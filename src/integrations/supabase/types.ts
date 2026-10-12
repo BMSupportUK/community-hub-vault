@@ -5219,6 +5219,7 @@ export type Database = {
           early_finish_at: string | null
           early_finish_reason: string | null
           end_prompt_asked_at: string | null
+          end_prompt_signed_out_at: string | null
           id: string
           still_working_ack_at: string | null
           user_id: string
@@ -5233,6 +5234,7 @@ export type Database = {
           early_finish_at?: string | null
           early_finish_reason?: string | null
           end_prompt_asked_at?: string | null
+          end_prompt_signed_out_at?: string | null
           id?: string
           still_working_ack_at?: string | null
           user_id: string
@@ -5247,6 +5249,7 @@ export type Database = {
           early_finish_at?: string | null
           early_finish_reason?: string | null
           end_prompt_asked_at?: string | null
+          end_prompt_signed_out_at?: string | null
           id?: string
           still_working_ack_at?: string | null
           user_id?: string

@@ -426,7 +426,11 @@ export function ShiftStartEndAlert() {
           <AlertDialogAction
             disabled={!finishedConfirmed}
             className="disabled:opacity-50 disabled:pointer-events-none"
-            onClick={() => void clockOut(Date.now())}
+            onClick={() => {
+              const at = Date.now();
+              const shiftId = openShift.id;
+              void supabase.from("shifts").update({ end_prompt_signed_out_at: new Date(at).toISOString() }).eq("id", shiftId).then(() => clockOut(at));
+            }}
           >
             Sign out
           </AlertDialogAction>

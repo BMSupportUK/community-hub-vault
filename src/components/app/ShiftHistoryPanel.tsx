@@ -17,6 +17,7 @@ interface ShiftHistoryRow {
   end_prompt_asked_at: string | null;
   still_working_ack_at: string | null;
   early_finish_at?: string | null;
+  end_prompt_signed_out_at?: string | null;
 }
 
 interface BreakRow {
@@ -416,7 +417,7 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
           const autoOut =
             !!s.clock_out &&
             !!s.end_prompt_asked_at &&
-            Math.abs(new Date(s.clock_out).getTime() - (new Date(s.end_prompt_asked_at).getTime() + AUTO_OUT_GRACE_MS)) < 60_000;
+            Math.abs(new Date(s.clock_out).getTime() - (new Date(s.end_prompt_asked_at).getTime() + AUTO_OUT_GRACE_MS)) < 15_000;
           return (
             <div key={s.id} className="grid min-w-0 gap-3 xl:grid-cols-2">
             <div
@@ -501,7 +502,12 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
                 )}
                 {acked ? (
                   <Pill icon={CheckCircle2} label={`Said still working at ${fmtTime(s.still_working_ack_at ?? s.clock_in)}`} tone="ok" />
-                ) : s.end_prompt_asked_at ? (
+                ) : null}
+                {s.end_prompt_signed_out_at ? (
+                  <Pill icon={CheckCircle2} label={`Answered: finished, signed out at ${fmtTime(s.end_prompt_signed_out_at)}`} tone="ok" />
+                ) : !acked && s.end_prompt_asked_at && s.clock_out && !autoOut ? (
+                  <Pill icon={CheckCircle2} label={`Answered: signed out at ${fmtTime(s.clock_out)}`} tone="ok" />
+                ) : !acked && s.end_prompt_asked_at ? (
                   <Pill icon={HelpCircle} label="No answer given" tone="warn" />
                 ) : null}
               </div>
