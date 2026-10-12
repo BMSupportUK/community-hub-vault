@@ -371,7 +371,7 @@ function TicketsPage() {
       supabase.removeChannel(ch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, view]);
+  }, [user?.id, view, isDemo]);
 
   // Load assignable staff list (once, for staff users)
   useEffect(() => {

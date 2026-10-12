@@ -21,9 +21,8 @@ export function useIsDemoAccount() {
 
 /** Pages that hold live customer data, downloads or DNS codes. */
 export function isDemoLockedPath(path: string, ownUsername: string | null, staffView: boolean) {
-  if (/^\/(members|install-guides|inbox|staff|admin)/.test(path)) return true;
+  if (/^\/(install-guides|inbox|admin)/.test(path)) return true;
   if (path.startsWith("/home/")) return true; // Talk channels show live staff chat
-  if (staffView && path.startsWith("/tickets")) return true; // live customer tickets
   if (path.startsWith("/u/")) {
     const name = decodeURIComponent(path.split("/")[2] ?? "");
     return !ownUsername || name.toLowerCase() !== ownUsername.toLowerCase();

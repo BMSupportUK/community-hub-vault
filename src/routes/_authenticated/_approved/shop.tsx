@@ -1286,7 +1286,7 @@ function Storefront() {
       supabase.removeChannel(ch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, isDemo]);
 
   const rateProduct = async (productId: string, value: number) => {
     if (!user) {
