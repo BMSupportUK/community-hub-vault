@@ -478,7 +478,13 @@ function StaffShiftsPage() {
       <div className="grid gap-3 md:grid-cols-2">
         {[
           { tabs: ROLE_TABS, counts: roleCounts, current: role, set: (k: any) => setRole(k), label: "Role" },
-          { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => setWeekday(k), label: "Day" },
+          { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => {
+              setWeekday(k);
+              // Jump the calendar to that weekday within the week being shown.
+              const d = weekStart(selectedDate);
+              d.setDate(d.getDate() + ((k + 6) % 7));
+              setSelectedDate(d);
+            }, label: "Day" },
         ].map((group) => (
           <div key={group.label} className="rounded-2xl border border-border bg-surface-1 p-2 shadow-sm">
             <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{group.label}</p>
@@ -527,7 +533,7 @@ function StaffShiftsPage() {
         </div>
       ) : grouped.length === 0 ? (
         <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-muted-foreground">
-          No shifts recorded in this period.
+          No shifts recorded in the week of {fmtDay(selectedDate)}.
         </div>
       ) : (
         <div className="space-y-6">
