@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Check all-user notification visibility above the app lock screen and correct any hidden notification surfaces
 - [x] Add copy icons to revealed staff PINs on the admin and main Staff PIN pages; keep existing unlock requirements
 - [x] Match admin PIN unlock background to Staff PIN and add all-staff PIN tab with individual hidden/reveal controls; background and access tests verified
 - [ ] Verify staff PIN eye controls through the unlocked admin dashboard — blocked by required account password and staff PIN
