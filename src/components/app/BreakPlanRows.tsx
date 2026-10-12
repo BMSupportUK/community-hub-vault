@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { breakIcon } from "@/lib/breaks";
 import { planBreaks, toMinutes, fromMinutes, type UserPlan } from "@/lib/break-plan";
 import { countOpenTickets, passTicketsForBreak } from "@/lib/break-handover";
+import { sendBreakEventPush } from "@/lib/push.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -111,6 +113,7 @@ const autoStartedKeys = new Set<string>();
  */
 export function AutoBreakStartListener() {
   const { user } = useAuth();
+  const notifyBreak = useServerFn(sendBreakEventPush);
   const [eligible, setEligible] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const { plan, nowMin } = useBreakPlan(user?.id ?? "");
@@ -160,6 +163,7 @@ export function AutoBreakStartListener() {
       if (n > 0) await passTicketsForBreak(item.kind);
       const { error } = await supabase.from("breaks").insert({ shift_id: shiftId, user_id: user.id, kind: item.kind });
       if (error) return;
+      notifyBreak({ data: { kind: "start", breakKind: item.kind } }).catch(() => {});
       setUsedKinds((k) => [...k, `${item.kind}@${item.start}`]);
       setNotice(`Your ${item.label.toLowerCase()} has started automatically.${n > 0 ? ` Your ticket${n === 1 ? " was" : "s were"} passed over.` : ""} It ends on its own.`);
     })();
