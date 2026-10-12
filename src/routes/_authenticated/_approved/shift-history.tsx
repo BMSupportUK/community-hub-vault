@@ -33,7 +33,7 @@ function ShiftHistoryPage() {
     let alive = true;
     void supabase
       .from("profiles")
-      .select("username, display_name")
+      .select("username, display_name, equipped_nameplate_id")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
