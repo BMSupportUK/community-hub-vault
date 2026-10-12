@@ -1,4 +1,6 @@
 import { resolveSoundSrc } from "@/lib/sound-overrides";
+import { PHONE_TONE_SRCS, toPhoneTone } from "@/lib/phone-alert-sounds";
+const recentlyPlayed = new Map<string, number>();
 // Shared audio playback helper.
 import { Capacitor } from "@capacitor/core";
 import { shakeScreen } from "@/lib/screen-shake";
@@ -230,15 +232,26 @@ export function playSound(
     console.warn("[sound] ignored playback with no source", opts.label ?? "");
     return Promise.resolve(false);
   }
-  src = resolveSoundSrc(src);
+  // Admin-uploaded overrides win; otherwise use the same recording the phone
+  // app plays for this alert so web and phone sound identical.
+  const overridden = resolveSoundSrc(src);
+  src = overridden !== src ? overridden : toPhoneTone(src);
+  if (PHONE_TONE_SRCS.has(src)) {
+    // Phone recordings are already volume-matched; don't over-boost them.
+    opts = { ...opts, gain: Math.min(opts.gain ?? 1, 1.2) };
+  }
   // Visual alert: shake even when sound is muted or the user is signed out,
   // so the alert is still noticed on screen.
   shakeScreen();
   if (!signedIn) return Promise.resolve(false);
   if (getSoundPrefs().muted) return Promise.resolve(false);
 
-  // Collapse an identical sound that is already waiting in the queue.
+  // Collapse an identical sound that is already waiting in the queue, or that
+  // just played (two listeners reacting to the same alert).
   if (queue.some((item) => item.src === src)) return Promise.resolve(true);
+  const last = recentlyPlayed.get(src);
+  if (last && Date.now() - last < 4000) return Promise.resolve(true);
+  recentlyPlayed.set(src, Date.now());
 
   return new Promise<boolean>((resolve) => {
     queue.push({ src, opts, resolve });
