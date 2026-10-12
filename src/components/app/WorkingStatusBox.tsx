@@ -91,38 +91,6 @@ function SignInOpensNote({ win }: { win: { start: string; end: string } }) {
   );
 }
 
-// Live countdown to the next rota shift, ticking every second. Shown in the
-// Current shift tab once today's shift has ended.
-function NextShiftCountdown({ slot, now }: { slot: NextSlot; now: number }) {
-  const { startsAt } = shiftWindowToUtcMs(
-    slot.shift_date,
-    slot.start_time,
-    slot.end_time,
-    "Europe/London",
-  );
-  const msLeft = Math.max(0, startsAt - now);
-  const totalSec = Math.floor(msLeft / 1000);
-  const days = Math.floor(totalSec / 86400);
-  const hours = Math.floor((totalSec % 86400) / 3600);
-  const mins = Math.floor((totalSec % 3600) / 60);
-  const secs = totalSec % 60;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const text =
-    days > 0
-      ? `${days}d ${pad(hours)}h ${pad(mins)}m ${pad(secs)}s`
-      : hours > 0
-        ? `${pad(hours)}h ${pad(mins)}m ${pad(secs)}s`
-        : `${pad(mins)}m ${pad(secs)}s`;
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-muted-foreground font-medium">Next shift in</span>
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 font-bold tabular-nums text-primary ring-1 ring-primary/30">
-        <CircleDot className="size-3.5" />
-        {text}
-      </span>
-    </div>
-  );
-}
 
 // Rota wall-clock (UK) converted into the viewer's device timezone. When the
 // shift crosses midnight locally, start and end are listed as separate days.
@@ -1011,7 +979,7 @@ export function WorkingStatusBox({
               <BreakPlanRows userId={user.id} usedKinds={usedKinds} listHidden onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground font-medium">Shift</span>
-                <span className="text-muted-foreground italic">Not signed in</span>
+                <span className="text-muted-foreground italic">Shift completed</span>
               </div>
               {!todayWindow && !hadShiftToday && (
                 <p className="text-xs text-muted-foreground">
@@ -1019,7 +987,9 @@ export function WorkingStatusBox({
                 </p>
               )}
               {!todayWindow && hadShiftToday && nextSlot && (
-                <NextShiftCountdown slot={nextSlot} now={now} />
+                <p className="text-xs text-muted-foreground">
+                  Today's shift has ended — your next shift is below.
+                </p>
               )}
               {!todayWindow && hadShiftToday && !nextSlot && (
                 <p className="text-xs text-muted-foreground">
