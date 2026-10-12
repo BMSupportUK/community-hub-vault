@@ -13,7 +13,7 @@ self.addEventListener("push", (event) => {
     // Ask any open app window to play the uploaded voice clip instead of the
     // generic OS notification chime.
     let playedInApp = false;
-    if (payload.sound) {
+    if (payload.sound || payload.kind) {
       const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const c of clients) {
         try {
@@ -26,7 +26,7 @@ self.addEventListener("push", (event) => {
             };
           });
           c.postMessage(
-            { type: "bm-play-sound", sound: payload.sound },
+            { type: "bm-play-sound", sound: payload.sound, kind: payload.kind, event: payload.event },
             [channel.port2],
           );
           if (await acknowledged) {
