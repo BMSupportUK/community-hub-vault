@@ -138,7 +138,6 @@ export function BreakEndingAlert() {
     })();
   }, [active, now]);
 
-  // Travel-home breaks are fully automatic: never alert, never play audio.
   if (!active || !stage) return null;
   const label = breakLabel(active.kind);
   const Icon = breakIcon(active.kind);
