@@ -297,7 +297,8 @@ function StaffShiftsPage() {
       window.removeEventListener("focus", onWake);
       document.removeEventListener("visibilitychange", onWake);
     };
-  }, [canView, days, load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView, weekFrom.getTime(), weekTo.getTime(), load]);
 
   const primaryRole = useCallback(
     (userId: string) => {
@@ -402,21 +403,72 @@ function StaffShiftsPage() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-xl border border-border bg-background/60 p-1 backdrop-blur">
-              {RANGES.map((r) => (
-                <button
-                  key={r.days}
-                  type="button"
-                  onClick={() => setDays(r.days)}
-                  className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                    days === r.days ? "bg-gradient-primary text-white shadow" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {r.label}
-                </button>
-              ))}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => goDay(-1)}
+                className="rounded-lg px-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                aria-label="Previous day"
+              >
+                <ChevronLeft className="size-4" />
+                <span className="hidden sm:inline">Previous day</span>
+              </Button>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-lg px-3 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                    aria-label="Choose a day"
+                  >
+                    <CalendarDays className="size-4" />
+                    {fmtDay(selectedDate)}
+                    {isToday ? " · today" : ""}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    mode="single"
+                    required
+                    selected={selectedDate}
+                    defaultMonth={selectedDate}
+                    onSelect={(date) => {
+                      if (!date) return;
+                      setSelectedDate(date);
+                      setWeekday(date.getDay());
+                      setCalendarOpen(false);
+                    }}
+                    weekStartsOn={1}
+                    autoFocus
+                    className="pointer-events-auto p-3"
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => goDay(1)}
+                className="rounded-lg px-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                aria-label="Next day"
+              >
+                <span className="hidden sm:inline">Next day</span>
+                <ChevronRight className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => { const t = new Date(); setSelectedDate(t); setWeekday(t.getDay()); }}
+                disabled={isToday}
+                className="rounded-lg px-3 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"
+              >
+                Today
+              </Button>
             </div>
-            <Button size="icon" variant="outline" className="rounded-xl" onClick={() => void load(days)} disabled={loading} aria-label="Refresh shifts">
+            <Button size="icon" variant="outline" className="rounded-xl" onClick={() => void load(weekFrom, weekTo)} disabled={loading} aria-label="Refresh shifts">
               {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             </Button>
           </div>
