@@ -289,8 +289,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               await supabase.from("shifts").update({ clock_out: nowIso }).eq("id", open.id);
               return;
             }
-            const { requestEarlyFinish } = await import("@/lib/early-finish.functions");
-            await requestEarlyFinish({ data: { reason: "Signed out mid-shift" } });
+            // Signing out (manual or automatic) before the rota end never asks
+            // for an early finish — the shift simply stays open. Early finishes
+            // are only requested from the Clock Out buttons with a reason.
           };
 
           await Promise.race([
