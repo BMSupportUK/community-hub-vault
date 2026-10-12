@@ -3,10 +3,16 @@
 // components that import MP3s directly — plays the replacement automatically.
 import { supabase } from "@/integrations/supabase/client";
 import { NOTIFICATION_SOUNDS } from "@/lib/notification-sounds";
+import { PHONE_ALERTS } from "@/lib/phone-alerts";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
 
 export const SOUND_BUCKET = "notification-sounds";
 
 const srcToKey = new Map<string, string>(NOTIFICATION_SOUNDS.map((s) => [s.src, s.key]));
+for (const a of PHONE_ALERTS) {
+  const src = phoneToneSrc(a.key);
+  if (src) srcToKey.set(src, `phone-${a.key}`);
+}
 let overrides = new Map<string, string>(); // key -> playable URL
 let loading: Promise<void> | null = null;
 const listeners = new Set<() => void>();

@@ -235,7 +235,7 @@ export function playSound(
   // Admin-uploaded overrides win; otherwise use the same recording the phone
   // app plays for this alert so web and phone sound identical.
   const overridden = resolveSoundSrc(src);
-  src = overridden !== src ? overridden : toPhoneTone(src);
+  src = overridden !== src ? overridden : resolveSoundSrc(toPhoneTone(src));
   if (PHONE_TONE_SRCS.has(src)) {
     // Phone recordings are already volume-matched; don't over-boost them.
     opts = { ...opts, gain: Math.min(opts.gain ?? 1, 1.2) };

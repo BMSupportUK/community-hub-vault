@@ -9,25 +9,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SOUND_BUCKET, loadSoundOverrides, getOverrideUrl, onOverridesChange } from "@/lib/sound-overrides";
 import { PHONE_ALERTS } from "@/lib/phone-alerts";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
 
-import mentionAudio from "@/assets/mention-notify.mp3";
-import staffMentionAudio from "@/assets/staff-mention.mp3";
 import broadcastAudio from "@/assets/broadcast-notify.mp3";
-import orderAudio from "@/assets/order-notify.mp3";
-import ticketAudio from "@/assets/ticket-notify.mp3";
-import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
-import paymentReceivedAudio from "@/assets/payment-received.mp3";
-import newSignupAudio from "@/assets/new-signup-notify.mp3";
-import shiftStartAudio from "@/assets/shift-start.mp3";
-import shiftEndAudio from "@/assets/shift-end.mp3";
-import endBreakAudio from "@/assets/end-break.mp3";
-import endLunchAudio from "@/assets/end-lunch.mp3";
-import outageAudio from "@/assets/outage-notify.mp3";
-import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import fanZoneAppealAsset from "@/assets/fan-zone-appeal-alert.mp3.asset.json";
 import fanZoneAppealMsgAsset from "@/assets/fan-zone-appeal-message.mp3.asset.json";
 import fanZoneAppealStaffAsset from "@/assets/fan-zone-appeal-staff-reply.mp3.asset.json";
-import contentReportedAsset from "@/assets/content-reported.mp3.asset.json";
 import fanZoneMentionAsset from "@/assets/fan-zone-mention.mp3.asset.json";
 import daneBmSupportAsset from "@/assets/dane-bm-support-needed.mp3.asset.json";
 
@@ -54,26 +41,18 @@ type SoundDef = {
   trigger: string;
 };
 
+// Every phone alert first (same recording the phone plays), then the
+// website-only sounds that have no phone version.
 const SOUNDS: SoundDef[] = [
-  { key: "mention", label: "Mention", file: "mention-notify.mp3", src: mentionAudio, gain: 1.5, trigger: "Someone @mentions you in chat or the forum." },
-  { key: "staff-mention", label: "Staff mention", file: "staff-mention.mp3", src: staffMentionAudio, gain: 1.5, trigger: "A member mentions staff in the gate or a staff channel." },
+  ...PHONE_ALERTS.map((a) => ({
+    key: `phone-${a.key}`, label: a.label, file: `${a.tone}.mp3`,
+    src: phoneToneSrc(a.key) ?? "", gain: 1.2, trigger: `${a.when}.`,
+  })),
   { key: "broadcast", label: "Broadcast", file: "broadcast-notify.mp3", src: broadcastAudio, gain: 1.5, trigger: "An admin broadcast / announcement is posted." },
-  { key: "order", label: "Sale / Order", file: "order-notify.mp3", src: orderAudio, gain: 1.8, trigger: "A customer places a new order." },
-  { key: "ticket", label: "New ticket", file: "ticket-notify.mp3", src: ticketAudio, gain: 2.0, trigger: "A new support ticket is opened / left unanswered." },
-  { key: "ticket-reply", label: "Ticket reply", file: "ticket-reply-notify.mp3", src: ticketReplyAudio, gain: 2.0, trigger: "A customer replies to a ticket you are assigned to." },
-  { key: "payment-received", label: "Payment confirmed", file: "payment-received.mp3", src: paymentReceivedAudio, gain: 2.0, trigger: "An order payment is confirmed (card or bank transfer)." },
-  { key: "signup", label: "New signup", file: "new-signup-notify.mp3", src: newSignupAudio, gain: 1.8, trigger: "A new member signs up and hits the gate." },
-  { key: "shift-start", label: "Shift start", file: "shift-start.mp3", src: shiftStartAudio, gain: 2.2, trigger: "Your rota shift is about to start." },
-  { key: "shift-end", label: "Shift end", file: "shift-end.mp3", src: shiftEndAudio, gain: 2.2, trigger: "Your rota shift is about to end." },
-  { key: "end-break", label: "Break ending", file: "end-break.mp3", src: endBreakAudio, gain: 2.2, trigger: "Your break is nearly over (auto-ends after 10s)." },
-  { key: "end-lunch", label: "Main break ending", file: "end-lunch.mp3", src: endLunchAudio, gain: 2.2, trigger: "Your main break is nearly over (auto-ends after 10s)." },
-  { key: "outage", label: "Outage raised", file: "outage-notify.mp3", src: outageAudio, gain: 2.2, trigger: "A service outage is published on the status page." },
-  { key: "outage-resolved", label: "Outage resolved", file: "outage-resolved.mp3", src: outageResolvedAudio, gain: 1.8, trigger: "An outage is marked resolved." },
   { key: "fan-zone-mention", label: "Fan Zone mention", file: "fan-zone-mention.mp3", src: fanZoneMentionAsset.url, gain: 2.0, trigger: "Someone @mentions you in Boro Fan Zone." },
   { key: "fan-zone-appeal", label: "Fan Zone ban appeal", file: "fan-zone-appeal-alert.mp3", src: fanZoneAppealAsset.url, gain: 2.0, trigger: "A banned Fan Zone member submits an appeal." },
   { key: "fan-zone-appeal-message", label: "Fan Zone appeal message", file: "fan-zone-appeal-message.mp3", src: fanZoneAppealMsgAsset.url, gain: 2.0, trigger: "A member sends a new message on their appeal." },
   { key: "fan-zone-appeal-staff-reply", label: "Fan Zone appeal reply", file: "fan-zone-appeal-staff-reply.mp3", src: fanZoneAppealStaffAsset.url, gain: 2.0, trigger: "A moderator replies to a member's appeal." },
-  { key: "content-reported", label: "Content reported", file: "content-reported.mp3", src: contentReportedAsset.url, gain: 2.0, trigger: "A post or message is reported for moderation." },
   { key: "dane-bm-support", label: "Needed in BM Support", file: "dane-bm-support-needed.mp3", src: daneBmSupportAsset.url, gain: 2.0, trigger: "You're called to BM Support." },
 ];
 
