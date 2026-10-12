@@ -1186,9 +1186,14 @@ function Storefront() {
     ticket_id?: string | null;
   } | null>(null);
 
+  const isDemo = useIsDemoAccount();
   const reloadLatestOrder = async () => {
     if (!user) {
       setLatestOrder(null);
+      return;
+    }
+    if (isDemo) {
+      setLatestOrder(DEMO_LATEST_ORDER);
       return;
     }
     const { data } = await supabase
