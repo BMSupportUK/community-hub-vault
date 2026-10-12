@@ -74,7 +74,7 @@ export function usePushRegister() {
         // backgrounded or closed. Channel IDs are bumped whenever the sound
         // changes because Android keeps a channel's original sound forever.
         await PushNotifications.createChannel({
-          id: "bm_support_ticket_replies_v4",
+          id: "bm_support_ticket_replies_v5",
           name: "Support ticket replies",
           description: "Ding alert when a customer replies to an assigned ticket",
           importance: 4,
@@ -89,7 +89,7 @@ export function usePushRegister() {
         // received ticket reply into a native local notification so the exact
         // bundled ding is used whether the app is open, backgrounded or closed.
         await LocalNotifications.createChannel({
-          id: "bm_support_ticket_replies_v4",
+          id: "bm_support_ticket_replies_v5",
           name: "Support ticket replies",
           description: "Ding alert when a customer replies to an assigned ticket",
           importance: 5,
@@ -99,7 +99,7 @@ export function usePushRegister() {
         });
 
         await PushNotifications.createChannel({
-          id: "bm_support_mentions_v3",
+          id: "bm_support_mentions_v4",
           name: "Mentions",
           description: "Ding alert when somebody mentions you",
           importance: 4,
@@ -110,7 +110,7 @@ export function usePushRegister() {
         });
 
         await LocalNotifications.createChannel({
-          id: "bm_support_mentions_v3",
+          id: "bm_support_mentions_v4",
           name: "Mentions",
           description: "Ding alert when somebody mentions you",
           importance: 5,
@@ -122,13 +122,13 @@ export function usePushRegister() {
         // One distinct ding per alert type; IDs bumped from the spoken
         // versions so Android picks up the new sounds.
         const dingChannels = [
-          { id: "bm_support_tickets_v5", name: "New support tickets", sound: "ticket_tone.mp3" },
-          { id: "bm_support_shift_start_v6", name: "Shift starting", sound: "shift_start_tone.mp3" },
-          { id: "bm_support_shift_end_v6", name: "Shift ending", sound: "shift_end_tone.mp3" },
-          { id: "bm_support_outage_v4", name: "Service outage", sound: "outage_tone.mp3" },
-          { id: "bm_support_outage_resolved_v4", name: "Outage resolved", sound: "outage_resolved_tone.mp3" },
-          { id: "bm_support_orders_v3", name: "New orders", sound: "order_tone.mp3" },
-          { id: "bm_support_payments_v3", name: "Payments received", sound: "payment_tone.mp3" },
+          { id: "bm_support_tickets_v6", name: "New support tickets", sound: "ticket_tone.mp3" },
+          { id: "bm_support_shift_start_v7", name: "Shift starting", sound: "shift_start_tone.mp3" },
+          { id: "bm_support_shift_end_v7", name: "Shift ending", sound: "shift_end_tone.mp3" },
+          { id: "bm_support_outage_v5", name: "Service outage", sound: "outage_tone.mp3" },
+          { id: "bm_support_outage_resolved_v5", name: "Outage resolved", sound: "outage_resolved_tone.mp3" },
+          { id: "bm_support_orders_v4", name: "New orders", sound: "order_tone.mp3" },
+          { id: "bm_support_payments_v4", name: "Payments received", sound: "payment_tone.mp3" },
         ];
         for (const c of dingChannels) {
           await PushNotifications.createChannel({
@@ -154,23 +154,23 @@ export function usePushRegister() {
           const spoken = kind === "dm"
             ? { channelId: "bm_support_alerts_v4", sound: undefined as string | undefined, fallback: "New message" }
             : kind === "ticket_reply"
-            ? { channelId: "bm_support_ticket_replies_v4", sound: "ticket_reply_tone.mp3", fallback: "Support ticket reply" }
+            ? { channelId: "bm_support_ticket_replies_v5", sound: "ticket_reply_tone.mp3", fallback: "Support ticket reply" }
             : kind === "mention"
-              ? { channelId: "bm_support_mentions_v3", sound: "mention_tone.mp3", fallback: "New mention" }
+              ? { channelId: "bm_support_mentions_v4", sound: "mention_tone.mp3", fallback: "New mention" }
               : kind === "ticket_raised" || kind === "ticket"
-                ? { channelId: "bm_support_tickets_v5", sound: "ticket_tone.mp3", fallback: "New support ticket" }
+                ? { channelId: "bm_support_tickets_v6", sound: "ticket_tone.mp3", fallback: "New support ticket" }
                 : typeof kind === "string" && kind.startsWith("shift_start")
-                  ? { channelId: "bm_support_shift_start_v6", sound: "shift_start_tone.mp3", fallback: "Shift starts soon" }
+                  ? { channelId: "bm_support_shift_start_v7", sound: "shift_start_tone.mp3", fallback: "Shift starts soon" }
                   : typeof kind === "string" && kind.startsWith("shift_end")
-                    ? { channelId: "bm_support_shift_end_v6", sound: "shift_end_tone.mp3", fallback: "Shift ends soon" }
+                    ? { channelId: "bm_support_shift_end_v7", sound: "shift_end_tone.mp3", fallback: "Shift ends soon" }
                     : kind === "incident" && incidentEvent === "created"
-                      ? { channelId: "bm_support_outage_v4", sound: "outage_tone.mp3", fallback: "Service outage" }
+                      ? { channelId: "bm_support_outage_v5", sound: "outage_tone.mp3", fallback: "Service outage" }
                       : kind === "incident" && incidentEvent === "resolved"
-                        ? { channelId: "bm_support_outage_resolved_v4", sound: "outage_resolved_tone.mp3", fallback: "Outage resolved" }
+                        ? { channelId: "bm_support_outage_resolved_v5", sound: "outage_resolved_tone.mp3", fallback: "Outage resolved" }
                         : kind === "order" || kind === "order_placed"
-                          ? { channelId: "bm_support_orders_v3", sound: "order_tone.mp3", fallback: "New order" }
+                          ? { channelId: "bm_support_orders_v4", sound: "order_tone.mp3", fallback: "New order" }
                           : kind === "order_paid" || kind === "invoice_paid" || kind === "wise_payment"
-                            ? { channelId: "bm_support_payments_v3", sound: "payment_tone.mp3", fallback: "Payment received" }
+                            ? { channelId: "bm_support_payments_v4", sound: "payment_tone.mp3", fallback: "Payment received" }
                             : null;
           if (!spoken) return;
           try {
