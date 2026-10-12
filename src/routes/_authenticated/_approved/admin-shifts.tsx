@@ -192,7 +192,9 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: st
 function StaffShiftsPage() {
   const { hasAny } = useAuth();
   const canView = hasAny(["admin", "management", "staff", "moderator"]);
-  const [days, setDays] = useState(1);
+  // The day picked in the calendar; the query always loads its Monday–Sunday week.
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
@@ -202,15 +204,26 @@ function StaffShiftsPage() {
   const [role, setRole] = useState<RoleKey>("admin");
   const [weekday, setWeekday] = useState<DayKey>(new Date().getDay());
 
-  const load = useCallback(async (d: number, silent = false) => {
+  const weekFrom = weekStart(selectedDate);
+  const weekTo = weekEnd(selectedDate);
+  const isToday = isoDay(selectedDate) === isoDay(new Date());
+
+  const goDay = (delta: number) => {
+    setSelectedDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + delta);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+  };
+
+  const load = useCallback(async (from: Date, to: Date, silent = false) => {
     if (!silent) setLoading(true);
-    const from = new Date();
-    from.setHours(0, 0, 0, 0);
-    from.setDate(from.getDate() - (d - 1));
     const { data } = await supabase
       .from("shifts")
       .select("id, user_id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, end_prompt_signed_out_at, early_finish_at, early_finish_reason")
       .gte("clock_in", from.toISOString())
+      .lt("clock_in", to.toISOString())
       .order("clock_in", { ascending: false });
     const rows = (data ?? []) as ShiftRow[];
     setShifts(rows);
