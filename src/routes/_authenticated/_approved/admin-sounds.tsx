@@ -121,18 +121,19 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   };
 
 
+  const [audience, setAudience] = useState<"me" | "everyone">("everyone");
   const sendPush = async (kind: string) => {
     if (pushBusy) return;
     setPushBusy(kind);
     try {
-      const results = await sendTestPush({ data: { kind } });
+      const results = await sendTestPush({ data: { kind, audience } });
       const entries = Object.entries(results);
       const skipped = entries.find(([, r]) => r.skipped)?.[1].skipped;
       const failed = entries.reduce((n, [, r]) => n + r.failed, 0);
       const sent = entries.reduce((n, [, r]) => n + r.sent, 0);
       if (skipped) toast.error(`Not sent: ${skipped}`);
       else if (sent === 0) toast.error(`No phone received it (${failed} failed). Is the app installed and signed in on your phone?`);
-      else toast.success(`Sent to ${sent} device${sent === 1 ? "" : "s"} — lock your phone to hear the sound.`);
+      else toast.success(`Sent to ${sent} phone${sent === 1 ? "" : "s"}${audience === "everyone" ? " (everyone who gets this alert)" : ""} — lock the phone to hear the sound.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Test push failed");
     } finally {
@@ -391,8 +392,16 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-50"
           >
             {pushBusy === "all" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-            {pushBusy === "all" ? "Sending all…" : "Send all to my phone"}
+            {pushBusy === "all" ? "Sending all…" : audience === "everyone" ? "Send all to everyone" : "Send all to my phone"}
           </button>
+        </div>
+        <div className="inline-flex rounded-lg border border-border bg-surface-2 p-1 text-xs">
+          {([["everyone", "Everyone who gets each alert"], ["me", "Only my phone"]] as const).map(([k, l]) => (
+            <button key={k} type="button" onClick={() => setAudience(k)}
+              className={`rounded-md px-3 py-1.5 font-semibold ${audience === k ? "bg-gradient-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              {l}
+            </button>
+          ))}
         </div>
         <PhoneChannelCheck />
         <div className="overflow-x-auto">
