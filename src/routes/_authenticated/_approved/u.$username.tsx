@@ -667,12 +667,14 @@ function ProfilePage() {
                     >
                       <Pencil className="size-4" /> Edit profile
                     </button>
+                    {!isStaffProfile && (
                     <button
                       onClick={() => setPickerOpen(true)}
                       className="flex min-w-0 items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-900/60 px-3 py-2 text-sm font-medium text-white sm:self-end sm:px-4"
                     >
                       Nameplate
                     </button>
+                    )}
                     </div>
                   )}
                   {!isOwner && viewer && (
@@ -854,7 +856,7 @@ function ProfilePage() {
           onSaved={() => { setEditing(false); load(); }}
         />
       )}
-      {pickerOpen && isOwner && (
+      {pickerOpen && isOwner && !isStaffProfile && (
         <NameplatePicker
           userId={profile.id}
           currentId={profile.equipped_nameplate_id}
