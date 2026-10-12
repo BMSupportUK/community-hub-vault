@@ -19,6 +19,10 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shiftsBg from "@/assets/staff-office-illustration.jpg";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { demoRota } from "@/lib/demo-data";
+
+const DEMO_TOAST = "Sample rota — changes aren't saved on the demo account";
 
 export const Route = createFileRoute("/_authenticated/_approved/shifts")({
   head: () => ({
@@ -240,6 +244,7 @@ function ShiftsPage() {
   const { toUtcMs, tz } = useTimezone();
   const { localMode, toggle: toggleLocalTz, browserTz, fmtRange, deviceRange } = useLocalDisplayTz(tz);
   const isMod = hasRole("moderator");
+  const isDemo = useIsDemoAccount();
   const canPick = isStaffOrAdmin || isMod;
   // Daily block-shift quota: Owner 2, Management 1, Staff 3.
   const myQuota = useMemo(
@@ -312,6 +317,15 @@ function ShiftsPage() {
   }), [weekStart]);
 
   const load = async () => {
+    if (isDemo) {
+      const d = demoRota(weekStart);
+      setSlots(d.slots as unknown as Slot[]);
+      setHolidays(d.holidays as unknown as Holiday[]);
+      setSwaps(d.swaps as unknown as Swap[]);
+      setProfiles(d.profiles as Record<string, Profile>);
+      setLoading(false);
+      return;
+    }
     const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
     const [{ data: s }, { data: h }, { data: sw }] = await Promise.all([
       supabase.from("shift_slots").select("*").gte("shift_date", fmtDate(weekStart)).lt("shift_date", fmtDate(weekEnd)).order("shift_date").order("start_time"),
@@ -383,7 +397,7 @@ function ShiftsPage() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekStart.getTime()]);
+  }, [weekStart.getTime(), isDemo]);
 
   // Business opening hours — used as the default start/finish for moderator hourly slots.
   useEffect(() => {
@@ -504,6 +518,7 @@ function ShiftsPage() {
 
   const claim = async (s: Slot) => {
     if (!user) return;
+    if (isDemo) return toast.info(DEMO_TOAST);
     if (s.required_role && !isAdmin && !roles.includes(s.required_role as AppRole)) {
       return toast.error(`That shift is reserved for ${roleLabel(s.required_role)}`);
     }
@@ -538,6 +553,7 @@ function ShiftsPage() {
 
   const release = async (s: Slot) => {
     if (!user) return;
+    if (isDemo) return toast.info(DEMO_TOAST);
     const { data, error } = await supabase
       .from("shift_slots")
       .update({ assigned_to: null })
@@ -562,6 +578,7 @@ function ShiftsPage() {
 
   const saveModHours = async () => {
     if (!modHoursDay) return;
+    if (isDemo) return toast.info(DEMO_TOAST);
     if (modHoursForm.end <= modHoursForm.start) return toast.error("Finish must be after start");
     setSavingModHours(true);
     try {
@@ -577,6 +594,7 @@ function ShiftsPage() {
   };
 
   const adminDeleteSlot = async (id: string) => {
+    if (isDemo) return toast.info(DEMO_TOAST);
     if (!confirm("Delete this slot?")) return;
     const { error } = await supabase.from("shift_slots").delete().eq("id", id);
     if (error) return toast.error(error.message);
@@ -584,6 +602,7 @@ function ShiftsPage() {
   };
 
   const addSlot = async () => {
+    if (isDemo) return toast.info(DEMO_TOAST);
     if (!newSlot.date) return toast.error("Date required");
     const start = newSlot.start, end = newSlot.end;
     if (newSlot.type === "shift") {
@@ -613,6 +632,7 @@ function ShiftsPage() {
   };
 
   const addBlockShift = async (preset: BlockPreset, date: string, role: ShiftRole = newSlot.role) => {
+    if (isDemo) return toast.info(DEMO_TOAST);
     if (!date) return toast.error("Pick a date");
     const { error } = await supabase.from("shift_slots").insert({
       shift_date: date, start_time: preset.start, end_time: preset.end,
@@ -627,6 +647,7 @@ function ShiftsPage() {
   };
 
   const fillWeekFromPresets = async () => {
+    if (isDemo) return toast.info(DEMO_TOAST);
     // One slot per role per day, following the daily cover quota (Owner 2, Management 1, Staff 3).
     const rows = days
       .flatMap((d) => {
@@ -681,6 +702,7 @@ function ShiftsPage() {
 
   const submitHoliday = async () => {
     if (!user) return;
+    if (isDemo) return toast.info(DEMO_TOAST);
     if (!holForm.start || !holForm.end) return toast.error("Start and end dates required");
     if (holForm.end < holForm.start) return toast.error("End must be after start");
     const { error } = await supabase.from("holiday_requests").insert({
@@ -693,6 +715,7 @@ function ShiftsPage() {
   };
 
   const reviewHoliday = async (id: string, status: ReqStatus, decisionReason?: string | null) => {
+    if (isDemo) return toast.info(DEMO_TOAST);
     const { error } = await supabase
       .from("holiday_requests")
       .update({
@@ -718,6 +741,7 @@ function ShiftsPage() {
 
   const openSwap = async (s: Slot) => {
     if (!user) return;
+    if (isDemo) return toast.info(DEMO_TOAST);
     setSwapFor(s); setSwapMsg(""); setSwapTarget("");
     setSwapCandidates([]);
     // Find roles of the requester (only staff-style ones), then peers with at least one matching role.
@@ -745,6 +769,7 @@ function ShiftsPage() {
   };
 
   const reviewSwap = async (s: Swap, status: ReqStatus) => {
+    if (isDemo) return toast.info(DEMO_TOAST);
     if (status === "approved") {
       if (s.target_user_id) {
         await supabase.from("shift_slots").update({ assigned_to: s.target_user_id }).eq("id", s.slot_id);
