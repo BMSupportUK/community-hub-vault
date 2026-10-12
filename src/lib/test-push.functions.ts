@@ -9,7 +9,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 export const sendTestPush = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { kind?: string; audience?: "me" | "everyone" }) => input)
+  .inputValidator((input: { kind?: string; audience?: "me" | "selected"; userIds?: string[] }) => ({
+    kind: input?.kind,
+    audience: input?.audience === "selected" ? "selected" as const : "me" as const,
+    userIds: Array.isArray(input?.userIds) ? input.userIds.map(String).slice(0, 50) : [],
+  }))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
 
@@ -20,7 +24,7 @@ export const sendTestPush = createServerFn({ method: "POST" })
       .in("role", ["admin", "management"]);
     if (!roles?.length) throw new Error("Admins only");
 
-    const { PHONE_ALERTS, phoneAlertRoles } = await import("@/lib/phone-alerts");
+    const { PHONE_ALERTS } = await import("@/lib/phone-alerts");
     const KINDS: Record<string, { title: string; body: string; data: Record<string, string> }> = {};
     for (const a of PHONE_ALERTS) {
       KINDS[a.key] = {
@@ -33,17 +37,20 @@ export const sendTestPush = createServerFn({ method: "POST" })
     const kind = data?.kind;
     if (kind !== "all" && (!kind || !KINDS[kind])) throw new Error("Unknown kind");
 
-    const { pushToUser, pushToRoles } = await import("@/lib/fcm.server");
-    const everyone = data?.audience === "everyone";
+    const { pushToUser } = await import("@/lib/fcm.server");
+    const targets = data.audience === "selected" ? [...new Set(data.userIds)] : [userId];
+    if (!targets.length) throw new Error("Tick at least one account to test with.");
 
     const send = async (key: string) => {
       const k = KINDS[key];
-      if (everyone) {
-        // Same recipients as the real alert: every account with the roles it goes to.
-        const a = PHONE_ALERTS.find((x) => x.key === key)!;
-        return pushToRoles(phoneAlertRoles(a), { title: k.title, body: k.body, data: k.data });
+      const total = { sent: 0, failed: 0 } as { sent: number; failed: number; skipped?: string };
+      for (const t of targets) {
+        const r = await pushToUser(t, { title: k.title, body: k.body, data: k.data });
+        total.sent += r.sent;
+        total.failed += r.failed;
+        if (r.skipped && r.skipped !== "no device tokens") total.skipped = r.skipped;
       }
-      return pushToUser(userId, { title: k.title, body: k.body, data: k.data });
+      return total;
     };
 
     if (kind === "all") {
