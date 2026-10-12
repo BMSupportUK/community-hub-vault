@@ -69,7 +69,7 @@ async function buildMessage(kind: Kind, id: string): Promise<string | null> {
     const { data: o } = await supabaseAdmin
       .schema("private" as never)
       .from("orders")
-      .select("user_id, status, total_cents, shipping_name")
+      .select("user_id, status, total_cents, shipping_name, customer_type")
       .eq("id", id)
       .maybeSingle();
     if (!o) return null;
@@ -79,11 +79,20 @@ async function buildMessage(kind: Kind, id: string): Promise<string | null> {
       .select("username, display_name")
       .eq("id", (o as { user_id: string }).user_id)
       .maybeSingle();
+    const adminName = (prof?.display_name as string) || (prof?.username as string) || "An admin";
+    const isManual = (o as { customer_type?: string }).customer_type === "manual";
     const who =
       ((o as { shipping_name?: string }).shipping_name as string) ||
       (prof?.display_name as string) ||
       (prof?.username as string) ||
       "customer";
+    if (isManual) {
+      return [
+        `📝 *Manual order* — £${total}`,
+        `added by ${escapeMd(adminName)} for ${escapeMd(who)}`,
+        `→ ${SITE}/shop?view=admin`,
+      ].join("\n");
+    }
     return [
       `🛒 *${(o as { status: string }).status === "pending" ? "New order" : "Order " + (o as { status: string }).status}* — £${total}`,
       `from ${escapeMd(who)}`,
