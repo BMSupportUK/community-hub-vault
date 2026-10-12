@@ -44,6 +44,18 @@ export function usePushRegister() {
         }
         if (!granted || removed) return;
 
+        // Register this phone FIRST so a channel-setup hiccup can never stop a
+        // device from receiving alerts (every signed-in phone must register).
+        const reg = await PushNotifications.addListener("registration", async (t) => {
+          try {
+            await register({ data: { token: t.value, platform: "android" } });
+          } catch (e) {
+            console.error("[push] failed to save token", e);
+          }
+        });
+        await PushNotifications.register();
+
+        try {
         await PushNotifications.createChannel({
           id: "bm_support_alerts_v4",
           name: "BM Support alerts",
@@ -149,6 +161,10 @@ export function usePushRegister() {
           });
         }
 
+        } catch (e) {
+          console.error("[push] channel setup failed", e);
+        }
+
         const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
           const kind = notification.data?.kind;
           const incidentEvent = notification.data?.event;
@@ -175,13 +191,6 @@ export function usePushRegister() {
           }
         });
 
-        const reg = await PushNotifications.addListener("registration", async (t) => {
-          try {
-            await register({ data: { token: t.value, platform: "android" } });
-          } catch (e) {
-            console.error("[push] failed to save token", e);
-          }
-        });
         const err = await PushNotifications.addListener("registrationError", (e) => {
           console.error("[push] registration error", e);
         });
@@ -200,8 +209,6 @@ export function usePushRegister() {
           openUrl(action.notification?.extra?.url);
         });
         listeners.push(reg, err, received, tapped, localTapped);
-
-        await PushNotifications.register();
       } catch (e) {
         console.error("[push] init failed", e);
       }
