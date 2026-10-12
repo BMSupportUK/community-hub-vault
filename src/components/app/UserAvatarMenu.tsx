@@ -70,7 +70,7 @@ interface MiniProfile {
 }
 
 export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
-  const { user, roles, signOut, hasAny, isFanZoneOnly, refreshRoles } = useAuth();
+  const { user, roles, signOut, hasAny, isFanZoneOnly } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [fanProfile, setFanProfile] = useState<{ fan_alias: string | null; fan_avatar_url: string | null } | null>(null);
