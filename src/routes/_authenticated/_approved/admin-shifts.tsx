@@ -13,6 +13,7 @@ import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPa
 import { ShiftBreakdownCard } from "@/components/app/ShiftBreakdownCard";
 import { shiftBreakdown } from "@/lib/shift-breakdown";
 import { isAutomaticShiftOut, shiftEndSignOutAnswer } from "@/lib/shift-end-history";
+import officeIllustration from "@/assets/staff-office-illustration.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
   component: StaffShiftsPage,
@@ -383,7 +384,9 @@ function StaffShiftsPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="relative isolate min-h-dvh space-y-6 p-4 md:p-6">
+      <img src={officeIllustration} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 -z-20 size-full object-cover object-center" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-background/85" />
       <EarlyFinishRequestsPanel />
       <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-surface-1 to-accent/10 p-5 shadow-sm md:p-6">
         <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-primary/10 blur-2xl" />
