@@ -1,3 +1,5 @@
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -93,6 +95,7 @@ function MembersPage() {
 
 
 
+  const isDemo = useIsDemoAccount();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
@@ -120,6 +123,13 @@ function MembersPage() {
   };
 
   const load = async () => {
+    if (isDemo) {
+      setProfiles([...DEMO_STAFF, ...DEMO_MEMBERS] as Profile[]);
+      const dm: Record<string, string[]> = {};
+      for (const r of DEMO_ROLES) (dm[r.user_id] ||= []).push(r.role);
+      setRolesByUser(dm);
+      return;
+    }
     const [{ data: ps }, { data: rs }, { data: dirRoles }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
@@ -160,7 +170,7 @@ function MembersPage() {
     }
   };
 
-  useEffect(() => { load(); }, [viewer?.id]);
+  useEffect(() => { load(); }, [viewer?.id, isDemo]);
 
   // Live-refresh when profiles, roles, or friendships change
   useEffect(() => {
