@@ -980,6 +980,7 @@ function OrderProgressStrip({
 
 /** Open (creating if needed) the customer's own secure checkout page for an order. */
 async function openSecureCheckout(orderId: string, fallback: (id: string) => void) {
+  if (orderId === DEMO_LATEST_ORDER.id) { window.location.assign("/pay/demo"); return; }
   const { data, error } = await supabase.rpc("create_my_checkout_link" as never, { p_order_id: orderId, p_method: null } as never);
   const row = (Array.isArray(data) ? data[0] : data) as { token: string; password: string } | null;
   if (error || !row?.token) { if (error) toast.error(error.message); return fallback(orderId); }
@@ -1618,7 +1619,7 @@ function Storefront() {
               <BuySteps
                 latestOrder={latestOrder}
                 onBrowse={() => setShopTab("shop")}
-                onViewOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
+                onViewOrder={(id) => id === DEMO_LATEST_ORDER.id ? window.location.assign("/pay/demo") : navigate({ to: "/shop", search: { view: "orders", id } })}
                 onViewTicket={(ticketId) => navigate({ to: "/tickets", search: { id: ticketId } })}
               />
             </TabsContent>

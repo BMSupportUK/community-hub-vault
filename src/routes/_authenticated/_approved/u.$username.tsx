@@ -262,6 +262,11 @@ function ProfilePage() {
     setBreakRow((b as BreakRow) ?? null);
     setTickets((tk ?? []) as TicketRow[]);
 
+    if (isDemo && isOwner) {
+      const demoRefs = demoReferrals();
+      setInviteInfo({ sent: demoRefs.length, used: demoRefs.filter((x) => x.used_by).length, bonusPaid: demoRefs.filter((x) => x.referral_bonus_paid).length, invitedBy: null, invitedAt: null, invitedBonusPaid: false });
+      setReferrals(demoRefs);
+    } else {
     // Invite info — visible to the profile owner and admins; for others we only show invitedBy
     const [{ data: sentInv }, { data: invitedRow }] = await Promise.all([
       supabase
@@ -310,6 +315,8 @@ function ProfilePage() {
         joined_username: r.used_by ? usedMap[r.used_by]?.username ?? null : null,
       })),
     );
+
+    }
 
     // Friends list for the profile owner — one-directional:
     // only people they sent an accepted request to count as their friends.
