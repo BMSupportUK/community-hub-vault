@@ -8,7 +8,7 @@ import { awayForShift, awayIcon } from "@/lib/staff-away";
 import { ShiftBreakdownCard } from "@/components/app/ShiftBreakdownCard";
 
 const PAGE_SIZE = 20;
-const AUTO_OUT_GRACE_MS = 15 * 60 * 1000;
+const AUTO_OUT_GRACE_MS = 1 * 60 * 1000;
 
 interface ShiftHistoryRow {
   id: string;
