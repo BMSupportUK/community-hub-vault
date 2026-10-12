@@ -18,6 +18,7 @@ import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 import { BmSplash } from "@/components/app/BmSplash";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
+import { AutoBreakStartListener } from "@/components/app/BreakPlanRows";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Capacitor } from "@capacitor/core";
@@ -263,6 +264,7 @@ function AuthLayout() {
           <BreakEndingAlert />
           <ShiftStartEndAlert />
           <EarlyFinishAlert />
+          <AutoBreakStartListener />
           <NotificationBell notificationsOnly />
           {!isPending && !isBanned && !isRejected && <ApprovedDeferredExtras notificationsOnly />}
         </Suspense>

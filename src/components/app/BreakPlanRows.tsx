@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Coffee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { breakIcon } from "@/lib/breaks";
 import { planBreaks, toMinutes, fromMinutes, type UserPlan } from "@/lib/break-plan";
@@ -101,6 +102,82 @@ export function NextBreakPill({ userId, usedKinds }: { userId: string; usedKinds
 // These staff have their breaks started for them at the allocated time.
 const AUTO_START_USERNAMES = new Set(["danej", "normanbyred77"]);
 const autoStartedKeys = new Set<string>();
+
+/**
+ * Lock-screen-safe auto break starter for AUTO_START_USERNAMES. Mounted in the
+ * notification-only slot so it keeps running while the screen is locked —
+ * the Working Status box (and its BreakPlanRows) unmounts behind the lock,
+ * which used to delay the break start and its pop-up until unlock.
+ */
+export function AutoBreakStartListener() {
+  const { user } = useAuth();
+  const [eligible, setEligible] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const { plan, nowMin } = useBreakPlan(user?.id ?? "");
+  const [usedKinds, setUsedKinds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    void supabase.from("profiles").select("username").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (alive) setEligible(AUTO_START_USERNAMES.has(String((data as { username?: string } | null)?.username ?? "").toLowerCase()));
+    });
+    return () => { alive = false; };
+  }, [user?.id]);
+
+  // Track today's breaks so a reload or a second listener never double-starts.
+  useEffect(() => {
+    if (!user || !eligible) return;
+    let alive = true;
+    const load = async () => {
+      const { data: s } = await supabase.from("shifts").select("id").eq("user_id", user.id).is("clock_out", null).limit(1).maybeSingle();
+      if (!s) { if (alive) setUsedKinds([]); return; }
+      const { data: bs } = await supabase.from("breaks").select("kind,started_at").eq("shift_id", (s as { id: string }).id);
+      if (alive) setUsedKinds(((bs ?? []) as { kind: string; started_at: string }[]).map((b) => `${b.kind}@${toMinutes(b.started_at.slice(11, 16))}`));
+    };
+    void load();
+    const r = setInterval(() => void load(), 60_000);
+    return () => { alive = false; clearInterval(r); };
+  }, [user?.id, eligible]);
+
+  const items = useMemo(() => planItems(plan, usedKinds, nowMin), [plan, usedKinds, nowMin]);
+  const dueItem = items.find((it) => !it.done && it.start !== null && nowMin >= it.start);
+
+  useEffect(() => {
+    if (!user || !eligible || !dueItem || dueItem.start === null) return;
+    const key = `${user.id}:${ukNow().date}:${dueItem.label}@${dueItem.start}`;
+    if (autoStartedKeys.has(key)) return;
+    autoStartedKeys.add(key);
+    const item = dueItem;
+    void (async () => {
+      const { data: s } = await supabase.from("shifts").select("id").eq("user_id", user.id).is("clock_out", null).limit(1).maybeSingle();
+      if (!s) return;
+      const shiftId = (s as { id: string }).id;
+      // Re-check inside the insert path: another tab may have started it.
+      const { data: existing } = await supabase.from("breaks").select("id").eq("shift_id", shiftId).eq("kind", item.kind).limit(1);
+      if (existing && existing.length > 0) return;
+      const n = await countOpenTickets(user.id);
+      if (n > 0) await passTicketsForBreak(item.kind);
+      const { error } = await supabase.from("breaks").insert({ shift_id: shiftId, user_id: user.id, kind: item.kind });
+      if (error) return;
+      setUsedKinds((k) => [...k, `${item.kind}@${item.start}`]);
+      setNotice(`Your ${item.label.toLowerCase()} has started automatically.${n > 0 ? ` Your ticket${n === 1 ? " was" : "s were"} passed over.` : ""} It ends on its own.`);
+    })();
+  }, [user, eligible, dueItem]);
+
+  return (
+    <Dialog open={!!notice} onOpenChange={(o) => { if (!o) setNotice(null); }}>
+      {/* z-[400] keeps the pop-up above the screen-lock overlay (z-[300]). */}
+      <DialogContent className="z-[400] w-[calc(100vw-2rem)] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />Break started</DialogTitle>
+          <DialogDescription>{notice}</DialogDescription>
+        </DialogHeader>
+        <Button className="w-full" onClick={() => setNotice(null)}>OK</Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function BreakPlanRows({ userId, usedKinds, onStartBreak, listHidden }: { userId: string; usedKinds: readonly string[]; onStartBreak?: (kind: "break" | "lunch") => void; listHidden?: boolean }) {
   const { plan, nowMin } = useBreakPlan(userId);
