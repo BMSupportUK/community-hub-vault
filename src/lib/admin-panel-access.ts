@@ -90,7 +90,7 @@ export function staffAllowedPageKeys(
 export const FAN_ZONE_ADMIN_PATHS = [
   "/admin-fan-zone", "/admin-boro-team-sheet", "/admin-predictions", "/admin-fantasy-motm",
   "/admin-fantasy-scoring", "/admin-fantasy-injuries", "/admin-fantasy-squad-numbers", "/admin-forum",
-  "/fan-zone-appeals", "/fan-zone-sanctions", "/fan-zone-security",
+  "/fan-zone-appeals", "/fan-zone-sanctions", "/fan-zone-security", "/fan-zone-sounds",
 ] as const;
 
 export function isFanZoneAdminPath(to: string | undefined): boolean {

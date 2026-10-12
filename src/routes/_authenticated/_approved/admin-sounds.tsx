@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SOUND_BUCKET, loadSoundOverrides, getOverrideUrl, onOverridesChange } from "@/lib/sound-overrides";
 import { PHONE_ALERTS } from "@/lib/phone-alerts";
+import { canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
 import { phoneToneSrc } from "@/lib/phone-alert-sounds";
 
 import broadcastAudio from "@/assets/broadcast-notify.mp3";
@@ -43,19 +44,23 @@ type SoundDef = {
 
 // Every phone alert first (same recording the phone plays), then the
 // website-only sounds that have no phone version.
-const SOUNDS: SoundDef[] = [
+const BM_SOUNDS: SoundDef[] = [
   ...PHONE_ALERTS.map((a) => ({
     key: `phone-${a.key}`, label: a.label, file: `${a.tone}.mp3`,
     src: phoneToneSrc(a.key) ?? "", gain: 1.2, trigger: `${a.when}.`,
   })),
   { key: "broadcast", label: "Broadcast", file: "broadcast-notify.mp3", src: broadcastAudio, gain: 1.5, trigger: "An admin broadcast / announcement is posted." },
+  { key: "dane-bm-support", label: "Needed in BM Support", file: "dane-bm-support-needed.mp3", src: daneBmSupportAsset.url, gain: 2.0, trigger: "You're called to BM Support." },
+];
+
+
+/** Boro Fan Zone is a separate part of the site — its sounds live in the Fan Zone admin panel. */
+export const FZ_SOUNDS: SoundDef[] = [
   { key: "fan-zone-mention", label: "Fan Zone mention", file: "fan-zone-mention.mp3", src: fanZoneMentionAsset.url, gain: 2.0, trigger: "Someone @mentions you in Boro Fan Zone." },
   { key: "fan-zone-appeal", label: "Fan Zone ban appeal", file: "fan-zone-appeal-alert.mp3", src: fanZoneAppealAsset.url, gain: 2.0, trigger: "A banned Fan Zone member submits an appeal." },
   { key: "fan-zone-appeal-message", label: "Fan Zone appeal message", file: "fan-zone-appeal-message.mp3", src: fanZoneAppealMsgAsset.url, gain: 2.0, trigger: "A member sends a new message on their appeal." },
   { key: "fan-zone-appeal-staff-reply", label: "Fan Zone appeal reply", file: "fan-zone-appeal-staff-reply.mp3", src: fanZoneAppealStaffAsset.url, gain: 2.0, trigger: "A moderator replies to a member's appeal." },
-  { key: "dane-bm-support", label: "Needed in BM Support", file: "dane-bm-support-needed.mp3", src: daneBmSupportAsset.url, gain: 2.0, trigger: "You're called to BM Support." },
 ];
-
 
 type Check = {
   status: "pending" | "ok" | "fail";
@@ -70,9 +75,11 @@ function formatBytes(n?: number) {
   return n < 1024 * 1024 ? `${Math.round(n / 1024)} KB` : `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
-function AdminSounds() {
-  const { hasAny } = useAuth();
-  const isAdmin = hasAny(["admin", "management"]);
+export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
+  const { hasAny, roles } = useAuth();
+  const isFz = zone === "fanzone";
+  const SOUNDS = isFz ? FZ_SOUNDS : BM_SOUNDS;
+  const isAdmin = isFz ? canOpenFanZoneAdminPanel(roles ?? []) : hasAny(["admin", "management"]);
   const [checks, setChecks] = useState<Record<string, Check>>({});
   const [checking, setChecking] = useState(true);
   const [nowPlaying, setNowPlaying] = useState<string | null>(null);
@@ -234,10 +241,10 @@ function AdminSounds() {
     <div className="w-full px-4 sm:px-6 py-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="size-4" /> Back to admin
+          <Link to={isFz ? "/fan-zone-admin" : "/admin"} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="size-4" /> {isFz ? "Back to Fan Zone admin" : "Back to admin"}
           </Link>
-          <h1 className="font-display text-2xl font-bold mt-1">Notification sounds</h1>
+          <h1 className="font-display text-2xl font-bold mt-1">{isFz ? "Boro Fan Zone sounds" : "Notification sounds"}</h1>
           <p className="text-sm text-muted-foreground">
             Every MP3 the app uses. Each one is fetched and decoded on load, so you can see at a glance
             whether the file is valid, then press play to hear exactly what staff hear.
@@ -260,7 +267,7 @@ function AdminSounds() {
       </div>
 
 
-      <div className="inline-flex rounded-xl border border-border bg-surface-1 p-1">
+      {!isFz && <div className="inline-flex rounded-xl border border-border bg-surface-1 p-1">
         {([["spoken", `Voice / in-app sounds (${SOUNDS.length})`, Volume2], ["mobile", `Phone alerts (${PHONE_ALERTS.length})`, Smartphone]] as const).map(([k, label, Icon]) => (
           <button
             key={k}
@@ -271,7 +278,7 @@ function AdminSounds() {
             <Icon className="size-4" /> {label}
           </button>
         ))}
-      </div>
+      </div>}
 
       {tab === "spoken" && (<>
       <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
@@ -365,7 +372,7 @@ function AdminSounds() {
       <SoundSettings />
       </>)}
 
-      {tab === "mobile" && (
+      {!isFz && tab === "mobile" && (
       <div className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

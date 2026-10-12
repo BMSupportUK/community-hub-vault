@@ -24,7 +24,7 @@ export function OutstandingTicketsAlert() {
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
   // Never interrupt the shop/orders flow with this dialog — a toast is enough there.
-  const isSoundTestPage = pathname === "/admin-sounds" || pathname.startsWith("/shop");
+  const isSoundTestPage = (pathname === "/admin-sounds" || pathname === "/fan-zone-sounds") || pathname.startsWith("/shop");
   const isTalkChannel = pathname === "/home" || pathname.startsWith("/home/");
   const isStaffRole = hasAny(["admin", "management", "staff"]);
   const [open, setOpen] = useState(false);

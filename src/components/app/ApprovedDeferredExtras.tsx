@@ -18,7 +18,7 @@ import { useLocation } from "@tanstack/react-router";
 export function ApprovedDeferredExtras({ notificationsOnly = false }: { notificationsOnly?: boolean }) {
   usePushRegister();
   const pathname = useLocation({ select: (location) => location.pathname });
-  const isSoundTestPage = pathname === "/admin-sounds";
+  const isSoundTestPage = (pathname === "/admin-sounds" || pathname === "/fan-zone-sounds");
 
   return (
     <>

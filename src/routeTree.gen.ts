@@ -84,6 +84,7 @@ import { Route as AuthenticatedApprovedFanZoneAdminRouteImport } from './routes/
 import { Route as AuthenticatedApprovedFanZoneAppealsRouteImport } from './routes/_authenticated/_approved/fan-zone-appeals'
 import { Route as AuthenticatedApprovedFanZoneSanctionsRouteImport } from './routes/_authenticated/_approved/fan-zone-sanctions'
 import { Route as AuthenticatedApprovedFanZoneSecurityRouteImport } from './routes/_authenticated/_approved/fan-zone-security'
+import { Route as AuthenticatedApprovedFanZoneSoundsRouteImport } from './routes/_authenticated/_approved/fan-zone-sounds'
 import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedInboxRouteImport } from './routes/_authenticated/_approved/inbox'
@@ -587,6 +588,12 @@ const AuthenticatedApprovedFanZoneSecurityRoute =
   AuthenticatedApprovedFanZoneSecurityRouteImport.update({
     id: '/fan-zone-security',
     path: '/fan-zone-security',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedFanZoneSoundsRoute =
+  AuthenticatedApprovedFanZoneSoundsRouteImport.update({
+    id: '/fan-zone-sounds',
+    path: '/fan-zone-sounds',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedForumRoute =
@@ -1180,6 +1187,7 @@ export interface FileRoutesByFullPath {
   '/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
   '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
+  '/fan-zone-sounds': typeof AuthenticatedApprovedFanZoneSoundsRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/inbox': typeof AuthenticatedApprovedInboxRoute
@@ -1340,6 +1348,7 @@ export interface FileRoutesByTo {
   '/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
   '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
+  '/fan-zone-sounds': typeof AuthenticatedApprovedFanZoneSoundsRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/inbox': typeof AuthenticatedApprovedInboxRoute
   '/inbox-reports': typeof AuthenticatedApprovedInboxReportsRoute
@@ -1504,6 +1513,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
   '/_authenticated/_approved/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/_authenticated/_approved/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
+  '/_authenticated/_approved/fan-zone-sounds': typeof AuthenticatedApprovedFanZoneSoundsRoute
   '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/inbox': typeof AuthenticatedApprovedInboxRoute
@@ -1668,6 +1678,7 @@ export interface FileRouteTypes {
     | '/fan-zone-appeals'
     | '/fan-zone-sanctions'
     | '/fan-zone-security'
+    | '/fan-zone-sounds'
     | '/forum'
     | '/home'
     | '/inbox'
@@ -1828,6 +1839,7 @@ export interface FileRouteTypes {
     | '/fan-zone-appeals'
     | '/fan-zone-sanctions'
     | '/fan-zone-security'
+    | '/fan-zone-sounds'
     | '/forum'
     | '/inbox'
     | '/inbox-reports'
@@ -1991,6 +2003,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/fan-zone-appeals'
     | '/_authenticated/_approved/fan-zone-sanctions'
     | '/_authenticated/_approved/fan-zone-security'
+    | '/_authenticated/_approved/fan-zone-sounds'
     | '/_authenticated/_approved/forum'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/inbox'
@@ -2677,6 +2690,13 @@ declare module '@tanstack/react-router' {
       path: '/fan-zone-security'
       fullPath: '/fan-zone-security'
       preLoaderRoute: typeof AuthenticatedApprovedFanZoneSecurityRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/fan-zone-sounds': {
+      id: '/_authenticated/_approved/fan-zone-sounds'
+      path: '/fan-zone-sounds'
+      fullPath: '/fan-zone-sounds'
+      preLoaderRoute: typeof AuthenticatedApprovedFanZoneSoundsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/forum': {
@@ -3421,6 +3441,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedFanZoneAppealsRoute: typeof AuthenticatedApprovedFanZoneAppealsRoute
   AuthenticatedApprovedFanZoneSanctionsRoute: typeof AuthenticatedApprovedFanZoneSanctionsRoute
   AuthenticatedApprovedFanZoneSecurityRoute: typeof AuthenticatedApprovedFanZoneSecurityRoute
+  AuthenticatedApprovedFanZoneSoundsRoute: typeof AuthenticatedApprovedFanZoneSoundsRoute
   AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInboxRoute: typeof AuthenticatedApprovedInboxRoute
@@ -3535,6 +3556,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedFanZoneSanctionsRoute,
   AuthenticatedApprovedFanZoneSecurityRoute:
     AuthenticatedApprovedFanZoneSecurityRoute,
+  AuthenticatedApprovedFanZoneSoundsRoute:
+    AuthenticatedApprovedFanZoneSoundsRoute,
   AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRouteWithChildren,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInboxRoute: AuthenticatedApprovedInboxRoute,
