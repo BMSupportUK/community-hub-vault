@@ -60,9 +60,9 @@ export const DEMO_PROFILE_MAP: [string, { id: string; display_name: string; user
 
 export const DEMO_LATEST_ORDER = {
   id: "00000000-0000-4000-a000-000000000001",
-  status: "completed",
+  status: "paid",
   paid_at: ago(5),
-  completed_at: ago(5),
+  completed_at: null,
   created_at: ago(5),
   ticket_id: null,
 };
