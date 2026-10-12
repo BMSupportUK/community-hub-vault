@@ -7,6 +7,8 @@ import { findEarliestEventUtcMs } from "@/lib/parse-event-times";
 import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight, ArrowUp, ArrowDown, ArrowLeft, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { demoSportsGuides } from "@/lib/demo-data";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,6 +108,7 @@ type Blog = {
 
 function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
+  const isDemo = useIsDemoAccount();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { cat: catFromUrl, sub: subFromUrl, reset: resetFromUrl } = Route.useSearch();
@@ -224,11 +227,12 @@ function SportsGuidesPage() {
   }, []);
 
 
-  const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
+  const queryKey = ["sports-guides-data", user?.id ?? "anon", isDemo] as const;
   const prune = useServerFn(pruneStaleSportsGuides);
   const dataQuery = useQuery({
     queryKey,
     queryFn: async () => {
+      if (isDemo) return demoSportsGuides();
       // Clear entries more than 10 hours past their start time before reading.
       try {
         await prune({});
