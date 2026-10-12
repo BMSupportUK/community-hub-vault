@@ -56,6 +56,7 @@ function ApprovedLayout() {
 
   return (
     <>
+      <DemoRoleBanner />
       <Outlet />
       <DeferUntilIdle>
         <ApprovedDeferredExtras />
