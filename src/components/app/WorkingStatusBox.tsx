@@ -751,7 +751,36 @@ export function WorkingStatusBox({
 
     return (
       <div className={cn("flex items-center", compact ? "gap-1" : "gap-3")}>
-        {/* Breaks start automatically at their allocated times — no manual start buttons. */}
+        <button
+          type="button"
+          onClick={() => void startBreak("break")}
+          disabled={busy || breakLeft <= 0}
+          title={breakLeft > 0 ? `Start a break (${breakLeft} left)` : "Both breaks used this shift"}
+          className={cn(
+            "inline-flex items-center justify-center rounded-full border transition-all",
+            breakLeft > 0
+              ? "border-warning/30 bg-warning/10 text-warning hover:bg-warning/20"
+              : "border-border bg-muted/30 text-muted-foreground cursor-not-allowed opacity-50",
+            iconButtonClass,
+          )}
+        >
+          <Coffee className={iconClass} />
+        </button>
+        <button
+          type="button"
+          onClick={() => void startBreak("lunch")}
+          disabled={busy || lunchLeft <= 0}
+          title={lunchLeft > 0 ? "Start your main break" : "Main break already used this shift"}
+          className={cn(
+            "inline-flex items-center justify-center rounded-full border transition-all",
+            lunchLeft > 0
+              ? "border-warning/30 bg-warning/10 text-warning hover:bg-warning/20"
+              : "border-border bg-muted/30 text-muted-foreground cursor-not-allowed opacity-50",
+            iconButtonClass,
+          )}
+        >
+          <UtensilsCrossed className={iconClass} />
+        </button>
         <button
           type="button"
           onClick={clockOut}
