@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoundSettings } from "@/components/app/SoundSettings";
 import { playSoundFromGesture, getSoundPrefs } from "@/lib/sound";
 import { sendTestPush } from "@/lib/test-push.functions";
+import { listRegisteredDevices, type RegisteredAccount } from "@/lib/registered-devices.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SOUND_BUCKET, loadSoundOverrides, getOverrideUrl, onOverridesChange } from "@/lib/sound-overrides";
@@ -86,7 +87,7 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   const sequenceRef = useRef<number | null>(null);
   const [running, setRunning] = useState(false);
   const [pushBusy, setPushBusy] = useState<string | null>(null);
-  const [tab, setTab] = useState<"spoken" | "mobile">("spoken");
+  const [tab, setTab] = useState<"spoken" | "mobile" | "devices">("spoken");
   const [, setOvVersion] = useState(0);
   const [uploading, setUploading] = useState<string | null>(null);
   useEffect(() => {
@@ -121,19 +122,27 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   };
 
 
-  const [audience, setAudience] = useState<"me" | "everyone">("everyone");
+  const [audience, setAudience] = useState<"me" | "selected">("me");
+  const [picked, setPicked] = useState<string[]>([]);
+  const [accounts, setAccounts] = useState<RegisteredAccount[] | null>(null);
+  const loadAccounts = async () => {
+    try { setAccounts(await listRegisteredDevices()); } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load devices"); setAccounts([]); }
+  };
+  useEffect(() => { if (!isFz && isAdmin && (tab === "mobile" || tab === "devices") && accounts === null) void loadAccounts(); }, [tab, isAdmin, isFz]);
+  const togglePick = (id: string) => setPicked((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
   const sendPush = async (kind: string) => {
     if (pushBusy) return;
+    if (audience === "selected" && picked.length === 0) return toast.error("Tick at least one account to test with.");
     setPushBusy(kind);
     try {
-      const results = await sendTestPush({ data: { kind, audience } });
+      const results = await sendTestPush({ data: { kind, audience, userIds: picked } });
       const entries = Object.entries(results);
       const skipped = entries.find(([, r]) => r.skipped)?.[1].skipped;
       const failed = entries.reduce((n, [, r]) => n + r.failed, 0);
       const sent = entries.reduce((n, [, r]) => n + r.sent, 0);
       if (skipped) toast.error(`Not sent: ${skipped}`);
       else if (sent === 0) toast.error(`No phone received it (${failed} failed). Is the app installed and signed in on your phone?`);
-      else toast.success(`Sent to ${sent} phone${sent === 1 ? "" : "s"}${audience === "everyone" ? " (everyone who gets this alert)" : ""} — lock the phone to hear the sound.`);
+      else toast.success(`Sent to ${sent} phone${sent === 1 ? "" : "s"}${audience === "selected" ? ` (${picked.length} ticked account${picked.length === 1 ? "" : "s"})` : ""} — lock the phone to hear the sound.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Test push failed");
     } finally {
@@ -269,7 +278,7 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
 
 
       {!isFz && <div className="inline-flex rounded-xl border border-border bg-surface-1 p-1">
-        {([["spoken", `Voice / in-app sounds (${SOUNDS.length})`, Volume2], ["mobile", `Phone alerts (${PHONE_ALERTS.length})`, Smartphone]] as const).map(([k, label, Icon]) => (
+        {([["spoken", `Voice / in-app sounds (${SOUNDS.length})`, Volume2], ["mobile", `Phone alerts (${PHONE_ALERTS.length})`, Smartphone], ["devices", "Registered devices", Smartphone]] as const).map(([k, label, Icon]) => (
           <button
             key={k}
             type="button"
@@ -392,17 +401,20 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-50"
           >
             {pushBusy === "all" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-            {pushBusy === "all" ? "Sending all…" : audience === "everyone" ? "Send all to everyone" : "Send all to my phone"}
+            {pushBusy === "all" ? "Sending all…" : audience === "selected" ? `Send all to ticked (${picked.length})` : "Send all to my phone"}
           </button>
         </div>
         <div className="inline-flex rounded-lg border border-border bg-surface-2 p-1 text-xs">
-          {([["everyone", "Everyone who gets each alert"], ["me", "Only my phone"]] as const).map(([k, l]) => (
+          {([["me", "Only my phone"], ["selected", "Ticked accounts"]] as const).map(([k, l]) => (
             <button key={k} type="button" onClick={() => setAudience(k)}
               className={`rounded-md px-3 py-1.5 font-semibold ${audience === k ? "bg-gradient-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
               {l}
             </button>
           ))}
         </div>
+        {audience === "selected" && (
+          <AccountPicker accounts={accounts} picked={picked} onToggle={togglePick} />
+        )}
         <PhoneChannelCheck />
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
@@ -445,6 +457,76 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
         </p>
       </div>
       )}
+      {!isFz && tab === "devices" && (
+        <RegisteredDevicesPanel accounts={accounts} onRefresh={() => { setAccounts(null); void loadAccounts(); }} />
+      )}
+    </div>
+  );
+}
+
+function fmtSeen(iso: string) {
+  return new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+}
+
+function AccountPicker({ accounts, picked, onToggle }: { accounts: RegisteredAccount[] | null; picked: string[]; onToggle: (id: string) => void }) {
+  if (!accounts) return <p className="text-xs text-muted-foreground"><Loader2 className="inline size-3 animate-spin" /> Loading registered accounts…</p>;
+  const groups = [["Staff", accounts.filter((a) => a.isStaff)], ["Users", accounts.filter((a) => !a.isStaff)]] as const;
+  return (
+    <div className="rounded-xl border border-border bg-surface-2 p-3 space-y-3">
+      <p className="text-xs text-muted-foreground">Tick who to test with — only their registered devices get the test.</p>
+      {groups.map(([title, list]) => (
+        <div key={title}>
+          <p className="text-xs font-semibold mb-1">{title} ({list.length})</p>
+          {list.length === 0 ? <p className="text-xs text-muted-foreground">None registered.</p> : (
+            <div className="flex flex-wrap gap-2">
+              {list.map((a) => (
+                <label key={a.user_id} className={`inline-flex items-center gap-2 rounded-lg border px-2 py-1 text-xs cursor-pointer ${picked.includes(a.user_id) ? "border-primary bg-primary/10" : "border-border"}`}>
+                  <input type="checkbox" checked={picked.includes(a.user_id)} onChange={() => onToggle(a.user_id)} />
+                  {a.name} <span className="text-muted-foreground">· {a.devices.length} device{a.devices.length === 1 ? "" : "s"}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RegisteredDevicesPanel({ accounts, onRefresh }: { accounts: RegisteredAccount[] | null; onRefresh: () => void }) {
+  const groups = accounts ? ([["Staff", accounts.filter((a) => a.isStaff)], ["Users", accounts.filter((a) => !a.isStaff)]] as const) : [];
+  return (
+    <div className="rounded-2xl border border-border bg-surface-1 p-4 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display font-bold flex items-center gap-2"><Smartphone className="size-4" /> Registered devices</h2>
+        <button type="button" onClick={onRefresh} className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 py-1 text-xs font-semibold hover:border-primary">
+          <RotateCcw className="size-3" /> Refresh
+        </button>
+      </div>
+      {!accounts ? <p className="text-sm text-muted-foreground"><Loader2 className="inline size-4 animate-spin" /> Loading…</p> : groups.map(([title, list]) => (
+        <div key={title} className="space-y-2">
+          <h3 className="font-semibold text-sm">{title} ({list.length})</h3>
+          {list.length === 0 ? <p className="text-xs text-muted-foreground">No registered devices.</p> : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="text-left text-muted-foreground">
+                  <tr><th className="py-2 pr-3">Account</th><th className="py-2 pr-3">Role</th><th className="py-2 pr-3">Device</th><th className="py-2">Last seen (UK)</th></tr>
+                </thead>
+                <tbody>
+                  {list.flatMap((a) => a.devices.map((d, i) => (
+                    <tr key={d.id} className="border-t border-border">
+                      <td className="py-2 pr-3 font-semibold">{i === 0 ? a.name : ""}</td>
+                      <td className="py-2 pr-3 text-muted-foreground">{i === 0 ? (a.roles.join(", ") || "member") : ""}</td>
+                      <td className="py-2 pr-3">{d.label}</td>
+                      <td className="py-2 text-muted-foreground">{fmtSeen(d.last_seen_at)}</td>
+                    </tr>
+                  )))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
