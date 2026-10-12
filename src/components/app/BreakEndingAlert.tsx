@@ -150,7 +150,8 @@ export function BreakEndingAlert() {
 
   return (
     <AlertDialog open onOpenChange={(o) => { if (!o) setStage(null); }}>
-      <AlertDialogContent className={isOver ? "border-red-500/60" : "border-amber-500/60"}>
+      {/* z-[400] keeps the warning above the screen-lock overlay (z-[300]). */}
+      <AlertDialogContent className={`z-[400] ${isOver ? "border-red-500/60" : "border-amber-500/60"}`}>
         <AlertDialogHeader>
           <div className={`mx-auto mb-2 grid place-items-center size-14 rounded-full ${isOver ? "bg-red-500/15 text-red-500 animate-pulse" : "bg-amber-500/15 text-amber-500"}`}>
             {isOver ? <AlertTriangle className="size-7" /> : <Icon className="size-7" />}
