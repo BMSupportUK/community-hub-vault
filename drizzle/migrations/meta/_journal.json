@@ -750,6 +750,13 @@
       "when": 1791805427895,
       "tag": "0106_manual_order_notification_same_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1791805538730,
+      "tag": "0107_manual_order_paid_notification",
+      "breakpoints": true
     }
   ]
 }
