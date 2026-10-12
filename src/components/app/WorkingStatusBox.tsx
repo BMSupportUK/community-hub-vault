@@ -985,9 +985,12 @@ export function WorkingStatusBox({
                   You're not on the rota today, so signing in is unavailable.
                 </p>
               )}
-              {!todayWindow && hadShiftToday && (
+              {!todayWindow && hadShiftToday && nextSlot && (
+                <NextShiftCountdown slot={nextSlot} now={now} />
+              )}
+              {!todayWindow && hadShiftToday && !nextSlot && (
                 <p className="text-xs text-muted-foreground">
-                  Today's shift has ended — your next shift is below.
+                  Today's shift has ended — no upcoming shift on the rota yet.
                 </p>
               )}
               {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
