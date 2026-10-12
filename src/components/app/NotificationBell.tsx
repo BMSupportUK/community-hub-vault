@@ -8,13 +8,19 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import mentionAudio from "@/assets/mention-notify.mp3";
 import outageAudio from "@/assets/outage-notify.mp3";
 import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
-import ticketAudio from "@/assets/ticket-notify.mp3";
-import newSignupAudio from "@/assets/new-signup-notify.mp3";
 import { playSound } from "@/lib/sound";
+import { phoneToneForKind } from "@/lib/phone-alert-sounds";
+
+// Kinds whose sound is played by a dedicated listener elsewhere.
+const OWNED_ELSEWHERE = new Set(["mention", "ticket_reply", "order_paid", "invoice_paid", "wise_payment", "ticket_raised", "ticket", "content_report", "shift_start", "shift_start_warn", "shift_end", "shift_end_warn", "break_ending", "main_break_ending"]);
+function playKindTone(kind: string, label: string) {
+  if (OWNED_ELSEWHERE.has(kind)) return;
+  const src = phoneToneForKind(kind);
+  if (src) void playSound(src, { label, gain: 1.2 });
+}
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { closeLocalNotifications } from "@/lib/local-notify";
 
@@ -132,7 +138,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
             // sound here duplicated every payment alert.
             if (!canManageOrders) toast(n.title, { description: n.body ?? undefined });
           } else if (n.kind === "ticket_assigned") {
-            playSound(ticketAudio, { label: "ticket-assigned", gain: 2.0 });
+            playKindTone("ticket_assigned", "ticket-assigned");
             toast(`🎫 ${n.title}`, {
               description: n.body ?? "A ticket has been assigned to you.",
               duration: 8000,
@@ -141,6 +147,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
                 : undefined,
             });
           } else {
+            playKindTone(n.kind, `user-${n.kind}`);
             toast(n.title, { description: n.body ?? undefined });
           }
         },
@@ -159,7 +166,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
             playSound(orderAudio, { label: "order", gain: 1.8 });
           }
           if (n.kind === "live_help" && canManageOrders) {
-            playSound(orderAudio, { label: "live-help", gain: 1.8 });
+            playKindTone("live_help", "live-help");
             toast(`📹 ${n.title}`, {
               description: n.body ?? "A customer is waiting for live camera help.",
               duration: 10000,
@@ -179,7 +186,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
             return;
           }
           if (n.kind === "gate_application") {
-            playSound(newSignupAudio, { label: "signup", gain: 1.8 });
+            playKindTone("gate_application", "signup");
             toast(`👋 ${n.title}`, {
               description: n.body ?? "A new user is requesting access.",
               duration: 8000,
@@ -188,7 +195,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
             return;
           }
           if (n.kind === "gate_message") {
-            playSound(mentionAudio, { label: "gate-reply", gain: 1.6 });
+            playKindTone("gate_message", "gate-reply");
             toast(`💬 ${n.title}`, {
               description: n.body ?? "An applicant replied in the access chat.",
               duration: 8000,
@@ -197,6 +204,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
             return;
           }
 
+          if (n.kind !== "order_placed") playKindTone(n.kind, `staff-${n.kind}`);
           toast(n.title, {
             description: n.body ?? undefined,
             action:

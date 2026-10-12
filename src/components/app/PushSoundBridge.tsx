@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { playSound } from "@/lib/sound";
 import { getSound } from "@/lib/notification-sounds";
+import { phoneToneForKind } from "@/lib/phone-alert-sounds";
 import { shakeScreen } from "@/lib/screen-shake";
 import { loadSoundOverrides } from "@/lib/sound-overrides";
 
@@ -15,11 +16,14 @@ export function PushSoundBridge() {
     const onMessage = async (event: MessageEvent) => {
       let played = false;
       try {
-        const data = event.data as { type?: string; sound?: string } | null;
+        const data = event.data as { type?: string; sound?: string; kind?: string; event?: string } | null;
         if (!data || data.type !== "bm-play-sound") return;
         shakeScreen();
+        // Same recording the phone app plays for this alert type.
+        const tone = phoneToneForKind(data.kind, data.event);
         const def = getSound(data.sound);
-        played = def ? await playSound(def.src, { label: `push-${def.key}`, gain: 2.0 }) : false;
+        const src = tone ?? def?.src;
+        played = src ? await playSound(src, { label: `push-${data.kind ?? def?.key}`, gain: 1.2 }) : false;
       } catch (err) {
         console.warn("[sound] push bridge failed:", err);
       } finally {
