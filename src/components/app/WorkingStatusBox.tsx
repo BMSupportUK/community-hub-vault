@@ -4,8 +4,6 @@ import {
   Briefcase,
   LogIn,
   LogOut,
-  Coffee,
-  UtensilsCrossed,
   Loader2,
   Calendar,
   Clock,
