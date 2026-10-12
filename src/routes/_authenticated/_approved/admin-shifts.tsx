@@ -272,14 +272,15 @@ function StaffShiftsPage() {
   }, []);
 
   useEffect(() => {
-    if (canView) void load(days);
-  }, [canView, days, load]);
+    if (canView) void load(weekFrom, weekTo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView, weekFrom.getTime(), weekTo.getTime(), load]);
 
   // Keep breaks/shifts live so main break and short-break status changes
   // show without a hard refresh.
   useEffect(() => {
     if (!canView) return;
-    const refresh = () => { void load(days, true); };
+    const refresh = () => { void load(weekFrom, weekTo, true); };
     const ch = supabase
       .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
