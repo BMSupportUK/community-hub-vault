@@ -31,7 +31,7 @@ export function useBreakPlan(userId: string) {
         supabase.from("shift_slots").select("assigned_to,required_role,start_time,end_time,slot_type").eq("shift_date", today),
         supabase.rpc("directory_member_roles"),
       ]);
-      const eligible = new Set(((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.role === "staff" || r.role === "management" || r.role === "admin").map((r) => r.user_id));
+      const eligible = new Set(((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.role === "staff" || r.role === "management" || r.role === "admin" || r.role === "moderator").map((r) => r.user_id));
       const rows = (slots ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to && eligible.has(s.assigned_to))
         .map((s) => ({ userId: s.assigned_to as string, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
       // Open rota slots (no one named) apply to everyone holding that role.
@@ -108,25 +108,35 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
   // No snooze / remind-me option and it can't be dismissed.
   const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
   const dueKey = dueItem && dueItem.start !== null ? `${dueItem.label}@${dueItem.start}` : null;
+  // Manual fallback: staff can still start a break they missed or that has no
+  // allocated slot, via a confirm dialog with the same ticket handover.
+  const [manualItem, setManualItem] = useState<(typeof items)[number] | null>(null);
+  const activeItem = dueItem ?? manualItem;
+  const activeKey = dueKey ?? (manualItem ? `manual-${manualItem.label}` : null);
   const [ticketCount, setTicketCount] = useState<number | null>(null);
   const [passed, setPassed] = useState(false);
   const [working, setWorking] = useState(false);
   useEffect(() => {
     setPassed(false);
     setTicketCount(null);
-    if (!dueKey) return;
+    if (!activeKey) return;
     let alive = true;
     void countOpenTickets(userId).then((n) => { if (alive) setTicketCount(n); });
     return () => { alive = false; };
-  }, [dueKey, userId]);
+  }, [activeKey, userId]);
 
   const onTicket = (ticketCount ?? 0) > 0 && !passed;
   const passOver = async () => {
-    if (!dueItem) return;
+    if (!activeItem) return;
     setWorking(true);
-    const ok = await passTicketsForBreak(dueItem.kind);
+    const ok = await passTicketsForBreak(activeItem.kind);
     setWorking(false);
     if (ok) setPassed(true);
+  };
+  const startActive = () => {
+    if (!activeItem) return;
+    onStartBreak?.(activeItem.kind);
+    setManualItem(null);
   };
 
   if (!plan) return null;
@@ -137,27 +147,39 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
         <span className="text-muted-foreground font-medium">Allocated breaks (UK office)</span>
         {items.map((it) => {
           const Icon = it.done ? CheckCircle2 : breakIcon(it.kind);
+          const canStartManually = !it.done && !!onStartBreak && (it.missed || it.start === null);
           return (
             <div key={it.label} className={cn("flex items-center justify-between rounded-full px-3 py-1 ring-1",
               it.done ? "bg-muted/20 ring-border text-muted-foreground line-through" : it.missed ? "bg-muted/10 ring-border text-muted-foreground/60" : it === next ? "bg-warning/15 ring-warning/40 text-warning" : "bg-white/[0.05] ring-white/15")}>
               <span className="inline-flex items-center gap-1.5 font-medium"><Icon className="size-3.5" />{it.label}</span>
-              <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
+              <span className="inline-flex items-center gap-2">
+                <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
+                {canStartManually && (
+                  <button
+                    type="button"
+                    onClick={() => setManualItem(it)}
+                    className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning ring-1 ring-warning/40 transition hover:bg-warning/25"
+                  >
+                    Start now
+                  </button>
+                )}
+              </span>
             </div>
           );
         })}
       </div>
-      <Dialog open={!!dueKey && !!onStartBreak && ticketCount !== null}>
+      <Dialog open={!!activeKey && !!onStartBreak && ticketCount !== null} onOpenChange={(open) => { if (!open && !dueKey) setManualItem(null); }}>
         <DialogContent
           className="w-[calc(100vw-2rem)] max-w-md overflow-x-hidden [&>button]:hidden"
-          onEscapeKeyDown={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => { if (dueKey) e.preventDefault(); }}
+          onInteractOutside={(e) => { if (dueKey) e.preventDefault(); }}
         >
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />{dueItem?.label} time</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />{activeItem?.label} time</DialogTitle>
             <DialogDescription>
               {onTicket
-                ? `You're dealing with ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}. Pass ${ticketCount === 1 ? "it" : "them"} over, then start your ${dueItem?.label.toLowerCase()}.`
-                : `Start your ${dueItem?.label.toLowerCase()}. It ends on its own.`}
+                ? `You're dealing with ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}. Pass ${ticketCount === 1 ? "it" : "them"} over, then start your ${activeItem?.label.toLowerCase()}.`
+                : `Start your ${activeItem?.label.toLowerCase()}. It ends on its own.`}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
@@ -166,8 +188,8 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
                 Pass ticket{ticketCount === 1 ? "" : "s"} over
               </Button>
             )}
-            <Button className="w-full" disabled={onTicket || working} onClick={() => { if (dueItem) onStartBreak?.(dueItem.kind); }}>
-              Start {dueItem?.label.toLowerCase()}
+            <Button className="w-full" disabled={onTicket || working} onClick={startActive}>
+              Start {activeItem?.label.toLowerCase()}
             </Button>
           </div>
         </DialogContent>
