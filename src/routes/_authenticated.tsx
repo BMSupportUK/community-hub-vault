@@ -29,6 +29,7 @@ import { ANDROID_RELEASE } from "@/lib/android-release";
 const MentionsBadge = lazy(() => import("@/components/app/MentionsBadge").then((m) => ({ default: m.MentionsBadge })));
 const BmInboxBell = lazy(() => import("@/components/app/BmInboxBell").then((m) => ({ default: m.BmInboxBell })));
 const NotificationBell = lazy(() => import("@/components/app/NotificationBell").then((m) => ({ default: m.NotificationBell })));
+const ApprovedDeferredExtras = lazy(() => import("@/components/app/ApprovedDeferredExtras").then((m) => ({ default: m.ApprovedDeferredExtras })));
 const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.TwoFactorPill })));
 const VpnPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.VpnPill })));
 const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
@@ -261,6 +262,9 @@ function AuthLayout() {
         <Suspense fallback={null}>
           <BreakEndingAlert />
           <ShiftStartEndAlert />
+          <EarlyFinishAlert />
+          <NotificationBell notificationsOnly />
+          {!isPending && !isBanned && !isRejected && <ApprovedDeferredExtras notificationsOnly />}
         </Suspense>
       }
     >
