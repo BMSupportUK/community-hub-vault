@@ -394,6 +394,7 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
             {pushBusy === "all" ? "Sending all…" : "Send all to my phone"}
           </button>
         </div>
+        <PhoneChannelCheck />
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="text-left text-muted-foreground">
@@ -431,9 +432,94 @@ export function AdminSounds({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
           </table>
         </div>
         <p className="text-xs text-muted-foreground">
-          Every phone alert now has its own tone. Tones are built into the Android app, so phones need Android version 1.2.3 to hear the new ones.
+          Every phone alert now has its own tone. Tones are built into the Android app, so phones need Android app version 1.2.4 to hear the new ones.
         </p>
       </div>
+      )}
+    </div>
+  );
+}
+
+type DeviceChannel = { id: string; name?: string; importance?: number; sound?: string | null };
+
+/**
+ * Runs inside the Android app only: reads the alert categories Android has
+ * actually stored on this phone, so a silent alert can be traced to a missing
+ * category, a lowered importance, or a category with no sound.
+ */
+function PhoneChannelCheck() {
+  const [native, setNative] = useState(false);
+  const [rows, setRows] = useState<DeviceChannel[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    void import("@capacitor/core").then(({ Capacitor }) => setNative(Capacitor.isNativePlatform()));
+  }, []);
+  if (!native) {
+    return (
+      <p className="text-xs text-muted-foreground rounded-lg border border-border bg-surface-2 p-3">
+        Open this page inside the BM Support phone app to check which alert sounds are switched on for that phone.
+      </p>
+    );
+  }
+  const run = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const { PushNotifications } = await import("@capacitor/push-notifications");
+      const res = await PushNotifications.listChannels();
+      setRows(res.channels as unknown as DeviceChannel[]);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const byId = new Map((rows ?? []).map((c) => [c.id, c]));
+  const problems = rows
+    ? PHONE_ALERTS.map((a) => {
+        const c = byId.get(a.channel);
+        const issue = !c
+          ? "Missing on this phone — fully close and reopen the app"
+          : (c.importance ?? 0) < 3
+            ? "Set to silent in phone settings"
+            : !c.sound
+              ? "No sound set in phone settings"
+              : null;
+        return { a, c, issue };
+      })
+    : [];
+  const bad = problems.filter((p) => p.issue);
+  return (
+    <div className="rounded-lg border border-border bg-surface-2 p-3 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold">Check this phone's alert sounds</p>
+        <button
+          type="button"
+          onClick={() => void run()}
+          disabled={busy}
+          className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-1 px-2 py-1 text-xs font-semibold hover:border-primary disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="size-3 animate-spin" /> : <Smartphone className="size-3" />} Check now
+        </button>
+      </div>
+      {err && <p className="text-xs text-destructive">{err}</p>}
+      {rows && (
+        bad.length === 0 ? (
+          <p className="text-xs text-emerald-400">All {PHONE_ALERTS.length} alert sounds are set up and switched on for this phone.</p>
+        ) : (
+          <div className="space-y-1">
+            <p className="text-xs text-destructive">{bad.length} alert{bad.length === 1 ? "" : "s"} won't make a sound on this phone:</p>
+            <ul className="text-xs space-y-0.5">
+              {bad.map(({ a, issue }) => (
+                <li key={a.key}><span className="font-semibold">{a.label}</span> — {issue}</li>
+              ))}
+            </ul>
+            <p className="text-[11px] text-muted-foreground">
+              To fix a silenced one: phone Settings → Apps → BM Support → Notifications → tap the alert → turn on "Make sound" / "Alert".
+            </p>
+          </div>
+        )
       )}
     </div>
   );
