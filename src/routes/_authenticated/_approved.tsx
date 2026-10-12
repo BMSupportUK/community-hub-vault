@@ -5,6 +5,9 @@ import { isFanZonePath } from "@/lib/fan-zone-nav";
 import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
 import { isPageAllowed, pageKeyForPath, usePagePermissions } from "@/lib/page-access";
 import { DemoRoleBanner } from "@/components/app/DemoRoleBanner";
+import { useIsDemoAccount, isDemoLockedPath } from "@/hooks/use-demo-account";
+import { Link } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
 
 const ApprovedDeferredExtras = lazy(() =>
   import("@/components/app/ApprovedDeferredExtras").then((module) => ({
@@ -58,10 +61,31 @@ function ApprovedLayout() {
   return (
     <>
       <DemoRoleBanner />
-      <Outlet />
+      <DemoGate path={path}>
+        <Outlet />
+      </DemoGate>
       <DeferUntilIdle>
         <ApprovedDeferredExtras />
       </DeferUntilIdle>
     </>
+  );
+}
+
+function DemoGate({ path, children }: { path: string; children: ReactNode }) {
+  const { user, roles } = useAuth();
+  const demo = useIsDemoAccount();
+  const own = (user?.user_metadata?.username as string | undefined) ?? null;
+  if (!demo || !isDemoLockedPath(path, own, roles.includes("staff"))) return <>{children}</>;
+  return (
+    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="rounded-full bg-surface-2 p-4">
+        <Lock className="size-8 text-muted-foreground" />
+      </div>
+      <h1 className="font-display text-xl font-bold">Not available on the demo</h1>
+      <p className="text-sm text-muted-foreground">
+        This section holds live member details, app downloads or DNS codes, so it's locked on the demo account.
+      </p>
+      <Link to="/home" className="text-sm font-semibold text-primary hover:underline">Back to home</Link>
+    </div>
   );
 }
