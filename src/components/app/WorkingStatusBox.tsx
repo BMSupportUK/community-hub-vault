@@ -979,7 +979,7 @@ export function WorkingStatusBox({
               <BreakPlanRows userId={user.id} usedKinds={usedKinds} listHidden onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground font-medium">Shift</span>
-                <span className="text-muted-foreground italic">Not signed in</span>
+                <span className="text-muted-foreground italic">Shift completed</span>
               </div>
               {!todayWindow && !hadShiftToday && (
                 <p className="text-xs text-muted-foreground">
