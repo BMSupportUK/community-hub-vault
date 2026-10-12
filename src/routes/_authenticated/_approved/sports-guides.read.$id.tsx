@@ -68,6 +68,19 @@ function ReadPage() {
     blog && /^\s*flosports\b/i.test(blog.title) ? "ET" : "GMT";
   useEffect(() => {
     (async () => {
+      if (isDemo) {
+        const d = demoSportsGuides();
+        const b = d.blogs.find((x) => x.id === id);
+        if (!b) {
+          toast.error("Guide not found");
+          navigate({ to: "/sports-guides" });
+          return;
+        }
+        setBlog(b as unknown as Blog);
+        setCategories(d.categories as Category[]);
+        setLoading(false);
+        return;
+      }
       const [{ data: b, error }, { data: cats }] = await Promise.all([
         supabase.from("sports_blogs").select("*").eq("id", id).maybeSingle(),
         supabase.from("sports_categories").select("id, name, parent_id").order("sort_order"),
