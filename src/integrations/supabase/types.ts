@@ -7051,7 +7051,6 @@ export type Database = {
       }
       archive_old_closed_tickets: { Args: never; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
-      auto_travel_home_breaks: { Args: never; Returns: undefined }
       bm_inbox_action: {
         Args: { _action: string; _body?: string; _target: string }
         Returns: string
