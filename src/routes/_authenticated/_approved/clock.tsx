@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, Bell } from "lucide-react";
+import { Clock, LogIn, LogOut, Loader2, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { offerTicketHandover } from "@/lib/break-handover";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
@@ -11,7 +10,7 @@ import clockBg from "@/assets/clock-bg.jpg";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
-import { type BreakKind, BREAK_LIMITS, breakLabel, breaksLeft } from "@/lib/breaks";
+import { type BreakKind, BREAK_LIMITS, breakLabel } from "@/lib/breaks";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Button } from "@/components/ui/button";
 import { requestEarlyFinish } from "@/lib/early-finish.functions";
@@ -81,8 +80,6 @@ function ClockPage() {
   }, []);
 
   const [usedKinds, setUsedKinds] = useState<string[]>([]);
-  const breakLeft = breaksLeft("break", usedKinds);
-  const lunchLeft = breaksLeft("lunch", usedKinds);
 
   const refresh = async () => {
     if (!user) return;
@@ -210,18 +207,6 @@ function ClockPage() {
     refresh();
   };
 
-  const startBreak = async (kind: BreakKind) => {
-    if (!user || !myShift || myBreak || busy) return;
-    if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) return;
-    setBusy(true);
-    if (kind !== "travel") await offerTicketHandover(user.id, kind);
-    const { error } = await supabase.from("breaks").insert({ shift_id: myShift.id, user_id: user.id, kind });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success(kind === "lunch" ? "Main break started — 30 min" : "Break started — 15 min");
-    notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
-    refresh();
-  };
 
 
   const sessionSeconds = myShift ? (now - new Date(myShift.clock_in).getTime()) / 1000 : 0;

@@ -481,8 +481,6 @@ export function WorkingStatusBox({
     notifyShift({ data: { kind: "clock_in" } }).catch(() => {});
   };
 
-  const breakLeft = breaksLeft("break", usedKinds);
-  const lunchLeft = breaksLeft("lunch", usedKinds);
   // Shift sign-out stays greyed out until the rota end time so it can't be
   // pressed by accident mid-shift. No rota slot today = always allowed.
   const canClockOut = shiftFinishAction(now, todayWindow?.end ?? null, earlyPending) === "clock-out";
