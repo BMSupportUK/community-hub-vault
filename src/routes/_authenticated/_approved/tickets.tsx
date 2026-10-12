@@ -1,3 +1,5 @@
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -271,6 +273,7 @@ function extractImagesFromClipboard(e: React.ClipboardEvent): File[] {
 
 function TicketsPage() {
   const { user, isStaff, hasAny } = useAuth();
+  const isDemo = useIsDemoAccount();
   const search = Route.useSearch();
   const navigate = useNavigate();
   const canBeAssigned = hasAny(["admin", "management", "staff"]);
@@ -324,6 +327,11 @@ function TicketsPage() {
 
   // Load tickets according to view
   const loadTickets = async () => {
+    if (isDemo) {
+      setTickets(demoTickets(user!.id) as unknown as Ticket[]);
+      setProfiles(new Map([...profiles, ...DEMO_PROFILE_MAP] as never));
+      return;
+    }
     let q = supabase.from("tickets").select("*").is("archived_at", null).order("updated_at", { ascending: false });
     if (view === "mine") q = q.eq("user_id", user!.id);
     else if (view === "assigned") q = q.eq("assigned_to", user!.id);

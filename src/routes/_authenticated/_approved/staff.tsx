@@ -1,3 +1,5 @@
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +59,7 @@ const ROLE_HEADER: Record<string, string> = {
 function StaffPage() {
   const { user: viewer } = useAuth();
   const onlineUsers = useOnlineUsers();
+  const isDemo = useIsDemoAccount();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
@@ -64,6 +67,13 @@ function StaffPage() {
   const [q, setQ] = useState("");
 
   const load = async () => {
+    if (isDemo) {
+      setProfiles(DEMO_STAFF as Profile[]);
+      const dm: Record<string, string[]> = {};
+      for (const r of DEMO_ROLES) (dm[r.user_id] ||= []).push(r.role);
+      setRolesByUser(dm);
+      return;
+    }
     const [{ data: ps }, { data: rs }] = await Promise.all([
       supabase.from("profiles").select("*").order("display_name"),
       supabase.from("user_roles").select("user_id, role"),
@@ -92,7 +102,7 @@ function StaffPage() {
       setFriendByUser(fmap);
     }
   };
-  useEffect(() => { load(); }, [viewer?.id]);
+  useEffect(() => { load(); }, [viewer?.id, isDemo]);
 
   const sendRequest = async (toId: string) => {
     if (!viewer) return;
