@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, Bell } from "lucide-react";
+import { Clock, LogIn, LogOut, Loader2, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { offerTicketHandover } from "@/lib/break-handover";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
@@ -11,7 +10,7 @@ import clockBg from "@/assets/clock-bg.jpg";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
-import { type BreakKind, BREAK_LIMITS, breakLabel, breaksLeft } from "@/lib/breaks";
+import { type BreakKind, BREAK_LIMITS, breakLabel } from "@/lib/breaks";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Button } from "@/components/ui/button";
 import { requestEarlyFinish } from "@/lib/early-finish.functions";
@@ -81,8 +80,6 @@ function ClockPage() {
   }, []);
 
   const [usedKinds, setUsedKinds] = useState<string[]>([]);
-  const breakLeft = breaksLeft("break", usedKinds);
-  const lunchLeft = breaksLeft("lunch", usedKinds);
 
   const refresh = async () => {
     if (!user) return;
@@ -210,18 +207,6 @@ function ClockPage() {
     refresh();
   };
 
-  const startBreak = async (kind: BreakKind) => {
-    if (!user || !myShift || myBreak || busy) return;
-    if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) return;
-    setBusy(true);
-    if (kind !== "travel") await offerTicketHandover(user.id, kind);
-    const { error } = await supabase.from("breaks").insert({ shift_id: myShift.id, user_id: user.id, kind });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success(kind === "lunch" ? "Main break started — 30 min" : "Break started — 15 min");
-    notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
-    refresh();
-  };
 
 
   const sessionSeconds = myShift ? (now - new Date(myShift.clock_in).getTime()) / 1000 : 0;
@@ -297,19 +282,7 @@ function ClockPage() {
                     <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" onClick={() => void startBreak("break")} disabled={busy || breakLeft <= 0}
-                        title={breakLeft > 0 ? "Start a 15-minute break" : "Both breaks used this shift"}
-                        className={cn(breakLeft <= 0 && "opacity-50")}>
-                        <Coffee className="size-4" /> Break ({breakLeft} left)
-                      </Button>
-                      <Button variant="outline" onClick={() => void startBreak("lunch")} disabled={busy || lunchLeft <= 0}
-                        title={lunchLeft > 0 ? "Start your 30-minute main break" : "Main break already used this shift"}
-                        className={cn(lunchLeft <= 0 && "opacity-50")}>
-                        <UtensilsCrossed className="size-4" /> Main break
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Breaks also start at your allocated times — these buttons are there if you need one sooner.</p>
+                    <p className="text-xs text-muted-foreground">Breaks start from the pop-up at your allocated times — they can't be started manually.</p>
                     <Button onClick={clockOut} disabled={busy || finishAction === "wait"}
                       variant={finishAction === "clock-out" ? "destructive" : "outline"}
                       title={finishAction === "clock-out" ? "Sign out of shift" : earlyPending

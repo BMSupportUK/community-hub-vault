@@ -108,11 +108,9 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
   // No snooze / remind-me option and it can't be dismissed.
   const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
   const dueKey = dueItem && dueItem.start !== null ? `${dueItem.label}@${dueItem.start}` : null;
-  // Manual fallback: staff can still start a break they missed or that has no
-  // allocated slot, via a confirm dialog with the same ticket handover.
-  const [manualItem, setManualItem] = useState<(typeof items)[number] | null>(null);
-  const activeItem = dueItem ?? manualItem;
-  const activeKey = dueKey ?? (manualItem ? `manual-${manualItem.label}` : null);
+  // No manual starts — breaks begin only from this allocated-time pop-up.
+  const activeItem = dueItem;
+  const activeKey = dueKey;
   const [ticketCount, setTicketCount] = useState<number | null>(null);
   const [passed, setPassed] = useState(false);
   const [working, setWorking] = useState(false);
@@ -136,7 +134,6 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
   const startActive = () => {
     if (!activeItem) return;
     onStartBreak?.(activeItem.kind);
-    setManualItem(null);
   };
 
   if (!plan) return null;
@@ -147,28 +144,16 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
         <span className="text-muted-foreground font-medium">Allocated breaks (UK office)</span>
         {items.map((it) => {
           const Icon = it.done ? CheckCircle2 : breakIcon(it.kind);
-          const canStartManually = !it.done && !!onStartBreak && (it.missed || it.start === null);
           return (
             <div key={it.label} className={cn("flex items-center justify-between rounded-full px-3 py-1 ring-1",
               it.done ? "bg-muted/20 ring-border text-muted-foreground line-through" : it.missed ? "bg-muted/10 ring-border text-muted-foreground/60" : it === next ? "bg-warning/15 ring-warning/40 text-warning" : "bg-white/[0.05] ring-white/15")}>
               <span className="inline-flex items-center gap-1.5 font-medium"><Icon className="size-3.5" />{it.label}</span>
-              <span className="inline-flex items-center gap-2">
-                <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
-                {canStartManually && (
-                  <button
-                    type="button"
-                    onClick={() => setManualItem(it)}
-                    className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning ring-1 ring-warning/40 transition hover:bg-warning/25"
-                  >
-                    Start now
-                  </button>
-                )}
-              </span>
+              <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
             </div>
           );
         })}
       </div>
-      <Dialog open={!!activeKey && !!onStartBreak && ticketCount !== null} onOpenChange={(open) => { if (!open && !dueKey) setManualItem(null); }}>
+      <Dialog open={!!activeKey && !!onStartBreak && ticketCount !== null} onOpenChange={() => {}}>
         <DialogContent
           className="w-[calc(100vw-2rem)] max-w-md overflow-x-hidden [&>button]:hidden"
           onEscapeKeyDown={(e) => { if (dueKey) e.preventDefault(); }}
