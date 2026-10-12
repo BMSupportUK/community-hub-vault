@@ -575,6 +575,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { to: "/admin-sounds", label: "Notification sounds", desc: "Test BM Support spoken and phone alerts, and upload replacement sounds.", icon: Bell, art: toolArtAlerts },
     { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3, art: toolArtMoney },
     { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users, art: toolArtTeam },
+    { to: "/admin-cover-requests", label: "Cover sign-in requests", desc: "Approve or decline staff cover sign-in requests and review the cover log.", icon: UserPlus, art: toolArtTeam },
     { tabKey: "theme", label: "Theme", desc: "Choose the default app theme for members.", icon: Palette, art: toolArtDesign },
     { tabKey: "invoice-template", label: "Invoice template", desc: "Edit the branded PDF customers download after payment.", icon: ReceiptText, art: toolArtDocs },
     { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop, art: toolArtDesign },

@@ -53,6 +53,7 @@ import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './route
 import { Route as AuthenticatedApprovedAdminBoroTeamSheetRouteImport } from './routes/_authenticated/_approved/admin-boro-team-sheet'
 import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
 import { Route as AuthenticatedApprovedAdminCheckoutTemplatesRouteImport } from './routes/_authenticated/_approved/admin-checkout-templates'
+import { Route as AuthenticatedApprovedAdminCoverRequestsRouteImport } from './routes/_authenticated/_approved/admin-cover-requests'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
@@ -402,6 +403,12 @@ const AuthenticatedApprovedAdminCheckoutTemplatesRoute =
   AuthenticatedApprovedAdminCheckoutTemplatesRouteImport.update({
     id: '/admin-checkout-templates',
     path: '/admin-checkout-templates',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminCoverRequestsRoute =
+  AuthenticatedApprovedAdminCoverRequestsRouteImport.update({
+    id: '/admin-cover-requests',
+    path: '/admin-cover-requests',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminCredentialsRoute =
@@ -1156,6 +1163,7 @@ export interface FileRoutesByFullPath {
   '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
+  '/admin-cover-requests': typeof AuthenticatedApprovedAdminCoverRequestsRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
@@ -1317,6 +1325,7 @@ export interface FileRoutesByTo {
   '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
+  '/admin-cover-requests': typeof AuthenticatedApprovedAdminCoverRequestsRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
@@ -1482,6 +1491,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/_authenticated/_approved/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
+  '/_authenticated/_approved/admin-cover-requests': typeof AuthenticatedApprovedAdminCoverRequestsRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
@@ -1647,6 +1657,7 @@ export interface FileRouteTypes {
     | '/admin-boro-team-sheet'
     | '/admin-business-hours'
     | '/admin-checkout-templates'
+    | '/admin-cover-requests'
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
@@ -1808,6 +1819,7 @@ export interface FileRouteTypes {
     | '/admin-boro-team-sheet'
     | '/admin-business-hours'
     | '/admin-checkout-templates'
+    | '/admin-cover-requests'
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
@@ -1972,6 +1984,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-boro-team-sheet'
     | '/_authenticated/_approved/admin-business-hours'
     | '/_authenticated/_approved/admin-checkout-templates'
+    | '/_authenticated/_approved/admin-cover-requests'
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-fan-zone'
@@ -2473,6 +2486,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-checkout-templates'
       fullPath: '/admin-checkout-templates'
       preLoaderRoute: typeof AuthenticatedApprovedAdminCheckoutTemplatesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-cover-requests': {
+      id: '/_authenticated/_approved/admin-cover-requests'
+      path: '/admin-cover-requests'
+      fullPath: '/admin-cover-requests'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminCoverRequestsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-credentials': {
@@ -3410,6 +3430,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminBoroTeamSheetRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
   AuthenticatedApprovedAdminCheckoutTemplatesRoute: typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
+  AuthenticatedApprovedAdminCoverRequestsRoute: typeof AuthenticatedApprovedAdminCoverRequestsRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminFanZoneRoute: typeof AuthenticatedApprovedAdminFanZoneRoute
@@ -3500,6 +3521,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminBusinessHoursRoute,
   AuthenticatedApprovedAdminCheckoutTemplatesRoute:
     AuthenticatedApprovedAdminCheckoutTemplatesRoute,
+  AuthenticatedApprovedAdminCoverRequestsRoute:
+    AuthenticatedApprovedAdminCoverRequestsRoute,
   AuthenticatedApprovedAdminCredentialsRoute:
     AuthenticatedApprovedAdminCredentialsRoute,
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
