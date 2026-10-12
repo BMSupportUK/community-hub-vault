@@ -1246,6 +1246,22 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/^(US|USA)\s*\|\s*NHL Center Ice$/i.test(lines[i])) lines.splice(i, 1);
   }
+  // NFL one-row style: "NFL 15: MNF 8:15pm Bills at Rams". The TNF/SNF/MNF
+  // label marks a US prime-time slot, so the bare clock is ET on that US
+  // weekday; it converts to the UK date/time after parsing. The "NFL Week 4"
+  // header above it is context only.
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(
+      new RegExp(String.raw`^(NFL)\s*(?:\|\s*)?(\d{1,3})\s*(?::|[-–—])\s*(TNF|SNF|MNF)\s+(${TIME_SOURCE})(?:\s*ET)?\s+(.+?)\s*$`, "i"),
+    );
+    if (!m || /\bUK\b/i.test(m[5])) continue;
+    const day = { TNF: "THU", SNF: "SUN", MNF: "MON" }[m[3].toUpperCase() as "TNF" | "SNF" | "MNF"];
+    lines.splice(i, 1, `${m[4].trim()} ET ${day}`, m[5].trim(), `NFL ${m[2].padStart(2, "0")}`);
+    i += 2;
+  }
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^NFL\s+Week\s+\d{1,2}$/i.test(lines[i])) lines.splice(i, 1);
+  }
   // NFL Sunday Ticket: "NFL 02: 1pm ET | 6pm UK" or
   // "NFL | 02 - SNF 8:20pm ET | 1:20am UK", then the fixture on the next
   // line. Use the stated UK time and ignore schedule labels such as SNF.
