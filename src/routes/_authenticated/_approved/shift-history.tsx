@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/_approved/shift-history")(
 function ShiftHistoryPage() {
   const { hasAny, user } = useAuth();
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
-  const [profile, setProfile] = useState<{ username: string | null; display_name: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ username: string | null; display_name: string | null; equipped_nameplate_id: string | null } | null>(null);
 
   // The page is titled with the signed-in person's username, so it has to be
   // read from the profiles table — the auth session only carries the email.
