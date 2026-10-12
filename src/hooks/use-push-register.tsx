@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { phoneAlertFor } from "@/lib/phone-alerts";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { registerDeviceToken } from "@/lib/push.functions";
@@ -151,27 +152,12 @@ export function usePushRegister() {
         const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
           const kind = notification.data?.kind;
           const incidentEvent = notification.data?.event;
-          const spoken = kind === "dm"
-            ? { channelId: "bm_support_alerts_v4", sound: undefined as string | undefined, fallback: "New message" }
-            : kind === "ticket_reply"
-            ? { channelId: "bm_support_ticket_replies_v5", sound: "ticket_reply_tone.mp3", fallback: "Support ticket reply" }
-            : kind === "mention"
-              ? { channelId: "bm_support_mentions_v4", sound: "mention_tone.mp3", fallback: "New mention" }
-              : kind === "ticket_raised" || kind === "ticket"
-                ? { channelId: "bm_support_tickets_v6", sound: "ticket_tone.mp3", fallback: "New support ticket" }
-                : typeof kind === "string" && kind.startsWith("shift_start")
-                  ? { channelId: "bm_support_shift_start_v7", sound: "shift_start_tone.mp3", fallback: "Shift starts soon" }
-                  : typeof kind === "string" && kind.startsWith("shift_end")
-                    ? { channelId: "bm_support_shift_end_v7", sound: "shift_end_tone.mp3", fallback: "Shift ends soon" }
-                    : kind === "incident" && incidentEvent === "created"
-                      ? { channelId: "bm_support_outage_v5", sound: "outage_tone.mp3", fallback: "Service outage" }
-                      : kind === "incident" && incidentEvent === "resolved"
-                        ? { channelId: "bm_support_outage_resolved_v5", sound: "outage_resolved_tone.mp3", fallback: "Outage resolved" }
-                        : kind === "order" || kind === "order_placed"
-                          ? { channelId: "bm_support_orders_v4", sound: "order_tone.mp3", fallback: "New order" }
-                          : kind === "order_paid" || kind === "invoice_paid" || kind === "wise_payment"
-                            ? { channelId: "bm_support_payments_v4", sound: "payment_tone.mp3", fallback: "Payment received" }
-                            : null;
+          // Every alert type uses its own native channel + recording, the same
+          // ones the closed-app path uses, so the open app speaks too.
+          const alert = phoneAlertFor(typeof kind === "string" ? kind : undefined, incidentEvent);
+          const spoken = alert
+            ? { channelId: alert.channel, sound: `${alert.tone}.mp3`, fallback: alert.label }
+            : null;
           if (!spoken) return;
           try {
             await LocalNotifications.schedule({
