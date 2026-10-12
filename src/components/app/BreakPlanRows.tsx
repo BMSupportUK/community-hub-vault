@@ -167,7 +167,8 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak, listHidden }: {
   if (!plan) return null;
   const autoDialog = (
     <Dialog open={!!autoNotice} onOpenChange={(o) => { if (!o) setAutoNotice(null); }}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
+      {/* z-[400] keeps the pop-up above the screen-lock overlay (z-[300]). */}
+      <DialogContent className="z-[400] w-[calc(100vw-2rem)] max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />Break started</DialogTitle>
           <DialogDescription>{autoNotice}</DialogDescription>
@@ -196,7 +197,7 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak, listHidden }: {
       </div>
       <Dialog open={!autoStart && !!activeKey && !!onStartBreak && ticketCount !== null} onOpenChange={() => {}}>
         <DialogContent
-          className="w-[calc(100vw-2rem)] max-w-md overflow-x-hidden [&>button]:hidden"
+          className="z-[400] w-[calc(100vw-2rem)] max-w-md overflow-x-hidden [&>button]:hidden"
           onEscapeKeyDown={(e) => { if (dueKey) e.preventDefault(); }}
           onInteractOutside={(e) => { if (dueKey) e.preventDefault(); }}
         >

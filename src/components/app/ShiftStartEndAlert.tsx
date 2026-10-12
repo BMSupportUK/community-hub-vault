@@ -382,7 +382,8 @@ export function ShiftStartEndAlert() {
 
   return (
     <AlertDialog open={dialogOpen} onOpenChange={(o) => { if (!o) setAskOpen(false); }}>
-      <AlertDialogContent className="border-amber-500/60">
+      {/* z-[400] keeps the alert above the screen-lock overlay (z-[300]). */}
+      <AlertDialogContent className="z-[400] border-amber-500/60">
         <AlertDialogHeader>
           <div className="mx-auto mb-2 grid place-items-center size-14 rounded-full bg-amber-500/15 text-amber-500">
             <StopCircle className="size-7" />

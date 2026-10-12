@@ -77,7 +77,8 @@ export function EarlyFinishAlert() {
 
   return (
     <AlertDialog open onOpenChange={(o) => { if (!o) setDismissedAt(Date.now()); }}>
-      <AlertDialogContent className="max-w-md" data-dismissed={dismissedAt || undefined}>
+      {/* z-[400] keeps the alert above the screen-lock overlay (z-[300]). */}
+      <AlertDialogContent className="z-[400] max-w-md" data-dismissed={dismissedAt || undefined}>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <Hourglass className="size-5 text-warning" /> Early finish request{rows.length > 1 ? "s" : ""}
