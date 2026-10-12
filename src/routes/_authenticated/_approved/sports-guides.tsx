@@ -108,6 +108,7 @@ type Blog = {
 
 function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
+  const isDemo = useIsDemoAccount();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { cat: catFromUrl, sub: subFromUrl, reset: resetFromUrl } = Route.useSearch();
@@ -231,6 +232,7 @@ function SportsGuidesPage() {
   const dataQuery = useQuery({
     queryKey,
     queryFn: async () => {
+      if (isDemo) return demoSportsGuides();
       // Clear entries more than 10 hours past their start time before reading.
       try {
         await prune({});
