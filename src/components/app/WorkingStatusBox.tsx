@@ -304,6 +304,19 @@ export function WorkingStatusBox({
   const [currentHours, setCurrentHours] = useState<NextSlot | null>(null);
   const [hadShiftToday, setHadShiftToday] = useState(false);
   const [shiftTab, setShiftTab] = useState<"current" | "next">("current");
+  // Auto-switch the tab: once today's shift has finished show Next shift, and
+  // switch back to Current shift when the new shift day arrives. Only flips
+  // when the derived state changes, so manual tab taps still stick.
+  const autoTabRef = useRef<"current" | "next">("current");
+  useEffect(() => {
+    const { time: nowTime } = londonNow(now);
+    const shiftDayActive = Boolean(shift) || Boolean(todayWindow && nowTime <= todayWindow.end);
+    const want: "current" | "next" = shiftDayActive ? "current" : "next";
+    if (autoTabRef.current !== want) {
+      autoTabRef.current = want;
+      setShiftTab(want);
+    }
+  }, [now, shift, todayWindow]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
