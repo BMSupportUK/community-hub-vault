@@ -113,6 +113,7 @@ const autoStartedKeys = new Set<string>();
  */
 export function AutoBreakStartListener() {
   const { user } = useAuth();
+  const notifyBreak = useServerFn(sendBreakEventPush);
   const [eligible, setEligible] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const { plan, nowMin } = useBreakPlan(user?.id ?? "");
