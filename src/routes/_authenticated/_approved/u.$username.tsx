@@ -1753,7 +1753,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
     });
     const t = setTimeout(() => setUnlocked(false), 5 * 60 * 1000);
     return () => clearTimeout(t);
-  }, [unlocked, targetUserId]);
+  }, [unlocked, targetUserId, isDemo]);
 
   const copy = async (id: string, text: string) => {
     await navigator.clipboard.writeText(text);
