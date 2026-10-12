@@ -501,7 +501,12 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
                 )}
                 {acked ? (
                   <Pill icon={CheckCircle2} label={`Said still working at ${fmtTime(s.still_working_ack_at ?? s.clock_in)}`} tone="ok" />
-                ) : s.end_prompt_asked_at ? (
+                ) : null}
+                {s.end_prompt_signed_out_at ? (
+                  <Pill icon={CheckCircle2} label={`Answered: finished, signed out at ${fmtTime(s.end_prompt_signed_out_at)}`} tone="ok" />
+                ) : !acked && s.end_prompt_asked_at && s.clock_out && !autoOut ? (
+                  <Pill icon={CheckCircle2} label={`Answered: signed out at ${fmtTime(s.clock_out)}`} tone="ok" />
+                ) : !acked && s.end_prompt_asked_at ? (
                   <Pill icon={HelpCircle} label="No answer given" tone="warn" />
                 ) : null}
               </div>
