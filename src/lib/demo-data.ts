@@ -81,6 +81,85 @@ export function demoReferrals() {
   return [r(1, true, true, 40), r(2, true, false, 20), r(3, false, false, 5)];
 }
 
+/** Sample staff rota for the demo account, built around the week being viewed. */
+export function demoRota(weekStart: Date) {
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const day = (i: number) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d; };
+  let n = 0;
+  const slot = (
+    i: number, start: string, end: string,
+    role: "admin" | "management" | "staff" | "moderator",
+    assigned: string | null, type: "shift" | "hourly" = "shift",
+  ) => ({
+    id: `00000000-0000-4000-c000-${String(++n).padStart(12, "0")}`,
+    shift_date: fmt(day(i)),
+    start_time: start,
+    end_time: end,
+    slot_type: type,
+    assigned_to: assigned,
+    notes: null,
+    required_role: role,
+  });
+  const [admin, manager, staff, mod] = DEMO_STAFF.map((s) => s.id);
+  const slots = [
+    // Monday
+    slot(0, "09:00", "19:00", "admin", admin),
+    slot(0, "09:00", "19:00", "management", manager),
+    slot(0, "09:00", "19:00", "staff", staff),
+    slot(0, "09:00", "19:00", "staff", null),
+    slot(0, "09:00", "19:00", "moderator", mod, "hourly"),
+    // Tuesday
+    slot(1, "09:00", "19:00", "admin", admin),
+    slot(1, "09:00", "19:00", "management", null),
+    slot(1, "09:00", "19:00", "staff", staff),
+    slot(1, "09:00", "19:00", "staff", null),
+    // Wednesday
+    slot(2, "09:00", "19:00", "admin", null),
+    slot(2, "09:00", "19:00", "management", manager),
+    slot(2, "09:00", "19:00", "staff", staff),
+    slot(2, "09:00", "19:00", "moderator", mod, "hourly"),
+    // Thursday
+    slot(3, "09:00", "19:00", "admin", admin),
+    slot(3, "09:00", "19:00", "staff", null),
+    slot(3, "09:00", "19:00", "staff", null),
+    // Friday
+    slot(4, "09:00", "19:00", "admin", admin),
+    slot(4, "09:00", "19:00", "management", manager),
+    slot(4, "09:00", "19:00", "staff", staff),
+    // Saturday
+    slot(5, "10:00", "18:00", "admin", null),
+    slot(5, "10:00", "18:00", "staff", staff),
+    slot(5, "10:00", "18:00", "moderator", null, "hourly"),
+    // Sunday
+    slot(6, "10:00", "18:00", "management", manager),
+    slot(6, "10:00", "18:00", "staff", null),
+  ];
+  const holidays = [{
+    id: "00000000-0000-4000-c100-000000000001",
+    user_id: staff,
+    start_date: fmt(day(9)),
+    end_date: fmt(day(12)),
+    reason: "Sample: family holiday",
+    status: "pending",
+    created_at: ago(2),
+    decision_reason: null,
+  }];
+  const swaps = [{
+    id: "00000000-0000-4000-c200-000000000001",
+    slot_id: slots[0].id,
+    requester_id: admin,
+    target_user_id: manager,
+    message: "Sample: can you cover my Monday?",
+    status: "pending",
+    created_at: ago(1),
+  }];
+  const profiles = Object.fromEntries(
+    DEMO_STAFF.map((s) => [s.id, { id: s.id, username: s.username, display_name: s.display_name }]),
+  );
+  return { slots, holidays, swaps, profiles };
+}
+
 /** Sample secure-order page content for /pay/demo. */
 export const DEMO_CHECKOUT_VIEW = {
   order: {
