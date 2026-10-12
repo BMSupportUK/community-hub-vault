@@ -249,7 +249,7 @@ function StaffShiftsPage() {
     if (canView) void load(days);
   }, [canView, days, load]);
 
-  // Keep breaks/shifts live so lunch, break and travelling-home status changes
+  // Keep breaks/shifts live so main break and short-break status changes
   // show without a hard refresh.
   useEffect(() => {
     if (!canView) return;

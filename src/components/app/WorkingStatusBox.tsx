@@ -518,13 +518,13 @@ export function WorkingStatusBox({
 
   const startBreak = async (kind: BreakKind, opts?: { skipHandover?: boolean }) => {
     if (!user || !shift || brk) return;
-    if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) {
+    if (breaksLeft(kind, usedKinds) <= 0) {
       toast.error(kind === "lunch" ? "You've already had your main break this shift." : "You've used both of your breaks this shift.");
       return;
     }
     if (busy) return;
     setBusy(true);
-    if (kind !== "travel" && !opts?.skipHandover) await offerTicketHandover(user.id, kind);
+    if (!opts?.skipHandover) await offerTicketHandover(user.id, kind);
     const { data: inserted, error } = await supabase
       .from("breaks")
       .insert({ shift_id: shift.id, user_id: user.id, kind })
