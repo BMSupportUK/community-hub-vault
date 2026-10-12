@@ -84,6 +84,11 @@ function accountTypeLabel(type: string | null | undefined) {
   return type ?? "Single";
 }
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
+/** Sample codes shown to the demo account instead of the live ones. */
+const DEMO_DNS_CODES: DnsRow[] = [
+  { id: "demo-1", label: "Sample DNS 1", code: "000000", notes: "Demo only — not a real code" },
+  { id: "demo-2", label: "Sample DNS 2", code: "111111", notes: "Demo only — not a real code" },
+];
 interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; order_id: string | null; }
 interface InviteSummary {
   sent: number;
@@ -137,6 +142,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
 
 import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -1716,6 +1722,7 @@ function ReferralsPanel({
 
 function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; isOwner: boolean }) {
   const { user } = useAuth();
+  const isDemo = useIsDemoAccount();
   const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [creds, setCreds] = useState<CredRow[]>([]);
@@ -1736,7 +1743,9 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
     setLoading(true);
     Promise.all([
       supabase.from("app_credentials").select("*").eq("owner_id", targetUserId).order("account_number", { ascending: true }),
-      supabase.from("qd_dns_codes").select("*").order("label", { ascending: true }),
+      isDemo
+        ? Promise.resolve({ data: DEMO_DNS_CODES })
+        : supabase.from("qd_dns_codes").select("*").order("label", { ascending: true }),
     ]).then(([{ data: c }, { data: d }]) => {
       setCreds((c ?? []) as CredRow[]);
       setDns((d ?? []) as DnsRow[]);
