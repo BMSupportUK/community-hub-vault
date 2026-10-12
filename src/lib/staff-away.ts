@@ -49,6 +49,9 @@ export function awayForShift(
   const from = new Date(shift.clock_in).getTime();
   const to = shift.clock_out ? new Date(shift.clock_out).getTime() : Date.now();
   return rows.filter(
-    (a) => new Date(a.starts_at).getTime() < to && (!a.ends_at || new Date(a.ends_at).getTime() > from),
+    (a) =>
+      a.reason !== "Outside Of Office Hours" &&
+      new Date(a.starts_at).getTime() < to &&
+      (!a.ends_at || new Date(a.ends_at).getTime() > from),
   );
 }
