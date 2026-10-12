@@ -143,6 +143,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
 import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { demoReferrals } from "@/lib/demo-data";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -161,6 +162,7 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const search = Route.useSearch();
   const { user: viewer, hasAny } = useAuth();
+  const isDemo = useIsDemoAccount();
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
   const locked = useViewportLockable();
@@ -262,7 +264,7 @@ function ProfilePage() {
     setBreakRow((b as BreakRow) ?? null);
     setTickets((tk ?? []) as TicketRow[]);
 
-    if (isDemo && isOwner) {
+    if (isDemo && viewer?.id === p.id) {
       const demoRefs = demoReferrals();
       setInviteInfo({ sent: demoRefs.length, used: demoRefs.filter((x) => x.used_by).length, bonusPaid: demoRefs.filter((x) => x.referral_bonus_paid).length, invitedBy: null, invitedAt: null, invitedBonusPaid: false });
       setReferrals(demoRefs);
@@ -414,7 +416,7 @@ function ProfilePage() {
     load();
   };
 
-  useEffect(() => { load(); }, [username]);
+  useEffect(() => { load(); }, [username, isDemo]);
 
   // Realtime: refresh when any friendship row involving the profile owner
   // or the current viewer changes (e.g. addressee accepts an outgoing request).

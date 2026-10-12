@@ -66,3 +66,41 @@ export const DEMO_LATEST_ORDER = {
   created_at: ago(5),
   ticket_id: null,
 };
+
+export function demoReferrals() {
+  const r = (n: number, used: boolean, paid: boolean, d: number) => ({
+    id: `00000000-0000-4000-b000-${String(n).padStart(12, "0")}`,
+    code: `DEMO${1000 + n}`,
+    used_by: used ? DEMO_MEMBERS[n % DEMO_MEMBERS.length].id : null,
+    used_at: used ? ago(d - 1) : null,
+    created_at: ago(d),
+    referral_bonus_paid: paid,
+    joined_name: used ? DEMO_MEMBERS[n % DEMO_MEMBERS.length].display_name : null,
+    joined_username: used ? DEMO_MEMBERS[n % DEMO_MEMBERS.length].username : null,
+  });
+  return [r(1, true, true, 40), r(2, true, false, 20), r(3, false, false, 5)];
+}
+
+/** Sample secure-order page content for /pay/demo. */
+export const DEMO_CHECKOUT_VIEW = {
+  order: {
+    ref: "DEMO-0001",
+    name: "Demo Customer",
+    totalCents: 6000,
+    discountCents: 0,
+    paidAt: ago(5),
+    completedAt: null,
+    method: "wise",
+    customerKind: "new" as const,
+    createdAt: ago(5),
+    email: null,
+    status: "paid",
+    paymentSentAt: ago(5),
+    accountSetupStartedAt: ago(4),
+    accountSetupAt: null,
+  },
+  items: [{ name: "Sample 12 month subscription", qty: 1, unitCents: 6000 }],
+  invoice: null,
+  bank: { account_name: "Sample Account", sort_code: "00-00-00", account_number: "00000000", iban: null, bic: null },
+  qdCode: { label: "Sample DNS", code: "000000" },
+};
