@@ -98,8 +98,21 @@ export function NextBreakPill({ userId, usedKinds }: { userId: string; usedKinds
 }
 
 /** Planned Break 1 / Main break / Break 2 times for staff and management on today's rota. */
-export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: string; usedKinds: readonly string[]; onStartBreak?: (kind: "break" | "lunch") => void }) {
+// These staff have their breaks started for them at the allocated time.
+const AUTO_START_USERNAMES = new Set(["danej", "normanbyred77"]);
+const autoStartedKeys = new Set<string>();
+
+export function BreakPlanRows({ userId, usedKinds, onStartBreak, listHidden }: { userId: string; usedKinds: readonly string[]; onStartBreak?: (kind: "break" | "lunch") => void; listHidden?: boolean }) {
   const { plan, nowMin } = useBreakPlan(userId);
+  const [autoStart, setAutoStart] = useState(false);
+  const [autoNotice, setAutoNotice] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void supabase.from("profiles").select("username").eq("id", userId).maybeSingle().then(({ data }) => {
+      if (alive) setAutoStart(AUTO_START_USERNAMES.has(String((data as { username?: string } | null)?.username ?? "").toLowerCase()));
+    });
+    return () => { alive = false; };
+  }, [userId]);
 
   const items = useMemo(() => planItems(plan, usedKinds, nowMin), [plan, usedKinds, nowMin]);
 
@@ -123,6 +136,21 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
     return () => { alive = false; };
   }, [activeKey, userId]);
 
+  // Auto-start: pass any tickets over, start the break, then show a notice.
+  useEffect(() => {
+    if (!autoStart || !activeKey || !activeItem || !onStartBreak) return;
+    const key = `${userId}:${ukNow().date}:${activeKey}`;
+    if (autoStartedKeys.has(key)) return;
+    autoStartedKeys.add(key);
+    const item = activeItem;
+    void (async () => {
+      const n = await countOpenTickets(userId);
+      if (n > 0) await passTicketsForBreak(item.kind);
+      onStartBreak(item.kind);
+      setAutoNotice(`Your ${item.label.toLowerCase()} has started automatically.${n > 0 ? ` Your ticket${n === 1 ? " was" : "s were"} passed over.` : ""} It ends on its own.`);
+    })();
+  }, [autoStart, activeKey, activeItem, onStartBreak, userId]);
+
   const onTicket = (ticketCount ?? 0) > 0 && !passed;
   const passOver = async () => {
     if (!activeItem) return;
@@ -137,9 +165,22 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
   };
 
   if (!plan) return null;
+  const autoDialog = (
+    <Dialog open={!!autoNotice} onOpenChange={(o) => { if (!o) setAutoNotice(null); }}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />Break started</DialogTitle>
+          <DialogDescription>{autoNotice}</DialogDescription>
+        </DialogHeader>
+        <Button className="w-full" onClick={() => setAutoNotice(null)}>OK</Button>
+      </DialogContent>
+    </Dialog>
+  );
+  if (listHidden) return autoStart ? autoDialog : null;
   const next = items.find((i) => !i.done && !i.missed && i.start !== null);
   return (
     <>
+      {autoDialog}
       <div className="grid gap-1.5 text-xs">
         <span className="text-muted-foreground font-medium">Allocated breaks (UK office)</span>
         {items.map((it) => {
@@ -153,7 +194,7 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
           );
         })}
       </div>
-      <Dialog open={!!activeKey && !!onStartBreak && ticketCount !== null} onOpenChange={() => {}}>
+      <Dialog open={!autoStart && !!activeKey && !!onStartBreak && ticketCount !== null} onOpenChange={() => {}}>
         <DialogContent
           className="w-[calc(100vw-2rem)] max-w-md overflow-x-hidden [&>button]:hidden"
           onEscapeKeyDown={(e) => { if (dueKey) e.preventDefault(); }}
