@@ -303,6 +303,7 @@ export function WorkingStatusBox({
   // today) — shown as the "Shift hours" line while the person is signed in.
   const [currentHours, setCurrentHours] = useState<NextSlot | null>(null);
   const [hadShiftToday, setHadShiftToday] = useState(false);
+  const [shiftTab, setShiftTab] = useState<"current" | "next">("current");
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -907,6 +908,28 @@ export function WorkingStatusBox({
               />
             </div>
           </div>
+          <div role="tablist" aria-label="Shifts" className="grid grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
+            {([
+              ["current", "Current shift"],
+              ["next", "Next shift"],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={shiftTab === key}
+                onClick={() => setShiftTab(key)}
+                className={cn(
+                  "rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide transition",
+                  shiftTab === key ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {shiftTab === "current" ? (
+          <>
           {shift ? (
             <>
               <div className="flex items-center justify-between">
@@ -996,7 +1019,13 @@ export function WorkingStatusBox({
               </span>
             </div>
           )}
-          {nextSlot && <NextShiftPanel slot={nextSlot} />}
+          </>
+          ) : nextSlot ? (
+            <NextShiftPanel slot={nextSlot} />
+          ) : (
+            <p className="text-xs text-muted-foreground">No upcoming shift on the rota yet.</p>
+          )}
+
 
         </div>
       </div>
