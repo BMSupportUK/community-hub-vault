@@ -297,19 +297,7 @@ function ClockPage() {
                     <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" onClick={() => void startBreak("break")} disabled={busy || breakLeft <= 0}
-                        title={breakLeft > 0 ? "Start a 15-minute break" : "Both breaks used this shift"}
-                        className={cn(breakLeft <= 0 && "opacity-50")}>
-                        <Coffee className="size-4" /> Break ({breakLeft} left)
-                      </Button>
-                      <Button variant="outline" onClick={() => void startBreak("lunch")} disabled={busy || lunchLeft <= 0}
-                        title={lunchLeft > 0 ? "Start your 30-minute main break" : "Main break already used this shift"}
-                        className={cn(lunchLeft <= 0 && "opacity-50")}>
-                        <UtensilsCrossed className="size-4" /> Main break
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Breaks also start at your allocated times — these buttons are there if you need one sooner.</p>
+                    <p className="text-xs text-muted-foreground">Breaks start from the pop-up at your allocated times — they can't be started manually.</p>
                     <Button onClick={clockOut} disabled={busy || finishAction === "wait"}
                       variant={finishAction === "clock-out" ? "destructive" : "outline"}
                       title={finishAction === "clock-out" ? "Sign out of shift" : earlyPending

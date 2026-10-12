@@ -108,11 +108,9 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
   // No snooze / remind-me option and it can't be dismissed.
   const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
   const dueKey = dueItem && dueItem.start !== null ? `${dueItem.label}@${dueItem.start}` : null;
-  // Manual fallback: staff can still start a break they missed or that has no
-  // allocated slot, via a confirm dialog with the same ticket handover.
-  const [manualItem, setManualItem] = useState<(typeof items)[number] | null>(null);
-  const activeItem = dueItem ?? manualItem;
-  const activeKey = dueKey ?? (manualItem ? `manual-${manualItem.label}` : null);
+  // No manual starts — breaks begin only from this allocated-time pop-up.
+  const activeItem = dueItem;
+  const activeKey = dueKey;
   const [ticketCount, setTicketCount] = useState<number | null>(null);
   const [passed, setPassed] = useState(false);
   const [working, setWorking] = useState(false);
