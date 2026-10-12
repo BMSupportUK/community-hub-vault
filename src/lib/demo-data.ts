@@ -195,7 +195,7 @@ export function demoSportsGuides() {
     blog(4, 2, "Demo Sharks at Sample Jets",
       "<p>Monday 20 October</p><p>01:15 GMT Demo Sharks at Sample Jets</p><p>Available channels</p><p>Sample NFL 1</p>"),
   ];
-  return { categories, blogs, subcategories: [], reads: {}, baselineAt: null };
+  return { categories, blogs, subcategories: [] as { id: string; category_id: string; name: string; sort_order: number; is_default: boolean }[], reads: {} as Record<string, string>, baselineAt: null as string | null };
 }
 
 /** Sample secure-order page content for /pay/demo. */
