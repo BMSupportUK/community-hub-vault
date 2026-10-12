@@ -11,6 +11,7 @@ import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPa
 import { CoverRequestsPanel } from "@/components/app/CoverRequestsPanel";
 import { ShiftBreakdownCard } from "@/components/app/ShiftBreakdownCard";
 import { shiftBreakdown } from "@/lib/shift-breakdown";
+import { isAutomaticShiftOut, shiftEndSignOutAnswer } from "@/lib/shift-end-history";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
   component: StaffShiftsPage,
@@ -26,7 +27,6 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
   }),
 });
 
-const AUTO_OUT_GRACE_MS = 15 * 60 * 1000;
 
 const RANGES = [
   { days: 1, label: "Today" },
@@ -41,6 +41,7 @@ interface ShiftRow {
   clock_out: string | null;
   end_prompt_asked_at: string | null;
   still_working_ack_at: string | null;
+  end_prompt_signed_out_at: string | null;
   early_finish_at: string | null;
   early_finish_reason: string | null;
 }
@@ -134,14 +135,6 @@ function fmtMs(ms: number) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-function isAutoOut(s: ShiftRow) {
-  return (
-    !!s.clock_out &&
-    !!s.end_prompt_asked_at &&
-    Math.abs(new Date(s.clock_out).getTime() - (new Date(s.end_prompt_asked_at).getTime() + AUTO_OUT_GRACE_MS)) < 60_000
-  );
-}
-
 function Pill({ label, tone }: { label: string; tone: "ok" | "warn" | "muted" | "info" }) {
   const tones: Record<string, string> = {
     ok: "bg-emerald-500/15 text-emerald-300 border-emerald-400/40",
@@ -196,7 +189,7 @@ function StaffShiftsPage() {
     from.setDate(from.getDate() - (d - 1));
     const { data } = await supabase
       .from("shifts")
-      .select("id, user_id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, early_finish_at, early_finish_reason")
+      .select("id, user_id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, end_prompt_signed_out_at, early_finish_at, early_finish_reason")
       .gte("clock_in", from.toISOString())
       .order("clock_in", { ascending: false });
     const rows = (data ?? []) as ShiftRow[];
@@ -336,7 +329,7 @@ function StaffShiftsPage() {
     for (const s of visible) {
       worked += shiftBreakdown(s, breaksByShift[s.id] ?? [], awayByUser[s.user_id] ?? []).workedMs;
       if (!s.clock_out) open += 1;
-      if (isAutoOut(s)) auto += 1;
+      if (isAutomaticShiftOut(s)) auto += 1;
     }
     return {
       shifts: visible.length,
@@ -479,7 +472,8 @@ function StaffShiftsPage() {
                   <div className="grid gap-4 2xl:grid-cols-2">
                 {rows.map((s) => {
                   const open = !s.clock_out;
-                  const auto = isAutoOut(s);
+                  const auto = isAutomaticShiftOut(s);
+                  const signedOutAnswer = shiftEndSignOutAnswer(s);
                   const p = people[s.user_id];
                   return (
                     <div key={s.id} className="grid min-w-0 gap-3 xl:grid-cols-2">
@@ -591,8 +585,11 @@ function StaffShiftsPage() {
                         )}
                         {s.still_working_ack_at ? (
                           <Pill label={`Said still working at ${fmtTime(s.still_working_ack_at)}`} tone="ok" />
-                        ) : s.end_prompt_asked_at ? (
-                          <Pill label="No answer" tone="warn" />
+                        ) : null}
+                        {signedOutAnswer ? (
+                          <Pill label={`Answered: finished, signed out at ${fmtTime(signedOutAnswer)}`} tone="ok" />
+                        ) : !s.still_working_ack_at && s.end_prompt_asked_at ? (
+                          <Pill label="No answer given" tone="warn" />
                         ) : null}
                       </div>
                       <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
