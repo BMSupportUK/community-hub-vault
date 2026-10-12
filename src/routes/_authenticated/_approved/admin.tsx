@@ -572,7 +572,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true, art: toolArtShop },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true, art: toolArtShop },
     { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package, adminOnly: true, managementToo: true, art: toolArtDevices },
-    { to: "/admin-sounds", label: "Notification sounds", desc: "Test spoken and phone alerts, and upload replacement sounds.", icon: Bell, art: toolArtAlerts },
+    { to: "/admin-sounds", label: "Notification sounds", desc: "Test BM Support spoken and phone alerts, and upload replacement sounds.", icon: Bell, art: toolArtAlerts },
     { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3, art: toolArtMoney },
     { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users, art: toolArtTeam },
     { tabKey: "theme", label: "Theme", desc: "Choose the default app theme for members.", icon: Palette, art: toolArtDesign },
@@ -594,6 +594,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
         ...allTools.filter((t) => isFanZoneAdminPath(t.to)),
         { to: "/fan-zone-appeals", label: "Fan Zone appeals", desc: "Review ban and access appeals from Fan Zone members.", icon: ShieldAlert, art: toolArtSecurity },
         { to: "/fan-zone-sanctions", label: "Fan Zone sanctions", desc: "Manage Fan Zone bans and mutes.", icon: Ban, art: toolArtSecurity },
+        { to: "/fan-zone-sounds", label: "Fan Zone sounds", desc: "Test and replace the Boro Fan Zone mention and appeal alert sounds.", icon: Bell, art: toolArtAlerts },
         { to: "/fan-zone-security", label: "Fan Zone security", desc: "Fan Zone security settings and checks.", icon: Shield, art: toolArtSecurity },
       ].filter((t) => fanZoneToolAllowed(t, roles, perms))
     : allTools.filter((t) => !isFanZoneAdminPath(t.to) && adminPanelToolAllowed(t, roles, perms));
