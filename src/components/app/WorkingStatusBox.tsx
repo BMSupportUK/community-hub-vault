@@ -987,7 +987,9 @@ export function WorkingStatusBox({
                 </p>
               )}
               {!todayWindow && hadShiftToday && nextSlot && (
-                <NextShiftCountdown slot={nextSlot} now={now} />
+                <p className="text-xs text-muted-foreground">
+                  Today's shift has ended — your next shift is below.
+                </p>
               )}
               {!todayWindow && hadShiftToday && !nextSlot && (
                 <p className="text-xs text-muted-foreground">
