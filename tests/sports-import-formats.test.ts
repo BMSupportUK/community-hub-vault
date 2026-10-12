@@ -121,6 +121,18 @@ beIN Sports English 1 & 2`;
     expect(result).toEqual([{ date: null, time: "10:00", title: "Highland Boxing: Resurgence 2026", channels: ["Triller TV 4"] }]);
   });
 
+  test("NFL one-row MNF listing converts its ET kick-off to the UK date and time", () => {
+    const now = Date.UTC(2026, 9, 12, 19);
+    const raw = "**NFL**\n```\nNFL Week 4\nNFL 15: MNF 8:15pm Bills at Rams\n```";
+    const result = checkSportsImport(raw, null, now);
+    expect(result.errors).toBe(0);
+    expect(result.formatted).toBe("Tuesday, 13th October\n\n01:15 BST\nBills at Rams\nNFL 15");
+    expect(result.events).toHaveLength(1);
+    // Read-back safety: the saved guide parses to the same events.
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+    expect(checkSportsImport(result.formatted!, "gmt", now).formatted).toBe(result.formatted);
+  });
+
   test("NFL Sunday Ticket uses the stated UK time and next-line fixture", () => {
     const result = parseSportsListingBlock("US | NFL Sunday Ticket\nNFL 02: 1pm ET | 6pm UK\nFalcons @ Packers");
     expect(result).toEqual([{ date: null, time: "6pm", title: "Falcons @ Packers", channels: ["NFL 02"] }]);
