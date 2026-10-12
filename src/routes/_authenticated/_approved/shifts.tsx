@@ -317,6 +317,15 @@ function ShiftsPage() {
   }), [weekStart]);
 
   const load = async () => {
+    if (isDemo) {
+      const d = demoRota(weekStart);
+      setSlots(d.slots as unknown as Slot[]);
+      setHolidays(d.holidays as unknown as Holiday[]);
+      setSwaps(d.swaps as unknown as Swap[]);
+      setProfiles(d.profiles as Record<string, Profile>);
+      setLoading(false);
+      return;
+    }
     const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
     const [{ data: s }, { data: h }, { data: sw }] = await Promise.all([
       supabase.from("shift_slots").select("*").gte("shift_date", fmtDate(weekStart)).lt("shift_date", fmtDate(weekEnd)).order("shift_date").order("start_time"),
@@ -509,6 +518,7 @@ function ShiftsPage() {
 
   const claim = async (s: Slot) => {
     if (!user) return;
+    if (isDemo) return toast.info(DEMO_TOAST);
     if (s.required_role && !isAdmin && !roles.includes(s.required_role as AppRole)) {
       return toast.error(`That shift is reserved for ${roleLabel(s.required_role)}`);
     }
@@ -543,6 +553,7 @@ function ShiftsPage() {
 
   const release = async (s: Slot) => {
     if (!user) return;
+    if (isDemo) return toast.info(DEMO_TOAST);
     const { data, error } = await supabase
       .from("shift_slots")
       .update({ assigned_to: null })
