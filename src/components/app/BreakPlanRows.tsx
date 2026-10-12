@@ -31,7 +31,7 @@ export function useBreakPlan(userId: string) {
         supabase.from("shift_slots").select("assigned_to,required_role,start_time,end_time,slot_type").eq("shift_date", today),
         supabase.rpc("directory_member_roles"),
       ]);
-      const eligible = new Set(((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.role === "staff" || r.role === "management" || r.role === "admin").map((r) => r.user_id));
+      const eligible = new Set(((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.role === "staff" || r.role === "management" || r.role === "admin" || r.role === "moderator").map((r) => r.user_id));
       const rows = (slots ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to && eligible.has(s.assigned_to))
         .map((s) => ({ userId: s.assigned_to as string, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
       // Open rota slots (no one named) apply to everyone holding that role.

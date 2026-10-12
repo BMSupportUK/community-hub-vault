@@ -968,9 +968,7 @@ export function WorkingStatusBox({
                   )}
                 </div>
               )}
-              {(roles.includes("staff") || roles.includes("management") || roles.includes("admin")) && (
-                <BreakPlanRows userId={user.id} usedKinds={usedKinds} onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
-              )}
+              <BreakPlanRows userId={user.id} usedKinds={usedKinds} onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
             </>
           ) : (
             <>
