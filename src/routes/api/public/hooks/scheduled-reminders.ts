@@ -22,6 +22,11 @@ import { reconcileUnpaidOrders } from "@/lib/order-payment-reconcile.server";
 const WARN_MS = 10 * 60 * 1000;
 const BREAK_LIMITS_SEC: Record<string, number> = { break: 15 * 60, lunch: 30 * 60 };
 const BREAK_WARN_SEC = 2 * 60;
+// Only these accounts are clocked in automatically (Dane J, normanbyred77).
+const AUTO_CLOCK_IN_USERS = new Set([
+  "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7",
+  "7852b1ea-1da6-4fe5-a6e3-01ab1a5c6eee",
+]);
 
 type AlertJob = {
   key: string;
@@ -241,16 +246,21 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               kind: "shift_start_warn",
             });
           }
-          // START overdue — nobody clocked in, so sign them in automatically.
+          // START overdue — nobody clocked in. Only allow-listed accounts are
+          // signed in automatically; everyone else must clock in manually and
+          // admin/management are alerted to investigate.
           if (!openShift && !alreadyWorked && toStart <= 0 && now < endsAt) {
             autoClockIns.push({ slotId: slot.id as string, userId, startsAt, endsAt });
+            const auto = AUTO_CLOCK_IN_USERS.has(userId);
             jobs.push({
               key: `slot:${slot.id}:start:over`,
               userId,
-              title: "Clocked in automatically",
-              body: "Your shift has started, so we've clocked you in for you.",
+              title: auto ? "Clocked in automatically" : "Your shift has started",
+              body: auto
+                ? "Your shift has started, so we've clocked you in for you."
+                : "Your shift has started and you haven't clocked in. Please clock in now.",
               url: "/clock",
-              kind: "shift_auto_clock_in",
+              kind: auto ? "shift_auto_clock_in" : "shift_start_over",
             });
           }
           // END warn — heads-up shortly before the shift finishes.
@@ -312,7 +322,47 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             }
           }
 
+          const needsManagers = todo.some((a) => !AUTO_CLOCK_IN_USERS.has(a.userId));
+          let managerIds: string[] = [];
+          if (needsManagers) {
+            const { data: mgrs } = await supabaseAdmin
+              .from("user_roles")
+              .select("user_id")
+              .in("role", ["admin", "management"] as never);
+            managerIds = Array.from(new Set((mgrs ?? []).map((r) => r.user_id as string)));
+          }
+
           for (const a of todo) {
+            if (!AUTO_CLOCK_IN_USERS.has(a.userId)) {
+              // Not allowed to auto sign in — alert admin/management instead.
+              const name = names.get(a.userId) ?? "Unknown staff";
+              const startAt = new Date(a.startsAt).toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Europe/London",
+              });
+              if (managerIds.length) {
+                await supabaseAdmin.from("user_notifications").insert(
+                  managerIds.map((uid) => ({
+                    user_id: uid,
+                    kind: "staff_missed_clock_in",
+                    title: `${name} hasn't signed in`,
+                    body: `${name}'s shift started at ${startAt} but they haven't clocked in. Please investigate.`,
+                    link_path: "/admin-shifts",
+                    source_type: "shift",
+                    source_id: a.slotId,
+                  })) as never,
+                );
+              }
+              await (supabaseAdmin as unknown as {
+                from: (t: string) => {
+                  upsert: (row: unknown, opts: { onConflict: string }) => Promise<unknown>;
+                };
+              })
+                .from("scheduled_alert_log")
+                .upsert({ alert_key: `slot:${a.slotId}:autoclock`, user_id: a.userId }, { onConflict: "alert_key" });
+              continue;
+            }
             // Guard against a race: skip if an open shift appeared meanwhile.
             const { data: stillOpen } = await supabaseAdmin
               .from("shifts")
