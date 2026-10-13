@@ -59,6 +59,7 @@ import {
 } from "@/lib/fantasy-guest.functions";
 import fantasyBossAsset from "@/assets/fantasy-boss.jpg.asset.json";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
+import { isFantasyPreGame } from "@/lib/fantasy-matchday";
 
 
 export const Route = createFileRoute("/boro-fantasy")({
@@ -90,13 +91,19 @@ const PlayerStatsCtx = createContext<
 );
 
 /** Weekly labels reflect official matchday membership, not zero minutes alone. */
-function WeeklyPickStatus({ pick }: { pick?: { minutes?: number | null; matchdayMembership?: "named" | "absent" | "unknown"; lineupSwapNote?: string | null; isStarter: boolean; autoSubbed?: boolean } }) {
+function WeeklyPickStatus({ pick, gw, isStarter }: { pick?: { minutes?: number | null; matchdayMembership?: "named" | "absent" | "unknown"; lineupSwapNote?: string | null; isStarter: boolean; autoSubbed?: boolean }; gw?: FantasyGameweekDTO | null; isStarter?: boolean }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 20_000);
+    return () => window.clearInterval(timer);
+  }, []);
   if (!pick) return null;
   const exchanged = !!pick.lineupSwapNote;
   const played = (pick.minutes ?? 0) > 0;
+  const preGame = !played && isFantasyPreGame(gw, now);
   return (
     <div className="mt-1 space-y-0.5 text-[10px] font-semibold leading-tight break-words">
-      {played ? <div>{pick.minutes}′ played</div> : pick.matchdayMembership === "absent" ? <div>Not In Matchday Squad</div> : pick.matchdayMembership === "named" ? <div>Unused Substitute</div> : null}
+      {preGame ? <div>{(isStarter ?? pick.isStarter) ? "In the starting 11" : "Named on subs bench"}</div> : played ? <div>{pick.minutes}′ played</div> : pick.matchdayMembership === "absent" ? <div>Not In Matchday Squad</div> : pick.matchdayMembership === "named" ? <div>Unused Substitute</div> : null}
       {exchanged && <div title={pick.lineupSwapNote ?? undefined} className="font-bold"><div>Exchanged</div><div>{pick.isStarter ? "Moved into the Starter 11" : "Moved To The Bench"}</div></div>}
     </div>
   );
@@ -3025,7 +3032,7 @@ function PitchView({
                             {pointsByPlayer.get(p.id) ?? 0} pts
                           </div>
                         )}
-                        <WeeklyPickStatus pick={weeklyPicks?.find((pick) => pick.playerId === p.id)} />
+                        <WeeklyPickStatus pick={weeklyPicks?.find((pick) => pick.playerId === p.id)} gw={gw} isStarter />
                         {editable && (
                           <div className="mt-1 flex flex-col gap-0.5 sm:flex-row sm:gap-1 items-center justify-center">
                             <div className="flex items-center justify-center gap-0.5 sm:gap-1">
@@ -3283,7 +3290,7 @@ function BenchPanel({
                         {pointsByPlayer.get(p.id) ?? 0} pts
                       </div>
                     )}
-                    <WeeklyPickStatus pick={weeklyPicks?.find((pick) => pick.playerId === p.id)} />
+                    <WeeklyPickStatus pick={weeklyPicks?.find((pick) => pick.playerId === p.id)} gw={gw} isStarter={false} />
                     {editable && (
                       <div className="mt-1.5 flex items-center justify-center gap-0.5 sm:gap-1">
                         <button type="button" title="Into the XI" onClick={() => onDropStart(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-emerald-400">
@@ -3689,7 +3696,7 @@ function EntrantSquadDialog({
       <span className="w-7 text-xs tabular-nums text-muted-foreground">
         {p.shirtNumber ? `#${p.shirtNumber}` : "—"}
       </span>
-      <div className="min-w-0 flex-1 text-sm font-medium"><div className="break-words">{p.name}</div><WeeklyPickStatus pick={p} /></div>
+      <div className="min-w-0 flex-1 text-sm font-medium"><div className="break-words">{p.name}</div><WeeklyPickStatus pick={p} gw={gw} /></div>
       {p.isCaptain && <Crown className="size-3.5 text-amber-400" aria-label="Captain" />}
       {p.isVice && <Star className="size-3.5 text-sky-400" aria-label="Vice captain" />}
       <span className="w-14 shrink-0 text-right text-[11px] uppercase text-muted-foreground">
