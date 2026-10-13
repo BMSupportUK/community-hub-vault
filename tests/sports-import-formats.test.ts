@@ -496,3 +496,41 @@ describe("Dated bold post headings", () => {
     expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
   });
 });
+
+describe("Weekday/date mismatch in post headings", () => {
+  test("a heading whose weekday name disagrees with the date number trusts the weekday", () => {
+    // 12 October 2026 is a Monday; the post says Tuesday. The weekday wins so
+    // the events land on Tuesday the 13th instead of yesterday (where they
+    // would be cleared as already gone).
+    const raw = "Tuesday, 12th October\n\n8:00pm UK / 3:00pm ET\nSTOKE CITY v MIDDLESBROUGH\nSky Sports Main Event\nSky Sports Football";
+    const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 13, 9), "Daily Sports");
+    expect(r.errors).toBe(0);
+    expect(r.events).toHaveLength(1);
+    expect(r.events[0]).toMatchObject({
+      date: "Tuesday, 13th October",
+      time: "20:00 BST",
+      title: "STOKE CITY v MIDDLESBROUGH",
+      channels: ["Sky Sports Main Event", "Sky Sports Football"],
+    });
+  });
+
+  test("a correct weekday/date heading is left alone", () => {
+    const raw = "Tuesday, 13th October\n\n8:00pm UK / 3:00pm ET\nSTOKE CITY v MIDDLESBROUGH\nSky Sports Main Event";
+    const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 13, 9), "Daily Sports");
+    expect(r.errors).toBe(0);
+    expect(r.events[0]).toMatchObject({ date: "Tuesday, 13th October" });
+  });
+
+  test("a dateless single-event post is dated from the import day", () => {
+    const raw = "8:00pm UK / 3:00pm ET\n\nSTOKE CITY v MIDDLESBROUGH\n\nSky Sports Main Event\n\nSky Sports Football";
+    const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 13, 9), "Daily Sports");
+    expect(r.errors).toBe(0);
+    expect(r.events).toHaveLength(1);
+    expect(r.events[0]).toMatchObject({
+      date: "Tuesday, 13th October",
+      time: "20:00 BST",
+      title: "STOKE CITY v MIDDLESBROUGH",
+      channels: ["Sky Sports Main Event", "Sky Sports Football"],
+    });
+  });
+});
