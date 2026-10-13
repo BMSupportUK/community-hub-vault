@@ -37,6 +37,7 @@ function ApprovedLayout() {
   const { roles } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const perms = usePagePermissions();
+  const isDemo = useIsDemoAccount();
 
   // Fan Zone routes have their own membership gating; page permissions cover
   // the BM Support side only.
@@ -58,12 +59,24 @@ function ApprovedLayout() {
     );
   }
 
+  const page = (
+    <DemoGate path={path}>
+      <Outlet />
+    </DemoGate>
+  );
+
   return (
     <>
-      <DemoRoleBanner />
-      <DemoGate path={path}>
-        <Outlet />
-      </DemoGate>
+      {isDemo ? (
+        // The page shell lays pages out in a row, so the demo banner must sit in
+        // its own column above the page or it squeezes the page to zero width.
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <DemoRoleBanner />
+          <div className="flex min-h-0 min-w-0 flex-1">{page}</div>
+        </div>
+      ) : (
+        page
+      )}
       <DeferUntilIdle>
         <ApprovedDeferredExtras />
       </DeferUntilIdle>
