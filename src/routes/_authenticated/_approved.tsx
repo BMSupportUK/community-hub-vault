@@ -37,6 +37,7 @@ function ApprovedLayout() {
   const { roles } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const perms = usePagePermissions();
+  const isDemo = useIsDemoAccount();
 
   // Fan Zone routes have their own membership gating; page permissions cover
   // the BM Support side only.
