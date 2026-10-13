@@ -160,7 +160,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
                 const { error: bErr } = await db.from("breaks").insert({ shift_id: shiftId, user_id: d.user_id, kind: d.kind });
                 if (bErr) { console.error("[scheduled-reminders] auto break failed", bErr); continue; }
                 mine.push({ user_id: d.user_id, kind: d.kind, ended_at: null });
-                (taken as any[]).push({ user_id: d.user_id, kind: d.kind, ended_at: null });
+                if (Array.isArray(taken)) (taken as any[]).push({ user_id: d.user_id, kind: d.kind, ended_at: null });
                 jobs.push({
                   key: `bplan:${d.user_id}:${ukDate}:${d.label}:auto`,
                   userId: d.user_id,
