@@ -203,7 +203,9 @@ function StaffShiftsPage() {
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [role, setRole] = useState<RoleKey>("admin");
-  const [weekday, setWeekday] = useState<DayKey>(new Date().getDay());
+  // The visible day is always the calendar day, so it is derived rather than
+  // kept in its own state — that way Previous/Next day can't desync header and list.
+  const weekday: DayKey = selectedDate.getDay();
 
   const weekFrom = weekStart(selectedDate);
   const weekTo = weekEnd(selectedDate);
@@ -440,7 +442,6 @@ function StaffShiftsPage() {
                     onSelect={(date) => {
                       if (!date) return;
                       setSelectedDate(date);
-                      setWeekday(date.getDay());
                       setCalendarOpen(false);
                     }}
                     weekStartsOn={1}
@@ -464,7 +465,7 @@ function StaffShiftsPage() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => { const t = new Date(); setSelectedDate(t); setWeekday(t.getDay()); }}
+                onClick={() => setSelectedDate(new Date())}
                 disabled={isToday}
                 className="rounded-lg px-3 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"
               >
@@ -482,7 +483,6 @@ function StaffShiftsPage() {
         {[
           { tabs: ROLE_TABS, counts: roleCounts, current: role, set: (k: any) => setRole(k), label: "Role" },
           { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => {
-              setWeekday(k);
               // Jump the calendar to that weekday within the week being shown.
               const d = weekStart(selectedDate);
               d.setDate(d.getDate() + ((k + 6) % 7));
