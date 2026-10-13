@@ -339,13 +339,17 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               minute: "2-digit",
               timeZone: "Europe/London",
             });
-            await supabaseAdmin.from("staff_notifications").insert({
+            // Only the staff member who was auto signed in gets this — it
+            // must not broadcast to the shared staff feed.
+            await supabaseAdmin.from("user_notifications").insert({
+              user_id: a.userId,
               kind: "staff_auto_clock_in",
               title: `${name} auto clocked in`,
               body: `${name} hadn't clocked in for their claimed shift, so they were signed in automatically at ${clockedAt} (shift start time).`,
               link_path: "/clock",
-              entity_id: a.userId,
-            });
+              source_type: "shift",
+              source_id: a.slotId,
+            } as never);
 
             await (supabaseAdmin as unknown as {
               from: (t: string) => {
