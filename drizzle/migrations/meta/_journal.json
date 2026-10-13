@@ -799,6 +799,13 @@
       "when": 1791916352315,
       "tag": "0113_block_deleting_reported_inbox_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 114,
+      "version": "7",
+      "when": 1791916494885,
+      "tag": "0114_inbox_bulk_delete",
+      "breakpoints": true
     }
   ]
 }
