@@ -16,6 +16,7 @@ import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
 import { GuideVaultCardActions } from "@/components/app/GuideVaultCardActions";
 import { MobilePdfViewer } from "@/components/app/MobilePdfViewer";
 import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 import { GuideAccessApprovals } from "@/components/app/GuideAccessApprovals";
@@ -158,7 +159,9 @@ function InstallGuidesPage() {
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   // The download tab is always visible; non-subscribers see a request-access
   // panel inside it, which admins/management approve on the Approvals tab.
-  const canSeeAppTab = true;
+  // The demo account can browse the guides but never gets download links.
+  const isDemo = useIsDemoAccount();
+  const canSeeAppTab = !isDemo;
 
 
   // Live transfer state drives the tab label, flipping back on expiry.
