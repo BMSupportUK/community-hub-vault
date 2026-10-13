@@ -7063,6 +7063,7 @@ export type Database = {
         Args: { _recipient: string; _sender: string }
         Returns: boolean
       }
+      bm_inbox_delete_many: { Args: { _ids?: string[] }; Returns: number }
       bm_inbox_my_privacy: { Args: never; Returns: string }
       bm_inbox_review: {
         Args: { _id?: string; _status?: string }
