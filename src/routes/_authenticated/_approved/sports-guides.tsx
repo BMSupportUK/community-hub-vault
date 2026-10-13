@@ -564,11 +564,22 @@ function SportsGuidesPage() {
     }
     const id = ids[c.index];
     if (!filtered.some((b) => b.id === id)) return;
+    const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Flash the target so each press visibly lands on the next guide, even
+    // when it sits in the same row as the previous one.
+    document.querySelectorAll<HTMLElement>("[data-az-flash]").forEach((n) => {
+      n.removeAttribute("data-az-flash");
+      n.style.outline = "";
+    });
+    el.setAttribute("data-az-flash", "1");
+    el.style.outline = "3px solid rgb(217 70 239)";
+    el.style.outlineOffset = "3px";
+    el.style.borderRadius = "0.75rem";
     window.setTimeout(() => {
-      document
-        .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 80);
+      if (el.getAttribute("data-az-flash")) { el.style.outline = ""; el.removeAttribute("data-az-flash"); }
+    }, 1500);
   };
 
   // Remember which guide the user opened (read/edit) so coming back from the
@@ -605,16 +616,21 @@ function SportsGuidesPage() {
     try { id = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
     if (!id || tab !== "guides") return;
     if (!filtered.some((b) => b.id === id)) return;
-    const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
-    if (!inView) el.scrollIntoView({ behavior: "auto", block: "center" });
-    // Keep the key for a few more passes so late layout shifts (images loading)
-    // can't strand the card off-screen; clear once it's comfortably centred.
-    if (inView) {
-      try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    }
+    // Keep re-centring for ~2.5s so images/late layout shifts (or a router
+    // scroll reset) can't leave the card off-screen; then clear the key.
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
+      if (el) {
+        const r = el.getBoundingClientRect();
+        if (r.top < 0 || r.bottom > window.innerHeight) el.scrollIntoView({ behavior: "auto", block: "center" });
+      }
+      if (Date.now() - started > 2500) {
+        window.clearInterval(timer);
+        try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
+      }
+    }, 100);
+    return () => window.clearInterval(timer);
   }, [filtered, tab, blogs]);
 
   // Search event listings across every sports guide category (guide names and
