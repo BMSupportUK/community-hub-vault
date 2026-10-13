@@ -279,8 +279,8 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
 
         // --- Auto clock-in ----------------------------------------------------
         // Claimed rota slots that have started without a clock-in get an open
-        // shift created from the slot's start time, then admins/management are
-        // alerted with who was signed in and at what time. The new shift shows
+        // shift created from the slot's start time, then only that staff
+        // member is alerted with when they were signed in. The new shift shows
         // up in the "on shift right now" list on the clock page instantly.
         let autoClockedIn = 0;
         if (autoClockIns.length) {
