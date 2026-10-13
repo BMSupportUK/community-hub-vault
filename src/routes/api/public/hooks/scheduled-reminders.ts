@@ -154,9 +154,25 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               const used = mine.filter((b) => b.kind === d.kind).length;
               const need = d.label === "Break 2" ? 2 : 1;
               if (used >= need) continue;
-              // Breaks are not started automatically — the staff member
-              // confirms from the Working Status popup so they can pass any
-              // open ticket over first. This alert just tells them it's due.
+              // Auto-start accounts get their break started here on the server,
+              // so it begins on time even when their browser is closed/asleep.
+              if (AUTO_CLOCK_IN_USERS.has(d.user_id)) {
+                const { error: bErr } = await db.from("breaks").insert({ shift_id: shiftId, user_id: d.user_id, kind: d.kind });
+                if (bErr) { console.error("[scheduled-reminders] auto break failed", bErr); continue; }
+                mine.push({ user_id: d.user_id, kind: d.kind, ended_at: null });
+                (taken as any[]).push({ user_id: d.user_id, kind: d.kind, ended_at: null });
+                jobs.push({
+                  key: `bplan:${d.user_id}:${ukDate}:${d.label}:auto`,
+                  userId: d.user_id,
+                  title: `${d.label} started`,
+                  body: `Your ${d.label.toLowerCase()} has started automatically. It ends on its own.`,
+                  url: "/home",
+                  kind: "break_warn",
+                });
+                continue;
+              }
+              // Everyone else confirms from the Working Status popup so they
+              // can pass any open ticket over first. This alert says it's due.
               jobs.push({
                 key: `bplan:${d.user_id}:${ukDate}:${d.label}`,
                 userId: d.user_id,
