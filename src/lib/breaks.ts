@@ -39,3 +39,17 @@ export function ukMinutes(iso: string): number {
   const m = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
   return h * 60 + m;
 }
+
+/**
+ * Live countdown for an active break: `mm:ss` of allowance still to run, or the
+ * amount over once it has passed. `over` picks the warning/danger colouring.
+ */
+export function breakCountdown(kind: BreakKind, startedAt: string, nowMs: number) {
+  const usedSec = (nowMs - new Date(startedAt).getTime()) / 1000;
+  const remainingSec = BREAK_LIMITS[kind] - usedSec;
+  const over = remainingSec < 0;
+  const abs = Math.floor(Math.abs(remainingSec));
+  const mm = Math.floor(abs / 60).toString().padStart(2, "0");
+  const ss = (abs % 60).toString().padStart(2, "0");
+  return { remainingSec, over, label: over ? `+${mm}:${ss}` : `${mm}:${ss}` };
+}
