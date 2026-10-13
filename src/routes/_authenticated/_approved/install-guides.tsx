@@ -16,6 +16,7 @@ import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
 import { GuideVaultCardActions } from "@/components/app/GuideVaultCardActions";
 import { MobilePdfViewer } from "@/components/app/MobilePdfViewer";
 import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 import { GuideAccessApprovals } from "@/components/app/GuideAccessApprovals";
