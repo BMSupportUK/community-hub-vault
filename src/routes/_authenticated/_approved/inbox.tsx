@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, Flag, LoaderCircle, MessagesSquare, Pencil, Plus, Search, Send, ShieldCheck, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, CheckSquare, Flag, LoaderCircle, MessagesSquare, Pencil, Plus, Search, Send, ShieldCheck, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { inboxAction, isInboxStaff, useBmInbox, type InboxMember, type InboxMessage } from "@/lib/bm-inbox";
+import { inboxAction, inboxDeleteMany, isInboxStaff, useBmInbox, type InboxMember, type InboxMessage } from "@/lib/bm-inbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +40,19 @@ function InboxPage() {
   const [report, setReport] = useState<InboxMessage>();
   const [reason, setReason] = useState("");
   const [deleting, setDeleting] = useState<InboxMessage>();
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmBulk, setConfirmBulk] = useState<"selected" | "all">();
+  async function bulkDelete(scope: "selected" | "all") {
+    setBusy(true);
+    try {
+      const removed = await inboxDeleteMany(scope === "selected" ? [...selected] : undefined);
+      await refresh();
+      setSelecting(false); setSelected(new Set()); setConfirmBulk(undefined);
+      toast.success(removed === 0 ? "Nothing to delete — reported messages are kept." : `Deleted ${removed} message${removed === 1 ? "" : "s"}.`);
+    } catch { toast.error("Could not delete those messages. Please try again."); }
+    finally { setBusy(false); }
+  }
   const bottom = useRef<HTMLDivElement>(null);
   const current = data?.threads.find(t => t.id === thread);
   const member = data?.members.find(m => m.id === current?.other_id);
