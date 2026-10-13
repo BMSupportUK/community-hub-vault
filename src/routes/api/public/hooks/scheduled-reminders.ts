@@ -22,6 +22,11 @@ import { reconcileUnpaidOrders } from "@/lib/order-payment-reconcile.server";
 const WARN_MS = 10 * 60 * 1000;
 const BREAK_LIMITS_SEC: Record<string, number> = { break: 15 * 60, lunch: 30 * 60 };
 const BREAK_WARN_SEC = 2 * 60;
+// Only these accounts are clocked in automatically (Dane J, normanbyred77).
+const AUTO_CLOCK_IN_USERS = new Set([
+  "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7",
+  "7852b1ea-1da6-4fe5-a6e3-01ab1a5c6eee",
+]);
 
 type AlertJob = {
   key: string;
