@@ -792,6 +792,13 @@
       "when": 1791916249229,
       "tag": "0112_bm_inbox_hard_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 113,
+      "version": "7",
+      "when": 1791916352315,
+      "tag": "0113_block_deleting_reported_inbox_messages",
+      "breakpoints": true
     }
   ]
 }
