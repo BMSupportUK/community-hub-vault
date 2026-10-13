@@ -785,6 +785,13 @@
       "when": 1791874507611,
       "tag": "0111_keep_demo_account_permanent",
       "breakpoints": true
+    },
+    {
+      "idx": 112,
+      "version": "7",
+      "when": 1791916249229,
+      "tag": "0112_bm_inbox_hard_delete",
+      "breakpoints": true
     }
   ]
 }
