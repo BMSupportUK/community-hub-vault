@@ -19,9 +19,10 @@ export function useIsDemoAccount() {
   return demo;
 }
 
-/** Pages that hold live customer data, downloads or DNS codes. */
+/** Pages that hold live customer data, downloads or DNS codes.
+ *  Install guides themselves are visible on the demo — only their downloads are blocked. */
 export function isDemoLockedPath(path: string, ownUsername: string | null, staffView: boolean) {
-  if (/^\/(install-guides|inbox|admin)/.test(path)) return true;
+  if (/^\/(inbox|admin)/.test(path)) return true;
   if (path.startsWith("/home/")) return true; // Talk channels show live staff chat
   if (path.startsWith("/u/")) {
     const name = decodeURIComponent(path.split("/")[2] ?? "");

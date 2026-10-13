@@ -158,7 +158,9 @@ function InstallGuidesPage() {
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   // The download tab is always visible; non-subscribers see a request-access
   // panel inside it, which admins/management approve on the Approvals tab.
-  const canSeeAppTab = true;
+  // The demo account can browse the guides but never gets download links.
+  const isDemo = useIsDemoAccount();
+  const canSeeAppTab = !isDemo;
 
 
   // Live transfer state drives the tab label, flipping back on expiry.
