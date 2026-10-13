@@ -47,7 +47,7 @@ function InboxPage() {
   async function act(action: Parameters<typeof inboxAction>[0], target: string, body = "") {
     setBusy(true);
     try { const id = await inboxAction(action, target, body); await refresh(); return id; }
-    catch (e) { toast.error(/not accepting messages/i.test(String((e as { message?: string })?.message ?? e)) ? "This person isn't accepting inbox messages." : "Could not complete that action. Please try again."); return null; }
+    catch (e) { const msg = String((e as { message?: string })?.message ?? e); toast.error(/not accepting messages/i.test(msg) ? "This person isn't accepting inbox messages." : /reported and cannot be deleted/i.test(msg) ? "This message has been reported and can't be deleted." : "Could not complete that action. Please try again."); return null; }
     finally { setBusy(false); }
   }
   // Non-seasonal days show the support-call illustration; seasonal themes hide it (their own art shows instead).
