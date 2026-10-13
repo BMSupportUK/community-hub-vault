@@ -7575,6 +7575,7 @@ export type Database = {
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
+      refresh_demo_account_data: { Args: never; Returns: undefined }
       release_checkout_payment_lock: {
         Args: { p_order: string }
         Returns: undefined
