@@ -31,6 +31,7 @@ const FANCY_RANGES: Array<[number, number, string]> = [
   [0x1d5a0, 0x1d5b9, "A"], [0x1d5ba, 0x1d5d3, "a"],
   [0x1d5d4, 0x1d5ed, "A"], [0x1d5ee, 0x1d607, "a"],
   [0x1d608, 0x1d621, "A"], [0x1d622, 0x1d63b, "a"],
+  [0x1d63c, 0x1d655, "A"], [0x1d656, 0x1d66f, "a"],
   [0x1d670, 0x1d689, "A"], [0x1d68a, 0x1d6a3, "a"],
 ];
 
@@ -71,8 +72,8 @@ const TEAM_SHEET_PATTERNS: RegExp[] = [
 
 const NEGATIVE_PATTERNS: RegExp[] = [
   /\bunder[\s-]?21s?\b/i,
-  /\bu21\b/i,
-  /\bu18\b/i,
+  /\bu21s?\b/i,
+  /\bu18s?\b/i,
   /\bacademy\b/i,
   /\bwomen'?s\b/i,
 ];
