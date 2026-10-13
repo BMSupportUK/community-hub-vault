@@ -171,15 +171,46 @@ function isDateLine(line: string): boolean {
  * example "OTHER SPORT: WEDNESDAY 23 SEPTEMBER". Keep only the date portion
  * so every split event retains the day without importing the section title.
  */
+/**
+ * A heading like "Tuesday, 12th October" where the 12th is actually a Monday
+ * is a typo in the post — trust the weekday name and move the date to the
+ * nearest day that matches it, so one wrong number can't dump every event on
+ * the wrong day (and get them all cleared as already gone).
+ */
+function correctWeekdayDateMismatch(
+  line: string,
+  parsed: { y: number; m: number; d: number },
+): { y: number; m: number; d: number } {
+  const weekdayMatch = line.match(
+    /\b(mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b/i,
+  );
+  if (!weekdayMatch) return parsed;
+  const wanted = WEEKDAY_NAMES.indexOf(weekdayMatch[1].slice(0, 3).toLowerCase());
+  if (wanted < 0) return parsed;
+  const actual = new Date(Date.UTC(parsed.y, parsed.m, parsed.d)).getUTCDay();
+  if (actual === wanted) return parsed;
+  // Nearest matching day, preferring forward on a tie.
+  let delta = (wanted - actual + 7) % 7;
+  if (delta > 3) delta -= 7;
+  const shifted = new Date(Date.UTC(parsed.y, parsed.m, parsed.d + delta));
+  return { y: shifted.getUTCFullYear(), m: shifted.getUTCMonth(), d: shifted.getUTCDate() };
+}
+
 function listingDateFromLine(line: string): string | null {
-  if (isDateLine(line)) return line;
+  if (isDateLine(line)) {
+    const parsed = parseListingDate(line);
+    if (!parsed) return line;
+    const fixed = correctWeekdayDateMismatch(line, parsed);
+    return formatListingDate(new Date(Date.UTC(fixed.y, fixed.m, fixed.d)));
+  }
   const embedded = line.match(
     /\b((?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)[\s,]+\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+(?:\d{2}|\d{4}))?)\s*$/i,
   )?.[1];
   if (!embedded) return null;
   const parsed = parseListingDate(embedded);
   if (!parsed) return null;
-  return formatListingDate(new Date(Date.UTC(parsed.y, parsed.m, parsed.d)));
+  const fixed = correctWeekdayDateMismatch(embedded, parsed);
+  return formatListingDate(new Date(Date.UTC(fixed.y, fixed.m, fixed.d)));
 }
 
 function normalizeTime(time: string): string {
