@@ -31,6 +31,7 @@ const FANCY_RANGES: Array<[number, number, string]> = [
   [0x1d5a0, 0x1d5b9, "A"], [0x1d5ba, 0x1d5d3, "a"],
   [0x1d5d4, 0x1d5ed, "A"], [0x1d5ee, 0x1d607, "a"],
   [0x1d608, 0x1d621, "A"], [0x1d622, 0x1d63b, "a"],
+  [0x1d63c, 0x1d655, "A"], [0x1d656, 0x1d66f, "a"],
   [0x1d670, 0x1d689, "A"], [0x1d68a, 0x1d6a3, "a"],
 ];
 
@@ -71,8 +72,8 @@ const TEAM_SHEET_PATTERNS: RegExp[] = [
 
 const NEGATIVE_PATTERNS: RegExp[] = [
   /\bunder[\s-]?21s?\b/i,
-  /\bu21\b/i,
-  /\bu18\b/i,
+  /\bu21s?\b/i,
+  /\bu18s?\b/i,
   /\bacademy\b/i,
   /\bwomen'?s\b/i,
 ];
@@ -337,11 +338,14 @@ export function opponentHandles(name: string): string[] {
   return [...guesses];
 }
 
-/** The opponent's own account speaks in the first person about their XI. */
+/** The opponent's own account speaks in the first person about their XI.
+ * Also catches colour-nickname announcements ("Your red and whites under the
+ * lights") that carry the team sheet graphic without ever saying "team news",
+ * "line-up" or "XI" — clubs like Stoke post exactly that. */
 export function isOwnTeamSheetText(rawText: string): boolean {
   const text = normalizeFancyText(rawText);
   if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
-  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:your|the|this|tonight'?s|today'?s)\s+(?:[a-z0-9'’-]+\s+){0,3}(?:xi|eleven)\b|\bxi\s*[:|\u26bd🔥👊📋]|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\b(?:team|side|xi|eleven)\s+to\s+(?:face|play|take\s+on)\b|\b(?:team|side|xi|eleven)\s+(?:v|vs|versus)\b/i.test(
+  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:your|the|this|tonight'?s|today'?s)\s+(?:[a-z0-9'’-]+\s+){0,3}(?:xi|eleven)\b|\bxi\s*[:|\u26bd🔥👊📋]|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\b(?:team|side|xi|eleven)\s+to\s+(?:face|play|take\s+on)\b|\b(?:team|side|xi|eleven)\s+(?:v|vs|versus)\b|\byour\s+(?:[a-z]+\s+){0,2}(?:reds?|whites?|blues?|greens?|blacks?|ambers?)\b/i.test(
     text,
   );
 }
