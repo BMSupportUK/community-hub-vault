@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AtSign, Bell, Check, MessageSquare, ShieldCheck, ShoppingBag, UserPlus, X } from "lucide-react";
+import { AtSign, Bell, Check, MessageSquare, ShieldCheck, ShoppingBag, UserPlus } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -464,11 +464,11 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
                           </div>
                         </div>
                         <button
-                          onClick={() => markRead(n.id)}
-                          className="text-muted-foreground hover:text-foreground p-1 -mr-1"
-                          title={isUnread ? "Mark read" : "Dismiss"}
+                          onClick={(e) => { e.stopPropagation(); markRead(n.id); }}
+                          className="grid size-7 shrink-0 place-items-center rounded-full border border-emerald-500/50 bg-emerald-500/10 text-emerald-500 transition-colors hover:bg-emerald-500 hover:text-emerald-50"
+                          title={isUnread ? "Clear notification" : "Dismiss"}
                         >
-                          <X className="size-3.5" />
+                          <Check className="size-4" strokeWidth={3} />
                         </button>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
