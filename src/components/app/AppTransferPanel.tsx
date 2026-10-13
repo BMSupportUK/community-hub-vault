@@ -188,6 +188,10 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   }, [remaining, open, queryClient]);
 
   const onRequest = async () => {
+    if (isDemo) {
+      toast.info("Download links can't be created on the demo account");
+      return;
+    }
     setBusy("request");
     try {
       await request({ data: { buildId: build.id } });
