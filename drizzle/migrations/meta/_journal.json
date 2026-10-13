@@ -778,6 +778,13 @@
       "when": 1791828197720,
       "tag": "0110_shift_end_prompt_answer",
       "breakpoints": true
+    },
+    {
+      "idx": 111,
+      "version": "7",
+      "when": 1791874507611,
+      "tag": "0111_keep_demo_account_permanent",
+      "breakpoints": true
     }
   ]
 }
