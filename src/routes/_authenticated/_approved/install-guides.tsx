@@ -161,7 +161,8 @@ function InstallGuidesPage() {
   // panel inside it, which admins/management approve on the Approvals tab.
   // The demo account can browse the guides but never gets download links.
   const isDemo = useIsDemoAccount();
-  const canSeeAppTab = !isDemo;
+  const canSeeAppTab = true;
+  void isDemo;
 
 
   // Live transfer state drives the tab label, flipping back on expiry.
