@@ -18,6 +18,8 @@ import { VpnBadge } from "@/lib/vpn-flags";
 import { formatRoleLabel } from "@/lib/role-label";
 import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators";
 import { DndCountdown } from "@/components/app/DndCountdown";
+import { useShiftStatusMap } from "@/hooks/use-shift-status-map";
+import { StaffBreakChip } from "@/components/app/StaffBreakChip";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
   component: StaffPage,
@@ -135,6 +137,9 @@ function StaffPage() {
     );
   });
 
+  // Live signed-in / on-break state for the staff shown on this page.
+  const shiftStatus = useShiftStatusMap(filtered.map((p) => p.id));
+
   // Highest role per user (by ROLE_ORDER priority)
   const topRole = (uid: string): string => {
     const rs = rolesByUser[uid] ?? [];
@@ -226,6 +231,7 @@ function StaffPage() {
                       const initial = name.slice(0, 1).toUpperCase();
                       const userRoles = rolesByUser[p.id] ?? [];
                       const isOnline = onlineUsers.has(p.id);
+                      const brk = shiftStatus[p.id]?.break;
                       return (
                         <div
                           key={p.id}
@@ -268,13 +274,14 @@ function StaffPage() {
                                 {name}
                               </Link>
                               <span className="ml-1 inline-flex align-middle"><VpnBadge userId={p.id} size={12} /></span>
-                              <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
+                              <div className="text-[10px] mt-0.5 flex flex-wrap items-center gap-1.5">
                                 <PresenceInline
                                   userId={p.id}
                                   isOnline={isOnline}
                                   offlineText={`Last seen ${formatLastSeen(p.last_seen_at)}`}
                                   offlineTextClass="text-muted-foreground/70"
                                 />
+                                {brk && <StaffBreakChip kind={brk.kind} startedAt={brk.started_at} />}
                                 <DndCountdown userId={p.id} compact />
                               </div>
                               {p.username && (

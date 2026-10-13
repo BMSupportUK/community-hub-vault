@@ -221,3 +221,45 @@ export const DEMO_CHECKOUT_VIEW = {
   bank: { account_name: "Sample Account", sort_code: "00-00-00", account_number: "00000000", iban: null, bic: null },
   qdCode: { label: "Sample DNS", code: "000000" },
 };
+
+/**
+ * Sample signed-in / on-break state for the demo staff directory, so the break
+ * countdown next to each person's online status is visible without reading or
+ * writing anyone's live shift records. Built from the current clock, so the
+ * sample break never runs out.
+ */
+export function demoShiftStatus(userIds: string[]) {
+  const ids = new Set(userIds);
+  const minAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+  type Spec = { shiftMinutes?: number; breakKind?: "break" | "lunch"; breakMinutes?: number };
+  const spec: Spec[] = [
+    { shiftMinutes: 180 }, // sample-admin: signed in, no break taken yet
+    { shiftMinutes: 240, breakKind: "lunch", breakMinutes: 12 }, // 18 min still to run
+    { shiftMinutes: 120, breakKind: "break", breakMinutes: 16 }, // 1 min over its allowance
+    {}, // sample-moderator: off shift
+  ];
+  const shifts: { id: string; user_id: string; clock_in: string }[] = [];
+  const breaks: {
+    id: string;
+    shift_id: string;
+    user_id: string;
+    kind: "break" | "lunch";
+    started_at: string;
+  }[] = [];
+  DEMO_STAFF.forEach((s, i) => {
+    const sp = spec[i];
+    if (!sp?.shiftMinutes || !ids.has(s.id)) return;
+    const shiftId = `00000000-0000-4000-c000-${String(i + 1).padStart(12, "0")}`;
+    shifts.push({ id: shiftId, user_id: s.id, clock_in: minAgo(sp.shiftMinutes) });
+    if (sp.breakKind) {
+      breaks.push({
+        id: `00000000-0000-4000-d000-${String(i + 1).padStart(12, "0")}`,
+        shift_id: shiftId,
+        user_id: s.id,
+        kind: sp.breakKind,
+        started_at: minAgo(sp.breakMinutes ?? 5),
+      });
+    }
+  });
+  return { shifts, breaks };
+}
