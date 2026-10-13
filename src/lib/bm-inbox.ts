@@ -39,3 +39,12 @@ export async function inboxAction(action: "start" | "send" | "read" | "edit" | "
   if (error) throw error;
   return data;
 }
+
+// Deletes the caller's own messages. Pass ids to delete a selection, or omit to
+// delete every message the caller has sent across the inbox. Reported messages
+// are kept (they're evidence) and skipped; returns how many were removed.
+export async function inboxDeleteMany(ids?: string[]) {
+  const { data, error } = await supabase.rpc("bm_inbox_delete_many", ids ? { _ids: ids } : {});
+  if (error) throw error;
+  return data as number;
+}
