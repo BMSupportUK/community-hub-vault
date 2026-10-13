@@ -17,6 +17,7 @@ import {
   requestAppDownloadAccess,
 } from "@/lib/app-transfer.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
 
 type Build = Awaited<ReturnType<typeof listAppBuilds>>[number];
 type Transfer = Awaited<ReturnType<typeof listMyAppTransfers>>[number];
@@ -158,6 +159,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   }, [transfer]);
 
   const remaining = countdown(transfer?.expiresAt, now);
+  const isDemo = useIsDemoAccount();
 
   useEffect(() => {
     let cancel = false;
