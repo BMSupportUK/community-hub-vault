@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useMatches, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { MessageSquare, Pin, Lock, Loader2, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -183,6 +184,10 @@ function ForumLayout() {
   // A live Boro Fan Zone ban locks the member out of the whole zone.
   const { ban: myBan, loading: banLoading } = useFanZoneBan(user?.id ?? null);
   const { mute: myMute } = useFanZoneMute(user?.id ?? null);
+  // Small windows scroll the whole page rather than an inner panel. There the
+  // wrapper must stay out of the scroll chain, or sticky side rails can't
+  // lock on (a scroll container that never scrolls still traps sticky).
+  const lockable = useViewportLockable();
   // The naughty-step screen greets a muted member on the Fan Zone home page
   // (the boards index). "Carry on reading" drops them into read-only browsing.
   const [muteBrowsing, setMuteBrowsing] = useState(false);
