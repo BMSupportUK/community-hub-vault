@@ -827,6 +827,13 @@
       "when": 1791982563988,
       "tag": "0117_staff_jobs_boards",
       "breakpoints": true
+    },
+    {
+      "idx": 118,
+      "version": "7",
+      "when": 1791983359199,
+      "tag": "0118_staff_checkout_chat_only",
+      "breakpoints": true
     }
   ]
 }
