@@ -249,26 +249,26 @@ function ForumLayout() {
         <div className="relative px-4 py-5 sm:px-8 sm:py-6 flex flex-col gap-5">
           <div className="z-10 flex w-full flex-wrap items-center gap-2 sm:justify-end">
             {hasSupportSide && (
-              <Button asChild size="sm" variant="outline" className="bg-white/15 backdrop-blur border-white/40 text-white hover:bg-white/25 hover:text-white justify-center size-9 p-0 lg:size-auto lg:px-3">
+              <Button asChild size="sm" variant="outline" className="bg-white/15 backdrop-blur border-white/40 text-white hover:bg-white/25 hover:text-white justify-center size-9 p-0 min-[1700px]:size-auto min-[1700px]:px-3">
                 <Link to="/home" title="Switch to BM Support">
-                  <ArrowLeftRight className="size-4 lg:mr-1.5" />
-                  <span className="hidden lg:inline">Switch to BM Support</span>
+                  <ArrowLeftRight className="size-4 min-[1700px]:mr-1.5" />
+                  <span className="hidden min-[1700px]:inline">Switch to BM Support</span>
                 </Link>
               </Button>
             )}
             {canOpenFanZoneAdminPanel((roles ?? []) as string[]) && (
-              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 lg:size-auto lg:px-3">
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 min-[1700px]:size-auto min-[1700px]:px-3">
                 <Link to="/fan-zone-admin" title="Fan Zone | Admin Panel">
-                  <ShieldCheck className="size-4 lg:mr-1.5" />
-                  <span className="hidden lg:inline">Fan Zone | Admin Panel</span>
+                  <ShieldCheck className="size-4 min-[1700px]:mr-1.5" />
+                  <span className="hidden min-[1700px]:inline">Fan Zone | Admin Panel</span>
                 </Link>
               </Button>
             )}
             {canModerate && (
-              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 lg:size-auto lg:px-3">
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 min-[1700px]:size-auto min-[1700px]:px-3">
                 <Link to="/admin-reports" title="Moderation centre">
-                  <ShieldAlert className="size-4 lg:mr-1.5" />
-                  <span className="hidden lg:inline">Moderation centre</span>
+                  <ShieldAlert className="size-4 min-[1700px]:mr-1.5" />
+                  <span className="hidden min-[1700px]:inline">Moderation centre</span>
                   {pendingReports > 0 && (
                     <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
                       {pendingReports}
@@ -278,10 +278,10 @@ function ForumLayout() {
               </Button>
             )}
             {canModerate && (
-              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 lg:size-auto lg:px-3">
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 min-[1700px]:size-auto min-[1700px]:px-3">
                 <Link to="/fan-zone-sanctions" title="Mutes & bans">
-                  <Ban className="size-4 lg:mr-1.5" />
-                  <span className="hidden lg:inline">Mutes &amp; bans</span>
+                  <Ban className="size-4 min-[1700px]:mr-1.5" />
+                  <span className="hidden min-[1700px]:inline">Mutes &amp; bans</span>
                   {activeSanctions > 0 && (
                     <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
                       {activeSanctions}
@@ -291,10 +291,10 @@ function ForumLayout() {
               </Button>
             )}
             {canModerate && (
-              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 lg:size-auto lg:px-3">
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 min-[1700px]:size-auto min-[1700px]:px-3">
                 <Link to="/fan-zone-appeals" title="Appeals">
-                  <MailQuestion className="size-4 lg:mr-1.5" />
-                  <span className="hidden lg:inline">Appeals</span>
+                  <MailQuestion className="size-4 min-[1700px]:mr-1.5" />
+                  <span className="hidden min-[1700px]:inline">Appeals</span>
                   {openAppeals > 0 && (
                     <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
                       {openAppeals}
