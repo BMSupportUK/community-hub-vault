@@ -1,4 +1,4 @@
-import { resolveSoundSrc } from "@/lib/sound-overrides";
+import { resolveSoundSrc, loadSoundOverrides } from "@/lib/sound-overrides";
 import { PHONE_TONE_SRCS, toPhoneTone } from "@/lib/phone-alert-sounds";
 const recentlyPlayed = new Map<string, number>();
 // Shared audio playback helper.
