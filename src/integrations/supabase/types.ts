@@ -5692,6 +5692,48 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_records: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          equipped_nameplate_id: string | null
+          join_date: string | null
+          leave_date: string | null
+          roles: string[]
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          equipped_nameplate_id?: string | null
+          join_date?: string | null
+          leave_date?: string | null
+          roles?: string[]
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          equipped_nameplate_id?: string | null
+          join_date?: string | null
+          leave_date?: string | null
+          roles?: string[]
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       status_incident_updates: {
         Row: {
           attachments: Json
@@ -7602,6 +7644,10 @@ export type Database = {
       revoke_expired_subscriber_role: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      save_staff_record: {
+        Args: { _join_date: string; _leave_date?: string; _user_id: string }
+        Returns: undefined
       }
       set_my_fan_alias: {
         Args: { _alias: string; _avatar: string }
