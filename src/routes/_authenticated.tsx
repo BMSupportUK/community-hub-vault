@@ -15,6 +15,7 @@ import { adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
+import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 import { BmSplash } from "@/components/app/BmSplash";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
@@ -124,9 +125,9 @@ function AuthLayout() {
   // button to hop over to the Fan Zone (the Fan Zone header has the reverse).
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
-  // Fan-Zone-only accounts reading the sports guides get Fan Zone chrome,
-  // never the BM Support header.
-  const inFanZone = isFanZonePath(path) || (isFanZoneOnly && path.startsWith("/sports-guides"));
+  // Sports guides reached from the Fan Zone (or by Fan-Zone-only accounts)
+  // keep Fan Zone chrome, never the BM Support header.
+  const inFanZone = useInFanZoneChrome(path, isFanZoneOnly);
   const search = useRouterState({ select: (r) => r.location.search as Record<string, unknown> });
   const shopTab = typeof search.tab === "string" ? search.tab : undefined;
   const shopView = typeof search.view === "string" ? search.view : undefined;

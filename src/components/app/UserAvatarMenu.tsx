@@ -42,6 +42,7 @@ import {
 import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 import { BORO_DEFAULT_AVATAR_URL } from "@/lib/boro-default-avatar";
 import {
@@ -89,7 +90,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
   const presence = usePresence(user?.id, Boolean(user));
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const inFanZone = isFanZonePath(path) || isFanZoneOnly;
+  const inFanZone = useInFanZoneChrome(path, isFanZoneOnly) || isFanZoneOnly;
   const { forcedAvatar: forcedFanAvatar } = useFanAvatarLock();
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
@@ -114,6 +115,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { user, isStaff, isPending, signOut, hasAny, roles, hasRole, isFanZoneOnly } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const inFanZoneChrome = useInFanZoneChrome(path, isFanZoneOnly);
   const fanZoneInfo = useFanZoneMembership(user?.id ?? null);
   const canSeeFanZoneMembers =
     hasAny(["admin", "management", "boro_fan_zone_moderator", "boro_fan_zone_member"]) ||
@@ -227,8 +229,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     );
   }
 
-  // Fan-Zone-only accounts never see the BM Support rail, wherever they are.
-  const inFanZone = isFanZonePath(path) || isFanZoneOnly;
+  // Fan-Zone-only accounts never see the BM Support rail, wherever they are;
+  // sports guides opened from the Fan Zone keep the Fan Zone rail too.
+  const inFanZone = inFanZoneChrome || isFanZoneOnly;
 
 
   const supportItems: RailItem[] = [
