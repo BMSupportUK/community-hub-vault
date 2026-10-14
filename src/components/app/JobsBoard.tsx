@@ -15,9 +15,11 @@ import { IconRail } from "./IconRail";
 import { applicationSchema, type JobZone, type JobVacancy } from "@/lib/jobs";
 import { listJobVacancies, submitJobApplication } from "@/lib/jobs.functions";
 import interview from "@/assets/jobs-interview.jpg";
+import { useAuth } from "@/hooks/use-auth";
 
 export const jobsQueryOptions = (zone: JobZone) => queryOptions({ queryKey: ["public-jobs", zone], queryFn: () => listJobVacancies({ data: { zone } }) });
 export function JobsBoard({ zone }: { zone: JobZone }) {
+  const { user, isFanZoneOnly } = useAuth();
   const { data: vacancies } = useSuspenseQuery(jobsQueryOptions(zone));
   const [selected, setSelected] = useState<JobVacancy | null>(null);
   const isBoro = zone === "fanzone";
@@ -46,7 +48,8 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
     </main>
     <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">{selected && <ApplicationForm key={selected.id} job={selected} />}</DialogContent></Dialog>
   </div>;
-  return isBoro ? <div className="boro-theme flex min-h-dvh"><IconRail />{content}</div> : content;
+  if (isBoro) return <div className="boro-theme flex min-h-dvh"><IconRail />{content}</div>;
+  return user && !isFanZoneOnly ? <div className="flex min-h-dvh"><IconRail />{content}</div> : content;
 }
 function ApplicationForm({ job }: { job: JobVacancy }) {
   const send = useServerFn(submitJobApplication);
