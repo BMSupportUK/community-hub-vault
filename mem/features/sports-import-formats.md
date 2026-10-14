@@ -123,3 +123,6 @@ ET→UK conversion (`sourceTimeToUk`/`sourceTimeToUkParts` in src/lib/import-tim
 ## Scotland Premier League Streams (permanent)
 Every fixture in this guide gets the exact channel label `Under Team Channels`; retain any supplied channels and do not duplicate the label on read-back or merge. The label belongs beneath Available channels, never in the event title. Do not apply this rule to the separate Scotland Premier League Channels guide.
 - Rugby Pass channel-header posts: a fixture wrapped over two lines (line ending in " v") is joined back into one fixture and keeps its Rugby Pass channel.
+
+## Stan Sport guide (permanent)
+Guide title matching /\bstan\b/i: the same event listed once per channel (e.g. "Stan 1 HD" and "Stan event 01"), same day, start times within 30 min, is ONE card carrying every channel; most-listed start time wins. Applied on import merge and editor save. Other guides keep same-event/different-channel entries separate. Test: tests/sports-stan-combine.test.ts.
