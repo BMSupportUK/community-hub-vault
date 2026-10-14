@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current
-- [ ] Add Owner tools Staff page, employment dates, preserved former-staff directory and full-page office illustration; verify saving and directory read-back
+- [x] Add Owner tools Staff page, employment dates, preserved former-staff directory and full-page office illustration; verified signed-in date save and directory read-back with a removed fictional record, plus mobile layout and rule tests
 - [x] Staff Shift history: pick days from a calendar with Previous day / Next day / Today; admin Staff shifts restored to its day-range buttons — verified signed-in (day 9 shows Friday 9 October 2026, Previous day gives Thursday 8 October, Today returns to Monday 12 October)
 - [x] Dim staff Shift history and Shifts with the same office picture; align admin/staff shift-end answers — nine tests passed and signed-in pages both show today's 19:00 sign-out answer
 - [x] Check all-user notification visibility above the app lock screen; restore member/staff listeners, remove reply suppression, and verify a simulated incoming alert while signed in and locked
