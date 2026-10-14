@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { LandingHeader } from "@/components/LandingHeader";
 import { FanZonePublicHeader } from "./FanZonePublicHeader";
 import { IconRail } from "./IconRail";
+import { JobsMemberHeader } from "./JobsMemberHeader";
 import { applicationSchema, type JobZone, type JobVacancy } from "@/lib/jobs";
 import { listJobVacancies, submitJobApplication } from "@/lib/jobs.functions";
 import interview from "@/assets/jobs-interview.jpg";
@@ -27,7 +28,7 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
   const content = <div className="relative isolate min-h-dvh min-w-0 flex-1">
     <img src={interview} alt="A candidate meeting two interviewers in a welcoming workplace" width={1536} height={1024} className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover object-center" />
     <div className="pointer-events-none absolute inset-0 -z-10 bg-background/75" />
-    {isBoro ? <FanZonePublicHeader /> : <LandingHeader />}
+    {isBoro ? <FanZonePublicHeader /> : user && !isFanZoneOnly ? <JobsMemberHeader /> : <LandingHeader />}
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
       <Link to={isBoro ? "/fan-zone" : "/"} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> {name}</Link>
       <header className="max-w-2xl py-10 sm:py-14">
