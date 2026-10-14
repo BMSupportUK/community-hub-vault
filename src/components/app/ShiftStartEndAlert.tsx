@@ -40,6 +40,7 @@ interface OpenShift {
   clock_out: string | null;
   end_prompt_asked_at: string | null;
   still_working_ack_at: string | null;
+  end_prompt_signed_out_at: string | null;
 }
 
 type Stage = "start" | "end";
@@ -117,7 +118,7 @@ export function ShiftStartEndAlert() {
           .order("start_time", { ascending: true }),
         supabase
           .from("shifts")
-          .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at")
+          .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, end_prompt_signed_out_at")
           .eq("user_id", user.id)
           .is("clock_out", null)
           .order("clock_in", { ascending: false })
@@ -293,6 +294,13 @@ export function ShiftStartEndAlert() {
   // to answer.
   useEffect(() => {
     if (!pageVisible || !openShift || endsAtMs === null || now < endsAtMs) {
+      setAskOpen(false);
+      setAutoEndAt(null);
+      return;
+    }
+    // A sign-out already in flight (or a realtime reload that still shows the
+    // shift open) must never re-open the question.
+    if (autoEndedShifts.has(openShift.id) || openShift.end_prompt_signed_out_at) {
       setAskOpen(false);
       setAutoEndAt(null);
       return;
