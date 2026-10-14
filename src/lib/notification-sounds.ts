@@ -4,20 +4,10 @@
 // asset rename or a typo'd key can never silently break playback in one
 // place while working in another.
 
-import mentionAudio from "@/assets/mention-notify.mp3";
-import staffMentionAudio from "@/assets/staff-mention.mp3";
+// The old built-in website clips were removed; every alert plays the same
+// recording the phone app uses (admin uploads still override per key).
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
 import broadcastAudio from "@/assets/broadcast-notify.mp3";
-import orderAudio from "@/assets/order-notify.mp3";
-import ticketAudio from "@/assets/ticket-notify.mp3";
-import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
-import paymentReceivedAudio from "@/assets/payment-received.mp3";
-import newSignupAudio from "@/assets/new-signup-notify.mp3";
-import shiftStartAudio from "@/assets/shift-start.mp3";
-import shiftEndAudio from "@/assets/shift-end.mp3";
-import endBreakAudio from "@/assets/end-break.mp3";
-import endLunchAudio from "@/assets/end-lunch.mp3";
-import outageAudio from "@/assets/outage-notify.mp3";
-import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import fanZoneAppealAsset from "@/assets/fan-zone-appeal-alert.mp3.asset.json";
 import fanZoneAppealMsgAsset from "@/assets/fan-zone-appeal-message.mp3.asset.json";
 import fanZoneAppealStaffAsset from "@/assets/fan-zone-appeal-staff-reply.mp3.asset.json";
@@ -55,7 +45,7 @@ export interface SoundDef {
 }
 
 export const NOTIFICATION_SOUNDS: readonly SoundDef[] = [
-  { key: "mention", label: "Mention", src: mentionAudio, gain: 1.5 },
+  { key: "mention", label: "Mention", src: phoneToneSrc("mention")!, gain: 1.5 },
   { key: "fan-zone-mention", label: "Fan Zone mention", src: fanZoneMentionAsset.url, gain: 2.0 },
   { key: "staff-mention", label: "Staff mention", src: staffMentionAudio, gain: 1.5 },
   { key: "broadcast", label: "Broadcast", src: broadcastAudio, gain: 1.5 },
