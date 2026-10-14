@@ -13,6 +13,19 @@ export const USER_TIMEOUT_OPTIONS = [5, 10, 15, 30, 60];
 export const DEFAULT_TIMEOUT_MINUTES = 15;
 export const STAFF_MAX_TIMEOUT_MINUTES = 10;
 
+/** The same persisted-state decision applies on cold start and app return. */
+export function shouldLockScreen(
+  enabled: boolean,
+  savedLocked: boolean,
+  lastActivity: number,
+  timeoutMinutes: number,
+  now = Date.now(),
+): boolean {
+  if (!enabled) return false;
+  const timeoutMs = Math.max(1, timeoutMinutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
+  return savedLocked || (Number.isFinite(lastActivity) && lastActivity > 0 && now - lastActivity >= timeoutMs);
+}
+
 /**
  * Wipe every persisted screen-lock flag/idle timestamp.
  *

@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Stop home flickering on app return; preserve the loaded page behind the security cover and verify short return plus expired/saved locks
 - [x] Make Knowledge Base full-width with two-column sidebar categories and a full-page customer-reading illustration; verified signed-in category selection, guide opening/back, intact header/rail and no horizontal overflow at 1920, 886 and 390px
 - [x] Allow staff secure checkout viewing, customer chat and existing link sharing; verified staff link copying, chat send/read-back after reload, hidden completion controls and direct stage-change denials; 14 tests pass, temporary test order/chat removed
 - [x] Add separate BM Support and Boro Fan Zone jobs boards with interview backgrounds, application forms, admin vacancy management and private application review; verified real admin vacancy save, anonymous application submission, admin read-back/status/notes, separate zone listings and mobile layout; 15 tests passed and fictional test records removed
