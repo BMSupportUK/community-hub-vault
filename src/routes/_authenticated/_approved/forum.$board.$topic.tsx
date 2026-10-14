@@ -980,7 +980,21 @@ function TopicPage() {
           <Button asChild variant="ghost" size="sm" className="px-2">
             <Link to="/forum/$board" params={{ board: slug }}>{board?.name ?? "Board"}</Link>
           </Button>
+          {canPost && (
+            <Button
+              type="button"
+              size="icon"
+              variant="destructive"
+              onClick={jumpToReplyBox}
+              className="ml-auto size-9 shrink-0 rounded-full shadow-lg"
+              aria-label="Jump to reply box"
+              title="Jump to reply box"
+            >
+              <MessageSquare className="size-4" />
+            </Button>
+          )}
         </div>
+
         <div className="flex items-start justify-between gap-3 flex-wrap">
           {editingTitle ? (
             <div className="flex items-center gap-2 min-w-0 flex-1">
