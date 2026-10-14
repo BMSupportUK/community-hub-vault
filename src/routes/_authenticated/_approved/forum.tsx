@@ -344,7 +344,7 @@ function ForumLayout() {
             <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
               <Link to="/forum/search" search={{ q: "" }}><SearchIcon className="size-4 mr-1.5" />Search</Link>
             </Button>
-            <div className="col-span-2 sm:col-span-1 flex justify-center sm:justify-end">
+            <div className="flex justify-center sm:justify-end">
               <FanZoneMentionsBell />
             </div>
           </div>
