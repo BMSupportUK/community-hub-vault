@@ -20,8 +20,18 @@ import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { useShiftStatusMap } from "@/hooks/use-shift-status-map";
 import { StaffBreakChip } from "@/components/app/StaffBreakChip";
+import { Nameplate } from "@/components/app/Nameplate";
+import { StaffEmploymentDates } from "@/components/app/StaffEmploymentDates";
+import { staffEmploymentGroup, type StaffRecord } from "@/lib/staff-employment";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
+  head: () => ({ meta: [
+    { title: "Staff Directory | BM Support" },
+    { name: "description", content: "BM Support staff by role, employment dates and former staff records." },
+    { property: "og:title", content: "Staff Directory | BM Support" },
+    { property: "og:description", content: "BM Support staff by role, employment dates and former staff records." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: StaffPage,
 });
 
@@ -45,11 +55,13 @@ type FriendState =
   | { kind: "friends"; id: string };
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
+const DIRECTORY_TABS = [...ROLE_ORDER, "former"];
 const ROLE_LABEL: Record<string, string> = {
   admin: "Owners",
   management: "Management",
   moderator: "Moderators",
   staff: "Staff",
+  former: "Staff who have left",
 };
 const ROLE_HEADER: Record<string, string> = {
   admin: profileHeaderManagement,
@@ -67,6 +79,7 @@ function StaffPage() {
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [employment, setEmployment] = useState<Record<string, StaffRecord>>({});
 
   const load = async () => {
     if (isDemo) {
@@ -74,13 +87,24 @@ function StaffPage() {
       const dm: Record<string, string[]> = {};
       for (const r of DEMO_ROLES) (dm[r.user_id] ||= []).push(r.role);
       setRolesByUser(dm);
+      setEmployment(Object.fromEntries(DEMO_STAFF.map((p) => [p.id, { user_id: p.id, join_date: "2026-01-05", leave_date: null, roles: dm[p.id] ?? [], username: p.username, display_name: p.display_name, avatar_url: p.avatar_url, bio: p.bio, equipped_nameplate_id: p.equipped_nameplate_id }])));
       return;
     }
-    const [{ data: ps }, { data: rs }] = await Promise.all([
+    const [{ data: ps }, { data: rs }, { data: records, error: recordError }] = await Promise.all([
       supabase.from("profiles").select("*").order("display_name"),
       supabase.from("user_roles").select("user_id, role"),
+      supabase.from("staff_records").select("*"),
     ]);
-    setProfiles((ps as Profile[] | null) ?? []);
+    if (recordError) toast.error("Unable to load employment dates");
+    const recordMap = Object.fromEntries((records ?? []).map((r) => [r.user_id, r]));
+    setEmployment(recordMap);
+    const directory = new Map(((ps as Profile[] | null) ?? []).map((p) => [p.id, p]));
+    for (const r of records ?? []) {
+      if (!r.leave_date) continue;
+      const current = directory.get(r.user_id);
+      directory.set(r.user_id, { ...current, id: r.user_id, username: r.username, display_name: r.display_name, avatar_url: r.avatar_url, bio: r.bio, equipped_nameplate_id: r.equipped_nameplate_id, created_at: current?.created_at ?? r.created_at, is_private: current?.is_private ?? false, last_seen_at: current?.last_seen_at ?? null });
+    }
+    setProfiles([...directory.values()]);
     const map: Record<string, string[]> = {};
     for (const r of (rs as RoleRow[] | null) ?? []) {
       (map[r.user_id] ||= []).push(r.role);
@@ -126,7 +150,7 @@ function StaffPage() {
 
   const STAFF_SET = new Set<string>(ROLE_ORDER);
   const staffProfiles = profiles.filter((p) =>
-    (rolesByUser[p.id] ?? []).some((r) => STAFF_SET.has(r))
+    staffEmploymentGroup(rolesByUser[p.id] ?? [], employment[p.id]) !== null
   );
   const filtered = staffProfiles.filter((p) => {
     if (!q.trim()) return true;
@@ -148,8 +172,11 @@ function StaffPage() {
   };
 
   const grouped: Record<string, Profile[]> = {};
-  ROLE_ORDER.forEach((r) => (grouped[r] = []));
-  filtered.forEach((p) => grouped[topRole(p.id)].push(p));
+  DIRECTORY_TABS.forEach((r) => (grouped[r] = []));
+  filtered.forEach((p) => {
+    const group = staffEmploymentGroup(rolesByUser[p.id] ?? [], employment[p.id]);
+    if (group) grouped[group].push(p);
+  });
 
   return (
     <Tabs defaultValue="admin">
@@ -176,7 +203,7 @@ function StaffPage() {
                 />
               </div>
               <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface/70 border border-border p-1 sm:flex sm:w-auto sm:flex-wrap">
-                {ROLE_ORDER.map((role) => (
+                {DIRECTORY_TABS.map((role) => (
                   <TabsTrigger
                     key={role}
                     value={role}
@@ -194,7 +221,7 @@ function StaffPage() {
         </header>
 
         <div className="px-4 py-5 sm:px-8 sm:py-6">
-          {ROLE_ORDER.map((role) => {
+          {DIRECTORY_TABS.map((role) => {
             const list = grouped[role];
             return (
               <TabsContent key={role} value={role} className="mt-6">
@@ -204,7 +231,7 @@ function StaffPage() {
                     aria-hidden
                   >
                     <img
-                      src={ROLE_HEADER[role]}
+                      src={ROLE_HEADER[role] ?? profileHeaderStaff}
                       alt=""
                       className="absolute inset-0 h-full w-full object-cover object-center"
                       decoding="async"
@@ -229,7 +256,7 @@ function StaffPage() {
                     {list.map((p) => {
                       const name = p.display_name ?? p.username ?? "Unknown";
                       const initial = name.slice(0, 1).toUpperCase();
-                      const userRoles = rolesByUser[p.id] ?? [];
+                      const userRoles = role === "former" ? employment[p.id]?.roles ?? [] : rolesByUser[p.id] ?? [];
                       const isOnline = onlineUsers.has(p.id);
                       const brk = shiftStatus[p.id]?.break;
                       return (
@@ -271,7 +298,9 @@ function StaffPage() {
                                 params={{ username: p.username ?? p.id }}
                                 className="font-semibold text-sm text-foreground hover:text-primary-glow transition-colors"
                               >
-                                {name}
+                                <Nameplate id={p.equipped_nameplate_id} className="min-h-10 rounded-md bg-gradient-primary px-3 py-2">
+                                  <span className="relative z-10 block pr-7">{name}</span>
+                                </Nameplate>
                               </Link>
                               <span className="ml-1 inline-flex align-middle"><VpnBadge userId={p.id} size={12} /></span>
                               <div className="text-[10px] mt-0.5 flex flex-wrap items-center gap-1.5">
@@ -325,9 +354,8 @@ function StaffPage() {
                                 <Lock className="size-3" /> Private profile — friends only
                               </p>
                             )}
-                            <div className="mt-auto pt-3 border-t border-purple-500/20 text-[11px] text-muted-foreground/70 flex items-center gap-1.5">
-                              <Clock className="size-3" />
-                              Joined {new Date(p.created_at).toLocaleDateString("en-GB")}
+                            <div className="mt-auto pt-3 border-t border-border">
+                              <StaffEmploymentDates joined={employment[p.id]?.join_date} left={employment[p.id]?.leave_date} />
                             </div>
                           </div>
                         </div>
