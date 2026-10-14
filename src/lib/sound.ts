@@ -1,5 +1,5 @@
 import { resolveSoundSrc, loadSoundOverrides } from "@/lib/sound-overrides";
-import { PHONE_TONE_SRCS, toPhoneTone } from "@/lib/phone-alert-sounds";
+import { PHONE_TONE_SRCS } from "@/lib/phone-alert-sounds";
 const recentlyPlayed = new Map<string, number>();
 // Shared audio playback helper.
 import { Capacitor } from "@capacitor/core";
