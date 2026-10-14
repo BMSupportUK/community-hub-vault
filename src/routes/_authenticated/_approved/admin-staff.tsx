@@ -71,7 +71,7 @@ function EmploymentDirectory() {
     if (invalid) return toast.error(invalid);
     if (left && !editing.leave_date && !window.confirm("Mark this staff member as having left? Their staff access will be removed and their details kept in Staff who have left.")) return;
     setBusy(true);
-    const { error } = await supabase.rpc("save_staff_record", { _user_id: editing.user_id, _join_date: joined, _leave_date: left || null });
+    const { error } = await supabase.rpc("save_staff_record", { _user_id: editing.user_id, _join_date: joined, _leave_date: left || undefined });
     setBusy(false);
     if (error) return toast.error(error.message);
     setEditing(null);
