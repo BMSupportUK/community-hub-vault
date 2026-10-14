@@ -258,8 +258,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       ? { to: "/fanzone/u/$userId", label: "My Profile", icon: UserCircle2, show: true, params: { userId: user.id } }
       : { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: false },
     { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
-    // Members-only: BM Support members' sports guides; Fan Zone-only accounts never see it.
-    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: !!user && !isFanZoneOnly, resetSportsGuides: true },
+    // Any signed-in member (BM Support or Fan Zone) can read the sports guides.
+    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: !!user, resetSportsGuides: true },
     ...COMPETITIONS.map((c) => ({
       to: c.to,
       label: c.railLabel,

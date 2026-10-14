@@ -52,6 +52,8 @@ const FAN_ZONE_ONLY_ALLOWED = [
   "/banned",
   "/gate",
   "/fan-zone-pending",
+  // Fan Zone members can read the sports guides from the Fan Zone rail.
+  "/sports-guides",
   "/login",
   "/signup",
 ];
