@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Staff read notification sounds" ON storage.objects;
+CREATE POLICY "Signed-in play notification sounds" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'notification-sounds' AND auth.uid() IS NOT NULL);
