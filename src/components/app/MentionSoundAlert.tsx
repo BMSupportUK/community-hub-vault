@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ensureSoundUnlocked, playSound } from "@/lib/sound";
 import { getSound } from "@/lib/notification-sounds";
-import mentionAudio from "@/assets/mention-notify.mp3";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
+const mentionAudio = phoneToneSrc("mention")!;
 
 type MentionNotification = {
   id: string;

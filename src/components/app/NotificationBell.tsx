@@ -8,11 +8,11 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import outageAudio from "@/assets/outage-notify.mp3";
-import outageResolvedAudio from "@/assets/outage-resolved.mp3";
-import orderAudio from "@/assets/order-notify.mp3";
 import { playSound } from "@/lib/sound";
-import { phoneToneForKind } from "@/lib/phone-alert-sounds";
+import { phoneToneForKind, phoneToneSrc } from "@/lib/phone-alert-sounds";
+const outageAudio = phoneToneSrc("outage")!;
+const outageResolvedAudio = phoneToneSrc("outage_resolved")!;
+const orderAudio = phoneToneSrc("order")!;
 
 // Kinds whose sound is played by a dedicated listener elsewhere.
 const OWNED_ELSEWHERE = new Set(["mention", "ticket_reply", "order_paid", "invoice_paid", "wise_payment", "ticket_raised", "ticket", "content_report", "shift_start", "shift_start_warn", "shift_end", "shift_end_warn", "break_ending", "main_break_ending"]);

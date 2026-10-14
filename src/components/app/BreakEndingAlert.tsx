@@ -11,8 +11,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import endLunchSfx from "@/assets/end-lunch.mp3";
-import endBreakSfx from "@/assets/end-break.mp3";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
+const endLunchSfx = phoneToneSrc("main_break_ending")!;
+const endBreakSfx = phoneToneSrc("break_ending")!;
 import { playSound } from "@/lib/sound";
 import { type BreakKind, BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 import { claimBreakAlert } from "@/lib/break-alerts";

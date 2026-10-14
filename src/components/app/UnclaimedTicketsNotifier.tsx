@@ -7,7 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { playSound } from "@/lib/sound";
 import { showLocalNotification } from "@/lib/local-notify";
-import ticketAudio from "@/assets/ticket-notify.mp3";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
+const ticketAudio = phoneToneSrc("ticket")!;
 
 type Row = { id: string; subject: string; priority: string; created_at: string };
 

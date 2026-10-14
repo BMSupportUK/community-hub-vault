@@ -4,7 +4,8 @@ import { BadgePoundSterling } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { playSound } from "@/lib/sound";
-import paymentReceivedAudio from "@/assets/payment-received.mp3";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
+const paymentReceivedAudio = phoneToneSrc("payment")!;
 import {
   AlertDialog,
   AlertDialogAction,
