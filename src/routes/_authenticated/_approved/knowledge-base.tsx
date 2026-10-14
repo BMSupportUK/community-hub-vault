@@ -639,7 +639,7 @@ function KnowledgeBasePage() {
 
 function KnowledgeBackground() {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden [clip-path:inset(0)]">
       <img src={kbReadingBackground} alt="" width={1920} height={1088} className="fixed inset-0 size-full object-cover object-right" />
       <div className="fixed inset-0 bg-background/80" />
     </div>
