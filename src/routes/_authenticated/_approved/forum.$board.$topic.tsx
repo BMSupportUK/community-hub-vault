@@ -413,10 +413,13 @@ function TopicPage() {
   }, [user?.id]);
 
   useEffect(() => {
+    console.log("[jumpdbg] effect", tab, pendingReplyScrollRef.current, !!replyBoxRef.current);
     if (tab !== "reply" || !pendingReplyScrollRef.current) return;
     pendingReplyScrollRef.current = false;
+    console.log("[jumpdbg] scrolling", !!replyBoxRef.current);
     replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [tab, reply]);
+
 
   // After posting, jump to the page holding the new reply and scroll to it.
   useEffect(() => {
