@@ -1,19 +1,6 @@
 // Website playback of the exact same recordings the Android app uses, so an
 // alert sounds identical in the browser and on the phone.
 import { PHONE_ALERTS, phoneAlertFor } from "@/lib/phone-alerts";
-import mentionAudio from "@/assets/mention-notify.mp3";
-import staffMentionAudio from "@/assets/staff-mention.mp3";
-import orderAudio from "@/assets/order-notify.mp3";
-import ticketAudio from "@/assets/ticket-notify.mp3";
-import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
-import paymentReceivedAudio from "@/assets/payment-received.mp3";
-import newSignupAudio from "@/assets/new-signup-notify.mp3";
-import shiftStartAudio from "@/assets/shift-start.mp3";
-import shiftEndAudio from "@/assets/shift-end.mp3";
-import endBreakAudio from "@/assets/end-break.mp3";
-import endLunchAudio from "@/assets/end-lunch.mp3";
-import outageAudio from "@/assets/outage-notify.mp3";
-import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 
 const files = import.meta.glob("/src/assets/phone-tones/*.mp3", {
   eager: true,
