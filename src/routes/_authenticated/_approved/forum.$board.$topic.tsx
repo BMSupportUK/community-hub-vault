@@ -1208,6 +1208,18 @@ function TopicPage() {
                 </div>
               ) : null}
               <ViewingBox />
+              {canPost && (
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={() => replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                  className="fixed bottom-6 right-[4.75rem] z-50 size-11 rounded-full border border-[#E11B22]/50 bg-background/90 text-[#E11B22] shadow-lg transition-transform hover:scale-110 hover:border-[#E11B22]"
+                  aria-label="Jump to reply box"
+                  title="Jump to reply box"
+                >
+                  <MessageSquare className="size-5" />
+                </Button>
+              )}
               <Button
                 type="button"
                 size="icon"
