@@ -820,6 +820,13 @@
       "when": 1791982186097,
       "tag": "0116_restrict_staff_record_direct_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 117,
+      "version": "7",
+      "when": 1791982563988,
+      "tag": "0117_staff_jobs_boards",
+      "breakpoints": true
     }
   ]
 }

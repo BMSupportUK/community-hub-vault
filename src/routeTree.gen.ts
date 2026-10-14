@@ -23,6 +23,7 @@ import { Route as FanzoneMuteDemoRouteImport } from './routes/fanzone-mute-demo'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as GetAndroidAppRouteImport } from './routes/get-android-app'
+import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as PackagesRouteImport } from './routes/packages'
@@ -38,6 +39,7 @@ import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as CheckoutInstallTokenRouteImport } from './routes/checkout-install.$token'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
+import { Route as FanZoneJobsRouteImport } from './routes/fan-zone.jobs'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesIdRouteImport } from './routes/guides.$id'
 import { Route as PayTokenRouteImport } from './routes/pay.$token'
@@ -244,6 +246,11 @@ const GetAndroidAppRoute = GetAndroidAppRouteImport.update({
   path: '/get-android-app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JobsRoute = JobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -317,6 +324,11 @@ const FanZoneIndexRoute = FanZoneIndexRouteImport.update({
 const FanZoneBoardRoute = FanZoneBoardRouteImport.update({
   id: '/$board',
   path: '/$board',
+  getParentRoute: () => FanZoneRoute,
+} as any)
+const FanZoneJobsRoute = FanZoneJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
   getParentRoute: () => FanZoneRoute,
 } as any)
 const GuidesIndexRoute = GuidesIndexRouteImport.update({
@@ -1141,6 +1153,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-android-app': typeof GetAndroidAppRoute
+  '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1154,6 +1167,7 @@ export interface FileRoutesByFullPath {
   '/a/$token': typeof ATokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
+  '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
@@ -1305,6 +1319,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-android-app': typeof GetAndroidAppRoute
+  '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1317,6 +1332,7 @@ export interface FileRoutesByTo {
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
+  '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/fan-zone': typeof FanZoneIndexRoute
@@ -1470,6 +1486,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-android-app': typeof GetAndroidAppRoute
+  '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1484,6 +1501,7 @@ export interface FileRoutesById {
   '/a/$token': typeof ATokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
+  '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
@@ -1638,6 +1656,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/get-android-app'
+    | '/jobs'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -1651,6 +1670,7 @@ export interface FileRouteTypes {
     | '/a/$token'
     | '/checkout-install/$token'
     | '/fan-zone/$board'
+    | '/fan-zone/jobs'
     | '/guides/$id'
     | '/pay/$token'
     | '/fan-zone/'
@@ -1802,6 +1822,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/get-android-app'
+    | '/jobs'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -1814,6 +1835,7 @@ export interface FileRouteTypes {
     | '/gate'
     | '/a/$token'
     | '/checkout-install/$token'
+    | '/fan-zone/jobs'
     | '/guides/$id'
     | '/pay/$token'
     | '/fan-zone'
@@ -1966,6 +1988,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/forgot-password'
     | '/get-android-app'
+    | '/jobs'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -1980,6 +2003,7 @@ export interface FileRouteTypes {
     | '/a/$token'
     | '/checkout-install/$token'
     | '/fan-zone/$board'
+    | '/fan-zone/jobs'
     | '/guides/$id'
     | '/pay/$token'
     | '/fan-zone/'
@@ -2134,6 +2158,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   GetAndroidAppRoute: typeof GetAndroidAppRoute
+  JobsRoute: typeof JobsRoute
   LoginRoute: typeof LoginRoute
   MfaChallengeRoute: typeof MfaChallengeRoute
   PackagesRoute: typeof PackagesRoute
@@ -2291,6 +2316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GetAndroidAppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/jobs': {
+      id: '/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof JobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -2394,6 +2426,13 @@ declare module '@tanstack/react-router' {
       path: '/$board'
       fullPath: '/fan-zone/$board'
       preLoaderRoute: typeof FanZoneBoardRouteImport
+      parentRoute: typeof FanZoneRoute
+    }
+    '/fan-zone/jobs': {
+      id: '/fan-zone/jobs'
+      path: '/jobs'
+      fullPath: '/fan-zone/jobs'
+      preLoaderRoute: typeof FanZoneJobsRouteImport
       parentRoute: typeof FanZoneRoute
     }
     '/guides/': {
@@ -3690,12 +3729,14 @@ const FanZoneBoardRouteWithChildren = FanZoneBoardRoute._addFileChildren(
 
 interface FanZoneRouteChildren {
   FanZoneBoardRoute: typeof FanZoneBoardRouteWithChildren
+  FanZoneJobsRoute: typeof FanZoneJobsRoute
   FanZoneIndexRoute: typeof FanZoneIndexRoute
   FanZoneUUserIdRoute: typeof FanZoneUUserIdRoute
 }
 
 const FanZoneRouteChildren: FanZoneRouteChildren = {
   FanZoneBoardRoute: FanZoneBoardRouteWithChildren,
+  FanZoneJobsRoute: FanZoneJobsRoute,
   FanZoneIndexRoute: FanZoneIndexRoute,
   FanZoneUUserIdRoute: FanZoneUUserIdRoute,
 }
@@ -3718,6 +3759,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   GetAndroidAppRoute: GetAndroidAppRoute,
+  JobsRoute: JobsRoute,
   LoginRoute: LoginRoute,
   MfaChallengeRoute: MfaChallengeRoute,
   PackagesRoute: PackagesRoute,

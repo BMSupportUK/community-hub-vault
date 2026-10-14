@@ -5573,6 +5573,98 @@ export type Database = {
           },
         ]
       }
+      staff_job_applications: {
+        Row: {
+          admin_notes: string
+          availability: string
+          consent: boolean
+          created_at: string
+          email: string
+          experience: string
+          full_name: string
+          id: string
+          motivation: string
+          phone: string
+          status: string
+          vacancy_id: string
+        }
+        Insert: {
+          admin_notes?: string
+          availability: string
+          consent: boolean
+          created_at?: string
+          email: string
+          experience: string
+          full_name: string
+          id?: string
+          motivation: string
+          phone?: string
+          status?: string
+          vacancy_id: string
+        }
+        Update: {
+          admin_notes?: string
+          availability?: string
+          consent?: boolean
+          created_at?: string
+          email?: string
+          experience?: string
+          full_name?: string
+          id?: string
+          motivation?: string
+          phone?: string
+          status?: string
+          vacancy_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_job_applications_vacancy_id_fkey"
+            columns: ["vacancy_id"]
+            isOneToOne: false
+            referencedRelation: "staff_job_vacancies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_job_vacancies: {
+        Row: {
+          closing_date: string | null
+          created_at: string
+          description: string
+          employment_type: string
+          id: string
+          location: string
+          published: boolean
+          requirements: string
+          title: string
+          zone: string
+        }
+        Insert: {
+          closing_date?: string | null
+          created_at?: string
+          description: string
+          employment_type?: string
+          id?: string
+          location?: string
+          published?: boolean
+          requirements?: string
+          title: string
+          zone: string
+        }
+        Update: {
+          closing_date?: string | null
+          created_at?: string
+          description?: string
+          employment_type?: string
+          id?: string
+          location?: string
+          published?: boolean
+          requirements?: string
+          title?: string
+          zone?: string
+        }
+        Relationships: []
+      }
       staff_notification_reads: {
         Row: {
           notification_id: string
@@ -7757,6 +7849,20 @@ export type Database = {
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
       submit_content_report: {
         Args: { _kind: string; _reason: string; _target: string }
+        Returns: string
+      }
+      submit_staff_job_application: {
+        Args: {
+          _availability: string
+          _consent: boolean
+          _email: string
+          _experience: string
+          _full_name: string
+          _motivation: string
+          _phone: string
+          _vacancy_id: string
+          _zone: string
+        }
         Returns: string
       }
       sync_subscriber_roles_from_credentials: { Args: never; Returns: number }
