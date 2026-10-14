@@ -138,6 +138,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
       if (cancelled) return;
       if (loadError) {
         console.error("Could not load screen lock settings", loadError);
+        setReady(true);
         return;
       }
       let active: ScreenLockSettings | null = null;
@@ -157,6 +158,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
         if (cancelled) return;
         if (createError || !created) {
           console.error("Could not create screen lock settings", createError);
+          setReady(true);
           return;
         }
         active = created as ScreenLockSettings;
@@ -284,7 +286,10 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
     if (!user || !ready) return;
     const hide = () => {
       wasBackgroundedRef.current = true;
-      if (settings?.enabled && !locked) setResumeChecking(true);
+      if (settings?.enabled && !locked) {
+        setResumeChecking(true);
+        // Record when we left so the return check uses real away time.
+      }
     };
     const checkResume = () => {
       if (document.visibilityState !== "visible") {
@@ -458,10 +463,10 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
   // Never hold a loading screen over an app that has nothing to hide: if no
   // saved lock and no expired idle timer suggest a lock, show the app while the
   // settings finish loading in the background.
-  if (!user || !ready || !settings || resumeChecking) {
-    if (screenLockMayBeLocked()) return <BmSplash />;
-    return <>{children}</>;
-  }
+  // Never reveal the signed-in site until the lock decision is made: cover it
+  // while settings load and while the app is backgrounded / resuming.
+  if (user && (!ready || resumeChecking)) return <BmSplash />;
+  if (!user && screenLockMayBeLocked()) return <BmSplash />;
   return <>{children}</>;
 }
 
