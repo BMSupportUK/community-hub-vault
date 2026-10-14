@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { deriveOrderTerms, accountTypeLabelFor, type AccountType } from "@/lib/order-terms";
 
 export interface CredentialCandidate {
@@ -39,8 +40,8 @@ async function assertStaff(supabase: any, userId: string) {
   const { data: roles, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw new Error(error.message);
   const callerRoles = (roles ?? []).map((r: { role: string }) => String(r.role));
-  if (!callerRoles.some((r: string) => r === "admin" || r === "management" || r === "staff")) {
-    throw new Error("Forbidden: staff only");
+  if (!canCompleteCheckoutSteps(callerRoles)) {
+    throw new Error("Forbidden: admin or management only");
   }
 }
 

@@ -607,7 +607,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
 
   const allTabs: readonly (readonly [string, string, boolean | string])[] = isFz ? [["tools", "Fan Zone tools", false]] : [
     ["tools", toolsHeading, false],
-    ["order-status", "Orders", true],
+    ["order-status", "Orders", false],
     ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
@@ -656,7 +656,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
         )}
       </div>
 
-      {tab === "order-status" && canSeePins ? (
+      {tab === "order-status" && canOpenAdminPanel(roles) ? (
         <div className="relative isolate -mx-4 sm:-mx-6 -mb-8 min-h-[calc(100dvh-16rem)] overflow-hidden">
           <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
             <img src={shopHero} alt="" className="h-full w-full object-cover object-center" />

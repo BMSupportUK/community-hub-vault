@@ -7757,6 +7757,22 @@ export type Database = {
         Returns: undefined
       }
       sports_blogs_clear_expired: { Args: never; Returns: undefined }
+      staff_checkout_order_summary: {
+        Args: { p_order_id?: string }
+        Returns: {
+          completed_at: string
+          created_at: string
+          customer_type: string
+          existing_username: string
+          id: string
+          manual_pay_method: string
+          order_ref: string
+          paid_at: string
+          shipping_name: string
+          status: string
+          total_cents: number
+        }[]
+      }
       staff_create_credential: {
         Args: {
           p_account_type?: string

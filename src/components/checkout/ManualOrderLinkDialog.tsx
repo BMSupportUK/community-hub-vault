@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, StaffCheckoutChatBubble, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { downloadReceipt } from "@/lib/receipt";
 
 
@@ -28,6 +30,8 @@ function CopyField({ label, value }: { label: string; value: string }) {
 
 /** Secure link + password panel, reused after saving an order and on the orders list. */
 export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, chatBubble = false, orderRef, onDone }: { orderId: string; withChat?: boolean; loginOnly?: boolean; chatBubble?: boolean; orderRef?: string | null; onDone?: () => void }) {
+  const { roles } = useAuth();
+  const canComplete = canCompleteCheckoutSteps(roles);
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [orderPaid, setOrderPaid] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
@@ -76,18 +80,18 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   useEffect(() => {
     // Load the months bought in both the checkout-page window and the admin
     // Orders "secure page" panel, so the expiry date fills in everywhere.
-    if (!link) return;
+    if (!link || !canComplete) return;
     loadRenewalAccounts({ data: { orderId } }).then((r) => {
       setRenewAccounts(r.accounts);
       setRenewAccountId(r.suggestedId ?? "");
       setRenewMonths(r.months);
     }).catch((e) => { setRenewAccounts([]); if (loginOnly) toast.error(e instanceof Error ? e.message : "Couldn't load the customer's accounts"); });
-  }, [loginOnly, !!link, orderId]);
+  }, [loginOnly, !!link, orderId, canComplete]);
   useEffect(() => {
     Promise.all([
       supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
-      supabase.from("orders").select("paid_at,completed_at,manual_pay_method").eq("id", orderId).maybeSingle(),
-      supabase.from("qd_dns_codes").select("id,label,code").order("label"),
+      supabase.rpc("staff_checkout_order_summary" as never, { p_order_id: orderId } as never).then(({ data, error }) => ({ data: (data as unknown as Record<string, unknown>[] | null)?.[0] ?? null, error })), 
+      canComplete ? supabase.from("qd_dns_codes").select("id,label,code").order("label") : Promise.resolve({ data: [] }),
     ]).then(([{ data: linkData }, { data: orderData }, { data: codeData }]) => {
       setLink((linkData as never) ?? null);
       const paidAt = (orderData as { paid_at?: string | null } | null)?.paid_at;
@@ -99,8 +103,9 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       setQdCodes(codes);
       if (codes.length > 0) setQdCodeId(codes[0].id);
     });
-  }, [orderId]);
+  }, [orderId, canComplete]);
   const toggleSetup = async (done: boolean) => {
+    if (!canComplete) return;
     setBusy(true);
     const { data, error } = await supabase.rpc("admin_set_account_setup" as never, { p_order_id: orderId, p_done: done } as never);
     setBusy(false);
@@ -111,6 +116,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   // Bank transfer / cash (and similar) payments are confirmed by hand here —
   // Stripe and Square orders mark themselves paid via their own webhooks.
   const markPaid = async () => {
+    if (!canComplete) return;
     if (!confirm("Confirm you've received this payment? The customer will be told their payment is confirmed.")) return;
     setBusy(true);
     const { error } = await supabase.rpc("admin_mark_manual_order_paid" as never, { p_order_id: orderId } as never);
@@ -121,6 +127,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
     toast.success("Payment marked as received");
   };
   const completeSale = async () => {
+    if (!canComplete) return;
     if (!confirm(renewal ? "Mark this renewal as complete?" : "Mark this sale as complete?")) return;
     setBusy(true);
     const { error } = await supabase.rpc("admin_complete_paid_order" as never, { _order_id: orderId } as never);
@@ -151,6 +158,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   const url = secureCheckoutUrl(link.token);
   const renewal = link.customer_kind === "existing";
   const sendCredentials = async () => {
+    if (!canComplete) return;
     if (!loginName.trim() || !accountPassword.trim()) return toast.error("Username and password are required");
     setBusy(true);
     try {
@@ -207,7 +215,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
     </>
   );
   const fields = (
-    <div className="space-y-3 min-w-0">
+    <div className={`space-y-3 min-w-0 ${chatBubble ? "pb-20" : ""}`}>
       <OrderStatusBar
         step={orderCompleted ? 3 : orderPaid ? 2 : 1}
         awaitingConfirmation={!!link.payment_sent_at && !orderPaid}
@@ -221,12 +229,12 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
         {orderPaid ? <Check className="size-4" /> : <Hourglass className="size-4" />}
         {orderPaid ? "PAID — payment confirmed by staff" : "NOT PAID YET — no payment has been confirmed"}
       </div>
-      {orderPaid && (
+      {canComplete && orderPaid && (
         <button type="button" disabled={busy} onClick={downloadInvoice} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-surface-2 text-xs font-semibold hover:bg-surface-2/80 disabled:opacity-60">
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />} Download invoice PDF
         </button>
       )}
-      {!orderPaid && payMethod && !["stripe", "square"].includes(payMethod) && (
+      {canComplete && !orderPaid && payMethod && !["stripe", "square"].includes(payMethod) && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2.5">
           <p className="text-xs text-muted-foreground flex-1 min-w-40">Waiting on {payMethod === "bank_transfer" || payMethod === "bank" ? "the bank transfer" : payMethod === "cash" ? "the cash payment" : "payment"}. Tap the button below only once the money has arrived.</p>
           <button type="button" disabled={busy} onClick={markPaid} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border-2 border-success text-success bg-background text-xs font-semibold disabled:opacity-60">
@@ -237,17 +245,17 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       {(orderPaid || !!link.account_setup_at) && <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
         <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> {renewal ? "Subscription extended (renewal)" : "Account set up"}</div>
         <p className="text-xs text-muted-foreground">{link.account_setup_at ? `Confirmed ${new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. The sale can now be completed.` : renewal ? "Confirm the customer's subscription has been extended. The sale can't be completed until you do." : "Confirm the customer's new account is set up. The sale can't be completed until you do."}</p>
-        <button type="button" disabled={busy || (!renewal && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
+        {canComplete && <button type="button" disabled={busy || (!renewal && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : (renewal ? "Confirm extension is done" : "Confirm account is set up")}
-        </button>
-        {link.account_setup_at && !orderCompleted && (
+        </button>}
+        {canComplete && link.account_setup_at && !orderCompleted && (
           <button type="button" disabled={busy} onClick={completeSale} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-success text-background text-xs font-semibold disabled:opacity-60">
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {renewal ? "Complete renewal" : "Complete sale"}
           </button>
         )}
         {orderCompleted && <p className="text-xs text-success font-medium">Sale completed.</p>}
       </div>}
-      {!renewal && orderPaid && !link.account_setup_at && (
+      {canComplete && !renewal && orderPaid && !link.account_setup_at && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="size-4 text-primary" /> Complete the new account</div>
           <p className="text-xs text-muted-foreground">Enter the service login details. Saving them creates the customer's credential and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
@@ -260,9 +268,10 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       <CopyField label="Secure page link" value={url} />
       <CopyField label="Password" value={link.password} />
       <CopyField label="Link + password (to send to the customer)" value={`Your secure order page: ${url}\nPassword: ${link.password}`} />
-      <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="size-3.5" /> Open page</a>
+      {canComplete && <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="size-3.5" /> Open page</a>}
     </div>
   );
+  if (loginOnly && !canComplete) return null;
   if (loginOnly) {
     if (renewal) {
       if (!orderPaid) return <p className="text-sm text-muted-foreground">The renewal expiry can be set once the order is paid.</p>;
@@ -270,6 +279,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       if (renewAccounts === null) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading accounts…</div>;
       if (renewAccounts.length === 0) return <p className="text-sm text-warning">This customer has no saved service account in admin Credentials to renew. Add their account in Credentials first.</p>;
       const saveRenewal = async () => {
+        if (!canComplete) return;
         const chosen = new Date(expiryLocal);
         if (!expiryLocal || Number.isNaN(chosen.getTime())) return toast.error("Pick the new expiry date & time");
         if (chosen.getTime() <= Date.now()) return toast.error("The new expiry must be in the future");

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { unlock } from "@/lib/checkout.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
 
 /**
  * Public secure checkout page for manual orders. Every call is gated by the
@@ -154,7 +155,7 @@ export const startCheckoutAccountSetup = createServerFn({ method: "POST" })
       .select("role")
       .eq("user_id", context.userId);
     if (roleError) throw new Error(roleError.message);
-    if (!(roles ?? []).some(({ role }) => ["admin", "management", "staff"].includes(String(role)))) {
+    if (!canCompleteCheckoutSteps((roles ?? []).map(({ role }) => String(role)))) {
       throw new Error("Forbidden");
     }
 
@@ -219,7 +220,7 @@ export const completeCheckoutSale = createServerFn({ method: "POST" })
       .select("role")
       .eq("user_id", context.userId);
     if (roleError) throw new Error(roleError.message);
-    if (!(roles ?? []).some(({ role }) => ["admin", "management", "staff"].includes(String(role)))) throw new Error("Forbidden");
+    if (!canCompleteCheckoutSteps((roles ?? []).map(({ role }) => String(role)))) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: order, error: orderError }, { data: link, error: linkError }] = await Promise.all([
