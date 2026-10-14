@@ -841,6 +841,13 @@
       "when": 1791983427139,
       "tag": "0119_checkout_credential_completion_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 120,
+      "version": "7",
+      "when": 1791985879663,
+      "tag": "0120_tighten_notification_sounds",
+      "breakpoints": true
     }
   ]
 }
