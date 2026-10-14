@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [x] Add separate BM Support and Boro Fan Zone jobs boards with interview backgrounds, application forms, admin vacancy management and private application review; verified real admin vacancy save, anonymous application submission, admin read-back/status/notes, separate zone listings and mobile layout; 15 tests passed and fictional test records removed
 - [x] Add Owner tools Staff page, employment dates, preserved former-staff directory and full-page office illustration; verified signed-in date save and directory read-back with a removed fictional record, plus mobile layout and rule tests
 - [x] Staff Shift history: pick days from a calendar with Previous day / Next day / Today; admin Staff shifts restored to its day-range buttons — verified signed-in (day 9 shows Friday 9 October 2026, Previous day gives Thursday 8 October, Today returns to Monday 12 October)
 - [x] Dim staff Shift history and Shifts with the same office picture; align admin/staff shift-end answers — nine tests passed and signed-in pages both show today's 19:00 sign-out answer

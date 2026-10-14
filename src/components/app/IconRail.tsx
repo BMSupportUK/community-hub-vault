@@ -248,12 +248,14 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
+    { to: "/jobs", label: "BM Support jobs", icon: Briefcase, show: true },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
   ];
 
   const fanZoneItems: RailItem[] = [
     // Switching back to BM Support lives on the Fan Zone header, not the rail.
     { to: user ? "/forum" : "/fan-zone", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
+    { to: "/fan-zone/jobs", label: "Fan Zone jobs", icon: Briefcase, show: true },
     { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: !!user },
     { to: "/fanzone/friend-requests", label: "Friend requests", icon: UserPlus, show: !!user, badge: fanFriendRequests },
 

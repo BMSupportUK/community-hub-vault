@@ -16,6 +16,7 @@ const baseNavItems = [
   { to: "/about", label: "About" },
   { to: "/fan-zone", label: "Boro Fan Zone Forum" },
   { to: "/contact", label: "Contact us" },
+  { to: "/jobs", label: "Jobs" },
 ];
 
 const COMPETITION_NAV_LABELS: Record<string, string> = {
