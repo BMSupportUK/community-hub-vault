@@ -24,7 +24,7 @@ export const generateEventBanner = createServerFn({ method: "POST" })
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3.1-flash-image",
+        model: "google/gemini-3.1-flash-lite-image",
         messages: [
           { role: "user", content: `Design a vibrant 300x250 event advertising banner. ${data.prompt}. Bold readable text, modern design, eye-catching colors.` },
         ],
