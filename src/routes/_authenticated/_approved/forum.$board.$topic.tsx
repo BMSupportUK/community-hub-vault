@@ -25,6 +25,8 @@ import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
 import { BlockUserButton } from "@/components/app/BlockUserButton";
 import { FanZoneAddFriendButton } from "@/components/app/FanZoneAddFriendButton";
 import { censorText, useProfanityWords } from "@/lib/profanity";
+import { usePageScrolled } from "@/components/app/BackToTopButton";
+
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
   head: () => ({
@@ -383,6 +385,24 @@ function TopicPage() {
     document.getElementById("forum-replies-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // The floating back-to-top arrow only earns its place once the page has
+  // actually been scrolled down.
+  const scrolledDown = usePageScrolled(400);
+
+  // Jump from the top of the topic straight to the reply box. The reply box
+  // lives in the Replies tab, so switch there first when the reader is on
+  // another tab — the pending-scroll effect finishes the job once it mounts.
+  const jumpToReplyBox = () => {
+    if (tab === "reply") {
+      replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    pendingReplyScrollRef.current = true;
+    setTab("reply");
+  };
+
+
+
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const { mute: myMute } = useFanZoneMute(user?.id ?? null);
   const canPost = canEnter && !!topic && !topic.is_locked && !myMute;
@@ -395,8 +415,23 @@ function TopicPage() {
   useEffect(() => {
     if (tab !== "reply" || !pendingReplyScrollRef.current) return;
     pendingReplyScrollRef.current = false;
-    replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // The reply box mounts with the Replies panel, which can land a frame or
+    // two after this effect runs — retry until it's actually in the DOM.
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries += 1;
+      const el = replyBoxRef.current;
+      if (el) {
+        window.clearInterval(timer);
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (tries > 30) {
+        window.clearInterval(timer);
+      }
+    }, 50);
+    return () => window.clearInterval(timer);
   }, [tab, reply]);
+
+
 
   // After posting, jump to the page holding the new reply and scroll to it.
   useEffect(() => {
@@ -978,7 +1013,21 @@ function TopicPage() {
           <Button asChild variant="ghost" size="sm" className="px-2">
             <Link to="/forum/$board" params={{ board: slug }}>{board?.name ?? "Board"}</Link>
           </Button>
+          {canPost && (
+            <Button
+              type="button"
+              size="icon"
+              variant="destructive"
+              onClick={jumpToReplyBox}
+              className="ml-auto size-9 shrink-0 rounded-full shadow-lg"
+              aria-label="Jump to reply box"
+              title="Jump to reply box"
+            >
+              <MessageSquare className="size-4" />
+            </Button>
+          )}
         </div>
+
         <div className="flex items-start justify-between gap-3 flex-wrap">
           {editingTitle ? (
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1208,29 +1257,20 @@ function TopicPage() {
                 </div>
               ) : null}
               <ViewingBox />
-              {canPost && (
+              {scrolledDown && (
                 <Button
                   type="button"
                   size="icon"
-                  onClick={() => replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
-                  className="fixed bottom-6 right-[4.75rem] z-50 size-11 rounded-full border border-[#E11B22]/50 bg-background/90 text-[#E11B22] shadow-lg transition-transform hover:scale-110 hover:border-[#E11B22]"
-                  aria-label="Jump to reply box"
-                  title="Jump to reply box"
+                  variant="destructive"
+                  onClick={scrollRepliesToTop}
+                  className="fixed bottom-6 right-6 z-50 size-11 rounded-full shadow-lg transition-transform hover:scale-110"
+                  aria-label="Back to top"
+                  title="Back to top"
                 >
-                  <MessageSquare className="size-5" />
+                  <ArrowUp className="size-5" />
                 </Button>
               )}
-              <Button
-                type="button"
-                size="icon"
-                variant="destructive"
-                onClick={scrollRepliesToTop}
-                className="fixed bottom-6 right-6 z-50 size-11 rounded-full shadow-lg transition-transform hover:scale-110"
-                aria-label="Back to top"
-                title="Back to top"
-              >
-                <ArrowUp className="size-5" />
-              </Button>
+
             </TabsContent>
           </Tabs>
         );

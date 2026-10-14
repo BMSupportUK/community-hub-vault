@@ -166,7 +166,11 @@ function RootComponent() {
     }
     trackPageView(analyticsPath);
   }, [analyticsPath]);
+  // Forum topic pages carry their own "back to top" arrow that jumps to the
+  // top of the replies, so the site-wide arrow would sit right on top of it.
+  const hasOwnBackToTop = /^\/forum\/[^/]+\/[^/]+/.test(analyticsPath);
   return (
+
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <InitialPageLoadCover />
@@ -180,7 +184,7 @@ function RootComponent() {
         <FanZonePresenceTracker />
         <ForceSignOutListener />
         <Outlet />
-        <BackToTopButton />
+        {!hasOwnBackToTop && <BackToTopButton />}
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
         <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />
 
