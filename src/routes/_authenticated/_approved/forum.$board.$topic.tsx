@@ -393,9 +393,14 @@ function TopicPage() {
   // lives in the Replies tab, so switch there first when the reader is on
   // another tab — the pending-scroll effect finishes the job once it mounts.
   const jumpToReplyBox = () => {
+    if (tab === "reply") {
+      replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     pendingReplyScrollRef.current = true;
     setTab("reply");
   };
+
 
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
