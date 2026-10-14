@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, ChevronDown, ChevronUp } from "lucide-react";
+import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, ChevronDown, ChevronUp, ArrowLeftRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,6 +120,9 @@ function AuthLayout() {
   // Fan Zone moderators who aren't staff get their own header button to the
   // Fan Zone dashboard; staff/management reach it from the BM dashboard.
   const canOpenFanZonePanel = !canOpenPanel && canOpenFanZoneAdminPanel(roles);
+  // Members holding both a BM Support role and a Fan Zone role get a header
+  // button to hop over to the Fan Zone (the Fan Zone header has the reverse).
+  const hasFanZoneSide = !isFanZoneOnly && hasAny(["boro_fan_zone_member", "boro_fan_zone_moderator"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
   // Fan-Zone-only accounts reading the sports guides get Fan Zone chrome,
@@ -300,6 +303,16 @@ function AuthLayout() {
                 {navOpen ? <IconRail inSheet /> : null}
               </SheetContent>
             </Sheet>
+            {hasFanZoneSide && (
+              <Link
+                to="/forum"
+                title="Switch to Boro Fan Zone"
+                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <ArrowLeftRight className="size-4" />
+                <span className="hidden min-[1700px]:inline">Switch to Boro Fan Zone</span>
+              </Link>
+            )}
             {canOpenPanel && (
               <Link
                 to="/admin"
