@@ -89,7 +89,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
   const presence = usePresence(user?.id, Boolean(user));
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const inFanZone = isFanZonePath(path) || isFanZoneOnly;
+  const inFanZone = useInFanZoneChrome(path, isFanZoneOnly) || isFanZoneOnly;
   const { forcedAvatar: forcedFanAvatar } = useFanAvatarLock();
 
   useEffect(() => {

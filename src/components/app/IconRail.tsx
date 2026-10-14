@@ -227,8 +227,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     );
   }
 
-  // Fan-Zone-only accounts never see the BM Support rail, wherever they are.
-  const inFanZone = isFanZonePath(path) || isFanZoneOnly;
+  // Fan-Zone-only accounts never see the BM Support rail, wherever they are;
+  // sports guides opened from the Fan Zone keep the Fan Zone rail too.
+  const inFanZone = inFanZoneChrome || isFanZoneOnly;
 
 
   const supportItems: RailItem[] = [
