@@ -1210,29 +1210,20 @@ function TopicPage() {
                 </div>
               ) : null}
               <ViewingBox />
-              {canPost && (
+              {scrolledDown && (
                 <Button
                   type="button"
                   size="icon"
-                  onClick={() => replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
-                  className="fixed bottom-6 right-[4.75rem] z-50 size-11 rounded-full border border-[#E11B22]/50 bg-background/90 text-[#E11B22] shadow-lg transition-transform hover:scale-110 hover:border-[#E11B22]"
-                  aria-label="Jump to reply box"
-                  title="Jump to reply box"
+                  variant="destructive"
+                  onClick={scrollRepliesToTop}
+                  className="fixed bottom-6 right-6 z-50 size-11 rounded-full shadow-lg transition-transform hover:scale-110"
+                  aria-label="Back to top"
+                  title="Back to top"
                 >
-                  <MessageSquare className="size-5" />
+                  <ArrowUp className="size-5" />
                 </Button>
               )}
-              <Button
-                type="button"
-                size="icon"
-                variant="destructive"
-                onClick={scrollRepliesToTop}
-                className="fixed bottom-6 right-6 z-50 size-11 rounded-full shadow-lg transition-transform hover:scale-110"
-                aria-label="Back to top"
-                title="Back to top"
-              >
-                <ArrowUp className="size-5" />
-              </Button>
+
             </TabsContent>
           </Tabs>
         );
