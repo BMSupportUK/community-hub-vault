@@ -141,7 +141,7 @@ async function splitWithAI(text: string): Promise<ParsedEvent[]> {
       "Lovable-API-Key": key,
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-3.8-flash",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: text },
@@ -261,7 +261,7 @@ async function generateCoverImage(prompt: string): Promise<Uint8Array | null> {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
+        model: "google/gemini-3.1-flash-image",
         messages: [
           {
             role: "user",
