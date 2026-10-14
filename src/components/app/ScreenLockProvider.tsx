@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -6,6 +7,7 @@ import {
   DEFAULT_TIMEOUT_MINUTES,
   STAFF_MAX_TIMEOUT_MINUTES,
   screenLockMayBeLocked,
+  shouldLockScreen,
 } from "@/lib/screen-lock-hash";
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
 import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
@@ -45,7 +47,6 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
   });
   const timerRef = useRef<number | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
-  const resumeTimerRef = useRef<number | null>(null);
   const wasBackgroundedRef = useRef(false);
   const storageKey = user ? `screenlock:locked:${user.id}` : null;
 
@@ -169,16 +170,14 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
       const flagKey = `screenlock:locked:${user.id}`;
       const activityKey = `screenlock:last-activity:${user.id}`;
       let savedLocked = false;
-      let idleExpired = false;
+      let lastActivity = 0;
       if (typeof window !== "undefined") {
         try {
           savedLocked = localStorage.getItem(flagKey) === "1";
-          const lastActivity = Number(localStorage.getItem(activityKey));
-          const timeoutMs = Math.max(1, active?.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
-          idleExpired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
+          lastActivity = Number(localStorage.getItem(activityKey));
         } catch {}
       }
-      const shouldLock = Boolean(active?.enabled && (savedLocked || idleExpired));
+      const shouldLock = shouldLockScreen(active.enabled, savedLocked, lastActivity, active.timeout_minutes);
       setLocked(shouldLock);
       window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: shouldLock } }));
       setSettings(active);
@@ -278,17 +277,14 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
     [storageKey, user?.id],
   );
 
-  // While the app is in the background we blank the page (nothing is visible
-  // anyway). On return we make the lock decision straight away — it is a local
-  // read, so there is nothing to wait for and no reason to hold a loading
-  // screen over an app that is already loaded.
+  // Cover the mounted page rather than rebuilding home on every return.
+  // Commit the local lock decision before the returning WebView frame paints.
   useEffect(() => {
     if (!user || !ready) return;
     const hide = () => {
       wasBackgroundedRef.current = true;
       if (settings?.enabled && !locked) {
-        setResumeChecking(true);
-        // Record when we left so the return check uses real away time.
+        flushSync(() => setResumeChecking(true));
       }
     };
     const checkResume = () => {
@@ -297,21 +293,22 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
         return;
       }
       if (!wasBackgroundedRef.current) {
-        setResumeChecking(false);
         return;
       }
       wasBackgroundedRef.current = false;
 
-      if (settings?.enabled && !locked) {
-        let expired = false;
-        try {
-          const lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
-          const timeoutMs = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
-          expired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
-        } catch {}
-        if (expired) doLock();
-      }
-      setResumeChecking(false);
+      flushSync(() => {
+        if (settings?.enabled && !locked) {
+          let savedLocked = false;
+          let lastActivity = 0;
+          try {
+            savedLocked = localStorage.getItem(`screenlock:locked:${user.id}`) === "1";
+            lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
+          } catch {}
+          if (shouldLockScreen(settings.enabled, savedLocked, lastActivity, settings.timeout_minutes)) doLock();
+        }
+        setResumeChecking(false);
+      });
     };
     document.addEventListener("visibilitychange", checkResume);
     window.addEventListener("pageshow", checkResume);
@@ -460,14 +457,10 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
       </>
     );
   }
-  // Never hold a loading screen over an app that has nothing to hide: if no
-  // saved lock and no expired idle timer suggest a lock, show the app while the
-  // settings finish loading in the background.
-  // Never reveal the signed-in site until the lock decision is made: cover it
-  // while settings load and while the app is backgrounded / resuming.
-  if (user && (!ready || resumeChecking)) return <BmSplash />;
+  // Initial settings gate mounting; resume only covers the existing tree.
+  if (user && !ready) return <BmSplash />;
   if (!user && screenLockMayBeLocked()) return <BmSplash />;
-  return <>{children}</>;
+  return <>{children}{resumeChecking && <BmSplash />}</>;
 }
 
 /** Header pill: lock the app immediately before stepping away from the PC. */
