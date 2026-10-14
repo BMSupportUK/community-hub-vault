@@ -20,6 +20,7 @@ import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import kbHero from "@/assets/knowledge-base-hero.jpg";
+import kbReadingBackground from "@/assets/knowledge-base-reading.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/knowledge-base")({
   head: () => ({
@@ -421,8 +422,9 @@ function KnowledgeBasePage() {
       </aside>
     );
     return (
-      <main className="min-h-0 flex-1 overflow-y-auto bg-background pb-24 md:pb-8">
-        <div data-knowledge-article-top className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 lg:py-8">
+      <main className="relative isolate min-h-0 flex-1 overflow-y-auto pb-24 md:pb-8">
+        <KnowledgeBackground />
+        <div data-knowledge-article-top className="w-full px-4 py-5 sm:px-8 lg:py-8">
           <Button type="button" variant="ghost" onClick={() => { setReading(null); scrollBackToArticle(); }} className="mb-5 -ml-3 gap-1.5 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" /> Back to guides
           </Button>
@@ -487,8 +489,9 @@ function KnowledgeBasePage() {
   };
 
   return (
-    <main data-knowledge-base className="min-h-0 flex-1 overflow-y-auto bg-background pb-24 md:pb-8">
-      <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 lg:py-8">
+    <main data-knowledge-base className="relative isolate min-h-0 flex-1 overflow-y-auto pb-24 md:pb-8">
+      <KnowledgeBackground />
+      <div className="w-full px-4 py-5 sm:px-8 lg:py-8">
         <header className="flex items-center justify-between gap-3 border-b border-border pb-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground shadow-soft">
@@ -543,27 +546,27 @@ function KnowledgeBasePage() {
         )}
 
         {(!isMod || tab === "guides") ? (
-          <>
-            <section className="mt-7">
+          <div className="mt-7 grid min-w-0 items-start gap-7 md:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-8">
+            <aside aria-label="Guide categories" className="min-w-0 md:sticky md:top-5 md:col-start-2 md:row-start-1 md:border-l md:border-border md:pl-5">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-display text-lg font-bold">Categories</h2>
                 {isMod && <Button size="sm" variant="ghost" onClick={openNewCategory}><FolderPlus className="mr-1.5 size-4" /> New</Button>}
               </div>
-              <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
+              <div className="grid grid-cols-2 gap-3 pb-2">
                 {categories.map((c, index) => {
                   const Icon = categoryIcons[index % categoryIcons.length];
                   const active = c.id === activeCat && !search;
                   return (
-                    <Button key={c.id} variant="ghost" onClick={() => { setSearch(""); setActiveCat(c.id); }} className={cn("h-32 w-32 shrink-0 snap-start flex-col items-start justify-between rounded-xl border p-4 text-left sm:w-auto", categoryTones[index % categoryTones.length], active && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
+                    <Button key={c.id} variant="ghost" aria-pressed={active} onClick={() => { setSearch(""); setActiveCat(c.id); }} className={cn("h-32 min-w-0 w-full flex-col items-start justify-between rounded-lg border p-3 text-left whitespace-normal", categoryTones[index % categoryTones.length], active && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
                       <span className="grid size-10 place-items-center rounded-lg bg-background/35"><Icon className="size-5" /></span>
-                      <span className="w-full"><span className="block truncate text-sm font-bold text-foreground">{c.name}</span><span className="mt-0.5 block text-xs opacity-75">{counts[c.id] ?? 0} articles</span></span>
+                      <span className="w-full min-w-0"><span className="block break-words text-sm font-bold leading-snug text-foreground">{c.name}</span><span className="mt-0.5 block text-xs opacity-75">{counts[c.id] ?? 0} articles</span></span>
                     </Button>
                   );
                 })}
               </div>
-            </section>
+            </aside>
 
-            <section className="mt-7">
+            <section className="min-w-0 md:col-start-1 md:row-start-1">
               <div className="mb-4 flex items-end justify-between gap-3">
                 <div><h2 className="font-display text-xl font-bold">{search ? "Search results" : "Featured guides"}</h2><p className="mt-1 text-xs text-muted-foreground">{activeCategory?.name ?? "All knowledge"}</p></div>
                 <span className="text-xs font-medium text-primary">{filtered.length} result{filtered.length === 1 ? "" : "s"}</span>
@@ -572,7 +575,7 @@ function KnowledgeBasePage() {
                 <EmptyState text={search ? "No articles match your search." : "No articles in this category yet."} cta={isMod ? { label: "Add article", onClick: openNewArticle } : undefined} />
               ) : (
                 <div className="space-y-3">
-                  <article data-article-id={featured.id} className="group overflow-hidden rounded-xl border border-border bg-card shadow-soft sm:grid sm:grid-cols-[minmax(0,1.2fr)_minmax(220px,.8fr)]">
+                  <article data-article-id={featured.id} className="group overflow-hidden rounded-lg border border-border bg-card shadow-soft xl:grid xl:grid-cols-[minmax(0,1.2fr)_minmax(220px,.8fr)]">
                     <div className="relative min-h-52 overflow-hidden bg-surface-2">
                       {featured.image_url ? <img src={featured.image_url} alt="" className="absolute inset-0 size-full object-cover" /> : <img src={kbHero} alt="" className="absolute inset-0 size-full object-cover opacity-70" />}
                       <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
@@ -590,7 +593,7 @@ function KnowledgeBasePage() {
                     </div>
                   </article>
 
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-3 xl:grid-cols-2">
                     {remaining.map((a) => {
                       const hasVideo = /<(?:video|iframe)\b/i.test(a.body ?? "");
                       const stats = ratingStats[a.id];
@@ -614,7 +617,7 @@ function KnowledgeBasePage() {
                 </div>
               )}
             </section>
-          </>
+          </div>
         ) : (
           <section className="mt-7">
             <div className="mb-4 flex items-center justify-between"><h2 className="font-display text-xl font-bold">Manage categories</h2><Button onClick={openNewCategory}><FolderPlus className="mr-1.5 size-4" /> New category</Button></div>
@@ -631,6 +634,15 @@ function KnowledgeBasePage() {
         <DialogContent><DialogHeader><DialogTitle>{editingCat?.id ? "Edit category" : "New category"}</DialogTitle></DialogHeader>{editingCat && <div className="space-y-3"><Label>Name</Label><Input value={editingCat.name} onChange={(e) => setEditingCat({ ...editingCat, name: e.target.value })} /><Label>Slug (optional)</Label><Input value={editingCat.slug} placeholder="auto" onChange={(e) => setEditingCat({ ...editingCat, slug: e.target.value })} /></div>}<DialogFooter><Button variant="outline" onClick={() => { setShowCatEditor(false); setEditingCat(null); }}>Cancel</Button><Button onClick={saveCategory}>Save</Button></DialogFooter></DialogContent>
       </Dialog>
     </main>
+  );
+}
+
+function KnowledgeBackground() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden [clip-path:inset(0)]">
+      <img src={kbReadingBackground} alt="" width={1920} height={1088} className="fixed inset-0 size-full object-cover object-right" />
+      <div className="fixed inset-0 bg-background/80" />
+    </div>
   );
 }
 
