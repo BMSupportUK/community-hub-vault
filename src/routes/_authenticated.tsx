@@ -122,7 +122,9 @@ function AuthLayout() {
   const canOpenFanZonePanel = !canOpenPanel && canOpenFanZoneAdminPanel(roles);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const inFanZone = isFanZonePath(path);
+  // Fan-Zone-only accounts reading the sports guides get Fan Zone chrome,
+  // never the BM Support header.
+  const inFanZone = isFanZonePath(path) || (isFanZoneOnly && path.startsWith("/sports-guides"));
   const search = useRouterState({ select: (r) => r.location.search as Record<string, unknown> });
   const shopTab = typeof search.tab === "string" ? search.tab : undefined;
   const shopView = typeof search.view === "string" ? search.view : undefined;
