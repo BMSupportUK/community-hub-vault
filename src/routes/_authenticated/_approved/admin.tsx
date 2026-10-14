@@ -1140,7 +1140,6 @@ function ThemePickerCard() {
 
 const HEADER_LINK_DEFAULTS = [
   { to: "/packages", label: "Packages" },
-  { to: "/guides", label: "Sports Guides" },
   { to: "/faq", label: "FAQ" },
   { to: "/about", label: "About" },
   { to: "/competition-winners", label: "Competition Winners" },

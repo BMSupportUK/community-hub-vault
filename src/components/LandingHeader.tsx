@@ -12,7 +12,6 @@ import { applyNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order
 
 const baseNavItems = [
   { to: "/packages", label: "Packages" },
-  { to: "/guides", label: "Sports Guides" },
   { to: "/faq", label: "FAQ" },
   { to: "/about", label: "About" },
   { to: "/fan-zone", label: "Boro Fan Zone Forum" },
