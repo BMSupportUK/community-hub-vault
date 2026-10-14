@@ -413,12 +413,24 @@ function TopicPage() {
   }, [user?.id]);
 
   useEffect(() => {
-    console.log("[jumpdbg] effect", tab, pendingReplyScrollRef.current, !!replyBoxRef.current);
     if (tab !== "reply" || !pendingReplyScrollRef.current) return;
     pendingReplyScrollRef.current = false;
-    console.log("[jumpdbg] scrolling", !!replyBoxRef.current);
-    replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // The reply box mounts with the Replies panel, which can land a frame or
+    // two after this effect runs — retry until it's actually in the DOM.
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries += 1;
+      const el = replyBoxRef.current;
+      if (el) {
+        window.clearInterval(timer);
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (tries > 30) {
+        window.clearInterval(timer);
+      }
+    }, 50);
+    return () => window.clearInterval(timer);
   }, [tab, reply]);
+
 
 
   // After posting, jump to the page holding the new reply and scroll to it.
