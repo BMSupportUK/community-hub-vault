@@ -215,7 +215,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
     </>
   );
   const fields = (
-    <div className="space-y-3 min-w-0">
+    <div className={`space-y-3 min-w-0 ${chatBubble ? "pb-20" : ""}`}>
       <OrderStatusBar
         step={orderCompleted ? 3 : orderPaid ? 2 : 1}
         awaitingConfirmation={!!link.payment_sent_at && !orderPaid}
