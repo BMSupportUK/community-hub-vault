@@ -291,10 +291,10 @@ function ForumLayout() {
               </Button>
             )}
             {canModerate && (
-              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
-                <Link to="/fan-zone-appeals">
-                  <MailQuestion className="size-4 mr-1.5" />
-                  Appeals
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center size-9 p-0 lg:size-auto lg:px-3">
+                <Link to="/fan-zone-appeals" title="Appeals">
+                  <MailQuestion className="size-4 lg:mr-1.5" />
+                  <span className="hidden lg:inline">Appeals</span>
                   {openAppeals > 0 && (
                     <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
                       {openAppeals}
@@ -318,7 +318,7 @@ function ForumLayout() {
               const missing = total - filled;
               if (!info || missing === 0) return null;
               return (
-                <Button asChild size="sm" variant="outline" className="bg-amber-500/20 backdrop-blur border-amber-300/50 text-white hover:bg-amber-500/30 hover:text-white justify-center col-span-2 sm:col-span-1">
+                <Button asChild size="sm" variant="outline" className="bg-amber-500/20 backdrop-blur border-amber-300/50 text-white hover:bg-amber-500/30 hover:text-white justify-center">
                   <Link to="/fanzone/profile">
                     <UserCog className="size-4 mr-1.5" />
                     Complete profile
