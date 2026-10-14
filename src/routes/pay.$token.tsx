@@ -56,7 +56,7 @@ function PayPage() {
   const [movingToSetup, setMovingToSetup] = useState(false);
   const [completingSale, setCompletingSale] = useState(false);
   const canManage = !!user && (hasRole("admin") || hasRole("management"));
-  const canMoveToSetup = !!user && (canManage || hasRole("staff"));
+  const canMoveToSetup = canManage;
   const fetchCheckout = useServerFn(getCheckout);
   const sendPaymentSent = useServerFn(markPaymentSent);
   const startAccountSetup = useServerFn(startCheckoutAccountSetup);

@@ -18,7 +18,7 @@
 - Android alerts use distinct per-type tones on versioned channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
-- Secure checkout browses only reached stages, never reverses payment; staff completion requires confirmed account setup.
+- Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.
 - How-to videos use private storage references and short-lived signed playback links so media is never exposed through a permanent public URL.
 - Install-guide videos use ordered `video_steps` on each guide; each step is a separate private video so narration aligns with one visible action.

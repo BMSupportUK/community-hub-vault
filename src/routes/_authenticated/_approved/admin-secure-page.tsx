@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
+import { canViewStaffCheckout } from "@/lib/checkout-access";
 import shopHero from "@/assets/shop-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-secure-page")({
@@ -26,19 +27,19 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-secure-pag
 });
 
 function SecurePageAdmin() {
-  const { hasRole } = useAuth();
+  const { roles } = useAuth();
   const { order, ref: refParam } = Route.useSearch();
   const [orderRef, setOrderRef] = useState<string | null>(refParam ?? null);
   const [loaded, setLoaded] = useState(!!refParam);
 
   useEffect(() => {
     if (!order) return;
-    supabase.from("orders").select("order_ref").eq("id", order).maybeSingle()
-      .then(({ data }) => { setOrderRef((data as never as { order_ref: string } | null)?.order_ref ?? null); setLoaded(true); });
+    supabase.rpc("staff_checkout_order_summary" as never, { p_order_id: order } as never)
+      .then(({ data }) => { setOrderRef((data as unknown as { order_ref: string }[] | null)?.[0]?.order_ref ?? null); setLoaded(true); });
   }, [order]);
 
 
-  if (!hasRole("admin") && !hasRole("management")) return <Navigate to="/admin" />;
+  if (!canViewStaffCheckout(roles)) return <Navigate to="/home" />;
   if (!order) return <Navigate to="/admin" search={{ tab: "order-status" } as never} />;
 
   return (

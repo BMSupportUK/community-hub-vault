@@ -8,6 +8,7 @@ import { fetchInChunks } from "@/lib/chunked-in";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
+import { canViewStaffCheckout, canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { ManualOrderLinkButton } from "@/components/checkout/ManualOrderLinkDialog";
 
 type Row = {
@@ -49,7 +50,8 @@ function paymentLabel(provider: string | null | undefined) {
 }
 
 export function OrderStatusAdminCard() {
-  const { hasRole } = useAuth();
+  const { hasRole, roles } = useAuth();
+  const canComplete = canCompleteCheckoutSteps(roles);
   const isAdmin = hasRole("admin");
   const [rows, setRows] = useState<Row[] | null>(null);
   const [methods, setMethods] = useState<Record<string, string>>({});
@@ -91,7 +93,7 @@ export function OrderStatusAdminCard() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase
+      const { data, error } = !canComplete ? await supabase.rpc("staff_checkout_order_summary" as never) : await supabase
         .from("orders")
         .select("id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type, order_ref, manual_pay_method")
         .order("created_at", { ascending: false })
@@ -119,7 +121,7 @@ export function OrderStatusAdminCard() {
       }
     })();
     return () => { cancelled = true; };
-  }, [reload]);
+  }, [reload, canComplete]);
 
   // Live updates: refetch when any order, payment or checkout stage changes.
   useEffect(() => {
@@ -205,10 +207,10 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.total_cents)}</td>
                       <td className="px-3 py-2 min-w-[150px]"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span>
                         {r.status.toLowerCase() !== "cancelled" && <div className="mt-1.5 w-32"><OrderStatusBar compact step={r.completed_at ? 3 : r.paid_at ? 2 : 1} /></div>}
-                        {(isAdmin || hasRole("management")) && <div className="mt-1.5"><ManualOrderLinkButton orderId={r.id} orderRef={r.order_ref} /></div>}
+                        {canViewStaffCheckout(roles) && <div className="mt-1.5"><ManualOrderLinkButton orderId={r.id} orderRef={r.order_ref} /></div>}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.paid_at ? new Date(r.paid_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : (
-                        r.customer_type === "manual" && !r.completed_at && r.status.toLowerCase() !== "cancelled" && ["bank_transfer", "bank", "cash"].includes((r.manual_pay_method ?? "").toLowerCase()) ? (
+                        canComplete && r.customer_type === "manual" && !r.completed_at && r.status.toLowerCase() !== "cancelled" && ["bank_transfer", "bank", "cash"].includes((r.manual_pay_method ?? "").toLowerCase()) ? (
                           <button type="button" disabled={reminding === r.id} onClick={() => sendReminder(r.id)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-warning/40 text-warning text-xs font-medium hover:bg-warning/10 disabled:opacity-50">{reminding === r.id ? <Loader2 className="size-3.5 animate-spin" /> : <Mail className="size-3.5" />} Payment reminder</button>
                         ) : "—"
                       )}</td>
