@@ -1865,12 +1865,12 @@ export function sportsFixtureCore(title: string | null | undefined): string | nu
  * Removes duplicate entries from a saved guide body. Returns the new HTML, or
  * null when nothing changes or the body isn't a plain formatter-built listing.
  */
-export function dedupeSportsListingHtml(html: string | null | undefined): string | null {
+export function dedupeSportsListingHtml(html: string | null | undefined, guideTitle?: string | null): string | null {
   if (!html || !html.trim()) return null;
   if (/data-link-preview|<img|<iframe|<video|<table/i.test(html)) return null;
   const events = parseSportsListingBlock(html);
   if (!events.length) return null;
-  const kept = dedupeSportsListingEvents(events);
+  const kept = combineGuideChannels(dedupeSportsListingEvents(events), guideTitle);
   const rebuilt = plainListingToHtml(formatSportsListingEvents(sortSportsListingEvents(kept), { channels: [] }));
   const before = normalizeListingBody(html);
   const after = normalizeListingBody(rebuilt);
