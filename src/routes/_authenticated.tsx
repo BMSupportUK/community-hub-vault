@@ -120,6 +120,9 @@ function AuthLayout() {
   // Fan Zone moderators who aren't staff get their own header button to the
   // Fan Zone dashboard; staff/management reach it from the BM dashboard.
   const canOpenFanZonePanel = !canOpenPanel && canOpenFanZoneAdminPanel(roles);
+  // Members holding both a BM Support role and a Fan Zone role get a header
+  // button to hop over to the Fan Zone (the Fan Zone header has the reverse).
+  const hasFanZoneSide = !isFanZoneOnly && hasAny(["boro_fan_zone_member", "boro_fan_zone_moderator"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
   // Fan-Zone-only accounts reading the sports guides get Fan Zone chrome,
