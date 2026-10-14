@@ -249,10 +249,10 @@ function ForumLayout() {
         <div className="relative px-4 py-5 sm:px-8 sm:py-6 flex flex-col gap-5">
           <div className="z-10 flex w-full flex-wrap items-center gap-2 sm:justify-end">
             {hasSupportSide && (
-              <Button asChild size="sm" variant="outline" className="bg-white/15 backdrop-blur border-white/40 text-white hover:bg-white/25 hover:text-white justify-center">
-                <Link to="/home">
-                  <ArrowLeftRight className="size-4 mr-1.5" />
-                  Switch to BM Support
+              <Button asChild size="sm" variant="outline" className="bg-white/15 backdrop-blur border-white/40 text-white hover:bg-white/25 hover:text-white justify-center size-9 p-0 lg:size-auto lg:px-3">
+                <Link to="/home" title="Switch to BM Support">
+                  <ArrowLeftRight className="size-4 lg:mr-1.5" />
+                  <span className="hidden lg:inline">Switch to BM Support</span>
                 </Link>
               </Button>
             )}
