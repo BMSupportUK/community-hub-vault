@@ -66,6 +66,7 @@ import { Route as AuthenticatedApprovedAdminFantasySquadNumbersRouteImport } fro
 import { Route as AuthenticatedApprovedAdminForumRouteImport } from './routes/_authenticated/_approved/admin-forum'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
 import { Route as AuthenticatedApprovedAdminIncomingTransfersRouteImport } from './routes/_authenticated/_approved/admin-incoming-transfers'
+import { Route as AuthenticatedApprovedAdminJobsRouteImport } from './routes/_authenticated/_approved/admin-jobs'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminPackagesRouteImport } from './routes/_authenticated/_approved/admin-packages'
@@ -86,6 +87,7 @@ import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from '
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedFanZoneAdminRouteImport } from './routes/_authenticated/_approved/fan-zone-admin'
 import { Route as AuthenticatedApprovedFanZoneAppealsRouteImport } from './routes/_authenticated/_approved/fan-zone-appeals'
+import { Route as AuthenticatedApprovedFanZoneJobsAdminRouteImport } from './routes/_authenticated/_approved/fan-zone-jobs-admin'
 import { Route as AuthenticatedApprovedFanZoneSanctionsRouteImport } from './routes/_authenticated/_approved/fan-zone-sanctions'
 import { Route as AuthenticatedApprovedFanZoneSecurityRouteImport } from './routes/_authenticated/_approved/fan-zone-security'
 import { Route as AuthenticatedApprovedFanZoneSoundsRouteImport } from './routes/_authenticated/_approved/fan-zone-sounds'
@@ -484,6 +486,12 @@ const AuthenticatedApprovedAdminIncomingTransfersRoute =
     path: '/admin-incoming-transfers',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminJobsRoute =
+  AuthenticatedApprovedAdminJobsRouteImport.update({
+    id: '/admin-jobs',
+    path: '/admin-jobs',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminNameplatesRoute =
   AuthenticatedApprovedAdminNameplatesRouteImport.update({
     id: '/admin-nameplates',
@@ -602,6 +610,12 @@ const AuthenticatedApprovedFanZoneAppealsRoute =
   AuthenticatedApprovedFanZoneAppealsRouteImport.update({
     id: '/fan-zone-appeals',
     path: '/fan-zone-appeals',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedFanZoneJobsAdminRoute =
+  AuthenticatedApprovedFanZoneJobsAdminRouteImport.update({
+    id: '/fan-zone-jobs-admin',
+    path: '/fan-zone-jobs-admin',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedFanZoneSanctionsRoute =
@@ -1195,6 +1209,7 @@ export interface FileRoutesByFullPath {
   '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-incoming-transfers': typeof AuthenticatedApprovedAdminIncomingTransfersRoute
+  '/admin-jobs': typeof AuthenticatedApprovedAdminJobsRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
@@ -1215,6 +1230,7 @@ export interface FileRoutesByFullPath {
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/fan-zone-admin': typeof AuthenticatedApprovedFanZoneAdminRoute
   '/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
+  '/fan-zone-jobs-admin': typeof AuthenticatedApprovedFanZoneJobsAdminRoute
   '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
   '/fan-zone-sounds': typeof AuthenticatedApprovedFanZoneSoundsRoute
@@ -1360,6 +1376,7 @@ export interface FileRoutesByTo {
   '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-incoming-transfers': typeof AuthenticatedApprovedAdminIncomingTransfersRoute
+  '/admin-jobs': typeof AuthenticatedApprovedAdminJobsRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
@@ -1380,6 +1397,7 @@ export interface FileRoutesByTo {
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/fan-zone-admin': typeof AuthenticatedApprovedFanZoneAdminRoute
   '/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
+  '/fan-zone-jobs-admin': typeof AuthenticatedApprovedFanZoneJobsAdminRoute
   '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
   '/fan-zone-sounds': typeof AuthenticatedApprovedFanZoneSoundsRoute
@@ -1529,6 +1547,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/_authenticated/_approved/admin-incoming-transfers': typeof AuthenticatedApprovedAdminIncomingTransfersRoute
+  '/_authenticated/_approved/admin-jobs': typeof AuthenticatedApprovedAdminJobsRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/_authenticated/_approved/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
@@ -1549,6 +1568,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
   '/_authenticated/_approved/fan-zone-admin': typeof AuthenticatedApprovedFanZoneAdminRoute
   '/_authenticated/_approved/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
+  '/_authenticated/_approved/fan-zone-jobs-admin': typeof AuthenticatedApprovedFanZoneJobsAdminRoute
   '/_authenticated/_approved/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/_authenticated/_approved/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
   '/_authenticated/_approved/fan-zone-sounds': typeof AuthenticatedApprovedFanZoneSoundsRoute
@@ -1698,6 +1718,7 @@ export interface FileRouteTypes {
     | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-incoming-transfers'
+    | '/admin-jobs'
     | '/admin-nameplates'
     | '/admin-notifications'
     | '/admin-packages'
@@ -1718,6 +1739,7 @@ export interface FileRouteTypes {
     | '/clock'
     | '/fan-zone-admin'
     | '/fan-zone-appeals'
+    | '/fan-zone-jobs-admin'
     | '/fan-zone-sanctions'
     | '/fan-zone-security'
     | '/fan-zone-sounds'
@@ -1863,6 +1885,7 @@ export interface FileRouteTypes {
     | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-incoming-transfers'
+    | '/admin-jobs'
     | '/admin-nameplates'
     | '/admin-notifications'
     | '/admin-packages'
@@ -1883,6 +1906,7 @@ export interface FileRouteTypes {
     | '/clock'
     | '/fan-zone-admin'
     | '/fan-zone-appeals'
+    | '/fan-zone-jobs-admin'
     | '/fan-zone-sanctions'
     | '/fan-zone-security'
     | '/fan-zone-sounds'
@@ -2031,6 +2055,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-forum'
     | '/_authenticated/_approved/admin-hero-boxes'
     | '/_authenticated/_approved/admin-incoming-transfers'
+    | '/_authenticated/_approved/admin-jobs'
     | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-notifications'
     | '/_authenticated/_approved/admin-packages'
@@ -2051,6 +2076,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/clock'
     | '/_authenticated/_approved/fan-zone-admin'
     | '/_authenticated/_approved/fan-zone-appeals'
+    | '/_authenticated/_approved/fan-zone-jobs-admin'
     | '/_authenticated/_approved/fan-zone-sanctions'
     | '/_authenticated/_approved/fan-zone-security'
     | '/_authenticated/_approved/fan-zone-sounds'
@@ -2617,6 +2643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminIncomingTransfersRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-jobs': {
+      id: '/_authenticated/_approved/admin-jobs'
+      path: '/admin-jobs'
+      fullPath: '/admin-jobs'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminJobsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-nameplates': {
       id: '/_authenticated/_approved/admin-nameplates'
       path: '/admin-nameplates'
@@ -2755,6 +2788,13 @@ declare module '@tanstack/react-router' {
       path: '/fan-zone-appeals'
       fullPath: '/fan-zone-appeals'
       preLoaderRoute: typeof AuthenticatedApprovedFanZoneAppealsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/fan-zone-jobs-admin': {
+      id: '/_authenticated/_approved/fan-zone-jobs-admin'
+      path: '/fan-zone-jobs-admin'
+      fullPath: '/fan-zone-jobs-admin'
+      preLoaderRoute: typeof AuthenticatedApprovedFanZoneJobsAdminRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/fan-zone-sanctions': {
@@ -3500,6 +3540,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminForumRoute: typeof AuthenticatedApprovedAdminForumRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
   AuthenticatedApprovedAdminIncomingTransfersRoute: typeof AuthenticatedApprovedAdminIncomingTransfersRoute
+  AuthenticatedApprovedAdminJobsRoute: typeof AuthenticatedApprovedAdminJobsRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
   AuthenticatedApprovedAdminPackagesRoute: typeof AuthenticatedApprovedAdminPackagesRoute
@@ -3520,6 +3561,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
   AuthenticatedApprovedFanZoneAdminRoute: typeof AuthenticatedApprovedFanZoneAdminRoute
   AuthenticatedApprovedFanZoneAppealsRoute: typeof AuthenticatedApprovedFanZoneAppealsRoute
+  AuthenticatedApprovedFanZoneJobsAdminRoute: typeof AuthenticatedApprovedFanZoneJobsAdminRoute
   AuthenticatedApprovedFanZoneSanctionsRoute: typeof AuthenticatedApprovedFanZoneSanctionsRoute
   AuthenticatedApprovedFanZoneSecurityRoute: typeof AuthenticatedApprovedFanZoneSecurityRoute
   AuthenticatedApprovedFanZoneSoundsRoute: typeof AuthenticatedApprovedFanZoneSoundsRoute
@@ -3601,6 +3643,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminHeroBoxesRoute,
   AuthenticatedApprovedAdminIncomingTransfersRoute:
     AuthenticatedApprovedAdminIncomingTransfersRoute,
+  AuthenticatedApprovedAdminJobsRoute: AuthenticatedApprovedAdminJobsRoute,
   AuthenticatedApprovedAdminNameplatesRoute:
     AuthenticatedApprovedAdminNameplatesRoute,
   AuthenticatedApprovedAdminNotificationsRoute:
@@ -3636,6 +3679,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedFanZoneAdminRoute,
   AuthenticatedApprovedFanZoneAppealsRoute:
     AuthenticatedApprovedFanZoneAppealsRoute,
+  AuthenticatedApprovedFanZoneJobsAdminRoute:
+    AuthenticatedApprovedFanZoneJobsAdminRoute,
   AuthenticatedApprovedFanZoneSanctionsRoute:
     AuthenticatedApprovedFanZoneSanctionsRoute,
   AuthenticatedApprovedFanZoneSecurityRoute:

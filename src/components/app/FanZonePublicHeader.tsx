@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, LogIn, Lock, Menu, Shield, UserPlus } from "lucide-react";
+import { Home, LogIn, Lock, Menu, Shield, UserPlus, BriefcaseBusiness } from "lucide-react";
 import { useState } from "react";
 import { IconRail } from "@/components/app/IconRail";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ export function FanZonePublicHeader({ hideAuthButtons = false }: { hideAuthButto
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        <Button asChild size="icon" variant="outline" title="Fan Zone jobs"><Link to="/fan-zone/jobs" aria-label="Fan Zone jobs"><BriefcaseBusiness className="size-4" /></Link></Button>
         {user && (
           <>
             <Button
