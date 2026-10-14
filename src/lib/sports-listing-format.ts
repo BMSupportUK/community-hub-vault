@@ -1784,13 +1784,85 @@ export function mergeSportsListingBlocks(existing: string, incoming: string, inp
     const instant = ukListingInstant(event.date, event.time);
     return instant === null || nowMs - instant <= cutoff;
   };
-  const events = dedupeSportsListingEvents(sortSportsListingEvents([
+  const events = sortSportsListingEvents(combineGuideChannels(dedupeSportsListingEvents(sortSportsListingEvents([
     ...parseSportsListingBlock(existing).filter(fresh),
     ...parseSportsListingBlock(incoming),
-  ]));
+  ])), input.guideTitle));
   // Each parsed event already owns its channels. Re-applying the incoming
   // event's channels here incorrectly adds them to every older guide entry.
   return events.length ? formatSportsListingEvents(events, { ...input, channels: [] }) : null;
+}
+
+/** Guides whose provider posts every event once per channel (Stan Sport). */
+export function guideCombinesChannels(guideTitle: string | null | undefined): boolean {
+  return /\bstan\b/i.test(guideTitle ?? "");
+}
+
+/**
+ * For guides like Stan Sport, the provider lists the same event once per
+ * channel ("Stan 1 HD", "Stan event 01"), sometimes a minute or two apart.
+ * Those become one entry carrying every channel. Other guides unchanged.
+ */
+export function combineGuideChannels(events: SportsListingEvent[], guideTitle: string | null | undefined): SportsListingEvent[] {
+  if (!guideCombinesChannels(guideTitle)) return events;
+  return combineSameEventChannels(events);
+}
+
+export function combineSameEventChannels(events: SportsListingEvent[]): SportsListingEvent[] {
+  const NEAR_MINUTES = 30;
+  const loose = (v: string | null | undefined) =>
+    (v ?? "").toLowerCase().replace(/\b(vs\.?|versus|@)\s/g, "v ").replace(/[^\p{L}\p{N}]+/gu, "");
+  const dateKey = (v: string | null | undefined) => {
+    const d = v ? parseListingDate(v) : null;
+    return d ? JSON.stringify(d) : loose(v);
+  };
+  const minutesOf = (v: string) => {
+    const c = parseClockTime(v);
+    return c ? c.hour * 60 + c.minute : null;
+  };
+  type Group = { first: SportsListingEvent; members: SportsListingEvent[]; mins: number[] };
+  const groups: Group[] = [];
+  const out: (SportsListingEvent | Group)[] = [];
+  for (const e of events) {
+    const mins = minutesOf(e.time);
+    const titleKey = loose(e.title);
+    const core = sportsFixtureCore(e.title);
+    const g = mins === null ? undefined : groups.find((gr) =>
+      dateKey(gr.first.date) === dateKey(e.date) &&
+      (loose(gr.first.title) === titleKey || (!!core && sportsFixtureCore(gr.first.title) === core)) &&
+      gr.mins.some((m) => Math.abs(m - mins) <= NEAR_MINUTES),
+    );
+    if (g) {
+      g.members.push(e);
+      g.mins.push(mins!);
+      continue;
+    }
+    if (mins === null) { out.push(e); continue; }
+    const ng: Group = { first: e, members: [e], mins: [mins] };
+    groups.push(ng);
+    out.push(ng);
+  }
+  return out.map((item) => {
+    if (!("members" in item)) return item;
+    if (item.members.length === 1) return item.first;
+    // Most-listed start time wins; ties go to the earliest.
+    const counts = new Map<string, { n: number; m: number }>();
+    item.members.forEach((m, i) => {
+      const c = counts.get(m.time) ?? { n: 0, m: item.mins[i] };
+      c.n += 1;
+      counts.set(m.time, c);
+    });
+    const time = [...counts.entries()].sort((a, b) => b[1].n - a[1].n || a[1].m - b[1].m)[0][0];
+    const seen = new Set<string>();
+    const channels: string[] = [];
+    for (const m of item.members) for (const ch of m.channels ?? []) {
+      const k = loose(ch);
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      channels.push(ch);
+    }
+    return { ...item.first, time, channels };
+  });
 }
 
 /**
@@ -1865,12 +1937,12 @@ export function sportsFixtureCore(title: string | null | undefined): string | nu
  * Removes duplicate entries from a saved guide body. Returns the new HTML, or
  * null when nothing changes or the body isn't a plain formatter-built listing.
  */
-export function dedupeSportsListingHtml(html: string | null | undefined): string | null {
+export function dedupeSportsListingHtml(html: string | null | undefined, guideTitle?: string | null): string | null {
   if (!html || !html.trim()) return null;
   if (/data-link-preview|<img|<iframe|<video|<table/i.test(html)) return null;
   const events = parseSportsListingBlock(html);
   if (!events.length) return null;
-  const kept = dedupeSportsListingEvents(events);
+  const kept = combineGuideChannels(dedupeSportsListingEvents(events), guideTitle);
   const rebuilt = plainListingToHtml(formatSportsListingEvents(sortSportsListingEvents(kept), { channels: [] }));
   const before = normalizeListingBody(html);
   const after = normalizeListingBody(rebuilt);

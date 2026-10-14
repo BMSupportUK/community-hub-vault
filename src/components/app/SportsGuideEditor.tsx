@@ -493,7 +493,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       }
       // Every save (draft or published) also clears repeat entries with the
       // same date, time, event and channel.
-      const deduped = dedupeSportsListingHtml(payload.body);
+      const deduped = dedupeSportsListingHtml(payload.body, editing.title);
       if (deduped !== null) {
         payload.body = deduped;
         toast.info("Guide formatted and duplicate listings removed before saving");

@@ -4,7 +4,8 @@ import { dedupeSportsListingHtml, mergeSportsListingBlocks, parseSportsListingBl
 const toHtml = (lines: string[]) => lines.map((l) => `<div>${l || "<br>"}</div>`).join("");
 
 test("same event listed twice is removed before saving", () => {
-  const html = toHtml(["03-10-2026","","20:55 BST","UFC FIGHTPASS: UFC 332: PRELIMS","UFC 2 HD","","20:55 BST","UFC FIGHTPASS: UFC 332: PRELIMS","UFC 2 HD","","22:55 BST","UFC FIGHTPASS: UFC 332: MAIN CARD","UFC 1 HD"]);
+  // The editor reformats the body (e.g. "03-10-2026" → "Saturday, 3rd October") before this runs.
+  const html = toHtml(["Saturday, 3rd October","","20:55 BST","UFC FIGHTPASS: UFC 332: PRELIMS","UFC 2 HD","","20:55 BST","UFC FIGHTPASS: UFC 332: PRELIMS","UFC 2 HD","","22:55 BST","UFC FIGHTPASS: UFC 332: MAIN CARD","UFC 1 HD"]);
   const out = dedupeSportsListingHtml(html);
   expect(out).not.toBeNull();
   expect(parseSportsListingBlock(out!)).toHaveLength(2);
