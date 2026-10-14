@@ -15,6 +15,7 @@ import { adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
+import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 import { BmSplash } from "@/components/app/BmSplash";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";

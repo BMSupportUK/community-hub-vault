@@ -42,6 +42,7 @@ import {
 import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 import { BORO_DEFAULT_AVATAR_URL } from "@/lib/boro-default-avatar";
 import {
