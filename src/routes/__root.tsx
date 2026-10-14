@@ -184,7 +184,7 @@ function RootComponent() {
         <FanZonePresenceTracker />
         <ForceSignOutListener />
         <Outlet />
-        <BackToTopButton />
+        {!hasOwnBackToTop && <BackToTopButton />}
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
         <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />
 
