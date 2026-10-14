@@ -385,6 +385,19 @@ function TopicPage() {
     document.getElementById("forum-replies-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // The floating back-to-top arrow only earns its place once the page has
+  // actually been scrolled down.
+  const scrolledDown = usePageScrolled(400);
+
+  // Jump from the top of the topic straight to the reply box. The reply box
+  // lives in the Replies tab, so switch there first when the reader is on
+  // another tab — the pending-scroll effect finishes the job once it mounts.
+  const jumpToReplyBox = () => {
+    pendingReplyScrollRef.current = true;
+    setTab("reply");
+  };
+
+
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const { mute: myMute } = useFanZoneMute(user?.id ?? null);
   const canPost = canEnter && !!topic && !topic.is_locked && !myMute;
