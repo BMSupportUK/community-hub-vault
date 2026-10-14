@@ -166,7 +166,11 @@ function RootComponent() {
     }
     trackPageView(analyticsPath);
   }, [analyticsPath]);
+  // Forum topic pages carry their own "back to top" arrow that jumps to the
+  // top of the replies, so the site-wide arrow would sit right on top of it.
+  const hasOwnBackToTop = /^\/forum\/[^/]+\/[^/]+/.test(analyticsPath);
   return (
+
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <InitialPageLoadCover />
