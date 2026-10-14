@@ -33,7 +33,51 @@ function isPageScroller(target: EventTarget | null): boolean {
   );
 }
 
+/**
+ * True once the PAGE (not an inner pane, dialog or side rail) has scrolled
+ * past `threshold` pixels. Uses the same scroller filtering the floating
+ * back-to-top arrow uses, so widget scrolling never counts as page scrolling.
+ */
+export function usePageScrolled(threshold = 600): boolean {
+  const [scrolled, setScrolled] = useState(false);
+  const lastScroller = useRef<HTMLElement | Window | null>(null);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  useEffect(() => {
+    const evaluate = () => {
+      const s = lastScroller.current;
+      const top = s
+        ? s instanceof Window
+          ? s.scrollY
+          : s.scrollTop
+        : window.scrollY;
+      setScrolled(top > threshold);
+    };
+
+    // Scroll events don't bubble, so listen in the capture phase to catch
+    // scrolls on inner containers as well as the window — then filter.
+    const onScroll = (e: Event) => {
+      const target = e.target;
+      if (!isPageScroller(target)) return;
+      lastScroller.current = target instanceof HTMLElement ? target : window;
+      evaluate();
+    };
+
+    document.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => document.removeEventListener("scroll", onScroll, { capture: true });
+  }, [threshold]);
+
+  // A new page starts fresh: hide until the new page is actually scrolled.
+  useEffect(() => {
+    lastScroller.current = null;
+    setScrolled(window.scrollY > threshold);
+  }, [pathname, threshold]);
+
+  return scrolled;
+}
+
 export function BackToTopButton() {
+
   const [visible, setVisible] = useState(false);
   const lastScroller = useRef<HTMLElement | Window | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });

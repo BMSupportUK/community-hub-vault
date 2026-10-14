@@ -25,6 +25,8 @@ import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
 import { BlockUserButton } from "@/components/app/BlockUserButton";
 import { FanZoneAddFriendButton } from "@/components/app/FanZoneAddFriendButton";
 import { censorText, useProfanityWords } from "@/lib/profanity";
+import { usePageScrolled } from "@/components/app/BackToTopButton";
+
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
   head: () => ({
