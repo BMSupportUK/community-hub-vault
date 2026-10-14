@@ -1811,8 +1811,17 @@ export function dedupeSportsListingEvents(events: SportsListingEvent[]): SportsL
     const c = parseClockTime(v ?? "");
     return c ? `${c.hour}:${c.minute}` : loose(v);
   };
+  // Same event + channel re-posted with a slightly different start time
+  // (e.g. 10:00 and 10:05) counts as a repeat within this window.
+  const NEAR_MINUTES = 30;
+  const near = new Map<string, number[]>();
+  const minutesOf = (v: string | null | undefined) => {
+    const c = parseClockTime(v ?? "");
+    return c ? c.hour * 60 + c.minute : null;
+  };
   return events.filter((e) => {
-    const slot = [dateKey(e.date), timeKey(e.time), (e.channels ?? []).map(loose).sort().join("|")].join("#");
+    const chans = (e.channels ?? []).map(loose).sort().join("|");
+    const slot = [dateKey(e.date), timeKey(e.time), chans].join("#");
     const key = `${slot}#${loose(e.title)}`;
     if (seen.has(key)) return false;
     // Same fixture re-imported under different wording, e.g.
@@ -1821,8 +1830,14 @@ export function dedupeSportsListingEvents(events: SportsListingEvent[]): SportsL
     const core = sportsFixtureCore(e.title);
     const coreKey = core ? `${slot}#fixture:${core}` : null;
     if (coreKey && seen.has(coreKey)) return false;
+    const mins = minutesOf(e.time);
+    const nearKeys = chans
+      ? [`${dateKey(e.date)}#${chans}#${loose(e.title)}`, ...(core ? [`${dateKey(e.date)}#${chans}#fixture:${core}`] : [])]
+      : [];
+    if (mins !== null && nearKeys.some((k) => (near.get(k) ?? []).some((m) => Math.abs(m - mins) <= NEAR_MINUTES))) return false;
     seen.add(key);
     if (coreKey) seen.add(coreKey);
+    if (mins !== null) for (const k of nearKeys) near.set(k, [...(near.get(k) ?? []), mins]);
     return true;
   });
 }

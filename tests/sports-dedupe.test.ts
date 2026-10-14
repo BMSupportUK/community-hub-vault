@@ -36,3 +36,15 @@ test("different fixtures in the same slot and channel both stay", () => {
   const html = toHtml(["Saturday, 10th October","","15:00 BST","Chelsea v Bournemouth","Channel 5","","15:00 BST","Fulham v Ipswich Town","Channel 5"]);
   expect(dedupeSportsListingHtml(html)).toBeNull();
 });
+
+test("same event on same channel re-posted a few minutes apart is kept once", () => {
+  const html = toHtml(["Saturday, 17th October","","10:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport","","10:05 BST","Melbourne Storm v Penrith Panthers","Stan Sport"]);
+  const out = dedupeSportsListingHtml(html);
+  expect(out).not.toBeNull();
+  expect(parseSportsListingBlock(out!)).toHaveLength(1);
+});
+
+test("same event on same channel hours apart stays as two entries", () => {
+  const html = toHtml(["Saturday, 17th October","","10:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport","","15:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport"]);
+  expect(dedupeSportsListingHtml(html)).toBeNull();
+});
