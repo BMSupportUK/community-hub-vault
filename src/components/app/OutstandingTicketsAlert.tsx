@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { playSound } from "@/lib/sound";
-import ticketAudio from "@/assets/ticket-notify.mp3";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
+const ticketAudio = phoneToneSrc("ticket")!;
 import {
   AlertDialog,
   AlertDialogAction,

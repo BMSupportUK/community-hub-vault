@@ -5,7 +5,8 @@ import { MessageSquareReply } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { playSound } from "@/lib/sound";
-import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
+const ticketReplyAudio = phoneToneSrc("ticket_reply")!;
 import {
   AlertDialog,
   AlertDialogAction,

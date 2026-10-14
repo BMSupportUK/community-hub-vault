@@ -1,5 +1,5 @@
 import { resolveSoundSrc, loadSoundOverrides } from "@/lib/sound-overrides";
-import { PHONE_TONE_SRCS, toPhoneTone } from "@/lib/phone-alert-sounds";
+import { PHONE_TONE_SRCS } from "@/lib/phone-alert-sounds";
 const recentlyPlayed = new Map<string, number>();
 // Shared audio playback helper.
 import { Capacitor } from "@capacitor/core";
@@ -242,11 +242,9 @@ export function playSound(
   // Wait for admin-uploaded overrides before choosing the file, so the old
   // built-in clip never plays first and then the uploaded version after it.
   return loadSoundOverrides().then(() => {
-    // Admin-uploaded overrides win; otherwise use the same recording the phone
-    // app plays for this alert so web and phone sound identical.
-    let resolved = original;
-    const overridden = resolveSoundSrc(resolved);
-    resolved = overridden !== resolved ? overridden : resolveSoundSrc(toPhoneTone(resolved));
+    // Admin-uploaded overrides win; every caller already passes the phone
+    // recording, so web and phone sound identical.
+    const resolved = resolveSoundSrc(original);
     if (PHONE_TONE_SRCS.has(resolved)) {
       // Phone recordings are already volume-matched; don't over-boost them.
       opts = { ...opts, gain: Math.min(opts.gain ?? 1, 1.2) };

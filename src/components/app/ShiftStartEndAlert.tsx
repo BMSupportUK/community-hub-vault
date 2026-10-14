@@ -4,8 +4,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { addDaysToDateStr, useTimezone } from "@/hooks/use-timezone";
-import shiftStartAudio from "@/assets/shift-start.mp3";
-import shiftEndAudio from "@/assets/shift-end.mp3";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
+const shiftStartAudio = phoneToneSrc("shift_start")!;
+const shiftEndAudio = phoneToneSrc("shift_end")!;
 import { playSound } from "@/lib/sound";
 import {
   AlertDialog,
