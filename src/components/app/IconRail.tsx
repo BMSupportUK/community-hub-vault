@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogIn, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown, UserPlus } from "lucide-react";
+import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogIn, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, ClipboardList, MonitorPlay, Popcorn, Crown, UserPlus } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
@@ -248,14 +248,14 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
-    { to: "/jobs", label: "BM Support jobs", icon: Briefcase, show: true },
+    { to: "/jobs", label: "BM Support jobs", icon: ClipboardList, show: true },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
   ];
 
   const fanZoneItems: RailItem[] = [
     // Switching back to BM Support lives on the Fan Zone header, not the rail.
     { to: user ? "/forum" : "/fan-zone", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
-    { to: "/fan-zone/jobs", label: "Fan Zone jobs", icon: Briefcase, show: true },
+    { to: "/fan-zone/jobs", label: "Fan Zone jobs", icon: ClipboardList, show: true },
     { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: !!user },
     { to: "/fanzone/friend-requests", label: "Friend requests", icon: UserPlus, show: !!user, badge: fanFriendRequests },
 
