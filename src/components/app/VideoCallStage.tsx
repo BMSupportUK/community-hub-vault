@@ -234,6 +234,11 @@ export function VideoCallStage({
         const deg = Number((payload as { deg?: number }).deg);
         if ([0, 90, 180, 270].includes(deg)) setRemoteRotate(deg);
       });
+      ch.on("broadcast", { event: "staffmeta" }, ({ payload }) => {
+        if (side !== "answerer") return;
+        const g = (payload as { gender?: string }).gender;
+        setRemotePlaceholder(g === "male" ? staffPlaceholderMale : staffPlaceholder);
+      });
       ch.on("broadcast", { event: "bye" }, () => { if (!hungRef.current) { hungRef.current = true; onHangupRef.current(); } });
       ch.on("broadcast", { event: "moved" }, ({ payload }) => {
         if (side !== "answerer" || hungRef.current) return;
@@ -275,8 +280,10 @@ export function VideoCallStage({
       });
       ch.subscribe((status) => {
         if (status !== "SUBSCRIBED") return;
-        if (side === "offerer") send("ping");
-        else send("ready", { tag: tagRef.current });
+        if (side === "offerer") {
+          send("ping");
+          if (staffGenderRef.current) send("staffmeta", { gender: staffGenderRef.current });
+        } else send("ready", { tag: tagRef.current });
       });
     })();
 
@@ -284,6 +291,7 @@ export function VideoCallStage({
     const retry = window.setInterval(() => {
       if (pcRef.current?.connectionState === "connected") return;
       if (side === "offerer" && !offeredRef.current) send("ping");
+      if (side === "offerer" && staffGenderRef.current) send("staffmeta", { gender: staffGenderRef.current });
       // Offer sent but no answer back yet: send it again in case it was lost.
       const pc = pcRef.current;
       if (side === "offerer" && pc && descSent.has(pc) && pc.signalingState === "have-local-offer" && pc.localDescription && activeTagRef.current) {
@@ -443,7 +451,7 @@ export function VideoCallStage({
         {connected && !remoteHasVideo && !error && (
           <div className="absolute inset-0 grid place-items-center bg-muted">
             <div className="flex flex-col items-center gap-3 px-6 text-center">
-              <img src={placeholderImage} alt={otherName} className="h-48 w-36 rounded-2xl border border-border object-cover shadow-lg sm:h-64 sm:w-48" />
+              <img src={remotePlaceholder} alt={otherName} className="h-48 w-36 rounded-2xl border border-border object-cover shadow-lg sm:h-64 sm:w-48" />
               <p className="text-sm font-medium text-foreground">You're chatting with {otherName}</p>
               <p className="text-xs text-muted-foreground">Their camera is off — they can see and hear you.</p>
             </div>
