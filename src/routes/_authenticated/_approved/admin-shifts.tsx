@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, UserX, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,22 @@ interface PersonRow {
   id: string;
   display_name: string | null;
   username: string | null;
+}
+
+/** A scheduled rota slot with an assigned staff member. */
+interface SlotRow {
+  id: string;
+  shift_date: string; // YYYY-MM-DD
+  start_time: string;
+  end_time: string;
+  assigned_to: string | null;
+  required_role: string | null;
+}
+
+/** A slot whose assigned member never clocked in that day. */
+interface MissedRow extends SlotRow {
+  startsAt: Date;
+  notYetDue: boolean;
 }
 
 const ROLE_TABS = [
@@ -202,6 +218,7 @@ function StaffShiftsPage() {
   const [awayByUser, setAwayByUser] = useState<Record<string, AwayRow[]>>({});
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
+  const [slots, setSlots] = useState<SlotRow[]>([]);
   const [role, setRole] = useState<RoleKey>("admin");
   // The visible day is always the calendar day, so it is derived rather than
   // kept in its own state — that way Previous/Next day can't desync header and list.
@@ -231,6 +248,16 @@ function StaffShiftsPage() {
     const rows = (data ?? []) as ShiftRow[];
     setShifts(rows);
 
+    // Scheduled rota slots for the same week — used to find missed sign-ins.
+    const { data: slotData } = await supabase
+      .from("shift_slots")
+      .select("id, shift_date, start_time, end_time, assigned_to, required_role")
+      .gte("shift_date", isoDay(from))
+      .lt("shift_date", isoDay(to))
+      .not("assigned_to", "is", null);
+    const slotRows = (slotData ?? []) as SlotRow[];
+    setSlots(slotRows);
+
     const ids = [...new Set(rows.map((r) => r.id))];
     const bmap: Record<string, BreakRow[]> = {};
     if (ids.length) {
@@ -257,7 +284,7 @@ function StaffShiftsPage() {
     }
     setAwayByUser(amap);
 
-    const userIds = [...new Set(rows.map((r) => r.user_id))];
+    const userIds = [...new Set([...rows.map((r) => r.user_id), ...slotRows.map((s) => s.assigned_to!).filter(Boolean)])];
     if (userIds.length) {
       const { data: pd } = await supabase.from("profiles").select("id, display_name, username").in("id", userIds);
       const pmap: Record<string, PersonRow> = {};
@@ -288,6 +315,7 @@ function StaffShiftsPage() {
       .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "away_log" }, refresh)
       .subscribe();
     const poll = setInterval(refresh, 20_000);
@@ -340,6 +368,24 @@ function StaffShiftsPage() {
     () => byWeekday.filter((s) => primaryRole(s.user_id) === role),
     [byWeekday, role, primaryRole],
   );
+
+  // Scheduled slots on the selected day whose assigned member never clocked
+  // in that day. A slot only counts as missed once its start time has passed.
+  const missed = useMemo<MissedRow[]>(() => {
+    const clockedDays = new Set(shifts.map((s) => `${s.user_id}|${dayKey(s.clock_in)}`));
+    const now = Date.now();
+    const dayIso = isoDay(selectedDate);
+    return slots
+      .filter((sl) => sl.assigned_to && sl.shift_date === dayIso && !clockedDays.has(`${sl.assigned_to}|${sl.shift_date}`))
+      .map((sl) => {
+        const [h, m] = sl.start_time.split(":").map(Number);
+        const [y, mo, d] = sl.shift_date.split("-").map(Number);
+        const startsAt = new Date(y ?? 1970, (mo ?? 1) - 1, d ?? 1, h || 0, m || 0);
+        return { ...sl, startsAt, notYetDue: startsAt.getTime() > now };
+      })
+      .filter((sl) => !sl.notYetDue)
+      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  }, [slots, shifts, selectedDate]);
 
   // day -> role -> shifts
   const grouped = useMemo(() => {
@@ -516,6 +562,55 @@ function StaffShiftsPage() {
           </div>
         ))}
       </div>
+
+      <section className="rounded-2xl border border-border bg-surface-1 p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={cn("grid size-8 place-items-center rounded-xl", missed.length ? "bg-rose-500/15 text-rose-400" : "bg-emerald-500/15 text-emerald-400")}>
+            <UserX className="size-4" />
+          </span>
+          <h2 className="font-display text-base font-bold tracking-tight">Missed sign-ins</h2>
+          <span className="rounded-full border border-border bg-background/60 px-2.5 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
+            {missed.length} on {fmtDay(selectedDate)}
+          </span>
+        </div>
+        {missed.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Everyone scheduled for {isToday ? "today so far" : "this day"} signed in.
+          </p>
+        ) : (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {missed.map((sl) => {
+              const p = people[sl.assigned_to!];
+              const slotRole = sl.required_role ?? primaryRole(sl.assigned_to!);
+              return (
+                <div key={sl.id} className="flex items-center gap-3 rounded-xl border border-rose-400/30 bg-rose-500/5 p-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-rose-500/15 font-display text-xs font-bold text-rose-300" aria-hidden>
+                    {nameOf(sl.assigned_to!).slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    {p?.username ? (
+                      <Link
+                        to="/u/$username"
+                        params={{ username: p.username }}
+                        search={{ tab: "shifts" } as any}
+                        className="block truncate text-sm font-semibold hover:text-primary"
+                      >
+                        {nameOf(sl.assigned_to!)}
+                      </Link>
+                    ) : (
+                      <p className="truncate text-sm font-semibold">{nameOf(sl.assigned_to!)}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground tabular-nums">
+                      Due {sl.start_time.slice(0, 5)} – {sl.end_time.slice(0, 5)} · {ROLE_LABEL[slotRole] ?? slotRole}
+                    </p>
+                  </div>
+                  <Pill label="No sign-in" tone="warn" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
       <aside className="order-first xl:order-last">
