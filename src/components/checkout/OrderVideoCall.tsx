@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Phone, PhoneOff, Video } from "lucide-react";
+import { Loader2, Phone, PhoneOff, QrCode, Video } from "lucide-react";
+import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -11,6 +12,7 @@ import {
   listOrderLiveHelp,
   startLiveHelp,
 } from "@/lib/live-help.functions";
+import { secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
 import { VideoCallStage } from "@/components/app/VideoCallStage";
 
 type Session = { id: string; status: "waiting" | "live" | "ended" | "expired" };
@@ -23,10 +25,15 @@ export function OrderVideoCallCustomer({ token, password }: { token: string; pas
   const [session, setSession] = useState<Session | null>(null);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
+  const [moved, setMoved] = useState(false);
 
   useEffect(() => {
     supabase.rpc("is_business_open").then(({ data }) => setOpen(data !== false));
   }, []);
+
+  useEffect(() => {
+    setMoved(false);
+  }, [session?.id]);
 
   useEffect(() => {
     if (!session) return;
@@ -79,9 +86,19 @@ export function OrderVideoCallCustomer({ token, password }: { token: string; pas
           </button>
         </div>
       )}
-      {session?.status === "live" && (
-        <VideoCallStage topic={`video-call-${session.id}`} side="answerer" otherName="BM Support" onHangup={end} />
-      )}
+      {session?.status === "live" && (moved ? (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-background p-6 text-center">
+          <div className="max-w-sm space-y-4">
+            <p className="text-lg font-semibold">Your video call has moved to your other device.</p>
+            <p className="text-sm text-muted-foreground">You can keep chatting on this screen, or end the call.</p>
+            <button type="button" onClick={end} className="inline-flex items-center gap-2 rounded-full bg-destructive px-5 py-2.5 text-sm font-semibold text-destructive-foreground">
+              <PhoneOff className="size-4" /> End call
+            </button>
+          </div>
+        </div>
+      ) : (
+        <VideoCallStage topic={`video-call-${session.id}`} side="answerer" otherName="BM Support" onHangup={end} onSuperseded={() => setMoved(true)} />
+      ))}
     </>
   );
 }
@@ -94,6 +111,7 @@ export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
   const [session, setSession] = useState<Session | null>(null);
   const [inCall, setInCall] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [checkoutLink, setCheckoutLink] = useState<{ token: string; password: string } | null>(null);
 
   useEffect(() => {
     let off = false;
@@ -108,6 +126,17 @@ export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
     const id = window.setInterval(tick, 4000);
     return () => { off = true; window.clearInterval(id); };
   }, [orderId, list]);
+
+  // The QR code is only shown while the customer is actually asking for video
+  // help, so it never appears on a normal order.
+  useEffect(() => {
+    if (!session || checkoutLink) return;
+    supabase.from("order_checkout_links").select("token,password").eq("order_id", orderId).maybeSingle()
+      .then(({ data }) => {
+        const link = data as unknown as { token: string; password: string } | null;
+        if (link?.token) setCheckoutLink(link);
+      });
+  }, [session, checkoutLink, orderId]);
 
   const answer = async () => {
     if (!session) return;
@@ -131,16 +160,29 @@ export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
   return (
     <>
       {!inCall && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary bg-primary/10 p-3 text-sm">
-          <Video className="size-5 text-primary" />
-          <span className="flex-1 font-semibold">{session.status === "waiting" ? "The customer is video calling you" : "Video call in progress"}</span>
-          <button type="button" disabled={busy} onClick={answer} className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
-            {busy ? <Loader2 className="size-3 animate-spin" /> : <Phone className="size-3" />} {session.status === "waiting" ? "Answer" : "Rejoin"}
-          </button>
-          <button type="button" onClick={end} className="inline-flex items-center gap-1 rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
-            <PhoneOff className="size-3" /> {session.status === "waiting" ? "Decline" : "End"}
-          </button>
-        </div>
+        <>
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary bg-primary/10 p-3 text-sm">
+            <Video className="size-5 text-primary" />
+            <span className="flex-1 font-semibold">{session.status === "waiting" ? "The customer is video calling you" : "Video call in progress"}</span>
+            <button type="button" disabled={busy} onClick={answer} className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
+              {busy ? <Loader2 className="size-3 animate-spin" /> : <Phone className="size-3" />} {session.status === "waiting" ? "Answer" : "Rejoin"}
+            </button>
+            <button type="button" onClick={end} className="inline-flex items-center gap-1 rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
+              <PhoneOff className="size-3" /> {session.status === "waiting" ? "Decline" : "End"}
+            </button>
+          </div>
+          {checkoutLink && (
+            <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
+              <div className="shrink-0 rounded-lg bg-white p-2">
+                <QRCode value={`${secureCheckoutUrl(checkoutLink.token)}?pw=${encodeURIComponent(checkoutLink.password)}`} size={112} />
+              </div>
+              <div className="min-w-0 space-y-1">
+                <p className="flex items-center gap-1.5 text-sm font-semibold"><QrCode className="size-4 text-primary" /> Customer wants video help — scan to use their phone</p>
+                <p className="text-sm text-muted-foreground">The customer scans this with their phone camera. It opens their order page on the phone, already signed in — they tap Start video call there and their phone camera shows up here, big, while the chat carries on their computer.</p>
+              </div>
+            </div>
+          )}
+        </>
       )}
       {inCall && <VideoCallStage topic={`video-call-${session.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} />}
     </>

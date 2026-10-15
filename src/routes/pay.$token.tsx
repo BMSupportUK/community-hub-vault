@@ -16,6 +16,11 @@ import { DEMO_CHECKOUT_VIEW } from "@/lib/demo-data";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/pay/$token")({
+  validateSearch: (search: Record<string, unknown>): { pw?: string } => ({
+    // The QR code staff show during a video call opens the page already
+    // unlocked by carrying the password in the link.
+    pw: typeof search.pw === "string" ? search.pw : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Secure checkout — BM Support" },
