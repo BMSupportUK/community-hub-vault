@@ -142,14 +142,22 @@ export function LiveHelpCustomer({ token, password }: { token: string; password:
     if (!session) return;
     const ch = supabase.channel(`live-help-${session.id}`);
     channelRef.current = ch;
+    let pending: RTCIceCandidateInit[] = [];
     ch.on("broadcast", { event: "signal" }, ({ payload }) => {
       const pc = pcRef.current;
       if (!pc || !payload) return;
       const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit };
       if (p.kind === "answer" && p.sdp) {
-        pc.setRemoteDescription({ type: "answer", sdp: p.sdp }).catch(() => {});
+        pc.setRemoteDescription({ type: "answer", sdp: p.sdp })
+          .then(async () => {
+            const queued = pending;
+            pending = [];
+            for (const c of queued) await pc.addIceCandidate(c).catch(() => {});
+          })
+          .catch(() => {});
       } else if (p.kind === "candidate" && p.candidate) {
-        pc.addIceCandidate(p.candidate).catch(() => {});
+        if (pc.remoteDescription) pc.addIceCandidate(p.candidate).catch(() => {});
+        else pending.push(p.candidate);
       } else if (p.kind === "offer") {
         // Staff restarted — ignore, customer is always the offerer.
       }
