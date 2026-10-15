@@ -13,6 +13,7 @@ import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 import hero from "@/assets/checkout-family-tv.jpg";
 import { toast } from "sonner";
 import { DEMO_CHECKOUT_VIEW } from "@/lib/demo-data";
+import { isMobilePhone } from "@/lib/is-mobile-phone";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/pay/$token")({
@@ -268,7 +269,7 @@ function PayPage() {
           </DialogContent>
         </Dialog>
       )}
-      {!canManage && !view.order.cancelled && <OrderVideoCallCustomer token={token} password={pw} />}
+      {!canManage && !view.order.cancelled && isMobilePhone() && <OrderVideoCallCustomer token={token} password={pw} />}
       <CustomerCheckoutChat token={token} password={pw} orderRef={view.order.ref} />
     </main>
   );

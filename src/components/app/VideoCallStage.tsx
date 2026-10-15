@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
+import { isMobilePhone } from "@/lib/is-mobile-phone";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
 
@@ -299,12 +300,16 @@ export function VideoCallStage({
         <button type="button" onClick={toggleMic} aria-label={micOn ? "Mute microphone" : "Unmute microphone"} className={`grid size-12 place-items-center rounded-full ${micOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
           {micOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
         </button>
-        <button type="button" onClick={toggleCam} aria-label={camOn ? "Turn camera off" : "Turn camera on"} className={`grid size-12 place-items-center rounded-full ${camOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
-          {camOn ? <Video className="size-5" /> : <VideoOff className="size-5" />}
-        </button>
-        <button type="button" onClick={flip} aria-label="Flip camera" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
-          <RefreshCw className="size-5" />
-        </button>
+        {isMobilePhone() && (
+          <>
+            <button type="button" onClick={toggleCam} aria-label={camOn ? "Turn camera off" : "Turn camera on"} className={`grid size-12 place-items-center rounded-full ${camOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
+              {camOn ? <Video className="size-5" /> : <VideoOff className="size-5" />}
+            </button>
+            <button type="button" onClick={flip} aria-label="Flip camera" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
+              <RefreshCw className="size-5" />
+            </button>
+          </>
+        )}
         <button type="button" onClick={hangup} aria-label="End call" className="grid size-14 place-items-center rounded-full bg-destructive text-destructive-foreground">
           <PhoneOff className="size-6" />
         </button>
