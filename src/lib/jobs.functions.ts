@@ -80,12 +80,26 @@ export const saveJobVacancy = createServerFn({ method: "POST" }).middleware([req
 export const reviewJobApplication = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid(), status: jobStatusSchema, admin_notes: z.string().trim().max(6000) }).parse(input))
   .handler(async ({ data, context }) => {
-    const role = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    if (role.error || !role.data) throw new Error("Admin access required.");
+    await assertApplicationViewer(context, data.id);
     const result = await context.supabase.from("staff_job_applications").update({ status: data.status, admin_notes: data.admin_notes }).eq("id", data.id).select("id").single();
     if (result.error) throw new Error("The application could not be updated.");
     return result.data;
   });
+
+type AuthContext = { supabase: any; userId: string };
+
+// BM Support applications: admin + management. Fan Zone applications: admin only.
+async function assertApplicationViewer(context: AuthContext, applicationId: string) {
+  const admin = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (!admin.error && admin.data) return;
+  const a = await context.supabase.from("staff_job_applications").select("vacancy_id").eq("id", applicationId).maybeSingle();
+  const v = a.data ? await context.supabase.from("staff_job_vacancies").select("zone").eq("id", a.data.vacancy_id).maybeSingle() : { data: null };
+  if (v.data?.zone === "bm") {
+    const mgmt = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "management" });
+    if (!mgmt.error && mgmt.data) return;
+  }
+  throw new Error("You do not have access to this application.");
+}
 function publicClient() {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   return createClient<Database>(process.env["SUPABASE_URL"]!, key, {
