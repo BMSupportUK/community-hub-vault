@@ -312,11 +312,20 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
       {active && (
         <div className="space-y-3">
           <div
-            className="relative aspect-video w-full cursor-crosshair overflow-hidden rounded-xl bg-black"
+            className="relative mx-auto w-full cursor-crosshair overflow-hidden rounded-xl bg-black"
+            style={{ aspectRatio: String(ratio), maxHeight: "70vh", maxWidth: ratio < 1 ? "min(100%, 60vh)" : "100%" }}
             onClick={dropPointer}
             title="Tap to show the customer where to press"
           >
-            <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-contain" />
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="h-full w-full object-contain"
+              onLoadedMetadata={syncRatio}
+              onResize={syncRatio}
+            />
             {connected && (
               <button
                 type="button"
