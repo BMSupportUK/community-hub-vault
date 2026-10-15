@@ -7097,6 +7097,7 @@ export type Database = {
           slot_key: string
         }[]
       }
+      admin_clock_in_staff: { Args: { _user_id: string }; Returns: string }
       admin_complete_manual_order: {
         Args: { _method?: string; _order_id: string; _reference?: string }
         Returns: undefined
