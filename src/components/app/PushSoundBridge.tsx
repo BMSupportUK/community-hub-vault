@@ -5,6 +5,14 @@ import { phoneToneForKind } from "@/lib/phone-alert-sounds";
 import { shakeScreen } from "@/lib/screen-shake";
 import { loadSoundOverrides } from "@/lib/sound-overrides";
 
+/** Kinds whose sound is already played by an in-app alert component. */
+const IN_APP_OWNED_KINDS = new Set([
+  "shift_start",
+  "shift_start_warn",
+  "shift_end",
+  "shift_end_warn",
+]);
+
 /**
  * Plays the uploaded voice clips when a web push arrives, so staff hear the
  * recorded message rather than the generic OS notification chime.
