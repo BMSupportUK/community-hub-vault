@@ -135,6 +135,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
           {order.manual
             ? <Link to="/checkout-install/$token" params={{ token: claimToken }} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"><BookOpen className="size-4" /> Open install guides</Link>
             : <Link to="/install-guides" search={{ tab: "guides", checkout: claimToken }} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"><BookOpen className="size-4" /> Open install guides</Link>}
+          {videoHelp}
         </div>
       </div>
     </section>
@@ -262,7 +263,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 )}
               </section>
               {installCard}
-              {videoHelp}
+              {!installCard && videoHelp}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -280,7 +281,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </section>
               {appLogin}
               {installCard}
-              {videoHelp}
+              {!installCard && videoHelp}
               {addLoginDetails}
               {visibleStage === 3 && completeSale}
               {visibleStage === 4 && order.manual && (
