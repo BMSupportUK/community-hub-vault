@@ -284,7 +284,7 @@ function StaffShiftsPage() {
     }
     setAwayByUser(amap);
 
-    const userIds = [...new Set(rows.map((r) => r.user_id))];
+    const userIds = [...new Set([...rows.map((r) => r.user_id), ...slotRows.map((s) => s.assigned_to!).filter(Boolean)])];
     if (userIds.length) {
       const { data: pd } = await supabase.from("profiles").select("id, display_name, username").in("id", userIds);
       const pmap: Record<string, PersonRow> = {};
