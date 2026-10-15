@@ -49,6 +49,8 @@ export function VideoCallStage({
   // Extra rotation (deg, clockwise) the customer's phone reports when it is
   // held sideways but its screen hasn't rotated (auto-rotate off).
   const [remoteRotate, setRemoteRotate] = useState(0);
+  // Staff-side manual turn (deg, clockwise) on top of the automatic one.
+  const [manualRotate, setManualRotate] = useState(0);
   const localRotateRef = useRef(0);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -334,10 +336,16 @@ export function VideoCallStage({
     const onOrient = (e: DeviceOrientationEvent) => {
       const b = e.beta, g = e.gamma;
       if (b == null || g == null) return;
+      // Use the "up" direction in the phone's own frame instead of raw tilt
+      // angles: tilt angles jump by 180° when a sideways phone leans back,
+      // which used to report "upside down" instead of "sideways".
+      const rb = (b * Math.PI) / 180, rg = (g * Math.PI) / 180;
+      const upX = -Math.cos(rb) * Math.sin(rg);
+      const upY = Math.sin(rb);
       // Phone lying flat: keep the last reading.
-      if (Math.abs(b) < 25 && Math.abs(g) < 25) return;
-      if (Math.abs(b) >= Math.abs(g)) deviceCw = b >= 0 ? 0 : 180;
-      else deviceCw = g > 0 ? 90 : 270;
+      if (Math.abs(upX) < 0.45 && Math.abs(upY) < 0.45) return;
+      if (Math.abs(upY) >= Math.abs(upX)) deviceCw = upY >= 0 ? 0 : 180;
+      else deviceCw = upX < 0 ? 90 : 270;
       push();
     };
     const listen = () => window.addEventListener("deviceorientation", onOrient);
