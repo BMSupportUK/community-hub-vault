@@ -10,3 +10,11 @@ test('applications require consent and complete contact details', () => {
  expect(applicationSchema.safeParse({ ...application, consent: false }).success).toBe(false);
  expect(applicationSchema.safeParse({ ...application, email: 'invalid' }).success).toBe(false);
 });
+import { vacancySchema, positionsLabel } from '../src/lib/jobs';
+test('a position can advertise multiple openings (1-100)', () => {
+ const base = { zone: 'bm', title: 'Support', location: '', employment_type: '', description: 'x', requirements: '', closing_date: null, published: true };
+ expect(vacancySchema.parse(base).positions_available).toBe(1);
+ expect(vacancySchema.parse({ ...base, positions_available: 3 }).positions_available).toBe(3);
+ expect(vacancySchema.safeParse({ ...base, positions_available: 0 }).success).toBe(false);
+ expect(positionsLabel(3)).toBe('3 positions');
+});

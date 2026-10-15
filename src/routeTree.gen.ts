@@ -42,6 +42,7 @@ import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as FanZoneJobsRouteImport } from './routes/fan-zone.jobs'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesIdRouteImport } from './routes/guides.$id'
+import { Route as JobApplicationTokenRouteImport } from './routes/job-application.$token'
 import { Route as PayTokenRouteImport } from './routes/pay.$token'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
@@ -125,6 +126,7 @@ import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.
 import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
 import { Route as FanZoneUUserIdRouteImport } from './routes/fan-zone.u.$userId'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
+import { Route as AuthenticatedApprovedAdminJobApplicationIdRouteImport } from './routes/_authenticated/_approved/admin-job-application.$id'
 import { Route as AuthenticatedApprovedFanzoneBlocksRouteImport } from './routes/_authenticated/_approved/fanzone.blocks'
 import { Route as AuthenticatedApprovedFanzoneFriendRequestsRouteImport } from './routes/_authenticated/_approved/fanzone.friend-requests'
 import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
@@ -341,6 +343,11 @@ const GuidesIndexRoute = GuidesIndexRouteImport.update({
 const GuidesIdRoute = GuidesIdRouteImport.update({
   id: '/guides/$id',
   path: '/guides/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JobApplicationTokenRoute = JobApplicationTokenRouteImport.update({
+  id: '/job-application/$token',
+  path: '/job-application/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PayTokenRoute = PayTokenRouteImport.update({
@@ -839,6 +846,12 @@ const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
   path: '/lovable/email/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedApprovedAdminJobApplicationIdRoute =
+  AuthenticatedApprovedAdminJobApplicationIdRouteImport.update({
+    id: '/admin-job-application/$id',
+    path: '/admin-job-application/$id',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedFanzoneBlocksRoute =
   AuthenticatedApprovedFanzoneBlocksRouteImport.update({
     id: '/fanzone/blocks',
@@ -1183,6 +1196,7 @@ export interface FileRoutesByFullPath {
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
+  '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
@@ -1268,6 +1282,7 @@ export interface FileRoutesByFullPath {
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
+  '/admin-job-application/$id': typeof AuthenticatedApprovedAdminJobApplicationIdRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/friend-requests': typeof AuthenticatedApprovedFanzoneFriendRequestsRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -1350,6 +1365,7 @@ export interface FileRoutesByTo {
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
+  '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
   '/fan-zone': typeof FanZoneIndexRoute
   '/guides': typeof GuidesIndexRoute
@@ -1434,6 +1450,7 @@ export interface FileRoutesByTo {
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/fan-zone/$board': typeof FanZoneBoardIndexRoute
+  '/admin-job-application/$id': typeof AuthenticatedApprovedAdminJobApplicationIdRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/friend-requests': typeof AuthenticatedApprovedFanzoneFriendRequestsRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -1521,6 +1538,7 @@ export interface FileRoutesById {
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
+  '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
@@ -1606,6 +1624,7 @@ export interface FileRoutesById {
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
+  '/_authenticated/_approved/admin-job-application/$id': typeof AuthenticatedApprovedAdminJobApplicationIdRoute
   '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/_authenticated/_approved/fanzone/friend-requests': typeof AuthenticatedApprovedFanzoneFriendRequestsRoute
   '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -1692,6 +1711,7 @@ export interface FileRouteTypes {
     | '/fan-zone/$board'
     | '/fan-zone/jobs'
     | '/guides/$id'
+    | '/job-application/$token'
     | '/pay/$token'
     | '/fan-zone/'
     | '/guides/'
@@ -1777,6 +1797,7 @@ export interface FileRouteTypes {
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
     | '/fan-zone/$board/'
+    | '/admin-job-application/$id'
     | '/fanzone/blocks'
     | '/fanzone/friend-requests'
     | '/fanzone/messages'
@@ -1859,6 +1880,7 @@ export interface FileRouteTypes {
     | '/checkout-install/$token'
     | '/fan-zone/jobs'
     | '/guides/$id'
+    | '/job-application/$token'
     | '/pay/$token'
     | '/fan-zone'
     | '/guides'
@@ -1943,6 +1965,7 @@ export interface FileRouteTypes {
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
     | '/fan-zone/$board'
+    | '/admin-job-application/$id'
     | '/fanzone/blocks'
     | '/fanzone/friend-requests'
     | '/fanzone/messages'
@@ -2029,6 +2052,7 @@ export interface FileRouteTypes {
     | '/fan-zone/$board'
     | '/fan-zone/jobs'
     | '/guides/$id'
+    | '/job-application/$token'
     | '/pay/$token'
     | '/fan-zone/'
     | '/guides/'
@@ -2114,6 +2138,7 @@ export interface FileRouteTypes {
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
     | '/fan-zone/$board/'
+    | '/_authenticated/_approved/admin-job-application/$id'
     | '/_authenticated/_approved/fanzone/blocks'
     | '/_authenticated/_approved/fanzone/friend-requests'
     | '/_authenticated/_approved/fanzone/messages'
@@ -2195,6 +2220,7 @@ export interface RootRouteChildren {
   ATokenRoute: typeof ATokenRoute
   CheckoutInstallTokenRoute: typeof CheckoutInstallTokenRoute
   GuidesIdRoute: typeof GuidesIdRoute
+  JobApplicationTokenRoute: typeof JobApplicationTokenRoute
   PayTokenRoute: typeof PayTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
@@ -2473,6 +2499,13 @@ declare module '@tanstack/react-router' {
       path: '/guides/$id'
       fullPath: '/guides/$id'
       preLoaderRoute: typeof GuidesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/job-application/$token': {
+      id: '/job-application/$token'
+      path: '/job-application/$token'
+      fullPath: '/job-application/$token'
+      preLoaderRoute: typeof JobApplicationTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pay/$token': {
@@ -3056,6 +3089,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/_approved/admin-job-application/$id': {
+      id: '/_authenticated/_approved/admin-job-application/$id'
+      path: '/admin-job-application/$id'
+      fullPath: '/admin-job-application/$id'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminJobApplicationIdRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/fanzone/blocks': {
       id: '/_authenticated/_approved/fanzone/blocks'
       path: '/fanzone/blocks'
@@ -3589,6 +3629,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
   AuthenticatedApprovedVpnRoute: typeof AuthenticatedApprovedVpnRoute
   AuthenticatedApprovedWhatToWatchRoute: typeof AuthenticatedApprovedWhatToWatchRoute
+  AuthenticatedApprovedAdminJobApplicationIdRoute: typeof AuthenticatedApprovedAdminJobApplicationIdRoute
   AuthenticatedApprovedFanzoneBlocksRoute: typeof AuthenticatedApprovedFanzoneBlocksRoute
   AuthenticatedApprovedFanzoneFriendRequestsRoute: typeof AuthenticatedApprovedFanzoneFriendRequestsRoute
   AuthenticatedApprovedFanzoneMessagesRoute: typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -3718,6 +3759,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
   AuthenticatedApprovedVpnRoute: AuthenticatedApprovedVpnRoute,
   AuthenticatedApprovedWhatToWatchRoute: AuthenticatedApprovedWhatToWatchRoute,
+  AuthenticatedApprovedAdminJobApplicationIdRoute:
+    AuthenticatedApprovedAdminJobApplicationIdRoute,
   AuthenticatedApprovedFanzoneBlocksRoute:
     AuthenticatedApprovedFanzoneBlocksRoute,
   AuthenticatedApprovedFanzoneFriendRequestsRoute:
@@ -3815,6 +3858,7 @@ const rootRouteChildren: RootRouteChildren = {
   ATokenRoute: ATokenRoute,
   CheckoutInstallTokenRoute: CheckoutInstallTokenRoute,
   GuidesIdRoute: GuidesIdRoute,
+  JobApplicationTokenRoute: JobApplicationTokenRoute,
   PayTokenRoute: PayTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
