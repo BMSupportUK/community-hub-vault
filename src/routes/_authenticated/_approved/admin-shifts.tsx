@@ -91,6 +91,22 @@ interface PersonRow {
   username: string | null;
 }
 
+/** A scheduled rota slot with an assigned staff member. */
+interface SlotRow {
+  id: string;
+  shift_date: string; // YYYY-MM-DD
+  start_time: string;
+  end_time: string;
+  assigned_to: string | null;
+  required_role: string | null;
+}
+
+/** A slot whose assigned member never clocked in that day. */
+interface MissedRow extends SlotRow {
+  startsAt: Date;
+  notYetDue: boolean;
+}
+
 const ROLE_TABS = [
   { key: "admin", label: "Owner" },
   { key: "management", label: "Management" },
