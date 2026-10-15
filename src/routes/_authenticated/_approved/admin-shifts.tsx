@@ -209,6 +209,8 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: st
 function StaffShiftsPage() {
   const { hasAny } = useAuth();
   const canView = hasAny(["admin", "management", "staff", "moderator"]);
+  const canManage = hasAny(["admin", "management"]);
+  const [signingIn, setSigningIn] = useState<string | null>(null);
   // The day picked in the calendar; the query always loads its Monday–Sunday week.
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
