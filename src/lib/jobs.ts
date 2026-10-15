@@ -9,6 +9,7 @@ export const vacancySchema = z.object({
   employment_type: z.string().trim().max(100), description: z.string().trim().min(1).max(12000),
   requirements: z.string().trim().max(12000), closing_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   published: z.boolean(),
+  positions_available: z.number().int().min(1).max(100).default(1),
 });
 export const applicationSchema = z.object({
   vacancy_id: z.string().uuid(), zone: jobZoneSchema,
@@ -20,7 +21,7 @@ export const applicationSchema = z.object({
 export type VacancyInput = z.infer<typeof vacancySchema>;
 export type JobVacancy = VacancyInput & { id: string; created_at: string };
 export type JobApplication = Omit<z.infer<typeof applicationSchema>, "website" | "zone"> & {
-  id: string; status: z.infer<typeof jobStatusSchema>; admin_notes: string; created_at: string;
+  id: string; status: z.infer<typeof jobStatusSchema>; admin_notes: string; created_at: string; access_token: string;
 };
 export function vacanciesForZone(rows: JobVacancy[], zone: JobZone) { return rows.filter((row) => row.zone === zone); }
 export function jobAdminAllowed(roles: readonly string[]) { return roles.includes("admin"); }
@@ -29,4 +30,7 @@ export function jobsHead(zone: JobZone, admin = false) {
   const title = `${admin ? "Recruitment administration" : "Staff vacancies"} | ${name}`;
   const description = admin ? `Manage ${name} staff positions and privately review job applications.` : `Browse ${name} staff opportunities and apply to join the team.`;
   return { meta: [{ title }, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] };
-}
+}export const jobMessageSchema = z.string().trim().min(1).max(4000);
+export type JobChatMessage = { id: string; sender: "admin" | "applicant"; body: string; created_at: string };
+export type JobApplicationView = { id: string; full_name: string; email: string; phone: string; experience: string; motivation: string; availability: string; status: string; created_at: string; vacancy_title: string; zone: JobZone; messages: JobChatMessage[] };
+export function positionsLabel(n: number | null | undefined) { const c = n && n > 0 ? n : 1; return c === 1 ? "1 position" : `${c} positions`; }

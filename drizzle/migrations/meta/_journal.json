@@ -855,6 +855,13 @@
       "when": 1791985977033,
       "tag": "0121_restore_member_sound_playback",
       "breakpoints": true
+    },
+    {
+      "idx": 122,
+      "version": "7",
+      "when": 1792050195038,
+      "tag": "0122_job_positions_and_application_pages",
+      "breakpoints": true
     }
   ]
 }

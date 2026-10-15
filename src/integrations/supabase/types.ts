@@ -5573,8 +5573,41 @@ export type Database = {
           },
         ]
       }
+      staff_job_application_messages: {
+        Row: {
+          application_id: string
+          body: string
+          created_at: string
+          id: string
+          sender: string
+        }
+        Insert: {
+          application_id: string
+          body: string
+          created_at?: string
+          id?: string
+          sender: string
+        }
+        Update: {
+          application_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_job_application_messages_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "staff_job_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_job_applications: {
         Row: {
+          access_token: string
           admin_notes: string
           availability: string
           consent: boolean
@@ -5589,6 +5622,7 @@ export type Database = {
           vacancy_id: string
         }
         Insert: {
+          access_token?: string
           admin_notes?: string
           availability: string
           consent: boolean
@@ -5603,6 +5637,7 @@ export type Database = {
           vacancy_id: string
         }
         Update: {
+          access_token?: string
           admin_notes?: string
           availability?: string
           consent?: boolean
@@ -5634,6 +5669,7 @@ export type Database = {
           employment_type: string
           id: string
           location: string
+          positions_available: number
           published: boolean
           requirements: string
           title: string
@@ -5646,6 +5682,7 @@ export type Database = {
           employment_type?: string
           id?: string
           location?: string
+          positions_available?: number
           published?: boolean
           requirements?: string
           title: string
@@ -5658,6 +5695,7 @@ export type Database = {
           employment_type?: string
           id?: string
           location?: string
+          positions_available?: number
           published?: boolean
           requirements?: string
           title?: string
@@ -7549,6 +7587,7 @@ export type Database = {
           username: string
         }[]
       }
+      get_job_application_by_token: { Args: { _token: string }; Returns: Json }
       get_or_create_fan_dm_thread: { Args: { _other: string }; Returns: string }
       get_pending_expiry_reminders: {
         Args: { _kind: string }
@@ -7696,6 +7735,10 @@ export type Database = {
       }
       mute_user: {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
+        Returns: string
+      }
+      post_job_application_message: {
+        Args: { _body: string; _token: string }
         Returns: string
       }
       prune_sports_blog_body: {
@@ -7868,6 +7911,20 @@ export type Database = {
         Returns: string
       }
       submit_staff_job_application: {
+        Args: {
+          _availability: string
+          _consent: boolean
+          _email: string
+          _experience: string
+          _full_name: string
+          _motivation: string
+          _phone: string
+          _vacancy_id: string
+          _zone: string
+        }
+        Returns: string
+      }
+      submit_staff_job_application_v2: {
         Args: {
           _availability: string
           _consent: boolean
