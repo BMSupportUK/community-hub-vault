@@ -1,7 +1,7 @@
 # Add screen sharing to Live Help sessions
 
 ## What it is
-During a live "Show Us" session, the customer can switch from their phone camera to **sharing their screen** — useful when the problem is inside an app or settings menu rather than the physical device. Staff see whichever the customer is showing, live, in the same session view. Nothing is recorded.
+During a live help session, the customer shares **their own device's screen** live, so staff watch exactly what they're doing while installing our app — every tap, menu and error message. Staff see it live in the session view and can point at what to press. Nothing is recorded.
 
 ## Customer side (`LiveHelpCustomer.tsx`)
 - Two toggle buttons in the session bar: **Camera** and **Share screen**.
