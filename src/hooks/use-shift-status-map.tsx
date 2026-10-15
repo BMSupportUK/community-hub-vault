@@ -12,7 +12,27 @@ export type LiveBreak = {
   kind: BreakKind;
   started_at: string;
 };
-export type ShiftStatus = { shift?: LiveShift; break?: LiveBreak };
+export type ShiftStatus = { shift?: LiveShift; break?: LiveBreak; preShift?: boolean };
+
+// Rota dates/times are UK office wall-clock, so always compare against London.
+function londonNow(at: number = Date.now()) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(at));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    time: `${hour}:${get("minute")}:${get("second")}`,
+  };
+}
 
 /**
  * Who in `userIds` is signed in to a shift, and which of them is on a break
@@ -24,24 +44,28 @@ export type ShiftStatus = { shift?: LiveShift; break?: LiveBreak };
 export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus> {
   const isDemo = useIsDemoAccount();
   const key = useMemo(() => Array.from(new Set(userIds)).sort().join(","), [userIds]);
-  const [rows, setRows] = useState<{ shifts: LiveShift[]; breaks: LiveBreak[] }>({
-    shifts: [],
-    breaks: [],
-  });
+  const [rows, setRows] = useState<{
+    shifts: LiveShift[];
+    breaks: LiveBreak[];
+    slotStarts: Record<string, string>;
+  }>({ shifts: [], breaks: [], slotStarts: {} });
+  // Ticks so "Get ready for shift" flips to "Working" at the rota start.
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const ids = key ? key.split(",") : [];
     if (isDemo) {
-      setRows(demoShiftStatus(ids));
+      setRows({ ...demoShiftStatus(ids), slotStarts: {} });
       return;
     }
     if (ids.length === 0) {
-      setRows({ shifts: [], breaks: [] });
+      setRows({ shifts: [], breaks: [], slotStarts: {} });
       return;
     }
     let cancelled = false;
     const refresh = async () => {
-      const [{ data: s }, { data: b }] = await Promise.all([
+      const today = londonNow().date;
+      const [{ data: s }, { data: b }, { data: slots }] = await Promise.all([
         supabase
           .from("shifts")
           .select("id,user_id,clock_in")
@@ -52,11 +76,25 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
           .select("id,shift_id,user_id,kind,started_at")
           .is("ended_at", null)
           .in("user_id", ids),
+        supabase
+          .from("shift_slots")
+          .select("assigned_to,start_time")
+          .eq("shift_date", today)
+          .in("assigned_to", ids),
       ]);
       if (cancelled) return;
+      const slotStarts: Record<string, string> = {};
+      for (const sl of (slots as { assigned_to: string | null; start_time: string }[] | null) ?? []) {
+        if (!sl.assigned_to) continue;
+        // Earliest slot of the day wins when someone has more than one.
+        if (!slotStarts[sl.assigned_to] || sl.start_time < slotStarts[sl.assigned_to]) {
+          slotStarts[sl.assigned_to] = sl.start_time;
+        }
+      }
       setRows({
         shifts: (s as LiveShift[] | null) ?? [],
         breaks: (b as LiveBreak[] | null) ?? [],
+        slotStarts,
       });
     };
     void refresh();
@@ -81,18 +119,26 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
     const poll = setInterval(() => {
       void refresh();
     }, 20_000);
+    const tick = setInterval(() => setNow(Date.now()), 15_000);
 
     return () => {
       cancelled = true;
       clearInterval(poll);
+      clearInterval(tick);
       void supabase.removeChannel(channel);
     };
   }, [key, isDemo]);
 
   return useMemo(() => {
+    const london = londonNow(now);
     const out: Record<string, ShiftStatus> = {};
-    for (const s of rows.shifts) out[s.user_id] = { ...out[s.user_id], shift: s };
+    for (const s of rows.shifts) {
+      const slotStart = rows.slotStarts[s.user_id];
+      // Clocked in before today's rota start = getting ready, not working yet.
+      const preShift = !!slotStart && slotStart > london.time;
+      out[s.user_id] = { ...out[s.user_id], shift: s, preShift };
+    }
     for (const b of rows.breaks) out[b.user_id] = { ...out[b.user_id], break: b };
     return out;
-  }, [rows]);
+  }, [rows, now]);
 }
