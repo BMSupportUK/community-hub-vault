@@ -9,7 +9,7 @@
 - Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets on each navigation. Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; cap and scroll mobile ticket headers to preserve messages and composers.
 - NHL Center Ice always treats its listing clock as ET and converts it to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use their stated UK times.
-- Corrected sports formats need split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend titles.
+- Corrected sports formats need split/safety/read-back tests; DAZN inline slots stay separate.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: show all staff/channel; fit composer and people.
@@ -28,7 +28,7 @@
 - Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
 - Customer invoices are BM Support PDFs after confirmed payment; never expose Stripe/Square hosted links.
 - Knowledge Base fills the page; category and ratings rails keep guides scannable.
-- Video help calls (orders, tickets) are in-site P2P WebRTC with per-call broadcast signalling, only a log stored, started only while is_business_open; wa.me stays as backup.
+- Video help calls: in-site P2P WebRTC, log only, opening hours only; wa.me is backup.
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
 - Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
