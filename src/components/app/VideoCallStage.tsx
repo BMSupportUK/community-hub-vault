@@ -63,13 +63,56 @@ export function VideoCallStage({
     let cancelled = false;
     hungRef.current = false;
 
+    let iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+
+    const createPeer = () => {
+      const stream = streamRef.current;
+      if (!stream) return null;
+      const pc = new RTCPeerConnection({ iceServers });
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      pc.onicecandidate = (e) => {
+        if (!e.candidate) return;
+        send("signal", {
+          kind: "candidate",
+          candidate: e.candidate.toJSON(),
+          ...(side === "offerer" ? { to: activeTagRef.current } : { from: tagRef.current }),
+        });
+      };
+      pc.ontrack = (e) => {
+        if (remoteRef.current && e.streams[0]) {
+          remoteRef.current.srcObject = e.streams[0];
+          remoteRef.current.play().catch(() => {});
+        }
+      };
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "connected") setConnected(true);
+        if (pc.connectionState === "failed") setError("The connection dropped. End the call and try again.");
+      };
+      pcRef.current = pc;
+      return pc;
+    };
+
     const makeOffer = async () => {
       const pc = pcRef.current;
-      if (!pc || offeredRef.current) return;
+      const to = activeTagRef.current;
+      if (!pc || offeredRef.current || !to) return;
       offeredRef.current = true;
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      send("signal", { kind: "offer", sdp: offer.sdp });
+      send("signal", { kind: "offer", sdp: offer.sdp, to });
+    };
+
+    // The customer may move the call to another of their devices (PC → phone):
+    // the newest "ready" wins and the previous device is told to stand down.
+    const switchPeer = (tag: string) => {
+      const old = activeTagRef.current;
+      activeTagRef.current = tag;
+      offeredRef.current = false;
+      pendingIce.current = [];
+      if (old) send("moved", { to: old });
+      pcRef.current?.close();
+      pcRef.current = null;
+      if (createPeer()) void makeOffer();
     };
 
     const flushIce = async () => {
