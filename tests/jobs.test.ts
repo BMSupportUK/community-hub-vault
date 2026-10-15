@@ -25,3 +25,18 @@ test('accepted applicants reduce the roles left to fill', () => {
  expect(positionsLeft(3, 3)).toBe(0);
  expect(positionsLeft(3, 5)).toBe(0);
 });
+
+describe("jobZoneViewerAllowed", () => {
+  it("allows admin for both zones", () => {
+    expect(jobZoneViewerAllowed(["admin"], "bm")).toBe(true);
+    expect(jobZoneViewerAllowed(["admin"], "fanzone")).toBe(true);
+  });
+  it("allows management for BM Support only", () => {
+    expect(jobZoneViewerAllowed(["management"], "bm")).toBe(true);
+    expect(jobZoneViewerAllowed(["management"], "fanzone")).toBe(false);
+  });
+  it("denies staff and members", () => {
+    expect(jobZoneViewerAllowed(["staff"], "bm")).toBe(false);
+    expect(jobZoneViewerAllowed([], "bm")).toBe(false);
+  });
+});
