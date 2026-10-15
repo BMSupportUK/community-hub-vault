@@ -119,18 +119,26 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
     const poll = setInterval(() => {
       void refresh();
     }, 20_000);
+    const tick = setInterval(() => setNow(Date.now()), 15_000);
 
     return () => {
       cancelled = true;
       clearInterval(poll);
+      clearInterval(tick);
       void supabase.removeChannel(channel);
     };
   }, [key, isDemo]);
 
   return useMemo(() => {
+    const london = londonNow(now);
     const out: Record<string, ShiftStatus> = {};
-    for (const s of rows.shifts) out[s.user_id] = { ...out[s.user_id], shift: s };
+    for (const s of rows.shifts) {
+      const slotStart = rows.slotStarts[s.user_id];
+      // Clocked in before today's rota start = getting ready, not working yet.
+      const preShift = !!slotStart && slotStart > london.time;
+      out[s.user_id] = { ...out[s.user_id], shift: s, preShift };
+    }
     for (const b of rows.breaks) out[b.user_id] = { ...out[b.user_id], break: b };
     return out;
-  }, [rows]);
+  }, [rows, now]);
 }
