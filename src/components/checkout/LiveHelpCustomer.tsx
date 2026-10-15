@@ -38,6 +38,8 @@ export function LiveHelpCustomer({ token, password }: { token: string; password:
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const startingRef = useRef(false);
+  const [facing, setFacing] = useState<"environment" | "user">("environment");
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sessionRef = useRef<Session | null>(null);
@@ -59,9 +61,12 @@ export function LiveHelpCustomer({ token, password }: { token: string; password:
   }, []);
 
   const startCamera = useCallback(async () => {
+    // Guard: join broadcast + polling both trigger this; two offers made the picture flash/black.
+    if (startingRef.current || streamRef.current) return;
+    startingRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        video: { facingMode: { ideal: "environment" } },
         audio: true,
       });
       streamRef.current = stream;
@@ -82,8 +87,34 @@ export function LiveHelpCustomer({ token, password }: { token: string; password:
     } catch {
       setCameraError("Camera permission was refused — allow the camera and press Get Live Help again.");
       toast.error("Camera permission is needed for live help");
+    } finally {
+      startingRef.current = false;
     }
   }, [broadcast]);
+
+  // Swap front/back camera without restarting the call.
+  const flipCamera = useCallback(async () => {
+    const stream = streamRef.current;
+    if (!stream) return;
+    const next = facing === "environment" ? "user" : "environment";
+    try {
+      stream.getVideoTracks().forEach((t) => t.stop());
+      const fresh = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: next } } })
+        .catch(() => navigator.mediaDevices.getUserMedia({ video: { facingMode: next } }));
+      const track = fresh.getVideoTracks()[0];
+      stream.getVideoTracks().forEach((t) => stream.removeTrack(t));
+      stream.addTrack(track);
+      const sender = pcRef.current?.getSenders().find((s) => s.track?.kind === "video" || (!s.track && s.dtmf === null));
+      await sender?.replaceTrack(track);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+      setFacing(next);
+    } catch {
+      toast.error("Couldn't switch camera");
+    }
+  }, [facing]);
 
   const stop = useCallback(async () => {
     const s = sessionRef.current;
@@ -234,7 +265,16 @@ export function LiveHelpCustomer({ token, password }: { token: string; password:
 
       <div className="flex flex-1 min-h-0 flex-col sm:flex-row">
         <div className="relative flex-1 min-h-40 bg-black">
-          <video ref={videoRef} muted playsInline className="h-full w-full object-contain" />
+          <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-contain" />
+          {session.status === "live" && (
+            <button
+              type="button"
+              onClick={flipCamera}
+              className="absolute right-2 top-2 z-10 rounded-full bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground"
+            >
+              {facing === "environment" ? "Use front camera" : "Use back camera"}
+            </button>
+          )}
           {!streamRef.current && session.status === "live" && (
             <div className="absolute inset-0 grid place-items-center text-muted-foreground text-sm">
               <Loader2 className="size-5 animate-spin" />
