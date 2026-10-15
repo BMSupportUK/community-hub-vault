@@ -135,10 +135,7 @@ function RotatingAffiliateBannerComponent({
           .filter((b: any) => b && b.name !== ADVERTISE_HERE_NAME) as Banner[];
       }
       if (list.length === 0) {
-        const { data } = await supabase
-          .from("affiliate_banners")
-          .select("id, name, image_url, link_url, alt_text, size, site, zones");
-        const available = (data ?? []) as Banner[];
+        const available = await loadAllBanners();
         list = available.filter((b) => {
           if (b.name === ADVERTISE_HERE_NAME) return false;
           if (site && (b.site ?? "bm_support") !== site) return false;
@@ -164,10 +161,9 @@ function RotatingAffiliateBannerComponent({
       setBanners(list);
     };
 
-    const loadId = window.setTimeout(() => void load(), 250);
+    void load();
     return () => {
       cancelled = true;
-      window.clearTimeout(loadId);
     };
   }, [boardId, size, site, zone]);
 
@@ -269,7 +265,7 @@ function RotatingAffiliateBannerComponent({
       >
         <img
           key={current.id}
-          src={current.image_url}
+          src={resizedBannerUrl(current.image_url, size)}
           alt={current.alt_text || current.name || "Sponsor"}
           width={spec.width}
           height={spec.height}
