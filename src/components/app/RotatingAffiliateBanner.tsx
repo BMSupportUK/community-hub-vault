@@ -24,6 +24,35 @@ type Fallback = {
   alt_text?: string | null;
 };
 
+/**
+ * Banner uploads are full-size PNGs (1MB+). Ask storage for a resized copy
+ * matched to the slot so slots download ~100-200KB instead of the original.
+ */
+function resizedBannerUrl(url: string, size: AdSize): string {
+  const width = size === "leaderboard" ? 900 : size === "square" ? 600 : 300;
+  return url.replace(
+    "/storage/v1/object/public/",
+    `/storage/v1/render/image/public/`,
+  ).includes("/render/image/")
+    ? `${url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/")}?width=${width}&quality=75&resize=contain`
+    : url;
+}
+
+// One shared fetch of the banner list for every slot on the page, instead of
+// each slot running its own queries.
+let allBannersPromise: Promise<Banner[]> | null = null;
+function loadAllBanners(): Promise<Banner[]> {
+  if (!allBannersPromise) {
+    allBannersPromise = (async () => {
+      const { data } = await supabase
+        .from("affiliate_banners")
+        .select("id, name, image_url, link_url, alt_text, size, site, zones");
+      return (data ?? []) as Banner[];
+    })();
+  }
+  return allBannersPromise;
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -108,10 +137,7 @@ function RotatingAffiliateBannerComponent({
           .filter((b: any) => b && b.name !== ADVERTISE_HERE_NAME) as Banner[];
       }
       if (list.length === 0) {
-        const { data } = await supabase
-          .from("affiliate_banners")
-          .select("id, name, image_url, link_url, alt_text, size, site, zones");
-        const available = (data ?? []) as Banner[];
+        const available = await loadAllBanners();
         list = available.filter((b) => {
           if (b.name === ADVERTISE_HERE_NAME) return false;
           if (site && (b.site ?? "bm_support") !== site) return false;
@@ -137,10 +163,9 @@ function RotatingAffiliateBannerComponent({
       setBanners(list);
     };
 
-    const loadId = window.setTimeout(() => void load(), 250);
+    void load();
     return () => {
       cancelled = true;
-      window.clearTimeout(loadId);
     };
   }, [boardId, size, site, zone]);
 
@@ -242,7 +267,7 @@ function RotatingAffiliateBannerComponent({
       >
         <img
           key={current.id}
-          src={current.image_url}
+          src={resizedBannerUrl(current.image_url, size)}
           alt={current.alt_text || current.name || "Sponsor"}
           width={spec.width}
           height={spec.height}
