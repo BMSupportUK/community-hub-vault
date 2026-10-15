@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
+import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 
 type Side = "offerer" | "answerer";
 
@@ -9,17 +10,21 @@ type Side = "offerer" | "answerer";
  * Full-screen two-way video call. Both sides send camera + mic; the offerer
  * starts the WebRTC negotiation once the answerer reports it is ready.
  * Signalling runs over a per-call broadcast topic. Nothing is recorded.
+ * When startWithCamera is false (staff side), the camera stays off and a
+ * BM Support staff illustration is shown until the user turns the camera on.
  */
 export function VideoCallStage({
   topic,
   side,
   otherName,
   onHangup,
+  startWithCamera = true,
 }: {
   topic: string;
   side: Side;
   otherName: string;
   onHangup: () => void;
+  startWithCamera?: boolean;
 }) {
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
@@ -33,7 +38,7 @@ export function VideoCallStage({
 
   const [connected, setConnected] = useState(false);
   const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  const [camOn, setCamOn] = useState(startWithCamera);
   const [error, setError] = useState<string | null>(null);
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
@@ -74,9 +79,13 @@ export function VideoCallStage({
       } catch { /* fall back to STUN */ }
       let stream: MediaStream;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+        stream = startWithCamera
+          ? await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true })
+          : await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
-        if (!cancelled) setError("Camera and microphone permission is needed for the call. Allow them in your browser and try again.");
+        if (!cancelled) setError(startWithCamera
+          ? "Camera and microphone permission is needed for the call. Allow them in your browser and try again."
+          : "Microphone permission is needed for the call. Allow it in your browser and try again.");
         return;
       }
       if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
@@ -156,13 +165,29 @@ export function VideoCallStage({
     t.enabled = !t.enabled;
     setMicOn(t.enabled);
   };
-  const toggleCam = () => {
-    const t = streamRef.current?.getVideoTracks()[0];
-    if (!t) return;
-    t.enabled = !t.enabled;
-    setCamOn(t.enabled);
+  const toggleCam = async () => {
+    const stream = streamRef.current;
+    const existing = stream?.getVideoTracks()[0];
+    if (existing) {
+      existing.enabled = !existing.enabled;
+      setCamOn(existing.enabled);
+      return;
+    }
+    // Camera was never started (staff side) — acquire it on demand.
+    try {
+      const fresh = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingRef.current }, audio: false });
+      const track = fresh.getVideoTracks()[0];
+      if (!stream || !track) return;
+      stream.addTrack(track);
+      pcRef.current?.addTrack(track, stream);
+      if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
+      setCamOn(true);
+    } catch {
+      setError("Couldn't turn the camera on. Allow camera permission in your browser and try again.");
+    }
   };
   const flip = async () => {
+    if (!streamRef.current?.getVideoTracks()[0]) return;
     const next = facingRef.current === "user" ? "environment" : "user";
     try {
       const fresh = await navigator.mediaDevices.getUserMedia({ video: { facingMode: next }, audio: false });
@@ -195,13 +220,20 @@ export function VideoCallStage({
         {error && (
           <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-foreground">{error}</div>
         )}
-        <video
-          ref={localRef}
-          playsInline
-          autoPlay
-          muted
-          className="absolute bottom-3 right-3 h-32 w-24 rounded-lg border border-border bg-card object-cover shadow-lg sm:h-44 sm:w-32"
-        />
+        {camOn ? (
+          <video
+            ref={localRef}
+            playsInline
+            autoPlay
+            muted
+            className="absolute bottom-3 right-3 h-32 w-24 rounded-lg border border-border bg-card object-cover shadow-lg sm:h-44 sm:w-32"
+          />
+        ) : (
+          <div className="absolute bottom-3 right-3 flex h-32 w-24 flex-col items-center justify-end overflow-hidden rounded-lg border border-border bg-card shadow-lg sm:h-44 sm:w-32">
+            <img src={staffPlaceholder} alt="BM Support staff" loading="lazy" width={512} height={768} className="h-full w-full object-cover" />
+            <span className="absolute inset-x-0 bottom-0 bg-background/70 px-1 py-0.5 text-center text-[10px] font-medium text-foreground">Camera off</span>
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-center gap-3 border-t border-border bg-card px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <button type="button" onClick={toggleMic} aria-label={micOn ? "Mute microphone" : "Unmute microphone"} className={`grid size-12 place-items-center rounded-full ${micOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
