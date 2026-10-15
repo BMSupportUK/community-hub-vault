@@ -315,6 +315,7 @@ function StaffShiftsPage() {
       .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "away_log" }, refresh)
       .subscribe();
     const poll = setInterval(refresh, 20_000);
