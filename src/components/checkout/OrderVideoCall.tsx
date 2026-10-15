@@ -239,7 +239,7 @@ export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
           )}
         </>
       )}
-      {inCall && <VideoCallStage topic={`video-call-${session.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} placeholderImage={isMale ? staffPlaceholderMale : undefined} />}
+      {inCall && <VideoCallStage topic={`video-call-${session.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} placeholderImage={isMale ? staffPlaceholderMale : undefined} staffGender={isMale ? "male" : "female"} />}
     </>
   );
 }
