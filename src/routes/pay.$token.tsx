@@ -269,7 +269,7 @@ function PayPage() {
           </DialogContent>
         </Dialog>
       )}
-      {!canManage && !view.order.cancelled && isMobilePhone() && <OrderVideoCallCustomer token={token} password={pw} />}
+      {!canManage && !view.order.cancelled && <OrderVideoCallCustomer token={token} password={pw} mobile={isMobilePhone()} />}
       <CustomerCheckoutChat token={token} password={pw} orderRef={view.order.ref} />
     </main>
   );
