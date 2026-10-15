@@ -55,16 +55,17 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
   useEffect(() => {
     const ids = key ? key.split(",") : [];
     if (isDemo) {
-      setRows(demoShiftStatus(ids));
+      setRows({ ...demoShiftStatus(ids), slotStarts: {} });
       return;
     }
     if (ids.length === 0) {
-      setRows({ shifts: [], breaks: [] });
+      setRows({ shifts: [], breaks: [], slotStarts: {} });
       return;
     }
     let cancelled = false;
     const refresh = async () => {
-      const [{ data: s }, { data: b }] = await Promise.all([
+      const today = londonNow().date;
+      const [{ data: s }, { data: b }, { data: slots }] = await Promise.all([
         supabase
           .from("shifts")
           .select("id,user_id,clock_in")
@@ -75,11 +76,25 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
           .select("id,shift_id,user_id,kind,started_at")
           .is("ended_at", null)
           .in("user_id", ids),
+        supabase
+          .from("shift_slots")
+          .select("assigned_to,start_time")
+          .eq("shift_date", today)
+          .in("assigned_to", ids),
       ]);
       if (cancelled) return;
+      const slotStarts: Record<string, string> = {};
+      for (const sl of (slots as { assigned_to: string | null; start_time: string }[] | null) ?? []) {
+        if (!sl.assigned_to) continue;
+        // Earliest slot of the day wins when someone has more than one.
+        if (!slotStarts[sl.assigned_to] || sl.start_time < slotStarts[sl.assigned_to]) {
+          slotStarts[sl.assigned_to] = sl.start_time;
+        }
+      }
       setRows({
         shifts: (s as LiveShift[] | null) ?? [],
         breaks: (b as LiveBreak[] | null) ?? [],
+        slotStarts,
       });
     };
     void refresh();
