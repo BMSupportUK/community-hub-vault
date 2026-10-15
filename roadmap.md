@@ -169,3 +169,4 @@
 - [x] Secure checkout: customer "Your app login details" card revealed once account setup is confirmed; verified reveal on the test order, nothing shown on a wrong password, 7 tests pass
 - [x] Account menu "Get the Android app" pop-up: bigger code with a proper white border, pure black modules, and the web address shown in text as a fallback; verified it decodes to https://bmsupport.uk/get-android-app
 - [x] Secure order page: Video help button moved inside the install-guides card, directly under the Open install guides button (was below the card)
+- [x] Order video help: staff offer always includes a video slot (customer camera reaches staff), call no longer restarts on each status poll, remote sound plays after Answer; verified with a two-browser test call
