@@ -640,6 +640,7 @@ function StaffShiftsPage() {
           </div>
         )}
       </section>
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
       <aside className="order-first xl:order-last">
