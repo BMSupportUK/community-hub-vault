@@ -171,3 +171,4 @@
 - [x] Secure order page: Video help button moved inside the install-guides card, directly under the Open install guides button (was below the card)
 - [x] Order video help: staff offer always includes a video slot (customer camera reaches staff), call no longer restarts on each status poll, remote sound plays after Answer; verified with a two-browser test call
 - [x] Order video help: offer/answer carry their network routes in one message, lost offers/answers are re-sent, failed connections retry; verified relay-only (mobile data style) test call
+- [x] Staff video call: separate sound player + speaker button; picture turns when customer's phone is held sideways (auto-rotate off)
