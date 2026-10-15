@@ -620,7 +620,22 @@ function StaffShiftsPage() {
                       Due {sl.start_time.slice(0, 5)} – {sl.end_time.slice(0, 5)} · {ROLE_LABEL[slotRole] ?? slotRole}
                     </p>
                   </div>
-                  <Pill label="No sign-in" tone="warn" />
+                  <div className="ml-auto flex shrink-0 flex-col items-end gap-1.5">
+                    <Pill label="No sign-in" tone="warn" />
+                    {canManage && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 rounded-lg px-2.5 text-xs font-semibold"
+                        disabled={signingIn === sl.assigned_to}
+                        onClick={() => void signInStaff(sl.assigned_to!)}
+                      >
+                        {signingIn === sl.assigned_to ? <Loader2 className="size-3.5 animate-spin" /> : <LogIn className="size-3.5" />}
+                        Sign in
+                      </Button>
+                    )}
+                  </div>
                 </div>
               );
             })}
