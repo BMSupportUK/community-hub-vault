@@ -131,6 +131,8 @@ export function VideoCallStage({
           return;
         }
         const v = remoteRef.current;
+        setRemoteHasVideo(true);
+        e.track.onended = () => setRemoteHasVideo(false);
         if (v && v.srcObject !== src) {
           v.srcObject = src;
           v.muted = true;
