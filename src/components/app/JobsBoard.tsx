@@ -64,12 +64,12 @@ function ApplicationForm({ job }: { job: JobVacancy }) {
   const [sent, setSent] = useState<{ token: string; password: string } | null>(null);
   const [error, setError] = useState("");
   const [consent, setConsent] = useState(false);
-  if (sent) { const link = `${window.location.origin}/job-application/${sent.token}`; return <div className="py-8 text-center"><DialogHeader><DialogTitle className="text-center">Application received</DialogTitle><DialogDescription className="text-center">Your application for {job.title} has been sent to our admin team for review.</DialogDescription></DialogHeader><CheckCircle2 className="mx-auto mt-6 size-12 text-success" />
+  if (sent) { const link = `${window.location.origin}/job-application/${sent.token}`; return <div className="py-8 text-center"><h2 className="text-lg font-semibold">Application received</h2><p className="text-sm text-muted-foreground">Your application for {job.title} has been sent to our admin team for review.</p><CheckCircle2 className="mx-auto mt-6 size-12 text-success" />
     <p className="mt-6 text-sm">Your private application page — we've emailed you these details too. Save them to view your application and chat with our team:</p>
     <p className="mt-2 break-all rounded-md border border-border bg-muted p-2 text-xs">{link}</p>
     <p className="mt-3 text-sm">Password: <span className="font-mono text-lg font-bold tracking-widest">{sent.password}</span></p>
     <div className="mt-4 flex flex-wrap justify-center gap-2"><Button variant="outline" onClick={() => void navigator.clipboard.writeText(link)}>Copy link</Button><Button asChild><a href={link} onClick={() => sessionStorage.setItem(`job-app-pw:${sent.token}`, sent.password)}>Open my application page</a></Button></div></div>; }
-  return <><DialogHeader><DialogTitle>{job.title}</DialogTitle><DialogDescription>{job.location}{job.employment_type && ` · ${job.employment_type}`}</DialogDescription></DialogHeader>
+  return <><h2 className="font-display text-2xl font-bold">{job.title}</h2><p className="mt-1 text-sm text-muted-foreground">{job.location}{job.employment_type && ` · ${job.employment_type}`}</p>
     <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{job.description}</p>
     {job.requirements && <div><h3 className="mb-2 font-semibold">What we're looking for</h3><p className="whitespace-pre-wrap break-words text-sm">{job.requirements}</p></div>}
     <form className="space-y-4 border-t border-border pt-5" onSubmit={async (event) => {
