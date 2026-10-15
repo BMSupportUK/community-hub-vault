@@ -24,7 +24,10 @@ export type JobApplication = Omit<z.infer<typeof applicationSchema>, "website" |
   id: string; status: z.infer<typeof jobStatusSchema>; admin_notes: string; created_at: string; access_token: string;
 };
 export function vacanciesForZone(rows: JobVacancy[], zone: JobZone) { return rows.filter((row) => row.zone === zone); }
-export function jobAdminAllowed(roles: readonly string[]) { return roles.includes("admin"); }
+export function jobAdminAllowed(roles: readonly string[]) { return roles.includes("admin") || roles.includes("management"); }
+export function jobZoneViewerAllowed(roles: readonly string[], zone: JobZone) {
+  return roles.includes("admin") || (zone === "bm" && roles.includes("management"));
+}
 export function jobsHead(zone: JobZone, admin = false) {
   const name = zone === "bm" ? "BM Support" : "Boro Fan Zone";
   const title = `${admin ? "Recruitment administration" : "Staff vacancies"} | ${name}`;
