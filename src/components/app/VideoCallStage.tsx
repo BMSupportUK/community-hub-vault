@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, PhoneOff, RefreshCw, RotateCw, Video, VideoOff, Loader2, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
@@ -388,7 +388,8 @@ export function VideoCallStage({
       setRemoteMuted(true);
     }
   };
-  const sideways = remoteRotate === 90 || remoteRotate === 270;
+  const totalRotate = (remoteRotate + manualRotate) % 360;
+  const sideways = totalRotate === 90 || totalRotate === 270;
 
   const toggleMic = () => {
     const t = streamRef.current?.getAudioTracks()[0];
@@ -454,7 +455,7 @@ export function VideoCallStage({
           style={{
             width: sideways ? stageSize.h : stageSize.w || "100%",
             height: sideways ? stageSize.w : stageSize.h || "100%",
-            transform: `translate(-50%, -50%) rotate(${remoteRotate}deg)`,
+            transform: `translate(-50%, -50%) rotate(${totalRotate}deg)`,
           }}
         />
         {connected && !remoteHasVideo && !error && (
@@ -505,6 +506,11 @@ export function VideoCallStage({
         <button type="button" onClick={toggleSound} aria-label={remoteMuted ? "Turn sound on" : "Turn sound off"} className={`grid size-12 place-items-center rounded-full ${remoteMuted ? "bg-destructive text-destructive-foreground" : "bg-secondary text-secondary-foreground"}`}>
           {remoteMuted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
         </button>
+        {side === "offerer" && (
+          <button type="button" onClick={() => setManualRotate((r) => (r + 90) % 360)} aria-label="Rotate picture" title="Rotate the customer's picture" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
+            <RotateCw className="size-5" />
+          </button>
+        )}
         {isMobilePhone() && startWithCamera && (
           <>
             <button type="button" onClick={toggleCam} aria-label={camOn ? "Turn camera off" : "Turn camera on"} className={`grid size-12 place-items-center rounded-full ${camOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
