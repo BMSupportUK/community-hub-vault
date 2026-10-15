@@ -66,7 +66,7 @@ export const startTicketVideoCall = createServerFn({ method: "POST" })
           kind: "live_help",
           title: "Video call — customer waiting",
           body: `A customer is calling from ticket "${c.ticket.subject}". Open the ticket to answer.`,
-          link_path: `/tickets?t=${data.ticketId}`,
+          link_path: `/tickets?id=${data.ticketId}`,
           entity_id: data.ticketId,
         } as never);
       } else {
@@ -75,7 +75,7 @@ export const startTicketVideoCall = createServerFn({ method: "POST" })
           kind: "video_call",
           title: "BM Support is video calling you",
           body: `Open your ticket "${c.ticket.subject}" to answer the call.`,
-          link_path: `/tickets?t=${data.ticketId}`,
+          link_path: `/tickets?id=${data.ticketId}`,
           source_type: "ticket",
           source_id: data.ticketId,
         } as never);
