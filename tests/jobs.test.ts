@@ -18,3 +18,10 @@ test('a position can advertise multiple openings (1-100)', () => {
  expect(vacancySchema.safeParse({ ...base, positions_available: 0 }).success).toBe(false);
  expect(positionsLabel(3)).toBe('3 positions');
 });
+import { positionsLeft } from '../src/lib/jobs';
+test('accepted applicants reduce the roles left to fill', () => {
+ expect(positionsLeft(3, 0)).toBe(3);
+ expect(positionsLeft(3, 2)).toBe(1);
+ expect(positionsLeft(3, 3)).toBe(0);
+ expect(positionsLeft(3, 5)).toBe(0);
+});

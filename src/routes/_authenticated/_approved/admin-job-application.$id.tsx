@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Copy, Save } from "lucide-react";
+import { ArrowLeft, Copy, KeyRound, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { jobAdminAllowed, jobStatusSchema } from "@/lib/jobs";
-import { getApplicationAdmin, postAdminApplicationMessage, reviewJobApplication } from "@/lib/jobs.functions";
+import { getApplicationAdmin, postAdminApplicationMessage, resetApplicationPassword, reviewJobApplication } from "@/lib/jobs.functions";
 import { JobApplicationSecure } from "@/components/app/JobApplicationSecure";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,8 @@ function AdminApplication() {
   const load = useServerFn(getApplicationAdmin);
   const send = useServerFn(postAdminApplicationMessage);
   const review = useServerFn(reviewJobApplication);
+  const resetPw = useServerFn(resetApplicationPassword);
+  const [newPw, setNewPw] = useState<string | null>(null);
   const { data, isPending, error } = useQuery({ queryKey: ["job-app-admin", id], queryFn: () => load({ data: { id } }), refetchInterval: 8000, enabled: jobAdminAllowed(roles) });
   const [status, setStatus] = useState("new");
   const [notes, setNotes] = useState("");
@@ -46,7 +48,9 @@ function AdminApplication() {
     app={{ ...a, vacancy_title: data.vacancy_title }}
     onSend={async (body) => { await send({ data: { id, body } }); await qc.invalidateQueries({ queryKey: ["job-app-admin", id] }); }}
     header={<div className="flex flex-wrap items-center justify-between gap-3"><Link to={back} className="inline-flex items-center gap-2 text-sm text-muted-foreground"><ArrowLeft className="size-4" />Jobs &amp; applications</Link>
-      <Button variant="outline" onClick={() => { void navigator.clipboard.writeText(link); toast.success("Applicant's secure link copied"); }}><Copy className="mr-2 size-4" />Copy applicant link</Button></div>}
+      <Button variant="outline" onClick={() => { void navigator.clipboard.writeText(link); toast.success("Applicant's secure link copied"); }}><Copy className="mr-2 size-4" />Copy applicant link</Button>
+      <Button variant="outline" onClick={async () => { if (!confirm("Create a new password? The old one will stop working.")) return; try { const r = await resetPw({ data: { id } }); setNewPw(r.password); } catch (e) { toast.error(e instanceof Error ? e.message : "Could not reset"); } }}><KeyRound className="mr-2 size-4" />New password</Button>
+      {newPw && <p className="w-full rounded-md border border-border bg-card/90 p-3 text-sm">New password (shown once): <span className="font-mono font-bold tracking-widest">{newPw}</span> <Button size="sm" variant="ghost" onClick={() => { void navigator.clipboard.writeText(newPw); toast.success("Copied"); }}>Copy</Button></p>}</div>}
     extra={<section className="space-y-4 rounded-lg border border-border bg-card/90 p-5">
       <div className="space-y-2"><Label>Review status</Label><Select value={status} onValueChange={setStatus}><SelectTrigger aria-label="Review status" className="w-60"><SelectValue /></SelectTrigger><SelectContent>{jobStatusSchema.options.map((s) => <SelectItem key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</SelectItem>)}</SelectContent></Select></div>
       <div className="space-y-2"><Label htmlFor="app-notes">Private admin notes</Label><Textarea id="app-notes" rows={3} maxLength={6000} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>

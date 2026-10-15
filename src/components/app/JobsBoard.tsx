@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,7 +15,7 @@ import { LandingHeader } from "@/components/LandingHeader";
 import { FanZonePublicHeader } from "./FanZonePublicHeader";
 import { IconRail } from "./IconRail";
 import { JobsMemberHeader } from "./JobsMemberHeader";
-import { applicationSchema, positionsLabel, type JobZone, type JobVacancy } from "@/lib/jobs";
+import { applicationSchema, positionsLabel, positionsLeft, type JobZone, type JobVacancy } from "@/lib/jobs";
 import { listJobVacancies, submitJobApplication } from "@/lib/jobs.functions";
 import interview from "@/assets/jobs-interview.jpg";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,6 +25,13 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
   const { user, isFanZoneOnly } = useAuth();
   const { data: vacancies } = useSuspenseQuery(jobsQueryOptions(zone));
   const [selected, setSelected] = useState<JobVacancy | null>(null);
+  const qc = useQueryClient();
+  useEffect(() => {
+    const ch = supabase.channel(`jobs-board-${zone}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "staff_job_vacancies" }, () => { void qc.invalidateQueries({ queryKey: ["public-jobs", zone] }); })
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [zone, qc]);
   const isBoro = zone === "fanzone";
   const name = isBoro ? "Boro Fan Zone" : "BM Support";
   const content = <div className="relative isolate min-h-dvh min-w-0 flex-1">
@@ -40,10 +49,10 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
         <div className="mb-6 flex items-center justify-between gap-4"><h2 className="font-display text-2xl font-semibold">Open positions</h2><span className="text-sm text-muted-foreground">{vacancies.length} available</span></div>
         {!vacancies.length ? <div className="py-8"><h3 className="text-lg font-semibold">No open positions right now</h3><p className="mt-2 text-muted-foreground">Please check back for future opportunities.</p></div> : <div className="grid gap-4 lg:grid-cols-2">{vacancies.map((job) => <article key={job.id} className="min-w-0 rounded-lg border border-border bg-card/90 p-5 backdrop-blur-sm sm:p-6">
           <h3 className="break-words font-display text-xl font-bold">{job.title}</h3>
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">{job.location && <span className="flex items-center gap-2"><MapPin className="size-4 shrink-0" />{job.location}</span>}{job.employment_type && <span className="flex items-center gap-2"><BriefcaseBusiness className="size-4 shrink-0" />{job.employment_type}</span>}<span className="font-semibold text-primary">{positionsLabel(job.positions_available)} available</span></div>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">{job.location && <span className="flex items-center gap-2"><MapPin className="size-4 shrink-0" />{job.location}</span>}{job.employment_type && <span className="flex items-center gap-2"><BriefcaseBusiness className="size-4 shrink-0" />{job.employment_type}</span>}{positionsLeft(job.positions_available, job.positions_filled) > 0 ? <span className="font-semibold text-primary">{positionsLeft(job.positions_available, job.positions_filled)} of {positionsLabel(job.positions_available)} left to fill</span> : <span className="font-semibold text-muted-foreground">All positions filled</span>}</div>
           <p className="mt-5 line-clamp-4 whitespace-pre-wrap break-words text-sm leading-relaxed">{job.description}</p>
           {job.closing_date && <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground"><CalendarDays className="size-4" />Closes {new Date(`${job.closing_date}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>}
-          <Button className="mt-6" onClick={() => setSelected(job)}>View position &amp; apply <ArrowRight className="ml-2 size-4" /></Button>
+          <Button className="mt-6" disabled={positionsLeft(job.positions_available, job.positions_filled) === 0} onClick={() => setSelected(job)}>View position &amp; apply <ArrowRight className="ml-2 size-4" /></Button>
         </article>)}</div>}
       </section>
     </main>
@@ -55,13 +64,14 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
 function ApplicationForm({ job }: { job: JobVacancy }) {
   const send = useServerFn(submitJobApplication);
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState<string | null>(null);
+  const [sent, setSent] = useState<{ token: string; password: string } | null>(null);
   const [error, setError] = useState("");
   const [consent, setConsent] = useState(false);
-  if (sent) { const link = `${window.location.origin}/job-application/${sent}`; return <div className="py-8 text-center"><DialogHeader><DialogTitle className="text-center">Application received</DialogTitle><DialogDescription className="text-center">Your application for {job.title} has been sent to our admin team for review.</DialogDescription></DialogHeader><CheckCircle2 className="mx-auto mt-6 size-12 text-success" />
-    <p className="mt-6 text-sm">Your private application page — save this link to view your application and chat with our team:</p>
+  if (sent) { const link = `${window.location.origin}/job-application/${sent.token}`; return <div className="py-8 text-center"><DialogHeader><DialogTitle className="text-center">Application received</DialogTitle><DialogDescription className="text-center">Your application for {job.title} has been sent to our admin team for review.</DialogDescription></DialogHeader><CheckCircle2 className="mx-auto mt-6 size-12 text-success" />
+    <p className="mt-6 text-sm">Your private application page — we've emailed you these details too. Save them to view your application and chat with our team:</p>
     <p className="mt-2 break-all rounded-md border border-border bg-muted p-2 text-xs">{link}</p>
-    <div className="mt-4 flex flex-wrap justify-center gap-2"><Button variant="outline" onClick={() => void navigator.clipboard.writeText(link)}>Copy link</Button><Button asChild><a href={link}>Open my application page</a></Button></div></div>; }
+    <p className="mt-3 text-sm">Password: <span className="font-mono text-lg font-bold tracking-widest">{sent.password}</span></p>
+    <div className="mt-4 flex flex-wrap justify-center gap-2"><Button variant="outline" onClick={() => void navigator.clipboard.writeText(link)}>Copy link</Button><Button asChild><a href={link} onClick={() => sessionStorage.setItem(`job-app-pw:${sent.token}`, sent.password)}>Open my application page</a></Button></div></div>; }
   return <><DialogHeader><DialogTitle>{job.title}</DialogTitle><DialogDescription>{job.location}{job.employment_type && ` · ${job.employment_type}`}</DialogDescription></DialogHeader>
     <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{job.description}</p>
     {job.requirements && <div><h3 className="mb-2 font-semibold">What we're looking for</h3><p className="whitespace-pre-wrap break-words text-sm">{job.requirements}</p></div>}
@@ -71,7 +81,7 @@ function ApplicationForm({ job }: { job: JobVacancy }) {
       const input = applicationSchema.safeParse({ ...fields, vacancy_id: job.id, zone: job.zone, consent });
       if (!input.success) { setError("Please complete all required fields, enter a valid email and agree to the application review."); return; }
       setBusy(true);
-      try { const r = await send({ data: input.data }); setSent(r.token); } catch (e) { setError(e instanceof Error ? e.message : "Your application could not be sent. Please try again."); } finally { setBusy(false); }
+      try { const r = await send({ data: input.data }); setSent(r); } catch (e) { setError(e instanceof Error ? e.message : "Your application could not be sent. Please try again."); } finally { setBusy(false); }
     }}>
       <h3 className="text-lg font-semibold">Your application</h3>
       <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="job-name">Full name *</Label><Input id="job-name" name="full_name" autoComplete="name" maxLength={150} required /></div><div className="space-y-2"><Label htmlFor="job-email">Email *</Label><Input id="job-email" name="email" type="email" autoComplete="email" maxLength={254} required /></div></div>
