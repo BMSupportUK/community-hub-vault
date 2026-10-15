@@ -23,6 +23,7 @@ export function VideoCallStage({
   onHangup,
   onSuperseded,
   startWithCamera = true,
+  placeholderImage = staffPlaceholder,
 }: {
   topic: string;
   side: Side;
@@ -31,6 +32,8 @@ export function VideoCallStage({
   /** Called on an answerer whose call was taken over by the customer's other device. */
   onSuperseded?: () => void;
   startWithCamera?: boolean;
+  /** Illustration shown while this side's camera is off (staff side). */
+  placeholderImage?: string;
 }) {
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
