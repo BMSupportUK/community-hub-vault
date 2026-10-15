@@ -43,10 +43,12 @@ function resizedBannerUrl(url: string, size: AdSize): string {
 let allBannersPromise: Promise<Banner[]> | null = null;
 function loadAllBanners(): Promise<Banner[]> {
   if (!allBannersPromise) {
-    allBannersPromise = supabase
-      .from("affiliate_banners")
-      .select("id, name, image_url, link_url, alt_text, size, site, zones")
-      .then(({ data }) => (data ?? []) as Banner[]);
+    allBannersPromise = (async () => {
+      const { data } = await supabase
+        .from("affiliate_banners")
+        .select("id, name, image_url, link_url, alt_text, size, site, zones");
+      return (data ?? []) as Banner[];
+    })();
   }
   return allBannersPromise;
 }
