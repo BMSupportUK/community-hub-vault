@@ -28,7 +28,7 @@
 - Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
 - Customer invoices are BM Support PDFs after confirmed payment; never expose Stripe/Square hosted links.
 - Knowledge Base fills the page; category and ratings rails keep guides scannable.
-- Secure orders show wa.me video help only while is_business_open; never embed customer camera sessions.
+- Two-way video help calls (secure orders + tickets) run in-site over peer-to-peer WebRTC with per-call broadcast signalling and only a call log stored; they start only while is_business_open, and the wa.me button stays as a backup — keeps calls private and unrecorded.
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
 - Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
