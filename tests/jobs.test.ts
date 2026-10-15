@@ -12,11 +12,18 @@ test('applications require consent and complete contact details', () => {
 });
 import { vacancySchema, positionsLabel } from '../src/lib/jobs';
 test('a position can advertise multiple openings (1-100)', () => {
- const base = { zone: 'bm', title: 'Support', location: '', employment_type: '', description: 'x', requirements: '', closing_date: null, published: true };
+ const base = { zone: 'bm', title: 'Support', location: '', employment_type: '', hours: '', description: 'x', requirements: '', closing_date: null, published: true };
  expect(vacancySchema.parse(base).positions_available).toBe(1);
  expect(vacancySchema.parse({ ...base, positions_available: 3 }).positions_available).toBe(3);
  expect(vacancySchema.safeParse({ ...base, positions_available: 0 }).success).toBe(false);
  expect(positionsLabel(3)).toBe('3 positions');
+});
+test('job type and working hours are saved as separate fields', () => {
+ const base = { zone: 'bm', title: 'Support', location: '', employment_type: 'Full-time', hours: 'Mon–Fri 09:00–19:00', description: 'x', requirements: '', closing_date: null, published: true };
+ const parsed = vacancySchema.parse(base);
+ expect(parsed.employment_type).toBe('Full-time');
+ expect(parsed.hours).toBe('Mon–Fri 09:00–19:00');
+ expect(vacancySchema.parse({ ...base, hours: undefined, employment_type: undefined }).hours).toBe('');
 });
 import { positionsLeft } from '../src/lib/jobs';
 test('accepted applicants reduce the roles left to fill', () => {
