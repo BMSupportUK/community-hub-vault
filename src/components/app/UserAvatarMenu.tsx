@@ -162,9 +162,9 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
 
     let cancel = false;
     QRCode.toDataURL(ANDROID_APK_ABSOLUTE_URL, {
-      width: 220,
-      margin: 2,
-      color: { dark: "#0b0616", light: "#ffffff" },
+      width: 440,
+      margin: 4,
+      color: { dark: "#000000", light: "#ffffff" },
     })
       .then((url) => {
         if (!cancel) setApkQr(url);
@@ -300,13 +300,22 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
           </Button>
         ) : (
           <div className="flex flex-col items-center gap-3">
-            <div className="rounded-xl bg-white p-2">
+            <div className="rounded-xl bg-white p-3">
               {apkQr ? (
-                <img src={apkQr} alt="QR code to download the BM Support Android app" className="block size-[200px]" />
+                <img
+                  src={apkQr}
+                  alt="QR code to download the BM Support Android app"
+                  className="block size-[240px] sm:size-[280px]"
+                />
               ) : (
-                <div className="size-[200px] animate-pulse rounded bg-muted" />
+                <div className="size-[240px] animate-pulse rounded bg-muted sm:size-[280px]" />
               )}
             </div>
+            <p className="text-center text-xs text-muted-foreground">
+              Camera not reading it? Open{" "}
+              <span className="font-semibold text-foreground select-all">bmsupport.uk/get-android-app</span> on your
+              phone.
+            </p>
           </div>
         )}
       </DialogContent>
