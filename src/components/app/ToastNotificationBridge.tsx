@@ -33,6 +33,9 @@ export function ToastNotificationBridge() {
     const readToast = (el: Element) => {
       if (seen.has(el)) return;
       seen.add(el);
+      // Live-updating toasts (e.g. shift countdowns) send their own single
+      // phone/browser alert; mirroring them would repeat every re-render.
+      if (el.classList.contains("no-os-notify")) return;
       const title =
         el.querySelector("[data-title]")?.textContent?.trim() ||
         el.textContent?.trim() ||
