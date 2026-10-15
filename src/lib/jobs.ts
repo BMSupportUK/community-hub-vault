@@ -6,7 +6,7 @@ export const jobStatusSchema = z.enum(["new", "reviewing", "shortlisted", "accep
 export const vacancySchema = z.object({
   id: z.string().uuid().optional(), zone: jobZoneSchema,
   title: z.string().trim().min(1).max(150), location: z.string().trim().max(200),
-  employment_type: z.string().trim().max(100), hours: z.string().trim().max(200), description: z.string().trim().min(1).max(12000),
+  employment_type: z.string().trim().max(100), hours: z.string().trim().max(200).default(""), description: z.string().trim().min(1).max(12000),
   requirements: z.string().trim().max(12000), closing_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   published: z.boolean(),
   positions_available: z.number().int().min(1).max(100).default(1),
