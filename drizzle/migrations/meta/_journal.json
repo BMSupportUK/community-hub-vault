@@ -883,6 +883,13 @@
       "when": 1792060194255,
       "tag": "0125_admin_clock_in_staff_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 126,
+      "version": "7",
+      "when": 1792088679889,
+      "tag": "0126_jobs_hours_field",
+      "breakpoints": true
     }
   ]
 }

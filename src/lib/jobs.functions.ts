@@ -17,7 +17,7 @@ export const listJobVacancies = createServerFn({ method: "GET" })
         headers.set("apikey", key); return fetch(input, { ...init, headers });
       } },
     });
-    const result = await publicClient.from("staff_job_vacancies").select("id,zone,title,location,employment_type,description,requirements,closing_date,published,positions_available,positions_filled,created_at").eq("zone", data.zone).order("created_at", { ascending: false });
+    const result = await publicClient.from("staff_job_vacancies").select("id,zone,title,location,employment_type,hours,description,requirements,closing_date,published,positions_available,positions_filled,created_at").eq("zone", data.zone).order("created_at", { ascending: false });
     if (result.error) throw new Error("Positions could not be loaded. Please try again.");
     return result.data as JobVacancy[];
   });
