@@ -89,7 +89,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 }
 
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale, appLogin }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
@@ -230,6 +230,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </Button>
             )}
           </section>
+          {/* When no sidebar shows the install guides, keep video help under the order details. */}
+          {!(paidSidebar || accountSidebar) && videoHelp}
 
           {paidSidebar ? (
             <aside className="min-w-0 space-y-3 lg:sticky lg:top-4">
@@ -260,6 +262,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 )}
               </section>
               {installCard}
+              {videoHelp}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -277,6 +280,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </section>
               {appLogin}
               {installCard}
+              {videoHelp}
               {addLoginDetails}
               {visibleStage === 3 && completeSale}
               {visibleStage === 4 && order.manual && (
