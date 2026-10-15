@@ -18,7 +18,7 @@ import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCall
 type Session = { id: string; status: "waiting" | "live" | "ended" | "expired" };
 
 /** Customer side on the secure order page: start a two-way video call. */
-export function OrderVideoCallCustomer({ token, password }: { token: string; password: string }) {
+export function OrderVideoCallCustomer({ token, password, mobile }: { token: string; password: string; mobile: boolean }) {
   const start = useServerFn(startLiveHelp);
   const poll = useServerFn(getLiveHelp);
   const endFn = useServerFn(endLiveHelpCustomer);
@@ -26,6 +26,7 @@ export function OrderVideoCallCustomer({ token, password }: { token: string; pas
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const [moved, setMoved] = useState(false);
+  const [invite, setInvite] = useState(false);
 
   useEffect(() => {
     supabase.rpc("is_business_open").then(({ data }) => setOpen(data !== false));
@@ -65,6 +66,33 @@ export function OrderVideoCallCustomer({ token, password }: { token: string; pas
   };
 
   if (!open && !session) return null;
+
+  // On a computer: invite the customer to stream from their phone via QR code.
+  if (!mobile) {
+    const phoneUrl = `${secureCheckoutUrl(token)}?pw=${encodeURIComponent(password)}`;
+    return invite ? (
+      <div className="fixed bottom-24 left-4 z-40 w-72 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-xl">
+        <p className="text-sm font-semibold">Show us on video</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Scan this with your phone camera, then tap <b>Start video call</b>. Point your phone at the device you're setting up — we'll see it on our big screen while you keep chatting here.
+        </p>
+        <div className="mt-3 grid place-items-center rounded-lg bg-background p-3">
+          <div className="rounded bg-card p-2"><QRCode value={phoneUrl} size={160} /></div>
+        </div>
+        <button type="button" onClick={() => setInvite(false)} className="mt-3 w-full rounded-full border border-border px-3 py-1.5 text-xs font-semibold">
+          Close
+        </button>
+      </div>
+    ) : (
+      <button
+        type="button"
+        onClick={() => setInvite(true)}
+        className="fixed bottom-24 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg"
+      >
+        <QrCode className="size-4" /> Video help
+      </button>
+    );
+  }
 
   return (
     <>
