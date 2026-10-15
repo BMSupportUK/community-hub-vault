@@ -218,6 +218,7 @@ function StaffShiftsPage() {
   const [awayByUser, setAwayByUser] = useState<Record<string, AwayRow[]>>({});
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
+  const [slots, setSlots] = useState<SlotRow[]>([]);
   const [role, setRole] = useState<RoleKey>("admin");
   // The visible day is always the calendar day, so it is derived rather than
   // kept in its own state — that way Previous/Next day can't desync header and list.
