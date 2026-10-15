@@ -63,7 +63,6 @@ function PayPage() {
   const { user, hasRole } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [movingToSetup, setMovingToSetup] = useState(false);
-  const [completingSale, setCompletingSale] = useState(false);
   const canManage = !!user && (hasRole("admin") || hasRole("management"));
   const canMoveToSetup = canManage;
   const fetchCheckout = useServerFn(getCheckout);
@@ -240,21 +239,6 @@ function PayPage() {
           <button type="button" onClick={() => setLoginOpen(true)} className="w-full h-11 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2">
             <KeyRound className="size-4" /> {view.order.customerKind === "existing" ? "Enter renewal expiry date" : "Add customer login details"}
           </button>
-        ) : undefined}
-        completeSale={canMoveToSetup && view.order.id && view.order.paidAt && view.order.accountSetupAt && !view.order.completedAt && !view.order.cancelled ? (
-          <Button type="button" disabled={completingSale} onClick={async () => {
-            if (!window.confirm("Complete this sale? The payment and account setup will remain confirmed.")) return;
-            setCompletingSale(true);
-            try {
-              await completeSale({ data: { orderId: view.order.id as string } });
-              await load(pw);
-              toast.success("Sale completed");
-            } catch (cause) {
-              toast.error(cause instanceof Error ? cause.message : "The sale could not be completed");
-            } finally { setCompletingSale(false); }
-          }} className="w-full">
-            {completingSale ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />} Complete sale
-          </Button>
         ) : undefined}
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
