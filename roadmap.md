@@ -164,3 +164,6 @@
 - [x] Admin secure checkout page: chat becomes the customer's bottom-corner bubble, order details full width
 - [x] Restore manual Break/Main break buttons on Working Status and Clock page; moderators included in break plan; Start now fallback for missed/no-slot breaks
 - [x] Manual orders get their own staff alert ("Manual order — added by X for Y") instead of "New order — DaneJ placed an order"; Telegram hook flags manual orders too
+- [x] Customer secure order page: remove the WhatsApp video button so in-site Video help is the only video option
+- [x] Secure checkout: payment-confirmed wording says install the app using the install guides, with a Continue button into account setup
+- [x] Secure checkout: customer "Your app login details" card revealed once account setup is confirmed; verified reveal on the test order, nothing shown on a wrong password, 7 tests pass

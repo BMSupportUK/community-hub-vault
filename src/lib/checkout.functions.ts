@@ -3,6 +3,7 @@ import { z } from "zod";
 import { unlock } from "@/lib/checkout.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
+import { canViewCheckoutAppLogin } from "@/lib/checkout-app-login";
 
 /**
  * Public secure checkout page for manual orders. Every call is gated by the
@@ -314,4 +315,48 @@ export const markPaymentSent = createServerFn({ method: "POST" })
       } catch { /* best effort */ }
     }
     return { ok: true as const };
+  });
+
+/**
+ * The customer opens their own app login details from the secure order page.
+ * Same token + password gate as the page itself, and only once the team has
+ * confirmed account setup — otherwise the card just says "still being set up".
+ */
+export const getCheckoutAppLogin = createServerFn({ method: "POST" })
+  .inputValidator((input) => creds.parse(input))
+  .handler(async ({ data }) => {
+    const u = await unlock(data.token, data.password);
+    if (!u) return { ok: false as const, ready: false as const, accounts: [] as { loginName: string; password: string; accountType: string | null; expiryAt: string | null }[] };
+
+    const { data: order, error: orderError } = await u.supabaseAdmin
+      .from("orders")
+      .select("paid_at,status,user_id")
+      .eq("id", u.link.order_id)
+      .maybeSingle();
+    if (orderError || !order) return { ok: true as const, ready: false as const, accounts: [] };
+
+    const allowed = canViewCheckoutAppLogin({
+      paid: !!order.paid_at,
+      cancelled: String(order.status ?? "") === "cancelled",
+      accountSetupAt: (u.link.account_setup_at as string | null) ?? null,
+    });
+    if (!allowed || !order.user_id) return { ok: true as const, ready: false as const, accounts: [] };
+
+    // The staff-only credentials view never shows rows to a signed-out checkout
+    // visitor, so the details come from a function that re-checks the order
+    // token, password, payment and setup confirmation itself.
+    const { data: rows } = await u.supabaseAdmin
+      .rpc("checkout_app_login", { p_token: data.token, p_password: data.password });
+
+    const accounts = (rows ?? [])
+      .filter((row: any) => row.app_login_name && row.password)
+      .map((row: any) => ({
+        loginName: String(row.app_login_name),
+        password: String(row.password),
+        accountType: row.account_type ? String(row.account_type) : null,
+        expiryAt: row.expiry_at ? String(row.expiry_at) : null,
+      }));
+
+    if (!accounts.length) return { ok: true as const, ready: false as const, accounts: [] };
+    return { ok: true as const, ready: true as const, accounts };
   });
