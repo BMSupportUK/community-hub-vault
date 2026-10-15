@@ -98,7 +98,8 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
 function JobMeta({ job }: { job: JobVacancy }) {
   return <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
     {job.location && <span className="flex items-center gap-1.5"><MapPin className="size-4 shrink-0" />{job.location}</span>}
-    {job.employment_type && <span className="flex items-center gap-1.5"><Clock className="size-4 shrink-0" />{job.employment_type}</span>}
+    {job.employment_type && <span className="flex items-center gap-1.5"><BriefcaseBusiness className="size-4 shrink-0" />{job.employment_type}</span>}
+    {job.hours && <span className="flex items-center gap-1.5"><Clock className="size-4 shrink-0" />{job.hours}</span>}
     <span className="flex items-center gap-1.5"><Users className="size-4 shrink-0" />{positionsLabel(job.positions_available)}</span>
     {job.closing_date && <span className="flex items-center gap-1.5"><CalendarDays className="size-4 shrink-0" />Closes {new Date(`${job.closing_date}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
   </div>;
