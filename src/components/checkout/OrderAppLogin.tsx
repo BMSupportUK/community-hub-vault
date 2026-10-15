@@ -53,14 +53,8 @@ export function OrderAppLogin({ token, password }: { token: string; password: st
   };
 
   return (
-    <section className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-3">
-      <div className="flex gap-3 items-start">
-        <KeyRound className="size-5 text-primary shrink-0 mt-0.5" />
-        <div className="space-y-1 min-w-0">
-          <p className="font-semibold">Your app login details</p>
-          <p className="text-sm text-muted-foreground">Use these to sign in to the BM Support app on your device.</p>
-        </div>
-      </div>
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">Use these to sign in to the BM Support app on your device.</p>
       {state === "ready" ? (
         <div className="space-y-3">
           {accounts.map((account, index) => (
