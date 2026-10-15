@@ -29,6 +29,7 @@ const AUTO_CLOCK_IN_USERS = new Set([
   "7852b1ea-1da6-4fe5-a6e3-01ab1a5c6eee",
   "9521bac8-d7d3-40bd-829c-192854f3ec35",
 ]);
+const DEMO_USER_ID = "9521bac8-d7d3-40bd-829c-192854f3ec35";
 
 type AlertJob = {
   key: string;
@@ -230,6 +231,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
         // Slots whose start time has passed with nobody clocked in — these get
         // auto clocked in below.
         const autoClockIns: { slotId: string; userId: string; startsAt: number; endsAt: number }[] = [];
+        const demoClockOuts: { userId: string; endsAt: number }[] = [];
 
         for (const slot of slots ?? []) {
           const userId = slot.assigned_to as string;
@@ -291,6 +293,11 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               url: "/clock",
               kind: "shift_end_warn",
             });
+          }
+          // Demo account: clock out automatically at the slot's end time.
+          if (isOpenForSlot && toEnd <= 0 && userId === DEMO_USER_ID) {
+            demoClockOuts.push({ userId, endsAt });
+            continue;
           }
           // END overdue — phone alert at the end of the shift.
           if (isOpenForSlot && toEnd <= 0) {
@@ -394,6 +401,24 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
                 .from("scheduled_alert_log")
                 .upsert({ alert_key: `slot:${a.slotId}:autoclock`, user_id: a.userId }, { onConflict: "alert_key" });
               continue;
+            }
+            // The demo account never clocks out itself — close any leftover
+            // open shift from an earlier day so today's auto sign-in can run.
+            if (a.userId === DEMO_USER_ID) {
+              const { data: stale } = await supabaseAdmin
+                .from("shifts")
+                .select("id, clock_in")
+                .eq("user_id", a.userId)
+                .is("clock_out", null)
+                .lt("clock_in", new Date(a.startsAt).toISOString());
+              for (const s of stale ?? []) {
+                const ci = new Date(s.clock_in as string).getTime();
+                const out = Math.min(ci + 8 * 60 * 60 * 1000, a.startsAt);
+                await supabaseAdmin
+                  .from("shifts")
+                  .update({ clock_out: new Date(out).toISOString() })
+                  .eq("id", s.id as string);
+              }
             }
             // Guard against a race: skip if an open shift appeared meanwhile.
             const { data: stillOpen } = await supabaseAdmin
