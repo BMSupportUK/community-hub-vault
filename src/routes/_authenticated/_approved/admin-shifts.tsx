@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, UserX, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
