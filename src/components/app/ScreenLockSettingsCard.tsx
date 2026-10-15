@@ -17,8 +17,10 @@ import { lockScreenNow } from "@/components/app/ScreenLockProvider";
 
 export function ScreenLockSettingsCard() {
   const { user, hasAny } = useAuth();
+  const isAdmin = hasAny(["admin"]);
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
-  const options = isStaff ? STAFF_TIMEOUT_OPTIONS : USER_TIMEOUT_OPTIONS;
+  const maxMins = isAdmin ? ADMIN_MAX_TIMEOUT_MINUTES : STAFF_MAX_TIMEOUT_MINUTES;
+  const options = isAdmin ? ADMIN_TIMEOUT_OPTIONS : isStaff ? STAFF_TIMEOUT_OPTIONS : USER_TIMEOUT_OPTIONS;
 
   const [loading, setLoading] = useState(true);
   const [enabled, setEnabled] = useState(true);
