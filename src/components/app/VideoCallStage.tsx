@@ -122,7 +122,6 @@ export function VideoCallStage({
     };
 
     (async () => {
-      let iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
       try {
         const r = await getVideoIceServers();
         iceServers = r.iceServers as RTCIceServer[];
@@ -141,37 +140,42 @@ export function VideoCallStage({
       if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
       streamRef.current = stream;
       if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
-
-      const pc = new RTCPeerConnection({ iceServers });
-      pcRef.current = pc;
-      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
-      pc.onicecandidate = (e) => { if (e.candidate) send("signal", { kind: "candidate", candidate: e.candidate.toJSON() }); };
-      pc.ontrack = (e) => {
-        if (remoteRef.current && e.streams[0]) {
-          remoteRef.current.srcObject = e.streams[0];
-          remoteRef.current.play().catch(() => {});
-        }
-      };
-      pc.onconnectionstatechange = () => {
-        if (pc.connectionState === "connected") setConnected(true);
-        if (pc.connectionState === "failed") setError("The connection dropped. End the call and try again.");
-      };
+      createPeer();
 
       const ch = supabase.channel(topic, { config: { broadcast: { self: false } } });
       chRef.current = ch;
-      ch.on("broadcast", { event: "ping" }, () => { if (side === "answerer") send("ready"); });
-      ch.on("broadcast", { event: "ready" }, () => { if (side === "offerer") makeOffer().catch(() => {}); });
+      ch.on("broadcast", { event: "ping" }, () => { if (side === "answerer") send("ready", { tag: tagRef.current }); });
+      ch.on("broadcast", { event: "ready" }, ({ payload }) => {
+        if (side !== "offerer") return;
+        const tag = (payload as { tag?: string }).tag;
+        if (!tag) return;
+        if (!activeTagRef.current) {
+          activeTagRef.current = tag;
+          makeOffer().catch(() => {});
+        } else if (tag !== activeTagRef.current) {
+          switchPeer(tag);
+        }
+      });
       ch.on("broadcast", { event: "bye" }, () => { if (!hungRef.current) { hungRef.current = true; onHangup(); } });
+      ch.on("broadcast", { event: "moved" }, ({ payload }) => {
+        if (side !== "answerer" || hungRef.current) return;
+        const to = (payload as { to?: string }).to;
+        if (to !== tagRef.current) return;
+        hungRef.current = true;
+        onSuperseded?.();
+      });
       ch.on("broadcast", { event: "signal" }, async ({ payload }) => {
-        const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit };
+        const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit; to?: string; from?: string };
         const cur = pcRef.current;
         if (!cur) return;
+        if (side === "answerer" && p.to && p.to !== tagRef.current) return;
+        if (side === "offerer" && p.from && p.from !== activeTagRef.current) return;
         try {
           if (p.kind === "offer" && p.sdp && side === "answerer") {
             await cur.setRemoteDescription({ type: "offer", sdp: p.sdp });
             const answer = await cur.createAnswer();
             await cur.setLocalDescription(answer);
-            send("signal", { kind: "answer", sdp: answer.sdp });
+            send("signal", { kind: "answer", sdp: answer.sdp, from: tagRef.current });
             await flushIce();
           } else if (p.kind === "answer" && p.sdp && side === "offerer") {
             await cur.setRemoteDescription({ type: "answer", sdp: p.sdp });
@@ -185,7 +189,7 @@ export function VideoCallStage({
       ch.subscribe((status) => {
         if (status !== "SUBSCRIBED") return;
         if (side === "offerer") send("ping");
-        else send("ready");
+        else send("ready", { tag: tagRef.current });
       });
     })();
 
@@ -193,7 +197,7 @@ export function VideoCallStage({
     const retry = window.setInterval(() => {
       if (pcRef.current?.connectionState === "connected") return;
       if (side === "offerer" && !offeredRef.current) send("ping");
-      if (side === "answerer" && !pcRef.current?.remoteDescription) send("ready");
+      if (side === "answerer" && !pcRef.current?.remoteDescription) send("ready", { tag: tagRef.current });
     }, 3000);
 
     return () => {
