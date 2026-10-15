@@ -54,6 +54,7 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
   const [waPhone, setWaPhone] = useState("");
   const [waOpen, setWaOpen] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [audioOn, setAudioOn] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -139,12 +140,17 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
           pc.onicecandidate = (e) => {
             if (e.candidate) broadcast("signal", { kind: "candidate", candidate: e.candidate.toJSON() });
           };
+          const remote = new MediaStream();
           pc.ontrack = (e) => {
-            if (videoRef.current && e.streams[0]) {
-              videoRef.current.srcObject = e.streams[0];
-              videoRef.current.play().catch(() => {});
-              setConnected(true);
+            const src = e.streams[0] ?? remote;
+            if (!e.streams[0]) remote.addTrack(e.track);
+            const v = videoRef.current;
+            if (v) {
+              if (v.srcObject !== src) v.srcObject = src;
+              v.muted = true; // browsers block un-muted autoplay -> black screen
+              v.play().catch(() => {});
             }
+            setConnected(true);
           };
           await pc.setRemoteDescription({ type: "offer", sdp: p.sdp! });
           ready = true;
@@ -304,7 +310,23 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
             onClick={dropPointer}
             title="Tap to show the customer where to press"
           >
-            <video ref={videoRef} playsInline className="h-full w-full object-contain" />
+            <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-contain" />
+            {connected && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const v = videoRef.current;
+                  if (!v) return;
+                  v.muted = !v.muted;
+                  v.play().catch(() => {});
+                  setAudioOn(!v.muted);
+                }}
+                className="absolute right-2 top-2 rounded-full bg-background/80 px-3 py-1 text-xs font-medium text-foreground"
+              >
+                {audioOn ? "Mute sound" : "Turn sound on"}
+              </button>
+            )}
             {!connected && (
               <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
                 <span className="flex items-center gap-2">
