@@ -84,6 +84,10 @@ export function VideoCallStage({
       if (!stream) return null;
       const pc = new RTCPeerConnection({ iceServers });
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      // Staff start with the camera off (audio only). Without a video slot in
+      // the offer the customer's phone camera can never be sent -> black screen.
+      if (!stream.getVideoTracks().length) pc.addTransceiver("video", { direction: "sendrecv", streams: [stream] });
+      if (!stream.getAudioTracks().length) pc.addTransceiver("audio", { direction: "sendrecv", streams: [stream] });
       pc.onicecandidate = (e) => {
         if (!e.candidate) return;
         send("signal", {
@@ -97,8 +101,14 @@ export function VideoCallStage({
         const src = e.streams[0];
         if (v && src && v.srcObject !== src) {
           v.srcObject = src;
-          v.muted = true; // un-muted autoplay is blocked -> black screen
-          v.play().catch(() => {});
+          // Try with sound (Answer was a click); if the browser blocks it,
+          // play muted so the picture still shows and offer "Turn sound on".
+          v.muted = false;
+          v.play().then(() => setRemoteMuted(false)).catch(() => {
+            v.muted = true;
+            setRemoteMuted(true);
+            v.play().catch(() => {});
+          });
         }
       };
       pc.onconnectionstatechange = () => {
@@ -250,7 +260,8 @@ export function VideoCallStage({
       const track = fresh.getVideoTracks()[0];
       if (!stream || !track) return;
       stream.addTrack(track);
-      pcRef.current?.addTrack(track, stream);
+      const slot = pcRef.current?.getTransceivers().find((t) => t.receiver.track.kind === "video");
+      if (slot) await slot.sender.replaceTrack(track);
       if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
       setCamOn(true);
     } catch {
@@ -282,7 +293,7 @@ export function VideoCallStage({
         <span className="size-2 animate-pulse rounded-full bg-destructive-foreground" /> Live video call with {otherName} — not recorded
       </div>
       <div className="relative min-h-0 flex-1 bg-muted">
-        <video ref={remoteRef} playsInline autoPlay muted={remoteMuted} className="h-full w-full object-contain" />
+        <video ref={remoteRef} playsInline autoPlay className="h-full w-full object-contain" />
         {connected && remoteMuted && (
           <button
             type="button"
