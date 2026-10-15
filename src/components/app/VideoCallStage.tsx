@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2 } from "lucide-react";
+import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
@@ -38,6 +38,15 @@ export function VideoCallStage({
 }) {
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
+  // Remote sound plays through its own element; the video stays muted so the
+  // picture always shows even when the browser blocks sound.
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
+  // Extra rotation (deg, clockwise) the customer's phone reports when it is
+  // held sideways but its screen hasn't rotated (auto-rotate off).
+  const [remoteRotate, setRemoteRotate] = useState(0);
+  const localRotateRef = useRef(0);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -109,18 +118,20 @@ export function VideoCallStage({
         });
       };
       pc.ontrack = (e) => {
+        const src = e.streams[0] ?? new MediaStream([e.track]);
+        if (e.track.kind === "audio") {
+          const a = audioRef.current;
+          if (!a) return;
+          a.srcObject = new MediaStream([e.track]);
+          a.muted = false;
+          a.play().then(() => setRemoteMuted(false)).catch(() => setRemoteMuted(true));
+          return;
+        }
         const v = remoteRef.current;
-        const src = e.streams[0];
-        if (v && src && v.srcObject !== src) {
+        if (v && v.srcObject !== src) {
           v.srcObject = src;
-          // Try with sound (Answer was a click); if the browser blocks it,
-          // play muted so the picture still shows and offer "Turn sound on".
-          v.muted = false;
-          v.play().then(() => setRemoteMuted(false)).catch(() => {
-            v.muted = true;
-            setRemoteMuted(true);
-            v.play().catch(() => {});
-          });
+          v.muted = true;
+          v.play().catch(() => {});
         }
       };
       pc.onconnectionstatechange = () => {
@@ -206,6 +217,10 @@ export function VideoCallStage({
           switchPeer(tag);
         }
       });
+      ch.on("broadcast", { event: "orient" }, ({ payload }) => {
+        const deg = Number((payload as { deg?: number }).deg);
+        if ([0, 90, 180, 270].includes(deg)) setRemoteRotate(deg);
+      });
       ch.on("broadcast", { event: "bye" }, () => { if (!hungRef.current) { hungRef.current = true; onHangupRef.current(); } });
       ch.on("broadcast", { event: "moved" }, ({ payload }) => {
         if (side !== "answerer" || hungRef.current) return;
@@ -262,6 +277,7 @@ export function VideoCallStage({
         send("signal", { kind: "offer", sdp: pc.localDescription.sdp, to: activeTagRef.current });
       }
       if (side === "answerer" && !pcRef.current?.remoteDescription) send("ready", { tag: tagRef.current });
+      if (side === "answerer") send("orient", { deg: localRotateRef.current });
     }, 3000);
 
     return () => {
@@ -276,6 +292,74 @@ export function VideoCallStage({
       pendingIce.current = [];
     };
   }, [topic, side, send, startWithCamera]);
+
+  // Phone (answerer) side: work out how the phone is physically held versus
+  // how its screen is drawn, and tell the other side how far to turn the picture.
+  useEffect(() => {
+    if (side !== "answerer") return;
+    const screenCw = () => {
+      const a = typeof screen !== "undefined" && screen.orientation ? screen.orientation.angle
+        : Number((window as unknown as { orientation?: number }).orientation ?? 0);
+      return ((360 - (a || 0)) % 360 + 360) % 360;
+    };
+    let deviceCw = 0;
+    const push = () => {
+      const deg = ((deviceCw - screenCw()) % 360 + 360) % 360;
+      const snapped = [0, 90, 180, 270].includes(deg) ? deg : 0;
+      if (snapped === localRotateRef.current) return;
+      localRotateRef.current = snapped;
+      send("orient", { deg: snapped });
+    };
+    const onOrient = (e: DeviceOrientationEvent) => {
+      const b = e.beta, g = e.gamma;
+      if (b == null || g == null) return;
+      // Phone lying flat: keep the last reading.
+      if (Math.abs(b) < 25 && Math.abs(g) < 25) return;
+      if (Math.abs(b) >= Math.abs(g)) deviceCw = b >= 0 ? 0 : 180;
+      else deviceCw = g > 0 ? 90 : 270;
+      push();
+    };
+    const listen = () => window.addEventListener("deviceorientation", onOrient);
+    const DOE = (window as unknown as { DeviceOrientationEvent?: { requestPermission?: () => Promise<string> } }).DeviceOrientationEvent;
+    let askOnTap: (() => void) | null = null;
+    if (DOE?.requestPermission) {
+      // iPhone needs a tap before it shares how the phone is held.
+      DOE.requestPermission().then((r) => { if (r === "granted") listen(); }).catch(() => {
+        askOnTap = () => { DOE.requestPermission?.().then((r) => { if (r === "granted") listen(); }).catch(() => {}); };
+        window.addEventListener("pointerdown", askOnTap, { once: true });
+      });
+    } else listen();
+    screen.orientation?.addEventListener?.("change", push);
+    window.addEventListener("orientationchange", push);
+    return () => {
+      window.removeEventListener("deviceorientation", onOrient);
+      if (askOnTap) window.removeEventListener("pointerdown", askOnTap);
+      screen.orientation?.removeEventListener?.("change", push);
+      window.removeEventListener("orientationchange", push);
+    };
+  }, [side, send]);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setStageSize({ w: el.clientWidth, h: el.clientHeight }));
+    ro.observe(el);
+    setStageSize({ w: el.clientWidth, h: el.clientHeight });
+    return () => ro.disconnect();
+  }, []);
+
+  const toggleSound = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (remoteMuted || a.paused) {
+      a.muted = false;
+      a.play().then(() => setRemoteMuted(false)).catch(() => setRemoteMuted(true));
+    } else {
+      a.muted = true;
+      setRemoteMuted(true);
+    }
+  };
+  const sideways = remoteRotate === 90 || remoteRotate === 270;
 
   const toggleMic = () => {
     const t = streamRef.current?.getAudioTracks()[0];
@@ -329,12 +413,24 @@ export function VideoCallStage({
       <div className="flex items-center justify-center gap-2 bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
         <span className="size-2 animate-pulse rounded-full bg-destructive-foreground" /> Live video call with {otherName} — not recorded
       </div>
-      <div className="relative min-h-0 flex-1 bg-muted">
-        <video ref={remoteRef} playsInline autoPlay className="h-full w-full object-contain" />
+      <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
+        <audio ref={audioRef} autoPlay className="hidden" />
+        <video
+          ref={remoteRef}
+          playsInline
+          autoPlay
+          muted
+          className="absolute left-1/2 top-1/2 object-contain transition-transform duration-300"
+          style={{
+            width: sideways ? stageSize.h : stageSize.w || "100%",
+            height: sideways ? stageSize.w : stageSize.h || "100%",
+            transform: `translate(-50%, -50%) rotate(${remoteRotate}deg)`,
+          }}
+        />
         {connected && remoteMuted && (
           <button
             type="button"
-            onClick={() => { setRemoteMuted(false); const v = remoteRef.current; if (v) { v.muted = false; v.play().catch(() => {}); } }}
+            onClick={toggleSound}
             className="absolute left-3 top-3 z-10 rounded-full bg-background/85 px-3 py-1.5 text-xs font-semibold text-foreground shadow"
           >
             Turn sound on
@@ -366,6 +462,9 @@ export function VideoCallStage({
       <div className="flex items-center justify-center gap-3 border-t border-border bg-card px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <button type="button" onClick={toggleMic} aria-label={micOn ? "Mute microphone" : "Unmute microphone"} className={`grid size-12 place-items-center rounded-full ${micOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
           {micOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
+        </button>
+        <button type="button" onClick={toggleSound} aria-label={remoteMuted ? "Turn sound on" : "Turn sound off"} className={`grid size-12 place-items-center rounded-full ${remoteMuted ? "bg-destructive text-destructive-foreground" : "bg-secondary text-secondary-foreground"}`}>
+          {remoteMuted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
         </button>
         {isMobilePhone() && (
           <>
