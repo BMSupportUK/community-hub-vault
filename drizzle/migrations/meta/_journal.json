@@ -904,6 +904,13 @@
       "when": 1792093952410,
       "tag": "0128_checkout_app_login_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 129,
+      "version": "7",
+      "when": 1792094706449,
+      "tag": "0129_checkout_app_login_order_scoped",
+      "breakpoints": true
     }
   ]
 }
