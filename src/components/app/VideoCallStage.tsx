@@ -3,6 +3,9 @@ import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2 } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
+import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
+
+export { staffPlaceholder, staffPlaceholderMale };
 
 type Side = "offerer" | "answerer";
 
