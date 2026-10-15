@@ -7304,6 +7304,15 @@ export type Database = {
       }
       can_pay_by_bank_transfer: { Args: { _user_id: string }; Returns: boolean }
       check_admin_unlock_lockout: { Args: never; Returns: Json }
+      checkout_app_login: {
+        Args: { p_password: string; p_token: string }
+        Returns: {
+          account_type: string
+          app_login_name: string
+          expiry_at: string
+          password: string
+        }[]
+      }
       checkout_auto_post: {
         Args: { p_key: string; p_order: string; p_values: Json }
         Returns: undefined

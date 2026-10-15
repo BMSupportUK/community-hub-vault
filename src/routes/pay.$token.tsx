@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, CheckCircle2, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
 import { completeCheckoutSale, continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
 import { OrderVideoCallCustomer } from "@/components/checkout/OrderVideoCall";
+import { OrderAppLogin } from "@/components/checkout/OrderAppLogin";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
@@ -208,10 +209,11 @@ function PayPage() {
           const result = await continueToAccountSetup({ data: { token, password: pw } });
           if (!result.ok) {
             toast.error("The order could not be moved to account setup");
-            return;
+            return false;
           }
           await load(pw);
           toast.success("Your order is now in account setup");
+          return true;
         }}
         moveToSetup={canMoveToSetup && view.order.id && view.order.paidAt && !view.order.cancelled && !view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.completedAt ? (
           <button
@@ -257,6 +259,7 @@ function PayPage() {
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
+        appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}
       />
       {canManage && view.order.id && (
         <Dialog open={loginOpen} onOpenChange={setLoginOpen}>

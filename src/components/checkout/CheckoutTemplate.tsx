@@ -89,7 +89,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 }
 
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale, appLogin }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
@@ -147,9 +147,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   else if (visibleStage === 1 && paid) { heading = "Payment stage"; sub = "This payment step has been completed."; }
   else if (visibleStage === 4) {
     heading = order.customerKind === "existing" ? "Your subscription has been extended!" : "Your account has been set up!";
-    sub = order.customerKind === "existing" ? "Your extension is live now — just restart your app to carry on watching." : "Your new account is ready. Your login details will be sent to you by the team.";
-  } else if (visibleStage === 3) { heading = order.customerKind === "existing" ? "Subscription extension" : "Account setup"; sub = accountSetup ? "This step is complete and the sale is ready to finish." : "Payment is confirmed and setup is in progress."; }
-  else if (visibleStage === 2) { heading = "Thank you — we've got your payment!"; sub = "Your payment has been confirmed."; }
+    sub = order.customerKind === "existing" ? "Your extension is live now — just restart your app to carry on watching." : "Your new account is ready. Open your app login details to sign in to the app.";
+  } else if (visibleStage === 3) { heading = order.customerKind === "existing" ? "Subscription extension" : "Account setup"; sub = accountSetup ? "Your order is complete. Open your app login details below to sign in." : "Payment is confirmed and setup is in progress."; }
+  else if (visibleStage === 2) { heading = "Payment confirmed"; sub = "Please install the app using the install guides."; }
   else if (method === "cash") { heading = `Order #${order.ref} — awaiting cash payment`; sub = "Once the team confirms your cash payment, this page will move on automatically."; }
   else if (awaitingConfirmation) { heading = "Payment sent — awaiting confirmation"; sub = "Thanks! We're waiting for your payment to arrive. This page updates automatically once it's confirmed."; }
   else if (paid) { heading = "Thank you — we've got your payment!"; sub = "We'll set everything up and let you know when it's complete."; }
@@ -237,8 +237,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <div className="flex gap-3 items-start">
                   <Check className="size-5 text-success shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold">{({ square: "Square", stripe: "Card", crypto: "Crypto", wise: "Bank transfer", bank_transfer: "Bank transfer", cash: "Cash" } as Record<string, string>)[String(view.order.method)] ?? "Payment"} payment received</p>
-                    <p className="text-sm text-muted-foreground">Your payment is confirmed. Continue when you’re ready so we can begin setting up your service.</p>
+                    <p className="font-semibold">Payment confirmed</p>
+                    <p className="text-sm text-muted-foreground">Please install the app using the install guides, then continue to view your app login details.</p>
                   </div>
                 </div>
                 {onContinueToSetup && (
@@ -247,12 +247,15 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                     disabled={continuing}
                     onClick={async () => {
                       setContinuing(true);
-                      try { await onContinueToSetup(); } finally { setContinuing(false); }
+                      try {
+                        const ok = await onContinueToSetup();
+                        if (ok !== false) setVisibleStage((stage) => Math.max(stage, 3));
+                      } finally { setContinuing(false); }
                     }}
                     className="w-full h-11 px-5 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60"
                   >
                     {continuing ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
-                    Continue to account setup
+                    Continue to view your app login details
                   </button>
                 )}
               </section>
@@ -268,10 +271,11 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   <p className="text-sm">{step === 3
                     ? sub
                     : accountSetup
-                      ? (order.customerKind === "existing" ? "Your subscription has been extended — we're just finishing off your order." : "Your account has been set up. Your login details have been sent in the chat.")
-                      : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
+                      ? (order.customerKind === "existing" ? "Your subscription has been extended — open your app login details below to carry on watching." : "Your account is ready. Open your app login details below to sign in to the app.")
+                      : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. Please install the app using the install guides while we finish setting up your account.")}</p>
                 </div>
               </section>
+              {appLogin}
               {installCard}
               {addLoginDetails}
               {visibleStage === 3 && completeSale}
