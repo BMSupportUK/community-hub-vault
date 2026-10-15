@@ -58,6 +58,7 @@ function DemoPayPage() {
 function PayPage() {
   const { token } = Route.useParams();
   const { pw: urlPw } = Route.useSearch();
+  const { user, hasRole } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [movingToSetup, setMovingToSetup] = useState(false);
   const [completingSale, setCompletingSale] = useState(false);
