@@ -18,12 +18,15 @@ export function VideoCallStage({
   side,
   otherName,
   onHangup,
+  onSuperseded,
   startWithCamera = true,
 }: {
   topic: string;
   side: Side;
   otherName: string;
   onHangup: () => void;
+  /** Called on an answerer whose call was taken over by the customer's other device. */
+  onSuperseded?: () => void;
   startWithCamera?: boolean;
 }) {
   const localRef = useRef<HTMLVideoElement | null>(null);
@@ -35,6 +38,10 @@ export function VideoCallStage({
   const offeredRef = useRef(false);
   const facingRef = useRef<"user" | "environment">("user");
   const hungRef = useRef(false);
+  // Identifies this device during signalling so a customer can move the call
+  // between their devices (PC → phone) without both joining at once.
+  const tagRef = useRef(`${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
+  const activeTagRef = useRef<string | null>(null);
 
   const [connected, setConnected] = useState(false);
   const [micOn, setMicOn] = useState(true);
