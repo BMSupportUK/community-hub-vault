@@ -55,6 +55,12 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
   const [waOpen, setWaOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [audioOn, setAudioOn] = useState(false);
+  const [ratio, setRatio] = useState<number>(16 / 9);
+
+  const syncRatio = useCallback(() => {
+    const v = videoRef.current;
+    if (v && v.videoWidth > 0 && v.videoHeight > 0) setRatio(v.videoWidth / v.videoHeight);
+  }, []);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
