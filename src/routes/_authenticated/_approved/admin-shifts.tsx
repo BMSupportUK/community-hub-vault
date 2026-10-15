@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
 import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPanel";
@@ -427,6 +428,19 @@ function StaffShiftsPage() {
   }, [visible, breaksByShift, awayByUser]);
 
   if (!canView) return <Navigate to="/admin" />;
+
+  // Admin/management can clock in a staff member who missed their sign-in.
+  const signInStaff = async (userId: string) => {
+    setSigningIn(userId);
+    const { error } = await supabase.rpc("admin_clock_in_staff", { _user_id: userId });
+    setSigningIn(null);
+    if (error) {
+      toast.error(error.message.includes("already on shift") ? "They're already signed in." : "Couldn't sign them in — try again.");
+      return;
+    }
+    toast.success(`${nameOf(userId)} signed in.`);
+    void load(weekFrom, weekTo, true);
+  };
 
   const nameOf = (userId: string) => {
     const p = people[userId];
