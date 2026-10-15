@@ -142,7 +142,7 @@ export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
           </button>
         </div>
       )}
-      {inCall && <VideoCallStage topic={`video-call-${session.id}`} side="offerer" otherName="the customer" onHangup={end} />}
+      {inCall && <VideoCallStage topic={`video-call-${session.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} />}
     </>
   );
 }
