@@ -165,13 +165,29 @@ export function VideoCallStage({
     t.enabled = !t.enabled;
     setMicOn(t.enabled);
   };
-  const toggleCam = () => {
-    const t = streamRef.current?.getVideoTracks()[0];
-    if (!t) return;
-    t.enabled = !t.enabled;
-    setCamOn(t.enabled);
+  const toggleCam = async () => {
+    const stream = streamRef.current;
+    const existing = stream?.getVideoTracks()[0];
+    if (existing) {
+      existing.enabled = !existing.enabled;
+      setCamOn(existing.enabled);
+      return;
+    }
+    // Camera was never started (staff side) — acquire it on demand.
+    try {
+      const fresh = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingRef.current }, audio: false });
+      const track = fresh.getVideoTracks()[0];
+      if (!stream || !track) return;
+      stream.addTrack(track);
+      pcRef.current?.addTrack(track, stream);
+      if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
+      setCamOn(true);
+    } catch {
+      setError("Couldn't turn the camera on. Allow camera permission in your browser and try again.");
+    }
   };
   const flip = async () => {
+    if (!streamRef.current?.getVideoTracks()[0]) return;
     const next = facingRef.current === "user" ? "environment" : "user";
     try {
       const fresh = await navigator.mediaDevices.getUserMedia({ video: { facingMode: next }, audio: false });
