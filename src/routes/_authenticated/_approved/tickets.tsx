@@ -2025,7 +2025,6 @@ function TicketDetail({
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/25 text-xs text-white">
               <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
             </span>
-            <TicketVideoCall ticketId={ticket.id} ownerId={ticket.user_id} ticketStatus={ticket.status} currentUserId={currentUserId} roles={roles} />
             {ticket.status !== "closed" && (isStaff || ticket.user_id === currentUserId) && (
               <button
                 onClick={closeTicket}
