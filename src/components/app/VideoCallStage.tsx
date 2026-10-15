@@ -389,6 +389,7 @@ export function VideoCallStage({
     setMicOn(t.enabled);
   };
   const toggleCam = async () => {
+    if (!startWithCamera) return; // staff never share their camera
     const stream = streamRef.current;
     const existing = stream?.getVideoTracks()[0];
     if (existing) {
@@ -496,7 +497,7 @@ export function VideoCallStage({
         <button type="button" onClick={toggleSound} aria-label={remoteMuted ? "Turn sound on" : "Turn sound off"} className={`grid size-12 place-items-center rounded-full ${remoteMuted ? "bg-destructive text-destructive-foreground" : "bg-secondary text-secondary-foreground"}`}>
           {remoteMuted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
         </button>
-        {isMobilePhone() && (
+        {isMobilePhone() && startWithCamera && (
           <>
             <button type="button" onClick={toggleCam} aria-label={camOn ? "Turn camera off" : "Turn camera on"} className={`grid size-12 place-items-center rounded-full ${camOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
               {camOn ? <Video className="size-5" /> : <VideoOff className="size-5" />}
