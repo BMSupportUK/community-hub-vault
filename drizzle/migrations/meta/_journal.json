@@ -911,6 +911,13 @@
       "when": 1792094706449,
       "tag": "0129_checkout_app_login_order_scoped",
       "breakpoints": true
+    },
+    {
+      "idx": 130,
+      "version": "7",
+      "when": 1792095023544,
+      "tag": "0130_checkout_logins_per_order",
+      "breakpoints": true
     }
   ]
 }

@@ -7892,46 +7892,88 @@ export type Database = {
           total_cents: number
         }[]
       }
-      staff_create_credential: {
-        Args: {
-          p_account_type?: string
-          p_login_name: string
-          p_months: number
-          p_owner_id: string
-          p_password: string
-        }
-        Returns: {
-          account_number: number
-          credential_id: string
-          expiry_at: string
-        }[]
-      }
-      staff_create_credential_with_expiry: {
-        Args: {
-          p_account_type?: string
-          p_expiry: string
-          p_login_name: string
-          p_owner_id: string
-          p_password: string
-        }
-        Returns: {
-          account_number: number
-          credential_id: string
-          expiry_at: string
-        }[]
-      }
+      staff_create_credential:
+        | {
+            Args: {
+              p_account_type?: string
+              p_login_name: string
+              p_months: number
+              p_owner_id: string
+              p_password: string
+            }
+            Returns: {
+              account_number: number
+              credential_id: string
+              expiry_at: string
+            }[]
+          }
+        | {
+            Args: {
+              p_account_type?: string
+              p_login_name: string
+              p_months: number
+              p_order_id?: string
+              p_owner_id: string
+              p_password: string
+            }
+            Returns: {
+              account_number: number
+              credential_id: string
+              expiry_at: string
+            }[]
+          }
+      staff_create_credential_with_expiry:
+        | {
+            Args: {
+              p_account_type?: string
+              p_expiry: string
+              p_login_name: string
+              p_owner_id: string
+              p_password: string
+            }
+            Returns: {
+              account_number: number
+              credential_id: string
+              expiry_at: string
+            }[]
+          }
+        | {
+            Args: {
+              p_account_type?: string
+              p_expiry: string
+              p_login_name: string
+              p_order_id?: string
+              p_owner_id: string
+              p_password: string
+            }
+            Returns: {
+              account_number: number
+              credential_id: string
+              expiry_at: string
+            }[]
+          }
       staff_default_nameplate_for_user: {
         Args: { _gender?: string; _user_id: string }
         Returns: string
       }
-      staff_extend_credential: {
-        Args: {
-          p_account_type?: string
-          p_credential_id: string
-          p_months: number
-        }
-        Returns: string
-      }
+      staff_extend_credential:
+        | {
+            Args: {
+              p_account_type?: string
+              p_credential_id: string
+              p_months: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_account_type?: string
+              p_credential_id: string
+              p_months: number
+              p_order_id?: string
+            }
+            Returns: string
+          }
       staff_nameplate_for_role:
         | {
             Args: { _role: Database["public"]["Enums"]["app_role"] }
