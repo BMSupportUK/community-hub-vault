@@ -1,3 +1,4 @@
+import { isVideoTestOrder } from "@/lib/video-test-orders";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { unlock } from "@/lib/checkout.server";
@@ -87,7 +88,7 @@ export const startLiveHelp = createServerFn({ method: "POST" })
     const existing = await latestOpenSession(supabaseAdmin, link.order_id);
     if (existing) return { ok: true as const, session: toSession(existing) };
     const { data: isOpen } = await supabaseAdmin.rpc("is_business_open");
-    if (isOpen === false) return { ok: false as const };
+    if (isOpen === false && !isVideoTestOrder(data.token)) return { ok: false as const };
 
     const { data: row, error } = await supabaseAdmin
       .from("order_support_sessions")
