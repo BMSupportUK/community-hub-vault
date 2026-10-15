@@ -44,10 +44,13 @@ function londonNow(at: number = Date.now()) {
 export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus> {
   const isDemo = useIsDemoAccount();
   const key = useMemo(() => Array.from(new Set(userIds)).sort().join(","), [userIds]);
-  const [rows, setRows] = useState<{ shifts: LiveShift[]; breaks: LiveBreak[] }>({
-    shifts: [],
-    breaks: [],
-  });
+  const [rows, setRows] = useState<{
+    shifts: LiveShift[];
+    breaks: LiveBreak[];
+    slotStarts: Record<string, string>;
+  }>({ shifts: [], breaks: [], slotStarts: {} });
+  // Ticks so "Get ready for shift" flips to "Working" at the rota start.
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const ids = key ? key.split(",") : [];
