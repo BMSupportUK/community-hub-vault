@@ -90,6 +90,6 @@ export function OrderAppLogin({ token, password }: { token: string; password: st
           View app login details
         </button>
       )}
-    </section>
+    </div>
   );
 }
