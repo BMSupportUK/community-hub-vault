@@ -5,6 +5,14 @@ import { phoneToneForKind } from "@/lib/phone-alert-sounds";
 import { shakeScreen } from "@/lib/screen-shake";
 import { loadSoundOverrides } from "@/lib/sound-overrides";
 
+/** Kinds whose sound is already played by an in-app alert component. */
+const IN_APP_OWNED_KINDS = new Set([
+  "shift_start",
+  "shift_start_warn",
+  "shift_end",
+  "shift_end_warn",
+]);
+
 /**
  * Plays the uploaded voice clips when a web push arrives, so staff hear the
  * recorded message rather than the generic OS notification chime.
@@ -18,6 +26,14 @@ export function PushSoundBridge() {
       try {
         const data = event.data as { type?: string; sound?: string; kind?: string; event?: string } | null;
         if (!data || data.type !== "bm-play-sound") return;
+        // Shift start/end warnings already play their clip from the in-app
+        // toast (ShiftStartEndAlert). The push arrives a few seconds later,
+        // so playing it here stacked a second, quieter copy of the same
+        // recording on top — the low muffled echo underneath the toast.
+        if (IN_APP_OWNED_KINDS.has(data.kind ?? "")) {
+          event.ports?.[0]?.postMessage({ played: true });
+          return;
+        }
         shakeScreen();
         // Same recording the phone app plays for this alert type.
         const tone = phoneToneForKind(data.kind, data.event);
