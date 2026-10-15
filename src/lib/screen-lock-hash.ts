@@ -9,9 +9,11 @@ export async function hashLockCode(userId: string, code: string): Promise<string
 
 export const STAFF_LOCK_ROLES = ["admin", "management", "staff", "moderator"] as const;
 export const STAFF_TIMEOUT_OPTIONS = [1, 5, 10];
+export const ADMIN_TIMEOUT_OPTIONS = [1, 5, 10, 30];
 export const USER_TIMEOUT_OPTIONS = [5, 10, 15, 30, 60];
 export const DEFAULT_TIMEOUT_MINUTES = 15;
 export const STAFF_MAX_TIMEOUT_MINUTES = 10;
+export const ADMIN_MAX_TIMEOUT_MINUTES = 30;
 
 /** The same persisted-state decision applies on cold start and app return. */
 export function shouldLockScreen(
