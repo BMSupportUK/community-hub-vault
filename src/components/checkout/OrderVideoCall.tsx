@@ -15,6 +15,7 @@ import {
 } from "@/lib/live-help.functions";
 import { secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
 import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCallStage";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Session = { id: string; status: "waiting" | "live" | "ended" | "expired" };
 
@@ -73,31 +74,35 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
   // On a computer: invite the customer to stream from their phone via QR code.
   if (!mobile) {
     const phoneUrl = `${secureCheckoutUrl(token)}?pw=${encodeURIComponent(password)}`;
-    return invite ? (
-      <div className={inline
-        ? "rounded-2xl border border-border bg-card p-4 text-card-foreground"
-        : "fixed bottom-24 left-4 z-40 w-72 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-xl"}>
-        <p className="text-sm font-semibold">Show us on video</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Scan this with your phone camera, then tap <b>Start video call</b>. Point your phone at the device you're setting up — we'll see it on our big screen while you keep chatting here.
-        </p>
-        <div className="mt-3 grid place-items-center rounded-lg bg-background p-3">
-          <div className="rounded bg-card p-2"><QRCode value={phoneUrl} size={160} /></div>
-        </div>
-        <button type="button" onClick={() => setInvite(false)} className="mt-3 w-full rounded-full border border-border px-3 py-1.5 text-xs font-semibold">
-          Close
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setInvite(true)}
+          className={inline
+            ? "w-full inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            : "fixed bottom-24 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg"}
+        >
+          <QrCode className="size-4" /> Video help
         </button>
-      </div>
-    ) : (
-      <button
-        type="button"
-        onClick={() => setInvite(true)}
-        className={inline
-          ? "w-full inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          : "fixed bottom-24 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg"}
-      >
-        <QrCode className="size-4" /> Video help
-      </button>
+        <Dialog open={invite} onOpenChange={setInvite}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Show us on video</DialogTitle>
+              <DialogDescription>
+                Open your phone's normal camera and point it at this code — no QR app needed. Tap the link that pops up, then tap <b>Start video call</b>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid place-items-center">
+              {/* White quiet zone so built-in iPhone/Android cameras read it instantly. */}
+              <div className="rounded-xl bg-white p-5">
+                <QRCode value={phoneUrl} size={240} level="M" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Point your phone at the device you're setting up — we'll see it on our big screen while you keep chatting here.</p>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
