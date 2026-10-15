@@ -13,7 +13,7 @@ import {
   startLiveHelp,
 } from "@/lib/live-help.functions";
 import { secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
-import { VideoCallStage } from "@/components/app/VideoCallStage";
+import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCallStage";
 
 type Session = { id: string; status: "waiting" | "live" | "ended" | "expired" };
 
@@ -112,6 +112,17 @@ export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
   const [inCall, setInCall] = useState(false);
   const [busy, setBusy] = useState(false);
   const [checkoutLink, setCheckoutLink] = useState<{ token: string; password: string } | null>(null);
+  const [isMale, setIsMale] = useState(false);
+
+  // Pick the staff illustration matching the signed-in staff member's profile gender.
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id;
+      if (!uid) return;
+      supabase.from("profiles").select("staff_gender").eq("id", uid).maybeSingle()
+        .then(({ data: p }) => setIsMale((p as { staff_gender?: string } | null)?.staff_gender === "male"));
+    });
+  }, []);
 
   useEffect(() => {
     let off = false;
@@ -184,7 +195,7 @@ export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
           )}
         </>
       )}
-      {inCall && <VideoCallStage topic={`video-call-${session.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} />}
+      {inCall && <VideoCallStage topic={`video-call-${session.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} placeholderImage={isMale ? staffPlaceholderMale : undefined} />}
     </>
   );
 }

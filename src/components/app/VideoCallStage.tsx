@@ -3,6 +3,9 @@ import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2 } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
+import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
+
+export { staffPlaceholder, staffPlaceholderMale };
 
 type Side = "offerer" | "answerer";
 
@@ -20,6 +23,7 @@ export function VideoCallStage({
   onHangup,
   onSuperseded,
   startWithCamera = true,
+  placeholderImage = staffPlaceholder,
 }: {
   topic: string;
   side: Side;
@@ -28,6 +32,8 @@ export function VideoCallStage({
   /** Called on an answerer whose call was taken over by the customer's other device. */
   onSuperseded?: () => void;
   startWithCamera?: boolean;
+  /** Illustration shown while this side's camera is off (staff side). */
+  placeholderImage?: string;
 }) {
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
@@ -284,7 +290,7 @@ export function VideoCallStage({
           />
         ) : (
           <div className="absolute bottom-3 right-3 flex h-32 w-24 flex-col items-center justify-end overflow-hidden rounded-lg border border-border bg-card shadow-lg sm:h-44 sm:w-32">
-            <img src={staffPlaceholder} alt="BM Support staff" loading="lazy" width={512} height={768} className="h-full w-full object-cover" />
+            <img src={placeholderImage} alt="BM Support staff" loading="lazy" width={512} height={768} className="h-full w-full object-cover" />
             <span className="absolute inset-x-0 bottom-0 bg-background/70 px-1 py-0.5 text-center text-[10px] font-medium text-foreground">Camera off</span>
           </div>
         )}
