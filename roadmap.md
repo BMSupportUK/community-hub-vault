@@ -168,3 +168,4 @@
 - [x] Secure checkout: payment-confirmed wording says install the app using the install guides, with a Continue button into account setup
 - [x] Secure checkout: customer "Your app login details" card revealed once account setup is confirmed; verified reveal on the test order, nothing shown on a wrong password, 7 tests pass
 - [x] Account menu "Get the Android app" pop-up: bigger code with a proper white border, pure black modules, and the web address shown in text as a fallback; verified it decodes to https://bmsupport.uk/get-android-app
+- [x] Secure order page: Video help button moved inside the install-guides card, directly under the Open install guides button (was below the card)
