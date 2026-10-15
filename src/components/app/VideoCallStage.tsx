@@ -67,6 +67,9 @@ export function VideoCallStage({
   onSupersededRef.current = onSuperseded;
   const [remoteMuted, setRemoteMuted] = useState(true);
   const [connected, setConnected] = useState(false);
+  // False while the other side sends no camera (staff audio-only): the customer
+  // then sees the staff illustration instead of a black box.
+  const [remoteHasVideo, setRemoteHasVideo] = useState(false);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(startWithCamera);
   const [error, setError] = useState<string | null>(null);
