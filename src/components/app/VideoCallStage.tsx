@@ -78,6 +78,15 @@ export function VideoCallStage({
     hungRef.current = false;
 
     let iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+    const descSent = new WeakSet<RTCPeerConnection>();
+    // Wait (briefly) for this side's network routes, including the relay.
+    const gathered = (pc: RTCPeerConnection) => new Promise<void>((resolve) => {
+      if (pc.iceGatheringState === "complete") return resolve();
+      const t = window.setTimeout(done, 2500);
+      function done() { window.clearTimeout(t); pc.removeEventListener("icegatheringstatechange", check); resolve(); }
+      function check() { if (pc.iceGatheringState === "complete") done(); }
+      pc.addEventListener("icegatheringstatechange", check);
+    });
 
     const createPeer = () => {
       const stream = streamRef.current;
@@ -88,8 +97,11 @@ export function VideoCallStage({
       // the offer the customer's phone camera can never be sent -> black screen.
       if (!stream.getVideoTracks().length) pc.addTransceiver("video", { direction: "sendrecv", streams: [stream] });
       if (!stream.getAudioTracks().length) pc.addTransceiver("audio", { direction: "sendrecv", streams: [stream] });
+      // Candidates found before the offer/answer is sent travel inside it (one
+      // message instead of a burst that the signalling channel can drop);
+      // only late ones are sent separately.
       pc.onicecandidate = (e) => {
-        if (!e.candidate) return;
+        if (!e.candidate || !descSent.has(pc)) return;
         send("signal", {
           kind: "candidate",
           candidate: e.candidate.toJSON(),
@@ -113,20 +125,31 @@ export function VideoCallStage({
       };
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "connected") setConnected(true);
-        if (pc.connectionState === "failed") setError("The connection dropped. End the call and try again.");
+        if (pc.connectionState === "connected") setError(null);
+        if (pc.connectionState === "failed") {
+          // Mobile networks drop/switch: the offerer retries the route once more.
+          if (side === "offerer" && pcRef.current === pc) {
+            offeredRef.current = false;
+            void makeOffer(true).catch(() => {});
+          }
+          setError("Reconnecting… if this stays, end the call and try again.");
+        }
       };
       pcRef.current = pc;
       return pc;
     };
 
-    const makeOffer = async () => {
+    const makeOffer = async (iceRestart = false) => {
       const pc = pcRef.current;
       const to = activeTagRef.current;
       if (!pc || offeredRef.current || !to) return;
       offeredRef.current = true;
-      const offer = await pc.createOffer();
+      descSent.delete(pc);
+      const offer = await pc.createOffer({ iceRestart });
       await pc.setLocalDescription(offer);
-      send("signal", { kind: "offer", sdp: offer.sdp, to });
+      await gathered(pc);
+      descSent.add(pc);
+      send("signal", { kind: "offer", sdp: pc.localDescription?.sdp ?? offer.sdp, to });
     };
 
     // The customer may move the call to another of their devices (PC → phone):
@@ -199,12 +222,21 @@ export function VideoCallStage({
         if (side === "offerer" && p.from && p.from !== activeTagRef.current) return;
         try {
           if (p.kind === "offer" && p.sdp && side === "answerer") {
+            // Same offer re-sent (our answer got lost): just send the answer again.
+            if (cur.remoteDescription?.sdp === p.sdp && cur.localDescription?.type === "answer") {
+              send("signal", { kind: "answer", sdp: cur.localDescription.sdp, from: tagRef.current });
+              return;
+            }
+            descSent.delete(cur);
             await cur.setRemoteDescription({ type: "offer", sdp: p.sdp });
             const answer = await cur.createAnswer();
             await cur.setLocalDescription(answer);
-            send("signal", { kind: "answer", sdp: answer.sdp, from: tagRef.current });
+            await gathered(cur);
+            descSent.add(cur);
+            send("signal", { kind: "answer", sdp: cur.localDescription?.sdp ?? answer.sdp, from: tagRef.current });
             await flushIce();
           } else if (p.kind === "answer" && p.sdp && side === "offerer") {
+            if (cur.signalingState !== "have-local-offer") return;
             await cur.setRemoteDescription({ type: "answer", sdp: p.sdp });
             await flushIce();
           } else if (p.kind === "candidate" && p.candidate) {
@@ -224,6 +256,11 @@ export function VideoCallStage({
     const retry = window.setInterval(() => {
       if (pcRef.current?.connectionState === "connected") return;
       if (side === "offerer" && !offeredRef.current) send("ping");
+      // Offer sent but no answer back yet: send it again in case it was lost.
+      const pc = pcRef.current;
+      if (side === "offerer" && pc && descSent.has(pc) && pc.signalingState === "have-local-offer" && pc.localDescription && activeTagRef.current) {
+        send("signal", { kind: "offer", sdp: pc.localDescription.sdp, to: activeTagRef.current });
+      }
       if (side === "answerer" && !pcRef.current?.remoteDescription) send("ready", { tag: tagRef.current });
     }, 3000);
 
