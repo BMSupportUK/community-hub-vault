@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, CheckCircle2, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
+import { ArrowLeft, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
 import { completeCheckoutSale, continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
 import { OrderVideoCallCustomer } from "@/components/checkout/OrderVideoCall";
 import { OrderAppLogin } from "@/components/checkout/OrderAppLogin";
@@ -69,7 +69,6 @@ function PayPage() {
   const sendPaymentSent = useServerFn(markPaymentSent);
   const startAccountSetup = useServerFn(startCheckoutAccountSetup);
   const continueToAccountSetup = useServerFn(continueCheckoutToAccountSetup);
-  const completeSale = useServerFn(completeCheckoutSale);
   const [password, setPassword] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [input, setInput] = useState("");
