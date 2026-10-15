@@ -108,15 +108,23 @@ function PayPage() {
       }).finally(() => setCheckingAccess(false));
       return;
     }
-    // Shop orders unlock with the link alone — try it before showing the
-    // password form (only manual orders need one).
-    load("").then((ok) => {
+    // A password carried in the link (QR code during a video call) unlocks
+    // straight away; otherwise shop orders unlock with the link alone — try
+    // it before showing the password form (only manual orders need one).
+    (async () => {
+      if (urlPw && (await load(urlPw))) {
+        sessionStorage.setItem(key, urlPw);
+        setPassword(urlPw);
+        setUnlocked(true);
+        return;
+      }
+      const ok = await load("");
       if (ok) {
         setPassword("");
         setUnlocked(true);
       }
-    }).finally(() => setCheckingAccess(false));
-  }, [key, load, validToken]);
+    })().finally(() => setCheckingAccess(false));
+  }, [key, load, validToken, urlPw]);
 
   // Keep the page live so payment / completion show without a refresh.
   useEffect(() => {
