@@ -562,6 +562,55 @@ function StaffShiftsPage() {
         ))}
       </div>
 
+      <section className="rounded-2xl border border-border bg-surface-1 p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={cn("grid size-8 place-items-center rounded-xl", missed.length ? "bg-rose-500/15 text-rose-400" : "bg-emerald-500/15 text-emerald-400")}>
+            <UserX className="size-4" />
+          </span>
+          <h2 className="font-display text-base font-bold tracking-tight">Missed sign-ins</h2>
+          <span className="rounded-full border border-border bg-background/60 px-2.5 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
+            {missed.length} on {fmtDay(selectedDate)}
+          </span>
+        </div>
+        {missed.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Everyone scheduled for {isToday ? "today so far" : "this day"} signed in.
+          </p>
+        ) : (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {missed.map((sl) => {
+              const p = people[sl.assigned_to!];
+              const slotRole = sl.required_role ?? primaryRole(sl.assigned_to!);
+              return (
+                <div key={sl.id} className="flex items-center gap-3 rounded-xl border border-rose-400/30 bg-rose-500/5 p-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-rose-500/15 font-display text-xs font-bold text-rose-300" aria-hidden>
+                    {nameOf(sl.assigned_to!).slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    {p?.username ? (
+                      <Link
+                        to="/u/$username"
+                        params={{ username: p.username }}
+                        search={{ tab: "shifts" } as any}
+                        className="block truncate text-sm font-semibold hover:text-primary"
+                      >
+                        {nameOf(sl.assigned_to!)}
+                      </Link>
+                    ) : (
+                      <p className="truncate text-sm font-semibold">{nameOf(sl.assigned_to!)}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground tabular-nums">
+                      Due {sl.start_time.slice(0, 5)} – {sl.end_time.slice(0, 5)} · {ROLE_LABEL[slotRole] ?? slotRole}
+                    </p>
+                  </div>
+                  <Pill label="No sign-in" tone="warn" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
       <aside className="order-first xl:order-last">
         <div className="grid gap-3 sm:grid-cols-2 xl:sticky xl:top-4 xl:grid-cols-1">
