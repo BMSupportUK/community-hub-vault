@@ -5,7 +5,30 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 import { cn } from "@/lib/utils";
 
-const TooltipProvider = TooltipPrimitive.Provider;
+/**
+ * Radix keeps a tooltip open while its trigger is focused. On phones (and when
+ * returning to the tab/app) the tapped trigger is still focused, so the tooltip
+ * hangs around until you tap elsewhere. Blur the focused element whenever the
+ * page becomes visible again so no tooltip survives the return.
+ */
+function TooltipProvider(props: React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Provider>) {
+  React.useEffect(() => {
+    const blur = () => {
+      const el = document.activeElement;
+      if (el instanceof HTMLElement && el !== document.body) el.blur();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") blur();
+    };
+    window.addEventListener("focus", blur);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", blur);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+  return <TooltipPrimitive.Provider {...props} />;
+}
 
 const Tooltip = TooltipPrimitive.Root;
 
