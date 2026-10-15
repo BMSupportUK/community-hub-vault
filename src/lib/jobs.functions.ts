@@ -80,12 +80,26 @@ export const saveJobVacancy = createServerFn({ method: "POST" }).middleware([req
 export const reviewJobApplication = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid(), status: jobStatusSchema, admin_notes: z.string().trim().max(6000) }).parse(input))
   .handler(async ({ data, context }) => {
-    const role = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    if (role.error || !role.data) throw new Error("Admin access required.");
+    await assertApplicationViewer(context, data.id);
     const result = await context.supabase.from("staff_job_applications").update({ status: data.status, admin_notes: data.admin_notes }).eq("id", data.id).select("id").single();
     if (result.error) throw new Error("The application could not be updated.");
     return result.data;
   });
+
+type AuthContext = { supabase: any; userId: string };
+
+// BM Support applications: admin + management. Fan Zone applications: admin only.
+async function assertApplicationViewer(context: AuthContext, applicationId: string) {
+  const admin = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (!admin.error && admin.data) return;
+  const a = await context.supabase.from("staff_job_applications").select("vacancy_id").eq("id", applicationId).maybeSingle();
+  const v = a.data ? await context.supabase.from("staff_job_vacancies").select("zone").eq("id", a.data.vacancy_id).maybeSingle() : { data: null };
+  if (v.data?.zone === "bm") {
+    const mgmt = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "management" });
+    if (!mgmt.error && mgmt.data) return;
+  }
+  throw new Error("You do not have access to this application.");
+}
 function publicClient() {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   return createClient<Database>(process.env["SUPABASE_URL"]!, key, {
@@ -118,8 +132,7 @@ export const postApplicantMessage = createServerFn({ method: "POST" })
 export const getApplicationAdmin = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const role = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    if (role.error || !role.data) throw new Error("Admin access required.");
+    await assertApplicationViewer(context, data.id);
     const a = await context.supabase.from("staff_job_applications").select("*").eq("id", data.id).maybeSingle();
     if (a.error || !a.data) throw new Error("Application not found.");
     const [v, m] = await Promise.all([
@@ -133,6 +146,7 @@ export const getApplicationAdmin = createServerFn({ method: "GET" }).middleware(
 export const postAdminApplicationMessage = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid(), body: jobMessageSchema }).parse(input))
   .handler(async ({ data, context }) => {
+    await assertApplicationViewer(context, data.id);
     const r = await context.supabase.from("staff_job_application_messages").insert({ application_id: data.id, sender: "admin", body: data.body }).select("id").single();
     if (r.error) throw new Error("Your message could not be sent.");
     return r.data;
@@ -141,6 +155,7 @@ export const postAdminApplicationMessage = createServerFn({ method: "POST" }).mi
 export const resetApplicationPassword = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    await assertApplicationViewer(context, data.id);
     const r = await context.supabase.rpc("reset_job_application_password", { _id: data.id });
     if (r.error) throw new Error("The password could not be reset.");
     return { password: r.data as string };
