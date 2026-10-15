@@ -312,6 +312,14 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           }
         }
 
+        for (const d of demoClockOuts) {
+          await supabaseAdmin
+            .from("shifts")
+            .update({ clock_out: new Date(d.endsAt).toISOString() })
+            .eq("user_id", d.userId)
+            .is("clock_out", null);
+        }
+
         // --- Auto clock-in ----------------------------------------------------
         // Claimed rota slots that have started without a clock-in get an open
         // shift created from the slot's start time, then only that staff
