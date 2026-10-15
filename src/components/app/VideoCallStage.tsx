@@ -432,6 +432,15 @@ export function VideoCallStage({
             transform: `translate(-50%, -50%) rotate(${remoteRotate}deg)`,
           }}
         />
+        {connected && !remoteHasVideo && !error && (
+          <div className="absolute inset-0 grid place-items-center bg-muted">
+            <div className="flex flex-col items-center gap-3 px-6 text-center">
+              <img src={placeholderImage} alt={otherName} className="h-48 w-36 rounded-2xl border border-border object-cover shadow-lg sm:h-64 sm:w-48" />
+              <p className="text-sm font-medium text-foreground">You're chatting with {otherName}</p>
+              <p className="text-xs text-muted-foreground">Their camera is off — they can see and hear you.</p>
+            </div>
+          </div>
+        )}
         {connected && remoteMuted && (
           <button
             type="button"
