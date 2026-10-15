@@ -18,12 +18,15 @@ export function VideoCallStage({
   side,
   otherName,
   onHangup,
+  onSuperseded,
   startWithCamera = true,
 }: {
   topic: string;
   side: Side;
   otherName: string;
   onHangup: () => void;
+  /** Called on an answerer whose call was taken over by the customer's other device. */
+  onSuperseded?: () => void;
   startWithCamera?: boolean;
 }) {
   const localRef = useRef<HTMLVideoElement | null>(null);
@@ -35,6 +38,10 @@ export function VideoCallStage({
   const offeredRef = useRef(false);
   const facingRef = useRef<"user" | "environment">("user");
   const hungRef = useRef(false);
+  // Identifies this device during signalling so a customer can move the call
+  // between their devices (PC → phone) without both joining at once.
+  const tagRef = useRef(`${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
+  const activeTagRef = useRef<string | null>(null);
 
   const [connected, setConnected] = useState(false);
   const [micOn, setMicOn] = useState(true);
@@ -56,13 +63,56 @@ export function VideoCallStage({
     let cancelled = false;
     hungRef.current = false;
 
+    let iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+
+    const createPeer = () => {
+      const stream = streamRef.current;
+      if (!stream) return null;
+      const pc = new RTCPeerConnection({ iceServers });
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      pc.onicecandidate = (e) => {
+        if (!e.candidate) return;
+        send("signal", {
+          kind: "candidate",
+          candidate: e.candidate.toJSON(),
+          ...(side === "offerer" ? { to: activeTagRef.current } : { from: tagRef.current }),
+        });
+      };
+      pc.ontrack = (e) => {
+        if (remoteRef.current && e.streams[0]) {
+          remoteRef.current.srcObject = e.streams[0];
+          remoteRef.current.play().catch(() => {});
+        }
+      };
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "connected") setConnected(true);
+        if (pc.connectionState === "failed") setError("The connection dropped. End the call and try again.");
+      };
+      pcRef.current = pc;
+      return pc;
+    };
+
     const makeOffer = async () => {
       const pc = pcRef.current;
-      if (!pc || offeredRef.current) return;
+      const to = activeTagRef.current;
+      if (!pc || offeredRef.current || !to) return;
       offeredRef.current = true;
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      send("signal", { kind: "offer", sdp: offer.sdp });
+      send("signal", { kind: "offer", sdp: offer.sdp, to });
+    };
+
+    // The customer may move the call to another of their devices (PC → phone):
+    // the newest "ready" wins and the previous device is told to stand down.
+    const switchPeer = (tag: string) => {
+      const old = activeTagRef.current;
+      activeTagRef.current = tag;
+      offeredRef.current = false;
+      pendingIce.current = [];
+      if (old) send("moved", { to: old });
+      pcRef.current?.close();
+      pcRef.current = null;
+      if (createPeer()) void makeOffer();
     };
 
     const flushIce = async () => {
@@ -72,7 +122,6 @@ export function VideoCallStage({
     };
 
     (async () => {
-      let iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
       try {
         const r = await getVideoIceServers();
         iceServers = r.iceServers as RTCIceServer[];
@@ -91,37 +140,42 @@ export function VideoCallStage({
       if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
       streamRef.current = stream;
       if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
-
-      const pc = new RTCPeerConnection({ iceServers });
-      pcRef.current = pc;
-      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
-      pc.onicecandidate = (e) => { if (e.candidate) send("signal", { kind: "candidate", candidate: e.candidate.toJSON() }); };
-      pc.ontrack = (e) => {
-        if (remoteRef.current && e.streams[0]) {
-          remoteRef.current.srcObject = e.streams[0];
-          remoteRef.current.play().catch(() => {});
-        }
-      };
-      pc.onconnectionstatechange = () => {
-        if (pc.connectionState === "connected") setConnected(true);
-        if (pc.connectionState === "failed") setError("The connection dropped. End the call and try again.");
-      };
+      createPeer();
 
       const ch = supabase.channel(topic, { config: { broadcast: { self: false } } });
       chRef.current = ch;
-      ch.on("broadcast", { event: "ping" }, () => { if (side === "answerer") send("ready"); });
-      ch.on("broadcast", { event: "ready" }, () => { if (side === "offerer") makeOffer().catch(() => {}); });
+      ch.on("broadcast", { event: "ping" }, () => { if (side === "answerer") send("ready", { tag: tagRef.current }); });
+      ch.on("broadcast", { event: "ready" }, ({ payload }) => {
+        if (side !== "offerer") return;
+        const tag = (payload as { tag?: string }).tag;
+        if (!tag) return;
+        if (!activeTagRef.current) {
+          activeTagRef.current = tag;
+          makeOffer().catch(() => {});
+        } else if (tag !== activeTagRef.current) {
+          switchPeer(tag);
+        }
+      });
       ch.on("broadcast", { event: "bye" }, () => { if (!hungRef.current) { hungRef.current = true; onHangup(); } });
+      ch.on("broadcast", { event: "moved" }, ({ payload }) => {
+        if (side !== "answerer" || hungRef.current) return;
+        const to = (payload as { to?: string }).to;
+        if (to !== tagRef.current) return;
+        hungRef.current = true;
+        onSuperseded?.();
+      });
       ch.on("broadcast", { event: "signal" }, async ({ payload }) => {
-        const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit };
+        const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit; to?: string; from?: string };
         const cur = pcRef.current;
         if (!cur) return;
+        if (side === "answerer" && p.to && p.to !== tagRef.current) return;
+        if (side === "offerer" && p.from && p.from !== activeTagRef.current) return;
         try {
           if (p.kind === "offer" && p.sdp && side === "answerer") {
             await cur.setRemoteDescription({ type: "offer", sdp: p.sdp });
             const answer = await cur.createAnswer();
             await cur.setLocalDescription(answer);
-            send("signal", { kind: "answer", sdp: answer.sdp });
+            send("signal", { kind: "answer", sdp: answer.sdp, from: tagRef.current });
             await flushIce();
           } else if (p.kind === "answer" && p.sdp && side === "offerer") {
             await cur.setRemoteDescription({ type: "answer", sdp: p.sdp });
@@ -135,7 +189,7 @@ export function VideoCallStage({
       ch.subscribe((status) => {
         if (status !== "SUBSCRIBED") return;
         if (side === "offerer") send("ping");
-        else send("ready");
+        else send("ready", { tag: tagRef.current });
       });
     })();
 
@@ -143,7 +197,7 @@ export function VideoCallStage({
     const retry = window.setInterval(() => {
       if (pcRef.current?.connectionState === "connected") return;
       if (side === "offerer" && !offeredRef.current) send("ping");
-      if (side === "answerer" && !pcRef.current?.remoteDescription) send("ready");
+      if (side === "answerer" && !pcRef.current?.remoteDescription) send("ready", { tag: tagRef.current });
     }, 3000);
 
     return () => {

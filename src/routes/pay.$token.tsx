@@ -16,6 +16,11 @@ import { DEMO_CHECKOUT_VIEW } from "@/lib/demo-data";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/pay/$token")({
+  validateSearch: (search: Record<string, unknown>): { pw?: string } => ({
+    // The QR code staff show during a video call opens the page already
+    // unlocked by carrying the password in the link.
+    pw: typeof search.pw === "string" ? search.pw : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Secure checkout — BM Support" },
@@ -52,6 +57,7 @@ function DemoPayPage() {
 
 function PayPage() {
   const { token } = Route.useParams();
+  const { pw: urlPw } = Route.useSearch();
   const { user, hasRole } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [movingToSetup, setMovingToSetup] = useState(false);
@@ -102,15 +108,23 @@ function PayPage() {
       }).finally(() => setCheckingAccess(false));
       return;
     }
-    // Shop orders unlock with the link alone — try it before showing the
-    // password form (only manual orders need one).
-    load("").then((ok) => {
+    // A password carried in the link (QR code during a video call) unlocks
+    // straight away; otherwise shop orders unlock with the link alone — try
+    // it before showing the password form (only manual orders need one).
+    (async () => {
+      if (urlPw && (await load(urlPw))) {
+        sessionStorage.setItem(key, urlPw);
+        setPassword(urlPw);
+        setUnlocked(true);
+        return;
+      }
+      const ok = await load("");
       if (ok) {
         setPassword("");
         setUnlocked(true);
       }
-    }).finally(() => setCheckingAccess(false));
-  }, [key, load, validToken]);
+    })().finally(() => setCheckingAccess(false));
+  }, [key, load, validToken, urlPw]);
 
   // Keep the page live so payment / completion show without a refresh.
   useEffect(() => {
