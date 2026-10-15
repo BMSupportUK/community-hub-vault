@@ -18,6 +18,14 @@ export function PushSoundBridge() {
       try {
         const data = event.data as { type?: string; sound?: string; kind?: string; event?: string } | null;
         if (!data || data.type !== "bm-play-sound") return;
+        // Shift start/end warnings already play their clip from the in-app
+        // toast (ShiftStartEndAlert). The push arrives a few seconds later,
+        // so playing it here stacked a second, quieter copy of the same
+        // recording on top — the low muffled echo underneath the toast.
+        if (IN_APP_OWNED_KINDS.has(data.kind ?? "")) {
+          event.ports?.[0]?.postMessage({ played: true });
+          return;
+        }
         shakeScreen();
         // Same recording the phone app plays for this alert type.
         const tone = phoneToneForKind(data.kind, data.event);
