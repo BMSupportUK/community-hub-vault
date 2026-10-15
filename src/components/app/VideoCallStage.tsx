@@ -220,13 +220,20 @@ export function VideoCallStage({
         {error && (
           <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-foreground">{error}</div>
         )}
-        <video
-          ref={localRef}
-          playsInline
-          autoPlay
-          muted
-          className="absolute bottom-3 right-3 h-32 w-24 rounded-lg border border-border bg-card object-cover shadow-lg sm:h-44 sm:w-32"
-        />
+        {camOn ? (
+          <video
+            ref={localRef}
+            playsInline
+            autoPlay
+            muted
+            className="absolute bottom-3 right-3 h-32 w-24 rounded-lg border border-border bg-card object-cover shadow-lg sm:h-44 sm:w-32"
+          />
+        ) : (
+          <div className="absolute bottom-3 right-3 flex h-32 w-24 flex-col items-center justify-end overflow-hidden rounded-lg border border-border bg-card shadow-lg sm:h-44 sm:w-32">
+            <img src={staffPlaceholder} alt="BM Support staff" loading="lazy" width={512} height={768} className="h-full w-full object-cover" />
+            <span className="absolute inset-x-0 bottom-0 bg-background/70 px-1 py-0.5 text-center text-[10px] font-medium text-foreground">Camera off</span>
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-center gap-3 border-t border-border bg-card px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <button type="button" onClick={toggleMic} aria-label={micOn ? "Mute microphone" : "Unmute microphone"} className={`grid size-12 place-items-center rounded-full ${micOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
