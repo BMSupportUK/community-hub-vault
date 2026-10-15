@@ -19,7 +19,7 @@ export const applicationSchema = z.object({
   consent: z.literal(true), website: z.string().max(0).default(""),
 });
 export type VacancyInput = z.infer<typeof vacancySchema>;
-export type JobVacancy = VacancyInput & { id: string; created_at: string };
+export type JobVacancy = VacancyInput & { id: string; created_at: string; positions_filled?: number };
 export type JobApplication = Omit<z.infer<typeof applicationSchema>, "website" | "zone"> & {
   id: string; status: z.infer<typeof jobStatusSchema>; admin_notes: string; created_at: string; access_token: string;
 };
@@ -34,3 +34,4 @@ export function jobsHead(zone: JobZone, admin = false) {
 export type JobChatMessage = { id: string; sender: "admin" | "applicant"; body: string; created_at: string };
 export type JobApplicationView = { id: string; full_name: string; email: string; phone: string; experience: string; motivation: string; availability: string; status: string; created_at: string; vacancy_title: string; zone: JobZone; messages: JobChatMessage[] };
 export function positionsLabel(n: number | null | undefined) { const c = n && n > 0 ? n : 1; return c === 1 ? "1 position" : `${c} positions`; }
+export function positionsLeft(available: number | null | undefined, filled: number | null | undefined) { return Math.max(0, (available && available > 0 ? available : 1) - (filled ?? 0)); }

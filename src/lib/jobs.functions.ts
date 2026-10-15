@@ -17,7 +17,7 @@ export const listJobVacancies = createServerFn({ method: "GET" })
         headers.set("apikey", key); return fetch(input, { ...init, headers });
       } },
     });
-    const result = await publicClient.from("staff_job_vacancies").select("id,zone,title,location,employment_type,description,requirements,closing_date,published,positions_available,created_at").eq("zone", data.zone).order("created_at", { ascending: false });
+    const result = await publicClient.from("staff_job_vacancies").select("id,zone,title,location,employment_type,description,requirements,closing_date,published,positions_available,positions_filled,created_at").eq("zone", data.zone).order("created_at", { ascending: false });
     if (result.error) throw new Error("Positions could not be loaded. Please try again.");
     return result.data as JobVacancy[];
   });
@@ -34,9 +34,20 @@ export const submitJobApplication = createServerFn({ method: "POST" })
         headers.set("apikey", key); return fetch(input, { ...init, headers });
       } },
     });
-    const result = await client.rpc("submit_staff_job_application_v2", { _vacancy_id: data.vacancy_id, _zone: data.zone, _full_name: data.full_name, _email: data.email, _phone: data.phone, _experience: data.experience, _motivation: data.motivation, _availability: data.availability, _consent: data.consent });
+    const result = await client.rpc("submit_staff_job_application_v3", { _vacancy_id: data.vacancy_id, _zone: data.zone, _full_name: data.full_name, _email: data.email, _phone: data.phone, _experience: data.experience, _motivation: data.motivation, _availability: data.availability, _consent: data.consent });
     if (result.error) throw new Error("Your application could not be sent. Check the position is still open and try again.");
-    return { token: result.data as string };
+    const out = result.data as unknown as { token: string; password: string; id: string };
+    const v = await client.from("staff_job_vacancies").select("title").eq("id", data.vacancy_id).maybeSingle();
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+      const origin = process.env.PUBLIC_SITE_URL || "https://bmsupport.uk";
+      await sendAndLogEmail(supabaseAdmin, "job-application-received", data.email, {
+        templateData: { applicantName: data.full_name, positionTitle: v.data?.title ?? "", siteName: data.zone === "bm" ? "BM Support" : "Boro Fan Zone", applicationLink: `${origin}/job-application/${out.token}`, applicationPassword: out.password },
+        idempotencyKey: `job-application-received-${out.id}`,
+      });
+    } catch (e) { console.error("job application email failed", e); }
+    return { token: out.token, password: out.password };
   });
 
 export const getJobAdminData = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
@@ -89,17 +100,17 @@ function publicClient() {
 const tokenSchema = z.string().regex(/^[a-f0-9]{40,128}$/);
 
 export const getApplicationByToken = createServerFn({ method: "GET" })
-  .inputValidator((input) => z.object({ token: tokenSchema }).parse(input))
+  .inputValidator((input) => z.object({ token: tokenSchema, password: z.string().trim().min(1).max(40) }).parse(input))
   .handler(async ({ data }) => {
-    const r = await publicClient().rpc("get_job_application_by_token", { _token: data.token });
+    const r = await publicClient().rpc("get_job_application_secure", { _token: data.token, _password: data.password });
     if (r.error) throw new Error("Your application could not be loaded.");
     return (r.data ?? null) as unknown as JobApplicationView | null;
   });
 
 export const postApplicantMessage = createServerFn({ method: "POST" })
-  .inputValidator((input) => z.object({ token: tokenSchema, body: jobMessageSchema }).parse(input))
+  .inputValidator((input) => z.object({ token: tokenSchema, password: z.string().trim().min(1).max(40), body: jobMessageSchema }).parse(input))
   .handler(async ({ data }) => {
-    const r = await publicClient().rpc("post_job_application_message", { _token: data.token, _body: data.body });
+    const r = await publicClient().rpc("post_job_application_message_secure", { _token: data.token, _password: data.password, _body: data.body });
     if (r.error) throw new Error("Your message could not be sent.");
     return { id: r.data };
   });
@@ -125,4 +136,12 @@ export const postAdminApplicationMessage = createServerFn({ method: "POST" }).mi
     const r = await context.supabase.from("staff_job_application_messages").insert({ application_id: data.id, sender: "admin", body: data.body }).select("id").single();
     if (r.error) throw new Error("Your message could not be sent.");
     return r.data;
+  });
+
+export const resetApplicationPassword = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const r = await context.supabase.rpc("reset_job_application_password", { _id: data.id });
+    if (r.error) throw new Error("The password could not be reset.");
+    return { password: r.data as string };
   });
