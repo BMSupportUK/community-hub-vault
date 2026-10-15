@@ -80,7 +80,7 @@ export function VideoCallStage({
   const [remotePlaceholder, setRemotePlaceholder] = useState(placeholderImage);
   const staffGenderRef = useRef(staffGender);
   staffGenderRef.current = staffGender;
-  const [micOn, setMicOn] = useState(true);
+  const [micOn, setMicOn] = useState(startWithCamera); // staff start muted; they unmute to talk
   const [camOn, setCamOn] = useState(startWithCamera);
   const [error, setError] = useState<string | null>(null);
 
