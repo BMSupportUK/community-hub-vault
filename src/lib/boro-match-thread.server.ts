@@ -691,7 +691,55 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     if (opts?.ignoreWindow) return true;
     return now >= ko - PREVIEW_BEFORE_MS && now <= ko + WINDOW_AFTER_MS;
   });
-  if (!fx) return { ...base, skipped: ["no fixture inside the preview window"] };
+  if (!fx) {
+    // Outside the preview window the club often publishes the press conference
+    // 2+ days before kick-off. Refresh just the thread's original post so the
+    // video lands as soon as it is out, not 26h before kick-off.
+    const next = rows.find((row) => Date.parse(row.kickoff_at) > now);
+    if (next) {
+      try {
+        const { data: board } = await supabaseAdmin
+          .from("forum_boards")
+          .select("id")
+          .eq("slug", "match-day")
+          .maybeSingle();
+        if (board?.id) {
+          const { data: topics } = await supabaseAdmin
+            .from("forum_topics")
+            .select("id, title, created_at, author_id")
+            .eq("board_id", board.id)
+            .order("created_at", { ascending: false })
+            .limit(40);
+          const t = matchTopicToFixture(
+            (topics ?? []) as Array<{ id: string; title: string; created_at: string; author_id: string }>,
+            next,
+          );
+          if (t) {
+            const { findPressConference } = await import("@/lib/boro-press-conference.server");
+            const presser = await findPressConference(next).catch(() => null);
+            if (presser) {
+              const { data: opPost } = await supabaseAdmin
+                .from("forum_posts")
+                .select("id, body")
+                .eq("topic_id", t.id)
+                .eq("is_op", true)
+                .maybeSingle();
+              if (opPost?.id) {
+                const nextBody = upsertPresserBlock(opPost.body ?? "", buildPresserBlock(next, {}, presser));
+                if (nextBody !== opPost.body) {
+                  await supabaseAdmin.from("forum_posts").update({ body: nextBody }).eq("id", opPost.id);
+                  skipped.push("press conference added to original post");
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        skipped.push(`early press conference refresh failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+    return { ...base, skipped: [...skipped, "no fixture inside the preview window"] };
+  }
   const label = `${fx.home_team} v ${fx.away_team}`;
 
   const { data: board } = await supabaseAdmin
