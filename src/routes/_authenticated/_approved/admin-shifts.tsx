@@ -368,6 +368,24 @@ function StaffShiftsPage() {
     [byWeekday, role, primaryRole],
   );
 
+  // Scheduled slots on the selected day whose assigned member never clocked
+  // in that day. A slot only counts as missed once its start time has passed.
+  const missed = useMemo<MissedRow[]>(() => {
+    const clockedDays = new Set(shifts.map((s) => `${s.user_id}|${dayKey(s.clock_in)}`));
+    const now = Date.now();
+    const dayIso = isoDay(selectedDate);
+    return slots
+      .filter((sl) => sl.assigned_to && sl.shift_date === dayIso && !clockedDays.has(`${sl.assigned_to}|${sl.shift_date}`))
+      .map((sl) => {
+        const [h, m] = sl.start_time.split(":").map(Number);
+        const [y, mo, d] = sl.shift_date.split("-").map(Number);
+        const startsAt = new Date(y ?? 1970, (mo ?? 1) - 1, d ?? 1, h || 0, m || 0);
+        return { ...sl, startsAt, notYetDue: startsAt.getTime() > now };
+      })
+      .filter((sl) => !sl.notYetDue)
+      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  }, [slots, shifts, selectedDate]);
+
   // day -> role -> shifts
   const grouped = useMemo(() => {
     const map = new Map<string, Map<string, ShiftRow[]>>();
