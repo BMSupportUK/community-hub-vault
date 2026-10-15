@@ -290,7 +290,7 @@ export function VideoCallStage({
           />
         ) : (
           <div className="absolute bottom-3 right-3 flex h-32 w-24 flex-col items-center justify-end overflow-hidden rounded-lg border border-border bg-card shadow-lg sm:h-44 sm:w-32">
-            <img src={staffPlaceholder} alt="BM Support staff" loading="lazy" width={512} height={768} className="h-full w-full object-cover" />
+            <img src={placeholderImage} alt="BM Support staff" loading="lazy" width={512} height={768} className="h-full w-full object-cover" />
             <span className="absolute inset-x-0 bottom-0 bg-background/70 px-1 py-0.5 text-center text-[10px] font-medium text-foreground">Camera off</span>
           </div>
         )}
