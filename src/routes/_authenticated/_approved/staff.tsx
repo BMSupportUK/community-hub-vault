@@ -304,12 +304,24 @@ function StaffPage() {
                               </Link>
                               <span className="ml-1 inline-flex align-middle"><VpnBadge userId={p.id} size={12} /></span>
                               <div className="text-[10px] mt-0.5 flex flex-wrap items-center gap-1.5">
-                                <PresenceInline
-                                  userId={p.id}
-                                  isOnline={isOnline}
-                                  offlineText={`Last seen ${formatLastSeen(p.last_seen_at)}`}
-                                  offlineTextClass="text-muted-foreground/70"
-                                />
+                                {shiftStatus[p.id]?.shift ? (
+                                  <span
+                                    className={
+                                      shiftStatus[p.id]?.preShift
+                                        ? "font-medium text-amber-400"
+                                        : "font-medium text-emerald-400"
+                                    }
+                                  >
+                                    {shiftStatus[p.id]?.preShift ? "Get ready for shift" : "Working"}
+                                  </span>
+                                ) : (
+                                  <PresenceInline
+                                    userId={p.id}
+                                    isOnline={isOnline}
+                                    offlineText={`Last seen ${formatLastSeen(p.last_seen_at)}`}
+                                    offlineTextClass="text-muted-foreground/70"
+                                  />
+                                )}
                                 {brk && <StaffBreakChip kind={brk.kind} startedAt={brk.started_at} />}
                                 <DndCountdown userId={p.id} compact />
                               </div>
