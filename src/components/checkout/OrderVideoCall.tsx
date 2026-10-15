@@ -18,8 +18,10 @@ import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCall
 
 type Session = { id: string; status: "waiting" | "live" | "ended" | "expired" };
 
-/** Customer side on the secure order page: start a two-way video call. */
-export function OrderVideoCallCustomer({ token, password, mobile }: { token: string; password: string; mobile: boolean }) {
+/** Customer side on the secure order page: start a two-way video call.
+ *  `inline` renders the controls in the page flow (under the install guides)
+ *  instead of as a floating bubble in the corner. */
+export function OrderVideoCallCustomer({ token, password, mobile, inline = false }: { token: string; password: string; mobile: boolean; inline?: boolean }) {
   const start = useServerFn(startLiveHelp);
   const poll = useServerFn(getLiveHelp);
   const endFn = useServerFn(endLiveHelpCustomer);
@@ -72,7 +74,9 @@ export function OrderVideoCallCustomer({ token, password, mobile }: { token: str
   if (!mobile) {
     const phoneUrl = `${secureCheckoutUrl(token)}?pw=${encodeURIComponent(password)}`;
     return invite ? (
-      <div className="fixed bottom-24 left-4 z-40 w-72 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-xl">
+      <div className={inline
+        ? "rounded-2xl border border-border bg-card p-4 text-card-foreground"
+        : "fixed bottom-24 left-4 z-40 w-72 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-xl"}>
         <p className="text-sm font-semibold">Show us on video</p>
         <p className="mt-1 text-xs text-muted-foreground">
           Scan this with your phone camera, then tap <b>Start video call</b>. Point your phone at the device you're setting up — we'll see it on our big screen while you keep chatting here.
@@ -88,7 +92,9 @@ export function OrderVideoCallCustomer({ token, password, mobile }: { token: str
       <button
         type="button"
         onClick={() => setInvite(true)}
-        className="fixed bottom-24 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg"
+        className={inline
+          ? "w-full inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          : "fixed bottom-24 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg"}
       >
         <QrCode className="size-4" /> Video help
       </button>
@@ -102,13 +108,17 @@ export function OrderVideoCallCustomer({ token, password, mobile }: { token: str
           type="button"
           onClick={request}
           disabled={busy}
-          className="fixed bottom-24 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg disabled:opacity-60"
+          className={inline
+            ? "w-full inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+            : "fixed bottom-24 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg disabled:opacity-60"}
         >
           {busy ? <Loader2 className="size-4 animate-spin" /> : <Video className="size-4" />} Start video call
         </button>
       )}
       {session?.status === "waiting" && (
-        <div className="fixed bottom-24 left-4 z-40 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-card-foreground shadow-lg">
+        <div className={inline
+          ? "flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-card-foreground"
+          : "fixed bottom-24 left-4 z-40 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-card-foreground shadow-lg"}>
           <Loader2 className="size-4 animate-spin text-primary" /> Calling BM Support…
           <button type="button" onClick={end} className="ml-1 inline-flex items-center gap-1 rounded-full bg-destructive px-3 py-1 text-xs font-semibold text-destructive-foreground">
             <PhoneOff className="size-3" /> Cancel
