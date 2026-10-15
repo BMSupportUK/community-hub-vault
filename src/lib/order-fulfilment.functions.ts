@@ -145,7 +145,8 @@ export const applyOrderToCredential = createServerFn({ method: "POST" })
       p_credential_id: target.id,
       p_months: terms.months,
       p_account_type: terms.accountType ?? undefined,
-    });
+      p_order_id: data.orderId,
+    } as never);
     if (error) throw new Error(error.message);
 
     const effectiveType = terms.accountType ?? ((target.account_type as AccountType | null) ?? null);
@@ -221,6 +222,7 @@ export const createCredentialForOrder = createServerFn({ method: "POST" })
         p_password: data.password,
         p_expiry: expiry.toISOString(),
         p_account_type: accountType,
+        p_order_id: data.orderId,
       } as never);
       if (error) throw new Error(error.message);
       const row = (Array.isArray(rows) ? rows[0] : rows) as
