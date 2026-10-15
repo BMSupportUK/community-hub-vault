@@ -389,6 +389,7 @@ export function VideoCallStage({
     setMicOn(t.enabled);
   };
   const toggleCam = async () => {
+    if (!startWithCamera) return; // staff never share their camera
     const stream = streamRef.current;
     const existing = stream?.getVideoTracks()[0];
     if (existing) {
