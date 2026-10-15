@@ -132,8 +132,7 @@ export const postApplicantMessage = createServerFn({ method: "POST" })
 export const getApplicationAdmin = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const role = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    if (role.error || !role.data) throw new Error("Admin access required.");
+    await assertApplicationViewer(context, data.id);
     const a = await context.supabase.from("staff_job_applications").select("*").eq("id", data.id).maybeSingle();
     if (a.error || !a.data) throw new Error("Application not found.");
     const [v, m] = await Promise.all([
@@ -147,6 +146,7 @@ export const getApplicationAdmin = createServerFn({ method: "GET" }).middleware(
 export const postAdminApplicationMessage = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid(), body: jobMessageSchema }).parse(input))
   .handler(async ({ data, context }) => {
+    await assertApplicationViewer(context, data.id);
     const r = await context.supabase.from("staff_job_application_messages").insert({ application_id: data.id, sender: "admin", body: data.body }).select("id").single();
     if (r.error) throw new Error("Your message could not be sent.");
     return r.data;
@@ -155,6 +155,7 @@ export const postAdminApplicationMessage = createServerFn({ method: "POST" }).mi
 export const resetApplicationPassword = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    await assertApplicationViewer(context, data.id);
     const r = await context.supabase.rpc("reset_job_application_password", { _id: data.id });
     if (r.error) throw new Error("The password could not be reset.");
     return { password: r.data as string };
