@@ -37,10 +37,15 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
     <img src={interview} alt="A candidate meeting two interviewers in a welcoming workplace" width={1536} height={1024} className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover object-center" />
     <div className="pointer-events-none absolute inset-0 -z-10 bg-background/75" />
     {isBoro ? <FanZonePublicHeader /> : user && !isFanZoneOnly ? <JobsMemberHeader /> : <LandingHeader />}
-    {selected ? <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-8 sm:py-12">
+    {selected ? <main className="w-full px-4 py-8 sm:px-8 sm:py-12">
       <button onClick={() => setSelected(null)} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Back to vacancies</button>
-      <div className="mt-6 rounded-lg border border-border bg-card/90 p-5 backdrop-blur-sm sm:p-6">
-        <ApplicationForm key={selected.id} job={selected} />
+      <div className="mt-6 grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="rounded-lg border border-border bg-card/90 p-5 backdrop-blur-sm sm:p-6">
+          <JobDetails job={selected} />
+        </div>
+        <div className="rounded-lg border border-border bg-card/90 p-5 backdrop-blur-sm sm:p-6">
+          <ApplicationForm key={selected.id} job={selected} />
+        </div>
       </div>
     </main> : <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
       <Link to={isBoro ? "/fan-zone" : "/"} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> {name}</Link>
