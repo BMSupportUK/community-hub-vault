@@ -260,6 +260,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 )}
               </section>
               {installCard}
+              {videoHelp}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -277,6 +278,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </section>
               {appLogin}
               {installCard}
+              {videoHelp}
               {addLoginDetails}
               {visibleStage === 3 && completeSale}
               {visibleStage === 4 && order.manual && (
