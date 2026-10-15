@@ -51,7 +51,13 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
       </header>
       <section aria-label="Open positions" className="border-t border-border py-8">
         <div className="mb-6 flex items-center justify-between gap-4"><h2 className="font-display text-2xl font-semibold">Open positions</h2><span className="text-sm text-muted-foreground">{vacancies.length} available</span></div>
-        ...
+        {!vacancies.length ? <div className="py-8"><h3 className="text-lg font-semibold">No open positions right now</h3><p className="mt-2 text-muted-foreground">Please check back for future opportunities.</p></div> : <div className="grid gap-4 lg:grid-cols-2">{vacancies.map((job) => <article key={job.id} className="min-w-0 rounded-lg border border-border bg-card/90 p-5 backdrop-blur-sm sm:p-6">
+          <h3 className="break-words font-display text-xl font-bold">{job.title}</h3>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">{job.location && <span className="flex items-center gap-2"><MapPin className="size-4 shrink-0" />{job.location}</span>}{job.employment_type && <span className="flex items-center gap-2"><BriefcaseBusiness className="size-4 shrink-0" />{job.employment_type}</span>}{positionsLeft(job.positions_available, job.positions_filled) > 0 ? <span className="font-semibold text-primary">{positionsLeft(job.positions_available, job.positions_filled)} of {positionsLabel(job.positions_available)} left to fill</span> : <span className="font-semibold text-muted-foreground">All positions filled</span>}</div>
+          <p className="mt-5 line-clamp-4 whitespace-pre-wrap break-words text-sm leading-relaxed">{job.description}</p>
+          {job.closing_date && <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground"><CalendarDays className="size-4" />Closes {new Date(`${job.closing_date}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>}
+          <Button className="mt-6" disabled={positionsLeft(job.positions_available, job.positions_filled) === 0} onClick={() => setSelected(job)}>View position &amp; apply <ArrowRight className="ml-2 size-4" /></Button>
+        </article>)}</div>}
       </section>
     </main>}
   </div>;
