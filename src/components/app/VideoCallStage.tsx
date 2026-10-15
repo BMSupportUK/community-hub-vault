@@ -214,6 +214,7 @@ export function VideoCallStage({
         return;
       }
       if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
+      if (!startWithCamera) stream.getAudioTracks().forEach((t) => { t.enabled = false; }); // staff mic starts muted
       streamRef.current = stream;
       if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
       createPeer();
