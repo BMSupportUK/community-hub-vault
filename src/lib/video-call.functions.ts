@@ -20,6 +20,27 @@ export const getVideoIceServers = createServerFn({ method: "POST" }).handler(asy
   if (urls && username && credential) {
     servers.push({ urls: urls.split(",").map((u) => u.trim()).filter(Boolean), username, credential });
   }
+  // Cloudflare TURN relay: short-lived credentials so calls connect over mobile data.
+  const cfKeyId = process.env["CF_TURN_KEY_ID"];
+  const cfToken = process.env["CF_TURN_KEY_TOKEN"];
+  if (cfKeyId && cfToken) {
+    try {
+      const res = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${cfKeyId}/credentials/generate-ice-servers`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${cfToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ ttl: 86400 }),
+      });
+      if (!res.ok) {
+        console.error(`Cloudflare TURN failed [${res.status}]: ${await res.text()}`);
+      } else {
+        const j = (await res.json()) as { iceServers?: typeof servers | (typeof servers)[number] };
+        const list = Array.isArray(j.iceServers) ? j.iceServers : j.iceServers ? [j.iceServers] : [];
+        servers.push(...list);
+      }
+    } catch (e) {
+      console.error("Cloudflare TURN error:", e);
+    }
+  }
   return { iceServers: servers };
 });
 
