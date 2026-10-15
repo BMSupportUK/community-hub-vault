@@ -103,5 +103,5 @@ function ApplicationForm({ job }: { job: JobVacancy }) {
       <div className="flex items-start gap-3"><Checkbox id="job-consent" checked={consent} onCheckedChange={(value) => setConsent(value === true)} /><Label htmlFor="job-consent" className="text-sm leading-relaxed">I agree to my details being stored and reviewed by the admin team for this application. *</Label></div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={busy}><Send className="mr-2 size-4" />{busy ? "Sending…" : "Send application"}</Button>
-    </form></>;
+    </form>;
 }
