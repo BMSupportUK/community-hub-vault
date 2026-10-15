@@ -15,6 +15,7 @@ import hero from "@/assets/checkout-family-tv.jpg";
 import { toast } from "sonner";
 import { DEMO_CHECKOUT_VIEW } from "@/lib/demo-data";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
+import { isVideoTestOrder } from "@/lib/video-test-orders";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/pay/$token")({
@@ -243,7 +244,7 @@ function PayPage() {
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
         appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}
-        videoHelp={!canManage && !view.order.cancelled ? <OrderVideoCallCustomer token={token} password={pw} mobile={isMobilePhone()} inline /> : undefined}
+        videoHelp={(!canManage || isVideoTestOrder(token)) && !view.order.cancelled ? <OrderVideoCallCustomer token={token} password={pw} mobile={isMobilePhone()} inline /> : undefined}
       />
       {canManage && view.order.id && (
         <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
