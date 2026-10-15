@@ -272,7 +272,8 @@ export function ShiftStartEndAlert() {
         id: toastId,
         duration: Infinity,
         dismissible: true,
-        className: isStart ? "border-l-4 border-l-emerald-500" : "border-l-4 border-l-amber-500",
+        className: `no-os-notify ${isStart ? "border-l-4 border-l-emerald-500" : "border-l-4 border-l-amber-500"}`,
+        onDismiss: () => dismissedStageToasts.add(dismissKey),
       }
     );
   }, [active, now, shiftWindowToUtcMs]);
