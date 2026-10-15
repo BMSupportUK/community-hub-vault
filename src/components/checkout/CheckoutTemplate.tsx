@@ -89,7 +89,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 }
 
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale, appLogin }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
