@@ -350,25 +350,39 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
 
           for (const a of todo) {
             if (!AUTO_CLOCK_IN_USERS.has(a.userId)) {
-              // Not allowed to auto sign in — alert admin/management instead.
+              // Not allowed to auto sign in — once they're 1 minute late,
+              // alert admin/management (in-app + phone) to investigate.
+              if (now < a.startsAt + 60 * 1000) continue;
               const name = names.get(a.userId) ?? "Unknown staff";
               const startAt = new Date(a.startsAt).toLocaleTimeString("en-GB", {
                 hour: "2-digit",
                 minute: "2-digit",
                 timeZone: "Europe/London",
               });
+              const title = `${name} hasn't signed in`;
+              const body = `${name}'s shift started at ${startAt} but they haven't clocked in. Please investigate.`;
               if (managerIds.length) {
                 await supabaseAdmin.from("user_notifications").insert(
                   managerIds.map((uid) => ({
                     user_id: uid,
                     kind: "staff_missed_clock_in",
-                    title: `${name} hasn't signed in`,
-                    body: `${name}'s shift started at ${startAt} but they haven't clocked in. Please investigate.`,
+                    title,
+                    body,
                     link_path: "/admin-shifts",
                     source_type: "shift",
                     source_id: a.slotId,
                   })) as never,
                 );
+                for (const uid of managerIds) {
+                  jobs.push({
+                    key: `slot:${a.slotId}:missed:${uid}`,
+                    userId: uid,
+                    title,
+                    body,
+                    url: "/admin-shifts",
+                    kind: "shift_start_over",
+                  });
+                }
               }
               await (supabaseAdmin as unknown as {
                 from: (t: string) => {
