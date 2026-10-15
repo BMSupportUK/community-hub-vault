@@ -1,3 +1,4 @@
+import { getVideoIceServers } from "@/lib/video-call.functions";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Video, VideoOff, Send, PhoneOff } from "lucide-react";
@@ -9,7 +10,13 @@ import { toast } from "sonner";
 type Session = { id: string; status: "waiting" | "live" | "ended" | "expired" };
 type Msg = { id: string; sender: string; content: string; created_at: string };
 
-const RTC_CONFIG: RTCConfiguration = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+let iceCache: Promise<RTCConfiguration> | null = null;
+function rtcConfig(): Promise<RTCConfiguration> {
+  iceCache ??= getVideoIceServers()
+    .then((r) => ({ iceServers: r.iceServers as RTCIceServer[] }))
+    .catch(() => { iceCache = null; return { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }; });
+  return iceCache;
+}
 
 /**
  * Customer side of a live "Show Us" session: they point their phone camera at
@@ -62,7 +69,7 @@ export function LiveHelpCustomer({ token, password }: { token: string; password:
         videoRef.current.srcObject = stream;
         videoRef.current.play().catch(() => {});
       }
-      const pc = new RTCPeerConnection(RTC_CONFIG);
+      const pc = new RTCPeerConnection(await rtcConfig());
       pcRef.current = pc;
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
       pc.onicecandidate = (e) => {
@@ -135,14 +142,22 @@ export function LiveHelpCustomer({ token, password }: { token: string; password:
     if (!session) return;
     const ch = supabase.channel(`live-help-${session.id}`);
     channelRef.current = ch;
+    let pending: RTCIceCandidateInit[] = [];
     ch.on("broadcast", { event: "signal" }, ({ payload }) => {
       const pc = pcRef.current;
       if (!pc || !payload) return;
       const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit };
       if (p.kind === "answer" && p.sdp) {
-        pc.setRemoteDescription({ type: "answer", sdp: p.sdp }).catch(() => {});
+        pc.setRemoteDescription({ type: "answer", sdp: p.sdp })
+          .then(async () => {
+            const queued = pending;
+            pending = [];
+            for (const c of queued) await pc.addIceCandidate(c).catch(() => {});
+          })
+          .catch(() => {});
       } else if (p.kind === "candidate" && p.candidate) {
-        pc.addIceCandidate(p.candidate).catch(() => {});
+        if (pc.remoteDescription) pc.addIceCandidate(p.candidate).catch(() => {});
+        else pending.push(p.candidate);
       } else if (p.kind === "offer") {
         // Staff restarted — ignore, customer is always the offerer.
       }

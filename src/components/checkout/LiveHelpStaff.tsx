@@ -1,3 +1,4 @@
+import { getVideoIceServers } from "@/lib/video-call.functions";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Video, Send, PhoneOff, MessageSquareText } from "lucide-react";
@@ -23,7 +24,13 @@ type Session = {
 };
 type Msg = { id: string; sender: string; content: string; created_at: string };
 
-const RTC_CONFIG: RTCConfiguration = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+let iceCache: Promise<RTCConfiguration> | null = null;
+function rtcConfig(): Promise<RTCConfiguration> {
+  iceCache ??= getVideoIceServers()
+    .then((r) => ({ iceServers: r.iceServers as RTCIceServer[] }))
+    .catch(() => { iceCache = null; return { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }; });
+  return iceCache;
+}
 
 /**
  * Staff side of a live "Show Us" session, shown on the order's secure admin
@@ -117,11 +124,17 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
     if (!active) return;
     const ch = supabase.channel(`live-help-${active.id}`);
     channelRef.current = ch;
+    // Candidates can arrive before the peer exists / has the offer applied: queue them.
+    let pending: RTCIceCandidateInit[] = [];
+    let ready = false;
     ch.on("broadcast", { event: "signal" }, ({ payload }) => {
       const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit };
       if (p.kind === "offer" && p.sdp) {
+        ready = false;
+        pcRef.current?.close();
+        pcRef.current = null;
         (async () => {
-          const pc = new RTCPeerConnection(RTC_CONFIG);
+          const pc = new RTCPeerConnection(await rtcConfig());
           pcRef.current = pc;
           pc.onicecandidate = (e) => {
             if (e.candidate) broadcast("signal", { kind: "candidate", candidate: e.candidate.toJSON() });
@@ -134,12 +147,17 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
             }
           };
           await pc.setRemoteDescription({ type: "offer", sdp: p.sdp! });
+          ready = true;
+          const queued = pending;
+          pending = [];
+          for (const c of queued) await pc.addIceCandidate(c).catch(() => {});
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           broadcast("signal", { kind: "answer", sdp: answer.sdp });
         })().catch(() => toast.error("Couldn't connect to the customer's camera"));
       } else if (p.kind === "candidate" && p.candidate) {
-        pcRef.current?.addIceCandidate(p.candidate).catch(() => {});
+        if (ready && pcRef.current) pcRef.current.addIceCandidate(p.candidate).catch(() => {});
+        else pending.push(p.candidate);
       }
     });
     ch.on("broadcast", { event: "end" }, () => {
