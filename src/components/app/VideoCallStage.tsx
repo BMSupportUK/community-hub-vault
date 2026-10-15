@@ -25,6 +25,7 @@ export function VideoCallStage({
   onSuperseded,
   startWithCamera = true,
   placeholderImage = staffPlaceholder,
+  staffGender,
 }: {
   topic: string;
   side: Side;
@@ -35,6 +36,8 @@ export function VideoCallStage({
   startWithCamera?: boolean;
   /** Illustration shown while this side's camera is off (staff side). */
   placeholderImage?: string;
+  /** Staff side only: broadcast to the customer so their "camera off" illustration matches. */
+  staffGender?: "male" | "female";
 }) {
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
@@ -70,6 +73,11 @@ export function VideoCallStage({
   // False while the other side sends no camera (staff audio-only): the customer
   // then sees the staff illustration instead of a black box.
   const [remoteHasVideo, setRemoteHasVideo] = useState(false);
+  // Illustration the customer sees while staff have no camera — matches the
+  // staff member's gender once they tell us over the call channel.
+  const [remotePlaceholder, setRemotePlaceholder] = useState(placeholderImage);
+  const staffGenderRef = useRef(staffGender);
+  staffGenderRef.current = staffGender;
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(startWithCamera);
   const [error, setError] = useState<string | null>(null);
