@@ -1,11 +1,11 @@
 # Project Architecture Rules
 
-- Sports guides preserve published status; headings prefix event names, not channels. Readers use document scrolling. All channels appear only beneath Available channels, including sole channels, for consistent placement. Keep BM loading through hydration/router pending.
+- Sports guides preserve published status; headings prefix event names, not channels; readers use document scrolling; every channel appears only beneath Available channels; BM keeps loading through hydration/router pending.
 - Sports cards flag local times on a different day from UK time to prevent date ambiguity.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides expose only validated dates, times, and event names; never free-text notes, descriptions, or channel lines.
-- Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones, and Fan Zone shows Forum-enabled BM banners alongside its own.
-- Member Home: staff keep image + greeting left; members get "Hey" + nameplate + "Welcome to The Customer Portal" above a capped subscription box that closes the gap (compact on phones).
+- Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
+- Member Home: staff keep image + greeting left; members get "Hey" + nameplate + "Welcome to The Customer Portal" above a capped subscription box closing the gap (compact on phones).
 - Header starts collapsed (slim bar) ONLY on tickets and Talk channels, open everywhere else; re-resets each navigation. Talk adds the channel name; Fan Zone never does.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; cap and scroll mobile ticket headers to preserve messages and composers.
 - NHL Center Ice treats its listing clock as ET and converts to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use stated UK times.
@@ -13,17 +13,17 @@
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: show all staff/channel; fit composer and people.
-- Talk presence: channel exit broadcasts leave/untracks next task; sign-out also removes the shared channel without respawn, preventing stale online users.
+- Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn so no stale online users remain.
 - Staff Away reads shared user_dnd_status; because it holds only the current window, Away history lives in a trigger-written table matched to shifts.
-- Android alerts use distinct per-type tones on versioned channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
+- Android alerts use distinct per-type tones on versioned channels; change the channel ID when correcting a sound, as Android keeps a channel's first sound permanently.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
-- Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.
+- Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials on claim — one source of truth in the admin credentials list.
 - Signed-out checkout visitors read app login details only via a token-gated SECURITY DEFINER function; the staff-only credentials view never serves them.
-- How-to and install-guide videos use private storage references with short-lived signed playback links, never permanent public URLs; install guides use ordered `video_steps`, one private video per step so narration matches one visible action.
-- New-account VPN blocking applies only to direct BM Support registration; any referral code (link or typed) and Fan Zone registrations bypass it, and referral-approved accounts never keep security-gate access-request notifications.
-- The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) applicants; refusal blocks ticket requests and tags appeals. Elsewhere GPS is captured silently only with existing permission.
+- How-to and install-guide videos use private storage with short-lived signed links, never permanent public URLs; install guides use ordered `video_steps`, one private video per step so narration matches one visible action.
+- New-account VPN blocking applies only to direct BM Support registration; any referral code (link or typed) and Fan Zone registrations bypass it, and referral-approved accounts drop security-gate access-request notifications.
+- The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) applicants; refusal blocks ticket requests and tags appeals. Elsewhere GPS is captured silently with existing permission only.
 - Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
 - Customer invoices are BM Support PDFs after confirmed payment; never expose Stripe/Square hosted links.
 - Knowledge Base fills the page; category and ratings rails keep guides scannable.
@@ -37,3 +37,4 @@
 - Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
 <!-- LOVABLE:END -->
 - Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
+- Tests run under `bun test`, so avoid vitest-only APIs (e.g. `vi.stubGlobal`) and swap globals with `Object.defineProperty` plus restore.
