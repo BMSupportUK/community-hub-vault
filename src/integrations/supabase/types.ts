@@ -5617,6 +5617,7 @@ export type Database = {
           full_name: string
           id: string
           motivation: string
+          password_hash: string | null
           phone: string
           status: string
           vacancy_id: string
@@ -5632,6 +5633,7 @@ export type Database = {
           full_name: string
           id?: string
           motivation: string
+          password_hash?: string | null
           phone?: string
           status?: string
           vacancy_id: string
@@ -5647,6 +5649,7 @@ export type Database = {
           full_name?: string
           id?: string
           motivation?: string
+          password_hash?: string | null
           phone?: string
           status?: string
           vacancy_id?: string
@@ -5670,6 +5673,7 @@ export type Database = {
           id: string
           location: string
           positions_available: number
+          positions_filled: number
           published: boolean
           requirements: string
           title: string
@@ -5683,6 +5687,7 @@ export type Database = {
           id?: string
           location?: string
           positions_available?: number
+          positions_filled?: number
           published?: boolean
           requirements?: string
           title: string
@@ -5696,6 +5701,7 @@ export type Database = {
           id?: string
           location?: string
           positions_available?: number
+          positions_filled?: number
           published?: boolean
           requirements?: string
           title?: string
@@ -7588,6 +7594,10 @@ export type Database = {
         }[]
       }
       get_job_application_by_token: { Args: { _token: string }; Returns: Json }
+      get_job_application_secure: {
+        Args: { _password: string; _token: string }
+        Returns: Json
+      }
       get_or_create_fan_dm_thread: { Args: { _other: string }; Returns: string }
       get_pending_expiry_reminders: {
         Args: { _kind: string }
@@ -7666,6 +7676,10 @@ export type Database = {
       }
       is_sales_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
+      job_application_id_for: {
+        Args: { _password: string; _token: string }
+        Returns: string
+      }
       list_content_reports: {
         Args: { _status?: string }
         Returns: {
@@ -7741,6 +7755,10 @@ export type Database = {
         Args: { _body: string; _token: string }
         Returns: string
       }
+      post_job_application_message_secure: {
+        Args: { _body: string; _password: string; _token: string }
+        Returns: string
+      }
       prune_sports_blog_body: {
         Args: { _body: string; _id: string }
         Returns: undefined
@@ -7767,6 +7785,7 @@ export type Database = {
         Args: { _ticket_id: string }
         Returns: number
       }
+      reset_job_application_password: { Args: { _id: string }; Returns: string }
       resolve_content_report: {
         Args: { _id: string; _notes?: string; _status: string }
         Returns: undefined
@@ -7937,6 +7956,20 @@ export type Database = {
           _zone: string
         }
         Returns: string
+      }
+      submit_staff_job_application_v3: {
+        Args: {
+          _availability: string
+          _consent: boolean
+          _email: string
+          _experience: string
+          _full_name: string
+          _motivation: string
+          _phone: string
+          _vacancy_id: string
+          _zone: string
+        }
+        Returns: Json
       }
       sync_subscriber_roles_from_credentials: { Args: never; Returns: number }
       talk_channel_member_directory: {
