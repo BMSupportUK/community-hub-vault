@@ -248,6 +248,16 @@ function StaffShiftsPage() {
     const rows = (data ?? []) as ShiftRow[];
     setShifts(rows);
 
+    // Scheduled rota slots for the same week — used to find missed sign-ins.
+    const { data: slotData } = await supabase
+      .from("shift_slots")
+      .select("id, shift_date, start_time, end_time, assigned_to, required_role")
+      .gte("shift_date", isoDay(from))
+      .lt("shift_date", isoDay(to))
+      .not("assigned_to", "is", null);
+    const slotRows = (slotData ?? []) as SlotRow[];
+    setSlots(slotRows);
+
     const ids = [...new Set(rows.map((r) => r.id))];
     const bmap: Record<string, BreakRow[]> = {};
     if (ids.length) {
