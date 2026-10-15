@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, PhoneOff, RefreshCw, RotateCw, Video, VideoOff, Loader2, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
@@ -49,6 +49,8 @@ export function VideoCallStage({
   // Extra rotation (deg, clockwise) the customer's phone reports when it is
   // held sideways but its screen hasn't rotated (auto-rotate off).
   const [remoteRotate, setRemoteRotate] = useState(0);
+  // Staff-side manual turn (deg, clockwise) on top of the automatic one.
+  const [manualRotate, setManualRotate] = useState(0);
   const localRotateRef = useRef(0);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -334,10 +336,16 @@ export function VideoCallStage({
     const onOrient = (e: DeviceOrientationEvent) => {
       const b = e.beta, g = e.gamma;
       if (b == null || g == null) return;
+      // Use the "up" direction in the phone's own frame instead of raw tilt
+      // angles: tilt angles jump by 180° when a sideways phone leans back,
+      // which used to report "upside down" instead of "sideways".
+      const rb = (b * Math.PI) / 180, rg = (g * Math.PI) / 180;
+      const upX = -Math.cos(rb) * Math.sin(rg);
+      const upY = Math.sin(rb);
       // Phone lying flat: keep the last reading.
-      if (Math.abs(b) < 25 && Math.abs(g) < 25) return;
-      if (Math.abs(b) >= Math.abs(g)) deviceCw = b >= 0 ? 0 : 180;
-      else deviceCw = g > 0 ? 90 : 270;
+      if (Math.abs(upX) < 0.45 && Math.abs(upY) < 0.45) return;
+      if (Math.abs(upY) >= Math.abs(upX)) deviceCw = upY >= 0 ? 0 : 180;
+      else deviceCw = upX < 0 ? 90 : 270;
       push();
     };
     const listen = () => window.addEventListener("deviceorientation", onOrient);
@@ -380,7 +388,8 @@ export function VideoCallStage({
       setRemoteMuted(true);
     }
   };
-  const sideways = remoteRotate === 90 || remoteRotate === 270;
+  const totalRotate = (remoteRotate + manualRotate) % 360;
+  const sideways = totalRotate === 90 || totalRotate === 270;
 
   const toggleMic = () => {
     const t = streamRef.current?.getAudioTracks()[0];
@@ -446,7 +455,7 @@ export function VideoCallStage({
           style={{
             width: sideways ? stageSize.h : stageSize.w || "100%",
             height: sideways ? stageSize.w : stageSize.h || "100%",
-            transform: `translate(-50%, -50%) rotate(${remoteRotate}deg)`,
+            transform: `translate(-50%, -50%) rotate(${totalRotate}deg)`,
           }}
         />
         {connected && !remoteHasVideo && !error && (
@@ -497,6 +506,11 @@ export function VideoCallStage({
         <button type="button" onClick={toggleSound} aria-label={remoteMuted ? "Turn sound on" : "Turn sound off"} className={`grid size-12 place-items-center rounded-full ${remoteMuted ? "bg-destructive text-destructive-foreground" : "bg-secondary text-secondary-foreground"}`}>
           {remoteMuted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
         </button>
+        {side === "offerer" && (
+          <button type="button" onClick={() => setManualRotate((r) => (r + 90) % 360)} aria-label="Rotate picture" title="Rotate the customer's picture" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
+            <RotateCw className="size-5" />
+          </button>
+        )}
         {isMobilePhone() && startWithCamera && (
           <>
             <button type="button" onClick={toggleCam} aria-label={camOn ? "Turn camera off" : "Turn camera on"} className={`grid size-12 place-items-center rounded-full ${camOn ? "bg-secondary text-secondary-foreground" : "bg-destructive text-destructive-foreground"}`}>
