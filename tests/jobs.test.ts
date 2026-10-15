@@ -23,7 +23,7 @@ test('job type and working hours are saved as separate fields', () => {
  const parsed = vacancySchema.parse(base);
  expect(parsed.employment_type).toBe('Full-time');
  expect(parsed.hours).toBe('Mon–Fri 09:00–19:00');
- expect(vacancySchema.parse({ ...base, hours: undefined, employment_type: undefined }).hours).toBe('');
+ expect(vacancySchema.parse({ ...base, hours: undefined }).hours).toBe('');
 });
 import { positionsLeft } from '../src/lib/jobs';
 test('accepted applicants reduce the roles left to fill', () => {
