@@ -541,7 +541,7 @@ function StaffShiftsPage() {
         </div>
       </header>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.7fr)] xl:items-start">
         {[
           { tabs: ROLE_TABS, counts: roleCounts, current: role, set: (k: any) => setRole(k), label: "Role" },
           { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => {
@@ -577,9 +577,7 @@ function StaffShiftsPage() {
             </div>
           </div>
         ))}
-      </div>
-
-      <section className="rounded-2xl border border-border bg-surface-1 p-4 shadow-sm">
+      <section className="rounded-2xl border border-border bg-surface-1 p-4 shadow-sm md:col-span-2 xl:col-span-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className={cn("grid size-8 place-items-center rounded-xl", missed.length ? "bg-rose-500/15 text-rose-400" : "bg-emerald-500/15 text-emerald-400")}>
             <UserX className="size-4" />
@@ -594,7 +592,7 @@ function StaffShiftsPage() {
             Everyone scheduled for {isToday ? "today so far" : "this day"} signed in.
           </p>
         ) : (
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-3 max-h-96 space-y-2 overflow-y-auto pr-1">
             {missed.map((sl) => {
               const p = people[sl.assigned_to!];
               const slotRole = sl.required_role ?? primaryRole(sl.assigned_to!);
