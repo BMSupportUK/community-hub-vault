@@ -270,16 +270,18 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             <aside className="min-w-0 space-y-3 lg:sticky lg:top-4">
               <section className={`rounded-2xl border p-5 flex gap-3 items-start ${accountSetup ? "border-success/40 bg-success/10" : "border-border bg-card"}`}>
                 {accountSetup ? <UserCheck className="size-5 text-success shrink-0 mt-0.5" /> : <Clock className="size-5 text-primary shrink-0 mt-0.5" />}
-                <div className="space-y-1">
-                  <p className="font-semibold">{order.customerKind === "existing" ? "Subscription extension" : "Account setup"}</p>
-                  <p className="text-sm">{step === 3
-                    ? sub
-                    : accountSetup
-                      ? (order.customerKind === "existing" ? "Your subscription has been extended — open your app login details below to carry on watching." : "Your account is ready. Open your app login details below to sign in to the app.")
-                      : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. Please install the app using the install guides while we finish setting up your account.")}</p>
+                <div className="space-y-3 min-w-0 flex-1">
+                  <div className="space-y-1">
+                    <p className="font-semibold">{order.customerKind === "existing" ? "Subscription extension" : "Account setup"}</p>
+                    <p className="text-sm">{step === 3
+                      ? sub
+                      : accountSetup
+                        ? (order.customerKind === "existing" ? "Your subscription has been extended — open your app login details below to carry on watching." : "Your account is ready. Open your app login details below to sign in to the app.")
+                        : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. Please install the app using the install guides while we finish setting up your account.")}</p>
+                  </div>
+                  {appLogin}
                 </div>
               </section>
-              {appLogin}
               {installCard}
               {!installCard && videoHelp}
               {addLoginDetails}

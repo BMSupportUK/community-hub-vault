@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Copy, KeyRound, Loader2, ShieldCheck } from "lucide-react";
+import { Check, Copy, Loader2, ShieldCheck } from "lucide-react";
 import { getCheckoutAppLogin } from "@/lib/checkout.functions";
 
 type AppAccount = {
