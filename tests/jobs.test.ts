@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { vacanciesForZone, jobAdminAllowed, applicationSchema, type JobVacancy } from '../src/lib/jobs';
+import { vacanciesForZone, jobAdminAllowed, jobZoneViewerAllowed, applicationSchema, type JobVacancy } from '../src/lib/jobs';
 const jobs: JobVacancy[] = ['bm', 'fanzone'].map((zone, i) => ({ id: `00000000-0000-4000-8000-00000000000${i}`, zone: zone as 'bm' | 'fanzone', title: 'Staff role', location: '', employment_type: '', description: 'Team role', requirements: '', closing_date: null, published: true, created_at: '2026-10-14T12:00:00Z' }));
 test('BM Support jobs board contains only BM Support positions', () => { expect(vacanciesForZone(jobs, 'bm').map((j) => j.zone)).toEqual(['bm']); });
 test('Boro Fan Zone jobs board contains only Fan Zone positions', () => { expect(vacanciesForZone(jobs, 'fanzone').map((j) => j.zone)).toEqual(['fanzone']); });
@@ -26,17 +26,15 @@ test('accepted applicants reduce the roles left to fill', () => {
  expect(positionsLeft(3, 5)).toBe(0);
 });
 
-describe("jobZoneViewerAllowed", () => {
-  it("allows admin for both zones", () => {
-    expect(jobZoneViewerAllowed(["admin"], "bm")).toBe(true);
-    expect(jobZoneViewerAllowed(["admin"], "fanzone")).toBe(true);
-  });
-  it("allows management for BM Support only", () => {
-    expect(jobZoneViewerAllowed(["management"], "bm")).toBe(true);
-    expect(jobZoneViewerAllowed(["management"], "fanzone")).toBe(false);
-  });
-  it("denies staff and members", () => {
-    expect(jobZoneViewerAllowed(["staff"], "bm")).toBe(false);
-    expect(jobZoneViewerAllowed([], "bm")).toBe(false);
-  });
+test("jobZoneViewerAllowed: admin sees both zones", () => {
+  expect(jobZoneViewerAllowed(["admin"], "bm")).toBe(true);
+  expect(jobZoneViewerAllowed(["admin"], "fanzone")).toBe(true);
+});
+test("jobZoneViewerAllowed: management sees BM Support only", () => {
+  expect(jobZoneViewerAllowed(["management"], "bm")).toBe(true);
+  expect(jobZoneViewerAllowed(["management"], "fanzone")).toBe(false);
+});
+test("jobZoneViewerAllowed: staff and members denied", () => {
+  expect(jobZoneViewerAllowed(["staff"], "bm")).toBe(false);
+  expect(jobZoneViewerAllowed([], "bm")).toBe(false);
 });
