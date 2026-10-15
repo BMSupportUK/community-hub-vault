@@ -43,13 +43,20 @@ export function VideoCallStage({
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const pendingIce = useRef<RTCIceCandidateInit[]>([]);
   const offeredRef = useRef(false);
-  const facingRef = useRef<"user" | "environment">("user");
+  const facingRef = useRef<"user" | "environment">(side === "answerer" ? "environment" : "user");
   const hungRef = useRef(false);
   // Identifies this device during signalling so a customer can move the call
   // between their devices (PC → phone) without both joining at once.
   const tagRef = useRef(`${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
   const activeTagRef = useRef<string | null>(null);
 
+  // Parent callbacks change on every poll; keep them in refs so the call
+  // isn't torn down and restarted (that caused the flicker/black screen).
+  const onHangupRef = useRef(onHangup);
+  onHangupRef.current = onHangup;
+  const onSupersededRef = useRef(onSuperseded);
+  onSupersededRef.current = onSuperseded;
+  const [remoteMuted, setRemoteMuted] = useState(true);
   const [connected, setConnected] = useState(false);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(startWithCamera);
@@ -63,8 +70,8 @@ export function VideoCallStage({
     if (hungRef.current) return;
     hungRef.current = true;
     send("bye");
-    onHangup();
-  }, [onHangup, send]);
+    onHangupRef.current();
+  }, [send]);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,9 +93,12 @@ export function VideoCallStage({
         });
       };
       pc.ontrack = (e) => {
-        if (remoteRef.current && e.streams[0]) {
-          remoteRef.current.srcObject = e.streams[0];
-          remoteRef.current.play().catch(() => {});
+        const v = remoteRef.current;
+        const src = e.streams[0];
+        if (v && src && v.srcObject !== src) {
+          v.srcObject = src;
+          v.muted = true; // un-muted autoplay is blocked -> black screen
+          v.play().catch(() => {});
         }
       };
       pc.onconnectionstatechange = () => {
@@ -136,7 +146,7 @@ export function VideoCallStage({
       let stream: MediaStream;
       try {
         stream = startWithCamera
-          ? await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true })
+          ? await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facingRef.current } }, audio: true })
           : await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
         if (!cancelled) setError(startWithCamera
@@ -163,13 +173,13 @@ export function VideoCallStage({
           switchPeer(tag);
         }
       });
-      ch.on("broadcast", { event: "bye" }, () => { if (!hungRef.current) { hungRef.current = true; onHangup(); } });
+      ch.on("broadcast", { event: "bye" }, () => { if (!hungRef.current) { hungRef.current = true; onHangupRef.current(); } });
       ch.on("broadcast", { event: "moved" }, ({ payload }) => {
         if (side !== "answerer" || hungRef.current) return;
         const to = (payload as { to?: string }).to;
         if (to !== tagRef.current) return;
         hungRef.current = true;
-        onSuperseded?.();
+        onSupersededRef.current?.();
       });
       ch.on("broadcast", { event: "signal" }, async ({ payload }) => {
         const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit; to?: string; from?: string };
@@ -218,7 +228,7 @@ export function VideoCallStage({
       offeredRef.current = false;
       pendingIce.current = [];
     };
-  }, [topic, side, send, onHangup]);
+  }, [topic, side, send, startWithCamera]);
 
   const toggleMic = () => {
     const t = streamRef.current?.getAudioTracks()[0];
@@ -272,7 +282,16 @@ export function VideoCallStage({
         <span className="size-2 animate-pulse rounded-full bg-destructive-foreground" /> Live video call with {otherName} — not recorded
       </div>
       <div className="relative min-h-0 flex-1 bg-muted">
-        <video ref={remoteRef} playsInline autoPlay className="h-full w-full object-contain" />
+        <video ref={remoteRef} playsInline autoPlay muted={remoteMuted} className="h-full w-full object-contain" />
+        {connected && remoteMuted && (
+          <button
+            type="button"
+            onClick={() => { setRemoteMuted(false); const v = remoteRef.current; if (v) { v.muted = false; v.play().catch(() => {}); } }}
+            className="absolute left-3 top-3 z-10 rounded-full bg-background/85 px-3 py-1.5 text-xs font-semibold text-foreground shadow"
+          >
+            Turn sound on
+          </button>
+        )}
         {!connected && !error && (
           <div className="absolute inset-0 grid place-items-center text-muted-foreground">
             <div className="flex flex-col items-center gap-2 text-sm"><Loader2 className="size-6 animate-spin" /> Connecting to {otherName}…</div>
