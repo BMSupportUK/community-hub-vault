@@ -37,10 +37,15 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
     <img src={interview} alt="A candidate meeting two interviewers in a welcoming workplace" width={1536} height={1024} className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover object-center" />
     <div className="pointer-events-none absolute inset-0 -z-10 bg-background/75" />
     {isBoro ? <FanZonePublicHeader /> : user && !isFanZoneOnly ? <JobsMemberHeader /> : <LandingHeader />}
-    {selected ? <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-8 sm:py-12">
+    {selected ? <main className="w-full px-4 py-8 sm:px-8 sm:py-12">
       <button onClick={() => setSelected(null)} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Back to vacancies</button>
-      <div className="mt-6 rounded-lg border border-border bg-card/90 p-5 backdrop-blur-sm sm:p-6">
-        <ApplicationForm key={selected.id} job={selected} />
+      <div className="mt-6 grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="rounded-lg border border-border bg-card/90 p-5 backdrop-blur-sm sm:p-6">
+          <JobDetails job={selected} />
+        </div>
+        <div className="rounded-lg border border-border bg-card/90 p-5 backdrop-blur-sm sm:p-6">
+          <ApplicationForm key={selected.id} job={selected} />
+        </div>
       </div>
     </main> : <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
       <Link to={isBoro ? "/fan-zone" : "/"} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> {name}</Link>
@@ -64,6 +69,11 @@ export function JobsBoard({ zone }: { zone: JobZone }) {
   if (isBoro) return <div className="boro-theme flex min-h-dvh"><IconRail />{content}</div>;
   return user && !isFanZoneOnly ? <div className="flex min-h-dvh"><IconRail />{content}</div> : content;
 }
+function JobDetails({ job }: { job: JobVacancy }) {
+  return <div className="space-y-5"><h2 className="font-display text-2xl font-bold">{job.title}</h2><p className="text-sm text-muted-foreground">{job.location}{job.employment_type && ` · ${job.employment_type}`}</p>
+    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{job.description}</p>
+    {job.requirements && <div><h3 className="mb-2 font-semibold">What we're looking for</h3><p className="whitespace-pre-wrap break-words text-sm">{job.requirements}</p></div>}</div>;
+}
 function ApplicationForm({ job }: { job: JobVacancy }) {
   const send = useServerFn(submitJobApplication);
   const [busy, setBusy] = useState(false);
@@ -75,10 +85,7 @@ function ApplicationForm({ job }: { job: JobVacancy }) {
     <p className="mt-2 break-all rounded-md border border-border bg-muted p-2 text-xs">{link}</p>
     <p className="mt-3 text-sm">Password: <span className="font-mono text-lg font-bold tracking-widest">{sent.password}</span></p>
     <div className="mt-4 flex flex-wrap justify-center gap-2"><Button variant="outline" onClick={() => void navigator.clipboard.writeText(link)}>Copy link</Button><Button asChild><a href={link} onClick={() => sessionStorage.setItem(`job-app-pw:${sent.token}`, sent.password)}>Open my application page</a></Button></div></div>; }
-  return <><h2 className="font-display text-2xl font-bold">{job.title}</h2><p className="mt-1 text-sm text-muted-foreground">{job.location}{job.employment_type && ` · ${job.employment_type}`}</p>
-    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{job.description}</p>
-    {job.requirements && <div><h3 className="mb-2 font-semibold">What we're looking for</h3><p className="whitespace-pre-wrap break-words text-sm">{job.requirements}</p></div>}
-    <form className="space-y-4 border-t border-border pt-5" onSubmit={async (event) => {
+  return <form className="space-y-4" onSubmit={async (event) => {
       event.preventDefault(); setError("");
       const fields = Object.fromEntries(new FormData(event.currentTarget));
       const input = applicationSchema.safeParse({ ...fields, vacancy_id: job.id, zone: job.zone, consent });
@@ -96,5 +103,5 @@ function ApplicationForm({ job }: { job: JobVacancy }) {
       <div className="flex items-start gap-3"><Checkbox id="job-consent" checked={consent} onCheckedChange={(value) => setConsent(value === true)} /><Label htmlFor="job-consent" className="text-sm leading-relaxed">I agree to my details being stored and reviewed by the admin team for this application. *</Label></div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={busy}><Send className="mr-2 size-4" />{busy ? "Sending…" : "Send application"}</Button>
-    </form></>;
+    </form>;
 }
