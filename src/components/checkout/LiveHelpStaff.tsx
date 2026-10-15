@@ -124,9 +124,15 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
     if (!active) return;
     const ch = supabase.channel(`live-help-${active.id}`);
     channelRef.current = ch;
+    // Candidates can arrive before the peer exists / has the offer applied: queue them.
+    let pending: RTCIceCandidateInit[] = [];
+    let ready = false;
     ch.on("broadcast", { event: "signal" }, ({ payload }) => {
       const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit };
       if (p.kind === "offer" && p.sdp) {
+        ready = false;
+        pcRef.current?.close();
+        pcRef.current = null;
         (async () => {
           const pc = new RTCPeerConnection(await rtcConfig());
           pcRef.current = pc;
@@ -141,12 +147,17 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
             }
           };
           await pc.setRemoteDescription({ type: "offer", sdp: p.sdp! });
+          ready = true;
+          const queued = pending;
+          pending = [];
+          for (const c of queued) await pc.addIceCandidate(c).catch(() => {});
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           broadcast("signal", { kind: "answer", sdp: answer.sdp });
         })().catch(() => toast.error("Couldn't connect to the customer's camera"));
       } else if (p.kind === "candidate" && p.candidate) {
-        pcRef.current?.addIceCandidate(p.candidate).catch(() => {});
+        if (ready && pcRef.current) pcRef.current.addIceCandidate(p.candidate).catch(() => {});
+        else pending.push(p.candidate);
       }
     });
     ch.on("broadcast", { event: "end" }, () => {
