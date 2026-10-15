@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LandingHeader } from "@/components/LandingHeader";
 import { FanZonePublicHeader } from "./FanZonePublicHeader";
 import { IconRail } from "./IconRail";
