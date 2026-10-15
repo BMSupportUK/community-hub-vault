@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
+import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 
 type Side = "offerer" | "answerer";
 
@@ -9,17 +10,21 @@ type Side = "offerer" | "answerer";
  * Full-screen two-way video call. Both sides send camera + mic; the offerer
  * starts the WebRTC negotiation once the answerer reports it is ready.
  * Signalling runs over a per-call broadcast topic. Nothing is recorded.
+ * When startWithCamera is false (staff side), the camera stays off and a
+ * BM Support staff illustration is shown until the user turns the camera on.
  */
 export function VideoCallStage({
   topic,
   side,
   otherName,
   onHangup,
+  startWithCamera = true,
 }: {
   topic: string;
   side: Side;
   otherName: string;
   onHangup: () => void;
+  startWithCamera?: boolean;
 }) {
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
