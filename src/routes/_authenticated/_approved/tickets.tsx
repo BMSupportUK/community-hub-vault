@@ -1,3 +1,4 @@
+import { TicketVideoCall } from "@/components/app/TicketVideoCall";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -1042,7 +1043,7 @@ function TicketDetail({
   staff: Profile[]; isStaff: boolean; currentUserId: string;
   myRating: number; onRate: (v: number) => void;
 }) {
-  const { hasAny } = useAuth();
+  const { hasAny, roles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const tz = useUserTimezone();
   const navigate = useNavigate();
@@ -2025,6 +2026,7 @@ function TicketDetail({
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/25 text-xs text-white">
               <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
             </span>
+            <TicketVideoCall ticketId={ticket.id} ownerId={ticket.user_id} ticketStatus={ticket.status} currentUserId={currentUserId} roles={roles} />
             {ticket.status !== "closed" && (isStaff || ticket.user_id === currentUserId) && (
               <button
                 onClick={closeTicket}
