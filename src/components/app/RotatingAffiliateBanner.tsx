@@ -24,6 +24,33 @@ type Fallback = {
   alt_text?: string | null;
 };
 
+/**
+ * Banner uploads are full-size PNGs (1MB+). Ask storage for a resized copy
+ * matched to the slot so slots download ~100-200KB instead of the original.
+ */
+function resizedBannerUrl(url: string, size: AdSize): string {
+  const width = size === "leaderboard" ? 900 : size === "square" ? 600 : 300;
+  return url.replace(
+    "/storage/v1/object/public/",
+    `/storage/v1/render/image/public/`,
+  ).includes("/render/image/")
+    ? `${url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/")}?width=${width}&quality=75&resize=contain`
+    : url;
+}
+
+// One shared fetch of the banner list for every slot on the page, instead of
+// each slot running its own queries.
+let allBannersPromise: Promise<Banner[]> | null = null;
+function loadAllBanners(): Promise<Banner[]> {
+  if (!allBannersPromise) {
+    allBannersPromise = supabase
+      .from("affiliate_banners")
+      .select("id, name, image_url, link_url, alt_text, size, site, zones")
+      .then(({ data }) => (data ?? []) as Banner[]);
+  }
+  return allBannersPromise;
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
