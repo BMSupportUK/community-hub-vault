@@ -458,7 +458,9 @@ export function VideoCallStage({
             transform: `translate(-50%, -50%) rotate(${totalRotate}deg)`,
           }}
         />
-        {connected && !remoteHasVideo && !error && (
+        {/* Customer side: staff never send a camera (their empty video slot still
+            arrives as a "track", which used to hide this and leave black). */}
+        {connected && (side === "answerer" || !remoteHasVideo) && !error && (
           <div className="absolute inset-0 grid place-items-center bg-muted">
             <div className="flex flex-col items-center gap-3 px-6 text-center">
               <img src={remotePlaceholder} alt={otherName} className="h-48 w-36 rounded-2xl border border-border object-cover shadow-lg sm:h-64 sm:w-48" />
