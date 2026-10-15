@@ -38,7 +38,7 @@ export function VideoCallStage({
 
   const [connected, setConnected] = useState(false);
   const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  const [camOn, setCamOn] = useState(startWithCamera);
   const [error, setError] = useState<string | null>(null);
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
@@ -79,9 +79,13 @@ export function VideoCallStage({
       } catch { /* fall back to STUN */ }
       let stream: MediaStream;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+        stream = startWithCamera
+          ? await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true })
+          : await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
-        if (!cancelled) setError("Camera and microphone permission is needed for the call. Allow them in your browser and try again.");
+        if (!cancelled) setError(startWithCamera
+          ? "Camera and microphone permission is needed for the call. Allow them in your browser and try again."
+          : "Microphone permission is needed for the call. Allow it in your browser and try again.");
         return;
       }
       if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
