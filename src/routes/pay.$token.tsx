@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, CheckCircle2, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
 import { completeCheckoutSale, continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
+import { OrderVideoCallCustomer } from "@/components/checkout/OrderVideoCall";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
@@ -253,6 +254,7 @@ function PayPage() {
           </DialogContent>
         </Dialog>
       )}
+      {!canManage && !view.order.cancelled && <OrderVideoCallCustomer token={token} password={pw} />}
       <CustomerCheckoutChat token={token} password={pw} orderRef={view.order.ref} />
     </main>
   );

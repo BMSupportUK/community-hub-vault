@@ -86,6 +86,8 @@ export const startLiveHelp = createServerFn({ method: "POST" })
     await expireStale(supabaseAdmin, link.order_id);
     const existing = await latestOpenSession(supabaseAdmin, link.order_id);
     if (existing) return { ok: true as const, session: toSession(existing) };
+    const { data: isOpen } = await supabaseAdmin.rpc("is_business_open");
+    if (isOpen === false) return { ok: false as const };
 
     const { data: row, error } = await supabaseAdmin
       .from("order_support_sessions")

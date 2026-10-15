@@ -6274,6 +6274,50 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_video_calls: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          ended_by: string | null
+          id: string
+          joined_at: string | null
+          joined_by: string | null
+          started_by: string
+          status: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          ended_by?: string | null
+          id?: string
+          joined_at?: string | null
+          joined_by?: string | null
+          started_by: string
+          status?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          ended_by?: string | null
+          id?: string
+          joined_at?: string | null
+          joined_by?: string | null
+          started_by?: string
+          status?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_video_calls_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tickets: {
         Row: {
           archived_at: string | null
