@@ -230,6 +230,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </Button>
             )}
           </section>
+          {/* When no sidebar shows the install guides, keep video help under the order details. */}
+          {!(paidSidebar || accountSidebar) && videoHelp}
 
           {paidSidebar ? (
             <aside className="min-w-0 space-y-3 lg:sticky lg:top-4">
