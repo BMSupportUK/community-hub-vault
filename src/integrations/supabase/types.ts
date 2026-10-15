@@ -5670,6 +5670,7 @@ export type Database = {
           created_at: string
           description: string
           employment_type: string
+          hours: string | null
           id: string
           location: string
           positions_available: number
@@ -5684,6 +5685,7 @@ export type Database = {
           created_at?: string
           description: string
           employment_type?: string
+          hours?: string | null
           id?: string
           location?: string
           positions_available?: number
@@ -5698,6 +5700,7 @@ export type Database = {
           created_at?: string
           description?: string
           employment_type?: string
+          hours?: string | null
           id?: string
           location?: string
           positions_available?: number
