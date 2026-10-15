@@ -51,6 +51,8 @@ type Stage = "start" | "end";
 const autoClockedSlots = new Set<string>();
 const autoEndedShifts = new Set<string>();
 const playedStageAlerts = new Set<string>();
+// Toasts the user closed — don't recreate them on the next countdown tick.
+const dismissedStageToasts = new Set<string>();
 const stillWorkingShifts = new Set<string>();
 const askedAtWrittenShifts = new Set<string>();
 
@@ -225,6 +227,8 @@ export function ShiftStartEndAlert() {
     const remaining = target - now;
     const overdue = remaining <= 0;
     const toastId = isStart ? "shift-start-warning" : "shift-end-warning";
+    const dismissKey = `${active.slot.id}:${active.stage}:${overdue ? "over" : "warn"}`;
+    if (dismissedStageToasts.has(dismissKey)) return;
     const title = isStart
       ? overdue ? "Shift has started" : "Shift starting soon"
       : overdue ? "Shift has ended" : "Shift ending soon";
