@@ -3,6 +3,7 @@ import { parseClockTime, ukListingInstant } from "./import-time";
 import {
   formatSportsListingBlock,
   isLikelyChannelLabel,
+  joinWrappedSlotDates,
   parseSportsListingBlock,
   type SportsListingEvent,
 } from "./sports-listing-format";
@@ -123,7 +124,7 @@ export function checkSportsImport(
 
   // 2. Nothing dropped: every row in the post that carries a clock time should
   //    have become an event. Fewer events than timed rows means lost listings.
-  const timedRows = raw
+  const timedRows = joinWrappedSlotDates(raw)
     .split(/\n/)
     .map((l) => l.trim().replace(/\([^)]*\)/g, ""))
     .filter((l) => l && CLOCK_RE.test(l) && !/^(all\s+times|times\s+(are|in))/i.test(l)).length;
