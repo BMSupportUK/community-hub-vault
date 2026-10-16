@@ -107,6 +107,15 @@ export function normalizeSportsListingText(value: string): string {
     .replace(/&#39;|&apos;/gi, "'");
 }
 
+/** Rejoins provider slot dates wrapped mid-year: "17-10-20" / "26 1:35 AM". */
+export function joinWrappedSlotDates(value: string): string {
+  return value.replace(
+    /(\b\d{1,2}[-/.]\d{1,2}[-/.])(\d{1,3})[ \t]*\r?\n[ \t]*(\d{1,3})(?=\s+\d{1,2}[:.]\d{2}\s*(?:am|pm)?\b)/gi,
+    (whole, prefix: string, start: string, end: string) =>
+      [2, 4].includes(start.length + end.length) ? `${prefix}${start}${end}` : whole,
+  );
+}
+
 const decodeListingEntities = normalizeSportsListingText;
 
 /**
@@ -1158,7 +1167,7 @@ function normalizeChannelHeaderFixtureBlocks(raw: string): string {
 
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
-  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(raw))));
+  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(joinWrappedSlotDates(raw)))));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
   // "Event HH:MM" continuation rows that belong to the channel above them.
