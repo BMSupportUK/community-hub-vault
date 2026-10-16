@@ -1,7 +1,7 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
-- [ ] Repair Aussie Rules malformed dual-time import and saved guide; verify all five fixtures and unchanged publication status.
+- [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
 - [x] Stop home remount flicker on app return; signed-in browser checks preserve the same home heading through background/return and expired return shows only the lock screen; four lock-state tests pass, build OK; physical-phone check remains unverified
