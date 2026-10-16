@@ -158,6 +158,8 @@ import { Route as ApiPublicHooksFinalLockRemindersRouteImport } from './routes/a
 import { Route as ApiPublicHooksInboxMessagePushRouteImport } from './routes/api/public/hooks/inbox-message-push'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
+import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
+import { Route as ApiPublicHooksRefreshStreamingStockRouteImport } from './routes/api/public/hooks/refresh-streaming-stock'
 import { Route as ApiPublicHooksRotaAutofillRouteImport } from './routes/api/public/hooks/rota-autofill'
 import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
@@ -1035,6 +1037,18 @@ const ApiPublicHooksNowpaymentsRoute =
     path: '/api/public/hooks/nowpayments',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRefreshStreamingPricesRoute =
+  ApiPublicHooksRefreshStreamingPricesRouteImport.update({
+    id: '/api/public/hooks/refresh-streaming-prices',
+    path: '/api/public/hooks/refresh-streaming-prices',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksRefreshStreamingStockRoute =
+  ApiPublicHooksRefreshStreamingStockRouteImport.update({
+    id: '/api/public/hooks/refresh-streaming-stock',
+    path: '/api/public/hooks/refresh-streaming-stock',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRotaAutofillRoute =
   ApiPublicHooksRotaAutofillRouteImport.update({
     id: '/api/public/hooks/rota-autofill',
@@ -1313,6 +1327,8 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
+  '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
@@ -1481,6 +1497,8 @@ export interface FileRoutesByTo {
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
+  '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
@@ -1655,6 +1673,8 @@ export interface FileRoutesById {
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
+  '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
@@ -1828,6 +1848,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
+    | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/rota-autofill'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
@@ -1996,6 +2018,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
+    | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/rota-autofill'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
@@ -2169,6 +2193,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
+    | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/rota-autofill'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
@@ -2250,6 +2276,8 @@ export interface RootRouteChildren {
   ApiPublicHooksInboxMessagePushRoute: typeof ApiPublicHooksInboxMessagePushRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
+  ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
+  ApiPublicHooksRefreshStreamingStockRoute: typeof ApiPublicHooksRefreshStreamingStockRoute
   ApiPublicHooksRotaAutofillRoute: typeof ApiPublicHooksRotaAutofillRoute
   ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
@@ -3313,6 +3341,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksNowpaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/refresh-streaming-prices': {
+      id: '/api/public/hooks/refresh-streaming-prices'
+      path: '/api/public/hooks/refresh-streaming-prices'
+      fullPath: '/api/public/hooks/refresh-streaming-prices'
+      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/refresh-streaming-stock': {
+      id: '/api/public/hooks/refresh-streaming-stock'
+      path: '/api/public/hooks/refresh-streaming-stock'
+      fullPath: '/api/public/hooks/refresh-streaming-stock'
+      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingStockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/rota-autofill': {
       id: '/api/public/hooks/rota-autofill'
       path: '/api/public/hooks/rota-autofill'
@@ -3891,6 +3933,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksInboxMessagePushRoute: ApiPublicHooksInboxMessagePushRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
+  ApiPublicHooksRefreshStreamingPricesRoute:
+    ApiPublicHooksRefreshStreamingPricesRoute,
+  ApiPublicHooksRefreshStreamingStockRoute:
+    ApiPublicHooksRefreshStreamingStockRoute,
   ApiPublicHooksRotaAutofillRoute: ApiPublicHooksRotaAutofillRoute,
   ApiPublicHooksScheduledRemindersRoute: ApiPublicHooksScheduledRemindersRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
