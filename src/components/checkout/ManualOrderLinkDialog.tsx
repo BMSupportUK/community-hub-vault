@@ -259,15 +259,29 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
         {orderCompleted && <p className="text-xs text-success font-medium">Sale completed.</p>}
       </div>}
       {canComplete && !renewal && orderPaid && !link.account_setup_at && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="size-4 text-primary" /> Complete the new account</div>
-          <p className="text-xs text-muted-foreground">Enter the service login details. Saving them creates the customer's credential and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
-          <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
-          <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
-          {extraFields}
-          <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
-        </div>
+        <Dialog open={setupOpen} onOpenChange={setSetupOpen}>
+          <DialogTrigger asChild>
+            <button type="button" className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"><KeyRound className="size-4" /> Set up the new account</button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" /> Complete the new account</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Enter the service login details. Saving them creates the customer's credential and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
+              <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+              <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+              {extraFields}
+              <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
+    </div>
+  );
+  const linkFields = (
+    <div className="space-y-3 min-w-0">
+      <div className="text-xs font-medium">Send to the customer</div>
       <CopyField label="Secure page link" value={url} />
       <CopyField label="Password" value={link.password} />
       <CopyField label="Link + password (to send to the customer)" value={`Your secure order page: ${url}\nPassword: ${link.password}`} />
