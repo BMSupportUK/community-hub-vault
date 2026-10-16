@@ -3,7 +3,7 @@ import { Mic, MicOff, PhoneOff, RefreshCw, RotateCw, Video, VideoOff, Loader2, V
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
-import { attachCallMicrophone, initialCallMedia } from "@/lib/call-media";
+import { attachCallMicrophone, callMicrophoneError, initialCallMedia } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
 
@@ -396,7 +396,7 @@ export function VideoCallStage({
   const toggleMic = async () => {
     if (micStartingRef.current) return;
     const t = streamRef.current?.getAudioTracks()[0];
-    if (t) {
+    if (t && t.readyState !== "ended") {
       t.enabled = !t.enabled;
       setMicOn(t.enabled);
       setMicError(null);
@@ -405,14 +405,17 @@ export function VideoCallStage({
     const pc = pcRef.current;
     const stream = streamRef.current;
     if (!pc || !stream) return;
+    if (t) stream.removeTrack(t);
     micStartingRef.current = true;
+    setMicError(null);
     try {
       const track = await attachCallMicrophone(pc, stream, navigator.mediaDevices);
       if (pcRef.current !== pc || streamRef.current !== stream) { track.stop(); return; }
       setMicOn(true);
       setMicError(null);
-    } catch {
-      setMicError("Microphone unavailable. Allow microphone access to talk; the call can continue without it.");
+    } catch (error) {
+      setMicOn(false);
+      setMicError(callMicrophoneError(error));
     } finally {
       micStartingRef.current = false;
     }
