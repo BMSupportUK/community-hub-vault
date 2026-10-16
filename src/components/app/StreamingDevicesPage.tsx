@@ -242,7 +242,7 @@ function DeviceCard({
           {!isWos ? (
             <>
               <p className="text-xs text-muted-foreground">
-                We don't sell this device — please search online for the best price.
+                We don&apos;t have that model — please search the internet for stock and price.
               </p>
               <Button asChild className="w-full" variant="outline">
                 <a
@@ -251,7 +251,7 @@ function DeviceCard({
                   rel="noopener noreferrer"
                 >
                   <ExternalLink className="size-4" />
-                  Search online for price
+                  Search the internet for stock and price
                 </a>
               </Button>
             </>
