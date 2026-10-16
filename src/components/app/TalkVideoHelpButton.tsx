@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Video } from "lucide-react";
@@ -7,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { joinLiveHelp, listOpenLiveHelpAll } from "@/lib/live-help.functions";
+import { cn } from "@/lib/utils";
 
 type Row = Awaited<ReturnType<typeof listOpenLiveHelpAll>>["sessions"][number];
 
@@ -25,6 +27,7 @@ export function TalkVideoHelpButton({ variant = "bar" }: { variant?: "bar" | "ic
   const [rows, setRows] = useState<Row[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [hoverAnchor, setHoverAnchor] = useState<{ bottom: number; left?: number; right?: number } | null>(null);
 
   const load = useCallback(async () => {
     const r = await list().catch(() => null);
@@ -83,31 +86,69 @@ export function TalkVideoHelpButton({ variant = "bar" }: { variant?: "bar" | "ic
           )}
         </button>
       ) : (
-        // Working Status box: same round icon button as the tickets one beside it.
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Video help calls"
-          title={
-            waiting.length > 0
-              ? `${waiting.length} customer${waiting.length === 1 ? "" : "s"} waiting for video help – click to claim`
-              : claimed.length > 0
-                ? `${claimed.length} video call${claimed.length === 1 ? "" : "s"} in progress`
-                : "Video help calls"
-          }
-          className={`relative grid size-8 shrink-0 place-items-center rounded-full transition-colors ${
-            waiting.length > 0
-              ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
-              : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
-          }`}
+        // Same hover tooltip with live counts as the tickets icon beside it.
+        <div
+          className="relative shrink-0"
+          onMouseEnter={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            const vw = window.innerWidth;
+            // Near the right edge, right-align the panel so it never overflows the screen.
+            if (vw - r.left < 170) setHoverAnchor({ bottom: r.bottom, right: vw - r.right });
+            else setHoverAnchor({ bottom: r.bottom, left: r.left + r.width / 2 });
+          }}
+          onMouseLeave={() => setHoverAnchor(null)}
         >
-          <Video className="size-3.5" />
-          {waiting.length > 0 && (
-            <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-background px-1 text-[9px] font-bold leading-4 text-destructive ring-1 ring-destructive">
-              {waiting.length > 99 ? "99+" : waiting.length}
-            </span>
+          <button
+            type="button"
+            onClick={() => { setHoverAnchor(null); setOpen(true); }}
+            aria-label="Video help calls"
+            title={
+              waiting.length > 0
+                ? `${waiting.length} customer${waiting.length === 1 ? "" : "s"} waiting for video help – click to claim`
+                : claimed.length > 0
+                  ? `${claimed.length} video call${claimed.length === 1 ? "" : "s"} in progress`
+                  : "Video help calls"
+            }
+            className={`relative grid size-8 shrink-0 place-items-center rounded-full transition-colors ${
+              waiting.length > 0
+                ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
+                : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+            }`}
+          >
+            <Video className="size-3.5" />
+            {waiting.length > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-background px-1 text-[9px] font-bold leading-4 text-destructive ring-1 ring-destructive">
+                {waiting.length > 99 ? "99+" : waiting.length}
+              </span>
+            )}
+          </button>
+          {hoverAnchor !== null && createPortal(
+            <div
+              className={cn(
+                "pointer-events-none fixed z-[80] w-max rounded-md border border-border bg-background px-2.5 py-1.5 text-left shadow-xl",
+                hoverAnchor.left !== undefined && "-translate-x-1/2",
+              )}
+              style={{
+                top: hoverAnchor.bottom + 6,
+                ...(hoverAnchor.left !== undefined ? { left: hoverAnchor.left } : { right: (hoverAnchor.right ?? 0) + 8 }),
+              }}
+            >
+              <div className="flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-destructive" />Waiting
+                </span>
+                <span className="font-bold text-destructive">{waiting.length}</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-primary" />In progress
+                </span>
+                <span className="font-bold text-primary">{claimed.length}</span>
+              </div>
+            </div>,
+            document.body,
           )}
-        </button>
+        </div>
       )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
