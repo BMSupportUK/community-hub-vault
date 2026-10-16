@@ -2857,8 +2857,8 @@ function Checkout({
             <div className="text-sm font-medium">Payment method</div>
             {bankOnly ? (
               <div className="rounded-lg border border-primary bg-primary/10 p-3 text-sm">
-                <span className="font-semibold">Bank transfer</span>
-                <span className="block text-xs text-muted-foreground">Your bank details and reference will be shown on your secure checkout page.</span>
+                <span className="font-semibold">Bank transfer (UK only)</span>
+                <span className="block text-xs text-muted-foreground">UK bank accounts only. Your bank details and reference will be shown on your secure checkout page.</span>
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">

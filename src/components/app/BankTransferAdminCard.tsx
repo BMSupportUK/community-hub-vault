@@ -301,6 +301,7 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
           <div className="space-y-2">
             <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Customers allowed to pay by bank transfer
+              <span className="block normal-case tracking-normal">(UK customers only — never for overseas customers)</span>
             </div>
             <input
               className={input}
