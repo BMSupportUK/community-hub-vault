@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
-import { OrderVideoCallStaff } from "@/components/checkout/OrderVideoCall";
+import { OrderVideoCallIncoming, OrderVideoCallStaffStage, useOrderVideoCallStaff } from "@/components/checkout/OrderVideoCall";
 import { canViewStaffCheckout } from "@/lib/checkout-access";
 import shopHero from "@/assets/shop-hero.jpg";
 
