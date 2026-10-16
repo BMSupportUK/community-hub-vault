@@ -224,8 +224,6 @@ function DeviceCard({
           </div>
         )}
       </div>
-
-      </div>
     </article>
   );
 }
