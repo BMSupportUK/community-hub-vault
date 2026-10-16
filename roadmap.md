@@ -175,4 +175,4 @@
 
 - [x] ESPN+ import: rejoin slot dates wrapped across lines so UCF v Houston stays separate; 157 events, signed-in queue check shows no errors
 
-- [ ] Allow staff calls to connect without microphone permission; request microphone only when staff choose voice
+- [x] Staff calls connect without microphone permission; real two-browser order call verified with zero staff media requests, denied unmute keeps call alive, subsequent unmute works without restarting
