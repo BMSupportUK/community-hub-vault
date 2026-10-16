@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { attachCallMicrophone, initialCallMedia } from "../src/lib/call-media";
+import { attachCallMicrophone, callMicrophoneError, initialCallMedia } from "../src/lib/call-media";
 
 test("staff connect without requesting microphone or camera permission", async () => {
   let requests = 0;
@@ -28,4 +28,10 @@ test("denied staff microphone does not close the call", async () => {
   const pc = { connectionState: "connected", close: () => { closed = true; }, getTransceivers: () => [{ receiver: { track: { kind: "audio" } } }] } as unknown as RTCPeerConnection;
   await expect(attachCallMicrophone(pc, {} as MediaStream, { getUserMedia: async () => { throw new Error("Permission denied"); } })).rejects.toThrow("Permission denied");
   expect(closed).toBe(false);
+});
+
+test("a busy enabled microphone is distinguished from denied access", () => {
+  expect(callMicrophoneError(new DOMException("Device busy", "NotReadableError"))).toContain("Close other apps");
+  expect(callMicrophoneError(new DOMException("Denied", "NotAllowedError"))).toContain("blocked");
+  expect(callMicrophoneError(new DOMException("Track failed", "InvalidModificationError"))).not.toContain("blocked");
 });
