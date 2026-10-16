@@ -174,3 +174,5 @@
 - [x] Staff video call: separate sound player + speaker button; picture turns when customer's phone is held sideways (auto-rotate off)
 
 - [x] ESPN+ import: rejoin slot dates wrapped across lines so UCF v Houston stays separate; 157 events, signed-in queue check shows no errors
+
+- [x] Staff calls connect without microphone permission; real two-browser order call verified with zero staff media requests, denied unmute keeps call alive, subsequent unmute works without restarting
