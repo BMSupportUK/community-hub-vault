@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-secure-pag
 function SecurePageAdmin() {
   const { roles } = useAuth();
   const { order, ref: refParam } = Route.useSearch();
+  const call = useOrderVideoCallStaff(order ?? "");
   const [orderRef, setOrderRef] = useState<string | null>(refParam ?? null);
   const [loaded, setLoaded] = useState(!!refParam);
 
