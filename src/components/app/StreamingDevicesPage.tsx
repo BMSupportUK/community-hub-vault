@@ -33,6 +33,7 @@ type Price = {
   currency: string;
   availability: string | null;
   source_url: string | null;
+  shop_name?: string | null;
   scraped_at: string;
   stock_checked_at: string | null;
 };
@@ -159,8 +160,11 @@ function DeviceCard({
   const brandStoreOnly = /(^|\.)(mi|xiaomi)\.com$/i.test(
     (() => { try { return new URL(device.amazon_url).hostname.replace(/^www\./, ""); } catch { return ""; } })(),
   );
-  const listingUrl = brandStoreOnly ? device.amazon_url : (price?.source_url || device.amazon_url);
-  const retailer = retailerFromUrl(listingUrl);
+  // A cheaper shop found by the daily price comparison (shop_name set) wins.
+  const listingUrl = price?.shop_name && price.source_url
+    ? price.source_url
+    : brandStoreOnly ? device.amazon_url : (price?.source_url || device.amazon_url);
+  const retailer = price?.shop_name && price.source_url ? price.shop_name : retailerFromUrl(listingUrl);
   const outOfStock = /out\s*of\s*stock|sold\s*out|unavailable|coming\s*soon/i.test(price?.availability ?? "");
   const inStock = !outOfStock && /in\s*stock|available/i.test(price?.availability ?? "");
   const rangeLabel = formatRange(
@@ -284,7 +288,7 @@ export function StreamingDevicesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("streaming_device_prices")
-        .select("device_id, price_cents, currency, availability, source_url, scraped_at, stock_checked_at");
+        .select("device_id, price_cents, currency, availability, source_url, shop_name, scraped_at, stock_checked_at");
       if (error) throw error;
       return (data ?? []) as Price[];
     },

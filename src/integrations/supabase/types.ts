@@ -5954,6 +5954,7 @@ export type Database = {
           device_id: string
           price_cents: number | null
           scraped_at: string
+          shop_name: string | null
           source_url: string | null
           stock_checked_at: string | null
         }
@@ -5963,6 +5964,7 @@ export type Database = {
           device_id: string
           price_cents?: number | null
           scraped_at?: string
+          shop_name?: string | null
           source_url?: string | null
           stock_checked_at?: string | null
         }
@@ -5972,6 +5974,7 @@ export type Database = {
           device_id?: string
           price_cents?: number | null
           scraped_at?: string
+          shop_name?: string | null
           source_url?: string | null
           stock_checked_at?: string | null
         }
@@ -6026,6 +6029,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          price_compare_url: string | null
           price_range_currency: string
           price_range_high_cents: number | null
           price_range_low_cents: number | null
@@ -6045,6 +6049,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          price_compare_url?: string | null
           price_range_currency?: string
           price_range_high_cents?: number | null
           price_range_low_cents?: number | null
@@ -6064,6 +6069,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          price_compare_url?: string | null
           price_range_currency?: string
           price_range_high_cents?: number | null
           price_range_low_cents?: number | null

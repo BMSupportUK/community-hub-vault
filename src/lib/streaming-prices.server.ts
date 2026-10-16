@@ -182,21 +182,92 @@ async function runChunked<T, R>(items: T[], size: number, fn: (item: T) => Promi
   return results;
 }
 
+export type CompareOffer = { shop: string; url: string; priceCents: number; inStock: boolean };
+
+/** Parse a PriceSpy product page's offer list (already sorted cheapest first). */
+export function parsePriceSpyOffers(html: string): CompareOffer[] {
+  const offers: CompareOffer[] = [];
+  for (const block of html.split('data-test="OfferListItem"').slice(1)) {
+    const b = block.slice(0, 9000);
+    const url = b.match(/href="(https:\/\/pricespy\.co\.uk\/go-to-shop\/[^"]+)"/)?.[1];
+    const shop = b.match(/alt="([^"]+)"/)?.[1];
+    const text = b.replace(/<[^>]+>/g, "|");
+    const price = text.match(/£\s?(\d[\d,]*(?:\.\d{2})?)/)?.[1];
+    if (!url || !shop || !price) continue;
+    offers.push({
+      shop: shop.replace(/&amp;/g, "&"),
+      url: url.replace(/&amp;/g, "&"),
+      priceCents: Math.round(Number(price.replace(/,/g, "")) * 100),
+      inStock: /\|\s*In stock\s*\|/i.test(text),
+    });
+  }
+  return offers;
+}
+
+/** Cheapest in-stock offer; a brand store with a known stored price competes too. */
+export function pickCheapest(
+  offers: CompareOffer[],
+  brandStore: { url: string; priceCents: number | null } | null,
+): CompareOffer | null {
+  const pool = offers.filter((o) => o.inStock);
+  if (brandStore?.priceCents) pool.push({ shop: "Official store", url: brandStore.url, priceCents: brandStore.priceCents, inStock: true });
+  pool.sort((a, b) => a.priceCents - b.priceCents);
+  return pool[0] ?? null;
+}
+
+async function refreshFromCompare(d: { id: string; amazon_url: string; price_compare_url: string }): Promise<boolean> {
+  try {
+    const res = await fetch(d.price_compare_url, {
+      headers: { "User-Agent": UA, Accept: "text/html", "Accept-Language": "en-GB,en;q=0.9" },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return false;
+    const offers = parsePriceSpyOffers(await res.text());
+    if (!offers.length) return false;
+    const { data: existing } = await supabaseAdmin
+      .from("streaming_device_prices")
+      .select("price_cents, source_url")
+      .eq("device_id", d.id)
+      .maybeSingle();
+    const isBrand = /(^|\.)(mi|xiaomi)\.com$/i.test(new URL(d.amazon_url).hostname.replace(/^www\./, ""));
+    // Brand-store price is only trusted if it was last stored against the brand link.
+    const brandPrice = isBrand && (!existing?.source_url || existing.source_url === d.amazon_url) ? existing?.price_cents ?? null : null;
+    const best = pickCheapest(offers, isBrand ? { url: d.amazon_url, priceCents: brandPrice } : null);
+    const now = new Date().toISOString();
+    const row = best
+      ? { price_cents: best.priceCents, availability: "In stock", source_url: best.url, shop_name: best.shop === "Official store" ? null : best.shop }
+      : { availability: "Out of stock" };
+    const { error } = await supabaseAdmin
+      .from("streaming_device_prices")
+      .upsert({ device_id: d.id, currency: "GBP", ...row, scraped_at: now, stock_checked_at: now }, { onConflict: "device_id" });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 export async function refreshStreamingPrices(
   mode: "full" | "stock" = "full",
 ): Promise<{ checked: number; updated: number; missed: string[] }> {
   const { data: devices, error } = await supabaseAdmin
     .from("streaming_devices")
-    .select("id, name, amazon_url")
+    .select("id, name, amazon_url, price_compare_url")
     .eq("is_active", true)
     .not("amazon_url", "is", null);
   if (error) throw new Error(error.message);
 
-  const rows = (devices ?? []) as { id: string; name: string; amazon_url: string }[];
+  const rows = (devices ?? []) as { id: string; name: string; amazon_url: string; price_compare_url: string | null }[];
   const missed: string[] = [];
   let updated = 0;
 
   await runChunked(rows, 6, async (d) => {
+    if (d.price_compare_url) {
+      // Comparison pages are only fetched on the daily run.
+      if (mode === "stock") return;
+      if (await refreshFromCompare({ ...d, price_compare_url: d.price_compare_url })) updated++;
+      else missed.push(d.name);
+      return;
+    }
     // Amazon serves bot-check pages to server-side readers; scraping it is
     // unreliable and can corrupt stock state, so those rows keep their
     // stored values until a readable source URL is set.
