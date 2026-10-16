@@ -169,6 +169,7 @@ export function useOrderVideoCallStaff(orderId: string) {
   }, []);
 
   useEffect(() => {
+    if (!orderId) return;
     let off = false;
     const tick = async () => {
       const r = await list({ data: { orderId } }).catch(() => null);
