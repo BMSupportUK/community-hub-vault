@@ -157,8 +157,9 @@ export async function syncFantasyInjuriesFromEfl(admin: Admin): Promise<EflInjur
       continue;
     }
     seen.add(row.id);
-    // The official EFL Fantasy feed is the single source of truth: every sync
-    // overwrites injury flags, including ones set by hand.
+    // Hand-set flags are kept until an admin clears them: they cover injuries
+    // the official feed hasn't picked up.
+    if (row.injury_source === "admin") continue;
 
     if (flag.status === "none") {
       if ((row.injury_status ?? "none") !== "none") {
@@ -194,6 +195,7 @@ export async function syncFantasyInjuriesFromEfl(admin: Admin): Promise<EflInjur
   // Anyone the feed no longer lists at all: drop stale feed-set flags.
   for (const row of pool) {
     if (seen.has(row.id)) continue;
+    if (row.injury_source !== "feed") continue;
     if ((row.injury_status ?? "none") === "none") continue;
     await admin
       .from("fantasy_players")
