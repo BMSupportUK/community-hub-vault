@@ -1178,6 +1178,11 @@ function normalizeChannelHeaderFixtureBlocks(raw: string): string {
 
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
+  // Hand-typed dual-zone slots may contain "4:15:am" or a backslash
+  // between UK and ET clocks. Repair only clock punctuation, not titles.
+  raw = raw
+    .replace(/(\b\d{1,2}[:.]\d{2}):\s*(am|pm)\b/gi, "$1$2")
+    .replace(/(\bUK(?:\s+(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*)?\s*)\\(?=\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*ET\b)/gi, "$1|");
   raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(insertMissingChannelPipe(joinWrappedSlotDates(raw))))));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
