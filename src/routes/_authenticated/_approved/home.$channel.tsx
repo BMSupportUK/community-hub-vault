@@ -58,6 +58,7 @@ import { StaffOnDutySidebar } from "@/components/app/StaffOnDutyStrip";
 import { OnlineMembersDialog } from "@/components/app/OnlineMembersDialog";
 import { TalkChannelMembersPanel } from "@/components/app/TalkChannelMembersPanel";
 import { TalkUnclaimedTicketsBar } from "@/components/app/UnclaimedTicketsNotifier";
+import { TalkVideoHelpButton } from "@/components/app/TalkVideoHelpButton";
 import { QuickRepliesPill, useQuickReplies } from "@/components/app/QuickRepliesDialog";
 import { useChannelJump } from "@/components/app/ChannelJump";
 import { useQuickReplySlash } from "@/components/app/QuickReplySlash";
@@ -1308,6 +1309,7 @@ function ChannelPage() {
           </div>
           <Sheet open={mobilePeopleOpen} onOpenChange={setMobilePeopleOpen}>
             <SheetContent side="right" className="flex h-dvh w-[min(92vw,24rem)] flex-col gap-0 border-l border-border bg-surface p-0">
+              {!hideMembersPanel && <TalkVideoHelpButton />}
               {!hideMembersPanel && <TalkUnclaimedTicketsBar />}
               {!hideMembersPanel && (
                 <div className="grid shrink-0 grid-cols-2 gap-1 border-b border-border p-2 pr-12">
@@ -2469,6 +2471,7 @@ function ChannelPage() {
             </div>
           ) : (
             <>
+              <TalkVideoHelpButton />
               <TalkUnclaimedTicketsBar />
               <div className="shrink-0 grid grid-cols-2 gap-1 border-b border-border p-1.5">
                 {(["staff", "members"] as const).map((t) => {

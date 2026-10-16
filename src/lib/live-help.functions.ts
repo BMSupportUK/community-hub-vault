@@ -329,3 +329,50 @@ export const sendLiveHelpWhatsAppInvite = createServerFn({ method: "POST" })
     } catch { /* ignore */ }
     return { ok: true as const, providerId };
   });
+
+/** Staff: every open video-help request across all orders (Talk video help box). */
+export const listOpenLiveHelpAll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const cutoff = new Date(Date.now() - SESSION_TTL_MS).toISOString();
+    await supabaseAdmin
+      .from("order_support_sessions")
+      .update({ status: "expired", ended_at: new Date().toISOString(), ended_by: "timeout" })
+      .in("status", ["waiting", "live"])
+      .lt("requested_at", cutoff);
+    const { data: rows, error } = await supabaseAdmin
+      .from("order_support_sessions")
+      .select("*")
+      .in("status", ["waiting", "live"])
+      .order("requested_at", { ascending: true })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    const list = (rows ?? []) as SessionRow[];
+    const orderIds = [...new Set(list.map((r) => r.order_id))];
+    const staffIds = [...new Set(list.map((r) => r.joined_by).filter(Boolean))] as string[];
+    const [{ data: orders }, { data: profiles }] = await Promise.all([
+      orderIds.length
+        ? supabaseAdmin.from("orders").select("id,order_ref,shipping_name").in("id", orderIds)
+        : Promise.resolve({ data: [] as any[] }),
+      staffIds.length
+        ? supabaseAdmin.from("profiles").select("id,username").in("id", staffIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const oMap = new Map((orders ?? []).map((o: any) => [String(o.id), o]));
+    const pMap = new Map((profiles ?? []).map((p: any) => [String(p.id), p.username ? String(p.username) : null]));
+    return {
+      sessions: list.map((r) => {
+        const o: any = oMap.get(r.order_id);
+        return {
+          ...toSession(r),
+          orderRef: o?.order_ref ? String(o.order_ref) : null,
+          customerName: o?.shipping_name ? String(o.shipping_name) : null,
+          claimedById: r.joined_by,
+          claimedByName: r.joined_by ? pMap.get(r.joined_by) ?? null : null,
+          mine: r.joined_by === context.userId,
+        };
+      }),
+    };
+  });

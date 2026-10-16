@@ -167,13 +167,6 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
           }
           if (n.kind === "live_help" && canManageOrders) {
             playKindTone("live_help", "live-help");
-            toast(`📹 ${n.title}`, {
-              description: n.body ?? "A customer is waiting for live camera help.",
-              duration: 10000,
-              action: n.link_path
-                ? { label: "Open", onClick: () => navigate({ to: n.link_path! } as never) }
-                : undefined,
-            });
             return;
           }
           if (n.kind === "ticket_raised" && canHandleTickets) {

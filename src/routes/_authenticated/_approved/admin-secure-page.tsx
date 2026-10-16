@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,8 @@ import { canViewStaffCheckout } from "@/lib/checkout-access";
 import shopHero from "@/assets/shop-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-secure-page")({
-  validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string; call?: string } => ({
+    call: typeof search.call === "string" ? (search.call as string) : undefined,
     order: typeof search.order === "string" ? (search.order as string) : undefined,
     ref: typeof search.ref === "string" ? (search.ref as string) : undefined,
   }),
@@ -29,10 +30,19 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-secure-pag
 
 function SecurePageAdmin() {
   const { roles } = useAuth();
-  const { order, ref: refParam } = Route.useSearch();
+  const { order, ref: refParam, call: callParam } = Route.useSearch();
   const call = useOrderVideoCallStaff(order ?? "");
   const [orderRef, setOrderRef] = useState<string | null>(refParam ?? null);
   const [loaded, setLoaded] = useState(!!refParam);
+  const autoAnswered = useRef(false);
+
+  // Claimed from the Talk video help box: drop straight into that call.
+  useEffect(() => {
+    if (!callParam || autoAnswered.current || call.inCall || call.busy) return;
+    if (call.session?.id !== callParam) return;
+    autoAnswered.current = true;
+    void call.answer();
+  }, [callParam, call]);
 
   useEffect(() => {
     if (!order) return;
