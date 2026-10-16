@@ -192,19 +192,7 @@ function DeviceCard({
             {device.brand && <div className="text-xs uppercase tracking-wide text-muted-foreground">{device.brand}</div>}
             <h3 className="text-lg font-semibold leading-tight">{device.name}</h3>
           </div>
-          {price && isWos && (
-            <div className="shrink-0 flex flex-col items-end gap-1">
-              <Badge variant="secondary" className="text-[10px]">{relTime(price.scraped_at)}</Badge>
-              {outOfStock ? (
-                <Badge variant="destructive" className="text-[10px]">Out of stock</Badge>
-              ) : inStock ? (
-                <Badge className="text-[10px] bg-emerald-600 text-white hover:bg-emerald-600">In stock</Badge>
-              ) : null}
-              {price.stock_checked_at && (
-                <span className="text-[10px] text-muted-foreground">
-                  stock checked {relTime(price.stock_checked_at)}
-                </span>
-              )}
+          <Badge className="shrink-0 text-[10px]">Highly recommended</Badge>
             </div>
           )}
         </div>
@@ -238,49 +226,6 @@ function DeviceCard({
           </div>
         )}
 
-        <div className="mt-auto pt-2 space-y-2">
-          {!isWos ? (
-            <>
-              <p className="text-xs text-muted-foreground">
-                We don&apos;t have that model — please search the internet for stock and price.
-              </p>
-              <Button asChild className="w-full" variant="outline">
-                <a
-                  href={`https://www.google.com/search?q=${encodeURIComponent(`${device.brand ?? ""} ${device.name} price UK`.trim())}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="size-4" />
-                  Search the internet for stock and price
-                </a>
-              </Button>
-            </>
-          ) : (
-            <>
-          {outOfStock && (
-            <p className="text-xs font-medium text-destructive">
-              Currently out of stock{retailer ? ` at ${retailer}` : ""} — check back soon.
-            </p>
-          )}
-          {listingUrl ? (
-            <Button asChild className="w-full" variant={outOfStock ? "outline" : "default"}>
-              <a href={listingUrl} target="_blank" rel="sponsored noopener noreferrer">
-                <ExternalLink className="size-4" />
-                {outOfStock
-                  ? `Out of stock — view on ${retailer || "store"}${priceLabel ? ` (${priceLabel})` : ""}`
-                  : priceLabel
-                    ? `Buying from our streaming partner — ${priceLabel}`
-                    : `Buying from our streaming partner${retailer ? ` (${retailer})` : ""}`}
-              </a>
-            </Button>
-          ) : (
-            <Button className="w-full" disabled>
-              Price unavailable
-            </Button>
-          )}
-            </>
-          )}
-        </div>
       </div>
     </article>
   );
