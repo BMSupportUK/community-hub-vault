@@ -51,6 +51,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   // Early renewals stack the new months on top of the time the customer still has left.
   const [stackEarly, setStackEarly] = useState(true);
   const [paidLocal, setPaidLocal] = useState("");
+  const [setupOpen, setSetupOpen] = useState(false);
   const toLocal = (d: Date) => {
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
