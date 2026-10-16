@@ -251,7 +251,7 @@ function DeviceCard({
                   rel="noopener noreferrer"
                 >
                   <ExternalLink className="size-4" />
-                  Search online for price
+                  Search the internet for stock and price
                 </a>
               </Button>
             </>
