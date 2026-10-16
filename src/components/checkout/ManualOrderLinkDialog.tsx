@@ -5,6 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, StaffCheckoutChatBubble, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,6 +51,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   // Early renewals stack the new months on top of the time the customer still has left.
   const [stackEarly, setStackEarly] = useState(true);
   const [paidLocal, setPaidLocal] = useState("");
+  const [setupOpen, setSetupOpen] = useState(false);
   const toLocal = (d: Date) => {
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -196,6 +198,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       if (setupError) throw setupError;
       setLink((current) => current ? { ...current, account_setup_at: (data as string | null) ?? new Date().toISOString() } : current);
       setAccountPassword("");
+      setSetupOpen(false);
       toast.success("Account saved and login details sent in the chat");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : (error as { message?: string })?.message ?? "Account details could not be sent");
@@ -256,15 +259,29 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
         {orderCompleted && <p className="text-xs text-success font-medium">Sale completed.</p>}
       </div>}
       {canComplete && !renewal && orderPaid && !link.account_setup_at && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="size-4 text-primary" /> Complete the new account</div>
-          <p className="text-xs text-muted-foreground">Enter the service login details. Saving them creates the customer's credential and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
-          <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
-          <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
-          {extraFields}
-          <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
-        </div>
+        <Dialog open={setupOpen} onOpenChange={setSetupOpen}>
+          <DialogTrigger asChild>
+            <button type="button" className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"><KeyRound className="size-4" /> Set up the new account</button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" /> Complete the new account</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Enter the service login details. Saving them creates the customer's credential and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
+              <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+              <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+              {extraFields}
+              <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
+    </div>
+  );
+  const linkFields = (
+    <div className="space-y-3 min-w-0">
+      <div className="text-xs font-medium">Send to the customer</div>
       <CopyField label="Secure page link" value={url} />
       <CopyField label="Password" value={link.password} />
       <CopyField label="Link + password (to send to the customer)" value={`Your secure order page: ${url}\nPassword: ${link.password}`} />
@@ -322,18 +339,24 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       </div>
     );
   }
-  if (!withChat) return fields;
+  if (!withChat) return <div className="space-y-4">{fields}{linkFields}</div>;
   // The full-page secure checkout panel keeps the chat as a bottom-corner
-  // bubble like the customer's own page, so the details get the whole width.
+  // bubble like the customer's own page; the customer link and password sit
+  // in a sidebar on the right so the details get the main width.
   if (chatBubble) return (
     <>
-      {fields}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        {fields}
+        <aside className="min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-6">
+          {linkFields}
+        </aside>
+      </div>
       <StaffCheckoutChatBubble orderId={orderId} token={link.token} orderRef={orderRef} />
     </>
   );
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
-      {fields}
+      <div className="space-y-4 min-w-0">{fields}{linkFields}</div>
       <aside className="min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-6">
         <div>
           <div className="text-xs font-medium">Chat for this sale only</div>
