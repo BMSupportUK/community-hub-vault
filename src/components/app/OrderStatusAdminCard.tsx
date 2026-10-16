@@ -40,7 +40,7 @@ function statusTone(s: string) {
 
 function paymentLabel(provider: string | null | undefined) {
   const v = (provider ?? "").toLowerCase();
-  if (v === "stripe") return "Stripe";
+  if (v === "stripe") return "Stripe (card or bank)";
   if (v === "square") return "Square";
   if (v === "bank_transfer" || v === "bank") return "Bank transfer";
   if (v === "crypto") return "Crypto";
