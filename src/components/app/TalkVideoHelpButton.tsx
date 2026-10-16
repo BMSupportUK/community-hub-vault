@@ -151,40 +151,59 @@ export function TalkVideoHelpButton({ variant = "bar" }: { variant?: "bar" | "ic
         </div>
       )}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
-          <DialogHeader><DialogTitle>Video help calls</DialogTitle></DialogHeader>
-          <section className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Unclaimed ({waiting.length})</h3>
-            {waiting.length === 0 && <p className="text-sm text-muted-foreground">No customers waiting.</p>}
-            {waiting.map((r) => (
-              <div key={r.id} className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{label(r)}{r.customerName ? ` · ${r.customerName}` : ""}</p>
-                  <p className="text-xs text-muted-foreground">Waiting since {ago(r.requestedAt)}</p>
-                </div>
-                <Button size="sm" disabled={busy === r.id} onClick={() => claim(r)}>
-                  {busy === r.id ? "Claiming…" : "Claim"}
-                </Button>
+        {/* Full screen like the ticket overview, with its own close button. */}
+        <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-3 overflow-y-auto rounded-none p-4 sm:max-w-none lg:overflow-hidden">
+          <DialogHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+            <DialogTitle>Video help calls</DialogTitle>
+            {/* Labeled close, sitting clear of the X in the top-right corner. */}
+            <Button variant="outline" size="sm" className="mr-8" onClick={() => setOpen(false)}>
+              Close
+            </Button>
+          </DialogHeader>
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
+            <section className="flex min-h-0 flex-col rounded-lg border border-border bg-surface-1">
+              <header className="flex items-center justify-between border-b border-border px-3 py-2">
+                <h3 className="text-sm font-semibold">Unclaimed</h3>
+                <span className="rounded-full bg-destructive/20 px-2 py-0.5 text-xs font-bold text-destructive">{waiting.length}</span>
+              </header>
+              <div className="min-h-0 flex-1 space-y-2 p-2 lg:overflow-y-auto">
+                {waiting.length === 0 && <p className="p-2 text-xs text-muted-foreground">No customers waiting.</p>}
+                {waiting.map((r) => (
+                  <div key={r.id} className="rounded-md border border-destructive/40 bg-destructive/10 p-2">
+                    <p className="truncate text-sm font-medium">{label(r)}{r.customerName ? ` · ${r.customerName}` : ""}</p>
+                    <p className="text-[11px] text-muted-foreground">Waiting since {ago(r.requestedAt)}</p>
+                    <div className="mt-2">
+                      <Button size="sm" className="h-8" disabled={busy === r.id} onClick={() => claim(r)}>
+                        {busy === r.id ? "Claiming…" : "Claim call"}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </section>
-          <section className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Claimed ({claimed.length})</h3>
-            {claimed.length === 0 && <p className="text-sm text-muted-foreground">No calls in progress.</p>}
-            {claimed.map((r) => (
-              <div key={r.id} className="flex items-center gap-2 rounded-md border border-border bg-surface-2/60 p-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{label(r)}{r.customerName ? ` · ${r.customerName}` : ""}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Claimed by {r.mine ? "you" : r.claimedByName ?? "staff"}{r.joinedAt ? ` · ${ago(r.joinedAt)}` : ""}
-                  </p>
-                </div>
-                <Button size="sm" variant={r.mine ? "default" : "outline"} onClick={() => goTo(r, r.mine)}>
-                  {r.mine ? "Go to call" : "View order"}
-                </Button>
+            </section>
+            <section className="flex min-h-0 flex-col rounded-lg border border-border bg-surface-1">
+              <header className="flex items-center justify-between border-b border-border px-3 py-2">
+                <h3 className="text-sm font-semibold">Claimed</h3>
+                <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-bold text-primary">{claimed.length}</span>
+              </header>
+              <div className="min-h-0 flex-1 space-y-2 p-2 lg:overflow-y-auto">
+                {claimed.length === 0 && <p className="p-2 text-xs text-muted-foreground">No calls in progress.</p>}
+                {claimed.map((r) => (
+                  <div key={r.id} className="rounded-md border border-border bg-background/60 p-2">
+                    <p className="truncate text-sm font-medium">{label(r)}{r.customerName ? ` · ${r.customerName}` : ""}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Claimed by {r.mine ? "you" : r.claimedByName ?? "staff"}{r.joinedAt ? ` · ${ago(r.joinedAt)}` : ""}
+                    </p>
+                    <div className="mt-2">
+                      <Button size="sm" variant={r.mine ? "default" : "outline"} className="h-8" onClick={() => goTo(r, r.mine)}>
+                        {r.mine ? "Go to call" : "View order"}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </section>
+            </section>
+          </div>
         </DialogContent>
       </Dialog>
     </>
