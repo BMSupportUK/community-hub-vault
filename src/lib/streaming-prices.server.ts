@@ -122,17 +122,16 @@ function fromHtml(html: string): PriceScrape | null {
     if (cur) currency = cur[1];
   }
 
-  // OpenCart shops (world-of-satellite): live price + Ex Tax, and a
-  // data-stock-status attribute ("In Stock" / "Out Of Stock") on the cart button.
+  // OpenCart shops (world-of-satellite): live price + Ex Tax. The
+  // "Availability: In Stock" list item disappears on out-of-stock pages, and
+  // only out-of-stock pages get the "outofstock" button class.
   const live = html.match(/class=["']live-price["'][^>]*>([^<]+)</i);
   if (live) setPrice(live[1]);
-  const stockStatus = html.match(/data-stock-status=["']([^"']+)["']/i);
-  if (stockStatus) {
-    availability = /out/i.test(stockStatus[1]) ? "Out of stock" : "In stock";
-  } else {
-    const availLabel = html.match(/Availability\s*:?\s*(?:<\/[^>]+>)?\s*(In Stock|Out Of Stock|Out of Stock)/i);
-    if (availLabel) availability = /out/i.test(availLabel[1]) ? "Out of stock" : "In stock";
+  const availLabel = html.match(/Availability\s*:\s*([^<]+)</i);
+  if (availLabel) {
+    availability = /out/i.test(availLabel[1]) ? "Out of stock" : /in stock/i.test(availLabel[1]) ? "In stock" : null;
   }
+  if (!availability && html.includes("outofstock")) availability = "Out of stock";
 
   // OpenCart category fallback: discounted price span.
   const priceNew = html.match(/class=["']price-new["'][^>]*>([^<]+)</i);
