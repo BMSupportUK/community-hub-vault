@@ -147,8 +147,8 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
   );
 }
 
-/** Staff side on the admin secure page: ring + answer the customer's call. */
-export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
+/** Staff-side hook: watches for the customer's video call and handles answer/end. */
+export function useOrderVideoCallStaff(orderId: string) {
   const list = useServerFn(listOrderLiveHelp);
   const join = useServerFn(joinLiveHelp);
   const endFn = useServerFn(endLiveHelpStaff);
@@ -211,35 +211,45 @@ export function OrderVideoCallStaff({ orderId }: { orderId: string }) {
     if (s) await endFn({ data: { sessionId: s.id } }).catch(() => undefined);
   }, [session, endFn]);
 
-  if (!session) return null;
+  return { session, inCall, busy, checkoutLink, isMale, answer, end };
+}
+
+export type OrderVideoCallStaffState = ReturnType<typeof useOrderVideoCallStaff>;
+
+/** Incoming-call banner with accept/decline — shown in the right sidebar above the secure links. */
+export function OrderVideoCallIncoming({ call }: { call: OrderVideoCallStaffState }) {
+  if (!call.session || call.inCall) return null;
   return (
     <>
-      {!inCall && (
-        <>
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary bg-primary/10 p-3 text-sm">
-            <Video className="size-5 text-primary" />
-            <span className="flex-1 font-semibold">{session.status === "waiting" ? "The customer is video calling you" : "Video call in progress"}</span>
-            <button type="button" disabled={busy} onClick={answer} className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
-              {busy ? <Loader2 className="size-3 animate-spin" /> : <Phone className="size-3" />} {session.status === "waiting" ? "Answer" : "Rejoin"}
-            </button>
-            <button type="button" onClick={end} className="inline-flex items-center gap-1 rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
-              <PhoneOff className="size-3" /> {session.status === "waiting" ? "Decline" : "End"}
-            </button>
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary bg-primary/10 p-3 text-sm">
+        <Video className="size-5 text-primary" />
+        <span className="flex-1 font-semibold">{call.session.status === "waiting" ? "The customer is video calling you" : "Video call in progress"}</span>
+        <button type="button" disabled={call.busy} onClick={call.answer} className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
+          {call.busy ? <Loader2 className="size-3 animate-spin" /> : <Phone className="size-3" />} {call.session.status === "waiting" ? "Accept" : "Rejoin"}
+        </button>
+        <button type="button" onClick={call.end} className="inline-flex items-center gap-1 rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
+          <PhoneOff className="size-3" /> Decline
+        </button>
+      </div>
+      {call.checkoutLink && (
+        <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
+          <div className="shrink-0 rounded-lg bg-white p-2">
+            <QRCode value={`${secureCheckoutUrl(call.checkoutLink.token)}?pw=${encodeURIComponent(call.checkoutLink.password)}`} size={112} />
           </div>
-          {checkoutLink && (
-            <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
-              <div className="shrink-0 rounded-lg bg-white p-2">
-                <QRCode value={`${secureCheckoutUrl(checkoutLink.token)}?pw=${encodeURIComponent(checkoutLink.password)}`} size={112} />
-              </div>
-              <div className="min-w-0 space-y-1">
-                <p className="flex items-center gap-1.5 text-sm font-semibold"><QrCode className="size-4 text-primary" /> Customer wants video help — scan to use their phone</p>
-                <p className="text-sm text-muted-foreground">The customer scans this with their phone camera. It opens their order page on the phone, already signed in — they tap Start video call there and their phone camera shows up here, big, while the chat carries on their computer.</p>
-              </div>
-            </div>
-          )}
-        </>
+          <div className="min-w-0 space-y-1">
+            <p className="flex items-center gap-1.5 text-sm font-semibold"><QrCode className="size-4 text-primary" /> Customer wants video help — scan to use their phone</p>
+            <p className="text-sm text-muted-foreground">The customer scans this with their phone camera. It opens their order page on the phone, already signed in — they tap Start video call there and their phone camera shows up here, big, while the chat carries on their computer.</p>
+          </div>
+        </div>
       )}
-      {inCall && <VideoCallStage topic={`video-call-${session.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} placeholderImage={isMale ? staffPlaceholderMale : undefined} staffGender={isMale ? "male" : "female"} />}
     </>
+  );
+}
+
+/** The live call view — rendered once staff have accepted, on top of the page. */
+export function OrderVideoCallStaffStage({ call }: { call: OrderVideoCallStaffState }) {
+  if (!call.session || !call.inCall) return null;
+  return (
+    <VideoCallStage topic={`video-call-${call.session.id}`} side="offerer" otherName="the customer" onHangup={call.end} startWithCamera={false} placeholderImage={call.isMale ? staffPlaceholderMale : undefined} staffGender={call.isMale ? "male" : "female"} />
   );
 }
