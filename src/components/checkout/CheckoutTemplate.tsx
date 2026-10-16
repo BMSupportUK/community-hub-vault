@@ -341,6 +341,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             <aside className="min-w-0 space-y-6 lg:sticky lg:top-4">
               <section className="rounded-2xl border border-border bg-card p-5">
                 <h2 className="font-semibold">Bank transfer details</h2>
+                <p className="text-xs text-muted-foreground mb-1">UK bank accounts only — overseas bank transfers aren't accepted.</p>
                 <p className="text-xs text-muted-foreground mb-3">Send exactly {GBP(order.totalCents)} to this account.</p>
                 {bank ? (
                   <div className="rounded-xl border border-border px-3">
