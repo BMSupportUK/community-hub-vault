@@ -12,11 +12,12 @@ export async function initialCallMedia(
 /** Uses the audio slot already negotiated, without restarting the call. */
 export async function attachCallMicrophone(pc: RTCPeerConnection, stream: MediaStream, devices: Pick<MediaDevices, "getUserMedia">) {
   const slot = pc.getTransceivers().find((t) => t.receiver.track.kind === "audio");
-  if (!slot || pc.connectionState === "closed") throw new Error("Call ended");
+  const isClosed = () => pc.connectionState === "closed";
+  if (!slot || isClosed()) throw new Error("Call ended");
   const fresh = await devices.getUserMedia({ audio: true, video: false });
   const track = fresh.getAudioTracks()[0];
   try {
-    if (!track || pc.connectionState === "closed") throw new Error("Microphone unavailable");
+    if (!track || isClosed()) throw new Error("Microphone unavailable");
     await slot.sender.replaceTrack(track);
     track.enabled = true;
     stream.addTrack(track);
