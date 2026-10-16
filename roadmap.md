@@ -182,3 +182,4 @@
 - [x] Video help icon in the Working Status box beside the tickets icon; signed-in /home check shows both buttons and the claim box opens
 
 - [x] Video help icon moved into the Talk channel header staff controls beside the tickets icon; side-panel copies removed; signed-in /home/welcome check shows camera icon at x=796 next to tickets at x=834
+- [x] Video help icon tooltip with live counts (Waiting / In progress) in the Talk header and Working Status box; verified with a real test call.
