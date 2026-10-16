@@ -21,25 +21,32 @@ export function CheckoutCardPayment({ token, password, method, amountCents, onPa
     [charge, token, password],
   );
 
+  const [bank, setBank] = useState(false);
+  const [bankErr, setBankErr] = useState<string | null>(null);
+
   const stripeOptions = useMemo(() => ({
-    // One session per page load: a remount (dev double-render, re-render of the
+    // One session per page load and mode: a remount (dev double-render, re-render of the
     // sidebar) must reuse it, otherwise the second request expires the session
     // the card form is showing and Stripe says "Something went wrong".
     fetchClientSecret: () => {
-      const cached = stripeSecrets.get(token);
+      const key = `${token}:${bank ? "bank" : "card"}`;
+      const cached = stripeSecrets.get(key);
       if (cached) return cached;
       const p = (async () => {
-        const r = await stripeSession({ data: { token, password, environment: getStripeEnvironment(), returnUrl: window.location.href } });
-        if ("error" in r) throw new Error(r.error);
+        const r = await stripeSession({ data: { token, password, environment: getStripeEnvironment(), returnUrl: window.location.href, bank } });
+        if ("error" in r) {
+          if (bank) { setBankErr(r.error); setBank(false); }
+          throw new Error(r.error);
+        }
         return r.clientSecret;
       })();
-      stripeSecrets.set(token, p);
-      p.catch(() => stripeSecrets.delete(token));
+      stripeSecrets.set(key, p);
+      p.catch(() => stripeSecrets.delete(key));
       return p;
     },
     onComplete: () => { void onPaid(); },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [token, password]);
+  }), [token, password, bank]);
 
   if (method === "crypto") return <CryptoPay token={token} password={password} amountCents={amountCents} />;
   if (method === "square") {
@@ -54,11 +61,33 @@ export function CheckoutCardPayment({ token, password, method, amountCents, onPa
       />
     );
   }
+  const switchTo = (b: boolean) => {
+    if (b === bank) return;
+    // Switching creates a new session server-side (which expires the other one), so drop both caches.
+    stripeSecrets.delete(`${token}:card`); stripeSecrets.delete(`${token}:bank`);
+    setBankErr(null); setBank(b);
+  };
   return (
-    <div className="rounded-xl overflow-hidden">
-      <EmbeddedCheckoutProvider stripe={getStripe()} options={stripeOptions}>
-        <EmbeddedCheckout />
-      </EmbeddedCheckoutProvider>
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2 rounded-xl border border-border p-1">
+        {([false, true] as const).map((b) => (
+          <button
+            key={String(b)}
+            type="button"
+            onClick={() => switchTo(b)}
+            className={`h-10 rounded-lg text-sm font-semibold transition-colors ${bank === b ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            {b ? "Pay by bank" : "Pay by card"}
+          </button>
+        ))}
+      </div>
+      {bank && <p className="text-xs text-muted-foreground">Choose your UK bank and approve the payment in your banking app. No card needed.</p>}
+      {bankErr && <p className="text-sm text-destructive">{bankErr}</p>}
+      <div className="rounded-xl overflow-hidden">
+        <EmbeddedCheckoutProvider key={bank ? "bank" : "card"} stripe={getStripe()} options={stripeOptions}>
+          <EmbeddedCheckout />
+        </EmbeddedCheckoutProvider>
+      </div>
     </div>
   );
 }

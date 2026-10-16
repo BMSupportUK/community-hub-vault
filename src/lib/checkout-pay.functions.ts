@@ -150,7 +150,7 @@ export const checkoutSquareCharge = createServerFn({ method: "POST" })
   });
 
 export const checkoutStripeSession = createServerFn({ method: "POST" })
-  .inputValidator((d) => creds.extend({ environment: z.enum(["sandbox", "live"]), returnUrl: z.string().url() }).parse(d))
+  .inputValidator((d) => creds.extend({ environment: z.enum(["sandbox", "live"]), returnUrl: z.string().url(), bank: z.boolean().optional() }).parse(d))
   .handler(async ({ data }): Promise<{ clientSecret: string } | { error: string }> => {
     const { createStripeClient, getStripeErrorMessage } = await import("@/lib/stripe.server");
     try {
@@ -166,10 +166,16 @@ export const checkoutStripeSession = createServerFn({ method: "POST" })
         mode: "payment",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
+        ...(data.bank ? { payment_method_types: ["pay_by_bank"] } : {}),
         line_items: [{ price_data: { currency: "gbp", product_data: { name: `Order ${ref}` }, unit_amount: order.total_cents }, quantity: 1 }],
         payment_intent_data: { description: `Order ${ref}`, metadata: { order_id: String(order.id) } },
         metadata: { order_id: String(order.id), ...(order.user_id ? { user_id: String(order.user_id) } : {}) },
-      } as any);
+      } as any).catch((e: unknown) => {
+        if (data.bank && /pay_by_bank|payment method/i.test((e as Error)?.message ?? "")) {
+          throw new Error("Pay by bank isn't available right now — please pay by card.");
+        }
+        throw e;
+      });
       if (!session.client_secret) throw new Error("Stripe did not return a client secret");
       await supabaseAdmin.from("order_payments").upsert({
         order_id: order.id, provider: "stripe", provider_payment_id: session.id, square_payment_id: session.id,
@@ -179,7 +185,7 @@ export const checkoutStripeSession = createServerFn({ method: "POST" })
       });
     } catch (e) {
       const m = (e as Error)?.message ?? "";
-      if (/already|in progress|bank transfer|crypto payment|cancelled/i.test(m)) return { error: m };
+      if (/already|in progress|bank transfer|crypto payment|cancelled|Pay by bank/i.test(m)) return { error: m };
       return { error: getStripeErrorMessage(e) };
     }
   });

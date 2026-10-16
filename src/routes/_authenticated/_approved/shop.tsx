@@ -2865,7 +2865,7 @@ function Checkout({
                 {(["square", "stripe", "crypto"] as const).map((m) => (
                   <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
                     className={`rounded-lg border p-3 text-left text-sm ${payMethod === m ? "border-primary bg-primary/10" : "border-border"}`}>
-                    <span className="font-semibold">{m === "square" ? "Square (card)" : m === "stripe" ? "Stripe (card)" : "Crypto (USDT)"}</span>
+                    <span className="font-semibold">{m === "square" ? "Square (card)" : m === "stripe" ? "Stripe (card or bank)" : "Crypto (USDT)"}</span>
                     {m === "square" && <span className="ml-2 text-[10px] uppercase tracking-wide rounded bg-primary text-primary-foreground px-1.5 py-0.5">Preferred</span>}
                   </button>
                 ))}
