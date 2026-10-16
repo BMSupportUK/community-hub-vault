@@ -176,3 +176,5 @@
 - [x] ESPN+ import: rejoin slot dates wrapped across lines so UCF v Houston stays separate; 157 events, signed-in queue check shows no errors
 
 - [x] Staff calls connect without microphone permission; real two-browser order call verified with zero staff media requests, denied unmute keeps call alive, subsequent unmute works without restarting
+
+- [x] Video help icon in the Working Status box beside the tickets icon; signed-in /home check shows both buttons and the claim box opens
