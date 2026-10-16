@@ -153,9 +153,10 @@ export function TalkVideoHelpButton({ variant = "bar" }: { variant?: "bar" | "ic
       <Dialog open={open} onOpenChange={setOpen}>
         {/* Full screen like the ticket overview, with its own close button. */}
         <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-3 overflow-y-auto rounded-none p-4 sm:max-w-none lg:overflow-hidden">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
             <DialogTitle>Video help calls</DialogTitle>
-            <Button variant="outline" className="absolute right-4 top-4" onClick={() => setOpen(false)}>
+            {/* Labeled close, sitting clear of the X in the top-right corner. */}
+            <Button variant="outline" size="sm" className="mr-8" onClick={() => setOpen(false)}>
               Close
             </Button>
           </DialogHeader>
