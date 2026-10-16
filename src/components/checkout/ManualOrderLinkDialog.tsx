@@ -5,6 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, StaffCheckoutChatBubble, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
 import { useAuth } from "@/hooks/use-auth";
