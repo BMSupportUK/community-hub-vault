@@ -131,7 +131,6 @@ function fromHtml(html: string): PriceScrape | null {
   if (availLabel) {
     availability = /out/i.test(availLabel[1]) ? "Out of stock" : /in stock/i.test(availLabel[1]) ? "In stock" : null;
   }
-  if (!availability && html.includes("outofstock")) availability = "Out of stock";
 
   // OpenCart category fallback: discounted price span.
   const priceNew = html.match(/class=["']price-new["'][^>]*>([^<]+)</i);
