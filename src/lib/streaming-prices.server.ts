@@ -105,27 +105,44 @@ function fromJsonLd(html: string): PriceScrape | null {
   return { priceCents, currency, availability };
 }
 
-function fromMeta(html: string): PriceScrape | null {
+function fromHtml(html: string): PriceScrape | null {
   let priceCents: number | null = null;
   let currency: string | null = null;
-  const patterns = [
-    /itemprop=["']price["'][^>]*content=["']([^"']+)["']/i,
-    /content=["']([^"']+)["'][^>]*itemprop=["']price["']/i,
-    /property=["'](?:product|og):price:amount["'][^>]*content=["']([^"']+)["']/i,
-    /name=["']price["'][^>]*content=["']([^"']+)["']/i,
-  ];
-  for (const re of patterns) {
-    const m = html.match(re);
-    if (m) {
-      priceCents = parsePriceToCents(m[1]);
-      if (priceCents !== null) break;
-    }
-  }
-  const cur = html.match(/property=["'](?:product|og):price:currency["'][^>]*content=["']([A-Za-z]{3})["']/i);
-  if (cur) currency = cur[1].toUpperCase();
   let availability: string | null = null;
-  if (/out\s*of\s*stock/i.test(html)) availability = "Out of stock";
-  else if (/in\s*stock/i.test(html)) availability = "In stock";
+
+  const setPrice = (raw: string) => {
+    if (priceCents === null) priceCents = parsePriceToCents(raw);
+  };
+
+  // Amazon-style embedded JSON.
+  const priceAmount = html.match(/"priceAmount"\s*:\s*([\d.]+)/);
+  if (priceAmount) {
+    priceCents = parsePriceToCents(priceAmount[1]);
+    const cur = html.match(/"currencySymbol"[^}]*"currency"\s*:\s*"([A-Z]{3})"/);
+    if (cur) currency = cur[1];
+  }
+
+  // OpenCart shops (world-of-satellite): live price + Ex Tax, and an
+  // "Availability: In Stock / Out Of Stock" list item.
+  const live = html.match(/class=["']live-price["'][^>]*>([^<]+)</i);
+  if (live) setPrice(live[1]);
+  const availLabel = html.match(/Availability\s*:?\s*<\/?[a-z]+>?[^I]*?(In Stock|Out Of Stock|Out of Stock)/i);
+  if (availLabel) availability = /out/i.test(availLabel[1]) ? "Out of stock" : "In stock";
+
+  // OpenCart category fallback: discounted price span.
+  const priceNew = html.match(/class=["']price-new["'][^>]*>([^<]+)</i);
+  if (priceNew) setPrice(priceNew[1]);
+  const metaPrice =
+    html.match(/itemprop=["']price["'][^>]*content=["']([^"']+)["']/i) ??
+    html.match(/property=["'](?:product|og):price:amount["'][^>]*content=["']([^"']+)["']/i);
+  if (metaPrice) setPrice(metaPrice[1]);
+  const metaCur = html.match(/property=["'](?:product|og):price:currency["'][^>]*content=["']([A-Za-z]{3})["']/i);
+  if (metaCur) currency = currency ?? metaCur[1].toUpperCase();
+
+  if (!availability) {
+    if (/out\s*of\s*stock/i.test(html)) availability = "Out of stock";
+    else if (/in\s*stock/i.test(html)) availability = "In stock";
+  }
   if (priceCents === null && !availability) return null;
   return { priceCents, currency, availability };
 }
@@ -133,13 +150,14 @@ function fromMeta(html: string): PriceScrape | null {
 export async function scrapeDevicePrice(url: string): Promise<PriceScrape | null> {
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml" },
+      headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml", "Accept-Language": "en-GB,en;q=0.9" },
       signal: AbortSignal.timeout(15000),
       redirect: "follow",
     });
     if (!res.ok) return null;
     const html = await res.text();
-    return fromJsonLd(html) ?? fromMeta(html);
+    if (/captcha|Robot Check/i.test(html)) return null;
+    return fromJsonLd(html) ?? fromHtml(html);
   } catch {
     return null;
   }
