@@ -1309,7 +1309,7 @@ function ChannelPage() {
           </div>
           <Sheet open={mobilePeopleOpen} onOpenChange={setMobilePeopleOpen}>
             <SheetContent side="right" className="flex h-dvh w-[min(92vw,24rem)] flex-col gap-0 border-l border-border bg-surface p-0">
-              {!hideMembersPanel && <TalkVideoHelpButton />}
+              <TalkVideoHelpButton />
               {!hideMembersPanel && <TalkUnclaimedTicketsBar />}
               {!hideMembersPanel && (
                 <div className="grid shrink-0 grid-cols-2 gap-1 border-b border-border p-2 pr-12">
