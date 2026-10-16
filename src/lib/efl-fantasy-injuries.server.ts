@@ -157,10 +157,8 @@ export async function syncFantasyInjuriesFromEfl(admin: Admin): Promise<EflInjur
       continue;
     }
     seen.add(row.id);
-    // Admin flags win for 14 days, then the official feed takes over again so a
-    // forgotten manual "doubtful" can't stick on a player who is back playing.
-    const adminAge = Date.now() - Date.parse(row.injury_updated_at ?? "");
-    if (row.injury_source === "admin" && !(adminAge > 14 * 24 * 60 * 60 * 1000)) continue;
+    // The official EFL Fantasy feed is the single source of truth: every sync
+    // overwrites injury flags, including ones set by hand.
 
     if (flag.status === "none") {
       if ((row.injury_status ?? "none") !== "none") {
