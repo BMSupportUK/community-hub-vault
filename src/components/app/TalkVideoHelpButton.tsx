@@ -16,7 +16,7 @@ function ago(iso: string) {
 }
 
 /** Talk sidebar: staff video-help box listing unclaimed and claimed calls. */
-export function TalkVideoHelpButton() {
+export function TalkVideoHelpButton({ variant = "bar" }: { variant?: "bar" | "icon" }) {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "staff"]);
   const list = useServerFn(listOpenLiveHelpAll);
@@ -64,23 +64,51 @@ export function TalkVideoHelpButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex w-full shrink-0 items-center gap-1.5 border-b border-border px-2.5 py-1.5 text-left"
-        aria-label="Open video help calls"
-      >
-        <Video className={`size-3.5 shrink-0 ${waiting.length ? "animate-pulse text-destructive" : "text-primary"}`} />
-        <span className={`min-w-0 flex-1 truncate text-[11px] font-semibold ${waiting.length ? "text-destructive" : "text-foreground"}`}>
-          Video help
-        </span>
-        {waiting.length > 0 && (
-          <span className="rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">{waiting.length}</span>
-        )}
-        {claimed.length > 0 && (
-          <span className="rounded-full bg-primary/20 px-1.5 text-[10px] font-bold text-primary">{claimed.length} live</span>
-        )}
-      </button>
+      {variant === "bar" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex w-full shrink-0 items-center gap-1.5 border-b border-border px-2.5 py-1.5 text-left"
+          aria-label="Open video help calls"
+        >
+          <Video className={`size-3.5 shrink-0 ${waiting.length ? "animate-pulse text-destructive" : "text-primary"}`} />
+          <span className={`min-w-0 flex-1 truncate text-[11px] font-semibold ${waiting.length ? "text-destructive" : "text-foreground"}`}>
+            Video help
+          </span>
+          {waiting.length > 0 && (
+            <span className="rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">{waiting.length}</span>
+          )}
+          {claimed.length > 0 && (
+            <span className="rounded-full bg-primary/20 px-1.5 text-[10px] font-bold text-primary">{claimed.length} live</span>
+          )}
+        </button>
+      ) : (
+        // Working Status box: same round icon button as the tickets one beside it.
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Video help calls"
+          title={
+            waiting.length > 0
+              ? `${waiting.length} customer${waiting.length === 1 ? "" : "s"} waiting for video help – click to claim`
+              : claimed.length > 0
+                ? `${claimed.length} video call${claimed.length === 1 ? "" : "s"} in progress`
+                : "Video help calls"
+          }
+          className={`relative grid size-8 shrink-0 place-items-center rounded-full transition-colors ${
+            waiting.length > 0
+              ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
+              : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+          }`}
+        >
+          <Video className="size-3.5" />
+          {waiting.length > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-background px-1 text-[9px] font-bold leading-4 text-destructive ring-1 ring-destructive">
+              {waiting.length > 99 ? "99+" : waiting.length}
+            </span>
+          )}
+        </button>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
           <DialogHeader><DialogTitle>Video help calls</DialogTitle></DialogHeader>
