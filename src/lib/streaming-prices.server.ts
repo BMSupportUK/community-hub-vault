@@ -55,6 +55,7 @@ function availabilityFromUrl(u: string | undefined): string | null {
 type Offerish = {
   price?: unknown;
   lowPrice?: unknown;
+  highPrice?: unknown;
   priceCurrency?: unknown;
   availability?: unknown;
 };
