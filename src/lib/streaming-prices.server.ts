@@ -122,12 +122,17 @@ function fromHtml(html: string): PriceScrape | null {
     if (cur) currency = cur[1];
   }
 
-  // OpenCart shops (world-of-satellite): live price + Ex Tax, and an
-  // "Availability: In Stock / Out Of Stock" list item.
+  // OpenCart shops (world-of-satellite): live price + Ex Tax, and a
+  // data-stock-status attribute ("In Stock" / "Out Of Stock") on the cart button.
   const live = html.match(/class=["']live-price["'][^>]*>([^<]+)</i);
   if (live) setPrice(live[1]);
-  const availLabel = html.match(/Availability\s*:?\s*<\/?[a-z]+>?[^I]*?(In Stock|Out Of Stock|Out of Stock)/i);
-  if (availLabel) availability = /out/i.test(availLabel[1]) ? "Out of stock" : "In stock";
+  const stockStatus = html.match(/data-stock-status=["']([^"']+)["']/i);
+  if (stockStatus) {
+    availability = /out/i.test(stockStatus[1]) ? "Out of stock" : "In stock";
+  } else {
+    const availLabel = html.match(/Availability\s*:?\s*(?:<\/[^>]+>)?\s*(In Stock|Out Of Stock|Out of Stock)/i);
+    if (availLabel) availability = /out/i.test(availLabel[1]) ? "Out of stock" : "In stock";
+  }
 
   // OpenCart category fallback: discounted price span.
   const priceNew = html.match(/class=["']price-new["'][^>]*>([^<]+)</i);
@@ -156,7 +161,7 @@ export async function scrapeDevicePrice(url: string): Promise<PriceScrape | null
     });
     if (!res.ok) return null;
     const html = await res.text();
-    if (/captcha|Robot Check/i.test(html)) return null;
+    if (/Robot Check|validateCaptcha|Type the characters you see in this image/i.test(html)) return null;
     return fromJsonLd(html) ?? fromHtml(html);
   } catch {
     return null;
