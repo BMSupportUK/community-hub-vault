@@ -24,6 +24,7 @@ import { awayIcon, awayElapsedLabel } from "@/lib/staff-away";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
+import { TalkVideoHelpButton } from "@/components/app/TalkVideoHelpButton";
 import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon, breaksLeft, ukMinutes } from "@/lib/breaks";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
@@ -927,6 +928,7 @@ export function WorkingStatusBox({
               </div>
             </div>
             <div className={cn("flex items-center", compact ? "gap-1" : "gap-3")}>
+              <TalkVideoHelpButton variant="icon" />
               {(canAnswerTickets || roles.includes("moderator")) && (
                 <StaffTicketsButton
                   staffId={user.id}
