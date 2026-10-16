@@ -3,6 +3,7 @@ import { Mic, MicOff, PhoneOff, RefreshCw, RotateCw, Video, VideoOff, Loader2, V
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
+import { attachCallMicrophone, initialCallMedia } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
 
@@ -83,6 +84,8 @@ export function VideoCallStage({
   const [micOn, setMicOn] = useState(startWithCamera); // staff start muted; they unmute to talk
   const [camOn, setCamOn] = useState(startWithCamera);
   const [error, setError] = useState<string | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
+  const micStartingRef = useRef(false);
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
     chRef.current?.send({ type: "broadcast", event, payload }).catch(() => {});
@@ -204,9 +207,7 @@ export function VideoCallStage({
       } catch { /* fall back to STUN */ }
       let stream: MediaStream;
       try {
-        stream = startWithCamera
-          ? await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facingRef.current } }, audio: true })
-          : await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream = await initialCallMedia(startWithCamera, facingRef.current, navigator.mediaDevices, () => new MediaStream());
       } catch {
         if (!cancelled) setError(startWithCamera
           ? "Camera and microphone permission is needed for the call. Allow them in your browser and try again."
@@ -392,11 +393,29 @@ export function VideoCallStage({
   const totalRotate = (remoteRotate + manualRotate) % 360;
   const sideways = totalRotate === 90 || totalRotate === 270;
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
+    if (micStartingRef.current) return;
     const t = streamRef.current?.getAudioTracks()[0];
-    if (!t) return;
-    t.enabled = !t.enabled;
-    setMicOn(t.enabled);
+    if (t) {
+      t.enabled = !t.enabled;
+      setMicOn(t.enabled);
+      setMicError(null);
+      return;
+    }
+    const pc = pcRef.current;
+    const stream = streamRef.current;
+    if (!pc || !stream) return;
+    micStartingRef.current = true;
+    try {
+      const track = await attachCallMicrophone(pc, stream, navigator.mediaDevices);
+      if (pcRef.current !== pc || streamRef.current !== stream) { track.stop(); return; }
+      setMicOn(true);
+      setMicError(null);
+    } catch {
+      setMicError("Microphone unavailable. Allow microphone access to talk; the call can continue without it.");
+    } finally {
+      micStartingRef.current = false;
+    }
   };
   const toggleCam = async () => {
     if (!startWithCamera) return; // staff never share their camera
@@ -447,6 +466,7 @@ export function VideoCallStage({
       </div>
       <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
         <audio ref={audioRef} autoPlay className="hidden" />
+        {micError && <p role="status" className="absolute left-3 right-3 top-16 z-10 rounded bg-background/85 p-3 text-center text-sm text-foreground">{micError}</p>}
         <video
           ref={remoteRef}
           playsInline
