@@ -339,18 +339,24 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       </div>
     );
   }
-  if (!withChat) return fields;
+  if (!withChat) return <div className="space-y-4">{fields}{linkFields}</div>;
   // The full-page secure checkout panel keeps the chat as a bottom-corner
-  // bubble like the customer's own page, so the details get the whole width.
+  // bubble like the customer's own page; the customer link and password sit
+  // in a sidebar on the right so the details get the main width.
   if (chatBubble) return (
     <>
-      {fields}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        {fields}
+        <aside className="min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-6">
+          {linkFields}
+        </aside>
+      </div>
       <StaffCheckoutChatBubble orderId={orderId} token={link.token} orderRef={orderRef} />
     </>
   );
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
-      {fields}
+      <div className="space-y-4 min-w-0">{fields}{linkFields}</div>
       <aside className="min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-6">
         <div>
           <div className="text-xs font-medium">Chat for this sale only</div>
