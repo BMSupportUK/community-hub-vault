@@ -92,7 +92,7 @@ function fromJsonLd(html: string): PriceScrape | null {
   let currency: string | null = null;
   let availability: string | null = null;
   for (const o of offers) {
-    for (const key of ["price", "lowPrice", "highPrice"]) {
+    for (const key of ["price", "lowPrice", "highPrice"] as const) {
       const v = o[key];
       if (priceCents === null && (typeof v === "number" || typeof v === "string")) {
         priceCents = parsePriceToCents(String(v));
