@@ -198,6 +198,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       if (setupError) throw setupError;
       setLink((current) => current ? { ...current, account_setup_at: (data as string | null) ?? new Date().toISOString() } : current);
       setAccountPassword("");
+      setSetupOpen(false);
       toast.success("Account saved and login details sent in the chat");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : (error as { message?: string })?.message ?? "Account details could not be sent");
