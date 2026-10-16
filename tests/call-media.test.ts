@@ -31,7 +31,7 @@ test("denied staff microphone does not close the call", async () => {
 });
 
 test("a busy enabled microphone is distinguished from denied access", () => {
-  expect(callMicrophoneError(new DOMException("Device busy", "NotReadableError"))).toContain("Close other apps");
+  expect(callMicrophoneError(new DOMException("Device busy", "NotReadableError"))).toContain("in use by another app");
   expect(callMicrophoneError(new DOMException("Denied", "NotAllowedError"))).toContain("blocked");
   expect(callMicrophoneError(new DOMException("Track failed", "InvalidModificationError"))).not.toContain("blocked");
 });
