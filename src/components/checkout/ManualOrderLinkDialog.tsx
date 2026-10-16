@@ -30,7 +30,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 }
 
 /** Secure link + password panel, reused after saving an order and on the orders list. */
-export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, chatBubble = false, orderRef, onDone }: { orderId: string; withChat?: boolean; loginOnly?: boolean; chatBubble?: boolean; orderRef?: string | null; onDone?: () => void }) {
+export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, chatBubble = false, orderRef, onDone, sidebarTop }: { orderId: string; withChat?: boolean; loginOnly?: boolean; chatBubble?: boolean; orderRef?: string | null; onDone?: () => void; sidebarTop?: ReactNode }) {
   const { roles } = useAuth();
   const canComplete = canCompleteCheckoutSteps(roles);
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
@@ -348,6 +348,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         {fields}
         <aside className="min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-6">
+          {sidebarTop}
           {linkFields}
         </aside>
       </div>
