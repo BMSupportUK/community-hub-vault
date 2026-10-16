@@ -116,6 +116,17 @@ export function joinWrappedSlotDates(value: string): string {
   );
 }
 
+/**
+ * Pipe-less channel rows: "Ligue 1 Match 1 19:45 Le Mans vs Toulouse" becomes
+ * "Ligue 1 Match 1 | 19:45 Le Mans vs Toulouse" so the channel stays separate.
+ */
+export function insertMissingChannelPipe(value: string): string {
+  return value.replace(
+    /^([ \t]*[A-Za-z][A-Za-z0-9+&'. ]*?\s\d{1,2})[ \t]+(\d{1,2}[:.]\d{2}[ \t]+\S.*\b(?:vs?\.?|v)\b.*)$/gim,
+    (whole, channel: string, rest: string) => (whole.includes("|") ? whole : `${channel} | ${rest}`),
+  );
+}
+
 const decodeListingEntities = normalizeSportsListingText;
 
 /**
@@ -1167,7 +1178,7 @@ function normalizeChannelHeaderFixtureBlocks(raw: string): string {
 
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
-  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(joinWrappedSlotDates(raw)))));
+  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(insertMissingChannelPipe(joinWrappedSlotDates(raw))))));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
   // "Event HH:MM" continuation rows that belong to the channel above them.
