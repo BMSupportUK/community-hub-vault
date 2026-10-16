@@ -197,6 +197,13 @@ export async function refreshStreamingPrices(
   let updated = 0;
 
   await runChunked(rows, 6, async (d) => {
+    // Amazon serves bot-check pages to server-side readers; scraping it is
+    // unreliable and can corrupt stock state, so those rows keep their
+    // stored values until a readable source URL is set.
+    if (/amazon\./i.test(d.amazon_url)) {
+      missed.push(d.name);
+      return;
+    }
     const scrape = await scrapeDevicePrice(d.amazon_url);
     if (!scrape || (scrape.priceCents === null && !scrape.availability)) {
       missed.push(d.name);
