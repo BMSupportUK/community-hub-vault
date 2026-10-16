@@ -193,8 +193,6 @@ function DeviceCard({
             <h3 className="text-lg font-semibold leading-tight">{device.name}</h3>
           </div>
           <Badge className="shrink-0 text-[10px]">Highly recommended</Badge>
-            </div>
-          )}
         </div>
 
         {device.summary && <p className="text-sm text-muted-foreground">{device.summary}</p>}
@@ -225,6 +223,7 @@ function DeviceCard({
             <span className="font-medium text-foreground">Sideload: </span>{device.sideload_notes}
           </div>
         )}
+      </div>
 
       </div>
     </article>
