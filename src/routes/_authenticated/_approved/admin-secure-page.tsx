@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
-import { OrderVideoCallStaff } from "@/components/checkout/OrderVideoCall";
+import { OrderVideoCallIncoming, OrderVideoCallStaffStage, useOrderVideoCallStaff } from "@/components/checkout/OrderVideoCall";
 import { canViewStaffCheckout } from "@/lib/checkout-access";
 import shopHero from "@/assets/shop-hero.jpg";
 
@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-secure-pag
 function SecurePageAdmin() {
   const { roles } = useAuth();
   const { order, ref: refParam } = Route.useSearch();
+  const call = useOrderVideoCallStaff(order ?? "");
   const [orderRef, setOrderRef] = useState<string | null>(refParam ?? null);
   const [loaded, setLoaded] = useState(!!refParam);
 
@@ -60,10 +61,10 @@ function SecurePageAdmin() {
           <h1 className="font-display text-2xl font-bold">Secure page · {orderRef ?? (loaded ? order.slice(0, 8) : "…")}</h1>
           <p className="text-sm text-muted-foreground">Copy the link and password to send to the customer, and reply to their messages here.</p>
         </div>
-        <OrderVideoCallStaff orderId={order} />
         <div className="rounded-2xl border border-border bg-card/85 backdrop-blur-sm p-5 space-y-4">
-          <SecureLinkPanel orderId={order} chatBubble orderRef={orderRef} />
+          <SecureLinkPanel orderId={order} chatBubble orderRef={orderRef} sidebarTop={<OrderVideoCallIncoming call={call} />} />
         </div>
+        <OrderVideoCallStaffStage call={call} />
       </div>
     </main>
   );
