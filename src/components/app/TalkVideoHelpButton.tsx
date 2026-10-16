@@ -43,9 +43,9 @@ export function TalkVideoHelpButton() {
   const waiting = rows.filter((r) => r.status === "waiting");
   const claimed = rows.filter((r) => r.status === "live");
 
-  const goTo = (r: Row) => {
+  const goTo = (r: Row, join = true) => {
     setOpen(false);
-    navigate({ to: "/admin-secure-page", search: { order: r.orderId, call: r.id } as never });
+    navigate({ to: "/admin-secure-page", search: (join ? { order: r.orderId, call: r.id } : { order: r.orderId }) as never });
   };
 
   const claim = async (r: Row) => {
@@ -110,7 +110,7 @@ export function TalkVideoHelpButton() {
                     Claimed by {r.mine ? "you" : r.claimedByName ?? "staff"}{r.joinedAt ? ` · ${ago(r.joinedAt)}` : ""}
                   </p>
                 </div>
-                <Button size="sm" variant={r.mine ? "default" : "outline"} onClick={() => goTo(r)}>
+                <Button size="sm" variant={r.mine ? "default" : "outline"} onClick={() => goTo(r, r.mine)}>
                   {r.mine ? "Go to call" : "View order"}
                 </Button>
               </div>
