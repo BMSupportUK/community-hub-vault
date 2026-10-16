@@ -159,7 +159,13 @@ export async function scrapeDevicePrice(url: string): Promise<PriceScrape | null
     });
     if (!res.ok) return null;
     const html = await res.text();
-    if (/Robot Check|validateCaptcha|Type the characters you see in this image/i.test(html)) return null;
+    if (
+      /Robot Check|validateCaptcha|Type the characters you see in this image|api-services-support@amazon\.com|To discuss automated access to Amazon data/i.test(
+        html,
+      )
+    ) {
+      return null;
+    }
     return fromJsonLd(html) ?? fromHtml(html);
   } catch {
     return null;
