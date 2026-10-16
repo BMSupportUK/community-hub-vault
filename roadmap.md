@@ -183,3 +183,5 @@
 
 - [x] Video help icon moved into the Talk channel header staff controls beside the tickets icon; side-panel copies removed; signed-in /home/welcome check shows camera icon at x=796 next to tickets at x=834
 - [x] Video help icon tooltip with live counts (Waiting / In progress) in the Talk header and Working Status box; verified with a real test call.
+
+- [x] Streaming device prices: rebuilt the missing refresh pages the daily/stock cron jobs call (they had been 404ing since early October); scraped prices and stock updated for the eight satellite-shop devices (Z Mini £109, A11 Gold £129, A11 Link £99 out of stock, KD3 £68.95); Amazon and Xiaomi pages hide prices from server readers so those rows keep their stored values; stock cron now sends the secret header.
