@@ -388,8 +388,8 @@ export function StreamingDevicesPage() {
         <header className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Streaming device reviews</h1>
           <p className="text-muted-foreground max-w-2xl">
-            Hand-picked Android TV / Google TV boxes that all support sideloading. Prices refresh
-            weekly from UK retailers.
+            Devices we highly recommend — hand-picked Android TV / Google TV boxes that all
+            support sideloading.
           </p>
         </header>
 
