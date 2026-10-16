@@ -194,7 +194,6 @@ export async function syncFantasyInjuriesFromEfl(admin: Admin): Promise<EflInjur
   // Anyone the feed no longer lists at all: drop stale feed-set flags.
   for (const row of pool) {
     if (seen.has(row.id)) continue;
-    if (row.injury_source !== "feed") continue;
     if ((row.injury_status ?? "none") === "none") continue;
     await admin
       .from("fantasy_players")
