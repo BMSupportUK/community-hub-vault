@@ -160,11 +160,10 @@ function DeviceCard({
   const brandStoreOnly = /(^|\.)(mi|xiaomi)\.com$/i.test(
     (() => { try { return new URL(device.amazon_url).hostname.replace(/^www\./, ""); } catch { return ""; } })(),
   );
-  // A cheaper shop found by the daily price comparison (shop_name set) wins.
-  const listingUrl = price?.shop_name && price.source_url
-    ? price.source_url
-    : brandStoreOnly ? device.amazon_url : (price?.source_url || device.amazon_url);
-  const retailer = price?.shop_name && price.source_url ? price.shop_name : retailerFromUrl(listingUrl);
+  // Only World of Satellite devices show a price and buy link; others ask the reader to search online.
+  const isWos = /world-of-satellite/i.test(device.amazon_url);
+  const listingUrl = brandStoreOnly ? device.amazon_url : (price?.source_url || device.amazon_url);
+  const retailer = retailerFromUrl(listingUrl);
   const outOfStock = /out\s*of\s*stock|sold\s*out|unavailable|coming\s*soon/i.test(price?.availability ?? "");
   const inStock = !outOfStock && /in\s*stock|available/i.test(price?.availability ?? "");
   const rangeLabel = formatRange(
@@ -193,7 +192,7 @@ function DeviceCard({
             {device.brand && <div className="text-xs uppercase tracking-wide text-muted-foreground">{device.brand}</div>}
             <h3 className="text-lg font-semibold leading-tight">{device.name}</h3>
           </div>
-          {price && (
+          {price && isWos && (
             <div className="shrink-0 flex flex-col items-end gap-1">
               <Badge variant="secondary" className="text-[10px]">{relTime(price.scraped_at)}</Badge>
               {outOfStock ? (
@@ -240,6 +239,24 @@ function DeviceCard({
         )}
 
         <div className="mt-auto pt-2 space-y-2">
+          {!isWos ? (
+            <>
+              <p className="text-xs text-muted-foreground">
+                We don't sell this device — please search online for the best price.
+              </p>
+              <Button asChild className="w-full" variant="outline">
+                <a
+                  href={`https://www.google.com/search?q=${encodeURIComponent(`${device.brand ?? ""} ${device.name} price UK`.trim())}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="size-4" />
+                  Search online for price
+                </a>
+              </Button>
+            </>
+          ) : (
+            <>
           {outOfStock && (
             <p className="text-xs font-medium text-destructive">
               Currently out of stock{retailer ? ` at ${retailer}` : ""} — check back soon.
@@ -260,6 +277,8 @@ function DeviceCard({
             <Button className="w-full" disabled>
               Price unavailable
             </Button>
+          )}
+            </>
           )}
         </div>
       </div>
