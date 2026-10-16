@@ -178,3 +178,5 @@
 - [x] Staff calls connect without microphone permission; real two-browser order call verified with zero staff media requests, denied unmute keeps call alive, subsequent unmute works without restarting
 
 - [x] Video help icon in the Working Status box beside the tickets icon; signed-in /home check shows both buttons and the claim box opens
+
+- [x] Video help icon moved into the Talk channel header staff controls beside the tickets icon; side-panel copies removed; signed-in /home/welcome check shows camera icon at x=796 next to tickets at x=834
