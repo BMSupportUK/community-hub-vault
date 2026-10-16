@@ -161,6 +161,7 @@ export async function scrapeDevicePrice(url: string): Promise<PriceScrape | null
     if (!res.ok) return null;
     const html = await res.text();
     if (
+      html.length < 15000 ||
       /Robot Check|validateCaptcha|Type the characters you see in this image|api-services-support@amazon\.com|To discuss automated access to Amazon data/i.test(
         html,
       )
