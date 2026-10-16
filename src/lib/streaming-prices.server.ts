@@ -196,17 +196,18 @@ export async function refreshStreamingPrices(
       // Keep the previous price when the page no longer exposes one.
       const { data: existing } = await supabaseAdmin
         .from("streaming_device_prices")
-        .select("price_cents, currency")
+        .select("price_cents, currency, availability")
         .eq("device_id", d.id)
         .maybeSingle();
       const priceCents = scrape.priceCents ?? existing?.price_cents ?? null;
       const currency = scrape.currency ?? existing?.currency ?? "GBP";
+      const availability = scrape.availability ?? existing?.availability ?? null;
       const { error: upErr } = await supabaseAdmin.from("streaming_device_prices").upsert(
         {
           device_id: d.id,
           price_cents: priceCents,
           currency,
-          availability: scrape.availability,
+          availability,
           source_url: d.amazon_url,
           scraped_at: now,
           stock_checked_at: now,
