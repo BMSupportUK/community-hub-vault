@@ -9,7 +9,7 @@
 - Header starts collapsed (slim bar) ONLY on tickets and Talk channels, open everywhere else; re-resets each navigation. Talk adds the channel name; Fan Zone never does.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; cap and scroll mobile ticket headers to preserve messages and composers.
 - NHL Center Ice treats its listing clock as ET and converts to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use stated UK times.
-- Corrected sports formats need split/safety/read-back tests; DAZN inline slots stay separate; qualifiers extend titles.
+- Sports formats need split/safety/read-back tests; normalize dual-clock typos before title pairing; DAZN inline slots stay separate, qualifiers extend titles.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: show all staff/channel; fit composer and people.

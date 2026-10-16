@@ -21,5 +21,5 @@ test("AFL backslash dual-time separator keeps Carlton separate from Adelaide", (
   expect(result.events).toContainEqual({ date: "Saturday, 17th October", time: "07:05 BST", title: "Brisbane v Port Adelaide", channels: ["TNT Sports 3", "Fox Footy 504"] });
   expect(result.events).toContainEqual({ date: "Friday, 16th October", time: "09:15 BST", title: "West Coast v Geelong", channels: ["Fox Footy 504"] });
   expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
-  expect(parseSportsListingBlock(mergeSportsListingBlocks("", raw, { sourceZone: "gmt" }, nowMs))).toEqual(result.events);
+  expect(parseSportsListingBlock(mergeSportsListingBlocks("", result.formatted ?? "", { sourceZone: "gmt" }, nowMs))).toEqual(result.events);
 });
