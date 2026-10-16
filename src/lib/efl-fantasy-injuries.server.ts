@@ -128,7 +128,7 @@ export async function syncFantasyInjuriesFromEfl(admin: Admin): Promise<EflInjur
 
   const { data: rows, error } = await admin
     .from("fantasy_players")
-    .select("id, name, injury_status, injury_note, injury_return, injury_source");
+    .select("id, name, injury_status, injury_note, injury_return, injury_source, injury_updated_at");
   if (error) return { ok: false, error: error.message };
 
   const pool = (rows ?? []) as {
@@ -138,6 +138,7 @@ export async function syncFantasyInjuriesFromEfl(admin: Admin): Promise<EflInjur
     injury_note: string | null;
     injury_return: string | null;
     injury_source: string | null;
+    injury_updated_at: string | null;
   }[];
 
   const nowIso = new Date().toISOString();
@@ -156,7 +157,10 @@ export async function syncFantasyInjuriesFromEfl(admin: Admin): Promise<EflInjur
       continue;
     }
     seen.add(row.id);
-    if (row.injury_source === "admin") continue;
+    // Admin flags win for 14 days, then the official feed takes over again so a
+    // forgotten manual "doubtful" can't stick on a player who is back playing.
+    const adminAge = Date.now() - Date.parse(row.injury_updated_at ?? "");
+    if (row.injury_source === "admin" && !(adminAge > 14 * 24 * 60 * 60 * 1000)) continue;
 
     if (flag.status === "none") {
       if ((row.injury_status ?? "none") !== "none") {

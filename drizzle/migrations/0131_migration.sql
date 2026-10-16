@@ -1,0 +1,1 @@
+update public.fantasy_players set injury_status='none', injury_note=null, injury_return=null, injury_source=null, injury_updated_at=now() where name='Adilson Malanda' and injury_source='admin' and injury_status='doubtful';
