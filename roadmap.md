@@ -4,6 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [x] Remove seconds from login credential entry and displays across credential/profile/checkout screens; two precision tests pass and signed-in entry plus saved expiry display verified without changing credentials.
 - [x] Subscription extended applies the sale term to saved credentials once, preserving remaining time; 18 tests pass and signed-in test renewal read back in Credentials (31 Jan → 28 Feb), fictional records removed.
 - [x] Restore staff visibility of open tickets under All; real staff list verified and nine database permission tests pass; ticket chat and alerts untouched.
 - [x] Replace customer inline Square/Stripe card forms with shared invoice payments and automatic status checks; authenticated checkout visually checked, both provider request flows tested with mocked responses, 15 tests pass; real provider creation/settlement remains unverified and changes need publishing.

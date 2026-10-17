@@ -11,6 +11,7 @@ import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
 import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
 
 import { formatLastSeen } from "@/lib/relative-time";
+import { formatCredentialTime } from "@/lib/credential-time";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -1865,7 +1866,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
                         <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><Calendar className="size-3" /> Expiry</p>
                         <p className={cn("text-sm",
                           expired ? "text-destructive" : expSoon ? "text-amber-500" : "text-foreground")}>
-                          {c.expiry_at ? new Date(c.expiry_at).toLocaleString("en-GB") : "No expiry set"}
+                          {c.expiry_at ? formatCredentialTime(c.expiry_at) : "No expiry set"}
                         </p>
                       </div>
                     </li>

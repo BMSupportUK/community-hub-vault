@@ -13,9 +13,18 @@ import {
   type CredentialBackupFile,
 } from "@/lib/credentials-restore.functions";
 import { resetUserVaultPin } from "@/lib/vault-pin-admin.functions";
+import { CREDENTIAL_TIME_STEP, credentialTimeInput, formatCredentialTime } from "@/lib/credential-time";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-credentials")({
   component: AdminCredentialsPage,
+  head: () => ({ meta: [
+    { title: "User Credentials — BM Support" },
+    { name: "description", content: "Manage customer login credentials and subscription expiry dates in BM Support." },
+    { property: "og:title", content: "User Credentials — BM Support" },
+    { property: "og:description", content: "Manage customer login credentials and subscription expiry dates in BM Support." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 interface CredentialRow {
@@ -241,7 +250,7 @@ function AdminCredentialsPage() {
                                 </div>
                                 {exp && (
                                   <div className={cn("text-xs", expired ? "text-destructive" : soon ? "text-amber-400" : "text-muted-foreground")}>
-                                    {expired ? "Expired" : "Expires"} {exp.toLocaleString("en-GB")}
+                                    {expired ? "Expired" : "Expires"} {formatCredentialTime(exp)}
                                   </div>
                                 )}
                               </div>
@@ -313,7 +322,7 @@ function CredentialEditor({
   const [appLoginName, setAppLoginName] = useState(row?.app_login_name ?? "");
   const [accountType, setAccountType] = useState<string>(row?.account_type ?? "single");
   const [password, setPassword] = useState(row?.password ?? "");
-  const [expiry, setExpiry] = useState(row?.expiry_at ? row.expiry_at.slice(0, 16) : "");
+  const [expiry, setExpiry] = useState(row?.expiry_at ? credentialTimeInput(row.expiry_at) : "");
   const [busy, setBusy] = useState(false);
   const accountLabel = `Account ${row?.account_number ?? nextAccountNumber}`;
 
@@ -388,7 +397,7 @@ function CredentialEditor({
             </div>
           </Field>
           <Field label="Expiry (optional)">
-            <input type="datetime-local" value={expiry} onChange={(e) => setExpiry(e.target.value)} className="ed-input" />
+            <input type="datetime-local" step={CREDENTIAL_TIME_STEP} value={expiry} onChange={(e) => setExpiry(credentialTimeInput(e.target.value))} className="ed-input" />
           </Field>
         </div>
 
