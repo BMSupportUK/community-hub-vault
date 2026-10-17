@@ -17,6 +17,9 @@ type Kind = "signup" | "ticket" | "order";
 
 async function buildMessage(kind: Kind, id: string): Promise<string | null> {
   if (kind === "signup") {
+    // Accounts added by admin/management from the dashboard aren't real sign-ups.
+    const { data: au } = await supabaseAdmin.auth.admin.getUserById(id);
+    if (au?.user?.user_metadata?.admin_created) return null;
     const { data: prof } = await supabaseAdmin
       .from("profiles")
       .select("username, display_name")
