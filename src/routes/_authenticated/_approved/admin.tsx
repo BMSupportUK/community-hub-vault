@@ -619,8 +619,12 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
   ];
-  const tabs = allTabs.filter(([, , gate]) =>
-    gate === "bank" ? isAdminOnly : !gate || canSeePins,
+  const tabs = allTabs.filter(([key, , gate]) =>
+    key === "user-credentials"
+      ? canSeeUserCredentialsTab(roles)
+      : gate === "bank"
+        ? isAdminOnly
+        : !gate || canSeePins,
   );
 
   const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
