@@ -4,7 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
-- [ ] Move pictured payment status, invoice PDF and subscription confirmation into admin secure checkout sidebar; preserve all actions and customer/chat/video behavior.
+- [x] Move pictured payment status, invoice PDF and subscription confirmation into admin secure checkout sidebar; signed-in completed renewal checked on screen, seven access/sync tests pass, build OK; actions and customer/chat/video behavior unchanged. Preview only.
 - [x] Add dashboard Customers tab with recorded package, expiry, last renewal, first subscription and referrer; optional admin-only one-month reward for future completed new-customer 12-month purchases, once per sale, preserving remaining time. Seventeen database tests pass; signed-in read returns 24 customers, no passwords; build OK. Missing historical details shown as Not recorded; no live subscriptions changed; tab needs publishing.
 - [ ] Verify Customers table and reward confirmation through unlocked dashboard — blocked by required account password/PIN; authenticated customer read and isolated database reward tests verified, no lock bypass.
 - [x] Snapshot referrer names on future referred new shop/manual sales; Orders shows attribution and staff secure checkout shows purchased items, customer details and adult choice. Thirteen rule/sync tests pass; real saved £115 order details verified signed-in on desktop/phone, build OK. No test orders created; display changes await publishing.
