@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Manual credentials access
-- [x] Restore existing-customer buttons alongside manual customer lookup in the Add order right sidebar; explicitly label the new-order bypass-account-creation checkbox and reset it for each fresh order. Five registration tests pass; build OK. Preview only.
+- [x] Restore existing-customer buttons alongside manual customer lookup in the Add order right sidebar; place the bypass-account-creation checkbox under Existing customer only and reset it when switching customer type or starting a fresh order. Preview only; screen check remains PIN-blocked.
 - [ ] Verify restored Add order sidebar and checkbox on screen — signed-in navigation is blocked by the account password/admin PIN gate; no security bypass or live order created.
 - [x] Add admin-only manual-order skip-account-creation checkbox to Add order and secure order sidebar, defaulting to registration; saved flag suppresses completion registration prompt, atomic create and direct-write permission guard. Twenty-one tests pass, build OK; preview only.
 - [ ] Verify manual registration exception end-to-end on screen — signed-in browser reaches account password/PIN gate; requires admin unlocking. Database persistence and admin-only permission tests pass.
