@@ -4,6 +4,8 @@ export type ProfitItem = { product_id: string | null; product_name: string; unit
 export type ProfitPayment = { provider: string | null; status: string | null; currency: string | null; provider_fee_cents: number | null };
 export type ProfitOrder = { total_cents: number; order_items: ProfitItem[]; payments: ProfitPayment[] };
 
+const FEE_PROVIDERS = new Set(['square', 'stripe', 'paypal']);
+
 export function calculateProfit(order: ProfitOrder) {
   let cost = 0;
   let missing = order.order_items.length === 0;
@@ -13,8 +15,10 @@ export function calculateProfit(order: ProfitOrder) {
   }
   const payments = order.payments.filter(p => isSettledPaymentStatus(p.status));
   let fees = 0;
-  let feesMissing = payments.length === 0;
+  let feesMissing = false;
   for (const payment of payments) {
+    // Cash, bank transfer, Wise and crypto carry no provider fee.
+    if (!FEE_PROVIDERS.has((payment.provider ?? '').toLowerCase())) continue;
     if (payment.currency?.toUpperCase() !== 'GBP' || !Number.isSafeInteger(payment.provider_fee_cents) || payment.provider_fee_cents == null || payment.provider_fee_cents < 0) feesMissing = true;
     else fees += payment.provider_fee_cents;
   }
