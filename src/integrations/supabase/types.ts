@@ -1644,6 +1644,30 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_account_renewal_dates: {
+        Row: {
+          account_id: string
+          customer_id: string
+          renewed_date: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          account_id: string
+          customer_id: string
+          renewed_date: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          account_id?: string
+          customer_id?: string
+          renewed_date?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: []
+      }
       customer_package_allocations: {
         Row: {
           allocated_at: string
@@ -7454,6 +7478,14 @@ export type Database = {
       admin_set_account_setup: {
         Args: { p_done: boolean; p_order_id: string }
         Returns: string
+      }
+      admin_set_customer_account_renewed: {
+        Args: {
+          p_account_id: string
+          p_customer_id: string
+          p_renewed_date: string
+        }
+        Returns: undefined
       }
       admin_set_customer_first_subscription: {
         Args: { p_customer_id: string; p_first_subscription_date: string }

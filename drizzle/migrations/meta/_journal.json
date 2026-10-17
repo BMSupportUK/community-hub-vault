@@ -1093,6 +1093,13 @@
       "when": 1792267483821,
       "tag": "0155_exclude_gj_and_dane_referral_bonus",
       "breakpoints": true
+    },
+    {
+      "idx": 156,
+      "version": "7",
+      "when": 1792268259436,
+      "tag": "0156_per_account_customer_renewal_dates",
+      "breakpoints": true
     }
   ]
 }

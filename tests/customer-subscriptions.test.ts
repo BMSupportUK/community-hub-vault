@@ -28,11 +28,33 @@ beforeAll(async () => {
  await db.exec(readFileSync(new URL('../drizzle/migrations/0153_hide_test_and_admin_customer_accounts.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0154_correct_hidden_customer_name_match.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0155_exclude_gj_and_dane_referral_bonus.sql',import.meta.url),'utf8'));
+ await db.exec('ALTER TABLE public.order_checkout_links ADD COLUMN renewal_credential_id uuid;');
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0156_per_account_customer_renewal_dates.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
 });
 afterAll(()=>db.close());
+test('multiple logins retain independent renewal dates without changing expiry', async () => {
+ await db.exec(`INSERT INTO profiles VALUES('${id(800)}','multi-customer','Multi Customer'); INSERT INTO private.app_credentials VALUES('${id(801)}','${id(800)}','login-one','single',1,'2027-10-17',NULL,now()),('${id(802)}','${id(800)}','login-two','single',2,'2027-12-25',NULL,now());`);
+ const before = (await db.query('SELECT id,expiry_at FROM private.app_credentials WHERE owner_id=$1 ORDER BY id',[id(800)])).rows;
+ await db.query('SELECT admin_set_customer_account_renewed($1,$2,$3)',[id(800),id(801),'2026-10-17']);
+ await db.query('SELECT admin_set_customer_account_renewed($1,$2,$3)',[id(800),id(802),'2026-12-25']);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data.find(c=>c.userId===id(800));
+ expect(c.accounts.find((a:any)=>a.id===id(801)).renewedAt).toBe('2026-10-17');
+ expect(c.accounts.find((a:any)=>a.id===id(802)).renewedAt).toBe('2026-12-25');
+ expect((await db.query('SELECT id,expiry_at FROM private.app_credentials WHERE owner_id=$1 ORDER BY id',[id(800)])).rows).toEqual(before);
+ await db.query('SELECT admin_set_customer_account_renewed($1,$2,NULL)',[id(800),id(801)]);
+ const restored=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data.find(c=>c.userId===id(800));
+ expect(restored.accounts.find((a:any)=>a.id===id(801)).renewedAt).toBeNull();
+ expect(restored.accounts.find((a:any)=>a.id===id(802)).renewedAt).toBe('2026-12-25');
+});
+test('per-login renewal changes require admin and a matching customer account',async()=>{
+ await db.exec("SELECT set_config('test.role','management',false)");
+ await expect(db.query('SELECT admin_set_customer_account_renewed($1,$2,$3)',[id(800),id(802),'2026-12-25'])).rejects.toThrow('Only admin');
+ await db.exec("SELECT set_config('test.role','admin',false)");
+ await expect(db.query('SELECT admin_set_customer_account_renewed($1,$2,$3)',[id(2),id(802),'2026-12-25'])).rejects.toThrow('Customer account not found');
+});
 async function sale(n:number,name='12 months',kind='new',status='completed',stamp='2026-10-18 10:00+00',paid=true) {
  await db.query(`INSERT INTO private.orders(id,user_id,customer_type,paid_at,status,created_at,order_ref) VALUES($1,$2,$3,$4,$5,$6,$7)`,[id(n),id(2),kind,paid?stamp:null,status,stamp,`SALE-${n}`]);
  await db.query('INSERT INTO order_referrals VALUES($1,$2,$3)',[id(n),id(3),'Referrer']);
