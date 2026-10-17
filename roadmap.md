@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Manual credentials access
+- [ ] Move customer PIN enrollment to password-gated manual secure checkout only; preserve existing PINs and credentials sign-in protection.
 - [x] Add customer-chosen six-digit PIN with existing TV-login proof for initial setup, salted PBKDF2 storage, one-hour lock after five failed PIN attempts, and atomic ten-minute sessions; eleven tests pass, real page denies invalid access, illustration renders and build OK. Preview UI awaits publishing; legacy email-only verification is disabled in the shared backend.
 - [ ] Verify real customer PIN enrollment and credential read-back — requires the customer's emailed one-use password and existing TV login; no real customer secrets accessed.
 - [x] Restrict site credentials cards, search, counts and add targets to positively identified BM Support accounts; four tests and signed-in list/search checks pass, Boro Matchday Action excluded, build OK; preview only.
