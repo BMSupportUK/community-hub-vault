@@ -5,11 +5,9 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Users, Search, Clock, UserPlus, Eye, Check, Lock, ShieldOff, MapPin, KeyRound } from "lucide-react";
+import { Users, Search, Clock, UserPlus, Eye, Check, Lock, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserMfa } from "@/lib/mfa.functions";
-import { sendTemporaryPassword } from "@/lib/temp-password.functions";
 import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
 
@@ -103,41 +101,6 @@ function MembersPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"online" | "offline">("online");
-
-  const [resetTarget, setResetTarget] = useState<Profile | null>(null);
-  const [resetReason, setResetReason] = useState("");
-  const [resetBusy, setResetBusy] = useState(false);
-  const resetMfa = useServerFn(resetUserMfa);
-  const sendTempPw = useServerFn(sendTemporaryPassword);
-  const [pwTarget, setPwTarget] = useState<Profile | null>(null);
-  const [pwBusy, setPwBusy] = useState(false);
-  const doSendPw = async () => {
-    if (!pwTarget) return;
-    setPwBusy(true);
-    try {
-      await sendTempPw({ data: { userId: pwTarget.id } });
-      toast.success("New password emailed. They'll be asked to change it when they sign in.");
-      setPwTarget(null);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't send the new password");
-    } finally {
-      setPwBusy(false);
-    }
-  };
-
-  const doReset = async () => {
-    if (!resetTarget) return;
-    setResetBusy(true);
-    try {
-      const res = await resetMfa({ data: { userId: resetTarget.id, reason: resetReason.trim() || undefined } });
-      toast.success(res.removed > 0 ? `Removed ${res.removed} factor(s)` : "No 2FA factors to remove");
-      setResetTarget(null); setResetReason("");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to reset 2FA");
-    } finally {
-      setResetBusy(false);
-    }
-  };
 
   const load = async () => {
     if (isDemo) {
@@ -416,22 +379,6 @@ function MembersPage() {
                   </p>
                 )}
 
-                {isAdmin && (
-                  <button
-                    onClick={() => setResetTarget(p)}
-                    className="mt-2 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-surface-2 border border-border hover:border-rose-400 hover:text-rose-300 transition"
-                  >
-                    <ShieldOff className="size-3.5" /> Reset 2FA
-                  </button>
-                )}
-                {isAdmin && (
-                  <button
-                    onClick={() => setPwTarget(p)}
-                    className="mt-2 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-surface-2 border border-border hover:border-primary hover:text-primary transition"
-                  >
-                    <KeyRound className="size-3.5" /> Email new password
-                  </button>
-                )}
 
                 <div className="mt-auto pt-3 border-t border-border/60 text-[11px] text-muted-foreground flex items-center gap-1.5">
                   <Clock className="size-3" />
@@ -449,80 +396,6 @@ function MembersPage() {
       </aside>
       </div>
 
-      {pwTarget && (
-        <div className="fixed inset-0 z-50 bg-black/60 grid place-items-center p-4">
-          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl bg-surface border border-border p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30 grid place-items-center">
-                <KeyRound className="size-5" />
-              </div>
-              <div>
-                <h2 className="font-display font-semibold text-lg">Email a new password</h2>
-                <p className="text-xs text-muted-foreground">for {pwTarget.display_name ?? pwTarget.username ?? "this user"}</p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Their current password stops working straight away. They'll get an email with a new temporary password and must choose their own as soon as they sign in.
-            </p>
-            <div className="flex gap-2">
-              <button onClick={doSendPw} disabled={pwBusy} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50">
-                {pwBusy ? "Sending…" : "Send new password"}
-              </button>
-              <button onClick={() => setPwTarget(null)} disabled={pwBusy} className="px-4 h-11 rounded-lg bg-surface-2 border border-border text-sm">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {resetTarget && (
-        <div className="fixed inset-0 z-50 bg-black/60 grid place-items-center p-4">
-          <div className="w-full max-w-md rounded-2xl bg-surface border border-border p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-rose-500/15 text-rose-300 ring-1 ring-rose-400/30 grid place-items-center">
-                <ShieldOff className="size-5" />
-              </div>
-              <div>
-                <h2 className="font-display font-semibold text-lg">Reset 2FA</h2>
-                <p className="text-xs text-muted-foreground">
-                  for {resetTarget.display_name ?? resetTarget.username ?? "this user"}
-                </p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              This removes every authenticator factor on the account. They'll be able to sign in with just their password and should re-enable 2FA right away.
-            </p>
-            <label className="block">
-              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Reason (optional)</span>
-              <textarea
-                value={resetReason}
-                onChange={(e) => setResetReason(e.target.value)}
-                maxLength={500}
-                rows={3}
-                placeholder="e.g. Lost phone, verified via ticket #123"
-                className="mt-1 w-full px-3 py-2 rounded-lg bg-input border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-              />
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={doReset}
-                disabled={resetBusy}
-                className="flex-1 h-11 rounded-lg bg-rose-600 text-white font-medium disabled:opacity-50"
-              >
-                {resetBusy ? "Resetting…" : "Reset 2FA"}
-              </button>
-              <button
-                onClick={() => { setResetTarget(null); setResetReason(""); }}
-                disabled={resetBusy}
-                className="px-4 h-11 rounded-lg bg-surface-2 border border-border text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
