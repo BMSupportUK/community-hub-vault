@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getCookie, setCookie, deleteCookie, getRequestHeader, setResponseHeader } from '@tanstack/react-start/server';
-import { manualAccessRequestSchema, manualAccessSubmitSchema, type ManualCredential } from './manual-credentials-schema';
+import { manualAccessRequestSchema, manualAccessLoginSchema, manualCheckoutAccessSchema, manualAccessPinSetupSchema, type ManualCredential } from './manual-credentials-schema';
 
 const cookieName = 'bm-manual-credentials';
 async function hash(value: string) {
@@ -14,6 +14,38 @@ async function hashPin(pin: string, salt: string) {
   return Array.from(new Uint8Array(bits), b => b.toString(16).padStart(2, '0')).join('');
 }
 function noStore() { setResponseHeader('Cache-Control', 'no-store'); }
+
+async function manualCheckoutIdentity(token: string, password: string) {
+  const { unlock } = await import('@/lib/checkout.server');
+  const unlocked = await unlock(token, password);
+  if (!unlocked || unlocked.link.claimed_by) throw new Error('Open your manual order using its secure link and password.');
+  const { data: order, error } = await unlocked.supabaseAdmin.from('orders').select('email,status,customer_type,order_ref').eq('id', unlocked.link.order_id).maybeSingle();
+  if (error || !order || order.status === 'cancelled' || !(order.customer_type === 'manual' || order.order_ref?.startsWith('MANUAL-'))) throw new Error('This manual order is unavailable.');
+  const email = manualAccessRequestSchema.safeParse({ email: order.email });
+  if (!email.success) throw new Error('Ask BM Support to save your email address on this order before setting a PIN.');
+  return { supabaseAdmin: unlocked.supabaseAdmin, key: await hash(email.data.email) };
+}
+
+export const getManualCheckoutPinStatus = createServerFn({ method: 'POST' })
+  .inputValidator(input => manualCheckoutAccessSchema.parse(input))
+  .handler(async ({ data }) => {
+    noStore();
+    const { supabaseAdmin, key } = await manualCheckoutIdentity(data.token, data.password);
+    const { data: access, error } = await supabaseAdmin.from('manual_credential_access').select('pin_hash').eq('email_key', key).maybeSingle();
+    if (error) throw new Error('Your PIN status could not be checked. Please try again.');
+    return { configured: !!access?.pin_hash };
+  });
+
+export const setManualCheckoutPin = createServerFn({ method: 'POST' })
+  .inputValidator(input => manualAccessPinSetupSchema.parse(input))
+  .handler(async ({ data }) => {
+    noStore();
+    const { supabaseAdmin, key } = await manualCheckoutIdentity(data.token, data.password);
+    const salt = randomPassword();
+    const { data: saved, error } = await supabaseAdmin.rpc('manual_credentials_set_checkout_pin', { p_token: data.token, p_password: data.password, p_email_key: key, p_pin_hash: await hashPin(data.pin, salt), p_pin_salt: salt });
+    if (error || !saved) throw new Error('Your PIN is already set or this secure checkout is unavailable. Your existing PIN has not changed.');
+    return { configured: true };
+  });
 
 export const requestManualCredentialsAccess = createServerFn({ method: 'POST' })
   .inputValidator(input => manualAccessRequestSchema.parse(input))
@@ -40,7 +72,7 @@ export const requestManualCredentialsAccess = createServerFn({ method: 'POST' })
   });
 
 export const loginManualCredentials = createServerFn({ method: 'POST' })
-  .inputValidator(input => manualAccessSubmitSchema.parse(input))
+  .inputValidator(input => manualAccessLoginSchema.strict().parse(input))
   .handler(async ({ data }) => {
     noStore();
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
@@ -55,12 +87,11 @@ export const loginManualCredentials = createServerFn({ method: 'POST' })
     const { data: valid, error } = await supabaseAdmin.rpc('manual_credentials_verify_pin', {
       p_email_key: key, p_email: data.email, p_code_hash: await hash(`${key}:${data.password}`),
       p_pin_hash: await hashPin(data.pin, salt), p_pin_salt: salt, p_session_hash: await hash(session),
-      p_app_login: 'appLogin' in data ? data.appLogin : undefined, p_app_password: 'appPassword' in data ? data.appPassword : undefined,
     });
-    if (!error && valid === 'setup_required') return { loggedIn: false, setupRequired: true };
-    if (error || valid !== 'verified') throw new Error('Access denied. Check your secure password, PIN and login details. After five failed attempts, access is locked for one hour.');
+    if (!error && valid === 'setup_required') throw new Error('Set your PIN on your password-protected manual secure checkout page first, then request a new secure password here.');
+    if (error || valid !== 'verified') throw new Error('Access denied. Check your secure password and PIN. After five failed attempts, access is locked for one hour.');
     setCookie(cookieName, JSON.stringify({ email: data.email, session }), { httpOnly: true, secure: !getRequestHeader('host')?.startsWith('localhost'), sameSite: 'strict', path: '/', maxAge: 600 });
-    return { loggedIn: true, setupRequired: false };
+    return { loggedIn: true };
   });
 
 export const readManualCredentials = createServerFn({ method: 'POST' }).handler(async () => {
