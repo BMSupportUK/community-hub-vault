@@ -7234,6 +7234,10 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      admin_correct_payment_reference: {
+        Args: { _order_id: string; _reference: string }
+        Returns: number
+      }
       admin_create_manual_order:
         | { Args: { _customer_name: string; _items: Json }; Returns: string }
         | {

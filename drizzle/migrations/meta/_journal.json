@@ -1009,6 +1009,13 @@
       "when": 1792249119080,
       "tag": "0143_record_provider_payment_fees",
       "breakpoints": true
+    },
+    {
+      "idx": 144,
+      "version": "7",
+      "when": 1792250099107,
+      "tag": "0144_migration",
+      "breakpoints": true
     }
   ]
 }
