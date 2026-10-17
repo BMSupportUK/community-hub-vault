@@ -27,7 +27,7 @@
 - Dialogs stay within the dynamic mobile viewport; dense views drop secondary columns on phones.
 - Square/Stripe payments use shared server invoice creation with verified order/token access; BM Support PDFs remain post-payment receipts.
 - Knowledge Base fills the page; category and ratings rails keep guides scannable.
-- Video help: in-site P2P WebRTC, log only, opening hours only; the order page offers in-site video only (WhatsApp video removed), with a PC→phone QR hand-off.
+- Video help: P2P WebRTC; customer camera goes via a fixed-size canvas so phone turns never reshape the encoder (blacked it); no rebuilds on turns.
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
 - Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
