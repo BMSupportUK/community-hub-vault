@@ -266,6 +266,9 @@ export function VideoCallStage({
           makeOffer().catch(() => {});
         } else if (tag !== activeTagRef.current) {
           switchPeer(tag);
+        } else if (!offeredRef.current && pcRef.current) {
+          // Same device after a rebuild: start the fresh connection.
+          makeOffer().catch(() => {});
         }
       });
       ch.on("broadcast", { event: "orient" }, ({ payload }) => {
@@ -273,6 +276,19 @@ export function VideoCallStage({
         if ([0, 90, 180, 270].includes(deg)) setRemoteRotate(deg);
       });
       ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
+      ch.on("broadcast", { event: "camstate" }, ({ payload }) => {
+        if (side === "offerer") remoteCamOffRef.current = (payload as { on?: boolean }).on === false;
+      });
+      // Staff rebuilt the connection: drop ours, start fresh, and say we're ready.
+      ch.on("broadcast", { event: "rebuild" }, ({ payload }) => {
+        if (side !== "answerer" || hungRef.current) return;
+        if ((payload as { to?: string }).to !== tagRef.current) return;
+        pendingIce.current = [];
+        pcRef.current?.close();
+        pcRef.current = null;
+        if (createPeer()) send("ready", { tag: tagRef.current });
+        restartCamRef.current();
+      });
       ch.on("broadcast", { event: "staffmeta" }, ({ payload }) => {
         if (side !== "answerer") return;
         const g = (payload as { gender?: string }).gender;
@@ -288,7 +304,7 @@ export function VideoCallStage({
       });
       ch.on("broadcast", { event: "signal" }, async ({ payload }) => {
         const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit; to?: string; from?: string };
-        const cur = pcRef.current;
+        let cur = pcRef.current;
         if (!cur) return;
         if (side === "answerer" && p.to && p.to !== tagRef.current) return;
         if (side === "offerer" && p.from && p.from !== activeTagRef.current) return;
@@ -298,6 +314,15 @@ export function VideoCallStage({
             if (cur.remoteDescription?.sdp === p.sdp && cur.localDescription?.type === "answer") {
               send("signal", { kind: "answer", sdp: cur.localDescription.sdp, from: tagRef.current });
               return;
+            }
+            // Staff rebuilt their side but our "rebuild" message got lost: rebuild too.
+            if (cur.remoteDescription && sdpFingerprint(cur.remoteDescription.sdp) !== sdpFingerprint(p.sdp)) {
+              cur.close();
+              pendingIce.current = [];
+              pcRef.current = null;
+              const fresh = createPeer();
+              if (!fresh) return;
+              cur = fresh;
             }
             descSent.delete(cur);
             await cur.setRemoteDescription({ type: "offer", sdp: p.sdp });
