@@ -1439,6 +1439,12 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
 
   const flush = () => {
     if (!current) return;
+    // A fixture line ("Bologna vs. Inter") is never a channel. It appears
+    // here when a post is cut off after the next event's title, before its
+    // time slot — drop it rather than listing it as a channel.
+    if (current.title && current.channels.length > 1) {
+      current.channels = current.channels.filter((ch) => !/\s(?:v|vs|v\.|vs\.|@)\s/i.test(ch));
+    }
     const done = finalized(current);
     if (done) events.push(done);
     current = null;
