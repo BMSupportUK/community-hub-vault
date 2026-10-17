@@ -205,8 +205,10 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
               n.kind === "order_placed" && n.entity_id
                 ? {
                     label: "Open chat",
-                    onClick: () =>
-                      navigate({ to: "/admin-secure-page", search: { order: n.entity_id } }),
+                    onClick: () => {
+                      if (!n.entity_id) return;
+                      navigate({ to: "/admin-secure-page", search: { order: n.entity_id } });
+                    },
                   }
                 : n.link_path
                   ? { label: "Open", onClick: () => navigate({ to: n.link_path! } as never) }
