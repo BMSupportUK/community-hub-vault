@@ -1,3 +1,4 @@
+import { squareProcessingFee } from './profit-calculation';
 import { effectiveCardProvider, squareInvoiceChatMessage } from './payment-methods';
 import { createStripeClient, type StripeEnv } from '@/lib/stripe.server';
 import { invoiceCanBeReused, invoiceIsSettled } from '@/lib/provider-invoice-policy';
@@ -26,6 +27,7 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
   let invoice: any;
   let provider: Provider;
   let squarePaymentId: string | null = null;
+  let providerFee: number | null = null;
   let status: string, url: string | null, total: number, paid: number, currency: string;
   if (row.stripe_invoice_id) {
     provider = 'stripe';
@@ -43,6 +45,8 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
     status = invoice.status ?? ''; url = invoice.public_url;
     total = Number(sqOrder.total_money?.amount ?? -1); currency = sqOrder.total_money?.currency ?? '';
     paid = 0;
+    let allFeesKnown = true;
+    let feeTotal = 0;
     for (const tender of sqOrder.tenders ?? []) {
       if (!tender.payment_id) continue;
       const payment = (await squareRequest(`/v2/payments/${encodeURIComponent(tender.payment_id)}`)).payment;
@@ -50,15 +54,28 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
       if (payment.order_id !== invoice.order_id || payment.amount_money?.currency !== 'GBP') throw new Error('Square payment does not match this invoice');
       paid += Number(payment.amount_money?.amount ?? 0);
       squarePaymentId = payment.id;
+      const fee = squareProcessingFee(payment);
+      if (fee == null) allFeesKnown = false; else feeTotal += fee;
     }
+    providerFee = allFeesKnown && paid > 0 ? feeTotal : null;
   } else return null;
   const settled = invoiceIsSettled(status, total, paid, currency, Number(order.total_cents));
   if (status.toLowerCase() === 'paid' && !settled) throw new Error('Invoice payment amount does not match the order');
   const { error: updateError } = await db.from('order_invoices').update({ status, public_url: url, ...(settled ? { paid_at: new Date().toISOString() } : {}), last_synced_at: new Date().toISOString() }).eq('order_id', orderId);
   if (updateError) throw new Error(updateError.message);
+  if (settled && provider === 'stripe') {
+    try {
+      const { fetchProviderFee } = await import('./provider-fees.server');
+      providerFee = await fetchProviderFee(provider, invoice.id, environment ?? (process.env.STRIPE_ENVIRONMENT === 'live' ? 'live' : 'sandbox'));
+    } catch { /* Fees can arrive later; never block a confirmed payment. */ }
+  }
+  if (settled && order.paid_at && providerFee != null) {
+    const { error: feeError } = await db.from('order_payments').update({ provider_fee_cents: providerFee }).eq('order_id', orderId).eq('provider', provider);
+    if (feeError) throw new Error(feeError.message);
+  }
   if (settled && !order.paid_at) {
     const reference = invoice.id;
-    const { error: paymentError } = await db.from('order_payments').upsert({ order_id: orderId, provider, provider_payment_id: squarePaymentId ?? reference, square_payment_id: squarePaymentId, status: 'COMPLETED', amount_cents: total, currency: 'GBP', created_by: order.user_id, receipt_url: null }, { onConflict: 'order_id' });
+    const { error: paymentError } = await db.from('order_payments').upsert({ order_id: orderId, provider, provider_payment_id: squarePaymentId ?? reference, square_payment_id: squarePaymentId, status: 'COMPLETED', amount_cents: total, provider_fee_cents: providerFee, currency: 'GBP', created_by: order.user_id, receipt_url: null }, { onConflict: 'order_id' });
     if (paymentError) throw new Error(paymentError.message);
     if (!order.paid_at) {
       const { error: paidError } = await db.from('orders').update({ paid_at: new Date().toISOString(), ...(order.status !== 'cancelled' && order.status !== 'completed' ? { status: 'paid' } : {}) }).eq('id', orderId).is('paid_at', null);
