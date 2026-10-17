@@ -4650,6 +4650,24 @@ export type Database = {
         }
         Relationships: []
       }
+      password_change_required: {
+        Row: {
+          created_at: string
+          set_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          set_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          set_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       prediction_winners: {
         Row: {
           competition: string

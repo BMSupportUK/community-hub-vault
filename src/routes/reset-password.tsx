@@ -6,11 +6,23 @@ import { Field } from "./login";
 import resetIllustration from "@/assets/reset-password-illustration.webp";
 
 export const Route = createFileRoute("/reset-password")({
+  validateSearch: (s: Record<string, unknown>) => ({ forced: s.forced === "1" || s.forced === 1 ? "1" : undefined }),
+  head: () => ({
+    meta: [
+      { title: "Set a new password — BM Support" },
+      { name: "description", content: "Choose a new password for your BM Support account." },
+      { property: "og:title", content: "Set a new password — BM Support" },
+      { property: "og:description", content: "Choose a new password for your BM Support account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: ResetPasswordPage,
 });
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
+  const forced = Route.useSearch().forced === "1";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -22,7 +34,9 @@ function ResetPasswordPage() {
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { setBusy(false); return toast.error(error.message); }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await supabase.from("password_change_required").delete().eq("user_id", user.id);
     toast.success("Password updated. You're signed in.");
     navigate({ to: "/home" });
   };
@@ -59,7 +73,11 @@ function ResetPasswordPage() {
           </Link>
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-soft">
             <h1 className="font-display text-2xl font-bold">Set a new password</h1>
-            <p className="text-sm text-muted-foreground mb-6">Enter your new password below.</p>
+            <p className="text-sm text-muted-foreground mb-6">
+              {forced
+                ? "You signed in with a temporary password from our team. Choose your own new password to continue."
+                : "Enter your new password below."}
+            </p>
             <form onSubmit={submit} className="space-y-3">
               <Field label="New password" type="password" value={password} onChange={setPassword} />
               <Field label="Confirm password" type="password" value={confirm} onChange={setConfirm} />
