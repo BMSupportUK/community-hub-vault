@@ -155,7 +155,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
       {error ? <p role="alert" className="text-destructive">{error}</p> : loading ? <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin" /></div> : !shown.length ? <p className="py-8 text-muted-foreground">No customers found.</p> : (
         <div className="overflow-x-auto"><table className="w-full min-w-[1000px] text-sm">
           <thead className="text-left text-xs uppercase text-muted-foreground"><tr>{["Username", "Current package", "Runs out", "Last renewed", "Referred by", "Year joined", "Years as customer"].map((h) => <th key={h} className="border-b border-border p-3">{h}</th>)}</tr></thead>
-          <tbody>{visible.map((c) => {
+          <tbody>{shown.map((c) => {
             const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
             const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
             const showNoRenewal = customerShowsNoRenewal(hasRecordedYear, years);
