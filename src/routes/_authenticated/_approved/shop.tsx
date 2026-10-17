@@ -53,24 +53,13 @@ import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import {
-  chargeOrderWithSquare,
-  getSquareWebConfig,
-  reconcileSquareOrder,
-} from "@/lib/square-payments.functions";
-import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { reconcileSquareOrder } from "@/lib/square-payments.functions";
+import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
-import {
-  createStripePaymentIntent,
-  confirmStripePayment,
-} from "@/lib/stripe-payments.functions";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { PaymentReminderButton } from "@/components/app/PaymentReminderButton";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
 import { getMyBankTransferAccess } from "@/lib/bank-transfer.functions";
-import { SquareCardPanel, SquareLogo } from "@/components/app/SquareCardPanel";
 import {
   createCryptoInvoice,
   getCryptoConfig,
@@ -4754,16 +4743,6 @@ function PayOrderDialog({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Prewarm Stripe SDK as soon as the Pay button mounts,
-  // so by the time the user clicks the Stripe tab the SDK is already cached.
-  useEffect(() => {
-    const idle = (cb: () => void) =>
-      (window as any).requestIdleCallback?.(cb, { timeout: 1500 }) ?? window.setTimeout(cb, 200);
-    idle(() => {
-      getStripe().catch(() => {});
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   // Provider invoice status, not a local 24-hour timer, controls availability.
   const [liveInvoice, setLiveInvoice] = useState<{ url: string } | null>(null);
   useEffect(() => {
@@ -4825,11 +4804,7 @@ function PayOrderDialog({
               <TabsTrigger value="stripe">Stripe</TabsTrigger>
             </TabsList>
             <TabsContent value="square" className="mt-3">
-              <SquareInvoicePanel
-                orderId={orderId}
-                amountCents={amountCents}
-                onChange={handleChange}
-              />
+              <ProviderInvoicePayment method="square" orderId={orderId} amountCents={amountCents} onPaid={handleChange} />
             </TabsContent>
             <TabsContent value="usdt" className="mt-3">
               <CryptoPanel
@@ -4855,149 +4830,6 @@ declare global {
   }
 }
 
-function SquareInvoicePanel({
-  orderId,
-  amountCents,
-  onChange,
-}: {
-  orderId: string;
-  amountCents: number;
-  onChange?: () => void | Promise<void>;
-}) {
-  return <ProviderInvoicePayment method="square" orderId={orderId} amountCents={amountCents} onPaid={onChange} />;
-  /* Legacy hosted-provider invoice controls retained below for historical reconciliation only.
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [url, setUrl] = useState<string | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const createInvoice = useServerFn(createSquareInvoiceForOrder);
-  const refreshInvoice = useServerFn(refreshSquareInvoiceStatus);
-  const checkBothProviders = useServerFn(checkOrderPaymentAcrossProviders);
-
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("order_invoices")
-        .select("public_url,status")
-        .eq("order_id", orderId)
-        .maybeSingle();
-      if (cancelled) return;
-      if (data?.public_url) setUrl(data.public_url);
-      if (data?.status) setStatus(data.status);
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId]);
-
-  const generate = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      const res: any = await createInvoice({ data: { orderId } });
-      if (res?.public_url) {
-        setUrl(res.public_url);
-        setStatus(res.status ?? "UNPAID");
-        try {
-          window.open(res.public_url, "_blank", "noopener,noreferrer");
-        } catch {}
-        await onChange?.();
-      } else {
-        setErr("Invoice created but no link was returned. Please refresh.");
-      }
-    } catch (e: any) {
-      setErr(e?.message || "Failed to create invoice");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const refresh = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      const checkRes: any = await checkBothProviders({ data: { orderId } });
-      if (checkRes?.paid) {
-        setStatus("PAID");
-        await onChange?.();
-        return;
-      }
-      const res: any = await refreshInvoice({ data: { orderId } });
-      if (res?.status) setStatus(res.status);
-      if (res?.public_url) setUrl(res.public_url);
-      await onChange?.();
-    } catch (e: any) {
-      setErr(e?.message || "Failed to refresh status");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (loading) {
-    return <div className="text-xs text-muted-foreground">Loading…</div>;
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="text-xs text-muted-foreground leading-relaxed">
-        Legacy Square invoice flow disabled. Card, Apple Pay, and Google Pay are
-        supported on the invoice page. Total {fmt(amountCents)}.
-      </div>
-      {url ? (
-        <div className="space-y-2">
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
-          >
-            <CreditCard className="size-4" />
-            Legacy Square link disabled
-          </a>
-          {status && (
-            <div className="text-[11px] text-muted-foreground text-center">
-              Status: {status}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={busy}
-            className="w-full text-xs font-medium underline disabled:opacity-50"
-          >
-            {busy ? "Checking…" : "I've paid — refresh status"}
-          </button>
-          <button
-            type="button"
-            onClick={generate}
-            disabled={busy}
-            className="w-full text-[11px] text-muted-foreground underline disabled:opacity-50"
-          >
-            {busy ? "Generating…" : "Generate a fresh link"}
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={generate}
-          disabled={busy}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition disabled:opacity-50"
-        >
-          <CreditCard className="size-4" />
-          {busy ? "Creating invoice…" : `Pay ${fmt(amountCents)} via Square`}
-        </button>
-      )}
-      {err && <div className="text-xs text-destructive">{err}</div>}
-    </div>
-  );
-  */
-}
-
-
 function StripeLogo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 ${className}`} aria-label="Stripe">
@@ -5014,131 +4846,6 @@ function StripeLogo({ className = "" }: { className?: string }) {
     </span>
   );
 }
-
-function StripePanel({
-  orderId,
-  amountCents,
-  canPay,
-  onChange,
-}: {
-  orderId: string;
-  amountCents: number;
-  canPay: boolean;
-  onChange?: () => void | Promise<void>;
-}) {
-  const [paid, setPaid] = useState<any | null>(null);
-  const [orderPaidAt, setOrderPaidAt] = useState<string | null>(null);
-  const [bootError, setBootError] = useState<string | null>(null);
-  const [fetchingSecret, setFetchingSecret] = useState(false);
-  const { format } = useCurrency();
-  const createPI = useServerFn(createStripePaymentIntent);
-  const isFinalPaid = Boolean(
-    (paid && isSettledPaymentStatus(paid.status)) ||
-      (orderPaidAt && paid?.provider === "stripe"),
-  );
-
-  const loadPayment = async () => {
-    const [{ data }, { data: order }] = await Promise.all([
-      supabase.from("order_payments").select("*").eq("order_id", orderId).maybeSingle(),
-      supabase.from("orders").select("paid_at").eq("id", orderId).maybeSingle(),
-    ]);
-    setPaid(data);
-    setOrderPaidAt((order as any)?.paid_at ?? null);
-  };
-  useEffect(() => {
-    loadPayment();
-  }, [orderId]);
-  // No background reconciliation: card payments are only verified when the
-  // customer presses "I've paid".
-
-  useEffect(() => {
-    const ch = supabase
-      .channel(`op-stripe-${orderId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
-        () => loadPayment(),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [orderId]);
-
-  const fetchClientSecret = useCallback(async () => {
-    setFetchingSecret(true);
-    setBootError(null);
-    try {
-      const returnUrl = `${window.location.origin}/shop?view=orders&id=${orderId}&session_id={CHECKOUT_SESSION_ID}`;
-      const result = await createPI({
-        data: { orderId, environment: getStripeEnvironment(), returnUrl },
-      });
-      if ("error" in result) throw new Error(result.error);
-      if (!result.clientSecret) throw new Error("Stripe did not return a client secret");
-      return result.clientSecret;
-    } catch (e) {
-      const message = (e as Error).message || "Failed to start Stripe checkout";
-      setBootError(message);
-      throw e;
-    } finally {
-      setFetchingSecret(false);
-    }
-  }, [createPI, orderId]);
-
-  const checkoutOptions = useMemo(() => ({ fetchClientSecret }), [fetchClientSecret]);
-
-  if (isFinalPaid) {
-    if (paid.provider !== "stripe") return null;
-    return (
-      <div>
-        <StripeLogo className="mb-1.5" />
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-          Card Payment via Stripe
-        </div>
-        <div className="rounded-md bg-success/10 border border-success/20 px-2.5 py-2 space-y-1">
-          <div className="flex items-center gap-2 text-success text-xs font-medium">
-            <CreditCard className="size-3.5" /> Paid
-            {paid.card_brand && paid.last_4 && (
-              <span className="font-mono text-muted-foreground">
-                {paid.card_brand} •••• {paid.last_4}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Order already settled (possibly via another provider) — don't offer a
-  // second card payment.
-  if (orderPaidAt) return null;
-
-  if (!canPay) return null;
-
-  return (
-    <div className="space-y-3">
-      <StripeLogo className="mb-1.5" />
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-        Pay by card
-      </div>
-      {bootError ? (
-        <div className="text-xs text-destructive">{bootError}</div>
-      ) : (
-        <div className="min-h-[280px] rounded-md border border-border bg-surface-2/50 p-2">
-          <EmbeddedCheckoutProvider stripe={getStripe()} options={checkoutOptions}>
-            <EmbeddedCheckout />
-          </EmbeddedCheckoutProvider>
-        </div>
-      )}
-      {fetchingSecret && (
-        <div className="text-xs text-muted-foreground flex items-center gap-2">
-          <Loader2 className="size-3 animate-spin" /> Loading checkout…
-        </div>
-      )}
-    </div>
-  );
-}
-
 
 function AdminProductsInner() {
   const [products, setProducts] = useState<Product[]>([]);
