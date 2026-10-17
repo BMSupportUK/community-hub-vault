@@ -975,7 +975,7 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
       (/\S\s+v\s+\S/i.test(line.trim()) ? line.trim() : null);
     if (
       fixture &&
-      eplTimeLine(lines[idx + 1] ?? "") &&
+      eplTimeLine(lines[idx + 1] ?? "", lines) &&
       /\d/.test(lines[idx + 1] ?? "")
     ) {
       current = { name: cleanLine(fixture), raw: "" };
@@ -2100,12 +2100,12 @@ export function listingBlockHasDate(raw: string): boolean {
 /** Strips Discord bold/code wrappers: "**## A v B**" → "## A v B", "`12:30pm UK | …`" → "12:30pm UK | …". */
 const unwrapEplMarkdown = (line: string) => line.trim().replace(/^\*{1,3}(.*?)\*{1,3}$/, "$1").replace(/^`+(.*?)`+$/, "$1").trim();
 /** "12:30pm UK / 7:30am ET", or the backticked "`12:30pm UK | 7:00am ET`" form. */
-const eplTimeLine = (line: string) =>
+const eplTimeLine = (line: string, lines: string[]) =>
   /\bUK\s*\/\s*[^\n]*\bET\b/i.test(unwrapEplMarkdown(line)) ||
-  (/^`[^`]+`$/.test(line.trim()) && /\bUK\s*\|\s*[^\n]*\bET\b/i.test(unwrapEplMarkdown(line)));
+  (/\bUK\s*\|\s*[^\n]*\bET\b/i.test(unwrapEplMarkdown(line)) && lines.some((l) => /\bEPL\b/.test(l)));
 const eplFixtureLineAt = (lines: string[], i: number) =>
   (/^##\s+\S/.test(unwrapEplMarkdown(lines[i] ?? "")) || /\S\s+v\s+\S/i.test(unwrapEplMarkdown(lines[i] ?? ""))) &&
-  eplTimeLine(lines[i + 1] ?? "") &&
+  eplTimeLine(lines[i + 1] ?? "", lines) &&
   /\d/.test(lines[i + 1] ?? "");
 
 /** True when a post uses the Premier League fixture layout above. */
