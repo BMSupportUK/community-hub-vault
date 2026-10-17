@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { Check, Copy, Download, ExternalLink, Hourglass, KeyRound, Link2, Loader2, Send, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { downloadReceipt } from "@/lib/receipt";
 import { CREDENTIAL_TIME_STEP, credentialTimeInput } from "@/lib/credential-time";
+import { startSecureOrderProgressSync } from "@/lib/secure-order-progress-sync";
 
 
 
@@ -34,6 +35,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, chatBubble = false, orderRef, onDone, sidebarTop }: { orderId: string; withChat?: boolean; loginOnly?: boolean; chatBubble?: boolean; orderRef?: string | null; onDone?: () => void; sidebarTop?: ReactNode }) {
   const { roles } = useAuth();
   const canComplete = canCompleteCheckoutSteps(roles);
+  const progressChannelId = useId();
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [orderPaid, setOrderPaid] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
@@ -91,22 +93,61 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
     }).catch((e) => { setRenewAccounts([]); if (loginOnly) toast.error(e instanceof Error ? e.message : "Couldn't load the customer's accounts"); });
   }, [loginOnly, !!link, orderId, canComplete]);
   useEffect(() => {
-    Promise.all([
-      supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
-      supabase.rpc("staff_checkout_order_summary" as never, { p_order_id: orderId } as never).then(({ data, error }) => ({ data: (data as unknown as Record<string, unknown>[] | null)?.[0] ?? null, error })), 
-      canComplete ? supabase.from("qd_dns_codes").select("id,label,code").order("label") : Promise.resolve({ data: [] }),
-    ]).then(([{ data: linkData }, { data: orderData }, { data: codeData }]) => {
-      setLink((linkData as never) ?? null);
-      const paidAt = (orderData as { paid_at?: string | null } | null)?.paid_at;
-      setOrderPaid(!!paidAt);
-      setOrderCompleted(!!(orderData as { completed_at?: string | null } | null)?.completed_at);
-      setPayMethod(((orderData as { manual_pay_method?: string | null } | null)?.manual_pay_method ?? null)?.toLowerCase() ?? null);
-      if (paidAt) setPaidLocal(toLocal(new Date(paidAt)));
-      const codes = (codeData ?? []) as { id: string; label: string; code: string }[];
-      setQdCodes(codes);
-      if (codes.length > 0) setQdCodeId(codes[0].id);
+    let active = true;
+    let lastPaidAt: string | null | undefined;
+    setLink(undefined);
+    setOrderPaid(false);
+    setOrderCompleted(false);
+    const stop = startSecureOrderProgressSync({
+      refresh: async () => {
+        const [linkResult, orderResult] = await Promise.all([
+          supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
+          supabase.rpc("staff_checkout_order_summary" as never, { p_order_id: orderId } as never),
+        ]);
+        if (!active || linkResult.error || orderResult.error) return;
+        const orderData = (orderResult.data as unknown as { paid_at: string | null; completed_at: string | null; manual_pay_method: string | null }[] | null)?.[0];
+        setLink((linkResult.data as never) ?? null);
+        setOrderPaid(!!orderData?.paid_at);
+        setOrderCompleted(!!orderData?.completed_at);
+        setPayMethod(orderData?.manual_pay_method?.toLowerCase() ?? null);
+        // Do not overwrite the date being edited in the account setup form.
+        const paidAt = orderData?.paid_at ?? null;
+        if (paidAt !== lastPaidAt) {
+          lastPaidAt = paidAt;
+          if (paidAt) setPaidLocal(toLocal(new Date(paidAt)));
+        }
+      },
+      subscribe: (refresh) => {
+        const channel = supabase.channel(`secure-order-progress:${orderId}:${progressChannelId}`)
+          .on("postgres_changes", { event: "UPDATE", schema: "private", table: "orders", filter: `id=eq.${orderId}` }, refresh)
+          .on("postgres_changes", { event: "*", schema: "public", table: "order_checkout_links", filter: `order_id=eq.${orderId}` }, refresh)
+          .subscribe((status) => { if (status === "SUBSCRIBED") refresh(); });
+        return () => { void supabase.removeChannel(channel); };
+      },
+      isVisible: () => document.visibilityState === "visible",
+      every: (refresh, milliseconds) => {
+        const timer = window.setInterval(refresh, milliseconds);
+        return () => window.clearInterval(timer);
+      },
+      onReturn: (refresh) => {
+        window.addEventListener("focus", refresh);
+        document.addEventListener("visibilitychange", refresh);
+        return () => {
+          window.removeEventListener("focus", refresh);
+          document.removeEventListener("visibilitychange", refresh);
+        };
+      },
     });
-  }, [orderId, canComplete]);
+    if (canComplete) {
+      void supabase.from("qd_dns_codes").select("id,label,code").order("label").then(({ data, error }) => {
+        if (!active || error) return;
+        const codes = data ?? [];
+        setQdCodes(codes);
+        if (codes.length > 0) setQdCodeId(codes[0].id);
+      });
+    }
+    return () => { active = false; stop(); };
+  }, [orderId, canComplete, progressChannelId]);
   const toggleSetup = async (done: boolean) => {
     if (!canComplete) return;
     setBusy(true);
@@ -226,7 +267,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
         accountSetup={!!link.account_setup_at}
         renewal={renewal}
       />
-      {link.payment_sent_at && (
+      {link.payment_sent_at && !orderPaid && (
         <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs"><Hourglass className="size-3.5 text-warning" /> Customer says payment was sent {new Date(link.payment_sent_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} — awaiting confirmation</div>
       )}
       <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${orderPaid ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>

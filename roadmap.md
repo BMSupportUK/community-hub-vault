@@ -4,6 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [ ] Update secure admin order steps automatically and verify progress refresh without changing live orders.
 - [x] Preserve actual sale-time fees; automatic checks fill missing transaction fees only. New sales read actual charges, reflecting provider fee changes without applying newer rates to past sales. Invoice sync preserves recorded fees. Live read-back awaits dashboard unlock below.
 - [x] Admin dashboard Orders: recorded Provider fee and Net received columns beside original amount for admin/management; unknown fees stay Unknown, seven fee tests pass and preview builds successfully.
 - [ ] Visually verify admin Orders fee columns — blocked by the dashboard password/PIN unlock; no credentials requested or security bypassed.
