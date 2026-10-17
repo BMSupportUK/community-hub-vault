@@ -35,6 +35,7 @@ beforeAll(async () => {
  await db.exec(`CREATE FUNCTION public.has_role(uuid,public.app_role) RETURNS boolean LANGUAGE sql AS 'SELECT current_setting(''test.role'',true)=$2::text';`);
  await db.exec(readFileSync(new URL('../drizzle/migrations/0139_renewal_confirmation_updates_credentials.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0159_manual_customer_groups_and_renewals.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0160_prevent_manual_renewal_group_reassignment.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -269,6 +270,10 @@ test('admin groups paid manual renewal with Ashley, stacks term and keeps a sing
 test('manual grouping rejects site customers and non-admin callers',async()=>{
  await expect(db.query('SELECT admin_group_manual_customer_order($1,$2,NULL)',[id(951),id(2)])).rejects.toThrow('not a site account');
  await db.exec("SELECT set_config('test.role','management',false)");await expect(db.query('SELECT admin_group_manual_customer_order($1,$2,NULL)',[id(951),id(950)])).rejects.toThrow('Only admin');await db.exec("SELECT set_config('test.role','admin',false)");
+});
+test('an applied manual renewal cannot be detached and counted as a separate subscription',async()=>{
+ await expect(db.query('SELECT admin_group_manual_customer_order($1,$2,NULL)',[id(951),id(950)])).rejects.toThrow('cannot be reassigned');
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(950));expect(c.accounts).toHaveLength(1);expect(c.accounts[0].expiresAt).toContain('2028-08-28');
 });
 test('explicit manual renewal extends only its selected account once without editing site credentials',async()=>{
  await db.exec(`INSERT INTO private.orders(id,customer_type,paid_at,status,created_at,order_ref,shipping_name) VALUES('${id(952)}','manual',now(),'paid',now(),'MANUAL-952','Ashley Spence'); INSERT INTO public.order_checkout_links(order_id,customer_kind,renewal_customer_id,renewal_account_id) VALUES('${id(952)}','existing','${id(950)}','${id(950)}'); INSERT INTO order_items VALUES('${id(1952)}','${id(952)}','1 month',1);`);

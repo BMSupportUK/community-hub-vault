@@ -4,7 +4,8 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
-- [ ] Keep manual customers separate from site accounts, add admin grouping of same-customer manual orders, show manual expiry and match manual renewals to the intended account.
+- [x] Keep manual customers separate from site accounts; admin grouping controls and manual-renewal name/account selection added. Ashley's live manual record reads calculated expiry 28 Aug 2027 from order date + 12 months; no live orders regrouped or subscriptions changed. Isolated grouping/renewal tests pass, preview build OK.
+- [ ] Verify manual grouping and renewal creation save/read-back through the dashboard — blocked by account password/PIN; signed-in reads verified, no security bypass.
 - [x] Remove the "Adjusted" tag from the admin Customers list; edited renewal dates and year joined display identically to recorded ones, corrections and "Use recorded date/year" restore options unchanged inside the edit pop-ups; 39 customer/date tests pass, typecheck clean, build OK. Screen check remains blocked by the dashboard password/PIN. Preview only.
 - [x] Add independent package selection for each subscription login on multi-account customers; 32 customer tests pass, screen verification remains PIN-blocked.
 - [x] Add admin-only customer-list username editing for No site account customers without creating accounts or changing credentials; 30 customer tests pass, build OK. Signed-in dashboard remains PIN-locked, so screen save/read-back is unverified. Preview only.
