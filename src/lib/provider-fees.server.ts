@@ -3,11 +3,7 @@ import { squareRequest } from './provider-invoices.server';
 import { squareProcessingFee } from './profit-calculation';
 
 export async function fetchProviderFee(provider: string, reference: string, environment: StripeEnv, expectedAmount: number): Promise<number | null> {
-  if (provider === 'square') {
-    if (reference.startsWith('Invoice #')) return null;
-    const { payment } = await squareRequest(`/v2/payments/${encodeURIComponent(reference)}`);
-    return payment?.status === 'COMPLETED' && payment.amount_money?.amount === expectedAmount ? squareProcessingFee(payment) : null;
-  }
+  if (provider === 'square') return fetchSquareFee(reference, expectedAmount);
   if (provider !== 'stripe') return null;
   const stripe = createStripeClient(environment);
   let intentId: string | null = null;
@@ -31,4 +27,42 @@ export async function fetchProviderFee(provider: string, reference: string, envi
   const charge = await stripe.charges.retrieve(chargeId, { expand: ['balance_transaction'] });
   const transaction = typeof charge.balance_transaction === 'string' ? await stripe.balanceTransactions.retrieve(charge.balance_transaction) : charge.balance_transaction;
   return charge.paid && charge.amount_captured === expectedAmount && transaction?.currency === 'gbp' && Number.isSafeInteger(transaction.fee) && transaction.fee >= 0 ? transaction.fee : null;
+}
+// Square references may be a payment id, an invoice id (inv:...) or a manual "Invoice #N" note.
+async function fetchSquareFee(reference: string, expectedAmount: number): Promise<number | null> {
+  let paymentIds: string[] = [];
+  const numberMatch = reference.match(/^Invoice\s*#\s*(\d+)$/i);
+  let invoiceId = reference.startsWith('inv:') ? reference : null;
+  if (numberMatch) {
+    const wanted = Number(numberMatch[1]);
+    let cursor: string | undefined;
+    const location = process.env.SQUARE_LOCATION_ID;
+    if (!location) return null;
+    do {
+      const page = await squareRequest(`/v2/invoices?location_id=${encodeURIComponent(location)}&limit=200${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
+      const found = (page.invoices ?? []).filter((i: any) => Number(i.invoice_number) === wanted);
+      if (found.length > 1) return null;
+      if (found.length === 1) { invoiceId = found[0].id; break; }
+      cursor = page.cursor;
+    } while (cursor);
+    if (!invoiceId) return null;
+  }
+  if (invoiceId) {
+    const { invoice } = await squareRequest(`/v2/invoices/${encodeURIComponent(invoiceId)}`);
+    if (invoice?.status !== 'PAID' || !invoice.order_id) return null;
+    const { order } = await squareRequest(`/v2/orders/${encodeURIComponent(invoice.order_id)}`);
+    paymentIds = (order?.tenders ?? []).map((t: any) => t.payment_id).filter(Boolean);
+  } else paymentIds = [reference];
+  if (!paymentIds.length) return null;
+  let total = 0;
+  let amount = 0;
+  for (const id of paymentIds) {
+    const { payment } = await squareRequest(`/v2/payments/${encodeURIComponent(id)}`);
+    if (payment?.status !== 'COMPLETED') return null;
+    const fee = squareProcessingFee(payment);
+    if (fee == null) return null;
+    total += fee;
+    amount += payment.amount_money?.amount ?? 0;
+  }
+  return amount === expectedAmount ? total : null;
 }
