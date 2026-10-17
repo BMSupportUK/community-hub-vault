@@ -158,7 +158,6 @@ function AddOrderPage() {
         <div className="min-w-0 space-y-5">
           <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
-          <label htmlFor="skip-registration" className="flex items-start gap-3 text-sm"><Checkbox id="skip-registration" className="mt-0.5 shrink-0" checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} /><span>Bypass account creation at the end of this order</span></label>
           <div className="space-y-2">
             {products === null ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
@@ -221,10 +220,11 @@ function AddOrderPage() {
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>
             <div className="flex flex-col gap-2 sm:flex-row md:flex-col xl:flex-row">
               {(["new", "existing"] as const).map((kind) => (
-                <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10">{kind === "new" ? "New customer" : "Existing customer"}</Button>
+                <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setSkipRegistration(false); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10">{kind === "new" ? "New customer" : "Existing customer"}</Button>
               ))}
             </div>
             {customerKind === "existing" ? <>
+              <label htmlFor="skip-registration" className="flex items-start gap-3 text-sm"><Checkbox id="skip-registration" className="mt-0.5 shrink-0" checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} /><span>Bypass account creation at the end of this order</span></label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
                 <input aria-label="Search manual customers" placeholder="Search name or login" value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm" />
