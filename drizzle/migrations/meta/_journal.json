@@ -1065,6 +1065,13 @@
       "when": 1792265947701,
       "tag": "0151_customer_site_account_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 152,
+      "version": "7",
+      "when": 1792267178061,
+      "tag": "0152_customer_last_renewed_date_editing",
+      "breakpoints": true
     }
   ]
 }

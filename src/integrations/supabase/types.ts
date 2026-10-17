@@ -1673,6 +1673,27 @@ export type Database = {
           },
         ]
       }
+      customer_renewal_date_corrections: {
+        Row: {
+          customer_id: string
+          renewed_date: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          customer_id: string
+          renewed_date: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          customer_id?: string
+          renewed_date?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: []
+      }
       customer_reviews: {
         Row: {
           body: string
@@ -7432,6 +7453,10 @@ export type Database = {
       }
       admin_set_customer_first_subscription: {
         Args: { p_customer_id: string; p_first_subscription_date: string }
+        Returns: undefined
+      }
+      admin_set_customer_last_renewed: {
+        Args: { p_customer_id: string; p_renewed_date: string }
         Returns: undefined
       }
       admin_upsert_signup_vpn: {

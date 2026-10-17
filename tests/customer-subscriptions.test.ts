@@ -24,6 +24,7 @@ beforeAll(async () => {
  await db.exec(readFileSync(new URL('../drizzle/migrations/0149_customer_tenure_date_corrections.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0150_customer_package_allocation.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0151_customer_site_account_flag.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0152_customer_last_renewed_date_editing.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -122,4 +123,30 @@ test('management cannot allocate packages',async()=>{
 test('allocation rejects unknown customers and unavailable packages',async()=>{
  await expect(db.query('SELECT admin_allocate_customer_package($1,$2)',[id(999),id(500)])).rejects.toThrow('Customer not found');
  await expect(db.query('SELECT admin_allocate_customer_package($1,$2)',[id(3),id(501)])).rejects.toThrow('available package');
+});
+
+test('admin edits renewal date without changing expiry or paid orders',async()=>{
+ const before=(await db.query('SELECT id,expiry_at FROM private.app_credentials ORDER BY id')).rows;
+ const orders=(await db.query('SELECT id,paid_at FROM private.orders ORDER BY id')).rows;
+ await db.query('SELECT admin_set_customer_last_renewed($1,$2)',[id(2),'2025-06-15']);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data.find(c=>c.userId===id(2));
+ expect(new Date(c?.renewedAt).toISOString()).toBe('2025-06-14T23:00:00.000Z');
+ expect(c?.renewedDateAdjusted).toBe(true);
+ expect((await db.query('SELECT id,expiry_at FROM private.app_credentials ORDER BY id')).rows).toEqual(before);
+ expect((await db.query('SELECT id,paid_at FROM private.orders ORDER BY id')).rows).toEqual(orders);
+});
+test('management cannot edit or restore last renewed date',async()=>{
+ await db.exec("SELECT set_config('test.role','management',false)");
+ expect((await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data.find(c=>c.userId===id(2))?.renewedDateAdjusted).toBe(true);
+ await expect(db.query('SELECT admin_set_customer_last_renewed($1,$2)',[id(2),'2024-01-02'])).rejects.toThrow('Only admin');
+ await expect(db.query('SELECT admin_set_customer_last_renewed($1,NULL)',[id(2)])).rejects.toThrow('Only admin');
+ await db.exec("SELECT set_config('test.role','admin',false)");
+});
+test('admin can restore recorded last renewed date',async()=>{
+ await db.query('SELECT admin_set_customer_last_renewed($1,NULL)',[id(2)]);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data.find(c=>c.userId===id(2));
+ expect(c?.renewedDateAdjusted).toBe(false);expect(c?.renewedAt).toBe(c?.recordedRenewedAt);expect(c?.renewedAt).toContain('2027-01-01');
+});
+test('renewal date editing rejects unknown customers',async()=>{
+ await expect(db.query('SELECT admin_set_customer_last_renewed($1,$2)',[id(999),'2025-06-15'])).rejects.toThrow('Customer not found');
 });

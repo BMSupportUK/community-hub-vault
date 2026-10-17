@@ -4,6 +4,8 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [x] Add admin-only last-renewed date editor and audited correction storage; restore recorded date supported, expiry/payments unchanged. All 27 customer tests pass; build OK. No real customer dates changed; preview only.
+- [ ] Verify last-renewed date save/read-back on the Customers screen — signed-in browser reaches dashboard password/PIN lock; blocked by dashboard unlock.
 - [x] Customer list: package names without quantities, credential logins beneath usernames, admin allocation for missing packages; 22 tests pass and authenticated read returns 24 customers with quantity-free names, saved login names retained. No real customer allocations or expiry changes made; build OK, preview only.
 - [x] Replace first-subscription date display/editor with year-only entry and year-based customer tenure; eighteen tests pass, admin permissions and expiry unchanged. Dashboard screen check remains PIN-blocked; preview only.
 - [x] Add customer years column and admin-only first-subscription date correction/backdating; fourteen database tests pass, including anniversary calculation, permissions, restoring recorded date and unchanged expiry. Screen verification blocked by dashboard password/PIN; preview UI awaits publishing.
