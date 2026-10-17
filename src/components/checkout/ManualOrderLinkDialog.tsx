@@ -85,6 +85,31 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
     addMonths(base, renewMonths);
     setExpiryLocal(toLocal(base));
   }, [paidLocal, renewMonths, link?.customer_kind]);
+  // Manual-customer renewals have no site account to pick: pull the login
+  // details saved on their earlier manual order (as shown in admin Customers).
+  const [previousLogin, setPreviousLogin] = useState<{ app_login_name: string; password: string | null; expiry_at: string | null } | null | undefined>(undefined);
+  const manualRenewal = link?.customer_kind === "existing" && renewAccounts !== null && renewAccounts.length === 0;
+  useEffect(() => {
+    if (!manualRenewal || !canComplete) return;
+    let active = true;
+    supabase.rpc("staff_manual_order_previous_login" as never, { p_order_id: orderId } as never).then(({ data }) => {
+      if (!active) return;
+      const row = (data as unknown as { app_login_name: string; password: string | null; expiry_at: string | null }[] | null)?.[0] ?? null;
+      setPreviousLogin(row);
+      if (row) {
+        setLoginName((v) => v || row.app_login_name || "");
+        setAccountPassword((v) => v || row.password || "");
+      }
+    });
+    return () => { active = false; };
+  }, [manualRenewal, orderId, canComplete]);
+  useEffect(() => {
+    if (!manualRenewal || previousLogin === undefined || renewMonths <= 0) return;
+    const remaining = previousLogin?.expiry_at ? new Date(previousLogin.expiry_at).getTime() : 0;
+    const base = new Date(stackEarly ? Math.max(remaining, Date.now()) : Date.now());
+    addMonths(base, renewMonths);
+    setExpiryLocal(toLocal(base));
+  }, [manualRenewal, previousLogin, renewMonths, stackEarly]);
   useEffect(() => {
     // Load the months bought in both the checkout-page window and the admin
     // Orders "secure page" panel, so the expiry date fills in everywhere.
