@@ -7401,6 +7401,10 @@ export type Database = {
         }
         Returns: string
       }
+      admin_customer_is_hidden: {
+        Args: { p_display_name: string; p_user_id: string; p_username: string }
+        Returns: boolean
+      }
       admin_customer_subscription_details: { Args: never; Returns: Json }
       admin_customer_subscriptions: { Args: never; Returns: Json }
       admin_customer_subscriptions_with_tenure: { Args: never; Returns: Json }
