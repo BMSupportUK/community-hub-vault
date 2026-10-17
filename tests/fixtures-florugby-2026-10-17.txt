@@ -1,0 +1,13 @@
+**VIP | Flosports TV**
+
+Florugby: Event0 name: 2026 Vodacom Bulls vs Stade Francais start:2026-10-17 14:00:00 stop:2026-10-17 18:00:00
+Florugby Event0 name: 2026 Munster Rugby vs Racing 92 start:2026-10-17 21:00:00 stop:2026-10-18 01:00:00
+Florugby: Event1 name: 2026 Sale Sharks vs Glasgow Warriors start:2026-10-17 14:00:00 stop:2026-10-17 18:00:00
+Florugby Event1 name: 2026 Scarlets vs Newcastle Red Bulls start:2026-10-17 21:00:00 stop:2026-10-18 01:00:00
+Florugby: Event2 name: 2026 Lyon vs Hollywoodbets Sharks start:2026-10-17 14:00:00 stop:2026-10-17 18:00:00
+Florugby Event2 name: 2026 Bath Rugby vs Montpellier start:2026-10-17 21:00:00 stop:2026-10-18 01:00:00
+Florugby: Event3 name: 2026 Black Lion vs Ospreys Rugby start:2026-10-17 14:00:00 stop:2026-10-17 18:00:00
+Florugby Event4 name: 2026 Zebre Parma vs Ulster Rugby start:2026-10-17 16:15:00 stop:2026-10-17 20:15:00
+Florugby Event5 name: 2026 Clermont vs Leinster Rugby start:2026-10-17 16:15:00 stop:2026-10-17 20:15:00
+Florugby Event6 name: 2026 DHL Stormers vs Bristol Bears start:2026-10-17 16:15:00 stop:2026-10-17 20:15:00
+Florugby Event7 name: 2026 La Rochelle vs Fidelity SecureDrive Lions start:2026-10-17 17:30:00 stop:2026-10-17 21:30:00
