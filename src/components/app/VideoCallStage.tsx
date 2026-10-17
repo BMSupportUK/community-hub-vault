@@ -630,9 +630,14 @@ export function VideoCallStage({
           {remoteMuted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
         </button>
         {side === "offerer" && (
-          <button type="button" onClick={() => setManualRotate((r) => (r + 90) % 360)} aria-label="Rotate picture" title="Rotate the customer's picture" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
-            <RotateCw className="size-5" />
-          </button>
+          <>
+            <button type="button" onClick={() => setManualRotate((r) => (r + 90) % 360)} aria-label="Rotate picture" title="Rotate the customer's picture" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
+              <RotateCw className="size-5" />
+            </button>
+            <button type="button" onClick={() => send("camrestart")} aria-label="Refresh customer's picture" title="Picture black? Restart the customer's camera" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
+              <RefreshCcw className="size-5" />
+            </button>
+          </>
         )}
         {isMobilePhone() && startWithCamera && (
           <>
