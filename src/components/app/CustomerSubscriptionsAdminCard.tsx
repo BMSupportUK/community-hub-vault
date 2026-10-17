@@ -32,6 +32,18 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const [renewalEditing, setRenewalEditing] = useState<Customer | null>(null);
   const [renewalAccount, setRenewalAccount] = useState<Account | null>(null);
   const [renewedDate, setRenewedDate] = useState("");
+  const [usernameEditing, setUsernameEditing] = useState<Customer | null>(null);
+  const [customerUsername, setCustomerUsername] = useState("");
+  const saveUsername = async () => {
+    if (!usernameEditing || !customerUsername.trim()) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_set_customer_list_username", { p_customer_id: usernameEditing.userId, p_username: customerUsername.trim() });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Customer username updated");
+    setUsernameEditing(null);
+    await load();
+  };
   const saveRenewedDate = async (restore = false) => {
     if (!renewalEditing || (!restore && !renewedDate)) return;
     setBusy(true);
@@ -79,7 +91,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   };
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc("admin_customer_subscription_details");
+    const { data, error } = await supabase.rpc("admin_customer_subscription_list");
     setLoading(false);
     setError(error?.message ?? "");
     if (!error) setRows((data ?? []) as unknown as Customer[]);
@@ -110,7 +122,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
             const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt);
             return (
             <tr key={c.userId} className="border-b border-border/60 align-top">
-              <td className="p-3 font-medium">{c.username || c.displayName || "Not recorded"}<span className={`mt-1 inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>{[...new Set(c.accounts.map((a) => a.login).filter(Boolean))].map((login) => <span key={login} className="mt-1 block break-all text-xs font-normal text-muted-foreground">{login}</span>)}</td>
+              <td className="p-3 font-medium"><div className="flex items-start gap-2"><span className="break-words">{c.username || c.displayName || "Not recorded"}</span>{canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" title="Edit customer username" aria-label={`Edit customer username for ${c.username || c.displayName || "customer"}`} onClick={() => { setUsernameEditing(c); setCustomerUsername(c.username || ""); }}><Pencil className="size-4" /></Button>}</div><span className={`mt-1 inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>{[...new Set(c.accounts.map((a) => a.login).filter(Boolean))].map((login) => <span key={login} className="mt-1 block break-all text-xs font-normal text-muted-foreground">{login}</span>)}</td>
               <td className="max-w-64 p-3"><div className="flex items-start gap-2"><span>{c.package || "Not recorded"}</span>{canReward && (!c.package || c.packageAllocated) && <Button variant="ghost" size="icon" title="Allocate package" aria-label={`Allocate package for ${c.username || c.displayName || "customer"}`} onClick={() => void openAllocation(c)}><Pencil className="size-4" /></Button>}</div></td>
               <td className="p-3">{hasRecordedYear ? (c.accounts.length ? c.accounts.map((a) => <div key={a.id} className="mb-1">{c.accounts.length > 1 && <span className="block text-xs text-muted-foreground">{a.login}</span>}{date(a.expiresAt)}</div>) : "Not recorded") : null}</td>
               <td className="p-3">{(c.accounts.length > 1 ? c.accounts : [null]).map((a) => {
@@ -134,6 +146,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
       <Dialog open={!!editing} onOpenChange={(open) => { if (!open && !busy) setEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Year joined · {editing?.username || editing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Year joined<Input aria-label="Year joined" type="number" inputMode="numeric" min={1000} max={ukCurrentYear()} step={1} value={joinedYear} onChange={(e) => setJoinedYear(e.target.value)} /></label><DialogFooter>{editing?.firstSubscriptionAdjusted && <Button variant="outline" disabled={busy} onClick={() => void saveJoinedYear(true)}>Use recorded year</Button>}<Button variant="outline" disabled={busy} onClick={() => setEditing(null)}>Cancel</Button><Button disabled={busy || !joinedYearToDate(joinedYear)} onClick={() => void saveJoinedYear()}>{busy && <Loader2 className="animate-spin" />}Save year</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={!!allocating} onOpenChange={(open) => { if (!open && !busy) setAllocating(null); }}><DialogContent><DialogHeader><DialogTitle>Allocate package · {allocating?.username || allocating?.displayName}</DialogTitle></DialogHeader><select aria-label="Subscription package" value={productId} onChange={(e) => setProductId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"><option value="" disabled>Choose package</option>{products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setAllocating(null)}>Cancel</Button><Button disabled={!productId || busy} onClick={() => void savePackage()}>{busy && <Loader2 className="animate-spin" />}Save package</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={!!renewalEditing} onOpenChange={(open) => { if (!open && !busy) setRenewalEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Last renewed · {renewalAccount?.login || renewalEditing?.username || renewalEditing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Last renewed date<Input aria-label="Last renewed date" type="date" value={renewedDate} onChange={(e) => setRenewedDate(e.target.value)} /></label><DialogFooter>{(renewalAccount ? renewalAccount.renewedDateAdjusted : renewalEditing?.renewedDateAdjusted) && <Button variant="outline" disabled={busy} onClick={() => void saveRenewedDate(true)}>Use recorded date</Button>}<Button variant="outline" disabled={busy} onClick={() => setRenewalEditing(null)}>Cancel</Button><Button disabled={busy || !renewedDate} onClick={() => void saveRenewedDate()}>{busy && <Loader2 className="animate-spin" />}Save date</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={!!usernameEditing} onOpenChange={(open) => { if (!open && !busy) setUsernameEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Customer username · {usernameEditing?.username || usernameEditing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Username<Input aria-label="Customer username" autoComplete="off" value={customerUsername} onChange={(e) => setCustomerUsername(e.target.value)} /></label><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setUsernameEditing(null)}>Cancel</Button><Button disabled={busy || !customerUsername.trim()} onClick={() => void saveUsername()}>{busy && <Loader2 className="animate-spin" />}Save username</Button></DialogFooter></DialogContent></Dialog>
     </section>
   );
 }

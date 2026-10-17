@@ -30,11 +30,33 @@ beforeAll(async () => {
  await db.exec(readFileSync(new URL('../drizzle/migrations/0155_exclude_gj_and_dane_referral_bonus.sql',import.meta.url),'utf8'));
  await db.exec('ALTER TABLE public.order_checkout_links ADD COLUMN renewal_credential_id uuid;');
  await db.exec(readFileSync(new URL('../drizzle/migrations/0156_per_account_customer_renewal_dates.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0157_manual_customer_list_usernames.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
 });
 afterAll(()=>db.close());
+test('admin enters and edits a no-site customer username without creating an account or changing credentials',async()=>{
+ await db.exec(`INSERT INTO private.orders(id,customer_type,paid_at,status,created_at,order_ref,shipping_name) VALUES('${id(900)}','manual','2026-10-18','completed','2026-10-18','SALE-900','Manual Customer'); INSERT INTO private.pending_order_credentials VALUES('${id(900)}','original-login','2027-10-18');`);
+ const before=(await db.query('SELECT * FROM private.pending_order_credentials WHERE order_id=$1',[id(900)])).rows;
+ await db.query('SELECT admin_set_customer_list_username($1,$2)',[id(900),'  manual-username  ']);
+ let c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(900));
+ expect(c?.username).toBe('manual-username'); expect(c?.hasSiteAccount).toBe(false);
+ await db.query('SELECT admin_set_customer_list_username($1,$2)',[id(900),'updated-username']);
+ c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(900));
+ expect(c?.username).toBe('updated-username'); expect(c?.accounts[0]?.login).toBe('original-login');
+ expect((await db.query('SELECT * FROM private.pending_order_credentials WHERE order_id=$1',[id(900)])).rows).toEqual(before);
+ expect((await db.query('SELECT * FROM profiles WHERE id=$1',[id(900)])).rows).toHaveLength(0);
+ expect((await db.query('SELECT * FROM auth.users WHERE id=$1',[id(900)])).rows).toHaveLength(0);
+});
+test('customer username editor rejects management, site accounts, unknown customers and blank usernames',async()=>{
+ await db.exec("SELECT set_config('test.role','management',false)");
+ await expect(db.query('SELECT admin_set_customer_list_username($1,$2)',[id(900),'changed'])).rejects.toThrow('Only admin');
+ await db.exec("SELECT set_config('test.role','admin',false)");
+ await expect(db.query('SELECT admin_set_customer_list_username($1,$2)',[id(3),'changed'])).rejects.toThrow('no site account');
+ await expect(db.query('SELECT admin_set_customer_list_username($1,$2)',[id(999),'changed'])).rejects.toThrow('Customer not found');
+ await expect(db.query('SELECT admin_set_customer_list_username($1,$2)',[id(900),' '])).rejects.toThrow('Enter a username');
+});
 test('multiple logins retain independent renewal dates without changing expiry', async () => {
  await db.exec(`INSERT INTO profiles VALUES('${id(800)}','multi-customer','Multi Customer'); INSERT INTO private.app_credentials VALUES('${id(801)}','${id(800)}','login-one','single',1,'2027-10-17',NULL,now()),('${id(802)}','${id(800)}','login-two','single',2,'2027-12-25',NULL,now());`);
  const before = (await db.query('SELECT id,expiry_at FROM private.app_credentials WHERE owner_id=$1 ORDER BY id',[id(800)])).rows;
