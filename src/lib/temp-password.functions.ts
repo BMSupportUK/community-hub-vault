@@ -47,8 +47,6 @@ export const createUserManually = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({
       email: z.string().trim().toLowerCase().email().max(255),
-      username: z.string().trim().min(2).max(30).regex(/^[A-Za-z0-9_.-]+$/, "Username can only use letters, numbers, _ . -"),
-      displayName: z.string().trim().max(60).optional(),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -58,16 +56,16 @@ export const createUserManually = createServerFn({ method: "POST" })
     if (!canSendTempPassword((roles ?? []).map((r) => String(r.role)))) throw new Error("Only admin and management can do this.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: taken } = await supabaseAdmin.from("profiles").select("id").ilike("username", data.username).maybeSingle();
-    if (taken) throw new Error("That username is already taken.");
+    // Customer chooses their own username/display name on first sign-in.
+    const placeholder = `user_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
 
     const password = generateTempPassword();
-    const displayName = data.displayName || data.username;
+    const displayName: string | undefined = undefined;
     const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password,
       email_confirm: true,
-      user_metadata: { username: data.username, display_name: displayName },
+      user_metadata: { username: placeholder, display_name: placeholder, needs_profile: true },
     });
     if (cErr || !created?.user) {
       throw new Error(/already/i.test(cErr?.message ?? "") ? "An account with that email already exists." : cErr?.message ?? "Couldn't create the account.");

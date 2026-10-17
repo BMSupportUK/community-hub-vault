@@ -85,18 +85,16 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
   const create = useServerFn(createUserManually);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      const res = await create({ data: { email, username, displayName: displayName || undefined } });
+      const res = await create({ data: { email } });
       if (res.banned) toast.warning("Account created, but that email is on the blacklist so it's banned.");
       else if (res.sent) toast.success("Account created and login details emailed.");
       else toast.warning("Account created, but the email couldn't be sent. Use Email new password on their card.");
-      setOpen(false); setEmail(""); setUsername(""); setDisplayName("");
+      setOpen(false); setEmail("");
       onCreated?.();
     } catch (err: any) {
       toast.error(err?.message ?? "Couldn't create the account");
@@ -114,15 +112,9 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
         <div className="fixed inset-0 z-50 bg-background/80 grid place-items-center p-4">
           <form onSubmit={submit} className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl bg-surface border border-border p-6 space-y-3">
             <h2 className="font-display font-semibold text-lg">Add a user</h2>
-            <p className="text-sm text-muted-foreground">They're approved straight away and get an email with their login details. They must choose their own password the first time they sign in.</p>
+            <p className="text-sm text-muted-foreground">They're approved straight away and get an email with their login details. The first time they sign in they choose their own password, username and display name.</p>
             <label className="block text-xs font-medium text-muted-foreground">Email
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
-            </label>
-            <label className="block text-xs font-medium text-muted-foreground">Username
-              <input required minLength={2} maxLength={30} pattern="[A-Za-z0-9_.\-]+" value={username} onChange={(e) => setUsername(e.target.value)} className={input} />
-            </label>
-            <label className="block text-xs font-medium text-muted-foreground">Display name (optional)
-              <input maxLength={60} value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={input} />
             </label>
             <div className="flex gap-2 pt-1">
               <button type="submit" disabled={busy} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50">
