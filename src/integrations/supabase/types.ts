@@ -8066,6 +8066,10 @@ export type Database = {
         }
         Returns: string
       }
+      staff_ticket_scope_allowed: {
+        Args: { _category_id: string; _order_id: string }
+        Returns: boolean
+      }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
       submit_content_report: {
         Args: { _kind: string; _reason: string; _target: string }

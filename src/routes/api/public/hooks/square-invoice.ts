@@ -46,35 +46,12 @@ export const Route = createFileRoute("/api/public/hooks/square-invoice")({
 
         if (!row) return new Response("ok");
 
-        let newStatus = invoice.status as string | undefined;
-        if (eventType === "invoice.payment_made") newStatus = "PAID";
-        else if (eventType === "invoice.canceled") newStatus = "CANCELED";
-
-        await supabaseAdmin
-          .from("order_invoices")
-          .update({
-            status: newStatus ?? row.status,
-            public_url: invoice.public_url ?? undefined,
-            invoice_number: invoice.invoice_number ?? undefined,
-            last_synced_at: new Date().toISOString(),
-          })
-          .eq("square_invoice_id", invoice.id);
-
-        // If the invoice is paid, mark the underlying order as paid too.
-        if (newStatus === "PAID" && row.order_id) {
-          const { data: order } = await supabaseAdmin
-            .from("orders")
-            .select("id,paid_at,status")
-            .eq("id", row.order_id)
-            .maybeSingle();
-          if (order && !order.paid_at) {
-            await supabaseAdmin
-              .from("orders")
-              .update({
-                paid_at: new Date().toISOString(),
-              })
-              .eq("id", row.order_id);
-          }
+        try {
+          const { syncProviderInvoice } = await import('@/lib/provider-invoices.server');
+          await syncProviderInvoice(supabaseAdmin, row.order_id);
+        } catch (error) {
+          console.error('[square-invoice] confirmation failed', error);
+          return new Response('Payment confirmation failed', { status: 500 });
         }
 
         return new Response("ok");

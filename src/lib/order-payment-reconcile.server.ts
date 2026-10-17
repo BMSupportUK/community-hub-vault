@@ -87,6 +87,10 @@ export async function reconcileUnpaidOrders(): Promise<{ scanned: number; repair
         .eq("order_id", order.id)
         .maybeSingle();
 
+      const { syncProviderInvoice } = await import('@/lib/provider-invoices.server');
+      const invoice = await syncProviderInvoice(supabaseAdmin, order.id);
+      if (invoice?.paid) { repaired++; continue; }
+
       // Path 1: stored payment already settled — just repair the order row.
       if (payment && isSettledPaymentStatus(payment.status) && Number(payment.amount_cents ?? -1) === totalCents) {
         const paidAt = await markOrderPaid(order, payment.provider_payment_id ? String(payment.provider_payment_id) : null);

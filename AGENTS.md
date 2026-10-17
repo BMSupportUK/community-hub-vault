@@ -12,6 +12,7 @@
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: show all staff/channel; fit composer and people.
+- Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn so no stale online users remain.
 - Staff Away reads shared user_dnd_status; because it holds only the current window, Away history lives in a trigger-written table matched to shifts.
 - Android alerts use distinct per-type tones on versioned channels; change the channel ID when correcting a sound, as Android keeps a channel's first sound permanently.
@@ -20,11 +21,11 @@
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials on claim — one source of truth in the admin credentials list.
 - Signed-out checkout visitors read app login details only via a token-gated SECURITY DEFINER function; the staff-only credentials view never serves them.
-- How-to and install-guide videos use private storage with short-lived signed links, never permanent public URLs; install guides use ordered `video_steps`, one private video per step so narration matches one visible action.
-- New-account VPN blocking applies only to direct BM Support registration; any referral code (link or typed) and Fan Zone registrations bypass it, and referral-approved accounts drop security-gate access-request notifications.
+- Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
+- VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) applicants; refusal blocks ticket requests and tags appeals. Elsewhere GPS is captured silently with existing permission only.
 - Dialogs stay within the dynamic mobile viewport; dense views drop secondary columns on phones.
-- Customer invoices are BM Support PDFs after confirmed payment; never expose Stripe/Square hosted links.
+- Square/Stripe payments use shared server invoice creation with verified order/token access; BM Support PDFs remain post-payment receipts.
 - Knowledge Base fills the page; category and ratings rails keep guides scannable.
 - Video help: in-site P2P WebRTC, log only, opening hours only; the order page offers in-site video only (WhatsApp video removed), with a PC→phone QR hand-off.
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
