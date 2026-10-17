@@ -23,7 +23,10 @@ function Thread({ messages, mine }: { messages: Msg[]; mine: "customer" | "staff
       {messages.map((m) => (
         <div key={m.id} className={`flex ${m.sender === mine ? "justify-end" : "justify-start"}`}>
           <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${m.sender === mine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-surface-2 text-foreground rounded-bl-sm"}`}>
-            {m.content}
+            {m.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+              /^https?:\/\//.test(part)
+                ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline font-medium break-all">{part}</a>
+                : <span key={i}>{part}</span>)}
             <div className="text-[10px] opacity-70 mt-0.5">{new Date(m.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</div>
           </div>
         </div>

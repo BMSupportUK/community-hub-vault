@@ -55,7 +55,7 @@ export function ProviderInvoicePayment({ method, amountCents, orderId, token, pa
  }, [token, password, orderId, method]);
  return <div className="space-y-3">
   {url ? <>
-   <Button asChild className="w-full min-h-11"><a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4"/>Pay {invoiceProvider} invoice</a></Button>
+   <Button asChild className="w-full min-h-11"><a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4"/>View invoice</a></Button>
    <Button variant="outline" className="w-full min-h-11" disabled={busy} onClick={() => void check()}><RefreshCw className="size-4"/>{busy ? 'Checking…' : "I've paid — check payment"}</Button>
   </> : <Button className="w-full min-h-11" disabled={busy} onClick={generate}>{busy ? <Loader2 className="size-4 animate-spin"/> : <Receipt className="size-4"/>}{busy ? 'Preparing invoice…' : `Pay £${(amountCents / 100).toFixed(2)} via ${provider}`}</Button>}
   {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
