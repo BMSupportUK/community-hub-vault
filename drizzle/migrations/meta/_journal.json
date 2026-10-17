@@ -1079,6 +1079,13 @@
       "when": 1792267371329,
       "tag": "0153_hide_test_and_admin_customer_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 154,
+      "version": "7",
+      "when": 1792267418070,
+      "tag": "0154_correct_hidden_customer_name_match",
+      "breakpoints": true
     }
   ]
 }

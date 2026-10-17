@@ -26,6 +26,7 @@ beforeAll(async () => {
  await db.exec(readFileSync(new URL('../drizzle/migrations/0151_customer_site_account_flag.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0152_customer_last_renewed_date_editing.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0153_hide_test_and_admin_customer_accounts.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0154_correct_hidden_customer_name_match.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
