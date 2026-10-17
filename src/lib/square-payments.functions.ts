@@ -67,6 +67,7 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
     verificationToken: z.string().max(2048).optional(),
   }).parse(input))
   .handler(async ({ data, context }) => {
+    throw new Error("Card payments are disabled — pay through the Square or Stripe invoice instead.");
     const { supabase, userId } = context;
     await assertAdminOrOrderOwner(supabase, userId, data.orderId);
 

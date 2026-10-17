@@ -73,6 +73,7 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
     z.object({ orderId: z.string().uuid(), environment: z.enum(["sandbox", "live"]), returnUrl: z.string() }).parse(input),
   )
   .handler(async ({ data, context }): Promise<{ clientSecret: string; paymentIntentId: string } | { error: string }> => {
+    throw new Error("Card payments are disabled — pay through the Square or Stripe invoice instead.");
     try {
       const { supabase, userId } = context;
       await assertAdminOrOrderOwner(supabase, userId, data.orderId);

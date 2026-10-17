@@ -4743,8 +4743,6 @@ function PayOrderDialog({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Prewarm Stripe SDK as soon as the Pay button mounts,
-  // so by the time the user clicks the Stripe tab the SDK is already cached.
   // Provider invoice status, not a local 24-hour timer, controls availability.
   const [liveInvoice, setLiveInvoice] = useState<{ url: string } | null>(null);
   useEffect(() => {
