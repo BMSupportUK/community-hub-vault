@@ -48,3 +48,27 @@ export function isBlackFrame(rgba: ArrayLike<number>, threshold = 12): boolean {
   }
   return max < threshold;
 }
+
+/** DTLS fingerprint line of an SDP; a different one means the other side built a brand-new connection. */
+export function sdpFingerprint(sdp: string | undefined | null): string | null {
+  const m = /a=fingerprint:(\S+ \S+)/i.exec(sdp ?? "");
+  return m ? m[1].toLowerCase() : null;
+}
+
+export type BlackPictureFix = "none" | "reattach" | "camrestart" | "rebuild";
+
+/**
+ * Escalating repair while the customer's picture stays black/frozen:
+ * re-attach the picture locally (2s), restart the customer's camera (4s,
+ * at most every 8s), then rebuild the whole connection (10s, at most every 20s).
+ */
+export function nextBlackPictureFix(
+  darkMs: number,
+  now: number,
+  s: { reattached: boolean; lastAsk: number; lastRebuild: number },
+): BlackPictureFix {
+  if (darkMs >= 10000 && now - s.lastRebuild >= 20000) return "rebuild";
+  if (darkMs >= 4000 && now - s.lastAsk >= 8000) return "camrestart";
+  if (darkMs >= 2000 && !s.reattached) return "reattach";
+  return "none";
+}
