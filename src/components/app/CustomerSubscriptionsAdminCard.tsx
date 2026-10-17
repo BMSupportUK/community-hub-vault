@@ -20,6 +20,7 @@ const renewalDay = (v: string | null) => v ? new Intl.DateTimeFormat("en-CA", { 
 
 export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boolean }) {
   const [rows, setRows] = useState<Customer[]>([]);
+  const [tab, setTab] = useState<"site" | "manual">("site");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
