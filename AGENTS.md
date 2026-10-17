@@ -38,3 +38,4 @@
 <!-- LOVABLE:END -->
 - Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
 - Tests run under `bun test`, so avoid vitest-only APIs (e.g. `vi.stubGlobal`) and swap globals with `Object.defineProperty` plus restore.
+- New sports guides without a banner inherit one via a database insert trigger (cover cache, then newest same-subcategory, then same-category guide), and guide adverts render regardless of banner, so no save path can leave a guide bare.
