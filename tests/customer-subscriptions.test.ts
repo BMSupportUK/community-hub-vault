@@ -31,6 +31,7 @@ beforeAll(async () => {
  await db.exec('ALTER TABLE public.order_checkout_links ADD COLUMN renewal_credential_id uuid;');
  await db.exec(readFileSync(new URL('../drizzle/migrations/0156_per_account_customer_renewal_dates.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0157_manual_customer_list_usernames.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0158_customer_per_account_packages.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -225,4 +226,26 @@ test('referrals from GJ or Dane never earn a bonus month but other referrers sti
  expect(rows.find(c=>c.userId===id(2))?.rewards?.some((r:any)=>r.orderId===id(40))??false).toBe(false);
  await db.query('UPDATE order_referrals SET referrer_user_id=$1,referrer_name=$2 WHERE order_id=$3',[id(3),'Referrer',id(40)]);
  expect((await db.query<{ok:boolean}>('SELECT referral_reward_eligible($1) ok',[id(40)])).rows[0]?.ok).toBe(true);
+});
+
+test('Multi Room and Single packages are independent for duplicate login names',async()=>{
+ await db.exec(`INSERT INTO profiles VALUES('${id(910)}','package-customer','Package Customer'); INSERT INTO private.app_credentials VALUES('${id(911)}','${id(910)}','shared-login','single',1,'2027-10-17',NULL,now()),('${id(912)}','${id(910)}','shared-login','multi',2,'2027-12-25',NULL,now()); INSERT INTO products VALUES('${id(913)}','Multi Room 12 Months',true),('${id(914)}','Single 12 Months',true);`);
+ const before=(await db.query('SELECT * FROM private.app_credentials WHERE owner_id=$1 ORDER BY id',[id(910)])).rows;
+ await db.query('SELECT admin_allocate_customer_account_package($1,$2,$3)',[id(910),id(911),id(913)]);
+ await db.query('SELECT admin_allocate_customer_account_package($1,$2,$3)',[id(910),id(912),id(914)]);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(910));
+ expect(c.accounts.find((a:any)=>a.id===id(911)).package).toBe('Multi Room 12 Months');
+ expect(c.accounts.find((a:any)=>a.id===id(912)).package).toBe('Single 12 Months');
+ await db.query('SELECT admin_allocate_customer_account_package($1,$2,$3)',[id(910),id(911),id(914)]);
+ const updated=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(910));
+ expect(updated.accounts.find((a:any)=>a.id===id(911)).package).toBe('Single 12 Months');
+ expect(updated.accounts.find((a:any)=>a.id===id(912)).package).toBe('Single 12 Months');
+ expect((await db.query('SELECT * FROM private.app_credentials WHERE owner_id=$1 ORDER BY id',[id(910)])).rows).toEqual(before);
+});
+test('per-account package selection requires admin and the matching account',async()=>{
+ await db.exec("SELECT set_config('test.role','management',false)");
+ await expect(db.query('SELECT admin_allocate_customer_account_package($1,$2,$3)',[id(910),id(911),id(913)])).rejects.toThrow('Only admin');
+ await db.exec("SELECT set_config('test.role','admin',false)");
+ await expect(db.query('SELECT admin_allocate_customer_account_package($1,$2,$3)',[id(3),id(911),id(913)])).rejects.toThrow('Customer account not found');
+ await expect(db.query('SELECT admin_allocate_customer_account_package($1,$2,$3)',[id(910),id(911),id(999)])).rejects.toThrow('available package');
 });
