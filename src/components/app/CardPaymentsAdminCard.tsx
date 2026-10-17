@@ -22,6 +22,7 @@ type Row = {
   amount_cents: number;
   currency: string;
   provider_payment_id: string | null;
+  provider_fee_cents: number | null;
   created_at: string;
   order?: {
     id: string;
@@ -71,7 +72,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
     (async () => {
       const { data, error } = await supabase
         .from("order_payments")
-        .select("id, order_id, provider, provider_payment_id, status, amount_cents, currency, created_at")
+        .select("id, order_id, provider, provider_payment_id, provider_fee_cents, status, amount_cents, currency, created_at")
         .in("provider", ["square", "stripe", "cash", "bank_transfer"])
         .order("created_at", { ascending: false })
         .limit(2000);
@@ -113,6 +114,8 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
   const activeMonth = month !== null && months.some(([mm]) => mm === month) ? month : months[0]?.[0] ?? null;
   const shown = list.filter((r) => { const d = new Date(r.created_at); return d.getFullYear() === activeYear && d.getMonth() === activeMonth; });
   const monthTotal = shown.reduce<Record<string, number>>((acc, r) => { acc[r.currency] = (acc[r.currency] ?? 0) + r.amount_cents; return acc; }, {});
+  const hasFees = provider === "square" || provider === "stripe";
+  const monthFees = shown.reduce<Record<string, number>>((acc, r) => { acc[r.currency] = (acc[r.currency] ?? 0) + (r.provider_fee_cents ?? 0); return acc; }, {});
   const downloadInvoice = async (row: Row) => {
     if (!row.order?.paid_at || row.order.status === "cancelled") return;
     setDownloading(row.id);
@@ -149,6 +152,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
             </div>
             <p className="text-sm text-muted-foreground">
               Total this month: {Object.entries(monthTotal).map(([c, v]) => money(v, c)).join(" · ")}
+              {hasFees && <> · Provider fees: {Object.entries(monthFees).map(([c, v]) => money(v, c)).join(" · ")} · Net received: {Object.entries(monthTotal).map(([c, v]) => money(v - (monthFees[c] ?? 0), c)).join(" · ")}</>}
             </p>
             <div className="overflow-x-auto rounded-xl border border-border">
               <table className="w-full text-sm">
@@ -157,6 +161,8 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                     <th className="px-3 py-2 font-medium">Date</th>
                     <th className="px-3 py-2 font-medium">Customer</th>
                     <th className="px-3 py-2 font-medium">Amount</th>
+                    <th className="px-3 py-2 font-medium">Provider fee</th>
+                    <th className="px-3 py-2 font-medium">Net received</th>
                     <th className="px-3 py-2 font-medium">Payment</th>
                     <th className="px-3 py-2 font-medium">Order</th>
                     <th className="px-3 py-2 font-medium">
@@ -181,6 +187,8 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                         <div className="text-xs text-muted-foreground">#{r.order_id.slice(0, 8)}{r.order?.customer_type ? ` · ${r.order.customer_type}` : ""}</div>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.amount_cents, r.currency)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{!hasFees ? "None" : r.provider_fee_cents == null ? "Unknown" : money(r.provider_fee_cents, r.currency)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{!hasFees ? money(r.amount_cents, r.currency) : r.provider_fee_cents == null ? "Unknown" : money(r.amount_cents - r.provider_fee_cents, r.currency)}</td>
                       <td className="px-3 py-2"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span></td>
                       <td className="px-3 py-2 capitalize">{r.order?.status ?? "—"}</td>
                       <td className="px-3 py-2 max-w-[240px]">
