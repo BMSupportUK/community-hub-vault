@@ -13,6 +13,8 @@ import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { downloadReceipt } from "@/lib/receipt";
 import { CREDENTIAL_TIME_STEP, credentialTimeInput } from "@/lib/credential-time";
 import { startSecureOrderProgressSync } from "@/lib/secure-order-progress-sync";
+import { Checkbox } from "@/components/ui/checkbox";
+import { manualRegistrationSchema } from "@/lib/manual-registration";
 import { StaffOrderDetails, type StaffOrderDetailsData } from "@/components/checkout/StaffOrderDetails";
 
 
@@ -37,7 +39,8 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   const { roles } = useAuth();
   const canComplete = canCompleteCheckoutSteps(roles);
   const progressChannelId = useId();
-  const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
+  const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null; skip_registration: boolean; claimed_by: string | null } | null | undefined>(undefined);
+  const [registrationBusy, setRegistrationBusy] = useState(false);
   const [orderPaid, setOrderPaid] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [orderDetails, setOrderDetails] = useState<StaffOrderDetailsData | null>(null);
@@ -131,7 +134,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
     const stop = startSecureOrderProgressSync({
       refresh: async () => {
         const [linkResult, orderResult, detailsResult] = await Promise.all([
-          supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
+          supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind,skip_registration,claimed_by").eq("order_id", orderId).maybeSingle(),
           supabase.rpc("staff_checkout_order_summary" as never, { p_order_id: orderId } as never),
           supabase.rpc("staff_checkout_order_details", { p_order_id: orderId }),
         ]);
@@ -309,6 +312,18 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   );
   const confirmations = (
     <div className="space-y-3 min-w-0" role="region" aria-label="Payment and subscription confirmations">
+      {roles.includes("admin") && !link.claimed_by && <label className="flex items-center gap-3 text-sm"><Checkbox disabled={registrationBusy} checked={link.skip_registration} onCheckedChange={async (value) => {
+        const input = manualRegistrationSchema.safeParse({ orderId, skip: value === true });
+        if (!input.success) return toast.error("Invalid account creation choice");
+        setRegistrationBusy(true);
+        try {
+          const { data, error } = await supabase.rpc("admin_set_manual_registration", { p_order_id: input.data.orderId, p_skip: input.data.skip });
+          if (error) throw error;
+          setLink((current) => current ? { ...current, skip_registration: data === true } : current);
+          toast.success(data ? "Site account creation is not required" : "Site account creation is required");
+        } catch (error) { toast.error((error as { message?: string }).message ?? "Could not save account creation choice"); }
+        finally { setRegistrationBusy(false); }
+      }} />Don't require a site account</label>}
       <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${orderPaid ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
         {orderPaid ? <Check className="size-4" /> : <Hourglass className="size-4" />}
         {orderPaid ? "PAID — payment confirmed by staff" : "NOT PAID YET — no payment has been confirmed"}

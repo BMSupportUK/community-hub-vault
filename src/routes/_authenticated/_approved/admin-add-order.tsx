@@ -10,6 +10,7 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { customerDate } from "@/lib/customer-date";
 
 type ManualCustomer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; accounts: { id: string; login: string; expiresAt: string | null }[] };
@@ -47,6 +48,7 @@ function AddOrderPage() {
   const [email, setEmail] = useState("");
   const [discount, setDiscount] = useState("");
   const [customerKind, setCustomerKind] = useState<"" | "new" | "existing">("");
+  const [skipRegistration, setSkipRegistration] = useState(false);
   const [created, setCreated] = useState<{ id: string; ref: string; invoiceError?: string } | null>(null);
 
   const [manualCustomers, setManualCustomers] = useState<ManualCustomer[]>([]);
@@ -91,7 +93,7 @@ function AddOrderPage() {
     const createdAt = isToday
       ? undefined
       : new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
-    const { data: id, error } = await supabase.rpc("admin_create_manual_order_v3" as never, {
+    const { data: id, error } = await supabase.rpc("admin_create_manual_order_v4", {
       _customer_name: custName.trim(),
       _items: items,
       _method: payMethod,
@@ -101,7 +103,8 @@ function AddOrderPage() {
       _created_at: createdAt ? createdAt.toISOString() : null,
       _customer_id: customerKind === "existing" ? customerId : null,
       _account_id: customerKind === "existing" ? renewalAccountId : null,
-    } as never);
+      _skip_registration: skipRegistration,
+    });
     if (error) { setBusy(false); return toast.error(error.message); }
     const { data: o } = await supabase.from("orders").select("order_ref").eq("id", id as string).maybeSingle();
     const invoiceError: string | undefined = undefined;
@@ -164,6 +167,7 @@ function AddOrderPage() {
             </div>
             <p className="text-xs text-muted-foreground">When complete, the secure page tells new customers their account is set up, and existing customers their subscription is upgraded.</p>
           </div>
+          <label className="flex items-center gap-3 text-sm"><Checkbox checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} />Don't require a site account</label>
           <div className="space-y-2">
             {products === null ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
