@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 type Account = { id: string; login: string; expiresAt: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
-type Customer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; accounts: Account[]; package: string | null; packageAllocated: boolean; renewedAt: string | null; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
+type Customer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; accounts: Account[]; package: string | null; packageAllocated: boolean; renewedAt: string | null; renewedDateAdjusted: boolean; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
 const date = (v: string | null) => v ? new Date(v).toLocaleString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Not recorded";
+
+const renewalDay = (v: string | null) => v ? new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(v)) : "";
 
 export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boolean }) {
   const [rows, setRows] = useState<Customer[]>([]);
@@ -26,6 +28,20 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const [allocating, setAllocating] = useState<Customer | null>(null);
   const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
   const [productId, setProductId] = useState("");
+  const [renewalEditing, setRenewalEditing] = useState<Customer | null>(null);
+  const [renewedDate, setRenewedDate] = useState("");
+  const saveRenewedDate = async (restore = false) => {
+    if (!renewalEditing || (!restore && !renewedDate)) return;
+    setBusy(true);
+    // NULL restores the recorded renewal; generated RPC types omit nullability.
+    const args = { p_customer_id: renewalEditing.userId, p_renewed_date: restore ? null : renewedDate };
+    const { error } = await supabase.rpc("admin_set_customer_last_renewed", args as { p_customer_id: string; p_renewed_date: string });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Last renewed date updated");
+    setRenewalEditing(null);
+    await load();
+  };
   const openAllocation = async (customer: Customer) => {
     const { data, error } = await supabase.from("products").select("id,name").eq("is_active", true).order("sort_order");
     if (error) return toast.error(error.message);
@@ -92,7 +108,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
               <td className="p-3 font-medium">{c.username || c.displayName || "Not recorded"}<span className={`mt-1 inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>{[...new Set(c.accounts.map((a) => a.login).filter(Boolean))].map((login) => <span key={login} className="mt-1 block break-all text-xs font-normal text-muted-foreground">{login}</span>)}</td>
               <td className="max-w-64 p-3"><div className="flex items-start gap-2"><span>{c.package || "Not recorded"}</span>{canReward && (!c.package || c.packageAllocated) && <Button variant="ghost" size="icon" title="Allocate package" aria-label={`Allocate package for ${c.username || c.displayName || "customer"}`} onClick={() => void openAllocation(c)}><Pencil className="size-4" /></Button>}</div></td>
               <td className="p-3">{c.accounts.length ? c.accounts.map((a) => <div key={a.id} className="mb-1">{c.accounts.length > 1 && <span className="block text-xs text-muted-foreground">{a.login}</span>}{date(a.expiresAt)}</div>) : "Not recorded"}</td>
-              <td className="p-3">{date(c.renewedAt)}</td>
+              <td className="p-3"><div className="flex items-start gap-2"><span>{c.renewedDateAdjusted && c.renewedAt ? new Date(c.renewedAt).toLocaleDateString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric" }) : date(c.renewedAt)}{c.renewedDateAdjusted && <span className="block text-xs text-muted-foreground">Adjusted</span>}</span>{canReward && <Button variant="ghost" size="icon" title="Edit last renewed date" aria-label={`Edit last renewed date for ${c.username || c.displayName || "customer"}`} onClick={() => { setRenewalEditing(c); setRenewedDate(renewalDay(c.renewedAt)); }}><Pencil className="size-4" /></Button>}</div></td>
               <td className="p-3"><span>{c.referrerName || "—"}</span>{c.rewards.map((r) => (
                 <div key={r.orderId} className={`mt-2 w-fit rounded-md border p-2 text-xs ${r.rewardedAt ? "border-primary/30 bg-primary/10" : "border-border bg-muted/40"}`}>
                   <span className="block font-medium">Referral bonus · 12 month new account</span>
@@ -108,6 +124,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
       <Dialog open={!!reward} onOpenChange={(open) => { if (!open && !busy) setReward(null); }}><DialogContent><DialogHeader><DialogTitle>Confirm referral bonus for {reward?.referrerName}</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Order {reward?.ref}. One calendar month will be added to their saved expiry, preserving any remaining time.</p><Select value={account} onValueChange={setAccount}><SelectTrigger aria-label="Referrer subscription account"><SelectValue placeholder="Choose subscription account" /></SelectTrigger><SelectContent>{reward?.referrerAccounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.login} · {date(a.expiresAt)}</SelectItem>)}</SelectContent></Select><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setReward(null)}>Cancel</Button><Button disabled={!account || busy} onClick={() => void award()}>{busy ? <Loader2 className="animate-spin" /> : <Gift />} Confirm bonus added</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={!!editing} onOpenChange={(open) => { if (!open && !busy) setEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Year joined · {editing?.username || editing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Year joined<Input aria-label="Year joined" type="number" inputMode="numeric" min={1000} max={ukCurrentYear()} step={1} value={joinedYear} onChange={(e) => setJoinedYear(e.target.value)} /></label><DialogFooter>{editing?.firstSubscriptionAdjusted && <Button variant="outline" disabled={busy} onClick={() => void saveJoinedYear(true)}>Use recorded year</Button>}<Button variant="outline" disabled={busy} onClick={() => setEditing(null)}>Cancel</Button><Button disabled={busy || !joinedYearToDate(joinedYear)} onClick={() => void saveJoinedYear()}>{busy && <Loader2 className="animate-spin" />}Save year</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={!!allocating} onOpenChange={(open) => { if (!open && !busy) setAllocating(null); }}><DialogContent><DialogHeader><DialogTitle>Allocate package · {allocating?.username || allocating?.displayName}</DialogTitle></DialogHeader><select aria-label="Subscription package" value={productId} onChange={(e) => setProductId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"><option value="" disabled>Choose package</option>{products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setAllocating(null)}>Cancel</Button><Button disabled={!productId || busy} onClick={() => void savePackage()}>{busy && <Loader2 className="animate-spin" />}Save package</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={!!renewalEditing} onOpenChange={(open) => { if (!open && !busy) setRenewalEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Last renewed · {renewalEditing?.username || renewalEditing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Last renewed date<Input aria-label="Last renewed date" type="date" value={renewedDate} onChange={(e) => setRenewedDate(e.target.value)} /></label><DialogFooter>{renewalEditing?.renewedDateAdjusted && <Button variant="outline" disabled={busy} onClick={() => void saveRenewedDate(true)}>Use recorded date</Button>}<Button variant="outline" disabled={busy} onClick={() => setRenewalEditing(null)}>Cancel</Button><Button disabled={busy || !renewedDate} onClick={() => void saveRenewedDate()}>{busy && <Loader2 className="animate-spin" />}Save date</Button></DialogFooter></DialogContent></Dialog>
     </section>
   );
 }
