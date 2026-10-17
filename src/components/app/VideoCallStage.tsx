@@ -67,6 +67,18 @@ export function VideoCallStage({
   // Staff-side manual turn (deg, clockwise) on top of the automatic one.
   const [manualRotate, setManualRotate] = useState(0);
   const localRotateRef = useRef(0);
+  // Staff side: shown while the customer has just turned their phone and the
+  // picture is reconnecting. Clears when frames flow again (or after 12s).
+  const [rotating, setRotating] = useState(false);
+  const rotatingRef = useRef(false);
+  const rotateMsgTimer = useRef(0);
+  const prevRemoteDeg = useRef(0);
+  const showRotating = useCallback(() => {
+    rotatingRef.current = true;
+    setRotating(true);
+    window.clearTimeout(rotateMsgTimer.current);
+    rotateMsgTimer.current = window.setTimeout(() => { rotatingRef.current = false; setRotating(false); }, 12000);
+  }, []);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -273,7 +285,12 @@ export function VideoCallStage({
       });
       ch.on("broadcast", { event: "orient" }, ({ payload }) => {
         const deg = Number((payload as { deg?: number }).deg);
-        if ([0, 90, 180, 270].includes(deg)) setRemoteRotate(deg);
+        if (![0, 90, 180, 270].includes(deg)) return;
+        if (deg !== prevRemoteDeg.current) {
+          prevRemoteDeg.current = deg;
+          setRemoteRotate(deg);
+          if (side === "offerer") showRotating();
+        }
       });
       ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
       ch.on("broadcast", { event: "camstate" }, ({ payload }) => {
