@@ -38,6 +38,6 @@
 <!-- LOVABLE:END -->
 - Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
-- Bannerless sports guides inherit a cover via DB trigger and adverts render regardless, so no save path leaves a guide bare.
+- DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 
 - Profit uses recorded fees in integer GBP pence; unknown fees keep totals provisional; package allocation preserves totals without duplicate fees.
