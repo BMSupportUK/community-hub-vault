@@ -6,7 +6,7 @@ export type ProfitOrder = { total_cents: number; order_items: ProfitItem[]; paym
 
 export function calculateProfit(order: ProfitOrder) {
   let cost = 0;
-  let missing = false;
+  let missing = order.order_items.length === 0;
   for (const item of order.order_items) {
     if (item.unit_cost_cents == null) missing = true;
     else cost += item.unit_cost_cents * item.quantity;
@@ -15,7 +15,6 @@ export function calculateProfit(order: ProfitOrder) {
   let fees = 0;
   let feesMissing = payments.length === 0;
   for (const payment of payments) {
-    if (payment.provider === 'cash' && payment.provider_fee_cents == null) continue;
     if (payment.currency?.toUpperCase() !== 'GBP' || !Number.isSafeInteger(payment.provider_fee_cents) || payment.provider_fee_cents == null || payment.provider_fee_cents < 0) feesMissing = true;
     else fees += payment.provider_fee_cents;
   }
@@ -35,7 +34,7 @@ export function allocateOrderAmounts(order: ProfitOrder) {
     });
   };
   const result = calculateProfit(order);
-  return { revenue: allocate(result.revenue), fees: allocate(result.fees), feesMissing: result.feesMissing };
+  return { revenue: allocate(result.revenue), fees: allocate(result.fees), feesMissing: result.feesMissing, unattributedRevenue: weights.length ? 0 : result.revenue, unattributedFees: weights.length ? 0 : result.fees };
 }
 
 export function squareProcessingFee(payment: { processing_fee?: { amount_money?: { amount?: number; currency?: string } }[] }): number | null {

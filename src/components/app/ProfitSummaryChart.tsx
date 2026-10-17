@@ -6,13 +6,14 @@ type Props = {
   revenue: number;
   cost: number;
   fees: number;
+  feesMissing: boolean;
   missing: boolean;
   sales?: number;
 };
 
 const money = (value: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(value / 100);
 
-export function ProfitSummaryChart({ title, revenue, cost, fees, missing, sales }: Props) {
+export function ProfitSummaryChart({ title, revenue, cost, fees, feesMissing, missing, sales }: Props) {
   const profit = revenue - cost - fees;
   const margin = revenue ? (profit / revenue) * 100 : 0;
   const data = [
@@ -40,7 +41,7 @@ export function ProfitSummaryChart({ title, revenue, cost, fees, missing, sales 
         {sales != null && <div className="flex items-center justify-between gap-2"><dt className="flex items-center gap-2 text-muted-foreground"><Package className="size-3.5" />Total sales</dt><dd className="font-semibold tabular-nums">{sales}</dd></div>}
         <div className="flex items-center justify-between gap-2"><dt className="flex items-center gap-2 text-muted-foreground"><Wallet className="size-3.5" />Revenue</dt><dd className="font-semibold tabular-nums">{money(revenue)}</dd></div>
         <div className="flex items-center justify-between gap-2"><dt className="flex items-center gap-2 text-muted-foreground"><span className="size-2 rounded-full bg-warning" />Product costs</dt><dd className="font-semibold tabular-nums">{money(cost)}</dd></div>
-        <div className="flex items-center justify-between gap-2"><dt className="flex items-center gap-2 text-muted-foreground"><span className="size-2 rounded-full bg-accent" />Provider fees</dt><dd className="font-semibold tabular-nums">{money(fees)}</dd></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><dt className="flex items-center gap-2 text-muted-foreground"><span className="size-2 rounded-full bg-accent" />Provider fees</dt><dd className="font-semibold tabular-nums">{feesMissing ? (fees ? `${money(fees)} + unknown` : 'Unknown') : money(fees)}</dd></div>
         <div className="flex items-center justify-between gap-2 border-t border-border pt-3"><dt className="flex items-center gap-2"><TrendingUp className={`size-3.5 ${profit < 0 ? "text-destructive" : "text-success"}`} />{profit < 0 ? "Loss" : "Profit"}</dt><dd className={`font-semibold tabular-nums ${profit < 0 ? "text-destructive" : "text-success"}`}>{money(Math.abs(profit))}</dd></div>
       </dl>
       {missing && <p className="mt-3 text-xs text-warning">Costs or fees incomplete · profit is provisional</p>}

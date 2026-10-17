@@ -22,3 +22,13 @@ test('Square fees use actual GBP processing fees, not a rate estimate', () => {
   expect(squareProcessingFee({})).toBeNull();
   expect(squareProcessingFee({ processing_fee: [{ amount_money: { amount: 100, currency: 'USD' } }] })).toBeNull();
 });
+test('cash requires a recorded zero fee rather than assuming one', () => {
+  expect(calculateProfit({ ...order, payments: [{ ...order.payments[0], provider: 'cash', provider_fee_cents: null }] }).feesMissing).toBe(true);
+  expect(calculateProfit({ ...order, payments: [{ ...order.payments[0], provider: 'cash', provider_fee_cents: 0 }] }).profit).toBe(4500);
+});
+test('orders without items retain their totals as unattributed and costs provisional', () => {
+  const empty = { ...order, order_items: [] };
+  expect(calculateProfit(empty).missing).toBe(true);
+  expect(allocateOrderAmounts(empty).unattributedRevenue).toBe(6500);
+  expect(allocateOrderAmounts(empty).unattributedFees).toBe(150);
+});

@@ -120,19 +120,20 @@ export function ProfitCostsPanel() {
     return [...m.entries()].sort((a, b) => b[0] - a[0]);
   }, [yearOrders]);
   const am = month != null && byMonth.some(([k]) => k === month) ? month : byMonth[0]?.[0] ?? null;
-  const sum = (os: Order[]) => os.reduce((a, o) => { const c = calc(o); return { revenue: a.revenue + c.revenue, cost: a.cost + c.cost, fees: a.fees + c.fees }; }, { revenue: 0, cost: 0, fees: 0 });
+  const sum = (os: Order[]) => os.reduce((a, o) => { const c = calc(o); return { revenue: a.revenue + c.revenue, cost: a.cost + c.cost, fees: a.fees + c.fees, feesMissing: a.feesMissing || c.feesMissing }; }, { revenue: 0, cost: 0, fees: 0, feesMissing: false });
   const yT = sum(yearOrders), mT = sum(am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : []);
 
   const monthOrders = am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : [];
   const yearMissing = yearOrders.some((o) => calc(o).missing);
   const monthMissing = monthOrders.some((o) => calc(o).missing);
   const pkgStats = (os: Order[]) => {
-    const m = new Map<string, { revenue: number; cost: number; fees: number; missing: boolean; qty: number }>();
+    const m = new Map<string, { revenue: number; cost: number; fees: number; feesMissing: boolean; missing: boolean; qty: number }>();
     for (const o of os) {
       const allocation = allocateOrderAmounts(o);
       for (const [index, i] of (o.order_items ?? []).entries()) {
       const k = i.product_id ?? `name:${i.product_name}`;
-      const e = m.get(k) ?? { revenue: 0, cost: 0, fees: 0, missing: false, qty: 0 };
+      const e = m.get(k) ?? { revenue: 0, cost: 0, fees: 0, feesMissing: false, missing: false, qty: 0 };
+      e.feesMissing ||= allocation.feesMissing;
       e.revenue += allocation.revenue[index] ?? 0; e.fees += allocation.fees[index] ?? 0; e.missing ||= allocation.feesMissing; e.qty += i.quantity;
       if (i.unit_cost_cents == null) e.missing = true; else e.cost += i.unit_cost_cents * i.quantity;
       m.set(k, e);
@@ -145,7 +146,7 @@ export function ProfitCostsPanel() {
     ...(products ?? []).map((p) => ({ key: p.id, name: p.name, price: p.price_cents as number | null })),
     ...[...pkgYear.keys()].filter((k) => k.startsWith("name:")).map((k) => ({ key: k, name: k.slice(5), price: null })),
   ].sort((a, b) => comparePackages(a, b) || (pkgYear.get(b.key)?.revenue ?? 0) - (pkgYear.get(a.key)?.revenue ?? 0));
-  const empty = { revenue: 0, cost: 0, fees: 0, missing: false, qty: 0 };
+  const empty = { revenue: 0, cost: 0, fees: 0, feesMissing: false, missing: false, qty: 0 };
   const selection = (active: boolean) => `h-auto min-h-9 rounded-md px-3 py-2 text-sm ${active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"}`;
 
   return (
@@ -203,8 +204,8 @@ export function ProfitCostsPanel() {
                     <span className="text-xs text-muted-foreground">{p.price != null ? `Sells for ${money(p.price)} · ` : ""}{y.qty} sold in {ay}</span>
                   </header>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} fees={mo.fees} missing={mo.missing} sales={mo.qty} />}
-                    <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} fees={y.fees} missing={y.missing} sales={y.qty} />
+                    {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} fees={mo.fees} feesMissing={mo.feesMissing} missing={mo.missing} sales={mo.qty} />}
+                    <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} fees={y.fees} feesMissing={y.feesMissing} missing={y.missing} sales={y.qty} />
                   </div>
                 </article>
               );
@@ -238,8 +239,8 @@ export function ProfitCostsPanel() {
               </section>
             </div>
             <aside aria-label="Profit statistics" className="grid min-w-0 gap-4 sm:grid-cols-2 lg:sticky lg:top-6 lg:grid-cols-1 xl:grid-cols-2">
-              {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mT.revenue} cost={mT.cost} fees={mT.fees} missing={monthMissing} />}
-              <ProfitSummaryChart title={`${ay} · Year total`} revenue={yT.revenue} cost={yT.cost} fees={yT.fees} missing={yearMissing} />
+              {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mT.revenue} cost={mT.cost} fees={mT.fees} feesMissing={mT.feesMissing} missing={monthMissing} />}
+              <ProfitSummaryChart title={`${ay} · Year total`} revenue={yT.revenue} cost={yT.cost} fees={yT.fees} feesMissing={yT.feesMissing} missing={yearMissing} />
             </aside>
           </div>
         )}
