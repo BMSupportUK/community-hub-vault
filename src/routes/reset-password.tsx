@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Field } from "./login";
@@ -26,13 +26,32 @@ function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  const [needsProfile, setNeedsProfile] = useState(false);
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setNeedsProfile(!!data.user?.user_metadata?.needs_profile));
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) return toast.error("Password must be at least 6 characters.");
     if (password !== confirm) return toast.error("Passwords don't match.");
+    const uname = username.trim();
+    const dname = displayName.trim();
+    if (needsProfile) {
+      if (!/^[A-Za-z0-9_.-]{2,30}$/.test(uname)) return toast.error("Username must be 2–30 letters, numbers, _ . or -");
+      if (dname.length < 1 || dname.length > 60) return toast.error("Please enter a display name.");
+    }
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    if (needsProfile) {
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (u) {
+        const { error: pErr } = await supabase.from("profiles").update({ username: uname, display_name: dname } as never).eq("id", u.id);
+        if (pErr) { setBusy(false); return toast.error(/duplicate|unique/i.test(pErr.message) ? "That username is already taken." : pErr.message); }
+      }
+    }
+    const { error } = await supabase.auth.updateUser(needsProfile ? { password, data: { needs_profile: false, username: uname, display_name: dname } } : { password });
     setBusy(false);
     if (error) { setBusy(false); return toast.error(error.message); }
     const { data: { user } } = await supabase.auth.getUser();
@@ -76,9 +95,16 @@ function ResetPasswordPage() {
             <p className="text-sm text-muted-foreground mb-6">
               {forced
                 ? "You signed in with a temporary password from our team. Choose your own new password to continue."
+                : needsProfile ? "Choose your username, display name and password to finish setting up your account."
                 : "Enter your new password below."}
             </p>
             <form onSubmit={submit} className="space-y-3">
+              {needsProfile && (
+                <>
+                  <Field label="Username" value={username} onChange={setUsername} />
+                  <Field label="Display name" value={displayName} onChange={setDisplayName} />
+                </>
+              )}
               <Field label="New password" type="password" value={password} onChange={setPassword} />
               <Field label="Confirm password" type="password" value={confirm} onChange={setConfirm} />
               <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
