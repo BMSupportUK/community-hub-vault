@@ -1100,6 +1100,13 @@
       "when": 1792268259436,
       "tag": "0156_per_account_customer_renewal_dates",
       "breakpoints": true
+    },
+    {
+      "idx": 157,
+      "version": "7",
+      "when": 1792269030758,
+      "tag": "0157_manual_customer_list_usernames",
+      "breakpoints": true
     }
   ]
 }

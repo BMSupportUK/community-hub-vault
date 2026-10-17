@@ -1668,6 +1668,27 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_list_usernames: {
+        Row: {
+          customer_id: string
+          updated_at: string
+          updated_by: string
+          username: string
+        }
+        Insert: {
+          customer_id: string
+          updated_at?: string
+          updated_by: string
+          username: string
+        }
+        Update: {
+          customer_id?: string
+          updated_at?: string
+          updated_by?: string
+          username?: string
+        }
+        Relationships: []
+      }
       customer_package_allocations: {
         Row: {
           allocated_at: string
@@ -7430,6 +7451,7 @@ export type Database = {
         Returns: boolean
       }
       admin_customer_subscription_details: { Args: never; Returns: Json }
+      admin_customer_subscription_list: { Args: never; Returns: Json }
       admin_customer_subscriptions: { Args: never; Returns: Json }
       admin_customer_subscriptions_with_tenure: { Args: never; Returns: Json }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }
@@ -7493,6 +7515,10 @@ export type Database = {
       }
       admin_set_customer_last_renewed: {
         Args: { p_customer_id: string; p_renewed_date: string }
+        Returns: undefined
+      }
+      admin_set_customer_list_username: {
+        Args: { p_customer_id: string; p_username: string }
         Returns: undefined
       }
       admin_upsert_signup_vpn: {
