@@ -3,7 +3,7 @@ import { Mic, MicOff, PhoneOff, RefreshCcw, RefreshCw, RotateCw, Video, VideoOff
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
-import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame } from "@/lib/call-media";
+import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame, nextBlackPictureFix, sdpFingerprint } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
 
@@ -102,6 +102,11 @@ export function VideoCallStage({
   const micStartingRef = useRef(false);
   const restartingRef = useRef(false);
   const restartCamRef = useRef<() => void>(() => {});
+  // Staff side: tear down and rebuild the connection (fresh encoder/decoder on
+  // both ends) — the last resort when the customer's picture stays black.
+  const rebuildRef = useRef<() => void>(() => {});
+  // Customer deliberately turned their camera off: don't "repair" the black.
+  const remoteCamOffRef = useRef(false);
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
     chRef.current?.send({ type: "broadcast", event, payload }).catch(() => {});
@@ -212,6 +217,17 @@ export function VideoCallStage({
       if (createPeer()) void makeOffer();
     };
 
+    // Same customer device, brand-new connection on both sides.
+    rebuildRef.current = () => {
+      const to = activeTagRef.current;
+      if (side !== "offerer" || !to || hungRef.current) return;
+      offeredRef.current = false;
+      pendingIce.current = [];
+      pcRef.current?.close();
+      pcRef.current = null;
+      if (createPeer()) send("rebuild", { to });
+    };
+
     const flushIce = async () => {
       const pc = pcRef.current;
       if (!pc?.remoteDescription) return;
@@ -250,6 +266,9 @@ export function VideoCallStage({
           makeOffer().catch(() => {});
         } else if (tag !== activeTagRef.current) {
           switchPeer(tag);
+        } else if (!offeredRef.current && pcRef.current) {
+          // Same device after a rebuild: start the fresh connection.
+          makeOffer().catch(() => {});
         }
       });
       ch.on("broadcast", { event: "orient" }, ({ payload }) => {
@@ -257,6 +276,19 @@ export function VideoCallStage({
         if ([0, 90, 180, 270].includes(deg)) setRemoteRotate(deg);
       });
       ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
+      ch.on("broadcast", { event: "camstate" }, ({ payload }) => {
+        if (side === "offerer") remoteCamOffRef.current = (payload as { on?: boolean }).on === false;
+      });
+      // Staff rebuilt the connection: drop ours, start fresh, and say we're ready.
+      ch.on("broadcast", { event: "rebuild" }, ({ payload }) => {
+        if (side !== "answerer" || hungRef.current) return;
+        if ((payload as { to?: string }).to !== tagRef.current) return;
+        pendingIce.current = [];
+        pcRef.current?.close();
+        pcRef.current = null;
+        if (createPeer()) send("ready", { tag: tagRef.current });
+        restartCamRef.current();
+      });
       ch.on("broadcast", { event: "staffmeta" }, ({ payload }) => {
         if (side !== "answerer") return;
         const g = (payload as { gender?: string }).gender;
@@ -272,7 +304,7 @@ export function VideoCallStage({
       });
       ch.on("broadcast", { event: "signal" }, async ({ payload }) => {
         const p = payload as { kind: string; sdp?: string; candidate?: RTCIceCandidateInit; to?: string; from?: string };
-        const cur = pcRef.current;
+        let cur = pcRef.current;
         if (!cur) return;
         if (side === "answerer" && p.to && p.to !== tagRef.current) return;
         if (side === "offerer" && p.from && p.from !== activeTagRef.current) return;
@@ -282,6 +314,15 @@ export function VideoCallStage({
             if (cur.remoteDescription?.sdp === p.sdp && cur.localDescription?.type === "answer") {
               send("signal", { kind: "answer", sdp: cur.localDescription.sdp, from: tagRef.current });
               return;
+            }
+            // Staff rebuilt their side but our "rebuild" message got lost: rebuild too.
+            if (cur.remoteDescription && sdpFingerprint(cur.remoteDescription.sdp) !== sdpFingerprint(p.sdp)) {
+              cur.close();
+              pendingIce.current = [];
+              pcRef.current = null;
+              const fresh = createPeer();
+              if (!fresh) return;
+              cur = fresh;
             }
             descSent.delete(cur);
             await cur.setRemoteDescription({ type: "offer", sdp: p.sdp });
@@ -420,31 +461,94 @@ export function VideoCallStage({
     };
   }, [side]);
 
-  // Staff side: if the customer's picture goes black for a few seconds, ask
-  // their phone to restart its camera (it recovers without ending the call).
+  // Staff side: when the customer's picture goes black or freezes, repair it in
+  // steps — re-attach it here, restart their camera, then rebuild the whole
+  // connection (fresh encoder + decoder on both ends) without ending the call.
   useEffect(() => {
     if (side !== "offerer") return;
     const canvas = document.createElement("canvas");
     canvas.width = 32;
     canvas.height = 24;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const state = { reattached: false, lastAsk: 0, lastRebuild: 0 };
     let darkSince = 0;
-    let lastAsk = 0;
-    const id = window.setInterval(() => {
+    let lastFrames = -1;
+    let busy = false;
+    const id = window.setInterval(async () => {
+      if (busy) return;
       const v = remoteRef.current;
-      if (!ctx || !v || pcRef.current?.connectionState !== "connected" || !v.srcObject) { darkSince = 0; return; }
-      if (v.paused) v.play().catch(() => {});
-      let black = v.readyState < 2 || v.videoWidth === 0;
-      if (!black) {
-        try { ctx.drawImage(v, 0, 0, 32, 24); black = isBlackFrame(ctx.getImageData(0, 0, 32, 24).data); } catch { black = false; }
+      const pc = pcRef.current;
+      if (!ctx || !v || !pc || pc.connectionState !== "connected" || !v.srcObject || remoteCamOffRef.current) {
+        darkSince = 0; lastFrames = -1; return;
       }
-      const now = Date.now();
-      if (!black) { darkSince = 0; return; }
-      if (!darkSince) darkSince = now;
-      if (now - darkSince >= 3000 && now - lastAsk >= 8000) { lastAsk = now; send("camrestart"); }
+      busy = true;
+      try {
+        if (v.paused) v.play().catch(() => {});
+        let bad = v.readyState < 2 || v.videoWidth === 0;
+        if (!bad) {
+          try { ctx.drawImage(v, 0, 0, 32, 24); bad = isBlackFrame(ctx.getImageData(0, 0, 32, 24).data); } catch { bad = false; }
+        }
+        // Frozen: no new frames decoded since last check (screen may show black).
+        try {
+          let frames = -1;
+          (await pc.getStats()).forEach((r) => {
+            if (r.type === "inbound-rtp" && r.kind === "video" && typeof r.framesDecoded === "number") frames = r.framesDecoded;
+          });
+          if (frames >= 0 && lastFrames >= 0 && frames === lastFrames) bad = true;
+          lastFrames = frames;
+        } catch { /* stats unavailable */ }
+        const now = Date.now();
+        if (!bad) { darkSince = 0; state.reattached = false; return; }
+        if (!darkSince) darkSince = now;
+        const fix = nextBlackPictureFix(now - darkSince, now, state);
+        if (fix === "reattach") {
+          state.reattached = true;
+          const s = v.srcObject;
+          v.srcObject = null;
+          v.srcObject = s;
+          v.play().catch(() => {});
+        } else if (fix === "camrestart") {
+          state.lastAsk = now;
+          send("camrestart");
+        } else if (fix === "rebuild") {
+          state.lastRebuild = now;
+          darkSince = 0;
+          state.reattached = false;
+          lastFrames = -1;
+          rebuildRef.current();
+        }
+      } finally {
+        busy = false;
+      }
     }, 1000);
     return () => window.clearInterval(id);
   }, [side, send]);
+
+  // Staff side: when the customer's picture changes shape (phone turned), give
+  // the video player a fresh hook-up — some PC browsers keep showing black.
+  useEffect(() => {
+    if (side !== "offerer") return;
+    const v = remoteRef.current;
+    if (!v) return;
+    let lastShape = "";
+    let timer = 0;
+    const onResize = () => {
+      const shape = v.videoWidth > v.videoHeight ? "wide" : "tall";
+      if (!v.videoWidth || shape === lastShape) return;
+      const first = !lastShape;
+      lastShape = shape;
+      if (first) return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const s = v.srcObject;
+        v.srcObject = null;
+        v.srcObject = s;
+        v.play().catch(() => {});
+      }, 400);
+    };
+    v.addEventListener("resize", onResize);
+    return () => { window.clearTimeout(timer); v.removeEventListener("resize", onResize); };
+  }, [side]);
 
   useEffect(() => {
     const el = stageRef.current;
@@ -503,6 +607,7 @@ export function VideoCallStage({
     if (existing) {
       existing.enabled = !existing.enabled;
       setCamOn(existing.enabled);
+      send("camstate", { on: existing.enabled });
       return;
     }
     // Camera was never started (staff side) — acquire it on demand.
@@ -634,7 +739,7 @@ export function VideoCallStage({
             <button type="button" onClick={() => setManualRotate((r) => (r + 90) % 360)} aria-label="Rotate picture" title="Rotate the customer's picture" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
               <RotateCw className="size-5" />
             </button>
-            <button type="button" onClick={() => send("camrestart")} aria-label="Refresh customer's picture" title="Picture black? Restart the customer's camera" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
+            <button type="button" onClick={() => { send("camrestart"); rebuildRef.current(); }} aria-label="Refresh customer's picture" title="Picture black? Reconnect the customer's picture" className="grid size-12 place-items-center rounded-full bg-secondary text-secondary-foreground">
               <RefreshCcw className="size-5" />
             </button>
           </>

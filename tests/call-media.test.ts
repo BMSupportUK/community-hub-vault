@@ -43,3 +43,21 @@ test("an all-black customer picture is detected so the camera can be restarted",
   dim.set([40, 40, 40, 255], 100 * 4);
   expect(isBlackFrame(dim)).toBe(false);
 });
+
+test("a black customer picture escalates: re-attach, camera restart, then full reconnect", async () => {
+  const { nextBlackPictureFix } = await import("../src/lib/call-media");
+  const fresh = { reattached: false, lastAsk: 0, lastRebuild: 0 };
+  const now = 100000;
+  expect(nextBlackPictureFix(1000, now, fresh)).toBe("none");
+  expect(nextBlackPictureFix(2000, now, fresh)).toBe("reattach");
+  expect(nextBlackPictureFix(4000, now, { ...fresh, reattached: true })).toBe("camrestart");
+  expect(nextBlackPictureFix(6000, now, { ...fresh, reattached: true, lastAsk: now - 3000 })).toBe("none");
+  expect(nextBlackPictureFix(10000, now, { ...fresh, reattached: true, lastAsk: now - 3000 })).toBe("rebuild");
+  expect(nextBlackPictureFix(12000, now, { reattached: true, lastAsk: now - 3000, lastRebuild: now - 5000 })).toBe("none");
+});
+
+test("a rebuilt connection is recognised by its new fingerprint", async () => {
+  const { sdpFingerprint } = await import("../src/lib/call-media");
+  expect(sdpFingerprint("v=0\r\na=fingerprint:sha-256 AA:BB\r\n")).toBe("sha-256 aa:bb");
+  expect(sdpFingerprint("v=0\r\n")).toBeNull();
+});
