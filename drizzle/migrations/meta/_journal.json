@@ -1142,6 +1142,13 @@
       "when": 1792271307818,
       "tag": "0162_staff_manual_order_previous_login",
       "breakpoints": true
+    },
+    {
+      "idx": 163,
+      "version": "7",
+      "when": 1792271970872,
+      "tag": "0163_manual_credentials_secure_access",
+      "breakpoints": true
     }
   ]
 }
