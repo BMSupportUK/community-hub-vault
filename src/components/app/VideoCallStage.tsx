@@ -120,7 +120,7 @@ export function VideoCallStage({
   const [micError, setMicError] = useState<string | null>(null);
   const micStartingRef = useRef(false);
   const restartingRef = useRef(false);
-  const restartCamRef = useRef<() => void>(() => {});
+  const restartCamRef = useRef<(stopFirst?: boolean) => void>(() => {});
   // Staff side: tear down and rebuild the connection (fresh encoder/decoder on
   // both ends) — the last resort when the customer's picture stays black.
   const rebuildRef = useRef<() => void>(() => {});
@@ -128,6 +128,19 @@ export function VideoCallStage({
   const remoteCamOffRef = useRef(false);
 
   useEffect(() => enterLiveCall(), []);
+
+  // What the customer's phone is doing, sent to staff and saved so a failed
+  // call can be diagnosed afterwards (no picture or personal data).
+  const logDiag = (who: "customer" | "staff", event: string, details: Record<string, unknown>) => {
+    void supabase.from("call_diagnostics").insert({ topic, side: who, event, details: details as never }).then(() => {}, () => {});
+  };
+  const diagBase = () => ({
+    ua: typeof navigator !== "undefined" ? navigator.userAgent : "",
+    orient: typeof screen !== "undefined" ? screen.orientation?.type ?? "" : "",
+    vw: typeof window !== "undefined" ? window.innerWidth : 0,
+    vh: typeof window !== "undefined" ? window.innerHeight : 0,
+    fixed: fixedRef.current ? fixedRef.current.stats() : null,
+  });
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
     chRef.current?.send({ type: "broadcast", event, payload }).catch(() => {});
@@ -276,7 +289,7 @@ export function VideoCallStage({
       const cam = stream.getVideoTracks()[0];
       if (side === "answerer" && cam) {
         fixedRef.current = createFixedFrameVideo(
-          () => restartCamRef.current(),
+          () => { send("diag", { event: "heal", ...diagBase() }); restartCamRef.current(true); },
           (w, h) => { shapeRef.current = { w, h }; send("shape", { w, h }); },
         );
         fixedRef.current?.setSource(cam);
@@ -316,7 +329,12 @@ export function VideoCallStage({
         if (!w || !h || w <= 0 || h <= 0) return;
         setRemoteShape((cur) => (cur && cur.w === w && cur.h === h ? cur : { w, h }));
       });
-      ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
+      ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(true); });
+      ch.on("broadcast", { event: "diag" }, ({ payload }) => {
+        if (side !== "offerer") return;
+        const { event, ...details } = payload as { event?: string } & Record<string, unknown>;
+        logDiag("customer", String(event || "tick"), details);
+      });
       ch.on("broadcast", { event: "rotating" }, ({ payload }) => {
         if (side !== "offerer" || remoteCamOffRef.current) return;
         if ((payload as { from?: string }).from !== activeTagRef.current) return;
@@ -489,6 +507,25 @@ export function VideoCallStage({
     };
   }, [side, send]);
 
+  // Customer's phone: report its camera state every few seconds during the call.
+  useEffect(() => {
+    if (side !== "answerer") return;
+    const id = window.setInterval(async () => {
+      const pc = pcRef.current;
+      if (!pc || pc.connectionState !== "connected") return;
+      const out: Record<string, unknown> = {};
+      try {
+        (await pc.getStats()).forEach((r) => {
+          if (r.type === "outbound-rtp" && r.kind === "video") {
+            Object.assign(out, { framesEncoded: r.framesEncoded, frameWidth: r.frameWidth, frameHeight: r.frameHeight, fps: r.framesPerSecond, encoder: r.encoderImplementation, limit: r.qualityLimitationReason });
+          }
+        });
+      } catch { /* stats unavailable */ }
+      send("diag", { event: "tick", ...diagBase(), out });
+    }, 3000);
+    return () => window.clearInterval(id);
+  }, [side, send]);
+
   // Customer's phone: some phones keep the call up but send only black after
   // the screen turns. Swap in a fresh camera after each turn, and whenever the
   // camera stops delivering a picture.
@@ -500,6 +537,7 @@ export function VideoCallStage({
     const onTurn = () => {
       landscape = window.innerWidth > window.innerHeight;
       if (streamRef.current?.getVideoTracks()[0]?.enabled) send("rotating", { from: tagRef.current });
+      send("diag", { event: "turn", ...diagBase() });
       // The call sends a fixed-size picture (see fixed-frame-video), so turning
       // no longer needs a camera restart — that restart itself blanked the picture.
       // A camera that really stops is restarted by the stall check instead.
@@ -594,6 +632,15 @@ export function VideoCallStage({
         if (!bad) { darkSince = 0; state.reattached = false; return; }
         if (!darkSince) darkSince = now;
         const fix = nextBlackPictureFix(now - darkSince, now, state);
+        if (fix !== "none") {
+          const inbound: Record<string, unknown> = {};
+          try {
+            (await pc.getStats()).forEach((r) => {
+              if (r.type === "inbound-rtp" && r.kind === "video") Object.assign(inbound, { framesDecoded: r.framesDecoded, frameWidth: r.frameWidth, frameHeight: r.frameHeight, fps: r.framesPerSecond, decoder: r.decoderImplementation });
+            });
+          } catch { /* stats unavailable */ }
+          logDiag("staff", `repair:${fix}`, { darkMs: now - darkSince, readyState: v.readyState, w: v.videoWidth, h: v.videoHeight, inbound });
+        }
         if (fix === "reattach") {
           state.reattached = true;
           const s = v.srcObject;
@@ -736,7 +783,7 @@ export function VideoCallStage({
   };
   // Fresh camera track swapped into the live call (no renegotiation). Used for
   // flipping, and to recover phones that send black after the screen rotates.
-  const restartCamera = async (facing: "user" | "environment" = facingRef.current) => {
+  const restartCamera = async (facing: "user" | "environment" = facingRef.current, stopFirst = false) => {
     const stream = streamRef.current;
     const old = stream?.getVideoTracks()[0];
     if (!stream || !old || restartingRef.current) return false;
@@ -746,7 +793,9 @@ export function VideoCallStage({
     try {
       let fresh: MediaStream;
       // Some phones allow only one camera user: free the old one and retry.
-      try { fresh = await get(); } catch { old.stop(); fresh = await get(); }
+      // A camera stuck sending black must be fully released before reopening.
+      if (stopFirst) { old.stop(); fresh = await get(); }
+      else { try { fresh = await get(); } catch { old.stop(); fresh = await get(); } }
       const track = fresh.getVideoTracks()[0];
       if (!track || streamRef.current !== stream) { fresh.getTracks().forEach((t) => t.stop()); return false; }
       track.enabled = enabled;
@@ -770,10 +819,10 @@ export function VideoCallStage({
       restartingRef.current = false;
     }
   };
-  restartCamRef.current = () => {
+  restartCamRef.current = (stopFirst = false) => {
     const t = streamRef.current?.getVideoTracks()[0];
     if (!t || !t.enabled) return; // camera deliberately off
-    void restartCamera();
+    void restartCamera(facingRef.current, stopFirst);
   };
   const flip = async () => {
     if (!streamRef.current?.getVideoTracks()[0] || restartingRef.current) return;

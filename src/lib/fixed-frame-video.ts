@@ -9,8 +9,25 @@
  */
 export const FIXED_FRAME_SIZE = 720;
 
+export type FixedFrameStats = {
+  srcState: string;
+  srcMuted: boolean;
+  srcEnabled: boolean;
+  srcReady: number;
+  srcW: number;
+  srcH: number;
+  srcPaused: boolean;
+  luma: number;
+  blackMs: number;
+  stalls: number;
+  heals: number;
+  outState: string;
+  outEnabled: boolean;
+};
+
 export type FixedFrameVideo = {
   track: MediaStreamTrack;
+  stats: () => FixedFrameStats;
   setSource: (track: MediaStreamTrack | null) => void;
   stop: () => void;
 };
@@ -41,7 +58,7 @@ export function cropView(stageW: number, stageH: number, shape: { w: number; h: 
   return { boxW, boxH, square: Math.max(boxW, boxH) };
 }
 
-export function createFixedFrameVideo(onStall?: () => void, onShape?: (w: number, h: number) => void, size = FIXED_FRAME_SIZE): FixedFrameVideo | null {
+export function createFixedFrameVideo(onStall?: (hard: boolean) => void, onShape?: (w: number, h: number) => void, size = FIXED_FRAME_SIZE): FixedFrameVideo | null {
   if (typeof document === "undefined") return null;
   const canvas = document.createElement("canvas");
   if (typeof canvas.captureStream !== "function") return null;
@@ -67,6 +84,30 @@ export function createFixedFrameVideo(onStall?: () => void, onShape?: (w: number
   let lastAdvance = performance.now();
   let stopped = false;
   let shapeKey = "";
+  // The camera itself can keep running but deliver only black after a turn on
+  // some Android phones: sample what we send and ask for a fresh camera.
+  const probe = document.createElement("canvas");
+  probe.width = 16;
+  probe.height = 12;
+  const pctx = probe.getContext("2d", { willReadFrequently: true });
+  let tick = 0;
+  let luma = -1;
+  let blackSince = 0;
+  let lastHeal = 0;
+  let healGap = 3000;
+  let stalls = 0;
+  let heals = 0;
+  const heal = (now: number) => {
+    if (now - lastHeal < healGap) return;
+    lastHeal = now;
+    // A really dark room shouldn't restart the camera every few seconds.
+    healGap = Math.min(healGap * 2, 30000);
+    heals++;
+    // Re-attach first (cheap), then a brand-new camera.
+    const t = source;
+    if (t && t.readyState === "live") { video.srcObject = new MediaStream([t]); video.play().catch(() => {}); }
+    onStall?.(true);
+  };
 
   const draw = () => {
     if (stopped) return;
@@ -81,7 +122,19 @@ export function createFixedFrameVideo(onStall?: () => void, onShape?: (w: number
       ctx.drawImage(video, r.x, r.y, r.w, r.h);
     }
     // Camera stopped delivering a picture: ask for a fresh one.
-    if (source?.enabled && now - lastAdvance > 2500) { lastAdvance = now; onStall?.(); }
+    if (source?.enabled && now - lastAdvance > 2500) { lastAdvance = now; stalls++; heal(now); }
+    if (source && source.readyState === "ended") heal(now);
+    if (pctx && source?.enabled && ++tick % 10 === 0) {
+      try {
+        pctx.drawImage(canvas, 0, 0, 16, 12);
+        const d = pctx.getImageData(0, 0, 16, 12).data;
+        let max = 0;
+        for (let i = 0; i < d.length; i += 4) max = Math.max(max, 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+        luma = Math.round(max);
+        if (max < 12) { blackSince ||= now; if (now - blackSince > 1500) heal(now); }
+        else { blackSince = 0; healGap = 3000; }
+      } catch { /* unreadable */ }
+    }
     if (video.paused && source) video.play().catch(() => {});
   };
   // Timer, not animation frames: keeps drawing even while the browser is busy turning the screen.
@@ -89,10 +142,26 @@ export function createFixedFrameVideo(onStall?: () => void, onShape?: (w: number
 
   return {
     track: out,
+    stats: () => ({
+      srcState: source?.readyState ?? "none",
+      srcMuted: !!source?.muted,
+      srcEnabled: !!source?.enabled,
+      srcReady: video.readyState,
+      srcW: video.videoWidth,
+      srcH: video.videoHeight,
+      srcPaused: video.paused,
+      luma,
+      blackMs: blackSince ? Math.round(performance.now() - blackSince) : 0,
+      stalls,
+      heals,
+      outState: out.readyState,
+      outEnabled: out.enabled,
+    }),
     setSource(track) {
       source = track;
       lastTime = -1;
       lastAdvance = performance.now();
+      blackSince = 0;
       video.srcObject = track ? new MediaStream([track]) : null;
       if (track) video.play().catch(() => {});
     },
