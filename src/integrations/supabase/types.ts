@@ -1644,6 +1644,38 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_account_packages: {
+        Row: {
+          account_id: string
+          allocated_at: string
+          allocated_by: string
+          customer_id: string
+          product_id: string
+        }
+        Insert: {
+          account_id: string
+          allocated_at?: string
+          allocated_by: string
+          customer_id: string
+          product_id: string
+        }
+        Update: {
+          account_id?: string
+          allocated_at?: string
+          allocated_by?: string
+          customer_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_account_packages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_account_renewal_dates: {
         Row: {
           account_id: string
@@ -7391,6 +7423,14 @@ export type Database = {
           page_path: string
           slot_key: string
         }[]
+      }
+      admin_allocate_customer_account_package: {
+        Args: {
+          p_account_id: string
+          p_customer_id: string
+          p_product_id: string
+        }
+        Returns: undefined
       }
       admin_allocate_customer_package: {
         Args: { p_customer_id: string; p_product_id: string }
