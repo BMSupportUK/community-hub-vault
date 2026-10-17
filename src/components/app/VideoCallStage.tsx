@@ -292,7 +292,11 @@ export function VideoCallStage({
       });
       ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
       ch.on("broadcast", { event: "camstate" }, ({ payload }) => {
-        if (side === "offerer") remoteCamOffRef.current = (payload as { on?: boolean }).on === false;
+        if (side !== "offerer") return;
+        const on = (payload as { on?: boolean }).on !== false;
+        remoteCamOffRef.current = !on;
+        // No point promising a picture that the customer has switched off.
+        if (!on && rotatingRef.current) { rotatingRef.current = false; setRotating(false); }
       });
       // Staff rebuilt the connection: drop ours, start fresh, and say we're ready.
       ch.on("broadcast", { event: "rebuild" }, ({ payload }) => {
