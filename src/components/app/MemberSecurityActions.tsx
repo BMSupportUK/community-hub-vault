@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { KeyRound, ShieldOff } from "lucide-react";
+import { KeyRound, ShieldOff, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { resetUserMfa } from "@/lib/mfa.functions";
-import { sendTemporaryPassword } from "@/lib/temp-password.functions";
+import { createUserManually, sendTemporaryPassword } from "@/lib/temp-password.functions";
 
 /** Admin dashboard (Members & Role Management) only: Reset 2FA + Email new password. */
 export function MemberSecurityActions({ userId, name }: { userId: string; name: string }) {
@@ -74,6 +74,63 @@ export function MemberSecurityActions({ userId, name }: { userId: string; name: 
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Admin/management: create an approved account and email the login details. */
+export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
+  const create = useServerFn(createUserManually);
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const res = await create({ data: { email, username, displayName: displayName || undefined } });
+      if (res.banned) toast.warning("Account created, but that email is on the blacklist so it's banned.");
+      else if (res.sent) toast.success("Account created and login details emailed.");
+      else toast.warning("Account created, but the email couldn't be sent. Use Email new password on their card.");
+      setOpen(false); setEmail(""); setUsername(""); setDisplayName("");
+      onCreated?.();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Couldn't create the account");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const input = "w-full h-10 px-3 rounded-lg bg-input border border-border focus:outline-none focus:ring-2 focus:ring-ring text-sm";
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
+        <UserPlus className="size-4" /> Add user
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-background/80 grid place-items-center p-4">
+          <form onSubmit={submit} className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl bg-surface border border-border p-6 space-y-3">
+            <h2 className="font-display font-semibold text-lg">Add a user</h2>
+            <p className="text-sm text-muted-foreground">They're approved straight away and get an email with their login details. They must choose their own password the first time they sign in.</p>
+            <label className="block text-xs font-medium text-muted-foreground">Email
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+            </label>
+            <label className="block text-xs font-medium text-muted-foreground">Username
+              <input required minLength={2} maxLength={30} pattern="[A-Za-z0-9_.\-]+" value={username} onChange={(e) => setUsername(e.target.value)} className={input} />
+            </label>
+            <label className="block text-xs font-medium text-muted-foreground">Display name (optional)
+              <input maxLength={60} value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={input} />
+            </label>
+            <div className="flex gap-2 pt-1">
+              <button type="submit" disabled={busy} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50">
+                {busy ? "Creating…" : "Create and email login"}
+              </button>
+              <button type="button" onClick={() => setOpen(false)} disabled={busy} className="px-4 h-11 rounded-lg bg-surface-2 border border-border text-sm">Cancel</button>
+            </div>
+          </form>
         </div>
       )}
     </>
