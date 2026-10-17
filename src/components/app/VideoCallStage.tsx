@@ -67,6 +67,18 @@ export function VideoCallStage({
   // Staff-side manual turn (deg, clockwise) on top of the automatic one.
   const [manualRotate, setManualRotate] = useState(0);
   const localRotateRef = useRef(0);
+  // Staff side: shown while the customer has just turned their phone and the
+  // picture is reconnecting. Clears when frames flow again (or after 12s).
+  const [rotating, setRotating] = useState(false);
+  const rotatingRef = useRef(false);
+  const rotateMsgTimer = useRef(0);
+  const prevRemoteDeg = useRef(0);
+  const showRotating = useCallback(() => {
+    rotatingRef.current = true;
+    setRotating(true);
+    window.clearTimeout(rotateMsgTimer.current);
+    rotateMsgTimer.current = window.setTimeout(() => { rotatingRef.current = false; setRotating(false); }, 12000);
+  }, []);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -273,7 +285,12 @@ export function VideoCallStage({
       });
       ch.on("broadcast", { event: "orient" }, ({ payload }) => {
         const deg = Number((payload as { deg?: number }).deg);
-        if ([0, 90, 180, 270].includes(deg)) setRemoteRotate(deg);
+        if (![0, 90, 180, 270].includes(deg)) return;
+        if (deg !== prevRemoteDeg.current) {
+          prevRemoteDeg.current = deg;
+          setRemoteRotate(deg);
+          if (side === "offerer") showRotating();
+        }
       });
       ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
       ch.on("broadcast", { event: "camstate" }, ({ payload }) => {
@@ -498,7 +515,7 @@ export function VideoCallStage({
           lastFrames = frames;
         } catch { /* stats unavailable */ }
         const now = Date.now();
-        if (!bad) { darkSince = 0; state.reattached = false; return; }
+        if (!bad) { darkSince = 0; state.reattached = false; if (rotatingRef.current) { rotatingRef.current = false; setRotating(false); } return; }
         if (!darkSince) darkSince = now;
         const fix = nextBlackPictureFix(now - darkSince, now, state);
         if (fix === "reattach") {
@@ -542,7 +559,7 @@ export function VideoCallStage({
       rebuildRef.current();
     }, reason === "start" ? 2500 : 1200);
   }, [side, send]);
-  useEffect(() => () => window.clearTimeout(autoTimer.current), []);
+  useEffect(() => () => { window.clearTimeout(autoTimer.current); window.clearTimeout(rotateMsgTimer.current); }, []);
   useEffect(() => { if (connected) autoRefresh("start"); }, [connected, autoRefresh]);
   const firstOrient = useRef(true);
   useEffect(() => {
@@ -687,6 +704,11 @@ export function VideoCallStage({
       <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
         <audio ref={audioRef} autoPlay className="hidden" />
         {micError && <p role="status" className="absolute left-3 right-3 top-16 z-10 rounded bg-background/85 p-3 text-center text-sm text-foreground">{micError}</p>}
+        {rotating && side === "offerer" && !error && (
+          <div role="status" className="absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-background/85 px-4 py-1.5 text-xs font-medium text-foreground shadow">
+            <Loader2 className="size-3.5 animate-spin text-primary" /> The customer has turned their phone — their picture will reconnect in a moment
+          </div>
+        )}
         <video
           ref={remoteRef}
           playsInline
