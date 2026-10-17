@@ -51,13 +51,21 @@ test("a black customer picture escalates: re-attach, camera restart, then full r
   expect(nextBlackPictureFix(1000, now, fresh)).toBe("none");
   expect(nextBlackPictureFix(2000, now, fresh)).toBe("reattach");
   expect(nextBlackPictureFix(4000, now, { ...fresh, reattached: true })).toBe("camrestart");
-  expect(nextBlackPictureFix(6000, now, { ...fresh, reattached: true, lastAsk: now - 3000 })).toBe("none");
-  expect(nextBlackPictureFix(10000, now, { ...fresh, reattached: true, lastAsk: now - 3000 })).toBe("rebuild");
-  expect(nextBlackPictureFix(12000, now, { reattached: true, lastAsk: now - 3000, lastRebuild: now - 5000 })).toBe("none");
+  expect(nextBlackPictureFix(4500, now, { ...fresh, reattached: true, lastAsk: now - 500 })).toBe("none");
+  expect(nextBlackPictureFix(5000, now, { ...fresh, reattached: true, lastAsk: now - 1000 })).toBe("rebuild");
+  expect(nextBlackPictureFix(6000, now, { reattached: true, lastAsk: now - 2000, lastRebuild: now - 5000 })).toBe("none");
 });
 
 test("a rebuilt connection is recognised by its new fingerprint", async () => {
   const { sdpFingerprint } = await import("../src/lib/call-media");
   expect(sdpFingerprint("v=0\r\na=fingerprint:sha-256 AA:BB\r\n")).toBe("sha-256 aa:bb");
   expect(sdpFingerprint("v=0\r\n")).toBeNull();
+});
+
+test("staff refresh the customer's picture automatically: once at start, then after each turn", async () => {
+  const { shouldAutoRefresh } = await import("../src/lib/call-media");
+  expect(shouldAutoRefresh("start", 10000, { startedDone: false, lastAuto: 0 })).toBe(true);
+  expect(shouldAutoRefresh("start", 10000, { startedDone: true, lastAuto: 0 })).toBe(false);
+  expect(shouldAutoRefresh("turn", 10000, { startedDone: true, lastAuto: 6000 })).toBe(false);
+  expect(shouldAutoRefresh("turn", 12000, { startedDone: true, lastAuto: 6000 })).toBe(true);
 });

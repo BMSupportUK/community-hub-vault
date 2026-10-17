@@ -60,15 +60,25 @@ export type BlackPictureFix = "none" | "reattach" | "camrestart" | "rebuild";
 /**
  * Escalating repair while the customer's picture stays black/frozen:
  * re-attach the picture locally (2s), restart the customer's camera (4s,
- * at most every 8s), then rebuild the whole connection (10s, at most every 20s).
+ * at most every 8s), then rebuild the whole connection (5s, at most every 15s).
  */
 export function nextBlackPictureFix(
   darkMs: number,
   now: number,
   s: { reattached: boolean; lastAsk: number; lastRebuild: number },
 ): BlackPictureFix {
-  if (darkMs >= 10000 && now - s.lastRebuild >= 20000) return "rebuild";
+  if (darkMs >= 5000 && now - s.lastRebuild >= 15000) return "rebuild";
   if (darkMs >= 4000 && now - s.lastAsk >= 8000) return "camrestart";
   if (darkMs >= 2000 && !s.reattached) return "reattach";
   return "none";
+}
+
+export type AutoRefreshReason = "start" | "turn";
+/**
+ * Staff side does the "Refresh customer's picture" job by itself: once just
+ * after the call connects, and after each phone turn (at most every 6s).
+ */
+export function shouldAutoRefresh(reason: AutoRefreshReason, now: number, s: { startedDone: boolean; lastAuto: number }): boolean {
+  if (reason === "start") return !s.startedDone;
+  return now - s.lastAuto >= 6000;
 }
