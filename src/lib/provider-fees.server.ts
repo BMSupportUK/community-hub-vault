@@ -3,11 +3,7 @@ import { squareRequest } from './provider-invoices.server';
 import { squareProcessingFee } from './profit-calculation';
 
 export async function fetchProviderFee(provider: string, reference: string, environment: StripeEnv, expectedAmount: number): Promise<number | null> {
-  if (provider === 'square') {
-    if (reference.startsWith('Invoice #')) return null;
-    const { payment } = await squareRequest(`/v2/payments/${encodeURIComponent(reference)}`);
-    return payment?.status === 'COMPLETED' && payment.amount_money?.amount === expectedAmount ? squareProcessingFee(payment) : null;
-  }
+  if (provider === 'square') return fetchSquareFee(reference, expectedAmount);
   if (provider !== 'stripe') return null;
   const stripe = createStripeClient(environment);
   let intentId: string | null = null;
