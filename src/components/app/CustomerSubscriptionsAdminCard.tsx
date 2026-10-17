@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { customerDate } from "@/lib/customer-date";
+import { customerDate, customerHasRecordedYear } from "@/lib/customer-date";
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
 import { Gift, Loader2, RefreshCw, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -107,15 +107,16 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
           <thead className="text-left text-xs uppercase text-muted-foreground"><tr>{["Username", "Current package", "Runs out", "Last renewed", "Referred by", "Year joined", "Years as customer"].map((h) => <th key={h} className="border-b border-border p-3">{h}</th>)}</tr></thead>
           <tbody>{visible.map((c) => {
             const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
+            const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt);
             return (
             <tr key={c.userId} className="border-b border-border/60 align-top">
               <td className="p-3 font-medium">{c.username || c.displayName || "Not recorded"}<span className={`mt-1 inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>{[...new Set(c.accounts.map((a) => a.login).filter(Boolean))].map((login) => <span key={login} className="mt-1 block break-all text-xs font-normal text-muted-foreground">{login}</span>)}</td>
               <td className="max-w-64 p-3"><div className="flex items-start gap-2"><span>{c.package || "Not recorded"}</span>{canReward && (!c.package || c.packageAllocated) && <Button variant="ghost" size="icon" title="Allocate package" aria-label={`Allocate package for ${c.username || c.displayName || "customer"}`} onClick={() => void openAllocation(c)}><Pencil className="size-4" /></Button>}</div></td>
-              <td className="p-3">{c.accounts.length ? c.accounts.map((a) => <div key={a.id} className="mb-1">{c.accounts.length > 1 && <span className="block text-xs text-muted-foreground">{a.login}</span>}{date(a.expiresAt)}</div>) : "Not recorded"}</td>
+              <td className="p-3">{hasRecordedYear ? (c.accounts.length ? c.accounts.map((a) => <div key={a.id} className="mb-1">{c.accounts.length > 1 && <span className="block text-xs text-muted-foreground">{a.login}</span>}{date(a.expiresAt)}</div>) : "Not recorded") : null}</td>
               <td className="p-3">{(c.accounts.length > 1 ? c.accounts : [null]).map((a) => {
                 const renewedAt = a ? a.renewedAt ?? null : c.renewedAt;
-                const adjusted = a ? a.renewedDateAdjusted : c.renewedDateAdjusted;
-                return <div key={a?.id ?? c.userId} className="mb-1 flex items-start gap-2"><span>{a && <span className="block text-xs text-muted-foreground">{a.login}</span>}{date(renewedAt)}{adjusted && <span className="block text-xs text-muted-foreground">Adjusted</span>}</span>{canReward && <Button variant="ghost" size="icon" title="Edit last renewed date" aria-label={`Edit last renewed date for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => { setRenewalEditing(c); setRenewalAccount(a); setRenewedDate(renewalDay(renewedAt)); }}><Pencil className="size-4" /></Button>}</div>;
+                const adjusted = hasRecordedYear && (a ? a.renewedDateAdjusted : c.renewedDateAdjusted);
+                return <div key={a?.id ?? c.userId} className="mb-1 flex items-start gap-2"><span>{a && <span className="block text-xs text-muted-foreground">{a.login}</span>}{hasRecordedYear ? date(renewedAt) : "No Renewal Yet"}{adjusted && <span className="block text-xs text-muted-foreground">Adjusted</span>}</span>{canReward && <Button variant="ghost" size="icon" title="Edit last renewed date" aria-label={`Edit last renewed date for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => { setRenewalEditing(c); setRenewalAccount(a); setRenewedDate(renewalDay(renewedAt)); }}><Pencil className="size-4" /></Button>}</div>;
               })}</td>
               <td className="p-3"><span>{c.referrerName || "—"}</span>{c.rewards.map((r) => (
                 <div key={r.orderId} className={`mt-2 w-fit rounded-md border p-2 text-xs ${r.rewardedAt ? "border-primary/30 bg-primary/10" : "border-border bg-muted/40"}`}>

@@ -4,6 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [ ] Hide expiry display and show No Renewal Yet for customers without a recorded joining year; preserve customers and saved dates.
 - [x] Give multiple customer logins independently editable renewal dates and show Customers dates without times; 29 tests pass, build OK and signed-in read confirms separate dates for both multi-login customers. No real dates changed; screen save/read-back remains blocked by dashboard password/PIN below. Preview only.
 - [x] Referrals from GJ or DaneJ never earn a referral bonus month; bonus box hidden and confirming refuses for those referrers, all other referrers unchanged. 26 customer tests pass; live read shows no bonus box on the Customers list; build OK, preview only.
 - [x] Hide guest48hSite and danejSite test/admin accounts from the admin Customers list only; base customer data, referral rewards and credential/history tools unchanged. 25 customer tests pass and an authenticated read returns 22 customers with neither account shown; build OK, preview only.
