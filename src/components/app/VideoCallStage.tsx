@@ -3,6 +3,7 @@ import { Mic, MicOff, PhoneOff, RefreshCcw, RefreshCw, RotateCw, Video, VideoOff
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
+import { RotationRecovery } from "@/lib/rotation-recovery";
 import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame, nextBlackPictureFix, sdpFingerprint, shouldAutoRefresh, type AutoRefreshReason } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
@@ -71,10 +72,10 @@ export function VideoCallStage({
   // picture is reconnecting. It stays up until frames flow again (no time cap)
   // or the customer turns their camera off.
   const [rotating, setRotating] = useState(false);
-  const rotatingRef = useRef(false);
+  const rotationRecovery = useRef(new RotationRecovery());
   const prevRemoteDeg = useRef(0);
-  const showRotating = useCallback(() => {
-    rotatingRef.current = true;
+  const showRotating = useCallback((awaitingCamera = false) => {
+    rotationRecovery.current.begin(awaitingCamera);
     setRotating(true);
   }, []);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -291,12 +292,22 @@ export function VideoCallStage({
         }
       });
       ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
+      ch.on("broadcast", { event: "rotating" }, ({ payload }) => {
+        if (side !== "offerer" || remoteCamOffRef.current) return;
+        if ((payload as { from?: string }).from !== activeTagRef.current) return;
+        showRotating(true);
+      });
+      ch.on("broadcast", { event: "camera-ready" }, ({ payload }) => {
+        if (side !== "offerer") return;
+        if ((payload as { from?: string }).from !== activeTagRef.current) return;
+        rotationRecovery.current.cameraReady();
+      });
       ch.on("broadcast", { event: "camstate" }, ({ payload }) => {
         if (side !== "offerer") return;
         const on = (payload as { on?: boolean }).on !== false;
         remoteCamOffRef.current = !on;
         // No point promising a picture that the customer has switched off.
-        if (!on && rotatingRef.current) { rotatingRef.current = false; setRotating(false); }
+        if (!on) { rotationRecovery.current.cameraOff(); setRotating(false); }
       });
       // Staff rebuilt the connection: drop ours, start fresh, and say we're ready.
       ch.on("broadcast", { event: "rebuild" }, ({ payload }) => {
@@ -460,6 +471,7 @@ export function VideoCallStage({
     const live = () => pcRef.current?.connectionState === "connected" && document.visibilityState === "visible";
     const onTurn = () => {
       landscape = window.innerWidth > window.innerHeight;
+      if (streamRef.current?.getVideoTracks()[0]?.enabled) send("rotating", { from: tagRef.current });
       window.clearTimeout(timer);
       timer = window.setTimeout(() => { if (live()) restartCamRef.current(); }, 900);
     };
@@ -477,6 +489,37 @@ export function VideoCallStage({
       screen.orientation?.removeEventListener?.("change", onTurn);
       window.removeEventListener("orientationchange", onTurn);
       window.removeEventListener("resize", onResize);
+    };
+  }, [side, send]);
+
+  // Cached decoded frames cannot dismiss this notice; require freshly presented
+  // non-black picture after the customer's camera replacement is ready.
+  useEffect(() => {
+    if (side !== "offerer") return;
+    const v = remoteRef.current;
+    if (!v) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 24;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    let stopped = false;
+    let frameId = 0;
+    const frame = () => {
+      if (stopped) return;
+      if (ctx && rotationRecovery.current.active && pcRef.current?.connectionState === "connected" && v.readyState >= 2 && v.videoWidth > 0) {
+        try {
+          ctx.drawImage(v, 0, 0, 32, 24);
+          if (rotationRecovery.current.presented(performance.now(), isBlackFrame(ctx.getImageData(0, 0, 32, 24).data))) setRotating(false);
+        } catch { /* no readable fresh frame yet */ }
+      }
+      if (v.requestVideoFrameCallback) frameId = v.requestVideoFrameCallback(frame);
+    };
+    if (v.requestVideoFrameCallback) frameId = v.requestVideoFrameCallback(frame);
+    else v.addEventListener("timeupdate", frame);
+    return () => {
+      stopped = true;
+      if (frameId) v.cancelVideoFrameCallback?.(frameId);
+      v.removeEventListener("timeupdate", frame);
     };
   }, [side]);
 
@@ -517,7 +560,7 @@ export function VideoCallStage({
           lastFrames = frames;
         } catch { /* stats unavailable */ }
         const now = Date.now();
-        if (!bad) { darkSince = 0; state.reattached = false; if (rotatingRef.current) { rotatingRef.current = false; setRotating(false); } return; }
+        if (!bad) { darkSince = 0; state.reattached = false; return; }
         if (!darkSince) darkSince = now;
         const fix = nextBlackPictureFix(now - darkSince, now, state);
         if (fix === "reattach") {
@@ -578,11 +621,11 @@ export function VideoCallStage({
       if (!v.videoWidth || shape === lastShape) return;
       const first = !lastShape;
       lastShape = shape;
-      if (!first) autoRefresh("turn");
+      if (!first) { if (!rotationRecovery.current.active) showRotating(); autoRefresh("turn"); }
     };
     v.addEventListener("resize", onResize);
     return () => v.removeEventListener("resize", onResize);
-  }, [side, autoRefresh]);
+  }, [side, autoRefresh, showRotating]);
 
   useEffect(() => {
     const el = stageRef.current;
@@ -680,6 +723,7 @@ export function VideoCallStage({
       track.enabled = enabled;
       facingRef.current = facing;
       if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
+      send("camera-ready", { from: tagRef.current });
       return true;
     } catch {
       return false;
@@ -706,8 +750,8 @@ export function VideoCallStage({
       <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
         <audio ref={audioRef} autoPlay className="hidden" />
         {micError && <p role="status" className="absolute left-3 right-3 top-16 z-10 rounded bg-background/85 p-3 text-center text-sm text-foreground">{micError}</p>}
-        {rotating && side === "offerer" && !error && (
-          <div role="status" className="absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-background/85 px-4 py-1.5 text-xs font-medium text-foreground shadow">
+        {rotating && side === "offerer" && (
+          <div role="status" className="absolute left-3 right-3 top-12 z-20 flex items-center justify-center gap-2 rounded bg-background/85 px-4 py-2 text-center text-sm font-medium text-foreground shadow">
             <Loader2 className="size-3.5 animate-spin text-primary" /> The customer has turned their phone — their picture will reconnect in a moment
           </div>
         )}
