@@ -27,6 +27,7 @@ beforeAll(async () => {
  await db.exec(readFileSync(new URL('../drizzle/migrations/0152_customer_last_renewed_date_editing.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0153_hide_test_and_admin_customer_accounts.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0154_correct_hidden_customer_name_match.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0155_exclude_gj_and_dane_referral_bonus.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -167,4 +168,17 @@ test('manual sales recorded under a hidden login name stay off the customer list
   INSERT INTO private.pending_order_credentials VALUES('${id(64)}','guest48hSite','2027-10-18 12:00+00');`);
  const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data??[];
  expect(rows.some(c=>c.username==='guest48hSite')).toBe(false);
+});
+
+test('referrals from GJ or Dane never earn a bonus month but other referrers still do',async()=>{
+ await sale(40,'12 months');
+ await db.query('UPDATE order_referrals SET referrer_user_id=$1,referrer_name=$2 WHERE order_id=$3',[id(700),'GJ',id(40)]);
+ expect((await db.query<{ok:boolean}>('SELECT referral_reward_eligible($1) ok',[id(40)])).rows[0]?.ok).toBe(false);
+ await expect(grant(40)).rejects.toThrow('qualify');
+ await db.query('UPDATE order_referrals SET referrer_user_id=$1,referrer_name=$2 WHERE order_id=$3',[id(701),'DaneJ',id(40)]);
+ await expect(grant(40)).rejects.toThrow('qualify');
+ const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data??[];
+ expect(rows.find(c=>c.userId===id(2))?.rewards?.some((r:any)=>r.orderId===id(40))??false).toBe(false);
+ await db.query('UPDATE order_referrals SET referrer_user_id=$1,referrer_name=$2 WHERE order_id=$3',[id(3),'Referrer',id(40)]);
+ expect((await db.query<{ok:boolean}>('SELECT referral_reward_eligible($1) ok',[id(40)])).rows[0]?.ok).toBe(true);
 });
