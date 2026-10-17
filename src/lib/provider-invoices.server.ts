@@ -73,7 +73,7 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
     } catch { /* Fees can arrive later; never block a confirmed payment. */ }
   }
   if (settled && order.paid_at && providerFee != null) {
-    const { error: feeError } = await db.from('order_payments').update({ provider_fee_cents: providerFee }).eq('order_id', orderId).eq('provider', provider);
+    const { error: feeError } = await db.from('order_payments').update({ provider_fee_cents: providerFee }).eq('order_id', orderId).eq('provider', provider).is('provider_fee_cents', null);
     if (feeError) throw new Error(feeError.message);
   }
   if (settled && !order.paid_at) {
