@@ -1,7 +1,7 @@
 import { beforeAll, afterAll, test, expect } from 'bun:test';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
-import { manualAccessRequestSchema, manualAccessLoginSchema } from '../src/lib/manual-credentials-schema';
+import { manualAccessRequestSchema, manualAccessLoginSchema, manualAccessPinSetupSchema } from '../src/lib/manual-credentials-schema';
 const db = new PGlite();
 const id = (n: number) => `00000000-0000-0000-0000-${String(n).padStart(12, '0')}`;
 beforeAll(async () => {
@@ -18,6 +18,7 @@ beforeAll(async () => {
   INSERT INTO private.orders VALUES('${id(1)}','manual','MANUAL-1',now(),'completed',convert_to('one@example.test','UTF8'),'First'),('${id(2)}','manual','MANUAL-2',now(),'completed',convert_to('two@example.test','UTF8'),'Second'),('${id(3)}','site','SITE-3',now(),'completed',convert_to('one@example.test','UTF8'),'Site'),('${id(4)}','manual','MANUAL-4',NULL,'pending',convert_to('one@example.test','UTF8'),'Unpaid');
   INSERT INTO private.pending_order_credentials VALUES('${id(1)}','first-login',convert_to('synthetic-first-password','UTF8'),'2027-01-01','single'),('${id(2)}','second-login',convert_to('synthetic-second-password','UTF8'),'2027-02-01','multi');`);
   await db.exec(readFileSync(new URL('../drizzle/migrations/0163_manual_credentials_secure_access.sql', import.meta.url), 'utf8'));
+  await db.exec(readFileSync(new URL('../drizzle/migrations/0164_manual_credentials_customer_pin.sql', import.meta.url), 'utf8'));
 });
 afterAll(() => db.close());
 test('manual customer sees only their paid manual credentials, never site or unrelated orders', async () => {
@@ -30,11 +31,14 @@ test('renewal retrieves its explicitly linked original account', async () => {
   await db.exec(`INSERT INTO private.orders VALUES('${id(5)}','manual','MANUAL-5',now(),'completed',convert_to('renewal@example.test','UTF8'),'Renewal'); INSERT INTO public.order_checkout_links VALUES('${id(5)}','${id(1)}',NULL);`);
   expect((await db.query<{ rows: any[] }>('SELECT manual_credentials_for_email($1) rows', ['renewal@example.test'])).rows[0]?.rows.map(r => r.id)).toEqual([id(1)]);
 });
-test('secure password works once and creates an expiring session', async () => {
+test('email alone cannot enroll a PIN; existing TV login proof sets it and creates a ten-minute session once', async () => {
   await db.exec("INSERT INTO manual_credential_access(email_key,code_hash,code_expires_at) VALUES('one','correct',now()+interval '15 minutes')");
-  expect((await db.query<{ ok: boolean }>("SELECT manual_credentials_verify('one','correct','session') ok")).rows[0]?.ok).toBe(true);
-  expect((await db.query<{ ok: boolean }>("SELECT manual_credentials_verify('one','correct','other') ok")).rows[0]?.ok).toBe(false);
-  expect((await db.query<{ ok: boolean }>("SELECT session_expires_at>now() AND session_expires_at<=now()+interval '30 minutes' ok FROM manual_credential_access WHERE email_key='one'")).rows[0]?.ok).toBe(true);
+  expect((await db.query<{ ok: boolean }>("SELECT manual_credentials_verify('one','correct','session') ok")).rows[0]?.ok).toBe(false);
+  expect(await verify('one', 'correct', 'a'.repeat(64))).toBe('setup_required');
+  expect(await verify('one', 'correct', 'a'.repeat(64), 'first-login', 'wrong')).toBe('invalid');
+  expect(await verify('one', 'correct', 'a'.repeat(64), 'first-login', 'synthetic-first-password')).toBe('verified');
+  expect(await verify('one', 'correct', 'a'.repeat(64))).toBe('invalid');
+  expect((await db.query<{ ok: boolean }>("SELECT session_expires_at>now() AND session_expires_at<=now()+interval '10 minutes' ok FROM manual_credential_access WHERE email_key='one'")).rows[0]?.ok).toBe(true);
 });
 test('expired password is rejected', async () => {
   await db.exec("INSERT INTO manual_credential_access(email_key,code_hash,code_expires_at) VALUES('expired','correct',now()-interval '1 second')");
@@ -57,4 +61,33 @@ test('customer cannot directly call service-only credential reads', async () => 
 test('manual access validates email and secure password inputs', () => {
   expect(manualAccessRequestSchema.safeParse({ email: 'not-email' }).success).toBe(false);
   expect(manualAccessLoginSchema.safeParse({ email: 'one@example.test', password: 'short' }).success).toBe(false);
+});
+async function verify(key: string, code: string, pinHash: string, login?: string, password?: string) {
+  return (await db.query<{ result: string }>('SELECT manual_credentials_verify_pin($1,$2,$3,$4,$5,$6,$7,$8) result', [key, 'one@example.test', code, pinHash, 's'.repeat(48), 'session', login ?? null, password ?? null])).rows[0]?.result;
+}
+test('PIN requires six digits and matching confirmation', () => {
+  const input = { email: 'one@example.test', password: 'c'.repeat(48), pin: '123456', confirmPin: '123456', appLogin: 'first-login', appPassword: 'synthetic-first-password' };
+  expect(manualAccessPinSetupSchema.safeParse(input).success).toBe(true);
+  expect(manualAccessPinSetupSchema.safeParse({ ...input, confirmPin: '654321' }).success).toBe(false);
+  expect(manualAccessLoginSchema.safeParse({ ...input, pin: '12345' }).success).toBe(false);
+  expect(manualAccessLoginSchema.safeParse({ ...input, pin: 'abcdef' }).success).toBe(false);
+});
+test('new email codes preserve PIN and cannot bypass the five-attempt one-hour lock', async () => {
+  await db.query("INSERT INTO manual_credential_access(email_key,code_hash,code_expires_at,pin_hash,pin_salt) VALUES('pin-locked','correct',now()+interval '15 minutes',$1,$2)", ['a'.repeat(64), 's'.repeat(48)]);
+  for (let i=0; i<5; i++) {
+    await db.exec("UPDATE manual_credential_access SET attempts=0,code_hash='correct',code_expires_at=now()+interval '15 minutes' WHERE email_key='pin-locked'");
+    expect(await verify('pin-locked','correct','b'.repeat(64))).toBe('invalid');
+  }
+  await db.exec("UPDATE manual_credential_access SET attempts=0 WHERE email_key='pin-locked'");
+  expect(await verify('pin-locked','correct','a'.repeat(64))).toBe('invalid');
+  const row = (await db.query<{ locked: boolean; pin_hash: string }>("SELECT pin_locked_until>now()+interval '59 minutes' locked,pin_hash FROM manual_credential_access WHERE email_key='pin-locked'")).rows[0];
+  expect(row?.locked).toBe(true);
+  expect(row?.pin_hash).toBe('a'.repeat(64));
+  await db.exec("UPDATE manual_credential_access SET pin_locked_until=now()-interval '1 second' WHERE email_key='pin-locked'");
+  expect(await verify('pin-locked','correct','a'.repeat(64))).toBe('verified');
+});
+test('correct email password cannot change an existing PIN even with TV login proof', async () => {
+  await db.query("INSERT INTO manual_credential_access(email_key,code_hash,code_expires_at,pin_hash,pin_salt) VALUES('existing','correct',now()+interval '15 minutes',$1,$2)", ['a'.repeat(64), 's'.repeat(48)]);
+  expect(await verify('existing','correct','b'.repeat(64),'first-login','synthetic-first-password')).toBe('invalid');
+  expect(await verify('existing','correct','a'.repeat(64))).toBe('verified');
 });
