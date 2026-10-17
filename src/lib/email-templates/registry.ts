@@ -39,8 +39,10 @@ import { template as fanZoneAppealReply } from './fan-zone-appeal-reply'
 import { template as paymentOutstanding } from './payment-outstanding'
 import { template as jobApplicationReceived } from './job-application-received'
 import { template as temporaryPassword } from './temporary-password'
+import { template as manualCredentialsAccess } from './manual-credentials-access'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'manual-credentials-access': manualCredentialsAccess,
   'twofa-reset-admin': twofaResetAdmin,
   'twofa-reset-user': twofaResetUser,
   'subscription-expiry-reminder': subscriptionExpiryReminder,
