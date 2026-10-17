@@ -4,6 +4,8 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [x] Admin dashboard Orders: recorded Provider fee and Net received columns beside original amount for admin/management; unknown fees stay Unknown, seven fee tests pass and preview builds successfully.
+- [ ] Visually verify admin Orders fee columns — blocked by the dashboard password/PIN unlock; no credentials requested or security bypassed.
 - [x] Show provider fees separately and deduct recorded fees from Profit & costs totals and package statistics; 13 calculation/invoice tests pass, unknown fees stay provisional.
 - [ ] Verify provider-fee refresh and totals through unlocked Profit & costs — signed-in browser reaches the required dashboard unlock; awaiting user unlock. Live provider fee read-back remains unverified.
 - [x] Remove the QR code from the staff secure checkout panel (customer's own QR dialog unchanged); signed-in two-browser check shows the Accept/Decline banner with no QR wording or QR graphic, build OK.
