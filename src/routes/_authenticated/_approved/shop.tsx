@@ -53,24 +53,13 @@ import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import {
-  chargeOrderWithSquare,
-  getSquareWebConfig,
-  reconcileSquareOrder,
-} from "@/lib/square-payments.functions";
-import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { reconcileSquareOrder } from "@/lib/square-payments.functions";
+import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
-import {
-  createStripePaymentIntent,
-  confirmStripePayment,
-} from "@/lib/stripe-payments.functions";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { PaymentReminderButton } from "@/components/app/PaymentReminderButton";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
 import { getMyBankTransferAccess } from "@/lib/bank-transfer.functions";
-import { SquareCardPanel, SquareLogo } from "@/components/app/SquareCardPanel";
 import {
   createCryptoInvoice,
   getCryptoConfig,
