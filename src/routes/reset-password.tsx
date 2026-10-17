@@ -93,9 +93,10 @@ function ResetPasswordPage() {
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-soft">
             <h1 className="font-display text-2xl font-bold">Set a new password</h1>
             <p className="text-sm text-muted-foreground mb-6">
-              {forced
+              {needsProfile
+                ? "Choose your username, display name and password to finish setting up your account."
+                : forced
                 ? "You signed in with a temporary password from our team. Choose your own new password to continue."
-                : needsProfile ? "Choose your username, display name and password to finish setting up your account."
                 : "Enter your new password below."}
             </p>
             <form onSubmit={submit} className="space-y-3">
