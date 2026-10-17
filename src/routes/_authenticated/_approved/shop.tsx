@@ -4756,9 +4756,8 @@ function PayOrderDialog({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // An unexpired, unpaid invoice replaces the Pay button until it expires (24h).
-  const [liveInvoice, setLiveInvoice] = useState<{ url: string; expiresAt: number } | null>(null);
-  const [nowTick, setNowTick] = useState(() => Date.now());
+  // Provider invoice status, not a local 24-hour timer, controls availability.
+  const [liveInvoice, setLiveInvoice] = useState<{ url: string } | null>(null);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -4769,18 +4768,13 @@ function PayOrderDialog({
         .maybeSingle();
       if (cancelled) return;
       const st = String(data?.status ?? "").toLowerCase();
-      if (data?.public_url && !["paid", "canceled", "cancelled", "void", "voided"].includes(st)) {
-        const base = new Date((data as any).updated_at || data.created_at).getTime();
-        setLiveInvoice({ url: data.public_url, expiresAt: base + 24 * 60 * 60 * 1000 });
+      if (data?.public_url && ["open", "unpaid", "scheduled", "payment_pending", "partially_paid"].includes(st)) {
+        setLiveInvoice({ url: data.public_url });
       } else setLiveInvoice(null);
     })();
     return () => { cancelled = true; };
   }, [orderId, open]);
-  useEffect(() => {
-    const t = window.setInterval(() => setNowTick(Date.now()), 60_000);
-    return () => window.clearInterval(t);
-  }, []);
-  const invoiceActive = liveInvoice && liveInvoice.expiresAt > nowTick;
+  const invoiceActive = !!liveInvoice;
   return (
     <>
       {invoiceActive ? (
