@@ -25,6 +25,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as GetAndroidAppRouteImport } from './routes/get-android-app'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ManualCredentialsRouteImport } from './routes/manual-credentials'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PredictionsRouteImport } from './routes/predictions'
@@ -260,6 +261,11 @@ const JobsRoute = JobsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManualCredentialsRoute = ManualCredentialsRouteImport.update({
+  id: '/manual-credentials',
+  path: '/manual-credentials',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MfaChallengeRoute = MfaChallengeRouteImport.update({
@@ -1196,6 +1202,7 @@ export interface FileRoutesByFullPath {
   '/get-android-app': typeof GetAndroidAppRoute
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/manual-credentials': typeof ManualCredentialsRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
   '/predictions': typeof PredictionsRoute
@@ -1368,6 +1375,7 @@ export interface FileRoutesByTo {
   '/get-android-app': typeof GetAndroidAppRoute
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/manual-credentials': typeof ManualCredentialsRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
   '/predictions': typeof PredictionsRoute
@@ -1541,6 +1549,7 @@ export interface FileRoutesById {
   '/get-android-app': typeof GetAndroidAppRoute
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/manual-credentials': typeof ManualCredentialsRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
   '/predictions': typeof PredictionsRoute
@@ -1717,6 +1726,7 @@ export interface FileRouteTypes {
     | '/get-android-app'
     | '/jobs'
     | '/login'
+    | '/manual-credentials'
     | '/mfa-challenge'
     | '/packages'
     | '/predictions'
@@ -1889,6 +1899,7 @@ export interface FileRouteTypes {
     | '/get-android-app'
     | '/jobs'
     | '/login'
+    | '/manual-credentials'
     | '/mfa-challenge'
     | '/packages'
     | '/predictions'
@@ -2061,6 +2072,7 @@ export interface FileRouteTypes {
     | '/get-android-app'
     | '/jobs'
     | '/login'
+    | '/manual-credentials'
     | '/mfa-challenge'
     | '/packages'
     | '/predictions'
@@ -2237,6 +2249,7 @@ export interface RootRouteChildren {
   GetAndroidAppRoute: typeof GetAndroidAppRoute
   JobsRoute: typeof JobsRoute
   LoginRoute: typeof LoginRoute
+  ManualCredentialsRoute: typeof ManualCredentialsRoute
   MfaChallengeRoute: typeof MfaChallengeRoute
   PackagesRoute: typeof PackagesRoute
   PredictionsRoute: typeof PredictionsRoute
@@ -2408,6 +2421,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manual-credentials': {
+      id: '/manual-credentials'
+      path: '/manual-credentials'
+      fullPath: '/manual-credentials'
+      preLoaderRoute: typeof ManualCredentialsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mfa-challenge': {
@@ -3891,6 +3911,7 @@ const rootRouteChildren: RootRouteChildren = {
   GetAndroidAppRoute: GetAndroidAppRoute,
   JobsRoute: JobsRoute,
   LoginRoute: LoginRoute,
+  ManualCredentialsRoute: ManualCredentialsRoute,
   MfaChallengeRoute: MfaChallengeRoute,
   PackagesRoute: PackagesRoute,
   PredictionsRoute: PredictionsRoute,

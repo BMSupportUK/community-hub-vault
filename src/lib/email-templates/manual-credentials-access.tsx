@@ -1,0 +1,7 @@
+import React from 'react';
+import { Body, Container, Head, Heading, Html, Preview, Text, Button } from '@react-email/components';
+import type { TemplateEntry } from './registry';
+function ManualAccessEmail({ password, loginUrl }: { password?: string; loginUrl?: string }) {
+  return <Html><Head /><Preview>Your private BM Support credentials access</Preview><Body style={{ backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }}><Container style={{ padding: '32px', maxWidth: '560px' }}><Heading>BM Support · Your credentials</Heading><Text>You requested a secure password to view your manual-order login details.</Text><Text style={{ fontFamily: 'monospace', overflowWrap: 'anywhere', padding: '16px', backgroundColor: '#f6f6f8' }}>{password}</Text><Text>This password expires after 15 minutes and can be used once. Your viewing session lasts 30 minutes.</Text><Button href={loginUrl} style={{ backgroundColor: '#7434b8', color: '#ffffff', padding: '12px 20px', borderRadius: '6px' }}>View my credentials</Button><Text>If you did not request this email, ignore it. Never share this password.</Text></Container></Body></Html>;
+}
+export const template = { component: ManualAccessEmail, subject: 'Your secure BM Support credentials access', displayName: 'Manual customer credentials access', previewData: { password: 'Example access password', loginUrl: 'https://bmsupport.uk/manual-credentials' } } satisfies TemplateEntry;

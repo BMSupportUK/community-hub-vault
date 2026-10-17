@@ -14,6 +14,10 @@ import {
 } from "@/lib/credentials-restore.functions";
 import { resetUserVaultPin } from "@/lib/vault-pin-admin.functions";
 import { CREDENTIAL_TIME_STEP, credentialTimeInput, formatCredentialTime } from "@/lib/credential-time";
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { ManualCredentialCards } from '@/components/app/ManualCredentialCards';
+import type { ManualCredentialCustomer } from '@/lib/manual-credentials-schema';
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-credentials")({
   component: AdminCredentialsPage,
@@ -58,6 +62,8 @@ function AdminCredentialsPage() {
   const [creds, setCreds] = useState<CredentialRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState('site');
+  const [manualCustomers, setManualCustomers] = useState<ManualCredentialCustomer[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [editor, setEditor] = useState<{ ownerId: string; row: CredentialRow | null } | null>(null);
@@ -67,9 +73,10 @@ function AdminCredentialsPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: c }] = await Promise.all([
+    const [{ data: profs }, { data: c }, manual] = await Promise.all([
       supabase.from("profiles").select("id, username, display_name").order("display_name", { ascending: true }),
       supabase.from("app_credentials").select("*").order("created_at", { ascending: false }),
+      supabase.rpc('admin_manual_credentials'),
     ]);
     const sortedProfs = ((profs ?? []) as ProfileLite[]).sort((a, b) => {
       const nameA = (a.display_name || a.username || "").toLowerCase();
@@ -78,6 +85,8 @@ function AdminCredentialsPage() {
     });
     setProfiles(sortedProfs);
     setCreds((c ?? []) as CredentialRow[]);
+    if (manual.error) toast.error('Manual credentials could not be loaded.');
+    setManualCustomers((Array.isArray(manual.data) ? manual.data : []) as unknown as ManualCredentialCustomer[]);
     setLoading(false);
   };
 
@@ -165,6 +174,10 @@ function AdminCredentialsPage() {
           </div>
         </header>
 
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <Tabs value={tab} onValueChange={setTab}><TabsList><TabsTrigger value="site">Site users ({profiles.length})</TabsTrigger><TabsTrigger value="manual">Non-site users ({manualCustomers.length})</TabsTrigger></TabsList></Tabs>
+          {tab === 'manual' && <Button variant="outline" asChild><Link to="/manual-credentials"><KeyRound /> Customer credentials page</Link></Button>}
+        </div>
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
@@ -177,6 +190,8 @@ function AdminCredentialsPage() {
 
         {loading ? (
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        ) : tab === 'manual' ? (
+          <ManualCredentialCards customers={manualCustomers.filter(c => [c.displayName, c.username, ...c.accounts.map(a => a.login)].some(v => v?.toLowerCase().includes(query.trim().toLowerCase())))} />
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-border bg-surface-1 px-6 py-16 text-center text-muted-foreground text-sm">No users found.</div>
         ) : (

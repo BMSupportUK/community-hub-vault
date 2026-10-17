@@ -1,6 +1,12 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Manual credentials access
+- [x] Add a manual-customer tab to User Credentials, preserving site-account tools; signed-in tab/card expansion verified.
+- [x] Add private manual credentials page with automatically emailed secure access, no site-account creation; verified sender domain, public request and denied invalid password, phone layout.
+- [x] Verify access isolation, expiry, rate limits and credentials read-back in isolated database tests; 47 tests passed, build OK, no real passwords logged.
+- [ ] Verify actual email receipt and successful customer login/read-back — awaits customer inbox access; no customer email sent during checks.
+
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current

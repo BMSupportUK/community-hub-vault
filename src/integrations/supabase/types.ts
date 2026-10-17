@@ -4165,6 +4165,51 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_credential_access: {
+        Row: {
+          attempts: number
+          code_expires_at: string | null
+          code_hash: string | null
+          email_key: string
+          session_expires_at: string | null
+          session_hash: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_expires_at?: string | null
+          code_hash?: string | null
+          email_key: string
+          session_expires_at?: string | null
+          session_hash?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_expires_at?: string | null
+          code_hash?: string | null
+          email_key?: string
+          session_expires_at?: string | null
+          session_hash?: string | null
+        }
+        Relationships: []
+      }
+      manual_credential_throttles: {
+        Row: {
+          hits: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          hits?: number
+          key: string
+          window_start?: string
+        }
+        Update: {
+          hits?: number
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       message_reactions: {
         Row: {
           created_at: string
@@ -7560,6 +7605,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_manual_credentials: { Args: never; Returns: Json }
       admin_manual_customer_orders: { Args: never; Returns: Json }
       admin_mark_manual_order_paid: {
         Args: { p_order_id: string }
@@ -8153,6 +8199,19 @@ export type Database = {
           thread_id: string
           unread: boolean
         }[]
+      }
+      manual_credentials_for_email: { Args: { p_email: string }; Returns: Json }
+      manual_credentials_throttle: {
+        Args: { p_key: string; p_limit: number }
+        Returns: boolean
+      }
+      manual_credentials_verify: {
+        Args: {
+          p_code_hash: string
+          p_email_key: string
+          p_session_hash: string
+        }
+        Returns: boolean
       }
       mark_fan_dm_thread_read: { Args: { _thread: string }; Returns: undefined }
       mark_order_paid: {
