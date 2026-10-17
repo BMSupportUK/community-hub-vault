@@ -297,7 +297,11 @@ function StaffTicketsDialog({ staffId, staffName, readOnly = false, onClose }: {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-3 overflow-y-auto rounded-none p-4 sm:max-w-none lg:overflow-hidden">
+      <DialogContent
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="z-[200] flex h-[100dvh] w-screen max-w-none flex-col gap-3 overflow-y-auto rounded-none p-4 sm:max-w-none lg:overflow-hidden [&>button:last-child]:z-[210] [&>button:last-child]:size-9 [&>button:last-child]:grid [&>button:last-child]:place-items-center"
+      >
         <DialogHeader>
           <DialogTitle>Ticket overview{readOnly ? "" : ` — ${staffName}`}</DialogTitle>
           <DialogDescription>
