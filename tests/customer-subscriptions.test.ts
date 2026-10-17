@@ -15,7 +15,7 @@ beforeAll(async () => {
  CREATE TABLE private.app_credentials(id uuid PRIMARY KEY,owner_id uuid,app_login_name text,account_type text,account_number int,expiry_at timestamptz,order_id uuid,updated_at timestamptz);
  CREATE TABLE public.order_referrals(order_id uuid PRIMARY KEY,referrer_user_id uuid,referrer_name text);
  CREATE TABLE public.order_items(id uuid,order_id uuid,product_name text,quantity int);
- CREATE TABLE public.order_checkout_links(order_id uuid,customer_kind text,claimed_by uuid);
+ CREATE TABLE public.order_checkout_links(order_id uuid PRIMARY KEY,customer_kind text,claimed_by uuid,account_setup_at timestamptz,account_setup_by uuid);
  CREATE TABLE public.products(id uuid PRIMARY KEY,name text,is_active boolean);
  CREATE TABLE public.profiles(id uuid,username text,display_name text);
  CREATE TABLE public.invites(id uuid,used_by uuid,created_by uuid,used_at timestamptz,created_at timestamptz);`);
@@ -32,6 +32,9 @@ beforeAll(async () => {
  await db.exec(readFileSync(new URL('../drizzle/migrations/0156_per_account_customer_renewal_dates.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0157_manual_customer_list_usernames.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0158_customer_per_account_packages.sql',import.meta.url),'utf8'));
+ await db.exec(`CREATE FUNCTION public.has_role(uuid,public.app_role) RETURNS boolean LANGUAGE sql AS 'SELECT current_setting(''test.role'',true)=$2::text';`);
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0139_renewal_confirmation_updates_credentials.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0159_manual_customer_groups_and_renewals.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -114,11 +117,11 @@ test('expired referrer subscription starts the free month from now',async()=>{
  await grant(12);
  const r=(await db.query<{ok:boolean}>(`SELECT expiry_at>now()+interval '27 days' AS ok FROM private.app_credentials WHERE id='${id(4)}'`)).rows[0];expect(r?.ok).toBe(true);
 });
-test('manual subscriptions match the customer email, not staff creator, and include saved pre-account expiry',async()=>{
+test('manual subscriptions stay separate from matching site email and staff creator, retaining manual expiry',async()=>{
  await sale(20,'Multi Room 12 months','manual');
  await db.exec(`INSERT INTO auth.users VALUES('${id(2)}','customer@example.test'); UPDATE private.orders SET user_id='${id(1)}',email_enc=convert_to('customer@example.test','UTF8') WHERE id='${id(20)}'; INSERT INTO private.pending_order_credentials VALUES('${id(20)}','customer-login','2027-10-18 12:00+00');`);
  const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscriptions() data')).rows[0]?.data??[];
- expect(rows.some(c=>c.userId===id(1))).toBe(false);expect(rows.find(c=>c.userId===id(2))?.accounts[0]?.login).toBe('customer-login');
+ expect(rows.some(c=>c.userId===id(1))).toBe(false);expect(rows.find(c=>c.userId===id(20))?.accounts[0]?.login).toBe('customer-login');expect(rows.find(c=>c.userId===id(20))?.hasSiteAccount).toBe(false);expect(rows.find(c=>c.userId===id(2))?.accounts.some((a:any)=>a.login==='customer-login')).toBe(false);
 });
 
 test('customer list flags profile-backed customers and manual-order customers without site accounts',async()=>{
@@ -248,4 +251,29 @@ test('per-account package selection requires admin and the matching account',asy
  await db.exec("SELECT set_config('test.role','admin',false)");
  await expect(db.query('SELECT admin_allocate_customer_account_package($1,$2,$3)',[id(3),id(911),id(913)])).rejects.toThrow('Customer account not found');
  await expect(db.query('SELECT admin_allocate_customer_account_package($1,$2,$3)',[id(910),id(911),id(999)])).rejects.toThrow('available package');
+});
+
+test('Ashley Spence manual order without credentials derives expiry from order date and purchased term',async()=>{
+ await db.exec(`INSERT INTO private.orders(id,customer_type,paid_at,status,created_at,order_ref,shipping_name) VALUES('${id(950)}','manual','2026-10-12','completed','2026-08-28 11:39:28+00','MANUAL-950','Ashley Spence'); INSERT INTO public.order_checkout_links(order_id,customer_kind) VALUES('${id(950)}','existing'); INSERT INTO order_items VALUES('${id(1950)}','${id(950)}','12 Month Package',1);`);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(950));
+ expect(c.hasSiteAccount).toBe(false);expect(c.accounts[0].expiresAt).toContain('2027-08-28');
+});
+test('admin groups paid manual renewal with Ashley, stacks term and keeps a single customer/account',async()=>{
+ await db.exec(`INSERT INTO private.orders(id,customer_type,paid_at,status,created_at,order_ref,shipping_name) VALUES('${id(951)}','manual','2027-07-01','completed','2027-07-01','MANUAL-951','Ashley Spence'); INSERT INTO public.order_checkout_links(order_id,customer_kind) VALUES('${id(951)}','existing'); INSERT INTO order_items VALUES('${id(1951)}','${id(951)}','12 months',1);`);
+ await db.query('SELECT admin_group_manual_customer_order($1,$2,$3)',[id(951),id(950),id(950)]);
+ const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data;
+ const c=rows.find(c=>c.userId===id(950));expect(c.accounts).toHaveLength(1);expect(c.accounts[0].expiresAt).toContain('2028-08-28');expect(rows.some(c=>c.userId===id(951))).toBe(false);
+ await db.query('SELECT admin_group_manual_customer_order($1,$2,$3)',[id(951),id(950),id(950)]);
+ const after=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(950));expect(after.accounts[0].expiresAt).toBe(c.accounts[0].expiresAt);
+});
+test('manual grouping rejects site customers and non-admin callers',async()=>{
+ await expect(db.query('SELECT admin_group_manual_customer_order($1,$2,NULL)',[id(951),id(2)])).rejects.toThrow('not a site account');
+ await db.exec("SELECT set_config('test.role','management',false)");await expect(db.query('SELECT admin_group_manual_customer_order($1,$2,NULL)',[id(951),id(950)])).rejects.toThrow('Only admin');await db.exec("SELECT set_config('test.role','admin',false)");
+});
+test('explicit manual renewal extends only its selected account once without editing site credentials',async()=>{
+ await db.exec(`INSERT INTO private.orders(id,customer_type,paid_at,status,created_at,order_ref,shipping_name) VALUES('${id(952)}','manual',now(),'paid',now(),'MANUAL-952','Ashley Spence'); INSERT INTO public.order_checkout_links(order_id,customer_kind,renewal_customer_id,renewal_account_id) VALUES('${id(952)}','existing','${id(950)}','${id(950)}'); INSERT INTO order_items VALUES('${id(1952)}','${id(952)}','1 month',1);`);
+ const before=(await db.query('SELECT * FROM private.app_credentials ORDER BY id')).rows;
+ await expect(db.query('SELECT staff_set_order_credential_expiry($1,$2,$3)',[id(952),id(4),'2090-01-01'])).rejects.toThrow('does not belong');
+ await db.query('SELECT admin_set_account_setup($1,true)',[id(952)]);await db.query('SELECT admin_set_account_setup($1,true)',[id(952)]);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(950));expect(c.accounts[0].expiresAt).toContain('2028-09-28');expect(c.accounts).toHaveLength(1);expect((await db.query('SELECT * FROM private.app_credentials ORDER BY id')).rows).toEqual(before);
 });
