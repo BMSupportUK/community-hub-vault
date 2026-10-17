@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
-import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, canSeeUserCredentialsTab, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
 import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/page-access";
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
