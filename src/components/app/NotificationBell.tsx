@@ -23,6 +23,7 @@ function playKindTone(kind: string, label: string) {
 }
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { closeLocalNotifications } from "@/lib/local-notify";
+import { staffOrderNotificationLink } from "@/lib/order-notification-link";
 
 type Notif = {
   id: string;
@@ -204,8 +205,10 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
               n.kind === "order_placed" && n.entity_id
                 ? {
                     label: "Open chat",
-                    onClick: () =>
-                      navigate({ to: "/shop", search: { view: "orders", id: n.entity_id } } as never),
+                    onClick: () => {
+                      if (!n.entity_id) return;
+                      navigate({ to: "/admin-secure-page", search: { order: n.entity_id } });
+                    },
                   }
                 : n.link_path
                   ? { label: "Open", onClick: () => navigate({ to: n.link_path! } as never) }
@@ -465,7 +468,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
                         </button>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {n.link_path && (
+                        {(n.link_path || staffOrderNotificationLink(n.kind, n.entity_id)) && (
                           <Button
                             size="sm"
                             variant="secondary"
@@ -476,9 +479,11 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
                               if (n.kind === "gate_application" || n.kind === "gate_message") {
                                 navigate({ to: "/moderation" } as never);
                               } else if (n.kind === "order_placed" && n.entity_id) {
-                                  navigate({ to: "/shop", search: { view: "orders", id: n.entity_id } } as never);
+                                  navigate({ to: "/admin-secure-page", search: { order: n.entity_id } });
                               } else {
-                                const [path, search] = n.link_path!.split("?");
+                                const link = staffOrderNotificationLink(n.kind, n.entity_id) ?? n.link_path;
+                                if (!link) return;
+                                const [path, search] = link.split("?");
                                 const searchObj: Record<string, string> = {};
                                 if (search) {
                                   for (const part of search.split("&")) {
