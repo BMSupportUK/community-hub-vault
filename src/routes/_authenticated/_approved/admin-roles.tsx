@@ -24,7 +24,7 @@ import { locationAccuracyLabel } from "@/lib/location-accuracy";
 import { toast } from "sonner";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
-import { MemberSecurityActions } from "@/components/app/MemberSecurityActions";
+import { MemberSecurityActions, AddUserButton } from "@/components/app/MemberSecurityActions";
 import { deleteMember, listMemberEmails, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
