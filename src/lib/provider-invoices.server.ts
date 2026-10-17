@@ -1,3 +1,4 @@
+import { effectiveCardProvider, squareInvoiceChatMessage } from './payment-methods';
 import { createStripeClient, type StripeEnv } from '@/lib/stripe.server';
 import { invoiceCanBeReused, invoiceIsSettled } from '@/lib/provider-invoice-policy';
 
@@ -69,7 +70,8 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
   return { ...row, status, public_url: url, amount_cents: total, provider, paid: settled, invoice };
 }
 
-export async function createProviderInvoice(db: any, orderId: string, provider: Provider, environment: StripeEnv, actorId: string | null) {
+export async function createProviderInvoice(db: any, orderId: string, requestedProvider: Provider, environment: StripeEnv, actorId: string | null) {
+  const provider = effectiveCardProvider(requestedProvider) as Provider;
   const { data: locked, error: lockError } = await db.rpc('claim_checkout_payment_lock', { p_order: orderId, p_seconds: 90 });
   if (lockError) throw new Error(lockError.message);
   if (!locked) throw new Error('Payment is being prepared. Please try again in a moment.');
@@ -134,6 +136,11 @@ export async function createProviderInvoice(db: any, orderId: string, provider: 
         await squareRequest(`/v2/invoices/${row.square_invoice_id}/cancel`, { version: current.version });
       }
       throw new Error(saveError.message);
+    }
+    if (provider === 'square') {
+      // Post the new invoice link into the order's secure checkout chat (once per new invoice).
+      const { error: chatError } = await db.from('checkout_chat_messages').insert({ order_id: orderId, sender: 'staff', staff_id: actorId, content: squareInvoiceChatMessage(order.total_cents, String(row.public_url)) });
+      if (chatError) console.error('Square invoice chat post failed', chatError.message);
     }
     return { public_url: String(row.public_url), status: String(row.status) };
   } finally { await db.rpc('release_checkout_payment_lock', { p_order: orderId }); }
