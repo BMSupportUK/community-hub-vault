@@ -267,19 +267,8 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       ) : qdCodes.length === 0 ? <p className="text-[11px] text-warning">No DNS codes saved in the admin dashboard yet.</p> : null}
     </>
   );
-  const fields = (
-    <div className={`space-y-3 min-w-0 ${chatBubble ? "pb-20" : ""}`}>
-      <OrderStatusBar
-        step={orderCompleted ? 3 : orderPaid ? 2 : 1}
-        awaitingConfirmation={!!link.payment_sent_at && !orderPaid}
-        accountSetup={!!link.account_setup_at}
-        renewal={renewal}
-      />
-      {link.payment_sent_at && !orderPaid && (
-        <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs"><Hourglass className="size-3.5 text-warning" /> Customer says payment was sent {new Date(link.payment_sent_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} — awaiting confirmation</div>
-      )}
-      {orderDetails && <StaffOrderDetails details={orderDetails} />}
-      {detailsError && <p className="text-sm text-destructive">Could not load customer order details. Retrying automatically…</p>}
+  const confirmations = (
+    <div className="space-y-3 min-w-0" role="region" aria-label="Payment and subscription confirmations">
       <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${orderPaid ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
         {orderPaid ? <Check className="size-4" /> : <Hourglass className="size-4" />}
         {orderPaid ? "PAID — payment confirmed by staff" : "NOT PAID YET — no payment has been confirmed"}
@@ -310,6 +299,22 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
         )}
         {orderCompleted && <p className="text-xs text-success font-medium">Sale completed.</p>}
       </div>}
+    </div>
+  );
+  const fields = (
+    <div className={`space-y-3 min-w-0 ${chatBubble ? "pb-20" : ""}`}>
+      <OrderStatusBar
+        step={orderCompleted ? 3 : orderPaid ? 2 : 1}
+        awaitingConfirmation={!!link.payment_sent_at && !orderPaid}
+        accountSetup={!!link.account_setup_at}
+        renewal={renewal}
+      />
+      {link.payment_sent_at && !orderPaid && (
+        <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs"><Hourglass className="size-3.5 text-warning" /> Customer says payment was sent {new Date(link.payment_sent_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} — awaiting confirmation</div>
+      )}
+      {orderDetails && <StaffOrderDetails details={orderDetails} />}
+      {detailsError && <p className="text-sm text-destructive">Could not load customer order details. Retrying automatically…</p>}
+      {!chatBubble && confirmations}
       {canComplete && !renewal && orderPaid && !link.account_setup_at && (
         <Dialog open={setupOpen} onOpenChange={setSetupOpen}>
           <DialogTrigger asChild>
@@ -401,6 +406,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
         {fields}
         <aside className="min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-6">
           {sidebarTop}
+          {confirmations}
           {linkFields}
         </aside>
       </div>
