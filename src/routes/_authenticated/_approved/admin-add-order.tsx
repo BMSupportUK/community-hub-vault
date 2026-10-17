@@ -151,7 +151,7 @@ function AddOrderPage() {
             <p className="text-sm text-muted-foreground">Saved orders get their own MANUAL reference and secure checkout page. <Link to="/admin-checkout-templates" className="text-primary hover:underline">View page templates</Link></p>
           </div>
         </div>
-        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid min-w-0 gap-6 md:grid-cols-[minmax(0,1fr)_280px] lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0 space-y-5">
           <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
@@ -221,8 +221,8 @@ function AddOrderPage() {
             </div>
           </div>
         </div>
-        <aside aria-label="Manual customers" className="min-w-0 border-t border-border pt-5 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0">
-          <div className="space-y-4 lg:sticky lg:top-6">
+        <aside aria-label="Manual customers" className="min-w-0 border-t border-border pt-5 md:border-t-0 md:border-l md:pl-6 md:pt-0">
+          <div className="space-y-4 md:sticky md:top-6">
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>
             {customerKind === "existing" ? <>
               <div className="relative">
