@@ -1,3 +1,4 @@
+import { STRIPE_CHECKOUT_ENABLED, effectiveCardProvider } from "@/lib/payment-methods";
 import { ProviderInvoicePayment } from "@/components/checkout/ProviderInvoicePayment";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -254,17 +255,17 @@ export function PayOrderDialog({
             </div>
           ) : (
             <Tabs defaultValue="square" className="pt-2">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className={`grid w-full ${STRIPE_CHECKOUT_ENABLED ? "grid-cols-3" : "grid-cols-2"}`}>
                 <TabsTrigger value="square">Square</TabsTrigger>
-                <TabsTrigger value="stripe">Stripe</TabsTrigger>
+                {STRIPE_CHECKOUT_ENABLED && <TabsTrigger value="stripe">Stripe</TabsTrigger>}
                 <TabsTrigger value="usdt">USDT</TabsTrigger>
               </TabsList>
               <TabsContent value="square" className="mt-3">
                 <SquareInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
               </TabsContent>
-              <TabsContent value="stripe" className="mt-3">
+              {STRIPE_CHECKOUT_ENABLED && <TabsContent value="stripe" className="mt-3">
                 <StripeInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
-              </TabsContent>
+              </TabsContent>}
               <TabsContent value="usdt" className="mt-3">
                 <CryptoPanel orderId={orderId} amountCents={amountCents} canPay onChange={handleChange} />
               </TabsContent>

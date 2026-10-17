@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { checkoutCryptoInvoice } from '@/lib/checkout-pay.functions';
+import { effectiveCardProvider } from '@/lib/payment-methods';
 import { ProviderInvoicePayment } from '@/components/checkout/ProviderInvoicePayment';
 export function CheckoutCardPayment({ token, password, method, amountCents, onPaid }: {
  token: string; password: string; method: 'square' | 'stripe' | 'crypto'; amountCents: number; onPaid: () => void | Promise<void>;
 }) {
  if (method === 'crypto') return <CryptoPay token={token} password={password} amountCents={amountCents}/>;
- return <ProviderInvoicePayment key={method} token={token} password={password} method={method} amountCents={amountCents} onPaid={onPaid}/>;
+ return <ProviderInvoicePayment key={effectiveCardProvider(method)} token={token} password={password} method={effectiveCardProvider(method)} amountCents={amountCents} onPaid={onPaid}/>;
 }
 
 function CryptoPay({ token, password, amountCents }: { token: string; password: string; amountCents: number }) {

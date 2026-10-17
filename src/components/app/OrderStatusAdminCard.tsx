@@ -1,3 +1,4 @@
+import { STRIPE_CHECKOUT_ENABLED, effectiveCardProvider } from "@/lib/payment-methods";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Check, X, Mail } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -220,7 +221,7 @@ export function OrderStatusAdminCard() {
                           <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} aria-label="Payment method" className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground">
                             <option value="">Use saved method</option>
                             <option value="square">Square</option>
-                            <option value="stripe">Stripe</option>
+                            {STRIPE_CHECKOUT_ENABLED && <option value="stripe">Stripe</option>}
                             <option value="wise">Wise (UK only)</option>
                             <option value="cash">Cash</option>
                           </select>

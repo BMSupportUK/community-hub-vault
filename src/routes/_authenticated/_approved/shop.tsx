@@ -53,6 +53,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { STRIPE_CHECKOUT_ENABLED } from "@/lib/payment-methods";
 import { reconcileSquareOrder } from "@/lib/square-payments.functions";
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
@@ -2860,7 +2861,7 @@ function Checkout({
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
-                {(["square", "stripe", "crypto"] as const).map((m) => (
+                {(["square", "stripe", "crypto"] as const).filter((m) => m !== "stripe" || STRIPE_CHECKOUT_ENABLED).map((m) => (
                   <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
                     className={`rounded-lg border p-3 text-left text-sm ${payMethod === m ? "border-primary bg-primary/10" : "border-border"}`}>
                     <span className="font-semibold">{m === "square" ? "Square (card)" : m === "stripe" ? "Stripe (card or bank)" : "Crypto (USDT)"}</span>
@@ -4798,10 +4799,10 @@ function PayOrderDialog({
             </div>
           ) : (
           <Tabs defaultValue="square" className="pt-2">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className={`grid w-full ${STRIPE_CHECKOUT_ENABLED ? "grid-cols-3" : "grid-cols-2"}`}>
               <TabsTrigger value="square">Square</TabsTrigger>
               <TabsTrigger value="usdt">USDT</TabsTrigger>
-              <TabsTrigger value="stripe">Stripe</TabsTrigger>
+              {STRIPE_CHECKOUT_ENABLED && <TabsTrigger value="stripe">Stripe</TabsTrigger>}
             </TabsList>
             <TabsContent value="square" className="mt-3">
               <ProviderInvoicePayment method="square" orderId={orderId} amountCents={amountCents} onPaid={handleChange} />
@@ -4814,9 +4815,9 @@ function PayOrderDialog({
                 onChange={handleChange}
               />
             </TabsContent>
-            <TabsContent value="stripe" className="mt-3">
+            {STRIPE_CHECKOUT_ENABLED && <TabsContent value="stripe" className="mt-3">
               <ProviderInvoicePayment method="stripe" orderId={orderId} amountCents={amountCents} onPaid={handleChange} />
-            </TabsContent>
+            </TabsContent>}
           </Tabs>
           )}
         </DialogContent>
