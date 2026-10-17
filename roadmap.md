@@ -4,6 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [ ] Show provider fees separately and deduct them from Profit & costs totals and package statistics; verify calculations and signed-in display.
 - [x] Remove the QR code from the staff secure checkout panel (customer's own QR dialog unchanged); signed-in two-browser check shows the Accept/Decline banner with no QR wording or QR graphic, build OK.
 - [x] Correct staff order notification links to exact secure checkout: future new/manual/paid staff alerts and existing stored links corrected, customer links unchanged; signed-in bell Open reached MANUAL-992894 secure page, five regression tests pass and build OK. Bell click fix needs publishing; future stored phone destinations corrected live.
 - [x] Repair staff rotation notice: explicit customer screen-turn signals independent of correction angle; fresh presented frames dismiss after camera replacement, not stale pixels or errors. Two-party browser call verified notice stays over 15 seconds of black video and clears after picture returns without manual refresh; 12 tests pass. Physical phone remains unverified; preview only.
