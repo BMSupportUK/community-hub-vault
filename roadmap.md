@@ -4,6 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [ ] Automatically reconcile provider fees, including changes to previously recorded fees, and refresh Orders and Profit & costs.
 - [x] Admin dashboard Orders: recorded Provider fee and Net received columns beside original amount for admin/management; unknown fees stay Unknown, seven fee tests pass and preview builds successfully.
 - [ ] Visually verify admin Orders fee columns — blocked by the dashboard password/PIN unlock; no credentials requested or security bypassed.
 - [x] Show provider fees separately and deduct recorded fees from Profit & costs totals and package statistics; 13 calculation/invoice tests pass, unknown fees stay provisional.
