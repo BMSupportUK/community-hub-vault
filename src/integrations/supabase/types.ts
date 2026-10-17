@@ -7755,6 +7755,7 @@ export type Database = {
         }
         Returns: string
       }
+      is_admin_created_user: { Args: { _uid: string }; Returns: boolean }
       is_blacklisted: {
         Args: { _email: string; _ip: string }
         Returns: boolean
