@@ -232,7 +232,8 @@ export function OrderVideoCallIncoming({ call }: { call: OrderVideoCallStaffStat
           <PhoneOff className="size-3" /> Decline
         </button>
       </div>
-      {call.checkoutLink && (
+      {/* QR only while the customer is still asking; it closes once a call has started or ended. */}
+      {call.checkoutLink && call.session.status === "waiting" && (
         <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
           <div className="shrink-0 rounded-lg bg-white p-2">
             <QRCode value={`${secureCheckoutUrl(call.checkoutLink.token)}?pw=${encodeURIComponent(call.checkoutLink.password)}`} size={112} />
