@@ -24,6 +24,7 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
   if (!order) throw new Error('Order not found');
   let invoice: any;
   let provider: Provider;
+  let squarePaymentId: string | null = null;
   let status: string, url: string | null, total: number, paid: number, currency: string;
   if (row.stripe_invoice_id) {
     provider = 'stripe';
@@ -40,15 +41,23 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
     const sqOrder = (await squareRequest(`/v2/orders/${encodeURIComponent(invoice.order_id)}`)).order;
     status = invoice.status ?? ''; url = invoice.public_url;
     total = Number(sqOrder.total_money?.amount ?? -1); currency = sqOrder.total_money?.currency ?? '';
-    paid = (invoice.payment_requests ?? []).reduce((sum: number, request: any) => sum + Number(request.total_completed_amount_money?.amount ?? 0), 0);
+    paid = 0;
+    for (const tender of sqOrder.tenders ?? []) {
+      if (!tender.payment_id) continue;
+      const payment = (await squareRequest(`/v2/payments/${encodeURIComponent(tender.payment_id)}`)).payment;
+      if (payment.status !== 'COMPLETED') continue;
+      if (payment.order_id !== invoice.order_id || payment.amount_money?.currency !== 'GBP') throw new Error('Square payment does not match this invoice');
+      paid += Number(payment.amount_money?.amount ?? 0);
+      squarePaymentId = payment.id;
+    }
   } else return null;
   const settled = invoiceIsSettled(status, total, paid, currency, Number(order.total_cents));
-  const { error: updateError } = await db.from('order_invoices').update({ status, public_url: url, last_synced_at: new Date().toISOString() }).eq('order_id', orderId);
-  if (updateError) throw new Error(updateError.message);
   if (status.toLowerCase() === 'paid' && !settled) throw new Error('Invoice payment amount does not match the order');
-  if (settled) {
+  const { error: updateError } = await db.from('order_invoices').update({ status, public_url: url, ...(settled ? { paid_at: new Date().toISOString() } : {}), last_synced_at: new Date().toISOString() }).eq('order_id', orderId);
+  if (updateError) throw new Error(updateError.message);
+  if (settled && !order.paid_at) {
     const reference = invoice.id;
-    const { error: paymentError } = await db.from('order_payments').upsert({ order_id: orderId, provider, provider_payment_id: reference, square_payment_id: reference, status: 'COMPLETED', amount_cents: total, currency: 'GBP', created_by: order.user_id, receipt_url: null }, { onConflict: 'order_id' });
+    const { error: paymentError } = await db.from('order_payments').upsert({ order_id: orderId, provider, provider_payment_id: squarePaymentId ?? reference, square_payment_id: squarePaymentId, status: 'COMPLETED', amount_cents: total, currency: 'GBP', created_by: order.user_id, receipt_url: null }, { onConflict: 'order_id' });
     if (paymentError) throw new Error(paymentError.message);
     if (!order.paid_at) {
       const { error: paidError } = await db.from('orders').update({ paid_at: new Date().toISOString(), ...(order.status !== 'cancelled' && order.status !== 'completed' ? { status: 'paid' } : {}) }).eq('id', orderId).is('paid_at', null);
@@ -70,13 +79,16 @@ export async function createProviderInvoice(db: any, orderId: string, provider: 
     if (error || !order) throw new Error('Order not found');
     if (order.paid_at || existing?.paid) throw new Error('This order is already paid');
     if (order.status === 'cancelled') throw new Error('This order was cancelled');
-    if (!(order.total_cents > 0)) throw new Error('Order total must be greater than zero');
+    if (!Number.isSafeInteger(order.total_cents) || !(order.total_cents > 0)) throw new Error('Order total must be a positive amount');
     const { data: payment } = await db.from('order_payments').select('provider,status').eq('order_id', orderId).maybeSingle();
     const { data: link } = await db.from('order_checkout_links').select('payment_sent_at').eq('order_id', orderId).maybeSingle();
     if (link?.payment_sent_at || (payment?.provider === 'nowpayments' && ['waiting','confirming','confirmed','sending','partially_paid'].includes(String(payment.status).toLowerCase()))) throw new Error('Another payment is being processed for this order.');
     if (['completed','approved','finished'].includes(String(payment?.status).toLowerCase())) throw new Error('A payment has already been taken.');
     if (existing && existing.provider === provider && invoiceCanBeReused(existing.status, existing.amount_cents, order.total_cents, existing.public_url)) return { public_url: existing.public_url, status: existing.status };
     if (existing && ['payment_pending','partially_paid'].includes(existing.status.toLowerCase())) throw new Error('An invoice payment is already being processed.');
+    // Keep the customer's existing payable link rather than switching providers
+    // and potentially exposing two invoices for the same order.
+    if (existing && invoiceCanBeReused(existing.status, existing.amount_cents, order.total_cents, existing.public_url)) return { public_url: existing.public_url, status: existing.status };
     if (existing && invoiceCanBeReused(existing.status, existing.amount_cents, existing.amount_cents, existing.public_url)) {
       if (existing.provider === 'square') await squareRequest(`/v2/invoices/${existing.square_invoice_id}/cancel`, { version: existing.invoice.version });
       else await createStripeClient(environment).invoices.voidInvoice(existing.stripe_invoice_id);
@@ -96,9 +108,9 @@ export async function createProviderInvoice(db: any, orderId: string, provider: 
       const customer = await stripe.customers.create({ ...(order.email ? { email: order.email } : {}), name: order.shipping_name || 'Customer', metadata: { order_id: orderId } }, { idempotencyKey: `${key}-customer` });
       const draft = await stripe.invoices.create({ customer: customer.id, collection_method: 'send_invoice', days_until_due: 30, auto_advance: false, payment_settings: { payment_method_types: ['card'] }, metadata: { order_id: orderId }, description: `BM Support order #${orderId.slice(0,8)}` }, { idempotencyKey: `${key}-invoice` });
       if (!draft.id) throw new Error('Stripe did not create an invoice');
-      await stripe.invoiceItems.create({ customer: customer.id, invoice: draft.id, currency: 'gbp', unit_amount_decimal: String(order.total_cents), quantity: 1, description: `BM Support order #${orderId.slice(0,8)}` } as never, { idempotencyKey: `${key}-item` });
+      await stripe.invoiceItems.create({ customer: customer.id, invoice: draft.id, currency: 'gbp', amount: order.total_cents, description: `BM Support order #${orderId.slice(0,8)}` }, { idempotencyKey: `${key}-item` });
       const invoice = await stripe.invoices.finalizeInvoice(draft.id, { auto_advance: false }, { idempotencyKey: `${key}-finalize` });
-      if (invoice.total !== order.total_cents || !invoice.hosted_invoice_url) {
+      if (invoice.total !== order.total_cents || invoice.currency !== 'gbp' || !invoice.hosted_invoice_url) {
         if (invoice.status === 'open') await stripe.invoices.voidInvoice(invoice.id);
         throw new Error('Stripe invoice total does not match the order');
       }
@@ -114,7 +126,15 @@ export async function createProviderInvoice(db: any, orderId: string, provider: 
       row = { square_invoice_id: invoice.id, square_order_id: sqOrder.id, stripe_invoice_id: null, public_url: invoice.public_url, invoice_number: invoice.invoice_number, status: invoice.status };
     }
     const { error: saveError } = await db.from('order_invoices').upsert({ ...row, order_id: orderId, amount_cents: order.total_cents, currency: 'GBP', created_by: actorId, last_synced_at: new Date().toISOString() }, { onConflict: 'order_id' });
-    if (saveError) throw new Error(saveError.message);
+    if (saveError) {
+      // Never leave an untracked payable invoice after a failed local save.
+      if (provider === 'stripe') await createStripeClient(environment).invoices.voidInvoice(row.stripe_invoice_id);
+      else {
+        const current = (await squareRequest(`/v2/invoices/${row.square_invoice_id}`)).invoice;
+        await squareRequest(`/v2/invoices/${row.square_invoice_id}/cancel`, { version: current.version });
+      }
+      throw new Error(saveError.message);
+    }
     return { public_url: String(row.public_url), status: String(row.status) };
   } finally { await db.rpc('release_checkout_payment_lock', { p_order: orderId }); }
 }

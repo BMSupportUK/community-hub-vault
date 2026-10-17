@@ -5,8 +5,8 @@
 
 ## Current
 - [x] Restore staff visibility of open tickets under All; real staff list verified and nine database permission tests pass; ticket chat and alerts untouched.
-- [ ] Replace inline Square and Stripe card payments with provider-created invoice payments; inspect payment logs for the reported expiry and verify the new checkout path.
-- [ ] Repair reported expiry on #ba12297d — live Square card form opens successfully; blocked on customer's exact error/screenshot, payment submission not attempted and no replacement invoice created.
+- [x] Replace customer inline Square/Stripe card forms with shared invoice payments and automatic status checks; authenticated checkout visually checked, both provider request flows tested with mocked responses, 15 tests pass; real provider creation/settlement remains unverified and changes need publishing.
+- [x] Record #ba12297d paid per user's Square Invoice #42 confirmation; £65 payment row and paid_at read back, customer order shows payment confirmed; no replacement invoice or charge created. Logs did not establish the exact original expiry cause; replaced expiring-session UI and removed the local 24-hour invoice timer.
 - [x] Stop home remount flicker on app return; signed-in browser checks preserve the same home heading through background/return and expired return shows only the lock screen; four lock-state tests pass, build OK; physical-phone check remains unverified
 - [x] Make Knowledge Base full-width with two-column sidebar categories and a full-page customer-reading illustration; verified signed-in category selection, guide opening/back, intact header/rail and no horizontal overflow at 1920, 886 and 390px
 - [x] Allow staff secure checkout viewing, customer chat and existing link sharing; verified staff link copying, chat send/read-back after reload, hidden completion controls and direct stage-change denials; 14 tests pass, temporary test order/chat removed

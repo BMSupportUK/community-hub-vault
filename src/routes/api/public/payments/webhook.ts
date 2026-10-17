@@ -26,7 +26,8 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           if (event.type === 'invoice.paid' || event.type === 'invoice.payment_succeeded') {
             const invoiceId = event.data.object?.id;
             const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-            const { data: row } = await supabaseAdmin.from('order_invoices').select('order_id').eq('stripe_invoice_id', String(invoiceId)).maybeSingle();
+            const { data: row, error: lookupError } = await supabaseAdmin.from('order_invoices').select('order_id').eq('stripe_invoice_id', String(invoiceId)).maybeSingle();
+            if (lookupError) throw new Error(lookupError.message);
             if (row) {
               const { syncProviderInvoice } = await import('@/lib/provider-invoices.server');
               await syncProviderInvoice(supabaseAdmin, row.order_id, env);
