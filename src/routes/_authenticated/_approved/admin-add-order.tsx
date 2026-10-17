@@ -1,7 +1,7 @@
 import { STRIPE_CHECKOUT_ENABLED, effectiveCardProvider } from "@/lib/payment-methods";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, CalendarIcon, Plus } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Check, Plus, Search, Users } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,8 @@ function AddOrderPage() {
   const [customerId, setCustomerId] = useState("");
   const [renewalAccountId, setRenewalAccountId] = useState("");
   const [lookupError, setLookupError] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [customersLoading, setCustomersLoading] = useState(true);
 
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
@@ -62,6 +64,7 @@ function AddOrderPage() {
     void supabase.rpc("admin_customer_subscription_list").then(({ data, error }) => {
       setLookupError(error?.message ?? "");
       setManualCustomers(((data ?? []) as unknown as ManualCustomer[]).filter((c) => !c.hasSiteAccount));
+      setCustomersLoading(false);
     });
   }, [user?.id]);
 
@@ -111,6 +114,10 @@ function AddOrderPage() {
   const subtotal = (products ?? []).reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0);
   const discountCents = Math.min(subtotal, Math.max(0, Math.round((Number(discount) || 0) * 100)));
   const total = subtotal - discountCents;
+  const matchingCustomers = manualCustomers.filter((customer) =>
+    [customer.username, customer.displayName, ...customer.accounts.map((account) => account.login)]
+      .some((value) => value?.toLowerCase().includes(customerSearch.trim().toLowerCase())),
+  );
 
   if (created) {
     return (
@@ -133,7 +140,7 @@ function AddOrderPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="w-full max-w-2xl mx-auto px-6 py-8 space-y-6">
+      <div className="w-full px-4 py-6 sm:px-6 lg:px-8 space-y-6">
         <Link to="/admin" search={{ tab: "order-status" } as never} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Back to Orders
         </Link>
@@ -144,7 +151,8 @@ function AddOrderPage() {
             <p className="text-sm text-muted-foreground">Saved orders get their own MANUAL reference and secure checkout page. <Link to="/admin-checkout-templates" className="text-primary hover:underline">View page templates</Link></p>
           </div>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="min-w-0 space-y-5">
           <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <div className="space-y-1.5">
@@ -156,16 +164,6 @@ function AddOrderPage() {
             </div>
             <p className="text-xs text-muted-foreground">When complete, the secure page tells new customers their account is set up, and existing customers their subscription is upgraded.</p>
           </div>
-          {customerKind === "existing" && <div className="space-y-3">
-            {lookupError && <p role="alert" className="text-sm text-destructive">{lookupError}</p>}
-            <label className="block space-y-1 text-sm">Manual customer<select aria-label="Manual customer" value={customerId} onChange={(e) => {
-              const c = manualCustomers.find((row) => row.userId === e.target.value);
-              setCustomerId(e.target.value); setRenewalAccountId("");
-              if (c) setCustName(c.displayName || c.username || custName);
-            }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-foreground"><option value="">{custName.trim() ? "Choose matching customer" : "Type the customer name first"}</option>{manualCustomers.filter((c) => c.userId === customerId || (custName.trim().length > 0 && [c.username, c.displayName, ...c.accounts.map((a) => a.login)].some((v) => v?.toLowerCase().includes(custName.trim().toLowerCase())))).map((c) => <option key={c.userId} value={c.userId}>{c.displayName || c.username} · {c.username || "No site account"}</option>)}</select></label>
-            {custName.trim() && !customerId && !manualCustomers.some((c) => [c.username, c.displayName, ...c.accounts.map((a) => a.login)].some((v) => v?.toLowerCase().includes(custName.trim().toLowerCase()))) && <p className="text-xs text-muted-foreground">No earlier manual order found for this name.</p>}
-            {customerId && <label className="block space-y-1 text-sm">Account to renew<select aria-label="Manual account to renew" value={renewalAccountId} onChange={(e) => setRenewalAccountId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-foreground"><option value="">Choose subscription account</option>{manualCustomers.find((c) => c.userId === customerId)?.accounts.map((a) => <option key={a.id} value={a.id}>{a.login} · Runs out {customerDate(a.expiresAt)}</option>)}</select></label>}
-          </div>}
           <div className="space-y-2">
             {products === null ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
@@ -218,10 +216,43 @@ function AddOrderPage() {
               <span className="text-sm text-muted-foreground">{discountCents > 0 ? <><s>{money(subtotal)}</s> </> : null}Total <span className="font-semibold text-foreground">{money(total)}</span></span>
             </div>
             <div className="flex gap-2">
-              <button type="button" onClick={back} className="h-9 px-4 rounded-lg border border-border text-sm font-medium">Cancel</button>
-              <button type="button" disabled={busy} onClick={save} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">{busy ? "Saving…" : "Save order"}</button>
+              <Button variant="outline" onClick={back}>Cancel</Button>
+              <Button disabled={busy} onClick={save}>{busy ? "Saving…" : "Save order"}</Button>
             </div>
           </div>
+        </div>
+        <aside aria-label="Manual customers" className="min-w-0 border-t border-border pt-5 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0">
+          <div className="space-y-4 lg:sticky lg:top-6">
+            <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>
+            {customerKind === "existing" ? <>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
+                <input aria-label="Search manual customers" placeholder="Search name or login" value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm" />
+              </div>
+              {lookupError && <p role="alert" className="text-sm text-destructive">{lookupError}</p>}
+              {customersLoading ? <p role="status" className="text-sm text-muted-foreground">Loading customers…</p> : <div className="max-h-[65dvh] overflow-y-auto space-y-3 pr-1">
+                {matchingCustomers.length === 0 && <p className="text-sm text-muted-foreground">No manual customers found.</p>}
+                {matchingCustomers.map((customer) => <div key={customer.userId} className="border-b border-border pb-3 space-y-2">
+                  <Button variant={customerId === customer.userId ? "secondary" : "ghost"} aria-pressed={customerId === customer.userId} className="h-auto w-full justify-start gap-2 whitespace-normal px-2 py-2 text-left" onClick={() => {
+                    setCustomerId(customer.userId); setRenewalAccountId(""); setCustName(customer.displayName || customer.username || "");
+                  }}>
+                    <span className="min-w-0 flex-1 break-words">{customer.displayName || customer.username || "Manual customer"}</span>
+                    {customerId === customer.userId && <Check className="size-4 shrink-0" />}
+                  </Button>
+                  {customer.accounts.map((account, index) => <Button key={account.id} variant={customerId === customer.userId && renewalAccountId === account.id ? "default" : "outline"} aria-pressed={customerId === customer.userId && renewalAccountId === account.id} className="h-auto w-full justify-start whitespace-normal px-3 py-2 text-left" onClick={() => {
+                    setCustomerId(customer.userId); setRenewalAccountId(account.id); setCustName(customer.displayName || customer.username || "");
+                  }}>
+                    <span className="min-w-0 space-y-1">
+                      <span className="block break-words">Account {index + 1}: {account.login}</span>
+                      <span className="block text-xs opacity-80">Runs out {customerDate(account.expiresAt)}</span>
+                    </span>
+                    {customerId === customer.userId && renewalAccountId === account.id && <Check className="ml-auto size-4 shrink-0" />}
+                  </Button>)}
+                </div>)}
+              </div>}
+            </> : <p className="text-sm text-muted-foreground">No existing customer selected.</p>}
+          </div>
+        </aside>
         </div>
       </div>
     </main>
