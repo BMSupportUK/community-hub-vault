@@ -8069,6 +8069,10 @@ export type Database = {
         Args: { p_order_id: string }
         Returns: boolean
       }
+      referral_reward_referrer_excluded: {
+        Args: { p_referrer_name: string; p_referrer_user_id: string }
+        Returns: boolean
+      }
       refresh_demo_account_data: { Args: never; Returns: undefined }
       release_checkout_payment_lock: {
         Args: { p_order: string }
