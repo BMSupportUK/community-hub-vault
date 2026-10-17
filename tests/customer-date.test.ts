@@ -18,3 +18,10 @@ test("a recorded joining year keeps dates visible including a customer joining t
   expect(customerHasRecordedYear(`${new Date().getUTCFullYear()}-01-01`)).toBe(true);
   expect(customerHasRecordedYear("2022-01-01")).toBe(true);
 });
+test("customers under 1 year show No Renewal Yet; 1+ years show their date", () => {
+  const { customerShowsNoRenewal } = require("../src/lib/customer-date");
+  expect(customerShowsNoRenewal(true, 0)).toBe(true);
+  expect(customerShowsNoRenewal(true, 1)).toBe(false);
+  expect(customerShowsNoRenewal(true, 3)).toBe(false);
+  expect(customerShowsNoRenewal(false, 2)).toBe(true);
+});
