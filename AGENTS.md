@@ -31,7 +31,7 @@
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
 - Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
-- Dashboard access and the header button label come from `src/lib/admin-panel-access.ts`; tool cards follow the page permission list.
+- Dashboard access, header button label and header tab gates come from `src/lib/admin-panel-access.ts`; a header-tabbed page has no tool card.
 <!-- LOVABLE:BEGIN -->
 - Break popup/sound shares one session-persisted per-break claim; expiry updates silently to prevent replay after dismiss, lock or reload.
 - Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
