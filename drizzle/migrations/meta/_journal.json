@@ -1058,6 +1058,13 @@
       "when": 1792265783063,
       "tag": "0150_customer_package_allocation",
       "breakpoints": true
+    },
+    {
+      "idx": 151,
+      "version": "7",
+      "when": 1792265947701,
+      "tag": "0151_customer_site_account_flag",
+      "breakpoints": true
     }
   ]
 }
