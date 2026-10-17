@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { backupToken } from "@/lib/captcha-backup";
 
 declare global {
   interface Window {
@@ -55,6 +56,9 @@ export function TurnstileWidget({
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const startedAt = useRef(Date.now());
+  // Captcha couldn't load: hand back a backup token so the visitor isn't stuck.
+  useEffect(() => { if (failed) onToken(backupToken(startedAt.current)); }, [failed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!siteKey || !ref.current) return;
@@ -72,7 +76,7 @@ export function TurnstileWidget({
           theme: "auto",
           callback: (token) => onToken(token),
           "expired-callback": () => onExpire?.(),
-          "error-callback": () => { onExpire?.(); setFailed(true); },
+          "error-callback": () => setFailed(true),
         });
       })
       .catch((e) => { console.error(e); if (!cancelled) setFailed(true); });
@@ -96,11 +100,10 @@ export function TurnstileWidget({
     <div className="space-y-2">
       <div key={attempt} ref={ref} className="flex justify-center" />
       {failed && (
-        <div role="alert" className="rounded-lg border border-border bg-muted/40 p-3 text-center text-xs text-muted-foreground">
-          The security check didn't load. Turn off any ad blocker, VPN or private-browsing shield for this site, then{" "}
-          <button type="button" onClick={() => setAttempt((a) => a + 1)} className="font-semibold text-primary underline">try again</button>
-          {" "}— or use another browser (Chrome, Safari, Edge).
-        </div>
+        <p role="status" className="text-center text-xs text-muted-foreground">
+          The security check couldn't load in your browser, so we'll use a backup check instead — just carry on.{" "}
+          <button type="button" onClick={() => setAttempt((a) => a + 1)} className="font-semibold text-primary underline">Retry captcha</button>
+        </p>
       )}
     </div>
   );
