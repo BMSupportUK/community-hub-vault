@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Manual credentials access
+- [x] Restrict site credentials cards, search, counts and add targets to positively identified BM Support accounts; four tests and signed-in list/search checks pass, Boro Matchday Action excluded, build OK; preview only.
 - [x] Add a manual-customer tab to User Credentials, preserving site-account tools; signed-in tab/card expansion verified.
 - [x] Add private manual credentials page with automatically emailed secure access, no site-account creation; verified sender domain, public request and denied invalid password, phone layout.
 - [x] Verify access isolation, expiry, rate limits and credentials read-back in isolated database tests; 47 tests passed, build OK, no real passwords logged.

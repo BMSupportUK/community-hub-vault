@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ManualCredentialCards } from '@/components/app/ManualCredentialCards';
 import type { ManualCredentialCustomer } from '@/lib/manual-credentials-schema';
+import { hasSupportAccountRoles } from '@/lib/fan-zone-nav';
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-credentials")({
   component: AdminCredentialsPage,
@@ -73,18 +74,33 @@ function AdminCredentialsPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: c }, manual] = await Promise.all([
+    const [{ data: profs, error: profileError }, { data: c, error: credentialError }, manual, roleResult] = await Promise.all([
       supabase.from("profiles").select("id, username, display_name").order("display_name", { ascending: true }),
       supabase.from("app_credentials").select("*").order("created_at", { ascending: false }),
       supabase.rpc('admin_manual_credentials'),
+      supabase.from('user_roles').select('user_id, role'),
     ]);
-    const sortedProfs = ((profs ?? []) as ProfileLite[]).sort((a, b) => {
+    if (roleResult.error || profileError || credentialError) {
+      setProfiles([]);
+      setCreds([]);
+      setLoading(false);
+      toast.error('BM Support credentials could not be loaded. Please try again.');
+      return;
+    }
+    const rolesByUser = new Map<string, string[]>();
+    for (const row of roleResult.data ?? []) {
+      const roles = rolesByUser.get(row.user_id) ?? [];
+      roles.push(row.role);
+      rolesByUser.set(row.user_id, roles);
+    }
+    const supportIds = new Set([...rolesByUser].filter(([, roles]) => hasSupportAccountRoles(roles)).map(([id]) => id));
+    const sortedProfs = ((profs ?? []) as ProfileLite[]).filter(p => supportIds.has(p.id)).sort((a, b) => {
       const nameA = (a.display_name || a.username || "").toLowerCase();
       const nameB = (b.display_name || b.username || "").toLowerCase();
       return nameA.localeCompare(nameB);
     });
     setProfiles(sortedProfs);
-    setCreds((c ?? []) as CredentialRow[]);
+    setCreds(((c ?? []) as CredentialRow[]).filter(credential => supportIds.has(credential.owner_id)));
     if (manual.error) toast.error('Manual credentials could not be loaded.');
     setManualCustomers((Array.isArray(manual.data) ? manual.data : []) as unknown as ManualCredentialCustomer[]);
     setLoading(false);

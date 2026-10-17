@@ -32,6 +32,11 @@ const SUPPORT_ROLES = [
 /** Fan Zone roles a Fan-Zone-only signup can hold. */
 const FAN_ZONE_ROLES = ["boro_fan_zone_member", "boro_fan_zone_moderator"];
 
+/** Positive membership check; an empty or Fan-Zone-only role list is not BM Support. */
+export function hasSupportAccountRoles(roles: readonly string[]): boolean {
+  return roles.some((role) => SUPPORT_ROLES.includes(role));
+}
+
 /**
  * True when the account only exists for the Boro Fan Zone (signed up via the
  * Fan Zone intent) and has no BM Support access at all.
