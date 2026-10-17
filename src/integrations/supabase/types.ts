@@ -8357,6 +8357,15 @@ export type Database = {
             }
             Returns: string
           }
+      staff_manual_order_previous_login: {
+        Args: { p_order_id: string }
+        Returns: {
+          account_type: string
+          app_login_name: string
+          expiry_at: string
+          password: string
+        }[]
+      }
       staff_nameplate_for_role:
         | {
             Args: { _role: Database["public"]["Enums"]["app_role"] }

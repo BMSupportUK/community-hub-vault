@@ -85,6 +85,31 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
     addMonths(base, renewMonths);
     setExpiryLocal(toLocal(base));
   }, [paidLocal, renewMonths, link?.customer_kind]);
+  // Manual-customer renewals have no site account to pick: pull the login
+  // details saved on their earlier manual order (as shown in admin Customers).
+  const [previousLogin, setPreviousLogin] = useState<{ app_login_name: string; password: string | null; expiry_at: string | null } | null | undefined>(undefined);
+  const manualRenewal = link?.customer_kind === "existing" && renewAccounts !== null && renewAccounts.length === 0;
+  useEffect(() => {
+    if (!manualRenewal || !canComplete) return;
+    let active = true;
+    supabase.rpc("staff_manual_order_previous_login" as never, { p_order_id: orderId } as never).then(({ data }) => {
+      if (!active) return;
+      const row = (data as unknown as { app_login_name: string; password: string | null; expiry_at: string | null }[] | null)?.[0] ?? null;
+      setPreviousLogin(row);
+      if (row) {
+        setLoginName((v) => v || row.app_login_name || "");
+        setAccountPassword((v) => v || row.password || "");
+      }
+    });
+    return () => { active = false; };
+  }, [manualRenewal, orderId, canComplete]);
+  useEffect(() => {
+    if (!manualRenewal || previousLogin === undefined || renewMonths <= 0) return;
+    const remaining = previousLogin?.expiry_at ? new Date(previousLogin.expiry_at).getTime() : 0;
+    const base = new Date(stackEarly ? Math.max(remaining, Date.now()) : Date.now());
+    addMonths(base, renewMonths);
+    setExpiryLocal(toLocal(base));
+  }, [manualRenewal, previousLogin, renewMonths, stackEarly]);
   useEffect(() => {
     // Load the months bought in both the checkout-page window and the admin
     // Orders "secure page" panel, so the expiry date fills in everywhere.
@@ -267,6 +292,21 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       ) : qdCodes.length === 0 ? <p className="text-[11px] text-warning">No DNS codes saved in the admin dashboard yet.</p> : null}
     </>
   );
+  const renewalExtra = (
+    <>
+      <p className="text-[11px] text-muted-foreground">{previousLogin === undefined ? "Looking up this customer's earlier order…" : previousLogin ? `Filled in from this customer's earlier order${previousLogin.expiry_at ? ` — it ran out ${new Date(previousLogin.expiry_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}` : ""}. Change anything that's different.` : "No earlier order found for this customer — enter their login details."}</p>
+      <label className="flex items-start gap-2 rounded-lg border border-border px-3 py-2 text-xs"><input type="checkbox" checked={stackEarly} onChange={(event) => setStackEarly(event.target.checked)} className="mt-0.5" /><span><span className="font-medium">Add the new {renewMonths > 0 ? `${renewMonths} month${renewMonths === 1 ? "" : "s"}` : "months"} on top of any time left</span><span className="block text-muted-foreground">Untick to start the new length from today instead.</span></span></label>
+      <label className="block space-y-1"><span className="text-xs font-medium">New subscription expiry date &amp; time</span><input type="datetime-local" step={CREDENTIAL_TIME_STEP} value={expiryLocal} onChange={(event) => setExpiryLocal(credentialTimeInput(event.target.value))} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+      <label className="block space-y-1"><span className="text-xs font-medium">QD app login code (DNS code from admin dashboard)</span><select value={qdCodeId} onChange={(event) => setQdCodeId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm"><option value="">Customer is not using QD</option>{qdCodes.map((code) => <option key={code.id} value={code.id}>{code.label} — {code.code}</option>)}</select></label>
+    </>
+  );
+  const loginFields = (
+    <>
+      <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+      <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+      {manualRenewal ? renewalExtra : extraFields}
+    </>
+  );
   const confirmations = (
     <div className="space-y-3 min-w-0" role="region" aria-label="Payment and subscription confirmations">
       <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${orderPaid ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
@@ -289,7 +329,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       {(orderPaid || !!link.account_setup_at) && <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
         <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> {renewal ? "Subscription extended (renewal)" : "Account set up"}</div>
         <p className="text-xs text-muted-foreground">{link.account_setup_at ? `Confirmed ${new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. The sale can now be completed.` : renewal ? "Confirm the customer's subscription has been extended. The sale can't be completed until you do." : "Confirm the customer's new account is set up. The sale can't be completed until you do."}</p>
-        {canComplete && <button type="button" disabled={busy || (!renewal && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
+        {canComplete && <button type="button" disabled={busy || ((!renewal || manualRenewal) && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : (renewal ? "Confirm extension is done" : "Confirm account is set up")}
         </button>}
         {canComplete && link.account_setup_at && !orderCompleted && (
@@ -315,21 +355,19 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       {orderDetails && <StaffOrderDetails details={orderDetails} />}
       {detailsError && <p className="text-sm text-destructive">Could not load customer order details. Retrying automatically…</p>}
       {!chatBubble && confirmations}
-      {canComplete && !renewal && orderPaid && !link.account_setup_at && (
+      {canComplete && (!renewal || manualRenewal) && orderPaid && !link.account_setup_at && (
         <Dialog open={setupOpen} onOpenChange={setSetupOpen}>
           <DialogTrigger asChild>
-            <button type="button" className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"><KeyRound className="size-4" /> Set up the new account</button>
+            <button type="button" className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"><KeyRound className="size-4" /> {manualRenewal ? "Enter the renewal login details" : "Set up the new account"}</button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" /> Complete the new account</DialogTitle>
+              <DialogTitle className="flex items-center gap-2"><KeyRound className="size-4 text-primary" /> {manualRenewal ? "Confirm the renewal" : "Complete the new account"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">Enter the service login details. Saving them creates the customer's credential and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
-              <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
-              <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
-              {extraFields}
-              <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
+              <p className="text-xs text-muted-foreground">Enter the service login details. Saving them records the customer's login and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
+              {loginFields}
+              <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim() || (manualRenewal && !expiryLocal)} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
             </div>
           </DialogContent>
         </Dialog>
@@ -351,7 +389,12 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       if (!orderPaid) return <p className="text-sm text-muted-foreground">The renewal expiry can be set once the order is paid.</p>;
       if (link.account_setup_at) return <p className="text-sm text-success">Renewal confirmed on {new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}.</p>;
       if (renewAccounts === null) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading accounts…</div>;
-      if (renewAccounts.length === 0) return <p className="text-sm text-warning">This customer has no saved service account in admin Credentials to renew. Add their account in Credentials first.</p>;
+      if (renewAccounts.length === 0) return (
+        <div className="space-y-3">
+          {loginFields}
+          <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim() || !expiryLocal} onClick={async () => { await sendCredentials(); onDone?.(); }} className="inline-flex w-full items-center justify-center gap-2 h-10 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send renewal details</button>
+        </div>
+      );
       const saveRenewal = async () => {
         if (!canComplete) return;
         const chosen = new Date(expiryLocal);
