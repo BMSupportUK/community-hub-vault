@@ -1217,6 +1217,24 @@ export type Database = {
         }
         Relationships: []
       }
+      captcha_backup_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       channel_permissions: {
         Row: {
           can_delete: boolean
