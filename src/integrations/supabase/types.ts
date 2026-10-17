@@ -1644,6 +1644,35 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_package_allocations: {
+        Row: {
+          allocated_at: string
+          allocated_by: string
+          customer_id: string
+          product_id: string
+        }
+        Insert: {
+          allocated_at?: string
+          allocated_by: string
+          customer_id: string
+          product_id: string
+        }
+        Update: {
+          allocated_at?: string
+          allocated_by?: string
+          customer_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_package_allocations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_reviews: {
         Row: {
           body: string
@@ -7297,6 +7326,10 @@ export type Database = {
           slot_key: string
         }[]
       }
+      admin_allocate_customer_package: {
+        Args: { p_customer_id: string; p_product_id: string }
+        Returns: undefined
+      }
       admin_award_referral_month: {
         Args: { p_credential_id: string; p_order_id: string }
         Returns: string
@@ -7347,6 +7380,7 @@ export type Database = {
         }
         Returns: string
       }
+      admin_customer_subscription_details: { Args: never; Returns: Json }
       admin_customer_subscriptions: { Args: never; Returns: Json }
       admin_customer_subscriptions_with_tenure: { Args: never; Returns: Json }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }

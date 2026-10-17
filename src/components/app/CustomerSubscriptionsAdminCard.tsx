@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 type Account = { id: string; login: string; expiresAt: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
-type Customer = { userId: string; username: string | null; displayName: string | null; accounts: Account[]; package: string | null; renewedAt: string | null; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
+type Customer = { userId: string; username: string | null; displayName: string | null; accounts: Account[]; package: string | null; packageAllocated: boolean; renewedAt: string | null; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
 const date = (v: string | null) => v ? new Date(v).toLocaleString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Not recorded";
 
 export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boolean }) {
@@ -23,6 +23,26 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [joinedYear, setJoinedYear] = useState("");
+  const [allocating, setAllocating] = useState<Customer | null>(null);
+  const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
+  const [productId, setProductId] = useState("");
+  const openAllocation = async (customer: Customer) => {
+    const { data, error } = await supabase.from("products").select("id,name").eq("is_active", true).order("sort_order");
+    if (error) return toast.error(error.message);
+    setProducts(data ?? []);
+    setProductId("");
+    setAllocating(customer);
+  };
+  const savePackage = async () => {
+    if (!allocating || !productId) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_allocate_customer_package", { p_customer_id: allocating.userId, p_product_id: productId });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Package allocated");
+    setAllocating(null);
+    await load();
+  };
   const saveJoinedYear = async (restore = false) => {
     if (!editing || (!restore && !joinedYear)) return;
     const storedDate = restore ? null : joinedYearToDate(joinedYear);
@@ -39,7 +59,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   };
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc("admin_customer_subscriptions_with_tenure");
+    const { data, error } = await supabase.rpc("admin_customer_subscription_details");
     setLoading(false);
     setError(error?.message ?? "");
     if (!error) setRows((data ?? []) as unknown as Customer[]);
@@ -69,8 +89,8 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
             const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
             return (
             <tr key={c.userId} className="border-b border-border/60 align-top">
-              <td className="p-3 font-medium">{c.username || c.displayName || "Not recorded"}</td>
-              <td className="max-w-64 p-3">{c.package || "Not recorded"}</td>
+              <td className="p-3 font-medium">{c.username || c.displayName || "Not recorded"}{[...new Set(c.accounts.map((a) => a.login).filter(Boolean))].map((login) => <span key={login} className="mt-1 block break-all text-xs font-normal text-muted-foreground">{login}</span>)}</td>
+              <td className="max-w-64 p-3"><div className="flex items-start gap-2"><span>{c.package || "Not recorded"}</span>{canReward && (!c.package || c.packageAllocated) && <Button variant="ghost" size="icon" title="Allocate package" aria-label={`Allocate package for ${c.username || c.displayName || "customer"}`} onClick={() => void openAllocation(c)}><Pencil className="size-4" /></Button>}</div></td>
               <td className="p-3">{c.accounts.length ? c.accounts.map((a) => <div key={a.id} className="mb-1">{c.accounts.length > 1 && <span className="block text-xs text-muted-foreground">{a.login}</span>}{date(a.expiresAt)}</div>) : "Not recorded"}</td>
               <td className="p-3">{date(c.renewedAt)}</td><td className="p-3">{c.referrerName || "—"}</td><td className="p-3"><div className="flex items-start gap-2"><span>{customerJoinedYear(c.firstSubscriptionAt) ?? "Not recorded"}{c.firstSubscriptionAdjusted && <span className="block text-xs text-muted-foreground">Adjusted</span>}</span>{canReward && <Button variant="ghost" size="icon" title="Edit year joined" aria-label={`Edit year joined for ${c.username || c.displayName || "customer"}`} onClick={() => { setEditing(c); setJoinedYear(String(customerJoinedYear(c.firstSubscriptionAt) ?? "")); }}><Pencil className="size-4" /></Button>}</div></td>
               <td className="p-3">{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</td>
@@ -80,6 +100,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
       )}
       <Dialog open={!!reward} onOpenChange={(open) => { if (!open && !busy) setReward(null); }}><DialogContent><DialogHeader><DialogTitle>Add a free month for {reward?.referrerName}</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Order {reward?.ref}. One calendar month will be added to their saved expiry, preserving any remaining time.</p><Select value={account} onValueChange={setAccount}><SelectTrigger aria-label="Referrer subscription account"><SelectValue placeholder="Choose subscription account" /></SelectTrigger><SelectContent>{reward?.referrerAccounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.login} · {date(a.expiresAt)}</SelectItem>)}</SelectContent></Select><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setReward(null)}>Cancel</Button><Button disabled={!account || busy} onClick={() => void award()}>{busy ? <Loader2 className="animate-spin" /> : <Gift />} Confirm free month</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={!!editing} onOpenChange={(open) => { if (!open && !busy) setEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Year joined · {editing?.username || editing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Year joined<Input aria-label="Year joined" type="number" inputMode="numeric" min={1000} max={ukCurrentYear()} step={1} value={joinedYear} onChange={(e) => setJoinedYear(e.target.value)} /></label><DialogFooter>{editing?.firstSubscriptionAdjusted && <Button variant="outline" disabled={busy} onClick={() => void saveJoinedYear(true)}>Use recorded year</Button>}<Button variant="outline" disabled={busy} onClick={() => setEditing(null)}>Cancel</Button><Button disabled={busy || !joinedYearToDate(joinedYear)} onClick={() => void saveJoinedYear()}>{busy && <Loader2 className="animate-spin" />}Save year</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={!!allocating} onOpenChange={(open) => { if (!open && !busy) setAllocating(null); }}><DialogContent><DialogHeader><DialogTitle>Allocate package · {allocating?.username || allocating?.displayName}</DialogTitle></DialogHeader><Select value={productId} onValueChange={setProductId}><SelectTrigger aria-label="Subscription package" className="h-auto min-h-10 w-full [&>span]:whitespace-normal [&>span]:text-left"><SelectValue placeholder="Choose package" /></SelectTrigger><SelectContent>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setAllocating(null)}>Cancel</Button><Button disabled={!productId || busy} onClick={() => void savePackage()}>{busy && <Loader2 className="animate-spin" />}Save package</Button></DialogFooter></DialogContent></Dialog>
     </section>
   );
 }
