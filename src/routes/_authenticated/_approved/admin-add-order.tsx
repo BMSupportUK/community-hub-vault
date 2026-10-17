@@ -133,7 +133,7 @@ function AddOrderPage() {
             <SecureLinkPanel orderId={created.id} withChat={false} />
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={back} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Back to Orders</button>
-              <button type="button" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); }} className="h-9 px-4 rounded-lg border border-border text-sm font-medium">Add another</button>
+              <Button variant="outline" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setSkipRegistration(false); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); }}>Add another</Button>
             </div>
           </div>
         </div>
@@ -158,16 +158,7 @@ function AddOrderPage() {
         <div className="min-w-0 space-y-5">
           <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
-          <div className="space-y-1.5">
-            <div className="text-sm font-medium">Customer</div>
-            <div className="flex gap-2">
-              {(["new", "existing"] as const).map((k) => (
-                <Button key={k} variant={customerKind === k ? "default" : "outline"} onClick={() => { setCustomerKind(k); setCustomerId(""); setRenewalAccountId(""); }} className="flex-1 h-10">{k === "new" ? "New customer" : "Existing customer"}</Button>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">When complete, the secure page tells new customers their account is set up, and existing customers their subscription is upgraded.</p>
-          </div>
-          <label className="flex items-center gap-3 text-sm"><Checkbox checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} />Don't require a site account</label>
+          <label htmlFor="skip-registration" className="flex items-start gap-3 text-sm"><Checkbox id="skip-registration" className="mt-0.5 shrink-0" checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} /><span>Bypass account creation at the end of this order</span></label>
           <div className="space-y-2">
             {products === null ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
@@ -228,6 +219,11 @@ function AddOrderPage() {
         <aside aria-label="Manual customers" className="min-w-0 border-t border-border pt-5 md:border-t-0 md:border-l md:pl-6 md:pt-0">
           <div className="space-y-4 md:sticky md:top-6">
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>
+            <div className="flex flex-col gap-2 sm:flex-row md:flex-col xl:flex-row">
+              {(["new", "existing"] as const).map((kind) => (
+                <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10">{kind === "new" ? "New customer" : "Existing customer"}</Button>
+              ))}
+            </div>
             {customerKind === "existing" ? <>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
