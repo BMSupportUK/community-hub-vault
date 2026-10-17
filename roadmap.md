@@ -4,6 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [x] Remove the "Adjusted" tag from the admin Customers list; edited renewal dates and year joined display identically to recorded ones, corrections and "Use recorded date/year" restore options unchanged inside the edit pop-ups; 39 customer/date tests pass, typecheck clean, build OK. Screen check remains blocked by the dashboard password/PIN. Preview only.
 - [x] Add independent package selection for each subscription login on multi-account customers; 32 customer tests pass, screen verification remains PIN-blocked.
 - [x] Add admin-only customer-list username editing for No site account customers without creating accounts or changing credentials; 30 customer tests pass, build OK. Signed-in dashboard remains PIN-locked, so screen save/read-back is unverified. Preview only.
 - [x] Hide expiry display and show No Renewal Yet for customers without a recorded joining year; preserve customers and saved dates. Seven date/year tests pass, build OK; screen verification remains blocked by dashboard PIN. Preview only.
