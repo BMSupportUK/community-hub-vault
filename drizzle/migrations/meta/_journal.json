@@ -1149,6 +1149,13 @@
       "when": 1792271970872,
       "tag": "0163_manual_credentials_secure_access",
       "breakpoints": true
+    },
+    {
+      "idx": 164,
+      "version": "7",
+      "when": 1792274999033,
+      "tag": "0164_manual_credentials_customer_pin",
+      "breakpoints": true
     }
   ]
 }

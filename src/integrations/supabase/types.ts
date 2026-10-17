@@ -4171,6 +4171,10 @@ export type Database = {
           code_expires_at: string | null
           code_hash: string | null
           email_key: string
+          pin_attempts: number
+          pin_hash: string | null
+          pin_locked_until: string | null
+          pin_salt: string | null
           session_expires_at: string | null
           session_hash: string | null
         }
@@ -4179,6 +4183,10 @@ export type Database = {
           code_expires_at?: string | null
           code_hash?: string | null
           email_key: string
+          pin_attempts?: number
+          pin_hash?: string | null
+          pin_locked_until?: string | null
+          pin_salt?: string | null
           session_expires_at?: string | null
           session_hash?: string | null
         }
@@ -4187,6 +4195,10 @@ export type Database = {
           code_expires_at?: string | null
           code_hash?: string | null
           email_key?: string
+          pin_attempts?: number
+          pin_hash?: string | null
+          pin_locked_until?: string | null
+          pin_salt?: string | null
           session_expires_at?: string | null
           session_hash?: string | null
         }
@@ -8212,6 +8224,19 @@ export type Database = {
           p_session_hash: string
         }
         Returns: boolean
+      }
+      manual_credentials_verify_pin: {
+        Args: {
+          p_app_login?: string
+          p_app_password?: string
+          p_code_hash: string
+          p_email: string
+          p_email_key: string
+          p_pin_hash: string
+          p_pin_salt: string
+          p_session_hash: string
+        }
+        Returns: string
       }
       mark_fan_dm_thread_read: { Args: { _thread: string }; Returns: undefined }
       mark_order_paid: {
