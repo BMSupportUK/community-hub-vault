@@ -4,7 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
-- [ ] Correct staff order notification links to the exact order's secure checkout; verify bell navigation and stored alert links.
+- [x] Correct staff order notification links to exact secure checkout: future new/manual/paid staff alerts and existing stored links corrected, customer links unchanged; signed-in bell Open reached MANUAL-992894 secure page, five regression tests pass and build OK. Bell click fix needs publishing; future stored phone destinations corrected live.
 - [x] Repair staff rotation notice: explicit customer screen-turn signals independent of correction angle; fresh presented frames dismiss after camera replacement, not stale pixels or errors. Two-party browser call verified notice stays over 15 seconds of black video and clears after picture returns without manual refresh; 12 tests pass. Physical phone remains unverified; preview only.
 - [x] Remove seconds from login credential entry and displays across credential/profile/checkout screens; two precision tests pass and signed-in entry plus saved expiry display verified without changing credentials.
 - [x] Subscription extended applies the sale term to saved credentials once, preserving remaining time; 18 tests pass and signed-in test renewal read back in Credentials (31 Jan → 28 Feb), fictional records removed.
