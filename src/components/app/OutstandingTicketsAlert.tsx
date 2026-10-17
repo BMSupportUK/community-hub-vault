@@ -4,6 +4,7 @@ import { LifeBuoy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { isInLiveCall, useInLiveCall } from "@/lib/live-call-state";
 import { playSound } from "@/lib/sound";
 import { phoneToneSrc } from "@/lib/phone-alert-sounds";
 const ticketAudio = phoneToneSrc("ticket")!;
@@ -29,6 +30,8 @@ export function OutstandingTicketsAlert() {
   const isTalkChannel = pathname === "/home" || pathname.startsWith("/home/");
   const isStaffRole = hasAny(["admin", "management", "staff"]);
   const [open, setOpen] = useState(false);
+  // Never cover a live video call; a pending pop-up waits until the call ends.
+  const inCall = useInLiveCall();
   const [counts, setCounts] = useState({ open: 0, in_progress: 0, unassigned: 0 });
 
   useEffect(() => {
@@ -56,7 +59,7 @@ export function OutstandingTicketsAlert() {
       const total = next.open + next.in_progress;
       if (autoOpen && total > 0 && sessionStorage.getItem(SESSION_KEY) !== "1") {
         sessionStorage.setItem(SESSION_KEY, "1");
-        if (isTalkChannel) {
+        if (isTalkChannel && !isInLiveCall()) {
           toast.info("Outstanding support tickets", {
             description: `${total} ticket${total === 1 ? " is" : "s are"} waiting for a response.`,
             duration: 10000,
@@ -84,6 +87,7 @@ export function OutstandingTicketsAlert() {
           // Surface new tickets the moment they arrive — don't wait for refresh.
           if (
             bootstrapped &&
+            !isInLiveCall() &&
             payload.eventType === "INSERT" &&
             (payload.new as { user_id?: string } | null)?.user_id !== user.id
           ) {
@@ -108,7 +112,7 @@ export function OutstandingTicketsAlert() {
   const total = counts.open + counts.in_progress;
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open && !inCall} onOpenChange={setOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">

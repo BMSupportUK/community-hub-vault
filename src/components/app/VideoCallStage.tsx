@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
 import { RotationRecovery } from "@/lib/rotation-recovery";
+import { enterLiveCall } from "@/lib/live-call-state";
 import { createFixedFrameVideo, cropView, type FixedFrameVideo } from "@/lib/fixed-frame-video";
 import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame, nextBlackPictureFix, sdpFingerprint, shouldAutoRefresh, type AutoRefreshReason } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
@@ -125,6 +126,8 @@ export function VideoCallStage({
   const rebuildRef = useRef<() => void>(() => {});
   // Customer deliberately turned their camera off: don't "repair" the black.
   const remoteCamOffRef = useRef(false);
+
+  useEffect(() => enterLiveCall(), []);
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
     chRef.current?.send({ type: "broadcast", event, payload }).catch(() => {});
