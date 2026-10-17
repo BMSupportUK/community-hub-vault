@@ -1086,6 +1086,13 @@
       "when": 1792267418070,
       "tag": "0154_correct_hidden_customer_name_match",
       "breakpoints": true
+    },
+    {
+      "idx": 155,
+      "version": "7",
+      "when": 1792267483821,
+      "tag": "0155_exclude_gj_and_dane_referral_bonus",
+      "breakpoints": true
     }
   ]
 }
