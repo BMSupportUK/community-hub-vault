@@ -23,6 +23,7 @@ beforeAll(async () => {
  await db.exec(readFileSync(new URL('../drizzle/migrations/0148_customer_subscription_manual_account_matching.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0149_customer_tenure_date_corrections.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0150_customer_package_allocation.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0151_customer_site_account_flag.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -69,6 +70,14 @@ test('manual subscriptions match the customer email, not staff creator, and incl
  await db.exec(`INSERT INTO auth.users VALUES('${id(2)}','customer@example.test'); UPDATE private.orders SET user_id='${id(1)}',email_enc=convert_to('customer@example.test','UTF8') WHERE id='${id(20)}'; INSERT INTO private.pending_order_credentials VALUES('${id(20)}','customer-login','2027-10-18 12:00+00');`);
  const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscriptions() data')).rows[0]?.data??[];
  expect(rows.some(c=>c.userId===id(1))).toBe(false);expect(rows.find(c=>c.userId===id(2))?.accounts[0]?.login).toBe('customer-login');
+});
+
+test('customer list flags profile-backed customers and manual-order customers without site accounts',async()=>{
+ await sale(31,'12 months','manual');
+ await db.exec(`UPDATE private.orders SET user_id=NULL,email_enc=convert_to('noprofile@example.test','UTF8') WHERE id='${id(31)}'`);
+ const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data??[];
+ expect(rows.find(c=>c.userId===id(2))?.hasSiteAccount).toBe(true);
+ expect(rows.find(c=>c.userId===id(31))?.hasSiteAccount).toBe(false);
 });
 
 test('admin backdates first subscription and tenure uses completed years without changing expiry',async()=>{
