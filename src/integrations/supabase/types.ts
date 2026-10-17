@@ -8213,6 +8213,16 @@ export type Database = {
         }[]
       }
       manual_credentials_for_email: { Args: { p_email: string }; Returns: Json }
+      manual_credentials_set_checkout_pin: {
+        Args: {
+          p_email_key: string
+          p_password: string
+          p_pin_hash: string
+          p_pin_salt: string
+          p_token: string
+        }
+        Returns: boolean
+      }
       manual_credentials_throttle: {
         Args: { p_key: string; p_limit: number }
         Returns: boolean

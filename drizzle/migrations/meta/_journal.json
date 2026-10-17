@@ -1156,6 +1156,13 @@
       "when": 1792274999033,
       "tag": "0164_manual_credentials_customer_pin",
       "breakpoints": true
+    },
+    {
+      "idx": 165,
+      "version": "7",
+      "when": 1792275246529,
+      "tag": "0165_manual_checkout_pin_enrollment",
+      "breakpoints": true
     }
   ]
 }
