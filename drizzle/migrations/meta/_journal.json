@@ -1016,6 +1016,13 @@
       "when": 1792250099107,
       "tag": "0144_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1792261063136,
+      "tag": "0145_fix_checkout_renewal_message_selection",
+      "breakpoints": true
     }
   ]
 }
