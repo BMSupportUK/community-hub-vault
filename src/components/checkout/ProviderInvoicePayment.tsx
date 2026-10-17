@@ -15,6 +15,7 @@ export function ProviderInvoicePayment({ method, amountCents, orderId, token, pa
  paidCallback.current = onPaid;
  const [status,setStatus] = useState('');
  const [url,setUrl] = useState<string | null>(null);
+ const [invoiceProvider,setInvoiceProvider] = useState(method === 'square' ? 'Square' : 'Stripe');
  const [busy,setBusy] = useState(false);
  const [error,setError] = useState<string | null>(null);
  const provider = method === 'square' ? 'Square' : 'Stripe';
@@ -35,7 +36,10 @@ export function ProviderInvoicePayment({ method, amountCents, orderId, token, pa
    const result = token ? await refreshGuest({ data: { token, password } }) : orderId ? await refresh({ data: { orderId } }) : null;
    if (!result) return;
    if ('error' in result) throw new Error(result.error);
-   if (result.provider === method && ['open','unpaid','scheduled','payment_pending','partially_paid'].includes(result.status.toLowerCase())) setUrl(result.public_url);
+   if (['open','unpaid','scheduled','payment_pending','partially_paid'].includes(result.status.toLowerCase())) {
+    setUrl(result.public_url);
+    setInvoiceProvider(result.provider === 'square' ? 'Square' : 'Stripe');
+   } else setUrl(null);
    if (result.paid) { setStatus('Payment confirmed'); await paidCallback.current?.(); }
    else if (manual) setStatus('Payment not confirmed yet');
   } catch(e) { if (manual) setError(e instanceof Error ? e.message : 'Could not check payment'); }
@@ -51,7 +55,7 @@ export function ProviderInvoicePayment({ method, amountCents, orderId, token, pa
  }, [token, password, orderId, method]);
  return <div className="space-y-3">
   {url ? <>
-   <Button asChild className="w-full min-h-11"><a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4"/>Pay {provider} invoice</a></Button>
+   <Button asChild className="w-full min-h-11"><a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink className="size-4"/>Pay {invoiceProvider} invoice</a></Button>
    <Button variant="outline" className="w-full min-h-11" disabled={busy} onClick={() => void check()}><RefreshCw className="size-4"/>{busy ? 'Checking…' : "I've paid — check payment"}</Button>
   </> : <Button className="w-full min-h-11" disabled={busy} onClick={generate}>{busy ? <Loader2 className="size-4 animate-spin"/> : <Receipt className="size-4"/>}{busy ? 'Preparing invoice…' : `Pay £${(amountCents / 100).toFixed(2)} via ${provider}`}</Button>}
   {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

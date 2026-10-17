@@ -191,6 +191,14 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     tab: typeof s.tab === "string" ? s.tab : undefined,
   }),
   head: () => ({
+    meta: [
+      { title: 'Shop and orders — BM Support' },
+      { name: 'description', content: 'BM Support packages, customer orders and secure invoice payments.' },
+      { property: 'og:title', content: 'Shop and orders — BM Support' },
+      { property: 'og:description', content: 'BM Support packages, customer orders and secure invoice payments.' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary' },
+    ],
     links: [
       { rel: "preconnect", href: "https://web.squarecdn.com", crossOrigin: "anonymous" },
       { rel: "preconnect", href: "https://sandbox.web.squarecdn.com", crossOrigin: "anonymous" },
