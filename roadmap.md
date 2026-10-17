@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Manual credentials access
+- [ ] Add customer-chosen PIN with independent first-setup proof, durable attempt limits, and the existing 10-minute access window; verify setup and login.
 - [x] Restrict site credentials cards, search, counts and add targets to positively identified BM Support accounts; four tests and signed-in list/search checks pass, Boro Matchday Action excluded, build OK; preview only.
 - [x] Add a manual-customer tab to User Credentials, preserving site-account tools; signed-in tab/card expansion verified.
 - [x] Add private manual credentials page with automatically emailed secure access, no site-account creation; verified sender domain, public request and denied invalid password, phone layout.
