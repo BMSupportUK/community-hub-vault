@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { canViewStaffCheckout, canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { ManualOrderLinkButton } from "@/components/checkout/ManualOrderLinkDialog";
+import { calculateProfit, type ProfitPayment } from "@/lib/profit-calculation";
 
 type Row = {
   id: string;
@@ -56,6 +57,7 @@ export function OrderStatusAdminCard() {
   const isAdmin = hasRole("admin");
   const [rows, setRows] = useState<Row[] | null>(null);
   const [methods, setMethods] = useState<Record<string, string>>({});
+  const [payments, setPayments] = useState<Record<string, ProfitPayment[]>>({});
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
@@ -104,10 +106,10 @@ export function OrderStatusAdminCard() {
       const orders = (data ?? []) as Row[];
       setRows(orders);
       if (orders.length) {
-        let pays: { order_id: string; provider: string | null }[];
+        let pays: (ProfitPayment & { order_id: string })[];
         try {
           pays = await fetchInChunks(orders.map((o) => o.id), (chunk) =>
-            supabase.from("order_payments").select("order_id, provider").in("order_id", chunk),
+            supabase.from("order_payments").select("order_id, provider, status, currency, provider_fee_cents").in("order_id", chunk),
           );
         } catch (e) {
           if (!cancelled) setError(e instanceof Error ? e.message : "Could not load payment methods");
@@ -115,10 +117,13 @@ export function OrderStatusAdminCard() {
         }
         if (cancelled) return;
         const map: Record<string, string> = {};
+        const paymentMap: Record<string, ProfitPayment[]> = {};
         for (const p of pays) {
           if (p.provider && !map[p.order_id]) map[p.order_id] = p.provider;
+          (paymentMap[p.order_id] ??= []).push(p);
         }
         setMethods(map);
+        setPayments(paymentMap);
       }
     })();
     return () => { cancelled = true; };
@@ -191,6 +196,8 @@ export function OrderStatusAdminCard() {
                     <th className="px-3 py-2 font-medium">Date</th>
                     <th className="px-3 py-2 font-medium">Customer</th>
                     <th className="px-3 py-2 font-medium">Amount</th>
+                    {canComplete && <th className="px-3 py-2 font-medium whitespace-nowrap">Provider fee</th>}
+                    {canComplete && <th className="px-3 py-2 font-medium whitespace-nowrap">Net received</th>}
                     <th className="px-3 py-2 font-medium">Status</th>
                     <th className="px-3 py-2 font-medium">Paid</th>
                     <th className="px-3 py-2 font-medium">Completed</th>
@@ -198,7 +205,10 @@ export function OrderStatusAdminCard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {shown.map((r) => (
+                  {shown.map((r) => {
+                    const fee = calculateProfit({ total_cents: r.total_cents, order_items: [], payments: payments[r.id] ?? [] });
+                    const settled = Boolean(r.paid_at || r.completed_at) || ["paid", "completed", "processing", "shipped"].includes(r.status.toLowerCase());
+                    return (
                     <tr key={r.id} className="border-t border-border">
                       <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</td>
                       <td className="px-3 py-2">
@@ -206,6 +216,8 @@ export function OrderStatusAdminCard() {
                         <div className="text-xs text-muted-foreground">{r.order_ref ?? `#${r.id.slice(0, 8)}`}{r.customer_type ? ` · ${r.customer_type}` : ""}</div>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.total_cents)}</td>
+                      {canComplete && <td className="px-3 py-2 whitespace-nowrap tabular-nums">{!settled ? "—" : fee.feesMissing ? (fee.fees ? `${money(fee.fees)} + unknown` : "Unknown") : money(fee.fees)}</td>}
+                      {canComplete && <td className="px-3 py-2 whitespace-nowrap tabular-nums">{!settled ? "—" : fee.feesMissing ? "Unknown" : money(r.total_cents - fee.fees)}</td>}
                       <td className="px-3 py-2 min-w-[150px]"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span>
                         {r.status.toLowerCase() !== "cancelled" && <div className="mt-1.5 w-32"><OrderStatusBar compact step={r.completed_at ? 3 : r.paid_at ? 2 : 1} /></div>}
                         {canViewStaffCheckout(roles) && <div className="mt-1.5"><ManualOrderLinkButton orderId={r.id} orderRef={r.order_ref} /></div>}
@@ -233,7 +245,7 @@ export function OrderStatusAdminCard() {
                       ) : r.completed_at ? new Date(r.completed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id] ?? r.manual_pay_method)}</td>
                     </tr>
-                  ))}
+                  ); })}
                 </tbody>
               </table>
             </div>
