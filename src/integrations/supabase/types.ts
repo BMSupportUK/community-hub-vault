@@ -1217,6 +1217,36 @@ export type Database = {
         }
         Relationships: []
       }
+      call_diagnostics: {
+        Row: {
+          created_at: string
+          details: Json
+          event: string
+          id: string
+          recorded_by: string
+          side: string
+          topic: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          event: string
+          id?: string
+          recorded_by?: string
+          side: string
+          topic: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          event?: string
+          id?: string
+          recorded_by?: string
+          side?: string
+          topic?: string
+        }
+        Relationships: []
+      }
       captcha_backup_attempts: {
         Row: {
           created_at: string
