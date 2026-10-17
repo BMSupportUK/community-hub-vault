@@ -43,7 +43,9 @@ export const loginManualCredentials = createServerFn({ method: 'POST' })
     const session = randomPassword();
     const { data: valid, error } = await supabaseAdmin.rpc('manual_credentials_verify', { p_email_key: key, p_code_hash: await hash(`${key}:${data.password}`), p_session_hash: await hash(session) });
     if (error || !valid) throw new Error('Invalid or expired secure password. Request a new one.');
-    setCookie(cookieName, JSON.stringify({ email: data.email, session }), { httpOnly: true, secure: !getRequestHeader('host')?.startsWith('localhost'), sameSite: 'strict', path: '/', maxAge: 1800 });
+    // Viewing window is strictly 10 minutes; the customer must request new access afterwards.
+    await supabaseAdmin.from('manual_credential_access').update({ session_expires_at: new Date(Date.now() + 10 * 60_000).toISOString() }).eq('email_key', key);
+    setCookie(cookieName, JSON.stringify({ email: data.email, session }), { httpOnly: true, secure: !getRequestHeader('host')?.startsWith('localhost'), sameSite: 'strict', path: '/', maxAge: 600 });
     return { loggedIn: true };
   });
 
@@ -58,7 +60,7 @@ export const readManualCredentials = createServerFn({ method: 'POST' }).handler(
   if (error || !access?.session_expires_at || new Date(access.session_expires_at).getTime() <= Date.now() || access.session_hash !== await hash(saved.session)) return null;
   const { data, error: readError } = await supabaseAdmin.rpc('manual_credentials_for_email', { p_email: saved.email });
   if (readError) throw new Error('Your details could not be loaded. Please try again.');
-  return data as unknown as ManualCredential[];
+  return { accounts: data as unknown as ManualCredential[], expiresAt: access.session_expires_at as string };
 });
 
 export const logoutManualCredentials = createServerFn({ method: 'POST' }).handler(async () => {
