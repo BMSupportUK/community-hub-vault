@@ -37,6 +37,7 @@
 - Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
 - Customer renewal-date corrections use a separate audited record and admin-only RPC; the details read overlays it to preserve payments and credential expiry.
 - Manual subscription groups use explicit checkout-link customer/account IDs, never site-profile or email matching; admin RPCs validate grouping and renewal targets to keep manual accounts independent.
+- Manual credential access verifies email codes plus a salted PBKDF2 PIN atomically; initial enrollment checks an existing paid manual TV login so mailbox access alone cannot enroll or reset a PIN.
 <!-- LOVABLE:END -->
 - Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
