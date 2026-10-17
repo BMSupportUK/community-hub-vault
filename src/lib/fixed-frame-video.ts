@@ -24,7 +24,24 @@ export function fitContain(w: number, h: number, size: number) {
   return { x: Math.round((size - dw) / 2), y: Math.round((size - dh) / 2), w: dw, h: dh };
 }
 
-export function createFixedFrameVideo(onStall?: () => void, size = FIXED_FRAME_SIZE): FixedFrameVideo | null {
+/**
+ * Staff side: show only the real camera picture from the fixed square, at the
+ * customer's actual shape (tall when held upright, wide when turned).
+ * `box` is the visible picture before any CSS turn; `square` is the size to
+ * draw the whole square so the bars fall outside the box. Unknown shape
+ * (older customer page) keeps the plain full-stage view.
+ */
+export function cropView(stageW: number, stageH: number, shape: { w: number; h: number } | null, sideways: boolean) {
+  const sw = sideways ? stageH : stageW;
+  const sh = sideways ? stageW : stageH;
+  if (!shape || shape.w <= 0 || shape.h <= 0 || sw <= 0 || sh <= 0) return { boxW: sw, boxH: sh, square: null as number | null };
+  const scale = Math.min(sw / shape.w, sh / shape.h);
+  const boxW = Math.round(shape.w * scale);
+  const boxH = Math.round(shape.h * scale);
+  return { boxW, boxH, square: Math.max(boxW, boxH) };
+}
+
+export function createFixedFrameVideo(onStall?: () => void, onShape?: (w: number, h: number) => void, size = FIXED_FRAME_SIZE): FixedFrameVideo | null {
   if (typeof document === "undefined") return null;
   const canvas = document.createElement("canvas");
   if (typeof canvas.captureStream !== "function") return null;
@@ -49,6 +66,7 @@ export function createFixedFrameVideo(onStall?: () => void, size = FIXED_FRAME_S
   let lastTime = -1;
   let lastAdvance = performance.now();
   let stopped = false;
+  let shapeKey = "";
 
   const draw = () => {
     if (stopped) return;
@@ -56,6 +74,8 @@ export function createFixedFrameVideo(onStall?: () => void, size = FIXED_FRAME_S
     if (source) out.enabled = source.enabled;
     if (source?.enabled && video.readyState >= 2 && video.videoWidth > 0) {
       if (video.currentTime !== lastTime) { lastTime = video.currentTime; lastAdvance = now; }
+      const key = `${video.videoWidth}x${video.videoHeight}`;
+      if (key !== shapeKey) { shapeKey = key; onShape?.(video.videoWidth, video.videoHeight); }
       const r = fitContain(video.videoWidth, video.videoHeight, size);
       ctx.fillRect(0, 0, size, size);
       ctx.drawImage(video, r.x, r.y, r.w, r.h);
