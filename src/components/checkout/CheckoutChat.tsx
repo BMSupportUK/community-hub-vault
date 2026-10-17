@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listCheckoutChat, sendCheckoutChat } from "@/lib/checkout.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { createPortal } from "react-dom";
 
 type Msg = { id: string; sender: string; content: string; created_at: string };
 
@@ -177,6 +178,8 @@ export function StaffCheckoutChat({ orderId, token }: { orderId: string; token: 
 export function StaffCheckoutChatBubble({ orderId, token, orderRef }: { orderId: string; token: string; orderRef?: string | null }) {
   const { messages, send } = useStaffCheckoutChat(orderId, token);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [unread, setUnread] = useState(0);
   const openRef = useRef(open);
   openRef.current = open;
@@ -205,7 +208,10 @@ export function StaffCheckoutChatBubble({ orderId, token, orderRef }: { orderId:
     });
   };
 
-  return (
+  // Portal to <body>: a blurred parent card would otherwise trap these
+  // "fixed" elements inside itself.
+  if (!mounted) return null;
+  return createPortal(
     <>
       {open && (
         <div className="fixed bottom-24 right-4 z-50 w-[min(360px,calc(100vw-2rem))] h-[min(480px,70vh)] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
@@ -222,6 +228,7 @@ export function StaffCheckoutChatBubble({ orderId, token, orderRef }: { orderId:
         {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
         {unread > 0 && !open && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold grid place-items-center z-10">{unread}</span>}
       </button>
-    </>
+    </>,
+    document.body,
   );
 }
