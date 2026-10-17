@@ -154,7 +154,7 @@ function AddOrderPage() {
             <p className="text-sm text-muted-foreground">Saved orders get their own MANUAL reference and secure checkout page. <Link to="/admin-checkout-templates" className="text-primary hover:underline">View page templates</Link></p>
           </div>
         </div>
-        <div className="grid min-w-0 gap-6 md:grid-cols-[minmax(0,1fr)_280px] lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(180px,42%)] gap-4 sm:gap-6 md:grid-cols-[minmax(0,1fr)_280px] lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0 space-y-5">
           <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
@@ -215,10 +215,10 @@ function AddOrderPage() {
             </div>
           </div>
         </div>
-        <aside aria-label="Manual customers" className="min-w-0 border-t border-border pt-5 md:border-t-0 md:border-l md:pl-6 md:pt-0">
-          <div className="space-y-4 md:sticky md:top-6">
+        <aside aria-label="Manual customers" className="min-w-0 border-l border-border pl-4 sm:pl-6">
+          <div className="space-y-4 sticky top-6">
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>
-            <div className="flex flex-col gap-2 sm:flex-row md:flex-col xl:flex-row">
+            <div className="flex flex-col gap-2 xl:flex-row">
               {(["new", "existing"] as const).map((kind) => (
                 <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10">{kind === "new" ? "New customer" : "Existing customer"}</Button>
               ))}
