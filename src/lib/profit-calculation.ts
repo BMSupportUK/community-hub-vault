@@ -15,7 +15,8 @@ export function calculateProfit(order: ProfitOrder) {
   }
   const payments = order.payments.filter(p => isSettledPaymentStatus(p.status));
   let fees = 0;
-  let feesMissing = false;
+  // Missing settled payment records must never look fee-free.
+  let feesMissing = payments.length === 0;
   for (const payment of payments) {
     // Cash, bank transfer, Wise and crypto carry no provider fee.
     if (!FEE_PROVIDERS.has((payment.provider ?? '').toLowerCase())) continue;

@@ -76,10 +76,15 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
     const { error: feeError } = await db.from('order_payments').update({ provider_fee_cents: providerFee }).eq('order_id', orderId).eq('provider', provider).is('provider_fee_cents', null);
     if (feeError) throw new Error(feeError.message);
   }
-  if (settled && !order.paid_at) {
+  if (settled) {
     const reference = invoice.id;
-    const { error: paymentError } = await db.from('order_payments').upsert({ order_id: orderId, provider, provider_payment_id: squarePaymentId ?? reference, square_payment_id: squarePaymentId, status: 'COMPLETED', amount_cents: total, provider_fee_cents: providerFee, currency: 'GBP', created_by: order.user_id, receipt_url: null }, { onConflict: 'order_id' });
-    if (paymentError) throw new Error(paymentError.message);
+    // Staff confirmation may precede provider sync; paid_at must not skip accounting.
+    const { data: recorded, error: recordedError } = await db.from('order_payments').select('id').eq('order_id', orderId).maybeSingle();
+    if (recordedError) throw new Error(recordedError.message);
+    if (!recorded) {
+      const { error: paymentError } = await db.from('order_payments').upsert({ order_id: orderId, provider, provider_payment_id: squarePaymentId ?? reference, square_payment_id: squarePaymentId, status: 'COMPLETED', amount_cents: total, provider_fee_cents: providerFee, currency: 'GBP', created_by: order.user_id, receipt_url: null }, { onConflict: 'order_id', ignoreDuplicates: true });
+      if (paymentError) throw new Error(paymentError.message);
+    }
     if (!order.paid_at) {
       const { error: paidError } = await db.from('orders').update({ paid_at: new Date().toISOString(), ...(order.status !== 'cancelled' && order.status !== 'completed' ? { status: 'paid' } : {}) }).eq('id', orderId).is('paid_at', null);
       if (paidError) throw new Error(paidError.message);

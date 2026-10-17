@@ -40,4 +40,4 @@
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 
-- Profit uses GBP pence; unknown fees provisional; allocation preserves totals. Fee sync fills missing charges; confirmed sale fees stay fixed.
+- Profit uses pence; absent payments/fees stay provisional. Invoice sync repairs absent rows after paid_at; confirmed fees stay fixed.
