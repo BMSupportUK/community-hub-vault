@@ -17,60 +17,6 @@ const creds = z.object({
   password: z.string().max(64).default(""),
 });
 
-async function syncInvoice(supabaseAdmin: any, orderId: string, method: string) {
-  const { data: inv } = await supabaseAdmin.from("order_invoices").select("*").eq("order_id", orderId).maybeSingle();
-  if (!inv) return null;
-  const settled = ["paid", "PAID"].includes(String(inv.status));
-  const stale = !inv.last_synced_at || Date.now() - new Date(inv.last_synced_at).getTime() > 15_000;
-  if (!settled && stale) {
-    try {
-      let paid = false;
-      let reference: string | null = inv.invoice_number ?? null;
-      if (method === "stripe" && inv.stripe_invoice_id) {
-        const { createStripeClient } = await import("@/lib/stripe.server");
-        const primary = (process.env.STRIPE_ENVIRONMENT as "sandbox" | "live") ?? "sandbox";
-        for (const env of primary === "live" ? (["live", "sandbox"] as const) : (["sandbox", "live"] as const)) {
-          try {
-            const invoice = await createStripeClient(env).invoices.retrieve(String(inv.stripe_invoice_id));
-            inv.status = invoice.status ?? inv.status;
-            inv.public_url = invoice.hosted_invoice_url ?? inv.public_url;
-            paid = invoice.status === "paid";
-            reference = invoice.number ?? reference;
-            break;
-          } catch { /* try other environment */ }
-        }
-      } else if (method === "square" && inv.square_invoice_id && process.env.SQUARE_ACCESS_TOKEN) {
-        const base = (process.env.SQUARE_ENVIRONMENT ?? "production").toLowerCase() === "sandbox"
-          ? "https://connect.squareupsandbox.com" : "https://connect.squareup.com";
-        const res = await fetch(`${base}/v2/invoices/${inv.square_invoice_id}`, {
-          headers: { Authorization: `Bearer ${process.env.SQUARE_ACCESS_TOKEN}`, "Square-Version": "2024-10-17" },
-        });
-        if (res.ok) {
-          const body: any = await res.json();
-          inv.status = body?.invoice?.status ?? inv.status;
-          inv.public_url = body?.invoice?.public_url ?? inv.public_url;
-          paid = inv.status === "PAID";
-        }
-      }
-      await supabaseAdmin.from("order_invoices")
-        .update({ status: inv.status, public_url: inv.public_url, last_synced_at: new Date().toISOString() })
-        .eq("order_id", orderId);
-      if (paid) {
-        const { data: o } = await supabaseAdmin.from("orders").select("paid_at").eq("id", orderId).maybeSingle();
-        if (o && !o.paid_at) await supabaseAdmin.from("orders").update({ paid_at: new Date().toISOString() }).eq("id", orderId);
-        const { postOrderPaymentReceivedNotice } = await import("@/lib/order-payment-notice.server");
-        await postOrderPaymentReceivedNotice({
-          orderId,
-          provider: method === "stripe" ? "Stripe" : "Square",
-          reference: reference ?? undefined,
-          receiptUrl: null,
-        } as any).catch(() => undefined);
-      }
-    } catch { /* status check is best-effort */ }
-  }
-  return { status: String(inv.status ?? ""), url: (inv.public_url as string | null) ?? null, number: (inv.invoice_number as string | null) ?? null };
-}
-
 export const getCheckout = createServerFn({ method: "POST" })
   .inputValidator((d) => creds.parse(d))
   .handler(async ({ data }) => {
@@ -94,6 +40,8 @@ export const getCheckout = createServerFn({ method: "POST" })
       const { syncCryptoPayment } = await import("@/lib/checkout-pay.functions");
       await syncCryptoPayment(supabaseAdmin, link.order_id).catch(() => undefined);
     }
+    const { syncProviderInvoice } = await import('@/lib/provider-invoices.server');
+    await syncProviderInvoice(supabaseAdmin, link.order_id).catch(error => console.error('[checkout-invoice-sync]', link.order_id, error instanceof Error ? error.message : 'failed'));
     const invoice = null;
     const { data: fresh } = await supabaseAdmin.from("orders").select("paid_at,completed_at").eq("id", link.order_id).maybeSingle();
     let bank: null | { account_name: string | null; sort_code: string | null; account_number: string | null; iban: string | null; bic: string | null } = null;
