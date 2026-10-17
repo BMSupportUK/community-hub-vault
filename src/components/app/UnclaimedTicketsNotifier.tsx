@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, BellRing, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { playSound } from "@/lib/sound";
 import { showLocalNotification } from "@/lib/local-notify";
 import { phoneToneSrc } from "@/lib/phone-alert-sounds";
-const ticketAudio = phoneToneSrc("ticket")!;
+const ticketAudio = phoneToneSrc("ticket");
 
 type Row = { id: string; subject: string; priority: string; created_at: string };
 
@@ -44,35 +44,27 @@ let knownTicketIds: Set<string> | null = null;
 
 /**
  * Tickets are claimed, not auto-assigned. For staff who are clocked in this
- * shows a sticky banner on every page (a pinned card with claim buttons in
- * Talk channels) while tickets wait to be claimed, and plays a sound plus a
- * browser alert when a new one arrives. Off-shift staff see nothing.
+ * plays a sound plus a browser alert when a new one arrives.
+ * This global listener renders no ticket block; claiming stays in ticket controls.
  */
 export function UnclaimedTicketsNotifier() {
   const { user, hasAny } = useAuth();
-  const pathname = useLocation({ select: (l) => l.pathname });
-  const isTalk = pathname === "/home" || pathname.startsWith("/home/");
-  const onTicketsPage = pathname.startsWith("/tickets");
   const isStaff = hasAny(["admin", "management", "staff"]);
   const [onShift, setOnShift] = useState(false);
-  const [rows, setRows] = useState<Row[]>([]);
-  const [claiming, setClaiming] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
 
   const load = useCallback(async () => {
     const list = await fetchUnclaimed();
-    if (knownTicketIds) {
-      const fresh = list.filter((r) => !knownTicketIds!.has(r.id));
+    const known = knownTicketIds;
+    if (known) {
+      const fresh = list.filter((r) => !known.has(r.id));
       if (fresh.length) {
-        void playSound(ticketAudio, { label: "ticket", gain: 2.0 });
+        if (ticketAudio) void playSound(ticketAudio, { label: "ticket", gain: 2.0 });
         for (const r of fresh) {
           void showLocalNotification("🎫 Ticket to claim", { body: r.subject, tag: `claim-${r.id}` });
         }
-        setCollapsed(false);
       }
     }
     knownTicketIds = new Set(list.map((r) => r.id));
-    setRows(list);
   }, []);
 
   // Track whether this staff member is clocked in.
@@ -91,7 +83,7 @@ export function UnclaimedTicketsNotifier() {
   }, [user, isStaff]);
 
   useEffect(() => {
-    if (!onShift) { setRows([]); knownTicketIds = null; return; }
+    if (!onShift) { knownTicketIds = null; return; }
     void load();
     const ch = supabase
       .channel(`claim-notifier-tickets-${Math.random().toString(36).slice(2)}`)
@@ -100,61 +92,7 @@ export function UnclaimedTicketsNotifier() {
     return () => { void supabase.removeChannel(ch); };
   }, [onShift, load]);
 
-  const claim = async (id: string) => {
-    if (!user) return;
-    setClaiming(id);
-    const result = await claimTicket(id, user.id);
-    setClaiming(null);
-    if (result === "error") return toast.error("Couldn't claim the ticket");
-    if (result === "taken") toast.error("Someone else claimed this ticket first");
-    else toast.success("Ticket claimed", { action: { label: "Go to ticket", onClick: () => { window.location.href = `/tickets?id=${id}&view=all`; } } });
-    void load();
-  };
-
-  // Talk channels show the count on the staff ticket icons instead.
-  if (!onShift || rows.length === 0 || onTicketsPage || isTalk) return null;
-  const n = rows.length;
-  const label = `${n} ticket${n === 1 ? "" : "s"} waiting to be claimed`;
-
-  if (isTalk) {
-    return (
-      <div className="fixed bottom-20 right-3 z-40 w-[min(22rem,calc(100vw-1.5rem))] rounded-lg border border-destructive/60 bg-card shadow-lg md:bottom-4">
-        <button type="button" onClick={() => setCollapsed((c) => !c)} className="flex w-full items-center gap-2 px-3 py-2 text-left">
-          <BellRing className="size-4 shrink-0 animate-pulse text-destructive" />
-          <span className="flex-1 text-sm font-semibold">{label}</span>
-          {collapsed ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-        </button>
-        {!collapsed && (
-          <div className="max-h-72 space-y-2 overflow-y-auto border-t border-border p-2">
-            {rows.map((r) => (
-              <div key={r.id} className="rounded-md border border-border bg-background/60 p-2">
-                <p className="truncate text-sm font-medium">{r.subject}</p>
-                <p className="text-[11px] capitalize text-muted-foreground">{r.priority} priority</p>
-                <div className="mt-2 flex gap-2">
-                  <Button size="sm" className="h-8" disabled={claiming === r.id} onClick={() => claim(r.id)}>
-                    {claiming === r.id ? "Claiming…" : "Claim"}
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="h-8">
-                    <Link to="/tickets" search={{ id: r.id, view: "all" } as never}>Go to ticket <ArrowRight className="size-3.5" /></Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div role="status" className="sticky top-0 z-50 flex items-center gap-2 bg-destructive px-3 py-1.5 text-sm text-destructive-foreground">
-      <BellRing className="size-4 shrink-0 animate-pulse" />
-      <span className="flex-1 truncate font-medium">{label}</span>
-      <Button asChild size="sm" variant="secondary" className="h-7">
-        <Link to="/tickets" search={{ view: "all" } as never}>Claim</Link>
-      </Button>
-    </div>
-  );
+  return null;
 }
 
 /**
