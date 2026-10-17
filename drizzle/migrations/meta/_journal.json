@@ -939,6 +939,13 @@
       "when": 1792158040150,
       "tag": "0133_clear_price_compare",
       "breakpoints": true
+    },
+    {
+      "idx": 134,
+      "version": "7",
+      "when": 1792227936075,
+      "tag": "0134_migration",
+      "breakpoints": true
     }
   ]
 }

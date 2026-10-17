@@ -1,9 +1,8 @@
 # Project Architecture Rules
 
 - Sports guides preserve published status; headings prefix event names, not channels; readers use document scrolling; every channel appears only beneath Available channels; BM keeps loading through hydration/router pending.
-- Sports cards flag local times on a different day from UK time to prevent date ambiguity.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
-- Public sports guides expose only validated dates, times, and event names; never free-text notes, descriptions, or channel lines.
+- Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
 - Member Home: staff keep image + greeting left; members get "Hey" + nameplate + "Welcome to The Customer Portal" above a capped subscription box closing the gap (compact on phones).
 - Header starts collapsed (slim bar) ONLY on tickets and Talk channels, open everywhere else; re-resets each navigation. Talk adds the channel name; Fan Zone never does.
@@ -24,7 +23,7 @@
 - How-to and install-guide videos use private storage with short-lived signed links, never permanent public URLs; install guides use ordered `video_steps`, one private video per step so narration matches one visible action.
 - New-account VPN blocking applies only to direct BM Support registration; any referral code (link or typed) and Fan Zone registrations bypass it, and referral-approved accounts drop security-gate access-request notifications.
 - The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) applicants; refusal blocks ticket requests and tags appeals. Elsewhere GPS is captured silently with existing permission only.
-- Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
+- Dialogs stay within the dynamic mobile viewport; dense views drop secondary columns on phones.
 - Customer invoices are BM Support PDFs after confirmed payment; never expose Stripe/Square hosted links.
 - Knowledge Base fills the page; category and ratings rails keep guides scannable.
 - Video help: in-site P2P WebRTC, log only, opening hours only; the order page offers in-site video only (WhatsApp video removed), with a PC→phone QR hand-off.
@@ -38,3 +37,4 @@
 <!-- LOVABLE:END -->
 - Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
 - Tests run under `bun test`, so avoid vitest-only APIs (e.g. `vi.stubGlobal`) and swap globals with `Object.defineProperty` plus restore.
+- Bannerless sports guides inherit a cover via DB trigger and adverts render regardless, so no save path leaves a guide bare.

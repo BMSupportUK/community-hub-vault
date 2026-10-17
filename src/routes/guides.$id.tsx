@@ -124,8 +124,8 @@ function PublicGuidePage() {
             })}
           </p>
 
-          {guide.image_url && (
-            <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+          <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+            {guide.image_url && (
               <div className="relative h-32 min-w-0 overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 sm:h-40 lg:h-48 xl:mx-3 xl:h-auto xl:aspect-[3/1]">
                 <img
                   src={guide.image_url}
@@ -139,11 +139,12 @@ function PublicGuidePage() {
                   className="absolute inset-0 h-full w-full object-contain"
                 />
               </div>
-              <div className="hidden min-w-0 xl:block xl:aspect-[3/1]">
-                <AdSenseSlot slot="home" />
-              </div>
+            )}
+            {/* The advert always shows, even if a guide has no banner picture. */}
+            <div className="hidden min-w-0 xl:block xl:aspect-[3/1]">
+              <AdSenseSlot slot="home" />
             </div>
-          )}
+          </div>
 
           <ul className="mt-8 grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
             {guide.events.map((e, i) => {
