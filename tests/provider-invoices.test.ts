@@ -18,5 +18,7 @@ describe('provider invoice payments', () => {
   expect(invoiceIsSettled('PAID',6500,6499,'GBP',6500)).toBe(false);
   expect(invoiceIsSettled('paid',6500,6500,'USD',6500)).toBe(false);
   expect(invoiceIsSettled('paid',6400,6500,'GBP',6500)).toBe(false);
+  expect(invoiceIsSettled('paid',6500,6501,'GBP',6500)).toBe(false);
+  expect(invoiceIsSettled('paid',6500.5,6500.5,'GBP',6500.5)).toBe(false);
  });
 });

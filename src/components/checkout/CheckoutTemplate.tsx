@@ -308,8 +308,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               <div className="flex items-center gap-3">
                 <CreditCard className="size-5 text-primary" />
                 <div>
-                  <h2 className="font-semibold">Pay by card with {METHOD[method]}</h2>
-                  <p className="text-xs text-muted-foreground">Enter your card below — card details are handled securely by {METHOD[method]}.</p>
+                  <h2 className="font-semibold">{METHOD[method]} invoice</h2>
                 </div>
               </div>
               {cardPayment ? cardPayment : preview ? (
@@ -317,7 +316,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   <Lock className="size-4" /> Pay {GBP(order.totalCents)}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Loading secure card form…</p>
+                <p className="text-sm text-muted-foreground">Loading invoice…</p>
               )}
               <p className="text-xs text-center text-muted-foreground">This page updates automatically once your payment goes through.</p>
             </aside>
