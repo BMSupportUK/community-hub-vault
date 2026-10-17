@@ -154,6 +154,11 @@ function AddOrderPage() {
             <p className="text-sm text-muted-foreground">Saved orders get their own MANUAL reference and secure checkout page. <Link to="/admin-checkout-templates" className="text-primary hover:underline">View page templates</Link></p>
           </div>
         </div>
+        <div className="flex gap-2">
+          {(["new", "existing"] as const).map((kind) => (
+            <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10 sm:flex-none sm:px-6">{kind === "new" ? "New customer" : "Existing customer"}</Button>
+          ))}
+        </div>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(180px,42%)] gap-4 sm:gap-6 md:grid-cols-[minmax(0,1fr)_280px] lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0 space-y-5">
           <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
@@ -217,13 +222,8 @@ function AddOrderPage() {
         </div>
         <aside aria-label="Manual customers" className="min-w-0 border-l border-border pl-4 sm:pl-6">
           <div className="space-y-4 sticky top-6">
-            <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>
-            <div className="flex flex-col gap-2 xl:flex-row">
-              {(["new", "existing"] as const).map((kind) => (
-                <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10">{kind === "new" ? "New customer" : "Existing customer"}</Button>
-              ))}
-            </div>
             <label htmlFor="skip-registration" className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm"><Checkbox id="skip-registration" className="mt-0.5 shrink-0" checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} /><span>Bypass account creation at the end of this order</span></label>
+            {customerKind === "existing" && <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>}
             {customerKind === "existing" ? <>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
@@ -250,7 +250,7 @@ function AddOrderPage() {
                   </Button>)}
                 </div>)}
               </div>}
-            </> : <p className="text-sm text-muted-foreground">No existing customer selected.</p>}
+            </> : null}
           </div>
         </aside>
         </div>
