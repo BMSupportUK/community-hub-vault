@@ -23,6 +23,15 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           return new Response("Invalid signature", { status: 400 });
         }
         try {
+          if (event.type === 'invoice.paid' || event.type === 'invoice.payment_succeeded') {
+            const invoiceId = event.data.object?.id;
+            const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+            const { data: row } = await supabaseAdmin.from('order_invoices').select('order_id').eq('stripe_invoice_id', String(invoiceId)).maybeSingle();
+            if (row) {
+              const { syncProviderInvoice } = await import('@/lib/provider-invoices.server');
+              await syncProviderInvoice(supabaseAdmin, row.order_id, env);
+            }
+          }
           if (
             event.type === "checkout.session.completed" ||
             event.type === "checkout.session.async_payment_succeeded"
@@ -36,8 +45,8 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             }
           }
         } catch (e) {
-          // Never make Stripe retry forever; the checkout page re-checks too.
           console.error("Stripe webhook handling failed:", e);
+          return new Response('Payment confirmation failed', { status: 500 });
         }
         return Response.json({ received: true });
       },

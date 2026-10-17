@@ -1,3 +1,4 @@
+import { ProviderInvoicePayment } from "@/components/checkout/ProviderInvoicePayment";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -4784,7 +4785,7 @@ function PayOrderDialog({
     <>
       {invoiceActive ? (
         <a
-          href={liveInvoice!.url}
+          href={liveInvoice?.url ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-warning/15 text-warning border border-warning/40 font-medium hover:bg-warning/25 transition"
@@ -4837,12 +4838,7 @@ function PayOrderDialog({
               />
             </TabsContent>
             <TabsContent value="stripe" className="mt-3">
-              <StripePanel
-                orderId={orderId}
-                amountCents={amountCents}
-                canPay={true}
-                onChange={handleChange}
-              />
+              <ProviderInvoicePayment method="stripe" orderId={orderId} amountCents={amountCents} onPaid={handleChange} />
             </TabsContent>
           </Tabs>
           )}
@@ -4866,7 +4862,7 @@ function SquareInvoicePanel({
   amountCents: number;
   onChange?: () => void | Promise<void>;
 }) {
-  return <div className="rounded-md border border-border bg-surface-2 p-3 text-xs text-muted-foreground">Square payment is handled on the secure checkout page. The BM Support invoice becomes available after payment.</div>;
+  return <ProviderInvoicePayment method="square" orderId={orderId} amountCents={amountCents} onPaid={onChange} />;
   /* Legacy hosted-provider invoice controls retained below for historical reconciliation only.
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
