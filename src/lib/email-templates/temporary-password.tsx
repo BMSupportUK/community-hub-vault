@@ -9,17 +9,18 @@ interface Props {
   email?: string
   password?: string
   loginUrl?: string
+  isNewAccount?: boolean
 }
 
-const TemporaryPasswordEmail = ({ displayName, email, password, loginUrl = 'https://bmsupport.uk/login' }: Props) => (
+const TemporaryPasswordEmail = ({ displayName, email, password, loginUrl = 'https://bmsupport.uk/login', isNewAccount }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your new {SITE_NAME} sign-in password</Preview>
+    <Preview>{isNewAccount ? `Your ${SITE_NAME} account is ready` : `Your new ${SITE_NAME} sign-in password`}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>🔑 Your new password, {displayName || 'there'}</Heading>
+        <Heading style={h1}>{isNewAccount ? `🎉 Welcome to ${SITE_NAME}, ${displayName || 'there'}` : `🔑 Your new password, ${displayName || 'there'}`}</Heading>
         <Text style={text}>
-          Our team has set a new temporary password on your <strong>{SITE_NAME}</strong> account.
+          {isNewAccount ? <>Our team has created your <strong>{SITE_NAME}</strong> account. Here are your login details.</> : <>Our team has set a new temporary password on your <strong>{SITE_NAME}</strong> account.</>}
         </Text>
         <Section style={card}>
           {email && (<><Text style={cardLabel}>Email</Text><Text style={value}>{email}</Text></>)}
@@ -44,7 +45,7 @@ const TemporaryPasswordEmail = ({ displayName, email, password, loginUrl = 'http
 
 export const template = {
   component: TemporaryPasswordEmail,
-  subject: `🔑 Your new ${SITE_NAME} password`,
+  subject: (d: Record<string, any>) => d?.isNewAccount ? `🎉 Your ${SITE_NAME} login details` : `🔑 Your new ${SITE_NAME} password`,
   displayName: 'Temporary password (BM Support)',
   previewData: { displayName: 'Jane', email: 'jane@example.com', password: 'Abc7KmPq92Xz', loginUrl: 'https://bmsupport.uk/login' },
 } satisfies TemplateEntry
