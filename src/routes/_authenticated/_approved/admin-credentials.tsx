@@ -207,7 +207,7 @@ function AdminCredentialsPage() {
         {loading ? (
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
         ) : tab === 'manual' ? (
-          <ManualCredentialCards customers={manualCustomers.filter(c => [c.displayName, c.username, ...c.accounts.map(a => a.login)].some(v => v?.toLowerCase().includes(query.trim().toLowerCase())))} />
+          <ManualCredentialCards onSaved={() => load()} customers={manualCustomers.filter(c => [c.displayName, c.username, ...c.accounts.map(a => a.login)].some(v => v?.toLowerCase().includes(query.trim().toLowerCase())))} />
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-border bg-surface-1 px-6 py-16 text-center text-muted-foreground text-sm">No users found.</div>
         ) : (
