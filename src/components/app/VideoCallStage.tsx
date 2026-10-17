@@ -68,16 +68,14 @@ export function VideoCallStage({
   const [manualRotate, setManualRotate] = useState(0);
   const localRotateRef = useRef(0);
   // Staff side: shown while the customer has just turned their phone and the
-  // picture is reconnecting. Clears when frames flow again (or after 12s).
+  // picture is reconnecting. It stays up until frames flow again (no time cap)
+  // or the customer turns their camera off.
   const [rotating, setRotating] = useState(false);
   const rotatingRef = useRef(false);
-  const rotateMsgTimer = useRef(0);
   const prevRemoteDeg = useRef(0);
   const showRotating = useCallback(() => {
     rotatingRef.current = true;
     setRotating(true);
-    window.clearTimeout(rotateMsgTimer.current);
-    rotateMsgTimer.current = window.setTimeout(() => { rotatingRef.current = false; setRotating(false); }, 12000);
   }, []);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
