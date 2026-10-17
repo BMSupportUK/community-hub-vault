@@ -38,6 +38,7 @@
 - Customer renewal-date corrections use a separate audited record and admin-only RPC; the details read overlays it to preserve payments and credential expiry.
 - Manual subscription groups use explicit checkout-link customer/account IDs, never site-profile or email matching; admin RPCs validate grouping and renewal targets to keep manual accounts independent.
 - Manual credential access verifies email codes plus a salted PBKDF2 PIN atomically; initial enrollment checks an existing paid manual TV login so mailbox access alone cannot enroll or reset a PIN.
+- Manual registration exceptions persist on checkout links, enforced by admin-only RPCs and a write trigger; creation saves atomically and PIN access remains independent.
 <!-- LOVABLE:END -->
 - Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.

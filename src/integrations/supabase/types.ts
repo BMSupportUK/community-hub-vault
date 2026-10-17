@@ -4509,6 +4509,7 @@ export type Database = {
           renewal_applied_at: string | null
           renewal_credential_id: string | null
           renewal_customer_id: string | null
+          skip_registration: boolean
           subscription_expiry_at: string | null
           token: string
         }
@@ -4529,6 +4530,7 @@ export type Database = {
           renewal_applied_at?: string | null
           renewal_credential_id?: string | null
           renewal_customer_id?: string | null
+          skip_registration?: boolean
           subscription_expiry_at?: string | null
           token: string
         }
@@ -4549,6 +4551,7 @@ export type Database = {
           renewal_applied_at?: string | null
           renewal_credential_id?: string | null
           renewal_customer_id?: string | null
+          skip_registration?: boolean
           subscription_expiry_at?: string | null
           token?: string
         }
@@ -7566,6 +7569,21 @@ export type Database = {
         }
         Returns: string
       }
+      admin_create_manual_order_v4: {
+        Args: {
+          _account_id?: string
+          _created_at?: string
+          _customer_id?: string
+          _customer_kind?: string
+          _customer_name: string
+          _discount_cents?: number
+          _email?: string
+          _items: Json
+          _method: string
+          _skip_registration?: boolean
+        }
+        Returns: string
+      }
       admin_customer_is_hidden: {
         Args: { p_display_name: string; p_user_id: string; p_username: string }
         Returns: boolean
@@ -7654,6 +7672,10 @@ export type Database = {
       admin_set_manual_customer_login: {
         Args: { p_login_name: string; p_order_id: string; p_password?: string }
         Returns: undefined
+      }
+      admin_set_manual_registration: {
+        Args: { p_order_id: string; p_skip: boolean }
+        Returns: boolean
       }
       admin_upsert_signup_vpn: {
         Args: {

@@ -5,6 +5,7 @@ import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clo
 import hero from "@/assets/checkout-family-tv.jpg";
 import installGuideIllustration from "@/assets/manual-order-install-guide.jpg";
 import { Button } from "@/components/ui/button";
+import { requiresManualRegistration } from "@/lib/manual-registration";
 import { downloadReceipt, type InvoiceTemplateSettings } from "@/lib/receipt";
 
 export type CheckoutView = {
@@ -19,6 +20,7 @@ export type CheckoutView = {
     method: string;
     customerKind: "new" | "existing";
     manual?: boolean;
+    skipRegistration?: boolean;
     createdAt?: string;
     email?: string | null;
     customerType?: string | null;
@@ -287,7 +289,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               {!installCard && videoHelp}
               {addLoginDetails}
               {visibleStage === 3 && completeSale}
-              {visibleStage === 4 && order.manual && (
+              {visibleStage === 4 && requiresManualRegistration(order) && (
                 <section className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-3 items-start">
                   <UserPlus className="size-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-2 min-w-0">
