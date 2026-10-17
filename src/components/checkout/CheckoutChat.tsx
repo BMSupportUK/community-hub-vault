@@ -208,7 +208,7 @@ export function StaffCheckoutChatBubble({ orderId, token, orderRef }: { orderId:
 
   // Portal to <body>: a blurred parent card would otherwise trap these
   // "fixed" elements inside itself.
-  if (typeof document === "undefined") return null;
+  if (!mounted) return null;
   return createPortal(
     <>
       {open && (
