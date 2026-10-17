@@ -1051,6 +1051,13 @@
       "when": 1792265362486,
       "tag": "0149_customer_tenure_date_corrections",
       "breakpoints": true
+    },
+    {
+      "idx": 150,
+      "version": "7",
+      "when": 1792265783063,
+      "tag": "0150_customer_package_allocation",
+      "breakpoints": true
     }
   ]
 }
