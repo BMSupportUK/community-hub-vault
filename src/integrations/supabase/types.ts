@@ -1683,6 +1683,27 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_subscription_history: {
+        Row: {
+          customer_id: string
+          first_subscription_date: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          customer_id: string
+          first_subscription_date: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          customer_id?: string
+          first_subscription_date?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: []
+      }
       device_push_tokens: {
         Row: {
           created_at: string
@@ -7327,6 +7348,7 @@ export type Database = {
         Returns: string
       }
       admin_customer_subscriptions: { Args: never; Returns: Json }
+      admin_customer_subscriptions_with_tenure: { Args: never; Returns: Json }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
@@ -7373,6 +7395,10 @@ export type Database = {
       admin_set_account_setup: {
         Args: { p_done: boolean; p_order_id: string }
         Returns: string
+      }
+      admin_set_customer_first_subscription: {
+        Args: { p_customer_id: string; p_first_subscription_date: string }
+        Returns: undefined
       }
       admin_upsert_signup_vpn: {
         Args: {

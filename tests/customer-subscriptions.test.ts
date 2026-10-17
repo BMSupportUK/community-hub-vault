@@ -20,6 +20,7 @@ beforeAll(async () => {
  CREATE TABLE public.invites(id uuid,used_by uuid,created_by uuid,used_at timestamptz,created_at timestamptz);`);
  await db.exec(readFileSync(new URL('../drizzle/migrations/0147_customer_subscriptions_referral_rewards.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0148_customer_subscription_manual_account_matching.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0149_customer_tenure_date_corrections.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -66,4 +67,23 @@ test('manual subscriptions match the customer email, not staff creator, and incl
  await db.exec(`INSERT INTO auth.users VALUES('${id(2)}','customer@example.test'); UPDATE private.orders SET user_id='${id(1)}',email_enc=convert_to('customer@example.test','UTF8') WHERE id='${id(20)}'; INSERT INTO private.pending_order_credentials VALUES('${id(20)}','customer-login','2027-10-18 12:00+00');`);
  const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscriptions() data')).rows[0]?.data??[];
  expect(rows.some(c=>c.userId===id(1))).toBe(false);expect(rows.find(c=>c.userId===id(2))?.accounts[0]?.login).toBe('customer-login');
+});
+
+test('admin backdates first subscription and tenure uses completed years without changing expiry',async()=>{
+ const before=(await db.query('SELECT expiry_at FROM private.app_credentials WHERE id=$1',[id(4)])).rows[0];
+ const start=(await db.query<{d:string}>("SELECT ((now() AT TIME ZONE 'Europe/London')::date-interval '5 years'+interval '1 day')::date::text d")).rows[0]?.d;
+ await db.query('SELECT admin_set_customer_first_subscription($1,$2)',[id(2),start]);
+ const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscriptions_with_tenure() data')).rows[0]?.data??[];
+ const c=rows.find(c=>c.userId===id(2));expect(c?.customerYears).toBe(4);expect(c?.firstSubscriptionAt).toBe(start);expect(c?.firstSubscriptionAdjusted).toBe(true);
+ expect((await db.query('SELECT expiry_at FROM private.app_credentials WHERE id=$1',[id(4)])).rows[0]).toEqual(before);
+ await db.query('SELECT admin_set_customer_first_subscription($1,NULL)',[id(2)]);
+ expect((await db.query<{data:any[]}>('SELECT admin_customer_subscriptions_with_tenure() data')).rows[0]?.data.find(c=>c.userId===id(2))?.firstSubscriptionAdjusted).toBe(false);
+});
+test('management cannot backdate customer history',async()=>{
+ await db.exec("SELECT set_config('test.role','management',false)");
+ await expect(db.query('SELECT admin_set_customer_first_subscription($1,$2)',[id(2),'2020-01-01'])).rejects.toThrow('Only admin');
+ await db.exec("SELECT set_config('test.role','admin',false)");
+});
+test('future first subscription dates are rejected',async()=>{
+ await expect(db.query("SELECT admin_set_customer_first_subscription($1,current_date+2)",[id(2)])).rejects.toThrow('future');
 });
