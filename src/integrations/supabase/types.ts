@@ -4448,8 +4448,11 @@ export type Database = {
           payment_lock_until: string | null
           payment_sent_at: string | null
           qd_code_id: string | null
+          renewal_account_id: string | null
           renewal_applied_at: string | null
           renewal_credential_id: string | null
+          renewal_customer_id: string | null
+          subscription_expiry_at: string | null
           token: string
         }
         Insert: {
@@ -4465,8 +4468,11 @@ export type Database = {
           payment_lock_until?: string | null
           payment_sent_at?: string | null
           qd_code_id?: string | null
+          renewal_account_id?: string | null
           renewal_applied_at?: string | null
           renewal_credential_id?: string | null
+          renewal_customer_id?: string | null
+          subscription_expiry_at?: string | null
           token: string
         }
         Update: {
@@ -4482,8 +4488,11 @@ export type Database = {
           payment_lock_until?: string | null
           payment_sent_at?: string | null
           qd_code_id?: string | null
+          renewal_account_id?: string | null
           renewal_applied_at?: string | null
           renewal_credential_id?: string | null
+          renewal_customer_id?: string | null
+          subscription_expiry_at?: string | null
           token?: string
         }
         Relationships: [
@@ -7486,6 +7495,20 @@ export type Database = {
         }
         Returns: string
       }
+      admin_create_manual_order_v3: {
+        Args: {
+          _account_id?: string
+          _created_at?: string
+          _customer_id?: string
+          _customer_kind?: string
+          _customer_name: string
+          _discount_cents?: number
+          _email?: string
+          _items: Json
+          _method: string
+        }
+        Returns: string
+      }
       admin_customer_is_hidden: {
         Args: { p_display_name: string; p_user_id: string; p_username: string }
         Returns: boolean
@@ -7522,6 +7545,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      admin_group_manual_customer_order: {
+        Args: {
+          p_account_id?: string
+          p_customer_id: string
+          p_order_id: string
+        }
+        Returns: undefined
+      }
       admin_list_user_ips_for_vpn_backfill: {
         Args: never
         Returns: {
@@ -7529,6 +7560,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_manual_customer_orders: { Args: never; Returns: Json }
       admin_mark_manual_order_paid: {
         Args: { p_order_id: string }
         Returns: Json
@@ -8336,6 +8368,10 @@ export type Database = {
       staff_nameplate_is_default: {
         Args: { _nameplate_id: string }
         Returns: boolean
+      }
+      staff_order_linked_renewal_account: {
+        Args: { p_order_id: string }
+        Returns: Json
       }
       staff_pin_check: {
         Args: { p_pin: string; p_user: string }
