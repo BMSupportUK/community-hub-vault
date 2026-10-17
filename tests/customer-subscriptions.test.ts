@@ -8,21 +8,25 @@ beforeAll(async () => {
  CREATE TYPE public.app_role AS ENUM ('admin','management','staff');
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS 'SELECT ''${id(1)}''::uuid';
  CREATE FUNCTION public.has_any_role(uuid,public.app_role[]) RETURNS boolean LANGUAGE sql AS 'SELECT coalesce(current_setting(''test.role'',true)=ANY($2::text[]),false)';
- CREATE TABLE private.orders(id uuid PRIMARY KEY,user_id uuid,customer_type text,paid_at timestamptz,status text,created_at timestamptz,order_ref text);
+ CREATE TABLE private.orders(id uuid PRIMARY KEY,user_id uuid,customer_type text,paid_at timestamptz,status text,created_at timestamptz,order_ref text,email_enc bytea,existing_username text,shipping_name text);
+ CREATE TABLE auth.users(id uuid,email text);
+ CREATE FUNCTION private.app_decrypt(bytea) RETURNS text LANGUAGE sql AS 'SELECT convert_from($1,''UTF8'')';
+ CREATE TABLE private.pending_order_credentials(order_id uuid,app_login_name text,expiry_at timestamptz);
  CREATE TABLE private.app_credentials(id uuid PRIMARY KEY,owner_id uuid,app_login_name text,account_type text,account_number int,expiry_at timestamptz,order_id uuid,updated_at timestamptz);
  CREATE TABLE public.order_referrals(order_id uuid PRIMARY KEY,referrer_user_id uuid,referrer_name text);
  CREATE TABLE public.order_items(id uuid,order_id uuid,product_name text,quantity int);
- CREATE TABLE public.order_checkout_links(order_id uuid,customer_kind text);
+ CREATE TABLE public.order_checkout_links(order_id uuid,customer_kind text,claimed_by uuid);
  CREATE TABLE public.profiles(id uuid,username text,display_name text);
  CREATE TABLE public.invites(id uuid,used_by uuid,created_by uuid,used_at timestamptz,created_at timestamptz);`);
  await db.exec(readFileSync(new URL('../drizzle/migrations/0147_customer_subscriptions_referral_rewards.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0148_customer_subscription_manual_account_matching.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
 });
 afterAll(()=>db.close());
 async function sale(n:number,name='12 months',kind='new',status='completed',stamp='2026-10-18 10:00+00',paid=true) {
- await db.query(`INSERT INTO private.orders VALUES($1,$2,$3,$4,$5,$6,$7)`,[id(n),id(2),kind,paid?stamp:null,status,stamp,`SALE-${n}`]);
+ await db.query(`INSERT INTO private.orders(id,user_id,customer_type,paid_at,status,created_at,order_ref) VALUES($1,$2,$3,$4,$5,$6,$7)`,[id(n),id(2),kind,paid?stamp:null,status,stamp,`SALE-${n}`]);
  await db.query('INSERT INTO order_referrals VALUES($1,$2,$3)',[id(n),id(3),'Referrer']);
  await db.query('INSERT INTO order_items VALUES($1,$2,$3,1)',[id(n+1000),id(n),name]);
 }
@@ -56,4 +60,10 @@ test('expired referrer subscription starts the free month from now',async()=>{
  await db.exec(`UPDATE private.app_credentials SET expiry_at='2020-01-01' WHERE id='${id(4)}'`);
  await grant(12);
  const r=(await db.query<{ok:boolean}>(`SELECT expiry_at>now()+interval '27 days' AS ok FROM private.app_credentials WHERE id='${id(4)}'`)).rows[0];expect(r?.ok).toBe(true);
+});
+test('manual subscriptions match the customer email, not staff creator, and include saved pre-account expiry',async()=>{
+ await sale(20,'Multi Room 12 months','manual');
+ await db.exec(`INSERT INTO auth.users VALUES('${id(2)}','customer@example.test'); UPDATE private.orders SET user_id='${id(1)}',email_enc=convert_to('customer@example.test','UTF8') WHERE id='${id(20)}'; INSERT INTO private.pending_order_credentials VALUES('${id(20)}','customer-login','2027-10-18 12:00+00');`);
+ const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscriptions() data')).rows[0]?.data??[];
+ expect(rows.some(c=>c.userId===id(1))).toBe(false);expect(rows.find(c=>c.userId===id(2))?.accounts[0]?.login).toBe('customer-login');
 });
