@@ -561,7 +561,7 @@ export function VideoCallStage({
       rebuildRef.current();
     }, reason === "start" ? 2500 : 1200);
   }, [side, send]);
-  useEffect(() => () => { window.clearTimeout(autoTimer.current); window.clearTimeout(rotateMsgTimer.current); }, []);
+  useEffect(() => () => { window.clearTimeout(autoTimer.current); }, []);
   useEffect(() => { if (connected) autoRefresh("start"); }, [connected, autoRefresh]);
   const firstOrient = useRef(true);
   useEffect(() => {
