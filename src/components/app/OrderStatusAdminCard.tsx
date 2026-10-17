@@ -96,6 +96,14 @@ export function OrderStatusAdminCard() {
     }
   };
 
+  const fixReference = async (id: string) => {
+    const reference = window.prompt("Correct payment reference (e.g. Invoice #39 or the provider payment ID)");
+    if (!reference?.trim()) return;
+    const { error } = await supabase.rpc("admin_correct_payment_reference", { _order_id: id, _reference: reference.trim() });
+    if (error) return setError(error.message);
+    setReload((n) => n + 1);
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -246,7 +254,11 @@ export function OrderStatusAdminCard() {
                         </div>
                       ) : <button type="button" onClick={() => { setCompleting(r.id); setPayMethod(r.manual_pay_method ?? ""); setPayRef(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"><Check className="size-3.5" /> Mark complete</button>
                       ) : r.completed_at ? new Date(r.completed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id] ?? r.manual_pay_method)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id] ?? r.manual_pay_method)}
+                        {canComplete && settled && ["square", "stripe"].includes(methods[r.id] ?? "") && (
+                          <button type="button" onClick={() => fixReference(r.id)} className="block mt-1 text-xs text-primary underline underline-offset-2">Fix payment reference</button>
+                        )}
+                      </td>
                     </tr>
                   ); })}
                 </tbody>
