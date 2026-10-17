@@ -121,7 +121,7 @@ export function OrderStatusAdminCard() {
       if (orders.length) {
         let pays: (ProfitPayment & { order_id: string })[];
         try {
-          const referrals = await fetchInChunks(orders.map((o) => o.id), (chunk) =>
+          const referrals = await fetchInChunks<{ order_id: string; referrer_name: string }>(orders.map((o) => o.id), (chunk) =>
             supabase.from("order_referrals").select("order_id,referrer_name").in("order_id", chunk),
           );
           if (cancelled) return;
