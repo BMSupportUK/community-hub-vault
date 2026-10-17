@@ -159,8 +159,8 @@ function AddOrderPage() {
             <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10 sm:flex-none sm:px-6">{kind === "new" ? "New customer" : "Existing customer"}</Button>
           ))}
         </div>
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(180px,42%)] gap-4 sm:gap-6 md:grid-cols-[minmax(0,1fr)_280px] lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="min-w-0 space-y-5">
+        <div className="flex min-w-0 flex-row items-start gap-4 sm:gap-6" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+        <div className="min-w-0 flex-1 space-y-5" style={{ flex: "1 1 0%", minWidth: 0 }}>
           <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <div className="space-y-2">
@@ -220,7 +220,7 @@ function AddOrderPage() {
             </div>
           </div>
         </div>
-        <aside aria-label="Manual customers" className="min-w-0 border-l border-border pl-4 sm:pl-6">
+        <aside aria-label="Manual customers" className="shrink-0 self-stretch border-l border-border pl-4 sm:pl-6" style={{ flex: "0 0 auto", width: "clamp(180px, 30%, 380px)" }}>
           <div className="space-y-4 sticky top-6">
             <label htmlFor="skip-registration" className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm"><Checkbox id="skip-registration" className="mt-0.5 shrink-0" checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} /><span>Bypass account creation at the end of this order</span></label>
             {customerKind === "existing" && <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>}
