@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChartNoAxesCombined, ChartPie, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet } from "lucide-react";
+import { CalendarDays, ChartNoAxesCombined, ChartPie, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet, RefreshCw } from "lucide-react";
 import { ProfitSummaryChart } from "@/components/app/ProfitSummaryChart";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { comparePackages } from "@/lib/package-order";
+import { calculateProfit, allocateOrderAmounts, type ProfitPayment } from "@/lib/profit-calculation";
+import { refreshProviderFees } from "@/lib/provider-fees.functions";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const money = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
@@ -13,17 +15,9 @@ const PROFIT_STATUSES = ["paid", "processing", "shipped", "completed"];
 
 type Product = { id: string; name: string; price_cents: number };
 type Item = { product_id: string | null; product_name: string; unit_price_cents: number; quantity: number; unit_cost_cents: number | null };
-type Order = { id: string; status: string; total_cents: number; created_at: string; shipping_name: string | null; existing_username: string | null; order_items: Item[] };
+type Order = { id: string; status: string; total_cents: number; created_at: string; shipping_name: string | null; existing_username: string | null; order_items: Item[]; payments: ProfitPayment[] };
 
-type Calc = { revenue: number; cost: number; missing: boolean };
-function calc(o: Order): Calc {
-  let cost = 0, missing = false;
-  for (const i of o.order_items ?? []) {
-    if (i.unit_cost_cents == null) missing = true;
-    else cost += i.unit_cost_cents * i.quantity;
-  }
-  return { revenue: o.total_cents, cost, missing };
-}
+const calc = calculateProfit;
 
 const METHOD_LABELS: Record<string, string> = { square: "Square", stripe: "Stripe", wise: "Wise", cash: "Cash", nowpayments: "NOWPayments", manual: "Manual" };
 
@@ -43,6 +37,7 @@ export function ProfitCostsPanel() {
   const [month, setMonth] = useState<number | null>(null);
   const [pkg, setPkg] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [refreshingFees, setRefreshingFees] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   const load = async () => {
@@ -60,16 +55,22 @@ export function ProfitCostsPanel() {
     const ids = (o.data ?? []).map((x) => x.id as string);
     const items: (Item & { order_id: string })[] = [];
     const methods: Record<string, string> = {};
+    const payments: Record<string, ProfitPayment[]> = {};
     for (let i = 0; i < ids.length; i += 200) {
       const chunk = ids.slice(i, i + 200);
       const r = await supabase.from("order_items").select("order_id, product_id, product_name, unit_price_cents, quantity, unit_cost_cents").in("order_id", chunk);
       if (r.error) { toast.error(r.error.message); return; }
       items.push(...((r.data ?? []) as (Item & { order_id: string })[]));
-      const pay = await supabase.from("order_payments").select("order_id, provider").in("order_id", chunk);
-      if (!pay.error) for (const row of pay.data ?? []) if (row.order_id && row.provider && !methods[row.order_id]) methods[row.order_id] = row.provider;
+      const pay = await supabase.from("order_payments").select("order_id, provider, status, currency, provider_fee_cents").in("order_id", chunk);
+      if (pay.error) { toast.error(pay.error.message); return; }
+      for (const row of pay.data ?? []) {
+        if (!row.order_id) continue;
+        (payments[row.order_id] ??= []).push(row);
+        if (row.provider && !methods[row.order_id]) methods[row.order_id] = row.provider;
+      }
     }
     setMethodOf(methods);
-    setOrders(((o.data ?? []) as unknown as Order[]).map((x) => ({ ...x, order_items: items.filter((i) => i.order_id === x.id) })).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
+    setOrders(((o.data ?? []) as unknown as Order[]).map((x) => ({ ...x, order_items: items.filter((i) => i.order_id === x.id), payments: payments[x.id] ?? [] })).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
     setLoaded(true);
   };
   useEffect(() => { if (!loaded) void load(); }, [loaded]);
@@ -110,29 +111,33 @@ export function ProfitCostsPanel() {
   const ay = year && years.includes(year) ? year : years[0] ?? null;
   const yearOrders = list.filter((o) => new Date(o.created_at).getFullYear() === ay);
   const byMonth = useMemo(() => {
-    const m = new Map<number, { revenue: number; cost: number; n: number; missing: boolean }>();
+    const m = new Map<number, { revenue: number; cost: number; fees: number; n: number; missing: boolean }>();
     for (const o of yearOrders) {
       const k = new Date(o.created_at).getMonth(); const c = calc(o);
-      const e = m.get(k) ?? { revenue: 0, cost: 0, n: 0, missing: false };
-      e.revenue += c.revenue; e.cost += c.cost; e.n++; e.missing ||= c.missing; m.set(k, e);
+      const e = m.get(k) ?? { revenue: 0, cost: 0, fees: 0, n: 0, missing: false };
+      e.revenue += c.revenue; e.cost += c.cost; e.fees += c.fees; e.n++; e.missing ||= c.missing; m.set(k, e);
     }
     return [...m.entries()].sort((a, b) => b[0] - a[0]);
   }, [yearOrders]);
   const am = month != null && byMonth.some(([k]) => k === month) ? month : byMonth[0]?.[0] ?? null;
-  const sum = (os: Order[]) => os.reduce((a, o) => { const c = calc(o); return { revenue: a.revenue + c.revenue, cost: a.cost + c.cost }; }, { revenue: 0, cost: 0 });
+  const sum = (os: Order[]) => os.reduce((a, o) => { const c = calc(o); return { revenue: a.revenue + c.revenue, cost: a.cost + c.cost, fees: a.fees + c.fees, feesMissing: a.feesMissing || c.feesMissing }; }, { revenue: 0, cost: 0, fees: 0, feesMissing: false });
   const yT = sum(yearOrders), mT = sum(am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : []);
 
   const monthOrders = am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : [];
   const yearMissing = yearOrders.some((o) => calc(o).missing);
   const monthMissing = monthOrders.some((o) => calc(o).missing);
   const pkgStats = (os: Order[]) => {
-    const m = new Map<string, { revenue: number; cost: number; missing: boolean; qty: number }>();
-    for (const o of os) for (const i of o.order_items ?? []) {
+    const m = new Map<string, { revenue: number; cost: number; fees: number; feesMissing: boolean; missing: boolean; qty: number }>();
+    for (const o of os) {
+      const allocation = allocateOrderAmounts(o);
+      for (const [index, i] of (o.order_items ?? []).entries()) {
       const k = i.product_id ?? `name:${i.product_name}`;
-      const e = m.get(k) ?? { revenue: 0, cost: 0, missing: false, qty: 0 };
-      e.revenue += i.unit_price_cents * i.quantity; e.qty += i.quantity;
+      const e = m.get(k) ?? { revenue: 0, cost: 0, fees: 0, feesMissing: false, missing: false, qty: 0 };
+      e.feesMissing ||= allocation.feesMissing;
+      e.revenue += allocation.revenue[index] ?? 0; e.fees += allocation.fees[index] ?? 0; e.missing ||= allocation.feesMissing; e.qty += i.quantity;
       if (i.unit_cost_cents == null) e.missing = true; else e.cost += i.unit_cost_cents * i.quantity;
       m.set(k, e);
+      }
     }
     return m;
   };
@@ -141,7 +146,7 @@ export function ProfitCostsPanel() {
     ...(products ?? []).map((p) => ({ key: p.id, name: p.name, price: p.price_cents as number | null })),
     ...[...pkgYear.keys()].filter((k) => k.startsWith("name:")).map((k) => ({ key: k, name: k.slice(5), price: null })),
   ].sort((a, b) => comparePackages(a, b) || (pkgYear.get(b.key)?.revenue ?? 0) - (pkgYear.get(a.key)?.revenue ?? 0));
-  const empty = { revenue: 0, cost: 0, missing: false, qty: 0 };
+  const empty = { revenue: 0, cost: 0, fees: 0, feesMissing: false, missing: false, qty: 0 };
   const selection = (active: boolean) => `h-auto min-h-9 rounded-md px-3 py-2 text-sm ${active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"}`;
 
   return (
@@ -152,6 +157,16 @@ export function ProfitCostsPanel() {
         <Button variant="ghost" className={`${selection(tab === "costs")} sm:ml-auto`} aria-pressed={tab === "costs"} onClick={() => setTab("costs")}><Package className="size-4" />Product costs</Button>
         <Button variant="ghost" className={selection(tab === "packages")} aria-pressed={tab === "packages"} onClick={() => setTab("packages")}><ChartPie className="size-4" />Packages</Button>
       </nav>
+      <div className="flex justify-end"><Button variant="outline" size="sm" disabled={refreshingFees} onClick={async () => {
+        setRefreshingFees(true);
+        try {
+          const result = await refreshProviderFees();
+          if ('error' in result) throw new Error(result.error);
+          toast.success(`${result.updated} provider fees updated${result.unavailable ? ` · ${result.unavailable} unavailable` : ''}`);
+          await load();
+        } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not refresh fees'); }
+        finally { setRefreshingFees(false); }
+      }}><RefreshCw className={`size-4 ${refreshingFees ? 'animate-spin' : ''}`} />Refresh provider fees</Button></div>
       {products === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
         : tab === "costs" ? (
           <section className="space-y-4">
@@ -189,8 +204,8 @@ export function ProfitCostsPanel() {
                     <span className="text-xs text-muted-foreground">{p.price != null ? `Sells for ${money(p.price)} · ` : ""}{y.qty} sold in {ay}</span>
                   </header>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} missing={mo.missing} sales={mo.qty} />}
-                    <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} missing={y.missing} sales={y.qty} />
+                    {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} fees={mo.fees} feesMissing={mo.feesMissing} missing={mo.missing} sales={mo.qty} />}
+                    <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} fees={y.fees} feesMissing={y.feesMissing} missing={y.missing} sales={y.qty} />
                   </div>
                 </article>
               );
@@ -205,26 +220,27 @@ export function ProfitCostsPanel() {
               </div>
               <section aria-label="Annual overview" className="border-b border-border/70 bg-card/85 p-5 shadow-soft backdrop-blur-md sm:p-6">
                 <div className="flex items-center justify-between gap-3"><h2 className="font-display text-xl font-semibold">{ay} overview</h2><span className="text-xs text-muted-foreground">{yearOrders.length} orders</span></div>
-                <div className="my-6"><p className="flex items-center gap-2 text-sm text-muted-foreground"><TrendingUp className="size-4 text-success" />{yearMissing ? "Provisional profit" : "Total profit"}</p><p className={`mt-2 break-words font-display text-4xl font-bold tabular-nums ${yT.revenue >= yT.cost ? "text-success" : "text-destructive"}`}>{money(yT.revenue - yT.cost)}</p></div>
-                <dl className="grid grid-cols-2 gap-4 border-t border-border/70 pt-4"><div><dt className="text-xs text-muted-foreground">Revenue</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{money(yT.revenue)}</dd></div><div><dt className="text-xs text-muted-foreground">Product costs</dt><dd className="mt-1 text-lg font-semibold tabular-nums text-warning">{money(yT.cost)}</dd></div></dl>
-                {yearMissing && <p className="mt-4 flex items-center gap-2 text-xs text-warning"><CircleAlert className="size-4 shrink-0" />Some orders have missing costs.</p>}
+                <div className="my-6"><p className="flex items-center gap-2 text-sm text-muted-foreground"><TrendingUp className="size-4 text-success" />{yearMissing ? "Provisional profit" : "Total profit"}</p><p className={`mt-2 break-words font-display text-4xl font-bold tabular-nums ${yT.revenue >= yT.cost + yT.fees ? "text-success" : "text-destructive"}`}>{money(yT.revenue - yT.cost - yT.fees)}</p></div>
+                <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 border-t border-border/70 pt-4"><div><dt className="text-xs text-muted-foreground">Revenue</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{money(yT.revenue)}</dd></div><div><dt className="text-xs text-muted-foreground">Product costs</dt><dd className="mt-1 text-lg font-semibold tabular-nums text-warning">{money(yT.cost)}</dd></div><div><dt className="text-xs text-muted-foreground">Provider fees</dt><dd className="mt-1 text-lg font-semibold tabular-nums text-accent">{yT.feesMissing ? (yT.fees ? `${money(yT.fees)} + unknown` : 'Unknown') : money(yT.fees)}</dd></div></dl>
+                {yearMissing && <p className="mt-4 flex items-center gap-2 text-xs text-warning"><CircleAlert className="size-4 shrink-0" />Some product costs or provider fees are missing; profit is provisional.</p>}
               </section>
               <section className="space-y-4">
                 <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><CalendarDays className="size-5 text-accent" />Monthly breakdown</h2>
-                <div className="flex flex-wrap gap-2">{byMonth.map(([k, v]) => <Button key={k} variant="outline" className={`${selection(k === am)} flex-col items-start gap-1 border-border/70 ${k !== am ? "bg-card/90" : "border-primary"}`} aria-pressed={k === am} onClick={() => setMonth(k)}><span className="flex items-center gap-2 font-semibold">{MONTHS[k]}{v.missing && <CircleAlert className="size-3" />}</span><span className="text-xs tabular-nums">{money(v.revenue - v.cost)}</span></Button>)}</div>
+                <div className="flex flex-wrap gap-2">{byMonth.map(([k, v]) => <Button key={k} variant="outline" className={`${selection(k === am)} flex-col items-start gap-1 border-border/70 ${k !== am ? "bg-card/90" : "border-primary"}`} aria-pressed={k === am} onClick={() => setMonth(k)}><span className="flex items-center gap-2 font-semibold">{MONTHS[k]}{v.missing && <CircleAlert className="size-3" />}</span><span className="text-xs tabular-nums">{money(v.revenue - v.cost - v.fees)}</span></Button>)}</div>
                 {am != null && <div className="border-y border-border/70 bg-card/90 px-5 py-5 backdrop-blur-md">
                   <div className="mb-5 flex items-center justify-between gap-2"><h3 className="font-semibold">{MONTHS[am]} {ay}</h3><span className="text-xs text-muted-foreground">{monthOrders.length} orders</span></div>
-                  <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+                  <dl className="grid grid-cols-2 gap-5 xl:grid-cols-4">
                     <div><dt className="text-xs text-muted-foreground">Revenue</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{money(mT.revenue)}</dd></div>
-                    <div><dt className="text-xs text-muted-foreground">Costs</dt><dd className="mt-1 text-lg font-semibold tabular-nums text-warning">{money(mT.cost)}</dd></div>
-                    <div><dt className="text-xs text-muted-foreground">{monthMissing ? "Provisional profit" : "Profit"}</dt><dd className={`mt-1 text-lg font-semibold tabular-nums ${mT.revenue >= mT.cost ? "text-success" : "text-destructive"}`}>{money(mT.revenue - mT.cost)}</dd></div>
+                    <div><dt className="text-xs text-muted-foreground">Product costs</dt><dd className="mt-1 text-lg font-semibold tabular-nums text-warning">{money(mT.cost)}</dd></div>
+                    <div><dt className="text-xs text-muted-foreground">Provider fees</dt><dd className="mt-1 text-lg font-semibold tabular-nums text-accent">{mT.feesMissing ? (mT.fees ? `${money(mT.fees)} + unknown` : 'Unknown') : money(mT.fees)}</dd></div>
+                    <div><dt className="text-xs text-muted-foreground">{monthMissing ? "Provisional profit" : "Profit"}</dt><dd className={`mt-1 text-lg font-semibold tabular-nums ${mT.revenue >= mT.cost + mT.fees ? "text-success" : "text-destructive"}`}>{money(mT.revenue - mT.cost - mT.fees)}</dd></div>
                   </dl>
                 </div>}
               </section>
             </div>
             <aside aria-label="Profit statistics" className="grid min-w-0 gap-4 sm:grid-cols-2 lg:sticky lg:top-6 lg:grid-cols-1 xl:grid-cols-2">
-              {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mT.revenue} cost={mT.cost} missing={monthMissing} />}
-              <ProfitSummaryChart title={`${ay} · Year total`} revenue={yT.revenue} cost={yT.cost} missing={yearMissing} />
+              {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mT.revenue} cost={mT.cost} fees={mT.fees} feesMissing={mT.feesMissing} missing={monthMissing} />}
+              <ProfitSummaryChart title={`${ay} · Year total`} revenue={yT.revenue} cost={yT.cost} fees={yT.fees} feesMissing={yT.feesMissing} missing={yearMissing} />
             </aside>
           </div>
         )}

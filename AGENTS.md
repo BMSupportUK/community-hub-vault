@@ -19,11 +19,11 @@
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
-- Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials on claim — one source of truth in the admin credentials list.
+- Pre-account manual-order logins stay private per order; claim moves them to customer credentials, the admin list's single source of truth.
 - Signed-out checkout visitors read app login details only via a token-gated SECURITY DEFINER function; the staff-only credentials view never serves them.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
-- The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) applicants; refusal blocks ticket requests and tags appeals. Elsewhere GPS is captured silently with existing permission only.
+- Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
 - Dialogs stay within the dynamic mobile viewport; dense views drop secondary columns on phones.
 - Square/Stripe payments use shared server invoice creation with verified order/token access; BM Support PDFs remain post-payment receipts.
 - Knowledge Base fills the page; category and ratings rails keep guides scannable.
@@ -37,5 +37,7 @@
 - Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
 <!-- LOVABLE:END -->
 - Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
-- Tests run under `bun test`, so avoid vitest-only APIs (e.g. `vi.stubGlobal`) and swap globals with `Object.defineProperty` plus restore.
-- Bannerless sports guides inherit a cover via DB trigger and adverts render regardless, so no save path leaves a guide bare.
+- Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
+- DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
+
+- Profit uses recorded fees in integer GBP pence; unknown fees keep totals provisional; package allocation preserves totals without duplicate fees.
