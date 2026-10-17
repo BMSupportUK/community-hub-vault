@@ -13,6 +13,8 @@ import { canViewStaffCheckout, canCompleteCheckoutSteps } from "@/lib/checkout-a
 import { ManualOrderLinkButton } from "@/components/checkout/ManualOrderLinkDialog";
 import { calculateProfit, type ProfitPayment } from "@/lib/profit-calculation";
 
+import { useProviderFeeRefresh } from '@/hooks/use-provider-fee-refresh';
+
 type Row = {
   id: string;
   status: string;
@@ -63,6 +65,7 @@ export function OrderStatusAdminCard() {
   const [month, setMonth] = useState<number | null>(null);
 
   const [reload, setReload] = useState(0);
+  useProviderFeeRefresh(canComplete, () => setReload(n => n + 1));
   const [completing, setCompleting] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("");
   const [payRef, setPayRef] = useState("");

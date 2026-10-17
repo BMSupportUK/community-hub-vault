@@ -9,6 +9,8 @@ import { comparePackages } from "@/lib/package-order";
 import { calculateProfit, allocateOrderAmounts, type ProfitPayment } from "@/lib/profit-calculation";
 import { refreshProviderFees } from "@/lib/provider-fees.functions";
 
+import { useProviderFeeRefresh } from '@/hooks/use-provider-fee-refresh';
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const money = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
 const PROFIT_STATUSES = ["paid", "processing", "shipped", "completed"];
@@ -74,6 +76,7 @@ export function ProfitCostsPanel() {
     setLoaded(true);
   };
   useEffect(() => { if (!loaded) void load(); }, [loaded]);
+  useProviderFeeRefresh(true, () => void load());
   // Live: re-load when an order or payment changes, so newly paid orders appear without a refresh.
   useEffect(() => {
     let t: ReturnType<typeof setTimeout> | null = null;
@@ -160,7 +163,7 @@ export function ProfitCostsPanel() {
       <div className="flex justify-end"><Button variant="outline" size="sm" disabled={refreshingFees} onClick={async () => {
         setRefreshingFees(true);
         try {
-          const result = await refreshProviderFees();
+          const result = await refreshProviderFees({ data: { offset: 0 } });
           if ('error' in result) throw new Error(result.error);
           toast.success(`${result.updated} provider fees updated${result.unavailable ? ` · ${result.unavailable} unavailable` : ''}`);
           await load();
