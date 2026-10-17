@@ -4,6 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [x] Hide guest48hSite and danejSite test/admin accounts from the admin Customers list only; base customer data, referral rewards and credential/history tools unchanged. 25 customer tests pass and an authenticated read returns 22 customers with neither account shown; build OK, preview only.
 - [x] Add admin-only last-renewed date editor and audited correction storage; restore recorded date supported, expiry/payments unchanged. All 27 customer tests pass; build OK. No real customer dates changed; preview only.
 - [ ] Verify last-renewed date save/read-back on the Customers screen — signed-in browser reaches dashboard password/PIN lock; blocked by dashboard unlock.
 - [x] Customer list: package names without quantities, credential logins beneath usernames, admin allocation for missing packages; 22 tests pass and authenticated read returns 24 customers with quantity-free names, saved login names retained. No real customer allocations or expiry changes made; build OK, preview only.
