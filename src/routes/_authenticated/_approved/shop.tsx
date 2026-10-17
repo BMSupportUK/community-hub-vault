@@ -4804,11 +4804,7 @@ function PayOrderDialog({
               <TabsTrigger value="stripe">Stripe</TabsTrigger>
             </TabsList>
             <TabsContent value="square" className="mt-3">
-              <SquareInvoicePanel
-                orderId={orderId}
-                amountCents={amountCents}
-                onChange={handleChange}
-              />
+              <ProviderInvoicePayment method="square" orderId={orderId} amountCents={amountCents} onPaid={handleChange} />
             </TabsContent>
             <TabsContent value="usdt" className="mt-3">
               <CryptoPanel
