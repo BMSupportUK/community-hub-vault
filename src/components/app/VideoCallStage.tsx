@@ -484,8 +484,11 @@ export function VideoCallStage({
     const onTurn = () => {
       landscape = window.innerWidth > window.innerHeight;
       if (streamRef.current?.getVideoTracks()[0]?.enabled) send("rotating", { from: tagRef.current });
+      // The call sends a fixed-size picture (see fixed-frame-video), so turning
+      // no longer needs a camera restart — that restart itself blanked the picture.
+      // A camera that really stops is restarted by the stall check instead.
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => { if (live()) restartCamRef.current(); }, 900);
+      if (!fixedRef.current) timer = window.setTimeout(() => { if (live()) restartCamRef.current(); }, 900);
     };
     const onResize = () => { if ((window.innerWidth > window.innerHeight) !== landscape) onTurn(); };
     screen.orientation?.addEventListener?.("change", onTurn);
@@ -621,7 +624,7 @@ export function VideoCallStage({
   const firstOrient = useRef(true);
   useEffect(() => {
     if (firstOrient.current) { firstOrient.current = false; return; }
-    autoRefresh("turn");
+    // Turning the phone no longer rebuilds the call: the rebuild itself blanked the picture.
   }, [remoteRotate, autoRefresh]);
   useEffect(() => {
     if (side !== "offerer") return;
@@ -633,6 +636,7 @@ export function VideoCallStage({
       if (!v.videoWidth || shape === lastShape) return;
       const first = !lastShape;
       lastShape = shape;
+      // Older customer pages still send a changing shape: those need the rebuild.
       if (!first) { if (!rotationRecovery.current.active) showRotating(); autoRefresh("turn"); }
     };
     v.addEventListener("resize", onResize);
