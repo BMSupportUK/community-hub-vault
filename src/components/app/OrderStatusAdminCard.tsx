@@ -60,6 +60,7 @@ export function OrderStatusAdminCard() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [methods, setMethods] = useState<Record<string, string>>({});
   const [payments, setPayments] = useState<Record<string, ProfitPayment[]>>({});
+  const [referrers, setReferrers] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
@@ -116,9 +117,15 @@ export function OrderStatusAdminCard() {
       if (error) return setError(error.message);
       const orders = (data ?? []) as Row[];
       setRows(orders);
+      setReferrers({});
       if (orders.length) {
         let pays: (ProfitPayment & { order_id: string })[];
         try {
+          const referrals = await fetchInChunks<{ order_id: string; referrer_name: string }>(orders.map((o) => o.id), (chunk) =>
+            supabase.from("order_referrals").select("order_id,referrer_name").in("order_id", chunk),
+          );
+          if (cancelled) return;
+          setReferrers(Object.fromEntries(referrals.map((r) => [r.order_id, r.referrer_name])));
           pays = await fetchInChunks(orders.map((o) => o.id), (chunk) =>
             supabase.from("order_payments").select("order_id, provider, status, currency, provider_fee_cents").in("order_id", chunk),
           );
@@ -225,6 +232,7 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2">
                         <div>{r.shipping_name || r.existing_username || "—"}</div>
                         <div className="text-xs text-muted-foreground">{r.order_ref ?? `#${r.id.slice(0, 8)}`}{r.customer_type ? ` · ${r.customer_type}` : ""}</div>
+                        {referrers[r.id] && <div className="text-xs text-muted-foreground">Referred by {referrers[r.id]}</div>}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.total_cents)}</td>
                       {canComplete && <td className="px-3 py-2 whitespace-nowrap tabular-nums">{!settled ? "—" : fee.feesMissing ? (fee.fees ? `${money(fee.fees)} + unknown` : "Unknown") : money(fee.fees)}</td>}

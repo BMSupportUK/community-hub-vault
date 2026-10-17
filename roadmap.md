@@ -4,6 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [x] Snapshot referrer names on future referred new shop/manual sales; Orders shows attribution and staff secure checkout shows purchased items, customer details and adult choice. Thirteen rule/sync tests pass; real saved £115 order details verified signed-in on desktop/phone, build OK. No test orders created; display changes await publishing.
 - [x] Repair completed £115 sale accounting: Square Invoice 45 confirmed paid, actual £4.61 fee saved; sale profit £80.39 and October profit £202.78 read back. Invoice reconciliation now repairs missing payment rows after paid_at; 15 tests pass, build OK. Screen verification remains blocked by dashboard unlock below; prevention changes preview only.
 - [x] Correct renewal/new-customer selection for secure order summaries, setup and completion; three database tests pass. Existing renewal completion message corrected and verified in signed-in chat; database fix applies live without publishing.
 - [x] Secure admin order steps refresh on order signals and every five seconds while visible; seven tests pass, build OK, signed-in response simulation verified unpaid→paid without reload or saved-order changes. Real customer transition not exercised; preview only.

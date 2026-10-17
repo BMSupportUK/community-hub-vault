@@ -4544,6 +4544,27 @@ export type Database = {
           },
         ]
       }
+      order_referrals: {
+        Row: {
+          captured_at: string
+          order_id: string
+          referrer_name: string
+          referrer_user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          order_id: string
+          referrer_name: string
+          referrer_user_id: string
+        }
+        Update: {
+          captured_at?: string
+          order_id?: string
+          referrer_name?: string
+          referrer_user_id?: string
+        }
+        Relationships: []
+      }
       order_support_session_messages: {
         Row: {
           content: string
@@ -7966,6 +7987,10 @@ export type Database = {
         Returns: undefined
       }
       sports_blogs_clear_expired: { Args: never; Returns: undefined }
+      staff_checkout_order_details: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
       staff_checkout_order_summary: {
         Args: { p_order_id?: string }
         Returns: {

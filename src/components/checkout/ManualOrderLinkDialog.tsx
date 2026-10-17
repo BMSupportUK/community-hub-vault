@@ -13,6 +13,7 @@ import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { downloadReceipt } from "@/lib/receipt";
 import { CREDENTIAL_TIME_STEP, credentialTimeInput } from "@/lib/credential-time";
 import { startSecureOrderProgressSync } from "@/lib/secure-order-progress-sync";
+import { StaffOrderDetails, type StaffOrderDetailsData } from "@/components/checkout/StaffOrderDetails";
 
 
 
@@ -39,6 +40,8 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [orderPaid, setOrderPaid] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<StaffOrderDetailsData | null>(null);
+  const [detailsError, setDetailsError] = useState(false);
   const [payMethod, setPayMethod] = useState<string | null>(null);
   const [loginName, setLoginName] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
@@ -98,13 +101,18 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
     setLink(undefined);
     setOrderPaid(false);
     setOrderCompleted(false);
+    setOrderDetails(null);
+    setDetailsError(false);
     const stop = startSecureOrderProgressSync({
       refresh: async () => {
-        const [linkResult, orderResult] = await Promise.all([
+        const [linkResult, orderResult, detailsResult] = await Promise.all([
           supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
           supabase.rpc("staff_checkout_order_summary" as never, { p_order_id: orderId } as never),
+          supabase.rpc("staff_checkout_order_details", { p_order_id: orderId }),
         ]);
         if (!active || linkResult.error || orderResult.error) return;
+        setDetailsError(!!detailsResult.error);
+        if (!detailsResult.error) setOrderDetails(detailsResult.data as unknown as StaffOrderDetailsData | null);
         const orderData = (orderResult.data as unknown as { paid_at: string | null; completed_at: string | null; manual_pay_method: string | null }[] | null)?.[0];
         setLink((linkResult.data as never) ?? null);
         setOrderPaid(!!orderData?.paid_at);
@@ -270,6 +278,8 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       {link.payment_sent_at && !orderPaid && (
         <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs"><Hourglass className="size-3.5 text-warning" /> Customer says payment was sent {new Date(link.payment_sent_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} — awaiting confirmation</div>
       )}
+      {orderDetails && <StaffOrderDetails details={orderDetails} />}
+      {detailsError && <p className="text-sm text-destructive">Could not load customer order details. Retrying automatically…</p>}
       <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${orderPaid ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
         {orderPaid ? <Check className="size-4" /> : <Hourglass className="size-4" />}
         {orderPaid ? "PAID — payment confirmed by staff" : "NOT PAID YET — no payment has been confirmed"}
