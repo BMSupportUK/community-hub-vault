@@ -96,7 +96,7 @@ export async function createProviderInvoice(db: any, orderId: string, provider: 
       const customer = await stripe.customers.create({ ...(order.email ? { email: order.email } : {}), name: order.shipping_name || 'Customer', metadata: { order_id: orderId } }, { idempotencyKey: `${key}-customer` });
       const draft = await stripe.invoices.create({ customer: customer.id, collection_method: 'send_invoice', days_until_due: 30, auto_advance: false, payment_settings: { payment_method_types: ['card'] }, metadata: { order_id: orderId }, description: `BM Support order #${orderId.slice(0,8)}` }, { idempotencyKey: `${key}-invoice` });
       if (!draft.id) throw new Error('Stripe did not create an invoice');
-      await stripe.invoiceItems.create({ customer: customer.id, invoice: draft.id, currency: 'gbp', unit_amount_decimal: String(order.total_cents), quantity: 1, description: `BM Support order #${orderId.slice(0,8)}` } as never, { idempotencyKey: `${key}-item` });
+      await stripe.invoiceItems.create({ customer: customer.id, invoice: draft.id, currency: 'gbp', amount: order.total_cents, description: `BM Support order #${orderId.slice(0,8)}` }, { idempotencyKey: `${key}-item` });
       const invoice = await stripe.invoices.finalizeInvoice(draft.id, { auto_advance: false }, { idempotencyKey: `${key}-finalize` });
       if (invoice.total !== order.total_cents || !invoice.hosted_invoice_url) {
         if (invoice.status === 'open') await stripe.invoices.voidInvoice(invoice.id);
@@ -114,7 +114,15 @@ export async function createProviderInvoice(db: any, orderId: string, provider: 
       row = { square_invoice_id: invoice.id, square_order_id: sqOrder.id, stripe_invoice_id: null, public_url: invoice.public_url, invoice_number: invoice.invoice_number, status: invoice.status };
     }
     const { error: saveError } = await db.from('order_invoices').upsert({ ...row, order_id: orderId, amount_cents: order.total_cents, currency: 'GBP', created_by: actorId, last_synced_at: new Date().toISOString() }, { onConflict: 'order_id' });
-    if (saveError) throw new Error(saveError.message);
+    if (saveError) {
+      // Never leave an untracked payable invoice after a failed local save.
+      if (provider === 'stripe') await createStripeClient(environment).invoices.voidInvoice(row.stripe_invoice_id);
+      else {
+        const current = (await squareRequest(`/v2/invoices/${row.square_invoice_id}`)).invoice;
+        await squareRequest(`/v2/invoices/${row.square_invoice_id}/cancel`, { version: current.version });
+      }
+      throw new Error(saveError.message);
+    }
     return { public_url: String(row.public_url), status: String(row.status) };
   } finally { await db.rpc('release_checkout_payment_lock', { p_order: orderId }); }
 }

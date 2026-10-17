@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const Route = createFileRoute("/api/public/hooks/square-invoice")({
   server: {
@@ -34,10 +33,10 @@ export const Route = createFileRoute("/api/public/hooks/square-invoice")({
           return new Response("Invalid JSON", { status: 400 });
         }
 
-        const eventType: string = payload?.type ?? "";
         const invoice = payload?.data?.object?.invoice;
         if (!invoice?.id) return new Response("ok");
 
+        const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
         const { data: row } = await supabaseAdmin
           .from("order_invoices")
           .select("order_id,status")

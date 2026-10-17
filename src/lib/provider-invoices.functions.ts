@@ -37,6 +37,18 @@ export const refreshOrderProviderInvoice = createServerFn({ method: 'POST' })
    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
    const { syncProviderInvoice } = await import('@/lib/provider-invoices.server');
    const row = await syncProviderInvoice(supabaseAdmin, data.orderId);
-   return { paid: row?.paid ?? false, status: row?.status ?? '', public_url: row?.public_url ?? null };
+   return { paid: row?.paid ?? false, status: row?.status ?? '', public_url: row?.public_url ?? null, provider: row?.provider ?? null };
+  } catch (error) { return { error: error instanceof Error ? error.message : 'Could not check invoice' }; }
+ });
+export const refreshCheckoutProviderInvoice = createServerFn({ method: 'POST' })
+ .inputValidator(d => z.object({ token: z.string().regex(/^[a-f0-9]{64}$/), password: z.string().max(64).default('') }).parse(d))
+ .handler(async ({ data }) => {
+  try {
+   const { unlock } = await import('@/lib/checkout.server');
+   const unlocked = await unlock(data.token, data.password);
+   if (!unlocked) throw new Error('Not authorized');
+   const { syncProviderInvoice } = await import('@/lib/provider-invoices.server');
+   const row = await syncProviderInvoice(unlocked.supabaseAdmin, unlocked.link.order_id);
+   return { paid: row?.paid ?? false, status: row?.status ?? '', public_url: row?.public_url ?? null, provider: row?.provider ?? null };
   } catch (error) { return { error: error instanceof Error ? error.message : 'Could not check invoice' }; }
  });
