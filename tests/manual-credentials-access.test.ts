@@ -42,12 +42,12 @@ test('email alone cannot enroll a PIN; existing TV login proof sets it and creat
 });
 test('expired password is rejected', async () => {
   await db.exec("INSERT INTO manual_credential_access(email_key,code_hash,code_expires_at) VALUES('expired','correct',now()-interval '1 second')");
-  expect((await db.query<{ ok: boolean }>("SELECT manual_credentials_verify('expired','correct','s') ok")).rows[0]?.ok).toBe(false);
+  expect(await verify('expired','correct','a'.repeat(64),'first-login','synthetic-first-password')).toBe('invalid');
 });
 test('five incorrect password attempts lock that request', async () => {
   await db.exec("INSERT INTO manual_credential_access(email_key,code_hash,code_expires_at) VALUES('locked','correct',now()+interval '15 minutes')");
-  for (let i = 0; i < 5; i++) await db.query("SELECT manual_credentials_verify('locked','wrong','s')");
-  expect((await db.query<{ ok: boolean }>("SELECT manual_credentials_verify('locked','correct','s') ok")).rows[0]?.ok).toBe(false);
+  for (let i = 0; i < 5; i++) await verify('locked','wrong','a'.repeat(64),'first-login','synthetic-first-password');
+  expect(await verify('locked','correct','a'.repeat(64),'first-login','synthetic-first-password')).toBe('invalid');
 });
 test('email requests are limited to three per hour', async () => {
   for (let i = 0; i < 3; i++) expect((await db.query<{ ok: boolean }>("SELECT manual_credentials_throttle('email:limited',3) ok")).rows[0]?.ok).toBe(true);
