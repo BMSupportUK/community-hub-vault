@@ -41,6 +41,10 @@ export function createFixedFrameVideo(onStall?: () => void, size = FIXED_FRAME_S
   video.muted = true;
   video.playsInline = true;
   video.autoplay = true;
+  // Some phone browsers only play videos that are on the page.
+  video.setAttribute("aria-hidden", "true");
+  video.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none;";
+  document.body.appendChild(video);
   let source: MediaStreamTrack | null = null;
   let lastTime = -1;
   let lastAdvance = performance.now();
@@ -76,6 +80,7 @@ export function createFixedFrameVideo(onStall?: () => void, size = FIXED_FRAME_S
       stopped = true;
       window.clearInterval(timer);
       video.srcObject = null;
+      video.remove();
       out.stop();
     },
   };

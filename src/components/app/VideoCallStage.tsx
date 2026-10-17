@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
 import { RotationRecovery } from "@/lib/rotation-recovery";
+import { createFixedFrameVideo, type FixedFrameVideo } from "@/lib/fixed-frame-video";
 import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame, nextBlackPictureFix, sdpFingerprint, shouldAutoRefresh, type AutoRefreshReason } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
@@ -80,6 +81,9 @@ export function VideoCallStage({
   }, []);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  // Customer phone: the camera is sent as a fixed-size picture so turning the
+  // phone never changes the picture shape (the cause of the black screen).
+  const fixedRef = useRef<FixedFrameVideo | null>(null);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const pendingIce = useRef<RTCIceCandidateInit[]>([]);
   const offeredRef = useRef(false);
@@ -149,7 +153,8 @@ export function VideoCallStage({
       const stream = streamRef.current;
       if (!stream) return null;
       const pc = new RTCPeerConnection({ iceServers });
-      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      const fixed = fixedRef.current;
+      stream.getTracks().forEach((t) => pc.addTrack(t.kind === "video" && fixed ? fixed.track : t, stream));
       // Staff start with the camera off (audio only). Without a video slot in
       // the offer the customer's phone camera can never be sent -> black screen.
       if (!stream.getVideoTracks().length) pc.addTransceiver("video", { direction: "sendrecv", streams: [stream] });
@@ -262,6 +267,11 @@ export function VideoCallStage({
       if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
       if (!startWithCamera) stream.getAudioTracks().forEach((t) => { t.enabled = false; }); // staff mic starts muted
       streamRef.current = stream;
+      const cam = stream.getVideoTracks()[0];
+      if (side === "answerer" && cam) {
+        fixedRef.current = createFixedFrameVideo(() => restartCamRef.current());
+        fixedRef.current?.setSource(cam);
+      }
       if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
       createPeer();
 
@@ -403,6 +413,8 @@ export function VideoCallStage({
       pcRef.current = null;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
+      fixedRef.current?.stop();
+      fixedRef.current = null;
       if (chRef.current) { supabase.removeChannel(chRef.current); chRef.current = null; }
       offeredRef.current = false;
       pendingIce.current = [];
@@ -716,8 +728,14 @@ export function VideoCallStage({
       try { fresh = await get(); } catch { old.stop(); fresh = await get(); }
       const track = fresh.getVideoTracks()[0];
       if (!track || streamRef.current !== stream) { fresh.getTracks().forEach((t) => t.stop()); return false; }
-      const slot = pcRef.current?.getTransceivers().find((t) => t.receiver.track.kind === "video");
-      await slot?.sender.replaceTrack(track);
+      track.enabled = enabled;
+      if (fixedRef.current) {
+        // The call keeps sending the same fixed-size picture; only its camera changes.
+        fixedRef.current.setSource(track);
+      } else {
+        const slot = pcRef.current?.getTransceivers().find((t) => t.receiver.track.kind === "video");
+        await slot?.sender.replaceTrack(track);
+      }
       stream.getVideoTracks().forEach((t) => { stream.removeTrack(t); t.stop(); });
       stream.addTrack(track);
       track.enabled = enabled;
