@@ -515,7 +515,7 @@ export function VideoCallStage({
           lastFrames = frames;
         } catch { /* stats unavailable */ }
         const now = Date.now();
-        if (!bad) { darkSince = 0; state.reattached = false; return; }
+        if (!bad) { darkSince = 0; state.reattached = false; if (rotatingRef.current) { rotatingRef.current = false; setRotating(false); } return; }
         if (!darkSince) darkSince = now;
         const fix = nextBlackPictureFix(now - darkSince, now, state);
         if (fix === "reattach") {
@@ -559,7 +559,7 @@ export function VideoCallStage({
       rebuildRef.current();
     }, reason === "start" ? 2500 : 1200);
   }, [side, send]);
-  useEffect(() => () => window.clearTimeout(autoTimer.current), []);
+  useEffect(() => () => { window.clearTimeout(autoTimer.current); window.clearTimeout(rotateMsgTimer.current); }, []);
   useEffect(() => { if (connected) autoRefresh("start"); }, [connected, autoRefresh]);
   const firstOrient = useRef(true);
   useEffect(() => {
@@ -704,6 +704,11 @@ export function VideoCallStage({
       <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
         <audio ref={audioRef} autoPlay className="hidden" />
         {micError && <p role="status" className="absolute left-3 right-3 top-16 z-10 rounded bg-background/85 p-3 text-center text-sm text-foreground">{micError}</p>}
+        {rotating && side === "offerer" && !error && (
+          <div role="status" className="absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-background/85 px-4 py-1.5 text-xs font-medium text-foreground shadow">
+            <Loader2 className="size-3.5 animate-spin text-primary" /> The customer has turned their phone — their picture will reconnect in a moment
+          </div>
+        )}
         <video
           ref={remoteRef}
           playsInline
