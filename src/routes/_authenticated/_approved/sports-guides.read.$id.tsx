@@ -305,8 +305,8 @@ function ReadPage() {
                 </span>
               )}
             </div>
-            {blog.image_url ? (
-              <div className="grid shrink-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+            <div className="grid shrink-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+              {blog.image_url ? (
                 <div className="relative h-32 min-w-0 overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 sm:h-40 lg:h-48 xl:h-auto xl:aspect-[3/1]">
                   <img
                     src={blog.image_url}
@@ -320,13 +320,14 @@ function ReadPage() {
                     className="absolute inset-0 w-full h-full object-contain"
                   />
                 </div>
-                <div className="hidden min-w-0 xl:flex xl:aspect-[3/1] xl:items-center">
-                  <div className="w-full">
-                    <AdSenseSlot slot="home" />
-                  </div>
+              ) : null}
+              {/* The advert always shows, even if a guide has no banner picture. */}
+              <div className="hidden min-w-0 xl:flex xl:aspect-[3/1] xl:items-center">
+                <div className="w-full">
+                  <AdSenseSlot slot="home" />
                 </div>
               </div>
-            ) : null}
+            </div>
             {blog.excerpt && (
               <p className="text-base text-purple-100/80 italic line-clamp-2">{blog.excerpt}</p>
             )}
