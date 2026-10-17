@@ -4270,6 +4270,8 @@ export type Database = {
           payment_lock_until: string | null
           payment_sent_at: string | null
           qd_code_id: string | null
+          renewal_applied_at: string | null
+          renewal_credential_id: string | null
           token: string
         }
         Insert: {
@@ -4285,6 +4287,8 @@ export type Database = {
           payment_lock_until?: string | null
           payment_sent_at?: string | null
           qd_code_id?: string | null
+          renewal_applied_at?: string | null
+          renewal_credential_id?: string | null
           token: string
         }
         Update: {
@@ -4300,6 +4304,8 @@ export type Database = {
           payment_lock_until?: string | null
           payment_sent_at?: string | null
           qd_code_id?: string | null
+          renewal_applied_at?: string | null
+          renewal_credential_id?: string | null
           token?: string
         }
         Relationships: [
@@ -7850,6 +7856,10 @@ export type Database = {
       mute_user: {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
         Returns: string
+      }
+      order_subscription_months: {
+        Args: { p_order_id: string }
+        Returns: number
       }
       post_job_application_message: {
         Args: { _body: string; _token: string }

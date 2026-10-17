@@ -974,6 +974,13 @@
       "when": 1792237057169,
       "tag": "0138_restore_staff_orders_ticket_access",
       "breakpoints": true
+    },
+    {
+      "idx": 139,
+      "version": "7",
+      "when": 1792238308366,
+      "tag": "0139_renewal_confirmation_updates_credentials",
+      "breakpoints": true
     }
   ]
 }
