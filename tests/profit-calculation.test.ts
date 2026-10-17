@@ -8,6 +8,16 @@ test('net profit deducts product costs and provider fees separately', () => {
 test('an unknown provider fee leaves profit provisional rather than confirmed zero', () => {
   expect(calculateProfit({ ...order, payments: [{ ...order.payments[0], provider_fee_cents: null }] }).missing).toBe(true);
 });
+test('a completed £115 sale without a payment record cannot report confirmed fee-free profit', () => {
+  const result = calculateProfit({ ...order, total_cents: 11500, payments: [] });
+  expect(result.feesMissing).toBe(true);
+  expect(result.missing).toBe(true);
+});
+test('the £115 Square sale deducts its actual £4.61 fee and £30 product cost', () => {
+  const result = calculateProfit({ total_cents: 11500, order_items: [{ ...order.order_items[0], unit_cost_cents: 3000 }], payments: [{ ...order.payments[0], provider_fee_cents: 461 }] });
+  expect(result.profit).toBe(8039);
+  expect(result.fees).toBe(461);
+});
 test('pending payments and foreign-currency fees cannot deduct GBP fees', () => {
   expect(calculateProfit({ ...order, payments: [{ ...order.payments[0], status: 'PENDING' }] }).fees).toBe(0);
   expect(calculateProfit({ ...order, payments: [{ ...order.payments[0], currency: 'USD' }] }).feesMissing).toBe(true);
