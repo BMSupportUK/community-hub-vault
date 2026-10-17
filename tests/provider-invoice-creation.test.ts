@@ -14,7 +14,7 @@ mock.module('../src/lib/stripe.server', () => ({createStripeClient: () => stripe
 const { createProviderInvoice } = await import('../src/lib/provider-invoices.server');
 
 function database(paid = false) {
- let saved: any;
+ let saved: any; const chat: any[] = [];
  const db = {
   rpc: async (name: string) => ({data:name === 'claim_checkout_payment_lock',error:null}),
   from: (table: string) => {
@@ -22,24 +22,22 @@ function database(paid = false) {
     select: () => chain, eq: () => chain,
     maybeSingle: async () => ({data:null,error:null}),
     single: async () => ({data:{id:'test-order',total_cents:6500,user_id:null,email:null,shipping_name:'Invoice test',status:'pending',paid_at:paid?'2026-10-17T00:00:00Z':null},error:null}),
+    insert: async (row: any) => {if(table === 'checkout_chat_messages') chat.push(row); return {error:null};},
     upsert: async (row: any) => {if(table === 'order_invoices') saved = row; return {error:null};},
    };
    return chain;
   },
  };
- return {db, saved:()=>saved};
+ return {db, saved:()=>saved, chat};
 }
 
 describe('invoice creation instead of inline cards', () => {
- test('Stripe creates an exact £65 invoice with a hosted payment link', async () => {
+ test('a Stripe request creates no Stripe invoice while Stripe is hidden', async () => {
   calls.length=0;
-  const fixture=database();
-  const result=await createProviderInvoice(fixture.db,'test-order','stripe','sandbox',null);
-  expect(result.public_url).toBe('https://invoice.stripe.com/test');
-  expect(calls.find(c=>c.operation==='item')?.data.amount).toBe(6500);
-  expect(calls.find(c=>c.operation==='invoice')?.data.collection_method).toBe('send_invoice');
-  expect(fixture.saved().square_invoice_id).toBeNull();
-  expect(fixture.saved().stripe_invoice_id).toBe('in_test');
+  const prior=process.env.SQUARE_LOCATION_ID; delete process.env.SQUARE_LOCATION_ID;
+  try { await expect(createProviderInvoice(database().db,'test-order','stripe','sandbox',null)).rejects.toThrow('Square location'); }
+  finally { if(prior!==undefined) process.env.SQUARE_LOCATION_ID=prior; }
+  expect(calls.length).toBe(0);
  });
  test('paid orders cannot generate another Stripe invoice', async () => {
   calls.length=0;
@@ -67,6 +65,8 @@ describe('invoice creation instead of inline cards', () => {
    expect(squareCalls.find(c=>c.path==='/v2/invoices')?.body.invoice.delivery_method).toBe('SHARE_MANUALLY');
    expect(squareCalls.at(-1)?.path).toBe('/v2/invoices/invoice-square/publish');
    expect(fixture.saved().stripe_invoice_id).toBeNull();
+   expect(fixture.chat).toHaveLength(1);
+   expect(fixture.chat[0].content).toBe('Here is your Square invoice for £65.00 — tap to pay: https://squareup.com/pay/invoice-test');
   } finally {
    globalThis.fetch=oldFetch;
    if(priorToken===undefined)delete process.env.SQUARE_ACCESS_TOKEN;else process.env.SQUARE_ACCESS_TOKEN=priorToken;
