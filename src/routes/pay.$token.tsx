@@ -5,6 +5,7 @@ import { ArrowLeft, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "luci
 import { continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
 import { OrderVideoCallCustomer } from "@/components/checkout/OrderVideoCall";
 import { OrderAppLogin } from "@/components/checkout/OrderAppLogin";
+import { ManualCheckoutPin } from "@/components/checkout/ManualCheckoutPin";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
@@ -243,7 +244,10 @@ function PayPage() {
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
-        appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}
+        appLogin={!view.order.cancelled ? <>
+          {view.order.accountSetupAt && <OrderAppLogin token={token} password={pw} />}
+          {view.order.manual && !canManage && <ManualCheckoutPin token={token} password={pw} />}
+        </> : undefined}
         videoHelp={(!canManage || isVideoTestOrder(token)) && !view.order.cancelled ? <OrderVideoCallCustomer token={token} password={pw} mobile={isMobilePhone()} inline /> : undefined}
       />
       {canManage && view.order.id && (
