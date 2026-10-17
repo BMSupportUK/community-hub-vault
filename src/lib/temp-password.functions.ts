@@ -65,7 +65,7 @@ export const createUserManually = createServerFn({ method: "POST" })
       email: data.email,
       password,
       email_confirm: true,
-      user_metadata: { username: placeholder, display_name: placeholder, needs_profile: true },
+      user_metadata: { username: placeholder, display_name: placeholder, needs_profile: true, admin_created: true },
     });
     if (cErr || !created?.user) {
       throw new Error(/already/i.test(cErr?.message ?? "") ? "An account with that email already exists." : cErr?.message ?? "Couldn't create the account.");
