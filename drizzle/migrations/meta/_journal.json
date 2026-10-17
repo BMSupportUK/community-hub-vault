@@ -1030,6 +1030,20 @@
       "when": 1792264144771,
       "tag": "0146_order_referral_snapshots_and_staff_details",
       "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1792264655073,
+      "tag": "0147_customer_subscriptions_referral_rewards",
+      "breakpoints": true
+    },
+    {
+      "idx": 148,
+      "version": "7",
+      "when": 1792265156121,
+      "tag": "0148_customer_subscription_manual_account_matching",
+      "breakpoints": true
     }
   ]
 }

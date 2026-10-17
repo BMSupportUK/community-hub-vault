@@ -14,6 +14,7 @@ import { LayoutGrid } from "lucide-react";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
+import { CustomerSubscriptionsAdminCard } from "@/components/app/CustomerSubscriptionsAdminCard";
 import pinIllustration from "@/assets/staff-pin-illustration.jpg";
 import shopHero from "@/assets/shop-hero.jpg";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
@@ -530,7 +531,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const perms = usePagePermissions();
   const toolsHeading = canSeePins ? "Owner tools" : "Staff tools";
   const { tab: searchTab } = useSearch({ strict: false }) as { tab?: string };
-  const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "invoice-template", "sign-out-devices", "android-apk"] as const;
+  const validTabs = ["tools", "order-status", "customers", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "invoice-template", "sign-out-devices", "android-apk"] as const;
   type DashTab = (typeof validTabs)[number];
   const [tab, setTab] = useState<DashTab>(
     (validTabs as readonly string[]).includes(searchTab as string) ? (searchTab as DashTab) : "tools",
@@ -608,6 +609,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const allTabs: readonly (readonly [string, string, boolean | string])[] = isFz ? [["tools", "Fan Zone tools", false]] : [
     ["tools", toolsHeading, false],
     ["order-status", "Orders", false],
+    ["customers", "Customers", true],
     ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
@@ -666,6 +668,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
             <OrderStatusAdminCard />
           </div>
         </div>
+      ) : tab === "customers" && canSeePins ? (
+        <CustomerSubscriptionsAdminCard canReward={isAdminOnly} />
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (

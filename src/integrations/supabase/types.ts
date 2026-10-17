@@ -5049,6 +5049,36 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_month_rewards: {
+        Row: {
+          awarded_at: string
+          awarded_by: string
+          credential_id: string
+          new_expiry_at: string
+          order_id: string
+          previous_expiry_at: string | null
+          referrer_user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          awarded_by: string
+          credential_id: string
+          new_expiry_at: string
+          order_id: string
+          previous_expiry_at?: string | null
+          referrer_user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          awarded_by?: string
+          credential_id?: string
+          new_expiry_at?: string
+          order_id?: string
+          previous_expiry_at?: string | null
+          referrer_user_id?: string
+        }
+        Relationships: []
+      }
       remote_signout_log: {
         Row: {
           actor_id: string
@@ -7246,6 +7276,10 @@ export type Database = {
           slot_key: string
         }[]
       }
+      admin_award_referral_month: {
+        Args: { p_credential_id: string; p_order_id: string }
+        Returns: string
+      }
       admin_clock_in_staff: { Args: { _user_id: string }; Returns: string }
       admin_complete_manual_order: {
         Args: { _method?: string; _order_id: string; _reference?: string }
@@ -7292,6 +7326,7 @@ export type Database = {
         }
         Returns: string
       }
+      admin_customer_subscriptions: { Args: never; Returns: Json }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
@@ -7919,6 +7954,7 @@ export type Database = {
         Args: { p_order_id: string }
         Returns: number
       }
+      package_item_months: { Args: { p_name: string }; Returns: number }
       post_job_application_message: {
         Args: { _body: string; _token: string }
         Returns: string
@@ -7939,6 +7975,11 @@ export type Database = {
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
+      referral_reward_cutoff: { Args: never; Returns: string }
+      referral_reward_eligible: {
+        Args: { p_order_id: string }
+        Returns: boolean
+      }
       refresh_demo_account_data: { Args: never; Returns: undefined }
       release_checkout_payment_lock: {
         Args: { p_order: string }
