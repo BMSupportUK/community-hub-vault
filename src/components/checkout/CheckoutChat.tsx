@@ -178,6 +178,8 @@ export function StaffCheckoutChat({ orderId, token }: { orderId: string; token: 
 export function StaffCheckoutChatBubble({ orderId, token, orderRef }: { orderId: string; token: string; orderRef?: string | null }) {
   const { messages, send } = useStaffCheckoutChat(orderId, token);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [unread, setUnread] = useState(0);
   const openRef = useRef(open);
   openRef.current = open;
