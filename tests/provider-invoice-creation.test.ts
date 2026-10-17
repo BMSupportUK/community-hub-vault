@@ -21,7 +21,7 @@ function database(paid = false) {
    const chain: any = {
     select: () => chain, eq: () => chain,
     maybeSingle: async () => ({data:null,error:null}),
-    single: async () => ({data:{id:'test-order',total_cents:6500,user_id:null,email:null,shipping_name:'Invoice test',status:'pending',paid_at:paid?'2026-10-17T00:00:00Z':null},error:null}),
+    single: async () => ({data:{id:'test-order',total_cents:6500,user_id:null,email:'customer@example.com',shipping_name:'Invoice test',status:'pending',paid_at:paid?'2026-10-17T00:00:00Z':null},error:null}),
     insert: async (row: any) => {if(table === 'checkout_chat_messages') chat.push(row); return {error:null};},
     upsert: async (row: any) => {if(table === 'order_invoices') saved = row; return {error:null};},
    };
