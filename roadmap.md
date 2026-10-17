@@ -4,7 +4,7 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
-- [x] Fee views automatically check provider records in rotating batches every minute while visible, including known-fee adjustments; Orders and Profit refresh after confirmed changes. Six reconciliation tests plus ten existing tests pass; preview builds successfully. Live read-back still awaits dashboard unlock below.
+- [x] Preserve actual sale-time fees; automatic checks fill missing transaction fees only. New sales read actual charges, reflecting provider fee changes without applying newer rates to past sales. Invoice sync preserves recorded fees. Live read-back awaits dashboard unlock below.
 - [x] Admin dashboard Orders: recorded Provider fee and Net received columns beside original amount for admin/management; unknown fees stay Unknown, seven fee tests pass and preview builds successfully.
 - [ ] Visually verify admin Orders fee columns — blocked by the dashboard password/PIN unlock; no credentials requested or security bypassed.
 - [x] Show provider fees separately and deduct recorded fees from Profit & costs totals and package statistics; 13 calculation/invoice tests pass, unknown fees stay provisional.
