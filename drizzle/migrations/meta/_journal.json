@@ -953,6 +953,13 @@
       "when": 1792233080877,
       "tag": "0135_password_change_required",
       "breakpoints": true
+    },
+    {
+      "idx": 136,
+      "version": "7",
+      "when": 1792234294980,
+      "tag": "0136_captcha_backup_attempts",
+      "breakpoints": true
     }
   ]
 }
