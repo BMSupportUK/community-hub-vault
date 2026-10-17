@@ -3,7 +3,7 @@ import { Mic, MicOff, PhoneOff, RefreshCcw, RefreshCw, RotateCw, Video, VideoOff
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
-import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame, nextBlackPictureFix, sdpFingerprint } from "@/lib/call-media";
+import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame, nextBlackPictureFix, sdpFingerprint, shouldAutoRefresh, type AutoRefreshReason } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
 
@@ -524,31 +524,46 @@ export function VideoCallStage({
     return () => window.clearInterval(id);
   }, [side, send]);
 
-  // Staff side: when the customer's picture changes shape (phone turned), give
-  // the video player a fresh hook-up — some PC browsers keep showing black.
+  // Staff side: do automatically what the "Refresh customer's picture" button
+  // does — a fresh connection shortly after the call starts, and again after
+  // every phone turn — so staff never have to press it to get a picture.
+  const autoRef = useRef({ startedDone: false, lastAuto: 0 });
+  const autoTimer = useRef(0);
+  const autoRefresh = useCallback((reason: AutoRefreshReason) => {
+    if (side !== "offerer") return;
+    window.clearTimeout(autoTimer.current);
+    autoTimer.current = window.setTimeout(() => {
+      if (remoteCamOffRef.current || hungRef.current) return;
+      const now = Date.now();
+      if (!shouldAutoRefresh(reason, now, autoRef.current)) return;
+      if (reason === "start") autoRef.current.startedDone = true;
+      autoRef.current.lastAuto = now;
+      send("camrestart");
+      rebuildRef.current();
+    }, reason === "start" ? 2500 : 1200);
+  }, [side, send]);
+  useEffect(() => () => window.clearTimeout(autoTimer.current), []);
+  useEffect(() => { if (connected) autoRefresh("start"); }, [connected, autoRefresh]);
+  const firstOrient = useRef(true);
+  useEffect(() => {
+    if (firstOrient.current) { firstOrient.current = false; return; }
+    autoRefresh("turn");
+  }, [remoteRotate, autoRefresh]);
   useEffect(() => {
     if (side !== "offerer") return;
     const v = remoteRef.current;
     if (!v) return;
     let lastShape = "";
-    let timer = 0;
     const onResize = () => {
       const shape = v.videoWidth > v.videoHeight ? "wide" : "tall";
       if (!v.videoWidth || shape === lastShape) return;
       const first = !lastShape;
       lastShape = shape;
-      if (first) return;
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        const s = v.srcObject;
-        v.srcObject = null;
-        v.srcObject = s;
-        v.play().catch(() => {});
-      }, 400);
+      if (!first) autoRefresh("turn");
     };
     v.addEventListener("resize", onResize);
-    return () => { window.clearTimeout(timer); v.removeEventListener("resize", onResize); };
-  }, [side]);
+    return () => v.removeEventListener("resize", onResize);
+  }, [side, autoRefresh]);
 
   useEffect(() => {
     const el = stageRef.current;
