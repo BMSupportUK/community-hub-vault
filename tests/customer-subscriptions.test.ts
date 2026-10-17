@@ -28,7 +28,7 @@ async function sale(n:number,name='12 months',kind='new',status='completed',stam
 }
 const grant = (n:number,credential=id(4))=>db.query('SELECT admin_award_referral_month($1,$2) AS expiry',[id(n),credential]);
 test('12-month referral adds one calendar month on top of remaining time and clamps month end',async()=>{
- await sale(10); const result=await grant(10); expect(String(result.rows[0]?.expiry)).toContain('2027-02-28');
+ await sale(10); const result=await grant(10); expect(new Date(result.rows[0]?.expiry as string).toISOString()).toBe('2027-02-28T12:30:00.000Z');
 });
 test('same referred purchase cannot grant twice',async()=>{await expect(grant(10)).rejects.toThrow('already');});
 test('all 12-month package types qualify without adding together shorter purchases',async()=>{
