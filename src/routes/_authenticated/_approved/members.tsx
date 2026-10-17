@@ -5,11 +5,9 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Users, Search, Clock, UserPlus, Eye, Check, Lock, ShieldOff, MapPin, KeyRound } from "lucide-react";
+import { Users, Search, Clock, UserPlus, Eye, Check, Lock, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserMfa } from "@/lib/mfa.functions";
-import { sendTemporaryPassword } from "@/lib/temp-password.functions";
 import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
 
@@ -103,41 +101,6 @@ function MembersPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"online" | "offline">("online");
-
-  const [resetTarget, setResetTarget] = useState<Profile | null>(null);
-  const [resetReason, setResetReason] = useState("");
-  const [resetBusy, setResetBusy] = useState(false);
-  const resetMfa = useServerFn(resetUserMfa);
-  const sendTempPw = useServerFn(sendTemporaryPassword);
-  const [pwTarget, setPwTarget] = useState<Profile | null>(null);
-  const [pwBusy, setPwBusy] = useState(false);
-  const doSendPw = async () => {
-    if (!pwTarget) return;
-    setPwBusy(true);
-    try {
-      await sendTempPw({ data: { userId: pwTarget.id } });
-      toast.success("New password emailed. They'll be asked to change it when they sign in.");
-      setPwTarget(null);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Couldn't send the new password");
-    } finally {
-      setPwBusy(false);
-    }
-  };
-
-  const doReset = async () => {
-    if (!resetTarget) return;
-    setResetBusy(true);
-    try {
-      const res = await resetMfa({ data: { userId: resetTarget.id, reason: resetReason.trim() || undefined } });
-      toast.success(res.removed > 0 ? `Removed ${res.removed} factor(s)` : "No 2FA factors to remove");
-      setResetTarget(null); setResetReason("");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to reset 2FA");
-    } finally {
-      setResetBusy(false);
-    }
-  };
 
   const load = async () => {
     if (isDemo) {
