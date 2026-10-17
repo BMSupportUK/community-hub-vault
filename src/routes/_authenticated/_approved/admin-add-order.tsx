@@ -1,3 +1,4 @@
+import { STRIPE_CHECKOUT_ENABLED, effectiveCardProvider } from "@/lib/payment-methods";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, CalendarIcon, Plus } from "lucide-react";
@@ -149,11 +150,11 @@ function AddOrderPage() {
             <select id="pay-method" value={payMethod} onChange={(e) => setPayMethod(e.target.value)} className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm">
               <option value="">Choose how the customer wants to pay…</option>
               <option value="square">Square</option>
-              <option value="stripe">Stripe</option>
+              {STRIPE_CHECKOUT_ENABLED && <option value="stripe">Stripe</option>}
               <option value="wise">Wise (bank transfer, UK only)</option>
               <option value="cash">Cash</option>
             </select>
-            <p className="text-xs text-muted-foreground">Stripe and Square show a secure card form on the checkout page; Wise shows your bank details (UK customers only); Cash shows a thank-you page.</p>
+            <p className="text-xs text-muted-foreground">Square shows a payable invoice on the checkout page; Wise shows your bank details (UK customers only); Cash shows a thank-you page.</p>
           </div>
           <div className="space-y-2 pt-2 border-t border-border">
             <label className="text-sm font-medium" htmlFor="order-date">Order date</label>
