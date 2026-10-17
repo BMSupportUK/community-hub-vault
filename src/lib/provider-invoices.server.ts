@@ -120,17 +120,18 @@ export async function createProviderInvoice(db: any, orderId: string, requestedP
     } else {
       const locationId = process.env.SQUARE_LOCATION_ID;
       if (!locationId) throw new Error('Square location is not configured');
-      // Square refuses invoices whose recipient has no email or phone, so
-      // always supply one: the order email, the account email, or ours.
-      let payerEmail: string | null = order.email || null;
+      // Square needs a recipient email. Demo orders use the demo inbox;
+      // real orders use only the customer's own email (order, then account).
+      const isDemo = /\bdemo\b/i.test(order.shipping_name || '');
+      let payerEmail: string | null = isDemo ? 'bmsupport2022@protonmail.com' : (order.email || null);
       if (!payerEmail && order.user_id) {
         try {
           const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
           const { data } = await supabaseAdmin.auth.admin.getUserById(order.user_id);
           payerEmail = data?.user?.email || null;
-        } catch { /* fall through to the shop address */ }
+        } catch { /* no account email */ }
       }
-      payerEmail = payerEmail || 'payments@bmsupport.uk';
+      if (!payerEmail) throw new Error("This order has no customer email — add the customer's email to the order before sending a Square invoice.");
       const customer = (await squareRequest('/v2/customers', { idempotency_key: key, given_name: order.shipping_name || 'Customer', email_address: payerEmail })).customer;
       const sqOrder = (await squareRequest('/v2/orders', { idempotency_key: key, order: { location_id: locationId, customer_id: customer.id, reference_id: orderId, line_items: [{ name: `BM Support order #${orderId.slice(0,8)}`, quantity: '1', base_price_money: { amount: order.total_cents, currency: 'GBP' } }] } })).order;
       const draft = (await squareRequest('/v2/invoices', { idempotency_key: key, invoice: { location_id: locationId, order_id: sqOrder.id, primary_recipient: { customer_id: customer.id }, payment_requests: [{ request_type: 'BALANCE', due_date: new Date(Date.now()+30*86400000).toISOString().slice(0,10) }], delivery_method: 'SHARE_MANUALLY', accepted_payment_methods: { card: true, square_gift_card: false, bank_account: false, buy_now_pay_later: false }, title: `BM Support order #${orderId.slice(0,8)}` } })).invoice;
