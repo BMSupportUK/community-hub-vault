@@ -27,9 +27,11 @@ async function buildMessage(kind: Kind, id: string): Promise<string | null> {
       .maybeSingle();
     const { data: info } = await supabaseAdmin
       .from("signup_info")
-      .select("country, city, isp, is_vpn, is_proxy")
+      .select("country, city, isp, is_vpn, is_proxy, referrer")
       .eq("user_id", id)
       .maybeSingle();
+    // Referral sign-ups are already approved — no new-signup alert.
+    if (String((info as { referrer?: string | null } | null)?.referrer ?? "").trim()) return null;
     const name = (prof?.display_name as string) || (prof?.username as string) || "new user";
     const loc = [info?.city, info?.country].filter(Boolean).join(", ");
     const flags = [
