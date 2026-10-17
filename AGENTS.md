@@ -40,4 +40,4 @@
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 
-- Profit uses GBP pence; unknown fees stay provisional; allocation preserves totals. Fee views paginate automatic reconciliation and write only confirmed changes.
+- Profit uses GBP pence; unknown fees are provisional; allocation preserves totals. Fee views paginate auto-reconciliation, writing only confirmed changes.
