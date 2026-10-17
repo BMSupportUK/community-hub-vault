@@ -3,7 +3,7 @@ import { Mic, MicOff, PhoneOff, RefreshCcw, RefreshCw, RotateCw, Video, VideoOff
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
-import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame } from "@/lib/call-media";
+import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame, nextBlackPictureFix, sdpFingerprint } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
 
@@ -102,6 +102,11 @@ export function VideoCallStage({
   const micStartingRef = useRef(false);
   const restartingRef = useRef(false);
   const restartCamRef = useRef<() => void>(() => {});
+  // Staff side: tear down and rebuild the connection (fresh encoder/decoder on
+  // both ends) — the last resort when the customer's picture stays black.
+  const rebuildRef = useRef<() => void>(() => {});
+  // Customer deliberately turned their camera off: don't "repair" the black.
+  const remoteCamOffRef = useRef(false);
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
     chRef.current?.send({ type: "broadcast", event, payload }).catch(() => {});
@@ -210,6 +215,17 @@ export function VideoCallStage({
       pcRef.current?.close();
       pcRef.current = null;
       if (createPeer()) void makeOffer();
+    };
+
+    // Same customer device, brand-new connection on both sides.
+    rebuildRef.current = () => {
+      const to = activeTagRef.current;
+      if (side !== "offerer" || !to || hungRef.current) return;
+      offeredRef.current = false;
+      pendingIce.current = [];
+      pcRef.current?.close();
+      pcRef.current = null;
+      if (createPeer()) send("rebuild", { to });
     };
 
     const flushIce = async () => {
