@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
@@ -19,6 +20,7 @@ const renewalDay = (v: string | null) => v ? new Intl.DateTimeFormat("en-CA", { 
 
 export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boolean }) {
   const [rows, setRows] = useState<Customer[]>([]);
+  const [tab, setTab] = useState<"site" | "manual">("site");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -133,16 +135,27 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
     await load();
   };
   const visible = rows.filter((c) => [c.username, c.displayName, c.referrerName, ...c.accounts.map((a) => a.login)].some((v) => v?.toLowerCase().includes(search.toLowerCase())));
+  const siteRows = visible.filter((c) => c.hasSiteAccount);
+  const manualRows = visible.filter((c) => !c.hasSiteAccount);
+  const siteCount = rows.filter((c) => c.hasSiteAccount).length;
+  const manualCount = rows.length - siteCount;
+  const shown = tab === "site" ? siteRows : manualRows;
   return (
     <section className="min-w-0 py-4" aria-label="Customer subscriptions">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-bold">Customers <span className="text-sm text-muted-foreground">{rows.length}</span></h2>
+        <h2 className="font-display text-xl font-bold">Customers</h2>
         <div className="flex gap-2"><Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button></div>
       </div>
-      {error ? <p role="alert" className="text-destructive">{error}</p> : loading ? <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin" /></div> : !visible.length ? <p className="py-8 text-muted-foreground">No customers found.</p> : (
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "site" | "manual")} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="site">Site customers <span className="ml-1 text-muted-foreground">{siteCount}</span></TabsTrigger>
+          <TabsTrigger value="manual">Manual customers <span className="ml-1 text-muted-foreground">{manualCount}</span></TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {error ? <p role="alert" className="text-destructive">{error}</p> : loading ? <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin" /></div> : !shown.length ? <p className="py-8 text-muted-foreground">No customers found.</p> : (
         <div className="overflow-x-auto"><table className="w-full min-w-[1000px] text-sm">
           <thead className="text-left text-xs uppercase text-muted-foreground"><tr>{["Username", "Current package", "Runs out", "Last renewed", "Referred by", "Year joined", "Years as customer"].map((h) => <th key={h} className="border-b border-border p-3">{h}</th>)}</tr></thead>
-          <tbody>{visible.map((c) => {
+          <tbody>{shown.map((c) => {
             const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
             const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
             const showNoRenewal = customerShowsNoRenewal(hasRecordedYear, years);
