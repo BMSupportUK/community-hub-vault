@@ -37,12 +37,13 @@ export const Route = createFileRoute("/api/public/hooks/square-invoice")({
         if (!invoice?.id) return new Response("ok");
 
         const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-        const { data: row } = await supabaseAdmin
+        const { data: row, error: lookupError } = await supabaseAdmin
           .from("order_invoices")
           .select("order_id,status")
           .eq("square_invoice_id", invoice.id)
           .maybeSingle();
 
+        if (lookupError) return new Response('Invoice lookup failed', { status: 500 });
         if (!row) return new Response("ok");
 
         try {
