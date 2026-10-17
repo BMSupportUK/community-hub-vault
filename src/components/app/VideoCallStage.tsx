@@ -461,31 +461,94 @@ export function VideoCallStage({
     };
   }, [side]);
 
-  // Staff side: if the customer's picture goes black for a few seconds, ask
-  // their phone to restart its camera (it recovers without ending the call).
+  // Staff side: when the customer's picture goes black or freezes, repair it in
+  // steps — re-attach it here, restart their camera, then rebuild the whole
+  // connection (fresh encoder + decoder on both ends) without ending the call.
   useEffect(() => {
     if (side !== "offerer") return;
     const canvas = document.createElement("canvas");
     canvas.width = 32;
     canvas.height = 24;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const state = { reattached: false, lastAsk: 0, lastRebuild: 0 };
     let darkSince = 0;
-    let lastAsk = 0;
-    const id = window.setInterval(() => {
+    let lastFrames = -1;
+    let busy = false;
+    const id = window.setInterval(async () => {
+      if (busy) return;
       const v = remoteRef.current;
-      if (!ctx || !v || pcRef.current?.connectionState !== "connected" || !v.srcObject) { darkSince = 0; return; }
-      if (v.paused) v.play().catch(() => {});
-      let black = v.readyState < 2 || v.videoWidth === 0;
-      if (!black) {
-        try { ctx.drawImage(v, 0, 0, 32, 24); black = isBlackFrame(ctx.getImageData(0, 0, 32, 24).data); } catch { black = false; }
+      const pc = pcRef.current;
+      if (!ctx || !v || !pc || pc.connectionState !== "connected" || !v.srcObject || remoteCamOffRef.current) {
+        darkSince = 0; lastFrames = -1; return;
       }
-      const now = Date.now();
-      if (!black) { darkSince = 0; return; }
-      if (!darkSince) darkSince = now;
-      if (now - darkSince >= 3000 && now - lastAsk >= 8000) { lastAsk = now; send("camrestart"); }
+      busy = true;
+      try {
+        if (v.paused) v.play().catch(() => {});
+        let bad = v.readyState < 2 || v.videoWidth === 0;
+        if (!bad) {
+          try { ctx.drawImage(v, 0, 0, 32, 24); bad = isBlackFrame(ctx.getImageData(0, 0, 32, 24).data); } catch { bad = false; }
+        }
+        // Frozen: no new frames decoded since last check (screen may show black).
+        try {
+          let frames = -1;
+          (await pc.getStats()).forEach((r) => {
+            if (r.type === "inbound-rtp" && r.kind === "video" && typeof r.framesDecoded === "number") frames = r.framesDecoded;
+          });
+          if (frames >= 0 && lastFrames >= 0 && frames === lastFrames) bad = true;
+          lastFrames = frames;
+        } catch { /* stats unavailable */ }
+        const now = Date.now();
+        if (!bad) { darkSince = 0; state.reattached = false; return; }
+        if (!darkSince) darkSince = now;
+        const fix = nextBlackPictureFix(now - darkSince, now, state);
+        if (fix === "reattach") {
+          state.reattached = true;
+          const s = v.srcObject;
+          v.srcObject = null;
+          v.srcObject = s;
+          v.play().catch(() => {});
+        } else if (fix === "camrestart") {
+          state.lastAsk = now;
+          send("camrestart");
+        } else if (fix === "rebuild") {
+          state.lastRebuild = now;
+          darkSince = 0;
+          state.reattached = false;
+          lastFrames = -1;
+          rebuildRef.current();
+        }
+      } finally {
+        busy = false;
+      }
     }, 1000);
     return () => window.clearInterval(id);
   }, [side, send]);
+
+  // Staff side: when the customer's picture changes shape (phone turned), give
+  // the video player a fresh hook-up — some PC browsers keep showing black.
+  useEffect(() => {
+    if (side !== "offerer") return;
+    const v = remoteRef.current;
+    if (!v) return;
+    let lastShape = "";
+    let timer = 0;
+    const onResize = () => {
+      const shape = v.videoWidth > v.videoHeight ? "wide" : "tall";
+      if (!v.videoWidth || shape === lastShape) return;
+      const first = !lastShape;
+      lastShape = shape;
+      if (first) return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const s = v.srcObject;
+        v.srcObject = null;
+        v.srcObject = s;
+        v.play().catch(() => {});
+      }, 400);
+    };
+    v.addEventListener("resize", onResize);
+    return () => { window.clearTimeout(timer); v.removeEventListener("resize", onResize); };
+  }, [side]);
 
   useEffect(() => {
     const el = stageRef.current;
