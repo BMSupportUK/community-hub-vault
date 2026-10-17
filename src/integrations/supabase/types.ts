@@ -7593,6 +7593,10 @@ export type Database = {
         Args: { p_customer_id: string; p_username: string }
         Returns: undefined
       }
+      admin_set_manual_customer_login: {
+        Args: { p_login_name: string; p_order_id: string; p_password?: string }
+        Returns: undefined
+      }
       admin_upsert_signup_vpn: {
         Args: {
           _city: string
