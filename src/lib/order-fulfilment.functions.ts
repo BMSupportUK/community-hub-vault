@@ -300,7 +300,16 @@ export const getOrderRenewalAccounts = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertStaff(context.supabase, context.userId);
+    const { data: linkedAccount, error: linkedError } = await context.supabase.rpc("staff_order_linked_renewal_account", { p_order_id: data.orderId });
+    if (linkedError) throw new Error(linkedError.message);
+    if (linkedAccount) {
+      const { terms } = await loadOrderContext(data.orderId);
+      const account = linkedAccount as unknown as CredentialCandidate;
+      return { accounts: [account], suggestedId: account.id, months: terms.months };
+    }
     const { order, terms, ownerId } = await loadOrderContext(data.orderId);
+    // An ungrouped manual sale must never load its staff creator's site accounts.
+    if (order.customer_type === "manual") return { accounts: [], suggestedId: null, months: terms.months };
     // The credentials view only shows rows to a signed-in staff member, so read
     // it as the staff user (the admin client sees nothing through it).
     let creds: CredentialCandidate[] = [];

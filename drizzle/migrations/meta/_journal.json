@@ -1114,6 +1114,20 @@
       "when": 1792269231506,
       "tag": "0158_customer_per_account_packages",
       "breakpoints": true
+    },
+    {
+      "idx": 159,
+      "version": "7",
+      "when": 1792269808890,
+      "tag": "0159_manual_customer_groups_and_renewals",
+      "breakpoints": true
+    },
+    {
+      "idx": 160,
+      "version": "7",
+      "when": 1792269996009,
+      "tag": "0160_prevent_manual_renewal_group_reassignment",
+      "breakpoints": true
     }
   ]
 }

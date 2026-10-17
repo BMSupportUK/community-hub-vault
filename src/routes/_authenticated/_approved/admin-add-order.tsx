@@ -10,6 +10,10 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { customerDate } from "@/lib/customer-date";
+
+type ManualCustomer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; accounts: { id: string; login: string; expiresAt: string | null }[] };
+
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-add-order")({
@@ -45,9 +49,21 @@ function AddOrderPage() {
   const [customerKind, setCustomerKind] = useState<"" | "new" | "existing">("");
   const [created, setCreated] = useState<{ id: string; ref: string; invoiceError?: string } | null>(null);
 
+  const [manualCustomers, setManualCustomers] = useState<ManualCustomer[]>([]);
+  const [customerId, setCustomerId] = useState("");
+  const [renewalAccountId, setRenewalAccountId] = useState("");
+  const [lookupError, setLookupError] = useState("");
+
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
   }, []);
+  useEffect(() => {
+    if (!hasRole("admin")) return;
+    void supabase.rpc("admin_customer_subscription_list").then(({ data, error }) => {
+      setLookupError(error?.message ?? "");
+      setManualCustomers(((data ?? []) as unknown as ManualCustomer[]).filter((c) => !c.hasSiteAccount));
+    });
+  }, [user?.id]);
 
   if (!hasRole("admin")) return <Navigate to="/admin" />;
   if (!isAdminUnlocked(user?.id)) return <Navigate to="/admin" search={{ next: "/admin-add-order" } as never} />;
@@ -59,6 +75,7 @@ function AddOrderPage() {
     if (!custName.trim()) return toast.error("Enter the customer name");
     if (!items.length) return toast.error("Pick at least one product");
     if (!customerKind) return toast.error("Is this a new or existing customer?");
+    if (customerKind === "existing" && (!customerId || !renewalAccountId)) return toast.error("Choose the manual customer and account to renew");
     if (!payMethod) return toast.error("Pick the payment method");
     const mail = email.trim();
     if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return toast.error("Enter a valid email address");
@@ -71,7 +88,7 @@ function AddOrderPage() {
     const createdAt = isToday
       ? undefined
       : new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
-    const { data: id, error } = await supabase.rpc("admin_create_manual_order_v2" as never, {
+    const { data: id, error } = await supabase.rpc("admin_create_manual_order_v3" as never, {
       _customer_name: custName.trim(),
       _items: items,
       _method: payMethod,
@@ -79,6 +96,8 @@ function AddOrderPage() {
       _discount_cents: discountCents,
       _customer_kind: customerKind,
       _created_at: createdAt ? createdAt.toISOString() : null,
+      _customer_id: customerKind === "existing" ? customerId : null,
+      _account_id: customerKind === "existing" ? renewalAccountId : null,
     } as never);
     if (error) { setBusy(false); return toast.error(error.message); }
     const { data: o } = await supabase.from("orders").select("order_ref").eq("id", id as string).maybeSingle();
@@ -104,7 +123,7 @@ function AddOrderPage() {
             <SecureLinkPanel orderId={created.id} withChat={false} />
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={back} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Back to Orders</button>
-              <button type="button" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setPayMethod(""); }} className="h-9 px-4 rounded-lg border border-border text-sm font-medium">Add another</button>
+              <button type="button" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); }} className="h-9 px-4 rounded-lg border border-border text-sm font-medium">Add another</button>
             </div>
           </div>
         </div>
@@ -126,17 +145,26 @@ function AddOrderPage() {
           </div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-          <input value={custName} onChange={(e) => setCustName(e.target.value)} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+          <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <div className="space-y-1.5">
             <div className="text-sm font-medium">Customer</div>
             <div className="flex gap-2">
               {(["new", "existing"] as const).map((k) => (
-                <button key={k} type="button" onClick={() => setCustomerKind(k)} className={`flex-1 h-10 rounded-lg border text-sm font-medium ${customerKind === k ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}>{k === "new" ? "New customer" : "Existing customer"}</button>
+                <Button key={k} variant={customerKind === k ? "default" : "outline"} onClick={() => { setCustomerKind(k); setCustomerId(""); setRenewalAccountId(""); }} className="flex-1 h-10">{k === "new" ? "New customer" : "Existing customer"}</Button>
               ))}
             </div>
             <p className="text-xs text-muted-foreground">When complete, the secure page tells new customers their account is set up, and existing customers their subscription is upgraded.</p>
           </div>
+          {customerKind === "existing" && <div className="space-y-3">
+            {lookupError && <p role="alert" className="text-sm text-destructive">{lookupError}</p>}
+            <label className="block space-y-1 text-sm">Manual customer<select aria-label="Manual customer" value={customerId} onChange={(e) => {
+              const c = manualCustomers.find((row) => row.userId === e.target.value);
+              setCustomerId(e.target.value); setRenewalAccountId("");
+              if (c) setCustName(c.displayName || c.username || custName);
+            }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-foreground"><option value="">Choose matching customer</option>{manualCustomers.filter((c) => c.userId === customerId || [c.username, c.displayName, ...c.accounts.map((a) => a.login)].some((v) => v?.toLowerCase().includes(custName.trim().toLowerCase()))).map((c) => <option key={c.userId} value={c.userId}>{c.displayName || c.username} · {c.username || "No site account"}</option>)}</select></label>
+            {customerId && <label className="block space-y-1 text-sm">Account to renew<select aria-label="Manual account to renew" value={renewalAccountId} onChange={(e) => setRenewalAccountId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-foreground"><option value="">Choose subscription account</option>{manualCustomers.find((c) => c.userId === customerId)?.accounts.map((a) => <option key={a.id} value={a.id}>{a.login} · Runs out {customerDate(a.expiresAt)}</option>)}</select></label>}
+          </div>}
           <div className="space-y-2">
             {products === null ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
