@@ -1,15 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mic, MicOff, PhoneOff, RefreshCw, RotateCw, Video, VideoOff, Loader2, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, PhoneOff, RefreshCcw, RefreshCw, RotateCw, Video, VideoOff, Loader2, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
-import { attachCallMicrophone, callMicrophoneError, initialCallMedia } from "@/lib/call-media";
+import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
 
 export { staffPlaceholder, staffPlaceholderMale };
 
 type Side = "offerer" | "answerer";
+
+/** Prefer VP8: some phones' built-in H.264 encoder sends only black after the
+ *  picture changes shape (phone rotated), while VP8 copes with it. */
+function preferVp8(pc: RTCPeerConnection) {
+  const caps = typeof RTCRtpReceiver !== "undefined" ? RTCRtpReceiver.getCapabilities?.("video") : null;
+  if (!caps) return;
+  const vp8 = caps.codecs.filter((c) => /\/vp8$/i.test(c.mimeType));
+  if (!vp8.length) return;
+  const rest = caps.codecs.filter((c) => !/\/vp8$/i.test(c.mimeType));
+  for (const t of pc.getTransceivers()) {
+    if (t.receiver.track.kind !== "video" || !t.setCodecPreferences) continue;
+    try { t.setCodecPreferences([...vp8, ...rest]); } catch { /* unsupported */ }
+  }
+}
 
 /**
  * Full-screen two-way video call. Both sides send camera + mic; the offerer
@@ -86,6 +100,8 @@ export function VideoCallStage({
   const [error, setError] = useState<string | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
   const micStartingRef = useRef(false);
+  const restartingRef = useRef(false);
+  const restartCamRef = useRef<() => void>(() => {});
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
     chRef.current?.send({ type: "broadcast", event, payload }).catch(() => {});
@@ -122,6 +138,7 @@ export function VideoCallStage({
       // the offer the customer's phone camera can never be sent -> black screen.
       if (!stream.getVideoTracks().length) pc.addTransceiver("video", { direction: "sendrecv", streams: [stream] });
       if (!stream.getAudioTracks().length) pc.addTransceiver("audio", { direction: "sendrecv", streams: [stream] });
+      preferVp8(pc);
       // Candidates found before the offer/answer is sent travel inside it (one
       // message instead of a burst that the signalling channel can drop);
       // only late ones are sent separately.
@@ -146,6 +163,7 @@ export function VideoCallStage({
         const v = remoteRef.current;
         setRemoteHasVideo(true);
         e.track.onended = () => setRemoteHasVideo(false);
+        e.track.onunmute = () => { remoteRef.current?.play().catch(() => {}); };
         if (v && v.srcObject !== src) {
           v.srcObject = src;
           v.muted = true;
@@ -238,6 +256,7 @@ export function VideoCallStage({
         const deg = Number((payload as { deg?: number }).deg);
         if ([0, 90, 180, 270].includes(deg)) setRemoteRotate(deg);
       });
+      ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
       ch.on("broadcast", { event: "staffmeta" }, ({ payload }) => {
         if (side !== "answerer") return;
         const g = (payload as { gender?: string }).gender;
@@ -266,6 +285,7 @@ export function VideoCallStage({
             }
             descSent.delete(cur);
             await cur.setRemoteDescription({ type: "offer", sdp: p.sdp });
+            preferVp8(cur);
             const answer = await cur.createAnswer();
             await cur.setLocalDescription(answer);
             await gathered(cur);
@@ -370,6 +390,62 @@ export function VideoCallStage({
     };
   }, [side, send]);
 
+  // Customer's phone: some phones keep the call up but send only black after
+  // the screen turns. Swap in a fresh camera after each turn, and whenever the
+  // camera stops delivering a picture.
+  useEffect(() => {
+    if (side !== "answerer") return;
+    let timer = 0;
+    let landscape = window.innerWidth > window.innerHeight;
+    const live = () => pcRef.current?.connectionState === "connected" && document.visibilityState === "visible";
+    const onTurn = () => {
+      landscape = window.innerWidth > window.innerHeight;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => { if (live()) restartCamRef.current(); }, 900);
+    };
+    const onResize = () => { if ((window.innerWidth > window.innerHeight) !== landscape) onTurn(); };
+    screen.orientation?.addEventListener?.("change", onTurn);
+    window.addEventListener("orientationchange", onTurn);
+    window.addEventListener("resize", onResize);
+    const watch = window.setInterval(() => {
+      const t = streamRef.current?.getVideoTracks()[0];
+      if (t && (t.readyState === "ended" || t.muted) && live()) restartCamRef.current();
+    }, 2500);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(watch);
+      screen.orientation?.removeEventListener?.("change", onTurn);
+      window.removeEventListener("orientationchange", onTurn);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [side]);
+
+  // Staff side: if the customer's picture goes black for a few seconds, ask
+  // their phone to restart its camera (it recovers without ending the call).
+  useEffect(() => {
+    if (side !== "offerer") return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 24;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    let darkSince = 0;
+    let lastAsk = 0;
+    const id = window.setInterval(() => {
+      const v = remoteRef.current;
+      if (!ctx || !v || pcRef.current?.connectionState !== "connected" || !v.srcObject) { darkSince = 0; return; }
+      if (v.paused) v.play().catch(() => {});
+      let black = v.readyState < 2 || v.videoWidth === 0;
+      if (!black) {
+        try { ctx.drawImage(v, 0, 0, 32, 24); black = isBlackFrame(ctx.getImageData(0, 0, 32, 24).data); } catch { black = false; }
+      }
+      const now = Date.now();
+      if (!black) { darkSince = 0; return; }
+      if (!darkSince) darkSince = now;
+      if (now - darkSince >= 3000 && now - lastAsk >= 8000) { lastAsk = now; send("camrestart"); }
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [side, send]);
+
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -443,23 +519,44 @@ export function VideoCallStage({
       setError("Couldn't turn the camera on. Allow camera permission in your browser and try again.");
     }
   };
-  const flip = async () => {
-    if (!streamRef.current?.getVideoTracks()[0]) return;
-    const next = facingRef.current === "user" ? "environment" : "user";
+  // Fresh camera track swapped into the live call (no renegotiation). Used for
+  // flipping, and to recover phones that send black after the screen rotates.
+  const restartCamera = async (facing: "user" | "environment" = facingRef.current) => {
+    const stream = streamRef.current;
+    const old = stream?.getVideoTracks()[0];
+    if (!stream || !old || restartingRef.current) return false;
+    restartingRef.current = true;
+    const enabled = old.enabled;
+    const get = () => navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing } }, audio: false });
     try {
-      const fresh = await navigator.mediaDevices.getUserMedia({ video: { facingMode: next }, audio: false });
-      const newTrack = fresh.getVideoTracks()[0];
-      const sender = pcRef.current?.getSenders().find((s) => s.track?.kind === "video");
-      await sender?.replaceTrack(newTrack);
-      const stream = streamRef.current;
-      stream?.getVideoTracks().forEach((t) => { stream.removeTrack(t); t.stop(); });
-      stream?.addTrack(newTrack);
-      newTrack.enabled = camOn;
-      facingRef.current = next;
-      if (localRef.current && stream) localRef.current.srcObject = stream;
+      let fresh: MediaStream;
+      // Some phones allow only one camera user: free the old one and retry.
+      try { fresh = await get(); } catch { old.stop(); fresh = await get(); }
+      const track = fresh.getVideoTracks()[0];
+      if (!track || streamRef.current !== stream) { fresh.getTracks().forEach((t) => t.stop()); return false; }
+      const slot = pcRef.current?.getTransceivers().find((t) => t.receiver.track.kind === "video");
+      await slot?.sender.replaceTrack(track);
+      stream.getVideoTracks().forEach((t) => { stream.removeTrack(t); t.stop(); });
+      stream.addTrack(track);
+      track.enabled = enabled;
+      facingRef.current = facing;
+      if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
+      return true;
     } catch {
-      setError("Couldn't switch camera on this device.");
+      return false;
+    } finally {
+      restartingRef.current = false;
     }
+  };
+  restartCamRef.current = () => {
+    const t = streamRef.current?.getVideoTracks()[0];
+    if (!t || !t.enabled) return; // camera deliberately off
+    void restartCamera();
+  };
+  const flip = async () => {
+    if (!streamRef.current?.getVideoTracks()[0] || restartingRef.current) return;
+    const next = facingRef.current === "user" ? "environment" : "user";
+    if (!(await restartCamera(next))) setError("Couldn't switch camera on this device.");
   };
 
   return (

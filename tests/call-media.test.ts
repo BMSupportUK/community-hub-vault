@@ -35,3 +35,11 @@ test("a busy enabled microphone is distinguished from denied access", () => {
   expect(callMicrophoneError(new DOMException("Denied", "NotAllowedError"))).toContain("blocked");
   expect(callMicrophoneError(new DOMException("Track failed", "InvalidModificationError"))).not.toContain("blocked");
 });
+test("an all-black customer picture is detected so the camera can be restarted", async () => {
+  const { isBlackFrame } = await import("../src/lib/call-media");
+  const black = new Uint8ClampedArray(32 * 24 * 4);
+  expect(isBlackFrame(black)).toBe(true);
+  const dim = new Uint8ClampedArray(black);
+  dim.set([40, 40, 40, 255], 100 * 4);
+  expect(isBlackFrame(dim)).toBe(false);
+});

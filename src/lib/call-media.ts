@@ -39,3 +39,12 @@ export async function attachCallMicrophone(pc: RTCPeerConnection, stream: MediaS
     throw error;
   }
 }
+/** True when a sampled video frame (RGBA pixels) is effectively all black. */
+export function isBlackFrame(rgba: ArrayLike<number>, threshold = 12): boolean {
+  let max = 0;
+  for (let i = 0; i + 2 < rgba.length; i += 4) {
+    const l = 0.299 * rgba[i] + 0.587 * rgba[i + 1] + 0.114 * rgba[i + 2];
+    if (l > max) max = l;
+  }
+  return max < threshold;
+}
