@@ -71,6 +71,14 @@ test('manual subscriptions match the customer email, not staff creator, and incl
  expect(rows.some(c=>c.userId===id(1))).toBe(false);expect(rows.find(c=>c.userId===id(2))?.accounts[0]?.login).toBe('customer-login');
 });
 
+test('customer list flags profile-backed customers and manual-order customers without site accounts',async()=>{
+ await sale(31,'12 months','manual');
+ await db.exec(`UPDATE private.orders SET user_id=NULL,email_enc=convert_to('noprofile@example.test','UTF8') WHERE id='${id(31)}'`);
+ const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data??[];
+ expect(rows.find(c=>c.userId===id(2))?.hasSiteAccount).toBe(true);
+ expect(rows.find(c=>c.userId===id(31))?.hasSiteAccount).toBe(false);
+});
+
 test('admin backdates first subscription and tenure uses completed years without changing expiry',async()=>{
  const before=(await db.query('SELECT expiry_at FROM private.app_credentials WHERE id=$1',[id(4)])).rows[0];
  const start=(await db.query<{d:string}>("SELECT ((now() AT TIME ZONE 'Europe/London')::date-interval '5 years'+interval '1 day')::date::text d")).rows[0]?.d;
