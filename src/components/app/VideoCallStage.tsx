@@ -75,7 +75,7 @@ export function VideoCallStage({
   const rotationRecovery = useRef(new RotationRecovery());
   const prevRemoteDeg = useRef(0);
   const showRotating = useCallback((awaitingCamera = false) => {
-    rotationRecovery.current.begin(awaitingCamera);
+    rotationRecovery.current.begin(awaitingCamera, performance.now());
     setRotating(true);
   }, []);
   const pcRef = useRef<RTCPeerConnection | null>(null);
