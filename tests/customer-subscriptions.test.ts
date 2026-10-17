@@ -25,6 +25,8 @@ beforeAll(async () => {
  await db.exec(readFileSync(new URL('../drizzle/migrations/0150_customer_package_allocation.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0151_customer_site_account_flag.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0152_customer_last_renewed_date_editing.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0153_hide_test_and_admin_customer_accounts.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0154_correct_hidden_customer_name_match.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -149,4 +151,20 @@ test('admin can restore recorded last renewed date',async()=>{
 });
 test('renewal date editing rejects unknown customers',async()=>{
  await expect(db.query('SELECT admin_set_customer_last_renewed($1,$2)',[id(999),'2025-06-15'])).rejects.toThrow('Customer not found');
+});
+
+test('test and admin accounts are hidden from the customer list but real customers remain',async()=>{
+ await db.exec(`INSERT INTO profiles VALUES('${id(60)}','guest48h','Guest'),('${id(61)}','danej','DaneJ');
+  INSERT INTO private.app_credentials VALUES('${id(62)}','${id(60)}','demo-sample-01','single',1,'2026-11-11 21:10+00',NULL,now()),('${id(63)}','${id(61)}','test','multi',1,'2027-10-15 19:35+00',NULL,now());`);
+ const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data??[];
+ expect(rows.some(c=>c.userId===id(60)||c.userId===id(61))).toBe(false);
+ expect(rows.some(c=>['guest48h','danej','Guest','DaneJ'].includes(c.username)||['guest48h','danej','Guest','DaneJ'].includes(c.displayName))).toBe(false);
+ expect(rows.some(c=>c.username==='customer')).toBe(true);
+ expect((await db.query<{data:any[]}>('SELECT admin_customer_subscriptions() data')).rows[0]?.data.some(c=>c.userId===id(60))).toBe(true);
+});
+test('manual sales recorded under a hidden login name stay off the customer list',async()=>{
+ await db.exec(`INSERT INTO private.orders(id,customer_type,paid_at,status,created_at,order_ref,email_enc) VALUES('${id(64)}','manual','2026-10-18 10:00+00','completed','2026-10-18 10:00+00','SALE-64',convert_to('guest@example.test','UTF8'));
+  INSERT INTO private.pending_order_credentials VALUES('${id(64)}','guest48hSite','2027-10-18 12:00+00');`);
+ const rows=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data??[];
+ expect(rows.some(c=>c.username==='guest48hSite')).toBe(false);
 });
