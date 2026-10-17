@@ -971,11 +971,11 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
     // Premier League fixture posts: "## Home v Away" (or a bare "Home v Away"
     // line) followed by a "12:30pm UK / 7:30am ET" line. Each fixture is its
     // own section so it can be filed into its own category and guide.
-    const fixture = line.trim().match(/^##\s+(\S.*)$/)?.[1] ??
+    const fixture = unwrapEplMarkdown(line).match(/^##\s+(\S.*)$/)?.[1] ??
       (/\S\s+v\s+\S/i.test(line.trim()) ? line.trim() : null);
     if (
       fixture &&
-      /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[idx + 1]?.trim() ?? "") &&
+      eplTimeLine(lines[idx + 1] ?? "", lines) &&
       /\d/.test(lines[idx + 1] ?? "")
     ) {
       current = { name: cleanLine(fixture), raw: "" };
@@ -2097,9 +2097,15 @@ export function listingBlockHasDate(raw: string): boolean {
  * Pipes inside channel names (`EPL | Premier League`) are flattened so they
  * aren't read as channel separators; `Hub Premier 1 & 5` becomes two channels.
  */
+/** Strips Discord bold/code wrappers: "**## A v B**" → "## A v B", "`12:30pm UK | …`" → "12:30pm UK | …". */
+const unwrapEplMarkdown = (line: string) => line.trim().replace(/^\*{1,3}(.*?)\*{1,3}$/, "$1").replace(/^`+(.*?)`+$/, "$1").trim();
+/** "12:30pm UK / 7:30am ET", or the backticked "`12:30pm UK | 7:00am ET`" form. */
+const eplTimeLine = (line: string, lines: string[]) =>
+  /\bUK\s*\/\s*[^\n]*\bET\b/i.test(unwrapEplMarkdown(line)) ||
+  (/\bUK\s*\|\s*[^\n]*\bET\b/i.test(unwrapEplMarkdown(line)) && lines.some((l) => /\bEPL\b/.test(l)));
 const eplFixtureLineAt = (lines: string[], i: number) =>
-  (/^##\s+\S/.test(lines[i]?.trim() ?? "") || /\S\s+v\s+\S/i.test(lines[i]?.trim() ?? "")) &&
-  /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[i + 1]?.trim() ?? "") &&
+  (/^##\s+\S/.test(unwrapEplMarkdown(lines[i] ?? "")) || /\S\s+v\s+\S/i.test(unwrapEplMarkdown(lines[i] ?? ""))) &&
+  eplTimeLine(lines[i + 1] ?? "", lines) &&
   /\d/.test(lines[i + 1] ?? "");
 
 /** True when a post uses the Premier League fixture layout above. */
@@ -2110,7 +2116,7 @@ export function isEplFixturePost(raw: string): boolean {
 
 export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean }): string {
   const sdOnly = opts?.sdOnly ?? false;
-  const lines = raw.replace(/\r/g, "").split("\n");
+  const lines = raw.replace(/\r/g, "").split("\n").map((l) => (l.trim() ? unwrapEplMarkdown(l) : l));
   const fixtureAt = (i: number) => eplFixtureLineAt(lines, i);
   if (!lines.some((_, i) => fixtureAt(i))) return raw;
   const out: string[] = [];
