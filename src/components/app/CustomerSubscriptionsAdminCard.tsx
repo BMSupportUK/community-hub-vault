@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { customerDate, customerHasRecordedYear } from "@/lib/customer-date";
+import { customerDate, customerHasRecordedYear, customerShowsNoRenewal } from "@/lib/customer-date";
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
 import { Gift, Loader2, RefreshCw, Pencil, Link2 } from "lucide-react";
 import { toast } from "sonner";
@@ -144,6 +144,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
           <tbody>{visible.map((c) => {
             const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
             const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
+            const showNoRenewal = customerShowsNoRenewal(hasRecordedYear, years);
             return (
             <tr key={c.userId} className="border-b border-border/60 align-top">
               <td className="p-3 font-medium"><div className="flex items-start gap-2"><span className="break-words">{c.username || c.displayName || "Not recorded"}</span>{canReward && !c.hasSiteAccount && <><Button variant="ghost" size="icon" title="Edit customer username" aria-label={`Edit customer username for ${c.username || c.displayName || "customer"}`} onClick={() => { setUsernameEditing(c); setCustomerUsername(c.username || ""); }}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button></>}</div><span className={`mt-1 inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>{[...new Set(c.accounts.map((a) => a.login).filter(Boolean))].map((login) => <span key={login} className="mt-1 block break-all text-xs font-normal text-muted-foreground">{login}</span>)}</td>
@@ -151,7 +152,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
               <td className="p-3">{hasRecordedYear ? (c.accounts.length ? c.accounts.map((a) => <div key={a.id} className="mb-1">{c.accounts.length > 1 && <span className="block text-xs text-muted-foreground">{a.login}</span>}{date(a.expiresAt)}</div>) : "Not recorded") : null}</td>
               <td className="p-3">{(c.accounts.length > 1 ? c.accounts : [null]).map((a) => {
                 const renewedAt = a ? a.renewedAt ?? null : c.renewedAt;
-                return <div key={a?.id ?? c.userId} className="mb-1 flex items-start gap-2"><span>{a && <span className="block text-xs text-muted-foreground">{a.login}</span>}{hasRecordedYear ? date(renewedAt) : "No Renewal Yet"}</span>{canReward && <Button variant="ghost" size="icon" title="Edit last renewed date" aria-label={`Edit last renewed date for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => { setRenewalEditing(c); setRenewalAccount(a); setRenewedDate(renewalDay(renewedAt)); }}><Pencil className="size-4" /></Button>}</div>;
+                return <div key={a?.id ?? c.userId} className="mb-1 flex items-start gap-2"><span>{a && <span className="block text-xs text-muted-foreground">{a.login}</span>}{showNoRenewal ? "No Renewal Yet" : date(renewedAt)}</span>{canReward && <Button variant="ghost" size="icon" title="Edit last renewed date" aria-label={`Edit last renewed date for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => { setRenewalEditing(c); setRenewalAccount(a); setRenewedDate(renewalDay(renewedAt)); }}><Pencil className="size-4" /></Button>}</div>;
               })}</td>
               <td className="p-3"><span>{c.referrerName || "—"}</span>{c.rewards.map((r) => (
                 <div key={r.orderId} className={`mt-2 w-fit rounded-md border p-2 text-xs ${r.rewardedAt ? "border-primary/30 bg-primary/10" : "border-border bg-muted/40"}`}>
