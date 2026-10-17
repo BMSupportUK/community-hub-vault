@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { isMobilePhone } from "@/lib/is-mobile-phone";
 import { RotationRecovery } from "@/lib/rotation-recovery";
-import { createFixedFrameVideo, type FixedFrameVideo } from "@/lib/fixed-frame-video";
+import { createFixedFrameVideo, cropView, type FixedFrameVideo } from "@/lib/fixed-frame-video";
 import { attachCallMicrophone, callMicrophoneError, initialCallMedia, isBlackFrame, nextBlackPictureFix, sdpFingerprint, shouldAutoRefresh, type AutoRefreshReason } from "@/lib/call-media";
 import staffPlaceholder from "@/assets/staff-video-placeholder.jpg";
 import staffPlaceholderMale from "@/assets/staff-video-placeholder-male.jpg";
@@ -84,6 +84,9 @@ export function VideoCallStage({
   // Customer phone: the camera is sent as a fixed-size picture so turning the
   // phone never changes the picture shape (the cause of the black screen).
   const fixedRef = useRef<FixedFrameVideo | null>(null);
+  const shapeRef = useRef<{ w: number; h: number } | null>(null);
+  // Staff side: the customer's real camera shape inside that fixed picture.
+  const [remoteShape, setRemoteShape] = useState<{ w: number; h: number } | null>(null);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const pendingIce = useRef<RTCIceCandidateInit[]>([]);
   const offeredRef = useRef(false);
@@ -269,7 +272,10 @@ export function VideoCallStage({
       streamRef.current = stream;
       const cam = stream.getVideoTracks()[0];
       if (side === "answerer" && cam) {
-        fixedRef.current = createFixedFrameVideo(() => restartCamRef.current());
+        fixedRef.current = createFixedFrameVideo(
+          () => restartCamRef.current(),
+          (w, h) => { shapeRef.current = { w, h }; send("shape", { w, h }); },
+        );
         fixedRef.current?.setSource(cam);
       }
       if (localRef.current) { localRef.current.srcObject = stream; localRef.current.play().catch(() => {}); }
@@ -300,6 +306,12 @@ export function VideoCallStage({
           setRemoteRotate(deg);
           if (side === "offerer") showRotating();
         }
+      });
+      ch.on("broadcast", { event: "shape" }, ({ payload }) => {
+        if (side !== "offerer") return;
+        const { w, h } = payload as { w?: number; h?: number };
+        if (!w || !h || w <= 0 || h <= 0) return;
+        setRemoteShape((cur) => (cur && cur.w === w && cur.h === h ? cur : { w, h }));
       });
       ch.on("broadcast", { event: "camrestart" }, () => { if (side === "answerer") restartCamRef.current(); });
       ch.on("broadcast", { event: "rotating" }, ({ payload }) => {
@@ -404,6 +416,7 @@ export function VideoCallStage({
       }
       if (side === "answerer" && !pcRef.current?.remoteDescription) send("ready", { tag: tagRef.current });
       if (side === "answerer") send("orient", { deg: localRotateRef.current });
+      if (side === "answerer" && shapeRef.current) send("shape", shapeRef.current);
     }, 3000);
 
     return () => {
@@ -665,6 +678,7 @@ export function VideoCallStage({
   };
   const totalRotate = (remoteRotate + manualRotate) % 360;
   const sideways = totalRotate === 90 || totalRotate === 270;
+  const view = cropView(stageSize.w, stageSize.h, remoteShape, sideways);
 
   const toggleMic = async () => {
     if (micStartingRef.current) return;
@@ -777,18 +791,24 @@ export function VideoCallStage({
             <Loader2 className="size-3.5 animate-spin text-primary" /> The customer has turned their phone — their picture will reconnect in a moment
           </div>
         )}
-        <video
-          ref={remoteRef}
-          playsInline
-          autoPlay
-          muted
-          className="absolute left-1/2 top-1/2 object-contain transition-transform duration-300"
+        {/* Customer picture at their real shape: tall when upright, wide when turned. */}
+        <div
+          className="absolute left-1/2 top-1/2 overflow-hidden transition-transform duration-300"
           style={{
-            width: sideways ? stageSize.h : stageSize.w || "100%",
-            height: sideways ? stageSize.w : stageSize.h || "100%",
+            width: view.boxW || "100%",
+            height: view.boxH || "100%",
             transform: `translate(-50%, -50%) rotate(${totalRotate}deg)`,
           }}
-        />
+        >
+          <video
+            ref={remoteRef}
+            playsInline
+            autoPlay
+            muted
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 object-contain"
+            style={{ width: view.square ?? "100%", height: view.square ?? "100%", maxWidth: "none" }}
+          />
+        </div>
         {/* Customer side: staff never send a camera (their empty video slot still
             arrives as a "track", which used to hide this and leave black). */}
         {connected && (side === "answerer" || !remoteHasVideo) && !error && (
