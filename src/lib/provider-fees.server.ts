@@ -2,11 +2,11 @@ import { createStripeClient, type StripeEnv } from './stripe.server';
 import { squareRequest } from './provider-invoices.server';
 import { squareProcessingFee } from './profit-calculation';
 
-export async function fetchProviderFee(provider: string, reference: string, environment: StripeEnv): Promise<number | null> {
+export async function fetchProviderFee(provider: string, reference: string, environment: StripeEnv, expectedAmount: number): Promise<number | null> {
   if (provider === 'square') {
     if (reference.startsWith('Invoice #')) return null;
     const { payment } = await squareRequest(`/v2/payments/${encodeURIComponent(reference)}`);
-    return payment?.status === 'COMPLETED' ? squareProcessingFee(payment) : null;
+    return payment?.status === 'COMPLETED' && payment.amount_money?.amount === expectedAmount ? squareProcessingFee(payment) : null;
   }
   if (provider !== 'stripe') return null;
   const stripe = createStripeClient(environment);
@@ -30,5 +30,5 @@ export async function fetchProviderFee(provider: string, reference: string, envi
   if (!chargeId) return null;
   const charge = await stripe.charges.retrieve(chargeId, { expand: ['balance_transaction'] });
   const transaction = typeof charge.balance_transaction === 'string' ? await stripe.balanceTransactions.retrieve(charge.balance_transaction) : charge.balance_transaction;
-  return charge.paid && transaction?.currency === 'gbp' && Number.isSafeInteger(transaction.fee) && transaction.fee >= 0 ? transaction.fee : null;
+  return charge.paid && charge.amount_captured === expectedAmount && transaction?.currency === 'gbp' && Number.isSafeInteger(transaction.fee) && transaction.fee >= 0 ? transaction.fee : null;
 }

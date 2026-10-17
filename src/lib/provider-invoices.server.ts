@@ -28,13 +28,16 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
   let provider: Provider;
   let squarePaymentId: string | null = null;
   let providerFee: number | null = null;
+  let stripeEnvironment: StripeEnv | undefined = environment;
   let status: string, url: string | null, total: number, paid: number, currency: string;
   if (row.stripe_invoice_id) {
     provider = 'stripe';
     const primary = environment ?? (process.env.STRIPE_ENVIRONMENT === 'live' ? 'live' : 'sandbox');
+    stripeEnvironment = primary;
     try { invoice = await createStripeClient(primary).invoices.retrieve(row.stripe_invoice_id); }
     catch (error) {
       if (environment) throw error;
+      stripeEnvironment = primary === 'live' ? 'sandbox' : 'live';
       invoice = await createStripeClient(primary === 'live' ? 'sandbox' : 'live').invoices.retrieve(row.stripe_invoice_id);
     }
     status = invoice.status ?? ''; url = invoice.hosted_invoice_url; total = invoice.total; paid = invoice.amount_paid; currency = invoice.currency;
@@ -66,7 +69,7 @@ export async function syncProviderInvoice(db: any, orderId: string, environment?
   if (settled && provider === 'stripe') {
     try {
       const { fetchProviderFee } = await import('./provider-fees.server');
-      providerFee = await fetchProviderFee(provider, invoice.id, environment ?? (process.env.STRIPE_ENVIRONMENT === 'live' ? 'live' : 'sandbox'));
+      if (stripeEnvironment) providerFee = await fetchProviderFee(provider, invoice.id, stripeEnvironment, total);
     } catch { /* Fees can arrive later; never block a confirmed payment. */ }
   }
   if (settled && order.paid_at && providerFee != null) {
