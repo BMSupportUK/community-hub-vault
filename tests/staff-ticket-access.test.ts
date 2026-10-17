@@ -43,6 +43,7 @@ for (const role of ['staff','moderator']) {
   await visible(role);
   await db.query('INSERT INTO public.ticket_messages VALUES(gen_random_uuid(),$1,$2,false)',['8d4e8026-477d-4bd0-8b72-268a03d8afa3',uid]);
   expect((await db.query('UPDATE public.tickets SET order_id=NULL WHERE id=$1 RETURNING id',['8d4e8026-477d-4bd0-8b72-268a03d8afa3'])).rows.length).toBe(1);
+  await db.exec(`RESET ROLE; DELETE FROM public.ticket_messages WHERE sender_id='${uid}';`);
  });
 }
 it('members cannot read another customer tickets',async()=>{expect(await visible('member')).toEqual([]);});
