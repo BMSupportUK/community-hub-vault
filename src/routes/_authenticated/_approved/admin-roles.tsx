@@ -24,6 +24,7 @@ import { locationAccuracyLabel } from "@/lib/location-accuracy";
 import { toast } from "sonner";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
+import { MemberSecurityActions } from "@/components/app/MemberSecurityActions";
 import { deleteMember, listMemberEmails, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
@@ -543,6 +544,9 @@ function AdminRolesPage() {
                         );
                       })}
                     </div>
+                    {hasAny(["admin", "management"]) && (
+                      <MemberSecurityActions userId={row.id} name={row.display_name ?? row.username ?? "this user"} />
+                    )}
                   </div>
                 ))}
               </div>
