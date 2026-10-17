@@ -308,6 +308,8 @@ export const getOrderRenewalAccounts = createServerFn({ method: "POST" })
       return { accounts: [account], suggestedId: account.id, months: terms.months };
     }
     const { order, terms, ownerId } = await loadOrderContext(data.orderId);
+    // An ungrouped manual sale must never load its staff creator's site accounts.
+    if (order.customer_type === "manual") return { accounts: [], suggestedId: null, months: terms.months };
     // The credentials view only shows rows to a signed-in staff member, so read
     // it as the staff user (the admin client sees nothing through it).
     let creds: CredentialCandidate[] = [];
