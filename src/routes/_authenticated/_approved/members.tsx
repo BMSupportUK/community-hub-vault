@@ -5,10 +5,11 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Users, Search, Clock, UserPlus, Eye, Check, Lock, ShieldOff, MapPin } from "lucide-react";
+import { Users, Search, Clock, UserPlus, Eye, Check, Lock, ShieldOff, MapPin, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { resetUserMfa } from "@/lib/mfa.functions";
+import { sendTemporaryPassword } from "@/lib/temp-password.functions";
 import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
 
@@ -107,6 +108,22 @@ function MembersPage() {
   const [resetReason, setResetReason] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
   const resetMfa = useServerFn(resetUserMfa);
+  const sendTempPw = useServerFn(sendTemporaryPassword);
+  const [pwTarget, setPwTarget] = useState<Profile | null>(null);
+  const [pwBusy, setPwBusy] = useState(false);
+  const doSendPw = async () => {
+    if (!pwTarget) return;
+    setPwBusy(true);
+    try {
+      await sendTempPw({ data: { userId: pwTarget.id } });
+      toast.success("New password emailed. They'll be asked to change it when they sign in.");
+      setPwTarget(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't send the new password");
+    } finally {
+      setPwBusy(false);
+    }
+  };
 
   const doReset = async () => {
     if (!resetTarget) return;
@@ -407,6 +424,14 @@ function MembersPage() {
                     <ShieldOff className="size-3.5" /> Reset 2FA
                   </button>
                 )}
+                {isAdmin && (
+                  <button
+                    onClick={() => setPwTarget(p)}
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-surface-2 border border-border hover:border-primary hover:text-primary transition"
+                  >
+                    <KeyRound className="size-3.5" /> Email new password
+                  </button>
+                )}
 
                 <div className="mt-auto pt-3 border-t border-border/60 text-[11px] text-muted-foreground flex items-center gap-1.5">
                   <Clock className="size-3" />
@@ -423,6 +448,33 @@ function MembersPage() {
         <AdSenseSlot slot="sidebar" />
       </aside>
       </div>
+
+      {pwTarget && (
+        <div className="fixed inset-0 z-50 bg-black/60 grid place-items-center p-4">
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl bg-surface border border-border p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30 grid place-items-center">
+                <KeyRound className="size-5" />
+              </div>
+              <div>
+                <h2 className="font-display font-semibold text-lg">Email a new password</h2>
+                <p className="text-xs text-muted-foreground">for {pwTarget.display_name ?? pwTarget.username ?? "this user"}</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Their current password stops working straight away. They'll get an email with a new temporary password and must choose their own as soon as they sign in.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={doSendPw} disabled={pwBusy} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50">
+                {pwBusy ? "Sending…" : "Send new password"}
+              </button>
+              <button onClick={() => setPwTarget(null)} disabled={pwBusy} className="px-4 h-11 rounded-lg bg-surface-2 border border-border text-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {resetTarget && (
         <div className="fixed inset-0 z-50 bg-black/60 grid place-items-center p-4">
