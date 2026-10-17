@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { customerDate, customerHasRecordedYear } from "@/lib/customer-date";
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
-import { Gift, Loader2, RefreshCw, Pencil } from "lucide-react";
+import { Gift, Loader2, RefreshCw, Pencil, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
 type Customer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; accounts: Account[]; package: string | null; packageAllocated: boolean; renewedAt: string | null; renewedDateAdjusted: boolean; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
+type ManualOrder = { id: string; ref: string; name: string; createdAt: string; paidAt: string | null; customerId: string; accountId: string | null; kind: string };
 const date = customerDate;
 
 const renewalDay = (v: string | null) => v ? new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(v)) : "";
@@ -35,6 +36,25 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const [renewedDate, setRenewedDate] = useState("");
   const [usernameEditing, setUsernameEditing] = useState<Customer | null>(null);
   const [customerUsername, setCustomerUsername] = useState("");
+  const [grouping, setGrouping] = useState<Customer | null>(null);
+  const [manualOrders, setManualOrders] = useState<ManualOrder[]>([]);
+  const [manualOrderId, setManualOrderId] = useState("");
+  const [groupAccountId, setGroupAccountId] = useState("");
+  const [orderSearch, setOrderSearch] = useState("");
+  const openGrouping = async (customer: Customer) => {
+    const { data, error } = await supabase.rpc("admin_manual_customer_orders");
+    if (error) return toast.error(error.message);
+    setManualOrders((data ?? []) as unknown as ManualOrder[]);
+    setManualOrderId(""); setGroupAccountId(""); setOrderSearch(customer.displayName || customer.username || ""); setGrouping(customer);
+  };
+  const groupOrder = async () => {
+    if (!grouping || !manualOrderId) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_group_manual_customer_order", { p_order_id: manualOrderId, p_customer_id: grouping.userId, p_account_id: groupAccountId || null } as unknown as { p_order_id: string; p_customer_id: string; p_account_id: string });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Manual order grouped with customer"); setGrouping(null); await load();
+  };
   const saveUsername = async () => {
     if (!usernameEditing || !customerUsername.trim()) return;
     setBusy(true);
@@ -123,10 +143,10 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
           <thead className="text-left text-xs uppercase text-muted-foreground"><tr>{["Username", "Current package", "Runs out", "Last renewed", "Referred by", "Year joined", "Years as customer"].map((h) => <th key={h} className="border-b border-border p-3">{h}</th>)}</tr></thead>
           <tbody>{visible.map((c) => {
             const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
-            const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt);
+            const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
             return (
             <tr key={c.userId} className="border-b border-border/60 align-top">
-              <td className="p-3 font-medium"><div className="flex items-start gap-2"><span className="break-words">{c.username || c.displayName || "Not recorded"}</span>{canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" title="Edit customer username" aria-label={`Edit customer username for ${c.username || c.displayName || "customer"}`} onClick={() => { setUsernameEditing(c); setCustomerUsername(c.username || ""); }}><Pencil className="size-4" /></Button>}</div><span className={`mt-1 inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>{[...new Set(c.accounts.map((a) => a.login).filter(Boolean))].map((login) => <span key={login} className="mt-1 block break-all text-xs font-normal text-muted-foreground">{login}</span>)}</td>
+              <td className="p-3 font-medium"><div className="flex items-start gap-2"><span className="break-words">{c.username || c.displayName || "Not recorded"}</span>{canReward && !c.hasSiteAccount && <><Button variant="ghost" size="icon" title="Edit customer username" aria-label={`Edit customer username for ${c.username || c.displayName || "customer"}`} onClick={() => { setUsernameEditing(c); setCustomerUsername(c.username || ""); }}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button></>}</div><span className={`mt-1 inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>{[...new Set(c.accounts.map((a) => a.login).filter(Boolean))].map((login) => <span key={login} className="mt-1 block break-all text-xs font-normal text-muted-foreground">{login}</span>)}</td>
               <td className="max-w-64 p-3">{(c.accounts.length > 1 ? c.accounts : [null]).map((a) => <div key={a?.id ?? c.userId} className="mb-2 flex items-start gap-2"><span>{a && <span className="block text-xs text-muted-foreground">{a.login}</span>}{(a ? a.package : c.package) || "Not recorded"}</span>{canReward && (a || !c.package || c.packageAllocated) && <Button variant="ghost" size="icon" title="Allocate package" aria-label={`Allocate package for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => void openAllocation(c, a)}><Pencil className="size-4" /></Button>}</div>)}</td>
               <td className="p-3">{hasRecordedYear ? (c.accounts.length ? c.accounts.map((a) => <div key={a.id} className="mb-1">{c.accounts.length > 1 && <span className="block text-xs text-muted-foreground">{a.login}</span>}{date(a.expiresAt)}</div>) : "Not recorded") : null}</td>
               <td className="p-3">{(c.accounts.length > 1 ? c.accounts : [null]).map((a) => {
@@ -150,6 +170,13 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
       <Dialog open={!!allocating} onOpenChange={(open) => { if (!open && !busy) setAllocating(null); }}><DialogContent><DialogHeader><DialogTitle>Allocate package · {packageAccount?.login || allocating?.username || allocating?.displayName}</DialogTitle></DialogHeader><select aria-label="Subscription package" value={productId} onChange={(e) => setProductId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"><option value="" disabled>Choose package</option>{products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setAllocating(null)}>Cancel</Button><Button disabled={!productId || busy} onClick={() => void savePackage()}>{busy && <Loader2 className="animate-spin" />}Save package</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={!!renewalEditing} onOpenChange={(open) => { if (!open && !busy) setRenewalEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Last renewed · {renewalAccount?.login || renewalEditing?.username || renewalEditing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Last renewed date<Input aria-label="Last renewed date" type="date" value={renewedDate} onChange={(e) => setRenewedDate(e.target.value)} /></label><DialogFooter>{(renewalAccount ? renewalAccount.renewedDateAdjusted : renewalEditing?.renewedDateAdjusted) && <Button variant="outline" disabled={busy} onClick={() => void saveRenewedDate(true)}>Use recorded date</Button>}<Button variant="outline" disabled={busy} onClick={() => setRenewalEditing(null)}>Cancel</Button><Button disabled={busy || !renewedDate} onClick={() => void saveRenewedDate()}>{busy && <Loader2 className="animate-spin" />}Save date</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={!!usernameEditing} onOpenChange={(open) => { if (!open && !busy) setUsernameEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Customer username · {usernameEditing?.username || usernameEditing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Username<Input aria-label="Customer username" autoComplete="off" value={customerUsername} onChange={(e) => setCustomerUsername(e.target.value)} /></label><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setUsernameEditing(null)}>Cancel</Button><Button disabled={busy || !customerUsername.trim()} onClick={() => void saveUsername()}>{busy && <Loader2 className="animate-spin" />}Save username</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={!!grouping} onOpenChange={(open) => { if (!open && !busy) setGrouping(null); }}><DialogContent><DialogHeader><DialogTitle>Group manual orders · {grouping?.displayName || grouping?.username}</DialogTitle></DialogHeader>
+        <Input aria-label="Search manual orders" placeholder="Customer name or order reference" value={orderSearch} onChange={(e) => setOrderSearch(e.target.value)} />
+        <label className="block space-y-1 text-sm">Manual order<select aria-label="Manual order to group" value={manualOrderId} onChange={(e) => { setManualOrderId(e.target.value); setGroupAccountId(""); }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-foreground"><option value="">Choose order</option>{manualOrders.filter((o) => o.id !== grouping?.userId && o.accountId === null && `${o.name} ${o.ref}`.toLowerCase().includes(orderSearch.toLowerCase())).map((o) => <option key={o.id} value={o.id}>{o.name} · {o.ref} · {date(o.createdAt)}</option>)}</select></label>
+        <label className="block space-y-1 text-sm">Subscription account<select aria-label="Grouped order subscription" value={groupAccountId} onChange={(e) => setGroupAccountId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-foreground"><option value="">Separate subscription for this customer</option>{grouping?.accounts.filter((a) => a.id !== manualOrderId).map((a) => <option key={a.id} value={a.id}>Renew {a.login} · {date(a.expiresAt)}</option>)}</select></label>
+        {groupAccountId && <p className="text-sm text-muted-foreground">A paid order adds its purchased term to this account, preserving remaining time. Site accounts are unchanged.</p>}
+        <DialogFooter><Button variant="outline" disabled={busy} onClick={() => setGrouping(null)}>Cancel</Button><Button disabled={busy || !manualOrderId} onClick={() => void groupOrder()}>{busy && <Loader2 className="animate-spin" />}Group order</Button></DialogFooter>
+      </DialogContent></Dialog>
     </section>
   );
 }
