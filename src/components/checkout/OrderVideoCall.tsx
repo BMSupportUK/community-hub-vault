@@ -155,7 +155,6 @@ export function useOrderVideoCallStaff(orderId: string) {
   const [session, setSession] = useState<Session | null>(null);
   const [inCall, setInCall] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [checkoutLink, setCheckoutLink] = useState<{ token: string; password: string } | null>(null);
   const [isMale, setIsMale] = useState(false);
 
   // Pick the staff illustration matching the signed-in staff member's profile gender.
@@ -183,16 +182,6 @@ export function useOrderVideoCallStaff(orderId: string) {
     return () => { off = true; window.clearInterval(id); };
   }, [orderId, list]);
 
-  // The QR code is only shown while the customer is actually asking for video
-  // help, so it never appears on a normal order.
-  useEffect(() => {
-    if (!session || checkoutLink) return;
-    supabase.from("order_checkout_links").select("token,password").eq("order_id", orderId).maybeSingle()
-      .then(({ data }) => {
-        const link = data as unknown as { token: string; password: string } | null;
-        if (link?.token) setCheckoutLink(link);
-      });
-  }, [session, checkoutLink, orderId]);
 
   const answer = async () => {
     if (!session) return;
@@ -212,7 +201,7 @@ export function useOrderVideoCallStaff(orderId: string) {
     if (s) await endFn({ data: { sessionId: s.id } }).catch(() => undefined);
   }, [session, endFn]);
 
-  return { session, inCall, busy, checkoutLink, isMale, answer, end };
+  return { session, inCall, busy, isMale, answer, end };
 }
 
 export type OrderVideoCallStaffState = ReturnType<typeof useOrderVideoCallStaff>;
@@ -232,18 +221,6 @@ export function OrderVideoCallIncoming({ call }: { call: OrderVideoCallStaffStat
           <PhoneOff className="size-3" /> Decline
         </button>
       </div>
-      {/* QR only while the customer is still asking; it closes once a call has started or ended. */}
-      {call.checkoutLink && call.session.status === "waiting" && (
-        <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4">
-          <div className="shrink-0 rounded-lg bg-white p-2">
-            <QRCode value={`${secureCheckoutUrl(call.checkoutLink.token)}?pw=${encodeURIComponent(call.checkoutLink.password)}`} size={112} />
-          </div>
-          <div className="min-w-0 space-y-1">
-            <p className="flex items-center gap-1.5 text-sm font-semibold"><QrCode className="size-4 text-primary" /> Customer wants video help — scan to use their phone</p>
-            <p className="text-sm text-muted-foreground">The customer scans this with their phone camera. It opens their order page on the phone, already signed in — they tap Start video call there and their phone camera shows up here, big, while the chat carries on their computer.</p>
-          </div>
-        </div>
-      )}
     </>
   );
 }
