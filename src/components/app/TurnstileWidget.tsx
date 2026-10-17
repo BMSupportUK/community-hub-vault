@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -53,10 +53,17 @@ export function TurnstileWidget({
   const ref = useRef<HTMLDivElement | null>(null);
   const widgetId = useRef<string | null>(null);
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!siteKey || !ref.current) return;
     let cancelled = false;
+    setFailed(false);
+    // Blocked by an ad blocker / privacy setting: nothing renders at all.
+    const watchdog = window.setTimeout(() => {
+      if (!cancelled && ref.current && !ref.current.querySelector("iframe")) setFailed(true);
+    }, 8000);
     loadScript()
       .then(() => {
         if (cancelled || !ref.current || !window.turnstile) return;
@@ -65,12 +72,13 @@ export function TurnstileWidget({
           theme: "auto",
           callback: (token) => onToken(token),
           "expired-callback": () => onExpire?.(),
-          "error-callback": () => onExpire?.(),
+          "error-callback": () => { onExpire?.(); setFailed(true); },
         });
       })
-      .catch((e) => console.error(e));
+      .catch((e) => { console.error(e); if (!cancelled) setFailed(true); });
     return () => {
       cancelled = true;
+      window.clearTimeout(watchdog);
       if (widgetId.current && window.turnstile) {
         try {
           window.turnstile.remove(widgetId.current);
@@ -81,8 +89,19 @@ export function TurnstileWidget({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteKey]);
+  }, [siteKey, attempt]);
 
   if (!siteKey) return null;
-  return <div ref={ref} className="flex justify-center" />;
+  return (
+    <div className="space-y-2">
+      <div key={attempt} ref={ref} className="flex justify-center" />
+      {failed && (
+        <div role="alert" className="rounded-lg border border-border bg-muted/40 p-3 text-center text-xs text-muted-foreground">
+          The security check didn't load. Turn off any ad blocker, VPN or private-browsing shield for this site, then{" "}
+          <button type="button" onClick={() => setAttempt((a) => a + 1)} className="font-semibold text-primary underline">try again</button>
+          {" "}— or use another browser (Chrome, Safari, Edge).
+        </div>
+      )}
+    </div>
+  );
 }

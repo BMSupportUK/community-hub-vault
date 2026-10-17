@@ -24,7 +24,7 @@ import { locationAccuracyLabel } from "@/lib/location-accuracy";
 import { toast } from "sonner";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
-import { MemberSecurityActions } from "@/components/app/MemberSecurityActions";
+import { MemberSecurityActions, AddUserButton } from "@/components/app/MemberSecurityActions";
 import { deleteMember, listMemberEmails, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
@@ -310,6 +310,9 @@ function AdminRolesPage() {
               Assign roles to members or manage the role list.
             </p>
           </div>
+          {hasAny(["admin", "management"]) && (
+            <div className="ml-auto"><AddUserButton onCreated={loadAll} /></div>
+          )}
         </header>
 
         <div className="flex gap-2 mb-5 border-b border-border">
