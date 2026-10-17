@@ -21,7 +21,7 @@ type Order = { id: string; status: string; total_cents: number; created_at: stri
 
 const calc = calculateProfit;
 
-const METHOD_LABELS: Record<string, string> = { square: "Square", stripe: "Stripe", wise: "Wise", cash: "Cash", nowpayments: "NOWPayments", manual: "Manual" };
+const METHOD_LABELS: Record<string, string> = { square: "Square", stripe: "Stripe", paypal: "PayPal", wise: "Wise", cash: "Cash", nowpayments: "NOWPayments", manual: "Manual" };
 
 function paymentGroup(provider: string | undefined) {
   if (provider === "crypto" || provider === "nowpayments") return "nowpayments";
@@ -239,6 +239,34 @@ export function ProfitCostsPanel() {
                     <div><dt className="text-xs text-muted-foreground">{monthMissing ? "Provisional profit" : "Profit"}</dt><dd className={`mt-1 text-lg font-semibold tabular-nums ${mT.revenue >= mT.cost + mT.fees ? "text-success" : "text-destructive"}`}>{money(mT.revenue - mT.cost - mT.fees)}</dd></div>
                   </dl>
                 </div>}
+                {am != null && monthOrders.length > 0 && (
+                  <div className="overflow-x-auto rounded-xl border border-border bg-card/90">
+                    <table className="w-full text-sm">
+                      <thead className="bg-surface-2 text-left text-muted-foreground">
+                        <tr>
+                          <th className="px-3 py-2 font-medium">Date</th>
+                          <th className="px-3 py-2 font-medium">Customer</th>
+                          <th className="px-3 py-2 font-medium">Amount</th>
+                          <th className="px-3 py-2 font-medium whitespace-nowrap">Provider fee</th>
+                          <th className="px-3 py-2 font-medium whitespace-nowrap">Net received</th>
+                          <th className="px-3 py-2 font-medium">Payment method</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {monthOrders.map((o) => { const f = calc(o); return (
+                          <tr key={o.id} className="border-t border-border">
+                            <td className="px-3 py-2 whitespace-nowrap">{new Date(o.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</td>
+                            <td className="px-3 py-2">{o.shipping_name || o.existing_username || "—"}</td>
+                            <td className="px-3 py-2 whitespace-nowrap tabular-nums">{money(o.total_cents)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap tabular-nums">{f.feesMissing ? (f.fees ? `${money(f.fees)} + unknown` : "Unknown") : money(f.fees)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap tabular-nums">{f.feesMissing ? "Unknown" : money(o.total_cents - f.fees)}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-xs">{METHOD_LABELS[paymentGroup(methodOf[o.id]) ?? ""] ?? methodOf[o.id] ?? "—"}</td>
+                          </tr>
+                        ); })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </section>
             </div>
             <aside aria-label="Profit statistics" className="grid min-w-0 gap-4 sm:grid-cols-2 lg:sticky lg:top-6 lg:grid-cols-1 xl:grid-cols-2">
