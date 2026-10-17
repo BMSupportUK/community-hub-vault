@@ -450,7 +450,15 @@ export function mismatchedSportsListingHeading(raw: string | null | undefined, g
 
 export function isLikelyChannelLabel(value: string): boolean {
   const text = value.replace(/\s+/g, " ").trim();
+  // Saved guides join several channels with " | ". Judge each part on its own
+  // so a long channel list (e.g. five UFC broadcasters) is never mistaken for
+  // an event title just because the joined line passes the length limit.
+  if (/\s\|\s/.test(text)) {
+    const parts = text.split(/\s+\|\s+/).filter(Boolean);
+    if (parts.length > 1) return parts.every((p) => isLikelyChannelLabel(p));
+  }
   if (!text || text.length > 70) return false;
+  if (/^(?:ufc\s*)?fight\s*pass$/i.test(text)) return true;
   if (/\b(?:v|vs|versus)\b/i.test(text)) return false;
   if (/\b(?:league|cup|trophy|championship|premier|serie|liga|bundesliga)\b/i.test(text) && !/\d/.test(text)) return false;
   // Provider feeds frequently use an unfamiliar name followed by a channel
@@ -1431,6 +1439,12 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
 
   const flush = () => {
     if (!current) return;
+    // A fixture line ("Bologna vs. Inter") is never a channel. It appears
+    // here when a post is cut off after the next event's title, before its
+    // time slot — drop it rather than listing it as a channel.
+    if (current.title && current.channels.length > 1) {
+      current.channels = current.channels.filter((ch) => !/\s(?:v|vs|v\.|vs\.|@)\s/i.test(ch));
+    }
     const done = finalized(current);
     if (done) events.push(done);
     current = null;
