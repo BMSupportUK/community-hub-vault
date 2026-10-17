@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Manual credentials access
+- [ ] Add admin-only manual-order skip-account-creation checkbox, defaulting to registration; verify permissions and saved checkout behaviour.
 - [x] Move customer PIN enrollment to password-gated manual secure checkout only; identity comes from the order, existing PINs cannot be overwritten, credentials page is sign-in only. Sixteen security/access tests pass, invalid credentials access denied in browser, build OK; preview only.
 - [x] Add customer-chosen six-digit PIN with existing TV-login proof for initial setup, salted PBKDF2 storage, one-hour lock after five failed PIN attempts, and atomic ten-minute sessions; eleven tests pass, real page denies invalid access, illustration renders and build OK. Preview UI awaits publishing; legacy email-only verification is disabled in the shared backend.
 - [ ] Verify checkout PIN save/read-back and real credentials login in browser — existing demo order has no checkout link, real customer flow needs their secure checkout access and emailed one-use password; database setup/read-back tests pass, no real customer secrets accessed.
