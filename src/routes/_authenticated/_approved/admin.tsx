@@ -1,13 +1,13 @@
 import { createFileRoute, Link, Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop, ReceiptText, UserPlus } from "lucide-react";
+import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, Globe, Clock, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop, ReceiptText, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
-import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, canSeeUserCredentialsTab, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
 import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/page-access";
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
@@ -544,7 +544,6 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const allTools: { to?: string; search?: Record<string, string>; tabKey?: DashTab; label: string; desc: string; icon: any; art: string; adminOnly?: boolean; managementToo?: boolean }[] = [
     { to: "/admin-roles", label: "Members & Role Management", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck, art: toolArtTeam },
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield, art: toolArtSecurity },
-    { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare, art: toolArtSecurity },
     { to: "/admin-dns", label: "QD DNS codes", desc: "Add and edit shared DNS codes for all members.", icon: Globe, art: toolArtGlobe },
     { to: "/moderation", label: "BM Support | Access Requests", desc: "Approve access requests and appeals.", icon: ShieldAlert, art: toolArtSecurity },
     { to: "/shifts", label: "Shifts overview", desc: "Review staff shifts and break history.", icon: Clock, art: toolArtTime },
@@ -610,6 +609,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     ["tools", toolsHeading, false],
     ["order-status", "Orders", false],
     ["customers", "Customers", true],
+    ["user-credentials", "User credentials", true],
     ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
@@ -619,8 +619,12 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
   ];
-  const tabs = allTabs.filter(([, , gate]) =>
-    gate === "bank" ? isAdminOnly : !gate || canSeePins,
+  const tabs = allTabs.filter(([key, , gate]) =>
+    key === "user-credentials"
+      ? canSeeUserCredentialsTab(roles)
+      : gate === "bank"
+        ? isAdminOnly
+        : !gate || canSeePins,
   );
 
   const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
@@ -633,7 +637,15 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     <div className="space-y-6">
       <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
         {tabs.map(([key, label]) =>
-          key === "profit-costs" ? (
+          key === "user-credentials" ? (
+            <Link
+              key={key}
+              to="/admin-credentials"
+              className="px-4 h-9 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground inline-flex items-center"
+            >
+              {label}
+            </Link>
+          ) : key === "profit-costs" ? (
             <Link
               key={key}
               to="/admin-profit-costs"

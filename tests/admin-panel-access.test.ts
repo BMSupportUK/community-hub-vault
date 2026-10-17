@@ -95,3 +95,21 @@ describe("Fan Zone dashboard is not for BM Support staff", () => {
     expect(fzTool({ to: "/admin-fan-zone" }, ["boro_fan_zone_moderator"], perms)).toBe(true);
   });
 });
+
+import { canSeeUserCredentialsTab } from "../src/lib/admin-panel-access";
+describe("User credentials tab in the dashboard header", () => {
+  it("shows the tab beside Customers to the owner and management only", () => {
+    expect(canSeeUserCredentialsTab(["admin"])).toBe(true);
+    expect(canSeeUserCredentialsTab(["management"])).toBe(true);
+    expect(canSeeUserCredentialsTab(["admin", "staff"])).toBe(true);
+    expect(canSeeUserCredentialsTab(["staff"])).toBe(false);
+    expect(canSeeUserCredentialsTab(["moderator"])).toBe(false);
+    expect(canSeeUserCredentialsTab(["subscriber"])).toBe(false);
+    expect(canSeeUserCredentialsTab(["boro_fan_zone_moderator"])).toBe(false);
+  });
+
+  it("never leaves a staff card behind now that the page is a header tab", () => {
+    const p = { ...perms, "admin-credentials": ["admin", "management"] };
+    expect(staffAllowedPageKeys(["staff"], p, new Set(), () => false)).not.toContain("admin-credentials");
+  });
+});
