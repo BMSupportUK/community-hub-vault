@@ -97,12 +97,12 @@ function AddOrderPage() {
       _customer_name: custName.trim(),
       _items: items,
       _method: payMethod,
-      _email: mail || null,
+      _email: mail || undefined,
       _discount_cents: discountCents,
       _customer_kind: customerKind,
-      _created_at: createdAt ? createdAt.toISOString() : null,
-      _customer_id: customerKind === "existing" ? customerId : null,
-      _account_id: customerKind === "existing" ? renewalAccountId : null,
+      _created_at: createdAt ? createdAt.toISOString() : undefined,
+      _customer_id: customerKind === "existing" ? customerId : undefined,
+      _account_id: customerKind === "existing" ? renewalAccountId : undefined,
       _skip_registration: skipRegistration,
     });
     if (error) { setBusy(false); return toast.error(error.message); }
