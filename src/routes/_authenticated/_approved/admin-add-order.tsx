@@ -250,7 +250,7 @@ function AddOrderPage() {
                   </Button>)}
                 </div>)}
               </div>}
-            </> : <p className="text-sm text-muted-foreground">No existing customer selected.</p>}
+            </> : null}
           </div>
         </aside>
         </div>
