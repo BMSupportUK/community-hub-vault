@@ -16,11 +16,13 @@ beforeAll(async () => {
  CREATE TABLE public.order_referrals(order_id uuid PRIMARY KEY,referrer_user_id uuid,referrer_name text);
  CREATE TABLE public.order_items(id uuid,order_id uuid,product_name text,quantity int);
  CREATE TABLE public.order_checkout_links(order_id uuid,customer_kind text,claimed_by uuid);
+ CREATE TABLE public.products(id uuid PRIMARY KEY,name text,is_active boolean);
  CREATE TABLE public.profiles(id uuid,username text,display_name text);
  CREATE TABLE public.invites(id uuid,used_by uuid,created_by uuid,used_at timestamptz,created_at timestamptz);`);
  await db.exec(readFileSync(new URL('../drizzle/migrations/0147_customer_subscriptions_referral_rewards.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0148_customer_subscription_manual_account_matching.sql',import.meta.url),'utf8'));
  await db.exec(readFileSync(new URL('../drizzle/migrations/0149_customer_tenure_date_corrections.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0150_customer_package_allocation.sql',import.meta.url),'utf8'));
  await db.exec(`SELECT set_config('test.role','admin',false);
  INSERT INTO profiles VALUES('${id(2)}','customer','Customer'),('${id(3)}','referrer','Referrer');
  INSERT INTO private.app_credentials VALUES('${id(4)}','${id(3)}','ref-login','single',1,'2027-01-31 12:30+00',NULL,now());`);
@@ -86,4 +88,29 @@ test('management cannot backdate customer history',async()=>{
 });
 test('future first subscription dates are rejected',async()=>{
  await expect(db.query("SELECT admin_set_customer_first_subscription($1,current_date+2)",[id(2)])).rejects.toThrow('future');
+});
+
+test('admin allocation saves a missing package and preserves saved login and expiry',async()=>{
+ await db.exec(`INSERT INTO products VALUES('${id(500)}','Single 12 months',true),('${id(501)}','Retired',false)`);
+ const before=(await db.query('SELECT expiry_at FROM private.app_credentials WHERE id=$1',[id(4)])).rows[0];
+ await db.query('SELECT admin_allocate_customer_package($1,$2)',[id(3),id(500)]);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data.find(c=>c.userId===id(3));
+ expect(c?.package).toBe('Single 12 months');expect(c?.packageAllocated).toBe(true);expect(c?.accounts.map((a:any)=>a.login)).toEqual(['ref-login']);
+ expect((await db.query('SELECT expiry_at FROM private.app_credentials WHERE id=$1',[id(4)])).rows[0]).toEqual(before);
+});
+test('purchase quantities are excluded from current package names',async()=>{
+ await sale(30,'Triple Room 12 months','existing','completed','2027-01-01 12:00+00');
+ await db.query('UPDATE order_items SET quantity=3 WHERE order_id=$1',[id(30)]);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_details() data')).rows[0]?.data.find(c=>c.userId===id(2));
+ expect(c?.package).toBe('Triple Room 12 months');
+ await expect(db.query('SELECT admin_allocate_customer_package($1,$2)',[id(2),id(500)])).rejects.toThrow('already has');
+});
+test('management cannot allocate packages',async()=>{
+ await db.exec("SELECT set_config('test.role','management',false)");
+ await expect(db.query('SELECT admin_allocate_customer_package($1,$2)',[id(3),id(500)])).rejects.toThrow('Only admin');
+ await db.exec("SELECT set_config('test.role','admin',false)");
+});
+test('allocation rejects unknown customers and unavailable packages',async()=>{
+ await expect(db.query('SELECT admin_allocate_customer_package($1,$2)',[id(999),id(500)])).rejects.toThrow('Customer not found');
+ await expect(db.query('SELECT admin_allocate_customer_package($1,$2)',[id(3),id(501)])).rejects.toThrow('available package');
 });
