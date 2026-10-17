@@ -1,0 +1,2 @@
+ALTER TABLE public.order_payments ADD COLUMN provider_fee_cents integer CHECK (provider_fee_cents >= 0);
+COMMENT ON COLUMN public.order_payments.provider_fee_cents IS 'Actual provider fee in the payment currency minor units; NULL means unknown, not zero.';

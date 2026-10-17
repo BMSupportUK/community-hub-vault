@@ -4493,6 +4493,7 @@ export type Database = {
           last_4: string | null
           order_id: string
           provider: string
+          provider_fee_cents: number | null
           provider_payment_id: string | null
           receipt_url: string | null
           square_payment_id: string | null
@@ -4509,6 +4510,7 @@ export type Database = {
           last_4?: string | null
           order_id: string
           provider?: string
+          provider_fee_cents?: number | null
           provider_payment_id?: string | null
           receipt_url?: string | null
           square_payment_id?: string | null
@@ -4525,6 +4527,7 @@ export type Database = {
           last_4?: string | null
           order_id?: string
           provider?: string
+          provider_fee_cents?: number | null
           provider_payment_id?: string | null
           receipt_url?: string | null
           square_payment_id?: string | null
