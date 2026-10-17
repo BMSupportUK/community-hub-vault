@@ -120,7 +120,7 @@ export function VideoCallStage({
   const [micError, setMicError] = useState<string | null>(null);
   const micStartingRef = useRef(false);
   const restartingRef = useRef(false);
-  const restartCamRef = useRef<() => void>(() => {});
+  const restartCamRef = useRef<(stopFirst?: boolean) => void>(() => {});
   // Staff side: tear down and rebuild the connection (fresh encoder/decoder on
   // both ends) — the last resort when the customer's picture stays black.
   const rebuildRef = useRef<() => void>(() => {});
@@ -128,6 +128,16 @@ export function VideoCallStage({
   const remoteCamOffRef = useRef(false);
 
   useEffect(() => enterLiveCall(), []);
+
+  // What the customer's phone is doing, sent to staff and saved so a failed
+  // call can be diagnosed afterwards (no picture or personal data).
+  const diagBase = () => ({
+    ua: typeof navigator !== "undefined" ? navigator.userAgent : "",
+    orient: typeof screen !== "undefined" ? screen.orientation?.type ?? "" : "",
+    vw: typeof window !== "undefined" ? window.innerWidth : 0,
+    vh: typeof window !== "undefined" ? window.innerHeight : 0,
+    fixed: fixedRef.current ? fixedRef.current.stats() : null,
+  });
 
   const send = useCallback((event: string, payload: Record<string, unknown> = {}) => {
     chRef.current?.send({ type: "broadcast", event, payload }).catch(() => {});
@@ -276,7 +286,7 @@ export function VideoCallStage({
       const cam = stream.getVideoTracks()[0];
       if (side === "answerer" && cam) {
         fixedRef.current = createFixedFrameVideo(
-          () => restartCamRef.current(),
+          () => { send("diag", { event: "heal", ...diagBase() }); restartCamRef.current(true); },
           (w, h) => { shapeRef.current = { w, h }; send("shape", { w, h }); },
         );
         fixedRef.current?.setSource(cam);
@@ -736,7 +746,7 @@ export function VideoCallStage({
   };
   // Fresh camera track swapped into the live call (no renegotiation). Used for
   // flipping, and to recover phones that send black after the screen rotates.
-  const restartCamera = async (facing: "user" | "environment" = facingRef.current) => {
+  const restartCamera = async (facing: "user" | "environment" = facingRef.current, stopFirst = false) => {
     const stream = streamRef.current;
     const old = stream?.getVideoTracks()[0];
     if (!stream || !old || restartingRef.current) return false;
@@ -746,7 +756,9 @@ export function VideoCallStage({
     try {
       let fresh: MediaStream;
       // Some phones allow only one camera user: free the old one and retry.
-      try { fresh = await get(); } catch { old.stop(); fresh = await get(); }
+      // A camera stuck sending black must be fully released before reopening.
+      if (stopFirst) { old.stop(); fresh = await get(); }
+      else { try { fresh = await get(); } catch { old.stop(); fresh = await get(); } }
       const track = fresh.getVideoTracks()[0];
       if (!track || streamRef.current !== stream) { fresh.getTracks().forEach((t) => t.stop()); return false; }
       track.enabled = enabled;
@@ -770,10 +782,10 @@ export function VideoCallStage({
       restartingRef.current = false;
     }
   };
-  restartCamRef.current = () => {
+  restartCamRef.current = (stopFirst = false) => {
     const t = streamRef.current?.getVideoTracks()[0];
     if (!t || !t.enabled) return; // camera deliberately off
-    void restartCamera();
+    void restartCamera(facingRef.current, stopFirst);
   };
   const flip = async () => {
     if (!streamRef.current?.getVideoTracks()[0] || restartingRef.current) return;

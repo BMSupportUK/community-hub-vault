@@ -58,7 +58,7 @@ export function cropView(stageW: number, stageH: number, shape: { w: number; h: 
   return { boxW, boxH, square: Math.max(boxW, boxH) };
 }
 
-export function createFixedFrameVideo(onStall?: () => void, onShape?: (w: number, h: number) => void, size = FIXED_FRAME_SIZE): FixedFrameVideo | null {
+export function createFixedFrameVideo(onStall?: (hard: boolean) => void, onShape?: (w: number, h: number) => void, size = FIXED_FRAME_SIZE): FixedFrameVideo | null {
   if (typeof document === "undefined") return null;
   const canvas = document.createElement("canvas");
   if (typeof canvas.captureStream !== "function") return null;
@@ -94,16 +94,19 @@ export function createFixedFrameVideo(onStall?: () => void, onShape?: (w: number
   let luma = -1;
   let blackSince = 0;
   let lastHeal = 0;
+  let healGap = 3000;
   let stalls = 0;
   let heals = 0;
   const heal = (now: number) => {
-    if (now - lastHeal < 3000) return;
+    if (now - lastHeal < healGap) return;
     lastHeal = now;
+    // A really dark room shouldn't restart the camera every few seconds.
+    healGap = Math.min(healGap * 2, 30000);
     heals++;
     // Re-attach first (cheap), then a brand-new camera.
     const t = source;
     if (t && t.readyState === "live") { video.srcObject = new MediaStream([t]); video.play().catch(() => {}); }
-    onStall?.();
+    onStall?.(true);
   };
 
   const draw = () => {
@@ -129,7 +132,7 @@ export function createFixedFrameVideo(onStall?: () => void, onShape?: (w: number
         for (let i = 0; i < d.length; i += 4) max = Math.max(max, 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
         luma = Math.round(max);
         if (max < 12) { blackSince ||= now; if (now - blackSince > 1500) heal(now); }
-        else blackSince = 0;
+        else { blackSince = 0; healGap = 3000; }
       } catch { /* unreadable */ }
     }
     if (video.paused && source) video.play().catch(() => {});
