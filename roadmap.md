@@ -192,3 +192,4 @@
 - [x] Streaming device prices: rebuilt the missing refresh pages the daily/stock cron jobs call (they had been 404ing since early October); scraped prices and stock updated for the eight satellite-shop devices (Z Mini £109, A11 Gold £129, A11 Link £99 out of stock, KD3 £68.95); Amazon and Xiaomi pages hide prices from server readers so those rows keep their stored values; stock cron now sends the secret header.
 
 - [x] Pay by bank (Stripe open banking) toggle on secure checkout Stripe method
+- [ ] Demo test order showing secure checkout with Square + crypto only and auto-posted Square invoice link (screenshots)
