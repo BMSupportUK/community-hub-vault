@@ -28,7 +28,9 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
     const storedDate = restore ? null : joinedYearToDate(joinedYear);
     if (!restore && !storedDate) return toast.error("Enter a valid year, no later than this year");
     setBusy(true);
-    const { error } = await supabase.rpc("admin_set_customer_first_subscription", { p_customer_id: editing.userId, p_first_subscription_date: storedDate });
+    // The SQL function accepts NULL to restore history; generated RPC types omit nullability.
+    const args = { p_customer_id: editing.userId, p_first_subscription_date: storedDate };
+    const { error } = await supabase.rpc("admin_set_customer_first_subscription", args as { p_customer_id: string; p_first_subscription_date: string });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Year joined updated");
