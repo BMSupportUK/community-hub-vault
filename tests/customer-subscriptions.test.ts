@@ -282,3 +282,39 @@ test('explicit manual renewal extends only its selected account once without edi
  await db.query('SELECT admin_set_account_setup($1,true)',[id(952)]);await db.query('SELECT admin_set_account_setup($1,true)',[id(952)]);
  const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(950));expect(c.accounts[0].expiresAt).toContain('2028-09-28');expect(c.accounts).toHaveLength(1);expect((await db.query('SELECT * FROM private.app_credentials ORDER BY id')).rows).toEqual(before);
 });
+
+test('manually added customers are listed without purchases and existing added users are backfilled', async () => {
+ await db.exec(`CREATE UNIQUE INDEX profiles_id_unique ON public.profiles(id);
+ ALTER TABLE auth.users ADD COLUMN raw_user_meta_data jsonb DEFAULT '{}'::jsonb, ADD COLUMN created_at timestamptz DEFAULT now();
+ INSERT INTO profiles VALUES('${id(970)}','user_pending','Pending');
+ INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES('${id(970)}','pending@example.test','{"admin_created":true,"needs_profile":true}');`);
+ await db.exec(readFileSync(new URL('../drizzle/migrations/0168_manual_added_customer_onboarding.sql',import.meta.url),'utf8'));
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(970));
+ expect(c?.manualSetupPending).toBe(true);
+ expect(c?.hasSiteAccount).toBe(true);
+ expect(c?.accounts).toEqual([]);
+ expect(c?.username).toBe('user_pending');
+});
+test('customer-completed profile replaces placeholder details without losing admin subscription entries', async () => {
+ await db.query('SELECT admin_allocate_customer_package($1,$2)',[id(970),id(500)]);
+ await db.query('SELECT admin_set_customer_first_subscription($1,$2)',[id(970),'2020-01-01']);
+ await db.exec(`INSERT INTO private.app_credentials VALUES('${id(971)}','${id(970)}','tv-login','single',1,'2027-10-18',NULL,now());
+ UPDATE profiles SET username='chosen-name',display_name='Chosen Name' WHERE id='${id(970)}';
+ UPDATE auth.users SET raw_user_meta_data=raw_user_meta_data || '{"needs_profile":false}' WHERE id='${id(970)}';`);
+ const c=(await db.query<{data:any[]}>('SELECT admin_customer_subscription_list() data')).rows[0]?.data.find(c=>c.userId===id(970));
+ expect(c?.manualSetupPending).toBe(false);
+ expect(c?.username).toBe('chosen-name');
+ expect(c?.displayName).toBe('Chosen Name');
+ expect(c?.package).toBe('Single 12 months');
+ expect(c?.firstSubscriptionAt).toBe('2020-01-01');
+ expect(c?.accounts[0].login).toBe('tv-login');
+ expect(c?.accounts[0].expiresAt).toContain('2027-10-18');
+});
+test('new manual customer provenance cannot be written by customers or read by staff', async () => {
+ await db.exec("SELECT set_config('test.role','staff',false); SET ROLE authenticated;");
+ try {
+   expect((await db.query('SELECT * FROM manually_added_customers')).rows).toHaveLength(0);
+   await expect(db.query('INSERT INTO manually_added_customers(user_id) VALUES($1)',[id(2)])).rejects.toThrow('permission denied');
+   await expect(db.query('SELECT admin_customer_subscription_list()')).rejects.toThrow('Forbidden');
+ } finally { await db.exec("RESET ROLE; SELECT set_config('test.role','admin',false)"); }
+});
