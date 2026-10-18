@@ -1226,6 +1226,13 @@
       "when": 1792342389572,
       "tag": "0174_pay_by_bank_banks",
       "breakpoints": true
+    },
+    {
+      "idx": 175,
+      "version": "7",
+      "when": 1792343268880,
+      "tag": "0175_orders_view_update_keeps_pay_method",
+      "breakpoints": true
     }
   ]
 }
