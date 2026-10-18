@@ -5634,6 +5634,7 @@ function AdminDiscounts() {
                       <div className="font-mono font-semibold text-base break-all">{c.code}</div>
                       <div className="text-xs text-muted-foreground">
                         {u ? `For @${u.username ?? u.display_name ?? "user"}` : "Everyone"}
+                        {u && manualEmails[u.id] ? ` · ${manualEmails[u.id]}` : ""}
                       </div>
                     </div>
                     <span
@@ -5788,6 +5789,7 @@ function AdminDiscounts() {
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.username ?? u.display_name ?? u.id.slice(0, 8)}
+                      {manualEmails[u.id] ? ` — ${manualEmails[u.id]}` : ""}
                     </option>
                   ))}
                 </select>
