@@ -617,7 +617,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const allTabs: readonly (readonly [string, string, boolean | string])[] = isFz ? [["tools", "Fan Zone tools", false]] : [
     ["tools", toolsHeading, false],
     ["order-status", "Orders", false],
-    ["customers", "Customers", true],
+    ["customers", "Customers", "customers"],
     ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
@@ -628,7 +628,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     ["backup-codes", "Backup codes", true],
   ];
   const tabs = allTabs.filter(([, , gate]) =>
-    gate === "bank" ? isAdminOnly : !gate || canSeePins,
+    gate === "bank" ? isAdminOnly : gate === "customers" ? canSeePins || hasRole("staff") : !gate || canSeePins,
   );
 
   const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
@@ -680,6 +680,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
         <CustomerMemberManagement>{({ toolbar, details, editor, extras, header, rolesRow }) => (
           <CustomerSubscriptionsAdminCard canReward={isAdminOnly} memberToolbar={toolbar} memberDetails={details} memberEditor={editor} memberExtras={extras} memberHeader={header} memberRoles={rolesRow} />
         )}</CustomerMemberManagement>
+      ) : tab === "customers" && hasRole("staff") ? (
+        <CustomerSubscriptionsAdminCard canReward={false} viewCredentials />
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (

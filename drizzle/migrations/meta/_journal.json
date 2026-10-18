@@ -1212,6 +1212,13 @@
       "when": 1792328737220,
       "tag": "0172_manual_customer_name_edit",
       "breakpoints": true
+    },
+    {
+      "idx": 173,
+      "version": "7",
+      "when": 1792329459047,
+      "tag": "0173_staff_read_customer_list",
+      "breakpoints": true
     }
   ]
 }

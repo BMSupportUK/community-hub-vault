@@ -27,7 +27,7 @@ const ACCOUNT_TYPES = [
   { value: "triple", label: "Triple-room account" },
 ] as const;
 
-export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, showPinReset = true }: { ownerId: string; ownerLabel: string; currentUserId: string; showPinReset?: boolean }) {
+export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, showPinReset = true, readOnly = false }: { ownerId: string; ownerLabel: string; currentUserId: string; showPinReset?: boolean; readOnly?: boolean }) {
   const [creds, setCreds] = useState<CredentialRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
@@ -86,7 +86,7 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, s
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader><DialogTitle>Credentials · {ownerLabel}</DialogTitle></DialogHeader>
           <div className="flex flex-wrap items-center gap-2">
-            {showPinReset && (
+            {!readOnly && showPinReset && (
             <button
               onClick={() => void resetPin()}
               disabled={pinBusy}
@@ -96,12 +96,12 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, s
               {pinBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Lock className="size-3.5" />} Reset PIN
             </button>
             )}
-            <button
+            {!readOnly && <button
               onClick={() => setEditor({ row: null })}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90"
             >
               <Plus className="size-3.5" /> Add
-            </button>
+            </button>}
           </div>
 
       {open && !loaded && <div className="grid place-items-center py-4 text-muted-foreground"><Loader2 className="size-4 animate-spin" /></div>}
@@ -130,10 +130,10 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, s
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-1">
+                  {!readOnly && <div className="flex gap-1">
                     <button onClick={() => setEditor({ row: c })} className="p-1.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground" aria-label={`Edit credential ${c.app_login_name}`}><Pencil className="size-3.5" /></button>
                     <button onClick={() => void remove(c.id)} className="p-1.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-destructive" aria-label={`Delete credential ${c.app_login_name}`}><Trash2 className="size-3.5" /></button>
-                  </div>
+                  </div>}
                 </div>
 
                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-surface-2 border border-border font-mono text-xs">
