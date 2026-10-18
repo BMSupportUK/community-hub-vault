@@ -97,7 +97,6 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise" | "crypto") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [switching, setSwitching] = useState(false);
-  const [showBankDetails, setShowBankDetails] = useState(false);
   const [payChoice, setPayChoice] = useState<PayMethodChoice>("bank");
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
@@ -120,6 +119,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   // Payment details (bank info, card form, crypto) sit in a right sidebar on
   // wide screens while the order is awaiting payment.
   const paymentSidebar = ["wise", "stripe", "square", "crypto", "cash"].includes(method) && !paid && !order.cancelled && visibleStage === 1;
+  // A manual bank-transfer order gets three columns: order details, Pay by
+  // bank, then our own account details for banks the open-banking list misses.
+  const threeColWise = paymentSidebar && method === "wise" && !!payByBank && !awaitingConfirmation;
   const accountSidebar = paid && !order.cancelled && visibleStage >= 3;
   const paidSidebar = paid && !order.cancelled && visibleStage === 2;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
@@ -140,6 +142,57 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
       manual_pay_method: order.method,
     }, items.map((item) => ({ product_name: item.name, quantity: item.qty, unit_price_cents: item.unitCents })), view.invoiceTemplate);
   };
+  // Our own bank-transfer details. On a manual bank-transfer order this is
+  // column 3, beside Pay by bank; elsewhere it is the single payment sidebar.
+  const bankTransferPanel = (heading: string, intro: string | null, showCardSwitch: boolean) => (
+    <aside className="min-w-0 space-y-4 lg:sticky lg:top-4">
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="font-semibold">{heading}</h2>
+        {intro ? <p className="text-xs text-muted-foreground mt-1">{intro}</p> : null}
+        <p className="text-xs text-muted-foreground mt-2 mb-1">UK bank accounts only — overseas bank transfers aren't accepted.</p>
+        <p className="text-xs text-muted-foreground mb-3">Send exactly {GBP(order.totalCents)} to this account.</p>
+        {bank ? (
+          <div className="rounded-xl border border-border px-3">
+            <CopyRow label="Account name" value={bank.account_name} />
+            <CopyRow label="Sort code" value={bank.sort_code} />
+            <CopyRow label="Account number" value={bank.account_number} />
+            <CopyRow label="IBAN" value={bank.iban} />
+            <CopyRow label="BIC" value={bank.bic} />
+            <CopyRow label="Reference" value={order.ref} />
+          </div>
+        ) : <p className="text-sm text-muted-foreground">Bank details are not available right now — please message us in the chat.</p>}
+      </section>
+      <section className="rounded-2xl border-2 border-warning bg-warning/10 p-5 flex gap-3 min-w-0">
+        <AlertTriangle className="size-6 text-warning shrink-0" />
+        <div className="space-y-1 min-w-0">
+          <p className="font-bold text-warning break-words">IMPORTANT: You MUST use <span className="font-mono">{order.ref}</span> as your payment reference.</p>
+          <p className="text-sm">Do not add anything else to the reference. Payments without this exact reference cannot be matched to your order and will be delayed.</p>
+        </div>
+      </section>
+      <section className="rounded-2xl border border-border bg-card p-5 space-y-3">
+        <div className="flex gap-3 items-start">
+          <Clock className="size-5 text-primary shrink-0 mt-0.5" />
+          <p className="text-sm"><span className="font-semibold">Please allow time for your transfer to arrive.</span> Most bank transfers land within minutes, but some banks can take up to 1–2 working days (longer over weekends and bank holidays). Your order will move on as soon as we receive it.</p>
+        </div>
+        {awaitingConfirmation ? (
+          <div className="flex items-center justify-center gap-2 h-11 rounded-xl bg-warning/15 text-warning text-sm font-semibold"><Hourglass className="size-4" /> Payment sent — awaiting confirmation</div>
+        ) : (
+          <button type="button" disabled={preview || sending || !onPaymentSent} onClick={async () => { if (!onPaymentSent) return; setSending(true); try { await onPaymentSent(); } finally { setSending(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60">
+            {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} I've sent the payment
+          </button>
+        )}
+      </section>
+      {showCardSwitch && onSwitchPayMethod ? (
+        <section className="rounded-2xl border border-border bg-card p-5">
+          <button type="button" disabled={preview || switching} onClick={async () => { if (!onSwitchPayMethod) return; setSwitching(true); try { await onSwitchPayMethod("square"); } finally { setSwitching(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
+            {switching ? <Loader2 className="size-4 animate-spin" /> : <CreditCard className="size-4" />} Prefer to pay by card instead
+          </button>
+          <p className="mt-2 text-xs text-muted-foreground text-center">Switch to a secure card payment on this order — you can go back to bank transfer any time before you pay.</p>
+        </section>
+      ) : null}
+    </aside>
+  );
+
   const installCard = paid && claimToken ? (
     <section className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="grid grid-cols-[112px_minmax(0,1fr)] items-stretch">
@@ -207,7 +260,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </div>
           )}
 
-          <div className={splitLayout ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
+          <div className={splitLayout ? (threeColWise ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)_minmax(300px,380px)] lg:items-start" : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start") : "space-y-6"}>
             <section className={`rounded-2xl border border-border bg-card p-5 ${splitLayout ? "min-w-0" : ""}`}>
             <h2 className="font-semibold mb-3">Order breakdown</h2>
             <div className="space-y-2 text-sm">
@@ -372,66 +425,13 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 </button>
               ) : null}
             </aside>
-          ) : paymentSidebar && method === "wise" && payByBank && !showBankDetails && !awaitingConfirmation ? (
-            <aside className="min-w-0 space-y-4 lg:sticky lg:top-4">
-              {payByBank}
-              <section className="rounded-2xl border border-border bg-card p-5 space-y-2">
-                <p className="text-sm font-semibold">Is your bank not listed?</p>
-                <p className="text-xs text-muted-foreground">Click below to pay by normal bank transfer using our account details instead.</p>
-                <button type="button" onClick={() => setShowBankDetails(true)} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2">
-                  <Landmark className="size-4" /> My bank isn't listed — show bank details
-                </button>
-              </section>
-            </aside>
+          ) : threeColWise ? (
+            <>
+              <aside className="min-w-0 lg:sticky lg:top-4">{payByBank}</aside>
+              {bankTransferPanel("Is your bank not listed?", "If your bank isn't in the Pay by bank list, send a normal bank transfer using our account details instead.", true)}
+            </>
           ) : paymentSidebar && method === "wise" ? (
-            <aside className="min-w-0 space-y-6 lg:sticky lg:top-4">
-              {payByBank && !awaitingConfirmation ? (
-                <button type="button" onClick={() => setShowBankDetails(false)} className="text-xs font-semibold text-primary hover:underline">← Back to Pay by bank</button>
-              ) : null}
-              <section className="rounded-2xl border border-border bg-card p-5">
-                <h2 className="font-semibold">Bank transfer details</h2>
-                <p className="text-xs text-muted-foreground mb-1">UK bank accounts only — overseas bank transfers aren't accepted.</p>
-                <p className="text-xs text-muted-foreground mb-3">Send exactly {GBP(order.totalCents)} to this account.</p>
-                {bank ? (
-                  <div className="rounded-xl border border-border px-3">
-                    <CopyRow label="Account name" value={bank.account_name} />
-                    <CopyRow label="Sort code" value={bank.sort_code} />
-                    <CopyRow label="Account number" value={bank.account_number} />
-                    <CopyRow label="IBAN" value={bank.iban} />
-                    <CopyRow label="BIC" value={bank.bic} />
-                    <CopyRow label="Reference" value={order.ref} />
-                  </div>
-                ) : <p className="text-sm text-muted-foreground">Bank details are not available right now — please message us in the chat.</p>}
-              </section>
-              <section className="rounded-2xl border-2 border-warning bg-warning/10 p-5 flex gap-3 min-w-0">
-                <AlertTriangle className="size-6 text-warning shrink-0" />
-                <div className="space-y-1 min-w-0">
-                  <p className="font-bold text-warning break-words">IMPORTANT: You MUST use <span className="font-mono">{order.ref}</span> as your payment reference.</p>
-                  <p className="text-sm">Do not add anything else to the reference. Payments without this exact reference cannot be matched to your order and will be delayed.</p>
-                </div>
-              </section>
-              <section className="rounded-2xl border border-border bg-card p-5 space-y-3">
-                <div className="flex gap-3 items-start">
-                  <Clock className="size-5 text-primary shrink-0 mt-0.5" />
-                  <p className="text-sm"><span className="font-semibold">Please allow time for your transfer to arrive.</span> Most bank transfers land within minutes, but some banks can take up to 1–2 working days (longer over weekends and bank holidays). Your order will move on as soon as we receive it.</p>
-                </div>
-                {awaitingConfirmation ? (
-                  <div className="flex items-center justify-center gap-2 h-11 rounded-xl bg-warning/15 text-warning text-sm font-semibold"><Hourglass className="size-4" /> Payment sent — awaiting confirmation</div>
-                ) : (
-                  <button type="button" disabled={preview || sending || !onPaymentSent} onClick={async () => { if (!onPaymentSent) return; setSending(true); try { await onPaymentSent(); } finally { setSending(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60">
-                    {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} I've sent the payment
-                  </button>
-                )}
-              </section>
-              {onSwitchPayMethod && !awaitingConfirmation ? (
-                <section className="rounded-2xl border border-border bg-card p-5">
-                  <button type="button" disabled={preview || switching} onClick={async () => { if (!onSwitchPayMethod) return; setSwitching(true); try { await onSwitchPayMethod("square"); } finally { setSwitching(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
-                    {switching ? <Loader2 className="size-4 animate-spin" /> : <CreditCard className="size-4" />} Prefer to pay by card instead
-                  </button>
-                  <p className="mt-2 text-xs text-muted-foreground text-center">Switch to a secure card payment on this order — you can go back to bank transfer any time before you pay.</p>
-                </section>
-              ) : null}
-            </aside>
+            bankTransferPanel("Bank transfer details", null, !awaitingConfirmation)
           ) : paymentSidebar && method === "cash" ? (
             <aside className="min-w-0 lg:sticky lg:top-4">
               <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">
