@@ -93,7 +93,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 }
 
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise" | "crypto") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [payChoice, setPayChoice] = useState<"card" | "bank">("bank");
@@ -312,7 +312,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
           ) : paymentSidebar && (method === "stripe" || method === "square") ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
               <h2 className="font-semibold">Choose how to pay</h2>
-              <div className={`grid gap-2 ${payByBank ? "grid-cols-2" : "grid-cols-1"}`} role="tablist" aria-label="Payment options">
+              <div className={`grid gap-2 ${[payByBank, onSwitchPayMethod].filter(Boolean).length === 2 ? "grid-cols-3" : [payByBank, onSwitchPayMethod].some(Boolean) ? "grid-cols-2" : "grid-cols-1"}`} role="tablist" aria-label="Payment options">
                 {payByBank ? (
                   <button type="button" role="tab" aria-selected={payChoice === "bank"} onClick={() => setPayChoice("bank")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "bank" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
                     <Landmark className="size-4" /> Pay by bank
@@ -321,6 +321,11 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <button type="button" role="tab" aria-selected={payChoice === "card"} onClick={() => setPayChoice("card")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "card" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
                   <CreditCard className="size-4" /> Card (Square)
                 </button>
+                {onSwitchPayMethod ? (
+                  <button type="button" role="tab" aria-selected={false} disabled={switching} onClick={async () => { setSwitching(true); try { await onSwitchPayMethod("crypto"); } finally { setSwitching(false); } }} className="min-h-16 rounded-xl border border-border bg-card px-2 py-2 text-xs font-semibold text-muted-foreground hover:bg-surface-2 inline-flex flex-col items-center justify-center gap-1 text-center disabled:opacity-60">
+                    {switching ? <Loader2 className="size-4 animate-spin" /> : <Bitcoin className="size-4" />} Crypto (USDT)
+                  </button>
+                ) : null}
               </div>
               {payChoice === "bank" && payByBank ? payByBank : (
                 <>
@@ -350,6 +355,11 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 </div>
               )}
               <p className="text-xs text-center text-muted-foreground">Crypto payments can take a few minutes to confirm. This page updates automatically.</p>
+              {onSwitchPayMethod ? (
+                <button type="button" disabled={switching} onClick={async () => { setSwitching(true); try { await onSwitchPayMethod("square"); } finally { setSwitching(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
+                  {switching ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />} Pay by bank or card instead
+                </button>
+              ) : null}
             </aside>
           ) : paymentSidebar && method === "wise" ? (
             <aside className="min-w-0 space-y-6 lg:sticky lg:top-4">
