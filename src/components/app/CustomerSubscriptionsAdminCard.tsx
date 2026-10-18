@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { customerDate, customerHasRecordedYear, customerShowsNoRenewal } from "@/lib/customer-date";
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
 import { sortCustomers, type CustomerSortDir, type CustomerSortField } from "@/lib/customer-sort";
-import { Gift, Loader2, RefreshCw, Pencil, Link2, ArrowDown, ArrowUp } from "lucide-react";
+import { Gift, Loader2, RefreshCw, Pencil, Link2, ArrowDown, ArrowUp, Check } from "lucide-react";
+import { historicalReferralBonusAdded, referralBonusExcluded } from "@/lib/customer-referral-bonus";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
 }) {
   const { user } = useAuth();
   const [rows, setRows] = useState<Customer[]>([]);
+  const [historicalBonuses, setHistoricalBonuses] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"single" | "multi" | "manual">("single");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<CustomerSortField>("default");
@@ -149,6 +151,8 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase.rpc("admin_customer_subscription_list");
+    const bonuses = await supabase.from("referral_bonus_acknowledgements").select("customer_id,referrer_name");
+    if (!bonuses.error) setHistoricalBonuses(Object.fromEntries((bonuses.data ?? []).map((b) => [b.customer_id, b.referrer_name])));
     setLoading(false);
     setError(error?.message ?? "");
     if (!error) {
@@ -247,15 +251,12 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
                 <span className="text-muted-foreground">·</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Years as customer:</span><span>{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</span>
               </div>
-              <Detail label="Referred by">{c.referrerName || "—"}</Detail>
+              <Detail label="Referred by"><span className="inline-flex flex-wrap items-center gap-2">{c.referrerName || "—"}{c.referrerName && !referralBonusExcluded(c.referrerName) && (() => {
+                const pending = c.rewards.find((r) => !r.rewardedAt);
+                if (historicalReferralBonusAdded(c.referrerName, historicalBonuses[c.userId], c.rewards.length) || (c.rewards.length && !pending)) return <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"><Check className="size-3.5" /> Referral Bonus added</span>;
+                return pending && canReward ? <Button variant="outline" size="sm" className="h-7" disabled={!pending.referrerAccounts.length} title={!pending.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${pending.ref ?? pending.orderId}`} onClick={() => { setReward(pending); setAccount(pending.referrerAccounts.length === 1 ? pending.referrerAccounts[0].id : ""); }}><Gift /> Add referral bonus</Button> : null;
+              })()}</span></Detail>
             </dl>
-            {c.rewards.map((r) => (
-              <div key={r.orderId} className={`w-fit max-w-full rounded-md border p-2 text-xs ${r.rewardedAt ? "border-primary/30 bg-primary/10" : "border-border bg-muted/40"}`}>
-                <span className="block font-medium">Referral bonus · 12 month new account</span>
-                {r.rewardedAt ? <span className="block text-muted-foreground">Bonus added {date(r.rewardedAt)}</span>
-                  : canReward ? <Button className="mt-1" variant="outline" size="sm" disabled={!r.referrerAccounts.length} title={!r.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${r.ref ?? r.orderId}`} onClick={() => { setReward(r); setAccount(r.referrerAccounts.length === 1 ? r.referrerAccounts[0].id : ""); }}><Gift /> Confirm bonus added</Button>
-                  : <span className="block text-muted-foreground">Awaiting admin confirmation</span>}
-              </div>))}
             {canReward && c.hasSiteAccount && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} />}
             {c.hasSiteAccount && memberDetails?.(c.userId)}
           </article>);
