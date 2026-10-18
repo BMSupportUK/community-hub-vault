@@ -245,6 +245,6 @@
 - [ ] Demo test order showing secure checkout with Square + crypto only and auto-posted Square invoice link (screenshots)
 
 ## Combined Customers screen
-- [ ] Merge subscription details and member/role controls into one customer card list with one edit pencil; retain site/manual tabs and existing security gates.
+- [x] Merge subscription details and member/role controls into one customer card list with one edit pencil; retain site/manual tabs and existing security gates. Six sorting tests pass; signed-in navigation has no page errors, card verification awaits password/PIN unlock.
 - [x] Move Members & Role Management beneath Customers, repoint both header copies and preserve protected controls; old links redirect to Customers. Nineteen existing tests pass, build OK; signed-in header click reaches Customers with no page errors.
 - [ ] Verify combined customer/member cards after unlocking — existing admin PIN and member password/PIN gates block the signed-in screen check; no security bypass used.
