@@ -1184,6 +1184,13 @@
       "when": 1792323215446,
       "tag": "0168_manual_added_customer_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 169,
+      "version": "7",
+      "when": 1792323513476,
+      "tag": "0169_silence_auto_gate_alerts_for_added_and_manual_customers",
+      "breakpoints": true
     }
   ]
 }
