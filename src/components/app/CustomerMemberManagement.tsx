@@ -87,7 +87,6 @@ type MemberSlots = {
 export function CustomerMemberManagement({ children }: { children: (slots: MemberSlots) => ReactNode }) {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
-  const isOwner = hasAny(["admin"]);
   const [rolesUnlocked, setRolesUnlocked] = useState(false);
   useEffect(() => {
     setRolesUnlocked(isRolesUnlocked(user?.id));
