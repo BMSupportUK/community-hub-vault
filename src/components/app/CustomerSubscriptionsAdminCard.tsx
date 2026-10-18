@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { customerDate, customerHasRecordedYear, customerShowsNoRenewal } from "@/lib/customer-date";
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
 import { Gift, Loader2, RefreshCw, Pencil, Link2 } from "lucide-react";
@@ -140,6 +140,12 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const siteCount = rows.filter((c) => c.hasSiteAccount).length;
   const manualCount = rows.length - siteCount;
   const shown = tab === "site" ? siteRows : manualRows;
+  const Detail = ({ label, children, action }: { label: string; children: ReactNode; action?: ReactNode }) => (
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0"><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt><dd className="mt-0.5 break-words">{children}</dd></div>
+      {action}
+    </div>
+  );
   return (
     <section className="min-w-0 py-4" aria-label="Customer subscriptions">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
