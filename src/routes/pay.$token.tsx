@@ -56,7 +56,7 @@ function DemoPayPage() {
           <ArrowLeft className="size-4" /> Back to my orders
         </Link>
       </div>
-      <CheckoutTemplate view={DEMO_CHECKOUT_VIEW as CheckoutView} onPaymentSent={demoOnly} onContinueToSetup={demoOnly} />
+      <CheckoutTemplate view={DEMO_CHECKOUT_VIEW as CheckoutView} preview onPaymentSent={demoOnly} onContinueToSetup={demoOnly} payByBank={<PayByBankSection token="demo" password="" preview />} />
     </main>
   );
 }

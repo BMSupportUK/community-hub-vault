@@ -69,7 +69,7 @@ export function PayByBankSection({ token, password, preview = false }: { token: 
           </EmbeddedCheckoutProvider>
         </div>
       ) : (
-        <button type="button" onClick={start} disabled={paying} className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60">
+        <button type="button" onClick={start} disabled={paying || preview} className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60">
           {paying ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />}
           {paying ? "Opening your bank…" : "Pay by bank"}
         </button>
