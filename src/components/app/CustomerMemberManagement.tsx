@@ -515,27 +515,77 @@ export function CustomerMemberManagement() {
                         )}
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
-                      {activeRoles.map((rd) => {
-                        const active = row.roles.includes(rd.name);
-                        const busy = saving === `${row.id}:${rd.name}`;
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-border items-center">
+                      {row.roles.map((rn) => {
+                        const rd =
+                          activeRoles.find((r) => r.name === rn) ??
+                          roleDefs.find((r) => r.name === rn);
+                        const label = rd ? displayRoleLabel(rd.name, rd.label) : rn;
+                        const busy = saving === `${row.id}:${rn}`;
                         return (
-                          <button
-                            key={rd.name}
-                            onClick={() => toggleRole(row, rd.name)}
-                            disabled={busy}
+                          <span
+                            key={rn}
+                            title={label}
                             className={cn(
-                              "px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all capitalize",
-                              active
-                                ? styleFor(rd.name)
-                                : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-foreground",
+                              "inline-flex items-center gap-1 pl-2.5 pr-1 py-1 rounded-lg text-xs font-semibold capitalize border",
+                              styleFor(rn),
                               busy && "opacity-60 cursor-wait",
                             )}
                           >
-                            {busy ? "…" : displayRoleLabel(rd.name, rd.label)}
-                          </button>
+                            {label}
+                            <button
+                              onClick={() => toggleRole(row, rn)}
+                              disabled={busy}
+                              title={`Remove ${label}`}
+                              className="p-0.5 rounded-md hover:bg-black/10"
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </span>
                         );
                       })}
+                      <button
+                        onClick={() => setAddRolesFor(addRolesFor === row.id ? null : row.id)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border border-dashed border-border text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
+                      >
+                        <Plus className="size-3.5" /> Add role
+                      </button>
+                      {addRolesFor === row.id && (
+                        <div className="w-full rounded-xl border border-border bg-surface-2 p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                              Add a role
+                            </div>
+                            <button
+                              onClick={() => setAddRolesFor(null)}
+                              title="Close"
+                              className="p-0.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-1"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          </div>
+                          {activeRoles.filter((rd) => !row.roles.includes(rd.name)).length === 0 ? (
+                            <div className="text-[11px] text-muted-foreground">
+                              All roles are already assigned.
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {activeRoles
+                                .filter((rd) => !row.roles.includes(rd.name))
+                                .map((rd) => (
+                                  <button
+                                    key={rd.name}
+                                    onClick={() => toggleRole(row, rd.name)}
+                                    disabled={saving === `${row.id}:${rd.name}`}
+                                    className="px-2.5 py-1 rounded-lg text-xs font-semibold border border-border bg-transparent text-muted-foreground hover:border-primary hover:text-foreground transition-all capitalize"
+                                  >
+                                    {displayRoleLabel(rd.name, rd.label)}
+                                  </button>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     {hasAny(["admin", "management"]) && (
                       <MemberSecurityActions userId={row.id} name={row.display_name ?? row.username ?? "this user"} />
