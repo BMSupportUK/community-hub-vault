@@ -19,7 +19,7 @@ const date = customerDate;
 
 const renewalDay = (v: string | null) => v ? new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(v)) : "";
 
-export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, memberDetails, memberEditor, memberExtras }: {
+export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, memberDetails, memberEditor, memberExtras, memberHeader }: {
   canReward: boolean;
   memberToolbar?: ReactNode;
   memberDetails?: (userId: string) => ReactNode;
