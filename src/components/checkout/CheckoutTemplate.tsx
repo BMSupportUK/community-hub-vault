@@ -120,6 +120,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   // Payment details (bank info, card form, crypto) sit in a right sidebar on
   // wide screens while the order is awaiting payment.
   const paymentSidebar = ["wise", "stripe", "square", "crypto", "cash"].includes(method) && !paid && !order.cancelled && visibleStage === 1;
+  // A manual bank-transfer order gets three columns: order details, Pay by
+  // bank, then our own account details for banks the open-banking list misses.
+  const threeColWise = paymentSidebar && method === "wise" && !!payByBank && !awaitingConfirmation;
   const accountSidebar = paid && !order.cancelled && visibleStage >= 3;
   const paidSidebar = paid && !order.cancelled && visibleStage === 2;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
