@@ -6,7 +6,6 @@ import { continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startChec
 import { switchCheckoutPayMethod } from "@/lib/checkout-pay.functions";
 import { OrderVideoCallCustomer } from "@/components/checkout/OrderVideoCall";
 import { OrderAppLogin } from "@/components/checkout/OrderAppLogin";
-import { ManualCheckoutPin } from "@/components/checkout/ManualCheckoutPin";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
