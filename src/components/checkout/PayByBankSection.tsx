@@ -11,7 +11,7 @@ import { PAY_BY_BANK_BANKS, PAY_BY_BANK_INTRO, PAY_BY_BANK_NOTE } from "@/lib/pa
  * Creates a Stripe Checkout session restricted to pay_by_bank and embeds it
  * inline; the manual bank transfer system is unaffected.
  */
-export function PayByBankSection({ token, password }: { token: string; password: string }) {
+export function PayByBankSection({ token, password, preview = false }: { token: string; password: string; preview?: boolean }) {
   const createSession = useServerFn(checkoutStripeSession);
   const [paying, setPaying] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
