@@ -69,7 +69,7 @@ export function ProfitCostsPanel() {
         try {
           const result = await getProfitOpenBankingOrders({ data: { orderIds: unchecked.map(row => row.order_id) } });
           for (const entry of result.verified) {
-            const row = unchecked.find(row => row.order_id === entry.orderId);
+            const row = unchecked.find(row => row.order_id === entry.orderId && row.provider_payment_id === entry.paymentId);
             if (row) verifiedMethods.current.set(`${row.order_id}:${row.provider_payment_id}`, entry.openBanking);
           }
           if (result.unavailable) toast.warning('Some Stripe payment methods could not be verified; their sales remain under Stripe until the next check.');
