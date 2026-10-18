@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
-import { continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
+import { continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup, switchCheckoutPayMethod } from "@/lib/checkout.functions";
 import { OrderVideoCallCustomer } from "@/components/checkout/OrderVideoCall";
 import { OrderAppLogin } from "@/components/checkout/OrderAppLogin";
 import { ManualCheckoutPin } from "@/components/checkout/ManualCheckoutPin";
@@ -71,6 +71,7 @@ function PayPage() {
   const sendPaymentSent = useServerFn(markPaymentSent);
   const startAccountSetup = useServerFn(startCheckoutAccountSetup);
   const continueToAccountSetup = useServerFn(continueCheckoutToAccountSetup);
+  const switchPayMethod = useServerFn(switchCheckoutPayMethod);
   const [password, setPassword] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [input, setInput] = useState("");
@@ -84,7 +85,7 @@ function PayPage() {
   const load = useCallback(async (pw: string) => {
     const r = await fetchCheckout({ data: { token, password: pw } });
     if (!r.ok) return false;
-    setView({ order: r.order, items: r.items, invoice: r.invoice, bank: r.bank, qdCode: (r as { qdCode?: { label: string; code: string } | null }).qdCode ?? null });
+    setView({ order: r.order, items: r.items, invoice: r.invoice, bank: r.bank, canPayByBank: Boolean((r as { canPayByBank?: boolean }).canPayByBank), qdCode: (r as { qdCode?: { label: string; code: string } | null }).qdCode ?? null });
     return true;
   }, [fetchCheckout, token]);
 
@@ -205,6 +206,10 @@ function PayPage() {
         view={view}
         claimToken={token}
         onPaymentSent={async () => { await sendPaymentSent({ data: { token, password: pw } }); await load(pw); }}
+        onSwitchPayMethod={async (method) => {
+          await switchPayMethod({ data: { token, password: pw, method } });
+          await load(pw);
+        }}
         onContinueToSetup={async () => {
           const result = await continueToAccountSetup({ data: { token, password: pw } });
           if (!result.ok) {
