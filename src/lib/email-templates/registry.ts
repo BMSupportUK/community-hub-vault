@@ -39,6 +39,7 @@ import { template as fanZoneAppealReply } from './fan-zone-appeal-reply'
 import { template as paymentOutstanding } from './payment-outstanding'
 import { template as jobApplicationReceived } from './job-application-received'
 import { template as temporaryPassword } from './temporary-password'
+import { template as manualAccountLogin } from './manual-account-login'
 import { template as manualCredentialsAccess } from './manual-credentials-access'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
@@ -64,5 +65,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'fan-zone-appeal-reply': fanZoneAppealReply,
   'payment-outstanding': paymentOutstanding,
   'job-application-received': jobApplicationReceived,
-  'temporary-password': temporaryPassword,
+'temporary-password': temporaryPassword,
+  'manual-account-login': manualAccountLogin,
 }
