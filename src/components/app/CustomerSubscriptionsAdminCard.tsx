@@ -31,8 +31,10 @@ const localDateTime = (iso: string) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, memberDetails, memberEditor, memberExtras, memberHeader, memberRoles }: {
+export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = false, memberToolbar, memberDetails, memberEditor, memberExtras, memberHeader, memberRoles }: {
   canReward: boolean;
+  /** Staff: read-only credentials viewing, no editing. */
+  viewCredentials?: boolean;
   memberToolbar?: ReactNode;
   memberDetails?: (userId: string) => ReactNode;
   memberEditor?: (userId: string) => ReactNode;
@@ -255,7 +257,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
               <h3 className="break-words font-semibold">{name}</h3>
               <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
               {c.manualSetupPending && <span className="text-xs text-muted-foreground">Awaiting profile setup</span>}
-              {canReward && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} showPinReset={c.hasSiteAccount} />}
+              {(canReward || viewCredentials) && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} showPinReset={c.hasSiteAccount} readOnly={!canReward} />}
               {c.hasSiteAccount && memberHeader?.(c.userId)}
               {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
               {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
