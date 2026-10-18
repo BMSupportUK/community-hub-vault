@@ -8057,6 +8057,7 @@ export type Database = {
           target_id: string
         }[]
       }
+      gate_alert_suppressed: { Args: { _uid: string }; Returns: boolean }
       get_active_mute: { Args: { _user_id: string }; Returns: string }
       get_boro_final_reminder_recipients: {
         Args: never
