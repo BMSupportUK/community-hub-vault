@@ -3780,7 +3780,7 @@ function OrderDetailImpl({
     let cancelled = false;
     (async () => {
       const res: any = await checkMyBankAccess({}).catch(() => null);
-      if (!cancelled) setBankOnlyCustomer(false if (!cancelled) setBankOnlyCustomer(Boolean(res?.allowed));if (!cancelled) setBankOnlyCustomer(Boolean(res?.allowed)); Boolean(res?.allowed)); // bank transfer is staff-created only
+      if (!cancelled && res !== undefined) setBankOnlyCustomer(false); // bank transfer is staff-created only
     })();
     return () => {
       cancelled = true;
