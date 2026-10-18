@@ -10,6 +10,10 @@ export function awayIcon(reason: string | null | undefined) {
   if (reason === "Meeting") return Users;
   return Moon; // Outside Of Office Hours and anything unknown keeps the moon.
 }
+/** Off shift, only Outside Of Office Hours may be chosen. */
+export function awayReasonsFor(onShift: boolean): readonly AwayReason[] {
+  return onShift ? AWAY_REASONS : ["Outside Of Office Hours"];
+}
 export function isScheduledAway(reason: AwayReason) {
   return reason === "Outside Of Office Hours";
 }
