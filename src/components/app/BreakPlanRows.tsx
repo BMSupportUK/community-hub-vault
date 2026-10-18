@@ -3,7 +3,7 @@ import { CheckCircle2, Coffee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { breakIcon } from "@/lib/breaks";
+import { breakIcon, ukMinutes } from "@/lib/breaks";
 import { planBreaks, toMinutes, fromMinutes, type UserPlan } from "@/lib/break-plan";
 import { countOpenTickets, passTicketsForBreak } from "@/lib/break-handover";
 import { sendBreakEventPush } from "@/lib/push.functions";
@@ -71,11 +71,14 @@ export function planItems(plan: UserPlan | null, usedKinds: readonly string[], n
     const at = e.includes("@") ? Number(e.split("@")[1]) : NaN;
     const s1 = plan.break1.start;
     const s2 = plan.break2.start;
-    // A break taken nearer Break 2's slot counts as Break 2, not Break 1.
-    const prefer2 = !Number.isNaN(at) && s2 !== null && (s1 === null || Math.abs(at - s2) < Math.abs(at - s1));
-    if (prefer2 && !b2) b2 = true;
-    else if (!b1) b1 = true;
-    else b2 = true;
+    // Timestamped records belong to one allocated slot only. A duplicate
+    // Break 1 must never spill over into the future Break 2 allowance.
+    if (Number.isFinite(at)) {
+      const prefer2 = s2 !== null && at >= s2 && (s1 === null || Math.abs(at - s2) < Math.abs(at - s1));
+      if (prefer2) b2 = true;
+      else if (s1 !== null && at >= s1) b1 = true;
+    } else if (!b1) b1 = true;
+    else if (s2 !== null && nowMin >= s2) b2 = true;
   }
   return [
     { ...plan.break1, done: b1 },
@@ -136,7 +139,7 @@ export function AutoBreakStartListener() {
       const { data: s } = await supabase.from("shifts").select("id").eq("user_id", user.id).is("clock_out", null).limit(1).maybeSingle();
       if (!s) { if (alive) setUsedKinds([]); return; }
       const { data: bs } = await supabase.from("breaks").select("kind,started_at").eq("shift_id", (s as { id: string }).id);
-      if (alive) setUsedKinds(((bs ?? []) as { kind: string; started_at: string }[]).map((b) => `${b.kind}@${toMinutes(b.started_at.slice(11, 16))}`));
+      if (alive) setUsedKinds(((bs ?? []) as { kind: string; started_at: string }[]).map((b) => `${b.kind}@${ukMinutes(b.started_at)}`));
     };
     void load();
     const r = setInterval(() => void load(), 60_000);
@@ -144,7 +147,7 @@ export function AutoBreakStartListener() {
   }, [user?.id, eligible]);
 
   const items = useMemo(() => planItems(plan, usedKinds, nowMin), [plan, usedKinds, nowMin]);
-  const dueItem = items.find((it) => !it.done && it.start !== null && nowMin >= it.start);
+  const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
 
   useEffect(() => {
     if (!user || !eligible || !dueItem || dueItem.start === null) return;
@@ -158,9 +161,10 @@ export function AutoBreakStartListener() {
       const shiftId = (s as { id: string }).id;
       // Re-check inside the insert path: another tab may have started it.
       // Break 1 already counts as one "break", so Break 2 is allowed a second.
-      const { data: existing } = await supabase.from("breaks").select("id").eq("shift_id", shiftId).eq("kind", item.kind);
-      const allowed = item.kind === "lunch" ? 1 : item.label === "Break 2" ? 2 : 1;
-      if ((existing?.length ?? 0) >= allowed) return;
+      const { data: existing, error: readError } = await supabase.from("breaks").select("kind,started_at,ended_at").eq("shift_id", shiftId);
+      if (readError || existing?.some((b) => b.ended_at === null)) return;
+      const recorded = (existing ?? []).map((b) => `${b.kind}@${ukMinutes(b.started_at)}`);
+      if (planItems(plan, recorded, ukNow().minutes).some((b) => b.label === item.label && b.done)) return;
       const n = await countOpenTickets(user.id);
       if (n > 0) await passTicketsForBreak(item.kind);
       const { error } = await supabase.from("breaks").insert({ shift_id: shiftId, user_id: user.id, kind: item.kind });
