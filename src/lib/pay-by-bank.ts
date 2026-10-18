@@ -27,7 +27,7 @@ export const PAY_BY_BANK_BANKS = [
 
 /** Shown under the bank list on the secure checkout page. */
 export const PAY_BY_BANK_NOTE =
-  "If your bank isn't in the list, it isn't supported yet — pay with the Square card invoice above instead.";
+  "If your bank isn't in the list, it isn't supported yet — choose Card (Square) to pay by card invoice instead.";
 
 /** One-line intro above the list. */
 export const PAY_BY_BANK_INTRO =

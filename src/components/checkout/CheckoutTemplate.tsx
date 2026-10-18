@@ -96,6 +96,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [payChoice, setPayChoice] = useState<"card" | "bank">("card");
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
   const step = checkoutStep(order);
@@ -310,26 +311,34 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </aside>
           ) : paymentSidebar && (method === "stripe" || method === "square") ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
-              <div className="flex items-center gap-3">
-                <CreditCard className="size-5 text-primary" />
-                <div>
-                  <h2 className="font-semibold">{METHOD[method]} invoice</h2>
-                </div>
+              <h2 className="font-semibold">Choose how to pay</h2>
+              <div className={`grid gap-2 ${view.canPayByBank && onSwitchPayMethod ? "grid-cols-3" : payByBank ? "grid-cols-2" : "grid-cols-1"}`} role="tablist" aria-label="Payment options">
+                <button type="button" role="tab" aria-selected={payChoice === "card"} onClick={() => setPayChoice("card")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "card" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
+                  <CreditCard className="size-4" /> Card (Square)
+                </button>
+                {payByBank ? (
+                  <button type="button" role="tab" aria-selected={payChoice === "bank"} onClick={() => setPayChoice("bank")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "bank" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
+                    <Landmark className="size-4" /> Pay by bank
+                  </button>
+                ) : null}
+                {view.canPayByBank && onSwitchPayMethod ? (
+                  <button type="button" role="tab" aria-selected={false} disabled={preview && !onSwitchPayMethod || switching} onClick={async () => { setSwitching(true); try { await onSwitchPayMethod("wise"); } finally { setSwitching(false); } }} className="min-h-16 rounded-xl border border-border bg-card px-2 py-2 text-xs font-semibold text-muted-foreground hover:bg-surface-2 inline-flex flex-col items-center justify-center gap-1 text-center disabled:opacity-60">
+                    {switching ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />} Bank transfer
+                  </button>
+                ) : null}
               </div>
-              {cardPayment ? cardPayment : preview ? (
-                <div className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold">
-                  <Lock className="size-4" /> Pay {GBP(order.totalCents)}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">Loading invoice…</p>
+              {payChoice === "bank" && payByBank ? payByBank : (
+                <>
+                  {cardPayment ? cardPayment : preview ? (
+                    <div className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold">
+                      <Lock className="size-4" /> Pay {GBP(order.totalCents)} by card
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Loading invoice…</p>
+                  )}
+                </>
               )}
               <p className="text-xs text-center text-muted-foreground">This page updates automatically once your payment goes through.</p>
-              {payByBank}
-              {view.canPayByBank && onSwitchPayMethod ? (
-                <button type="button" disabled={preview || switching} onClick={async () => { if (!onSwitchPayMethod) return; setSwitching(true); try { await onSwitchPayMethod("wise"); } finally { setSwitching(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
-                  {switching ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />} Pay by bank transfer instead
-                </button>
-              ) : null}
             </aside>
           ) : paymentSidebar && method === "crypto" ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
