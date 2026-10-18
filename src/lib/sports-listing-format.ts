@@ -1587,6 +1587,13 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       lastChannelWasPlain = null;
       continue;
     }
+    // Untimed NFL programme rows such as "NFL15: Redzone - Week 6": RedZone
+    // is a programme, not a channel of the game above. With no start time it
+    // cannot become a guide event, so skip it — never attach it as channels.
+    if (/^NFL\s*\d{1,3}\s*:/i.test(line) && !/\d{1,2}[:.]\d{2}\s*(?:[ap]m)?\s*$|\d{1,2}\s*[ap]m\s*$/i.test(line)) {
+      lastChannelWasPlain = null;
+      continue;
+    }
     const parts = splitChannelLine(line);
     current.channels.push(...parts);
     lastChannelWasPlain = parts.length === 1 ? parts[0] : null;
