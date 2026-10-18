@@ -79,6 +79,7 @@ type MemberSlots = {
   editor: (userId: string) => ReactNode;
   extras: (userId: string) => ReactNode;
   header: (userId: string) => ReactNode;
+  rolesRow: (userId: string) => ReactNode;
 };
 
 export function CustomerMemberManagement({ children }: { children: (slots: MemberSlots) => ReactNode }) {
@@ -307,26 +308,42 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Last IP:</span><span>{row.last_ip || "—"}</span>
     </div>;
   };
+  const banMember = async (row: Row) => {
+    if (row.id === user?.id) {
+      toast.error("You can't ban your own account.");
+      return;
+    }
+    const name = row.display_name || row.username || row.id.slice(0, 8);
+    const banned = row.roles.includes("banned");
+    if (!confirm(banned ? `Lift the ban on ${name}?` : `Ban ${name}? They will lose access to the site immediately.`)) return;
+    await toggleRole(row, "banned");
+  };
   const memberHeader = (userId: string) => {
     const row = rows.find((r) => r.id === userId);
     if (!row) return null;
+    const banned = row.roles.includes("banned");
     return <>
+      <Button variant="ghost" size="icon" className="size-6" title="View location history" aria-label={`View location history for ${row.username || row.display_name}`} onClick={() => setHistoryFor(row)}><MapPin className="size-4" /></Button>
+      <Button variant="ghost" size="icon" className={cn("size-6", banned && "text-destructive")} title={banned ? "Lift ban" : "Ban user"} aria-label={`${banned ? "Lift ban on" : "Ban"} ${row.username || row.display_name}`} disabled={saving !== null || row.id === user?.id} onClick={() => void banMember(row)}><Ban className="size-4" /></Button>
+      <Button variant="ghost" size="icon" className="size-6 hover:text-destructive" title="Delete member" aria-label={`Delete member ${row.username || row.display_name}`} disabled={deletingUser === row.id || row.id === user?.id} onClick={() => void removeMember(row)}>{deletingUser === row.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}</Button>
+    </>;
+  };
+  const memberRoles = (userId: string) => {
+    const row = rows.find((r) => r.id === userId);
+    if (!row) return null;
+    return <div className="flex flex-wrap items-center gap-2">
       {row.roles.map((rn) => {
         const rd = roleDefs.find((r) => r.name === rn);
         const label = rd ? displayRoleLabel(rd.name, rd.label) : rn;
         return <span key={rn} className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-semibold", styleFor(rn))}>{label}<Button variant="ghost" size="icon" className="size-4" title={`Remove ${label}`} aria-label={`Remove ${label} from ${row.username || row.display_name}`} disabled={saving !== null} onClick={() => void toggleRole(row, rn)}><X className="size-3" /></Button></span>;
       })}
       <Button variant="outline" size="icon" className="size-6 border-dashed" title="Add role" aria-label={`Add role for ${row.username || row.display_name}`} onClick={() => setAddRolesFor(row.id)}><Plus className="size-3.5" /></Button>
-      <Button variant="ghost" size="icon" className="size-6" title="View location history" aria-label={`View location history for ${row.username || row.display_name}`} onClick={() => setHistoryFor(row)}><MapPin className="size-4" /></Button>
-    </>;
+    </div>;
   };
   const memberDetails = (userId: string) => {
     const row = rows.find((r) => r.id === userId);
     if (!row) return null;
     return <div className="space-y-3 border-t border-border pt-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="icon" className="ml-auto size-7" title="Delete member" aria-label={`Delete member ${row.username || row.display_name}`} disabled={deletingUser === row.id || row.id === user?.id} onClick={() => void removeMember(row)}>{deletingUser === row.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}</Button>
-      </div>
       <MemberSecurityActions userId={row.id} name={row.display_name ?? row.username ?? "this user"} />
     </div>;
   };
