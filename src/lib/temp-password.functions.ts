@@ -82,8 +82,8 @@ export const createUserManually = createServerFn({ method: "POST" })
     await supabaseAdmin.from("password_change_required").upsert({ user_id: id, set_by: callerId } as never);
 
     const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
-    const res = await sendAndLogEmail(supabaseAdmin, "temporary-password", data.email, {
-      templateData: { displayName, email: data.email, password, loginUrl: "https://bmsupport.uk/login", isNewAccount: true },
+    const res = await sendAndLogEmail(supabaseAdmin, "manual-account-login", data.email, {
+      templateData: { displayName, email: data.email, password, loginUrl: "https://bmsupport.uk/login" },
       idempotencyKey: `new-account-${id}`,
     });
     return { userId: id, sent: res.sent, banned: !!isBanned };
