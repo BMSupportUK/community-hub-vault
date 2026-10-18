@@ -1,6 +1,6 @@
 # Project Architecture Rules
 
-- Sports guides keep published status; headings prefix event names, not channels; readers use document scrolling; every channel appears only beneath Available channels; BM keeps loading through hydration/router pending.
+- Sports guides keep publication status; headings prefix events, not channels; document scrolling; channels only beneath Available channels; BM loads through hydration/router pending.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
@@ -47,4 +47,4 @@
 
 - Profit uses pence; missing data stays provisional and confirmed fees fixed. Invoice sync repairs absent rows. Demo fixtures replace displayed rows only, never live totals.
 
-- Break matching uses a browser-independent UK-time helper; duplicates never consume future slots. The lock-safe starter rechecks records before insert against replay.
+- Break matching uses browser-independent UK time; duplicates never consume future slots. The lock-safe starter rechecks records before insert to prevent replay.
