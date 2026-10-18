@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
 import { MemberSecurityActions, AddUserButton } from "@/components/app/MemberSecurityActions";
-import { deleteMember, listMemberEmails, updateMemberUsername } from "@/lib/admin-users.functions";
+import { deleteMember, listMemberEmails, updateMemberEmail, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
   type LocationHistoryRow,
@@ -102,9 +102,13 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   const deleteMemberFn = useServerFn(deleteMember);
   const listEmailsFn = useServerFn(listMemberEmails);
   const updateUsernameFn = useServerFn(updateMemberUsername);
+  const updateEmailFn = useServerFn(updateMemberEmail);
   const [editingUsernameFor, setEditingUsernameFor] = useState<string | null>(null);
   const [usernameDraft, setUsernameDraft] = useState("");
   const [savingUsername, setSavingUsername] = useState(false);
+  const [editingEmailFor, setEditingEmailFor] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [addRolesFor, setAddRolesFor] = useState<string | null>(null);
