@@ -4222,6 +4222,27 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_customer_names: {
+        Row: {
+          customer_id: string
+          name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          customer_id: string
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          customer_id?: string
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       manual_name_customers: {
         Row: {
           created_at: string
@@ -7740,6 +7761,10 @@ export type Database = {
       }
       admin_set_manual_customer_login: {
         Args: { p_login_name: string; p_order_id: string; p_password?: string }
+        Returns: undefined
+      }
+      admin_set_manual_customer_name: {
+        Args: { p_customer_id: string; p_name: string }
         Returns: undefined
       }
       admin_set_manual_registration: {
