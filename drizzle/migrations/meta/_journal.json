@@ -1219,6 +1219,13 @@
       "when": 1792329459047,
       "tag": "0173_staff_read_customer_list",
       "breakpoints": true
+    },
+    {
+      "idx": 174,
+      "version": "7",
+      "when": 1792342389572,
+      "tag": "0174_pay_by_bank_banks",
+      "breakpoints": true
     }
   ]
 }

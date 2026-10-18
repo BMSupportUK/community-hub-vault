@@ -5031,6 +5031,21 @@ export type Database = {
         }
         Relationships: []
       }
+      pay_by_bank_banks: {
+        Row: {
+          checked_at: string
+          name: string
+        }
+        Insert: {
+          checked_at?: string
+          name: string
+        }
+        Update: {
+          checked_at?: string
+          name?: string
+        }
+        Relationships: []
+      }
       prediction_winners: {
         Row: {
           competition: string
