@@ -159,40 +159,48 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
         </TabsList>
       </Tabs>
       {error ? <p role="alert" className="text-destructive">{error}</p> : loading ? <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin" /></div> : !shown.length ? <p className="py-8 text-muted-foreground">No customers found.</p> : (
-        <div className="overflow-x-auto"><table className="w-full min-w-[1000px] text-sm">
-          <thead className="text-left text-xs uppercase text-muted-foreground"><tr>{["Username", "Current package", "Runs out", "Last renewed", "Referred by", "Year joined", "Years as customer"].map((h) => <th key={h} className="border-b border-border p-3">{h}</th>)}</tr></thead>
-          <tbody>{shown.flatMap((c) => {
-            const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
-            const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
-            const showNoRenewal = customerShowsNoRenewal(hasRecordedYear, years);
-            const multi = c.accounts.length > 1;
-            const lines: (Account | null)[] = c.accounts.length ? c.accounts : [null];
-            return lines.map((a, i) => {
-              const last = i === lines.length - 1;
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{shown.map((c) => {
+          const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
+          const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
+          const showNoRenewal = customerShowsNoRenewal(hasRecordedYear, years);
+          const multi = c.accounts.length > 1;
+          const lines: (Account | null)[] = c.accounts.length ? c.accounts : [null];
+          const name = c.username || c.displayName || "Not recorded";
+          return (
+          <article key={c.userId} className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-card/70 p-4">
+            <header className="flex flex-wrap items-center gap-2">
+              <h3 className="break-words font-semibold">{name}</h3>
+              <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
+              {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="ml-auto" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
+            </header>
+            {lines.map((a, i) => {
               const renewedAt = multi && a ? a.renewedAt ?? null : c.renewedAt;
               const pkg = (multi && a ? a.package : c.package) || "Not recorded";
               return (
-            <tr key={`${c.userId}-${a?.id ?? "none"}`} className={`align-top ${last ? "border-b border-border/60" : "border-b border-dashed border-border/30"}`}>
-              <td className="p-3 font-medium">
-                <div className="flex flex-wrap items-center gap-2"><span className="break-words">{c.username || c.displayName || "Not recorded"}</span>{multi && <span className="rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {i + 1}</span>}{i === 0 && canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}</div>
-                <span className={`mt-1 inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
-                <span className="mt-1 flex items-center gap-1 break-all text-xs font-normal text-muted-foreground">{a?.login || "No login details"}{!c.hasSiteAccount && canReward && a && <Button variant="ghost" size="icon" className="size-6" title="Edit login details" aria-label={`Edit login details for ${a.login || c.displayName || "customer"}`} onClick={() => { setLoginEditing({ customer: c, account: a }); setLoginName(a.login && a.login !== c.displayName ? a.login : ""); setLoginPassword(""); }}><Pencil className="size-3" /></Button>}</span>
-              </td>
-              <td className="max-w-64 p-3"><div className="flex items-start gap-2"><span>{pkg}</span>{canReward && ((multi && a) || !c.package || c.packageAllocated) && <Button variant="ghost" size="icon" title="Allocate package" aria-label={`Allocate package for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => void openAllocation(c, multi ? a : null)}><Pencil className="size-4" /></Button>}</div></td>
-              <td className="p-3">{hasRecordedYear ? (a ? date(a.expiresAt) : "Not recorded") : null}</td>
-              <td className="p-3"><div className="flex items-start gap-2"><span>{showNoRenewal ? "No Renewal Yet" : date(renewedAt)}</span>{canReward && <Button variant="ghost" size="icon" title="Edit last renewed date" aria-label={`Edit last renewed date for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => { setRenewalEditing(c); setRenewalAccount(multi ? a : null); setRenewedDate(renewalDay(renewedAt)); }}><Pencil className="size-4" /></Button>}</div></td>
-              <td className="p-3"><span>{c.referrerName || "—"}</span>{i === 0 && c.rewards.map((r) => (
-                <div key={r.orderId} className={`mt-2 w-fit rounded-md border p-2 text-xs ${r.rewardedAt ? "border-primary/30 bg-primary/10" : "border-border bg-muted/40"}`}>
-                  <span className="block font-medium">Referral bonus · 12 month new account</span>
-                  {r.rewardedAt ? <span className="block text-muted-foreground">Bonus added {date(r.rewardedAt)}</span>
-                    : canReward ? <Button className="mt-1" variant="outline" size="sm" disabled={!r.referrerAccounts.length} title={!r.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${r.ref ?? r.orderId}`} onClick={() => { setReward(r); setAccount(r.referrerAccounts.length === 1 ? r.referrerAccounts[0].id : ""); }}><Gift /> Confirm bonus added</Button>
-                    : <span className="block text-muted-foreground">Awaiting admin confirmation</span>}
-                </div>))}</td>
-              <td className="p-3"><div className="flex items-start gap-2"><span>{customerJoinedYear(c.firstSubscriptionAt) ?? "Not recorded"}</span>{i === 0 && canReward && <Button variant="ghost" size="icon" title="Edit year joined" aria-label={`Edit year joined for ${c.username || c.displayName || "customer"}`} onClick={() => { setEditing(c); setJoinedYear(String(customerJoinedYear(c.firstSubscriptionAt) ?? "")); }}><Pencil className="size-4" /></Button>}</div></td>
-              <td className="p-3">{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</td>
-            </tr>); });
-          })}</tbody>
-        </table></div>
+              <section key={a?.id ?? "none"} className={multi ? "space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-3" : "space-y-2.5"}>
+                {multi && <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {i + 1}</span>}
+                <div className="flex items-center gap-1 break-all text-xs text-muted-foreground"><span className="font-semibold uppercase tracking-wide">Login:</span> {a?.login || "No login details"}{!c.hasSiteAccount && canReward && a && <Button variant="ghost" size="icon" className="size-6" title="Edit login details" aria-label={`Edit login details for ${a.login || c.displayName || "customer"}`} onClick={() => { setLoginEditing({ customer: c, account: a }); setLoginName(a.login && a.login !== c.displayName ? a.login : ""); setLoginPassword(""); }}><Pencil className="size-3" /></Button>}</div>
+                <dl className="space-y-2 text-sm">
+                  <Detail label="Current package" action={canReward && ((multi && a) || !c.package || c.packageAllocated) ? <Button variant="ghost" size="icon" className="size-6 shrink-0" title="Allocate package" aria-label={`Allocate package for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => void openAllocation(c, multi ? a : null)}><Pencil className="size-3.5" /></Button> : undefined}>{pkg}</Detail>
+                  {hasRecordedYear && <Detail label="Runs out">{a ? date(a.expiresAt) : "Not recorded"}</Detail>}
+                  <Detail label="Last renewed" action={canReward ? <Button variant="ghost" size="icon" className="size-6 shrink-0" title="Edit last renewed date" aria-label={`Edit last renewed date for ${a?.login || c.username || c.displayName || "customer"}`} onClick={() => { setRenewalEditing(c); setRenewalAccount(multi ? a : null); setRenewedDate(renewalDay(renewedAt)); }}><Pencil className="size-3.5" /></Button> : undefined}>{showNoRenewal ? "No Renewal Yet" : date(renewedAt)}</Detail>
+                </dl>
+              </section>);
+            })}
+            <dl className="space-y-2 border-t border-border/60 pt-3 text-sm">
+              <Detail label="Referred by">{c.referrerName || "—"}</Detail>
+              <Detail label="Year joined" action={canReward ? <Button variant="ghost" size="icon" className="size-6 shrink-0" title="Edit year joined" aria-label={`Edit year joined for ${c.username || c.displayName || "customer"}`} onClick={() => { setEditing(c); setJoinedYear(String(customerJoinedYear(c.firstSubscriptionAt) ?? "")); }}><Pencil className="size-3.5" /></Button> : undefined}>{customerJoinedYear(c.firstSubscriptionAt) ?? "Not recorded"}</Detail>
+              <Detail label="Years as customer">{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</Detail>
+            </dl>
+            {c.rewards.map((r) => (
+              <div key={r.orderId} className={`w-fit max-w-full rounded-md border p-2 text-xs ${r.rewardedAt ? "border-primary/30 bg-primary/10" : "border-border bg-muted/40"}`}>
+                <span className="block font-medium">Referral bonus · 12 month new account</span>
+                {r.rewardedAt ? <span className="block text-muted-foreground">Bonus added {date(r.rewardedAt)}</span>
+                  : canReward ? <Button className="mt-1" variant="outline" size="sm" disabled={!r.referrerAccounts.length} title={!r.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${r.ref ?? r.orderId}`} onClick={() => { setReward(r); setAccount(r.referrerAccounts.length === 1 ? r.referrerAccounts[0].id : ""); }}><Gift /> Confirm bonus added</Button>
+                  : <span className="block text-muted-foreground">Awaiting admin confirmation</span>}
+              </div>))}
+          </article>);
+        })}</div>
       )}
       <Dialog open={!!reward} onOpenChange={(open) => { if (!open && !busy) setReward(null); }}><DialogContent><DialogHeader><DialogTitle>Confirm referral bonus for {reward?.referrerName}</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Order {reward?.ref}. One calendar month will be added to their saved expiry, preserving any remaining time.</p><Select value={account} onValueChange={setAccount}><SelectTrigger aria-label="Referrer subscription account"><SelectValue placeholder="Choose subscription account" /></SelectTrigger><SelectContent>{reward?.referrerAccounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.login} · {date(a.expiresAt)}</SelectItem>)}</SelectContent></Select><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setReward(null)}>Cancel</Button><Button disabled={!account || busy} onClick={() => void award()}>{busy ? <Loader2 className="animate-spin" /> : <Gift />} Confirm bonus added</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={!!editing} onOpenChange={(open) => { if (!open && !busy) setEditing(null); }}><DialogContent><DialogHeader><DialogTitle>Year joined · {editing?.username || editing?.displayName}</DialogTitle></DialogHeader><label className="space-y-2 text-sm">Year joined<Input aria-label="Year joined" type="number" inputMode="numeric" min={1000} max={ukCurrentYear()} step={1} value={joinedYear} onChange={(e) => setJoinedYear(e.target.value)} /></label><DialogFooter>{editing?.firstSubscriptionAdjusted && <Button variant="outline" disabled={busy} onClick={() => void saveJoinedYear(true)}>Use recorded year</Button>}<Button variant="outline" disabled={busy} onClick={() => setEditing(null)}>Cancel</Button><Button disabled={busy || !joinedYearToDate(joinedYear)} onClick={() => void saveJoinedYear()}>{busy && <Loader2 className="animate-spin" />}Save year</Button></DialogFooter></DialogContent></Dialog>
