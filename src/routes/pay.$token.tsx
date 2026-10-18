@@ -257,7 +257,6 @@ function PayPage() {
         appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}
         videoHelp={(!canManage || isVideoTestOrder(token)) && !view.order.cancelled ? <OrderVideoCallCustomer token={token} password={pw} mobile={isMobilePhone()} inline /> : undefined}
       />
-      {view.order.manual && !canManage && !view.order.cancelled && <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6"><ManualCheckoutPin token={token} password={pw} /></div>}
       {canManage && view.order.id && (
         <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
           <DialogContent>
