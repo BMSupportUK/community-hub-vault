@@ -32,3 +32,34 @@ export const PAY_BY_BANK_NOTE =
 /** One-line intro above the list. */
 export const PAY_BY_BANK_INTRO =
   "Pay from your UK bank account — approve the payment in your banking app and it's confirmed in minutes.";
+
+const BANK_NAME_FIXES: Record<string, string> = { lloyds: "Lloyds Bank", natwest: "NatWest", "starling": "Starling Bank" };
+
+/**
+ * Reads the supported-bank list out of the published Stripe Pay by Bank
+ * (Xero/Stripe) help page text. Returns null when the page layout looks
+ * wrong, so a broken page can never wipe the list customers see.
+ */
+export function parseSupportedBanks(pageText: string): string[] | null {
+  const start = pageText.indexOf("Supported banks cover");
+  if (start < 0) return null;
+  const rest = pageText.slice(start).split("\n").slice(1);
+  const banks: string[] = [];
+  for (const raw of rest) {
+    const line = raw.replace(/^[\s•*-]+/, "").trim();
+    if (!line) continue;
+    if (line.endsWith("?") || line.length > 40 || banks.length >= 60) break;
+    const fixed = BANK_NAME_FIXES[line.toLowerCase()] ?? line;
+    if (!banks.includes(fixed)) banks.push(fixed);
+  }
+  return banks.length >= 8 && banks.length < 60 ? banks : null;
+}
+
+/** Strips HTML tags into one-item-per-line text for parseSupportedBanks. */
+export function htmlToLines(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, "\n")
+    .replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/&#39;|&rsquo;/g, "'")
+    .split("\n").map((l) => l.trim()).filter(Boolean).join("\n");
+}
