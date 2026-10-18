@@ -85,8 +85,13 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   const { user, roles } = useAuth();
   const isFz = zone === "fanzone";
   const [hasPin, setHasPin] = useState<boolean | null>(null);
-  const [unlocked, setUnlocked] = useState(false);
-  const [unlockedUntil, setUnlockedUntil] = useState(0);
+  // Read the saved unlock synchronously so an unlocked admin never sees the PIN screen flash.
+  const initialUntil = (() => {
+    if (!user || typeof window === "undefined") return 0;
+    try { const v = parseInt(localStorage.getItem(UNLOCK_KEY(user.id)) ?? "0", 10); return v > Date.now() ? v : 0; } catch { return 0; }
+  })();
+  const [unlocked, setUnlocked] = useState(initialUntil > 0);
+  const [unlockedUntil, setUnlockedUntil] = useState(initialUntil);
   const { next, chat } = useSearch({ strict: false }) as { next?: string; chat?: string };
   const navigate = useNavigate();
   // Old chat alerts link here with ?chat=<orderId> — send them to the full secure page.
@@ -102,13 +107,13 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
       setHasPin(!!data);
       // Restore an unexpired unlock from this browser session
       try {
-        const raw = sessionStorage.getItem(UNLOCK_KEY(user.id));
+        const raw = localStorage.getItem(UNLOCK_KEY(user.id));
         const until = raw ? parseInt(raw, 10) : 0;
         if (until > Date.now()) {
           setUnlocked(true);
           setUnlockedUntil(until);
         } else if (raw) {
-          sessionStorage.removeItem(UNLOCK_KEY(user.id));
+          localStorage.removeItem(UNLOCK_KEY(user.id));
         }
       } catch {}
     })();
@@ -122,7 +127,7 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
 
   const lockNow = () => {
     setUnlocked(false);
-    if (user) { try { sessionStorage.removeItem(UNLOCK_KEY(user.id)); } catch {} }
+    if (user) { try { localStorage.removeItem(UNLOCK_KEY(user.id)); } catch {} }
   };
 
   if (!(isFz ? canOpenFanZoneAdminPanel(roles) : canOpenAdminPanel(roles))) return <Navigate to="/home" />;
@@ -173,7 +178,7 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
               setUnlocked(true);
               setUnlockedUntil(until);
               setHasPin(true);
-              if (user) { try { sessionStorage.setItem(UNLOCK_KEY(user.id), String(until)); } catch {} }
+              if (user) { try { localStorage.setItem(UNLOCK_KEY(user.id), String(until)); } catch {} }
               if (next && next.startsWith("/")) {
                 const [to, query = ""] = next.split("?");
                 const search = Object.fromEntries(new URLSearchParams(query));
