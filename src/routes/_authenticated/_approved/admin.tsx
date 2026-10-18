@@ -685,8 +685,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
           </div>
         </div>
       ) : tab === "customers" && canSeePins ? (
-        <CustomerMemberManagement>{({ toolbar, details, editor }) => (
-          <CustomerSubscriptionsAdminCard canReward={isAdminOnly} memberToolbar={toolbar} memberDetails={details} memberEditor={editor} />
+        <CustomerMemberManagement>{({ toolbar, details, editor, extras }) => (
+          <CustomerSubscriptionsAdminCard canReward={isAdminOnly} memberToolbar={toolbar} memberDetails={details} memberEditor={editor} memberExtras={extras} />
         )}</CustomerMemberManagement>
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />

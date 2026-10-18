@@ -19,11 +19,12 @@ const date = customerDate;
 
 const renewalDay = (v: string | null) => v ? new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(v)) : "";
 
-export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, memberDetails, memberEditor }: {
+export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, memberDetails, memberEditor, memberExtras }: {
   canReward: boolean;
   memberToolbar?: ReactNode;
   memberDetails?: (userId: string) => ReactNode;
   memberEditor?: (userId: string) => ReactNode;
+  memberExtras?: (userId: string) => ReactNode;
 }) {
   const [rows, setRows] = useState<Customer[]>([]);
   const [tab, setTab] = useState<"site" | "manual">("site");
@@ -88,7 +89,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
       : await supabase.rpc("admin_set_customer_last_renewed", args as { p_customer_id: string; p_renewed_date: string });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Last renewed date updated");
+    toast.success("Last renewed subscription updated");
 
     await load();
   };
@@ -186,7 +187,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
     <section className="min-w-0 py-4" aria-label="Customer subscriptions">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">Customers</h2>{memberToolbar}</div>
-        <div className="flex flex-wrap items-center gap-2"><select aria-label="Sort customers by" value={sortBy} onChange={(e) => setSortBy(e.target.value as CustomerSortField)} className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"><option value="default">Sort: Default order</option><option value="name">Name</option><option value="expires">Runs out</option><option value="renewed">Last renewed</option><option value="joined">Year joined</option><option value="years">Years as customer</option><option value="referrer">Referred by</option></select>{sortBy !== "default" && <Button variant="outline" size="icon" aria-label={sortDir === "asc" ? "Sorted oldest to newest, switch to newest first" : "Sorted newest to oldest, switch to oldest first"} title={sortDir === "asc" ? "Oldest to newest" : "Newest to oldest"} onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}>{sortDir === "asc" ? <ArrowDown /> : <ArrowUp />}</Button>}<Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button></div>
+        <div className="flex flex-wrap items-center gap-2"><select aria-label="Sort customers by" value={sortBy} onChange={(e) => setSortBy(e.target.value as CustomerSortField)} className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"><option value="default">Sort: Default order</option><option value="name">Name</option><option value="expires">Subscription expires</option><option value="renewed">Last renewed subscription</option><option value="joined">Year joined</option><option value="years">Years as customer</option><option value="referrer">Referred by</option></select>{sortBy !== "default" && <Button variant="outline" size="icon" aria-label={sortDir === "asc" ? "Sorted oldest to newest, switch to newest first" : "Sorted newest to oldest, switch to oldest first"} title={sortDir === "asc" ? "Oldest to newest" : "Newest to oldest"} onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}>{sortDir === "asc" ? <ArrowDown /> : <ArrowUp />}</Button>}<Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button></div>
       </div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as "site" | "manual")} className="mb-4">
         <TabsList>
@@ -219,15 +220,19 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
                 <div className="flex items-center gap-1 break-all text-xs text-muted-foreground"><span className="font-semibold uppercase tracking-wide">Login:</span> {a?.login || "No login details"}</div>
                 <dl className="space-y-2 text-sm">
                   <Detail label="Current package">{pkg}</Detail>
-                  {hasRecordedYear && <Detail label="Runs out">{a ? date(a.expiresAt) : "Not recorded"}</Detail>}
-                  <Detail label="Last renewed">{showNoRenewal ? "No Renewal Yet" : date(renewedAt)}</Detail>
+                  <div className="grid gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2.5 sm:grid-cols-2">
+                    {hasRecordedYear && <Detail label="Subscription expires">{a ? date(a.expiresAt) : "Not recorded"}</Detail>}
+                    <Detail label="Last renewed subscription">{showNoRenewal ? "No Renewal Yet" : date(renewedAt)}</Detail>
+                  </div>
                 </dl>
               </section>);
             })}
-            <dl className="space-y-2 border-t border-border/60 pt-3 text-sm">
-              <Detail label="Referred by">{c.referrerName || "—"}</Detail>
+            <div className="mt-1 h-1 w-full rounded-full bg-foreground/25" aria-hidden="true" />
+            <dl className="space-y-2 pt-3 text-sm">
+              {c.hasSiteAccount && memberExtras?.(c.userId)}
               <Detail label="Year joined">{customerJoinedYear(c.firstSubscriptionAt) ?? "Not recorded"}</Detail>
               <Detail label="Years as customer">{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</Detail>
+              <Detail label="Referred by">{c.referrerName || "—"}</Detail>
             </dl>
             {c.rewards.map((r) => (
               <div key={r.orderId} className={`w-fit max-w-full rounded-md border p-2 text-xs ${r.rewardedAt ? "border-primary/30 bg-primary/10" : "border-border bg-muted/40"}`}>
@@ -261,7 +266,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
               <Button size="sm" disabled={busy || !productId} onClick={() => void savePackage()}>Save package</Button>
             </section>}
             <section className="space-y-2">
-              <label className="block space-y-1 text-sm">Last renewed date<Input aria-label="Last renewed date" type="date" value={renewedDate} onChange={(e) => setRenewedDate(e.target.value)} /></label>
+              <label className="block space-y-1 text-sm">Last renewed subscription<Input aria-label="Last renewed subscription date" type="date" value={renewedDate} onChange={(e) => setRenewedDate(e.target.value)} /></label>
               <div className="flex flex-wrap gap-2"><Button size="sm" disabled={busy || !renewedDate} onClick={() => void saveRenewedDate()}>Save date</Button>{(renewalAccount ? renewalAccount.renewedDateAdjusted : customerEditing?.renewedDateAdjusted) && <Button size="sm" variant="outline" disabled={busy} onClick={() => void saveRenewedDate(true)}>Use recorded date</Button>}</div>
             </section>
           </fieldset>

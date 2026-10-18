@@ -77,6 +77,7 @@ type MemberSlots = {
   toolbar: ReactNode;
   details: (userId: string) => ReactNode;
   editor: (userId: string) => ReactNode;
+  extras: (userId: string) => ReactNode;
 };
 
 export function CustomerMemberManagement({ children }: { children: (slots: MemberSlots) => ReactNode }) {
@@ -296,14 +297,18 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     return <RolesGate onUnlocked={() => setRolesUnlocked(true)} />;
   }
 
+  const memberExtras = (userId: string) => {
+    const row = rows.find((r) => r.id === userId);
+    if (!row) return null;
+    return <>
+      <div><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Email</dt><dd className="mt-0.5 break-all">{row.email || "—"}</dd></div>
+      <div><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Last IP</dt><dd className="mt-0.5 break-all">{row.last_ip || "—"}</dd></div>
+    </>;
+  };
   const memberDetails = (userId: string) => {
     const row = rows.find((r) => r.id === userId);
     if (!row) return null;
     return <div className="space-y-3 border-t border-border pt-3">
-      <dl className="space-y-2 text-sm">
-        <div><dt className="text-[10px] font-semibold uppercase text-muted-foreground">Email</dt><dd className="break-all">{row.email || "—"}</dd></div>
-        <div><dt className="text-[10px] font-semibold uppercase text-muted-foreground">Last IP</dt><dd className="break-all">{row.last_ip || "—"}</dd></div>
-      </dl>
       <div className="flex flex-wrap items-center gap-2">
         {row.roles.map((rn) => {
           const rd = roleDefs.find((r) => r.name === rn);
@@ -327,7 +332,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   };
   const addRoleRow = rows.find((r) => r.id === addRolesFor);
   return <>
-    {children({ toolbar: <><AddUserButton onCreated={loadAll} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor })}
+    {children({ toolbar: <><AddUserButton onCreated={loadAll} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras })}
     <Dialog open={tab === "roles"} onOpenChange={(open) => { if (!open) setTab("members"); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Manage roles</DialogTitle></DialogHeader><RolesManager defs={roleDefs} onChange={loadAll} /></DialogContent></Dialog>
     <Dialog open={!!addRoleRow} onOpenChange={(open) => { if (!open) setAddRolesFor(null); }}><DialogContent><DialogHeader><DialogTitle>Add role · {addRoleRow?.username || addRoleRow?.display_name}</DialogTitle></DialogHeader><div className="flex flex-wrap gap-2">{addRoleRow && activeRoles.filter((rd) => !addRoleRow.roles.includes(rd.name)).map((rd) => <Button key={rd.name} variant="outline" size="sm" disabled={saving !== null} onClick={() => void toggleRole(addRoleRow, rd.name)}>{displayRoleLabel(rd.name, rd.label)}</Button>)}</div></DialogContent></Dialog>
     {historyFor && <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />}
