@@ -1,12 +1,12 @@
 import { expect, test } from 'bun:test';
 import { customerListGroup } from '../src/lib/customer-list-group';
 
-test('manually added accounts awaiting required fields appear in Manual customers before any purchase', () => {
-  expect(customerListGroup({ hasSiteAccount: true, manualSetupPending: true, accounts: [] })).toBe('manual');
+test('manually added accounts awaiting required fields appear in Awaiting profile setup, not Manual customers', () => {
+  expect(customerListGroup({ hasSiteAccount: true, manualSetupPending: true, accounts: [] })).toBe('setup');
 });
 test('completing required fields automatically puts the same account in its site group', () => {
   const customer = { hasSiteAccount: true, manualSetupPending: true, accounts: [{ id: 'login-1', expiresAt: '2027-10-18' }] };
-  expect(customerListGroup(customer)).toBe('manual');
+  expect(customerListGroup(customer)).toBe('setup');
   expect(customerListGroup({ ...customer, manualSetupPending: false })).toBe('single');
   expect(customer.accounts[0].expiresAt).toBe('2027-10-18');
 });
