@@ -10,6 +10,7 @@ import { ManualCheckoutPin } from "@/components/checkout/ManualCheckoutPin";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
+import { PayByBankSection } from "@/components/checkout/PayByBankSection";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
