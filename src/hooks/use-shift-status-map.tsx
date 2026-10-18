@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { demoShiftStatus } from "@/lib/demo-data";
 import { type BreakKind } from "@/lib/breaks";
+import { isPreparingForShift } from "@/lib/shift-start";
 
 export type LiveShift = { id: string; user_id: string; clock_in: string };
 export type LiveBreak = {
@@ -47,9 +48,9 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
   const [rows, setRows] = useState<{
     shifts: LiveShift[];
     breaks: LiveBreak[];
-    slotStarts: Record<string, string>;
+    slotStarts: Record<string, { shift_date: string; start_time: string; end_time: string }>;
   }>({ shifts: [], breaks: [], slotStarts: {} });
-  // Ticks so "Get ready for shift" flips to "Working" at the rota start.
+  // Ticks so preparing flips to working at the exact rota start.
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -78,17 +79,19 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
           .in("user_id", ids),
         supabase
           .from("shift_slots")
-          .select("assigned_to,start_time")
+          .select("assigned_to,shift_date,start_time,end_time")
           .eq("shift_date", today)
           .in("assigned_to", ids),
       ]);
       if (cancelled) return;
-      const slotStarts: Record<string, string> = {};
-      for (const sl of (slots as { assigned_to: string | null; start_time: string }[] | null) ?? []) {
+      const slotStarts: typeof rows.slotStarts = {};
+      for (const sl of (slots ?? [])) {
         if (!sl.assigned_to) continue;
-        // Earliest slot of the day wins when someone has more than one.
-        if (!slotStarts[sl.assigned_to] || sl.start_time < slotStarts[sl.assigned_to]) {
-          slotStarts[sl.assigned_to] = sl.start_time;
+        const signedIn = s?.find((shift) => shift.user_id === sl.assigned_to);
+        if (!signedIn || sl.end_time <= londonNow(Date.parse(signedIn.clock_in)).time) continue;
+        // Select the slot associated with this sign-in, not a previous slot.
+        if (!slotStarts[sl.assigned_to] || sl.start_time < slotStarts[sl.assigned_to].start_time) {
+          slotStarts[sl.assigned_to] = sl;
         }
       }
       setRows({
@@ -119,7 +122,7 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
     const poll = setInterval(() => {
       void refresh();
     }, 20_000);
-    const tick = setInterval(() => setNow(Date.now()), 15_000);
+    const tick = setInterval(() => setNow(Date.now()), 1000);
 
     return () => {
       cancelled = true;
@@ -130,12 +133,11 @@ export function useShiftStatusMap(userIds: string[]): Record<string, ShiftStatus
   }, [key, isDemo]);
 
   return useMemo(() => {
-    const london = londonNow(now);
     const out: Record<string, ShiftStatus> = {};
     for (const s of rows.shifts) {
       const slotStart = rows.slotStarts[s.user_id];
       // Clocked in before today's rota start = getting ready, not working yet.
-      const preShift = !!slotStart && slotStart > london.time;
+      const preShift = isPreparingForShift(now, s.clock_in, slotStart ?? null);
       out[s.user_id] = { ...out[s.user_id], shift: s, preShift };
     }
     for (const b of rows.breaks) out[b.user_id] = { ...out[b.user_id], break: b };

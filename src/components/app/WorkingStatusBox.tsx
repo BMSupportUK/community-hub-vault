@@ -38,6 +38,8 @@ import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
 import { BreakPlanRows, NextBreakPill } from "@/components/app/BreakPlanRows";
 import { offerTicketHandover } from "@/lib/break-handover";
+import { isPreparingForShift } from "@/lib/shift-start";
+import { Button } from "@/components/ui/button";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
@@ -297,6 +299,7 @@ export function WorkingStatusBox({
   const [coverPending, setCoverPending] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
+  const signInFlight = useRef(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
   const [deviceTz, setDeviceTz] = useState(() => browserTimezone());
   // Today's rota window: earliest slot start and latest slot end (HH:MM:SS).
@@ -428,7 +431,7 @@ export function WorkingStatusBox({
               .filter((sl) => sl.start_time <= nowTime)
               .sort((a, b) => b.start_time.localeCompare(a.start_time))[0] ?? null)
           : null);
-      setCurrentHours(underwayToday ?? null);
+      setCurrentHours(underwayToday ?? (s ? upcomingToday : null) ?? null);
     };
     refresh();
     const ch = supabase
@@ -473,7 +476,10 @@ export function WorkingStatusBox({
   })();
 
   const clockIn = async () => {
-    if (!user) return;
+    if (!user || shift || signInFlight.current) return;
+    signInFlight.current = true;
+    setBusy(true);
+    try {
     if (!canSignIn) {
       // Not on the rota right now — ask admin/management to approve a cover sign-in.
       if (coverPending) {
@@ -499,11 +505,18 @@ export function WorkingStatusBox({
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from("shifts").insert({ user_id: user.id });
-    setBusy(false);
+    const { data: inserted, error } = await supabase.from("shifts").insert({ user_id: user.id }).select("id,clock_in").single();
     if (error) return toast.error(error.message);
+    setShift(inserted);
+    setCurrentHours(laterToday);
     toast.success("Clocked in");
     notifyShift({ data: { kind: "clock_in" } }).catch(() => {});
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't sign in. Please try again.");
+    } finally {
+      signInFlight.current = false;
+      setBusy(false);
+    }
   };
 
   // Shift sign-out stays greyed out until the rota end time so it can't be
@@ -626,6 +639,7 @@ export function WorkingStatusBox({
   ) : null;
 
   const shiftSec = shift ? (now - new Date(shift.clock_in).getTime()) / 1000 : 0;
+  const preparing = isPreparingForShift(now, shift?.clock_in ?? null, currentHours);
   const brSec = brk ? (now - new Date(brk.started_at).getTime()) / 1000 : 0;
   const brRemain = brk ? LIMITS[brk.kind] - brSec : 0;
   const over = brRemain < 0;
@@ -750,14 +764,17 @@ export function WorkingStatusBox({
     const iconButtonClass = compact ? "size-8" : "size-10";
     const iconClass = compact ? "size-4" : "size-5";
     if (busy) {
-      return <Loader2 className={cn(iconClass, "animate-spin text-muted-foreground")} />;
+      return <Button size="icon" variant="outline" disabled aria-label="Signing in…" className={cn("rounded-full", iconButtonClass)}><Loader2 className={cn(iconClass, "animate-spin text-muted-foreground")} /></Button>;
     }
     if (!shift) {
       return (
-        <button
+        <Button
+          size="icon"
+          variant="outline"
           type="button"
           onClick={clockIn}
-          disabled={coverPending}
+          disabled={busy || (!canSignIn && coverPending)}
+          aria-label={canSignIn ? "Sign in to shift" : "Request to cover"}
           title={
             canSignIn
               ? "Sign in"
@@ -776,7 +793,7 @@ export function WorkingStatusBox({
           )}
         >
           <LogIn className={iconClass} />
-        </button>
+        </Button>
       );
     }
     if (brk) {
@@ -820,7 +837,8 @@ export function WorkingStatusBox({
         </span>
         <NextBreakPill userId={user.id} usedKinds={usedKinds} />
         <ShiftEndCountdown compact />
-        <ActionIcons compact />
+        {ActionIcons({ compact: true })}
+        {preparing && <span role="status" className="text-xs font-medium text-warning">Preparing for shift</span>}
         {awayPill}
         <DndDialogButton className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted" />
         <TalkVideoHelpButton variant="icon" />
@@ -939,7 +957,7 @@ export function WorkingStatusBox({
                   readOnly={!canAnswerTickets}
                 />
               )}
-              <ActionIcons compact={compact} />
+              {ActionIcons({ compact })}
               <DndDialogButton
                 className={cn(
                   "inline-flex shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted",
@@ -972,11 +990,11 @@ export function WorkingStatusBox({
           <>
           {shift ? (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2" role="status">
                 <span className="text-muted-foreground font-medium">Shift</span>
-                <span className={cn("inline-flex items-center gap-2 font-bold tabular-nums text-success", compact ? "text-sm" : "text-lg")}>
+                <span className={cn("inline-flex items-center gap-2 font-bold tabular-nums", preparing ? "text-warning text-sm" : "text-success", !preparing && (compact ? "text-sm" : "text-lg"))}>
                   <CircleDot className={compact ? "size-4" : "size-5"} />
-                  {fmtHM(shiftSec)}
+                  {preparing ? "Preparing for shift" : fmtHM(shiftSec)}
                 </span>
                 <ShiftEndCountdown />
               </div>
