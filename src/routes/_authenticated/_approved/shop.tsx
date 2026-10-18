@@ -39,7 +39,7 @@ import {
   ArrowRight,
   ArrowLeft,
 } from "lucide-react";
-import { Monitor, Smartphone, BadgeCheck } from "lucide-react";
+import { Monitor, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
