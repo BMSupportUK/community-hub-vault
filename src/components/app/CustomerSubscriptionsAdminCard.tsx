@@ -28,6 +28,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   memberEditor?: (userId: string) => ReactNode;
   memberExtras?: (userId: string) => ReactNode;
   memberHeader?: (userId: string) => ReactNode;
+  memberRoles?: (userId: string) => ReactNode;
 }) {
   const { user } = useAuth();
   const [rows, setRows] = useState<Customer[]>([]);
@@ -221,6 +222,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
               {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
               {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
             </header>
+            {c.hasSiteAccount && memberRoles?.(c.userId)}
             {lines.map((a, i) => {
               const renewedAt = multi && a ? a.renewedAt ?? null : c.renewedAt;
               const pkg = (multi && a ? a.package : c.package) || "Not recorded";
