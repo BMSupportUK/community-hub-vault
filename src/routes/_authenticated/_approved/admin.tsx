@@ -15,6 +15,7 @@ import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
 import { CustomerSubscriptionsAdminCard } from "@/components/app/CustomerSubscriptionsAdminCard";
+import { CustomerMemberManagement } from "@/components/app/CustomerMemberManagement";
 import pinIllustration from "@/assets/staff-pin-illustration.jpg";
 import shopHero from "@/assets/shop-hero.jpg";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
@@ -541,8 +542,11 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
 
 
 
+  useEffect(() => {
+    if (searchTab && (validTabs as readonly string[]).includes(searchTab)) setTab(searchTab as DashTab);
+  }, [searchTab]);
+
   const allTools: { to?: string; search?: Record<string, string>; tabKey?: DashTab; label: string; desc: string; icon: any; art: string; adminOnly?: boolean; managementToo?: boolean }[] = [
-    { to: "/admin-roles", label: "Members & Role Management", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck, art: toolArtTeam },
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield, art: toolArtSecurity },
     { to: "/admin-dns", label: "QD DNS codes", desc: "Add and edit shared DNS codes for all members.", icon: Globe, art: toolArtGlobe },
     { to: "/moderation", label: "BM Support | Access Requests", desc: "Approve access requests and appeals.", icon: ShieldAlert, art: toolArtSecurity },
@@ -585,7 +589,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
   ];
-  const cardKeys = new Set(allTools.filter((t) => t.to).map((t) => pageKeyForPath(t.to!)));
+  const cardKeys = new Set(["admin-roles", ...allTools.flatMap((t) => t.to ? [pageKeyForPath(t.to)] : [])]);
   const extraPageCards: typeof allTools = isFz ? [] : staffAllowedPageKeys(roles, perms, cardKeys, (k) => permissionSection(k) === "fanzone").map((key) => ({
     to: `/${key}`,
     label: pagePermissionLabel(key),
@@ -681,7 +685,10 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
           </div>
         </div>
       ) : tab === "customers" && canSeePins ? (
-        <CustomerSubscriptionsAdminCard canReward={isAdminOnly} />
+        <div className="space-y-8">
+          <CustomerSubscriptionsAdminCard canReward={isAdminOnly} />
+          <CustomerMemberManagement />
+        </div>
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (

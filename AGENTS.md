@@ -33,6 +33,7 @@
 - Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
 - Dashboard access, header button label and header tab gates come from `src/lib/admin-panel-access.ts`; a header-tabbed page has no tool card.
 <!-- LOVABLE:BEGIN -->
+- Members and role management renders beneath subscriptions in the Customers dashboard tab; legacy member-management URLs redirect there to keep one destination while retaining the existing security gate.
 - Break popup/sound shares one session-persisted per-break claim; expiry updates silently to prevent replay after dismiss, lock or reload.
 - Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
 - Customer renewal-date corrections use a separate audited record and admin-only RPC; the details read overlays it to preserve payments and credential expiry.
