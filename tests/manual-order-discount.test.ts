@@ -47,3 +47,19 @@ describe("manual order discount code", () => {
     expect(discountCodeLabel({ userId: JANE, code: "NEW-1", percent: 10, amount_cents: null })).toBe("10% off");
   });
 });
+
+import { eligibleSubtotalCents as eligible } from "../src/lib/manual-order-discount";
+import { test as t2, expect as e2 } from "bun:test";
+const lines = [
+  { productId: "12m", priceCents: 6000, quantity: 1 },
+  { productId: "1m", priceCents: 1000, quantity: 1 },
+];
+t2("code limited to the 12 month package ignores other packages", () => {
+  e2(eligible(lines, ["12m"])).toBe(6000);
+});
+t2("code limited to a package not in the order takes nothing off", () => {
+  e2(eligible([lines[1]], ["12m"])).toBe(0);
+});
+t2("code with no packages listed covers every package", () => {
+  e2(eligible(lines, [])).toBe(7000);
+});

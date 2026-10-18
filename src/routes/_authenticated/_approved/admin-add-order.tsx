@@ -246,7 +246,7 @@ function AddOrderPage() {
             <div className="flex items-center gap-3 flex-wrap">
               {appliedCode ? (
                 <span className="text-sm text-muted-foreground flex items-center gap-2">
-                  Discount code <span className="font-mono text-foreground">{appliedCode.code}</span> applied ({discountCodeLabel(appliedCode)})
+                  Discount code <span className="font-mono text-foreground">{appliedCode.code}</span> applied ({discountCodeLabel(appliedCode)}{appliedCode.productIds.length ? `, only on ${(products ?? []).filter((p) => appliedCode.productIds.includes(p.id)).map((p) => p.name).join(", ") || "its allowed packages"}` : ""})
                   <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => setAppliedCode(null)}>Remove</Button>
                 </span>
               ) : (
