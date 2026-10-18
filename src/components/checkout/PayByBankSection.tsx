@@ -13,7 +13,7 @@ import { PAY_BY_BANK_BANKS, PAY_BY_BANK_INTRO, PAY_BY_BANK_NOTE } from "@/lib/pa
  * Creates a Stripe Checkout session restricted to pay_by_bank and embeds it
  * inline; the manual bank transfer system is unaffected.
  */
-export function PayByBankSection({ token, password, preview = false }: { token: string; password: string; preview?: boolean }) {
+export function PayByBankSection({ token, password, preview = false, hideCardNote = false }: { token: string; password: string; preview?: boolean; hideCardNote?: boolean }) {
   const createSession = useServerFn(checkoutStripeSession);
   const [paying, setPaying] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -76,7 +76,7 @@ export function PayByBankSection({ token, password, preview = false }: { token: 
             <li key={b} className="rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-xs text-foreground">{b}</li>
           ))}
         </ul>
-        <p className="mt-2 text-xs text-muted-foreground">{PAY_BY_BANK_NOTE}</p>
+        {hideCardNote ? null : <p className="mt-2 text-xs text-muted-foreground">{PAY_BY_BANK_NOTE}</p>}
       </div>
       <button type="button" onClick={() => (clientSecret ? setOpen(true) : start())} disabled={paying || preview} className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60">
         {paying ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />}
