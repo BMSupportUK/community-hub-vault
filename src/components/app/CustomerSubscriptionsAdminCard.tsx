@@ -256,8 +256,8 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
                   : canReward ? <Button className="mt-1" variant="outline" size="sm" disabled={!r.referrerAccounts.length} title={!r.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${r.ref ?? r.orderId}`} onClick={() => { setReward(r); setAccount(r.referrerAccounts.length === 1 ? r.referrerAccounts[0].id : ""); }}><Gift /> Confirm bonus added</Button>
                   : <span className="block text-muted-foreground">Awaiting admin confirmation</span>}
               </div>))}
-            {c.hasSiteAccount && memberDetails?.(c.userId)}
             {canReward && c.hasSiteAccount && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} />}
+            {c.hasSiteAccount && memberDetails?.(c.userId)}
           </article>);
         })}</div>
       )}
