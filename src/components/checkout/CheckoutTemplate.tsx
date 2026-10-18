@@ -207,7 +207,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </div>
           )}
 
-          <div className={splitLayout ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
+          <div className={splitLayout ? (threeColWise ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)_minmax(300px,380px)] lg:items-start" : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start") : "space-y-6"}>
             <section className={`rounded-2xl border border-border bg-card p-5 ${splitLayout ? "min-w-0" : ""}`}>
             <h2 className="font-semibold mb-3">Order breakdown</h2>
             <div className="space-y-2 text-sm">
