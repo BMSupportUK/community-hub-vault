@@ -1,6 +1,6 @@
 import { ClientOnly, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ShieldCheck,
   Search,
@@ -16,6 +16,9 @@ import {
   Check,
   KeyRound,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -70,7 +73,13 @@ const SYSTEM_STYLE: Record<string, string> = {
 };
 const CUSTOM_STYLE = "bg-primary/20 text-primary border-primary/40";
 
-export function CustomerMemberManagement() {
+type MemberSlots = {
+  toolbar: ReactNode;
+  details: (userId: string) => ReactNode;
+  editor: (userId: string) => ReactNode;
+};
+
+export function CustomerMemberManagement({ children }: { children: (slots: MemberSlots) => ReactNode }) {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const isOwner = hasAny(["admin"]);
@@ -287,321 +296,42 @@ export function CustomerMemberManagement() {
     return <RolesGate onUnlocked={() => setRolesUnlocked(true)} />;
   }
 
-  return (
-    <section aria-label="Members and role management" className="border-t border-border pt-6">
-      <div className="w-full">
-        <header className="flex items-center gap-3 mb-6">
-          <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
-            <ShieldCheck className="size-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h2 className="font-display text-xl font-bold">Members &amp; Role Management</h2>
-            <p className="text-sm text-muted-foreground">
-              Assign roles to members or manage the role list.
-            </p>
-          </div>
-          {hasAny(["admin", "management"]) && (
-            <div className="ml-auto"><AddUserButton onCreated={loadAll} /></div>
-          )}
-        </header>
-
-        <div className="flex gap-2 mb-5 border-b border-border">
-          {(
-            [
-              ["members", "Members", Users],
-              ["roles", "Manage roles", Tags],
-            ] as const
-          ).map(([k, lbl, Icon]) => (
-            <button
-              key={k}
-              onClick={() => setTab(k)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
-                tab === k
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Icon className="size-4" /> {lbl}
-            </button>
-          ))}
-        </div>
-
-        {loading ? (
-          <div className="grid place-items-center py-16 text-muted-foreground">
-            <Loader2 className="size-5 animate-spin" />
-          </div>
-        ) : tab === "members" ? (
-          <>
-            <div className="mb-5 space-y-4">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name, username, user id, email, IP or login name…"
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-surface-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary text-base"
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-                  Filter:
-                </span>
-                <button
-                  onClick={() => setRoleFilter("all")}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
-                    roleFilter === "all"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-transparent text-muted-foreground border-border hover:text-foreground",
-                  )}
-                >
-                  All ({rows.length})
-                </button>
-                {activeRoles.map((rd) => {
-                  const count = rows.filter((r) => r.roles.includes(rd.name)).length;
-                  return (
-                    <button
-                      key={rd.name}
-                      onClick={() => setRoleFilter(rd.name)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all capitalize",
-                        roleFilter === rd.name
-                          ? styleFor(rd.name)
-                          : "bg-transparent text-muted-foreground border-border hover:text-foreground",
-                      )}
-                    >
-                      {displayRoleLabel(rd.name, rd.label)} ({count})
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => setRoleFilter("none")}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
-                    roleFilter === "none"
-                      ? "bg-muted text-muted-foreground border-border"
-                      : "bg-transparent text-muted-foreground border-border hover:text-foreground",
-                  )}
-                >
-                  No roles ({rows.filter((r) => r.roles.length === 0).length})
-                </button>
-              </div>
-            </div>
-            {filtered.length === 0 ? (
-              <div className="rounded-2xl border border-border bg-surface-1 px-5 py-12 text-center text-muted-foreground text-sm">
-                No users found.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                {filtered.map((row) => (
-                  <div
-                    key={row.id}
-                    className="rounded-2xl border border-border bg-surface-1 hover:border-primary/40 transition-colors p-5 flex flex-col gap-4 shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-2 min-w-0">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <div className="font-semibold truncate">
-                            {row.display_name || row.username || "Unnamed"}
-                          </div>
-                          <button
-                            onClick={() => setHistoryFor(row)}
-                            title="View location history"
-                            className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
-                          >
-                            <MapPin className="size-3.5" />
-                          </button>
-                        </div>
-                        {isOwner && editingUsernameFor === row.id ? (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <input
-                              autoFocus
-                              value={usernameDraft}
-                              onChange={(e) => setUsernameDraft(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") void saveUsername(row);
-                                if (e.key === "Escape") setEditingUsernameFor(null);
-                              }}
-                              className="w-full min-w-0 px-2 py-1 rounded-md bg-surface-2 border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary"
-                              placeholder="username"
-                            />
-                            <button
-                              onClick={() => void saveUsername(row)}
-                              disabled={savingUsername}
-                              title="Save username"
-                              className="shrink-0 p-1 rounded-md text-primary hover:bg-primary/10 disabled:opacity-50"
-                            >
-                              {savingUsername ? (
-                                <Loader2 className="size-3.5 animate-spin" />
-                              ) : (
-                                <Check className="size-3.5" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => setEditingUsernameFor(null)}
-                              title="Cancel"
-                              className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 min-w-0">
-                            <div className="text-xs text-muted-foreground truncate">
-                              @{row.username ?? row.id.slice(0, 8)}
-                            </div>
-                            {isOwner && (
-                              <button
-                                onClick={() => {
-                                  setEditingUsernameFor(row.id);
-                                  setUsernameDraft(row.username ?? "");
-                                }}
-                                title="Edit username (owners only)"
-                                className="shrink-0 p-0.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
-                              >
-                                <Pencil className="size-3" />
-                              </button>
-                            )}
-                          </div>
-                        )}
-                        <div
-                          className="text-xs text-muted-foreground truncate mt-0.5"
-                          title={row.email ?? "No email on file"}
-                        >
-                          {row.email ?? "—"}
-                        </div>
-                        <div
-                          className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5"
-                          title={row.last_ip ?? "No IP recorded"}
-                        >
-                          Last IP: {row.last_ip ?? "—"}
-                        </div>
-                        <div className="mt-2 space-y-1">
-                          <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
-                            <KeyRound className="size-3" /> Login name
-                          </div>
-                          {row.creds.length === 0 ? (
-                            <div className="text-[11px] text-muted-foreground/70">
-                              None assigned
-                            </div>
-                          ) : (
-                            row.creds.map((c) => (
-                              <div
-                                key={c.id}
-                                className="flex items-center rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] font-mono"
-                                title={c.app_login_name}
-                              >
-                                <span className="truncate">{c.app_login_name}</span>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => removeMember(row)}
-                        disabled={deletingUser === row.id || row.id === user?.id}
-                        title={
-                          row.id === user?.id
-                            ? "You can't delete your own account"
-                            : "Delete member"
-                        }
-                        className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground shrink-0"
-                      >
-                        {deletingUser === row.id ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="size-4" />
-                        )}
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 pt-3 border-t border-border items-center">
-                      {row.roles.map((rn) => {
-                        const rd =
-                          activeRoles.find((r) => r.name === rn) ??
-                          roleDefs.find((r) => r.name === rn);
-                        const label = rd ? displayRoleLabel(rd.name, rd.label) : rn;
-                        const busy = saving === `${row.id}:${rn}`;
-                        return (
-                          <span
-                            key={rn}
-                            title={label}
-                            className={cn(
-                              "inline-flex items-center gap-1 pl-2.5 pr-1 py-1 rounded-lg text-xs font-semibold capitalize border",
-                              styleFor(rn),
-                              busy && "opacity-60 cursor-wait",
-                            )}
-                          >
-                            {label}
-                            <button
-                              onClick={() => toggleRole(row, rn)}
-                              disabled={busy}
-                              title={`Remove ${label}`}
-                              className="p-0.5 rounded-md hover:bg-black/10"
-                            >
-                              <X className="size-3" />
-                            </button>
-                          </span>
-                        );
-                      })}
-                      <button
-                        onClick={() => setAddRolesFor(addRolesFor === row.id ? null : row.id)}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold border border-dashed border-border text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
-                      >
-                        <Plus className="size-3.5" /> Add role
-                      </button>
-                      {addRolesFor === row.id && (
-                        <div className="w-full rounded-xl border border-border bg-surface-2 p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
-                              Add a role
-                            </div>
-                            <button
-                              onClick={() => setAddRolesFor(null)}
-                              title="Close"
-                              className="p-0.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-1"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          </div>
-                          {activeRoles.filter((rd) => !row.roles.includes(rd.name)).length === 0 ? (
-                            <div className="text-[11px] text-muted-foreground">
-                              All roles are already assigned.
-                            </div>
-                          ) : (
-                            <div className="flex flex-wrap gap-2">
-                              {activeRoles
-                                .filter((rd) => !row.roles.includes(rd.name))
-                                .map((rd) => (
-                                  <button
-                                    key={rd.name}
-                                    onClick={() => toggleRole(row, rd.name)}
-                                    disabled={saving === `${row.id}:${rd.name}`}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-semibold border border-border bg-transparent text-muted-foreground hover:border-primary hover:text-foreground transition-all capitalize"
-                                  >
-                                    {displayRoleLabel(rd.name, rd.label)}
-                                  </button>
-                                ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {hasAny(["admin", "management"]) && (
-                      <MemberSecurityActions userId={row.id} name={row.display_name ?? row.username ?? "this user"} />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <RolesManager defs={roleDefs} onChange={loadAll} />
-        )}
+  const memberDetails = (userId: string) => {
+    const row = rows.find((r) => r.id === userId);
+    if (!row) return null;
+    return <div className="space-y-3 border-t border-border pt-3">
+      <dl className="space-y-2 text-sm">
+        <div><dt className="text-[10px] font-semibold uppercase text-muted-foreground">Email</dt><dd className="break-all">{row.email || "—"}</dd></div>
+        <div><dt className="text-[10px] font-semibold uppercase text-muted-foreground">Last IP</dt><dd className="break-all">{row.last_ip || "—"}</dd></div>
+      </dl>
+      <div className="flex flex-wrap items-center gap-2">
+        {row.roles.map((rn) => {
+          const rd = roleDefs.find((r) => r.name === rn);
+          const label = rd ? displayRoleLabel(rd.name, rd.label) : rn;
+          return <span key={rn} className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold", styleFor(rn))}>{label}<Button variant="ghost" size="icon" className="size-5" title={`Remove ${label}`} aria-label={`Remove ${label} from ${row.username || row.display_name}`} disabled={saving !== null} onClick={() => void toggleRole(row, rn)}><X className="size-3" /></Button></span>;
+        })}
+        <Button variant="outline" size="icon" className="size-7 border-dashed" title="Add role" aria-label={`Add role for ${row.username || row.display_name}`} onClick={() => setAddRolesFor(row.id)}><Plus className="size-3.5" /></Button>
+        <Button variant="ghost" size="icon" className="size-7" title="View location history" aria-label={`View location history for ${row.username || row.display_name}`} onClick={() => setHistoryFor(row)}><MapPin className="size-4" /></Button>
+        <Button variant="ghost" size="icon" className="ml-auto size-7" title="Delete member" aria-label={`Delete member ${row.username || row.display_name}`} disabled={deletingUser === row.id || row.id === user?.id} onClick={() => void removeMember(row)}>{deletingUser === row.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}</Button>
       </div>
-      {historyFor && <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />}
-    </section>
-  );
+      <MemberSecurityActions userId={row.id} name={row.display_name ?? row.username ?? "this user"} />
+    </div>;
+  };
+  const memberEditor = (userId: string) => {
+    const row = rows.find((r) => r.id === userId);
+    if (!row || !isOwner) return null;
+    return <section className="space-y-2 border-b border-border pb-4">
+      <label className="block space-y-1 text-sm">Site username<Input aria-label="Site username" value={editingUsernameFor === row.id ? usernameDraft : row.username ?? ""} onChange={(e) => { setEditingUsernameFor(row.id); setUsernameDraft(e.target.value); }} /></label>
+      <Button size="sm" disabled={savingUsername || editingUsernameFor !== row.id || !usernameDraft.trim()} onClick={() => void saveUsername(row)}>Save username</Button>
+    </section>;
+  };
+  const addRoleRow = rows.find((r) => r.id === addRolesFor);
+  return <>
+    {children({ toolbar: <><AddUserButton onCreated={loadAll} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor })}
+    <Dialog open={tab === "roles"} onOpenChange={(open) => { if (!open) setTab("members"); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Manage roles</DialogTitle></DialogHeader><RolesManager defs={roleDefs} onChange={loadAll} /></DialogContent></Dialog>
+    <Dialog open={!!addRoleRow} onOpenChange={(open) => { if (!open) setAddRolesFor(null); }}><DialogContent><DialogHeader><DialogTitle>Add role · {addRoleRow?.username || addRoleRow?.display_name}</DialogTitle></DialogHeader><div className="flex flex-wrap gap-2">{addRoleRow && activeRoles.filter((rd) => !addRoleRow.roles.includes(rd.name)).map((rd) => <Button key={rd.name} variant="outline" size="sm" disabled={saving !== null} onClick={() => void toggleRole(addRoleRow, rd.name)}>{displayRoleLabel(rd.name, rd.label)}</Button>)}</div></DialogContent></Dialog>
+    {historyFor && <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />}
+  </>;
 }
 
 function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void }) {
