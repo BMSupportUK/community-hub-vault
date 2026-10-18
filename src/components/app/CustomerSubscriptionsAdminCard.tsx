@@ -28,7 +28,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   memberHeader?: (userId: string) => ReactNode;
 }) {
   const [rows, setRows] = useState<Customer[]>([]);
-  const [tab, setTab] = useState<"site" | "manual">("site");
+  const [tab, setTab] = useState<"single" | "multi" | "manual">("single");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<CustomerSortField>("default");
   const [sortDir, setSortDir] = useState<CustomerSortDir>("asc");
@@ -170,14 +170,18 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   const visible = rows.filter((c) => [c.username, c.displayName, c.referrerName, ...c.accounts.map((a) => a.login)].some((v) => v?.toLowerCase().includes(search.toLowerCase())));
   const siteRows = visible.filter((c) => c.hasSiteAccount);
   const manualRows = visible.filter((c) => !c.hasSiteAccount);
-  const siteCount = rows.filter((c) => c.hasSiteAccount).length;
-  const manualCount = rows.length - siteCount;
+  const isMulti = (c: Customer) => c.accounts.length > 1;
+  const singleRows = siteRows.filter((c) => !isMulti(c));
+  const multiRows = siteRows.filter(isMulti);
+  const singleCount = rows.filter((c) => c.hasSiteAccount && !isMulti(c)).length;
+  const multiCount = rows.filter((c) => c.hasSiteAccount && isMulti(c)).length;
+  const manualCount = rows.filter((c) => !c.hasSiteAccount).length;
   const withNoRenewal = (list: Customer[]) => list.map((c) => {
     const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
     const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
     return { ...c, noRenewal: customerShowsNoRenewal(hasRecordedYear, years) };
   });
-  const shown = sortCustomers(withNoRenewal(tab === "site" ? siteRows : manualRows), sortBy, sortDir);
+  const shown = sortCustomers(withNoRenewal(tab === "single" ? singleRows : tab === "multi" ? multiRows : manualRows), sortBy, sortDir);
   const Detail = ({ label, children, action }: { label: string; children: ReactNode; action?: ReactNode }) => (
     <div className="flex items-start justify-between gap-2">
       <div className="min-w-0"><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt><dd className="mt-0.5 break-words">{children}</dd></div>
@@ -190,9 +194,10 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
         <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">Customers</h2>{memberToolbar}</div>
         <div className="flex flex-wrap items-center gap-2"><select aria-label="Sort customers by" value={sortBy} onChange={(e) => setSortBy(e.target.value as CustomerSortField)} className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"><option value="default">Sort: Default order</option><option value="name">Name</option><option value="expires">Subscription expires</option><option value="renewed">Last renewed subscription</option><option value="joined">Year joined</option><option value="years">Years as customer</option><option value="referrer">Referred by</option></select>{sortBy !== "default" && <Button variant="outline" size="icon" aria-label={sortDir === "asc" ? "Sorted oldest to newest, switch to newest first" : "Sorted newest to oldest, switch to oldest first"} title={sortDir === "asc" ? "Oldest to newest" : "Newest to oldest"} onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}>{sortDir === "asc" ? <ArrowDown /> : <ArrowUp />}</Button>}<Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button></div>
       </div>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "site" | "manual")} className="mb-4">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "single" | "multi" | "manual")} className="mb-4">
         <TabsList>
-          <TabsTrigger value="site">Site customers <span className="ml-1 text-muted-foreground">{siteCount}</span></TabsTrigger>
+          <TabsTrigger value="single">Single account <span className="ml-1 text-muted-foreground">{singleCount}</span></TabsTrigger>
+          <TabsTrigger value="multi">Multiple accounts <span className="ml-1 text-muted-foreground">{multiCount}</span></TabsTrigger>
           <TabsTrigger value="manual">Manual customers <span className="ml-1 text-muted-foreground">{manualCount}</span></TabsTrigger>
         </TabsList>
       </Tabs>
