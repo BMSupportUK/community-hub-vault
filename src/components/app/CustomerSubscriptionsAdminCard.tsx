@@ -238,7 +238,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
               return (
               <section key={a?.id ?? "none"} className={multi ? "space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-3" : "space-y-2.5"}>
                 {multi && <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {i + 1}</span>}
-                <div className="flex items-center gap-1 break-all text-xs text-muted-foreground"><span className="font-semibold uppercase tracking-wide">Login:</span> {a?.login || "No login details"}</div>
+                <div className="flex items-center gap-1 break-all text-xs text-muted-foreground"><span className="font-semibold uppercase tracking-wide">App Login:</span> {a?.login || "No login details"}</div>
                 <dl className="space-y-2 text-sm">
                   <Detail label="Current package">{pkg}</Detail>
                   <div className="grid gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2.5 sm:grid-cols-2">
