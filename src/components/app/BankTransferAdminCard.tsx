@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Landmark, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Landmark, Loader2, Plus, Save, Trash2, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import {
   searchUsersForBankTransfer,
 } from "@/lib/bank-transfer.functions";
 import { getManualCustomerEmails } from "@/lib/manual-customers.functions";
+import { getCustomerDiscountFlags } from "@/lib/customer-discount-flags";
 import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 
 type Grant = {
@@ -53,6 +54,7 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
   const [grants, setGrants] = useState<Grant[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [manualEmails, setManualEmails] = useState<Record<string, string>>({});
+  const [discountUserIds, setDiscountUserIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
@@ -76,6 +78,9 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
       fetchManualEmails({} as never)
         .then((r: any) => setManualEmails(r?.emails ?? {}))
         .catch(() => setManualEmails({}));
+      getCustomerDiscountFlags({} as never)
+        .then((r: any) => setDiscountUserIds(new Set(r?.userIds ?? [])))
+        .catch(() => setDiscountUserIds(new Set()));
     } catch (e: any) {
       toast.error(e?.message ?? "Could not load bank transfer settings");
     } finally {
