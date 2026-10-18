@@ -43,7 +43,7 @@ export type CheckoutView = {
 };
 
 const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
-const METHOD: Record<string, string> = { stripe: STRIPE_CHECKOUT_ENABLED ? "Stripe" : "Square", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
+const METHOD: Record<string, string> = { stripe: "Square", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
 
 export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false, renewal = false, selectedStep, onStepSelect }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean; renewal?: boolean; selectedStep?: number; onStepSelect?: (step: number) => void }) {
   const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Payment confirmed", renewal ? "Subscription extended" : "Account set up", "Completed"];

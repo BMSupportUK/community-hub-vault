@@ -7,7 +7,8 @@ export function CheckoutCardPayment({ token, password, method, amountCents, onPa
  token: string; password: string; method: 'square' | 'stripe' | 'crypto'; amountCents: number; onPaid: () => void | Promise<void>;
 }) {
  if (method === 'crypto') return <CryptoPay token={token} password={password} amountCents={amountCents}/>;
- return <ProviderInvoicePayment key={effectiveCardProvider(method)} token={token} password={password} method={effectiveCardProvider(method)} amountCents={amountCents} onPaid={onPaid}/>;
+ // Card invoices always go through Square; Stripe is used only for open-banking Pay by bank.
+ return <ProviderInvoicePayment key="square" token={token} password={password} method="square" amountCents={amountCents} onPaid={onPaid}/>;
 }
 
 function CryptoPay({ token, password, amountCents }: { token: string; password: string; amountCents: number }) {

@@ -4,7 +4,7 @@
  * Stripe picks the final bank list inside its own payment picker and can
  * change it at any time, so this is an informational list of the UK banks
  * that appear there, not a guarantee. Every customer also sees the fallback:
- * if their bank is not supported they pay the card invoice instead.
+ * if their bank is not supported they pay the Square card invoice instead.
  */
 export const PAY_BY_BANK_BANKS = [
   "Bank of Scotland",
@@ -28,7 +28,7 @@ export const PAY_BY_BANK_BANKS = [
 
 /** Shown under the bank list on the secure checkout page. */
 export const PAY_BY_BANK_NOTE =
-  "If your bank isn't in the list, it isn't supported yet — use the card invoice instead.";
+  "If your bank isn't in the list, it isn't supported yet — pay with the Square card invoice above instead.";
 
 /** One-line intro above the list. */
 export const PAY_BY_BANK_INTRO =
