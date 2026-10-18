@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CUSTOMER_LIST_CHANGED } from "@/lib/customer-list-refresh";
-import { ChevronDown, ChevronRight, Check, Eye, EyeOff, History, KeyRound, Loader2, Lock, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, History, KeyRound, Loader2, Lock, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
