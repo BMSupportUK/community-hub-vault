@@ -21,18 +21,16 @@ export function settledProfitProvider(payments: { provider: string | null; statu
 }
 
 type MethodPayment = { provider: string | null; status: string | null; provider_payment_id?: string | null };
-export function orderPaymentGroup(payments: MethodPayment[], verified: Map<string, boolean>, saved?: string | null) {
+export function orderPaymentGroup(payments: MethodPayment[], verified: Map<string, boolean>, _saved?: string | null) {
   const paid = payments.find(p => isSettledPaymentStatus(p.status));
   if (paid) return profitPaymentGroup(paid.provider ?? undefined, verified.get(paid.provider_payment_id ?? '') === true);
-  // An abandoned Stripe session must never override a later chosen payment option.
-  if (saved === 'stripe') {
-    const bank = payments.some(p => p.provider === 'stripe' && verified.get(p.provider_payment_id ?? '') === true);
-    return bank ? 'open_banking' : 'stripe';
-  }
-  return profitPaymentGroup(saved ?? undefined);
+  // Until the payment actually completes we cannot know whether the customer
+  // paid by Open Banking or a Wise bank transfer, so the method stays pending.
+  return 'pending';
 }
 
 export function orderPaymentLabel(group?: string) {
+  if (group === 'pending') return 'Pending';
   if (group === 'square') return 'Square card';
   if (group === 'open_banking') return 'Open Banking';
   if (group === 'wise' || group === 'bank') return 'Wise';
