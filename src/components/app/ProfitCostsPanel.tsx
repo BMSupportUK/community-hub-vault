@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { comparePackages } from "@/lib/package-order";
 import { calculateProfit, allocateOrderAmounts, type ProfitPayment } from "@/lib/profit-calculation";
 import { refreshProviderFees } from "@/lib/provider-fees.functions";
-import { PROFIT_METHOD_LABELS as METHOD_LABELS, profitPaymentGroup as paymentGroup, profitMethodTabs, settledProfitProvider } from '@/lib/profit-payment-groups';
+import { PROFIT_METHOD_LABELS as METHOD_LABELS, profitPaymentGroup as paymentGroup, profitMethodTabs, settledProfitProvider, orderPaymentGroup } from '@/lib/profit-payment-groups';
 import { getProfitOpenBankingOrders } from '@/lib/profit-payment-groups.functions';
 import { OPEN_BANKING_DEMO, profitDisplayOrders } from '@/lib/profit-open-banking-demo';
 import { Switch } from '@/components/ui/switch';
@@ -78,8 +78,12 @@ export function ProfitCostsPanel() {
       for (const row of pay.data ?? []) {
         if (!row.order_id) continue;
         (payments[row.order_id] ??= []).push(row);
-        const provider = settledProfitProvider([row]);
-        if (provider) methods[row.order_id] = paymentGroup(provider, verifiedMethods.current.get(`${row.order_id}:${row.provider_payment_id}`) === true) ?? provider;
+      }
+      for (const orderId of chunk) {
+        const rows = (pay.data ?? []).filter(row => row.order_id === orderId);
+        const verified = new Map(rows.map(row => [row.provider_payment_id ?? '', verifiedMethods.current.get(`${orderId}:${row.provider_payment_id}`) === true]));
+        const group = orderPaymentGroup(rows, verified);
+        if (group) methods[orderId] = group;
       }
     }
     setMethodOf(methods);
