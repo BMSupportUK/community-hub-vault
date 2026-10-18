@@ -1,0 +1,16 @@
+STAN Sport
+Stan event: EventS1: Wuhan: Day 7 - WTA 1000 start:2026-10-18 11:30:09 stop:2026-10-18 21:30:09
+Stan event: EventS1: Bay FC v Portland Thorns - NWSL 2026 start:2026-10-18 22:00:09 stop:2026-10-19 00:13:09
+Stan event: EventS2: Race: 6 Hours of Barcelona - WEC 2026 start:2026-10-18 10:30:26 stop:2026-10-18 13:23:46
+Stan event: EventS2: Leeds United v Manchester United - Premier League Matchweek 7 2026/2027 start:2026-10-18 13:50:09 stop:2026-10-18 16:03:09
+Stan event: EventS2: Nottingham Forest v Arsenal - Premier League Matchweek 7 2026/2027 start:2026-10-18 16:20:09 stop:2026-10-18 18:33:09
+Stan event: EventS2: PL Weekend Wrap: Matchweek 7 - Oct 19 start:2026-10-18 19:00:09 stop:2026-10-18 21:13:09
+Stan event: EventS3: Chelsea v Tottenham Hotspur - WSL 2026/27 start:2026-10-18 11:50:09 stop:2026-10-18 14:03:09
+Stan event: EventS3: Manchester City v Brighton & Hove Albion - WSL 2026/27 start:2026-10-18 14:20:09 stop:2026-10-18 16:33:09
+Stan event: EventS4: Crystal Palace v West Ham United - WSL 2026/27 start:2026-10-18 11:50:09 stop:2026-10-18 14:03:09
+Stan event: EventS5: Goal Rush: Leeds United v Manchester United • 18 Oct - Premier League 2026/2027 start:2026-10-18 13:00:09 stop:2026-10-18 15:13:09
+Stan event: EventS6: Brighton & Hove Albion v Crystal Palace - Premier League Matchweek 7 2026/2027 start:2026-10-18 13:50:09 stop:2026-10-18 16:03:09
+Stan event: EventS7: Aston Villa v Liverpool - WSL 2026/27 start:2026-10-18 13:50:09 stop:2026-10-18 16:03:09
+Stan event: EventS8: Charlton Athletic v Manchester United - WSL 2026/27 start:2026-10-18 13:50:09 stop:2026-10-18 16:03:09
+Stan event: EventS9: Bournemouth v Sunderland - Premier League Matchweek 7 2026/2027 start:2026-10-18 13:50:09 stop:2026-10-18 16:03:09
+Stan event: EventS10: London City Lionesses v Everton - WSL 2026/27 start:2026-10-18 13:50:09 stop:2026-10-18 16:03:09
