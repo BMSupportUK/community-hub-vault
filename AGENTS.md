@@ -46,3 +46,5 @@
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 
 - Profit uses pence; absent payments/fees stay provisional. Invoice sync repairs absent rows after paid_at; confirmed fees stay fixed.
+
+- Allocated break matching uses a browser-independent helper with UK timestamps; duplicate records never consume future slots, and the lock-safe starter rechecks recorded slots before inserting to prevent replay.

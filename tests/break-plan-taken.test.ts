@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { planItems } from "@/components/app/BreakPlanRows";
+import { planItems } from "../src/lib/break-plan-status";
 import { ukMinutes } from "../src/lib/breaks";
 
 const plan = {
