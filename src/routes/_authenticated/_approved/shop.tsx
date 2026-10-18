@@ -5425,6 +5425,8 @@ function AdminDiscounts() {
   const [percentInput, setPercentInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
   const [codeLinks, setCodeLinks] = useState<Map<string, string[]>>(new Map());
+  const [manualEmails, setManualEmails] = useState<Record<string, string>>({});
+  const fetchManualEmails = useServerFn(getManualCustomerEmails);
 
   const genCode = (userId: string | null | undefined) => {
     const u = userId ? users.find((x) => x.id === userId) : null;
