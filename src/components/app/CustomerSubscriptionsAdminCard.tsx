@@ -52,6 +52,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   const [account, setAccount] = useState("");
   const [busy, setBusy] = useState(false);
   const [customerEditing, setCustomerEditing] = useState<Customer | null>(null);
+  const [customerName, setCustomerName] = useState("");
   const [editAccountId, setEditAccountId] = useState("");
   const [editing, setEditing] = useState<Customer | null>(null);
   const [joinedYear, setJoinedYear] = useState("");
@@ -129,8 +130,18 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
     setLoginPassword("");
     setLoginExpiry(selected?.expiresAt ? localDateTime(selected.expiresAt) : "");
   };
+  const saveCustomerName = async () => {
+    if (!customerEditing || !customerName.trim()) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_set_manual_customer_name", { p_customer_id: customerEditing.userId, p_name: customerName.trim() });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Customer username saved");
+    await load();
+  };
   const openCustomerEditor = async (customer: Customer) => {
     setCustomerEditing(customer);
+    setCustomerName(customer.username || customer.displayName || "");
     setEditing(customer);
     setRenewalEditing(customer);
     setAllocating(customer);
@@ -292,6 +303,11 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
           <DialogHeader><DialogTitle>Edit customer · {customerEditing?.username || customerEditing?.displayName}</DialogTitle></DialogHeader>
           <fieldset disabled={busy} className="space-y-5">
             {customerEditing?.hasSiteAccount && memberEditor?.(customerEditing.userId)}
+            {customerEditing && !customerEditing.hasSiteAccount && <section className="space-y-2 border-b border-border pb-4">
+              <label className="block space-y-1 text-sm">Customer username<Input aria-label="Customer username" autoComplete="off" value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></label>
+              <p className="text-xs text-muted-foreground">The name shown on the customer card. App login details are changed separately with the key icon.</p>
+              <Button size="sm" disabled={busy || !customerName.trim() || customerName.trim() === (customerEditing.username || customerEditing.displayName || "")} onClick={() => void saveCustomerName()}>Save username</Button>
+            </section>}
             <section className="space-y-2 border-b border-border pb-4">
               <label className="block space-y-1 text-sm">Year joined<Input aria-label="Year joined" type="number" inputMode="numeric" min={1000} max={ukCurrentYear()} step={1} value={joinedYear} onChange={(e) => setJoinedYear(e.target.value)} /></label>
               <div className="flex flex-wrap gap-2"><Button size="sm" disabled={busy || !joinedYearToDate(joinedYear)} onClick={() => void saveJoinedYear()}>Save year</Button>{customerEditing?.firstSubscriptionAdjusted && <Button size="sm" variant="outline" disabled={busy} onClick={() => void saveJoinedYear(true)}>Use recorded year</Button>}</div>
