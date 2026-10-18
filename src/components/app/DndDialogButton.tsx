@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { AWAY_REASONS, awayIcon, awayWindow, isScheduledAway, type AwayReason } from "@/lib/staff-away";
+import { awayReasonsFor, awayIcon, awayWindow, isScheduledAway, type AwayReason } from "@/lib/staff-away";
 import { toast } from "sonner";
 
 function timeInZone(d: Date, timeZone: string) {
@@ -28,6 +28,16 @@ export function DndDialogButton({ className, icon = "moon" }: { className?: stri
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [saving, setSaving] = useState(false);
+  const [onShift, setOnShift] = useState(true);
+  useEffect(() => {
+    if (!open || !user) return;
+    void supabase.from("shifts").select("id").eq("user_id", user.id).is("clock_out", null).limit(1).maybeSingle()
+      .then(({ data }) => {
+        setOnShift(!!data);
+        if (!data) setReason("Outside Of Office Hours");
+      });
+  }, [open, user?.id]);
+  const reasons = awayReasonsFor(onShift);
   useEffect(() => {
     if (!open) return;
     const current = info?.enabled && (!info.endsAt || info.endsAt.getTime() > Date.now());
@@ -49,6 +59,7 @@ export function DndDialogButton({ className, icon = "moon" }: { className?: stri
   const startLocked = manualRunning && !scheduled;
   const save = async (endAway = false) => {
     if (saving) return;
+    if (!endAway && !reasons.includes(reason)) { toast.error("Your shift has ended — only Outside Of Office Hours is available"); return; }
     if (!endAway && startLocked) return;
     let window;
     try {
@@ -84,9 +95,9 @@ export function DndDialogButton({ className, icon = "moon" }: { className?: stri
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label htmlFor="away-reason" className="text-sm font-medium">Away reason</label>
-            <Select value={reason} onValueChange={(value) => { const selected = AWAY_REASONS.find((item) => item === value); if (selected) setReason(selected); }}>
+            <Select value={reason} onValueChange={(value) => { const selected = reasons.find((item) => item === value); if (selected) setReason(selected); }}>
               <SelectTrigger id="away-reason"><SelectValue /></SelectTrigger>
-              <SelectContent className="z-[120]">{AWAY_REASONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+              <SelectContent className="z-[120]">{reasons.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           {scheduled && <>

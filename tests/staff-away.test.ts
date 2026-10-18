@@ -28,3 +28,8 @@ test("the away timer counts up live in seconds, minutes or hours", () => {
   // A clock skew where "now" is behind the start must never show a negative time.
   expect(awayElapsedLabel(10_000, 1_000)).toBe("0s");
 });
+import { awayReasonsFor } from "../src/lib/staff-away";
+test("after a shift ends only Outside Of Office Hours is allowed", () => {
+  expect(awayReasonsFor(false)).toEqual(["Outside Of Office Hours"]);
+  expect(awayReasonsFor(true)).toHaveLength(4);
+});
