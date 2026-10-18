@@ -4,10 +4,10 @@ export const ADMIN_UNLOCK_KEY = (uid: string) => `admin_unlock_until:${uid}`;
 export function isAdminUnlocked(userId: string | undefined | null): boolean {
   if (!userId || typeof window === "undefined") return false;
   try {
-    const raw = sessionStorage.getItem(ADMIN_UNLOCK_KEY(userId));
+    const raw = localStorage.getItem(ADMIN_UNLOCK_KEY(userId));
     const until = raw ? parseInt(raw, 10) : 0;
     if (until > Date.now()) return true;
-    if (raw) sessionStorage.removeItem(ADMIN_UNLOCK_KEY(userId));
+    if (raw) localStorage.removeItem(ADMIN_UNLOCK_KEY(userId));
   } catch {}
   return false;
 }
