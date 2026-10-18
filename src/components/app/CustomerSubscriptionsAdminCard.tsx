@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { CREDENTIAL_TIME_STEP, credentialTimeInput } from "@/lib/credential-time";
 import { MemberCredentialsSection, RestoreCredentialsBackupButton } from "@/components/app/MemberCredentialsSection";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -23,6 +24,12 @@ type ManualOrder = { id: string; ref: string; name: string; createdAt: string; p
 const date = customerDate;
 
 const renewalDay = (v: string | null) => v ? new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(v)) : "";
+
+const localDateTime = (iso: string) => {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, memberDetails, memberEditor, memberExtras, memberHeader, memberRoles }: {
   canReward: boolean;
@@ -58,6 +65,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   const [loginEditing, setLoginEditing] = useState<{ customer: Customer; account: Account } | null>(null);
   const [loginName, setLoginName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginExpiry, setLoginExpiry] = useState("");
   const [grouping, setGrouping] = useState<Customer | null>(null);
   const [manualOrders, setManualOrders] = useState<ManualOrder[]>([]);
   const [manualOrderId, setManualOrderId] = useState("");
@@ -76,6 +84,15 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Manual order grouped with customer"); setGrouping(null); await load();
+  };
+  const saveExpiry = async () => {
+    if (!loginEditing || !loginExpiry) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_set_manual_customer_expiry", { p_order_id: loginEditing.account.id, p_expiry_at: new Date(loginExpiry).toISOString() });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Subscription expiry saved");
+    await load();
   };
   const saveLogin = async () => {
     if (!loginEditing || !loginName.trim()) return;
@@ -110,6 +127,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
     setLoginEditing(!customer.hasSiteAccount && selected ? { customer, account: selected } : null);
     setLoginName(selected?.login && selected.login !== customer.displayName ? selected.login : "");
     setLoginPassword("");
+    setLoginExpiry(selected?.expiresAt ? localDateTime(selected.expiresAt) : "");
   };
   const openCustomerEditor = async (customer: Customer) => {
     setCustomerEditing(customer);
@@ -283,6 +301,8 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
               <label className="block space-y-1 text-sm">Login name<Input aria-label="Login name" autoComplete="off" value={loginName} onChange={(e) => setLoginName(e.target.value)} /></label>
               <label className="block space-y-1 text-sm">Password<Input aria-label="Login password" type="password" autoComplete="new-password" placeholder="Leave blank to keep the saved password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></label>
               <Button size="sm" disabled={busy || !loginName.trim()} onClick={() => void saveLogin()}>Save login details</Button>
+              <label className="block space-y-1 pt-2 text-sm">Subscription expires<Input aria-label="Subscription expiry" type="datetime-local" step={CREDENTIAL_TIME_STEP} value={loginExpiry} onChange={(e) => setLoginExpiry(credentialTimeInput(e.target.value))} /></label>
+              <Button size="sm" disabled={busy || !loginExpiry} onClick={() => void saveExpiry()}>Save expiry</Button>
             </section>}
             {customerEditing && (customerEditing.accounts.length > 1 || !customerEditing.package || customerEditing.packageAllocated) && <section className="space-y-2 border-b border-border pb-4">
               <label className="block space-y-1 text-sm">Current package<select aria-label="Subscription package" value={productId} onChange={(e) => setProductId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"><option value="" disabled>Choose package</option>{products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
