@@ -6,6 +6,7 @@ import installGuideIllustration from "@/assets/manual-order-install-guide.jpg";
 import { Button } from "@/components/ui/button";
 import { requiresManualRegistration } from "@/lib/manual-registration";
 import { downloadReceipt, type InvoiceTemplateSettings } from "@/lib/receipt";
+import { bankOptionDisabled, nextPayChoice, readStoredPayChoice, storePayChoice, type PayMethodChoice } from "@/lib/pay-choice-lock";
 
 export type CheckoutView = {
   order: {
@@ -96,9 +97,15 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise" | "crypto") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [switching, setSwitching] = useState(false);
-  const [payChoice, setPayChoice] = useState<"card" | "bank">("bank");
+  const [payChoice, setPayChoice] = useState<PayMethodChoice>("bank");
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
+  // The card choice survives a refresh, so Pay by bank can't be reopened on an
+  // order the customer has already committed to paying by card.
+  useEffect(() => {
+    if (preview) return;
+    if (readStoredPayChoice(order.ref) === "card") setPayChoice("card");
+  }, [order.ref, preview]);
   const step = checkoutStep(order);
   const subtotal = items.reduce((s, i) => s + i.unitCents * i.qty, 0);
   const paid = step >= 2;
@@ -314,11 +321,11 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               <h2 className="font-semibold">Choose how to pay</h2>
               <div className={`grid gap-2 ${[payByBank, onSwitchPayMethod].filter(Boolean).length === 2 ? "grid-cols-3" : [payByBank, onSwitchPayMethod].some(Boolean) ? "grid-cols-2" : "grid-cols-1"}`} role="tablist" aria-label="Payment options">
                 {payByBank ? (
-                  <button type="button" role="tab" aria-selected={payChoice === "bank"} onClick={() => setPayChoice("bank")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "bank" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
+                  <button type="button" role="tab" aria-selected={payChoice === "bank"} disabled={bankOptionDisabled(payChoice)} title={bankOptionDisabled(payChoice) ? "You have chosen to pay by card — Pay by bank is unavailable for this order" : undefined} onClick={() => setPayChoice(nextPayChoice(payChoice, "bank"))} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "bank" ? "border-primary bg-primary/10 text-foreground" : bankOptionDisabled(payChoice) ? "border-border bg-surface-2 text-muted-foreground/50 cursor-not-allowed" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
                     <Landmark className="size-4" /> Pay by bank
                   </button>
                 ) : null}
-                <button type="button" role="tab" aria-selected={payChoice === "card"} onClick={() => setPayChoice("card")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "card" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
+                <button type="button" role="tab" aria-selected={payChoice === "card"} onClick={() => { storePayChoice(order.ref, "card"); setPayChoice(nextPayChoice(payChoice, "card")); }} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "card" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
                   <CreditCard className="size-4" /> Card (Square)
                 </button>
                 {onSwitchPayMethod ? (
@@ -327,6 +334,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   </button>
                 ) : null}
               </div>
+              {payChoice === "card" && payByBank ? (
+                <p className="text-xs text-muted-foreground">You've chosen to pay by card, so Pay by bank is unavailable — an order can only be paid one way.</p>
+              ) : null}
               {payChoice === "bank" && payByBank ? payByBank : (
                 <>
                   {cardPayment ? cardPayment : preview ? (
