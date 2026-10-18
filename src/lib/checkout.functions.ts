@@ -49,6 +49,13 @@ export const getCheckout = createServerFn({ method: "POST" })
       const { data: b } = await supabaseAdmin.from("bank_transfer_details").select("account_name,sort_code,account_number,iban,bic").limit(1).maybeSingle();
       bank = b ?? null;
     }
+    // Card orders owned by a bank-approved customer can still switch to bank
+    // transfer on this page — the method is never a one-way door.
+    let canPayByBank = false;
+    if (!order.paid_at && ["square", "stripe", "crypto", ""].includes(method) && (order as any).user_id) {
+      const { data: allowed } = await supabaseAdmin.rpc("can_pay_by_bank_transfer", { _user_id: String((order as any).user_id) });
+      canPayByBank = Boolean(allowed);
+    }
     const { data: pay } = await supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", link.order_id).maybeSingle();
     const { data: invoiceSetting } = await supabaseAdmin.from("app_settings").select("value").eq("key", "invoice_template").maybeSingle();
     const cryptoConfirming = pay?.provider === "nowpayments" && ["confirming", "confirmed", "sending", "partially_paid"].includes(String(pay.status));
