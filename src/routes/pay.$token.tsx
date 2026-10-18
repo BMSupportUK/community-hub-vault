@@ -251,7 +251,7 @@ function PayPage() {
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
         payByBank={["square", "stripe", "wise"].includes(view.order.method) && !view.order.paidAt && !view.order.cancelled ? (
-          <PayByBankSection token={token} password={pw} />
+          <PayByBankSection token={token} password={pw} hideCardNote={view.order.method === "wise"} />
         ) : undefined}
         appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}
         videoHelp={(!canManage || isVideoTestOrder(token)) && !view.order.cancelled ? <OrderVideoCallCustomer token={token} password={pw} mobile={isMobilePhone()} inline /> : undefined}
