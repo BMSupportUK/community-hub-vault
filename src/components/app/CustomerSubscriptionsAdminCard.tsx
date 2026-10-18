@@ -25,6 +25,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   memberDetails?: (userId: string) => ReactNode;
   memberEditor?: (userId: string) => ReactNode;
   memberExtras?: (userId: string) => ReactNode;
+  memberHeader?: (userId: string) => ReactNode;
 }) {
   const [rows, setRows] = useState<Customer[]>([]);
   const [tab, setTab] = useState<"site" | "manual">("site");
@@ -208,6 +209,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
             <header className="flex flex-wrap items-center gap-2">
               <h3 className="break-words font-semibold">{name}</h3>
               <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
+              {c.hasSiteAccount && memberHeader?.(c.userId)}
               {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
               {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
             </header>
@@ -230,8 +232,11 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
             <div className="mt-1 h-1 w-full rounded-full bg-foreground/25" aria-hidden="true" />
             <dl className="space-y-2 pt-3 text-sm">
               {c.hasSiteAccount && memberExtras?.(c.userId)}
-              <Detail label="Year joined">{customerJoinedYear(c.firstSubscriptionAt) ?? "Not recorded"}</Detail>
-              <Detail label="Years as customer">{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</Detail>
+              <div className="flex flex-wrap items-baseline gap-x-1.5">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Year joined:</span><span>{customerJoinedYear(c.firstSubscriptionAt) ?? "Not recorded"}</span>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Years as customer:</span><span>{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</span>
+              </div>
               <Detail label="Referred by">{c.referrerName || "—"}</Detail>
             </dl>
             {c.rewards.map((r) => (
