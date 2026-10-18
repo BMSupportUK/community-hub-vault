@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { customerDate, customerHasRecordedYear, customerShowsNoRenewal } from "@/lib/customer-date";
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
-import { Gift, Loader2, RefreshCw, Pencil, Link2 } from "lucide-react";
+import { sortCustomers, type CustomerSortDir, type CustomerSortField } from "@/lib/customer-sort";
+import { Gift, Loader2, RefreshCw, Pencil, Link2, ArrowDown, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const [rows, setRows] = useState<Customer[]>([]);
   const [tab, setTab] = useState<"site" | "manual">("site");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<CustomerSortField>("default");
+  const [sortDir, setSortDir] = useState<CustomerSortDir>("asc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reward, setReward] = useState<Reward | null>(null);
@@ -139,7 +142,12 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const manualRows = visible.filter((c) => !c.hasSiteAccount);
   const siteCount = rows.filter((c) => c.hasSiteAccount).length;
   const manualCount = rows.length - siteCount;
-  const shown = tab === "site" ? siteRows : manualRows;
+  const withNoRenewal = (list: Customer[]) => list.map((c) => {
+    const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
+    const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
+    return { ...c, noRenewal: customerShowsNoRenewal(hasRecordedYear, years) };
+  });
+  const shown = sortCustomers(withNoRenewal(tab === "site" ? siteRows : manualRows), sortBy, sortDir);
   const Detail = ({ label, children, action }: { label: string; children: ReactNode; action?: ReactNode }) => (
     <div className="flex items-start justify-between gap-2">
       <div className="min-w-0"><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt><dd className="mt-0.5 break-words">{children}</dd></div>
@@ -150,7 +158,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
     <section className="min-w-0 py-4" aria-label="Customer subscriptions">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-xl font-bold">Customers</h2>
-        <div className="flex gap-2"><Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button></div>
+        <div className="flex flex-wrap items-center gap-2"><select aria-label="Sort customers by" value={sortBy} onChange={(e) => setSortBy(e.target.value as CustomerSortField)} className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"><option value="default">Sort: Default order</option><option value="name">Name</option><option value="expires">Runs out</option><option value="renewed">Last renewed</option><option value="joined">Year joined</option><option value="years">Years as customer</option><option value="referrer">Referred by</option></select>{sortBy !== "default" && <Button variant="outline" size="icon" aria-label={sortDir === "asc" ? "Sorted oldest to newest, switch to newest first" : "Sorted newest to oldest, switch to oldest first"} title={sortDir === "asc" ? "Oldest to newest" : "Newest to oldest"} onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}>{sortDir === "asc" ? <ArrowDown /> : <ArrowUp />}</Button>}<Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button></div>
       </div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as "site" | "manual")} className="mb-4">
         <TabsList>
