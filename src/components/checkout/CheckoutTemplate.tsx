@@ -96,7 +96,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [switching, setSwitching] = useState(false);
-  const [payChoice, setPayChoice] = useState<"card" | "bank">("card");
+  const [payChoice, setPayChoice] = useState<"card" | "bank">("bank");
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
   const step = checkoutStep(order);
@@ -313,16 +313,16 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
               <h2 className="font-semibold">Choose how to pay</h2>
               <div className={`grid gap-2 ${payByBank ? "grid-cols-2" : "grid-cols-1"}`} role="tablist" aria-label="Payment options">
-                <button type="button" role="tab" aria-selected={payChoice === "card"} onClick={() => setPayChoice("card")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "card" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
-                  <CreditCard className="size-4" /> Card (Square)
-                </button>
                 {payByBank ? (
                   <button type="button" role="tab" aria-selected={payChoice === "bank"} onClick={() => setPayChoice("bank")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "bank" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
                     <Landmark className="size-4" /> Pay by bank
                   </button>
                 ) : null}
+                <button type="button" role="tab" aria-selected={payChoice === "card"} onClick={() => setPayChoice("card")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "card" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
+                  <CreditCard className="size-4" /> Card (Square)
+                </button>
               </div>
-              {payChoice === "bank" && payByBank ? payByBank : (
+              {(payChoice === "bank" || !cardPayment && false) && payByBank ? payByBank : (
                 <>
                   {cardPayment ? cardPayment : preview ? (
                     <div className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold">
