@@ -19,7 +19,12 @@ const date = customerDate;
 
 const renewalDay = (v: string | null) => v ? new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(v)) : "";
 
-export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boolean }) {
+export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, memberDetails, memberEditor }: {
+  canReward: boolean;
+  memberToolbar?: ReactNode;
+  memberDetails?: (userId: string) => ReactNode;
+  memberEditor?: (userId: string) => ReactNode;
+}) {
   const [rows, setRows] = useState<Customer[]>([]);
   const [tab, setTab] = useState<"site" | "manual">("site");
   const [search, setSearch] = useState("");
@@ -180,7 +185,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   return (
     <section className="min-w-0 py-4" aria-label="Customer subscriptions">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-bold">Customers</h2>
+        <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">Customers</h2>{memberToolbar}</div>
         <div className="flex flex-wrap items-center gap-2"><select aria-label="Sort customers by" value={sortBy} onChange={(e) => setSortBy(e.target.value as CustomerSortField)} className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"><option value="default">Sort: Default order</option><option value="name">Name</option><option value="expires">Runs out</option><option value="renewed">Last renewed</option><option value="joined">Year joined</option><option value="years">Years as customer</option><option value="referrer">Referred by</option></select>{sortBy !== "default" && <Button variant="outline" size="icon" aria-label={sortDir === "asc" ? "Sorted oldest to newest, switch to newest first" : "Sorted newest to oldest, switch to oldest first"} title={sortDir === "asc" ? "Oldest to newest" : "Newest to oldest"} onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}>{sortDir === "asc" ? <ArrowDown /> : <ArrowUp />}</Button>}<Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button></div>
       </div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as "site" | "manual")} className="mb-4">
@@ -231,6 +236,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
                   : canReward ? <Button className="mt-1" variant="outline" size="sm" disabled={!r.referrerAccounts.length} title={!r.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${r.ref ?? r.orderId}`} onClick={() => { setReward(r); setAccount(r.referrerAccounts.length === 1 ? r.referrerAccounts[0].id : ""); }}><Gift /> Confirm bonus added</Button>
                   : <span className="block text-muted-foreground">Awaiting admin confirmation</span>}
               </div>))}
+            {c.hasSiteAccount && memberDetails?.(c.userId)}
           </article>);
         })}</div>
       )}
@@ -239,6 +245,7 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-xl">
           <DialogHeader><DialogTitle>Edit customer · {customerEditing?.username || customerEditing?.displayName}</DialogTitle></DialogHeader>
           <fieldset disabled={busy} className="space-y-5">
+            {customerEditing?.hasSiteAccount && memberEditor?.(customerEditing.userId)}
             <section className="space-y-2 border-b border-border pb-4">
               <label className="block space-y-1 text-sm">Year joined<Input aria-label="Year joined" type="number" inputMode="numeric" min={1000} max={ukCurrentYear()} step={1} value={joinedYear} onChange={(e) => setJoinedYear(e.target.value)} /></label>
               <div className="flex flex-wrap gap-2"><Button size="sm" disabled={busy || !joinedYearToDate(joinedYear)} onClick={() => void saveJoinedYear()}>Save year</Button>{customerEditing?.firstSubscriptionAdjusted && <Button size="sm" variant="outline" disabled={busy} onClick={() => void saveJoinedYear(true)}>Use recorded year</Button>}</div>
