@@ -3,7 +3,7 @@ import { customerDate, customerHasRecordedYear, customerShowsNoRenewal } from "@
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
 import { sortCustomers, type CustomerSortDir, type CustomerSortField } from "@/lib/customer-sort";
 import { Gift, Loader2, RefreshCw, Pencil, Link2, ArrowDown, ArrowUp, Check } from "lucide-react";
-import { historicalReferralBonusAdded, referralBonusExcluded } from "@/lib/customer-referral-bonus";
+import { referralBonusState } from "@/lib/customer-referral-bonus";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,6 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
 }) {
   const { user } = useAuth();
   const [rows, setRows] = useState<Customer[]>([]);
-  const [historicalBonuses, setHistoricalBonuses] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"single" | "multi" | "manual">("single");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<CustomerSortField>("default");
@@ -151,8 +150,6 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase.rpc("admin_customer_subscription_list");
-    const bonuses = await supabase.from("referral_bonus_acknowledgements").select("customer_id,referrer_name");
-    if (!bonuses.error) setHistoricalBonuses(Object.fromEntries((bonuses.data ?? []).map((b) => [b.customer_id, b.referrer_name])));
     setLoading(false);
     setError(error?.message ?? "");
     if (!error) {
@@ -251,9 +248,11 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
                 <span className="text-muted-foreground">·</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Years as customer:</span><span>{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</span>
               </div>
-              <Detail label="Referred by"><span className="inline-flex flex-wrap items-center gap-2">{c.referrerName || "—"}{c.referrerName && !referralBonusExcluded(c.referrerName) && (() => {
+              <Detail label="Referred by"><span className="inline-flex flex-wrap items-center gap-2">{c.referrerName || "—"}{(() => {
+                const bonusState = referralBonusState(c.referrerName, c.rewards);
+                if (bonusState === 'hidden') return null;
                 const pending = c.rewards.find((r) => !r.rewardedAt);
-                if (historicalReferralBonusAdded(c.referrerName, historicalBonuses[c.userId], c.rewards.length) || (c.rewards.length && !pending)) return <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"><Check className="size-3.5" /> Referral Bonus added</span>;
+                if (bonusState === 'added') return <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"><Check className="size-3.5" /> Referral Bonus added</span>;
                 return pending && canReward ? <Button variant="outline" size="sm" className="h-7" disabled={!pending.referrerAccounts.length} title={!pending.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${pending.ref ?? pending.orderId}`} onClick={() => { setReward(pending); setAccount(pending.referrerAccounts.length === 1 ? pending.referrerAccounts[0].id : ""); }}><Gift /> Add referral bonus</Button> : null;
               })()}</span></Detail>
             </dl>

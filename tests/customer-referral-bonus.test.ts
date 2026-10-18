@@ -1,7 +1,7 @@
 import { test, expect } from 'bun:test';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
-import { historicalReferralBonusAdded, referralBonusExcluded } from '../src/lib/customer-referral-bonus';
+import { historicalReferralBonusAdded, referralBonusExcluded, referralBonusState } from '../src/lib/customer-referral-bonus';
 
 test('DaneJ referrals are excluded even with spaces or different case', () => {
   expect(referralBonusExcluded('DaneJ')).toBe(true);
@@ -10,6 +10,18 @@ test('DaneJ referrals are excluded even with spaces or different case', () => {
 test('GJ referrals are excluded', () => {
   expect(referralBonusExcluded('GJ')).toBe(true);
   expect(referralBonusExcluded('G.J.')).toBe(true);
+});
+test('no completed paid 12-month purchase means no referral button or tick', () => {
+  expect(referralBonusState('bernies_quiff', [])).toBe('hidden');
+});
+test('a completed paid 12-month purchase enables the pending bonus', () => {
+  expect(referralBonusState('other-referrer', [{ rewardedAt: null }])).toBe('pending');
+});
+test('a rewarded qualifying purchase shows the tick', () => {
+  expect(referralBonusState('other-referrer', [{ rewardedAt: '2026-10-18T11:00:00Z' }])).toBe('added');
+});
+test('DaneJ and GJ remain excluded after a qualifying purchase', () => {
+  for (const name of ['DaneJ', 'GJ']) expect(referralBonusState(name, [{ rewardedAt: null }])).toBe('hidden');
 });
 test('existing recorded referrals count as added without hiding a later qualifying sale', () => {
   expect(historicalReferralBonusAdded('bernies_quiff', 'bernies_quiff', 0)).toBe(true);
