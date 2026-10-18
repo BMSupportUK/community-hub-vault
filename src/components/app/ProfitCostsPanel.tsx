@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChartNoAxesCombined, ChartPie, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet, RefreshCw } from "lucide-react";
 import { ProfitSummaryChart } from "@/components/app/ProfitSummaryChart";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { comparePackages } from "@/lib/package-order";
 import { calculateProfit, allocateOrderAmounts, type ProfitPayment } from "@/lib/profit-calculation";
 import { refreshProviderFees } from "@/lib/provider-fees.functions";
+import { PROFIT_METHOD_LABELS as METHOD_LABELS, profitPaymentGroup as paymentGroup, profitMethodTabs, settledProfitProvider } from '@/lib/profit-payment-groups';
+import { getProfitOpenBankingOrders } from '@/lib/profit-payment-groups.functions';
 
 import { useProviderFeeRefresh } from '@/hooks/use-provider-fee-refresh';
 
@@ -21,15 +23,8 @@ type Order = { id: string; status: string; total_cents: number; created_at: stri
 
 const calc = calculateProfit;
 
-const METHOD_LABELS: Record<string, string> = { square: "Square", stripe: "Stripe", paypal: "PayPal", wise: "Wise", cash: "Cash", nowpayments: "NOWPayments", manual: "Manual" };
-
-function paymentGroup(provider: string | undefined) {
-  if (provider === "crypto" || provider === "nowpayments") return "nowpayments";
-  if (provider === "bank_transfer" || provider === "wise") return "wise";
-  return provider;
-}
-
 export function ProfitCostsPanel() {
+  const verifiedMethods = useRef(new Map<string, boolean>());
   const [tab, setTab] = useState<string>("profit");
   const [products, setProducts] = useState<Product[] | null>(null);
   const [costs, setCosts] = useState<Record<string, string>>({});
@@ -63,12 +58,25 @@ export function ProfitCostsPanel() {
       const r = await supabase.from("order_items").select("order_id, product_id, product_name, unit_price_cents, quantity, unit_cost_cents").in("order_id", chunk);
       if (r.error) { toast.error(r.error.message); return; }
       items.push(...((r.data ?? []) as (Item & { order_id: string })[]));
-      const pay = await supabase.from("order_payments").select("order_id, provider, status, currency, provider_fee_cents").in("order_id", chunk);
+      const pay = await supabase.from("order_payments").select("order_id, provider, provider_payment_id, status, currency, provider_fee_cents").in("order_id", chunk);
       if (pay.error) { toast.error(pay.error.message); return; }
+      const candidates = (pay.data ?? []).filter(row => row.provider === 'stripe' && row.provider_payment_id?.startsWith('cs_') && settledProfitProvider([row]) === 'stripe');
+      const unchecked = candidates.filter(row => !verifiedMethods.current.has(`${row.order_id}:${row.provider_payment_id}`));
+      if (unchecked.length) {
+        try {
+          const result = await getProfitOpenBankingOrders({ data: { orderIds: unchecked.map(row => row.order_id) } });
+          for (const entry of result.verified) {
+            const row = unchecked.find(row => row.order_id === entry.orderId);
+            if (row) verifiedMethods.current.set(`${row.order_id}:${row.provider_payment_id}`, entry.openBanking);
+          }
+          if (result.unavailable) toast.warning('Some Stripe payment methods could not be verified; their sales remain under Stripe until the next check.');
+        } catch { toast.warning('Open Banking classification is temporarily unavailable; Stripe totals are unchanged.'); }
+      }
       for (const row of pay.data ?? []) {
         if (!row.order_id) continue;
         (payments[row.order_id] ??= []).push(row);
-        if (row.provider && !methods[row.order_id]) methods[row.order_id] = row.provider;
+        const provider = settledProfitProvider([row]);
+        if (provider) methods[row.order_id] = paymentGroup(provider, verifiedMethods.current.get(`${row.order_id}:${row.provider_payment_id}`) === true) ?? provider;
       }
     }
     setMethodOf(methods);
@@ -104,10 +112,7 @@ export function ProfitCostsPanel() {
 
   const all = orders ?? [];
   const methodTabs = useMemo(() => {
-    const fixed = ["square", "stripe", "wise", "cash", "nowpayments"];
-    const seen = new Set<string>(fixed);
-    for (const o of all) { const m = paymentGroup(methodOf[o.id]); if (m) seen.add(m); }
-    return [...seen].sort((a, b) => (METHOD_LABELS[a] ?? a).localeCompare(METHOD_LABELS[b] ?? b));
+    return profitMethodTabs(Object.values(methodOf));
   }, [all, methodOf]);
   const list = tab === "profit" || tab === "costs" || tab === "packages" ? all : all.filter((o) => paymentGroup(methodOf[o.id]) === tab);
   const years = useMemo(() => [...new Set(list.map((o) => new Date(o.created_at).getFullYear()))].sort((a, b) => b - a), [list]);
