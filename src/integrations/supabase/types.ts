@@ -4222,6 +4222,27 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_name_customers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       manually_added_customers: {
         Row: {
           created_at: string
