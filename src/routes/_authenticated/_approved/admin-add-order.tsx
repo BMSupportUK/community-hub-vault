@@ -12,6 +12,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { customerDate } from "@/lib/customer-date";
+import {
+  discountCodeCents,
+  discountCodeLabel,
+  pickCustomerDiscountCodes,
+  type CustomerDiscountCode,
+} from "@/lib/manual-order-discount";
 
 type ManualCustomer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; accounts: { id: string; login: string; expiresAt: string | null }[] };
 
@@ -57,6 +63,8 @@ function AddOrderPage() {
   const [lookupError, setLookupError] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [customersLoading, setCustomersLoading] = useState(true);
+  const [customerCodes, setCustomerCodes] = useState<Record<string, CustomerDiscountCode>>({});
+  const [appliedCode, setAppliedCode] = useState<CustomerDiscountCode | null>(null);
 
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
@@ -68,6 +76,14 @@ function AddOrderPage() {
       setManualCustomers(((data ?? []) as unknown as ManualCustomer[]).filter((c) => !c.hasSiteAccount));
       setCustomersLoading(false);
     });
+    // Codes saved against each customer, so picking a name can apply their discount.
+    void supabase
+      .from("discount_codes")
+      .select("user_id,code,percent,amount_cents")
+      .eq("is_active", true)
+      .not("user_id", "is", null)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setCustomerCodes(pickCustomerDiscountCodes(data as never)));
   }, [user?.id]);
 
   if (!hasRole("admin")) return <Navigate to="/admin" />;
@@ -85,8 +101,12 @@ function AddOrderPage() {
     const mail = email.trim();
     if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return toast.error("Enter a valid email address");
     if ((payMethod === "stripe" || payMethod === "square") && !mail) return toast.error("Card invoices need the customer's email address");
-    const discountCents = Math.round((Number(discount) || 0) * 100);
-    if (discountCents < 0) return toast.error("Discount can't be negative");
+    const manualCents = Math.round((Number(discount) || 0) * 100);
+    if (!appliedCode && manualCents < 0) return toast.error("Discount can't be negative");
+    const orderSubtotal = (products ?? []).reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0);
+    const discountCents = appliedCode
+      ? discountCodeCents(appliedCode, orderSubtotal)
+      : Math.min(orderSubtotal, Math.max(0, manualCents));
     setBusy(true);
     const now = new Date();
     const isToday = format(orderDate, "yyyy-MM-dd") === format(now, "yyyy-MM-dd");
@@ -115,7 +135,9 @@ function AddOrderPage() {
   };
 
   const subtotal = (products ?? []).reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0);
-  const discountCents = Math.min(subtotal, Math.max(0, Math.round((Number(discount) || 0) * 100)));
+  const discountCents = appliedCode
+    ? discountCodeCents(appliedCode, subtotal)
+    : Math.min(subtotal, Math.max(0, Math.round((Number(discount) || 0) * 100)));
   const total = subtotal - discountCents;
   const matchingCustomers = manualCustomers.filter((customer) =>
     [customer.username, customer.displayName, ...customer.accounts.map((account) => account.login)]
@@ -133,7 +155,7 @@ function AddOrderPage() {
             <SecureLinkPanel orderId={created.id} withChat={false} />
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={back} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Back to Orders</button>
-              <Button variant="outline" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setSkipRegistration(false); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); }}>Add another</Button>
+              <Button variant="outline" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setSkipRegistration(false); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }}>Add another</Button>
             </div>
           </div>
         </div>
@@ -156,12 +178,12 @@ function AddOrderPage() {
         </div>
         <div className="flex gap-2">
           {(["new", "existing"] as const).map((kind) => (
-            <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10 sm:flex-none sm:px-6">{kind === "new" ? "New customer" : "Existing customer"}</Button>
+            <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }} className="min-w-0 flex-1 h-10 sm:flex-none sm:px-6">{kind === "new" ? "New customer" : "Existing customer"}</Button>
           ))}
         </div>
         <div className="flex min-w-0 flex-row items-start gap-4 sm:gap-6" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
         <div className="min-w-0 flex-1 space-y-5" style={{ flex: "1 1 0%", minWidth: 0 }}>
-          <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+          <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <div className="space-y-2">
             {products === null ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
@@ -209,9 +231,16 @@ function AddOrderPage() {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
             <div className="flex items-center gap-3 flex-wrap">
-              <label className="text-sm text-muted-foreground flex items-center gap-2">Discount £
-                <input type="number" min={0} step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0.00" className="w-24 h-9 rounded-lg border border-border bg-background px-2 text-sm" aria-label="Discount in pounds" />
-              </label>
+              {appliedCode ? (
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  Discount code <span className="font-mono text-foreground">{appliedCode.code}</span> applied ({discountCodeLabel(appliedCode)})
+                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => setAppliedCode(null)}>Remove</Button>
+                </span>
+              ) : (
+                <label className="text-sm text-muted-foreground flex items-center gap-2">Discount £
+                  <input type="number" min={0} step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0.00" className="w-24 h-9 rounded-lg border border-border bg-background px-2 text-sm" aria-label="Discount in pounds" />
+                </label>
+              )}
               <span className="text-sm text-muted-foreground">{discountCents > 0 ? <><s>{money(subtotal)}</s> </> : null}Total <span className="font-semibold text-foreground">{money(total)}</span></span>
             </div>
             <div className="flex gap-2">
@@ -232,23 +261,31 @@ function AddOrderPage() {
               {lookupError && <p role="alert" className="text-sm text-destructive">{lookupError}</p>}
               {customersLoading ? <p role="status" className="text-sm text-muted-foreground">Loading customers…</p> : <div className="max-h-[65dvh] overflow-y-auto space-y-3 pr-1">
                 {matchingCustomers.length === 0 && <p className="text-sm text-muted-foreground">No manual customers found.</p>}
-                {matchingCustomers.map((customer) => <div key={customer.userId} className="border-b border-border pb-3 space-y-2">
-                  <Button variant={customerId === customer.userId ? "secondary" : "ghost"} aria-pressed={customerId === customer.userId} className="h-auto w-full justify-start gap-2 whitespace-normal px-2 py-2 text-left" onClick={() => {
-                    setCustomerId(customer.userId); setRenewalAccountId(""); setCustName(customer.displayName || customer.username || "");
-                  }}>
-                    <span className="min-w-0 flex-1 break-words">{customer.displayName || customer.username || "Manual customer"}</span>
-                    {customerId === customer.userId && <Check className="size-4 shrink-0" />}
-                  </Button>
-                  {customer.accounts.map((account, index) => <Button key={account.id} variant={customerId === customer.userId && renewalAccountId === account.id ? "default" : "outline"} aria-pressed={customerId === customer.userId && renewalAccountId === account.id} className="h-auto w-full justify-start whitespace-normal px-3 py-2 text-left" onClick={() => {
-                    setCustomerId(customer.userId); setRenewalAccountId(account.id); setCustName(customer.displayName || customer.username || "");
-                  }}>
-                    <span className="min-w-0 space-y-1">
-                      <span className="block break-words">Account {index + 1}: {account.login}</span>
-                      <span className="block text-xs opacity-80">Subscription expires {customerDate(account.expiresAt)}</span>
-                    </span>
-                    {customerId === customer.userId && renewalAccountId === account.id && <Check className="ml-auto size-4 shrink-0" />}
-                  </Button>)}
-                </div>)}
+                {matchingCustomers.map((customer) => {
+                  const selected = customerId === customer.userId;
+                  const code = customerCodes[customer.userId];
+                  const label = customer.username || customer.displayName || "Manual customer";
+                  return <div key={customer.userId} className="border-b border-border pb-3 space-y-2">
+                    <Button variant={selected ? "secondary" : "ghost"} aria-pressed={selected} className="h-auto w-full justify-start gap-2 whitespace-normal px-2 py-2 text-left" onClick={() => {
+                      setCustomerId(customer.userId);
+                      setRenewalAccountId(customer.accounts.length === 1 ? customer.accounts[0].id : "");
+                      setCustName(customer.username || customer.displayName || "");
+                      setAppliedCode(code ?? null);
+                    }}>
+                      <span className="min-w-0 flex-1 break-words">{label}</span>
+                      {selected && <Check className="size-4 shrink-0" />}
+                    </Button>
+                    {selected && customer.accounts.length > 1 && customer.accounts.map((account, index) => <Button key={account.id} variant={renewalAccountId === account.id ? "default" : "outline"} aria-pressed={renewalAccountId === account.id} className="h-auto w-full justify-start whitespace-normal px-3 py-2 text-left" onClick={() => {
+                      setCustomerId(customer.userId); setRenewalAccountId(account.id);
+                    }}>
+                      <span className="min-w-0 space-y-1">
+                        <span className="block break-words">Account {index + 1}: {account.login}</span>
+                        <span className="block text-xs opacity-80">Subscription expires {customerDate(account.expiresAt)}</span>
+                      </span>
+                      {renewalAccountId === account.id && <Check className="ml-auto size-4 shrink-0" />}
+                    </Button>)}
+                  </div>;
+                })}
               </div>}
             </> : null}
           </div>
