@@ -18,6 +18,8 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
+- [x] Add illustrated final manual-checkout account creation with required username, display name, gender and credentials PIN plus separate site password; safe demo submission and phone layout verified, invalid checkout denied, 24 tests pass and build OK. Preview only.
+- [ ] Verify real final-step signup, confirmation email and account claim — needs a customer's completed secure-order access and inbox; no live customer account created during demo checks.
 - [x] Keep shift sign-in buttons mounted across timer ticks, guard duplicate submissions, show immediate feedback and read back the inserted shift; show Preparing for shift before the UK start in Working Status, Time Tracking and Staff Directory. Twelve tests pass, build OK; real signed-in home status and start-time transition verified without changing live shifts. Preview only.
 - [ ] Verify a fresh shift sign-in submission on screen — requesting user already has an open live shift; no live shift ended or duplicate shift created for testing.
 - [x] Correct Premier League Hub Now 4K shorthand and today's saved guide/queue record; eighteen split/import/read-back tests pass, publication unchanged. Importer change awaits publishing.

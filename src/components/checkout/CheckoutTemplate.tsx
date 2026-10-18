@@ -296,11 +296,11 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                     <p className="font-semibold">Keep updated with the service</p>
                     <p className="text-sm text-muted-foreground">Create a free account to follow your orders, get the latest updates and manage your subscription any time. Your subscription is added automatically — no waiting for approval.</p>
                     <Link
-                      to="/signup"
-                      onClick={() => { if (claimToken) try { localStorage.setItem("bm-checkout-claim", claimToken); } catch { /* ignore */ } }}
+                      to="/checkout-account/$token"
+                      params={{ token: claimToken ?? "demo" }}
                       className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
                     >
-                      Create an account
+                      Final step: create my account
                     </Link>
                   </div>
                 </section>

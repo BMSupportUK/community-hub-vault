@@ -25,6 +25,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as GetAndroidAppRouteImport } from './routes/get-android-app'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ManualAccountDemoRouteImport } from './routes/manual-account-demo'
 import { Route as ManualCredentialsRouteImport } from './routes/manual-credentials'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as PackagesRouteImport } from './routes/packages'
@@ -37,6 +38,7 @@ import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as ATokenRouteImport } from './routes/a.$token'
+import { Route as CheckoutAccountTokenRouteImport } from './routes/checkout-account.$token'
 import { Route as CheckoutInstallTokenRouteImport } from './routes/checkout-install.$token'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
@@ -263,6 +265,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManualAccountDemoRoute = ManualAccountDemoRouteImport.update({
+  id: '/manual-account-demo',
+  path: '/manual-account-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ManualCredentialsRoute = ManualCredentialsRouteImport.update({
   id: '/manual-credentials',
   path: '/manual-credentials',
@@ -321,6 +328,11 @@ const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
 const ATokenRoute = ATokenRouteImport.update({
   id: '/a/$token',
   path: '/a/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutAccountTokenRoute = CheckoutAccountTokenRouteImport.update({
+  id: '/checkout-account/$token',
+  path: '/checkout-account/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutInstallTokenRoute = CheckoutInstallTokenRouteImport.update({
@@ -1202,6 +1214,7 @@ export interface FileRoutesByFullPath {
   '/get-android-app': typeof GetAndroidAppRoute
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/manual-account-demo': typeof ManualAccountDemoRoute
   '/manual-credentials': typeof ManualCredentialsRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1213,6 +1226,7 @@ export interface FileRoutesByFullPath {
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
+  '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/jobs': typeof FanZoneJobsRoute
@@ -1375,6 +1389,7 @@ export interface FileRoutesByTo {
   '/get-android-app': typeof GetAndroidAppRoute
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/manual-account-demo': typeof ManualAccountDemoRoute
   '/manual-credentials': typeof ManualCredentialsRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1386,6 +1401,7 @@ export interface FileRoutesByTo {
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
+  '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
@@ -1549,6 +1565,7 @@ export interface FileRoutesById {
   '/get-android-app': typeof GetAndroidAppRoute
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/manual-account-demo': typeof ManualAccountDemoRoute
   '/manual-credentials': typeof ManualCredentialsRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1561,6 +1578,7 @@ export interface FileRoutesById {
   '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
+  '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/jobs': typeof FanZoneJobsRoute
@@ -1726,6 +1744,7 @@ export interface FileRouteTypes {
     | '/get-android-app'
     | '/jobs'
     | '/login'
+    | '/manual-account-demo'
     | '/manual-credentials'
     | '/mfa-challenge'
     | '/packages'
@@ -1737,6 +1756,7 @@ export interface FileRouteTypes {
     | '/fan-zone-pending'
     | '/gate'
     | '/a/$token'
+    | '/checkout-account/$token'
     | '/checkout-install/$token'
     | '/fan-zone/$board'
     | '/fan-zone/jobs'
@@ -1899,6 +1919,7 @@ export interface FileRouteTypes {
     | '/get-android-app'
     | '/jobs'
     | '/login'
+    | '/manual-account-demo'
     | '/manual-credentials'
     | '/mfa-challenge'
     | '/packages'
@@ -1910,6 +1931,7 @@ export interface FileRouteTypes {
     | '/fan-zone-pending'
     | '/gate'
     | '/a/$token'
+    | '/checkout-account/$token'
     | '/checkout-install/$token'
     | '/fan-zone/jobs'
     | '/guides/$id'
@@ -2072,6 +2094,7 @@ export interface FileRouteTypes {
     | '/get-android-app'
     | '/jobs'
     | '/login'
+    | '/manual-account-demo'
     | '/manual-credentials'
     | '/mfa-challenge'
     | '/packages'
@@ -2084,6 +2107,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fan-zone-pending'
     | '/_authenticated/gate'
     | '/a/$token'
+    | '/checkout-account/$token'
     | '/checkout-install/$token'
     | '/fan-zone/$board'
     | '/fan-zone/jobs'
@@ -2249,6 +2273,7 @@ export interface RootRouteChildren {
   GetAndroidAppRoute: typeof GetAndroidAppRoute
   JobsRoute: typeof JobsRoute
   LoginRoute: typeof LoginRoute
+  ManualAccountDemoRoute: typeof ManualAccountDemoRoute
   ManualCredentialsRoute: typeof ManualCredentialsRoute
   MfaChallengeRoute: typeof MfaChallengeRoute
   PackagesRoute: typeof PackagesRoute
@@ -2257,6 +2282,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ATokenRoute: typeof ATokenRoute
+  CheckoutAccountTokenRoute: typeof CheckoutAccountTokenRoute
   CheckoutInstallTokenRoute: typeof CheckoutInstallTokenRoute
   GuidesIdRoute: typeof GuidesIdRoute
   JobApplicationTokenRoute: typeof JobApplicationTokenRoute
@@ -2423,6 +2449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manual-account-demo': {
+      id: '/manual-account-demo'
+      path: '/manual-account-demo'
+      fullPath: '/manual-account-demo'
+      preLoaderRoute: typeof ManualAccountDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/manual-credentials': {
       id: '/manual-credentials'
       path: '/manual-credentials'
@@ -2505,6 +2538,13 @@ declare module '@tanstack/react-router' {
       path: '/a/$token'
       fullPath: '/a/$token'
       preLoaderRoute: typeof ATokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout-account/$token': {
+      id: '/checkout-account/$token'
+      path: '/checkout-account/$token'
+      fullPath: '/checkout-account/$token'
+      preLoaderRoute: typeof CheckoutAccountTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout-install/$token': {
@@ -3911,6 +3951,7 @@ const rootRouteChildren: RootRouteChildren = {
   GetAndroidAppRoute: GetAndroidAppRoute,
   JobsRoute: JobsRoute,
   LoginRoute: LoginRoute,
+  ManualAccountDemoRoute: ManualAccountDemoRoute,
   ManualCredentialsRoute: ManualCredentialsRoute,
   MfaChallengeRoute: MfaChallengeRoute,
   PackagesRoute: PackagesRoute,
@@ -3919,6 +3960,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ATokenRoute: ATokenRoute,
+  CheckoutAccountTokenRoute: CheckoutAccountTokenRoute,
   CheckoutInstallTokenRoute: CheckoutInstallTokenRoute,
   GuidesIdRoute: GuidesIdRoute,
   JobApplicationTokenRoute: JobApplicationTokenRoute,
