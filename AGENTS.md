@@ -45,6 +45,6 @@
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 
-- Profit uses pence; missing data stays provisional and confirmed fees fixed. Invoice sync repairs absent rows. Demo fixtures replace displayed rows only, never live totals.
+- Profit uses pence; missing data provisional, confirmed fees fixed. Orders/profit share verified settled-method grouping. Invoice sync repairs rows; demos never alter totals.
 
 - Break matching uses browser-independent UK time; duplicates never consume future slots. The lock-safe starter rechecks records before insert to prevent replay.

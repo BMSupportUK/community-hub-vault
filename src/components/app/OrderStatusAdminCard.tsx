@@ -12,6 +12,8 @@ import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { canViewStaffCheckout, canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { ManualOrderLinkButton } from "@/components/checkout/ManualOrderLinkDialog";
 import { calculateProfit, type ProfitPayment } from "@/lib/profit-calculation";
+import { orderPaymentGroup, orderPaymentLabel } from '@/lib/profit-payment-groups';
+import { getProfitOpenBankingOrders } from '@/lib/profit-payment-groups.functions';
 
 import { useProviderFeeRefresh } from '@/hooks/use-provider-fee-refresh';
 
@@ -43,14 +45,7 @@ function statusTone(s: string) {
 }
 
 function paymentLabel(provider: string | null | undefined) {
-  const v = (provider ?? "").toLowerCase();
-  if (v === "stripe") return "Stripe (card or bank)";
-  if (v === "square") return "Square";
-  if (v === "bank_transfer" || v === "bank") return "Bank transfer";
-  if (v === "crypto") return "Crypto";
-  if (v === "cash") return "Cash";
-  if (v === "wise") return "Wise";
-  return provider ? provider : "—";
+  return orderPaymentLabel(orderPaymentGroup([], new Map(), provider?.toLowerCase()));
 }
 
 export function OrderStatusAdminCard() {
@@ -119,7 +114,7 @@ export function OrderStatusAdminCard() {
       setRows(orders);
       setReferrers({});
       if (orders.length) {
-        let pays: (ProfitPayment & { order_id: string })[];
+        let pays: (ProfitPayment & { order_id: string; provider_payment_id: string | null })[];
         try {
           const referrals = await fetchInChunks<{ order_id: string; referrer_name: string }>(orders.map((o) => o.id), (chunk) =>
             supabase.from("order_referrals").select("order_id,referrer_name").in("order_id", chunk),
@@ -127,7 +122,7 @@ export function OrderStatusAdminCard() {
           if (cancelled) return;
           setReferrers(Object.fromEntries(referrals.map((r) => [r.order_id, r.referrer_name])));
           pays = await fetchInChunks(orders.map((o) => o.id), (chunk) =>
-            supabase.from("order_payments").select("order_id, provider, status, currency, provider_fee_cents").in("order_id", chunk),
+            supabase.from("order_payments").select("order_id, provider, provider_payment_id, status, currency, provider_fee_cents").in("order_id", chunk),
           );
         } catch (e) {
           if (!cancelled) setError(e instanceof Error ? e.message : "Could not load payment methods");
@@ -135,10 +130,24 @@ export function OrderStatusAdminCard() {
         }
         if (cancelled) return;
         const map: Record<string, string> = {};
+        const verified = new Map<string, boolean>();
+        if (canComplete) {
+          const ids = [...new Set(pays.filter(p => p.provider === 'stripe' && p.provider_payment_id?.startsWith('cs_')).map(p => p.order_id))];
+          for (let i = 0; i < ids.length; i += 200) {
+            try {
+              const result = await getProfitOpenBankingOrders({ data: { orderIds: ids.slice(i, i + 200) } });
+              for (const entry of result.verified) verified.set(entry.paymentId, entry.openBanking);
+            } catch { /* Keep unknown methods explicitly unverified rather than guess. */ }
+          }
+          if (cancelled) return;
+        }
         const paymentMap: Record<string, ProfitPayment[]> = {};
         for (const p of pays) {
-          if (p.provider && !map[p.order_id]) map[p.order_id] = p.provider;
           (paymentMap[p.order_id] ??= []).push(p);
+        }
+        for (const order of orders) {
+          const group = orderPaymentGroup(pays.filter(p => p.order_id === order.id), verified, order.manual_pay_method);
+          if (group) map[order.id] = group;
         }
         setMethods(map);
         setPayments(paymentMap);
@@ -251,7 +260,7 @@ export function OrderStatusAdminCard() {
                         <div className="flex items-center gap-1.5">
                           <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} aria-label="Payment method" className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground">
                             <option value="">Use saved method</option>
-                            <option value="square">Square</option>
+                            <option value="square">Square card</option>
                             {STRIPE_CHECKOUT_ENABLED && <option value="stripe">Stripe</option>}
                             <option value="wise">Wise (UK only)</option>
                             <option value="cash">Cash</option>
@@ -263,7 +272,7 @@ export function OrderStatusAdminCard() {
                       ) : <button type="button" onClick={() => { setCompleting(r.id); setPayMethod(r.manual_pay_method ?? ""); setPayRef(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"><Check className="size-3.5" /> Mark complete</button>
                       ) : r.completed_at ? new Date(r.completed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id] ?? r.manual_pay_method)}
-                        {canComplete && settled && ["square", "stripe"].includes(methods[r.id] ?? "") && (
+                        {canComplete && settled && ["square", "stripe", "open_banking"].includes(methods[r.id] ?? "") && (
                           <button type="button" onClick={() => fixReference(r.id)} className="block mt-1 text-xs text-primary underline underline-offset-2">Fix payment reference</button>
                         )}
                       </td>

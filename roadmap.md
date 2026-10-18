@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Open Banking profit breakdown
+- [x] Align Orders payment labels with verified Open Banking and settled Wise, Square card and Crypto payments; pending alternatives cannot override actual payments.
 - [x] Add display-only £1 Open Banking demo with sample fees, separate from real orders and totals.
 - [x] Add Open Banking immediately before Wise with independent sales, actual provider fees, net received and year/month profit totals; identify bank payments from verified Stripe methods without changing payment records. Nineteen tests pass and preview build OK.
 - [ ] Verify the real Open Banking breakdown on screen — signed-in finance page redirects to the required staff PIN gate; awaits user unlock.

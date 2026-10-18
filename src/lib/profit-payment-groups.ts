@@ -20,6 +20,27 @@ export function settledProfitProvider(payments: { provider: string | null; statu
   return payments.find(payment => isSettledPaymentStatus(payment.status))?.provider ?? undefined;
 }
 
+type MethodPayment = { provider: string | null; status: string | null; provider_payment_id?: string | null };
+export function orderPaymentGroup(payments: MethodPayment[], verified: Map<string, boolean>, saved?: string | null) {
+  const paid = payments.find(p => isSettledPaymentStatus(p.status));
+  if (paid) return profitPaymentGroup(paid.provider ?? undefined, verified.get(paid.provider_payment_id ?? '') === true);
+  // An abandoned Stripe session must never override a later chosen payment option.
+  if (saved === 'stripe') {
+    const bank = payments.some(p => p.provider === 'stripe' && verified.get(p.provider_payment_id ?? '') === true);
+    return bank ? 'open_banking' : 'stripe';
+  }
+  return profitPaymentGroup(saved ?? undefined);
+}
+
+export function orderPaymentLabel(group?: string) {
+  if (group === 'square') return 'Square card';
+  if (group === 'open_banking') return 'Open Banking';
+  if (group === 'wise' || group === 'bank') return 'Wise';
+  if (group === 'nowpayments' || group === 'crypto') return 'Crypto';
+  if (group === 'stripe') return 'Stripe · method unverified';
+  return group ? PROFIT_METHOD_LABELS[group] ?? group : '—';
+}
+
 export function isOpenBankingSession(session: { payment_method_types?: string[] | null; payment_intent?: unknown }) {
   const intent = session.payment_intent;
   if (intent && typeof intent === 'object' && 'latest_charge' in intent) {
