@@ -163,11 +163,6 @@ export function ProfitCostsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
-        <Switch id="open-banking-demo" checked={demo} onCheckedChange={(checked) => { setDemo(checked); setTab('open_banking'); setYear(null); setMonth(null); }} />
-        <label htmlFor="open-banking-demo" className="text-sm font-medium">Open Banking demo</label>
-        {demo && <p className="text-sm text-warning" role="status">Demo only · £1 payment · sample fee 21p · net received 79p. No money taken; live totals unchanged.</p>}
-      </div>
       <nav aria-label="Profit views" className="flex flex-wrap items-center gap-1 border-y border-border/70 bg-card/85 p-2 backdrop-blur-md">
         <Button variant="ghost" className={selection(tab === "profit")} aria-pressed={tab === "profit"} onClick={() => setTab("profit")}><ChartNoAxesCombined className="size-4" />Total profit</Button>
         {methodTabs.map((m) => <Button variant="ghost" key={m} className={selection(tab === m)} aria-pressed={tab === m} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</Button>)}
