@@ -444,7 +444,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </section>
             </aside>
           ) : wiseBankDetails ? (
-            bankTransferPanel("Bank transfer details", null, !awaitingConfirmation, !!payByBank && !awaitingConfirmation)
+            bankTransferPanel("Bank transfer details", null, false, !!payByBank && !awaitingConfirmation)
           ) : paymentSidebar && method === "cash" ? (
             <aside className="min-w-0 lg:sticky lg:top-4">
               <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">
