@@ -20,14 +20,6 @@ export function adminPanelLabel(roles: readonly string[]): string {
   return roles.includes("admin") ? "Admin | Admin Panel" : "Staff | Admin Panel";
 }
 
-/**
- * Who sees the "User credentials" tab in the dashboard header, next to
- * Customers. The credentials page itself refuses everyone else, so the tab
- * must not offer it to anyone who would only be bounced back to Home.
- */
-export function canSeeUserCredentialsTab(roles: readonly string[]): boolean {
-  return roles.includes("admin") || roles.includes("management");
-}
 
 
 /** The access-relevant shape of a dashboard tool card. */

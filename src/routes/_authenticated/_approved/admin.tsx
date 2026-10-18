@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
-import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, canSeeUserCredentialsTab, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
 import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/page-access";
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
@@ -613,7 +613,6 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     ["tools", toolsHeading, false],
     ["order-status", "Orders", false],
     ["customers", "Customers", true],
-    ["user-credentials", "User credentials", true],
     ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
@@ -623,12 +622,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
   ];
-  const tabs = allTabs.filter(([key, , gate]) =>
-    key === "user-credentials"
-      ? canSeeUserCredentialsTab(roles)
-      : gate === "bank"
-        ? isAdminOnly
-        : !gate || canSeePins,
+  const tabs = allTabs.filter(([, , gate]) =>
+    gate === "bank" ? isAdminOnly : !gate || canSeePins,
   );
 
   const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
@@ -641,15 +636,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     <div className="space-y-6">
       <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
         {tabs.map(([key, label]) =>
-          key === "user-credentials" ? (
-            <Link
-              key={key}
-              to="/admin-credentials"
-              className="px-4 h-9 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground inline-flex items-center"
-            >
-              {label}
-            </Link>
-          ) : key === "profit-costs" ? (
+          key === "profit-costs" ? (
             <Link
               key={key}
               to="/admin-profit-costs"

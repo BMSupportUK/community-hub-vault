@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { MemberCredentialsSection, RestoreCredentialsBackupButton } from "@/components/app/MemberCredentialsSection";
+import { useAuth } from "@/hooks/use-auth";
 
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
@@ -27,6 +29,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   memberExtras?: (userId: string) => ReactNode;
   memberHeader?: (userId: string) => ReactNode;
 }) {
+  const { user } = useAuth();
   const [rows, setRows] = useState<Customer[]>([]);
   const [tab, setTab] = useState<"single" | "multi" | "manual">("single");
   const [search, setSearch] = useState("");
@@ -192,7 +195,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
     <section className="min-w-0 py-4" aria-label="Customer subscriptions">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">Customers</h2>{memberToolbar}</div>
-        <div className="flex flex-wrap items-center gap-2"><select aria-label="Sort customers by" value={sortBy} onChange={(e) => setSortBy(e.target.value as CustomerSortField)} className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"><option value="default">Sort: Default order</option><option value="name">Name</option><option value="expires">Subscription expires</option><option value="renewed">Last renewed subscription</option><option value="joined">Year joined</option><option value="years">Years as customer</option><option value="referrer">Referred by</option></select>{sortBy !== "default" && <Button variant="outline" size="icon" aria-label={sortDir === "asc" ? "Sorted oldest to newest, switch to newest first" : "Sorted newest to oldest, switch to oldest first"} title={sortDir === "asc" ? "Oldest to newest" : "Newest to oldest"} onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}>{sortDir === "asc" ? <ArrowDown /> : <ArrowUp />}</Button>}<Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button></div>
+        <div className="flex flex-wrap items-center gap-2"><select aria-label="Sort customers by" value={sortBy} onChange={(e) => setSortBy(e.target.value as CustomerSortField)} className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"><option value="default">Sort: Default order</option><option value="name">Name</option><option value="expires">Subscription expires</option><option value="renewed">Last renewed subscription</option><option value="joined">Year joined</option><option value="years">Years as customer</option><option value="referrer">Referred by</option></select>{sortBy !== "default" && <Button variant="outline" size="icon" aria-label={sortDir === "asc" ? "Sorted oldest to newest, switch to newest first" : "Sorted newest to oldest, switch to oldest first"} title={sortDir === "asc" ? "Oldest to newest" : "Newest to oldest"} onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}>{sortDir === "asc" ? <ArrowDown /> : <ArrowUp />}</Button>}<Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button>{canReward && <RestoreCredentialsBackupButton onRestored={() => void load()} />}</div>
       </div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as "single" | "multi" | "manual")} className="mb-4">
         <TabsList>
@@ -252,6 +255,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
                   : <span className="block text-muted-foreground">Awaiting admin confirmation</span>}
               </div>))}
             {c.hasSiteAccount && memberDetails?.(c.userId)}
+            {canReward && c.hasSiteAccount && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} />}
           </article>);
         })}</div>
       )}

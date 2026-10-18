@@ -60,7 +60,6 @@ import { Route as AuthenticatedApprovedAdminBoroTeamSheetRouteImport } from './r
 import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
 import { Route as AuthenticatedApprovedAdminCheckoutTemplatesRouteImport } from './routes/_authenticated/_approved/admin-checkout-templates'
 import { Route as AuthenticatedApprovedAdminCoverRequestsRouteImport } from './routes/_authenticated/_approved/admin-cover-requests'
-import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
 import { Route as AuthenticatedApprovedAdminFantasyInjuriesRouteImport } from './routes/_authenticated/_approved/admin-fantasy-injuries'
@@ -451,12 +450,6 @@ const AuthenticatedApprovedAdminCoverRequestsRoute =
   AuthenticatedApprovedAdminCoverRequestsRouteImport.update({
     id: '/admin-cover-requests',
     path: '/admin-cover-requests',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminCredentialsRoute =
-  AuthenticatedApprovedAdminCredentialsRouteImport.update({
-    id: '/admin-credentials',
-    path: '/admin-credentials',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminDnsRoute =
@@ -1248,7 +1241,6 @@ export interface FileRoutesByFullPath {
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
   '/admin-cover-requests': typeof AuthenticatedApprovedAdminCoverRequestsRoute
-  '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/admin-fantasy-injuries': typeof AuthenticatedApprovedAdminFantasyInjuriesRoute
@@ -1422,7 +1414,6 @@ export interface FileRoutesByTo {
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
   '/admin-cover-requests': typeof AuthenticatedApprovedAdminCoverRequestsRoute
-  '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/admin-fantasy-injuries': typeof AuthenticatedApprovedAdminFantasyInjuriesRoute
@@ -1600,7 +1591,6 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/_authenticated/_approved/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
   '/_authenticated/_approved/admin-cover-requests': typeof AuthenticatedApprovedAdminCoverRequestsRoute
-  '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/_authenticated/_approved/admin-fantasy-injuries': typeof AuthenticatedApprovedAdminFantasyInjuriesRoute
@@ -1778,7 +1768,6 @@ export interface FileRouteTypes {
     | '/admin-business-hours'
     | '/admin-checkout-templates'
     | '/admin-cover-requests'
-    | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
     | '/admin-fantasy-injuries'
@@ -1952,7 +1941,6 @@ export interface FileRouteTypes {
     | '/admin-business-hours'
     | '/admin-checkout-templates'
     | '/admin-cover-requests'
-    | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
     | '/admin-fantasy-injuries'
@@ -2129,7 +2117,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-business-hours'
     | '/_authenticated/_approved/admin-checkout-templates'
     | '/_authenticated/_approved/admin-cover-requests'
-    | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-fan-zone'
     | '/_authenticated/_approved/admin-fantasy-injuries'
@@ -2692,13 +2679,6 @@ declare module '@tanstack/react-router' {
       path: '/admin-cover-requests'
       fullPath: '/admin-cover-requests'
       preLoaderRoute: typeof AuthenticatedApprovedAdminCoverRequestsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-credentials': {
-      id: '/_authenticated/_approved/admin-credentials'
-      path: '/admin-credentials'
-      fullPath: '/admin-credentials'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminCredentialsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-dns': {
@@ -3672,7 +3652,6 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
   AuthenticatedApprovedAdminCheckoutTemplatesRoute: typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
   AuthenticatedApprovedAdminCoverRequestsRoute: typeof AuthenticatedApprovedAdminCoverRequestsRoute
-  AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminFanZoneRoute: typeof AuthenticatedApprovedAdminFanZoneRoute
   AuthenticatedApprovedAdminFantasyInjuriesRoute: typeof AuthenticatedApprovedAdminFantasyInjuriesRoute
@@ -3768,8 +3747,6 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminCheckoutTemplatesRoute,
   AuthenticatedApprovedAdminCoverRequestsRoute:
     AuthenticatedApprovedAdminCoverRequestsRoute,
-  AuthenticatedApprovedAdminCredentialsRoute:
-    AuthenticatedApprovedAdminCredentialsRoute,
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminFanZoneRoute:
     AuthenticatedApprovedAdminFanZoneRoute,
