@@ -54,7 +54,7 @@ export function ManualAccountCreation({ demo = false, orderRef, onSubmit }: { de
             <label className="block text-sm font-medium">Site password <span className="text-destructive">*</span><input required type="password" minLength={10} maxLength={128} autoComplete="new-password" value={sitePassword} onChange={e => setSitePassword(e.target.value)} placeholder="At least 10 characters" className="mt-2 h-11 w-full rounded-md border border-border bg-input px-3 text-foreground outline-none focus:ring-2 focus:ring-ring" /><span className="mt-2 block text-xs font-normal text-muted-foreground">Your site account uses the email address saved on your order.</span></label>
           </div>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={busy} className="h-12 w-full">{busy ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}{busy ? 'Creating your account…' : demo ? 'Preview account creation' : 'Create my account'}</Button>
+          <Button type="submit" disabled={busy} className="h-12 w-full">{busy ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}{busy ? 'Creating your account…' : 'Create account'}</Button>
           <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="size-4" /> Your PIN is stored securely and never shared.</p>
         </form>
       </>}
