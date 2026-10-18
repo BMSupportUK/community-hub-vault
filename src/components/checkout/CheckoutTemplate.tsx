@@ -146,8 +146,13 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   };
   // Our own bank-transfer details. On a manual bank-transfer order this is
   // column 3, beside Pay by bank; elsewhere it is the single payment sidebar.
-  const bankTransferPanel = (heading: string, intro: string | null, showCardSwitch: boolean) => (
+  const bankTransferPanel = (heading: string, intro: string | null, showCardSwitch: boolean, showBack: boolean) => (
     <aside className="min-w-0 space-y-4 lg:sticky lg:top-4">
+      {showBack ? (
+        <button type="button" onClick={() => setBankNotListed(false)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="size-4" /> Back to Pay by bank
+        </button>
+      ) : null}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-semibold">{heading}</h2>
         {intro ? <p className="text-xs text-muted-foreground mt-1">{intro}</p> : null}
