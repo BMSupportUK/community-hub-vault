@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { CUSTOMER_LIST_CHANGED } from "@/lib/customer-list-refresh";
-import { ChevronDown, ChevronRight, Check, Eye, EyeOff, History, Loader2, Lock, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, History, KeyRound, Loader2, Lock, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { listCredentialBackups, restoreCredentialBackup, type CredentialBackupFile } from "@/lib/credentials-restore.functions";
@@ -71,32 +72,35 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId }:
   };
 
   return (
-    <section className="space-y-2 rounded-lg border border-border/60 bg-background/40 p-3" aria-label={`Credentials for ${ownerLabel}`}>
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-        >
-          {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-          Credentials {loaded && <span className="text-primary">({creds.length})</span>}
-        </button>
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={() => void resetPin()}
-            disabled={pinBusy}
-            title="Reset this user's credentials vault PIN"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-300 text-xs font-medium hover:bg-amber-500/20 disabled:opacity-60"
-          >
-            {pinBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Lock className="size-3.5" />} Reset PIN
-          </button>
-          <button
-            onClick={() => { setOpen(true); setEditor({ row: null }); }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90"
-          >
-            <Plus className="size-3.5" /> Add
-          </button>
-        </div>
-      </div>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title="View credentials"
+        aria-label={`View credentials for ${ownerLabel}`}
+        className="relative grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+      >
+        <KeyRound className="size-4" />
+      </button>
+      <Dialog open={open && !editor} onOpenChange={(v) => { if (!editor) setOpen(v); }}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
+          <DialogHeader><DialogTitle>Credentials · {ownerLabel}</DialogTitle></DialogHeader>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => void resetPin()}
+              disabled={pinBusy}
+              title="Reset this user's credentials vault PIN"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-300 text-xs font-medium hover:bg-amber-500/20 disabled:opacity-60"
+            >
+              {pinBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Lock className="size-3.5" />} Reset PIN
+            </button>
+            <button
+              onClick={() => setEditor({ row: null })}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90"
+            >
+              <Plus className="size-3.5" /> Add
+            </button>
+          </div>
 
       {open && !loaded && <div className="grid place-items-center py-4 text-muted-foreground"><Loader2 className="size-4 animate-spin" /></div>}
 
@@ -142,6 +146,8 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId }:
           })}
         </div>
       )}
+        </DialogContent>
+      </Dialog>
 
       {editor && (
         <CredentialEditor
@@ -153,7 +159,7 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId }:
           onSaved={() => { setEditor(null); void load(); window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED)); }}
         />
       )}
-    </section>
+    </>
   );
 }
 

@@ -226,6 +226,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
               <h3 className="break-words font-semibold">{name}</h3>
               <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
               {c.manualSetupPending && <span className="text-xs text-muted-foreground">Awaiting profile setup</span>}
+              {canReward && c.hasSiteAccount && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} />}
               {c.hasSiteAccount && memberHeader?.(c.userId)}
               {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
               {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
@@ -263,7 +264,6 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
                 return pending && canReward ? <Button variant="outline" size="sm" className="h-7" disabled={!pending.referrerAccounts.length} title={!pending.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${pending.ref ?? pending.orderId}`} onClick={() => { setReward(pending); setAccount(pending.referrerAccounts.length === 1 ? pending.referrerAccounts[0].id : ""); }}><Gift /> Add referral bonus</Button> : null;
               })()}</span></Detail>
             </dl>
-            {canReward && c.hasSiteAccount && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} />}
             {c.hasSiteAccount && memberDetails?.(c.userId)}
           </article>);
         })}</div>
