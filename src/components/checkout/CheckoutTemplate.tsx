@@ -325,6 +325,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <p className="text-sm text-muted-foreground">Loading invoice…</p>
               )}
               <p className="text-xs text-center text-muted-foreground">This page updates automatically once your payment goes through.</p>
+              {payByBank}
               {view.canPayByBank && onSwitchPayMethod ? (
                 <button type="button" disabled={preview || switching} onClick={async () => { if (!onSwitchPayMethod) return; setSwitching(true); try { await onSwitchPayMethod("wise"); } finally { setSwitching(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
                   {switching ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />} Pay by bank transfer instead
