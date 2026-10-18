@@ -78,6 +78,7 @@ type MemberSlots = {
   details: (userId: string) => ReactNode;
   editor: (userId: string) => ReactNode;
   extras: (userId: string) => ReactNode;
+  header: (userId: string) => ReactNode;
 };
 
 export function CustomerMemberManagement({ children }: { children: (slots: MemberSlots) => ReactNode }) {
@@ -339,7 +340,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   };
   const addRoleRow = rows.find((r) => r.id === addRolesFor);
   return <>
-    {children({ toolbar: <><AddUserButton onCreated={loadAll} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras })}
+    {children({ toolbar: <><AddUserButton onCreated={loadAll} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras, header: memberHeader })}
     <Dialog open={tab === "roles"} onOpenChange={(open) => { if (!open) setTab("members"); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Manage roles</DialogTitle></DialogHeader><RolesManager defs={roleDefs} onChange={loadAll} /></DialogContent></Dialog>
     <Dialog open={!!addRoleRow} onOpenChange={(open) => { if (!open) setAddRolesFor(null); }}><DialogContent><DialogHeader><DialogTitle>Add role · {addRoleRow?.username || addRoleRow?.display_name}</DialogTitle></DialogHeader><div className="flex flex-wrap gap-2">{addRoleRow && activeRoles.filter((rd) => !addRoleRow.roles.includes(rd.name)).map((rd) => <Button key={rd.name} variant="outline" size="sm" disabled={saving !== null} onClick={() => void toggleRole(addRoleRow, rd.name)}>{displayRoleLabel(rd.name, rd.label)}</Button>)}</div></DialogContent></Dialog>
     {historyFor && <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />}
