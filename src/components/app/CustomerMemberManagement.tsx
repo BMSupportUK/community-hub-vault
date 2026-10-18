@@ -270,6 +270,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
       await updateUsernameFn({ data: { userId: row.id, username: next } });
       setRows((all) => all.map((r) => (r.id === row.id ? { ...r, username: next } : r)));
       toast.success(`Username changed to @${next}`);
+      window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED));
       setEditingUsernameFor(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to update username");
