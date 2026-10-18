@@ -142,7 +142,12 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const manualRows = visible.filter((c) => !c.hasSiteAccount);
   const siteCount = rows.filter((c) => c.hasSiteAccount).length;
   const manualCount = rows.length - siteCount;
-  const shown = tab === "site" ? siteRows : manualRows;
+  const withNoRenewal = (list: Customer[]) => list.map((c) => {
+    const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
+    const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
+    return { ...c, noRenewal: customerShowsNoRenewal(hasRecordedYear, years) };
+  });
+  const shown = sortCustomers(withNoRenewal(tab === "site" ? siteRows : manualRows), sortBy, sortDir);
   const Detail = ({ label, children, action }: { label: string; children: ReactNode; action?: ReactNode }) => (
     <div className="flex items-start justify-between gap-2">
       <div className="min-w-0"><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt><dd className="mt-0.5 break-words">{children}</dd></div>
