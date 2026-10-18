@@ -11,7 +11,7 @@ import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers, setPresencePage } from "@/hooks/use-online-users";
 import { pageLabelForPath } from "@/lib/page-labels";
 import { isPageAllowed, usePagePermissions } from "@/lib/page-access";
-import { adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
+import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
@@ -355,12 +355,12 @@ function AuthLayout() {
             )}
             {isAdmin && (
               <Link
-                to="/admin-roles"
-                title="Members & Role Management"
+                {...ADMIN_CUSTOMERS_LINK}
+                title="Customers"
                 className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <ShieldCheck className="size-4" />
-                <span className="hidden min-[1700px]:inline">Members &amp; Role Management</span>
+                <span className="hidden min-[1700px]:inline">Customers</span>
               </Link>
             )}
             {user && (

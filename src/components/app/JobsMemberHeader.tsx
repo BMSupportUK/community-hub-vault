@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { LayoutDashboard, Menu, Receipt, Shield, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
+import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
 import { isPageAllowed, usePagePermissions } from "@/lib/page-access";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IconRail } from "./IconRail";
@@ -40,7 +40,7 @@ export function JobsMemberHeader() {
         {canOpenFanZonePanel && <Link to="/fan-zone-admin" title="Fan Zone | Admin Panel" className={pill}><ShieldCheck className="size-4" /><span className="hidden min-[1700px]:inline">Fan Zone | Admin Panel</span></Link>}
         {isAdmin && <Link to="/moderation" title="Admin | Access Requests" className={pill}><Shield className="size-4" /><span className="hidden min-[1700px]:inline">Admin | Access Requests</span><ModerationPendingBadge /></Link>}
         {isAdmin && <button type="button" title="Admin | Shop Orders" className={pill} onClick={() => navigate({ to: "/admin", search: { tab: "order-status" } as never })}><Receipt className="size-4" /><span className="hidden min-[1700px]:inline">Admin | Shop Orders</span><PendingOrdersBadge /></button>}
-        {isAdmin && <Link to="/admin-roles" title="Members & Role Management" className={pill}><ShieldCheck className="size-4" /><span className="hidden min-[1700px]:inline">Members &amp; Role Management</span></Link>}
+        {isAdmin && <Link {...ADMIN_CUSTOMERS_LINK} title="Customers" className={pill}><ShieldCheck className="size-4" /><span className="hidden min-[1700px]:inline">Customers</span></Link>}
         <BmInboxBell />
         <MentionsBadge />
         <NotificationBell />

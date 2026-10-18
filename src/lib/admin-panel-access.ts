@@ -1,4 +1,7 @@
 import type { PagePermMap } from "@/lib/page-access";
+import { linkOptions } from "@tanstack/react-router";
+
+export const ADMIN_CUSTOMERS_LINK = linkOptions({ to: "/admin", search: { tab: "customers" } });
 
 /**
  * Who may open the BM Support admin dashboard from the header, and what the
