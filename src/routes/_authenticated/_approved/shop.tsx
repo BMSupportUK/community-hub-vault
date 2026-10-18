@@ -5497,6 +5497,9 @@ function AdminDiscounts() {
       .select("id,username,display_name")
       .order("username")
       .then(({ data }) => setUsers(data ?? []));
+    fetchManualEmails({} as never)
+      .then((res: any) => setManualEmails(res?.emails ?? {}))
+      .catch(() => setManualEmails({}));
     supabase
       .from("products")
       .select("id,name,is_active")
