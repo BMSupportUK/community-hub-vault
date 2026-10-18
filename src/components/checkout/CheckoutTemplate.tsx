@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { STRIPE_CHECKOUT_ENABLED } from "@/lib/payment-methods";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Copy, CreditCard, Download, Hourglass, Landmark, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
