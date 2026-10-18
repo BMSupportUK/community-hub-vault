@@ -1,6 +1,6 @@
-import { Navigate } from "@tanstack/react-router";
+import { ClientOnly, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   ShieldCheck,
   Search,
@@ -29,7 +29,7 @@ import {
   getUserLocationHistory,
   type LocationHistoryRow,
 } from "@/lib/user-location-history.functions";
-import { LocationHistoryMap } from "@/components/app/LocationHistoryMap";
+const LocationHistoryMap = lazy(() => import("@/components/app/LocationHistoryMap").then((m) => ({ default: m.LocationHistoryMap })));
 
 interface RoleDef {
   name: string;
@@ -668,7 +668,7 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
               No location events recorded yet. They'll appear here next time this user signs in.
             </div>
           ) : view === "map" ? (
-            <LocationHistoryMap rows={rows} />
+            <ClientOnly><Suspense fallback={<Loader2 className="size-5 animate-spin" />}><LocationHistoryMap rows={rows} /></Suspense></ClientOnly>
           ) : (
             <table className="w-full text-sm">
               <thead className="text-xs uppercase tracking-wide text-muted-foreground bg-surface-2 sticky top-0">

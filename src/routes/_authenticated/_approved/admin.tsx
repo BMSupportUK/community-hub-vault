@@ -542,6 +542,10 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
 
 
 
+  useEffect(() => {
+    if (searchTab && (validTabs as readonly string[]).includes(searchTab)) setTab(searchTab as DashTab);
+  }, [searchTab]);
+
   const allTools: { to?: string; search?: Record<string, string>; tabKey?: DashTab; label: string; desc: string; icon: any; art: string; adminOnly?: boolean; managementToo?: boolean }[] = [
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield, art: toolArtSecurity },
     { to: "/admin-dns", label: "QD DNS codes", desc: "Add and edit shared DNS codes for all members.", icon: Globe, art: toolArtGlobe },
