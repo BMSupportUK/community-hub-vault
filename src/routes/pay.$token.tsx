@@ -251,7 +251,7 @@ function PayPage() {
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
-        payByBank={["square", "stripe"].includes(view.order.method) && !view.order.paidAt && !view.order.cancelled ? (
+        payByBank={["square", "stripe", "wise"].includes(view.order.method) && !view.order.paidAt && !view.order.cancelled ? (
           <PayByBankSection token={token} password={pw} />
         ) : undefined}
         appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}

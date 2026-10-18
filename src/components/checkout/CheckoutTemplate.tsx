@@ -97,6 +97,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise" | "crypto") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [showBankDetails, setShowBankDetails] = useState(false);
   const [payChoice, setPayChoice] = useState<PayMethodChoice>("bank");
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
@@ -371,8 +372,22 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 </button>
               ) : null}
             </aside>
+          ) : paymentSidebar && method === "wise" && payByBank && !showBankDetails && !awaitingConfirmation ? (
+            <aside className="min-w-0 space-y-4 lg:sticky lg:top-4">
+              {payByBank}
+              <section className="rounded-2xl border border-border bg-card p-5 space-y-2">
+                <p className="text-sm font-semibold">Is your bank not listed?</p>
+                <p className="text-xs text-muted-foreground">Click below to pay by normal bank transfer using our account details instead.</p>
+                <button type="button" onClick={() => setShowBankDetails(true)} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2">
+                  <Landmark className="size-4" /> My bank isn't listed — show bank details
+                </button>
+              </section>
+            </aside>
           ) : paymentSidebar && method === "wise" ? (
             <aside className="min-w-0 space-y-6 lg:sticky lg:top-4">
+              {payByBank && !awaitingConfirmation ? (
+                <button type="button" onClick={() => setShowBankDetails(false)} className="text-xs font-semibold text-primary hover:underline">← Back to Pay by bank</button>
+              ) : null}
               <section className="rounded-2xl border border-border bg-card p-5">
                 <h2 className="font-semibold">Bank transfer details</h2>
                 <p className="text-xs text-muted-foreground mb-1">UK bank accounts only — overseas bank transfers aren't accepted.</p>
