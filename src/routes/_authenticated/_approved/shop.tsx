@@ -3780,7 +3780,7 @@ function OrderDetailImpl({
     let cancelled = false;
     (async () => {
       const res: any = await checkMyBankAccess({}).catch(() => null);
-      if (!cancelled) setBankOnlyCustomer(Boolean(res?.allowed));
+      if (!cancelled) setBankOnlyCustomer(false if (!cancelled) setBankOnlyCustomer(Boolean(res?.allowed));if (!cancelled) setBankOnlyCustomer(Boolean(res?.allowed)); Boolean(res?.allowed)); // bank transfer is staff-created only
     })();
     return () => {
       cancelled = true;
@@ -4729,7 +4729,7 @@ function PayOrderDialog({
     (async () => {
       try {
         const res: any = await checkBankAccess({});
-        if (!cancelled) setBankOnly(Boolean(res?.allowed));
+        if (!cancelled) setBankOnly(false && Boolean(res?.allowed)); // bank transfer is staff-created only
       } catch {
         if (!cancelled) setBankOnly(false);
       }
