@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CUSTOMER_LIST_CHANGED } from "@/lib/customer-list-refresh";
 import { ChevronDown, ChevronRight, Check, Eye, EyeOff, History, Loader2, Lock, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,7 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId }:
     if (error) return toast.error(error.message);
     toast.success("Deleted");
     void load();
+    window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED));
   };
 
   const resetPin = async () => {
@@ -148,7 +150,7 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId }:
           nextAccountNumber={Math.max(0, ...creds.map((c) => c.account_number)) + 1}
           currentUserId={currentUserId}
           onClose={() => setEditor(null)}
-          onSaved={() => { setEditor(null); void load(); }}
+          onSaved={() => { setEditor(null); void load(); window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED)); }}
         />
       )}
     </section>
