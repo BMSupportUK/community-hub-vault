@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { checkoutCryptoInvoice } from '@/lib/checkout-pay.functions';
-import { effectiveCardProvider } from '@/lib/payment-methods';
 import { ProviderInvoicePayment } from '@/components/checkout/ProviderInvoicePayment';
 export function CheckoutCardPayment({ token, password, method, amountCents, onPaid }: {
  token: string; password: string; method: 'square' | 'stripe' | 'crypto'; amountCents: number; onPaid: () => void | Promise<void>;
