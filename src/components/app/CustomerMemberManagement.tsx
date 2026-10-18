@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
 import { MemberSecurityActions, AddUserButton } from "@/components/app/MemberSecurityActions";
-import { deleteMember, listMemberEmails, updateMemberUsername } from "@/lib/admin-users.functions";
+import { deleteMember, listMemberEmails, updateMemberEmail, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
   type LocationHistoryRow,
@@ -87,7 +87,6 @@ type MemberSlots = {
 export function CustomerMemberManagement({ children }: { children: (slots: MemberSlots) => ReactNode }) {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
-  const isOwner = hasAny(["admin"]);
   const [rolesUnlocked, setRolesUnlocked] = useState(false);
   useEffect(() => {
     setRolesUnlocked(isRolesUnlocked(user?.id));
@@ -102,9 +101,13 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   const deleteMemberFn = useServerFn(deleteMember);
   const listEmailsFn = useServerFn(listMemberEmails);
   const updateUsernameFn = useServerFn(updateMemberUsername);
+  const updateEmailFn = useServerFn(updateMemberEmail);
   const [editingUsernameFor, setEditingUsernameFor] = useState<string | null>(null);
   const [usernameDraft, setUsernameDraft] = useState("");
   const [savingUsername, setSavingUsername] = useState(false);
+  const [editingEmailFor, setEditingEmailFor] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [addRolesFor, setAddRolesFor] = useState<string | null>(null);
@@ -279,6 +282,25 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     }
   };
 
+  const saveEmail = async (row: Row) => {
+    const next = emailDraft.trim().toLowerCase();
+    if (!next || next === row.email) {
+      setEditingEmailFor(null);
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      await updateEmailFn({ data: { userId: row.id, email: next } });
+      setRows((all) => all.map((r) => (r.id === row.id ? { ...r, email: next } : r)));
+      toast.success(`Email changed to ${next}`);
+      setEditingEmailFor(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to update email");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
   const removeMember = async (row: Row) => {
     if (row.id === user?.id) {
       toast.error("You can't delete your own account.");
@@ -358,10 +380,12 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   };
   const memberEditor = (userId: string) => {
     const row = rows.find((r) => r.id === userId);
-    if (!row || !isOwner) return null;
+    if (!row || !isAdmin) return null;
     return <section className="space-y-2 border-b border-border pb-4">
       <label className="block space-y-1 text-sm">Site username<Input aria-label="Site username" value={editingUsernameFor === row.id ? usernameDraft : row.username ?? ""} onChange={(e) => { setEditingUsernameFor(row.id); setUsernameDraft(e.target.value); }} /></label>
       <Button size="sm" disabled={savingUsername || editingUsernameFor !== row.id || !usernameDraft.trim()} onClick={() => void saveUsername(row)}>Save username</Button>
+      <label className="block space-y-1 text-sm">Email<Input type="email" aria-label="Email" value={editingEmailFor === row.id ? emailDraft : row.email ?? ""} onChange={(e) => { setEditingEmailFor(row.id); setEmailDraft(e.target.value); }} /></label>
+      <Button size="sm" disabled={savingEmail || editingEmailFor !== row.id || !emailDraft.trim()} onClick={() => void saveEmail(row)}>Save email</Button>
     </section>;
   };
   const addRoleRow = rows.find((r) => r.id === addRolesFor);

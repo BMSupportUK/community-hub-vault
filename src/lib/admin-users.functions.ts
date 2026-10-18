@@ -58,15 +58,15 @@ export const updateMemberUsername = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Owner (admin) only — management and below cannot edit usernames.
+    // Admin or management only — below cannot edit usernames.
     const { data: roles, error: rolesError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
     if (rolesError) throw new Error(rolesError.message);
     const callerRoles = (roles ?? []).map((r) => String(r.role));
-    if (!callerRoles.includes("admin")) {
-      throw new Error("Forbidden: owners only");
+    if (!callerRoles.some((r) => r === "admin" || r === "management")) {
+      throw new Error("Forbidden: admin or management only");
     }
 
     const username = data.username.trim();
@@ -86,6 +86,38 @@ export const updateMemberUsername = createServerFn({ method: "POST" })
     if (updateError) throw new Error(updateError.message);
 
     return { success: true, username };
+  });
+
+export const updateMemberEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: roles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (rolesError) throw new Error(rolesError.message);
+    const callerRoles = (roles ?? []).map((r) => String(r.role));
+    if (!callerRoles.some((r) => r === "admin" || r === "management")) {
+      throw new Error("Forbidden: admin or management only");
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      email: data.email,
+      email_confirm: true,
+    });
+    if (error) throw new Error(error.message);
+
+    return { success: true, email: data.email };
   });
 
 export const listMemberEmails = createServerFn({ method: "POST" })
