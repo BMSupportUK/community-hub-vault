@@ -231,9 +231,16 @@ function AddOrderPage() {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
             <div className="flex items-center gap-3 flex-wrap">
-              <label className="text-sm text-muted-foreground flex items-center gap-2">Discount £
-                <input type="number" min={0} step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0.00" className="w-24 h-9 rounded-lg border border-border bg-background px-2 text-sm" aria-label="Discount in pounds" />
-              </label>
+              {appliedCode ? (
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  Discount code <span className="font-mono text-foreground">{appliedCode.code}</span> applied ({discountCodeLabel(appliedCode)})
+                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => setAppliedCode(null)}>Remove</Button>
+                </span>
+              ) : (
+                <label className="text-sm text-muted-foreground flex items-center gap-2">Discount £
+                  <input type="number" min={0} step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0.00" className="w-24 h-9 rounded-lg border border-border bg-background px-2 text-sm" aria-label="Discount in pounds" />
+                </label>
+              )}
               <span className="text-sm text-muted-foreground">{discountCents > 0 ? <><s>{money(subtotal)}</s> </> : null}Total <span className="font-semibold text-foreground">{money(total)}</span></span>
             </div>
             <div className="flex gap-2">
@@ -254,23 +261,31 @@ function AddOrderPage() {
               {lookupError && <p role="alert" className="text-sm text-destructive">{lookupError}</p>}
               {customersLoading ? <p role="status" className="text-sm text-muted-foreground">Loading customers…</p> : <div className="max-h-[65dvh] overflow-y-auto space-y-3 pr-1">
                 {matchingCustomers.length === 0 && <p className="text-sm text-muted-foreground">No manual customers found.</p>}
-                {matchingCustomers.map((customer) => <div key={customer.userId} className="border-b border-border pb-3 space-y-2">
-                  <Button variant={customerId === customer.userId ? "secondary" : "ghost"} aria-pressed={customerId === customer.userId} className="h-auto w-full justify-start gap-2 whitespace-normal px-2 py-2 text-left" onClick={() => {
-                    setCustomerId(customer.userId); setRenewalAccountId(""); setCustName(customer.displayName || customer.username || "");
-                  }}>
-                    <span className="min-w-0 flex-1 break-words">{customer.displayName || customer.username || "Manual customer"}</span>
-                    {customerId === customer.userId && <Check className="size-4 shrink-0" />}
-                  </Button>
-                  {customer.accounts.map((account, index) => <Button key={account.id} variant={customerId === customer.userId && renewalAccountId === account.id ? "default" : "outline"} aria-pressed={customerId === customer.userId && renewalAccountId === account.id} className="h-auto w-full justify-start whitespace-normal px-3 py-2 text-left" onClick={() => {
-                    setCustomerId(customer.userId); setRenewalAccountId(account.id); setCustName(customer.displayName || customer.username || "");
-                  }}>
-                    <span className="min-w-0 space-y-1">
-                      <span className="block break-words">Account {index + 1}: {account.login}</span>
-                      <span className="block text-xs opacity-80">Subscription expires {customerDate(account.expiresAt)}</span>
-                    </span>
-                    {customerId === customer.userId && renewalAccountId === account.id && <Check className="ml-auto size-4 shrink-0" />}
-                  </Button>)}
-                </div>)}
+                {matchingCustomers.map((customer) => {
+                  const selected = customerId === customer.userId;
+                  const code = customerCodes[customer.userId];
+                  const label = customer.username || customer.displayName || "Manual customer";
+                  return <div key={customer.userId} className="border-b border-border pb-3 space-y-2">
+                    <Button variant={selected ? "secondary" : "ghost"} aria-pressed={selected} className="h-auto w-full justify-start gap-2 whitespace-normal px-2 py-2 text-left" onClick={() => {
+                      setCustomerId(customer.userId);
+                      setRenewalAccountId(customer.accounts.length === 1 ? customer.accounts[0].id : "");
+                      setCustName(customer.username || customer.displayName || "");
+                      setAppliedCode(code ?? null);
+                    }}>
+                      <span className="min-w-0 flex-1 break-words">{label}</span>
+                      {selected && <Check className="size-4 shrink-0" />}
+                    </Button>
+                    {selected && customer.accounts.length > 1 && customer.accounts.map((account, index) => <Button key={account.id} variant={renewalAccountId === account.id ? "default" : "outline"} aria-pressed={renewalAccountId === account.id} className="h-auto w-full justify-start whitespace-normal px-3 py-2 text-left" onClick={() => {
+                      setCustomerId(customer.userId); setRenewalAccountId(account.id);
+                    }}>
+                      <span className="min-w-0 space-y-1">
+                        <span className="block break-words">Account {index + 1}: {account.login}</span>
+                        <span className="block text-xs opacity-80">Subscription expires {customerDate(account.expiresAt)}</span>
+                      </span>
+                      {renewalAccountId === account.id && <Check className="ml-auto size-4 shrink-0" />}
+                    </Button>)}
+                  </div>;
+                })}
               </div>}
             </> : null}
           </div>
