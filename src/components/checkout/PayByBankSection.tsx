@@ -49,7 +49,7 @@ export function PayByBankSection({ token, password, preview = false }: { token: 
       <div className="flex items-center gap-3">
         <Landmark className="size-5 text-primary shrink-0" />
         <div className="min-w-0">
-          <h2 className="font-semibold">Pay by bank instead</h2>
+          <h2 className="font-semibold">Pay by bank</h2>
           <p className="text-xs text-muted-foreground">{PAY_BY_BANK_INTRO}</p>
         </div>
       </div>

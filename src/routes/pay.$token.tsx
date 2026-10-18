@@ -43,11 +43,11 @@ export const Route = createFileRoute("/pay/$token")({
 
 function PayRoute() {
   const { token } = Route.useParams();
-  return token === "demo" ? <DemoPayPage /> : <PayPage />;
+  return token === "demo" ? <DemoPayPage /> : token === "demo-payment" ? <DemoPayPage unpaid /> : <PayPage />;
 }
 
 /** Sample secure order for the demo account — no live data, actions do nothing. */
-function DemoPayPage() {
+function DemoPayPage({ unpaid = false }: { unpaid?: boolean }) {
   const demoOnly = async () => { toast.info("This is a sample order on the demo account"); };
   return (
     <main className="min-h-screen overflow-y-auto">
@@ -56,7 +56,7 @@ function DemoPayPage() {
           <ArrowLeft className="size-4" /> Back to my orders
         </Link>
       </div>
-      <CheckoutTemplate view={DEMO_CHECKOUT_VIEW as CheckoutView} preview onPaymentSent={demoOnly} onContinueToSetup={demoOnly} payByBank={<PayByBankSection token="demo" password="" preview />} />
+      <CheckoutTemplate view={(unpaid ? { ...DEMO_CHECKOUT_VIEW, canPayByBank: true, order: { ...DEMO_CHECKOUT_VIEW.order, method: "square", paidAt: null, paymentSentAt: null, status: "pending" } } : DEMO_CHECKOUT_VIEW) as CheckoutView} preview onSwitchPayMethod={demoOnly} onPaymentSent={demoOnly} onContinueToSetup={demoOnly} payByBank={<PayByBankSection token="demo" password="" preview />} />
     </main>
   );
 }
