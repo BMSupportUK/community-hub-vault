@@ -15,19 +15,19 @@
 - Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn so no stale online users remain.
 - Staff Away reads shared user_dnd_status; because it holds only the current window, Away history lives in a trigger-written table matched to shifts.
-- Android alerts use distinct per-type tones on versioned channels; change the channel ID when correcting a sound, as Android keeps a channel's first sound permanently.
+- Android alerts use per-type tones on versioned channels; sound corrections need a new channel ID because Android retains the first sound.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
 - Pre-account manual-order logins stay private per order; claim moves them to customer credentials, the admin list's single source of truth.
-- Signed-out checkout visitors read app login details only via a token-gated SECURITY DEFINER function; the staff-only credentials view never serves them.
+- Signed-out checkout app logins use only token-gated SECURITY DEFINER reads, never the staff credentials view.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
 - Dialogs stay within the dynamic mobile viewport; dense views drop secondary columns on phones.
 - Square/Stripe payments use shared server invoice creation with verified order/token access; BM Support PDFs remain post-payment receipts.
 - Knowledge Base fills the page; category and ratings rails keep guides scannable.
-- Video help: P2P WebRTC; customer camera goes via a fixed-size canvas so phone turns never reshape the encoder (blacked it); no rebuilds on turns.
+- Video help uses P2P WebRTC and a fixed-size customer canvas; rotation must not reshape or rebuild the encoder (causes black video).
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
 - Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
@@ -47,4 +47,4 @@
 
 - Profit uses pence; absent payments/fees stay provisional. Invoice sync repairs absent rows after paid_at; confirmed fees stay fixed.
 
-- Allocated break matching uses a browser-independent helper with UK timestamps; duplicate records never consume future slots, and the lock-safe starter rechecks recorded slots before inserting to prevent replay.
+- Break matching uses a browser-independent UK-time helper; duplicates never consume future slots. The lock-safe starter rechecks records before insert to prevent replay.
