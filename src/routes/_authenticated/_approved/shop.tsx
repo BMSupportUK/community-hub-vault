@@ -5492,11 +5492,14 @@ function AdminDiscounts() {
   };
   useEffect(() => {
     load();
-    supabase
-      .from("profiles")
-      .select("id,username,display_name")
-      .order("username")
-      .then(({ data }) => setUsers(data ?? []));
+    // Same people as the admin Customers list (site + manual, incl. name-only);
+    // Fan Zone-only profiles never appear here.
+    supabase.rpc("admin_customer_subscription_list").then(({ data }) => {
+      const list = ((data ?? []) as unknown as { userId: string; username: string | null; displayName: string | null }[])
+        .map((c) => ({ id: c.userId, username: c.username, display_name: c.displayName }))
+        .sort((a, b) => (a.username || a.display_name || "").localeCompare(b.username || b.display_name || "", "en-GB", { sensitivity: "base" }));
+      setUsers(list);
+    });
     fetchManualEmails({} as never)
       .then((res: any) => setManualEmails(res?.emails ?? {}))
       .catch(() => setManualEmails({}));
