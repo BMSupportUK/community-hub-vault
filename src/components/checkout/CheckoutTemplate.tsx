@@ -312,18 +312,13 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
           ) : paymentSidebar && (method === "stripe" || method === "square") ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
               <h2 className="font-semibold">Choose how to pay</h2>
-              <div className={`grid gap-2 ${view.canPayByBank && onSwitchPayMethod ? "grid-cols-3" : payByBank ? "grid-cols-2" : "grid-cols-1"}`} role="tablist" aria-label="Payment options">
+              <div className={`grid gap-2 ${payByBank ? "grid-cols-2" : "grid-cols-1"}`} role="tablist" aria-label="Payment options">
                 <button type="button" role="tab" aria-selected={payChoice === "card"} onClick={() => setPayChoice("card")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "card" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
                   <CreditCard className="size-4" /> Card (Square)
                 </button>
                 {payByBank ? (
                   <button type="button" role="tab" aria-selected={payChoice === "bank"} onClick={() => setPayChoice("bank")} className={`min-h-16 rounded-xl border px-2 py-2 text-xs font-semibold inline-flex flex-col items-center justify-center gap-1 text-center ${payChoice === "bank" ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground hover:bg-surface-2"}`}>
                     <Landmark className="size-4" /> Pay by bank
-                  </button>
-                ) : null}
-                {view.canPayByBank && onSwitchPayMethod ? (
-                  <button type="button" role="tab" aria-selected={false} disabled={preview && !onSwitchPayMethod || switching} onClick={async () => { setSwitching(true); try { await onSwitchPayMethod("wise"); } finally { setSwitching(false); } }} className="min-h-16 rounded-xl border border-border bg-card px-2 py-2 text-xs font-semibold text-muted-foreground hover:bg-surface-2 inline-flex flex-col items-center justify-center gap-1 text-center disabled:opacity-60">
-                    {switching ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />} Bank transfer
                   </button>
                 ) : null}
               </div>
