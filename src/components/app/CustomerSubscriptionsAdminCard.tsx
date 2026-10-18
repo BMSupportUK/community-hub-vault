@@ -28,7 +28,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   memberHeader?: (userId: string) => ReactNode;
 }) {
   const [rows, setRows] = useState<Customer[]>([]);
-  const [tab, setTab] = useState<"site" | "manual">("site");
+  const [tab, setTab] = useState<"single" | "multi" | "manual">("single");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<CustomerSortField>("default");
   const [sortDir, setSortDir] = useState<CustomerSortDir>("asc");
@@ -170,8 +170,12 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
   const visible = rows.filter((c) => [c.username, c.displayName, c.referrerName, ...c.accounts.map((a) => a.login)].some((v) => v?.toLowerCase().includes(search.toLowerCase())));
   const siteRows = visible.filter((c) => c.hasSiteAccount);
   const manualRows = visible.filter((c) => !c.hasSiteAccount);
-  const siteCount = rows.filter((c) => c.hasSiteAccount).length;
-  const manualCount = rows.length - siteCount;
+  const isMulti = (c: Customer) => c.accounts.length > 1;
+  const singleRows = siteRows.filter((c) => !isMulti(c));
+  const multiRows = siteRows.filter(isMulti);
+  const singleCount = rows.filter((c) => c.hasSiteAccount && !isMulti(c)).length;
+  const multiCount = rows.filter((c) => c.hasSiteAccount && isMulti(c)).length;
+  const manualCount = rows.filter((c) => !c.hasSiteAccount).length;
   const withNoRenewal = (list: Customer[]) => list.map((c) => {
     const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
     const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
