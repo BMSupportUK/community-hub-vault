@@ -52,6 +52,7 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
   const [form, setForm] = useState(blank);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [manualEmails, setManualEmails] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
@@ -72,6 +73,9 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
       });
       setGrants((res?.grants ?? []) as Grant[]);
       setNames((res?.names ?? {}) as Record<string, string>);
+      fetchManualEmails({} as never)
+        .then((r: any) => setManualEmails(r?.emails ?? {}))
+        .catch(() => setManualEmails({}));
     } catch (e: any) {
       toast.error(e?.message ?? "Could not load bank transfer settings");
     } finally {
