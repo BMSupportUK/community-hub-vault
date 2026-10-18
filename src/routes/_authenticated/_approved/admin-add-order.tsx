@@ -244,7 +244,7 @@ function AddOrderPage() {
                   }}>
                     <span className="min-w-0 space-y-1">
                       <span className="block break-words">Account {index + 1}: {account.login}</span>
-                      <span className="block text-xs opacity-80">Runs out {customerDate(account.expiresAt)}</span>
+                      <span className="block text-xs opacity-80">Subscription expires {customerDate(account.expiresAt)}</span>
                     </span>
                     {customerId === customer.userId && renewalAccountId === account.id && <Check className="ml-auto size-4 shrink-0" />}
                   </Button>)}

@@ -248,3 +248,7 @@
 - [x] Merge subscription details and member/role controls into one customer card list with one edit pencil; retain site/manual tabs and existing security gates. Six sorting tests pass; signed-in navigation has no page errors, card verification awaits password/PIN unlock.
 - [x] Move Members & Role Management beneath Customers, repoint both header copies and preserve protected controls; old links redirect to Customers. Nineteen existing tests pass, build OK; signed-in header click reaches Customers with no page errors.
 - [ ] Verify combined customer/member cards after unlocking — existing admin PIN and member password/PIN gates block the signed-in screen check; no security bypass used.
+
+## Customer card grouping
+- [x] Combine email, last IP, year joined and years as customer into one block under a strong divider on admin customer cards; signed-in card screenshot confirms all five grouped, no clipping. Preview only.
+- [ ] Group Subscription Expires with Last Renewed Subscription on each account and rename both labels across the customer surfaces; screen check to follow.
