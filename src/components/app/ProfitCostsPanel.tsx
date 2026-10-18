@@ -269,7 +269,7 @@ export function ProfitCostsPanel() {
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{money(o.total_cents)}</td>
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{f.feesMissing ? (f.fees ? `${money(f.fees)} + unknown` : "Unknown") : money(f.fees)}</td>
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{f.feesMissing ? "Unknown" : money(o.total_cents - f.fees)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-xs">{METHOD_LABELS[paymentGroup(displayMethods[o.id]) ?? ""] ?? displayMethods[o.id] ?? "—"}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-xs">{METHOD_LABELS[paymentGroup(methodOf[o.id]) ?? ""] ?? methodOf[o.id] ?? "—"}</td>
                           </tr>
                         ); })}
                       </tbody>
