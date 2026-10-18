@@ -1177,6 +1177,13 @@
       "when": 1792321410949,
       "tag": "0167_historical_referral_bonus_acknowledgements",
       "breakpoints": true
+    },
+    {
+      "idx": 168,
+      "version": "7",
+      "when": 1792323215446,
+      "tag": "0168_manual_added_customer_onboarding",
+      "breakpoints": true
     }
   ]
 }
