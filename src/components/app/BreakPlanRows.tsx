@@ -3,13 +3,15 @@ import { CheckCircle2, Coffee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { breakIcon } from "@/lib/breaks";
+import { breakIcon, ukMinutes } from "@/lib/breaks";
 import { planBreaks, toMinutes, fromMinutes, type UserPlan } from "@/lib/break-plan";
 import { countOpenTickets, passTicketsForBreak } from "@/lib/break-handover";
 import { sendBreakEventPush } from "@/lib/push.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { planItems } from "@/lib/break-plan-status";
+export { planItems } from "@/lib/break-plan-status";
 
 const ukNow = () => {
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date()).map((x) => [x.type, x.value]));
@@ -58,30 +60,6 @@ export function useBreakPlan(userId: string) {
     return () => { alive = false; supabase.removeChannel(ch); clearInterval(r); };
   }, [userId]);
   return { plan, nowMin };
-}
-
-/** usedKinds entries may be "break" or "break@<UK minutes>" (when the break was started). */
-export function planItems(plan: UserPlan | null, usedKinds: readonly string[], nowMin: number) {
-  if (!plan) return [];
-  const breakEntries = usedKinds.filter((k) => k === "break" || k.startsWith("break@"));
-  const lunchUsed = usedKinds.some((k) => k === "lunch" || k.startsWith("lunch@"));
-  let b1 = false;
-  let b2 = false;
-  for (const e of breakEntries) {
-    const at = e.includes("@") ? Number(e.split("@")[1]) : NaN;
-    const s1 = plan.break1.start;
-    const s2 = plan.break2.start;
-    // A break taken nearer Break 2's slot counts as Break 2, not Break 1.
-    const prefer2 = !Number.isNaN(at) && s2 !== null && (s1 === null || Math.abs(at - s2) < Math.abs(at - s1));
-    if (prefer2 && !b2) b2 = true;
-    else if (!b1) b1 = true;
-    else b2 = true;
-  }
-  return [
-    { ...plan.break1, done: b1 },
-    { ...plan.lunch, done: lunchUsed },
-    { ...plan.break2, done: b2 },
-  ].map((it) => ({ ...it, missed: !it.done && it.start !== null && nowMin > it.start + 15 }));
 }
 
 /** Compact "next upcoming break" pill for the Talk channel staff controls header. */
@@ -136,7 +114,7 @@ export function AutoBreakStartListener() {
       const { data: s } = await supabase.from("shifts").select("id").eq("user_id", user.id).is("clock_out", null).limit(1).maybeSingle();
       if (!s) { if (alive) setUsedKinds([]); return; }
       const { data: bs } = await supabase.from("breaks").select("kind,started_at").eq("shift_id", (s as { id: string }).id);
-      if (alive) setUsedKinds(((bs ?? []) as { kind: string; started_at: string }[]).map((b) => `${b.kind}@${toMinutes(b.started_at.slice(11, 16))}`));
+      if (alive) setUsedKinds(((bs ?? []) as { kind: string; started_at: string }[]).map((b) => `${b.kind}@${ukMinutes(b.started_at)}`));
     };
     void load();
     const r = setInterval(() => void load(), 60_000);
@@ -144,7 +122,7 @@ export function AutoBreakStartListener() {
   }, [user?.id, eligible]);
 
   const items = useMemo(() => planItems(plan, usedKinds, nowMin), [plan, usedKinds, nowMin]);
-  const dueItem = items.find((it) => !it.done && it.start !== null && nowMin >= it.start);
+  const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
 
   useEffect(() => {
     if (!user || !eligible || !dueItem || dueItem.start === null) return;
@@ -158,9 +136,10 @@ export function AutoBreakStartListener() {
       const shiftId = (s as { id: string }).id;
       // Re-check inside the insert path: another tab may have started it.
       // Break 1 already counts as one "break", so Break 2 is allowed a second.
-      const { data: existing } = await supabase.from("breaks").select("id").eq("shift_id", shiftId).eq("kind", item.kind);
-      const allowed = item.kind === "lunch" ? 1 : item.label === "Break 2" ? 2 : 1;
-      if ((existing?.length ?? 0) >= allowed) return;
+      const { data: existing, error: readError } = await supabase.from("breaks").select("kind,started_at,ended_at").eq("shift_id", shiftId);
+      if (readError || existing?.some((b) => b.ended_at === null)) return;
+      const recorded = (existing ?? []).map((b) => `${b.kind}@${ukMinutes(b.started_at)}`);
+      if (planItems(plan, recorded, ukNow().minutes).some((b) => b.label === item.label && b.done)) return;
       const n = await countOpenTickets(user.id);
       if (n > 0) await passTicketsForBreak(item.kind);
       const { error } = await supabase.from("breaks").insert({ shift_id: shiftId, user_id: user.id, kind: item.kind });
