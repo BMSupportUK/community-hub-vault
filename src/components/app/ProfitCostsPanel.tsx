@@ -10,8 +10,6 @@ import { calculateProfit, allocateOrderAmounts, type ProfitPayment } from "@/lib
 import { refreshProviderFees } from "@/lib/provider-fees.functions";
 import { PROFIT_METHOD_LABELS as METHOD_LABELS, profitPaymentGroup as paymentGroup, profitMethodTabs, settledProfitProvider, orderPaymentGroup } from '@/lib/profit-payment-groups';
 import { getProfitOpenBankingOrders } from '@/lib/profit-payment-groups.functions';
-import { OPEN_BANKING_DEMO, profitDisplayOrders } from '@/lib/profit-open-banking-demo';
-import { Switch } from '@/components/ui/switch';
 
 import { useProviderFeeRefresh } from '@/hooks/use-provider-fee-refresh';
 
@@ -38,7 +36,6 @@ export function ProfitCostsPanel() {
   const [saving, setSaving] = useState<string | null>(null);
   const [refreshingFees, setRefreshingFees] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [demo, setDemo] = useState(false);
 
   const load = async () => {
     const [p, c, o] = await Promise.all([
@@ -117,12 +114,11 @@ export function ProfitCostsPanel() {
     void load();
   };
 
-  const all = profitDisplayOrders(orders ?? [], demo);
-  const displayMethods: Record<string, string> = demo ? { [OPEN_BANKING_DEMO.id]: 'open_banking' } : methodOf;
+  const all = orders ?? [];
   const methodTabs = useMemo(() => {
     return profitMethodTabs(Object.values(methodOf));
   }, [all, methodOf]);
-  const list = tab === "profit" || tab === "costs" || tab === "packages" ? all : all.filter((o) => paymentGroup(displayMethods[o.id]) === tab);
+  const list = tab === "profit" || tab === "costs" || tab === "packages" ? all : all.filter((o) => paymentGroup(methodOf[o.id]) === tab);
   const years = useMemo(() => [...new Set(list.map((o) => new Date(o.created_at).getFullYear()))].sort((a, b) => b - a), [list]);
   const ay = year && years.includes(year) ? year : years[0] ?? null;
   const yearOrders = list.filter((o) => new Date(o.created_at).getFullYear() === ay);
@@ -178,7 +174,7 @@ export function ProfitCostsPanel() {
         <Button variant="ghost" className={`${selection(tab === "costs")} sm:ml-auto`} aria-pressed={tab === "costs"} onClick={() => setTab("costs")}><Package className="size-4" />Product costs</Button>
         <Button variant="ghost" className={selection(tab === "packages")} aria-pressed={tab === "packages"} onClick={() => setTab("packages")}><ChartPie className="size-4" />Packages</Button>
       </nav>
-      <div className="flex justify-end"><Button variant="outline" size="sm" disabled={refreshingFees || demo} onClick={async () => {
+      <div className="flex justify-end"><Button variant="outline" size="sm" disabled={refreshingFees} onClick={async () => {
         setRefreshingFees(true);
         try {
           const result = await refreshProviderFees({ data: { offset: 0 } });
