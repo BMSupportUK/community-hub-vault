@@ -2,6 +2,30 @@ import { expect, test } from "bun:test";
 import { checkSportsImport } from "../src/lib/sports-import-check";
 import { cardRawForEplEvent, normalizeSportsListingText, parseSportsListingBlock, sortSportsListingEvents, splitFixtureChannelBlocks } from "../src/lib/sports-listing-format";
 
+test("Premier League Hub expands Now shorthand with its separately named Now 4K feed", () => {
+  const raw = `# PREMIER LEAGUE
+Sunday, 18th October
+## Leeds v Manchester United
+2:00pm UK / 9:00am ET
+
+EPL | Premier League Hub
+Stan Sport
+Fubo Sports 4
+Now HK 1,2 & 4K
+Hub Premier 4
+MonoMax`;
+  const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 18, 8), "Premier League Hub");
+  expect(result.errors).toBe(0);
+  expect(result.events).toHaveLength(1);
+  const event = result.events[0];
+  if (!event) throw new Error("Missing Leeds fixture");
+  expect(event.channels).toEqual(["Stan Sport", "Fubo Sports 4", "Now HK 1", "Now HK 2", "Now 4K", "Hub Premier 4", "MonoMax"]);
+  expect(parseSportsListingBlock(cardRawForEplEvent(event))[0]?.channels).toEqual(event.channels);
+  const saved = cardRawForEplEvent(event).replace("Now 4K", "4K");
+  expect(parseSportsListingBlock(saved)[0]?.channels).toEqual(event.channels);
+  expect(parseSportsListingBlock(saved.replace("Now HK 1\nNow HK 2", "Sky Sports 1\nSky Sports 2"))[0]?.channels).toContain("4K");
+});
+
 test("Split into single events breaks Premier League fixtures into one block per channel group", async () => {
   // Same sequence as splitQueueItem in discord-import.functions.ts.
   const raw = normalizeSportsListingText(await Bun.file(new URL("./fixtures-epl-2026-10-10.txt", import.meta.url)).text());

@@ -323,6 +323,12 @@ function splitChannelLine(line: string): string[] {
     if (numberedPrefix && /^\d{1,3}$/.test(clean)) {
       return `${numberedPrefix} ${clean}`;
     }
+    // Now's combined label "Now HK 1,2 & 4K" has a separately named
+    // UHD feed. Keep its brand when splitting, including saved card rows.
+    if (/^4k$/i.test(clean) && /^Now(?:\s+HK)?$/i.test(numberedPrefix ?? "")) {
+      numberedPrefix = null;
+      return "Now 4K";
+    }
     numberedPrefix = null;
     return clean;
   });
