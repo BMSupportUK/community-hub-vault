@@ -243,3 +243,6 @@
 
 - [x] Pay by bank (Stripe open banking) toggle on secure checkout Stripe method
 - [ ] Demo test order showing secure checkout with Square + crypto only and auto-posted Square invoice link (screenshots)
+
+## Combined Customers screen
+- [ ] Move Members & Role Management beneath Customers, repoint header, preserve protected controls and old links; verify preview.
