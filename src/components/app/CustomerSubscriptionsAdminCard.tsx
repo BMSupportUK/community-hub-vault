@@ -224,10 +224,12 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
                 </dl>
               </section>);
             })}
-            <dl className="space-y-2 border-t border-border/60 pt-3 text-sm">
-              <Detail label="Referred by">{c.referrerName || "—"}</Detail>
+            <div className="mt-1 h-1 w-full rounded-full bg-foreground/25" aria-hidden="true" />
+            <dl className="space-y-2 pt-3 text-sm">
+              {c.hasSiteAccount && memberExtras?.(c.userId)}
               <Detail label="Year joined">{customerJoinedYear(c.firstSubscriptionAt) ?? "Not recorded"}</Detail>
               <Detail label="Years as customer">{years === null ? "Not recorded" : `${years} ${years === 1 ? "year" : "years"}`}</Detail>
+              <Detail label="Referred by">{c.referrerName || "—"}</Detail>
             </dl>
             {c.rewards.map((r) => (
               <div key={r.orderId} className={`w-fit max-w-full rounded-md border p-2 text-xs ${r.rewardedAt ? "border-primary/30 bg-primary/10" : "border-border bg-muted/40"}`}>
