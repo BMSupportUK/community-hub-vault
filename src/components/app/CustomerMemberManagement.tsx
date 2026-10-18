@@ -93,6 +93,7 @@ export function CustomerMemberManagement() {
   const [savingUsername, setSavingUsername] = useState(false);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [addRolesFor, setAddRolesFor] = useState<string | null>(null);
   
 
   const loadAll = async () => {
