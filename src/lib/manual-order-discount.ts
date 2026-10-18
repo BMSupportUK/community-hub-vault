@@ -11,7 +11,22 @@ export type CustomerDiscountCode = {
   code: string;
   percent: number | null;
   amount_cents: number | null;
+  /** Products this code may come off. Empty means every product. */
+  productIds: string[];
 };
+
+/**
+ * The part of the order a code may come off: only the packages the code is
+ * allowed for. A code with no packages listed covers every package.
+ */
+export function eligibleSubtotalCents(
+  lines: { productId: string; priceCents: number; quantity: number }[],
+  productIds: string[],
+): number {
+  return lines
+    .filter((l) => productIds.length === 0 || productIds.includes(l.productId))
+    .reduce((a, l) => a + l.priceCents * l.quantity, 0);
+}
 
 /**
  * One code per customer, newest first.
@@ -21,9 +36,10 @@ export type CustomerDiscountCode = {
  * (codes for everyone) are ignored — those apply themselves at checkout.
  */
 export function pickCustomerDiscountCodes(
-  rows: { user_id?: string | null; code?: string | null; percent?: number | null; amount_cents?: number | null }[]
+  rows: { id?: string; user_id?: string | null; code?: string | null; percent?: number | null; amount_cents?: number | null }[]
     | null
     | undefined,
+  links: { discount_code_id: string; product_id: string }[] = [],
 ): Record<string, CustomerDiscountCode> {
   const byCustomer: Record<string, CustomerDiscountCode> = {};
   for (const row of rows ?? []) {
@@ -34,6 +50,7 @@ export function pickCustomerDiscountCodes(
       code: row.code,
       percent: row.percent ?? null,
       amount_cents: row.amount_cents ?? null,
+      productIds: links.filter((l) => l.discount_code_id === row.id).map((l) => l.product_id),
     };
   }
   return byCustomer;

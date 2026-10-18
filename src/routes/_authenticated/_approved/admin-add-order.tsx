@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { customerDate } from "@/lib/customer-date";
 import {
-  discountCodeCents,
+  discountCodeCents, eligibleSubtotalCents,
   discountCodeLabel,
   pickCustomerDiscountCodes,
   type CustomerDiscountCode,
@@ -77,17 +77,30 @@ function AddOrderPage() {
       setCustomersLoading(false);
     });
     // Codes saved against each customer, so picking a name can apply their discount.
-    void supabase
-      .from("discount_codes")
-      .select("user_id,code,percent,amount_cents")
-      .eq("is_active", true)
-      .not("user_id", "is", null)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => setCustomerCodes(pickCustomerDiscountCodes(data as never)));
+    void (async () => {
+      const { data } = await supabase
+        .from("discount_codes")
+        .select("id,user_id,code,percent,amount_cents")
+        .eq("is_active", true)
+        .not("user_id", "is", null)
+        .order("created_at", { ascending: false });
+      const ids = (data ?? []).map((r) => r.id);
+      const { data: links } = ids.length
+        ? await supabase.from("discount_code_products").select("discount_code_id,product_id").in("discount_code_id", ids)
+        : { data: [] };
+      setCustomerCodes(pickCustomerDiscountCodes(data as never, (links ?? []) as never));
+    })();
   }, [user?.id]);
 
   if (!hasRole("admin")) return <Navigate to="/admin" />;
   if (!isAdminUnlocked(user?.id)) return <Navigate to="/admin" search={{ next: "/admin-add-order" } as never} />;
+
+  // A code only comes off the packages it is allowed for.
+  const codeSubtotal = (code: CustomerDiscountCode) =>
+    eligibleSubtotalCents(
+      (products ?? []).map((p) => ({ productId: p.id, priceCents: p.price_cents, quantity: qty[p.id] ?? 0 })),
+      code.productIds,
+    );
 
   const back = () => navigate({ to: "/admin", search: { tab: "order-status" } as never });
 
@@ -105,7 +118,7 @@ function AddOrderPage() {
     if (!appliedCode && manualCents < 0) return toast.error("Discount can't be negative");
     const orderSubtotal = (products ?? []).reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0);
     const discountCents = appliedCode
-      ? discountCodeCents(appliedCode, orderSubtotal)
+      ? discountCodeCents(appliedCode, codeSubtotal(appliedCode))
       : Math.min(orderSubtotal, Math.max(0, manualCents));
     setBusy(true);
     const now = new Date();
@@ -136,7 +149,7 @@ function AddOrderPage() {
 
   const subtotal = (products ?? []).reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0);
   const discountCents = appliedCode
-    ? discountCodeCents(appliedCode, subtotal)
+    ? discountCodeCents(appliedCode, codeSubtotal(appliedCode))
     : Math.min(subtotal, Math.max(0, Math.round((Number(discount) || 0) * 100)));
   const total = subtotal - discountCents;
   const matchingCustomers = manualCustomers.filter((customer) =>
