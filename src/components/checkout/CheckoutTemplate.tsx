@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { STRIPE_CHECKOUT_ENABLED } from "@/lib/payment-methods";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Copy, CreditCard, Download, Hourglass, Landmark, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
@@ -43,7 +42,7 @@ export type CheckoutView = {
 };
 
 const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
-const METHOD: Record<string, string> = { stripe: STRIPE_CHECKOUT_ENABLED ? "Stripe" : "Square", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
+const METHOD: Record<string, string> = { stripe: "Square", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
 
 export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false, renewal = false, selectedStep, onStepSelect }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean; renewal?: boolean; selectedStep?: number; onStepSelect?: (step: number) => void }) {
   const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Payment confirmed", renewal ? "Subscription extended" : "Account set up", "Completed"];
