@@ -23,6 +23,8 @@ export function CustomerSubscriptionsAdminCard({ canReward }: { canReward: boole
   const [rows, setRows] = useState<Customer[]>([]);
   const [tab, setTab] = useState<"site" | "manual">("site");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<CustomerSortField>("default");
+  const [sortDir, setSortDir] = useState<CustomerSortDir>("asc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reward, setReward] = useState<Reward | null>(null);
