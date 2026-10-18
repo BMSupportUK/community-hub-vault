@@ -1170,6 +1170,13 @@
       "when": 1792275729732,
       "tag": "0166_manual_order_registration_exception",
       "breakpoints": true
+    },
+    {
+      "idx": 167,
+      "version": "7",
+      "when": 1792321410949,
+      "tag": "0167_historical_referral_bonus_acknowledgements",
+      "breakpoints": true
     }
   ]
 }
