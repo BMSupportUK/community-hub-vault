@@ -27,7 +27,7 @@ const ACCOUNT_TYPES = [
   { value: "triple", label: "Triple-room account" },
 ] as const;
 
-export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId }: { ownerId: string; ownerLabel: string; currentUserId: string }) {
+export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, showPinReset = true }: { ownerId: string; ownerLabel: string; currentUserId: string; showPinReset?: boolean }) {
   const [creds, setCreds] = useState<CredentialRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
@@ -86,6 +86,7 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId }:
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader><DialogTitle>Credentials · {ownerLabel}</DialogTitle></DialogHeader>
           <div className="flex flex-wrap items-center gap-2">
+            {showPinReset && (
             <button
               onClick={() => void resetPin()}
               disabled={pinBusy}
@@ -94,6 +95,7 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId }:
             >
               {pinBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Lock className="size-3.5" />} Reset PIN
             </button>
+            )}
             <button
               onClick={() => setEditor({ row: null })}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90"
