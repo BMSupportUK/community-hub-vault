@@ -254,6 +254,7 @@
 - [x] Group Subscription Expires with Last Renewed Subscription in one box on each customer account and rename both labels (also in sort choices, edit pop-up, Add order sidebar and Non-site credentials cards); signed-in card screenshot confirms the pairing and strong divider with no clipping, 8 customer tests pass, typecheck clean, build OK. Preview only.
 
 ## Referral bonus ticks
+- [ ] Restrict historical ticks to a verified completed 12-month purchase; future bonus buttons retain their existing purchase eligibility.
 - [x] Move referral bonus control beside Referred by; completed awards show Referral Bonus added.
 - [x] Record both existing non-excluded referrals without adding time; authenticated read confirms all expiry dates unchanged; 41 tests pass and build OK.
 - [ ] Verify tick/button appearance and future award through unlocked Customers screen — blocked by account password/staff PIN; no security bypass or live bonus applied.
