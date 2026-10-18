@@ -14,12 +14,12 @@
 - Talk: show all staff/channel; fit composer and people.
 - Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn so no stale online users remain.
-- Staff Away reads shared user_dnd_status; because it holds only the current window, Away history lives in a trigger-written table matched to shifts.
+- Staff Away reads user_dnd_status (current window); triggers store shift-linked history.
 - Android alerts use per-type tones on versioned channels; sound corrections need a new channel ID because Android retains the first sound.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
-- Pre-account manual-order logins stay private per order; claim moves them to customer credentials, the admin list's single source of truth.
+- Pre-account manual logins are order-private; claim moves them to customer credentials, the admin list's source of truth.
 - Signed-out checkout app logins use only token-gated SECURITY DEFINER reads, never the staff credentials view.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
