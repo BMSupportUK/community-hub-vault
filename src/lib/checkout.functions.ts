@@ -25,7 +25,7 @@ export const getCheckout = createServerFn({ method: "POST" })
     const { supabaseAdmin, link } = u;
     const { data: order } = await supabaseAdmin
       .from("orders")
-      .select("id,order_ref,shipping_name,email,customer_type,existing_username,discount_code,wants_adult_content,total_cents,discount_cents,paid_at,completed_at,created_at,manual_pay_method,status")
+      .select("id,user_id,order_ref,shipping_name,email,customer_type,existing_username,discount_code,wants_adult_content,total_cents,discount_cents,paid_at,completed_at,created_at,manual_pay_method,status")
       .eq("id", link.order_id)
       .maybeSingle();
     if (!order) return { ok: false as const };
