@@ -322,7 +322,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   <CreditCard className="size-4" /> Card (Square)
                 </button>
               </div>
-              {(payChoice === "bank" || !cardPayment && false) && payByBank ? payByBank : (
+              {payChoice === "bank" && payByBank ? payByBank : (
                 <>
                   {cardPayment ? cardPayment : preview ? (
                     <div className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold">
