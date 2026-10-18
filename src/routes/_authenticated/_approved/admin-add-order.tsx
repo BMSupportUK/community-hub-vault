@@ -12,6 +12,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { customerDate } from "@/lib/customer-date";
+import {
+  discountCodeCents,
+  discountCodeLabel,
+  pickCustomerDiscountCodes,
+  type CustomerDiscountCode,
+} from "@/lib/manual-order-discount";
 
 type ManualCustomer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; accounts: { id: string; login: string; expiresAt: string | null }[] };
 
@@ -57,6 +63,8 @@ function AddOrderPage() {
   const [lookupError, setLookupError] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [customersLoading, setCustomersLoading] = useState(true);
+  const [customerCodes, setCustomerCodes] = useState<Record<string, CustomerDiscountCode>>({});
+  const [appliedCode, setAppliedCode] = useState<CustomerDiscountCode | null>(null);
 
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
@@ -68,6 +76,14 @@ function AddOrderPage() {
       setManualCustomers(((data ?? []) as unknown as ManualCustomer[]).filter((c) => !c.hasSiteAccount));
       setCustomersLoading(false);
     });
+    // Codes saved against each customer, so picking a name can apply their discount.
+    void supabase
+      .from("discount_codes")
+      .select("user_id,code,percent,amount_cents")
+      .eq("is_active", true)
+      .not("user_id", "is", null)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setCustomerCodes(pickCustomerDiscountCodes(data as never)));
   }, [user?.id]);
 
   if (!hasRole("admin")) return <Navigate to="/admin" />;
@@ -85,8 +101,12 @@ function AddOrderPage() {
     const mail = email.trim();
     if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return toast.error("Enter a valid email address");
     if ((payMethod === "stripe" || payMethod === "square") && !mail) return toast.error("Card invoices need the customer's email address");
-    const discountCents = Math.round((Number(discount) || 0) * 100);
-    if (discountCents < 0) return toast.error("Discount can't be negative");
+    const manualCents = Math.round((Number(discount) || 0) * 100);
+    if (!appliedCode && manualCents < 0) return toast.error("Discount can't be negative");
+    const orderSubtotal = (products ?? []).reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0);
+    const discountCents = appliedCode
+      ? discountCodeCents(appliedCode, orderSubtotal)
+      : Math.min(orderSubtotal, Math.max(0, manualCents));
     setBusy(true);
     const now = new Date();
     const isToday = format(orderDate, "yyyy-MM-dd") === format(now, "yyyy-MM-dd");
@@ -115,7 +135,9 @@ function AddOrderPage() {
   };
 
   const subtotal = (products ?? []).reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0);
-  const discountCents = Math.min(subtotal, Math.max(0, Math.round((Number(discount) || 0) * 100)));
+  const discountCents = appliedCode
+    ? discountCodeCents(appliedCode, subtotal)
+    : Math.min(subtotal, Math.max(0, Math.round((Number(discount) || 0) * 100)));
   const total = subtotal - discountCents;
   const matchingCustomers = manualCustomers.filter((customer) =>
     [customer.username, customer.displayName, ...customer.accounts.map((account) => account.login)]
@@ -133,7 +155,7 @@ function AddOrderPage() {
             <SecureLinkPanel orderId={created.id} withChat={false} />
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={back} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Back to Orders</button>
-              <Button variant="outline" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setSkipRegistration(false); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); }}>Add another</Button>
+              <Button variant="outline" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setSkipRegistration(false); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }}>Add another</Button>
             </div>
           </div>
         </div>
@@ -156,12 +178,12 @@ function AddOrderPage() {
         </div>
         <div className="flex gap-2">
           {(["new", "existing"] as const).map((kind) => (
-            <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); }} className="min-w-0 flex-1 h-10 sm:flex-none sm:px-6">{kind === "new" ? "New customer" : "Existing customer"}</Button>
+            <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }} className="min-w-0 flex-1 h-10 sm:flex-none sm:px-6">{kind === "new" ? "New customer" : "Existing customer"}</Button>
           ))}
         </div>
         <div className="flex min-w-0 flex-row items-start gap-4 sm:gap-6" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
         <div className="min-w-0 flex-1 space-y-5" style={{ flex: "1 1 0%", minWidth: 0 }}>
-          <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+          <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <div className="space-y-2">
             {products === null ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
