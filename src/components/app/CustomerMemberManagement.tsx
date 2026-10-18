@@ -300,9 +300,23 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   const memberExtras = (userId: string) => {
     const row = rows.find((r) => r.id === userId);
     if (!row) return null;
+    return <div className="flex flex-wrap items-baseline gap-x-1.5 break-all text-sm">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Email:</span><span>{row.email || "—"}</span>
+      <span className="text-muted-foreground">·</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Last IP:</span><span>{row.last_ip || "—"}</span>
+    </div>;
+  };
+  const memberHeader = (userId: string) => {
+    const row = rows.find((r) => r.id === userId);
+    if (!row) return null;
     return <>
-      <div><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Email</dt><dd className="mt-0.5 break-all">{row.email || "—"}</dd></div>
-      <div><dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Last IP</dt><dd className="mt-0.5 break-all">{row.last_ip || "—"}</dd></div>
+      {row.roles.map((rn) => {
+        const rd = roleDefs.find((r) => r.name === rn);
+        const label = rd ? displayRoleLabel(rd.name, rd.label) : rn;
+        return <span key={rn} className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-semibold", styleFor(rn))}>{label}<Button variant="ghost" size="icon" className="size-4" title={`Remove ${label}`} aria-label={`Remove ${label} from ${row.username || row.display_name}`} disabled={saving !== null} onClick={() => void toggleRole(row, rn)}><X className="size-3" /></Button></span>;
+      })}
+      <Button variant="outline" size="icon" className="size-6 border-dashed" title="Add role" aria-label={`Add role for ${row.username || row.display_name}`} onClick={() => setAddRolesFor(row.id)}><Plus className="size-3.5" /></Button>
+      <Button variant="ghost" size="icon" className="size-6" title="View location history" aria-label={`View location history for ${row.username || row.display_name}`} onClick={() => setHistoryFor(row)}><MapPin className="size-4" /></Button>
     </>;
   };
   const memberDetails = (userId: string) => {
@@ -310,13 +324,6 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     if (!row) return null;
     return <div className="space-y-3 border-t border-border pt-3">
       <div className="flex flex-wrap items-center gap-2">
-        {row.roles.map((rn) => {
-          const rd = roleDefs.find((r) => r.name === rn);
-          const label = rd ? displayRoleLabel(rd.name, rd.label) : rn;
-          return <span key={rn} className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold", styleFor(rn))}>{label}<Button variant="ghost" size="icon" className="size-5" title={`Remove ${label}`} aria-label={`Remove ${label} from ${row.username || row.display_name}`} disabled={saving !== null} onClick={() => void toggleRole(row, rn)}><X className="size-3" /></Button></span>;
-        })}
-        <Button variant="outline" size="icon" className="size-7 border-dashed" title="Add role" aria-label={`Add role for ${row.username || row.display_name}`} onClick={() => setAddRolesFor(row.id)}><Plus className="size-3.5" /></Button>
-        <Button variant="ghost" size="icon" className="size-7" title="View location history" aria-label={`View location history for ${row.username || row.display_name}`} onClick={() => setHistoryFor(row)}><MapPin className="size-4" /></Button>
         <Button variant="ghost" size="icon" className="ml-auto size-7" title="Delete member" aria-label={`Delete member ${row.username || row.display_name}`} disabled={deletingUser === row.id || row.id === user?.id} onClick={() => void removeMember(row)}>{deletingUser === row.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}</Button>
       </div>
       <MemberSecurityActions userId={row.id} name={row.display_name ?? row.username ?? "this user"} />
