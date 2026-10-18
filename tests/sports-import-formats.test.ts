@@ -162,6 +162,14 @@ Lions at Panthers`;
     setSystemTime();
   });
 
+  test("NFL Sunday Ticket untimed Redzone programme row never attaches to the game above", () => {
+    const raw = `US | NFL Sunday Ticket
+NFL13: Cowboys @ Packers 01:20
+NFL15: Redzone - Week 6`;
+    const result = parseSportsListingBlock(raw);
+    expect(result).toEqual([{ date: null, time: "01:20", title: "Cowboys @ Packers", channels: ["NFL 13"] }]);
+  });
+
   test("NBA League Pass inline ET and UK clocks keep a clean fixture and numbered channel", () => {
     setSystemTime(new Date(Date.UTC(2026, 9, 4, 12)));
     const raw = "US | NBA League Pass\nNBA  01: Jazz vs Nuggets 7pm ET | 12:00am UK";
