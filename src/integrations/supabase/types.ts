@@ -5266,6 +5266,24 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_bonus_acknowledgements: {
+        Row: {
+          customer_id: string
+          recorded_at: string
+          referrer_name: string
+        }
+        Insert: {
+          customer_id: string
+          recorded_at?: string
+          referrer_name: string
+        }
+        Update: {
+          customer_id?: string
+          recorded_at?: string
+          referrer_name?: string
+        }
+        Relationships: []
+      }
       referral_month_rewards: {
         Row: {
           awarded_at: string
