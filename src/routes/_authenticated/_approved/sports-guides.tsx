@@ -118,8 +118,11 @@ function SportsGuidesPage() {
   const showAllGuides = hasAny(["admin", "management"]);
   // Always open on Welcome with no category picked. Guides only appear once the
   // visitor clicks a category (returning from a guide uses the ?cat= param).
-  const [tab, setTab] = useState<string>("welcome");
-  const [activeCat, setActiveCat] = useState<string | null>(null);
+  // Returning from new/edit/read with ?cat= opens straight on Guides, so the
+  // Welcome tab never flashes before the guide's card appears.
+  const returningToCat = !resetFromUrl && !!catFromUrl;
+  const [tab, setTab] = useState<string>(returningToCat ? "guides" : "welcome");
+  const [activeCat, setActiveCat] = useState<string | null>(returningToCat ? catFromUrl ?? null : null);
   const [search, setSearch] = useState("");
   // Search only kicks in from three letters up, and only looks at event
   // listings inside guide bodies (never guide names/descriptions).

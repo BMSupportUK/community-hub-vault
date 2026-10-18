@@ -537,7 +537,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     // The guide list can remain mounted in React Query while this editor is
     // open. Remove every user's cached copy so returning to the cards reads
     // the saved `published` value instead of rendering the old draft state.
-    queryClient.removeQueries({ queryKey: ["sports-guides-data"] });
+    void queryClient.invalidateQueries({ queryKey: ["sports-guides-data"] });
     toast.success(
       payload.published
         ? "Published — now visible on the public Sports Guide"
