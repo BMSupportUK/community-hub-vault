@@ -5428,6 +5428,12 @@ function AdminDiscounts() {
   const [manualEmails, setManualEmails] = useState<Record<string, string>>({});
   const fetchManualEmails = useServerFn(getManualCustomerEmails);
 
+  /** A customer counts as "already has a code" when an active code is saved for
+   * them. The code being edited doesn't count, so the tick only ever flags a
+   * second code for the same person. */
+  const otherActiveCodes = (uid: string) =>
+    codes.filter((c) => c.user_id === uid && c.is_active && c.id !== editing?.id);
+
   const genCode = (userId: string | null | undefined) => {
     const u = userId ? users.find((x) => x.id === userId) : null;
     const base = (u?.username ?? u?.display_name ?? "BM")
@@ -5791,11 +5797,18 @@ function AdminDiscounts() {
                   <option value="">Everyone (global)</option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
+                      {otherActiveCodes(u.id).length > 0 ? "✓ " : ""}
                       {u.username ?? u.display_name ?? u.id.slice(0, 8)}
                       {manualEmails[u.id] ? ` — ${manualEmails[u.id]}` : ""}
                     </option>
                   ))}
                 </select>
+                {editing.user_id && otherActiveCodes(editing.user_id).length > 0 && (
+                  <p className="mt-1 flex flex-wrap items-center gap-1 text-xs text-success">
+                    <BadgeCheck className="size-3.5 shrink-0" aria-hidden="true" />
+                    Already has {otherActiveCodes(editing.user_id).length === 1 ? "a discount code" : "discount codes"}: {otherActiveCodes(editing.user_id).map((c) => c.code).join(", ")}
+                  </p>
+                )}
               </Field>
               <Field
                 label={`Applies to products (${selectedProductIds.length === 0 ? "all products" : `${selectedProductIds.length} selected`})`}
