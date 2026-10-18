@@ -7,6 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
 import { checkExistingUsername } from "@/lib/credential-username-check.functions";
+import { getManualCustomerEmails } from "@/lib/manual-customers.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { type ChannelGroup } from "@/components/app/ChannelColumn";
 import {
@@ -5424,6 +5425,8 @@ function AdminDiscounts() {
   const [percentInput, setPercentInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
   const [codeLinks, setCodeLinks] = useState<Map<string, string[]>>(new Map());
+  const [manualEmails, setManualEmails] = useState<Record<string, string>>({});
+  const fetchManualEmails = useServerFn(getManualCustomerEmails);
 
   const genCode = (userId: string | null | undefined) => {
     const u = userId ? users.find((x) => x.id === userId) : null;
@@ -5494,6 +5497,9 @@ function AdminDiscounts() {
       .select("id,username,display_name")
       .order("username")
       .then(({ data }) => setUsers(data ?? []));
+    fetchManualEmails({} as never)
+      .then((res: any) => setManualEmails(res?.emails ?? {}))
+      .catch(() => setManualEmails({}));
     supabase
       .from("products")
       .select("id,name,is_active")
@@ -5628,6 +5634,7 @@ function AdminDiscounts() {
                       <div className="font-mono font-semibold text-base break-all">{c.code}</div>
                       <div className="text-xs text-muted-foreground">
                         {u ? `For @${u.username ?? u.display_name ?? "user"}` : "Everyone"}
+                        {u && manualEmails[u.id] ? ` · ${manualEmails[u.id]}` : ""}
                       </div>
                     </div>
                     <span
@@ -5782,6 +5789,7 @@ function AdminDiscounts() {
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.username ?? u.display_name ?? u.id.slice(0, 8)}
+                      {manualEmails[u.id] ? ` — ${manualEmails[u.id]}` : ""}
                     </option>
                   ))}
                 </select>

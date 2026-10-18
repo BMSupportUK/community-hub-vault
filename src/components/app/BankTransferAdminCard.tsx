@@ -11,6 +11,7 @@ import {
   saveBankTransferDetails,
   searchUsersForBankTransfer,
 } from "@/lib/bank-transfer.functions";
+import { getManualCustomerEmails } from "@/lib/manual-customers.functions";
 import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 
 type Grant = {
@@ -45,11 +46,13 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
   const search = useServerFn(searchUsersForBankTransfer);
   const grant = useServerFn(grantBankTransfer);
   const revoke = useServerFn(revokeBankTransfer);
+  const fetchManualEmails = useServerFn(getManualCustomerEmails);
 
   const [view, setView] = useState<BankTransferView>(initialView);
   const [form, setForm] = useState(blank);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [manualEmails, setManualEmails] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
@@ -70,6 +73,9 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
       });
       setGrants((res?.grants ?? []) as Grant[]);
       setNames((res?.names ?? {}) as Record<string, string>);
+      fetchManualEmails({} as never)
+        .then((r: any) => setManualEmails(r?.emails ?? {}))
+        .catch(() => setManualEmails({}));
     } catch (e: any) {
       toast.error(e?.message ?? "Could not load bank transfer settings");
     } finally {
@@ -327,8 +333,11 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
                     disabled={busy}
                     className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-surface-2 disabled:opacity-60"
                   >
-                    <span>{u.display_name ?? "Unknown"}</span>
-                    <Plus className="size-4 text-emerald-400" />
+                    <span className="min-w-0 text-left">
+                      {u.display_name ?? "Unknown"}
+                      {manualEmails[u.id] && <span className="block text-[11px] text-muted-foreground truncate">{manualEmails[u.id]}</span>}
+                    </span>
+                    <Plus className="size-4 shrink-0 text-emerald-400" />
                   </button>
                 ))}
               </div>
@@ -382,6 +391,7 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-medium truncate">{names[g.user_id] ?? "Unknown"}</div>
+                        {manualEmails[g.user_id] && <div className="text-[11px] text-muted-foreground truncate">{manualEmails[g.user_id]}</div>}
                         <div className="text-[11px] text-muted-foreground">
                           {g.expires_at
                             ? `${expired ? "Expired" : "Expires"} ${new Date(g.expires_at).toLocaleDateString("en-GB")}`
