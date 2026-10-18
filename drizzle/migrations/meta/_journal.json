@@ -1205,6 +1205,13 @@
       "when": 1792327623191,
       "tag": "0171_manual_name_only_customers",
       "breakpoints": true
+    },
+    {
+      "idx": 172,
+      "version": "7",
+      "when": 1792328737220,
+      "tag": "0172_manual_customer_name_edit",
+      "breakpoints": true
     }
   ]
 }
