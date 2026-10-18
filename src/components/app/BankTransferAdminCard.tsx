@@ -339,7 +339,10 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
                     className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-surface-2 disabled:opacity-60"
                   >
                     <span className="min-w-0 text-left">
-                      {u.display_name ?? "Unknown"}
+                      <span className="flex items-center gap-1">
+                        {u.display_name ?? "Unknown"}
+                        {discountUserIds.has(u.id) && <BadgeCheck className="size-3.5 shrink-0 text-success" aria-label="Discount code added" />}
+                      </span>
                       {manualEmails[u.id] && <span className="block text-[11px] text-muted-foreground truncate">{manualEmails[u.id]}</span>}
                     </span>
                     <Plus className="size-4 shrink-0 text-emerald-400" />
@@ -395,7 +398,10 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
                       className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface-2 p-4"
                     >
                       <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">{names[g.user_id] ?? "Unknown"}</div>
+                        <div className="flex items-center gap-1 min-w-0">
+                          <span className="text-sm font-medium truncate">{names[g.user_id] ?? "Unknown"}</span>
+                          {discountUserIds.has(g.user_id) && <BadgeCheck className="size-3.5 shrink-0 text-success" aria-label="Discount code added" />}
+                        </div>
                         {manualEmails[g.user_id] && <div className="text-[11px] text-muted-foreground truncate">{manualEmails[g.user_id]}</div>}
                         <div className="text-[11px] text-muted-foreground">
                           {g.expires_at
