@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { Landmark, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { checkoutStripeSession } from "@/lib/checkout-pay.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { PAY_BY_BANK_BANKS, PAY_BY_BANK_INTRO, PAY_BY_BANK_NOTE } from "@/lib/pay-by-bank";
@@ -16,6 +17,7 @@ export function PayByBankSection({ token, password, preview = false }: { token: 
   const createSession = useServerFn(checkoutStripeSession);
   const [paying, setPaying] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [banks, setBanks] = useState<string[]>([...PAY_BY_BANK_BANKS]);
   useEffect(() => {
@@ -48,7 +50,7 @@ export function PayByBankSection({ token, password, preview = false }: { token: 
         },
       });
       if ("error" in r) setErr(r.error);
-      else setClientSecret(r.clientSecret);
+      else { setClientSecret(r.clientSecret); setOpen(true); }
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -76,18 +78,24 @@ export function PayByBankSection({ token, password, preview = false }: { token: 
         </ul>
         <p className="mt-2 text-xs text-muted-foreground">{PAY_BY_BANK_NOTE}</p>
       </div>
-      {clientSecret ? (
-        <div id="pay-by-bank-checkout">
-          <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret: () => Promise.resolve(clientSecret) }}>
-            <EmbeddedCheckout />
-          </EmbeddedCheckoutProvider>
-        </div>
-      ) : (
-        <button type="button" onClick={start} disabled={paying || preview} className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60">
-          {paying ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />}
-          {paying ? "Opening your bank…" : "Pay by bank"}
-        </button>
-      )}
+      <button type="button" onClick={() => (clientSecret ? setOpen(true) : start())} disabled={paying || preview} className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60">
+        {paying ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />}
+        {paying ? "Opening your bank…" : "Pay by bank"}
+      </button>
+      <Dialog open={open && !!clientSecret} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] max-h-[90dvh] overflow-y-auto p-4">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Landmark className="size-5 text-primary" />Pay by bank</DialogTitle>
+          </DialogHeader>
+          {clientSecret && (
+            <div id="pay-by-bank-checkout" className="rounded-xl overflow-hidden">
+              <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret: () => Promise.resolve(clientSecret) }}>
+                <EmbeddedCheckout />
+              </EmbeddedCheckoutProvider>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       {err && <p className="text-sm text-destructive">{err}</p>}
     </section>
   );
