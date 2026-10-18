@@ -18,7 +18,8 @@
 - [x] Repair Aussie Rules malformed dual-time import and saved guide; all five fixtures verified signed-in with correct UK times and channels, publication status unchanged; 72 sports tests pass.
 
 ## Current
-- [ ] Make shift sign-in respond to one click and show Preparing for shift until the scheduled start; verify without changing live staff shifts.
+- [x] Keep shift sign-in buttons mounted across timer ticks, guard duplicate submissions, show immediate feedback and read back the inserted shift; show Preparing for shift before the UK start in Working Status, Time Tracking and Staff Directory. Twelve tests pass, build OK; real signed-in home status and start-time transition verified without changing live shifts. Preview only.
+- [ ] Verify a fresh shift sign-in submission on screen — requesting user already has an open live shift; no live shift ended or duplicate shift created for testing.
 - [x] Correct Premier League Hub Now 4K shorthand and today's saved guide/queue record; eighteen split/import/read-back tests pass, publication unchanged. Importer change awaits publishing.
 - [x] Publish the private manual-credentials page so it opens at bmsupport.uk/manual-credentials, and add one clearly-labelled £0 demo manual customer (MANUAL-900001, login democust) so the page can be tried; live page serves the secure access form and profit totals are unaffected. Customer email receipt and login read-back still await the customer's own run.
 - [x] Move User credentials from a dashboard tool card into the header beside Customers, for admin and management only; the card is removed so the page cannot appear twice, 13 access tests pass and build OK. Screen check remains blocked by the dashboard password/PIN. Preview only.
