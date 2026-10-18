@@ -251,4 +251,4 @@
 
 ## Customer card grouping
 - [x] Combine email, last IP, year joined and years as customer into one block under a strong divider on admin customer cards; signed-in card screenshot confirms all five grouped, no clipping. Preview only.
-- [ ] Group Subscription Expires with Last Renewed Subscription on each account and rename both labels across the customer surfaces; screen check to follow.
+- [x] Group Subscription Expires with Last Renewed Subscription in one box on each customer account and rename both labels (also in sort choices, edit pop-up, Add order sidebar and Non-site credentials cards); signed-in card screenshot confirms the pairing and strong divider with no clipping, 8 customer tests pass, typecheck clean, build OK. Preview only.
