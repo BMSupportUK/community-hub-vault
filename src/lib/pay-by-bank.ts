@@ -3,12 +3,13 @@
  *
  * Stripe picks the final bank list inside its own payment picker and can
  * change it at any time, so this is an informational list of the UK banks
- * that appear there, not a guarantee. Every customer also sees the fallback:
+ * that appear there, not a guarantee. Source: Stripe-powered Pay by Bank UK
+ * list (Xero/Stripe, covers ~98% of UK consumers), checked Oct 2026. Every customer also sees the fallback:
  * if their bank is not supported they pay the Square card invoice instead.
  */
 export const PAY_BY_BANK_BANKS = [
+  "Barclays",
   "Bank of Scotland",
-  "Chase",
   "Danske Bank",
   "First Direct",
   "Halifax",
@@ -20,10 +21,8 @@ export const PAY_BY_BANK_BANKS = [
   "Revolut",
   "Royal Bank of Scotland",
   "Santander",
-  "Starling Bank",
   "TSB",
   "Ulster Bank",
-  "Virgin Money",
 ] as const;
 
 /** Shown under the bank list on the secure checkout page. */
