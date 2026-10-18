@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { Landmark, Loader2 } from "lucide-react";
@@ -16,6 +17,19 @@ export function PayByBankSection({ token, password, preview = false }: { token: 
   const [paying, setPaying] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [banks, setBanks] = useState<string[]>([...PAY_BY_BANK_BANKS]);
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase.from("pay_by_bank_banks").select("name").order("name");
+      if (alive && data && data.length) setBanks(data.map((r) => r.name));
+    };
+    void load();
+    const ch = supabase.channel(`pay-by-bank-banks-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "pay_by_bank_banks" }, () => { void load(); })
+      .subscribe();
+    return () => { alive = false; void supabase.removeChannel(ch); };
+  }, []);
 
   const stripeReady = useMemo(() => {
     try { getStripeEnvironment(); return true; } catch { return false; }
@@ -56,7 +70,7 @@ export function PayByBankSection({ token, password, preview = false }: { token: 
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-1.5">Supported banks:</p>
         <ul className="flex flex-wrap gap-1.5" aria-label="Banks supported by Pay by Bank">
-          {PAY_BY_BANK_BANKS.map((b) => (
+          {banks.map((b) => (
             <li key={b} className="rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-xs text-foreground">{b}</li>
           ))}
         </ul>

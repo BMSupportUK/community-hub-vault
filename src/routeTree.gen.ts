@@ -160,6 +160,7 @@ import { Route as ApiPublicHooksFinalLockRemindersRouteImport } from './routes/a
 import { Route as ApiPublicHooksInboxMessagePushRouteImport } from './routes/api/public/hooks/inbox-message-push'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
+import { Route as ApiPublicHooksPayByBankBanksRouteImport } from './routes/api/public/hooks/pay-by-bank-banks'
 import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
 import { Route as ApiPublicHooksRefreshStreamingStockRouteImport } from './routes/api/public/hooks/refresh-streaming-stock'
 import { Route as ApiPublicHooksRotaAutofillRouteImport } from './routes/api/public/hooks/rota-autofill'
@@ -1048,6 +1049,12 @@ const ApiPublicHooksNowpaymentsRoute =
     path: '/api/public/hooks/nowpayments',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksPayByBankBanksRoute =
+  ApiPublicHooksPayByBankBanksRouteImport.update({
+    id: '/api/public/hooks/pay-by-bank-banks',
+    path: '/api/public/hooks/pay-by-bank-banks',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRefreshStreamingPricesRoute =
   ApiPublicHooksRefreshStreamingPricesRouteImport.update({
     id: '/api/public/hooks/refresh-streaming-prices',
@@ -1340,6 +1347,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/pay-by-bank-banks': typeof ApiPublicHooksPayByBankBanksRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
@@ -1512,6 +1520,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/pay-by-bank-banks': typeof ApiPublicHooksPayByBankBanksRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
@@ -1690,6 +1699,7 @@ export interface FileRoutesById {
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/pay-by-bank-banks': typeof ApiPublicHooksPayByBankBanksRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
@@ -1867,6 +1877,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/pay-by-bank-banks'
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/rota-autofill'
@@ -2039,6 +2050,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/pay-by-bank-banks'
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/rota-autofill'
@@ -2216,6 +2228,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/pay-by-bank-banks'
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/rota-autofill'
@@ -2302,6 +2315,7 @@ export interface RootRouteChildren {
   ApiPublicHooksInboxMessagePushRoute: typeof ApiPublicHooksInboxMessagePushRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
+  ApiPublicHooksPayByBankBanksRoute: typeof ApiPublicHooksPayByBankBanksRoute
   ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
   ApiPublicHooksRefreshStreamingStockRoute: typeof ApiPublicHooksRefreshStreamingStockRoute
   ApiPublicHooksRotaAutofillRoute: typeof ApiPublicHooksRotaAutofillRoute
@@ -3381,6 +3395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksNowpaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/pay-by-bank-banks': {
+      id: '/api/public/hooks/pay-by-bank-banks'
+      path: '/api/public/hooks/pay-by-bank-banks'
+      fullPath: '/api/public/hooks/pay-by-bank-banks'
+      preLoaderRoute: typeof ApiPublicHooksPayByBankBanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/refresh-streaming-prices': {
       id: '/api/public/hooks/refresh-streaming-prices'
       path: '/api/public/hooks/refresh-streaming-prices'
@@ -3973,6 +3994,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksInboxMessagePushRoute: ApiPublicHooksInboxMessagePushRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
+  ApiPublicHooksPayByBankBanksRoute: ApiPublicHooksPayByBankBanksRoute,
   ApiPublicHooksRefreshStreamingPricesRoute:
     ApiPublicHooksRefreshStreamingPricesRoute,
   ApiPublicHooksRefreshStreamingStockRoute:
