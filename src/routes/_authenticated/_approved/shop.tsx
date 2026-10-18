@@ -7,6 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
 import { checkExistingUsername } from "@/lib/credential-username-check.functions";
+import { getManualCustomerEmails } from "@/lib/manual-customers.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { type ChannelGroup } from "@/components/app/ChannelColumn";
 import {
