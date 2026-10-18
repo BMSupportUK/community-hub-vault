@@ -1,29 +1,30 @@
-# Your own bank payment system (no card fees)
+# Bank payments without showing your account details
 
-Customers pay straight into your Wise account. The site confirms each payment on its own, with no Square or Stripe fees. Most of this already exists: each order gets a unique BM-xxxxxx reference, and Wise payment emails are matched to orders automatically. This plan makes that the main way to pay and closes the gaps.
+With a normal bank transfer, the customer always sees the name, sort code and account number they pay. To hide them, the customer approves the payment in their own banking app (open banking). The money still goes into your account, and they never see the details.
 
-## What changes for customers
-1. **Bank transfer shown first at checkout** for UK customers, labelled "Pay by bank – no fees". Card and crypto stay available below it.
-2. **A clearer payment screen**: account name, sort code and account number, the exact amount and the BM reference. Each one has a Copy button, and there's a "Pay in your banking app" step guide.
-3. **Instant confirmation**: as soon as the money lands, the order page shows "Payment received" and checkout carries on by itself. They don't have to wait for staff.
-4. **Optional small discount** for paying by bank, e.g. £1 off (only if you want it).
+## Recommended: open-banking "Pay by bank" as the main option
+1. At checkout, UK customers see "Pay by bank – no card fees" first.
+2. They pick their bank, approve the payment in their banking app, and land back on the order page with "Payment received". Checkout carries on by itself.
+3. Your account details stay hidden: the payment screen shows only "BM Support" and the amount.
+4. Fees are much lower than card: a small flat fee per payment, or a low percentage, depending on the provider. Payments arrive instantly and can't be charged back like card payments.
+5. Profit & costs shows each fee as usual.
 
-## What changes for you
-1. **Instant matching from Wise itself**: Wise tells the site the moment money arrives. Today the site waits for the payment email. Email matching stays as a backup.
-2. **The safety rules stay as they are**: an order is only marked paid when the reference and the exact amount both match one waiting order. Anything else goes to the Bank Transfer page for you to sort by hand.
-3. **Choose who can pay by bank**: everyone in the UK, or only customers you approve (how it works today), set with one switch on the Bank Transfer page.
-4. **Reminder**: if a payment hasn't arrived within 24 hours, the customer gets an automatic "still waiting" chat message and email.
-5. **Profit & costs** shows bank payments with a £0 fee, so you can see what you saved compared with card.
+Provider options (you'd choose one):
+- **Stripe Pay by bank**: already switched on in your site. No new account needed, so it's the quickest. Its fee is lower than card.
+- **GoCardless Instant Bank Pay** or **TrueLayer**: usually the cheapest per payment. Each needs a new business sign-up.
 
-## Limits to know
-- UK customers only (overseas customers keep card or crypto). This follows your existing rule.
-- A bank transfer can't be reversed by the site, so refunds are sent by hand from Wise.
-- Wise needs a one-time step in its settings to send payment alerts to the site. I'll give you the link to paste in.
+## Manual Wise transfer: kept, but locked down
+- Only customers you approve can see your details (as today), and only inside their own password-protected order page.
+- The details disappear once the order is paid or cancelled.
+- No details appear in emails, chat messages or receipts.
+- The existing automatic matching by BM reference and exact amount stays.
+
+## What I need from you
+- Which provider: Stripe (no extra setup) or GoCardless/TrueLayer (the lowest fees, but you need to open an account).
 
 ## Technical details
-- New public endpoint `src/routes/api/public/wise-webhook.ts` for the Wise `balances#credit` event. It checks Wise's signature using Wise's public key, re-fetches the transfer through the existing `wise.server.ts`, then calls `runWiseAutoMatch`. Repeat deliveries are ignored by the Wise transaction ID.
-- New `app_settings` key `bank_transfer_open_to_uk`. `can_pay_by_bank_transfer` honours it, and the UK-only check is kept.
-- Checkout ordering and the copy buttons go in `pay.$token.tsx` and the shop checkout. Realtime on `order_payments` drives the "Payment received" switch.
-- A scheduled server route sends the 24-hour reminder, reusing `payment-outstanding-email`.
-- Tests for the matching rules (the reference and amount must both match, duplicates are ignored, the UK-only gate) and for the open-to-UK switch.
+- Stripe route: reuse the existing Pay by bank flow and invoice creation. Put it first at checkout for UK customers, and confirm payment through the existing webhook and Realtime on `order_payments`.
+- GoCardless/TrueLayer route: add a server function to create the payment request and a signed webhook at `src/routes/api/public/<provider>-webhook.ts` that marks the order paid. The API key is stored as a secret.
+- Bank detail display in `pay.$token.tsx` is gated by `can_pay_by_bank_transfer`, shown only while the order is unpaid, and never added to chat or email templates.
+- Tests: details hidden after payment and for non-approved customers; a webhook with a bad signature is rejected.
 - Locked video and ticket/Talk code is not touched.
