@@ -2362,14 +2362,8 @@ function Checkout({
   const [email, setEmail] = useState(user?.email ?? "");
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [payMethod, setPayMethod] = useState<"square" | "stripe" | "wise" | "crypto">("square");
-  const [bankOnly, setBankOnly] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    (getMyBankTransferAccess({}) as Promise<any>)
-      .then((r) => { if (alive && r?.allowed) { setBankOnly(true); setPayMethod("wise"); } })
-      .catch(() => undefined);
-    return () => { alive = false; };
-  }, []);
+  const bankOnly = false;
+  // Manual bank transfer is staff-only (admins create those orders); customers pay by card, Pay by bank or crypto.
   const [existingUsername, setExistingUsername] = useState("");
   const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
