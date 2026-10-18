@@ -149,6 +149,41 @@ export const checkoutSquareCharge = createServerFn({ method: "POST" })
     });
   });
 
+/**
+ * Let the customer switch an unpaid order between bank transfer (Wise) and
+ * card while it is still awaiting payment. A reported bank transfer or a
+ * payment already underway can never be switched.
+ */
+export const switchCheckoutPayMethod = createServerFn({ method: "POST" })
+  .inputValidator((d) => creds.extend({ method: z.enum(["square", "wise"]) }).parse(d))
+  .handler(async ({ data }) => {
+    const u = await unlock(data.token, data.password);
+    if (!u) throw new Error("Not authorized");
+    const { supabaseAdmin, link } = u;
+    const order = await loadOrder(supabaseAdmin, link.order_id);
+    if (String(order.manual_pay_method ?? "").toLowerCase() === data.method) return { ok: true as const };
+    const { data: linkRow } = await supabaseAdmin
+      .from("order_checkout_links")
+      .select("payment_sent_at")
+      .eq("order_id", link.order_id)
+      .maybeSingle();
+    if (linkRow?.payment_sent_at) {
+      throw new Error("You've already told us a payment was sent for this order. Please wait for us to confirm it, or message us in the chat before paying another way.");
+    }
+    if (data.method === "wise") {
+      if (!order.user_id) throw new Error("Bank transfer isn't available for this order");
+      const { data: allowed } = await supabaseAdmin.rpc("can_pay_by_bank_transfer", { _user_id: String(order.user_id) });
+      if (!allowed) throw new Error("Bank transfer isn't available for this order");
+    }
+    const { error } = await supabaseAdmin
+      .from("orders")
+      .update({ manual_pay_method: data.method })
+      .eq("id", order.id)
+      .is("paid_at", null);
+    if (error) throw new Error("Could not switch the payment method — please try again");
+    return { ok: true as const };
+  });
+
 export const checkoutStripeSession = createServerFn({ method: "POST" })
   .inputValidator((d) => creds.extend({ environment: z.enum(["sandbox", "live"]), returnUrl: z.string().url(), bank: z.boolean().optional() }).parse(d))
   .handler(async ({ data }): Promise<{ clientSecret: string } | { error: string }> => {

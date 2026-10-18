@@ -25,7 +25,7 @@ export const getCheckout = createServerFn({ method: "POST" })
     const { supabaseAdmin, link } = u;
     const { data: order } = await supabaseAdmin
       .from("orders")
-      .select("id,order_ref,shipping_name,email,customer_type,existing_username,discount_code,wants_adult_content,total_cents,discount_cents,paid_at,completed_at,created_at,manual_pay_method,status")
+      .select("id,user_id,order_ref,shipping_name,email,customer_type,existing_username,discount_code,wants_adult_content,total_cents,discount_cents,paid_at,completed_at,created_at,manual_pay_method,status")
       .eq("id", link.order_id)
       .maybeSingle();
     if (!order) return { ok: false as const };
@@ -48,6 +48,13 @@ export const getCheckout = createServerFn({ method: "POST" })
     if (method === "wise") {
       const { data: b } = await supabaseAdmin.from("bank_transfer_details").select("account_name,sort_code,account_number,iban,bic").limit(1).maybeSingle();
       bank = b ?? null;
+    }
+    // Card orders owned by a bank-approved customer can still switch to bank
+    // transfer on this page — the method is never a one-way door.
+    let canPayByBank = false;
+    if (!order.paid_at && ["square", "stripe", "crypto", ""].includes(method) && (order as any).user_id) {
+      const { data: allowed } = await supabaseAdmin.rpc("can_pay_by_bank_transfer", { _user_id: String((order as any).user_id) });
+      canPayByBank = Boolean(allowed);
     }
     const { data: pay } = await supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", link.order_id).maybeSingle();
     const { data: invoiceSetting } = await supabaseAdmin.from("app_settings").select("value").eq("key", "invoice_template").maybeSingle();
@@ -90,6 +97,7 @@ export const getCheckout = createServerFn({ method: "POST" })
       items: (items ?? []).map((i: any) => ({ name: String(i.product_name ?? "Item"), qty: Number(i.quantity ?? 1), unitCents: Number(i.unit_price_cents ?? 0) })),
       invoice,
       bank,
+      canPayByBank,
       qdCode,
       invoiceTemplate: (invoiceSetting?.value as Record<string, string> | null) ?? undefined,
     };

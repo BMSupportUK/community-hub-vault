@@ -244,15 +244,32 @@ export function PayOrderDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{bankOnly ? "Pay by bank transfer" : "Choose how to pay"}</DialogTitle>
+            <DialogTitle>Choose how to pay</DialogTitle>
             <div className="text-sm text-muted-foreground">Total {format(amountCents)}</div>
           </DialogHeader>
           {bankOnly === null ? (
             <div className="text-xs text-muted-foreground py-3">Loading payment options…</div>
           ) : bankOnly ? (
-            <div className="pt-2">
-              <BankTransferPanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
-            </div>
+            <Tabs defaultValue="bank" className="pt-2">
+              <TabsList className={`grid w-full ${STRIPE_CHECKOUT_ENABLED ? "grid-cols-4" : "grid-cols-3"}`}>
+                <TabsTrigger value="bank">Bank</TabsTrigger>
+                <TabsTrigger value="square">Square</TabsTrigger>
+                {STRIPE_CHECKOUT_ENABLED && <TabsTrigger value="stripe">Stripe</TabsTrigger>}
+                <TabsTrigger value="usdt">USDT</TabsTrigger>
+              </TabsList>
+              <TabsContent value="bank" className="mt-3">
+                <BankTransferPanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
+              </TabsContent>
+              <TabsContent value="square" className="mt-3">
+                <SquareInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
+              </TabsContent>
+              {STRIPE_CHECKOUT_ENABLED && <TabsContent value="stripe" className="mt-3">
+                <StripeInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
+              </TabsContent>}
+              <TabsContent value="usdt" className="mt-3">
+                <CryptoPanel orderId={orderId} amountCents={amountCents} canPay onChange={handleChange} />
+              </TabsContent>
+            </Tabs>
           ) : (
             <Tabs defaultValue="square" className="pt-2">
               <TabsList className={`grid w-full ${STRIPE_CHECKOUT_ENABLED ? "grid-cols-3" : "grid-cols-2"}`}>

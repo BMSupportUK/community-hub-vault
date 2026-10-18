@@ -2855,22 +2855,22 @@ function Checkout({
         )}
           <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
             <div className="text-sm font-medium">Payment method</div>
-            {bankOnly ? (
-              <div className="rounded-lg border border-primary bg-primary/10 p-3 text-sm">
-                <span className="font-semibold">Bank transfer (UK only)</span>
-                <span className="block text-xs text-muted-foreground">UK bank accounts only. Your bank details and reference will be shown on your secure checkout page.</span>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {(["square", "stripe", "crypto"] as const).filter((m) => m !== "stripe" || STRIPE_CHECKOUT_ENABLED).map((m) => (
-                  <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
-                    className={`rounded-lg border p-3 text-left text-sm ${payMethod === m ? "border-primary bg-primary/10" : "border-border"}`}>
-                    <span className="font-semibold">{m === "square" ? "Square (card)" : m === "stripe" ? "Stripe (card or bank)" : "Crypto (USDT)"}</span>
-                    {m === "square" && <span className="ml-2 text-[10px] uppercase tracking-wide rounded bg-primary text-primary-foreground px-1.5 py-0.5">Preferred</span>}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className={`grid gap-2 ${bankOnly ? "grid-cols-2" : "grid-cols-3"}`}>
+              {bankOnly && (
+                <button key="wise" type="button" onClick={() => setPayMethod("wise")} aria-pressed={payMethod === "wise"}
+                  className={`rounded-lg border p-3 text-left text-sm ${payMethod === "wise" ? "border-primary bg-primary/10" : "border-border"}`}>
+                  <span className="font-semibold">Bank transfer (UK only)</span>
+                  <span className="block text-xs text-muted-foreground">UK bank accounts only. Your bank details and reference will be shown on your secure checkout page.</span>
+                </button>
+              )}
+              {(["square", "stripe", "crypto"] as const).filter((m) => m !== "stripe" || STRIPE_CHECKOUT_ENABLED).map((m) => (
+                <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
+                  className={`rounded-lg border p-3 text-left text-sm ${payMethod === m ? "border-primary bg-primary/10" : "border-border"}`}>
+                  <span className="font-semibold">{m === "square" ? "Square (card)" : m === "stripe" ? "Stripe (card or bank)" : "Crypto (USDT)"}</span>
+                  {m === "square" && <span className="ml-2 text-[10px] uppercase tracking-wide rounded bg-primary text-primary-foreground px-1.5 py-0.5">Preferred</span>}
+                </button>
+              ))}
+            </div>
           </div>
          <div className="shrink-0 p-3 sm:p-5 border-t border-border flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">
@@ -4789,15 +4789,37 @@ function PayOrderDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{bankOnly ? "Pay by bank transfer" : "Choose how to pay"}</DialogTitle>
+            <DialogTitle>Choose how to pay</DialogTitle>
             <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
           </DialogHeader>
           {bankOnly === null ? (
             <div className="text-xs text-muted-foreground py-3">Loading payment options…</div>
           ) : bankOnly ? (
-            <div className="pt-2">
-              <BankTransferPanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
-            </div>
+            <Tabs defaultValue="bank" className="pt-2">
+              <TabsList className={`grid w-full ${STRIPE_CHECKOUT_ENABLED ? "grid-cols-4" : "grid-cols-3"}`}>
+                <TabsTrigger value="bank">Bank</TabsTrigger>
+                <TabsTrigger value="square">Square</TabsTrigger>
+                <TabsTrigger value="usdt">USDT</TabsTrigger>
+                {STRIPE_CHECKOUT_ENABLED && <TabsTrigger value="stripe">Stripe</TabsTrigger>}
+              </TabsList>
+              <TabsContent value="bank" className="mt-3">
+                <BankTransferPanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
+              </TabsContent>
+              <TabsContent value="square" className="mt-3">
+                <ProviderInvoicePayment method="square" orderId={orderId} amountCents={amountCents} onPaid={handleChange} />
+              </TabsContent>
+              <TabsContent value="usdt" className="mt-3">
+                <CryptoPanel
+                  orderId={orderId}
+                  amountCents={amountCents}
+                  canPay={true}
+                  onChange={handleChange}
+                />
+              </TabsContent>
+              {STRIPE_CHECKOUT_ENABLED && <TabsContent value="stripe" className="mt-3">
+                <ProviderInvoicePayment method="stripe" orderId={orderId} amountCents={amountCents} onPaid={handleChange} />
+              </TabsContent>}
+            </Tabs>
           ) : (
           <Tabs defaultValue="square" className="pt-2">
             <TabsList className={`grid w-full ${STRIPE_CHECKOUT_ENABLED ? "grid-cols-3" : "grid-cols-2"}`}>

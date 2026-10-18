@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { STRIPE_CHECKOUT_ENABLED } from "@/lib/payment-methods";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Copy, CreditCard, Download, Hourglass, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
+import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Copy, CreditCard, Download, Hourglass, Landmark, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
 import installGuideIllustration from "@/assets/manual-order-install-guide.jpg";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,8 @@ export type CheckoutView = {
   items: { name: string; qty: number; unitCents: number }[];
   invoice: { status: string; url: string | null; number: string | null } | null;
   bank: { account_name: string | null; sort_code: string | null; account_number: string | null; iban: string | null; bic: string | null } | null;
+  /** The order owner is approved for bank transfer, so a card order can switch to it. */
+  canPayByBank?: boolean;
   qdCode?: { label: string; code: string } | null;
   invoiceTemplate?: InvoiceTemplateSettings;
 };
@@ -92,8 +94,9 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 }
 
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
   const step = checkoutStep(order);
@@ -322,6 +325,11 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <p className="text-sm text-muted-foreground">Loading invoice…</p>
               )}
               <p className="text-xs text-center text-muted-foreground">This page updates automatically once your payment goes through.</p>
+              {view.canPayByBank && onSwitchPayMethod ? (
+                <button type="button" disabled={preview || switching} onClick={async () => { if (!onSwitchPayMethod) return; setSwitching(true); try { await onSwitchPayMethod("wise"); } finally { setSwitching(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
+                  {switching ? <Loader2 className="size-4 animate-spin" /> : <Landmark className="size-4" />} Pay by bank transfer instead
+                </button>
+              ) : null}
             </aside>
           ) : paymentSidebar && method === "crypto" ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
@@ -376,6 +384,14 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   </button>
                 )}
               </section>
+              {onSwitchPayMethod && !awaitingConfirmation ? (
+                <section className="rounded-2xl border border-border bg-card p-5">
+                  <button type="button" disabled={preview || switching} onClick={async () => { if (!onSwitchPayMethod) return; setSwitching(true); try { await onSwitchPayMethod("square"); } finally { setSwitching(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
+                    {switching ? <Loader2 className="size-4 animate-spin" /> : <CreditCard className="size-4" />} Prefer to pay by card instead
+                  </button>
+                  <p className="mt-2 text-xs text-muted-foreground text-center">Switch to a secure card payment on this order — you can go back to bank transfer any time before you pay.</p>
+                </section>
+              ) : null}
             </aside>
           ) : paymentSidebar && method === "cash" ? (
             <aside className="min-w-0 lg:sticky lg:top-4">
