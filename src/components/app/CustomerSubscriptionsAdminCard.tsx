@@ -1,4 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { customerListGroup } from "@/lib/customer-list-group";
+import { subscribeCustomerListRefresh } from "@/lib/customer-list-refresh";
 import { customerDate, customerHasRecordedYear, customerShowsNoRenewal } from "@/lib/customer-date";
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
 import { sortCustomers, type CustomerSortDir, type CustomerSortField } from "@/lib/customer-sort";
@@ -16,7 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
-type Customer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; accounts: Account[]; package: string | null; packageAllocated: boolean; renewedAt: string | null; renewedDateAdjusted: boolean; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
+type Customer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; manualSetupPending?: boolean; accounts: Account[]; package: string | null; packageAllocated: boolean; renewedAt: string | null; renewedDateAdjusted: boolean; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
 type ManualOrder = { id: string; ref: string; name: string; createdAt: string; paidAt: string | null; customerId: string; accountId: string | null; kind: string };
 const date = customerDate;
 
@@ -147,8 +149,8 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
 
     await load();
   };
-  const load = async () => {
-    setLoading(true);
+  const load = async (quiet = false) => {
+    if (!quiet) setLoading(true);
     const { data, error } = await supabase.rpc("admin_customer_subscription_list");
     setLoading(false);
     setError(error?.message ?? "");
@@ -161,7 +163,10 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
       }
     }
   };
+  const refreshRef = useRef(load);
+  refreshRef.current = load;
   useEffect(() => { void load(); }, []);
+  useEffect(() => subscribeCustomerListRefresh(() => { void refreshRef.current(true); }), []);
   const award = async () => {
     if (!reward || !account) return;
     setBusy(true);
@@ -173,14 +178,12 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
     await load();
   };
   const visible = rows.filter((c) => [c.username, c.displayName, c.referrerName, ...c.accounts.map((a) => a.login)].some((v) => v?.toLowerCase().includes(search.toLowerCase())));
-  const siteRows = visible.filter((c) => c.hasSiteAccount);
-  const manualRows = visible.filter((c) => !c.hasSiteAccount);
-  const isMulti = (c: Customer) => c.accounts.length > 1;
-  const singleRows = siteRows.filter((c) => !isMulti(c));
-  const multiRows = siteRows.filter(isMulti);
-  const singleCount = rows.filter((c) => c.hasSiteAccount && !isMulti(c)).length;
-  const multiCount = rows.filter((c) => c.hasSiteAccount && isMulti(c)).length;
-  const manualCount = rows.filter((c) => !c.hasSiteAccount).length;
+  const manualRows = visible.filter((c) => customerListGroup(c) === "manual");
+  const singleRows = visible.filter((c) => customerListGroup(c) === "single");
+  const multiRows = visible.filter((c) => customerListGroup(c) === "multi");
+  const singleCount = rows.filter((c) => customerListGroup(c) === "single").length;
+  const multiCount = rows.filter((c) => customerListGroup(c) === "multi").length;
+  const manualCount = rows.filter((c) => customerListGroup(c) === "manual").length;
   const withNoRenewal = (list: Customer[]) => list.map((c) => {
     const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
     const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
@@ -219,6 +222,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, memberToolbar, membe
             <header className="flex flex-wrap items-center gap-2">
               <h3 className="break-words font-semibold">{name}</h3>
               <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
+              {c.manualSetupPending && <span className="text-xs text-muted-foreground">Awaiting profile setup</span>}
               {c.hasSiteAccount && memberHeader?.(c.userId)}
               {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
               {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
