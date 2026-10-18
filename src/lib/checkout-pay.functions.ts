@@ -203,6 +203,8 @@ export const checkoutStripeSession = createServerFn({ method: "POST" })
         return_url: data.returnUrl,
         ...(data.bank ? { payment_method_types: ["pay_by_bank"] } : {}),
         line_items: [{ price_data: { currency: "gbp", product_data: { name: `Order ${ref}` }, unit_amount: order.total_cents }, quantity: 1 }],
+        // BM Support issues its own invoices/receipts — never ask Stripe to create one.
+        invoice_creation: { enabled: false },
         payment_intent_data: { description: `Order ${ref}`, metadata: { order_id: String(order.id) } },
         metadata: { order_id: String(order.id), ...(order.user_id ? { user_id: String(order.user_id) } : {}) },
       } as any).catch((e: unknown) => {
