@@ -244,7 +244,7 @@ export function PayOrderDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{bankOnly ? "Pay by bank transfer" : "Choose how to pay"}</DialogTitle>
+            <DialogTitle>Choose how to pay</DialogTitle>
             <div className="text-sm text-muted-foreground">Total {format(amountCents)}</div>
           </DialogHeader>
           {bankOnly === null ? (
