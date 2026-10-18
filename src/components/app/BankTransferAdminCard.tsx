@@ -11,6 +11,7 @@ import {
   saveBankTransferDetails,
   searchUsersForBankTransfer,
 } from "@/lib/bank-transfer.functions";
+import { getManualCustomerEmails } from "@/lib/manual-customers.functions";
 import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 
 type Grant = {
@@ -45,6 +46,7 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
   const search = useServerFn(searchUsersForBankTransfer);
   const grant = useServerFn(grantBankTransfer);
   const revoke = useServerFn(revokeBankTransfer);
+  const fetchManualEmails = useServerFn(getManualCustomerEmails);
 
   const [view, setView] = useState<BankTransferView>(initialView);
   const [form, setForm] = useState(blank);
