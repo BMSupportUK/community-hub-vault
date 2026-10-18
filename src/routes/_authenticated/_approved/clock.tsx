@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Clock, LogIn, LogOut, Loader2, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +18,7 @@ import { askEarlyFinishReason, shiftFinishAction, ukClock } from "@/lib/shift-fi
 import { requestCoverSignIn } from "@/lib/cover-request.functions";
 import { askCoverRequest } from "@/lib/cover-request";
 import { todayClosingTime } from "@/lib/business-hours";
+import { isPreparingForShift } from "@/lib/shift-start";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   head: () => ({ meta: [
@@ -69,6 +70,7 @@ function ClockPage() {
   const [now, setNow] = useState(() => Date.now());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const signInFlight = useRef(false);
   const [myShift, setMyShift] = useState<Shift | null>(null);
   const [myBreak, setMyBreak] = useState<Break | null>(null);
   const [activeShifts, setActiveShifts] = useState<Shift[]>([]);
@@ -145,7 +147,10 @@ function ClockPage() {
   })();
 
   const clockIn = async () => {
-    if (!user) return;
+    if (!user || myShift || signInFlight.current) return;
+    signInFlight.current = true;
+    setBusy(true);
+    try {
     if (!canSignIn) {
       if (coverPending) return toast.info("Your cover request is waiting for admin or management.");
       // Moderators work their own hours, so they enter the end time; staff,
@@ -167,12 +172,18 @@ function ClockPage() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from("shifts").insert({ user_id: user.id });
-    setBusy(false);
+    const { data: inserted, error } = await supabase.from("shifts").insert({ user_id: user.id }).select("*").single();
     if (error) return toast.error(error.message);
+    setMyShift(inserted);
     toast.success("Clocked in");
     notifyShift({ data: { kind: "clock_in" } }).catch(() => {});
     refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't sign in. Please try again.");
+    } finally {
+      signInFlight.current = false;
+      setBusy(false);
+    }
   };
 
   const clockOut = async () => {
@@ -210,6 +221,7 @@ function ClockPage() {
 
 
   const sessionSeconds = myShift ? (now - new Date(myShift.clock_in).getTime()) / 1000 : 0;
+  const preparing = isPreparingForShift(now, myShift?.clock_in ?? null, signWindow ? { shift_date: ukClock(now).date, start_time: signWindow.start, end_time: signWindow.end } : null);
   const breakElapsed = myBreak ? (now - new Date(myBreak.started_at).getTime()) / 1000 : 0;
   const breakRemaining = myBreak ? BREAK_LIMITS[myBreak.kind] - breakElapsed : 0;
   const overBreak = breakRemaining < 0;
@@ -270,15 +282,15 @@ function ClockPage() {
                     <div className="font-semibold">Not clocked in</div>
                     <div className="text-sm text-muted-foreground">Start your shift to track hours.</div>
                   </div>
-                  <button onClick={clockIn} disabled={busy || (!canSignIn && coverPending)} title={canSignIn ? "Clock in" : coverPending ? "Cover request waiting for admin or management" : "Not on the rota now — request to sign in to cover (needs approval)"} className="w-full px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium inline-flex items-center justify-center gap-2 disabled:opacity-60">
-                    <LogIn className="size-4" /> {canSignIn ? "Clock In" : coverPending ? "Cover request pending" : "Request to cover"}
-                  </button>
+                  <Button onClick={clockIn} disabled={busy || (!canSignIn && coverPending)} title={canSignIn ? "Clock in" : coverPending ? "Cover request waiting for admin or management" : "Not on the rota now — request to sign in to cover (needs approval)"} className="w-full">
+                    {busy ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4" />} {busy ? "Signing in…" : canSignIn ? "Clock In" : coverPending ? "Cover request pending" : "Request to cover"}
+                  </Button>
                 </div>
               )}
               {myShift && !myBreak && (
                 <div className="flex flex-col gap-4">
                   <div>
-                    <div className="font-semibold text-emerald-400">Working — {fmt(sessionSeconds)}</div>
+                    <div role="status" className={cn("font-semibold", preparing ? "text-warning" : "text-success")}>{preparing ? "Preparing for shift" : `Working — ${fmt(sessionSeconds)}`}</div>
                     <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
                   </div>
                   <div className="flex flex-col gap-2">

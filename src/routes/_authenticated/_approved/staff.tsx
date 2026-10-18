@@ -312,7 +312,7 @@ function StaffPage() {
                                         : "font-medium text-emerald-400"
                                     }
                                   >
-                                    {shiftStatus[p.id]?.preShift ? "Get ready for shift" : "Working"}
+                                    {shiftStatus[p.id]?.preShift ? "Preparing for shift" : "Working"}
                                   </span>
                                 ) : (
                                   <PresenceInline
