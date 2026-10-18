@@ -2,7 +2,8 @@
 # Roadmap
 
 ## Manually added customer onboarding
-- [ ] Show manually added accounts immediately in Manual customers with editable details and automatically refresh after profile completion, preserving subscription records.
+- [x] Include manually added accounts before any purchase, group unfinished accounts under Manual customers, and refresh both card data sources on creation and every 15 visible seconds. Required profile completion updates names and moves the same card to its site group; admin subscription entries remain intact. Forty-six tests pass, build OK, authenticated read confirms the existing pending account is listed.
+- [ ] Verify Add user, editing and customer completion through the unlocked Customers screen — blocked by the dashboard password/PIN gate; no live customer account or email created for testing.
 
 ## Manual credentials access
 - [x] Restore existing-customer buttons alongside manual customer lookup in the Add order right sidebar; place the bypass-account-creation checkbox under Existing customer only and reset it when switching customer type or starting a fresh order. Preview only; screen check remains PIN-blocked.
