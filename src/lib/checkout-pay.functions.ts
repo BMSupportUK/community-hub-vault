@@ -155,7 +155,7 @@ export const checkoutSquareCharge = createServerFn({ method: "POST" })
  * payment already underway can never be switched.
  */
 export const switchCheckoutPayMethod = createServerFn({ method: "POST" })
-  .inputValidator((d) => creds.extend({ method: z.enum(["square", "wise"]) }).parse(d))
+  .inputValidator((d) => creds.extend({ method: z.enum(["square", "wise", "crypto"]) }).parse(d))
   .handler(async ({ data }) => {
     const u = await unlock(data.token, data.password);
     if (!u) throw new Error("Not authorized");
