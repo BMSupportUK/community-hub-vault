@@ -146,7 +146,16 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   };
   // Our own bank-transfer details. On a manual bank-transfer order this is
   // column 3, beside Pay by bank; elsewhere it is the single payment sidebar.
-  const bankTransferPanel = (heading: string, intro: string | null, showCardSwitch: boolean, showBack: boolean) => (
+  const referenceWarning = () => (
+    <section className="rounded-2xl border-2 border-warning bg-warning/10 p-5 flex gap-3 min-w-0">
+      <AlertTriangle className="size-6 text-warning shrink-0" />
+      <div className="space-y-1 min-w-0">
+        <p className="font-bold text-warning break-words">IMPORTANT: You MUST use <span className="font-mono">{order.ref}</span> as your payment reference.</p>
+        <p className="text-sm">Do not add anything else to the reference. Payments without this exact reference cannot be matched to your order and will be delayed.</p>
+      </div>
+    </section>
+  );
+  const bankTransferPanel = (heading: string, intro: string | null, showCardSwitch: boolean, showBack: boolean, showRefWarning = true) => (
     <aside className="min-w-0 space-y-4 lg:sticky lg:top-4">
       {showBack ? (
         <button type="button" onClick={() => setBankNotListed(false)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -169,13 +178,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
           </div>
         ) : <p className="text-sm text-muted-foreground">Bank details are not available right now — please message us in the chat.</p>}
       </section>
-      <section className="rounded-2xl border-2 border-warning bg-warning/10 p-5 flex gap-3 min-w-0">
-        <AlertTriangle className="size-6 text-warning shrink-0" />
-        <div className="space-y-1 min-w-0">
-          <p className="font-bold text-warning break-words">IMPORTANT: You MUST use <span className="font-mono">{order.ref}</span> as your payment reference.</p>
-          <p className="text-sm">Do not add anything else to the reference. Payments without this exact reference cannot be matched to your order and will be delayed.</p>
-        </div>
-      </section>
+        {showRefWarning ? referenceWarning() : null}
       <section className="rounded-2xl border border-border bg-card p-5 space-y-3">
         <div className="flex gap-3 items-start">
           <Clock className="size-5 text-primary shrink-0 mt-0.5" />
@@ -435,7 +438,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
           ) : wiseThreeCol ? (
             <>
               {bankNotListed ? (
-                bankTransferPanel("Bank transfer details", null, false, false)
+                bankTransferPanel("Bank transfer details", null, false, false, false)
               ) : (
                 <aside className="min-w-0 lg:sticky lg:top-4">{payByBank}</aside>
               )}
@@ -447,6 +450,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                     <Landmark className="size-4" /> {bankNotListed ? "Back to Pay by bank" : "My bank isn't listed — show bank details"}
                   </button>
                 </section>
+                {bankNotListed ? referenceWarning() : null}
               </aside>
             </>
           ) : wiseBankDetails ? (
