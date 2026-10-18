@@ -85,16 +85,22 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
   const create = useServerFn(createUserManually);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim() && !name.trim()) {
+      toast.error("Enter a name or an email address.");
+      return;
+    }
     setBusy(true);
     try {
-      const res = await create({ data: { email } });
-      if (res.banned) toast.warning("Account created, but that email is on the blacklist so it's banned.");
+      const res = await create({ data: { email: email.trim(), name: name.trim() } });
+      if (res.nameOnly) toast.success("Customer added to the list. No account or email — add their details when they buy.");
+      else if (res.banned) toast.warning("Account created, but that email is on the blacklist so it's banned.");
       else if (res.sent) toast.success("Account created and login details emailed.");
       else toast.warning("Account created, but the email couldn't be sent. Use Email new password on their card.");
-      setOpen(false); setEmail("");
+      setOpen(false); setEmail(""); setName("");
       onCreated?.();
     } catch (err: any) {
       toast.error(err?.message ?? "Couldn't create the account");
