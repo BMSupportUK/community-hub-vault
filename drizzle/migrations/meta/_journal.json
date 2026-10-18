@@ -1198,6 +1198,13 @@
       "when": 1792325837109,
       "tag": "0170_admin_set_manual_customer_expiry",
       "breakpoints": true
+    },
+    {
+      "idx": 171,
+      "version": "7",
+      "when": 1792327623191,
+      "tag": "0171_manual_name_only_customers",
+      "breakpoints": true
     }
   ]
 }

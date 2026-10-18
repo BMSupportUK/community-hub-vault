@@ -46,7 +46,8 @@ export const createUserManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z.object({
-      email: z.string().trim().toLowerCase().email().max(255),
+      email: z.string().trim().toLowerCase().email().max(255).optional().or(z.literal("")),
+      name: z.string().trim().min(1).max(100).optional().or(z.literal("")),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -55,14 +56,30 @@ export const createUserManually = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!canSendTempPassword((roles ?? []).map((r) => String(r.role)))) throw new Error("Only admin and management can do this.");
 
+    const email = data.email?.trim() || "";
+    const name = data.name?.trim() || "";
+    if (!email && !name) throw new Error("Enter a name or an email address.");
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Name only: list the customer without an account or email.
+    if (!email) {
+      const { data: row, error: nErr } = await supabaseAdmin
+        .from("manual_name_customers")
+        .insert({ name, created_by: callerId } as never)
+        .select("id")
+        .single();
+      if (nErr || !row) throw new Error("The customer could not be added to the customer list. Please try again.");
+      return { userId: (row as { id: string }).id, sent: false, banned: false, nameOnly: true };
+    }
+
     // Customer chooses their own username/display name on first sign-in.
     const placeholder = `user_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
 
     const password = generateTempPassword();
     const displayName: string | undefined = undefined;
     const { data: created, error: cErr } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
+      email,
       password,
       email_confirm: true,
       user_metadata: { username: placeholder, display_name: placeholder, needs_profile: true, admin_created: true },
@@ -88,8 +105,8 @@ export const createUserManually = createServerFn({ method: "POST" })
     await supabaseAdmin.from("password_change_required").upsert({ user_id: id, set_by: callerId } as never);
 
     const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
-    const res = await sendAndLogEmail(supabaseAdmin, "manual-account-login", data.email, {
-      templateData: { displayName, email: data.email, password, loginUrl: "https://bmsupport.uk/login" },
+    const res = await sendAndLogEmail(supabaseAdmin, "manual-account-login", email, {
+      templateData: { displayName, email, password, loginUrl: "https://bmsupport.uk/login" },
       idempotencyKey: `new-account-${id}`,
     });
     return { userId: id, sent: res.sent, banned: !!isBanned };

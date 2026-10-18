@@ -85,16 +85,22 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
   const create = useServerFn(createUserManually);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim() && !name.trim()) {
+      toast.error("Enter a name or an email address.");
+      return;
+    }
     setBusy(true);
     try {
-      const res = await create({ data: { email } });
-      if (res.banned) toast.warning("Account created, but that email is on the blacklist so it's banned.");
+      const res = await create({ data: { email: email.trim(), name: name.trim() } });
+      if (res.nameOnly) toast.success("Customer added to the list. No account or email — add their details when they buy.");
+      else if (res.banned) toast.warning("Account created, but that email is on the blacklist so it's banned.");
       else if (res.sent) toast.success("Account created and login details emailed.");
       else toast.warning("Account created, but the email couldn't be sent. Use Email new password on their card.");
-      setOpen(false); setEmail("");
+      setOpen(false); setEmail(""); setName("");
       onCreated?.();
     } catch (err: any) {
       toast.error(err?.message ?? "Couldn't create the account");
@@ -112,13 +118,16 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
         <div className="fixed inset-0 z-50 bg-background/80 grid place-items-center p-4">
           <form onSubmit={submit} className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl bg-surface border border-border p-6 space-y-3">
             <h2 className="font-display font-semibold text-lg">Add a user</h2>
-            <p className="text-sm text-muted-foreground">They're approved straight away and get an email with their login details. The first time they sign in they choose their own password, username and display name.</p>
-            <label className="block text-xs font-medium text-muted-foreground">Email
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+            <p className="text-sm text-muted-foreground">Add just a name to list them as a manual customer, or add an email too and they'll get their login details — the first time they sign in they choose their own password, username and display name.</p>
+            <label className="block text-xs font-medium text-muted-foreground">Name
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} placeholder="Customer name" className={input} />
+            </label>
+            <label className="block text-xs font-medium text-muted-foreground">Email (optional — sends their login details)
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
             </label>
             <div className="flex gap-2 pt-1">
               <button type="submit" disabled={busy} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50">
-                {busy ? "Creating…" : "Create and email login"}
+                {busy ? "Creating…" : email.trim() ? "Create and email login" : "Add to customer list"}
               </button>
               <button type="button" onClick={() => setOpen(false)} disabled={busy} className="px-4 h-11 rounded-lg bg-surface-2 border border-border text-sm">Cancel</button>
             </div>
