@@ -36,6 +36,8 @@ export type CheckoutView = {
   items: { name: string; qty: number; unitCents: number }[];
   invoice: { status: string; url: string | null; number: string | null } | null;
   bank: { account_name: string | null; sort_code: string | null; account_number: string | null; iban: string | null; bic: string | null } | null;
+  /** The order owner is approved for bank transfer, so a card order can switch to it. */
+  canPayByBank?: boolean;
   qdCode?: { label: string; code: string } | null;
   invoiceTemplate?: InvoiceTemplateSettings;
 };
@@ -92,8 +94,9 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 }
 
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
   const [sending, setSending] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
   const step = checkoutStep(order);

@@ -97,6 +97,7 @@ export const getCheckout = createServerFn({ method: "POST" })
       items: (items ?? []).map((i: any) => ({ name: String(i.product_name ?? "Item"), qty: Number(i.quantity ?? 1), unitCents: Number(i.unit_price_cents ?? 0) })),
       invoice,
       bank,
+      canPayByBank,
       qdCode,
       invoiceTemplate: (invoiceSetting?.value as Record<string, string> | null) ?? undefined,
     };
