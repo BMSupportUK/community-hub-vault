@@ -31,9 +31,10 @@ test('Orders names the actual settled payment, not an abandoned bank attempt', (
   }
   expect(orderPaymentLabel(orderPaymentGroup([{ ...pending, status: 'COMPLETED' }], verified, 'wise'))).toBe('Open Banking');
 });
-test('unpaid method uses current saved choice and unverified Stripe is not guessed', () => {
+test('unpaid orders show Pending until checkout confirms Open Banking or Wise', () => {
   const payments = [{ provider: 'stripe', provider_payment_id: 'cs_bank', status: 'PENDING' }];
-  expect(orderPaymentLabel(orderPaymentGroup(payments, new Map([['cs_bank', true]]), 'wise'))).toBe('Wise');
-  expect(orderPaymentLabel(orderPaymentGroup(payments, new Map([['cs_bank', true]]), 'stripe'))).toBe('Open Banking');
-  expect(orderPaymentLabel(orderPaymentGroup(payments, new Map(), 'stripe'))).toBe('Stripe · method unverified');
+  expect(orderPaymentLabel(orderPaymentGroup(payments, new Map([['cs_bank', true]]), 'wise'))).toBe('Pending');
+  expect(orderPaymentLabel(orderPaymentGroup(payments, new Map([['cs_bank', true]]), 'stripe'))).toBe('Pending');
+  expect(orderPaymentLabel(orderPaymentGroup([], new Map(), 'stripe'))).toBe('Pending');
+  expect(orderPaymentLabel(orderPaymentGroup([], new Map(), 'wise'))).toBe('Pending');
 });
