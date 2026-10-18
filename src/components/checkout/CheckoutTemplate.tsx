@@ -119,9 +119,11 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   // Payment details (bank info, card form, crypto) sit in a right sidebar on
   // wide screens while the order is awaiting payment.
   const paymentSidebar = ["wise", "stripe", "square", "crypto", "cash"].includes(method) && !paid && !order.cancelled && visibleStage === 1;
-  // A manual bank-transfer order gets three columns: order details, Pay by
-  // bank, then our own account details for banks the open-banking list misses.
-  const threeColWise = paymentSidebar && method === "wise" && !!payByBank && !awaitingConfirmation;
+  // A manual bank-transfer order shows Pay by bank first; only when the
+  // customer taps "My bank isn't listed" do our own account details replace it.
+  const [bankNotListed, setBankNotListed] = useState(false);
+  const wisePayByBank = paymentSidebar && method === "wise" && !!payByBank && !awaitingConfirmation && !bankNotListed;
+  const wiseBankDetails = paymentSidebar && method === "wise" && !wisePayByBank;
   const accountSidebar = paid && !order.cancelled && visibleStage >= 3;
   const paidSidebar = paid && !order.cancelled && visibleStage === 2;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
@@ -144,8 +146,13 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   };
   // Our own bank-transfer details. On a manual bank-transfer order this is
   // column 3, beside Pay by bank; elsewhere it is the single payment sidebar.
-  const bankTransferPanel = (heading: string, intro: string | null, showCardSwitch: boolean) => (
+  const bankTransferPanel = (heading: string, intro: string | null, showCardSwitch: boolean, showBack: boolean) => (
     <aside className="min-w-0 space-y-4 lg:sticky lg:top-4">
+      {showBack ? (
+        <button type="button" onClick={() => setBankNotListed(false)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ChevronLeft className="size-4" /> Back to Pay by bank
+        </button>
+      ) : null}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-semibold">{heading}</h2>
         {intro ? <p className="text-xs text-muted-foreground mt-1">{intro}</p> : null}
@@ -260,7 +267,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </div>
           )}
 
-          <div className={splitLayout ? (threeColWise ? "grid gap-3 md:grid-cols-3 md:items-start" : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start") : "space-y-6"}>
+          <div className={splitLayout ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
             <section className={`rounded-2xl border border-border bg-card p-5 ${splitLayout ? "min-w-0" : ""}`}>
             <h2 className="font-semibold mb-3">Order breakdown</h2>
             <div className="space-y-2 text-sm">
@@ -425,13 +432,19 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 </button>
               ) : null}
             </aside>
-          ) : threeColWise ? (
-            <>
-              <aside className="min-w-0 lg:sticky lg:top-4">{payByBank}</aside>
-              {bankTransferPanel("Is your bank not listed?", "If your bank isn't in the Pay by bank list, send a normal bank transfer using our account details instead.", true)}
-            </>
-          ) : paymentSidebar && method === "wise" ? (
-            bankTransferPanel("Bank transfer details", null, !awaitingConfirmation)
+          ) : wisePayByBank ? (
+            <aside className="min-w-0 space-y-4 lg:sticky lg:top-4">
+              {payByBank}
+              <section className="rounded-2xl border border-border bg-card p-5">
+                <h2 className="font-semibold">Is your bank not listed?</h2>
+                <p className="mt-1 text-xs text-muted-foreground">If your bank isn't in the Pay by bank list, you can send a normal bank transfer using our account details instead.</p>
+                <button type="button" onClick={() => setBankNotListed(true)} className="mt-3 w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-sm font-semibold hover:bg-surface-2">
+                  <Landmark className="size-4" /> My bank isn't listed — show bank details
+                </button>
+              </section>
+            </aside>
+          ) : wiseBankDetails ? (
+            bankTransferPanel("Bank transfer details", null, !awaitingConfirmation, !!payByBank && !awaitingConfirmation)
           ) : paymentSidebar && method === "cash" ? (
             <aside className="min-w-0 lg:sticky lg:top-4">
               <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">
