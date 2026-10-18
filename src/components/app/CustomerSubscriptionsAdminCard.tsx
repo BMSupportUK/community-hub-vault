@@ -6,6 +6,7 @@ import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentY
 import { sortCustomers, type CustomerSortDir, type CustomerSortField } from "@/lib/customer-sort";
 import { Gift, Loader2, RefreshCw, Pencil, Link2, ArrowDown, ArrowUp, Check, BadgeCheck } from "lucide-react";
 import { getCustomerDiscountFlags } from "@/lib/customer-discount-flags";
+import { getCustomerBankTransferFlags } from "@/lib/customer-bank-transfer-flags";
 import { referralBonusState } from "@/lib/customer-referral-bonus";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +47,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
   const { user } = useAuth();
   const [rows, setRows] = useState<Customer[]>([]);
   const [discountUserIds, setDiscountUserIds] = useState<Set<string>>(new Set());
+  const [bankTransferUserIds, setBankTransferUserIds] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<CustomerListGroup>("single");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<CustomerSortField>("default");
@@ -190,8 +192,17 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
       // The tick is a convenience marker only — never block the customer list.
     }
   };
+  const loadBankTransferFlags = async () => {
+    try {
+      const res = await getCustomerBankTransferFlags({} as never);
+      setBankTransferUserIds(new Set(res?.userIds ?? []));
+    } catch {
+      // The £ sign is a convenience marker only — never block the customer list.
+    }
+  };
   const load = async (quiet = false) => {
     if (!quiet) void loadDiscountFlags();
+    if (!quiet) void loadBankTransferFlags();
     if (!quiet) setLoading(true);
     const { data, error } = await supabase.rpc("admin_customer_subscription_list");
     setLoading(false);
@@ -266,6 +277,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
           <article key={c.userId} className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-card/70 p-4">
             <header className="flex flex-wrap items-center gap-2">
               <h3 className="break-words font-semibold">{name}</h3>
+              {bankTransferUserIds.has(c.userId) && <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-[10px] font-bold leading-none text-primary" title="Bank transfer set up" aria-label="Bank transfer set up">£</span>}
               {discountUserIds.has(c.userId) && <span className="inline-flex shrink-0" title="Discount code added" aria-label="Discount code added"><BadgeCheck className="size-4 text-success" aria-hidden="true" /></span>}
               <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
               {c.manualSetupPending && <span className="text-xs text-muted-foreground">Awaiting profile setup</span>}
