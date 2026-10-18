@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Open Banking profit breakdown
+- [x] Add Open Banking immediately before Wise with independent sales, actual provider fees, net received and year/month profit totals; identify bank payments from verified Stripe methods without changing payment records. Nineteen tests pass and preview build OK.
+- [ ] Verify the real Open Banking breakdown on screen — signed-in finance page redirects to the required staff PIN gate; awaits user unlock.
+
 ## Manually added customer onboarding
 - [x] Include manually added accounts before any purchase, group unfinished accounts under Manual customers, and refresh both card data sources on creation and every 15 visible seconds. Required profile completion updates names and moves the same card to its site group; admin subscription entries remain intact. Forty-six tests pass, build OK, authenticated read confirms the existing pending account is listed.
 - [ ] Verify Add user, editing and customer completion through the unlocked Customers screen — blocked by the dashboard password/PIN gate; no live customer account or email created for testing.
