@@ -601,8 +601,9 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
   }
 
   // "Stan event: EventS1 name: Harlequins v Bath - PREM Rugby" → channel
-  // "Stan Event S1", event after "name:".
-  const stanEvent = head.match(/^([a-z][a-z0-9 +&'./-]*?)\s+event\s*:\s*event\s*([a-z]?\d{1,3})\s+name\s*:\s*(.+)$/i);
+  // "Stan Event S1", event after "name:". Newer posts drop "name:" and put
+  // the title straight after the slot: "Stan event: EventS1: Wuhan: Day 7 - WTA 1000".
+  const stanEvent = head.match(/^([a-z][a-z0-9 +&'./-]*?)\s+event\s*:\s*event\s*([a-z]?\d{1,3})\s*(?:name\s*:\s*|\s*:\s*)(.+)$/i);
   if (stanEvent?.[1] && stanEvent[2] && stanEvent[3]) {
     const brand = stanEvent[1].trim().replace(/^\w+$/, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
     return {
