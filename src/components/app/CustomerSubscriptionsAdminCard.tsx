@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { customerDate, customerHasRecordedYear, customerShowsNoRenewal } from "@/lib/customer-date";
 import { customerJoinedYear, customerYearsFromYear, joinedYearToDate, ukCurrentYear } from "@/lib/customer-joined-year";
-import { Gift, Loader2, RefreshCw, Pencil, Link2 } from "lucide-react";
+import { sortCustomers, type CustomerSortDir, type CustomerSortField } from "@/lib/customer-sort";
+import { Gift, Loader2, RefreshCw, Pencil, Link2, ArrowDown, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
