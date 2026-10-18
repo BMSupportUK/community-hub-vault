@@ -10,6 +10,7 @@ import { ManualCheckoutPin } from "@/components/checkout/ManualCheckoutPin";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
+import { PayByBankSection } from "@/components/checkout/PayByBankSection";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
@@ -55,7 +56,7 @@ function DemoPayPage() {
           <ArrowLeft className="size-4" /> Back to my orders
         </Link>
       </div>
-      <CheckoutTemplate view={DEMO_CHECKOUT_VIEW as CheckoutView} onPaymentSent={demoOnly} onContinueToSetup={demoOnly} />
+      <CheckoutTemplate view={DEMO_CHECKOUT_VIEW as CheckoutView} preview onPaymentSent={demoOnly} onContinueToSetup={demoOnly} payByBank={<PayByBankSection token="demo" password="" preview />} />
     </main>
   );
 }
@@ -249,6 +250,9 @@ function PayPage() {
         ) : undefined}
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
+        ) : undefined}
+        payByBank={["square", "stripe"].includes(view.order.method) && !view.order.paidAt && !view.order.cancelled ? (
+          <PayByBankSection token={token} password={pw} />
         ) : undefined}
         appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}
         videoHelp={(!canManage || isVideoTestOrder(token)) && !view.order.cancelled ? <OrderVideoCallCustomer token={token} password={pw} mobile={isMobilePhone()} inline /> : undefined}
