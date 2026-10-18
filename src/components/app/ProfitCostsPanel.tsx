@@ -10,8 +10,6 @@ import { calculateProfit, allocateOrderAmounts, type ProfitPayment } from "@/lib
 import { refreshProviderFees } from "@/lib/provider-fees.functions";
 import { PROFIT_METHOD_LABELS as METHOD_LABELS, profitPaymentGroup as paymentGroup, profitMethodTabs, settledProfitProvider, orderPaymentGroup } from '@/lib/profit-payment-groups';
 import { getProfitOpenBankingOrders } from '@/lib/profit-payment-groups.functions';
-import { OPEN_BANKING_DEMO, profitDisplayOrders } from '@/lib/profit-open-banking-demo';
-import { Switch } from '@/components/ui/switch';
 
 import { useProviderFeeRefresh } from '@/hooks/use-provider-fee-refresh';
 
@@ -38,7 +36,6 @@ export function ProfitCostsPanel() {
   const [saving, setSaving] = useState<string | null>(null);
   const [refreshingFees, setRefreshingFees] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [demo, setDemo] = useState(false);
 
   const load = async () => {
     const [p, c, o] = await Promise.all([
@@ -117,12 +114,11 @@ export function ProfitCostsPanel() {
     void load();
   };
 
-  const all = profitDisplayOrders(orders ?? [], demo);
-  const displayMethods: Record<string, string> = demo ? { [OPEN_BANKING_DEMO.id]: 'open_banking' } : methodOf;
+  const all = orders ?? [];
   const methodTabs = useMemo(() => {
     return profitMethodTabs(Object.values(methodOf));
   }, [all, methodOf]);
-  const list = tab === "profit" || tab === "costs" || tab === "packages" ? all : all.filter((o) => paymentGroup(displayMethods[o.id]) === tab);
+  const list = tab === "profit" || tab === "costs" || tab === "packages" ? all : all.filter((o) => paymentGroup(methodOf[o.id]) === tab);
   const years = useMemo(() => [...new Set(list.map((o) => new Date(o.created_at).getFullYear()))].sort((a, b) => b - a), [list]);
   const ay = year && years.includes(year) ? year : years[0] ?? null;
   const yearOrders = list.filter((o) => new Date(o.created_at).getFullYear() === ay);
@@ -167,18 +163,13 @@ export function ProfitCostsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
-        <Switch id="open-banking-demo" checked={demo} onCheckedChange={(checked) => { setDemo(checked); setTab('open_banking'); setYear(null); setMonth(null); }} />
-        <label htmlFor="open-banking-demo" className="text-sm font-medium">Open Banking demo</label>
-        {demo && <p className="text-sm text-warning" role="status">Demo only · £1 payment · sample fee 21p · net received 79p. No money taken; live totals unchanged.</p>}
-      </div>
       <nav aria-label="Profit views" className="flex flex-wrap items-center gap-1 border-y border-border/70 bg-card/85 p-2 backdrop-blur-md">
         <Button variant="ghost" className={selection(tab === "profit")} aria-pressed={tab === "profit"} onClick={() => setTab("profit")}><ChartNoAxesCombined className="size-4" />Total profit</Button>
         {methodTabs.map((m) => <Button variant="ghost" key={m} className={selection(tab === m)} aria-pressed={tab === m} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</Button>)}
         <Button variant="ghost" className={`${selection(tab === "costs")} sm:ml-auto`} aria-pressed={tab === "costs"} onClick={() => setTab("costs")}><Package className="size-4" />Product costs</Button>
         <Button variant="ghost" className={selection(tab === "packages")} aria-pressed={tab === "packages"} onClick={() => setTab("packages")}><ChartPie className="size-4" />Packages</Button>
       </nav>
-      <div className="flex justify-end"><Button variant="outline" size="sm" disabled={refreshingFees || demo} onClick={async () => {
+      <div className="flex justify-end"><Button variant="outline" size="sm" disabled={refreshingFees} onClick={async () => {
         setRefreshingFees(true);
         try {
           const result = await refreshProviderFees({ data: { offset: 0 } });
@@ -278,7 +269,7 @@ export function ProfitCostsPanel() {
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{money(o.total_cents)}</td>
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{f.feesMissing ? (f.fees ? `${money(f.fees)} + unknown` : "Unknown") : money(f.fees)}</td>
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{f.feesMissing ? "Unknown" : money(o.total_cents - f.fees)}</td>
-                            <td className="px-3 py-2 whitespace-nowrap text-xs">{METHOD_LABELS[paymentGroup(displayMethods[o.id]) ?? ""] ?? displayMethods[o.id] ?? "—"}</td>
+                            <td className="px-3 py-2 whitespace-nowrap text-xs">{METHOD_LABELS[paymentGroup(methodOf[o.id]) ?? ""] ?? methodOf[o.id] ?? "—"}</td>
                           </tr>
                         ); })}
                       </tbody>
