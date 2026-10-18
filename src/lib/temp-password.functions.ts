@@ -72,6 +72,12 @@ export const createUserManually = createServerFn({ method: "POST" })
     }
     const id = created.user.id;
 
+    const { error: customerError } = await supabaseAdmin.from("manually_added_customers").insert({ user_id: id, created_by: callerId });
+    if (customerError) {
+      await supabaseAdmin.auth.admin.deleteUser(id);
+      throw new Error("The customer could not be added to the customer list. Please try again.");
+    }
+
     // Added by staff = already approved: member role, gate application closed.
     await supabaseAdmin.from("user_roles").delete().eq("user_id", id).eq("role", "pending" as never);
     const { data: isBanned } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", id).eq("role", "banned" as never).maybeSingle();

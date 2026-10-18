@@ -1,6 +1,7 @@
 import { ClientOnly, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { CUSTOMER_LIST_CHANGED, subscribeCustomerListRefresh } from "@/lib/customer-list-refresh";
 import {
   ShieldCheck,
   Search,
@@ -109,8 +110,8 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   const [addRolesFor, setAddRolesFor] = useState<string | null>(null);
   
 
-  const loadAll = async () => {
-    setLoading(true);
+  const loadAll = async (quiet = false) => {
+    if (!quiet) setLoading(true);
     const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }, emailsRes, { data: credsData }] =
       await Promise.all([
         supabase
@@ -163,6 +164,12 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     setRoleDefs((defs ?? []) as RoleDef[]);
     setLoading(false);
   };
+  const refreshRef = useRef(loadAll);
+  refreshRef.current = loadAll;
+  useEffect(() => {
+    if (!isAdmin) return;
+    return subscribeCustomerListRefresh(() => { void refreshRef.current(true); });
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isAdmin) loadAll();
@@ -358,8 +365,8 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   };
   const addRoleRow = rows.find((r) => r.id === addRolesFor);
   return <>
-    {children({ toolbar: <><AddUserButton onCreated={loadAll} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras, header: memberHeader, rolesRow: memberRoles })}
-    <Dialog open={tab === "roles"} onOpenChange={(open) => { if (!open) setTab("members"); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Manage roles</DialogTitle></DialogHeader><RolesManager defs={roleDefs} onChange={loadAll} /></DialogContent></Dialog>
+    {children({ toolbar: <><AddUserButton onCreated={() => window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED))} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras, header: memberHeader, rolesRow: memberRoles })}
+    <Dialog open={tab === "roles"} onOpenChange={(open) => { if (!open) setTab("members"); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Manage roles</DialogTitle></DialogHeader><RolesManager defs={roleDefs} onChange={() => void loadAll()} /></DialogContent></Dialog>
     <Dialog open={!!addRoleRow} onOpenChange={(open) => { if (!open) setAddRolesFor(null); }}><DialogContent><DialogHeader><DialogTitle>Add role · {addRoleRow?.username || addRoleRow?.display_name}</DialogTitle></DialogHeader><div className="flex flex-wrap gap-2">{addRoleRow && activeRoles.filter((rd) => !addRoleRow.roles.includes(rd.name)).map((rd) => <Button key={rd.name} variant="outline" size="sm" disabled={saving !== null} onClick={() => void toggleRole(addRoleRow, rd.name)}>{displayRoleLabel(rd.name, rd.label)}</Button>)}</div></DialogContent></Dialog>
     {historyFor && <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />}
   </>;
