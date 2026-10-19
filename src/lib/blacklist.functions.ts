@@ -3,6 +3,20 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+async function assertBlacklistAccess(supabase: any, userId: string): Promise<boolean> {
+  const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  const roles: string[] = (data ?? []).map((r: any) => String(r.role));
+  if (roles.some((r) => r === "admin" || r === "management")) return true;
+  if (roles.includes("staff")) return false;
+  throw new Error("Forbidden: staff only");
+}
+
+function maskEmail(v: string) {
+  const [u, d] = v.split("@");
+  return `${(u ?? "").slice(0, 1)}***@${d ?? ""}`;
+}
+
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw new Error(error.message);
@@ -42,13 +56,16 @@ export const listBlacklist = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    const full = await assertBlacklistAccess(supabase, userId);
     const { data, error } = await supabaseAdmin
       .from("blacklist_entries")
       .select("id, kind, value, reason, created_by, created_at")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return { entries: data ?? [] };
+    const entries = (data ?? []).map((e: any) =>
+      full || e.kind !== "email" ? e : { ...e, value: maskEmail(String(e.value)), created_by: null },
+    );
+    return { entries };
   });
 
 export const addBlacklist = createServerFn({ method: "POST" })
@@ -62,7 +79,7 @@ export const addBlacklist = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertBlacklistAccess(supabase, userId);
 
     const value = normalize(data.kind, data.value);
     if (data.kind === "email") {
@@ -145,7 +162,7 @@ export const removeBlacklist = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertBlacklistAccess(supabase, userId);
     const { error } = await supabaseAdmin.from("blacklist_entries").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
