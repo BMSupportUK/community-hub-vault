@@ -161,6 +161,13 @@ function ChannelPage() {
   const hideMembersPanel = slug === "welcome" || slug === "rules";
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<"staff" | "members">("staff");
+  // iPhone/iPad: keep the people list tucked away so the chat gets the full
+  // width; the Staff/Members buttons slide it out on demand.
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  useEffect(() => {
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    setIsTouchDevice(ios);
+  }, []);
   const [mobilePeopleOpen, setMobilePeopleOpen] = useState(false);
   // Authorised change (user request, 2026-09-28): online counts moved out of the
   // staff/members panel headers into these two tabs.
@@ -1277,8 +1284,8 @@ function ChannelPage() {
             </span>
           )}
         </div>
-        <div className="flex min-w-0 items-center gap-2 overflow-x-auto rounded-2xl border border-primary/30 bg-card/50 px-2 py-1.5 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl scrollbar-hide md:ml-auto md:px-3 md:py-2">
-          <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+        <div className="flex min-w-0 flex-wrap items-center justify-start gap-1.5 rounded-2xl border border-primary/30 bg-card/50 px-2 py-1.5 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl md:ml-auto md:justify-end md:gap-2 md:px-3 md:py-2">
+          <div className={cn("flex shrink-0 items-center gap-1.5", !isTouchDevice && "md:hidden")}>
             <button
               type="button"
               onClick={() => {
@@ -2461,7 +2468,7 @@ function ChannelPage() {
             </div>
           </div>
         </div>
-        <aside className="relative z-0 hidden h-full max-h-full min-h-0 w-56 shrink-0 overflow-hidden border-l border-border bg-surface/40 md:flex md:flex-col xl:w-64">
+        <aside className={cn("relative z-0 hidden h-full max-h-full min-h-0 w-56 shrink-0 overflow-hidden border-l border-border bg-surface/40 xl:w-64", !isTouchDevice && "md:flex md:flex-col")}>
           {hideMembersPanel ? (
             <>
               <div className="flex-1 min-h-0 overflow-hidden">
