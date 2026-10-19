@@ -1,3 +1,5 @@
+import { optedOutUsers } from "./notification-prefs.server";
+import { notifyCategory } from "./notification-categories";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -92,11 +94,13 @@ export const removeSubscription = createServerFn({ method: "POST" })
 
 export async function broadcast(title: string, body: string, url: string, tag: string) {
   const webpush = await getWebPush();
-  const { data: subs, error } = await supabaseAdmin
+  const { data: subs0, error } = await supabaseAdmin
     .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth");
+    .select("id, endpoint, p256dh, auth, user_id");
   if (error) throw new Error(error.message);
-  if (!subs?.length) return { sent: 0 };
+  const out0 = await optedOutUsers(notifyCategory(undefined, tag, url), "browser");
+  const subs = (subs0 ?? []).filter((s: any) => !out0.has(String(s.user_id)));
+  if (!subs.length) return { sent: 0 };
 
   const payload = JSON.stringify({ title, body, url, tag });
   const stale: string[] = [];
@@ -131,6 +135,8 @@ export async function broadcastToUser(
   kind?: string,
 ) {
   const webpush = await getWebPush();
+  const out1 = await optedOutUsers(notifyCategory(kind, tag, url), "browser");
+  if (out1.has(userId)) return { sent: 0 };
   const { data: subs } = await supabaseAdmin
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth")
@@ -175,11 +181,13 @@ export async function broadcastToRoles(
     .in("role", roles);
   const userIds = Array.from(new Set((roleRows ?? []).map((r) => String(r.user_id))));
   if (!userIds.length) return { sent: 0 };
-  const { data: subs } = await supabaseAdmin
+  const out2 = await optedOutUsers(notifyCategory(kind, tag, url), "browser");
+  const { data: subs0 } = await supabaseAdmin
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth, user_id")
-    .in("user_id", userIds);
-  if (!subs?.length) return { sent: 0 };
+    .in("user_id", userIds.filter((u) => !out2.has(u)));
+  const subs = subs0 ?? [];
+  if (!subs.length) return { sent: 0 };
 
   const payload = JSON.stringify({ title, body, url, tag, kind });
   const stale: string[] = [];

@@ -1,3 +1,5 @@
+import { optedOutUsers } from "./notification-prefs.server";
+import { notifyCategory } from "./notification-categories";
 import { phoneAlertFor, DEFAULT_PHONE_CHANNEL } from "@/lib/phone-alerts";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -82,12 +84,12 @@ export async function pushToAdmins(args: {
 
   const { data: tokens, error: tokErr } = await supabaseAdmin
     .from("device_push_tokens")
-    .select("token")
+    .select("token, user_id")
     .in("user_id", userIds);
   if (tokErr) throw new Error(tokErr.message);
   if (!tokens?.length) return { sent: 0, failed: 0, skipped: "no device tokens" };
 
-  return sendFcmToTokens(tokens.map((t) => t.token), args);
+  return sendFcmToTokens(await dropOptedOut(tokens as any[], args), args);
 }
 
 /** Send a push to ALL users that have a registered device token. */
@@ -101,10 +103,10 @@ export async function pushToAllDevices(args: {
   }
   const { data: tokens, error } = await supabaseAdmin
     .from("device_push_tokens")
-    .select("token");
+    .select("token, user_id");
   if (error) throw new Error(error.message);
   if (!tokens?.length) return { sent: 0, failed: 0, skipped: "no device tokens" };
-  return sendFcmToTokens(tokens.map((t) => t.token), args);
+  return sendFcmToTokens(await dropOptedOut(tokens as any[], args), args);
 }
 
 /** Send a push to users with any of the given roles. */
@@ -125,11 +127,11 @@ export async function pushToRoles(
 
   const { data: tokens, error: tokErr } = await supabaseAdmin
     .from("device_push_tokens")
-    .select("token")
+    .select("token, user_id")
     .in("user_id", userIds);
   if (tokErr) throw new Error(tokErr.message);
   if (!tokens?.length) return { sent: 0, failed: 0, skipped: "no device tokens" };
-  return sendFcmToTokens(tokens.map((t) => t.token), args);
+  return sendFcmToTokens(await dropOptedOut(tokens as any[], args), args);
 }
 
 /** Send a push to a single user's registered devices. */
@@ -142,11 +144,11 @@ export async function pushToUser(
   }
   const { data: tokens, error } = await supabaseAdmin
     .from("device_push_tokens")
-    .select("token")
+    .select("token, user_id")
     .eq("user_id", userId);
   if (error) throw new Error(error.message);
   if (!tokens?.length) return { sent: 0, failed: 0, skipped: "no device tokens" };
-  return sendFcmToTokens(tokens.map((t) => t.token), args);
+  return sendFcmToTokens(await dropOptedOut(tokens as any[], args), args);
 }
 
 async function sendFcmToTokens(
@@ -221,4 +223,11 @@ async function sendFcmToTokens(
     await supabaseAdmin.from("device_push_tokens").delete().in("token", stale);
   }
   return { sent, failed };
+}
+async function dropOptedOut(
+  tokens: { token: string; user_id: string }[],
+  args: { data?: Record<string, string> },
+): Promise<string[]> {
+  const out = await optedOutUsers(notifyCategory(args.data?.kind, args.data?.tag, args.data?.url), "phone");
+  return tokens.filter((t) => !out.has(String(t.user_id))).map((t) => t.token);
 }
