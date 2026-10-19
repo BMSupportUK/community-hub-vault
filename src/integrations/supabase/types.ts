@@ -4457,6 +4457,30 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_channel_prefs: {
+        Row: {
+          browser: boolean
+          category: string
+          phone: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          browser?: boolean
+          category: string
+          phone?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          browser?: boolean
+          category?: string
+          phone?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_log: {
         Row: {
           channel: string

@@ -1247,6 +1247,13 @@
       "when": 1792435944367,
       "tag": "0177_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 178,
+      "version": "7",
+      "when": 1792438235741,
+      "tag": "0178_notification_channel_prefs",
+      "breakpoints": true
     }
   ]
 }
