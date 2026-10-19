@@ -7,6 +7,7 @@
 - [ ] Check real payment confirmation and Orders labels on screen after publishing — dashboard verification is blocked by the required password/staff PIN; no live payment created or modified for testing.
 
 ## Today's break allocation and rota booking
+- [x] Dane J’s account gets breaks when working alone via the shared planner used by saved allocations and UI fallback; other staff still require cover. Existing times/records untouched; 20 break tests pass.
 - [x] Repair empty saved break allocations when cover becomes available; Dane’s 11:45, 14:30 and 16:45 UK times verified on his signed-in home screen, with existing allocations and recorded breaks preserved.
 - [x] Block bookings on crossed-out rota days in the UI and database; signed-in rota shows today Closed without Claim and future days with Claim. UK-midnight and break regressions: 18 tests pass.
 
