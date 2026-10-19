@@ -32,7 +32,6 @@ import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-fl
 import { VpnBadge } from "@/lib/vpn-flags";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import { SoundSettings } from "@/components/app/SoundSettings";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
@@ -145,8 +144,6 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { demoReferrals } from "@/lib/demo-data";
-import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
-import { NotificationChannelPrefs } from "@/components/app/NotificationChannelPrefs";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -186,7 +183,7 @@ function ProfilePage() {
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
   const initialTab = (["profile","creds","tickets","referrals","friends","subscription"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "subscription";
-  const allowedTabs = ["profile","creds","tickets","referrals","friends","notifications","theme","subscription"] as const;
+  const allowedTabs = ["profile","creds","tickets","referrals","friends","theme","subscription"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
@@ -553,7 +550,6 @@ function ProfilePage() {
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
-    ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
   ];
 
@@ -852,19 +848,6 @@ function ProfilePage() {
             </TabsContent>
           )}
 
-          {isOwner && (
-            <TabsContent value="notifications" className={paneClass}>
-              <div className="mb-4 rounded-xl border border-border bg-surface-1 p-4 space-y-2">
-                <h3 className="font-display text-sm font-semibold">Phone & browser alerts</h3>
-                <p className="text-xs text-muted-foreground">
-                  Get alerts even when BM Support is closed. On iPhone, open BM Support from your Home Screen icon first, then tap Enable.
-                </p>
-                <PushNotificationsToggle />
-                <NotificationChannelPrefs />
-              </div>
-              <SoundSettings />
-            </TabsContent>
-          )}
 
           {isOwner && (
             <TabsContent value="theme" className={paneClass}>

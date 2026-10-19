@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Volume2, VolumeX, Play, Bell } from "lucide-react";
+import { Play, Bell } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,6 +17,8 @@ export function SoundSettings() {
   const [prefs, setPrefs] = useState(() => getSoundPrefs());
 
   useEffect(() => onSoundPrefsChange(() => setPrefs(getSoundPrefs())), []);
+  // The old mute switch was removed; per-type alert switches replace it.
+  useEffect(() => { if (getSoundPrefs().muted) setSoundPrefs({ muted: false }); }, []);
 
   const volumePct = Math.round(prefs.volume * 100);
 
@@ -35,46 +36,6 @@ export function SoundSettings() {
         </div>
       </header>
 
-      {/* Mute */}
-      <div className="flex items-center justify-between rounded-xl border border-purple-500/30 bg-purple-900/40 px-4 py-3">
-        <div className="flex items-center gap-3">
-          {prefs.muted ? (
-            <VolumeX className="size-5 text-rose-300" />
-          ) : (
-            <Volume2 className="size-5 text-emerald-300" />
-          )}
-          <div>
-            <Label className="text-base">Mute all notification sounds</Label>
-            <p className="text-xs text-purple-200/70">You'll still see on-screen alerts and badges.</p>
-          </div>
-        </div>
-        <Switch
-          checked={prefs.muted}
-          onCheckedChange={(v) => setSoundPrefs({ muted: v })}
-        />
-      </div>
-
-      {/* Volume */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-base">Volume</Label>
-          <span className="text-sm font-mono text-purple-100">{volumePct}%</span>
-        </div>
-        <Slider
-          value={[volumePct]}
-          min={0}
-          max={200}
-          step={5}
-          disabled={prefs.muted}
-          onValueChange={([v]) => setSoundPrefs({ volume: v / 100 })}
-        />
-        <div className="flex justify-between text-xs text-purple-200/70">
-          <span>Quiet</span>
-          <span>Default (100%)</span>
-          <span>Loud (200%)</span>
-        </div>
-      </div>
-
       {/* Test buttons */}
       <div className="space-y-2">
         <Label className="text-base">Test sounds</Label>
@@ -87,7 +48,7 @@ export function SoundSettings() {
               key={s.label}
               variant="secondary"
               size="sm"
-              disabled={prefs.muted}
+              
               onClick={() => playSoundFromGesture(s.src, { gain: s.gain, label: `test-${s.label}` })}
               className="bg-purple-800/60 hover:bg-purple-700/80 border border-purple-500/40"
             >
