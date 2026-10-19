@@ -13,8 +13,8 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.2.4",
-  versionCode: 16,
+  versionName: "1.2.5",
+  versionCode: 17,
   /** Raw CDN asset (served as application/zip) — proxied by /api/public/android-apk. */
   assetUrl: androidApkAsset.url,
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
@@ -23,5 +23,5 @@ export const ANDROID_RELEASE = {
   /** QR target: a landing page with one tap-to-download button, so camera
    *  apps / link previews opening the URL can't start duplicate downloads. */
   qrUrl: "https://bmsupport.uk/get-android-app",
-  notes: "Every phone alert now has its own unique tone — including break due, break ending, main break ending, cover approved/declined, signups, mentions and messages.",
+  notes: "Missed clock-in now has its own spoken alert, and ticket-reply and early-finish alerts always use their own voice.",
 } as const;
