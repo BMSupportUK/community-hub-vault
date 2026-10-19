@@ -12,11 +12,6 @@ async function assertBlacklistAccess(supabase: any, userId: string): Promise<boo
   throw new Error("Forbidden: staff only");
 }
 
-function maskEmail(v: string) {
-  const [u, d] = v.split("@");
-  return `${(u ?? "").slice(0, 1)}***@${d ?? ""}`;
-}
-
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw new Error(error.message);
@@ -56,16 +51,13 @@ export const listBlacklist = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const full = await assertBlacklistAccess(supabase, userId);
+    await assertBlacklistAccess(supabase, userId);
     const { data, error } = await supabaseAdmin
       .from("blacklist_entries")
       .select("id, kind, value, reason, created_by, created_at")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    const entries = (data ?? []).map((e: any) =>
-      full || e.kind !== "email" ? e : { ...e, value: maskEmail(String(e.value)), created_by: null },
-    );
-    return { entries };
+    return { entries: data ?? [] };
   });
 
 export const addBlacklist = createServerFn({ method: "POST" })
