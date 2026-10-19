@@ -145,6 +145,7 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { demoReferrals } from "@/lib/demo-data";
+import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -852,6 +853,13 @@ function ProfilePage() {
 
           {isOwner && (
             <TabsContent value="notifications" className={paneClass}>
+              <div className="mb-4 rounded-xl border border-border bg-surface-1 p-4 space-y-2">
+                <h3 className="font-display text-sm font-semibold">Phone & browser alerts</h3>
+                <p className="text-xs text-muted-foreground">
+                  Get alerts even when BM Support is closed. On iPhone, open BM Support from your Home Screen icon first, then tap Enable.
+                </p>
+                <PushNotificationsToggle />
+              </div>
               <SoundSettings />
             </TabsContent>
           )}
