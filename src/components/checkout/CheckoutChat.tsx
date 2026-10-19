@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listCheckoutChat, sendCheckoutChat } from "@/lib/checkout.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { createPortal } from "react-dom";
+import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
 
 type Msg = { id: string; sender: string; content: string; created_at: string };
 
@@ -23,10 +24,7 @@ function Thread({ messages, mine }: { messages: Msg[]; mine: "customer" | "staff
       {messages.map((m) => (
         <div key={m.id} className={`flex ${m.sender === mine ? "justify-end" : "justify-start"}`}>
           <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${m.sender === mine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-surface-2 text-foreground rounded-bl-sm"}`}>
-            {m.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
-              /^https?:\/\//.test(part)
-                ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline font-medium break-all">{part}</a>
-                : <span key={i}>{part}</span>)}
+            <MentionText content={m.content} />
             <div className="text-[10px] opacity-70 mt-0.5">{new Date(m.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</div>
           </div>
         </div>
@@ -39,6 +37,8 @@ function Thread({ messages, mine }: { messages: Msg[]; mine: "customer" | "staff
 function Composer({ onSend }: { onSend: (t: string) => Promise<void> }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const mention = useMentionAutocomplete({ value: text, onChange: setText, textareaRef: inputRef, canBroadcast: false });
   const submit = async () => {
     const t = text.trim();
     if (!t || busy) return;
@@ -46,8 +46,9 @@ function Composer({ onSend }: { onSend: (t: string) => Promise<void> }) {
     try { await onSend(t); setText(""); } finally { setBusy(false); }
   };
   return (
-    <div className="flex gap-2 p-2 border-t border-border">
-      <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submit(); }} placeholder="Type a message…" maxLength={2000} className="flex-1 h-10 rounded-full border border-border bg-background px-4 text-sm" />
+    <div className="relative flex gap-2 p-2 border-t border-border">
+      {mention.dropdown}
+      <input ref={inputRef} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (mention.onKeyDown(e)) return; if (e.key === "Enter") submit(); }} placeholder="Type a message… (@ to tag)" maxLength={2000} className="flex-1 h-10 rounded-full border border-border bg-background px-4 text-sm" />
       <button type="button" onClick={submit} disabled={busy || !text.trim()} aria-label="Send" className="size-10 grid place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"><Send className="size-4" /></button>
     </div>
   );
