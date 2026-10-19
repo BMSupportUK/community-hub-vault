@@ -21,6 +21,10 @@
 ## Things to check with GoCardless
 - Their fee for Instant Bank Pay. Stripe charges 0.5% + 20p. Ask GoCardless for their current UK rate.
 - How quickly the money is paid out to you. GoCardless usually takes a few working days.
+- **Business address:** GoCardless needs your address when you sign up, and it may appear in the emails they send customers. Ask them to switch off customer emails, or to use your own emails instead. The customer's bank screen shows only your business name.
+
+## Business address on our side
+- Our own BM Support invoices and receipts won't show your business address. I'll check them during the build and remove it if it appears anywhere.
 
 ## Technical details
 - New `gocardless.server.ts`: Billing Request plus Billing Request Flow (`payment_request`, GBP, `scheme: faster_payments`), with sandbox/live chosen from the token. Secrets: `GOCARDLESS_ACCESS_TOKEN_LIVE`, `GOCARDLESS_ACCESS_TOKEN_SANDBOX`, `GOCARDLESS_WEBHOOK_SECRET`.
