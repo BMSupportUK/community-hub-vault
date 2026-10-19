@@ -1,4 +1,4 @@
-import { STRIPE_CHECKOUT_ENABLED, effectiveCardProvider } from "@/lib/payment-methods";
+import { STRIPE_CHECKOUT_ENABLED } from "@/lib/payment-methods";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Check, X, Mail } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -45,7 +45,7 @@ function statusTone(s: string) {
 }
 
 function paymentLabel(provider: string | null | undefined) {
-  return orderPaymentLabel(orderPaymentGroup([], new Map(), provider?.toLowerCase()));
+  return orderPaymentLabel(provider?.toLowerCase());
 }
 
 export function OrderStatusAdminCard() {
@@ -271,7 +271,7 @@ export function OrderStatusAdminCard() {
                         </div>
                       ) : <button type="button" onClick={() => { setCompleting(r.id); setPayMethod(r.manual_pay_method ?? ""); setPayRef(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"><Check className="size-3.5" /> Mark complete</button>
                       ) : r.completed_at ? new Date(r.completed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id] ?? r.manual_pay_method)}
+                      <td className="px-3 py-2 whitespace-nowrap text-xs">{orderPaymentLabel(methods[r.id] ?? 'pending')}
                         {canComplete && settled && ["square", "stripe", "open_banking"].includes(methods[r.id] ?? "") && (
                           <button type="button" onClick={() => fixReference(r.id)} className="block mt-1 text-xs text-primary underline underline-offset-2">Fix payment reference</button>
                         )}

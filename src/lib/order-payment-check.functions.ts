@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
-import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 
 /**
  * Single "I've paid" check that interrogates BOTH providers the customer can
@@ -64,6 +62,7 @@ async function assertAdminOrOrderOwner(supabase: any, userId: string, orderId: s
 }
 
 async function markPaid(orderId: string, transactionId: string | null, actorId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { error } = await supabaseAdmin.rpc("mark_order_paid" as never, {
     p_order_id: orderId,
     p_transaction_id: transactionId ?? orderId,
@@ -108,6 +107,7 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
   .handler(async ({ data, context }): Promise<CheckResult> => {
     const { supabase, userId } = context;
     await assertAdminOrOrderOwner(supabase, userId, data.orderId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const orderId = data.orderId;
     const { data: order } = await supabaseAdmin
@@ -149,7 +149,7 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
     // 1. Stripe — stored checkout session first, then a metadata search so a
     //    payment made from another device/session is still found.
     try {
-      const stripe = createStripeClient((process.env.STRIPE_ENVIRONMENT as StripeEnv) ?? "sandbox");
+      const { lookupStripePayment } = await import("@/lib/stripe-payment-lookup.server");
       checked.push("Stripe");
 
       // Stripe invoice (raised like a Square invoice) — check its status before
@@ -161,7 +161,8 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
         .eq("order_id", orderId)
         .maybeSingle();
       if (stripeInv?.stripe_invoice_id) {
-        const invoice = await stripe.invoices.retrieve(String(stripeInv.stripe_invoice_id));
+        const invoiceId = String(stripeInv.stripe_invoice_id);
+        const invoice = await lookupStripePayment(invoiceId, (stripe) => stripe.invoices.retrieve(invoiceId));
         if (invoice) {
           await supabaseAdmin
             .from("order_invoices")
@@ -187,7 +188,7 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
 
       const storedSession = payment?.provider === "stripe" ? String(payment.provider_payment_id ?? "") : "";
       if (storedSession.startsWith("cs_")) {
-        const session = await stripe.checkout.sessions.retrieve(storedSession, { expand: ["payment_intent"] });
+        const session = await lookupStripePayment(storedSession, (stripe) => stripe.checkout.sessions.retrieve(storedSession, { expand: ["payment_intent"] }));
         if (session.payment_status === "paid" && Number(session.amount_total) === totalCents) {
           const pi = session.payment_intent as any;
           stripeRef = pi?.id ?? session.id;
@@ -198,10 +199,10 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
       }
 
       if (!stripeRef) {
-        const found = await stripe.paymentIntents.search({
+        const found = await lookupStripePayment(null, (stripe) => stripe.paymentIntents.search({
           query: `metadata['order_id']:'${orderId}' AND status:'succeeded'`,
           limit: 5,
-        });
+        }), (result) => result.data.some((p) => Number(p.amount_received || p.amount) === totalCents));
         const pi = found.data.find((p) => Number(p.amount_received || p.amount) === totalCents);
         if (pi) {
           stripeRef = pi.id;

@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Project monitoring payment findings
+- [ ] Correct Stripe account selection in automatic and manual payment checks; verify live/test fallback.
+- [ ] Display resolved settled payment methods in Orders without guessing unpaid methods; verify labels.
+
 ## Today's break allocation and rota booking
 - [x] Repair empty saved break allocations when cover becomes available; Dane’s 11:45, 14:30 and 16:45 UK times verified on his signed-in home screen, with existing allocations and recorded breaks preserved.
 - [x] Block bookings on crossed-out rota days in the UI and database; signed-in rota shows today Closed without Claim and future days with Claim. UK-midnight and break regressions: 18 tests pass.

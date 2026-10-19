@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
-import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
+import { lookupStripePayment } from "@/lib/stripe-payment-lookup.server";
 
 // Safety-net reconciliation for orders whose payment completed at the
 // provider but whose paid flag never got written locally (e.g. the customer
@@ -109,8 +109,7 @@ export async function reconcileUnpaidOrders(): Promise<{ scanned: number; repair
         stripeChecked < MAX_STRIPE_LOOKUPS_PER_RUN
       ) {
         stripeChecked++;
-        const stripe = createStripeClient((process.env.STRIPE_ENVIRONMENT as StripeEnv) ?? "sandbox");
-        const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ["payment_intent"] });
+        const session = await lookupStripePayment(sessionId, (stripe) => stripe.checkout.sessions.retrieve(sessionId, { expand: ["payment_intent"] }));
         if (session.payment_status !== "paid") continue;
         if (Number(session.amount_total) !== totalCents) {
           console.error(`[payment-reconcile] amount mismatch on order ${order.id}: stripe=${session.amount_total} local=${totalCents}`);
