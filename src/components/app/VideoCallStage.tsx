@@ -61,6 +61,9 @@ export function VideoCallStage({
   sidePanel?: ReactNode;
 }) {
   const [withChat, setWithChat] = useState(false);
+  // Customer's phone held sideways while its screen stays upright (rotation lock).
+  const [heldTurn, setHeldTurn] = useState(0);
+  const turned = side === "answerer" && withChat && (heldTurn === 90 || heldTurn === 270);
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
   // Remote sound plays through its own element; the video stays muted so the
@@ -475,6 +478,7 @@ export function VideoCallStage({
       if (snapped === localRotateRef.current) return;
       localRotateRef.current = snapped;
       send("orient", { deg: snapped });
+      setHeldTurn(snapped);
     };
     const onOrient = (e: DeviceOrientationEvent) => {
       const b = e.beta, g = e.gamma;
@@ -835,7 +839,12 @@ export function VideoCallStage({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-background">
+    <div
+      className="fixed z-[100] flex flex-col bg-background"
+      style={turned
+        ? { left: "50%", top: "50%", width: "100dvh", height: "100vw", transform: `translate(-50%, -50%) rotate(${heldTurn === 90 ? -90 : 90}deg)` }
+        : { inset: 0 }}
+    >
       <div className="flex items-center justify-center gap-2 bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
         <span className="size-2 animate-pulse rounded-full bg-destructive-foreground" /> Live video call with {otherName} — not recorded
       </div>
@@ -849,7 +858,7 @@ export function VideoCallStage({
           ))}
         </div>
       )}
-      <div className="flex min-h-0 flex-1 flex-col landscape:flex-row md:flex-row">
+      <div className={`flex min-h-0 flex-1 flex-col landscape:flex-row md:flex-row ${turned ? "!flex-row" : ""}`}>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
         <audio ref={audioRef} autoPlay className="hidden" />
@@ -953,7 +962,7 @@ export function VideoCallStage({
       </div>
       </div>
       {sidePanel && withChat && (
-        <aside className="flex h-[45dvh] min-h-0 shrink-0 flex-col border-t border-border bg-card landscape:h-auto landscape:w-[min(24rem,45vw)] landscape:border-l landscape:border-t-0 md:h-auto md:w-[24rem] md:border-l md:border-t-0">
+        <aside className={`flex h-[45dvh] min-h-0 shrink-0 flex-col border-t border-border bg-card landscape:h-auto landscape:w-[min(24rem,45vw)] landscape:border-l landscape:border-t-0 md:h-auto md:w-[24rem] md:border-l md:border-t-0 ${turned ? "!h-auto !w-[min(24rem,45vh)] !border-l !border-t-0" : ""}`}>
           {sidePanel}
         </aside>
       )}
