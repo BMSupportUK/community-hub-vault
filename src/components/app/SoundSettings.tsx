@@ -33,6 +33,10 @@ export function SoundSettings() {
           <p className="text-sm text-purple-200/80">
             Control how loud in-app alerts (shifts, breaks, tickets, mentions, outages) play on this device.
           </p>
+          <p className="text-xs text-purple-200/70 pt-1">
+            These BM Support sounds play in the browser and on Android phones. On iPhone or iPad,
+            alerts arrive with your phone's default message tone instead.
+          </p>
         </div>
       </header>
 
