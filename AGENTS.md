@@ -47,4 +47,4 @@
 
 - Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts.
 
-- Breaks use UK time; starters recheck against duplicates. Empty plans retry; real times stay fixed. Rota UI/write guards close days at UK midnight.
+- Shared planner handles cover exceptions. UK breaks retry empty plans, freeze real times, recheck duplicates. Rota UI/write guards close at UK midnight.
