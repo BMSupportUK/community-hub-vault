@@ -108,6 +108,7 @@ function RotatingAffiliateBannerComponent({
   const [fading, setFading] = useState(false);
   const [placeholder, setPlaceholder] = useState<{ id: string; image_url: string } | null>(null);
   const advertRef = useRef<HTMLAnchorElement>(null);
+  const advertImgRef = useRef<HTMLImageElement>(null);
   const instanceIdRef = useRef<number>(nextInstanceId++);
 
   useEffect(() => {
