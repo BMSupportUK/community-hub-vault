@@ -84,6 +84,7 @@ export function staffAllowedPageKeys(
   return Object.entries(perms)
     .filter(([key, allowed]) =>
       key !== "admin" &&
+      key.startsWith("admin-") &&
       !existingKeys.has(key) &&
       !isFanZonePage(key) &&
       bm.some((r) => allowed.includes(r)),
