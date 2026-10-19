@@ -290,7 +290,7 @@ function RotatingAffiliateBannerComponent({
       ) : (
       <img
         key={current.id}
-        ref={advertRef}
+        ref={advertImgRef}
         src={resizedBannerUrl(current.image_url, size)}
         alt={current.alt_text || current.name || "Sponsor"}
         width={spec.width}
