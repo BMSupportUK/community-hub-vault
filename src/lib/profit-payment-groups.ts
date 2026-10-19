@@ -4,6 +4,7 @@ export const PROFIT_METHOD_LABELS: Record<string, string> = { square: 'Square', 
 
 export function profitPaymentGroup(provider: string | undefined, openBanking = false) {
   if (provider === 'stripe' && openBanking) return 'open_banking';
+  if (provider === 'gocardless') return 'open_banking';
   if (provider === 'crypto' || provider === 'nowpayments') return 'nowpayments';
   if (provider === 'bank_transfer' || provider === 'wise') return 'wise';
   return provider;
