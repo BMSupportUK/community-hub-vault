@@ -138,7 +138,7 @@ export function CustomerCheckoutChat({ token, password, orderRef }: { token: str
 }
 
 /** Shared data + realtime wiring for the staff side of a sale's chat. */
-function useStaffCheckoutChat(orderId: string, token: string) {
+function useStaffCheckoutChat(orderId: string, token: string, suffix = "") {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -148,10 +148,10 @@ function useStaffCheckoutChat(orderId: string, token: string) {
   }, [orderId]);
   useEffect(() => {
     load();
-    const db = supabase.channel(`checkout-chat-db-${orderId}`)
+    const db = supabase.channel(`checkout-chat-db-${orderId}${suffix}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "checkout_chat_messages", filter: `order_id=eq.${orderId}` }, () => load())
       .subscribe();
-    const bc = supabase.channel(`checkout-chat-${token}`).subscribe();
+    const bc = supabase.channel(`checkout-chat-${token}${suffix}`).subscribe();
     chRef.current = bc;
     return () => { supabase.removeChannel(db); supabase.removeChannel(bc); };
   }, [load, orderId, token]);
@@ -177,7 +177,8 @@ export function StaffCheckoutChat({ orderId, token }: { orderId: string; token: 
 
 /** Staff chat filling a side pane (used beside a live video call). */
 export function StaffCheckoutChatPanel({ orderId, token }: { orderId: string; token: string }) {
-  const { messages, send } = useStaffCheckoutChat(orderId, token);
+  // Own topic names so this pane never clashes with the chat bubble's channels.
+  const { messages, send } = useStaffCheckoutChat(orderId, token, "-call");
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-border px-4 py-2 text-sm font-semibold">Chat with the customer</div>
@@ -192,18 +193,15 @@ export function CustomerCheckoutChatPanel({ token, password }: { token: string; 
   const [messages, setMessages] = useState<Msg[]>([]);
   const list = useServerFn(listCheckoutChat);
   const sendFn = useServerFn(sendCheckoutChat);
-  const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const load = useCallback(async () => {
     const r = await list({ data: { token, password } });
     if (r.ok) setMessages(r.messages);
   }, [list, token, password]);
   useEffect(() => {
     load();
-    const ch = supabase.channel(`checkout-chat-panel-${token}-${Math.random().toString(36).slice(2)}`).subscribe();
-    const live = supabase.channel(`checkout-chat-${token}`).on("broadcast", { event: "new" }, () => load()).subscribe();
-    chRef.current = live;
-    const poll = setInterval(load, 5000);
-    return () => { clearInterval(poll); supabase.removeChannel(ch); supabase.removeChannel(live); };
+    // The chat bubble already owns the shared topic; this pane polls instead.
+    const poll = setInterval(load, 3000);
+    return () => { clearInterval(poll); };
   }, [load, token]);
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -211,7 +209,7 @@ export function CustomerCheckoutChatPanel({ token, password }: { token: string; 
       <Thread messages={messages} mine="customer" />
       <Composer onSend={async (t) => {
         const r = await sendFn({ data: { token, password, content: t } });
-        if (r.ok) { await load(); chRef.current?.send({ type: "broadcast", event: "new", payload: {} }); }
+        if (r.ok) await load();
       }} />
     </div>
   );
