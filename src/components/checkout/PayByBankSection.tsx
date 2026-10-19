@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { Landmark, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { checkoutStripeSession } from "@/lib/checkout-pay.functions";
+import { checkoutStripeSession, checkoutPayByBankProvider, checkoutGoCardlessBank } from "@/lib/checkout-pay.functions";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { PAY_BY_BANK_BANKS, PAY_BY_BANK_INTRO, PAY_BY_BANK_NOTE } from "@/lib/pay-by-bank";
 
@@ -36,16 +36,30 @@ export function PayByBankSection({ token, password, preview = false, hideCardNot
   const stripeReady = useMemo(() => {
     try { getStripeEnvironment(); return true; } catch { return false; }
   }, []);
+  const getProvider = useServerFn(checkoutPayByBankProvider);
+  const startGoCardless = useServerFn(checkoutGoCardlessBank);
+  const [provider, setProvider] = useState<"stripe" | "gocardless">("stripe");
+  useEffect(() => {
+    if (preview) return;
+    getProvider({ data: { token, password } }).then((r) => setProvider(r.provider)).catch(() => {});
+  }, [token, password, preview, getProvider]);
 
   const start = async () => {
     setPaying(true); setErr(null);
+    const returnUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
     try {
+      if (provider === "gocardless") {
+        const r = await startGoCardless({ data: { token, password, returnUrl } });
+        if ("error" in r) setErr(r.error);
+        else { window.location.href = r.url; return; }
+        return;
+      }
       const r = await createSession({
         data: {
           token,
           password,
           environment: getStripeEnvironment(),
-          returnUrl: `${window.location.origin}${window.location.pathname}${window.location.search}`,
+          returnUrl,
           bank: true,
         },
       });
@@ -58,7 +72,7 @@ export function PayByBankSection({ token, password, preview = false, hideCardNot
     }
   };
 
-  if (!stripeReady) return null;
+  if (!stripeReady && provider !== "gocardless") return null;
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5 space-y-3">

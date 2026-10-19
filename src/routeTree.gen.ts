@@ -157,6 +157,7 @@ import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/a
 import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
 import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
 import { Route as ApiPublicHooksFinalLockRemindersRouteImport } from './routes/api/public/hooks/final-lock-reminders'
+import { Route as ApiPublicHooksGocardlessRouteImport } from './routes/api/public/hooks/gocardless'
 import { Route as ApiPublicHooksInboxMessagePushRouteImport } from './routes/api/public/hooks/inbox-message-push'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
@@ -1032,6 +1033,12 @@ const ApiPublicHooksFinalLockRemindersRoute =
     path: '/api/public/hooks/final-lock-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksGocardlessRoute =
+  ApiPublicHooksGocardlessRouteImport.update({
+    id: '/api/public/hooks/gocardless',
+    path: '/api/public/hooks/gocardless',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksInboxMessagePushRoute =
   ApiPublicHooksInboxMessagePushRouteImport.update({
     id: '/api/public/hooks/inbox-message-push',
@@ -1344,6 +1351,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
+  '/api/public/hooks/gocardless': typeof ApiPublicHooksGocardlessRoute
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
@@ -1517,6 +1525,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
+  '/api/public/hooks/gocardless': typeof ApiPublicHooksGocardlessRoute
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
@@ -1696,6 +1705,7 @@ export interface FileRoutesById {
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
+  '/api/public/hooks/gocardless': typeof ApiPublicHooksGocardlessRoute
   '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
@@ -1874,6 +1884,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
+    | '/api/public/hooks/gocardless'
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
@@ -2047,6 +2058,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
+    | '/api/public/hooks/gocardless'
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
@@ -2225,6 +2237,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
+    | '/api/public/hooks/gocardless'
     | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
@@ -2312,6 +2325,7 @@ export interface RootRouteChildren {
   ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksFantasySquadSyncRoute: typeof ApiPublicHooksFantasySquadSyncRoute
   ApiPublicHooksFinalLockRemindersRoute: typeof ApiPublicHooksFinalLockRemindersRoute
+  ApiPublicHooksGocardlessRoute: typeof ApiPublicHooksGocardlessRoute
   ApiPublicHooksInboxMessagePushRoute: typeof ApiPublicHooksInboxMessagePushRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
@@ -3374,6 +3388,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFinalLockRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/gocardless': {
+      id: '/api/public/hooks/gocardless'
+      path: '/api/public/hooks/gocardless'
+      fullPath: '/api/public/hooks/gocardless'
+      preLoaderRoute: typeof ApiPublicHooksGocardlessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/inbox-message-push': {
       id: '/api/public/hooks/inbox-message-push'
       path: '/api/public/hooks/inbox-message-push'
@@ -3991,6 +4012,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksFantasySquadRemindersRoute,
   ApiPublicHooksFantasySquadSyncRoute: ApiPublicHooksFantasySquadSyncRoute,
   ApiPublicHooksFinalLockRemindersRoute: ApiPublicHooksFinalLockRemindersRoute,
+  ApiPublicHooksGocardlessRoute: ApiPublicHooksGocardlessRoute,
   ApiPublicHooksInboxMessagePushRoute: ApiPublicHooksInboxMessagePushRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,

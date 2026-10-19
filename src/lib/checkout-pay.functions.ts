@@ -318,3 +318,41 @@ export async function syncCryptoPayment(supabaseAdmin: any, orderId: string) {
     if (order && !order.paid_at) await markPaid(supabaseAdmin, order, "NOWPayments", String(done.payment_id ?? ""));
   }
 }
+
+/** Which open-banking provider Pay by bank uses right now (Stripe unless GoCardless is switched on and set up). */
+export const checkoutPayByBankProvider = createServerFn({ method: "POST" })
+  .inputValidator((d) => creds.parse(d))
+  .handler(async ({ data }): Promise<{ provider: "stripe" | "gocardless" }> => {
+    const u = await unlock(data.token, data.password);
+    if (!u) return { provider: "stripe" };
+    const { getPayByBankProvider } = await import("@/lib/gocardless.server");
+    return { provider: await getPayByBankProvider(u.supabaseAdmin) };
+  });
+
+/** GoCardless Instant Bank Pay: returns the bank-approval link. */
+export const checkoutGoCardlessBank = createServerFn({ method: "POST" })
+  .inputValidator((d) => creds.extend({ returnUrl: z.string().url() }).parse(d))
+  .handler(async ({ data }): Promise<{ url: string } | { error: string }> => {
+    try {
+      const u = await unlock(data.token, data.password);
+      if (!u) throw new Error("Not authorized");
+      const { supabaseAdmin, link } = u;
+      const gcs = await import("@/lib/gocardless.server");
+      if ((await gcs.getPayByBankProvider(supabaseAdmin)) !== "gocardless") throw new Error("Pay by bank isn't available right now — please pay by card.");
+      return await withPaymentLock(supabaseAdmin, link.order_id, async () => {
+        try { await gcs.syncGoCardlessOrder(supabaseAdmin, link.order_id); } catch { /* ignore */ }
+        const order = await guardAgainstDoublePayment(supabaseAdmin, link.order_id, "stripe");
+        await expireOpenStripeSession(supabaseAdmin, order.id);
+        const flow = await gcs.createGoCardlessBankFlow(order, data.returnUrl);
+        await supabaseAdmin.from("order_payments").upsert({
+          order_id: order.id, provider: "gocardless", provider_payment_id: flow.billingRequestId, square_payment_id: flow.billingRequestId,
+          status: "PENDING", amount_cents: order.total_cents, currency: "GBP", created_by: order.user_id,
+        }, { onConflict: "order_id" });
+        return { url: flow.url };
+      });
+    } catch (e) {
+      const m = (e as Error)?.message ?? "";
+      if (/already|in progress|bank transfer|crypto payment|cancelled|Pay by bank/i.test(m)) return { error: m };
+      return { error: "Pay by bank couldn't start — please try again or pay by card." };
+    }
+  });

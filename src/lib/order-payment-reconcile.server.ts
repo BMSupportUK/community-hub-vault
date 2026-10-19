@@ -100,6 +100,13 @@ export async function reconcileUnpaidOrders(): Promise<{ scanned: number; repair
         continue;
       }
 
+      // Path 1b: ask GoCardless about an unfinished Pay by bank payment.
+      if (payment?.provider === "gocardless") {
+        const { syncGoCardlessOrder } = await import("@/lib/gocardless.server");
+        await syncGoCardlessOrder(supabaseAdmin, order.id);
+        continue;
+      }
+
       // Path 2: ask Stripe about an incomplete checkout session.
       const sessionId = payment?.provider === "stripe" ? String(payment.provider_payment_id ?? "") : "";
       const createdMs = order.created_at ? new Date(order.created_at).getTime() : 0;

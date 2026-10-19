@@ -13,6 +13,7 @@ import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
+import { PayByBankProviderCard } from "@/components/app/PayByBankProviderCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
 import { CustomerSubscriptionsAdminCard } from "@/components/app/CustomerSubscriptionsAdminCard";
 import { CustomerMemberManagement } from "@/components/app/CustomerMemberManagement";
@@ -685,7 +686,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (
-        <CardPaymentsAdminCard provider="stripe" />
+        <div className="space-y-4"><PayByBankProviderCard /><CardPaymentsAdminCard provider="stripe" /></div>
       ) : tab === "cash" && canSeePins ? (
         <CardPaymentsAdminCard provider="cash" />
       ) : tab === "bank-transfer-orders" && canSeePins ? (
