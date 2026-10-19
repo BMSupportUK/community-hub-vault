@@ -13,7 +13,7 @@ import {
   listOrderLiveHelp,
   startLiveHelp,
 } from "@/lib/live-help.functions";
-import { secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+import { CustomerCheckoutChatPanel, StaffCheckoutChatPanel, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
 import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCallStage";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -141,7 +141,7 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
           </div>
         </div>
       ) : (
-        <VideoCallStage topic={`video-call-${session.id}`} side="answerer" otherName="BM Support" onHangup={end} onSuperseded={() => setMoved(true)} />
+        <VideoCallStage topic={`video-call-${session.id}`} side="answerer" otherName="BM Support" onHangup={end} onSuperseded={() => setMoved(true)} sidePanel={<CustomerCheckoutChatPanel token={token} password={password} />} />
       ))}
     </>
   );
@@ -226,9 +226,15 @@ export function OrderVideoCallIncoming({ call }: { call: OrderVideoCallStaffStat
 }
 
 /** The live call view — rendered once staff have accepted, on top of the page. */
-export function OrderVideoCallStaffStage({ call }: { call: OrderVideoCallStaffState }) {
+export function OrderVideoCallStaffStage({ call, orderId }: { call: OrderVideoCallStaffState; orderId: string }) {
+  const [token, setToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (!orderId) return;
+    supabase.from("order_checkout_links").select("token").eq("order_id", orderId).maybeSingle()
+      .then(({ data }) => setToken((data as { token?: string } | null)?.token ?? null));
+  }, [orderId]);
   if (!call.session || !call.inCall) return null;
   return (
-    <VideoCallStage topic={`video-call-${call.session.id}`} side="offerer" otherName="the customer" onHangup={call.end} startWithCamera={false} placeholderImage={call.isMale ? staffPlaceholderMale : undefined} staffGender={call.isMale ? "male" : "female"} />
+    <VideoCallStage topic={`video-call-${call.session.id}`} side="offerer" otherName="the customer" onHangup={call.end} startWithCamera={false} placeholderImage={call.isMale ? staffPlaceholderMale : undefined} staffGender={call.isMale ? "male" : "female"} sidePanel={token ? <StaffCheckoutChatPanel orderId={orderId} token={token} /> : undefined} />
   );
 }
