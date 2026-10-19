@@ -39,8 +39,10 @@ export function PayByBankSection({ token, password, preview = false, hideCardNot
   const getProvider = useServerFn(checkoutPayByBankProvider);
   const startGoCardless = useServerFn(checkoutGoCardlessBank);
   const [provider, setProvider] = useState<"stripe" | "gocardless">("stripe");
+  // GoCardless is paused until the account is verified: always use Stripe.
+  const GOCARDLESS_ENABLED = false;
   useEffect(() => {
-    if (preview) return;
+    if (preview || !GOCARDLESS_ENABLED) return;
     getProvider({ data: { token, password } }).then((r) => setProvider(r.provider)).catch(() => {});
   }, [token, password, preview, getProvider]);
 
