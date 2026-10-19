@@ -315,11 +315,11 @@ export function useMentionAutocomplete({
   const dropdown = useMemo(() => {
     if (query === null || results.length === 0) return null;
     return (
-      <div className="absolute bottom-full left-0 mb-2 w-72 max-w-[90vw] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden z-50">
-        <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border bg-muted/40">
-          People matching @{query || "…"}
+      <div className="absolute bottom-full left-0 mb-2 w-72 max-w-[90vw] rounded-lg border-2 border-primary/60 bg-popover text-popover-foreground shadow-xl overflow-hidden z-50">
+        <div className="px-3 py-1.5 text-[11px] font-semibold text-primary border-b border-border bg-primary/10">
+          Tap a name to tag them
         </div>
-        <ul className="max-h-60 overflow-y-auto">
+        <ul className="max-h-60 overflow-y-auto p-1.5 space-y-1">
           {results.map((u, i) => (
             <li key={u.id}>
               <button
@@ -330,8 +330,10 @@ export function useMentionAutocomplete({
                 }}
                 onMouseEnter={() => setHighlight(i)}
                 className={cn(
-                  "w-full flex items-center gap-2 px-3 py-2 text-left text-sm",
-                  i === highlight ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
+                  "w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-md border transition-colors",
+                  i === highlight
+                    ? "bg-accent text-accent-foreground border-primary ring-2 ring-primary/40"
+                    : "border-border hover:border-primary/60 hover:bg-accent/60",
                 )}
               >
                 <span

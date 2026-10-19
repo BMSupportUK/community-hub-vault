@@ -524,16 +524,20 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
       />
       {mention && filteredMentions.length > 0 && (
         <div
-          className="absolute z-50 min-w-[220px] max-w-[300px] rounded-md border border-border bg-popover shadow-lg overflow-hidden text-sm"
+          className="absolute z-50 min-w-[240px] max-w-[320px] rounded-lg border-2 border-primary/60 bg-popover shadow-xl overflow-hidden text-sm"
           style={{ top: mention.rect.top, left: Math.max(8, mention.rect.left) }}
         >
+          <div className="px-2.5 py-1.5 text-[11px] font-semibold text-primary border-b border-border bg-primary/10">
+            Tap a name to tag them
+          </div>
+          <div className="p-1.5 space-y-1 max-h-64 overflow-y-auto">
           {filteredMentions.map((c, i) => (
             <button
               key={`${c.type}:${c.key}`}
               type="button"
               onMouseDown={(e) => { e.preventDefault(); insertMention(c); }}
               onMouseEnter={() => setMentionIndex(i)}
-              className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 ${i === mentionIndex ? "bg-accent" : ""}`}
+              className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-md border transition-colors ${i === mentionIndex ? "bg-accent border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/60 hover:bg-accent/60"}`}
             >
               {c.type === "user" ? (
                 <span className="size-6 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[10px] font-bold text-white overflow-hidden shrink-0">
@@ -548,6 +552,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
               </span>
             </button>
           ))}
+          </div>
         </div>
       )}
     </div>
