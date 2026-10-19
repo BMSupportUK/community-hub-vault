@@ -64,6 +64,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
           .from("user_notifications")
           .select("id, kind, title, body, link_path, source_id, created_at, read_at")
           .eq("user_id", user.id)
+          .neq("kind", "mention") // mentions live in the @ Mentions list only
           .gte("created_at", cutoff)
           .order("created_at", { ascending: false })
         .limit(50);
@@ -115,7 +116,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
             link_path: r.link_path, entity_id: r.source_id, created_at: r.created_at,
             read_at: r.read_at, source: "user",
           };
-          setItems((prev) => [n, ...prev].slice(0, 80));
+          if (n.kind !== "mention") setItems((prev) => [n, ...prev].slice(0, 80));
           if (n.kind === "mention") {
             toast(`📣 ${n.title}`, {
               description: n.body ?? undefined,
