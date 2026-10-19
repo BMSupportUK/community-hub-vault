@@ -23,7 +23,7 @@ interface Entry {
 
 function AdminBlacklistPage() {
   const { hasAny, user } = useAuth();
-  const isAdmin = hasAny(["admin", "management"]);
+  const isAdmin = hasAny(["admin", "management", "staff"]);
   const list = useServerFn(listBlacklist);
   const add = useServerFn(addBlacklist);
   const remove = useServerFn(removeBlacklist);
