@@ -47,4 +47,4 @@
 
 - Profit uses pence; missing data provisional, confirmed fees fixed. Orders/profit share verified settled-method grouping. Invoice sync repairs rows; demos never alter totals.
 
-- Break matching uses browser-independent UK time; duplicates never consume future slots. The lock-safe starter rechecks records before insert to prevent replay.
+- Breaks use UK time; duplicate-safe starters recheck records. Empty plans retry; real times stay fixed. Rota UI/write guards close days at UK midnight.

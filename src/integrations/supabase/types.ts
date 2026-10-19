@@ -8461,6 +8461,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      rota_day_closed: {
+        Args: { _date: string; _now?: string }
+        Returns: boolean
+      }
       save_staff_record: {
         Args: { _join_date: string; _leave_date?: string; _user_id: string }
         Returns: undefined

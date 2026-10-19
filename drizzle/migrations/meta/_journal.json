@@ -1233,6 +1233,13 @@
       "when": 1792343268880,
       "tag": "0175_orders_view_update_keeps_pay_method",
       "breakpoints": true
+    },
+    {
+      "idx": 176,
+      "version": "7",
+      "when": 1792396889799,
+      "tag": "0176_block_closed_rota_bookings",
+      "breakpoints": true
     }
   ]
 }
