@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { pushToUser } from "@/lib/fcm.server";
 import { broadcastToUser } from "@/lib/push.functions";
-import { planBreaks, toMinutes, fromMinutes } from "@/lib/break-plan";
+import { toMinutes, fromMinutes } from "@/lib/break-plan";
+import { pendingBreakAllocations } from "@/lib/break-plan-allocation";
 import { reconcileUnpaidOrders } from "@/lib/order-payment-reconcile.server";
 
 
@@ -125,21 +126,19 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             }
           }
           const plans = ((stored ?? []) as { user_id: string; label: string; kind: string; start_min: number | null }[]).slice();
-          const planned = new Set(plans.map((r) => r.user_id));
-          const fresh = rows.filter((r) => !planned.has(r.userId) && ukMin < r.end);
-          if (fresh.length) {
-            const reserved = plans.filter((r) => r.start_min !== null).map((r) => ({ start: r.start_min as number, end: (r.start_min as number) + (r.kind === "lunch" ? 30 : 15) }));
-            const result = planBreaks(rows, 1, ukMin, reserved, planned);
-            const inserts: typeof plans = [];
-            for (const f of fresh) {
-              const up = result.get(f.userId);
-              if (!up) continue;
-              for (const it of [up.break1, up.lunch, up.break2]) inserts.push({ user_id: f.userId, label: it.label, kind: it.kind, start_min: it.start });
-            }
-            if (inserts.length) {
-              await db.from("break_plan_times").upsert(inserts.map((r) => ({ ...r, shift_date: ukDate })), { onConflict: "user_id,shift_date,label", ignoreDuplicates: true });
-              plans.push(...inserts);
-            }
+          const allocations = pendingBreakAllocations(rows, plans, ukMin);
+          for (const allocation of allocations) {
+            const existing = plans.find((row) => row.user_id === allocation.user_id && row.label === allocation.label);
+            const { error } = existing
+              ? await db.from("break_plan_times").update({ start_min: allocation.start_min })
+                .eq("user_id", allocation.user_id).eq("shift_date", ukDate).eq("label", allocation.label).is("start_min", null)
+              : await db.from("break_plan_times").upsert({ ...allocation, shift_date: ukDate }, { onConflict: "user_id,shift_date,label", ignoreDuplicates: true });
+            if (error) throw error;
+          }
+          if (allocations.length) {
+            const { data: committed, error } = await db.from("break_plan_times").select("user_id,label,kind,start_min").eq("shift_date", ukDate);
+            if (error) throw error;
+            plans.splice(0, plans.length, ...(committed ?? []));
           }
           const due = plans.filter((r) => r.start_min !== null && ukMin >= r.start_min && ukMin <= r.start_min + 15);
           if (due.length) {

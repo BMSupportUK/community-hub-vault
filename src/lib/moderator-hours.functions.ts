@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rotaDayClosed } from "@/lib/rota-booking";
 
 const schema = z.object({
   shift_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -16,6 +17,7 @@ export const addModeratorHours = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => schema.parse(input))
   .handler(async ({ data, context }) => {
+    if (rotaDayClosed(data.shift_date)) throw new Error("That rota day is closed — choose a future day");
     if (data.end_time <= data.start_time) throw new Error("Finish time must be after the start time");
 
     const { data: isMod } = await context.supabase.rpc("has_any_role", {

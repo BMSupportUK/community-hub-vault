@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import shiftsBg from "@/assets/staff-office-illustration.jpg";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { demoRota } from "@/lib/demo-data";
+import { rotaDayClosed } from "@/lib/rota-booking";
 
 const DEMO_TOAST = "Sample rota — changes aren't saved on the demo account";
 
@@ -151,9 +152,7 @@ function fmtDate(d: Date) {
 }
 function dayLabel(d: Date) { return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); }
 function isDayPastOrStarted(d: Date) {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const x = new Date(d); x.setHours(0, 0, 0, 0);
-  return x.getTime() <= today.getTime();
+  return rotaDayClosed(fmtDate(d));
 }
 
 const LOCAL_TZ_KEY = "shifts_display_local_tz_v1";
@@ -518,6 +517,7 @@ function ShiftsPage() {
 
   const claim = async (s: Slot) => {
     if (!user) return;
+    if (rotaDayClosed(s.shift_date)) return toast.error("That rota day is closed — choose a future day");
     if (isDemo) return toast.info(DEMO_TOAST);
     if (s.required_role && !isAdmin && !roles.includes(s.required_role as AppRole)) {
       return toast.error(`That shift is reserved for ${roleLabel(s.required_role)}`);
@@ -578,6 +578,7 @@ function ShiftsPage() {
 
   const saveModHours = async () => {
     if (!modHoursDay) return;
+    if (rotaDayClosed(modHoursDay)) return toast.error("That rota day is closed — choose a future day");
     if (isDemo) return toast.info(DEMO_TOAST);
     if (modHoursForm.end <= modHoursForm.start) return toast.error("Finish must be after start");
     setSavingModHours(true);
@@ -974,9 +975,9 @@ function ShiftsPage() {
                                   <div className="mt-1.5 flex items-center justify-between gap-1">
                                     <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
                                     <div className="flex items-center gap-1">
-                                      {!taken && canPick && shiftNotStarted && (
+                                      {!past && !taken && canPick && shiftNotStarted && (
                                         ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
-                                          <button onClick={() => setConfirmSlot(s)} className="px-2 py-0.5 rounded bg-gradient-primary text-white font-semibold">Claim</button>
+                                          <Button size="sm" onClick={() => setConfirmSlot(s)} className="h-6 px-2 text-xs">Claim</Button>
                                         )
                                       )}
                                       {mine && (
@@ -1661,7 +1662,7 @@ function ShiftsPage() {
           <DialogFooter>
             <Button variant="outline" disabled={claiming} onClick={() => setConfirmSlot(null)}>Cancel</Button>
             <Button
-              disabled={claiming}
+              disabled={claiming || !confirmSlot || rotaDayClosed(confirmSlot.shift_date)}
               onClick={async () => {
                 if (!confirmSlot) return;
                 setClaiming(true);
