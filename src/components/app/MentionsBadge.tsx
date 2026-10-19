@@ -45,7 +45,7 @@ function mentionNav(m: MentionRow):
   if (base.startsWith("/forum") && m.source_id) {
     return { to: base, hash: `forum-post-${m.source_id}`, search: existing } as any;
   }
-  return { to: base };
+  return qs ? ({ to: base, search: existing } as any) : { to: base };
 }
 
 /**
