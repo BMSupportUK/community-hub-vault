@@ -4,13 +4,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Switch } from "@/components/ui/switch";
-import { NOTIFY_CATEGORIES, type NotifyChannel } from "@/lib/notification-categories";
+import { categoriesForRoles, type NotifyChannel } from "@/lib/notification-categories";
 
 type Prefs = Record<string, { browser: boolean; phone: boolean }>;
 
 /** Per-type on/off switches for browser alerts and phone app alerts. */
 export function NotificationChannelPrefs() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
+  const cats = categoriesForRoles((roles ?? []).map(String));
   const [prefs, setPrefs] = useState<Prefs>({});
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export function NotificationChannelPrefs() {
   const Column = ({ channel, title, icon }: { channel: NotifyChannel; title: string; icon: React.ReactNode }) => (
     <div className="rounded-xl border border-border bg-surface-2 p-3 space-y-1">
       <div className="flex items-center gap-2 text-sm font-semibold pb-1">{icon}{title}</div>
-      {NOTIFY_CATEGORIES.map((c) => (
+      {cats.map((c) => (
         <label key={c.id} className="flex items-center justify-between gap-3 py-1.5 cursor-pointer">
           <span className="min-w-0">
             <span className="block text-sm">{c.label}</span>
