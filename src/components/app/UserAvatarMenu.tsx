@@ -15,6 +15,7 @@ import {
   Apple,
   Lock,
   Download,
+  Bell,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
@@ -416,6 +417,14 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             )}
             Copy username
           </DropdownMenuItem>
+          {!inFanZone ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/notification-settings">
+                <Bell className="size-4 mr-2" />
+                Notifications & sounds
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem asChild className="cursor-pointer">
             <Link to={inFanZone ? "/fan-zone-security" : "/account-security"}>
               <ShieldCheck className="size-4 mr-2" />

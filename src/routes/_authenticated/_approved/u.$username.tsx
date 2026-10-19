@@ -145,8 +145,6 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { demoReferrals } from "@/lib/demo-data";
-import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
-import { NotificationChannelPrefs } from "@/components/app/NotificationChannelPrefs";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -553,7 +551,6 @@ function ProfilePage() {
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
-    ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
   ];
 
@@ -852,19 +849,6 @@ function ProfilePage() {
             </TabsContent>
           )}
 
-          {isOwner && (
-            <TabsContent value="notifications" className={paneClass}>
-              <div className="mb-4 rounded-xl border border-border bg-surface-1 p-4 space-y-2">
-                <h3 className="font-display text-sm font-semibold">Phone & browser alerts</h3>
-                <p className="text-xs text-muted-foreground">
-                  Get alerts even when BM Support is closed. On iPhone, open BM Support from your Home Screen icon first, then tap Enable.
-                </p>
-                <PushNotificationsToggle />
-                <NotificationChannelPrefs />
-              </div>
-              <SoundSettings />
-            </TabsContent>
-          )}
 
           {isOwner && (
             <TabsContent value="theme" className={paneClass}>
