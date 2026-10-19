@@ -528,8 +528,8 @@ function ShiftsPage() {
       const mineThatDay = (slotsByDay[s.shift_date] ?? []).filter(
         (x) => x.slot_type === "shift" && x.assigned_to === user.id,
       ).length;
-      if (myQuota > 0 && mineThatDay >= myQuota) {
-        return toast.error(`Your role covers ${myQuota} shift${myQuota === 1 ? "" : "s"} per day`);
+      if (mineThatDay >= 1) {
+        return toast.error("You already have a shift booked that day");
       }
     }
     const { data, error } = await supabase
