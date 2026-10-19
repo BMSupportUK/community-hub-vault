@@ -41,7 +41,7 @@
 - Manual credential access verifies email codes plus a salted PBKDF2 PIN atomically; initial enrollment checks an existing paid manual TV login so mailbox access alone cannot enroll or reset a PIN.
 - Manual registration exceptions persist on checkout links, enforced by admin-only RPCs and a write trigger; creation saves atomically and PIN access remains independent.
 <!-- LOVABLE:END -->
-- Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
+- playSound resolves uploaded overrides for all web callers; closed-app Android tones require an APK rebuild.
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 
