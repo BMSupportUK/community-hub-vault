@@ -200,7 +200,7 @@ function EntryCards({
 }: {
   items: Entry[];
   icon: any;
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
   empty: string;
 }) {
   if (items.length === 0) {
@@ -219,14 +219,16 @@ function EntryCards({
               <Icon className="size-4 text-destructive" />
             </div>
             <div className="flex-1 min-w-0 font-mono text-sm break-all">{it.value}</div>
-            <button
-              type="button"
-              onClick={() => onRemove(it.id)}
-              title="Remove"
-              className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="size-4" />
-            </button>
+            {onRemove && (
+              <button
+                type="button"
+                onClick={() => onRemove(it.id)}
+                title="Remove"
+                className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            )}
           </div>
           {it.reason && <p className="text-xs text-muted-foreground break-words">{it.reason}</p>}
           <p className="text-[11px] text-muted-foreground mt-auto">
