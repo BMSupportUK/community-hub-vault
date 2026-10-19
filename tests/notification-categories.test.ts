@@ -1,10 +1,33 @@
 import { test, expect } from "bun:test";
-import { notifyCategory } from "../src/lib/notification-categories";
+import { notifyCategory, categoriesForRoles } from "../src/lib/notification-categories";
 
 test("alert types map to their own switch", () => {
   expect(notifyCategory("dm", "dm-1", "/inbox")).toBe("messages");
-  expect(notifyCategory("ticket", null, "/tickets/1")).toBe("tickets");
+  expect(notifyCategory("ticket_raised")).toBe("new_tickets");
+  expect(notifyCategory("ticket-reply", "ticket-reply-1")).toBe("ticket_replies");
   expect(notifyCategory(undefined, "incident-5", "/status")).toBe("outages");
-  expect(notifyCategory("break", "break-x-start", "/clock")).toBe("shifts");
-  expect(notifyCategory(undefined, "something", "/home")).toBe("general");
+  expect(notifyCategory(undefined, "bplan:u:2026-10-19:Break 1", "/clock")).toBe("breaks");
+  expect(notifyCategory(undefined, "slot:1:start:warn", "/clock")).toBe("shifts");
+  expect(notifyCategory("order_placed")).toBe("new_orders");
+  expect(notifyCategory("order_paid")).toBe("my_orders");
+});
+
+test("members only see member alerts", () => {
+  const ids = categoriesForRoles([]).map((c) => c.id);
+  expect(ids).not.toContain("shifts");
+  expect(ids).not.toContain("new_tickets");
+  expect(ids).not.toContain("new_orders");
+  expect(ids).toContain("messages");
+});
+
+test("staff see staff alerts but not admin-only ones", () => {
+  const ids = categoriesForRoles(["staff"]).map((c) => c.id);
+  expect(ids).toContain("shifts");
+  expect(ids).not.toContain("new_orders");
+  expect(ids).not.toContain("access_requests");
+});
+
+test("moderators see access requests; admins see orders", () => {
+  expect(categoriesForRoles(["moderator"]).map((c) => c.id)).toContain("access_requests");
+  expect(categoriesForRoles(["admin"]).map((c) => c.id)).toContain("new_orders");
 });
