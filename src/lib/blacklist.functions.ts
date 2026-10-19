@@ -71,7 +71,7 @@ export const addBlacklist = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertBlacklistAccess(supabase, userId);
+    await assertAdmin(supabase, userId);
 
     const value = normalize(data.kind, data.value);
     if (data.kind === "email") {
@@ -154,7 +154,7 @@ export const removeBlacklist = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertBlacklistAccess(supabase, userId);
+    await assertAdmin(supabase, userId);
     const { error } = await supabaseAdmin.from("blacklist_entries").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
