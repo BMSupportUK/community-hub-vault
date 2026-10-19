@@ -175,6 +175,48 @@ export function StaffCheckoutChat({ orderId, token }: { orderId: string; token: 
   );
 }
 
+/** Staff chat filling a side pane (used beside a live video call). */
+export function StaffCheckoutChatPanel({ orderId, token }: { orderId: string; token: string }) {
+  const { messages, send } = useStaffCheckoutChat(orderId, token);
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="border-b border-border px-4 py-2 text-sm font-semibold">Chat with the customer</div>
+      <Thread messages={messages} mine="staff" />
+      <Composer onSend={send} />
+    </div>
+  );
+}
+
+/** Customer chat filling a side pane (used beside a live video call). */
+export function CustomerCheckoutChatPanel({ token, password }: { token: string; password: string }) {
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const list = useServerFn(listCheckoutChat);
+  const sendFn = useServerFn(sendCheckoutChat);
+  const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const load = useCallback(async () => {
+    const r = await list({ data: { token, password } });
+    if (r.ok) setMessages(r.messages);
+  }, [list, token, password]);
+  useEffect(() => {
+    load();
+    const ch = supabase.channel(`checkout-chat-panel-${token}-${Math.random().toString(36).slice(2)}`).subscribe();
+    const live = supabase.channel(`checkout-chat-${token}`).on("broadcast", { event: "new" }, () => load()).subscribe();
+    chRef.current = live;
+    const poll = setInterval(load, 5000);
+    return () => { clearInterval(poll); supabase.removeChannel(ch); supabase.removeChannel(live); };
+  }, [load, token]);
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="border-b border-border px-4 py-2 text-sm font-semibold">Chat with BM Support</div>
+      <Thread messages={messages} mine="customer" />
+      <Composer onSend={async (t) => {
+        const r = await sendFn({ data: { token, password, content: t } });
+        if (r.ok) { await load(); chRef.current?.send({ type: "broadcast", event: "new", payload: {} }); }
+      }} />
+    </div>
+  );
+}
+
 /**
  * Staff side as a bottom-corner bubble — the same shape and behaviour the
  * customer sees on their secure page, so both sides look and act alike.

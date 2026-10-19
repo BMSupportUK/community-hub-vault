@@ -44,6 +44,7 @@ export function VideoCallStage({
   startWithCamera = true,
   placeholderImage = staffPlaceholder,
   staffGender,
+  sidePanel,
 }: {
   topic: string;
   side: Side;
