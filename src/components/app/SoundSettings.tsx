@@ -10,8 +10,27 @@ import {
   playSoundFromGesture,
 } from "@/lib/sound";
 import { NOTIFICATION_SOUNDS } from "@/lib/notification-sounds";
+import { PHONE_ALERTS } from "@/lib/phone-alerts";
+import { phoneToneSrc } from "@/lib/phone-alert-sounds";
 
-const SAMPLES = NOTIFICATION_SOUNDS;
+// Every alert type gets its own play button: all phone/browser alert
+// recordings, plus the extra website-only clips (broadcast, Fan Zone, etc.).
+const SAMPLES: { label: string; src: string; gain: number }[] = (() => {
+  const out: { label: string; src: string; gain: number }[] = [];
+  const seen = new Set<string>();
+  for (const a of PHONE_ALERTS) {
+    const src = phoneToneSrc(a.key);
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    out.push({ label: a.label, src, gain: 2.0 });
+  }
+  for (const s of NOTIFICATION_SOUNDS) {
+    if (seen.has(s.src)) continue;
+    seen.add(s.src);
+    out.push({ label: s.label, src: s.src, gain: s.gain });
+  }
+  return out;
+})();
 
 export function SoundSettings() {
   const [prefs, setPrefs] = useState(() => getSoundPrefs());
