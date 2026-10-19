@@ -5,6 +5,8 @@ export type UserPlan = { break1: PlanItem; lunch: PlanItem; break2: PlanItem };
 
 const STEP = 15;
 const DUR = { break: 15, lunch: 30 } as const;
+// Account-specific cover exception, shared by saved allocations and UI fallback.
+export const DANE_J_BREAK_USER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
 
 /** Breaks are planned from the shift start. `nowMin` is accepted for callers but no longer re-spreads past breaks — a missed break stays missed. */
 export function planBreaks(slots: readonly PlanSlot[], minCover = 1, _nowMin?: number, reserved: readonly { start: number; end: number }[] = [], skip: ReadonlySet<string> = new Set()): Map<string, UserPlan> {
@@ -20,7 +22,9 @@ export function planBreaks(slots: readonly PlanSlot[], minCover = 1, _nowMin?: n
       for (const cand of k === 0 ? [base] : [base + k * STEP, base - k * STEP]) {
         if (cand < min || cand + dur > max) continue;
         // Everyone on shift in this window, minus those already away, minus this person, must leave minCover.
-        if (onShift(cand, cand + dur) - awayAt(cand, cand + dur) - 1 >= minCover) return cand;
+        const working = onShift(cand, cand + dur);
+        if (s.userId === DANE_J_BREAK_USER_ID && working === 1) return cand;
+        if (working - awayAt(cand, cand + dur) - 1 >= minCover) return cand;
       }
     }
     return null;
