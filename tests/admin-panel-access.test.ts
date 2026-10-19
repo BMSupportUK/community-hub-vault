@@ -58,6 +58,13 @@ describe("admin panel tool cards", () => {
     expect(adminPanelToolAllowed({ to: "/shifts" }, ["management"], perms)).toBe(true);
   });
 
+  it("never cards the secure checkout page — it is the Orders tab's own page", () => {
+    const p = { "admin-secure-page": ["staff", "management"], "admin-blacklist": ["staff"] };
+    const keys = staffAllowedPageKeys(["staff"], p, new Set(), () => false);
+    expect(keys).toEqual(["admin-blacklist"]);
+    expect(keys).not.toContain("admin-secure-page");
+  });
+
   it("ignores Boro Fan Zone roles on the BM Support dashboard", () => {
     const p = { "admin-fan-zone": ["admin", "boro_fan_zone_moderator"] };
     expect(adminPanelToolAllowed({ to: "/admin-fan-zone" }, ["staff", "boro_fan_zone_moderator"], p)).toBe(false);
