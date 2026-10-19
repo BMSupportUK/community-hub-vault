@@ -48,3 +48,4 @@
 - Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts.
 
 - Shared planner handles cover exceptions. UK breaks retry empty plans, freeze real times, recheck duplicates. Rota UI/write guards close at UK midnight.
+- Pay by bank provider (Stripe/GoCardless) comes from app_settings `pay_by_bank_provider`, resolved server-side and only honoured when GoCardless secrets exist — so it can be switched without a rebuild.
