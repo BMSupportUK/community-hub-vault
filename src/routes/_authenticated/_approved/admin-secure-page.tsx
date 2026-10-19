@@ -74,7 +74,7 @@ function SecurePageAdmin() {
         <div className="rounded-2xl border border-border bg-card/85 backdrop-blur-sm p-5 space-y-4">
           <SecureLinkPanel orderId={order} chatBubble orderRef={orderRef} sidebarTop={<OrderVideoCallIncoming call={call} />} />
         </div>
-        <OrderVideoCallStaffStage call={call} />
+        <OrderVideoCallStaffStage call={call} orderId={order} />
       </div>
     </main>
   );
