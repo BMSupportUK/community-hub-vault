@@ -108,6 +108,7 @@ function RotatingAffiliateBannerComponent({
   const [fading, setFading] = useState(false);
   const [placeholder, setPlaceholder] = useState<{ id: string; image_url: string } | null>(null);
   const advertRef = useRef<HTMLAnchorElement>(null);
+  const advertImgRef = useRef<HTMLImageElement>(null);
   const instanceIdRef = useRef<number>(nextInstanceId++);
 
   useEffect(() => {
@@ -254,12 +255,20 @@ function RotatingAffiliateBannerComponent({
 
   if (!current) return null;
 
+  // Only the "Advertise here" placeholder falls back to email. A real banner
+  // with no saved link must not open a mail composer on tap — render it
+  // without an anchor instead.
+  const isAdvertiseHere =
+    current.id === placeholder?.id || current.id.startsWith("__advertise_here__");
+  const href = current.link_url || (isAdvertiseHere ? "mailto:bmsupport2022@protonmail.com" : null);
+
   return (
     <div className="grid w-full min-w-0 place-items-center px-3">
+      {href ? (
       <a
         ref={advertRef}
-        href={current.link_url || "mailto:bmsupport2022@protonmail.com"}
-        target="_blank"
+        href={href}
+        target={href.startsWith("mailto:") ? undefined : "_blank"}
         rel="noopener noreferrer sponsored"
         className={`block w-full mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all ${isWide ? "max-w-4xl" : size === "square" ? "max-w-[300px]" : "max-w-64"}`}
         aria-label={current.alt_text || current.name || "Sponsor"}
@@ -278,6 +287,21 @@ function RotatingAffiliateBannerComponent({
           sizes={isWide ? "(max-width: 768px) 100vw, 900px" : "(max-width: 768px) 200px, 300px"}
         />
       </a>
+      ) : (
+      <img
+        key={current.id}
+        ref={advertImgRef}
+        src={resizedBannerUrl(current.image_url, size)}
+        alt={current.alt_text || current.name || "Sponsor"}
+        width={spec.width}
+        height={spec.height}
+        className={`block w-full mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden transition-opacity duration-300 ${isWide ? "aspect-[3/1] object-contain max-w-4xl" : size === "square" ? "aspect-square object-cover max-w-[300px]" : "h-auto object-contain max-w-64"} object-center ${fading ? "opacity-0" : "opacity-100"}`}
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
+        sizes={isWide ? "(max-width: 768px) 100vw, 900px" : "(max-width: 768px) 200px, 300px"}
+      />
+      )}
     </div>
   );
 }
