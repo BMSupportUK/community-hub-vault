@@ -61,6 +61,8 @@ export function VideoCallStage({
   sidePanel?: ReactNode;
 }) {
   const [withChat, setWithChat] = useState(false);
+  // Customer's phone held sideways while its screen stays upright (rotation lock).
+  const [heldTurn, setHeldTurn] = useState(0);
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
   // Remote sound plays through its own element; the video stays muted so the
@@ -475,6 +477,7 @@ export function VideoCallStage({
       if (snapped === localRotateRef.current) return;
       localRotateRef.current = snapped;
       send("orient", { deg: snapped });
+      setHeldTurn(snapped);
     };
     const onOrient = (e: DeviceOrientationEvent) => {
       const b = e.beta, g = e.gamma;
@@ -835,7 +838,12 @@ export function VideoCallStage({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-background">
+    <div
+      className="fixed z-[100] flex flex-col bg-background"
+      style={side === "answerer" && withChat && (heldTurn === 90 || heldTurn === 270)
+        ? { left: "50%", top: "50%", width: "100dvh", height: "100vw", transform: `translate(-50%, -50%) rotate(${heldTurn === 90 ? -90 : 90}deg)` }
+        : { inset: 0 }}
+    >
       <div className="flex items-center justify-center gap-2 bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
         <span className="size-2 animate-pulse rounded-full bg-destructive-foreground" /> Live video call with {otherName} — not recorded
       </div>
