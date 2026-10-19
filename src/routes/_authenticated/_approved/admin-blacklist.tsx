@@ -24,6 +24,7 @@ interface Entry {
 function AdminBlacklistPage() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management", "staff"]);
+  const canManage = hasAny(["admin", "management"]);
   const list = useServerFn(listBlacklist);
   const add = useServerFn(addBlacklist);
   const remove = useServerFn(removeBlacklist);
@@ -128,6 +129,7 @@ function AdminBlacklistPage() {
           </div>
         </header>
 
+        {canManage && (
         <form onSubmit={submit} className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
           <div className="grid sm:grid-cols-[140px_1fr] gap-3">
             <select
@@ -163,6 +165,7 @@ function AdminBlacklistPage() {
             Add to blacklist
           </button>
         </form>
+        )}
 
         {loading ? (
           <div className="py-10 text-center text-muted-foreground"><Loader2 className="size-5 animate-spin inline" /></div>
@@ -177,10 +180,10 @@ function AdminBlacklistPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="email" className="mt-4">
-              <EntryCards items={emails} icon={Mail} onRemove={onRemove} empty="No blocked emails yet." />
+              <EntryCards items={emails} icon={Mail} onRemove={canManage ? onRemove : undefined} empty="No blocked emails yet." />
             </TabsContent>
             <TabsContent value="ip" className="mt-4">
-              <EntryCards items={ips} icon={Globe} onRemove={onRemove} empty="No blocked IPs yet." />
+              <EntryCards items={ips} icon={Globe} onRemove={canManage ? onRemove : undefined} empty="No blocked IPs yet." />
             </TabsContent>
           </Tabs>
         )}
@@ -197,7 +200,7 @@ function EntryCards({
 }: {
   items: Entry[];
   icon: any;
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
   empty: string;
 }) {
   if (items.length === 0) {
@@ -216,14 +219,16 @@ function EntryCards({
               <Icon className="size-4 text-destructive" />
             </div>
             <div className="flex-1 min-w-0 font-mono text-sm break-all">{it.value}</div>
-            <button
-              type="button"
-              onClick={() => onRemove(it.id)}
-              title="Remove"
-              className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="size-4" />
-            </button>
+            {onRemove && (
+              <button
+                type="button"
+                onClick={() => onRemove(it.id)}
+                title="Remove"
+                className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            )}
           </div>
           {it.reason && <p className="text-xs text-muted-foreground break-words">{it.reason}</p>}
           <p className="text-[11px] text-muted-foreground mt-auto">
