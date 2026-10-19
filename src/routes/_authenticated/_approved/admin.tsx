@@ -686,7 +686,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (
-        <div className="space-y-4"><PayByBankProviderCard /><CardPaymentsAdminCard provider="stripe" /></div>
+        {/* GoCardless switch hidden until the account is verified: <PayByBankProviderCard /> */}
+        <div className="space-y-4"><CardPaymentsAdminCard provider="stripe" /></div>
       ) : tab === "cash" && canSeePins ? (
         <CardPaymentsAdminCard provider="cash" />
       ) : tab === "bank-transfer-orders" && canSeePins ? (
