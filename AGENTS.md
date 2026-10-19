@@ -45,6 +45,6 @@
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 
-- Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups. Invoice sync repairs rows; demos never affect totals. Stripe checks retry missing resources across accounts.
+- Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts.
 
-- Breaks use UK time; duplicate-safe starters recheck records. Empty plans retry; real times stay fixed. Rota UI/write guards close days at UK midnight.
+- Breaks use UK time; starters recheck against duplicates. Empty plans retry; real times stay fixed. Rota UI/write guards close days at UK midnight.
