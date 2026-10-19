@@ -159,7 +159,7 @@ export function useMentionAutocomplete({
 }: {
   value: string;
   onChange: (next: string) => void;
-  textareaRef: React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement | HTMLDivElement | null>;
   canBroadcast: boolean;
   /** Staff role tags the current user is allowed to insert, e.g. ["staff","management"]. */
   roleMentions?: string[];
@@ -177,7 +177,7 @@ export function useMentionAutocomplete({
     if (!ta) return;
     const selection = window.getSelection();
     const caret =
-      ta instanceof HTMLTextAreaElement
+      (ta instanceof HTMLTextAreaElement || ta instanceof HTMLInputElement)
         ? (ta.selectionStart ?? value.length)
         : selection?.rangeCount && ta.contains(selection.anchorNode)
           ? (() => {
@@ -251,7 +251,7 @@ export function useMentionAutocomplete({
     if (!ta || queryStart.current < 0) return;
     const selection = window.getSelection();
     const caret =
-      ta instanceof HTMLTextAreaElement
+      (ta instanceof HTMLTextAreaElement || ta instanceof HTMLInputElement)
         ? (ta.selectionStart ?? value.length)
         : selection?.rangeCount && ta.contains(selection.anchorNode)
           ? (() => {
@@ -269,7 +269,7 @@ export function useMentionAutocomplete({
     const pos = before.length + insert.length;
     requestAnimationFrame(() => {
       ta.focus();
-      if (ta instanceof HTMLTextAreaElement) {
+      if ((ta instanceof HTMLTextAreaElement || ta instanceof HTMLInputElement)) {
         ta.setSelectionRange(pos, pos);
       } else {
         ta.textContent = next;
