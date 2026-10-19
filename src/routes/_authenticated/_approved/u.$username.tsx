@@ -146,6 +146,7 @@ import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { demoReferrals } from "@/lib/demo-data";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
+import { NotificationChannelPrefs } from "@/components/app/NotificationChannelPrefs";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -859,6 +860,7 @@ function ProfilePage() {
                   Get alerts even when BM Support is closed. On iPhone, open BM Support from your Home Screen icon first, then tap Enable.
                 </p>
                 <PushNotificationsToggle />
+                <NotificationChannelPrefs />
               </div>
               <SoundSettings />
             </TabsContent>
