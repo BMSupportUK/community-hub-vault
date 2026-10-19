@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Mic, MicOff, PhoneOff, RefreshCcw, RefreshCw, RotateCw, Video, VideoOff, Loader2, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getVideoIceServers } from "@/lib/video-call.functions";
@@ -56,7 +56,10 @@ export function VideoCallStage({
   placeholderImage?: string;
   /** Staff side only: broadcast to the customer so their "camera off" illustration matches. */
   staffGender?: "male" | "female";
+  /** Optional order chat shown beside the call on the "Video + Chat" tab. */
+  sidePanel?: ReactNode;
 }) {
+  const [withChat, setWithChat] = useState(false);
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
   // Remote sound plays through its own element; the video stays muted so the
@@ -835,6 +838,18 @@ export function VideoCallStage({
       <div className="flex items-center justify-center gap-2 bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
         <span className="size-2 animate-pulse rounded-full bg-destructive-foreground" /> Live video call with {otherName} — not recorded
       </div>
+      {sidePanel && (
+        <div role="tablist" aria-label="Call view" className="flex justify-center gap-1 border-b border-border bg-card p-1.5">
+          {([[false, "Video"], [true, "Video + Chat"]] as const).map(([v, label]) => (
+            <button key={label} type="button" role="tab" aria-selected={withChat === v} onClick={() => setWithChat(v)}
+              className={`rounded-md px-4 py-1.5 text-sm font-medium ${withChat === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
         <audio ref={audioRef} autoPlay className="hidden" />
         {micError && <p role="status" className="absolute left-3 right-3 top-16 z-10 rounded bg-background/85 p-3 text-center text-sm text-foreground">{micError}</p>}
@@ -934,6 +949,13 @@ export function VideoCallStage({
         <button type="button" onClick={hangup} aria-label="End call" className="grid size-14 place-items-center rounded-full bg-destructive text-destructive-foreground">
           <PhoneOff className="size-6" />
         </button>
+      </div>
+      </div>
+      {sidePanel && withChat && (
+        <aside className="flex h-[45dvh] min-h-0 shrink-0 flex-col border-t border-border bg-card md:h-auto md:w-[24rem] md:border-l md:border-t-0">
+          {sidePanel}
+        </aside>
+      )}
       </div>
     </div>
   );
