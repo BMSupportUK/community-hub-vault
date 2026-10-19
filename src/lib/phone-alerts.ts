@@ -18,7 +18,7 @@ export interface PhoneAlert {
 
 export const PHONE_ALERTS: readonly PhoneAlert[] = [
   { key: "ticket", label: "New ticket", when: "Ticket opened / left unanswered", channel: "bm_support_tickets_v6", tone: "ticket_tone", kinds: ["ticket", "ticket_raised", "ticket_raised_owner"] },
-  { key: "ticket_reply", label: "Ticket reply", when: "Customer replies to your ticket", channel: "bm_support_ticket_replies_v5", tone: "ticket_reply_tone", kinds: ["ticket_reply"] },
+  { key: "ticket_reply", label: "Ticket reply", when: "Customer replies to your ticket", channel: "bm_support_ticket_replies_v5", tone: "ticket_reply_tone", kinds: ["ticket_reply", "ticket-reply"] },
   { key: "ticket_assigned", label: "Ticket assigned", when: "A ticket is assigned to / picked up by you", channel: "bm_alert_ticket_assigned_v3", tone: "ticket_assigned_tone", kinds: ["ticket_assigned", "ticket_picked_up"], isNew: true },
   { key: "ticket_handover", label: "Ticket handed over", when: "A colleague passes you a ticket before a break", channel: "bm_alert_ticket_handover_v3", tone: "ticket_handover_tone", kinds: ["ticket_handover"], isNew: true },
   { key: "ticket_help", label: "Ticket help requested", when: "A colleague asks for help on a ticket", channel: "bm_alert_ticket_help_v3", tone: "ticket_help_tone", kinds: ["ticket_help_requested"], isNew: true },
@@ -34,12 +34,13 @@ export const PHONE_ALERTS: readonly PhoneAlert[] = [
   { key: "content_report", label: "Content reported", when: "Post or message reported", channel: "bm_alert_content_report_v3", tone: "content_report_tone", kinds: ["content_report"], isNew: true, audience: "management" },
   { key: "shift_start", label: "Shift start", when: "Rota shift about to start", channel: "bm_support_shift_start_v7", tone: "shift_start_tone", kinds: ["shift_start", "shift_start_warn"] },
   { key: "auto_clock_in", label: "Auto clock-in", when: "Shift auto clocked in", channel: "bm_alert_auto_clock_in_v3", tone: "auto_clock_in_tone", kinds: ["shift_auto_clock_in", "staff_auto_clock_in"], isNew: true },
+  { key: "missed_clock_in", label: "Missed clock-in", when: "A shift started without a clock-in", channel: "bm_alert_missed_clock_in_v1", tone: "missed_clock_in_tone", kinds: ["staff_missed_clock_in"], isNew: true },
   { key: "shift_end", label: "Shift ending soon", when: "Rota shift about to end", channel: "bm_support_shift_end_v7", tone: "shift_end_tone", kinds: ["shift_end", "shift_end_warn"] },
   { key: "shift_over", label: "Shift has ended", when: "Shift end time reached while signed in", channel: "bm_alert_shift_over_v3", tone: "shift_over_tone", kinds: ["shift_end_over"], isNew: true },
   { key: "cover_request", label: "Cover sign-in request", when: "Staff asks to sign in for cover", channel: "bm_alert_cover_request_v3", tone: "cover_request_tone", kinds: ["cover_request"], isNew: true, audience: "management" },
   { key: "cover_approved", label: "Cover approved", when: "Your cover request was approved", channel: "bm_alert_cover_approved_v3", tone: "cover_approved_tone", kinds: ["shift_start_cover_approved"], isNew: true },
   { key: "cover_declined", label: "Cover declined", when: "Your cover request was declined", channel: "bm_alert_cover_declined_v3", tone: "cover_declined_tone", kinds: ["cover_declined"], isNew: true },
-  { key: "early_finish", label: "Early finish", when: "Early finish requested / decided", channel: "bm_alert_early_finish_v3", tone: "early_finish_tone", kinds: ["early_finish"], isNew: true, audience: "management" },
+  { key: "early_finish", label: "Early finish", when: "Early finish requested / decided", channel: "bm_alert_early_finish_v3", tone: "early_finish_tone", kinds: ["early_finish", "early-finish"], isNew: true, audience: "management" },
   { key: "break_due", label: "Break due", when: "Allocated Break 1 / Main break / Break 2 time arrives", channel: "bm_alert_break_due_v3", tone: "break_due_tone", kinds: ["break_warn"], isNew: true },
   { key: "break_ending", label: "Break ending", when: "Break nearly over", channel: "bm_alert_break_ending_v3", tone: "break_ending_tone", kinds: ["break_ending"], isNew: true },
   { key: "main_break_ending", label: "Main break ending", when: "Main break nearly over", channel: "bm_alert_main_break_ending_v3", tone: "main_break_ending_tone", kinds: ["main_break_ending"], isNew: true },

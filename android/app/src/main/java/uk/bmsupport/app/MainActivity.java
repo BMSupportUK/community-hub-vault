@@ -54,6 +54,7 @@ public class MainActivity extends BridgeActivity {
         createSpokenChannel("bm_alert_guide_access_v3", "Guide / app access", R.raw.guide_access_tone);
         createSpokenChannel("bm_alert_content_report_v3", "Content reported", R.raw.content_report_tone);
         createSpokenChannel("bm_alert_auto_clock_in_v3", "Auto clock-in", R.raw.auto_clock_in_tone);
+        createSpokenChannel("bm_alert_missed_clock_in_v1", "Missed clock-in", R.raw.missed_clock_in_tone);
         createSpokenChannel("bm_alert_shift_over_v3", "Shift has ended", R.raw.shift_over_tone);
         createSpokenChannel("bm_alert_cover_request_v3", "Cover sign-in request", R.raw.cover_request_tone);
         createSpokenChannel("bm_alert_cover_approved_v3", "Cover approved", R.raw.cover_approved_tone);
