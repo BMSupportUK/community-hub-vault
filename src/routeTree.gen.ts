@@ -104,6 +104,7 @@ import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_authenticated/_approved/new-content'
+import { Route as AuthenticatedApprovedNotificationSettingsRouteImport } from './routes/_authenticated/_approved/notification-settings'
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
 import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
 import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
@@ -718,6 +719,12 @@ const AuthenticatedApprovedNewContentRoute =
     path: '/new-content',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedNotificationSettingsRoute =
+  AuthenticatedApprovedNotificationSettingsRouteImport.update({
+    id: '/notification-settings',
+    path: '/notification-settings',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedProfileRoute =
   AuthenticatedApprovedProfileRouteImport.update({
     id: '/profile',
@@ -1299,6 +1306,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/notification-settings': typeof AuthenticatedApprovedNotificationSettingsRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -1473,6 +1481,7 @@ export interface FileRoutesByTo {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/notification-settings': typeof AuthenticatedApprovedNotificationSettingsRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -1653,6 +1662,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/members': typeof AuthenticatedApprovedMembersRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
   '/_authenticated/_approved/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/_authenticated/_approved/notification-settings': typeof AuthenticatedApprovedNotificationSettingsRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -1832,6 +1842,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/new-content'
+    | '/notification-settings'
     | '/profile'
     | '/responsive-check'
     | '/reviews'
@@ -2006,6 +2017,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/new-content'
+    | '/notification-settings'
     | '/profile'
     | '/responsive-check'
     | '/reviews'
@@ -2185,6 +2197,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/members'
     | '/_authenticated/_approved/moderation'
     | '/_authenticated/_approved/new-content'
+    | '/_authenticated/_approved/notification-settings'
     | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/responsive-check'
     | '/_authenticated/_approved/reviews'
@@ -3017,6 +3030,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedNewContentRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/notification-settings': {
+      id: '/_authenticated/_approved/notification-settings'
+      path: '/notification-settings'
+      fullPath: '/notification-settings'
+      preLoaderRoute: typeof AuthenticatedApprovedNotificationSettingsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/profile': {
       id: '/_authenticated/_approved/profile'
       path: '/profile'
@@ -3738,6 +3758,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedMembersRoute: typeof AuthenticatedApprovedMembersRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
   AuthenticatedApprovedNewContentRoute: typeof AuthenticatedApprovedNewContentRoute
+  AuthenticatedApprovedNotificationSettingsRoute: typeof AuthenticatedApprovedNotificationSettingsRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedResponsiveCheckRoute: typeof AuthenticatedApprovedResponsiveCheckRoute
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
@@ -3862,6 +3883,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedMembersRoute: AuthenticatedApprovedMembersRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
   AuthenticatedApprovedNewContentRoute: AuthenticatedApprovedNewContentRoute,
+  AuthenticatedApprovedNotificationSettingsRoute:
+    AuthenticatedApprovedNotificationSettingsRoute,
   AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
   AuthenticatedApprovedResponsiveCheckRoute:
     AuthenticatedApprovedResponsiveCheckRoute,
