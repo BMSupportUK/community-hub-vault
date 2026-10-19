@@ -64,7 +64,7 @@ export function PushNotificationsToggle() {
     return <p className="text-xs text-muted-foreground">Open this site in a real browser tab (or installed PWA) to enable push notifications.</p>;
   }
   if (status === "unsupported") {
-    return <p className="text-xs text-muted-foreground">Push notifications aren't supported in this browser. On Android, use Chrome and add to home screen.</p>;
+    return <p className="text-xs text-muted-foreground">Push notifications aren't supported here. On iPhone, open bmsupport.uk in Safari, tap Share → Add to Home Screen, then open BM Support from that icon. On Android, use Chrome.</p>;
   }
   if (status === "denied") {
     return <p className="text-xs text-muted-foreground">Notifications are blocked. Enable them in your browser site settings to receive outage and shift alerts.</p>;
