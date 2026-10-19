@@ -24,14 +24,25 @@ export const NOTIFY_CATEGORIES = [
   { id: "payments", label: "Payments received", hint: "Invoices paid and Wise transfers", roles: ADMIN },
   { id: "checkout_chat", label: "Secure checkout chat", hint: "Customer messages on an order", roles: ADMIN },
   { id: "owner_tickets", label: "Tickets raised to owner", hint: "Tickets escalated to admin", roles: ADMIN },
-  { id: "general", label: "Everything else", hint: "Any other alerts", roles: EVERYONE },
+  { id: "guide_access", label: "Guide access", hint: "Your guide passcode or access is approved", roles: EVERYONE },
+  { id: "ticket_picked_up", label: "Ticket picked up", hint: "A staff member picks up a ticket", roles: STAFF },
+  { id: "ticket_help", label: "Ticket help requests", hint: "A colleague asks for help on a ticket", roles: STAFF },
+  { id: "shift_start", label: "Shift starting", hint: "Your shift is about to start or has started", roles: STAFF },
+  { id: "shift_end", label: "Shift ending", hint: "Your shift is ending soon or has ended", roles: STAFF },
+  { id: "auto_clock_in", label: "Automatic clock-in", hint: "You were clocked in automatically", roles: STAFF },
+  { id: "missed_clock_in", label: "Missed clock-in", hint: "A shift started without a clock-in", roles: STAFF },
+  { id: "cover_requests", label: "Cover requests", hint: "Someone asks for shift cover", roles: STAFF },
+  { id: "download_requests", label: "Guide & app download requests", hint: "Customers asking for install guides or app downloads", roles: ADMIN },
+  { id: "signups", label: "New sign-ups", hint: "A new account is created", roles: ADMIN },
+  { id: "content_reports", label: "Message reports", hint: "A private message is reported", roles: ADMIN },
+  { id: "general", label: "Other alerts", hint: "Test alerts only", roles: EVERYONE, hidden: true },
 ] as const;
 export type NotifyCategory = (typeof NOTIFY_CATEGORIES)[number]["id"];
 
 /** The alert types this person's roles can actually receive. */
 export function categoriesForRoles(roles: string[]) {
   const mine = new Set<string>(roles.length ? [...roles, "member"] : ["member"]);
-  return NOTIFY_CATEGORIES.filter((c) => (c.roles as readonly string[]).some((r) => mine.has(r)));
+  return NOTIFY_CATEGORIES.filter((c) => !("hidden" in c && c.hidden) && (c.roles as readonly string[]).some((r) => mine.has(r)));
 }
 
 const BY_KIND: Record<string, NotifyCategory> = {
@@ -41,13 +52,30 @@ const BY_KIND: Record<string, NotifyCategory> = {
   incident: "outages",
   app_update: "app_updates",
   ticket: "new_tickets",
+  order: "new_orders",
+  ticket_reply: "ticket_replies",
+  ticket_handover: "ticket_replies",
+  ticket_picked_up: "ticket_picked_up",
+  ticket_help_requested: "ticket_help",
+  shift_start: "shift_start",
+  shift_end: "shift_end",
+  staff_missed_clock_in: "missed_clock_in",
+  cover_request: "cover_requests",
+  guide_passcode: "guide_access",
+  guide_access_granted: "guide_access",
+  install_guides_access_request: "download_requests",
+  app_download_access_request: "download_requests",
+  signup: "signups",
+  content_report: "content_reports",
+  incident_created: "outages",
+  incident_resolved: "outages",
   ticket_raised: "new_tickets",
   "ticket-reply": "ticket_replies",
   ticket_assigned: "ticket_assigned",
   live_help: "live_help",
   shift: "shifts",
-  staff_auto_clock_in: "shifts",
-  shift_auto_clock_in: "shifts",
+  staff_auto_clock_in: "auto_clock_in",
+  shift_auto_clock_in: "auto_clock_in",
   shift_start_warn: "shifts",
   shift_start_over: "shifts",
   break: "breaks",

@@ -31,3 +31,10 @@ test("moderators see access requests; admins see orders", () => {
   expect(categoriesForRoles(["moderator"]).map((c) => c.id)).toContain("access_requests");
   expect(categoriesForRoles(["admin"]).map((c) => c.id)).toContain("new_orders");
 });
+
+test("every alert the site sends has its own switch, none fall into Other", () => {
+  for (const k of ["order","ticket","signup","ticket_reply","ticket_picked_up","shift_start","shift_end","guide_passcode","content_report","cover_request","staff_missed_clock_in","ticket_handover","incident_created","install_guides_access_request","app_download_access_request","ticket_help_requested"]) {
+    expect(notifyCategory(k)).not.toBe("general");
+  }
+  expect(categoriesForRoles(["admin"]).map((c) => c.id)).not.toContain("general");
+});
