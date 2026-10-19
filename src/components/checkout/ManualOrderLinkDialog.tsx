@@ -494,7 +494,7 @@ export function ManualOrderLinkButton({ orderId, orderRef }: { orderId: string; 
       onClick={() => navigate({ to: "/admin-secure-page", search: { order: orderId, ref: orderRef ?? undefined } as never })}
       className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-xs font-medium hover:bg-surface-2"
     >
-      <Link2 className="size-3.5" /> Secure page
+      <Link2 className="size-3.5" /> Secure Order Page
     </button>
   );
 }

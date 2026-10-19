@@ -246,9 +246,10 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.total_cents)}</td>
                       {canComplete && <td className="px-3 py-2 whitespace-nowrap tabular-nums">{!settled ? "—" : fee.feesMissing ? (fee.fees ? `${money(fee.fees)} + unknown` : "Unknown") : money(fee.fees)}</td>}
                       {canComplete && <td className="px-3 py-2 whitespace-nowrap tabular-nums">{!settled ? "—" : fee.feesMissing ? "Unknown" : money(r.total_cents - fee.fees)}</td>}
-                      <td className="px-3 py-2 min-w-[150px]"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span>
-                        {r.status.toLowerCase() !== "cancelled" && <div className="mt-1.5 w-32"><OrderStatusBar compact step={r.completed_at ? 3 : r.paid_at ? 2 : 1} /></div>}
-                        {canViewStaffCheckout(roles) && <div className="mt-1.5"><ManualOrderLinkButton orderId={r.id} orderRef={r.order_ref} /></div>}
+                      <td className="px-3 py-2 min-w-[150px]">
+                        {canViewStaffCheckout(roles) && <div className="mb-1.5"><ManualOrderLinkButton orderId={r.id} orderRef={r.order_ref} /></div>}
+                        {r.status.toLowerCase() !== "cancelled" && <div className="mb-1.5 w-32"><OrderStatusBar compact step={r.completed_at ? 3 : r.paid_at ? 2 : 1} /></div>}
+                        <span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.paid_at ? new Date(r.paid_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : (
                         canComplete && r.customer_type === "manual" && !r.completed_at && r.status.toLowerCase() !== "cancelled" && ["bank_transfer", "bank", "cash"].includes((r.manual_pay_method ?? "").toLowerCase()) ? (
