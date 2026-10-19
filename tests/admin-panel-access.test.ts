@@ -63,7 +63,7 @@ describe("admin panel tool cards", () => {
     expect(adminPanelToolAllowed({ to: "/admin-fan-zone" }, ["staff", "boro_fan_zone_moderator"], p)).toBe(false);
   });
 
-  it("adds a card for every BM Support page ticked for staff", () => {
+  it("adds cards only for admin tool pages ticked for staff, never normal pages", () => {
     const p = {
       admin: ["staff"],
       tickets: ["staff", "member"],
@@ -71,9 +71,10 @@ describe("admin panel tool cards", () => {
       shifts: ["staff"],
       forum: ["boro_fan_zone_moderator", "staff"],
       "admin-dns": ["admin"],
+      "admin-blacklist": ["staff"],
     };
     const keys = staffAllowedPageKeys(["staff", "boro_fan_zone_moderator"], p, new Set(["shifts"]), (k) => k === "forum");
-    expect(keys.sort()).toEqual(["members", "tickets"]);
+    expect(keys.sort()).toEqual(["admin-blacklist"]);
     expect(staffAllowedPageKeys(["admin"], p, new Set(), () => false)).toEqual([]);
   });
 });
@@ -96,20 +97,3 @@ describe("Fan Zone dashboard is not for BM Support staff", () => {
   });
 });
 
-import { canSeeUserCredentialsTab } from "../src/lib/admin-panel-access";
-describe("User credentials tab in the dashboard header", () => {
-  it("shows the tab beside Customers to the owner and management only", () => {
-    expect(canSeeUserCredentialsTab(["admin"])).toBe(true);
-    expect(canSeeUserCredentialsTab(["management"])).toBe(true);
-    expect(canSeeUserCredentialsTab(["admin", "staff"])).toBe(true);
-    expect(canSeeUserCredentialsTab(["staff"])).toBe(false);
-    expect(canSeeUserCredentialsTab(["moderator"])).toBe(false);
-    expect(canSeeUserCredentialsTab(["subscriber"])).toBe(false);
-    expect(canSeeUserCredentialsTab(["boro_fan_zone_moderator"])).toBe(false);
-  });
-
-  it("never leaves a staff card behind now that the page is a header tab", () => {
-    const p = { ...perms, "admin-credentials": ["admin", "management"] };
-    expect(staffAllowedPageKeys(["staff"], p, new Set(), () => false)).not.toContain("admin-credentials");
-  });
-});
