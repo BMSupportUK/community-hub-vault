@@ -170,11 +170,20 @@ export function useMentionAutocomplete({
   const [results, setResults] = useState<MentionUser[]>([]);
   const [highlight, setHighlight] = useState(0);
   const queryStart = useRef<number>(-1);
+  // Value produced by the last pick: skip re-detecting "@name" in it, otherwise
+  // the stale caret reopens the list and the name needs a second tap.
+  const justApplied = useRef<string | null>(null);
 
   // Detect "@..." token under the caret on every value change.
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
+    if (justApplied.current !== null && justApplied.current === value) {
+      setQuery(null);
+      queryStart.current = -1;
+      return;
+    }
+    justApplied.current = null;
     const selection = window.getSelection();
     const caret =
       (ta instanceof HTMLTextAreaElement || ta instanceof HTMLInputElement)
@@ -265,6 +274,7 @@ export function useMentionAutocomplete({
     const after = value.slice(caret);
     const insert = `@${user.username} `;
     const next = before + insert + after;
+    justApplied.current = next;
     onChange(next);
     const pos = before.length + insert.length;
     requestAnimationFrame(() => {
