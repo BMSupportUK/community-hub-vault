@@ -67,6 +67,14 @@ export function bmSupportRoles(roles: readonly string[]): string[] {
 }
 
 /**
+ * Pages that are opened from inside another tool rather than from a dashboard
+ * card, so they never get one of their own: the staff secure checkout page is
+ * reached from the Orders tab, so a card beside it would only duplicate that.
+ * The permission row stays, so who may still open the page is unchanged.
+ */
+export const DASHBOARD_HIDDEN_PAGE_KEYS = new Set(["admin-secure-page"]);
+
+/**
  * Extra dashboard cards for staff: every BM Support page the permission list
  * ticks for their BM Support roles that has no tool card of its own, so each
  * allowed section shows up. Excludes the dashboard itself.
@@ -86,6 +94,7 @@ export function staffAllowedPageKeys(
       key !== "admin" &&
       key.startsWith("admin-") &&
       !existingKeys.has(key) &&
+      !DASHBOARD_HIDDEN_PAGE_KEYS.has(key) &&
       !isFanZonePage(key) &&
       bm.some((r) => allowed.includes(r)),
     )
