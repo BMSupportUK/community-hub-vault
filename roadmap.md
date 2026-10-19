@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Today's break allocation and rota booking
+- [ ] Repair empty saved break allocations when cover becomes available, preserving allocated times and recorded breaks.
+- [ ] Block bookings on crossed-out rota days and verify the cutoff.
+
 ## Open Banking profit breakdown
 - [x] Align Orders payment labels with verified Open Banking and settled Wise, Square card and Crypto payments; pending alternatives cannot override actual payments.
 - [x] Add display-only £1 Open Banking demo with sample fees, separate from real orders and totals.
