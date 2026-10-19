@@ -849,7 +849,7 @@ export function VideoCallStage({
           ))}
         </div>
       )}
-      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col landscape:flex-row md:flex-row">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
         <audio ref={audioRef} autoPlay className="hidden" />
@@ -953,7 +953,7 @@ export function VideoCallStage({
       </div>
       </div>
       {sidePanel && withChat && (
-        <aside className="flex h-[45dvh] min-h-0 shrink-0 flex-col border-t border-border bg-card md:h-auto md:w-[24rem] md:border-l md:border-t-0">
+        <aside className="flex h-[45dvh] min-h-0 shrink-0 flex-col border-t border-border bg-card landscape:h-auto landscape:w-[min(24rem,45vw)] landscape:border-l landscape:border-t-0 md:h-auto md:w-[24rem] md:border-l md:border-t-0">
           {sidePanel}
         </aside>
       )}
