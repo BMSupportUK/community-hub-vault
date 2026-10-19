@@ -53,9 +53,10 @@ export function MentionSoundAlert() {
         });
         return;
       }
-      // BM Support wants Dane: bespoke voice clip (louder cue than the chime).
-      // Fires for any BM Support alert, and always while he is in the Fan Zone.
-      if (user?.id === DANE_USER_ID) {
+      // BM Support wants Dane: bespoke voice clip, only while he is in the
+      // Fan Zone. On the BM Support site he gets the normal mention tone.
+      const inFanZone = typeof window !== "undefined" && window.location.pathname.startsWith("/forum");
+      if (user?.id === DANE_USER_ID && inFanZone) {
         const needed = getSound("dane-bm-support");
         if (needed) {
           void playSound(needed.src, { label: `bm-support-needed-${row.id}`, gain: needed.gain });
