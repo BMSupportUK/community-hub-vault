@@ -129,6 +129,7 @@ function AdminBlacklistPage() {
           </div>
         </header>
 
+        {canManage && (
         <form onSubmit={submit} className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
           <div className="grid sm:grid-cols-[140px_1fr] gap-3">
             <select
