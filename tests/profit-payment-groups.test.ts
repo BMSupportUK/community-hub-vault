@@ -38,3 +38,10 @@ test('unpaid orders show Pending until checkout confirms Open Banking or Wise', 
   expect(orderPaymentLabel(orderPaymentGroup([], new Map(), 'stripe'))).toBe('Pending');
   expect(orderPaymentLabel(orderPaymentGroup([], new Map(), 'wise'))).toBe('Pending');
 });
+test('resolved Orders groups keep their settled payment method', () => {
+  expect(orderPaymentLabel('square')).toBe('Square card');
+  expect(orderPaymentLabel('open_banking')).toBe('Open Banking');
+  expect(orderPaymentLabel('wise')).toBe('Wise');
+  expect(orderPaymentLabel('nowpayments')).toBe('Crypto');
+  expect(orderPaymentLabel('pending')).toBe('Pending');
+});

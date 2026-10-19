@@ -41,10 +41,10 @@
 - Manual credential access verifies email codes plus a salted PBKDF2 PIN atomically; initial enrollment checks an existing paid manual TV login so mailbox access alone cannot enroll or reset a PIN.
 - Manual registration exceptions persist on checkout links, enforced by admin-only RPCs and a write trigger; creation saves atomically and PIN access remains independent.
 <!-- LOVABLE:END -->
-- Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
+- playSound resolves uploaded overrides for all web callers; closed-app Android tones require an APK rebuild.
 - Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 
-- Profit uses pence; missing data provisional, confirmed fees fixed. Orders/profit share verified settled-method grouping. Invoice sync repairs rows; demos never alter totals.
+- Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts.
 
-- Breaks use UK time; duplicate-safe starters recheck records. Empty plans retry; real times stay fixed. Rota UI/write guards close days at UK midnight.
+- Breaks use UK time; starters recheck against duplicates. Empty plans retry; real times stay fixed. Rota UI/write guards close days at UK midnight.
