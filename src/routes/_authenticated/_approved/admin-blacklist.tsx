@@ -165,6 +165,7 @@ function AdminBlacklistPage() {
             Add to blacklist
           </button>
         </form>
+        )}
 
         {loading ? (
           <div className="py-10 text-center text-muted-foreground"><Loader2 className="size-5 animate-spin inline" /></div>
@@ -179,10 +180,10 @@ function AdminBlacklistPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="email" className="mt-4">
-              <EntryCards items={emails} icon={Mail} onRemove={onRemove} empty="No blocked emails yet." />
+              <EntryCards items={emails} icon={Mail} onRemove={canManage ? onRemove : undefined} empty="No blocked emails yet." />
             </TabsContent>
             <TabsContent value="ip" className="mt-4">
-              <EntryCards items={ips} icon={Globe} onRemove={onRemove} empty="No blocked IPs yet." />
+              <EntryCards items={ips} icon={Globe} onRemove={canManage ? onRemove : undefined} empty="No blocked IPs yet." />
             </TabsContent>
           </Tabs>
         )}
