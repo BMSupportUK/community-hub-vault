@@ -1,5 +1,12 @@
 # Swap Pay by Bank from Stripe to GoCardless
 
+## Build it now, switched off
+- I build all the GoCardless parts now, but leave them **off**. Customers keep paying through Stripe Pay by bank, so nothing changes for them.
+- Admins get a new **Pay by bank provider** setting in the dashboard with two choices, Stripe or GoCardless. GoCardless stays greyed out until its keys are saved and checked.
+- When GoCardless verifies you, you paste the keys into the secure boxes, set up the webhook, and switch the setting over. You won't need another build.
+- If anything goes wrong, you can switch straight back to Stripe.
+
+
 ## What I'd need from you
 1. **A GoCardless merchant account** with **Instant Bank Pay** turned on. This is GoCardless's one-off open banking payment. You may have to ask GoCardless support to enable it.
 2. **A live access token** from the GoCardless dashboard (Developers → Create access token, read-write). I'll ask for it in a secure box. Don't paste it in chat.
