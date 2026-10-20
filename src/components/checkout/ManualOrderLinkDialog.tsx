@@ -394,7 +394,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       <div className="text-xs font-medium">Send to the customer</div>
       <CopyField label="Secure page link" value={url} />
       <CopyField label="Password" value={link.password} />
-      <CopyField label="Link + password (to send to the customer)" value={`Your secure order page: ${url}\nPassword: ${link.password}`} />
+      <CopyField label="Link + password (to send to the customer)" value={`${url}${url.includes("?") ? "&" : "?"}pw=${encodeURIComponent(link.password)}`} />
       {canComplete && <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="size-3.5" /> Open page</a>}
     </div>
   );
