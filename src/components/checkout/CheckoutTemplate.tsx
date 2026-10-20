@@ -310,8 +310,6 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </Button>
             )}
           </section>
-          {/* When no sidebar shows the install guides, keep video help under the order details. */}
-          {!(paidSidebar || accountSidebar) && videoHelp}
           </div>
 
           {paidSidebar ? (
@@ -343,7 +341,6 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 )}
               </section>
               {installCard}
-              {!installCard && videoHelp}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -363,7 +360,6 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 </div>
               </section>
               {installCard}
-              {!installCard && videoHelp}
               {addLoginDetails}
               {visibleStage === 3 && completeSale}
               {visibleStage === 4 && requiresManualRegistration(order) && (
