@@ -771,14 +771,7 @@ function ShiftsPage() {
 
   const reviewSwap = async (s: Swap, status: ReqStatus) => {
     if (isDemo) return toast.info(DEMO_TOAST);
-    if (status === "approved") {
-      if (s.target_user_id) {
-        await supabase.from("shift_slots").update({ assigned_to: s.target_user_id }).eq("id", s.slot_id);
-      } else {
-        await supabase.from("shift_slots").update({ assigned_to: null }).eq("id", s.slot_id);
-      }
-    }
-    const { error } = await supabase.from("shift_swap_requests").update({ status, reviewed_by: user?.id ?? null, reviewed_at: new Date().toISOString() }).eq("id", s.id);
+    const { error } = await supabase.rpc("decide_shift_swap", { _id: s.id, _approve: status === "approved" });
     if (error) return toast.error(error.message);
     toast.success(`Swap ${status}`);
     load();
