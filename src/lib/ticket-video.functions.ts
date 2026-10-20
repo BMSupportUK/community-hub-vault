@@ -176,3 +176,35 @@ export const endTicketVideoCallStaff = createServerFn({ method: "POST" })
       .in("status", ["ringing", "waiting", "live"]);
     return { ok: true as const };
   });
+
+/** Staff on a ticket video call ask admin/management to join (one request per 2 minutes per call). */
+export const requestTicketVideoAssistance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await staffRoles(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: call } = await supabaseAdmin.from("ticket_video_calls").select("id,ticket_id,status").eq("id", data.sessionId).in("status", ["waiting", "live"]).maybeSingle();
+    if (!call) throw new Error("This call has ended");
+    const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from("staff_notifications").select("created_at").eq("kind", "live_help_assist").eq("entity_id", data.sessionId)
+      .gte("created_at", since).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (recent) {
+      const wait = Math.max(1, Math.ceil((new Date(String(recent.created_at)).getTime() + 120000 - Date.now()) / 1000));
+      return { ok: false as const, waitSeconds: wait };
+    }
+    const [{ data: t }, { data: me }] = await Promise.all([
+      supabaseAdmin.from("tickets").select("subject").eq("id", call.ticket_id).maybeSingle(),
+      supabaseAdmin.from("profiles").select("username").eq("id", context.userId).maybeSingle(),
+    ]);
+    const { error } = await supabaseAdmin.from("staff_notifications").insert({
+      kind: "live_help_assist",
+      title: `Help needed on video call — ticket "${(t as { subject?: string } | null)?.subject ?? ""}"`,
+      body: `${(me as { username?: string } | null)?.username ?? "A staff member"} is asking admin/management to join the customer video call.`,
+      link_path: `/tickets?id=${call.ticket_id}`,
+      entity_id: data.sessionId,
+    } as never);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, waitSeconds: 120 };
+  });

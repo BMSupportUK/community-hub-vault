@@ -177,8 +177,9 @@ export type StaffCallRoom = ReturnType<typeof useStaffCallRoom>;
 const ROLE_LABEL: Record<string, string> = { admin: "Admin", management: "Management", staff: "Staff" };
 
 /** Staff-only box: who is on the call plus the admin/management help button. */
-export function StaffOnCallBox({ room }: { room: StaffCallRoom }) {
-  const ask = useServerFn(requestVideoCallAssistance);
+export function StaffOnCallBox({ room, requestHelp }: { room: StaffCallRoom; requestHelp?: (a: { data: { sessionId: string } }) => Promise<{ ok: boolean; waitSeconds: number }> }) {
+  const askOrder = useServerFn(requestVideoCallAssistance);
+  const ask = requestHelp ?? askOrder;
   const [lastAt, setLastAt] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(Date.now());
