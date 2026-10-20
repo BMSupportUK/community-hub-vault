@@ -5,8 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { addDaysToDateStr, useTimezone } from "@/hooks/use-timezone";
 import { phoneToneSrc } from "@/lib/phone-alert-sounds";
-const shiftStartAudio = phoneToneSrc("shift_start")!;
-const shiftEndAudio = phoneToneSrc("shift_end")!;
+import { shiftAlertSoundEvent } from "@/lib/shift-alert-sound";
 import { playSound } from "@/lib/sound";
 import {
   AlertDialog,
@@ -204,16 +203,6 @@ export function ShiftStartEndAlert() {
     }
   }, [candidate, active]);
 
-  // Play the matching voice clip when a warning first appears for a given slot.
-  useEffect(() => {
-    if (!active) return;
-    const key = `${active.slot.id}:${active.stage}`;
-    if (playedStageAlerts.has(key)) return;
-    playedStageAlerts.add(key);
-    const src = active.stage === "start" ? shiftStartAudio : shiftEndAudio;
-    playSound(src, { label: `shift-${active.stage}`, gain: 2.2 });
-  }, [active]);
-
   // Render or update the non-blocking warning toast.
   useEffect(() => {
     if (!active) {
@@ -377,6 +366,19 @@ export function ShiftStartEndAlert() {
 
   const dialogOpen = askOpen && !!openShift && autoEndAt !== null;
   const remaining = autoEndAt !== null ? autoEndAt - now : 0;
+
+  // Warning and actual shift end are separate alerts. Previously the warning
+  // consumed the only sound key ten minutes before the question appeared.
+  useEffect(() => {
+    if (!active || !pageVisible) return;
+    const { startsAt, endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
+    const event = shiftAlertSoundEvent(active.slot.id, active.stage, active.stage === "start" ? startsAt : endsAt, now, dialogOpen);
+    if (!event || playedStageAlerts.has(event.key)) return;
+    const src = phoneToneSrc(event.tone);
+    if (!src) return;
+    playedStageAlerts.add(event.key);
+    void playSound(src, { label: event.tone, gain: 2.2 });
+  }, [active, pageVisible, now, dialogOpen, shiftWindowToUtcMs]);
 
   // Safety net: a dialog that disappears while open can leave the page with
   // clicks disabled. If nothing is actually open, give the page its clicks back.
