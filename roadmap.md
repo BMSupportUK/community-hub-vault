@@ -287,3 +287,6 @@
 
 ## Staff group video calls
 - [x] Multiple staff on one secure-order video call, staff-only "on this call" box, request admin/management help button; any staff leaving never drops the call
+
+## Ticket video calls
+- [x] /video staff command posts QR; customer phone page; multi-staff room on tickets
