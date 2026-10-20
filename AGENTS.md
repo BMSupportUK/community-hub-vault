@@ -12,6 +12,7 @@
 - Staff Away reads user_dnd_status (current window); triggers store shift-linked history.
 - Android alerts use per-type tones on versioned channels; sound corrections need a new channel ID because Android retains the first sound.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
+- Shift sounds deduplicate warning and due phases separately; the shift-over clip plays when the visible still-working question opens, not from a hidden end toast.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
