@@ -209,7 +209,7 @@ export function StaffOnCallBox({ room, requestHelp }: { room: StaffCallRoom; req
   };
 
   return (
-    <div className="fixed left-3 top-3 z-[110] w-64 max-w-[calc(100vw-1.5rem)] rounded-xl border border-border bg-card/95 p-3 text-card-foreground shadow-lg backdrop-blur-sm">
+    <div className="fixed bottom-24 left-3 z-[110] w-64 max-w-[calc(100vw-1.5rem)] rounded-xl border border-border bg-card/95 p-3 text-card-foreground shadow-lg backdrop-blur-sm">
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-2 text-left text-sm font-semibold">
         <Users className="size-4 text-primary" /> Staff on this call ({room.members.length})
         <span className="ml-auto text-xs text-muted-foreground">{open ? "Hide" : "Show"}</span>

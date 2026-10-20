@@ -66,7 +66,7 @@ export function VideoCallStage({
   /** Staff: when true at hang-up, leave without telling the customer (other staff stay on). */
   quietLeave?: () => boolean;
 }) {
-  const [withChat, setWithChat] = useState(false);
+  const [withChat, setWithChat] = useState(true);
   // Customer's phone held sideways while its screen stays upright (rotation lock).
   const [heldTurn, setHeldTurn] = useState(0);
   const turned = side === "answerer" && withChat && (heldTurn === 90 || heldTurn === 270);
