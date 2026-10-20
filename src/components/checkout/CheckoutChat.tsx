@@ -15,7 +15,7 @@ export function secureCheckoutUrl(token: string) {
   return `${base}/pay/${token}`;
 }
 
-function Thread({ messages, mine }: { messages: Msg[]; mine: "customer" | "staff" }) {
+export function Thread({ messages, mine }: { messages: Msg[]; mine: "customer" | "staff" }) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
   return (
@@ -34,7 +34,7 @@ function Thread({ messages, mine }: { messages: Msg[]; mine: "customer" | "staff
   );
 }
 
-function Composer({ onSend }: { onSend: (t: string) => Promise<void> }) {
+export function Composer({ onSend }: { onSend: (t: string) => Promise<void> }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
