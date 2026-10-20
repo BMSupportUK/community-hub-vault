@@ -15,6 +15,8 @@ import {
 } from "@/lib/live-help.functions";
 import { CustomerCheckoutChatPanel, StaffCheckoutChatPanel, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
 import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCallStage";
+import { StaffCallViewer, StaffOnCallBox, useStaffCallRoom } from "@/components/checkout/StaffCallRoom";
+import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Session = { id: string; status: "waiting" | "live" | "ended" | "expired" };
@@ -156,14 +158,22 @@ export function useOrderVideoCallStaff(orderId: string) {
   const [inCall, setInCall] = useState(false);
   const [busy, setBusy] = useState(false);
   const [isMale, setIsMale] = useState(false);
+  const { roles } = useAuth();
+  const [me, setMe] = useState<{ userId: string; name: string } | null>(null);
+  const role = roles.includes("admin") ? "admin" : roles.includes("management") ? "management" : "staff";
+  const room = useStaffCallRoom(inCall && session ? session.id : null, me ? { ...me, role } : null);
 
   // Pick the staff illustration matching the signed-in staff member's profile gender.
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const uid = data.user?.id;
       if (!uid) return;
-      supabase.from("profiles").select("staff_gender").eq("id", uid).maybeSingle()
-        .then(({ data: p }) => setIsMale((p as { staff_gender?: string } | null)?.staff_gender === "male"));
+      supabase.from("profiles").select("staff_gender,username").eq("id", uid).maybeSingle()
+        .then(({ data: p }) => {
+          const row = p as { staff_gender?: string; username?: string } | null;
+          setIsMale(row?.staff_gender === "male");
+          setMe({ userId: uid, name: row?.username || "Staff" });
+        });
     });
   }, []);
 
@@ -197,11 +207,16 @@ export function useOrderVideoCallStaff(orderId: string) {
   const end = useCallback(async () => {
     const s = session;
     setInCall(false);
+    // Other staff still on the call: only this person leaves, the call carries on.
+    if (room.othersPresent()) return;
     setSession(null);
     if (s) await endFn({ data: { sessionId: s.id } }).catch(() => undefined);
-  }, [session, endFn]);
+  }, [session, endFn, room]);
 
-  return { session, inCall, busy, isMale, answer, end };
+  /** Leave without ending the call for anyone (used by extra staff). */
+  const leave = useCallback(() => { setInCall(false); }, []);
+
+  return { session, inCall, busy, isMale, answer, end, leave, room };
 }
 
 export type OrderVideoCallStaffState = ReturnType<typeof useOrderVideoCallStaff>;
@@ -217,9 +232,11 @@ export function OrderVideoCallIncoming({ call }: { call: OrderVideoCallStaffStat
         <button type="button" disabled={call.busy} onClick={call.answer} className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
           {call.busy ? <Loader2 className="size-3 animate-spin" /> : <Phone className="size-3" />} {call.session.status === "waiting" ? "Accept" : "Rejoin"}
         </button>
-        <button type="button" onClick={call.end} className="inline-flex items-center gap-1 rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
-          <PhoneOff className="size-3" /> Decline
-        </button>
+        {call.session.status === "waiting" && (
+          <button type="button" onClick={call.end} className="inline-flex items-center gap-1 rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
+            <PhoneOff className="size-3" /> Decline
+          </button>
+        )}
       </div>
     </>
   );
@@ -234,7 +251,23 @@ export function OrderVideoCallStaffStage({ call, orderId }: { call: OrderVideoCa
       .then(({ data }) => setToken((data as { token?: string } | null)?.token ?? null));
   }, [orderId]);
   if (!call.session || !call.inCall) return null;
+  const room = call.room;
+  const chat = token ? <StaffCheckoutChatPanel orderId={orderId} token={token} /> : undefined;
+  if (!room.ready) {
+    return (
+      <div className="fixed inset-0 z-[100] grid place-items-center bg-background text-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Joining the call…</span>
+      </div>
+    );
+  }
   return (
-    <VideoCallStage topic={`video-call-${call.session.id}`} side="offerer" otherName="the customer" onHangup={call.end} startWithCamera={false} placeholderImage={call.isMale ? staffPlaceholderMale : undefined} staffGender={call.isMale ? "male" : "female"} sidePanel={token ? <StaffCheckoutChatPanel orderId={orderId} token={token} /> : undefined} />
+    <>
+      {room.isHost ? (
+        <VideoCallStage topic={`video-call-${call.session.id}`} side="offerer" otherName="the customer" onHangup={call.end} startWithCamera={false} placeholderImage={call.isMale ? staffPlaceholderMale : undefined} staffGender={call.isMale ? "male" : "female"} sidePanel={chat} onRemoteTrack={room.pushTrack} quietLeave={room.othersPresent} />
+      ) : (
+        <StaffCallViewer room={room} sessionId={call.session.id} onLeave={call.leave} sidePanel={chat} />
+      )}
+      <StaffOnCallBox room={room} />
+    </>
   );
 }

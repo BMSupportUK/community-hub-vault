@@ -45,6 +45,8 @@ export function VideoCallStage({
   placeholderImage = staffPlaceholder,
   staffGender,
   sidePanel,
+  onRemoteTrack,
+  quietLeave,
 }: {
   topic: string;
   side: Side;
@@ -59,6 +61,10 @@ export function VideoCallStage({
   staffGender?: "male" | "female";
   /** Optional order chat shown beside the call on the "Video + Chat" tab. */
   sidePanel?: ReactNode;
+  /** Staff host: receives each customer track so other staff can be sent the picture. */
+  onRemoteTrack?: (track: MediaStreamTrack) => void;
+  /** Staff: when true at hang-up, leave without telling the customer (other staff stay on). */
+  quietLeave?: () => boolean;
 }) {
   const [withChat, setWithChat] = useState(false);
   // Customer's phone held sideways while its screen stays upright (rotation lock).
@@ -111,6 +117,10 @@ export function VideoCallStage({
   onHangupRef.current = onHangup;
   const onSupersededRef = useRef(onSuperseded);
   onSupersededRef.current = onSuperseded;
+  const onRemoteTrackRef = useRef(onRemoteTrack);
+  onRemoteTrackRef.current = onRemoteTrack;
+  const quietLeaveRef = useRef(quietLeave);
+  quietLeaveRef.current = quietLeave;
   const [remoteMuted, setRemoteMuted] = useState(true);
   const [connected, setConnected] = useState(false);
   // False while the other side sends no camera (staff audio-only): the customer
@@ -156,7 +166,7 @@ export function VideoCallStage({
   const hangup = useCallback(() => {
     if (hungRef.current) return;
     hungRef.current = true;
-    send("bye");
+    if (!quietLeaveRef.current?.()) send("bye");
     onHangupRef.current();
   }, [send]);
 
@@ -199,6 +209,7 @@ export function VideoCallStage({
       };
       pc.ontrack = (e) => {
         const src = e.streams[0] ?? new MediaStream([e.track]);
+        try { onRemoteTrackRef.current?.(e.track); } catch { /* relay is optional */ }
         if (e.track.kind === "audio") {
           const a = audioRef.current;
           if (!a) return;
