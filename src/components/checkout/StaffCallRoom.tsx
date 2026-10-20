@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { enterLiveCall } from "@/lib/live-call-state";
 import { LifeBuoy, Loader2, LogOut, Users, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -243,6 +244,7 @@ export function StaffOnCallBox({ room, requestHelp }: { room: StaffCallRoom; req
 
 /** What a second (or later) staff member sees: the customer's picture passed on by the host. */
 export function StaffCallViewer({ room, sessionId, onLeave, sidePanel }: { room: StaffCallRoom; sessionId: string; onLeave: () => void; sidePanel?: ReactNode }) {
+  useEffect(() => enterLiveCall(), []);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [deg, setDeg] = useState(0);

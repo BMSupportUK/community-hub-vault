@@ -1,3 +1,4 @@
+import { isInLiveCall } from "@/lib/live-call-state";
 /**
  * Local (on-device) browser notifications.
  * Used to mirror in-app toasts as real OS/browser popups.
@@ -25,20 +26,11 @@ export async function ensureLocalNotifyPermission(): Promise<boolean> {
   }
 }
 
-let activeCalls = 0;
-/** While a video call is on screen, browser popups are held back so the call isn't interrupted. */
-export function holdNotificationsForCall(): () => void {
-  activeCalls++;
-  let done = false;
-  return () => { if (!done) { done = true; activeCalls = Math.max(0, activeCalls - 1); } };
-}
-export function inVideoCall() { return activeCalls > 0; }
-
 export async function showLocalNotification(
   title: string,
   opts: { body?: string; tag?: string; icon?: string; silent?: boolean } = {},
 ): Promise<boolean> {
-  if (activeCalls > 0) return false;
+  if (isInLiveCall()) return false;
   if (!localNotifySupported() || Notification.permission !== "granted") return false;
   const payload: NotificationOptions = {
     body: opts.body,
