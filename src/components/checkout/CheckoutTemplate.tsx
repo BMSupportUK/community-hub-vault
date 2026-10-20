@@ -46,7 +46,8 @@ const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", c
 const METHOD: Record<string, string> = { stripe: "Square", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
 
 export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false, renewal = false, selectedStep, onStepSelect }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean; renewal?: boolean; selectedStep?: number; onStepSelect?: (step: number) => void }) {
-  const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Payment confirmed", renewal ? "Subscription extended" : "Account set up", "Completed"];
+  // "Please pay" until the customer finishes checkout, then "Awaiting payment" while it's confirmed.
+  const labels = ["Created", awaitingConfirmation ? "Awaiting payment" : "Please pay", "Payment confirmed", renewal ? "Subscription extended" : "Account set up", "Completed"];
   // Map the 4-state step (0-3) onto 5 labels: after paid, "Account set up" is done once confirmed.
   step = step === 3 ? 4 : step === 2 && accountSetup ? 3 : step;
   const shownStep = selectedStep ?? step;
@@ -271,6 +272,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
           )}
 
           <div className={splitLayout ? (wiseThreeCol ? "grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,400px)_minmax(240px,300px)] lg:items-start" : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start") : "space-y-6"}>
+            <div className="min-w-0 space-y-6">
             <section className={`rounded-2xl border border-border bg-card p-5 ${splitLayout ? "min-w-0" : ""}`}>
             <h2 className="font-semibold mb-3">Order breakdown</h2>
             <div className="space-y-2 text-sm">
@@ -310,6 +312,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
           </section>
           {/* When no sidebar shows the install guides, keep video help under the order details. */}
           {!(paidSidebar || accountSidebar) && videoHelp}
+          </div>
 
           {paidSidebar ? (
             <aside className="min-w-0 space-y-3 lg:sticky lg:top-4">
