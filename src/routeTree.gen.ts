@@ -47,6 +47,7 @@ import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesIdRouteImport } from './routes/guides.$id'
 import { Route as JobApplicationTokenRouteImport } from './routes/job-application.$token'
 import { Route as PayTokenRouteImport } from './routes/pay.$token'
+import { Route as VideoTokenRouteImport } from './routes/video.$token'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAdminAdStatsRouteImport } from './routes/_authenticated/_approved/admin-ad-stats'
@@ -375,6 +376,11 @@ const JobApplicationTokenRoute = JobApplicationTokenRouteImport.update({
 const PayTokenRoute = PayTokenRouteImport.update({
   id: '/pay/$token',
   path: '/pay/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideoTokenRoute = VideoTokenRouteImport.update({
+  id: '/video/$token',
+  path: '/video/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedAccountSecurityRoute =
@@ -1247,6 +1253,7 @@ export interface FileRoutesByFullPath {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/video/$token': typeof VideoTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1423,6 +1430,7 @@ export interface FileRoutesByTo {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/video/$token': typeof VideoTokenRoute
   '/fan-zone': typeof FanZoneIndexRoute
   '/guides': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1603,6 +1611,7 @@ export interface FileRoutesById {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/video/$token': typeof VideoTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1783,6 +1792,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/video/$token'
     | '/fan-zone/'
     | '/guides/'
     | '/account-security'
@@ -1959,6 +1969,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/video/$token'
     | '/fan-zone'
     | '/guides'
     | '/account-security'
@@ -2138,6 +2149,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/video/$token'
     | '/fan-zone/'
     | '/guides/'
     | '/_authenticated/_approved/account-security'
@@ -2313,6 +2325,7 @@ export interface RootRouteChildren {
   GuidesIdRoute: typeof GuidesIdRoute
   JobApplicationTokenRoute: typeof JobApplicationTokenRoute
   PayTokenRoute: typeof PayTokenRoute
+  VideoTokenRoute: typeof VideoTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
@@ -2629,6 +2642,13 @@ declare module '@tanstack/react-router' {
       path: '/pay/$token'
       fullPath: '/pay/$token'
       preLoaderRoute: typeof PayTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/video/$token': {
+      id: '/video/$token'
+      path: '/video/$token'
+      fullPath: '/video/$token'
+      preLoaderRoute: typeof VideoTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/account-security': {
@@ -4007,6 +4027,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesIdRoute: GuidesIdRoute,
   JobApplicationTokenRoute: JobApplicationTokenRoute,
   PayTokenRoute: PayTokenRoute,
+  VideoTokenRoute: VideoTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
