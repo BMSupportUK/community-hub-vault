@@ -70,6 +70,32 @@ export function VideoCallStage({
   // Customer's phone held sideways while its screen stays upright (rotation lock).
   const [heldTurn, setHeldTurn] = useState(0);
   const turned = side === "answerer" && withChat && (heldTurn === 90 || heldTurn === 270);
+  // Customer typing sideways: really turn the screen (full screen + orientation
+  // lock, Android) so the phone keyboard opens along the bottom of the sideways
+  // view. Layout only — never touches the camera or connection.
+  const lockedRef = useRef(false);
+  const lockLandscape = useCallback(async () => {
+    if (lockedRef.current || typeof document === "undefined") return;
+    const o = screen.orientation as ScreenOrientation & { lock?: (t: string) => Promise<void> };
+    if (!o?.lock) return;
+    try {
+      if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
+      await o.lock("landscape");
+      lockedRef.current = true;
+    } catch { /* iPhone / unsupported: keep the on-screen turn */ }
+  }, []);
+  useEffect(() => {
+    if (side === "answerer" && withChat) return;
+    if (!lockedRef.current) return;
+    lockedRef.current = false;
+    try { screen.orientation?.unlock?.(); } catch { /* ignore */ }
+    if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
+  }, [side, withChat]);
+  useEffect(() => () => {
+    if (!lockedRef.current) return;
+    try { screen.orientation?.unlock?.(); } catch { /* ignore */ }
+    if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
+  }, []);
   const localRef = useRef<HTMLVideoElement | null>(null);
   const remoteRef = useRef<HTMLVideoElement | null>(null);
   // Remote sound plays through its own element; the video stays muted so the
@@ -851,6 +877,7 @@ export function VideoCallStage({
 
   return (
     <div
+      onPointerDownCapture={turned ? () => { void lockLandscape(); } : undefined}
       className="fixed z-[100] flex flex-col bg-background"
       style={turned
         ? { left: "50%", top: "50%", width: "100dvh", height: "100vw", transform: `translate(-50%, -50%) rotate(${heldTurn === 90 ? -90 : 90}deg)` }
