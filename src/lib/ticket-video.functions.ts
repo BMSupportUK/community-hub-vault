@@ -208,3 +208,53 @@ export const requestTicketVideoAssistance = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const, waitSeconds: 120 };
   });
+
+type ChatMsg = { id: string; sender: string; content: string; created_at: string };
+
+function chatView(rows: { id: string; sender_id: string; content: string; created_at: string }[], ownerId: string): ChatMsg[] {
+  return rows.map((r) => ({
+    id: String(r.id),
+    sender: r.sender_id === ownerId ? "customer" : "staff",
+    content: /\[\[video:[a-f0-9]{64}\]\]/.test(r.content ?? "") ? "📹 Video call link sent" : String(r.content ?? ""),
+    created_at: String(r.created_at),
+  }));
+}
+
+async function openCallTicket(token: string) {
+  const { supabaseAdmin, call } = await byToken(token);
+  if (!call || !["ringing", "waiting", "live"].includes(call.status)) return null;
+  const { data: t } = await supabaseAdmin.from("tickets").select("id,user_id,status").eq("id", call.ticket_id).maybeSingle();
+  if (!t) return null;
+  return { supabaseAdmin, ticket: t as { id: string; user_id: string; status: string } };
+}
+
+/** Customer phone: the ticket's public chat, shown beside the video call. */
+export const listTicketChatByToken = createServerFn({ method: "POST" })
+  .inputValidator((d) => tokenSchema.parse(d))
+  .handler(async ({ data }) => {
+    const c = await openCallTicket(data.token);
+    if (!c) return { ok: false as const, messages: [] as ChatMsg[] };
+    const { data: rows } = await c.supabaseAdmin
+      .from("ticket_messages")
+      .select("id,sender_id,content,created_at")
+      .eq("ticket_id", c.ticket.id)
+      .eq("is_internal", false)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    return { ok: true as const, messages: chatView(((rows ?? []) as never[]).reverse(), c.ticket.user_id) };
+  });
+
+/** Customer phone: reply in the ticket from beside the video call. */
+export const sendTicketChatByToken = createServerFn({ method: "POST" })
+  .inputValidator((d) => tokenSchema.extend({ content: z.string().trim().min(1).max(2000) }).parse(d))
+  .handler(async ({ data }) => {
+    const c = await openCallTicket(data.token);
+    if (!c || c.ticket.status === "closed") return { ok: false as const };
+    const { error } = await c.supabaseAdmin.from("ticket_messages").insert({
+      ticket_id: c.ticket.id,
+      sender_id: c.ticket.user_id,
+      content: data.content,
+      is_internal: false,
+    });
+    return { ok: !error };
+  });

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCallStage";
 import { StaffCallViewer, StaffOnCallBox, useStaffCallRoom } from "@/components/checkout/StaffCallRoom";
+import { StaffTicketCallChatPanel } from "@/components/app/TicketCallChat";
 import {
   endTicketVideoCallStaff,
   getTicketVideoCallStaff,
@@ -35,7 +36,7 @@ export function TicketVideoInviteCard({ token, text }: { token: string; text: st
 }
 
 /** Staff side of a ticket video call: incoming banner, multi-staff room and the call screen. */
-export function TicketVideoCallStaff({ ticketId }: { ticketId: string }) {
+export function TicketVideoCallStaff({ ticketId, ownerId }: { ticketId: string; ownerId: string }) {
   const get = useServerFn(getTicketVideoCallStaff);
   const join = useServerFn(joinTicketVideoCallStaff);
   const endFn = useServerFn(endTicketVideoCallStaff);
@@ -118,12 +119,13 @@ export function TicketVideoCallStaff({ ticketId }: { ticketId: string }) {
     );
   }
 
+  const chat = <StaffTicketCallChatPanel ticketId={ticketId} ownerId={ownerId} />;
   return (
     <>
       {room.isHost ? (
-        <VideoCallStage topic={`video-call-${call.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} placeholderImage={isMale ? staffPlaceholderMale : undefined} staffGender={isMale ? "male" : "female"} onRemoteTrack={room.pushTrack} quietLeave={room.othersPresent} />
+        <VideoCallStage topic={`video-call-${call.id}`} side="offerer" otherName="the customer" onHangup={end} startWithCamera={false} placeholderImage={isMale ? staffPlaceholderMale : undefined} staffGender={isMale ? "male" : "female"} onRemoteTrack={room.pushTrack} quietLeave={room.othersPresent} sidePanel={chat} />
       ) : (
-        <StaffCallViewer room={room} sessionId={call.id} onLeave={() => setInCall(false)} />
+        <StaffCallViewer room={room} sessionId={call.id} onLeave={() => setInCall(false)} sidePanel={chat} />
       )}
       <StaffOnCallBox room={room} requestHelp={askHelp} />
     </>

@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, PhoneOff, Video } from "lucide-react";
 import { VideoCallStage } from "@/components/app/VideoCallStage";
+import { CustomerTicketCallChatPanel } from "@/components/app/TicketCallChat";
 import { endTicketVideoByToken, getTicketVideoByToken, startTicketVideoByToken } from "@/lib/ticket-video.functions";
 
 export const Route = createFileRoute("/video/$token")({
@@ -66,7 +67,7 @@ function TicketVideoPage() {
   }, [endFn, token]);
 
   if ((state === "waiting" || state === "live") && callId) {
-    return <VideoCallStage topic={`video-call-${callId}`} side="answerer" otherName="BM Support" onHangup={hangup} />;
+    return <VideoCallStage topic={`video-call-${callId}`} side="answerer" otherName="BM Support" onHangup={hangup} sidePanel={<CustomerTicketCallChatPanel token={token} />} />;
   }
 
   const msg: Record<Exclude<State, "waiting" | "live" | "ready">, string> = {

@@ -2127,7 +2127,7 @@ function TicketDetail({
         onRate={onRate}
       />
 
-      {canUseVideoCommand(roles) && <TicketVideoCallStaff ticketId={ticket.id} />}
+      {canUseVideoCommand(roles) && <TicketVideoCallStaff ticketId={ticket.id} ownerId={ticket.user_id} />}
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 sm:px-5 py-3 sm:py-4">
         {messages.filter((m) => !(m.content ?? "").startsWith("🛠️ We are currently setting up your account.")).map((m) => {
           const name = senderName(m.sender_id);
