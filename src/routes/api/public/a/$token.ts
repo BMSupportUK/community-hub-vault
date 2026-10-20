@@ -51,11 +51,18 @@ export const Route = createFileRoute("/api/public/a/$token")({
         const deviceLabel = deviceFromUserAgent(userAgent);
         const clientIp = clientIpFromHeaders(request.headers);
 
+        // Downloader apps often probe the link then fetch it again a second
+        // later — a restart within 2 minutes is the same download.
+        const lastStart = transfer.last_download_started_at
+          ? Date.parse(transfer.last_download_started_at as string)
+          : 0;
+        const isQuickRepeat = lastStart > 0 && Date.now() - lastStart < 2 * 60 * 1000;
+        const countIt = !isRangeContinuation && !isQuickRepeat;
+
         await supabaseAdmin
           .from("app_transfers")
           .update({
-            download_count:
-              (transfer.download_count ?? 0) + (isRangeContinuation ? 0 : 1),
+            download_count: (transfer.download_count ?? 0) + (countIt ? 1 : 0),
             last_download_user_agent: userAgent,
             last_download_device: deviceLabel,
             last_download_ip: clientIp,
