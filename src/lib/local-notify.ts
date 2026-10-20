@@ -1,3 +1,4 @@
+import { isInLiveCall } from "@/lib/live-call-state";
 /**
  * Local (on-device) browser notifications.
  * Used to mirror in-app toasts as real OS/browser popups.
@@ -29,6 +30,7 @@ export async function showLocalNotification(
   title: string,
   opts: { body?: string; tag?: string; icon?: string; silent?: boolean } = {},
 ): Promise<boolean> {
+  if (isInLiveCall()) return false;
   if (!localNotifySupported() || Notification.permission !== "granted") return false;
   const payload: NotificationOptions = {
     body: opts.body,
