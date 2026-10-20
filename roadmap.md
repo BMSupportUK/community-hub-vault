@@ -286,4 +286,4 @@
 - [ ] GoCardless go-live: supported banks from GoCardless institutions by customer country; not-listed fallback Square card / internal bank details (blocked: account verification)
 
 ## Staff group video calls
-- [ ] Multiple staff on one secure-order video call, staff-only "on this call" box, request admin/management help button; any staff leaving never drops the call
+- [x] Multiple staff on one secure-order video call, staff-only "on this call" box, request admin/management help button; any staff leaving never drops the call

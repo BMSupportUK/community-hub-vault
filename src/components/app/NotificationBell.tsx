@@ -167,6 +167,16 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
           if (n.kind === "order_placed" && canManageOrders) {
             playSound(orderAudio, { label: "order", gain: 1.8 });
           }
+          if (n.kind === "live_help_assist") {
+            if (!canManageOrders) return;
+            playKindTone("live_help", "live-help");
+            toast(`🆘 ${n.title}`, {
+              description: n.body ?? "A staff member needs help on a video call.",
+              duration: 15000,
+              action: n.link_path ? { label: "Join call", onClick: () => navigate({ to: n.link_path! } as never) } : undefined,
+            });
+            return;
+          }
           if (n.kind === "live_help" && canManageOrders) {
             playKindTone("live_help", "live-help");
             return;

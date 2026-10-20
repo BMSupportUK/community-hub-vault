@@ -73,6 +73,7 @@ const BY_KIND: Record<string, NotifyCategory> = {
   "ticket-reply": "ticket_replies",
   ticket_assigned: "ticket_assigned",
   live_help: "live_help",
+  live_help_assist: "live_help",
   shift: "shifts",
   staff_auto_clock_in: "auto_clock_in",
   shift_auto_clock_in: "auto_clock_in",
