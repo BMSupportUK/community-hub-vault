@@ -42,3 +42,24 @@ it("help requests wait two minutes between sends", () => {
   expect(assistWaitSeconds(0, 60_000)).toBe(60);
   expect(assistWaitSeconds(0, 120_000)).toBe(0);
 });
+
+import { isVideoCommand, canUseVideoCommand, parseVideoInvite, videoInviteMessage } from "../src/lib/video-call-access";
+
+it("/video command is only for admin, management and staff", () => {
+  expect(canUseVideoCommand(["staff"])).toBe(true);
+  expect(canUseVideoCommand(["management"])).toBe(true);
+  expect(canUseVideoCommand(["admin"])).toBe(true);
+  expect(canUseVideoCommand(["moderator"])).toBe(false);
+  expect(canUseVideoCommand(["member"])).toBe(false);
+});
+it("recognises the /video command exactly", () => {
+  expect(isVideoCommand("/video")).toBe(true);
+  expect(isVideoCommand(" /VIDEO ")).toBe(true);
+  expect(isVideoCommand("/video please")).toBe(false);
+  expect(isVideoCommand("video")).toBe(false);
+});
+it("invite messages carry the token for the QR code", () => {
+  const t = "a".repeat(64);
+  expect(parseVideoInvite(videoInviteMessage(t))?.token).toBe(t);
+  expect(parseVideoInvite("hello")).toBeNull();
+});

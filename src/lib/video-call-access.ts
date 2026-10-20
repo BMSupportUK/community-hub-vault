@@ -47,3 +47,24 @@ export function assistWaitSeconds(lastRequestAt: number | null, now: number): nu
   if (lastRequestAt == null) return 0;
   return Math.max(0, Math.ceil((lastRequestAt + CALL_ASSIST_COOLDOWN_MS - now) / 1000));
 }
+
+/** Ticket chat command staff type to send the customer a video-call QR code. */
+export function isVideoCommand(text: string): boolean {
+  return /^\/video\s*$/i.test(text.trim());
+}
+
+/** Only admin, management and staff may use the /video command. */
+export const canUseVideoCommand = canTakeVideoCalls;
+
+const INVITE_RE = /\[\[video:([a-f0-9]{64})\]\]/;
+
+export function videoInviteMessage(token: string): string {
+  return `📹 Video call: scan this code with your phone's camera, or tap the link on your phone, then tap Start video call.\n[[video:${token}]]`;
+}
+
+/** The invite token inside a ticket message, if it is a video-call invite. */
+export function parseVideoInvite(content: string | null | undefined): { token: string; text: string } | null {
+  const m = (content ?? "").match(INVITE_RE);
+  if (!m) return null;
+  return { token: m[1], text: (content ?? "").replace(INVITE_RE, "").trim() };
+}
