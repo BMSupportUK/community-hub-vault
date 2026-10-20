@@ -284,3 +284,6 @@
 - [x] Record both existing non-excluded referrals without adding time; authenticated read confirms all expiry dates unchanged; 41 tests pass and build OK.
 - [ ] Verify tick/button appearance and future award through unlocked Customers screen — blocked by account password/staff PIN; no security bypass or live bonus applied.
 - [ ] GoCardless go-live: supported banks from GoCardless institutions by customer country; not-listed fallback Square card / internal bank details (blocked: account verification)
+
+## Staff group video calls
+- [ ] Multiple staff on one secure-order video call, staff-only "on this call" box, request admin/management help button; any staff leaving never drops the call
