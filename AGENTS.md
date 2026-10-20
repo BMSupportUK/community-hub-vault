@@ -36,3 +36,4 @@
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 - Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts. Pay by bank provider is a server-resolved app setting, GoCardless only when its secrets exist (switch without rebuild).
 - Shared planner handles cover exceptions. UK breaks retry empty plans, freeze real times, recheck duplicates. Rota UI/write guards close at UK midnight.
+- Cover and swap approvals use authenticated admin/management database functions with a single-slot, owner-context exception for today's rota; swap reassignment and status commit together so ordinary closed-day bookings remain blocked.

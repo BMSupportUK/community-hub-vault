@@ -7932,6 +7932,10 @@ export type Database = {
         Args: { _approve: boolean; _id: string }
         Returns: string
       }
+      decide_shift_swap: {
+        Args: { _approve: boolean; _id: string }
+        Returns: string
+      }
       delete_app_role: { Args: { _name: string }; Returns: undefined }
       directory_member_roles: {
         Args: never
