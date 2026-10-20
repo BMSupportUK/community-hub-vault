@@ -25,3 +25,25 @@ export function canAnswerTicketVideoCall(opts: {
 }): boolean {
   return opts.startedByOwner ? canTakeVideoCalls(opts.roles) : opts.isOwner;
 }
+
+export type StaffCallMember = { userId: string; name: string; role: string; joinedAt: number; host: boolean };
+
+/** Who carries the customer's picture for the other staff: the earliest-joined
+ *  flagged host, otherwise the earliest-joined staff member still on the call. */
+export function pickCallHost(members: readonly StaffCallMember[]): string | null {
+  const byJoin = [...members].sort((a, b) => a.joinedAt - b.joinedAt || a.userId.localeCompare(b.userId));
+  return (byJoin.find((m) => m.host) ?? byJoin[0])?.userId ?? null;
+}
+
+/** A staff member leaving only ends the whole call when nobody else is on it. */
+export function leavingEndsCall(members: readonly StaffCallMember[], me: string): boolean {
+  return !members.some((m) => m.userId !== me);
+}
+
+export const CALL_ASSIST_COOLDOWN_MS = 2 * 60 * 1000;
+
+/** Seconds until another admin/management help request may be sent (0 = now). */
+export function assistWaitSeconds(lastRequestAt: number | null, now: number): number {
+  if (lastRequestAt == null) return 0;
+  return Math.max(0, Math.ceil((lastRequestAt + CALL_ASSIST_COOLDOWN_MS - now) / 1000));
+}

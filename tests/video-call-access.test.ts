@@ -22,3 +22,23 @@ describe("video call access", () => {
     expect(canAnswerTicketVideoCall({ roles: [], isOwner: true, startedByOwner: false })).toBe(true);
   });
 });
+
+import { pickCallHost, leavingEndsCall, assistWaitSeconds } from "../src/lib/video-call-access";
+
+const m = (userId: string, joinedAt: number, host = false) => ({ userId, name: userId, role: "staff", joinedAt, host });
+
+test("the flagged host keeps carrying the call", () => {
+  expect(pickCallHost([m("a", 1), m("b", 2, true)])).toBe("b");
+});
+test("when the host leaves the longest-present staff member takes over", () => {
+  expect(pickCallHost([m("c", 30), m("b", 20)])).toBe("b");
+});
+test("a staff member leaving never ends the call while others remain", () => {
+  expect(leavingEndsCall([m("a", 1), m("b", 2)], "a")).toBe(false);
+  expect(leavingEndsCall([m("a", 1)], "a")).toBe(true);
+});
+test("help requests wait two minutes between sends", () => {
+  expect(assistWaitSeconds(null, 1000)).toBe(0);
+  expect(assistWaitSeconds(0, 60_000)).toBe(60);
+  expect(assistWaitSeconds(0, 120_000)).toBe(0);
+});
