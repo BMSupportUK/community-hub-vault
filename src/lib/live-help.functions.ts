@@ -376,3 +376,48 @@ export const listOpenLiveHelpAll = createServerFn({ method: "POST" })
       }),
     };
   });
+
+/** Staff on a video call ask admin/management to join (one request per 2 minutes per call). */
+export const requestVideoCallAssistance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ sessionId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: session } = await supabaseAdmin
+      .from("order_support_sessions")
+      .select("id,order_id,status")
+      .eq("id", data.sessionId)
+      .in("status", ["waiting", "live"])
+      .maybeSingle();
+    if (!session) throw new Error("This call has ended");
+    const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from("staff_notifications")
+      .select("created_at")
+      .eq("kind", "live_help_assist")
+      .eq("entity_id", data.sessionId)
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (recent) {
+      const wait = Math.max(1, Math.ceil((new Date(String(recent.created_at)).getTime() + 120000 - Date.now()) / 1000));
+      return { ok: false as const, waitSeconds: wait };
+    }
+    const [{ data: order }, { data: me }] = await Promise.all([
+      supabaseAdmin.from("orders").select("order_ref").eq("id", session.order_id).maybeSingle(),
+      supabaseAdmin.from("profiles").select("username").eq("id", context.userId).maybeSingle(),
+    ]);
+    const ref = (order as { order_ref?: string } | null)?.order_ref ?? String(session.order_id).slice(0, 8);
+    const who = (me as { username?: string } | null)?.username ?? "A staff member";
+    const { error } = await supabaseAdmin.from("staff_notifications").insert({
+      kind: "live_help_assist",
+      title: `Help needed on video call — order #${ref}`,
+      body: `${who} is asking admin/management to join the customer video call.`,
+      link_path: `/admin-secure-page?order=${session.order_id}&call=${session.id}`,
+      entity_id: session.id,
+    } as never);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, waitSeconds: 120 };
+  });
