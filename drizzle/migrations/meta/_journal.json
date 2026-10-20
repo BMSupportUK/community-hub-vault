@@ -1254,6 +1254,13 @@
       "when": 1792438235741,
       "tag": "0178_notification_channel_prefs",
       "breakpoints": true
+    },
+    {
+      "idx": 179,
+      "version": "7",
+      "when": 1792479164213,
+      "tag": "0179_restore_authorized_same_day_approvals",
+      "breakpoints": true
     }
   ]
 }
