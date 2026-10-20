@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Same-day cover and swap approvals
+- [ ] Restore authorized same-day cover approvals without reopening closed rota bookings.
+- [ ] Make shift swap reassignment and approval atomic; retain duplicate-shift protection and verify regressions.
+
 ## Project monitoring payment findings
 - [x] Correct Stripe account selection in automatic and manual checks; live prefixes override sandbox config, missing resources and empty searches retry the other account. Reconciliation integration and fallback tests pass.
 - [x] Display resolved settled payment methods in Orders without guessing unpaid methods; label regressions pass. Eighteen payment tests passed; preview build OK.
