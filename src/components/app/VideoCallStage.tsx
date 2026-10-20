@@ -59,14 +59,16 @@ export function VideoCallStage({
   placeholderImage?: string;
   /** Staff side only: broadcast to the customer so their "camera off" illustration matches. */
   staffGender?: "male" | "female";
-  /** Optional order chat shown beside the call on the "Video + Chat" tab. */
+  /** Optional order chat shown beside the call. */
   sidePanel?: ReactNode;
   /** Staff host: receives each customer track so other staff can be sent the picture. */
   onRemoteTrack?: (track: MediaStreamTrack) => void;
   /** Staff: when true at hang-up, leave without telling the customer (other staff stay on). */
   quietLeave?: () => boolean;
 }) {
-  const [withChat, setWithChat] = useState(true);
+  // The chat always sits beside the call — the video-only view was dropped.
+  const withChat = Boolean(sidePanel);
+
   // Customer's phone held sideways while its screen stays upright (rotation lock).
   const [heldTurn, setHeldTurn] = useState(0);
   const turned = side === "answerer" && withChat && (heldTurn === 90 || heldTurn === 270);
@@ -886,16 +888,6 @@ export function VideoCallStage({
       <div className="flex items-center justify-center gap-2 bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground">
         <span className="size-2 animate-pulse rounded-full bg-destructive-foreground" /> Live video call with {otherName} — not recorded
       </div>
-      {sidePanel && (
-        <div role="tablist" aria-label="Call view" className="flex justify-center gap-1 border-b border-border bg-card p-1.5">
-          {([[false, "Video"], [true, "Video + Chat"]] as const).map(([v, label]) => (
-            <button key={label} type="button" role="tab" aria-selected={withChat === v} onClick={() => setWithChat(v)}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium ${withChat === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
       <div className={`flex min-h-0 flex-1 flex-col landscape:flex-row md:flex-row ${turned ? "!flex-row" : ""}`}>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div ref={stageRef} className="relative min-h-0 flex-1 overflow-hidden bg-muted">
