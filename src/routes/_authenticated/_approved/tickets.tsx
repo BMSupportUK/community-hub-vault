@@ -43,6 +43,9 @@ import { sendNewTicketPush } from "@/lib/push.functions";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
 import { QuickRepliesPill } from "@/components/app/QuickRepliesDialog";
+import { TicketVideoCallStaff, TicketVideoInviteCard } from "@/components/app/TicketVideoCall";
+import { createTicketVideoInvite } from "@/lib/ticket-video.functions";
+import { canUseVideoCommand, isVideoCommand, parseVideoInvite } from "@/lib/video-call-access";
 import { useChannelJump } from "@/components/app/ChannelJump";
 import {
   applyOrderToCredential,
@@ -1618,10 +1621,27 @@ function TicketDetail({
   }, [messages.length]);
 
   const notifyStaffOfCustomerReplyFn = useServerFn(notifyStaffOfCustomerReply);
+  const createVideoInviteFn = useServerFn(createTicketVideoInvite);
   const send = async () => {
     const content = draft.trim();
     if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
     if (ticket.status === "closed") return toast.error("Ticket is closed");
+    // "/video": staff-only command that posts a QR code the customer scans to start a video call.
+    if (isVideoCommand(content) && replyFiles.length === 0) {
+      if (!canUseVideoCommand(roles)) return toast.error("Only admin, management and staff can use /video");
+      setSending(true);
+      try {
+        await createVideoInviteFn({ data: { ticketId: ticket.id } });
+        setDraft("");
+        draftRef.current = "";
+        await load();
+        notifyTicketChanged();
+        toast.success("Video call code sent to the customer");
+      } catch (e) {
+        toast.error((e as Error).message || "Couldn't create the video call");
+      } finally { setSending(false); }
+      return;
+    }
     setSending(true);
     const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, currentUserId, setReplyProgress) : [];
     setReplyProgress(null);
@@ -2107,6 +2127,7 @@ function TicketDetail({
         onRate={onRate}
       />
 
+      {canUseVideoCommand(roles) && <TicketVideoCallStaff ticketId={ticket.id} />}
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 sm:px-5 py-3 sm:py-4">
         {messages.filter((m) => !(m.content ?? "").startsWith("🛠️ We are currently setting up your account.")).map((m) => {
           const name = senderName(m.sender_id);
@@ -2207,7 +2228,10 @@ function TicketDetail({
                       </div>
                     </div>
                   ) : (
-                    <MentionText content={m.content} currentUsername={myUsername} />
+                    (() => {
+                      const invite = parseVideoInvite(m.content);
+                      return invite ? <TicketVideoInviteCard token={invite.token} text={invite.text} /> : <MentionText content={m.content} currentUsername={myUsername} />;
+                    })()
                   )}
                   <TicketAttachments items={m.attachments} />
                 </div>
