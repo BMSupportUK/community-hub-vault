@@ -2,8 +2,9 @@
 # Roadmap
 
 ## Same-day cover and swap approvals
-- [ ] Restore authorized same-day cover approvals without reopening closed rota bookings.
-- [ ] Make shift swap reassignment and approval atomic; retain duplicate-shift protection and verify regressions.
+- [x] Restore authorized same-day cover approvals without reopening closed rota bookings; applied database fix and isolated approval/sign-in read-back pass.
+- [x] Make shift swap reassignment and approval atomic; retain duplicate-shift protection. Ten database/cutoff regressions pass; signed-in Shifts opens without errors and preview build OK.
+- [ ] Verify an actual approval through the UI — requires a suitable pending cover/swap request; no real staff rota or sign-in records changed for testing.
 
 ## Project monitoring payment findings
 - [x] Correct Stripe account selection in automatic and manual checks; live prefixes override sandbox config, missing resources and empty searches retry the other account. Reconciliation integration and fallback tests pass.
