@@ -268,10 +268,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/tickets", label: "Tickets", icon: Ticket, show: false },
     // Shop, My Orders and Install Guides live inside the Customer Portal tabs.
     { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, resetSportsGuides: true },
-    { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
-    { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
-    { to: "/members", label: "Members", icon: Users, show: true },
-    { to: "/staff", label: "Staff", icon: Briefcase, show: true },
+    { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: false },
+    { to: "/new-content", label: "New content", icon: Tv, show: false, badge: unreadNewContent },
+    { to: "/members", label: "Members", icon: Users, show: false },
+    { to: "/staff", label: "Staff", icon: Briefcase, show: false },
     { to: "/jobs", label: "BM Support jobs", icon: ClipboardList, show: true },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
   ];
@@ -342,7 +342,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/install-guides", label: "Install Guides", icon: Wrench, show: true },
     { to: "/knowledge-base", label: "Knowledge Base", icon: BookOpen, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
-    { to: "/portal/settings", label: "Settings", icon: Settings, show: true },
   ] : [];
   // Default layout: base items, with the portal pages right after Home.
   const base = [...visible];
