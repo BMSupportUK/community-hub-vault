@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PortalTabs } from "@/components/app/PortalTabs";
 import { SecureHowToVideo } from "@/components/app/SecureHowToVideo";
 import { toast } from "sonner";
 
@@ -59,10 +60,11 @@ function makeCode(len = 8) {
   return s;
 }
 
-function LeaderboardPage() {
+/** Customers see Welcome, Leaderboard and My Invites in the portal; the admin tabs live in Owner tools. */
+export function LeaderboardPage({ admin = false }: { admin?: boolean } = {}) {
   const { user, hasAny } = useAuth();
-  const isAdmin = hasAny(["admin", "management"]);
-  const [tab, setTab] = useState("welcome");
+  const isAdmin = admin && hasAny(["admin", "management"]);
+  const [tab, setTab] = useState(admin ? "referrals" : "welcome");
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [adminInvites, setAdminInvites] = useState<AdminInvite[]>([]);
@@ -208,6 +210,8 @@ function LeaderboardPage() {
   };
 
   return (
+    <div className="flex min-h-0 flex-1 flex-col">
+    {!admin && <PortalTabs active="referrals" />}
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
       <header className="border-b border-purple-500/30 bg-purple-950/40 px-4 pb-5 pt-6 backdrop-blur sm:px-8 sm:pb-6 sm:pt-8">
         <h1 className="font-display text-2xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent sm:text-3xl">Referrals</h1>
@@ -216,10 +220,12 @@ function LeaderboardPage() {
 
       <div className="px-4 py-5 sm:px-8 sm:py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid h-auto w-full grid-cols-1 gap-1 bg-purple-950/60 p-1 border border-purple-500/30 min-[360px]:grid-cols-2 sm:gap-0 ${isAdmin ? "sm:grid-cols-5 sm:max-w-4xl" : "sm:grid-cols-3 sm:max-w-2xl"}`}>
+          <TabsList className={`grid h-auto w-full grid-cols-1 gap-1 bg-purple-950/60 p-1 border border-purple-500/30 min-[360px]:grid-cols-2 sm:gap-0 ${admin ? "sm:grid-cols-2 sm:max-w-md" : "sm:grid-cols-3 sm:max-w-2xl"}`}>
+            {!admin && <>
             <TabsTrigger value="welcome" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Welcome</TabsTrigger>
             <TabsTrigger value="leaderboard" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Leaderboard</TabsTrigger>
             <TabsTrigger value="invites" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">My Invites</TabsTrigger>
+            </>}
             {isAdmin && (
               <>
                 <TabsTrigger value="referrals" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Referrals</TabsTrigger>
@@ -563,6 +569,7 @@ function LeaderboardPage() {
           )}
         </Tabs>
       </div>
+    </div>
     </div>
   );
 }
