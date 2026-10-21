@@ -293,7 +293,7 @@
 
 ## Customer new-order destination and reminder
 - [x] Add owner-only order password requests on My Orders cards and notification copy actions; eight ownership/notification tests pass, build OK.
-- [ ] Verify password request and clipboard through a populated My Orders card — current signed-in account shows no order cards in the selected section.
+- [x] Signed-in My Orders card request sends a notification; its Copy chat password button populates the clipboard. No order or payment changed.
 - [x] Require entered order passwords for all customer secure checkout access; signed-in/link-only and automatic password bypasses removed. Twelve password/access tests pass; signed-in page shows password entry.
 - [x] Send placed orders to Shop orders; signed-in My Orders destination verified.
 - [x] Persist a customer payment reminder with an owner-only secure password copy action; keep passwords out of push payloads.
