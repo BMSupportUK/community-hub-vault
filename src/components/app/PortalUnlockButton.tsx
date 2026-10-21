@@ -32,7 +32,7 @@ export function PortalUnlockButton() {
   );
 }
 
-function UnlockedDone({ onClose }: { onClose: () => void }) {
+export function UnlockedDone({ onClose }: { onClose: () => void }) {
   return (
     <div className="py-6 text-center">
       <LockOpen className="mx-auto size-10 text-primary" />
