@@ -16,7 +16,7 @@ import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 /** Office time, lock, 2FA and VPN pills shown beside the "Hey" greeting. */
 function GreetingPills() {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2 [&_.hidden]:!flex">
+    <div className="flex min-w-0 flex-wrap items-center gap-2 [&_span.hidden]:!inline">
       <Clocks />
       <LockNowPill />
       <TwoFactorPill />
@@ -85,6 +85,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                             {staffRoleLabel}
                           </span>
                         )}
+                        <GreetingPills />
                       </div>
                       <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
                         Welcome to The Staff Portal
@@ -119,6 +120,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                         <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                           Member
                         </span>
+                        <GreetingPills />
                       </div>
                     </div>
                   )}
