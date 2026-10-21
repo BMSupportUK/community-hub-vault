@@ -19,6 +19,7 @@ import { CREDENTIAL_TIME_STEP, credentialTimeInput } from "@/lib/credential-time
 import { MemberCredentialsSection, RestoreCredentialsBackupButton } from "@/components/app/MemberCredentialsSection";
 import { useAuth } from "@/hooks/use-auth";
 import { CustomerAccountSwitchButton } from "@/components/app/CustomerAccountSwitch";
+import { CustomerPortalLinkButtons } from "@/components/app/CustomerPortalLinkButtons";
 
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
@@ -285,6 +286,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
               {(canReward || viewCredentials) && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} showPinReset={c.hasSiteAccount} readOnly={!canReward} />}
               {c.hasSiteAccount && memberHeader?.(c.userId)}
               {c.hasSiteAccount && <CustomerAccountSwitchButton customerId={c.userId} name={name} />}
+              {c.hasSiteAccount && <CustomerPortalLinkButtons customerId={c.userId} name={name} />}
               {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
               {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
             </header>
