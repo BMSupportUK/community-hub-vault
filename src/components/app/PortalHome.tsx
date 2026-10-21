@@ -1,3 +1,4 @@
+import { PortalUnlockButton } from "@/components/app/PortalUnlockButton";
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { Headphones, Star } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
