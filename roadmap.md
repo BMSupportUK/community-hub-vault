@@ -307,8 +307,8 @@
 - [ ] Verify a newly placed sale's notification and clipboard action end-to-end — awaits a new customer order; no live sale created for testing.
 
 ## Customer Portal
-- [ ] Replace emailed login links with entered login codes, enforce verification limits, and show a second-by-second access countdown; verify customer unlock and expiry.
+- [x] Replace emailed login links with entered eight-digit codes and second-by-second countdown. Nine tests pass; selected customer signed-in and public code entry verified, countdown ticks and expiry removes content; database rejects after five wrong attempts. No real email sent; preview only.
 - [x] Replace clipped tab-bar overlay with a fail-closed content gate; real customer first entry and every portal tab blocked, expiry removes content, other-user grants rejected, email button reachable at 950px and 390px. Seven tests pass; build OK. Email delivery/redemption not exercised in this repair.
 - [x] Personal portal link per site customer, 24-hour one-use email login link, portal tabs (Shop, My Orders, My Logins with PIN, Install Guides), side rail single entry, admin copy/reset. Link sign-in and reuse rejection verified in preview.
 - [ ] Manual customers without a site account — waiting on the user to decide whether to auto-create an account for them.
-- [ ] Real login-link email not sent in testing.
+- [ ] Verify login-code email receipt — requires customer inbox; no real customer email sent in testing.
