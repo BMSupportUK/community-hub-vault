@@ -45,7 +45,6 @@ function PortalLoginsPage() {
     <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8"><div className="mx-auto max-w-5xl rounded-2xl border border-border bg-background/80 p-4 backdrop-blur sm:p-6">
       <h1 className="mb-1 font-display text-2xl font-bold">My App Logins</h1>
       <p className="mb-6 text-sm text-muted-foreground">Your TV app usernames and passwords. Enter your PIN to show them for 10 minutes.</p>
-      <PortalLink />
       {!accounts ? <form onSubmit={submit} className="max-w-sm space-y-4 rounded-xl border border-border bg-surface p-5">
         <div className="flex items-center gap-2 font-semibold"><Lock className="size-4 text-primary" />Enter your 6-digit PIN</div>
         <p className="text-xs text-muted-foreground">First time? The PIN you enter now becomes your PIN. Five wrong tries locks access for one hour.</p>
