@@ -4,7 +4,7 @@
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
 - Portal homes share one layout: hero image fills the left column; sidebar shows status pills, "Hey" + nameplate + role badge, welcome text, then Working Status (staff) or subscription box (members).
-- No global top header: inbox/mentions/alerts in side rail; clocks/lock/2FA/VPN by portal "Hey"; admin shortcuts in Staff Portal tab bar; phones get a floating menu button.
+- No global top header: inbox/mentions/alerts in side rail; clocks/lock/2FA/VPN by portal "Hey"; portal pages and admin shortcuts sit in the side rail under Home (portal bars keep only Home); phones get a floating menu button.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; cap and scroll mobile ticket headers to preserve messages and composers.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: show all staff/channel; fit composer and people.
@@ -42,5 +42,5 @@
 - Cover and swap approvals use authenticated admin/management database functions with a single-slot, owner-context exception for today's rota; swap reassignment and status commit together so ordinary closed-day bookings remain blocked.
 - Secure-order video calls: one staff host relays the customer to other staff via a staff-only topic; the session ends only when the last staff leaves, longest-present staff takes over.
 - Ticket video: staff-only /video command makes a hashed 30-min token QR to public /video/$token, reusing the secure-order host/relay room.
-- Portal: hashed email codes with atomic attempt limits; layout gates content and owns the live timer. User-bound state fails closed; tabs replace rail entries.
+- Portal: hashed email codes with atomic attempt limits; layout gates content and owns the live timer. User-bound state fails closed; customer portal rail links appear only once unlocked.
 - /home redirects by role (`src/lib/portal-home.ts`): staff to /staff-portal, members to /portal; both render `PortalHome`.
