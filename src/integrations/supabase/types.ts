@@ -8484,6 +8484,10 @@ export type Database = {
         Args: { p_original_id: string; p_rows: Json }
         Returns: number
       }
+      request_my_order_password: {
+        Args: { p_order_id: string }
+        Returns: boolean
+      }
       request_ticket_admin_help: {
         Args: { _ticket_id: string }
         Returns: number

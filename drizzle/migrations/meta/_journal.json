@@ -1275,6 +1275,13 @@
       "when": 1792567391328,
       "tag": "0181_customer_order_payment_notification",
       "breakpoints": true
+    },
+    {
+      "idx": 182,
+      "version": "7",
+      "when": 1792567746039,
+      "tag": "0182_request_customer_order_password",
+      "breakpoints": true
     }
   ]
 }

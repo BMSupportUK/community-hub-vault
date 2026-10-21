@@ -1,4 +1,5 @@
 import { ProviderInvoicePayment } from "@/components/checkout/ProviderInvoicePayment";
+import { RequestOrderPasswordButton } from "@/components/checkout/RequestOrderPasswordButton";
 import { customerOrderDestination } from "@/lib/customer-order-notice";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
@@ -3584,6 +3585,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                 >
                   <Receipt className="size-3.5" /> Secure checkout
                 </button>
+                <RequestOrderPasswordButton orderId={o.id} />
                 {ticketId && (
                   <button
                     onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}

@@ -25,7 +25,7 @@ import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { closeLocalNotifications } from "@/lib/local-notify";
 import { staffOrderNotificationLink } from "@/lib/order-notification-link";
 import { CustomerOrderNoticeActions } from "@/components/checkout/CustomerOrderNoticeActions";
-import { CUSTOMER_ORDER_PAYMENT_KIND, customerOrderNoticeId } from "@/lib/customer-order-notice";
+import { customerOrderNoticeId } from "@/lib/customer-order-notice";
 
 type Notif = {
   id: string;
@@ -137,7 +137,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
                 ? { label: "Go to ticket", onClick: () => navigate({ to: n.link_path! } as never) }
                 : undefined,
             });
-          } else if (n.kind === CUSTOMER_ORDER_PAYMENT_KIND && n.entity_id) {
+          } else if (customerOrderNoticeId(n.source, n.kind, n.entity_id)) {
             const orderId = customerOrderNoticeId(n.source, n.kind, n.entity_id);
             if (orderId) toast(n.title, {
               description: <div className="space-y-3"><p>{n.body}</p><CustomerOrderNoticeActions orderId={orderId} /></div>,

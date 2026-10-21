@@ -6,6 +6,7 @@
 - Sports formats need split/safety/read-back tests; normalize dual-clock typos before title pairing; DAZN inline slots stay separate, qualifiers extend titles.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Every customer checkout requires the entered order password, including signed-in shop owners; paid, non-cancelled orders can open published guides through the same credentials.
+- Customer password-request notifications use an owner-only RPC and contain no credentials; copy actions retrieve the password separately.
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
 - Pre-account manual logins are order-private; claim moves them to customer credentials, the admin list's source of truth.
 - Signed-out checkout app logins use only token-gated SECURITY DEFINER reads, never the staff credentials view.
