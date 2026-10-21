@@ -1,4 +1,3 @@
-import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { Headphones, Star } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
@@ -58,13 +57,13 @@ export function PortalHome({ staff }: { staff: boolean }) {
       {/* Hero */}
       <div className="grid min-h-dvh w-full min-w-0 grid-rows-[auto_auto] overflow-x-hidden overflow-y-visible md:min-h-full">
       <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
-        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px] md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
+        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
+              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
                 {/* Left column — hero image with the greeting beneath, mirroring the staff home. */}
                 <div className="order-1 flex min-w-0 flex-col gap-3 self-start text-white">
-                  <div className="relative aspect-[16/10] w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25">
+                  <div className="relative aspect-[21/9] w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25">
                     <div className="absolute inset-0">
                       <img
                         src={heroImg}
@@ -126,27 +125,6 @@ export function PortalHome({ staff }: { staff: boolean }) {
                   )}
                 </div>
 
-                {/* Right column — staff status box or member subscription details. */}
-                <div className={`order-2 flex min-h-0 min-w-0 flex-col gap-3 ${isStaffAccount ? "self-stretch" : "self-start"}`}>
-                  {isStaffAccount ? (
-                    <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
-                  ) : (
-                    <>
-                      <SubscriptionDetailsCard compact embedded />
-                      {/* Welcome heading and message sit under the subscription box. */}
-                      <div className="px-1">
-                        <h1 className="break-words font-display text-xl font-extrabold leading-tight lg:text-2xl bg-gradient-to-r from-white via-amber-100 to-pink-200 bg-clip-text text-transparent drop-shadow">
-                          Welcome to The Customer Portal
-                        </h1>
-                        <p className="mt-2 text-xs font-medium text-white/90 lg:text-sm">
-                          <Star className="mr-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
-                          <span>Manage your account, orders and logins, and get help — all in one place.</span>
-                          <Star className="ml-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
               </div>
             </div>
 
@@ -170,7 +148,27 @@ export function PortalHome({ staff }: { staff: boolean }) {
           </div>
 
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
-            <AdSenseSlot slot="homeSkyscraper" />
+                {/* Right column — staff status box or member subscription details. */}
+                <div className={`flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-4 text-white shadow-2xl `}>
+                  {isStaffAccount ? (
+                    <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
+                  ) : (
+                    <>
+                      <SubscriptionDetailsCard compact embedded />
+                      {/* Welcome heading and message sit under the subscription box. */}
+                      <div className="px-1">
+                        <h1 className="break-words font-display text-xl font-extrabold leading-tight lg:text-2xl bg-gradient-to-r from-white via-amber-100 to-pink-200 bg-clip-text text-transparent drop-shadow">
+                          Welcome to The Customer Portal
+                        </h1>
+                        <p className="mt-2 text-xs font-medium text-white/90 lg:text-sm">
+                          <Star className="mr-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
+                          <span>Manage your account, orders and logins, and get help — all in one place.</span>
+                          <Star className="ml-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
             </div>
           </div>
       </section>
