@@ -37,12 +37,7 @@ export function PortalLock({ children }: { children: ReactNode }) {
     return () => { window.clearInterval(id); window.removeEventListener(PORTAL_LOCK_EVENT, check); window.removeEventListener("storage", check); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", check); };
   }, [user?.id]);
   if (isStaff) return <>{children}</>;
-  if (user && grant?.userId === user.id && grant.open) return <>
-    <div className="flex shrink-0 items-center justify-end gap-2 border-b border-border bg-surface px-4 py-2 text-sm text-foreground">
-      <Timer className="size-4 text-primary" /><span>Portal locks in</span><time aria-label="Portal access remaining" className="min-w-20 font-mono font-semibold tabular-nums">{portalCountdown(remaining)}</time>
-    </div>
-    {children}
-  </>;
+  if (user && grant?.userId === user.id && grant.open) return <>{children}</>;
   async function unlock(code: string) {
     if (!user) throw new Error("Please sign in again.");
     const result = await verify({ data: { loginCode: code } });
