@@ -1,6 +1,9 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { KeyRound, Package, ShoppingCart, Ticket, Wrench } from "lucide-react";
+import { useEffect, useState } from "react";
+import { KeyRound, Package, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
 
 type Tab = "shop" | "orders" | "tickets" | "logins" | "guides";
 
@@ -21,6 +24,27 @@ export function PortalTabs({ active }: { active?: Tab }) {
       <Link to="/tickets" className={cn(item, current === "tickets" ? on : off)}><Ticket className="size-4" />Tickets</Link>
       <Link to="/portal/logins" className={cn(item, current === "logins" ? on : off)}><KeyRound className="size-4" />My Logins</Link>
       <Link to="/install-guides" search={{ tab: undefined, checkout: undefined }} className={cn(item, current === "guides" ? on : off)}><Wrench className="size-4" />Install Guides</Link>
+      <PortalCountdown />
     </nav>
+  );
+}
+
+function PortalCountdown() {
+  const { isStaff } = useAuth();
+  const [left, setLeft] = useState<number | null>(null);
+  useEffect(() => {
+    const tick = () => { try { setLeft(portalSecondsRemaining(window.localStorage.getItem(PORTAL_EXPIRY_KEY))); } catch { setLeft(0); } };
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  if (isStaff || !left) return null;
+  const low = left <= 300;
+  return (
+    <div role="timer" aria-label="Portal access remaining" className={cn("ml-auto inline-flex shrink-0 items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-sm font-bold shadow-lg", low ? "animate-pulse border-destructive bg-destructive text-destructive-foreground" : "border-primary bg-primary/15 text-foreground shadow-primary/30")}>
+      <Timer className={cn("size-4", !low && "text-primary")} />
+      <span className="hidden sm:inline">Locks in</span>
+      <time className="font-mono text-base tabular-nums">{portalCountdown(left)}</time>
+    </div>
   );
 }
