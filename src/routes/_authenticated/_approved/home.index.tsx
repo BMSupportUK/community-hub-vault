@@ -1,16 +1,14 @@
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Trophy, KeyRound, Star } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Headphones, Star } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { Nameplate } from "@/components/app/Nameplate";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
-import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 import { formatRoleLabel } from "@/lib/role-label";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
@@ -29,10 +27,6 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 
 function WelcomePage() {
   const { user, hasRole, roles } = useAuth();
-  // LOCKED: "N in chat" counter on the chatroom link. Do not change, restyle, or remove
-  // without explicit authorisation. See mem://constraints/chat-counters-locked
-  const chatroomCount = useTalkChannelTotalCount();
-  const canManage = hasRole("admin") || hasRole("management");
   const isStaffAccount =
     hasRole("admin") || hasRole("management") || hasRole("staff") || hasRole("moderator");
   // Highest-priority staff role, used for the greeting line under the hero image.
@@ -44,7 +38,6 @@ function WelcomePage() {
   const [nameplateId, setNameplateId] = useState<string | null>(null);
   const [isStaffShiftActive, setIsStaffShiftActive] = useState(false);
   const name = displayName;
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user?.id) return;
