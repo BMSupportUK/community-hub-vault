@@ -223,13 +223,14 @@ export function useOrderVideoCallStaff(orderId: string) {
     // Other staff still on the call: only this person leaves, the call carries on.
     if (room.othersPresent()) return;
     setSession(null);
+    if (s) setEndedId(s.id);
     if (s) await endFn({ data: { sessionId: s.id } }).catch(() => undefined);
   }, [session, endFn, room]);
 
   /** Leave without ending the call for anyone (used by extra staff). */
   const leave = useCallback(() => { setInCall(false); }, []);
 
-  return { session, inCall, busy, isMale, answer, end, leave, room };
+  return { session, inCall, busy, isMale, answer, end, leave, room, endedId, clearWrapUp: () => setEndedId(null) };
 }
 
 export type OrderVideoCallStaffState = ReturnType<typeof useOrderVideoCallStaff>;
