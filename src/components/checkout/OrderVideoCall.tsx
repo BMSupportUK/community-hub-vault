@@ -264,7 +264,8 @@ export function OrderVideoCallStaffStage({ call, orderId }: { call: OrderVideoCa
     supabase.from("order_checkout_links").select("token").eq("order_id", orderId).maybeSingle()
       .then(({ data }) => setToken((data as { token?: string } | null)?.token ?? null));
   }, [orderId]);
-  if (!call.session || !call.inCall) return null;
+  const wrapUp = <CallWrapUp sessionId={call.endedId} side="staff" onDone={call.clearWrapUp} />;
+  if (!call.session || !call.inCall) return wrapUp;
   const room = call.room;
   const chat = token ? <StaffCheckoutChatPanel orderId={orderId} token={token} /> : undefined;
   if (!room.ready) {
