@@ -1,5 +1,5 @@
 import { isVideoTestOrder } from "@/lib/video-test-orders";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Phone, PhoneOff, QrCode, Video } from "lucide-react";
 import QRCode from "react-qr-code";
@@ -14,6 +14,7 @@ import {
   startLiveHelp,
 } from "@/lib/live-help.functions";
 import { CustomerCheckoutChatPanel, StaffCheckoutChatPanel, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+import { CallWrapUp } from "@/components/checkout/CallWrapUp";
 import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCallStage";
 import { StaffCallViewer, StaffOnCallBox, useStaffCallRoom } from "@/components/checkout/StaffCallRoom";
 import { useAuth } from "@/hooks/use-auth";
@@ -33,6 +34,9 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
   const [open, setOpen] = useState(false);
   const [moved, setMoved] = useState(false);
   const [invite, setInvite] = useState(false);
+  const [endedId, setEndedId] = useState<string | null>(null);
+  const sessionRef = useRef<Session | null>(null);
+  sessionRef.current = session;
 
   useEffect(() => {
     supabase.rpc("is_business_open").then(({ data }) => setOpen(data !== false || isVideoTestOrder(token)));
@@ -48,7 +52,9 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
     const tick = async () => {
       const r = await poll({ data: { token, password } }).catch(() => null);
       if (off || !r?.ok) return;
-      setSession(r.session && (r.session.status === "waiting" || r.session.status === "live") ? r.session : null);
+      const open = r.session && (r.session.status === "waiting" || r.session.status === "live") ? r.session : null;
+      if (!open && sessionRef.current) setEndedId(sessionRef.current.id);
+      setSession(open);
     };
     const id = window.setInterval(tick, 3000);
     return () => { off = true; window.clearInterval(id); };
@@ -57,6 +63,7 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
   const end = useCallback(async () => {
     const s = session;
     setSession(null);
+    if (s) setEndedId(s.id);
     if (s) await endFn({ data: { token, password, sessionId: s.id } }).catch(() => undefined);
   }, [session, endFn, token, password]);
 
@@ -78,6 +85,7 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
     const phoneUrl = `${secureCheckoutUrl(token)}?pw=${encodeURIComponent(password)}`;
     return (
       <>
+        <CallWrapUp sessionId={endedId} side="customer" onDone={() => setEndedId(null)} />
         <button
           type="button"
           onClick={() => setInvite(true)}
@@ -145,6 +153,7 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
       ) : (
         <VideoCallStage topic={`video-call-${session.id}`} side="answerer" otherName="BM Support" onHangup={end} onSuperseded={() => setMoved(true)} sidePanel={<CustomerCheckoutChatPanel token={token} password={password} />} />
       ))}
+      <CallWrapUp sessionId={endedId} side="customer" onDone={() => setEndedId(null)} />
     </>
   );
 }
@@ -160,6 +169,9 @@ export function useOrderVideoCallStaff(orderId: string) {
   const [isMale, setIsMale] = useState(false);
   const { roles } = useAuth();
   const [me, setMe] = useState<{ userId: string; name: string } | null>(null);
+  const [endedId, setEndedId] = useState<string | null>(null);
+  const sessionRef = useRef<Session | null>(null);
+  sessionRef.current = session;
   const role = roles.includes("admin") ? "admin" : roles.includes("management") ? "management" : "staff";
   const room = useStaffCallRoom(inCall && session ? session.id : null, me ? { ...me, role } : null);
 
@@ -184,6 +196,7 @@ export function useOrderVideoCallStaff(orderId: string) {
       const r = await list({ data: { orderId } }).catch(() => null);
       if (off || !r) return;
       const open = r.sessions.find((s) => s.status === "waiting" || s.status === "live") ?? null;
+      if (!open && sessionRef.current) setEndedId(sessionRef.current.id);
       setSession(open);
       if (!open) setInCall(false);
     };
@@ -210,13 +223,14 @@ export function useOrderVideoCallStaff(orderId: string) {
     // Other staff still on the call: only this person leaves, the call carries on.
     if (room.othersPresent()) return;
     setSession(null);
+    if (s) setEndedId(s.id);
     if (s) await endFn({ data: { sessionId: s.id } }).catch(() => undefined);
   }, [session, endFn, room]);
 
   /** Leave without ending the call for anyone (used by extra staff). */
   const leave = useCallback(() => { setInCall(false); }, []);
 
-  return { session, inCall, busy, isMale, answer, end, leave, room };
+  return { session, inCall, busy, isMale, answer, end, leave, room, endedId, clearWrapUp: () => setEndedId(null) };
 }
 
 export type OrderVideoCallStaffState = ReturnType<typeof useOrderVideoCallStaff>;
@@ -250,7 +264,8 @@ export function OrderVideoCallStaffStage({ call, orderId }: { call: OrderVideoCa
     supabase.from("order_checkout_links").select("token").eq("order_id", orderId).maybeSingle()
       .then(({ data }) => setToken((data as { token?: string } | null)?.token ?? null));
   }, [orderId]);
-  if (!call.session || !call.inCall) return null;
+  const wrapUp = <CallWrapUp sessionId={call.endedId} side="staff" onDone={call.clearWrapUp} />;
+  if (!call.session || !call.inCall) return wrapUp;
   const room = call.room;
   const chat = token ? <StaffCheckoutChatPanel orderId={orderId} token={token} /> : undefined;
   if (!room.ready) {
@@ -262,6 +277,7 @@ export function OrderVideoCallStaffStage({ call, orderId }: { call: OrderVideoCa
   }
   return (
     <>
+      {wrapUp}
       {room.isHost ? (
         <VideoCallStage topic={`video-call-${call.session.id}`} side="offerer" otherName="the customer" onHangup={call.end} startWithCamera={false} placeholderImage={call.isMale ? staffPlaceholderMale : undefined} staffGender={call.isMale ? "male" : "female"} sidePanel={chat} onRemoteTrack={room.pushTrack} quietLeave={room.othersPresent} />
       ) : (
