@@ -26,7 +26,7 @@ function PortalLink() {
   useEffect(() => { void supabase.rpc("get_my_customer_portal_code").then(({ data }) => { if (data) setUrl(`${window.location.origin}/portal/${data}`); }); }, []);
   if (!url) return null;
   return <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface p-4">
-    <div className="min-w-0 flex-1"><p className="text-sm font-semibold">Your personal portal link</p><p className="truncate font-mono text-xs text-muted-foreground">{url}</p><p className="mt-1 text-xs text-muted-foreground">Bookmark it. Open it any time to get a 24-hour login link sent to your email.</p></div>
+    <div className="min-w-0 flex-1"><p className="text-sm font-semibold">Your personal portal link</p><p className="truncate font-mono text-xs text-muted-foreground">{url}</p><p className="mt-1 text-xs text-muted-foreground">This address changes every day. Your login emails always contain the latest one.</p></div>
     <Button variant="outline" size="sm" onClick={async () => { await navigator.clipboard.writeText(url); setCopied(true); toast.success("Portal link copied"); window.setTimeout(() => setCopied(false), 2000); }}>{copied ? <Check /> : <Copy />}Copy</Button>
   </div>;
 }

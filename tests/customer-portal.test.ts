@@ -16,3 +16,13 @@ test('only admin and management can reset; staff can copy', () => {
   expect(canCopyPortal(['staff'])).toBe(true);
   expect(canCopyPortal(['user'])).toBe(false);
 });
+test('portal locks one hour after opening, never past the 24-hour link', async () => {
+  const { portalLockAt } = await import('../src/lib/customer-portal');
+  const now = Date.parse('2026-10-21T10:00:00Z');
+  expect(portalLockAt('2026-10-22T09:00:00Z', now)).toBe('2026-10-21T11:00:00.000Z');
+  expect(portalLockAt('2026-10-21T10:20:00Z', now)).toBe('2026-10-21T10:20:00.000Z');
+});
+test('portal address changes every 24 hours', () => {
+  const m = readFileSync(new URL('../drizzle/migrations/0187_customer_portal_daily_code_reusable_links.sql', import.meta.url), 'utf8');
+  expect(m).toContain("code_set_at <= now() - interval '24 hours'");
+});

@@ -16,7 +16,7 @@ const PortalLinkEmail = ({ name, loginUrl = 'https://bmsupport.uk' }: Props) => 
           <Section style={{ textAlign: 'center', margin: '8px 0' }}>
             <Button href={loginUrl} style={btn}>Open my portal</Button>
           </Section>
-          <Text style={small}>This link works once and expires after 24 hours. Requesting a new link stops this one working.</Text>
+          <Text style={small}>This link lasts 24 hours. Each time you open it, the portal locks again after one hour. Requesting a new link stops this one working.</Text>
         </Section>
         <Text style={text}>If you didn't ask for this, you can ignore this email.</Text>
         <Hr style={hr} />
