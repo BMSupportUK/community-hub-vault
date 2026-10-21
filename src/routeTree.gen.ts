@@ -79,6 +79,7 @@ import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminPredictionsRouteImport } from './routes/_authenticated/_approved/admin-predictions'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
 import { Route as AuthenticatedApprovedAdminProfitCostsRouteImport } from './routes/_authenticated/_approved/admin-profit-costs'
+import { Route as AuthenticatedApprovedAdminReferralsRouteImport } from './routes/_authenticated/_approved/admin-referrals'
 import { Route as AuthenticatedApprovedAdminReportsRouteImport } from './routes/_authenticated/_approved/admin-reports'
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
@@ -569,6 +570,12 @@ const AuthenticatedApprovedAdminProfitCostsRoute =
   AuthenticatedApprovedAdminProfitCostsRouteImport.update({
     id: '/admin-profit-costs',
     path: '/admin-profit-costs',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminReferralsRoute =
+  AuthenticatedApprovedAdminReferralsRouteImport.update({
+    id: '/admin-referrals',
+    path: '/admin-referrals',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminReportsRoute =
@@ -1307,6 +1314,7 @@ export interface FileRoutesByFullPath {
   '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
+  '/admin-referrals': typeof AuthenticatedApprovedAdminReferralsRoute
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
@@ -1487,6 +1495,7 @@ export interface FileRoutesByTo {
   '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
+  '/admin-referrals': typeof AuthenticatedApprovedAdminReferralsRoute
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
@@ -1671,6 +1680,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
+  '/_authenticated/_approved/admin-referrals': typeof AuthenticatedApprovedAdminReferralsRoute
   '/_authenticated/_approved/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
@@ -1855,6 +1865,7 @@ export interface FileRouteTypes {
     | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-profit-costs'
+    | '/admin-referrals'
     | '/admin-reports'
     | '/admin-reviews'
     | '/admin-roles'
@@ -2035,6 +2046,7 @@ export interface FileRouteTypes {
     | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-profit-costs'
+    | '/admin-referrals'
     | '/admin-reports'
     | '/admin-reviews'
     | '/admin-roles'
@@ -2218,6 +2230,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-predictions'
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-profit-costs'
+    | '/_authenticated/_approved/admin-referrals'
     | '/_authenticated/_approved/admin-reports'
     | '/_authenticated/_approved/admin-reviews'
     | '/_authenticated/_approved/admin-roles'
@@ -2905,6 +2918,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-profit-costs'
       fullPath: '/admin-profit-costs'
       preLoaderRoute: typeof AuthenticatedApprovedAdminProfitCostsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-referrals': {
+      id: '/_authenticated/_approved/admin-referrals'
+      path: '/admin-referrals'
+      fullPath: '/admin-referrals'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminReferralsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-reports': {
@@ -3811,6 +3831,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminPredictionsRoute: typeof AuthenticatedApprovedAdminPredictionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminProfitCostsRoute: typeof AuthenticatedApprovedAdminProfitCostsRoute
+  AuthenticatedApprovedAdminReferralsRoute: typeof AuthenticatedApprovedAdminReferralsRoute
   AuthenticatedApprovedAdminReportsRoute: typeof AuthenticatedApprovedAdminReportsRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
@@ -3923,6 +3944,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminProfanityRoute,
   AuthenticatedApprovedAdminProfitCostsRoute:
     AuthenticatedApprovedAdminProfitCostsRoute,
+  AuthenticatedApprovedAdminReferralsRoute:
+    AuthenticatedApprovedAdminReferralsRoute,
   AuthenticatedApprovedAdminReportsRoute:
     AuthenticatedApprovedAdminReportsRoute,
   AuthenticatedApprovedAdminReviewsRoute:
