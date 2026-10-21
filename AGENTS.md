@@ -5,9 +5,9 @@
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
 - Portal homes share one layout: hero image fills the left column; sidebar shows status pills, "Hey" + nameplate + role badge, welcome text, then Working Status (staff) or subscription box (members).
 - No global top header: inbox/mentions/alerts in side rail; clocks/lock/2FA/VPN by portal "Hey"; portal pages and admin shortcuts sit in the side rail under Home (portal bars keep only Home); phones get a floating menu button.
-- Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; mobile ticket headers cap and scroll so messages/composers stay visible.
+- Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; mobile ticket headers cap+scroll to keep messages/composers.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
-- Talk shows all staff per channel; composer and people fit.
+- Talk: all staff per channel; composer/people fit.
 - Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn so no stale online users remain.
 - Staff Away reads user_dnd_status (current window); triggers store shift-linked history.
@@ -20,7 +20,7 @@
 - Dialogs fit mobile dvh; dense views drop phone columns.
 - Knowledge Base is full-page with category/ratings rails.
 - Video help uses P2P WebRTC and a fixed-size customer canvas; rotation must not reshape or rebuild the encoder (causes black video).
-- Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
+- Gender-matched customer defaults never replace custom picks; staff/Fan Zone-only excluded.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
 - Seasonal Talk/inbox: one date helper/overlay.
 - Dashboard access, header button label and header tab gates come from `src/lib/admin-panel-access.ts`; a header-tabbed page has no tool card.
