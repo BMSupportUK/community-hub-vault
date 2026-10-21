@@ -43,6 +43,7 @@ import {
 import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { isStaffPortalUser } from "@/lib/portal-home";
 import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 import { BORO_DEFAULT_AVATAR_URL } from "@/lib/boro-default-avatar";
@@ -87,6 +88,9 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     setIsPhone(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
   const isAdmin = hasAny(["admin", "management"]);
+  // Profile/notification/security settings live in the Customer Portal Settings
+  // tabs now, so only staff (who have no portal) still get them in this menu.
+  const staffPortalUser = isStaffPortalUser(roles ?? []);
   const roleFlashMap = useRoleFlashMap();
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
   const presence = usePresence(user?.id, Boolean(user));
@@ -362,7 +366,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
           <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
             {inFanZone ? "Fan Zone account" : "Account"}
           </DropdownMenuLabel>
-          {!inFanZone ? (
+          {!inFanZone && staffPortalUser ? (
             <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
               <Pencil className="size-4 mr-2" />
               Edit profile
@@ -407,7 +411,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             )}
             Copy username
           </DropdownMenuItem>
-          {!inFanZone ? (
+          {!inFanZone && staffPortalUser ? (
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link to="/portal/settings" search={{ tab: "browser" }}>
                 <Bell className="size-4 mr-2" />
@@ -415,13 +419,15 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               </Link>
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem asChild className="cursor-pointer">
-            {inFanZone ? (
-              <Link to="/fan-zone-security"><ShieldCheck className="size-4 mr-2" />Security & 2FA</Link>
-            ) : (
-              <Link to="/portal/settings" search={{ tab: "security" }}><ShieldCheck className="size-4 mr-2" />Security & 2FA</Link>
-            )}
-          </DropdownMenuItem>
+          {inFanZone ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/fan-zone-security"><ShieldCheck className="size-4 mr-2" />Security &amp; 2FA</Link>
+            </DropdownMenuItem>
+          ) : staffPortalUser ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/portal/settings" search={{ tab: "security" }}><ShieldCheck className="size-4 mr-2" />Security &amp; 2FA</Link>
+            </DropdownMenuItem>
+          ) : null}
           {!inFanZone ? (
             <DropdownMenuItem
               onSelect={(e) => {
