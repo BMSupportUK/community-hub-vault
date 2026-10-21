@@ -332,6 +332,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         ? "flex h-full"
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
+      <PortalExpiryWatcher />
       <div
         aria-label={!user || isFanZoneOnly || inFanZone ? "Boro Fan Zone" : "BM Support"}
         title={!user || isFanZoneOnly || inFanZone ? "Boro Fan Zone" : "BM Support"}
