@@ -3450,6 +3450,28 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [tickets, setTickets] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [myPlate, setMyPlate] = useState<{
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    equipped_nameplate_id: string | null;
+  } | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    let off = false;
+    supabase
+      .from("profiles")
+      .select("username, display_name, avatar_url, equipped_nameplate_id")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!off) setMyPlate((data as typeof myPlate) ?? null);
+      });
+    return () => {
+      off = true;
+    };
+  }, [user?.id]);
+  const placerName = myPlate?.display_name || myPlate?.username || "You";
   const [tab, setTab] = useState<"processing" | "completed" | "cancelled">("processing");
   const [month, setMonth] = useState(() => new Date().getMonth());
   const [year, setYear] = useState(() => new Date().getFullYear());
@@ -3544,33 +3566,64 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
           return (
             <div
               key={o.id}
-              className="bg-purple-950/50 border border-purple-500/30 backdrop-blur rounded-xl p-4 flex flex-col gap-2 hover:border-fuchsia-400/40 hover:bg-purple-900/40 transition"
+              className="group overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 backdrop-blur shadow-lg shadow-purple-950/40 flex flex-col transition hover:-translate-y-0.5 hover:border-fuchsia-400/50 hover:shadow-xl hover:shadow-fuchsia-900/30"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-[10px] text-purple-200/70">
+              <div className="relative h-16 overflow-hidden">
+                <Nameplate
+                  id={myPlate?.equipped_nameplate_id ?? null}
+                  className="absolute inset-0"
+                  fallbackStyle={{
+                    background:
+                      "linear-gradient(to bottom right, hsl(var(--primary)/0.45), hsl(330 80% 60% / 0.3), hsl(220 80% 60% / 0.3))",
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-purple-950/80 to-transparent" />
+                <div className="relative h-full px-4 flex items-center gap-3">
+                  <Avatar className="h-10 w-10 ring-2 ring-purple-950/80 shadow-lg">
+                    <AvatarImage src={myPlate?.avatar_url ?? undefined} alt={placerName} />
+                    <AvatarFallback className="text-sm font-bold bg-gradient-primary text-primary-foreground">
+                      {placerName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-white drop-shadow">{placerName}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-white/75">Placed by</div>
+                  </div>
+                  <span
+                    className={cn(
+                      "text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize shadow",
+                      STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100",
+                    )}
+                  >
+                    {o.status}
+                  </span>
+                </div>
+              </div>
+              <div className="p-4 flex flex-col gap-3 flex-1">
+              <div className="flex items-end justify-between gap-2">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-purple-200/60">Order total</div>
+                  <div className="font-display font-bold text-2xl bg-gradient-to-r from-violet-300 via-fuchsia-300 to-blue-300 bg-clip-text text-transparent">
+                    {fmt(o.total_cents)}
+                  </div>
+                </div>
+                <span className="font-mono text-[10px] rounded-md border border-purple-500/30 bg-purple-900/40 px-1.5 py-0.5 text-purple-200/80">
                   #{o.id.slice(0, 8)}
                 </span>
-                <span
-                  className={cn(
-                    "text-[10px] px-1.5 py-0.5 rounded font-medium capitalize",
-                    STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100",
-                  )}
-                >
-                  {o.status}
-                </span>
               </div>
-              <div className="flex items-baseline justify-between gap-2">
-                <div className="font-display font-bold text-lg text-purple-50">
-                  {fmt(o.total_cents)}
-                </div>
+              <div className="grid gap-1 rounded-lg border border-purple-500/20 bg-purple-900/30 p-2.5 text-[11px]">
                 {o.shipping_name && (
-                  <div className="truncate text-[11px] text-purple-100/80">{o.shipping_name}</div>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-purple-200/60">Name</span>
+                    <span className="truncate text-purple-50">{o.shipping_name}</span>
+                  </div>
                 )}
+                <div className="flex justify-between gap-2">
+                  <span className="text-purple-200/60">Placed</span>
+                  <span className="text-purple-50">{new Date(o.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</span>
+                </div>
               </div>
-              <div className="text-[11px] text-purple-200/60">
-                {new Date(o.created_at).toLocaleString("en-GB")}
-              </div>
-              <div className="mt-auto pt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-auto pt-1 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => onOpenOrder(o.id)}
                   className="px-3 py-1.5 rounded-md bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:from-violet-500 hover:to-blue-500 inline-flex items-center gap-1"
