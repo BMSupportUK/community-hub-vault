@@ -144,6 +144,7 @@ import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
 import { Route as AuthenticatedApprovedPortalIndexRouteImport } from './routes/_authenticated/_approved/portal.index'
 import { Route as AuthenticatedApprovedPortalLoginsRouteImport } from './routes/_authenticated/_approved/portal.logins'
+import { Route as AuthenticatedApprovedPortalSettingsRouteImport } from './routes/_authenticated/_approved/portal.settings'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as ApiPublicATokenRouteImport } from './routes/api/public/a/$token'
@@ -961,6 +962,12 @@ const AuthenticatedApprovedPortalLoginsRoute =
     path: '/portal/logins',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedPortalSettingsRoute =
+  AuthenticatedApprovedPortalSettingsRouteImport.update({
+    id: '/portal/settings',
+    path: '/portal/settings',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedSportsGuidesNewRoute =
   AuthenticatedApprovedSportsGuidesNewRouteImport.update({
     id: '/new',
@@ -1377,6 +1384,7 @@ export interface FileRoutesByFullPath {
   '/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
+  '/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1557,6 +1565,7 @@ export interface FileRoutesByTo {
   '/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
+  '/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1743,6 +1752,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
+  '/_authenticated/_approved/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1928,6 +1938,7 @@ export interface FileRouteTypes {
     | '/forum/search'
     | '/home/$channel'
     | '/portal/logins'
+    | '/portal/settings'
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/a/$token'
@@ -2108,6 +2119,7 @@ export interface FileRouteTypes {
     | '/forum/search'
     | '/home/$channel'
     | '/portal/logins'
+    | '/portal/settings'
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/a/$token'
@@ -2293,6 +2305,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/forum/search'
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/portal/logins'
+    | '/_authenticated/_approved/portal/settings'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
     | '/api/public/a/$token'
@@ -3375,6 +3388,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedPortalLoginsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/portal/settings': {
+      id: '/_authenticated/_approved/portal/settings'
+      path: '/portal/settings'
+      fullPath: '/portal/settings'
+      preLoaderRoute: typeof AuthenticatedApprovedPortalSettingsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/sports-guides/new': {
       id: '/_authenticated/_approved/sports-guides/new'
       path: '/new'
@@ -3881,6 +3901,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedFanzoneNewPostsRoute: typeof AuthenticatedApprovedFanzoneNewPostsRoute
   AuthenticatedApprovedFanzoneProfileRoute: typeof AuthenticatedApprovedFanzoneProfileRoute
   AuthenticatedApprovedPortalLoginsRoute: typeof AuthenticatedApprovedPortalLoginsRoute
+  AuthenticatedApprovedPortalSettingsRoute: typeof AuthenticatedApprovedPortalSettingsRoute
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
   AuthenticatedApprovedPortalIndexRoute: typeof AuthenticatedApprovedPortalIndexRoute
   AuthenticatedApprovedFanzonePostsUserIdRoute: typeof AuthenticatedApprovedFanzonePostsUserIdRoute
@@ -4022,6 +4043,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedFanzoneProfileRoute,
   AuthenticatedApprovedPortalLoginsRoute:
     AuthenticatedApprovedPortalLoginsRoute,
+  AuthenticatedApprovedPortalSettingsRoute:
+    AuthenticatedApprovedPortalSettingsRoute,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
   AuthenticatedApprovedPortalIndexRoute: AuthenticatedApprovedPortalIndexRoute,
   AuthenticatedApprovedFanzonePostsUserIdRoute:

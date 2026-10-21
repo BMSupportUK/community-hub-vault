@@ -265,17 +265,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     setTimeout(() => setCopied(false), 1200);
   };
 
-  const goEdit = () => {
-    if (profile?.username) {
-      navigate({
-        to: "/u/$username",
-        params: { username: profile.username },
-        search: { tab: "profile", edit: 1 } as never,
-      });
-    } else {
-      navigate({ to: "/profile" });
-    }
-  };
+  const goEdit = () => navigate({ to: "/portal/settings", search: { tab: "profile" } });
 
   return (
     <>
@@ -419,17 +409,18 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
           </DropdownMenuItem>
           {!inFanZone ? (
             <DropdownMenuItem asChild className="cursor-pointer">
-              <Link to="/notification-settings">
+              <Link to="/portal/settings" search={{ tab: "browser" }}>
                 <Bell className="size-4 mr-2" />
                 Notifications & sounds
               </Link>
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem asChild className="cursor-pointer">
-            <Link to={inFanZone ? "/fan-zone-security" : "/account-security"}>
-              <ShieldCheck className="size-4 mr-2" />
-              Security & 2FA
-            </Link>
+            {inFanZone ? (
+              <Link to="/fan-zone-security"><ShieldCheck className="size-4 mr-2" />Security & 2FA</Link>
+            ) : (
+              <Link to="/portal/settings" search={{ tab: "security" }}><ShieldCheck className="size-4 mr-2" />Security & 2FA</Link>
+            )}
           </DropdownMenuItem>
           {!inFanZone ? (
             <DropdownMenuItem

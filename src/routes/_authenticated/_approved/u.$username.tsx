@@ -57,7 +57,7 @@ export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   }),
 });
 
-interface ProfileRow {
+export interface ProfileRow {
   id: string;
   username: string | null;
   display_name: string | null;
@@ -551,7 +551,6 @@ function ProfilePage() {
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
-    ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
   ];
 
   // On genuinely large screens the profile stays inside the viewport: the
@@ -676,12 +675,13 @@ function ProfilePage() {
                   </div>
                   {isOwner && (
                     <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
-                    <button
-                      onClick={() => setEditing(true)}
+                    <Link
+                      to="/portal/settings"
+                      search={{ tab: "profile" }}
                       className="flex min-w-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 px-3 py-2 text-sm font-medium text-white shadow-lg shadow-purple-900/50 sm:self-end sm:px-4"
                     >
                       <Pencil className="size-4" /> Edit profile
-                    </button>
+                    </Link>
                     {!isStaffProfile && (
                     <button
                       onClick={() => setPickerOpen(true)}
@@ -817,22 +817,9 @@ function ProfilePage() {
           )}
 
 
-          {isOwner && (
-            <TabsContent value="theme" className={paneClass}>
-              <PersonalThemePanel />
-            </TabsContent>
-          )}
         </Tabs>
       </div>
 
-      {editing && isOwner && (
-        <EditProfileModal
-          profile={profile}
-          isStaffProfile={isStaffProfile}
-          onClose={() => setEditing(false)}
-          onSaved={() => { setEditing(false); load(); }}
-        />
-      )}
       {pickerOpen && isOwner && !isStaffProfile && (
         <NameplatePicker
           userId={profile.id}
@@ -872,7 +859,7 @@ function ProfileActivity({ userId, lastSeenAt: seedLastSeen }: { userId: string;
 }
 
 
-function PersonalThemePanel() {
+export function PersonalThemePanel() {
   const current = useAppTheme();
   const choose = async (theme: Parameters<typeof setPersonalAppTheme>[0]) => {
     try {
@@ -2119,7 +2106,7 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
 
 /* ---------------- Edit profile modal ---------------- */
 
-function EditProfileModal({ profile, isStaffProfile, onClose, onSaved }: { profile: ProfileRow; isStaffProfile: boolean; onClose: () => void; onSaved: () => void }) {
+export function EditProfileModal({ profile, isStaffProfile, onClose, onSaved, inline = false }: { profile: ProfileRow; isStaffProfile: boolean; onClose: () => void; onSaved: () => void; inline?: boolean }) {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(profile.display_name ?? "");
   const [username, setUsername] = useState(profile.username ?? "");
@@ -2179,8 +2166,8 @@ function EditProfileModal({ profile, isStaffProfile, onClose, onSaved }: { profi
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-background/80 p-3 backdrop-blur-sm sm:p-4" onClick={onClose}>
-      <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface-1 p-4 sm:max-h-[calc(100dvh-2rem)] sm:p-6" onClick={(e) => e.stopPropagation()}>
+    <div className={inline ? "w-full" : "fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-background/80 p-3 backdrop-blur-sm sm:p-4"} onClick={inline ? undefined : onClose}>
+      <div className={inline ? "w-full max-w-2xl rounded-2xl border border-border bg-surface-1 p-4 sm:p-6" : "my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface-1 p-4 sm:max-h-[calc(100dvh-2rem)] sm:p-6"} onClick={(e) => e.stopPropagation()}>
         <h2 className="font-display text-xl font-bold mb-4">Edit profile</h2>
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 mb-4 sm:flex sm:gap-4">
           <Avatar url={avatarUrl} name={displayName || username || "?"} size={72} userId={profile.id} />
@@ -2268,7 +2255,7 @@ function EditProfileModal({ profile, isStaffProfile, onClose, onSaved }: { profi
           </span>
         </label>
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 border border-border text-sm">Cancel</button>
+          {!inline && <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 border border-border text-sm">Cancel</button>}
           <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm disabled:opacity-60">
             {saving ? "Saving…" : "Save"}
           </button>
