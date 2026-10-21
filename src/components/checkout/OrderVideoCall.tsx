@@ -1,5 +1,5 @@
 import { isVideoTestOrder } from "@/lib/video-test-orders";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Phone, PhoneOff, QrCode, Video } from "lucide-react";
 import QRCode from "react-qr-code";
@@ -34,6 +34,9 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
   const [open, setOpen] = useState(false);
   const [moved, setMoved] = useState(false);
   const [invite, setInvite] = useState(false);
+  const [endedId, setEndedId] = useState<string | null>(null);
+  const sessionRef = useRef<Session | null>(null);
+  sessionRef.current = session;
 
   useEffect(() => {
     supabase.rpc("is_business_open").then(({ data }) => setOpen(data !== false || isVideoTestOrder(token)));
