@@ -6,6 +6,7 @@ import { sendPaymentOutstandingEmail } from "@/lib/payment-outstanding-email.fun
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
+import { fetchOrderUserNames, orderCustomerName } from "@/lib/order-customer-name";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
@@ -27,6 +28,7 @@ type Row = {
   completed_at: string | null;
   shipping_name: string | null;
   existing_username: string | null;
+  user_id?: string | null;
   customer_type: string | null;
   order_ref: string | null;
   manual_pay_method: string | null;
@@ -57,6 +59,7 @@ export function OrderStatusAdminCard() {
   const [methods, setMethods] = useState<Record<string, string>>({});
   const [payments, setPayments] = useState<Record<string, ProfitPayment[]>>({});
   const [referrers, setReferrers] = useState<Record<string, string>>({});
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
@@ -106,7 +109,7 @@ export function OrderStatusAdminCard() {
     (async () => {
       const { data, error } = !canComplete ? await supabase.rpc("staff_checkout_order_summary" as never) : await supabase
         .from("orders")
-        .select("id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type, order_ref, manual_pay_method")
+        .select("id, user_id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type, order_ref, manual_pay_method")
         .order("created_at", { ascending: false })
         .limit(5000);
       if (cancelled) return;
@@ -114,6 +117,7 @@ export function OrderStatusAdminCard() {
       const orders = (data ?? []) as Row[];
       setRows(orders);
       setReferrers({});
+      void fetchOrderUserNames(orders.map((o) => o.user_id)).then((n) => { if (!cancelled) setUserNames(n); });
       if (orders.length) {
         let pays: (ProfitPayment & { order_id: string; provider_payment_id: string | null })[];
         try {
@@ -240,7 +244,7 @@ export function OrderStatusAdminCard() {
                     <tr key={r.id} className="border-t border-border">
                       <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</td>
                       <td className="px-3 py-2">
-                        <div>{r.shipping_name || r.existing_username || "—"}</div>
+                        <div>{orderCustomerName(r, userNames)}</div>
                         <div className="text-xs text-muted-foreground">{r.order_ref ?? `#${r.id.slice(0, 8)}`}{r.customer_type ? ` · ${r.customer_type}` : ""}</div>
                         {referrers[r.id] && <div className="text-xs text-muted-foreground">Referred by {referrers[r.id]}</div>}
                       </td>
