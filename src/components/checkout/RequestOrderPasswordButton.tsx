@@ -12,7 +12,9 @@ export function RequestOrderPasswordButton({ orderId, label = 'Request order pas
     try {
       const { data, error } = await supabase.rpc('request_my_order_password', { p_order_id: orderId });
       if (error) throw new Error('The order password could not be requested. Please try again.');
-      toast.success(data ? 'Password notification sent — check your notifications.' : 'Your password notification was just sent — check your notifications.');
+      // A new request already produces the actionable secure-order toast via
+      // NotificationBell. Only give separate feedback when no new notice fires.
+      if (!data) toast.info('Your password notification was just sent — check your notifications.');
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : 'Please try again.');
     } finally { setBusy(false); }
