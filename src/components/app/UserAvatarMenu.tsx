@@ -411,7 +411,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             )}
             Copy username
           </DropdownMenuItem>
-          {!inFanZone ? (
+          {!inFanZone && staffPortalUser ? (
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link to="/portal/settings" search={{ tab: "browser" }}>
                 <Bell className="size-4 mr-2" />
