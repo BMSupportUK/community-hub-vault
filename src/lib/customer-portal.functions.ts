@@ -32,11 +32,11 @@ export const requestPortalLink = createServerFn({ method: "POST" })
     const token = hex(crypto.getRandomValues(new Uint8Array(32)));
     const { error } = await supabaseAdmin.rpc("portal_issue_link", { p_user_id: portal.user_id, p_token_hash: await hash(token) });
     if (error) throw new Error("We couldn't send your link. Please try again.");
-    const { data: profile } = await supabaseAdmin.from("profiles").select("username").eq("id", portal.user_id).maybeSingle();
+    const { data: profile } = await supabaseAdmin.from("profiles").select("display_name").eq("id", portal.user_id).maybeSingle();
     const origin = getRequestUrl().origin;
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     await sendTemplateEmail("customer-portal-link", email, {
-      templateData: { name: profile?.username ?? undefined, loginUrl: `${origin}/portal/${data.code}?t=${token}` },
+      templateData: { name: profile?.display_name ?? undefined, loginUrl: `${origin}/portal/${data.code}?t=${token}` },
       idempotencyKey: `portal-link-${await hash(token)}`,
     });
     return { sent: true };
