@@ -292,6 +292,7 @@
 - [x] /video staff command posts QR; customer phone page; multi-staff room on tickets
 
 ## Customer new-order destination and reminder
+- [ ] Put customer status, purchased items and the existing cancellation action on order cards; remove duplicated customer sidebar details and verify the signed-in display.
 - [x] Add owner-only order password requests on My Orders cards and notification copy actions; eight ownership/notification tests pass, build OK.
 - [x] Signed-in My Orders card request sends a notification; its Copy chat password button populates the clipboard. No order or payment changed.
 - [x] Require entered order passwords for all customer secure checkout access; signed-in/link-only and automatic password bypasses removed. Twelve password/access tests pass; signed-in page shows password entry.
