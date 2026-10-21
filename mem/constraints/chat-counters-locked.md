@@ -1,6 +1,6 @@
 ---
 name: Chat counters are locked
-description: Chat/presence counters (side rail, Jump back in, Members panel) must never be changed without explicit authorisation from the user
+description: Chat/presence counters (side rail, Members panel) must never be changed without explicit authorisation from the user
 type: constraint
 ---
 
