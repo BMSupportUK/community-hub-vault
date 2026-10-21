@@ -169,6 +169,9 @@ export function useOrderVideoCallStaff(orderId: string) {
   const [isMale, setIsMale] = useState(false);
   const { roles } = useAuth();
   const [me, setMe] = useState<{ userId: string; name: string } | null>(null);
+  const [endedId, setEndedId] = useState<string | null>(null);
+  const sessionRef = useRef<Session | null>(null);
+  sessionRef.current = session;
   const role = roles.includes("admin") ? "admin" : roles.includes("management") ? "management" : "staff";
   const room = useStaffCallRoom(inCall && session ? session.id : null, me ? { ...me, role } : null);
 
@@ -193,6 +196,7 @@ export function useOrderVideoCallStaff(orderId: string) {
       const r = await list({ data: { orderId } }).catch(() => null);
       if (off || !r) return;
       const open = r.sessions.find((s) => s.status === "waiting" || s.status === "live") ?? null;
+      if (!open && sessionRef.current) setEndedId(sessionRef.current.id);
       setSession(open);
       if (!open) setInCall(false);
     };
