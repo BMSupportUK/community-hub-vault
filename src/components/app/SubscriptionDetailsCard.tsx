@@ -28,15 +28,26 @@ export function SubscriptionDetailsCard({
   const { user } = useAuth();
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [customerName, setCustomerName] = useState<string | null>(null);
   const [viewIndex, setViewIndex] = useState(0);
 
   useEffect(() => {
     if (!user) {
       setCreds([]);
       setLoaded(true);
+      setCustomerName(null);
       return;
     }
     let active = true;
+    supabase
+      .from("profiles")
+      .select("display_name, username")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        setCustomerName((data?.display_name || data?.username || null) as string | null);
+      });
     const load = () => {
       supabase
         .from("app_credentials")
@@ -137,6 +148,14 @@ export function SubscriptionDetailsCard({
           )}>
             Your Subscription Details
           </h3>
+          {customerName && (
+            <p className={cn(
+              "font-semibold truncate max-w-full px-1 text-white drop-shadow",
+              fill ? "text-xs md:text-lg mt-0.5" : compact ? "text-xs mt-0.5" : "text-sm mt-0.5",
+            )}>
+              {customerName}
+            </p>
+          )}
           <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px] mt-0.5" : "text-xs mt-0.5")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
