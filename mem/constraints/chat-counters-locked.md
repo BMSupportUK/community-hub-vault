@@ -9,7 +9,7 @@ The chat counter system is FROZEN. Do not change, refactor, restyle, rename, mov
 Frozen surfaces:
 - `src/hooks/use-talk-channel-presence.tsx` — the whole presence engine (heartbeat, linger, debounce, leave/join broadcast signals, `useTalkChannelTotalCount`, `useTalkChannelMemberCount`, `useTalkChannelPresentUsers`).
 - `src/components/app/IconRail.tsx` — Customer Chatroom live count badge.
-- `src/routes/_authenticated/_approved/home.index.tsx` — "N in chat" pill on the chatroom link.
+- ~~`src/routes/_authenticated/_approved/home.index.tsx` — "N in chat" pill on the chatroom link.~~ Removed on 21 Oct 2026 when the user asked for the "Jump back in" links to be deleted; the side rail badge and Members panel counts are untouched and still frozen.
 - `src/components/app/TalkChannelMembersPanel.tsx` — Members panel header count and green online dots.
 
 Rules:
