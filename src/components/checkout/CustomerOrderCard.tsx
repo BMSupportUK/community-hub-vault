@@ -15,6 +15,7 @@ import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { getAutomatedMessage } from "@/lib/automated-messages";
 import { downloadReceipt } from "@/lib/receipt";
 import { accountTypeLabelFor, deriveOrderTerms } from "@/lib/order-terms";
+import { canSeeUserEmail } from "@/lib/user-email-access";
 
 interface CustomerOrder {
   id: string;
@@ -31,6 +32,7 @@ interface CustomerOrder {
   wants_adult_content?: boolean | null;
   discount_code?: string | null;
   discount_cents?: number | null;
+  email?: string | null;
 }
 interface Item {
   id: string;
@@ -51,7 +53,8 @@ export function CustomerOrderCard({ order, onOpenCheckout }: {
   order: CustomerOrder;
   onOpenCheckout: () => void;
 }) {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
+  const showEmail = canSeeUserEmail(roles);
   const { format } = useCurrency();
   const navigate = useNavigate();
   const [buyer, setBuyer] = useState<Buyer | null>(null);
@@ -183,6 +186,7 @@ export function CustomerOrderCard({ order, onOpenCheckout }: {
         <div className="grid gap-x-6 gap-y-3 text-xs sm:grid-cols-2">
           <dl className="min-w-0 space-y-2">
             {order.shipping_name && <Detail label="Customer" value={order.shipping_name} />}
+            {showEmail && order.email && <Detail label="Email" value={order.email} />}
             <Detail label="Placed" value={date(order.created_at)} />
             {order.customer_type && <Detail label="Order type" value={order.customer_type === "existing" ? "Renewal" : "New customer"} />}
             {order.existing_username && <Detail label="Account" value={order.existing_username} />}
