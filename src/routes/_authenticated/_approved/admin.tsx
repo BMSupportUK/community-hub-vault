@@ -153,6 +153,19 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
               <p className="text-sm text-white/85">Server-wide controls — staff can see the sections admin allows them to.</p>
             </div>
           <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 sm:col-span-1">
+            {!isFz && isAdminRole && (
+              <>
+                <Link to="/moderation" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
+                  <Shield className="size-4" /> Access Requests <ModerationPendingBadge />
+                </Link>
+                <Link to="/admin" search={{ tab: "order-status" } as never} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
+                  <ReceiptText className="size-4" /> Shop Orders <PendingOrdersBadge />
+                </Link>
+                <Link {...ADMIN_CUSTOMERS_LINK} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
+                  <ShieldCheck className="size-4" /> Customers
+                </Link>
+              </>
+            )}
             {(isFz ? canOpenAdminPanel(roles) : canOpenFanZoneAdminPanel(roles)) && (
               <Link to={isFz ? "/admin" : "/fan-zone-admin"} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
                 {isFz ? "BM Support dashboard" : "Boro Fan Zone dashboard"}

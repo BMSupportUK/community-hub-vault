@@ -10,6 +10,9 @@ import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
+import { BmInboxBell } from "@/components/app/BmInboxBell";
+import { MentionsBadge } from "@/components/app/MentionsBadge";
+import { NotificationBell } from "@/components/app/NotificationBell";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
 import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
@@ -388,7 +391,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       </div>
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       {user && (
-        <div className="flex flex-col items-center pt-1 shrink-0">
+        <div className="relative z-10 flex flex-col items-center gap-1.5 pt-1 shrink-0">
+          <BmInboxBell />
+          <MentionsBadge />
+          <NotificationBell />
           <UserAvatarMenu variant="bar" />
         </div>
       )}
