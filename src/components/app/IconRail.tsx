@@ -239,7 +239,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/home", label: "Home", icon: Home, show: true },
     // BM Support Inbox lives in the top header (before the mentions icon), not the rail.
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
-    { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
+    // Customers reach Tickets through the Customer Portal tabs; staff keep it here.
+    { to: "/tickets", label: "Tickets", icon: Ticket, show: isStaff && !hasRole("moderator") },
     // Shop, My Orders and Install Guides live inside the Customer Portal tabs.
     { to: "/portal", label: "Customer Portal", icon: ShoppingCart, show: true },
     { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, resetSportsGuides: true },

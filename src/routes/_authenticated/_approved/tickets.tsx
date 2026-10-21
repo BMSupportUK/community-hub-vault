@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ticketsHero from "@/assets/tickets-hero.jpg";
+import { PortalTabs } from "@/components/app/PortalTabs";
 import ticketsEmpty from "@/assets/tickets-empty.png";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
@@ -468,7 +469,8 @@ function TicketsPage() {
 
   return (
     <main className="flex h-full max-h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden text-white">
-      <div className="relative h-full min-h-0 overflow-hidden bg-rose-950">
+      {!isStaff && <PortalTabs active="tickets" />}
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-rose-950">
         {/* Full-page background image */}
         <div className="pointer-events-none absolute inset-0 z-0">
           <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover brightness-[0.45]" />
