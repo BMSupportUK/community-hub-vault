@@ -22,7 +22,7 @@
 - Video help uses P2P WebRTC and a fixed-size customer canvas; rotation must not reshape or rebuild the encoder (causes black video).
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
-- Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
+- Seasonal Talk/inbox: one date helper and overlay; locked chat untouched.
 - Dashboard access, header button label and header tab gates come from `src/lib/admin-panel-access.ts`; a header-tabbed page has no tool card.
 <!-- LOVABLE:BEGIN -->
 - Members and role management renders beneath subscriptions in the Customers dashboard tab; legacy member-management URLs redirect there to keep one destination while retaining the existing security gate.
