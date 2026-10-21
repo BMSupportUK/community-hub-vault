@@ -63,6 +63,7 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
   const end = useCallback(async () => {
     const s = session;
     setSession(null);
+    if (s) setEndedId(s.id);
     if (s) await endFn({ data: { token, password, sessionId: s.id } }).catch(() => undefined);
   }, [session, endFn, token, password]);
 
