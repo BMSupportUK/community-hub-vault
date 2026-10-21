@@ -1345,6 +1345,13 @@
       "when": 1792603096038,
       "tag": "0191_renewed_date_uses_latest_paid_renewal",
       "breakpoints": true
+    },
+    {
+      "idx": 192,
+      "version": "7",
+      "when": 1792606401550,
+      "tag": "0192_portal_unlock_until_uk_midnight",
+      "breakpoints": true
     }
   ]
 }

@@ -248,7 +248,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     // Customers unlock their portal from beside the Home button.
     { to: "/portal-unlock", label: "Unlock portal", icon: Lock, show: false, unlock: true },
     // BM Support Inbox lives in the top header (before the mentions icon), not the rail.
-    { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
+    // Talk channels now open from each portal's tab bar.
+    { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: false, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     // Customers reach Tickets through the Customer Portal tabs; staff keep it here.
     { to: "/tickets", label: "Tickets", icon: Ticket, show: false },
     // Shop, My Orders and Install Guides live inside the Customer Portal tabs.
