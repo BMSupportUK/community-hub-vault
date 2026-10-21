@@ -42,4 +42,4 @@
 - Cover and swap approvals use authenticated admin/management database functions with a single-slot, owner-context exception for today's rota; swap reassignment and status commit together so ordinary closed-day bookings remain blocked.
 - Secure-order video calls: one staff host relays the customer to other staff via a staff-only topic; the session ends only when the last staff leaves, longest-present staff takes over.
 - Ticket video: staff-only /video command makes a hashed 30-min token QR to public /video/$token, reusing the secure-order host/relay room.
-- Portal: daily codes, previous code requests only; email links 24h, unlock 1h. Layout gates content before mount; user-bound browser state fails closed. Tabs replace rail entries.
+- Portal: hashed email codes with atomic attempt limits; layout gates content and owns the live timer. User-bound state fails closed; tabs replace rail entries.
