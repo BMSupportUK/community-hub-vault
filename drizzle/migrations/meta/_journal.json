@@ -1324,6 +1324,13 @@
       "when": 1792583756278,
       "tag": "0188_customer_portal_email_login_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 189,
+      "version": "7",
+      "when": 1792584348028,
+      "tag": "0189_customer_portal_code_email_editable",
+      "breakpoints": true
     }
   ]
 }
