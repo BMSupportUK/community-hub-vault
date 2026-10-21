@@ -17,7 +17,7 @@ export function portalCountdown(seconds: number) {
 }
 
 export function isPortalPath(path: string) {
-  return path === "/shop" || path === "/tickets" || path.startsWith("/tickets/") || path === "/install-guides" || path === "/leaderboard" || path === "/portal" || path.startsWith("/portal/");
+  return path === "/shop" || path === "/tickets" || path.startsWith("/tickets/") || path === "/install-guides" || path === "/leaderboard" || path === "/knowledge-base" || path === "/portal" || path.startsWith("/portal/");
 }
 
 export function portalAccessValid(expiresAt: string | null, ownerId: string | null, userId: string, now = Date.now()) {

@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PortalTabs } from "@/components/app/PortalTabs";
 import kbHero from "@/assets/knowledge-base-hero.jpg";
 import kbReadingBackground from "@/assets/knowledge-base-reading.jpg";
 
@@ -489,6 +490,8 @@ function KnowledgeBasePage() {
   };
 
   return (
+    <div className="flex min-h-0 flex-1 flex-col">
+    <PortalTabs active="knowledge" />
     <main data-knowledge-base className="relative isolate min-h-0 flex-1 overflow-y-auto pb-24 md:pb-8">
       <KnowledgeBackground />
       <div className="w-full px-4 py-5 sm:px-8 lg:py-8">
@@ -634,6 +637,7 @@ function KnowledgeBasePage() {
         <DialogContent><DialogHeader><DialogTitle>{editingCat?.id ? "Edit category" : "New category"}</DialogTitle></DialogHeader>{editingCat && <div className="space-y-3"><Label>Name</Label><Input value={editingCat.name} onChange={(e) => setEditingCat({ ...editingCat, name: e.target.value })} /><Label>Slug (optional)</Label><Input value={editingCat.slug} placeholder="auto" onChange={(e) => setEditingCat({ ...editingCat, slug: e.target.value })} /></div>}<DialogFooter><Button variant="outline" onClick={() => { setShowCatEditor(false); setEditingCat(null); }}>Cancel</Button><Button onClick={saveCategory}>Save</Button></DialogFooter></DialogContent>
       </Dialog>
     </main>
+    </div>
   );
 }
 
