@@ -1,18 +1,18 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { KeyRound, Package, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
+import { Trophy, KeyRound, Package, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
 
-type Tab = "shop" | "orders" | "tickets" | "logins" | "guides";
+type Tab = "shop" | "orders" | "tickets" | "logins" | "guides" | "referrals";
 
 /** Customer Portal tab bar shown above the Shop, My Orders, Tickets, My Logins and Install Guides pages. */
 export function PortalTabs({ active }: { active?: Tab }) {
   const location = useLocation();
   const view = (location.search as { view?: string }).view;
   const p = location.pathname;
-  const current: Tab = active ?? (p.startsWith("/install-guides") ? "guides" : p.startsWith("/tickets") ? "tickets" : p.startsWith("/portal") ? "logins" : view === "orders" ? "orders" : "shop");
+  const current: Tab = active ?? (p.startsWith("/install-guides") ? "guides" : p.startsWith("/leaderboard") ? "referrals" : p.startsWith("/tickets") ? "tickets" : p.startsWith("/portal") ? "logins" : view === "orders" ? "orders" : "shop");
   const item = "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors";
   const on = "bg-primary text-primary-foreground shadow";
   const off = "text-muted-foreground hover:bg-surface-2 hover:text-foreground";
@@ -24,6 +24,7 @@ export function PortalTabs({ active }: { active?: Tab }) {
       <Link to="/tickets" className={cn(item, current === "tickets" ? on : off)}><Ticket className="size-4" />Tickets</Link>
       <Link to="/portal/logins" className={cn(item, current === "logins" ? on : off)}><KeyRound className="size-4" />My Logins</Link>
       <Link to="/install-guides" search={{ tab: undefined, checkout: undefined }} className={cn(item, current === "guides" ? on : off)}><Wrench className="size-4" />Install Guides</Link>
+      <Link to="/leaderboard" className={cn(item, current === "referrals" ? on : off)}><Trophy className="size-4" />Referrals</Link>
       <PortalCountdown />
     </nav>
   );
