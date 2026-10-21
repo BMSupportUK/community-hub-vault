@@ -290,3 +290,8 @@
 
 ## Ticket video calls
 - [x] /video staff command posts QR; customer phone page; multi-staff room on tickets
+
+## Customer new-order destination and reminder
+- [ ] Send placed orders to Shop orders.
+- [ ] Persist a customer payment reminder with an owner-only secure password copy action; keep passwords out of push payloads.
+- [ ] Run order notification regressions and verify the signed-in experience without placing a live sale.
