@@ -7745,6 +7745,22 @@ export type Database = {
         }
         Returns: string
       }
+      admin_create_manual_order_v5: {
+        Args: {
+          _account_id?: string
+          _created_at?: string
+          _customer_id?: string
+          _customer_kind?: string
+          _customer_name: string
+          _discount_cents?: number
+          _email?: string
+          _items: Json
+          _method: string
+          _site_user_id?: string
+          _skip_registration?: boolean
+        }
+        Returns: string
+      }
       admin_customer_is_hidden: {
         Args: { p_display_name: string; p_user_id: string; p_username: string }
         Returns: boolean
@@ -7801,6 +7817,15 @@ export type Database = {
       admin_mark_manual_order_paid: {
         Args: { p_order_id: string }
         Returns: Json
+      }
+      admin_order_site_users: {
+        Args: never
+        Returns: {
+          display_name: string
+          email: string
+          id: string
+          username: string
+        }[]
       }
       admin_revoke_user_sessions: {
         Args: { _keep_session: string; _target: string }
