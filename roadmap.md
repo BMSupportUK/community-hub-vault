@@ -292,6 +292,7 @@
 - [x] /video staff command posts QR; customer phone page; multi-staff room on tickets
 
 ## Customer new-order destination and reminder
+- [ ] Require entered order passwords for all customer secure checkout access; remove signed-in/link-only and automatic password bypasses.
 - [x] Send placed orders to Shop orders; signed-in My Orders destination verified.
 - [x] Persist a customer payment reminder with an owner-only secure password copy action; keep passwords out of push payloads.
 - [x] Ten destination, notification and ownership regressions pass; preview build OK.

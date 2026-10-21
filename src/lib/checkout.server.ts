@@ -14,12 +14,8 @@ export async function unlock(token: string, password: string) {
     .eq("token", token)
     .maybeSingle();
   if (!link) return null;
-  // Only manual orders are password-gated. Shop-order links are created with
-  // claimed_by set (the placing member), so a null claimed_by means manual.
-  if (!link.claimed_by) {
-    // Always run a comparison so a wrong token and a wrong password look the same.
-    if (!same(password, link.password)) return null;
-  }
+  // Every customer order requires its password, including claimed shop orders.
+  if (!password.trim() || !same(password, link.password)) return null;
   return { supabaseAdmin, link };
 }
 

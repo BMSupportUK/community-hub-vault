@@ -22,8 +22,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/pay/$token")({
   validateSearch: (search: Record<string, unknown>): { pw?: string } => ({
-    // The QR code staff show during a video call opens the page already
-    // unlocked by carrying the password in the link.
+    // Legacy links may carry a password, but never unlock automatically.
     pw: typeof search.pw === "string" ? search.pw : undefined,
   }),
   head: () => ({
@@ -62,7 +61,6 @@ function DemoPayPage({ unpaid = false }: { unpaid?: boolean }) {
 
 function PayPage() {
   const { token } = Route.useParams();
-  const { pw: urlPw } = Route.useSearch();
   const { user, hasRole } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [movingToSetup, setMovingToSetup] = useState(false);
@@ -95,40 +93,13 @@ function PayPage() {
       setCheckingAccess(false);
       return;
     }
-    const saved = sessionStorage.getItem(key);
-    if (saved) {
-      load(saved).then(async (ok) => {
-        if (ok) {
-          setPassword(saved);
-          setUnlocked(true);
-        } else {
-          sessionStorage.removeItem(key);
-          const linkOnly = await load("");
-          if (linkOnly) {
-            setPassword("");
-            setUnlocked(true);
-          }
-        }
-      }).finally(() => setCheckingAccess(false));
-      return;
-    }
-    // A password carried in the link (QR code during a video call) unlocks
-    // straight away; otherwise shop orders unlock with the link alone — try
-    // it before showing the password form (only manual orders need one).
-    (async () => {
-      if (urlPw && (await load(urlPw))) {
-        sessionStorage.setItem(key, urlPw);
-        setPassword(urlPw);
-        setUnlocked(true);
-        return;
-      }
-      const ok = await load("");
-      if (ok) {
-        setPassword("");
-        setUnlocked(true);
-      }
-    })().finally(() => setCheckingAccess(false));
-  }, [key, load, validToken, urlPw]);
+    // Require a fresh entry whenever the customer opens this order page.
+    setPassword(null);
+    setUnlocked(false);
+    setView(null);
+    setInput("");
+    setCheckingAccess(false);
+  }, [token, validToken]);
 
   // Keep the page live so payment / completion show without a refresh.
   useEffect(() => {
@@ -176,9 +147,9 @@ function PayPage() {
             </div>
             <input value={input} onChange={(e) => setInput(e.target.value)} autoComplete="off" placeholder="XXXX-XXXX-XXXX" className="w-full h-11 rounded-lg border border-border bg-background px-3 text-center font-mono tracking-widest uppercase" aria-label="Password" />
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <button type="submit" disabled={busy || !input.trim()} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2">
+            <Button type="submit" disabled={busy || !input.trim()} className="w-full h-11 rounded-lg font-semibold gap-2">
               {busy && <Loader2 className="size-4 animate-spin" />} Open my order
-            </button>
+            </Button>
             <p className="text-xs text-muted-foreground inline-flex items-center justify-center gap-1.5">
               <ShieldCheck className="size-3.5" /> Only you can see this page — it is protected by your unique link and password.
             </p>
