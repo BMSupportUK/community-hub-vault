@@ -150,6 +150,9 @@ function PayPage() {
             <Button type="submit" disabled={busy || !input.trim()} className="w-full h-11 rounded-lg font-semibold gap-2">
               {busy && <Loader2 className="size-4 animate-spin" />} Open my order
             </Button>
+            <Button asChild variant="outline" className="w-full h-11 rounded-lg font-semibold gap-2">
+              <Link to="/shop" search={{ view: "orders" }}><ArrowLeft className="size-4" /> Back to my orders</Link>
+            </Button>
             <p className="text-xs text-muted-foreground inline-flex items-center justify-center gap-1.5">
               <ShieldCheck className="size-3.5" /> Only you can see this page — it is protected by your unique link and password.
             </p>
