@@ -47,6 +47,7 @@ import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesIdRouteImport } from './routes/guides.$id'
 import { Route as JobApplicationTokenRouteImport } from './routes/job-application.$token'
 import { Route as PayTokenRouteImport } from './routes/pay.$token'
+import { Route as PortalCodeRouteImport } from './routes/portal.$code'
 import { Route as VideoTokenRouteImport } from './routes/video.$token'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
@@ -140,6 +141,8 @@ import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedForumSearchRouteImport } from './routes/_authenticated/_approved/forum.search'
 import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
+import { Route as AuthenticatedApprovedPortalIndexRouteImport } from './routes/_authenticated/_approved/portal.index'
+import { Route as AuthenticatedApprovedPortalLoginsRouteImport } from './routes/_authenticated/_approved/portal.logins'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as ApiPublicATokenRouteImport } from './routes/api/public/a/$token'
@@ -376,6 +379,11 @@ const JobApplicationTokenRoute = JobApplicationTokenRouteImport.update({
 const PayTokenRoute = PayTokenRouteImport.update({
   id: '/pay/$token',
   path: '/pay/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalCodeRoute = PortalCodeRouteImport.update({
+  id: '/portal/$code',
+  path: '/portal/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VideoTokenRoute = VideoTokenRouteImport.update({
@@ -934,6 +942,18 @@ const AuthenticatedApprovedHomeChannelRoute =
     path: '/$channel',
     getParentRoute: () => AuthenticatedApprovedHomeRoute,
   } as any)
+const AuthenticatedApprovedPortalIndexRoute =
+  AuthenticatedApprovedPortalIndexRouteImport.update({
+    id: '/portal/',
+    path: '/portal/',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedPortalLoginsRoute =
+  AuthenticatedApprovedPortalLoginsRouteImport.update({
+    id: '/portal/logins',
+    path: '/portal/logins',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedSportsGuidesNewRoute =
   AuthenticatedApprovedSportsGuidesNewRouteImport.update({
     id: '/new',
@@ -1253,6 +1273,7 @@ export interface FileRoutesByFullPath {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
@@ -1347,6 +1368,7 @@ export interface FileRoutesByFullPath {
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
+  '/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1390,6 +1412,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/portal/': typeof AuthenticatedApprovedPortalIndexRoute
   '/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
   '/fanzone/posts/$userId': typeof AuthenticatedApprovedFanzonePostsUserIdRoute
   '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
@@ -1430,6 +1453,7 @@ export interface FileRoutesByTo {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
   '/fan-zone': typeof FanZoneIndexRoute
   '/guides': typeof GuidesIndexRoute
@@ -1523,6 +1547,7 @@ export interface FileRoutesByTo {
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
+  '/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1566,6 +1591,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
+  '/portal': typeof AuthenticatedApprovedPortalIndexRoute
   '/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
   '/fanzone/posts/$userId': typeof AuthenticatedApprovedFanzonePostsUserIdRoute
   '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
@@ -1611,6 +1637,7 @@ export interface FileRoutesById {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
@@ -1705,6 +1732,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/_authenticated/_approved/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
+  '/_authenticated/_approved/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1748,6 +1776,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/_authenticated/_approved/portal/': typeof AuthenticatedApprovedPortalIndexRoute
   '/_authenticated/_approved/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
   '/_authenticated/_approved/fanzone/posts/$userId': typeof AuthenticatedApprovedFanzonePostsUserIdRoute
   '/_authenticated/_approved/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
@@ -1792,6 +1821,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/portal/$code'
     | '/video/$token'
     | '/fan-zone/'
     | '/guides/'
@@ -1886,6 +1916,7 @@ export interface FileRouteTypes {
     | '/forum/$board'
     | '/forum/search'
     | '/home/$channel'
+    | '/portal/logins'
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/a/$token'
@@ -1929,6 +1960,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
     | '/home/'
+    | '/portal/'
     | '/fanzone/messages/$thread'
     | '/fanzone/posts/$userId'
     | '/fanzone/u/$userId'
@@ -1969,6 +2001,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/portal/$code'
     | '/video/$token'
     | '/fan-zone'
     | '/guides'
@@ -2062,6 +2095,7 @@ export interface FileRouteTypes {
     | '/forum/$board'
     | '/forum/search'
     | '/home/$channel'
+    | '/portal/logins'
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/a/$token'
@@ -2105,6 +2139,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
     | '/home'
+    | '/portal'
     | '/fanzone/messages/$thread'
     | '/fanzone/posts/$userId'
     | '/fanzone/u/$userId'
@@ -2149,6 +2184,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/portal/$code'
     | '/video/$token'
     | '/fan-zone/'
     | '/guides/'
@@ -2243,6 +2279,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/forum/$board'
     | '/_authenticated/_approved/forum/search'
     | '/_authenticated/_approved/home/$channel'
+    | '/_authenticated/_approved/portal/logins'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
     | '/api/public/a/$token'
@@ -2286,6 +2323,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
     | '/_authenticated/_approved/home/'
+    | '/_authenticated/_approved/portal/'
     | '/_authenticated/_approved/fanzone/messages/$thread'
     | '/_authenticated/_approved/fanzone/posts/$userId'
     | '/_authenticated/_approved/fanzone/u/$userId'
@@ -2325,6 +2363,7 @@ export interface RootRouteChildren {
   GuidesIdRoute: typeof GuidesIdRoute
   JobApplicationTokenRoute: typeof JobApplicationTokenRoute
   PayTokenRoute: typeof PayTokenRoute
+  PortalCodeRoute: typeof PortalCodeRoute
   VideoTokenRoute: typeof VideoTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
@@ -2642,6 +2681,13 @@ declare module '@tanstack/react-router' {
       path: '/pay/$token'
       fullPath: '/pay/$token'
       preLoaderRoute: typeof PayTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/$code': {
+      id: '/portal/$code'
+      path: '/portal/$code'
+      fullPath: '/portal/$code'
+      preLoaderRoute: typeof PortalCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/video/$token': {
@@ -3295,6 +3341,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedHomeChannelRouteImport
       parentRoute: typeof AuthenticatedApprovedHomeRoute
     }
+    '/_authenticated/_approved/portal/': {
+      id: '/_authenticated/_approved/portal/'
+      path: '/portal'
+      fullPath: '/portal/'
+      preLoaderRoute: typeof AuthenticatedApprovedPortalIndexRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/portal/logins': {
+      id: '/_authenticated/_approved/portal/logins'
+      path: '/portal/logins'
+      fullPath: '/portal/logins'
+      preLoaderRoute: typeof AuthenticatedApprovedPortalLoginsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/sports-guides/new': {
       id: '/_authenticated/_approved/sports-guides/new'
       path: '/new'
@@ -3799,7 +3859,9 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedFanzoneMessagesRoute: typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   AuthenticatedApprovedFanzoneNewPostsRoute: typeof AuthenticatedApprovedFanzoneNewPostsRoute
   AuthenticatedApprovedFanzoneProfileRoute: typeof AuthenticatedApprovedFanzoneProfileRoute
+  AuthenticatedApprovedPortalLoginsRoute: typeof AuthenticatedApprovedPortalLoginsRoute
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
+  AuthenticatedApprovedPortalIndexRoute: typeof AuthenticatedApprovedPortalIndexRoute
   AuthenticatedApprovedFanzonePostsUserIdRoute: typeof AuthenticatedApprovedFanzonePostsUserIdRoute
   AuthenticatedApprovedFanzoneUUserIdRoute: typeof AuthenticatedApprovedFanzoneUUserIdRoute
 }
@@ -3935,7 +3997,10 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedFanzoneNewPostsRoute,
   AuthenticatedApprovedFanzoneProfileRoute:
     AuthenticatedApprovedFanzoneProfileRoute,
+  AuthenticatedApprovedPortalLoginsRoute:
+    AuthenticatedApprovedPortalLoginsRoute,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
+  AuthenticatedApprovedPortalIndexRoute: AuthenticatedApprovedPortalIndexRoute,
   AuthenticatedApprovedFanzonePostsUserIdRoute:
     AuthenticatedApprovedFanzonePostsUserIdRoute,
   AuthenticatedApprovedFanzoneUUserIdRoute:
@@ -4027,6 +4092,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesIdRoute: GuidesIdRoute,
   JobApplicationTokenRoute: JobApplicationTokenRoute,
   PayTokenRoute: PayTokenRoute,
+  PortalCodeRoute: PortalCodeRoute,
   VideoTokenRoute: VideoTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
