@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogIn, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, ClipboardList, MonitorPlay, Popcorn, Crown, UserPlus } from "lucide-react";
+import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogIn, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, ClipboardList, MonitorPlay, Popcorn, Crown, UserPlus, Lock } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
@@ -19,6 +19,7 @@ import fantasyBench from "@/assets/boro-fantasy-bench.png.asset.json";
 import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
 import boroPredictionsGoal from "@/assets/boro-predictions-goal.png.asset.json";
 import { PortalExpiryWatcher } from "@/components/app/PortalExpiryWatcher";
+import { PortalRailUnlock } from "@/components/app/PortalRailUnlock";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
@@ -110,6 +111,8 @@ interface RailItem {
   search?: Record<string, string>;
   params?: Record<string, string>;
   resetSportsGuides?: boolean;
+  /** Rendered as the portal unlock control instead of a normal rail link. */
+  unlock?: boolean;
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
@@ -239,6 +242,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     // Each person's home is their own portal.
     // Home is each role's own portal: staff get the Staff Portal, customers the Customer Portal.
     { to: isStaff ? "/staff-portal" : "/portal", label: "Home", icon: Home, show: true },
+    // Customers unlock their portal from beside the Home button.
+    { to: "/portal-unlock", label: "Unlock portal", icon: Lock, show: !isStaff, unlock: true },
     // BM Support Inbox lives in the top header (before the mentions icon), not the rail.
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     // Customers reach Tickets through the Customer Portal tabs; staff keep it here.
