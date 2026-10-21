@@ -38,6 +38,7 @@ export function SubscriptionDetailsCard({
       setCustomerName(null);
       return;
     }
+    let active = true;
     supabase
       .from("profiles")
       .select("display_name, username")
@@ -47,7 +48,6 @@ export function SubscriptionDetailsCard({
         if (!active) return;
         setCustomerName((data?.display_name || data?.username || null) as string | null);
       });
-    let active = true;
     const load = () => {
       supabase
         .from("app_credentials")
