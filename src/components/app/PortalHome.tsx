@@ -126,6 +126,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                           <span>Manage your account, orders and logins, and get help — all in one place.</span>
                           <Star className="ml-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
                         </p>
+                        <div className="mt-3"><PortalUnlockButton /></div>
                       </div>
                     </>
                   )}
