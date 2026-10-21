@@ -9,6 +9,21 @@ import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCar
 import { Nameplate } from "@/components/app/Nameplate";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { formatRoleLabel } from "@/lib/role-label";
+import { Clocks } from "@/components/app/Clocks";
+import { LockNowPill } from "@/components/app/ScreenLockProvider";
+import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
+
+/** Office time, lock, 2FA and VPN pills shown beside the "Hey" greeting. */
+function GreetingPills() {
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-2 [&_span.hidden]:!inline">
+      <Clocks />
+      <LockNowPill />
+      <TwoFactorPill />
+      <VpnPill />
+    </div>
+  );
+}
 
 /** Portal home — staff layout for the Staff Portal, member layout for the Customer Portal. */
 export function PortalHome({ staff }: { staff: boolean }) {
@@ -70,6 +85,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                             {staffRoleLabel}
                           </span>
                         )}
+                        <GreetingPills />
                       </div>
                       <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
                         Welcome to The Staff Portal
@@ -104,6 +120,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                         <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                           Member
                         </span>
+                        <GreetingPills />
                       </div>
                     </div>
                   )}

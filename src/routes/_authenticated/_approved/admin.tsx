@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
-import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { ADMIN_CUSTOMERS_LINK, adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
+import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
 import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/page-access";
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
@@ -132,6 +134,7 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   };
 
   if (!(isFz ? canOpenFanZoneAdminPanel(roles) : canOpenAdminPanel(roles))) return <Navigate to="/home" />;
+  const isAdminRole = roles.includes("admin") || roles.includes("management");
 
   return (
     <main className="relative isolate h-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -153,6 +156,19 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
               <p className="text-sm text-white/85">Server-wide controls — staff can see the sections admin allows them to.</p>
             </div>
           <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 sm:col-span-1">
+            {!isFz && isAdminRole && (
+              <>
+                <Link to="/moderation" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
+                  <Shield className="size-4" /> Access Requests <ModerationPendingBadge />
+                </Link>
+                <Link to="/admin" search={{ tab: "order-status" } as never} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
+                  <ReceiptText className="size-4" /> Shop Orders <PendingOrdersBadge />
+                </Link>
+                <Link {...ADMIN_CUSTOMERS_LINK} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
+                  <ShieldCheck className="size-4" /> Customers
+                </Link>
+              </>
+            )}
             {(isFz ? canOpenAdminPanel(roles) : canOpenFanZoneAdminPanel(roles)) && (
               <Link to={isFz ? "/admin" : "/fan-zone-admin"} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
                 {isFz ? "BM Support dashboard" : "Boro Fan Zone dashboard"}
