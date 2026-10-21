@@ -16,7 +16,7 @@ import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 /** Office time, lock, 2FA and VPN pills shown beside the "Hey" greeting. */
 function GreetingPills() {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2 [&_span.hidden]:!inline">
+    <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1.5 shadow-lg backdrop-blur [&_span.hidden]:!inline">
       <Clocks />
       <LockNowPill />
       <TwoFactorPill />
@@ -61,10 +61,10 @@ export function PortalHome({ staff }: { staff: boolean }) {
         <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px] md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start md:grid-cols-2 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
+              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
                 {/* Left column — hero image with the greeting beneath, mirroring the staff home. */}
                 <div className="order-1 flex min-w-0 flex-col gap-3 self-start text-white">
-                  <div className="relative aspect-video w-full min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
+                  <div className="relative aspect-[16/10] w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25">
                     <div className="absolute inset-0">
                       <img
                         src={heroImg}
@@ -73,13 +73,13 @@ export function PortalHome({ staff }: { staff: boolean }) {
                         height={1080}
                         className="h-full w-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-violet-950/70 via-fuchsia-900/10 to-transparent" />
                     </div>
                   </div>
                   {isStaffAccount && (
                     <div className="px-1">
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-sm font-semibold text-sky-100/90">Hey {name}</span>
+                        <span className="text-base font-bold text-amber-200 drop-shadow">Hey {name}</span>
                         {staffRoleLabel && (
                           <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                             {staffRoleLabel}
@@ -87,7 +87,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                         )}
                         <GreetingPills />
                       </div>
-                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
+                      <h1 className="mt-1.5 font-display text-2xl font-extrabold leading-tight lg:text-3xl xl:text-4xl bg-gradient-to-r from-white via-amber-100 to-pink-200 bg-clip-text text-transparent drop-shadow">
                         Welcome to The Staff Portal
                       </h1>
                       {/* Shift encouragement sits directly under the staff welcome heading. */}
@@ -106,7 +106,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                     // Member nameplate greeting stays under the picture; welcome text sits by the subscription box.
                     <div className="px-1">
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-sm font-semibold text-sky-100/90">Hey</span>
+                        <span className="text-base font-bold text-amber-200 drop-shadow">Hey</span>
                         <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg">
                           <Nameplate
                             id={nameplateId}
@@ -135,7 +135,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                       <SubscriptionDetailsCard compact embedded />
                       {/* Welcome heading and message sit under the subscription box. */}
                       <div className="px-1">
-                        <h1 className="break-words font-display text-lg font-bold leading-tight lg:text-xl">
+                        <h1 className="break-words font-display text-xl font-extrabold leading-tight lg:text-2xl bg-gradient-to-r from-white via-amber-100 to-pink-200 bg-clip-text text-transparent drop-shadow">
                           Welcome to The Customer Portal
                         </h1>
                         <p className="mt-2 text-xs font-medium text-white/90 lg:text-sm">
