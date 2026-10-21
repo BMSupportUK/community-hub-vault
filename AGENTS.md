@@ -17,8 +17,8 @@
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
-- Dialogs stay within the dynamic mobile viewport; dense views drop secondary columns on phones.
-- Knowledge Base fills the page; category and ratings rails keep guides scannable.
+- Dialogs fit the dynamic mobile viewport; dense views drop columns on phones.
+- Knowledge Base fills the page with category/ratings rails.
 - Video help uses P2P WebRTC and a fixed-size customer canvas; rotation must not reshape or rebuild the encoder (causes black video).
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
