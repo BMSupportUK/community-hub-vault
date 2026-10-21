@@ -85,6 +85,7 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
     const phoneUrl = `${secureCheckoutUrl(token)}?pw=${encodeURIComponent(password)}`;
     return (
       <>
+        <CallWrapUp sessionId={endedId} side="customer" onDone={() => setEndedId(null)} />
         <button
           type="button"
           onClick={() => setInvite(true)}
@@ -152,6 +153,7 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
       ) : (
         <VideoCallStage topic={`video-call-${session.id}`} side="answerer" otherName="BM Support" onHangup={end} onSuperseded={() => setMoved(true)} sidePanel={<CustomerCheckoutChatPanel token={token} password={password} />} />
       ))}
+      <CallWrapUp sessionId={endedId} side="customer" onDone={() => setEndedId(null)} />
     </>
   );
 }
