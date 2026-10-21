@@ -140,6 +140,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
           } else if (customerOrderNoticeId(n.source, n.kind, n.entity_id)) {
             const orderId = customerOrderNoticeId(n.source, n.kind, n.entity_id);
             if (orderId) toast(n.title, {
+              id: `customer-order-notice-${n.id}`,
               description: <div className="space-y-3"><p>{n.body}</p><CustomerOrderNoticeActions orderId={orderId} /></div>,
               duration: 20000,
             });
