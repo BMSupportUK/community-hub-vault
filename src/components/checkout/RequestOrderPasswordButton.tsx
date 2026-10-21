@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-export function RequestOrderPasswordButton({ orderId }: { orderId: string }) {
+export function RequestOrderPasswordButton({ orderId, label = 'Request order password', className, title = 'Request the order password by email notification' }: { orderId: string; label?: string; className?: string; title?: string }) {
   const [busy, setBusy] = useState(false);
   async function request() {
     if (busy) return;
@@ -17,7 +17,7 @@ export function RequestOrderPasswordButton({ orderId }: { orderId: string }) {
       toast.error(cause instanceof Error ? cause.message : 'Please try again.');
     } finally { setBusy(false); }
   }
-  return <Button variant="secondary" size="sm" disabled={busy} onClick={() => void request()}>
-    {busy ? <Loader2 className="size-3.5 animate-spin" /> : <KeyRound className="size-3.5" />} Request order password
+  return <Button variant="secondary" size="sm" disabled={busy} onClick={() => void request()} className={className} title={title}>
+    {busy ? <Loader2 className="size-3.5 animate-spin" /> : <KeyRound className="size-3.5" />} {label}
   </Button>;
 }
