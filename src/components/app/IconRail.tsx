@@ -236,7 +236,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
 
   const supportItems: RailItem[] = [
-    { to: "/home", label: "Home", icon: Home, show: true },
+    // Each person's home is their own portal.
+    { to: "/staff-portal", label: "Staff Portal", icon: Home, show: isStaff },
     // BM Support Inbox lives in the top header (before the mentions icon), not the rail.
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     // Customers reach Tickets through the Customer Portal tabs; staff keep it here.
