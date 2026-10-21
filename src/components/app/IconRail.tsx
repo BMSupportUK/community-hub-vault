@@ -421,8 +421,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           const curTab = (searchState as { tab?: string }).tab ?? null;
           const pActive = i.to === "/home/$channel" ? path.startsWith("/home/") : i.to === "/admin" ? path.startsWith("/admin") && (searchTab ?? null) === (curTab ?? null) : path.startsWith(i.to);
           return (
-            <div key={i.key} className="relative z-10 shrink-0">
-              <RailIcon to={i.to} label={i.label} Icon={i.icon} active={pActive} badge={i.badge} badgeVariant={i.badgeVariant} search={i.search} params={i.params} extra={i.extra} />
+            <div key={i.key} {...dragProps(i.key!)}>
+              <RailIcon to={i.to} label={i.label} Icon={i.icon} active={pActive} draggable={isAdmin} badge={i.badge} badgeVariant={i.badgeVariant} search={i.search} params={i.params} extra={i.extra} />
             </div>
           );
         }
@@ -440,14 +440,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           );
         }
         return (
-          <div
-            key={i.to}
-            draggable={isAdmin}
-            onDragStart={() => { dragKey.current = i.to; }}
-            onDragOver={(e) => { if (isAdmin) e.preventDefault(); }}
-            onDrop={() => reorder(i.to)}
-            className={cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
-          >
+          <div key={i.to} {...dragProps(i.to)}>
             <RailIcon to={i.to} label={i.label} Icon={i.icon} active={active} badge={i.badge} badgeVariant={i.badgeVariant} draggable={isAdmin} search={i.search} params={i.params} resetSportsGuides={i.resetSportsGuides} />
           </div>
         );
