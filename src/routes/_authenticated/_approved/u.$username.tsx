@@ -546,8 +546,8 @@ function ProfilePage() {
   const tabDefs = [
     { id: "profile", label: "Profile" },
     ...(canSeeSubscription ? [{ id: "subscription", label: "Subscription" }] : []),
-    // Customers see their own logins in the Customer Portal (My Logins); admins still view others' here.
-    ...(canSeeCreds && !isOwner ? [{ id: "creds", label: "Credentials" }] : []),
+    // Credentials live in the Customer Portal (customers) and the admin dashboard (staff); no profile tab.
+    ...([] as { id: string; label: string }[]),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
@@ -757,7 +757,7 @@ function ProfilePage() {
             </div>
           </TabsContent>
 
-          {canSeeCreds && !isOwner && (
+          {false && canSeeCreds && (
             <TabsContent value="creds" className={paneClass}>
               <div className="space-y-6">
                 <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/50 backdrop-blur shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
