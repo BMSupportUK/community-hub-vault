@@ -12,6 +12,8 @@ import { PortalLock } from "@/components/app/PortalLock";
 import { isPortalPath } from "@/lib/customer-portal";
 import { StaffPortalTabs, isStaffPortalPath } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
+import { PortalTabs } from "@/components/app/PortalTabs";
+import { isPortalQuickLinkPath } from "@/components/app/portal-quick-links";
 
 const ApprovedDeferredExtras = lazy(() =>
   import("@/components/app/ApprovedDeferredExtras").then((module) => ({
@@ -70,12 +72,15 @@ function ApprovedLayout() {
   const isPortalHome = (x: string) => x === "/portal" || x === "/portal/";
   const portalGate = (isPortalPath(path) && !isPortalHome(path)) || (isPortalPath(resolvedPath) && !isPortalHome(resolvedPath));
   const inner = portalGate ? <PortalLock><Outlet /></PortalLock> : <Outlet />;
-  const staffTabs = isStaffPortalUser(roles) && isStaffPortalPath(path);
+  const quickLinkPage = isPortalQuickLinkPath(path);
+  const staffPortalUser = isStaffPortalUser(roles);
+  const staffTabs = staffPortalUser && (isStaffPortalPath(path) || quickLinkPage);
+  const customerTabs = !staffPortalUser && quickLinkPage;
   const page = (
     <DemoGate path={path}>
-      {staffTabs ? (
+      {staffTabs || customerTabs ? (
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <StaffPortalTabs />
+          {staffTabs ? <StaffPortalTabs /> : <PortalTabs />}
           {inner}
         </div>
       ) : inner}

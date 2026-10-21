@@ -26,6 +26,7 @@ import { PortalRailUnlock } from "@/components/app/PortalRailUnlock";
 import { usePortalUnlocked } from "@/components/app/PortalLock";
 import { isPortalPath } from "@/lib/customer-portal";
 import { isStaffPortalPath } from "@/components/app/StaffPortalTabs";
+import { isPortalQuickLinkPath } from "@/components/app/portal-quick-links";
 import { CalendarClock, History, KeyRound as KeyIcon, LayoutDashboard, Shield, Receipt, ShieldCheck, Settings } from "lucide-react";
 import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
@@ -134,7 +135,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   // The portal tab bars show the inbox/mentions/notification icons beside Home,
   // so the rail hides its copies on any page covered by a portal bar.
-  const pathShowsPortalBar = isStaffPortalPath(path) || isPortalPath(path);
+  const pathShowsPortalBar = isStaffPortalPath(path) || isPortalPath(path) || isPortalQuickLinkPath(path);
   const searchState = useRouterState({ select: (r) => r.location.search }) as Record<string, unknown>;
   const inFanZoneChrome = useInFanZoneChrome(path, isFanZoneOnly);
   const fanZoneInfo = useFanZoneMembership(user?.id ?? null);
