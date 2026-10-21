@@ -32,6 +32,8 @@ export function SubscriptionDetailsCard({
   const [loaded, setLoaded] = useState(false);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const [nameplateId, setNameplateId] = useState<string | null>(null);
+  const [joinedYear, setJoinedYear] = useState<number | null>(null);
+  const [joinedRecorded, setJoinedRecorded] = useState<boolean | null>(null);
   const [viewIndex, setViewIndex] = useState(0);
 
   useEffect(() => {
