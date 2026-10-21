@@ -243,7 +243,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     // Home is each role's own portal: staff get the Staff Portal, customers the Customer Portal.
     { to: isStaff ? "/staff-portal" : "/portal", label: "Home", icon: Home, show: true },
     // Customers unlock their portal from beside the Home button.
-    { to: "/portal-unlock", label: "Unlock portal", icon: Lock, show: !!user && !isStaff, unlock: true },
+    { to: "/portal-unlock", label: "Unlock portal", icon: Lock, show: false, unlock: true },
     // BM Support Inbox lives in the top header (before the mentions icon), not the rail.
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     // Customers reach Tickets through the Customer Portal tabs; staff keep it here.
