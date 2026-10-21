@@ -54,6 +54,16 @@ export function SubscriptionDetailsCard({
         setCustomerName((data?.display_name || data?.username || null) as string | null);
         setNameplateId((data?.equipped_nameplate_id ?? null) as string | null);
       });
+    supabase
+      .from("customer_subscription_history")
+      .select("first_subscription_date")
+      .eq("customer_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        setJoinedYear(customerJoinedYear((data?.first_subscription_date ?? null) as string | null));
+        setJoinedRecorded(Boolean(data?.first_subscription_date));
+      });
     const load = () => {
       supabase
         .from("app_credentials")
