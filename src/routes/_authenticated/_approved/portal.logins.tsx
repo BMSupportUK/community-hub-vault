@@ -9,6 +9,7 @@ import { ManualCredentialCards } from "@/components/app/ManualCredentialCards";
 import { readPortalCredentials } from "@/lib/customer-portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import type { ManualCredential } from "@/lib/manual-credentials-schema";
+import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/portal/logins")({
   component: PortalLoginsPage,
@@ -46,9 +47,13 @@ function PortalLoginsPage() {
     catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setPin(""); setBusy(false); }
   }
-  return <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-    <PortalTabs active="logins" />
-    <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8"><div className="mx-auto max-w-5xl">
+  return <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
+    <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+      <img src={tvLoginIllustration} alt="" className="h-full w-full object-cover brightness-[0.4]" />
+      <div className="absolute inset-0 bg-background/40" />
+    </div>
+    <div className="relative z-10"><PortalTabs active="logins" /></div>
+    <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8"><div className="mx-auto max-w-5xl rounded-2xl border border-border bg-background/80 p-4 backdrop-blur sm:p-6">
       <h1 className="mb-1 font-display text-2xl font-bold">My App Logins</h1>
       <p className="mb-6 text-sm text-muted-foreground">Your TV app usernames and passwords. Enter your PIN to show them for 10 minutes.</p>
       <PortalLink />

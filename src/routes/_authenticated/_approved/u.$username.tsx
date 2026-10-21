@@ -546,7 +546,8 @@ function ProfilePage() {
   const tabDefs = [
     { id: "profile", label: "Profile" },
     ...(canSeeSubscription ? [{ id: "subscription", label: "Subscription" }] : []),
-    ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
+    // Customers see their own logins in the Customer Portal (My Logins); admins still view others' here.
+    ...(canSeeCreds && !isOwner ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
