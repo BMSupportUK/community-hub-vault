@@ -419,13 +419,15 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               </Link>
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem asChild className="cursor-pointer">
-            {inFanZone ? (
-              <Link to="/fan-zone-security"><ShieldCheck className="size-4 mr-2" />Security & 2FA</Link>
-            ) : (
-              <Link to="/portal/settings" search={{ tab: "security" }}><ShieldCheck className="size-4 mr-2" />Security & 2FA</Link>
-            )}
-          </DropdownMenuItem>
+          {inFanZone ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/fan-zone-security"><ShieldCheck className="size-4 mr-2" />Security &amp; 2FA</Link>
+            </DropdownMenuItem>
+          ) : staffPortalUser ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/portal/settings" search={{ tab: "security" }}><ShieldCheck className="size-4 mr-2" />Security &amp; 2FA</Link>
+            </DropdownMenuItem>
+          ) : null}
           {!inFanZone ? (
             <DropdownMenuItem
               onSelect={(e) => {
