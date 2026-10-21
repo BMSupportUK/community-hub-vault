@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Lock, Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Lock, Timer } from "lucide-react";
+import { PortalCodeForm } from "@/components/app/PortalCodeForm";
 import { useAuth } from "@/hooks/use-auth";
-import { requestMyPortalLink } from "@/lib/customer-portal.functions";
-import { PORTAL_EXPIRY_KEY, PORTAL_USER_KEY, portalAccessValid } from "@/lib/customer-portal";
+import { requestMyPortalCode, unlockMyPortalCode } from "@/lib/customer-portal.functions";
+import { PORTAL_EXPIRY_KEY, PORTAL_USER_KEY, portalAccessValid, portalSecondsRemaining, portalCountdown } from "@/lib/customer-portal";
 
 export const PORTAL_LOCK_EVENT = "bm-portal-lock-change";
 
@@ -15,36 +15,48 @@ function unlocked(userId: string) {
   } catch { return false; }
 }
 
-/** Customers must open their emailed portal link before the portal shows; it relocks an hour later. */
+/** Customer content stays unmounted until the entered email code is verified. */
 export function PortalLock({ children }: { children: ReactNode }) {
   const { isStaff, user } = useAuth();
-  const send = useServerFn(requestMyPortalLink);
+  const send = useServerFn(requestMyPortalCode);
+  const verify = useServerFn(unlockMyPortalCode);
   const [grant, setGrant] = useState<{ userId: string; open: boolean } | null>(null);
-  const [busy, setBusy] = useState(false), [sent, setSent] = useState(false), [error, setError] = useState("");
+  const [remaining, setRemaining] = useState(0);
   useEffect(() => {
-    const check = () => setGrant(user ? { userId: user.id, open: unlocked(user.id) } : null);
+    const check = () => {
+      const open = user ? unlocked(user.id) : false;
+      setGrant(user ? { userId: user.id, open } : null);
+      try { setRemaining(open ? portalSecondsRemaining(window.localStorage.getItem(PORTAL_EXPIRY_KEY)) : 0); } catch { setRemaining(0); }
+    };
     check();
-    const id = window.setInterval(check, 5_000);
+    const id = window.setInterval(check, 1_000);
     window.addEventListener(PORTAL_LOCK_EVENT, check);
     window.addEventListener("storage", check);
     window.addEventListener("focus", check);
     document.addEventListener("visibilitychange", check);
     return () => { window.clearInterval(id); window.removeEventListener(PORTAL_LOCK_EVENT, check); window.removeEventListener("storage", check); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", check); };
   }, [user?.id]);
-  if (isStaff || (user && grant?.userId === user.id && grant.open)) return <>{children}</>;
-  async function request() {
-    setBusy(true); setError("");
-    try { await send(); setSent(true); } catch (e) { setError(e instanceof Error ? e.message : "Please try again."); } finally { setBusy(false); }
+  if (isStaff) return <>{children}</>;
+  if (user && grant?.userId === user.id && grant.open) return <>
+    <div className="flex shrink-0 items-center justify-end gap-2 border-b border-border bg-surface px-4 py-2 text-sm text-foreground">
+      <Timer className="size-4 text-primary" /><span>Portal locks in</span><time aria-label="Portal access remaining" className="min-w-20 font-mono font-semibold tabular-nums">{portalCountdown(remaining)}</time>
+    </div>
+    {children}
+  </>;
+  async function unlock(code: string) {
+    if (!user) throw new Error("Please sign in again.");
+    const result = await verify({ data: { loginCode: code } });
+    window.localStorage.setItem(PORTAL_USER_KEY, user.id);
+    window.localStorage.setItem(PORTAL_EXPIRY_KEY, result.expiresAt);
+    window.dispatchEvent(new Event(PORTAL_LOCK_EVENT));
   }
   return (
     <div role="dialog" aria-label="Customer Portal locked" className="grid min-h-0 min-w-0 flex-1 place-items-center overflow-y-auto bg-background p-6">
       <div className="w-full max-w-md py-8 text-center">
         <div className="mx-auto mb-4 grid size-12 place-items-center rounded-xl bg-primary/15 text-primary"><Lock className="size-6" /></div>
         <h2 className="font-display text-xl font-bold">Customer Portal locked</h2>
-        <p className="mt-2 text-sm text-muted-foreground">For your security we'll email you a login link. It lasts 24 hours, and the portal locks again one hour after each opening.</p>
-        {sent ? <p role="status" className="mt-4 text-sm">Link sent — check your email (and spam folder) and open it on this device.</p>
-          : <Button className="mt-5 w-full" disabled={busy} onClick={() => void request()}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}Email me my login link</Button>}
-        {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+        <p className="mt-2 text-sm text-muted-foreground">Enter the login code emailed to you. Your code lasts 24 hours; portal access lasts one hour.</p>
+        <PortalCodeForm onSend={() => send()} onUnlock={unlock} />
         <Link to="/home" className="mt-4 inline-block text-sm text-muted-foreground underline">Back to home</Link>
       </div>
     </div>
