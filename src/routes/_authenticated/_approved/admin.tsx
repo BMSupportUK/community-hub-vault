@@ -31,6 +31,7 @@ import { RemoteSignOutCard } from "@/components/app/RemoteSignOutCard";
 import { AndroidApkUploadCard } from "@/components/app/AndroidApkUploadCard";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import { InvoiceTemplateCard } from "@/components/app/InvoiceTemplateCard";
+import { RailOrderEditor } from "@/components/app/RailOrderEditor";
 import {
   Dialog,
   DialogContent,
@@ -541,7 +542,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const perms = usePagePermissions();
   const toolsHeading = canSeePins ? "Owner tools" : "Staff tools";
   const { tab: searchTab } = useSearch({ strict: false }) as { tab?: string };
-  const validTabs = ["tools", "order-status", "customers", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "invoice-template", "sign-out-devices", "android-apk"] as const;
+  const validTabs = ["tools", "order-status", "customers", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "rail-order", "invoice-template", "sign-out-devices", "android-apk"] as const;
   type DashTab = (typeof validTabs)[number];
   const [tab, setTab] = useState<DashTab>(
     (validTabs as readonly string[]).includes(searchTab as string) ? (searchTab as DashTab) : "tools",
@@ -596,6 +597,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { tabKey: "theme", label: "Theme", desc: "Choose the default app theme for members.", icon: Palette, art: toolArtDesign },
     { tabKey: "invoice-template", label: "Invoice template", desc: "Edit the branded PDF customers download after payment.", icon: ReceiptText, art: toolArtDocs },
     { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop, art: toolArtDesign },
+    { tabKey: "rail-order", label: "Side icon rail", desc: "Staff and customer icon orders.", icon: LayoutGrid, art: toolArtDesign, adminOnly: true },
     { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
   ];
@@ -660,7 +662,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
               type="button"
               onClick={() => setTab(key as DashTab)}
               className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
-                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "invoice-template" || tab === "sign-out-devices" || tab === "android-apk"))
+                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "rail-order" || tab === "invoice-template" || tab === "sign-out-devices" || tab === "android-apk"))
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
@@ -715,6 +717,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
         <div className="max-w-2xl">
           <ThemePickerCard />
         </div>
+      ) : tab === "rail-order" && isAdminOnly ? (
+        <RailOrderEditor />
       ) : tab === "header-links" ? (
         <div className="max-w-2xl">
           <HeaderLinksCard />

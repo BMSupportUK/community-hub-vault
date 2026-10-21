@@ -31,6 +31,7 @@ import { CalendarClock, History, KeyRound as KeyIcon, LayoutDashboard, Shield, R
 import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
+import { RAIL_ORDER_CHANGED, railOrderKey, railOrderRows, sortRailItems } from "./rail-order";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
@@ -192,11 +193,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   }, [isPending, inSheet, user?.id]);
 
   useEffect(() => {
-    if (inSheet) return;
     let cancelled = false;
     const loadOrder = async () => {
-      const { data } = await supabase.from("nav_order").select("key,sort_order");
-      if (cancelled) return;
+      const { data, error } = await supabase.from("nav_order").select("key,sort_order");
+      if (cancelled || error) return;
       const map: Record<string, number> = {};
       (data ?? []).forEach((r: { key: string; sort_order: number }) => {
         map[r.key] = r.sort_order;
@@ -205,9 +205,16 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       setOrder(map);
     };
     const id = window.setTimeout(() => void loadOrder(), 250);
+    const refresh = () => { if (document.visibilityState === "visible") void loadOrder(); };
+    const poll = window.setInterval(refresh, 15000);
+    window.addEventListener(RAIL_ORDER_CHANGED, refresh);
+    window.addEventListener("focus", refresh);
     return () => {
       cancelled = true;
       window.clearTimeout(id);
+      window.clearInterval(poll);
+      window.removeEventListener(RAIL_ORDER_CHANGED, refresh);
+      window.removeEventListener("focus", refresh);
     };
   }, [inSheet]);
 
@@ -356,11 +363,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   // staff, customer) so each role's icon set keeps its own sequence.
   const railScope = inFanZone ? "fanzone" : isStaff ? "staff" : "member";
   const idOf = (i: RailItem) => i.key ?? i.to;
-  const savedKey = (id: string) => `rail:${railScope}:${id}`;
-  const sorted = base
-    .map((i, idx) => ({ i, rank: order[savedKey(idOf(i))] ?? 100000 + idx }))
-    .sort((a, b) => a.rank - b.rank)
-    .map((x) => x.i);
+  const sorted = sortRailItems(base, order, railScope, idOf);
   // The unlock control is not a page: pin it directly beside Home.
   if (unlockItem) {
     const homeIndex = sorted.findIndex((i) => i.to === "/portal" || i.to === "/staff-portal");
@@ -376,7 +379,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     const to = keys.indexOf(targetKey);
     if (from < 0 || to < 0) return;
     keys.splice(to, 0, keys.splice(from, 1)[0]);
-    const rows = keys.map((key, i) => ({ key: savedKey(key), sort_order: (i + 1) * 10 }));
+    const rows = railOrderRows(railScope, keys);
     const nextOrder = { ...order, ...Object.fromEntries(rows.map((r) => [r.key, r.sort_order])) };
     cachedNavOrder = nextOrder;
     setOrder(nextOrder);
@@ -421,7 +424,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           const curTab = (searchState as { tab?: string }).tab ?? null;
           const pActive = i.to === "/home/$channel" ? path.startsWith("/home/") : i.to === "/admin" ? path.startsWith("/admin") && (searchTab ?? null) === (curTab ?? null) : path.startsWith(i.to);
           return (
-            <div key={i.key} {...dragProps(i.key!)}>
+            <div key={i.key} {...dragProps(i.key)}>
               <RailIcon to={i.to} label={i.label} Icon={i.icon} active={pActive} draggable={isAdmin} badge={i.badge} badgeVariant={i.badgeVariant} search={i.search} params={i.params} extra={i.extra} />
             </div>
           );

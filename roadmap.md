@@ -312,3 +312,6 @@
 - [x] Personal portal link per site customer, 24-hour one-use email login link, portal tabs (Shop, My Orders, My Logins with PIN, Install Guides), side rail single entry, admin copy/reset. Link sign-in and reuse rejection verified in preview.
 - [ ] Manual customers without a site account — waiting on the user to decide whether to auto-create an account for them.
 - [ ] Verify login-code email receipt — requires customer inbox; no real customer email sent in testing.
+
+## Side icon rail ordering
+- [ ] Add admin Owner Tools editor for separate staff and user orders using existing saved rail keys; verify persistence and shared rendering.
