@@ -419,14 +419,14 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
           </DropdownMenuItem>
           {!inFanZone ? (
             <DropdownMenuItem asChild className="cursor-pointer">
-              <Link to="/notification-settings">
+              <Link to="/portal/settings" search={{ tab: "browser" }}>
                 <Bell className="size-4 mr-2" />
                 Notifications & sounds
               </Link>
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem asChild className="cursor-pointer">
-            <Link to={inFanZone ? "/fan-zone-security" : "/account-security"}>
+            {inFanZone ? <Link to="/fan-zone-security"> : <Link to="/portal/settings" search={{ tab: "security" }}>}
               <ShieldCheck className="size-4 mr-2" />
               Security & 2FA
             </Link>
