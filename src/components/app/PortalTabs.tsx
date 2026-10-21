@@ -1,12 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home, MessagesSquare, BookOpen, Settings, Trophy, KeyRound, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
+import { Home, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useHasSalesAccount } from "@/hooks/use-sales-account";
 import { usePortalUnlocked } from "@/components/app/PortalLock";
 import { PortalUnlockButton } from "@/components/app/PortalUnlockButton";
-import { TalkLiveCount } from "@/components/app/TalkLiveCount";
 import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
 
 type Tab = "home" | "shop" | "orders" | "tickets" | "logins" | "guides" | "referrals" | "knowledge" | "settings";
@@ -16,7 +15,6 @@ export function PortalTabs({ active }: { active?: Tab }) {
   const location = useLocation();
   const { isStaff } = useAuth();
   const unlocked = usePortalUnlocked();
-  const showLinks = isStaff || unlocked;
   const view = (location.search as { view?: string }).view;
   const p = location.pathname;
   const current: Tab = active ?? (p.startsWith("/install-guides") ? "guides" : p.startsWith("/knowledge-base") ? "knowledge" : p.startsWith("/leaderboard") ? "referrals" : p.startsWith("/tickets") ? "tickets" : p.startsWith("/portal/settings") ? "settings" : p === "/portal" || p === "/portal/" ? "home" : p.startsWith("/portal") ? "logins" : view === "orders" ? "orders" : "shop");
@@ -28,16 +26,6 @@ export function PortalTabs({ active }: { active?: Tab }) {
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Customer Portal</span>
       <Link to="/portal" className={cn(item, current === "home" ? on : off)}><Home className="size-4" />Home</Link>
       {!isStaff && !unlocked && <PortalUnlockButton />}
-      {showLinks && (<>
-      <Link to="/shop" className={cn(item, current === "shop" ? on : off)}><ShoppingCart className="size-4" />Shop</Link>
-      <Link to="/tickets" className={cn(item, current === "tickets" ? on : off)}><Ticket className="size-4" />Tickets</Link>
-      <Link to="/home/$channel" params={{ channel: "welcome" }} className={cn(item, off)}><MessagesSquare className="size-4" />Talk<TalkLiveCount /></Link>
-      <Link to="/portal/logins" className={cn(item, current === "logins" ? on : off)}><KeyRound className="size-4" />My Logins</Link>
-      <Link to="/install-guides" search={{ tab: undefined, checkout: undefined }} className={cn(item, current === "guides" ? on : off)}><Wrench className="size-4" />Install Guides</Link>
-      <Link to="/knowledge-base" className={cn(item, current === "knowledge" ? on : off)}><BookOpen className="size-4" />Knowledge Base</Link>
-      <Link to="/leaderboard" className={cn(item, current === "referrals" ? on : off)}><Trophy className="size-4" />Referrals</Link>
-      <Link to="/portal/settings" search={{ tab: undefined }} className={cn(item, current === "settings" ? on : off)}><Settings className="size-4" />Settings</Link>
-      </>)}
       <PortalCountdown />
     </nav>
   );

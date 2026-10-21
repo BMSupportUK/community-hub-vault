@@ -23,6 +23,11 @@ import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
 import boroPredictionsGoal from "@/assets/boro-predictions-goal.png.asset.json";
 import { PortalExpiryWatcher } from "@/components/app/PortalExpiryWatcher";
 import { PortalRailUnlock } from "@/components/app/PortalRailUnlock";
+import { usePortalUnlocked } from "@/components/app/PortalLock";
+import { CalendarClock, History, KeyRound as KeyIcon, LayoutDashboard, Shield, Receipt, ShieldCheck, Settings } from "lucide-react";
+import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
+import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
+import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
@@ -116,6 +121,9 @@ interface RailItem {
   resetSportsGuides?: boolean;
   /** Rendered as the portal unlock control instead of a normal rail link. */
   unlock?: boolean;
+  /** Portal page pinned under Home; not draggable. */
+  key?: string;
+  extra?: React.ReactNode;
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
@@ -307,6 +315,29 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   };
   const visible = items.filter((i) => i.show && allowedByPerms(i.to));
 
+  const portalUnlocked = usePortalUnlocked();
+  const isModOnly = roles.includes("moderator") && !roles.some((r) => r === "admin" || r === "management" || r === "staff");
+  // Each portal's pages (formerly its tab bar) sit directly under Home.
+  const portalItems: RailItem[] = inFanZone || !user ? [] : isStaff ? [
+    { to: "/tickets", label: "Tickets", icon: Ticket, show: !isModOnly },
+    { to: "/home/$channel", label: "Talk", icon: MessagesSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
+    { to: "/shifts", label: "Shifts", icon: CalendarClock, show: true },
+    { to: "/shift-history", label: "Shift history", icon: History, show: true },
+    { to: "/staff-pin", label: "Staff PIN", icon: KeyIcon, show: true },
+    { to: "/admin", key: "admin-panel", label: adminPanelLabel(roles), icon: LayoutDashboard, show: canOpenAdminPanel(roles) },
+    { to: "/moderation", label: "Access Requests", icon: Shield, show: isAdmin, extra: <ModerationPendingBadge /> },
+    { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge /> },
+    { to: ADMIN_CUSTOMERS_LINK.to as string, key: "admin-customers", label: "Customers", icon: ShieldCheck, show: isAdmin, search: ADMIN_CUSTOMERS_LINK.search as Record<string, string> },
+  ] : portalUnlocked ? [
+    { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
+    { to: "/tickets", label: "Tickets", icon: Ticket, show: true },
+    { to: "/home/$channel", label: "Talk", icon: MessagesSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
+    { to: "/portal/logins", label: "My Logins", icon: KeyIcon, show: true },
+    { to: "/install-guides", label: "Install Guides", icon: Wrench, show: true },
+    { to: "/knowledge-base", label: "Knowledge Base", icon: BookOpen, show: true },
+    { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
+    { to: "/portal/settings", label: "Settings", icon: Settings, show: true },
+  ] : [];
   const sorted = [...visible].sort((a, b) => {
     const ai = order[orderKey(a.to)] ?? items.findIndex((x) => x.to === a.to) * 10 + 1000;
     const bi = order[orderKey(b.to)] ?? items.findIndex((x) => x.to === b.to) * 10 + 1000;
@@ -320,6 +351,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     const [unlockItem] = sorted.splice(unlockIndex, 1);
     const homeIndex = sorted.findIndex((i) => i.to === "/portal" || i.to === "/staff-portal");
     sorted.splice(homeIndex + 1, 0, unlockItem);
+  }
+  {
+    const homeIndex = sorted.findIndex((i) => i.to === "/portal" || i.to === "/staff-portal");
+    const after = sorted[homeIndex + 1]?.unlock ? homeIndex + 2 : homeIndex + 1;
+    sorted.splice(after, 0, ...portalItems.filter((i) => i.show).map((i) => ({ ...i, key: `portal:${i.key ?? i.to}` })));
   }
 
   const reorder = async (targetKey: string) => {
@@ -363,6 +399,16 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       <div className="relative z-10 flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {sorted.map((i) => {
+        if (i.key?.startsWith("portal:")) {
+          const searchTab = (i.search as { tab?: string } | undefined)?.tab;
+          const curTab = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
+          const pActive = i.to === "/home/$channel" ? path.startsWith("/home/") : i.to === "/admin" ? path.startsWith("/admin") && (searchTab ?? null) === (curTab ?? null) : path.startsWith(i.to);
+          return (
+            <div key={i.key} className="relative z-10 shrink-0">
+              <RailIcon to={i.to} label={i.label} Icon={i.icon} active={pActive} badge={i.badge} badgeVariant={i.badgeVariant} search={i.search} params={i.params} extra={i.extra} />
+            </div>
+          );
+        }
         const active =
           i.to === "/home"
             ? path === "/home"
@@ -415,6 +461,7 @@ function RailIcon({
   search,
   params,
   resetSportsGuides,
+  extra,
 }: {
   to: string;
   label: string;
@@ -427,6 +474,7 @@ function RailIcon({
   search?: Record<string, string>;
   params?: Record<string, string>;
   resetSportsGuides?: boolean;
+  extra?: React.ReactNode;
 }) {
   return (
     <TooltipProvider delayDuration={150}>
@@ -469,6 +517,7 @@ function RailIcon({
                 {badge > 99 ? "99+" : badge}
               </span>
             ) : null}
+            {extra ? <span className="pointer-events-none absolute -top-1 -right-1">{extra}</span> : null}
             {active && <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-10 w-2 bg-primary-glow rounded-r shadow-glow" />}
           </Link>
         </TooltipTrigger>
