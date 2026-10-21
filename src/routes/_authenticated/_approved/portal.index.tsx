@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
 import { PortalHome } from "@/components/app/PortalHome";
 import { PortalTabs } from "@/components/app/PortalTabs";
 
@@ -14,6 +15,10 @@ export const Route = createFileRoute("/_authenticated/_approved/portal/")({
 });
 
 function CustomerPortalHome() {
+  const { isStaff, loading } = useAuth();
+  if (loading) return null;
+  // Staff never see the Customer Portal home; theirs is the Staff Portal.
+  if (isStaff) return <Navigate to="/staff-portal" replace />;
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <PortalTabs active="home" />
