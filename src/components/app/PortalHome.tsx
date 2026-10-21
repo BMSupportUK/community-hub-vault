@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Tv, Popcorn, Briefcase, Users } from "lucide-react";
+import { PORTAL_QUICK_LINKS } from "@/components/app/portal-quick-links";
 import { Headphones, Star } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import staffHeroImg from "@/assets/staff-portal-hero.jpg";
@@ -28,12 +28,6 @@ function GreetingPills() {
 }
 
 /** Portal home — staff layout for the Staff Portal, member layout for the Customer Portal. */
-const QUICK_LINKS = [
-  { to: "/new-content", label: "New Content", blurb: "Latest additions", Icon: Tv },
-  { to: "/what-to-watch", label: "What To Watch", blurb: "Picks for tonight", Icon: Popcorn },
-  { to: "/staff", label: "Staff", blurb: "Meet the team", Icon: Briefcase },
-  { to: "/members", label: "Members", blurb: "Our community", Icon: Users },
-] as const;
 
 export function PortalHome({ staff }: { staff: boolean }) {
   const { user, hasRole, roles } = useAuth();
@@ -154,7 +148,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
           </div>
       </section>
       <nav aria-label="More from BM Support" className="grid grid-cols-2 gap-3 p-4 pt-0 sm:grid-cols-4 xl:px-6 xl:pb-6">
-        {QUICK_LINKS.map(({ to, label, blurb, Icon }) => (
+        {PORTAL_QUICK_LINKS.map(({ to, label, blurb, Icon }) => (
           <Link key={to} to={to} className="group flex items-center gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-3 text-white shadow-xl transition-transform hover:-translate-y-0.5 xl:p-4">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15 ring-1 ring-white/25"><Icon className="size-5" /></span>
             <span className="min-w-0">
