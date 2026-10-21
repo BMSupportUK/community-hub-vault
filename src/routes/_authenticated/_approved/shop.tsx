@@ -1500,7 +1500,7 @@ function Storefront() {
         )}
         style={
           tab === "orders"
-            ? { backgroundImage: `url(${shopOrdersBg})` }
+            ? { backgroundImage: `url(${shopHero})` }
             : tab === "app_demos"
               ? { backgroundImage: `url(${tvLoginIllustration})` }
               : undefined
@@ -3284,7 +3284,7 @@ function OrdersView({
   return (
     <div
       className="flex-1 min-h-0 overflow-y-auto scrollbar-hide relative bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: `url(${shopOrdersBg})` }}
+      style={{ backgroundImage: `url(${scope === "all" ? shopOrdersBg : shopHero})` }}
     >
       <div
         className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#1a0b2e]/60 backdrop-blur-[2px] pointer-events-none"
