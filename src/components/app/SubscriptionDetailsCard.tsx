@@ -152,12 +152,16 @@ export function SubscriptionDetailsCard({
             Your Subscription Details
           </h3>
           {customerName && (
-            <p className={cn(
-              "font-semibold truncate max-w-full px-1 text-white drop-shadow",
-              fill ? "text-xs md:text-lg mt-0.5" : compact ? "text-xs mt-0.5" : "text-sm mt-0.5",
-            )}>
-              {customerName}
-            </p>
+            <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg mt-1">
+              <Nameplate
+                id={nameplateId}
+                className="absolute inset-0"
+                fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
+              />
+              <div className="relative flex h-full items-center px-2.5">
+                <span className="truncate font-display text-sm font-semibold text-white drop-shadow">{customerName}</span>
+              </div>
+            </div>
           )}
           <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px] mt-0.5" : "text-xs mt-0.5")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
