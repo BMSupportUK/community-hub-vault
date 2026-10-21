@@ -4,7 +4,7 @@
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
 - Portal homes share one layout: hero image fills the left column; sidebar shows status pills, "Hey" + nameplate + role badge, welcome text, then Working Status (staff) or subscription box (members).
-- No global header: inbox/mentions/alerts beside portal Home, rail elsewhere; shared quick-link definitions keep bottom destinations in that header, preventing rail jumps. Status by "Hey"; page links in rail; phones get a floating menu.
+- Portal Home headers hold alerts; bottom destinations share that header. Rail/editor share scoped saved ordering helpers; status by "Hey", pages in rail, phones use floating menu.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; mobile ticket headers cap+scroll to keep messages/composers.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: all staff per channel.

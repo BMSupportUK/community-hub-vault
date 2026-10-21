@@ -312,3 +312,7 @@
 - [x] Personal portal link per site customer, 24-hour one-use email login link, portal tabs (Shop, My Orders, My Logins with PIN, Install Guides), side rail single entry, admin copy/reset. Link sign-in and reuse rejection verified in preview.
 - [ ] Manual customers without a site account — waiting on the user to decide whether to auto-create an account for them.
 - [ ] Verify login-code email receipt — requires customer inbox; no real customer email sent in testing.
+
+## Side icon rail ordering
+- [x] Add admin-only Owner Tools editor for separate staff/user orders with existing persisted keys and shared rendering helpers; two ordering regressions pass, preview build OK.
+- [ ] Verify editor save/reload through the UI — authenticated dashboard requires account password and staff PIN; no unlock bypass or shared order changed for testing.
