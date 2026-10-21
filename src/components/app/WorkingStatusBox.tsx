@@ -946,25 +946,6 @@ export function WorkingStatusBox({
                 </div>
               </div>
             </div>
-            <div className={cn("flex items-center", compact ? "gap-1" : "gap-3")}>
-              <TalkVideoHelpButton variant="icon" />
-              {(canAnswerTickets || roles.includes("moderator")) && (
-                <StaffTicketsButton
-                  staffId={user.id}
-                  staffName={displayName}
-                  placement="below"
-                  className="shrink-0"
-                  readOnly={!canAnswerTickets}
-                />
-              )}
-              {ActionIcons({ compact })}
-              <DndDialogButton
-                className={cn(
-                  "inline-flex shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted",
-                  compact ? "size-8" : "size-10",
-                )}
-              />
-            </div>
           </div>
           <div role="tablist" aria-label="Shifts" className="grid grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
             {([
@@ -985,6 +966,30 @@ export function WorkingStatusBox({
                 {label}
               </button>
             ))}
+          </div>
+          {/* Shift controls sit under the Shifts tabs so none get clipped; video + tickets get their own line. */}
+          <div className="flex flex-col gap-2">
+            <div className={cn("flex flex-wrap items-center", compact ? "gap-1" : "gap-3")}>
+              <TalkVideoHelpButton variant="icon" />
+              {(canAnswerTickets || roles.includes("moderator")) && (
+                <StaffTicketsButton
+                  staffId={user.id}
+                  staffName={displayName}
+                  placement="below"
+                  className="shrink-0"
+                  readOnly={!canAnswerTickets}
+                />
+              )}
+            </div>
+            <div className={cn("flex flex-wrap items-center", compact ? "gap-1" : "gap-3")}>
+              {ActionIcons({ compact })}
+              <DndDialogButton
+                className={cn(
+                  "inline-flex shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted",
+                  compact ? "size-8" : "size-10",
+                )}
+              />
+            </div>
           </div>
           {shiftTab === "current" ? (
           <>
