@@ -201,45 +201,39 @@ function WelcomePage() {
                       </p>
                     </div>
                   )}
-                </div>
-
-                {/* Right column — the welcome message above the staff status box
-                    or the member subscription details. */}
-                <div className="order-2 flex min-h-0 min-w-0 flex-col gap-3 self-stretch">
                   {!isStaffAccount && (
-                    // The welcome copy owns the column's spare height so the text
-                    // reads large instead of bunched above the box.
-                    <div className="flex min-h-0 flex-1 flex-col justify-center min-w-0 text-white">
+                    // Same layout as the staff greeting: under the picture, left column.
+                    <div className="px-1">
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="text-sm font-semibold text-sky-100/90">Hey</span>
-                        {/* The member's name plate stands in for their name text. */}
-                        <div className="relative h-9 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg xl:w-[183px]">
+                        <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg">
                           <Nameplate
                             id={nameplateId}
                             className="absolute inset-0"
                             fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
                           />
                           <div className="relative flex h-full items-center px-2.5">
-                            <span className="truncate font-display text-sm font-semibold text-white">
-                              {name}
-                            </span>
+                            <span className="truncate font-display text-sm font-semibold text-white">{name}</span>
                           </div>
                         </div>
-                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                           Member
                         </span>
                       </div>
-                      <h1 className="mt-4 font-display text-3xl font-bold leading-tight xl:text-4xl">
+                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
                         Welcome to The Customer Portal
                       </h1>
-                      <p className="mt-5 text-lg font-medium leading-relaxed text-white/90 xl:text-xl">
-                        Stay connected with the community, manage your account and get help.
-                      </p>
-                      <p className="mt-4 text-lg leading-relaxed text-white/85 xl:text-xl">
-                        Access channels, schedules, support and services—all in one place.
+                      <p className="mt-2.5 px-1 text-sm font-medium text-white/90">
+                        <Star className="mr-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle" />
+                        <span>Manage your account, orders and logins, and get help — all in one place.</span>
+                        <Star className="ml-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle" />
                       </p>
                     </div>
                   )}
+                </div>
+
+                {/* Right column — staff status box or member subscription details. */}
+                <div className="order-2 flex min-h-0 min-w-0 flex-col gap-3 self-start">
                   {isStaffAccount ? (
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                   ) : (
