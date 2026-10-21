@@ -151,10 +151,16 @@ export function CustomerOrderCard({ order, onOpenCheckout }: {
     <article aria-label={`Order ${order.id.slice(0, 8)}`} className="min-w-0 overflow-hidden rounded-lg border border-primary/35 bg-surface/95 shadow-soft flex flex-col">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
         <span className="font-mono text-xs text-muted-foreground">#{order.id.slice(0, 8)}</span>
-        {user?.id === order.user_id && !cancelled && !completed && (
-          <Button variant="outline" size="sm" onClick={cancel} disabled={busy || paid || bankAwaiting || loading || loadError} className="border-destructive/40 text-destructive" title={paid ? "Paid orders cannot be cancelled" : bankAwaiting ? "Bank transfer reported — cannot cancel while we verify your payment" : "Cancel order"}>
-            {busy ? <Loader2 className="animate-spin" /> : <Ban />} Cancel order
-          </Button>
+        {!cancelled && (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button size="sm" onClick={onOpenCheckout} className="h-7 gap-1.5 px-2.5 text-xs" title="Open secure checkout"><Lock /> Checkout</Button>
+            <RequestOrderPasswordButton orderId={order.id} label="Password" className="h-7 gap-1.5 px-2.5 text-xs" />
+            {user?.id === order.user_id && !completed && (
+              <Button variant="outline" size="sm" onClick={cancel} disabled={busy || paid || bankAwaiting || loading || loadError} className="h-7 gap-1.5 border-destructive/40 px-2.5 text-xs text-destructive" title={paid ? "Paid orders cannot be cancelled" : bankAwaiting ? "Bank transfer reported — cannot cancel while we verify your payment" : "Cancel order"}>
+                {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Ban className="size-3.5" />} Cancel
+              </Button>
+            )}
+          </div>
         )}
       </div>
       <Nameplate id={buyer?.equipped_nameplate_id} className="bg-gradient-primary min-h-20">
@@ -191,11 +197,12 @@ export function CustomerOrderCard({ order, onOpenCheckout }: {
           </dl>
           {order.notes && <div className="min-w-0 sm:col-span-2"><Detail label="Notes" value={order.notes} /></div>}
         </div>
-        <div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
-          {!cancelled && <><Button size="sm" onClick={onOpenCheckout}><Lock /> Open secure checkout</Button><RequestOrderPasswordButton orderId={order.id} /></>}
-          {paid && !cancelled && <Button variant="outline" size="sm" onClick={() => downloadReceipt(order, items).catch(() => toast.error("Could not generate PDF"))}><Download /> Invoice PDF</Button>}
-          {ticketId && <Button variant="outline" size="sm" onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}><Receipt /> Support ticket</Button>}
-        </div>
+        {(paid || ticketId) && (
+          <div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
+            {paid && !cancelled && <Button variant="outline" size="sm" onClick={() => downloadReceipt(order, items).catch(() => toast.error("Could not generate PDF"))}><Download /> Invoice PDF</Button>}
+            {ticketId && <Button variant="outline" size="sm" onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}><Receipt /> Support ticket</Button>}
+          </div>
+        )}
       </div>
     </article>
   );
