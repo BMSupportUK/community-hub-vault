@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Nameplate } from "@/components/app/Nameplate";
 
 interface CredRow {
   id: string;
