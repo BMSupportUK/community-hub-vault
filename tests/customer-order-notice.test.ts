@@ -10,3 +10,8 @@ test("password copy actions belong only to customer order payment notifications"
   expect(customerOrderNoticeId("user", "order_placed", id)).toBeNull();
   expect(customerOrderNoticeId("user", "customer_order_payment", "invalid")).toBeNull();
 });
+test('password request notifications offer copy actions only to customers', () => {
+  expect(customerOrderNoticeId('user', 'customer_order_password', id)).toBe(id);
+  expect(customerOrderNoticeId('staff', 'customer_order_password', id)).toBeNull();
+  expect(customerOrderNoticeId('user', 'customer_order_password', 'invalid')).toBeNull();
+});
