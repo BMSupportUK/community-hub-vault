@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -114,24 +115,13 @@ export function CustomerCheckoutChat({ token, password, orderRef }: { token: str
 
   return (
     <>
-      {open && (
-        <div className="fixed bottom-24 right-4 z-50 w-[min(360px,calc(100vw-2rem))] h-[min(480px,70vh)] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
-            <div><div className="font-semibold text-sm">Order #{orderRef}</div><div className="text-[11px] opacity-80">Private chat for this sale only</div></div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close chat"><X className="size-5" /></button>
-          </div>
-          <Thread messages={messages} mine="customer" />
-          <Composer onSend={async (t) => {
-            const r = await send({ data: { token, password, content: t } });
-            if (r.ok) { await load(); chRef.current?.send({ type: "broadcast", event: "new", payload: {} }); }
-          }} />
-        </div>
-      )}
-      <button type="button" onClick={toggleChat} aria-label={unread > 0 ? `Chat with us, ${unread} unread ${unread === 1 ? "message" : "messages"}` : "Chat with us"} className={`fixed bottom-5 right-4 z-50 size-14 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-xl hover:scale-105 transition-transform ${unread > 0 && !open ? "animate-bounce" : ""}`}>
-        {unread > 0 && !open && <span className="absolute inset-0 rounded-full bg-primary/60 animate-ping" aria-hidden />}
-        {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
-        {unread > 0 && !open && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold grid place-items-center z-10">{unread}</span>}
-      </button>
+      <SlideChat open={open} onToggle={toggleChat} onClose={() => setOpen(false)} unread={unread} title={`Order #${orderRef}`} label={unread > 0 ? `Order chat, ${unread} unread` : "Order chat"}>
+        <Thread messages={messages} mine="customer" />
+        <Composer onSend={async (t) => {
+          const r = await send({ data: { token, password, content: t } });
+          if (r.ok) { await load(); chRef.current?.send({ type: "broadcast", event: "new", payload: {} }); }
+        }} />
+      </SlideChat>
 
     </>
   );
@@ -257,22 +247,31 @@ export function StaffCheckoutChatBubble({ orderId, token, orderRef }: { orderId:
   if (!mounted) return null;
   return createPortal(
     <>
-      {open && (
-        <div className="fixed bottom-24 right-4 z-50 w-[min(360px,calc(100vw-2rem))] h-[min(480px,70vh)] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
-            <div><div className="font-semibold text-sm">Order {orderRef ? `#${orderRef}` : "chat"}</div><div className="text-[11px] opacity-80">Private chat for this sale only</div></div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close chat"><X className="size-5" /></button>
-          </div>
-          <Thread messages={messages} mine="staff" />
-          <Composer onSend={send} />
-        </div>
-      )}
-      <button type="button" onClick={toggleChat} aria-label={unread > 0 ? `Chat about this sale, ${unread} unread ${unread === 1 ? "message" : "messages"}` : "Chat about this sale"} className={`fixed bottom-5 right-4 z-50 size-14 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-xl hover:scale-105 transition-transform ${unread > 0 && !open ? "animate-bounce" : ""}`}>
-        {unread > 0 && !open && <span className="absolute inset-0 rounded-full bg-primary/60 animate-ping" aria-hidden />}
-        {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
-        {unread > 0 && !open && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold grid place-items-center z-10">{unread}</span>}
-      </button>
+      <SlideChat open={open} onToggle={toggleChat} onClose={() => setOpen(false)} unread={unread} title={orderRef ? `Order #${orderRef}` : "Order chat"} label={unread > 0 ? `Order chat, ${unread} unread` : "Order chat"}>
+        <Thread messages={messages} mine="staff" />
+        <Composer onSend={send} />
+      </SlideChat>
     </>,
     document.body,
+  );
+}
+
+/** Messenger-style chat: a square "Order chat" tab on the right edge that slides a panel out. */
+function SlideChat({ open, onToggle, onClose, unread, title, label, children }: { open: boolean; onToggle: () => void; onClose: () => void; unread: number; title: string; label: string; children: ReactNode }) {
+  return (
+    <>
+      <div aria-hidden={!open} className={`fixed right-0 top-1/2 z-50 -translate-y-1/2 w-[min(380px,calc(100vw-1rem))] h-[min(560px,85dvh)] flex flex-col rounded-l-2xl border border-r-0 border-border bg-card shadow-2xl overflow-hidden transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full pointer-events-none"}`}>
+        <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
+          <div><div className="font-semibold text-sm">{title}</div><div className="text-[11px] opacity-80">Private chat for this sale only</div></div>
+          <button type="button" onClick={onClose} aria-label="Close chat"><X className="size-5" /></button>
+        </div>
+        {children}
+      </div>
+      <button type="button" onClick={onToggle} aria-label={label} aria-expanded={open} className={`fixed top-1/2 z-50 -translate-y-1/2 flex flex-col items-center gap-1.5 rounded-l-xl bg-primary px-2.5 py-4 text-primary-foreground shadow-xl transition-[right] duration-300 ease-out ${open ? "right-[min(380px,calc(100vw-1rem))]" : "right-0"}`}>
+        {open ? <X className="size-5" /> : <MessageCircle className="size-5" />}
+        <span className="text-xs font-semibold [writing-mode:vertical-rl] rotate-180">Order chat</span>
+        {unread > 0 && !open && <span className="absolute -top-2 -left-2 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold grid place-items-center animate-pulse">{unread}</span>}
+      </button>
+    </>
   );
 }
