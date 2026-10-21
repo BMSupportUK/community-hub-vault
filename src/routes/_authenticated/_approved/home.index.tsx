@@ -1,5 +1,5 @@
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Headphones, Star } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
@@ -150,9 +150,8 @@ function WelcomePage() {
 
             <div className="relative z-10 mx-3 -mt-10 grid grid-cols-1 gap-2 sm:mx-5 sm:grid-cols-2 lg:mx-6">
               {!hasRole("moderator") && (
-                <Link
-                  to="/tickets"
-                  className="inline-flex min-h-16 items-center justify-center gap-2 rounded-xl border-2 border-white/40 bg-surface/90 px-3 py-2.5 text-xs font-medium text-foreground shadow-[0_12px_30px_rgba(0,0,0,0.3)] backdrop-blur transition hover:border-white/60 hover:bg-surface-2 xl:gap-3 xl:px-4 xl:py-3 xl:text-sm"
+                <div
+                  className="inline-flex min-h-16 items-center justify-center gap-2 rounded-xl border-2 border-white/40 bg-surface/90 px-3 py-2.5 text-xs font-medium text-foreground shadow-[0_12px_30px_rgba(0,0,0,0.3)] backdrop-blur xl:gap-3 xl:px-4 xl:py-3 xl:text-sm"
                 >
                   <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 xl:size-9">
                     <Headphones className="size-4 text-white" />
@@ -162,7 +161,7 @@ function WelcomePage() {
                     <span className="block text-[10px] text-muted-foreground xl:text-[11px]">We're always here to help.</span>
                   </span>
                   <span className="size-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60 xl:ml-2" />
-                </Link>
+                </div>
               )}
               <ServiceStatusPill className="min-h-16 justify-center self-stretch gap-2 bg-surface/90 px-3 py-2.5 text-xs shadow-[0_12px_30px_rgba(0,0,0,0.3)] backdrop-blur xl:gap-3 xl:px-4 xl:py-3 xl:text-sm [&_.status-copy]:text-[10px] xl:[&_.status-copy]:text-[11px] [&_.status-icon]:size-8 xl:[&_.status-icon]:size-9 [&_.status-dot]:ml-0 xl:[&_.status-dot]:ml-2" />
             </div>
