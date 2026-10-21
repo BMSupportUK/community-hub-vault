@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { PORTAL_EXPIRY_KEY, portalSessionExpired } from "@/lib/customer-portal";
 
 /** Locks (signs out) a portal-link sign-in one hour after opening. Normal sign-ins are untouched. */
@@ -9,7 +8,7 @@ export function PortalExpiryWatcher() {
       const at = window.localStorage.getItem(PORTAL_EXPIRY_KEY);
       if (at && portalSessionExpired(at)) {
         window.localStorage.removeItem(PORTAL_EXPIRY_KEY);
-        void supabase.auth.signOut();
+        window.dispatchEvent(new Event("bm-portal-lock-change"));
       }
     };
     check();

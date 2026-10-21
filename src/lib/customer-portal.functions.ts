@@ -91,3 +91,27 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
     const accounts = [...((site as unknown as ManualCredential[]) ?? []), ...((manual as unknown as ManualCredential[]) ?? [])];
     return { accounts, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
+
+/** Signed-in customer: email a fresh 24-hour portal login link to unlock the portal. */
+export const requestMyPortalLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    setResponseHeader("cache-control", "no-store");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ok } = await supabaseAdmin.rpc("manual_credentials_throttle", { p_key: `portal-self:${context.userId}`, p_limit: 5 });
+    if (!ok) throw new Error("Too many requests. Please try again in an hour.");
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const email = user.user?.email;
+    if (!email) throw new Error("Your account has no email saved. Please contact support.");
+    const { data: code } = await supabaseAdmin.rpc("portal_ensure_code", { p_user_id: context.userId });
+    const token = hex(crypto.getRandomValues(new Uint8Array(32)));
+    const { error } = await supabaseAdmin.rpc("portal_issue_link", { p_user_id: context.userId, p_token_hash: await hash(token) });
+    if (error || !code) throw new Error("We couldn't send your link. Please try again.");
+    const { data: profile } = await supabaseAdmin.from("profiles").select("display_name").eq("id", context.userId).maybeSingle();
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    await sendTemplateEmail("customer-portal-link", email, {
+      templateData: { name: profile?.display_name ?? undefined, loginUrl: `${getRequestUrl().origin}/portal/${code}?t=${token}` },
+      idempotencyKey: `portal-link-${await hash(token)}`,
+    });
+    return { sent: true };
+  });
