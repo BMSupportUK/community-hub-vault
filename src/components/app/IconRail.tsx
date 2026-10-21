@@ -130,6 +130,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { user, isStaff, isPending, signOut, hasAny, roles, hasRole, isFanZoneOnly } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const searchState = useRouterState({ select: (r) => r.location.search }) as Record<string, unknown>;
   const inFanZoneChrome = useInFanZoneChrome(path, isFanZoneOnly);
   const fanZoneInfo = useFanZoneMembership(user?.id ?? null);
   const canSeeFanZoneMembers =
@@ -401,7 +402,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       {sorted.map((i) => {
         if (i.key?.startsWith("portal:")) {
           const searchTab = (i.search as { tab?: string } | undefined)?.tab;
-          const curTab = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
+          const curTab = (searchState as { tab?: string }).tab ?? null;
           const pActive = i.to === "/home/$channel" ? path.startsWith("/home/") : i.to === "/admin" ? path.startsWith("/admin") && (searchTab ?? null) === (curTab ?? null) : path.startsWith(i.to);
           return (
             <div key={i.key} className="relative z-10 shrink-0">
