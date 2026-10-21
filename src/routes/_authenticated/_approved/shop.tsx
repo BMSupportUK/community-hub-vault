@@ -1,5 +1,7 @@
 import { ProviderInvoicePayment } from "@/components/checkout/ProviderInvoicePayment";
 import { RequestOrderPasswordButton } from "@/components/checkout/RequestOrderPasswordButton";
+import { Nameplate } from "@/components/app/Nameplate";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { customerOrderDestination } from "@/lib/customer-order-notice";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
@@ -3645,6 +3647,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                     <Receipt className="size-3.5" /> Support ticket
                   </button>
                 )}
+              </div>
               </div>
             </div>
           );
