@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home, Timer } from "lucide-react";
+import { Settings, Home, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useHasSalesAccount } from "@/hooks/use-sales-account";
@@ -33,6 +33,9 @@ export function PortalTabs({ active }: { active?: Tab }) {
         <MentionsBadge />
         <NotificationBell />
       </div>
+      {(isStaff || unlocked) && (
+        <Link to="/portal/settings" className={cn(item, current === "settings" ? on : off)}><Settings className="size-4" />Settings</Link>
+      )}
       {!isStaff && !unlocked && <PortalUnlockButton />}
       <PortalCountdown />
     </nav>

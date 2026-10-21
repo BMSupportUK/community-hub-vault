@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+import { Tv, Popcorn, Briefcase, Users } from "lucide-react";
 import { Headphones, Star } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import staffHeroImg from "@/assets/staff-portal-hero.jpg";
@@ -26,6 +28,13 @@ function GreetingPills() {
 }
 
 /** Portal home — staff layout for the Staff Portal, member layout for the Customer Portal. */
+const QUICK_LINKS = [
+  { to: "/new-content", label: "New Content", blurb: "Latest additions", Icon: Tv },
+  { to: "/what-to-watch", label: "What To Watch", blurb: "Picks for tonight", Icon: Popcorn },
+  { to: "/staff", label: "Staff", blurb: "Meet the team", Icon: Briefcase },
+  { to: "/members", label: "Members", blurb: "Our community", Icon: Users },
+] as const;
+
 export function PortalHome({ staff }: { staff: boolean }) {
   const { user, hasRole, roles } = useAuth();
   const isStaffAccount = staff;
@@ -56,7 +65,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
   return (
     <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-visible md:overflow-y-auto">
       {/* Hero */}
-      <div className="grid min-h-dvh w-full min-w-0 grid-rows-[auto_auto] overflow-x-hidden overflow-y-visible md:min-h-full">
+      <div className="grid min-h-dvh w-full min-w-0 grid-rows-[1fr_auto] overflow-x-hidden overflow-y-visible md:h-full md:min-h-0">
       <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
         <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
@@ -144,6 +153,17 @@ export function PortalHome({ staff }: { staff: boolean }) {
             </div>
           </div>
       </section>
+      <nav aria-label="More from BM Support" className="grid grid-cols-2 gap-3 p-4 pt-0 sm:grid-cols-4 xl:px-6 xl:pb-6">
+        {QUICK_LINKS.map(({ to, label, blurb, Icon }) => (
+          <Link key={to} to={to} className="group flex items-center gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-3 text-white shadow-xl transition-transform hover:-translate-y-0.5 xl:p-4">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15 ring-1 ring-white/25"><Icon className="size-5" /></span>
+            <span className="min-w-0">
+              <span className="block truncate font-display text-sm font-bold">{label}</span>
+              <span className="block truncate text-[11px] text-white/80">{blurb}</span>
+            </span>
+          </Link>
+        ))}
+      </nav>
       </div>
 
     </main>

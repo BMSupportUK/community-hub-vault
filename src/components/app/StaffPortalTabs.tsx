@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home } from "lucide-react";
+import { Home, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { isStaffPortalUser } from "@/lib/portal-home";
@@ -28,6 +28,7 @@ export function StaffPortalTabs() {
         <MentionsBadge />
         <NotificationBell />
       </div>
+      <Link to="/portal/settings" className={cls("/portal/settings")}><Settings className="size-4" />Settings</Link>
     </nav>
   );
 }
