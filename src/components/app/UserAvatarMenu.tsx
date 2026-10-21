@@ -88,6 +88,9 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     setIsPhone(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
   const isAdmin = hasAny(["admin", "management"]);
+  // Profile/notification/security settings live in the Customer Portal Settings
+  // tabs now, so only staff (who have no portal) still get them in this menu.
+  const staffPortalUser = isStaffPortalUser(roles ?? []);
   const roleFlashMap = useRoleFlashMap();
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
   const presence = usePresence(user?.id, Boolean(user));
