@@ -3,7 +3,7 @@ import { getRequestHeader, getRequestUrl, setResponseHeader } from "@tanstack/re
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { ManualCredential } from "@/lib/manual-credentials-schema";
-import { portalCodeSchema, portalTokenSchema } from "@/lib/customer-portal";
+import { portalCodeSchema, portalLockAt, portalTokenSchema } from "@/lib/customer-portal";
 
 const hex = (bytes: ArrayBuffer | Uint8Array) => Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, "0")).join("");
 const hash = async (value: string) => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
@@ -24,39 +24,47 @@ export const requestPortalLink = createServerFn({ method: "POST" })
       supabaseAdmin.rpc("manual_credentials_throttle", { p_key: `portal-code:${data.code}`, p_limit: 5 }),
     ]);
     if (!ipOk || !codeOk) throw new Error("Too many requests. Please try again in an hour.");
-    const { data: portal } = await supabaseAdmin.from("customer_portals").select("user_id").eq("code", data.code).maybeSingle();
+    const portal = await findPortal(supabaseAdmin, data.code);
     if (!portal) return { sent: true };
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(portal.user_id);
     const email = user.user?.email;
     if (!email || !user.user?.email_confirmed_at) return { sent: true };
+    // The portal address changes every 24 hours; the email always carries today's.
+    const { data: currentCode } = await supabaseAdmin.rpc("portal_ensure_code", { p_user_id: portal.user_id });
     const token = hex(crypto.getRandomValues(new Uint8Array(32)));
     const { error } = await supabaseAdmin.rpc("portal_issue_link", { p_user_id: portal.user_id, p_token_hash: await hash(token) });
-    if (error) throw new Error("We couldn't send your link. Please try again.");
+    if (error || !currentCode) throw new Error("We couldn't send your link. Please try again.");
     const { data: profile } = await supabaseAdmin.from("profiles").select("display_name").eq("id", portal.user_id).maybeSingle();
     const origin = getRequestUrl().origin;
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     await sendTemplateEmail("customer-portal-link", email, {
-      templateData: { name: profile?.display_name ?? undefined, loginUrl: `${origin}/portal/${data.code}?t=${token}` },
+      templateData: { name: profile?.display_name ?? undefined, loginUrl: `${origin}/portal/${currentCode}?t=${token}` },
       idempotencyKey: `portal-link-${await hash(token)}`,
     });
     return { sent: true };
   });
 
-/** Public: swap a valid one-use link for a sign-in token for that customer's account. */
+/** Current or previous (yesterday's) portal code identifies the customer. */
+async function findPortal(admin: any, code: string): Promise<{ user_id: string } | null> {
+  const { data } = await admin.from("customer_portals").select("user_id").or(`code.eq.${code},previous_code.eq.${code}`).limit(1).maybeSingle();
+  return data ?? null;
+}
+
+/** Public: swap a valid 24-hour link for a sign-in token. Each opening locks again after one hour. */
 export const redeemPortalLink = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ code: portalCodeSchema, token: portalTokenSchema }).strict().parse(input))
   .handler(async ({ data }) => {
     setResponseHeader("cache-control", "no-store");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: portal } = await supabaseAdmin.from("customer_portals").select("user_id").eq("code", data.code).maybeSingle();
+    const portal = await findPortal(supabaseAdmin, data.code);
     const { data: rows, error } = await supabaseAdmin.rpc("portal_redeem_link", { p_token_hash: await hash(data.token) });
     const row = Array.isArray(rows) ? rows[0] : null;
-    if (error || !row || !portal || row.user_id !== portal.user_id) throw new Error("This login link has expired or was already used. Request a new one.");
+    if (error || !row || !portal || row.user_id !== portal.user_id) throw new Error("This login link has expired. Request a new one.");
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(row.user_id);
     if (!user.user?.email) throw new Error("This portal is unavailable.");
     const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email: user.user.email });
     if (linkError || !link.properties?.hashed_token || link.user?.id !== row.user_id) throw new Error("We couldn't sign you in. Request a new link.");
-    return { tokenHash: link.properties.hashed_token, expiresAt: row.expires_at as string };
+    return { tokenHash: link.properties.hashed_token, expiresAt: portalLockAt(row.expires_at as string) };
   });
 
 /** Signed-in: show the customer's own app logins after their 6-digit PIN. First use sets the PIN. */

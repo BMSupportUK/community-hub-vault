@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PORTAL_EXPIRY_KEY, portalSessionExpired } from "@/lib/customer-portal";
 
-/** Signs out a portal-link sign-in once its 24 hours are up. Normal sign-ins are untouched. */
+/** Locks (signs out) a portal-link sign-in one hour after opening. Normal sign-ins are untouched. */
 export function PortalExpiryWatcher() {
   useEffect(() => {
     const check = () => {
@@ -13,7 +13,7 @@ export function PortalExpiryWatcher() {
       }
     };
     check();
-    const id = window.setInterval(check, 60_000);
+    const id = window.setInterval(check, 15_000);
     return () => window.clearInterval(id);
   }, []);
   return null;

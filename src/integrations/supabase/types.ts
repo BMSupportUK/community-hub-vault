@@ -1813,19 +1813,25 @@ export type Database = {
       customer_portals: {
         Row: {
           code: string
+          code_set_at: string
           created_at: string
+          previous_code: string | null
           reset_at: string | null
           user_id: string
         }
         Insert: {
           code: string
+          code_set_at?: string
           created_at?: string
+          previous_code?: string | null
           reset_at?: string | null
           user_id: string
         }
         Update: {
           code?: string
+          code_set_at?: string
           created_at?: string
+          previous_code?: string | null
           reset_at?: string | null
           user_id?: string
         }

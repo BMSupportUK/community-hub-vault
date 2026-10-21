@@ -46,8 +46,8 @@ function PortalEntry() {
   return <main className="grid min-h-dvh place-items-center bg-background px-4 text-foreground">
     <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
       <div className="mb-4 flex items-center gap-3"><div className="grid size-11 place-items-center rounded-lg bg-gradient-primary"><ShoppingCart className="size-5 text-primary-foreground" /></div><div><p className="text-xs text-muted-foreground">BM Support</p><h1 className="font-display text-2xl font-bold">Customer Portal</h1></div></div>
-      {opening ? <p className="flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" />Opening your portal…</p> : sent ? <p role="status" className="text-sm">If this is your portal, a login link is on its way to your email. It works once and lasts 24 hours. Check your spam folder too.</p> : <>
-        <p className="mb-5 text-sm text-muted-foreground">Your shop, orders, app logins and install guides. We'll email you a login link that lasts 24 hours.</p>
+      {opening ? <p className="flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" />Opening your portal…</p> : sent ? <p role="status" className="text-sm">If this is your portal, a login link is on its way to your email. The link lasts 24 hours, and the portal locks again one hour after each opening. Check your spam folder too.</p> : <>
+        <p className="mb-5 text-sm text-muted-foreground">Your shop, orders, app logins and install guides. We'll email you a login link that lasts 24 hours. Each time you open it, the portal locks again after an hour.</p>
         <Button className="w-full" disabled={busy} onClick={send}>{busy ? <Loader2 className="animate-spin" /> : <Mail />}Send me a login link</Button>
       </>}
       {sent && <Button variant="ghost" className="mt-3 w-full" disabled={busy} onClick={send}>Send a new link</Button>}
