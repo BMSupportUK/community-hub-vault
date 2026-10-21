@@ -218,6 +218,20 @@ export function SubscriptionDetailsCard({
                 )}>
                   Expiry date: {c.expiry_at ? fmtDate(new Date(c.expiry_at)) : "No expiry date"}
                 </div>
+                <div className={cn("font-medium text-[11px] mt-0.5", fill ? "md:text-base md:mt-2" : "", embedded ? "text-white/70" : "text-muted-foreground")}>
+                  Year joined: <span className={cn("font-semibold", embedded ? "text-white" : "text-foreground")}>{joinedRecorded ? (joinedYear ?? "Not recorded") : "Not recorded"}</span>
+                </div>
+                <div className={cn("font-medium text-[11px] mt-0.5", fill ? "md:text-base md:mt-2" : "", embedded ? "text-white/70" : "text-muted-foreground")}>
+                  Customer for:{" "}
+                  <span className={cn("font-semibold", embedded ? "text-white" : "text-foreground")}>
+                    {joinedRecorded
+                      ? (() => {
+                          const years = customerYearsFromYear(joinedYear);
+                          return years === null ? "Not recorded" : `${years} year${years === 1 ? "" : "s"}`;
+                        })()
+                      : "Not recorded"}
+                  </span>
+                </div>
               </div>
               {c.expiry_at && (
                 <span
