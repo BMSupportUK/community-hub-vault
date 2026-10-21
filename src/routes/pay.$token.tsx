@@ -164,7 +164,7 @@ function PayPage() {
 
   const pw = password ?? "";
   return (
-    <main className="min-h-screen overflow-y-auto">
+    <main className="min-h-screen overflow-y-auto order-chat-gutter">
       {/* Members get a way back to their order screen; link-only customers
           (manual orders) arrived by link, so there is nothing to go back to. */}
       {user && (
