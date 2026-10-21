@@ -285,126 +285,20 @@ function AuthLayout() {
       <div className={locksToViewport ? "fixed inset-0 flex h-dvh w-dvw overflow-hidden bg-background" : "relative flex min-h-dvh w-full bg-background"}>
         <IconRail />
         <div className={locksToViewport ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden" : "flex min-h-dvh min-w-0 flex-1 flex-col"}>
-{!inFanZone && talkHeaderCollapsed && (
-          <button
-            type="button"
-            onClick={() => setTalkHeaderExpanded(true)}
-            title="Show header"
-            className="group h-8 shrink-0 border-b border-primary/60 bg-gradient-to-r from-primary/90 via-primary/80 to-accent/80 text-primary-foreground flex items-center gap-2 px-3 text-xs font-semibold tracking-wide text-left shadow-sm hover:from-primary hover:via-primary hover:to-accent transition-colors"
-          >
-            <ChevronDown className="size-3.5 transition-transform group-hover:translate-y-0.5" />
-            {inTalkChannel && <span className="font-bold truncate">{talkChannelName ?? "Talk channel"}</span>}
-            <span className="hidden sm:inline underline decoration-1 underline-offset-2">— show header</span>
-          </button>
-        )}
-        {!inFanZone && !talkHeaderCollapsed && (<header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-hidden mb-1">
-          <div className="flex items-center gap-1.5 lg:gap-2 min-w-0 flex-1">
-            <Sheet open={navOpen} onOpenChange={setNavOpen}>
-              <SheetTrigger
-                className="md:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-muted-foreground"
-                aria-label="Open navigation"
-              >
-                <Menu className="size-5" />
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-auto bg-rail border-r border-border">
-                {navOpen ? <IconRail inSheet /> : null}
-              </SheetContent>
-            </Sheet>
-            {canOpenPanel && (
-              <Link
-                to="/admin"
-                title={panelLabel}
-                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
-              >
-                <LayoutDashboard className="size-4" />
-                <span className="hidden min-[1700px]:inline">{panelLabel}</span>
-              </Link>
-            )}
-            {canOpenFanZonePanel && (
-              <Link
-                to="/fan-zone-admin"
-                title="Fan Zone | Admin Panel"
-                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
-              >
-                <ShieldCheck className="size-4" />
-                <span className="hidden min-[1700px]:inline">Fan Zone | Admin Panel</span>
-              </Link>
-            )}
-            {isAdmin && (
-              <Link
-                to="/moderation"
-                title="Admin | Access Requests"
-                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
-              >
-                <Shield className="size-4" />
-                <span className="hidden min-[1700px]:inline">Admin | Access Requests</span>
-                <DeferUntilIdle><ModerationPendingBadge /></DeferUntilIdle>
-              </Link>
-            )}
-            {isAdmin && (
-              <button
-                type="button"
-                title="Admin | Shop Orders"
-                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
-                onClick={openSalesChats}
-              >
-                <Receipt className="size-4" />
-                <span className="hidden min-[1700px]:inline">Admin | Shop Orders</span>
-                <DeferUntilIdle><PendingOrdersBadge /></DeferUntilIdle>
-              </button>
-            )}
-            {isAdmin && (
-              <Link
-                {...ADMIN_CUSTOMERS_LINK}
-                title="Customers"
-                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
-              >
-                <ShieldCheck className="size-4" />
-                <span className="hidden min-[1700px]:inline">Customers</span>
-              </Link>
-            )}
-            {user && (
-              <DeferUntilIdle>
-                <BmInboxBell />
-              </DeferUntilIdle>
-            )}
-            {user && (
-              <DeferUntilIdle>
-                <MentionsBadge />
-              </DeferUntilIdle>
-            )}
-            {user && (
-              <DeferUntilIdle>
-                <NotificationBell />
-              </DeferUntilIdle>
-            )}
-          </div>
-          <div className="hidden xl:flex flex-1 min-w-0 px-3" />
-             <div className="hidden lg:contents">
-               <DeferUntilIdle>
-                 <Clocks />
-               </DeferUntilIdle>
-             </div>
-            <DeferUntilIdle>
-              <LockNowPill />
-            </DeferUntilIdle>
-            <DeferUntilIdle>
-              <TwoFactorPill />
-            </DeferUntilIdle>
-
-            <DeferUntilIdle>
-              <VpnPill />
-            </DeferUntilIdle>
-            <button
-              type="button"
-              onClick={() => setTalkHeaderExpanded(false)}
-              title="Hide header"
-              aria-label="Hide header"
-              className="shrink-0 inline-flex items-center justify-center size-8 rounded-md hover:bg-surface-2 text-muted-foreground ml-1"
+        {/* Top header removed: phones keep a small menu button to open the side rail. */}
+        {!inFanZone && (
+          <Sheet open={navOpen} onOpenChange={setNavOpen}>
+            <SheetTrigger
+              className="md:hidden fixed left-2 top-2 z-40 inline-flex items-center justify-center size-9 rounded-md border border-border bg-surface/90 backdrop-blur text-muted-foreground shadow"
+              aria-label="Open navigation"
             >
-              <ChevronUp className="size-4" />
-            </button>
-        </header>)}
+              <Menu className="size-5" />
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-auto bg-rail border-r border-border">
+              {navOpen ? <IconRail inSheet /> : null}
+            </SheetContent>
+          </Sheet>
+        )}
         <div
           className={
             locksToViewport
