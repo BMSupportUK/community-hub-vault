@@ -277,6 +277,7 @@ export function OrderVideoCallStaffStage({ call, orderId }: { call: OrderVideoCa
   }
   return (
     <>
+      {wrapUp}
       {room.isHost ? (
         <VideoCallStage topic={`video-call-${call.session.id}`} side="offerer" otherName="the customer" onHangup={call.end} startWithCamera={false} placeholderImage={call.isMale ? staffPlaceholderMale : undefined} staffGender={call.isMale ? "male" : "female"} sidePanel={chat} onRemoteTrack={room.pushTrack} quietLeave={room.othersPresent} />
       ) : (
