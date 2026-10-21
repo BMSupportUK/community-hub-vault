@@ -4,7 +4,7 @@
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
 - Member Home: staff keep image + greeting left; members keep "Hey" + nameplate under the picture and get "Welcome to The Customer Portal" + message under a capped subscription box (compact on phones).
-- No global top header: inbox/mentions/alerts in side rail; clocks/lock/2FA/VPN by portal "Hey"; admin shortcuts in Admin Panel header; phones get a floating menu button.
+- No global top header: inbox/mentions/alerts in side rail; clocks/lock/2FA/VPN by portal "Hey"; admin shortcuts in Staff Portal tab bar; phones get a floating menu button.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; cap and scroll mobile ticket headers to preserve messages and composers.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: show all staff/channel; fit composer and people.
