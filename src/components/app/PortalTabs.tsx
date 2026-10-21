@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useHasSalesAccount } from "@/hooks/use-sales-account";
 import { usePortalUnlocked } from "@/components/app/PortalLock";
 import { PortalUnlockButton } from "@/components/app/PortalUnlockButton";
+import { TalkLiveCount } from "@/components/app/TalkLiveCount";
 import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
 
 type Tab = "home" | "shop" | "orders" | "tickets" | "logins" | "guides" | "referrals" | "knowledge" | "settings";
@@ -30,7 +31,7 @@ export function PortalTabs({ active }: { active?: Tab }) {
       {showLinks && (<>
       <Link to="/shop" className={cn(item, current === "shop" ? on : off)}><ShoppingCart className="size-4" />Shop</Link>
       <Link to="/tickets" className={cn(item, current === "tickets" ? on : off)}><Ticket className="size-4" />Tickets</Link>
-      <Link to="/home/$channel" params={{ channel: "welcome" }} className={cn(item, off)}><MessagesSquare className="size-4" />Talk</Link>
+      <Link to="/home/$channel" params={{ channel: "welcome" }} className={cn(item, off)}><MessagesSquare className="size-4" />Talk<TalkLiveCount /></Link>
       <Link to="/portal/logins" className={cn(item, current === "logins" ? on : off)}><KeyRound className="size-4" />My Logins</Link>
       <Link to="/install-guides" search={{ tab: undefined, checkout: undefined }} className={cn(item, current === "guides" ? on : off)}><Wrench className="size-4" />Install Guides</Link>
       <Link to="/knowledge-base" className={cn(item, current === "knowledge" ? on : off)}><BookOpen className="size-4" />Knowledge Base</Link>

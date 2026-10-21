@@ -6,6 +6,7 @@ import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel } from "@/lib/
 import { isStaffPortalUser } from "@/lib/portal-home";
 import { ModerationPendingBadge } from "./ModerationPendingBadge";
 import { PendingOrdersBadge } from "./PendingOrdersBadge";
+import { TalkLiveCount } from "./TalkLiveCount";
 
 /** Pages that sit inside the Staff Portal tab bar (ticket threads keep their own bounded layout). */
 export function isStaffPortalPath(path: string) {
@@ -26,7 +27,7 @@ export function StaffPortalTabs() {
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Staff Portal</span>
       <Link to="/staff-portal" className={cls("/staff-portal")}><Home className="size-4" />Home</Link>
       {!isMod && <Link to="/tickets" className={cls("/tickets")}><Ticket className="size-4" />Tickets</Link>}
-      <Link to="/home/$channel" params={{ channel: "welcome" }} className={cls("/home/welcome")}><MessagesSquare className="size-4" />Talk</Link>
+      <Link to="/home/$channel" params={{ channel: "welcome" }} className={cls("/home/welcome")}><MessagesSquare className="size-4" />Talk<TalkLiveCount /></Link>
       <Link to="/shifts" className={cls("/shifts")}><CalendarClock className="size-4" />Shifts</Link>
       <Link to="/shift-history" className={cls("/shift-history")}><History className="size-4" />Shift history</Link>
       <Link to="/staff-pin" className={cls("/staff-pin")}><KeyRound className="size-4" />Staff PIN</Link>
