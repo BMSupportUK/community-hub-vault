@@ -101,6 +101,9 @@ export function CustomerOrderCard({ order, onOpenCheckout }: {
   const bankAwaiting = payment?.provider === "bank_transfer" && payment.paymentStatus?.toLowerCase() === "awaiting_verification" && !paid;
   const name = buyer?.display_name || buyer?.username || order.shipping_name || "You";
   const status = cancelled ? "Cancelled" : completed ? "Completed" : paid ? "Account setup" : order.status === "processing" || payment?.provider ? "Awaiting payment" : "New order — please pay";
+  const terms = deriveOrderTerms(items);
+  const packageLabel = items.length === 0 ? "Not recorded" : items.map(item => `${item.product_name}${item.quantity > 1 ? ` × ${item.quantity}` : ""}`).join(", ");
+  const packageHint = terms.months > 0 ? `${terms.months} month${terms.months === 1 ? "" : "s"}${terms.accountType ? ` · ${accountTypeLabelFor(terms.accountType)}` : ""}` : null;
   const date = (value: string) => new Date(value).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
   const notifyChanged = () => window.dispatchEvent(new CustomEvent("orders:changed", { detail: { orderId: order.id } }));
   const sendSystem = async (content: string) => {
