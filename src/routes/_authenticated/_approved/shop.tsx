@@ -1558,12 +1558,6 @@ function Storefront() {
                 App Demos
               </TabsTrigger>
               <TabsTrigger
-                value="orders"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
-              >
-                My Orders
-              </TabsTrigger>
-              <TabsTrigger
                 value="refund"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
               >
