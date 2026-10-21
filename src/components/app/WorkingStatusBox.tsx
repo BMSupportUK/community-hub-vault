@@ -967,8 +967,8 @@ export function WorkingStatusBox({
               </button>
             ))}
           </div>
-          {/* Shift controls sit under the Shifts tabs so none get clipped; video + tickets get their own line. */}
-          <div className="flex flex-col gap-2">
+          {/* Shift controls sit on one wrapping row under the Shifts tabs: video, tickets, then shift actions and Away. */}
+          <div>
             <div className={cn("flex flex-wrap items-center", compact ? "gap-1" : "gap-3")}>
               <TalkVideoHelpButton variant="icon" />
               {(canAnswerTickets || roles.includes("moderator")) && (
@@ -980,8 +980,6 @@ export function WorkingStatusBox({
                   readOnly={!canAnswerTickets}
                 />
               )}
-            </div>
-            <div className={cn("flex flex-wrap items-center", compact ? "gap-1" : "gap-3")}>
               {ActionIcons({ compact })}
               <DndDialogButton
                 className={cn(
