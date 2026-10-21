@@ -307,6 +307,7 @@
 - [ ] Verify a newly placed sale's notification and clipboard action end-to-end — awaits a new customer order; no live sale created for testing.
 
 ## Customer Portal
+- [ ] Repair the clipped portal lock and verify first entry, all tabs, account isolation and one-hour relocking as a customer.
 - [x] Personal portal link per site customer, 24-hour one-use email login link, portal tabs (Shop, My Orders, My Logins with PIN, Install Guides), side rail single entry, admin copy/reset. Link sign-in and reuse rejection verified in preview.
 - [ ] Manual customers without a site account — waiting on the user to decide whether to auto-create an account for them.
 - [ ] Real login-link email not sent in testing.
