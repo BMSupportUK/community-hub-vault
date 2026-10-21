@@ -489,6 +489,14 @@ html.theme-boro body {
   &::-webkit-scrollbar { display: none; width: 0; height: 0; }
 }
 
+/* Pages showing the "Order chat" tab on the right edge: the tab is about
+   2.5rem wide, so page content keeps a clear gap in front of it instead of
+   sitting underneath it. */
+@utility order-chat-gutter {
+  padding-right: calc(2.5rem + 0.75rem);
+}
+
+
 /* Legacy purple/violet page bridge: old hardcoded utilities now follow the admin theme. */
 :is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry, html.theme-boro) :is(.bg-purple-950\/30, .bg-violet-950\/30) { background-color: color-mix(in oklab, var(--surface) 38%, transparent) !important; }
 :is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry, html.theme-boro) :is(.bg-purple-950\/40, .bg-violet-950\/40, .bg-purple-900\/30, .bg-violet-900\/30, .bg-slate-950\/40) { background-color: color-mix(in oklab, var(--surface) 50%, transparent) !important; }

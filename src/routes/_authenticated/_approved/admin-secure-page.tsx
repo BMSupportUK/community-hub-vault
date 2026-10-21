@@ -55,7 +55,7 @@ function SecurePageAdmin() {
   if (!order) return <Navigate to="/admin" search={{ tab: "order-status" } as never} />;
 
   return (
-    <main className="relative isolate flex-1 min-h-full overflow-y-auto">
+    <main className="relative isolate flex-1 min-h-full overflow-y-auto order-chat-gutter">
       {/* Same shop picture as the Orders tab, kept behind everything: it can
           never cover the header or the panel because it sits below all content
           and ignores pointer events. */}
