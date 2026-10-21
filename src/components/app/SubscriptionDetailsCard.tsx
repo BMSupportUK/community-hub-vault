@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Nameplate } from "@/components/app/Nameplate";
+import { customerJoinedYear, customerYearsFromYear } from "@/lib/customer-joined-year";
 
 interface CredRow {
   id: string;
@@ -31,6 +32,8 @@ export function SubscriptionDetailsCard({
   const [loaded, setLoaded] = useState(false);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const [nameplateId, setNameplateId] = useState<string | null>(null);
+  const [joinedYear, setJoinedYear] = useState<number | null>(null);
+  const [joinedRecorded, setJoinedRecorded] = useState<boolean | null>(null);
   const [viewIndex, setViewIndex] = useState(0);
 
   useEffect(() => {
@@ -50,6 +53,16 @@ export function SubscriptionDetailsCard({
         if (!active) return;
         setCustomerName((data?.display_name || data?.username || null) as string | null);
         setNameplateId((data?.equipped_nameplate_id ?? null) as string | null);
+      });
+    supabase
+      .from("customer_subscription_history")
+      .select("first_subscription_date")
+      .eq("customer_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        setJoinedYear(customerJoinedYear((data?.first_subscription_date ?? null) as string | null));
+        setJoinedRecorded(Boolean(data?.first_subscription_date));
       });
     const load = () => {
       supabase
@@ -204,6 +217,20 @@ export function SubscriptionDetailsCard({
                   expired ? "text-red-300" : expSoon ? "text-amber-300" : "text-emerald-300"
                 )}>
                   Expiry date: {c.expiry_at ? fmtDate(new Date(c.expiry_at)) : "No expiry date"}
+                </div>
+                <div className={cn("font-medium text-[11px] mt-0.5", fill ? "md:text-base md:mt-2" : "", embedded ? "text-white/70" : "text-muted-foreground")}>
+                  Year joined: <span className={cn("font-semibold", embedded ? "text-white" : "text-foreground")}>{joinedRecorded ? (joinedYear ?? "Not recorded") : "Not recorded"}</span>
+                </div>
+                <div className={cn("font-medium text-[11px] mt-0.5", fill ? "md:text-base md:mt-2" : "", embedded ? "text-white/70" : "text-muted-foreground")}>
+                  Customer for:{" "}
+                  <span className={cn("font-semibold", embedded ? "text-white" : "text-foreground")}>
+                    {joinedRecorded
+                      ? (() => {
+                          const years = customerYearsFromYear(joinedYear);
+                          return years === null ? "Not recorded" : `${years} year${years === 1 ? "" : "s"}`;
+                        })()
+                      : "Not recorded"}
+                  </span>
                 </div>
               </div>
               {c.expiry_at && (

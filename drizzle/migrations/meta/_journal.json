@@ -1331,6 +1331,13 @@
       "when": 1792584348028,
       "tag": "0189_customer_portal_code_email_editable",
       "breakpoints": true
+    },
+    {
+      "idx": 190,
+      "version": "7",
+      "when": 1792584471334,
+      "tag": "0190_customer_subscription_history_own_read",
+      "breakpoints": true
     }
   ]
 }
