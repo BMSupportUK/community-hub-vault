@@ -4,10 +4,10 @@
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
 - Portal homes share one layout: hero image fills the left column; sidebar shows status pills, "Hey" + nameplate + role badge, welcome text, then Working Status (staff) or subscription box (members).
-- No global top header: inbox/mentions/alerts in side rail; clocks/lock/2FA/VPN by portal "Hey"; portal pages and admin shortcuts sit in the side rail under Home (portal bars keep only Home); phones get a floating menu button.
+- No global top header: inbox/mentions/alerts beside Home in both portal headers, rail elsewhere; clocks/lock/2FA/VPN by portal "Hey"; portal pages and admin shortcuts in the rail under Home; phones get a floating menu button.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; mobile ticket headers cap+scroll to keep messages/composers.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
-- Talk: all staff per channel; composer/people fit.
+- Talk: all staff per channel, composer/people fit.
 - Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn so no stale online users remain.
 - Staff Away reads user_dnd_status (current window); triggers store shift-linked history.
