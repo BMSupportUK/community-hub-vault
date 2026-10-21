@@ -1810,6 +1810,38 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_portal_login_codes: {
+        Row: {
+          code_hash: string
+          expires_at: string
+          failed_attempts: number
+          issued_at: string
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          expires_at?: string
+          failed_attempts?: number
+          issued_at?: string
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          expires_at?: string
+          failed_attempts?: number
+          issued_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_login_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_portals: {
         Row: {
           code: string
@@ -8575,12 +8607,20 @@ export type Database = {
         Args: { p_token_hash: string; p_user_id: string }
         Returns: string
       }
+      portal_issue_login_code: {
+        Args: { p_code_hash: string; p_user_id: string }
+        Returns: string
+      }
       portal_redeem_link: {
         Args: { p_token_hash: string }
         Returns: {
           expires_at: string
           user_id: string
         }[]
+      }
+      portal_verify_login_code: {
+        Args: { p_code_hash: string; p_user_id: string }
+        Returns: string
       }
       portal_verify_pin: {
         Args: { p_email_key: string; p_pin_hash: string; p_pin_salt: string }

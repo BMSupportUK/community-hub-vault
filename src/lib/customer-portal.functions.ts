@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader, getRequestUrl, setResponseHeader } from "@tanstack/react-start/server";
+import { getRequestHeader, setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { ManualCredential } from "@/lib/manual-credentials-schema";
-import { portalCodeSchema, portalLockAt, portalTokenSchema } from "@/lib/customer-portal";
+import { portalCodeSchema, portalLoginCodeSchema } from "@/lib/customer-portal";
 
 const hex = (bytes: ArrayBuffer | Uint8Array) => Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, "0")).join("");
 const hash = async (value: string) => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
@@ -12,8 +12,8 @@ async function hashPin(pin: string, salt: string) {
   return hex(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: new TextEncoder().encode(salt), iterations: 100_000 }, key, 256));
 }
 
-/** Public: email a one-use 24-hour login link to the portal owner. Always answers the same way. */
-export const requestPortalLink = createServerFn({ method: "POST" })
+/** Public: email a 24-hour login code to the portal owner. */
+export const requestPortalCode = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ code: portalCodeSchema }).strict().parse(input))
   .handler(async ({ data }) => {
     setResponseHeader("cache-control", "no-store");
@@ -29,18 +29,8 @@ export const requestPortalLink = createServerFn({ method: "POST" })
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(portal.user_id);
     const email = user.user?.email;
     if (!email || !user.user?.email_confirmed_at) return { sent: true };
-    // The portal address changes every 24 hours; the email always carries today's.
-    const { data: currentCode } = await supabaseAdmin.rpc("portal_ensure_code", { p_user_id: portal.user_id });
-    const token = hex(crypto.getRandomValues(new Uint8Array(32)));
-    const { error } = await supabaseAdmin.rpc("portal_issue_link", { p_user_id: portal.user_id, p_token_hash: await hash(token) });
-    if (error || !currentCode) throw new Error("We couldn't send your link. Please try again.");
-    const { data: profile } = await supabaseAdmin.from("profiles").select("display_name").eq("id", portal.user_id).maybeSingle();
-    const origin = getRequestUrl().origin;
-    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
-    await sendTemplateEmail("customer-portal-link", email, {
-      templateData: { name: profile?.display_name ?? undefined, loginUrl: `${origin}/portal/${currentCode}?t=${token}` },
-      idempotencyKey: `portal-link-${await hash(token)}`,
-    });
+    const { issuePortalCode } = await import("@/lib/customer-portal-code.server");
+    await issuePortalCode(supabaseAdmin, portal.user_id, email);
     return { sent: true };
   });
 
@@ -50,21 +40,21 @@ async function findPortal(admin: any, code: string): Promise<{ user_id: string }
   return data ?? null;
 }
 
-/** Public: swap a valid 24-hour link for a sign-in token. Each opening locks again after one hour. */
-export const redeemPortalLink = createServerFn({ method: "POST" })
-  .inputValidator((input) => z.object({ code: portalCodeSchema, token: portalTokenSchema }).strict().parse(input))
+/** Public: verify the entered email code before creating a customer session. */
+export const redeemPortalCode = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({ code: portalCodeSchema, loginCode: portalLoginCodeSchema }).strict().parse(input))
   .handler(async ({ data }) => {
     setResponseHeader("cache-control", "no-store");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const portal = await findPortal(supabaseAdmin, data.code);
-    const { data: rows, error } = await supabaseAdmin.rpc("portal_redeem_link", { p_token_hash: await hash(data.token) });
-    const row = Array.isArray(rows) ? rows[0] : null;
-    if (error || !row || !portal || row.user_id !== portal.user_id) throw new Error("This login link has expired. Request a new one.");
-    const { data: user } = await supabaseAdmin.auth.admin.getUserById(row.user_id);
+    const { verifyPortalCode } = await import("@/lib/customer-portal-code.server");
+    const expiresAt = await verifyPortalCode(supabaseAdmin, portal?.user_id ?? null, data.loginCode);
+    if (!portal) throw new Error("Invalid or expired code. Request a new code.");
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(portal.user_id);
     if (!user.user?.email) throw new Error("This portal is unavailable.");
     const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email: user.user.email });
-    if (linkError || !link.properties?.hashed_token || link.user?.id !== row.user_id) throw new Error("We couldn't sign you in. Request a new link.");
-    return { tokenHash: link.properties.hashed_token, expiresAt: portalLockAt(row.expires_at as string) };
+    if (linkError || !link.properties?.hashed_token || link.user?.id !== portal.user_id) throw new Error("We couldn't sign you in. Request a new code.");
+    return { tokenHash: link.properties.hashed_token, expiresAt };
   });
 
 /** Signed-in: show the customer's own app logins after their 6-digit PIN. First use sets the PIN. */
@@ -92,8 +82,8 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
     return { accounts, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
 
-/** Signed-in customer: email a fresh 24-hour portal login link to unlock the portal. */
-export const requestMyPortalLink = createServerFn({ method: "POST" })
+/** Signed-in customer: email a fresh login code. */
+export const requestMyPortalCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     setResponseHeader("cache-control", "no-store");
@@ -103,15 +93,18 @@ export const requestMyPortalLink = createServerFn({ method: "POST" })
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(context.userId);
     const email = user.user?.email;
     if (!email) throw new Error("Your account has no email saved. Please contact support.");
-    const { data: code } = await supabaseAdmin.rpc("portal_ensure_code", { p_user_id: context.userId });
-    const token = hex(crypto.getRandomValues(new Uint8Array(32)));
-    const { error } = await supabaseAdmin.rpc("portal_issue_link", { p_user_id: context.userId, p_token_hash: await hash(token) });
-    if (error || !code) throw new Error("We couldn't send your link. Please try again.");
-    const { data: profile } = await supabaseAdmin.from("profiles").select("display_name").eq("id", context.userId).maybeSingle();
-    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
-    await sendTemplateEmail("customer-portal-link", email, {
-      templateData: { name: profile?.display_name ?? undefined, loginUrl: `${getRequestUrl().origin}/portal/${code}?t=${token}` },
-      idempotencyKey: `portal-link-${await hash(token)}`,
-    });
+    if (!user.user?.email_confirmed_at) throw new Error("Please verify your account email first.");
+    const { issuePortalCode } = await import("@/lib/customer-portal-code.server");
+    await issuePortalCode(supabaseAdmin, context.userId, email);
     return { sent: true };
+  });
+
+export const unlockMyPortalCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ loginCode: portalLoginCodeSchema }).strict().parse(input))
+  .handler(async ({ data, context }) => {
+    setResponseHeader("cache-control", "no-store");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { verifyPortalCode } = await import("@/lib/customer-portal-code.server");
+    return { expiresAt: await verifyPortalCode(supabaseAdmin, context.userId, data.loginCode) };
   });

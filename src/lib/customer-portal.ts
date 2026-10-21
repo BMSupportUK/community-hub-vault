@@ -1,11 +1,20 @@
 import { z } from "zod";
 
 export const portalCodeSchema = z.string().regex(/^[a-f0-9]{24}$/);
-export const portalTokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
+export const portalLoginCodeSchema = z.string().trim().regex(/^\d{8}$/, "Enter your 8-digit login code.");
 export const PORTAL_LINK_HOURS = 24;
 export const PORTAL_LOCK_MINUTES = 60;
 export const PORTAL_EXPIRY_KEY = "bm-portal-expires-at";
 export const PORTAL_USER_KEY = "bm-portal-user-id";
+
+export function portalSecondsRemaining(expiresAt: string | null, now = Date.now()) {
+  const expiry = expiresAt ? Date.parse(expiresAt) : NaN;
+  return Number.isFinite(expiry) ? Math.max(0, Math.ceil((expiry - now) / 1000)) : 0;
+}
+
+export function portalCountdown(seconds: number) {
+  return `${Math.floor(seconds / 3600).toString().padStart(2, "0")}:${Math.floor(seconds % 3600 / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
+}
 
 export function isPortalPath(path: string) {
   return path === "/shop" || path === "/tickets" || path.startsWith("/tickets/") || path === "/install-guides" || path === "/portal" || path.startsWith("/portal/");
