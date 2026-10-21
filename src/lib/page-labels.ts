@@ -7,6 +7,7 @@ const EXACT: Record<string, string> = {
   "/": "Landing page",
   "/home": "Home",
   "/tickets": "Tickets",
+  "/portal": "Customer Portal",
   "/shop": "Shop",
   "/install-guides": "Install Guides",
   "/sports-guides": "Sports guides",
