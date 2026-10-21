@@ -18,7 +18,6 @@ export function CustomerOrderNoticeActions({ orderId, onOpen }: { orderId: strin
       if (error || !access?.token || !access.password) throw new Error("Your secure order could not be opened. Please try again.");
       if (copy) {
         await navigator.clipboard.writeText(access.password);
-        onCopied?.();
         toast.success("Secure-chat password copied");
       } else {
         onOpen?.();
