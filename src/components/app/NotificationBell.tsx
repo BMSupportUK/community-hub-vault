@@ -453,9 +453,8 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
               return (
                 <li
                   key={n.id}
-                  onClick={() => { if (isUnread) void markRead(n.id); }}
                   className={cn(
-                    "px-4 py-3 transition-colors cursor-pointer hover:bg-muted/40",
+                    "px-4 py-3 transition-colors",
                     isUnread && "bg-primary/5",
                   )}
                 >
