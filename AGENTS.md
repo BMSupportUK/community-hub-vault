@@ -17,12 +17,12 @@
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
-- Dialogs stay within the dynamic mobile viewport; dense views drop secondary columns on phones.
-- Knowledge Base fills the page; category and ratings rails keep guides scannable.
+- Dialogs fit the dynamic mobile viewport; dense views drop columns on phones.
+- Knowledge Base fills the page with category/ratings rails.
 - Video help uses P2P WebRTC and a fixed-size customer canvas; rotation must not reshape or rebuild the encoder (causes black video).
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
-- Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
+- Seasonal Talk/inbox: one date helper and overlay; locked chat untouched.
 - Dashboard access, header button label and header tab gates come from `src/lib/admin-panel-access.ts`; a header-tabbed page has no tool card.
 <!-- LOVABLE:BEGIN -->
 - Members and role management renders beneath subscriptions in the Customers dashboard tab; legacy member-management URLs redirect there to keep one destination while retaining the existing security gate.
@@ -34,7 +34,7 @@
 - Manual registration exceptions persist on checkout links, enforced by admin-only RPCs and a write trigger; creation saves atomically and PIN access remains independent.
 <!-- LOVABLE:END -->
 - playSound resolves uploaded overrides for all web callers; closed-app Android tones require an APK rebuild.
-- Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
+- Tests use `bun test` (no Vitest APIs); restore swapped globals.
 - Customer payment notifications contain no passwords; copy actions fetch through an authenticated owner-only read RPC without changing payment methods.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 - Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts. Pay by bank provider is a server-resolved app setting, GoCardless only when its secrets exist (switch without rebuild).
@@ -43,3 +43,4 @@
 - Secure-order video calls: one staff host relays the customer to other staff via a staff-only topic; the session ends only when the last staff leaves, longest-present staff takes over.
 - Ticket video: staff-only /video command makes a hashed 30-min token QR to public /video/$token, reusing the secure-order host/relay room.
 - Portal: hashed email codes with atomic attempt limits; layout gates content and owns the live timer. User-bound state fails closed; tabs replace rail entries.
+- /home redirects by role (`src/lib/portal-home.ts`): staff to /staff-portal, members to /portal; both render `PortalHome`.
