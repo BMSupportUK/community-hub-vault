@@ -220,14 +220,6 @@ function WelcomePage() {
                           Member
                         </span>
                       </div>
-                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
-                        Welcome to The Customer Portal
-                      </h1>
-                      <p className="mt-2.5 px-1 text-sm font-medium text-white/90">
-                        <Star className="mr-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle" />
-                        <span>Manage your account, orders and logins, and get help — all in one place.</span>
-                        <Star className="ml-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle" />
-                      </p>
                     </div>
                   )}
                 </div>
@@ -237,7 +229,20 @@ function WelcomePage() {
                   {isStaffAccount ? (
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                   ) : (
-                    <SubscriptionDetailsCard compact embedded />
+                    <>
+                      <SubscriptionDetailsCard compact embedded />
+                      {/* Welcome heading and message sit under the subscription box. */}
+                      <div className="px-1">
+                        <h1 className="break-words font-display text-lg font-bold leading-tight lg:text-xl">
+                          Welcome to The Customer Portal
+                        </h1>
+                        <p className="mt-2 text-xs font-medium text-white/90 lg:text-sm">
+                          <Star className="mr-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
+                          <span>Manage your account, orders and logins, and get help — all in one place.</span>
+                          <Star className="ml-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
+                        </p>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
