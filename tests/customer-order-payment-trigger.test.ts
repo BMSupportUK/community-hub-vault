@@ -25,11 +25,11 @@ test("new owned checkout sends a payment notice without leaking secure credentia
   expect(JSON.stringify(notices)).not.toContain("secret-password");
 });
 test("only the signed-in order owner can retrieve the secure chat password", async () => {
-  await db.exec(`SET app.user='${owner}'`);
+  await db.query("SELECT set_config('app.user',$1,false)", [owner]);
   expect((await db.query("SELECT * FROM public.get_my_order_chat_access($1)", [order])).rows).toEqual([{ token: "secret-token", password: "secret-password" }]);
-  await db.exec(`SET app.user='${other}'`);
+  await db.query("SELECT set_config('app.user',$1,false)", [other]);
   await expect(db.query("SELECT * FROM public.get_my_order_chat_access($1)", [order])).rejects.toThrow("Not authorized");
-  await db.exec("SET app.user=''");
+  await db.query("SELECT set_config('app.user','',false)");
   await expect(db.query("SELECT * FROM public.get_my_order_chat_access($1)", [order])).rejects.toThrow("Not signed in");
 });
 test("unclaimed manual checkouts do not send the staff order owner's customer reminder", async () => {
