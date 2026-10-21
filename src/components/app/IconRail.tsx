@@ -31,7 +31,7 @@ import { CalendarClock, History, KeyRound as KeyIcon, LayoutDashboard, Shield, R
 import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
-import { RAIL_ORDER_CHANGED, railOrderKey, railOrderRows, sortRailItems } from "./rail-order";
+import { RAIL_ORDER_CHANGED, railOrderRows, sortRailItems } from "./rail-order";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
