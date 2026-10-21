@@ -14,6 +14,7 @@ import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { getAutomatedMessage } from "@/lib/automated-messages";
 import { downloadReceipt } from "@/lib/receipt";
+import { accountTypeLabelFor, deriveOrderTerms } from "@/lib/order-terms";
 
 interface CustomerOrder {
   id: string;
@@ -170,18 +171,23 @@ export function CustomerOrderCard({ order, onOpenCheckout }: {
             items.length === 0 ? <p className="text-xs text-muted-foreground">No items recorded</p> : <ul className="space-y-3">{items.map(item => <li key={item.id} className="flex items-start justify-between gap-3 text-sm"><div className="min-w-0 flex-1 break-words">{item.product_name}<div className="text-xs text-muted-foreground">Quantity: {item.quantity} · {format(item.unit_price_cents)} each</div></div><div className="shrink-0 text-right font-medium">{format(item.unit_price_cents * item.quantity)}{user?.id === order.user_id && order.status === "pending" && !paid && !completed && <Button size="icon" variant="ghost" className="ml-1 size-6 text-muted-foreground" title={`Remove ${item.product_name}`} aria-label={`Remove ${item.product_name}`} onClick={() => removeItem(item)} disabled={busy}><Trash2 /></Button>}</div></li>)}</ul>
           )}
         </div>
-        <dl className="space-y-2 text-xs">
-          {order.shipping_name && <Detail label="Customer" value={order.shipping_name} />}
-          <Detail label="Placed" value={date(order.created_at)} />
-          {order.customer_type && <Detail label="Order type" value={order.customer_type === "existing" ? "Renewal" : "New customer"} />}
-          {order.existing_username && <Detail label="Account" value={order.existing_username} />}
-          {typeof order.wants_adult_content === "boolean" && <Detail label="Adult content" value={order.wants_adult_content ? "Yes" : "No"} />}
-          {order.discount_code && <Detail label="Discount" value={`${order.discount_code} (−${format(order.discount_cents ?? 0)})`} />}
-          {(order.paid_at || payment?.paidAt) && <Detail label="Paid" value={date(order.paid_at || payment?.paidAt || order.created_at)} />}
-          {order.completed_at && <Detail label="Completed" value={date(order.completed_at)} />}
-          {bankAwaiting && <Detail label="Payment" value="Bank transfer awaiting verification" />}
-          {order.notes && <Detail label="Notes" value={order.notes} />}
-        </dl>
+        <div className="grid gap-x-6 gap-y-3 text-xs sm:grid-cols-2">
+          <dl className="min-w-0 space-y-2">
+            {order.shipping_name && <Detail label="Customer" value={order.shipping_name} />}
+            <Detail label="Placed" value={date(order.created_at)} />
+            {order.customer_type && <Detail label="Order type" value={order.customer_type === "existing" ? "Renewal" : "New customer"} />}
+            {order.existing_username && <Detail label="Account" value={order.existing_username} />}
+            {order.discount_code && <Detail label="Discount" value={`${order.discount_code} (−${format(order.discount_cents ?? 0)})`} />}
+            {(order.paid_at || payment?.paidAt) && <Detail label="Paid" value={date(order.paid_at || payment?.paidAt || order.created_at)} />}
+            {order.completed_at && <Detail label="Completed" value={date(order.completed_at)} />}
+            {bankAwaiting && <Detail label="Payment" value="Bank transfer awaiting verification" />}
+          </dl>
+          <dl className="min-w-0 space-y-2">
+            <Detail label="Package" value={packageLabel} hint={packageHint} />
+            {typeof order.wants_adult_content === "boolean" && <Detail label="Adult content" value={order.wants_adult_content ? "Yes" : "No"} />}
+          </dl>
+          {order.notes && <div className="min-w-0 sm:col-span-2"><Detail label="Notes" value={order.notes} /></div>}
+        </div>
         <div className="mt-auto flex flex-wrap gap-2 border-t border-border pt-3">
           {!cancelled && <><Button size="sm" onClick={onOpenCheckout}><Lock /> Open secure checkout</Button><RequestOrderPasswordButton orderId={order.id} /></>}
           {paid && !cancelled && <Button variant="outline" size="sm" onClick={() => downloadReceipt(order, items).catch(() => toast.error("Could not generate PDF"))}><Download /> Invoice PDF</Button>}
@@ -192,6 +198,6 @@ export function CustomerOrderCard({ order, onOpenCheckout }: {
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
-  return <div className="grid gap-0.5"><dt className="text-muted-foreground">{label}</dt><dd className="whitespace-pre-line break-words font-medium">{value}</dd></div>;
+function Detail({ label, value, hint }: { label: string; value: string; hint?: string | null }) {
+  return <div className="grid gap-0.5"><dt className="text-muted-foreground">{label}</dt><dd className="whitespace-pre-line break-words font-medium">{value}{hint ? <div className="font-normal text-muted-foreground">{hint}</div> : null}</dd></div>;
 }
