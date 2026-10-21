@@ -3376,35 +3376,6 @@ function OrdersView({
                 Cancelled {countBadge(cancelledOrders.length)}
               </TabsTrigger>
             </TabsList>
-            {isAdmin && adminUnlocked && (
-              <div className="flex bg-purple-950/60 border border-purple-500/30 rounded-md p-0.5 text-[11px]">
-                <button
-                  onClick={() => {
-                    setScope("mine");
-                    clearSelectedOrder();
-                  }}
-                  className={cn(
-                    "px-3 py-1 rounded text-purple-100",
-                    scope === "mine" &&
-                      "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white",
-                  )}
-                >
-                  Mine
-                </button>
-                <button
-                  onClick={() => {
-                    setScope("all");
-                    clearSelectedOrder();
-                  }}
-                  className={cn(
-                    "px-3 py-1 rounded text-purple-100",
-                    scope === "all" && "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white",
-                  )}
-                >
-                  All
-                </button>
-              </div>
-            )}
           </div>
 
           <TabsContent value="new" className="mt-6">
