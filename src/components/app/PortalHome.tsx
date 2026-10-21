@@ -1,5 +1,6 @@
 import { Headphones, Star } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
+import staffHeroImg from "@/assets/staff-portal-hero.jpg";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -66,10 +67,10 @@ export function PortalHome({ staff }: { staff: boolean }) {
                   <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 ${isStaffAccount ? "aspect-[21/9]" : "min-h-[260px] flex-1"}`}>
                     <div className="absolute inset-0">
                       <img
-                        src={heroImg}
-                        alt="BM Support — community and support"
+                        src={isStaffAccount ? staffHeroImg : heroImg}
+                        alt={isStaffAccount ? "BM Support staff working at office desks while colleagues walk between them" : "BM Support — community and support"}
                         width={1920}
-                        height={1080}
+                        height={isStaffAccount ? 832 : 1080}
                         className="h-full w-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-violet-950/70 via-fuchsia-900/10 to-transparent" />
