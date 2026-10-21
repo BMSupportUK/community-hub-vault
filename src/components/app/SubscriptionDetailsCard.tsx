@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Nameplate } from "@/components/app/Nameplate";
+import { customerJoinedYear, customerYearsFromYear } from "@/lib/customer-joined-year";
 
 interface CredRow {
   id: string;
