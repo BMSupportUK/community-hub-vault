@@ -43,3 +43,4 @@
 - Secure-order video calls: one staff host relays the customer to other staff via a staff-only topic; the session ends only when the last staff leaves, longest-present staff takes over.
 - Ticket video: staff-only /video command makes a hashed 30-min token QR to public /video/$token, reusing the secure-order host/relay room.
 - Portal: hashed email codes with atomic attempt limits; layout gates content and owns the live timer. User-bound state fails closed; tabs replace rail entries.
+- Sign-in lands on /home, which redirects by role via `src/lib/portal-home.ts`: staff to /staff-portal, members to /portal (Customer Portal Home tab); both share `PortalHome`.
