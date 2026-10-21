@@ -1,5 +1,6 @@
 # Project Architecture Rules
 - Subdirectories have their own `AGENTS.md`; read it before changing files there.
+- Account switching and site-user order rules live in `src/lib/AGENTS.md` to keep authorization centralized.
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
 - Member Home: staff keep image + greeting left; members get "Hey" + nameplate + "Welcome to The Customer Portal" above a capped subscription box closing the gap (compact on phones).
