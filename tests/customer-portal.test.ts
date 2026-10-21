@@ -1,7 +1,7 @@
 import { test, expect } from 'bun:test';
 import { portalSessionExpired, portalAccessValid, isPortalPath, canResetPortal, canCopyPortal, PORTAL_LINK_HOURS, portalLoginCodeSchema, portalSecondsRemaining, portalCountdown } from '../src/lib/customer-portal';
 import { readFileSync } from 'node:fs';
-const sql = readFileSync(new URL('../drizzle/migrations/0185_customer_portal.sql', import.meta.url), 'utf8');
+const sql = readFileSync(new URL('../drizzle/migrations/0188_customer_portal_email_login_codes.sql', import.meta.url), 'utf8');
 test('login codes last 24 hours', () => {
   expect(PORTAL_LINK_HOURS).toBe(24);
   expect(sql).toContain("now() + interval '24 hours'");
@@ -29,7 +29,7 @@ test('only admin and management can reset; staff can copy', () => {
   expect(canCopyPortal(['staff'])).toBe(true);
   expect(canCopyPortal(['user'])).toBe(false);
 });
-test('portal locks one hour after opening, never past the 24-hour link', async () => {
+test('portal locks one hour after unlocking, never past the 24-hour code', async () => {
   const { portalLockAt } = await import('../src/lib/customer-portal');
   const now = Date.parse('2026-10-21T10:00:00Z');
   expect(portalLockAt('2026-10-22T09:00:00Z', now)).toBe('2026-10-21T11:00:00.000Z');
@@ -43,7 +43,7 @@ test('first entry and malformed expiry stay locked', () => {
   expect(portalAccessValid(null, 'customer-a', 'customer-a')).toBe(false);
   expect(portalAccessValid('invalid', 'customer-a', 'customer-a')).toBe(false);
 });
-test('an unlock belongs only to the customer who opened the link', () => {
+test('an unlock belongs only to the customer who entered the code', () => {
   const now = Date.parse('2026-10-21T10:00:00Z');
   expect(portalAccessValid('2026-10-21T11:00:00Z', 'customer-a', 'customer-b', now)).toBe(false);
   expect(portalAccessValid('2026-10-21T11:00:00Z', 'customer-a', 'customer-a', now)).toBe(true);
