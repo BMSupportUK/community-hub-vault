@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home, MessagesSquare, BookOpen, Settings, Trophy, KeyRound, Package, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
+import { Home, MessagesSquare, BookOpen, Settings, Trophy, KeyRound, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useHasSalesAccount } from "@/hooks/use-sales-account";
@@ -29,7 +29,6 @@ export function PortalTabs({ active }: { active?: Tab }) {
       {!isStaff && !unlocked && <PortalUnlockButton />}
       {showLinks && (<>
       <Link to="/shop" className={cn(item, current === "shop" ? on : off)}><ShoppingCart className="size-4" />Shop</Link>
-      <Link to="/shop" search={{ view: "orders" }} className={cn(item, current === "orders" ? on : off)}><Package className="size-4" />My Orders</Link>
       <Link to="/tickets" className={cn(item, current === "tickets" ? on : off)}><Ticket className="size-4" />Tickets</Link>
       <Link to="/home/$channel" params={{ channel: "welcome" }} className={cn(item, off)}><MessagesSquare className="size-4" />Talk</Link>
       <Link to="/portal/logins" className={cn(item, current === "logins" ? on : off)}><KeyRound className="size-4" />My Logins</Link>
