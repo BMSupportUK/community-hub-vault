@@ -64,7 +64,9 @@ function ApprovedLayout() {
 
   // While navigating away, the old portal page can still render for a moment;
   // keep the lock on if either the shown or the target page is a portal page.
-  const portalGate = isPortalPath(path) || isPortalPath(resolvedPath);
+  // The Customer Portal welcome page stays open; it offers its own Unlock button.
+  const isPortalHome = (x: string) => x === "/portal" || x === "/portal/";
+  const portalGate = (isPortalPath(path) && !isPortalHome(path)) || (isPortalPath(resolvedPath) && !isPortalHome(resolvedPath));
   const page = (
     <DemoGate path={path}>
       {portalGate ? <PortalLock><Outlet /></PortalLock> : <Outlet />}

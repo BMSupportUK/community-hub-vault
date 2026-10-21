@@ -52,8 +52,23 @@ export function PortalLock({ children }: { children: ReactNode }) {
         <h2 className="font-display text-xl font-bold">Customer Portal locked</h2>
         <p className="mt-2 text-sm text-muted-foreground">Enter the login code emailed to you. Your code lasts 24 hours; portal access lasts one hour.</p>
         <PortalCodeForm onSend={() => send()} onUnlock={unlock} />
-        <Link to="/home" className="mt-4 inline-block text-sm text-muted-foreground underline">Back to home</Link>
+        <Link to="/portal" className="mt-4 inline-block text-sm text-muted-foreground underline">Back to portal home</Link>
       </div>
     </div>
   );
+}
+
+/** True while the signed-in customer's portal is unlocked. */
+export function usePortalUnlocked() {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const check = () => setOpen(user ? unlocked(user.id) : false);
+    check();
+    const id = window.setInterval(check, 1_000);
+    window.addEventListener(PORTAL_LOCK_EVENT, check);
+    window.addEventListener("storage", check);
+    return () => { window.clearInterval(id); window.removeEventListener(PORTAL_LOCK_EVENT, check); window.removeEventListener("storage", check); };
+  }, [user?.id]);
+  return open;
 }
