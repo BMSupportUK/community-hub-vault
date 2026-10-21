@@ -50,7 +50,7 @@ export function PortalLock({ children }: { children: ReactNode }) {
       <div className="w-full max-w-md py-8 text-center">
         <div className="mx-auto mb-4 grid size-12 place-items-center rounded-xl bg-primary/15 text-primary"><Lock className="size-6" /></div>
         <h2 className="font-display text-xl font-bold">Customer Portal locked</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Enter the login code emailed to you. Your code lasts 24 hours; portal access lasts one hour.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Enter the login code emailed to you. Your code lasts 24 hours; portal access lasts until midnight (UK time).</p>
         <PortalCodeForm onSend={() => send()} onUnlock={unlock} />
         <Link to="/portal" className="mt-4 inline-block text-sm text-muted-foreground underline">Back to portal home</Link>
       </div>

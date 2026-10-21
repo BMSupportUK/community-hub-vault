@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Ticket, CalendarClock, History, KeyRound, Briefcase, LayoutDashboard, Shield, Receipt, ShieldCheck } from "lucide-react";
+import { Home, MessagesSquare, Ticket, CalendarClock, History, KeyRound, Briefcase, LayoutDashboard, Shield, Receipt, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";

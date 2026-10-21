@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home, BookOpen, Settings, Trophy, KeyRound, Package, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
+import { Home, MessagesSquare, BookOpen, Settings, Trophy, KeyRound, Package, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { usePortalUnlocked } from "@/components/app/PortalLock";

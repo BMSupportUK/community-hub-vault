@@ -37,7 +37,7 @@ export function UnlockedDone({ onClose }: { onClose: () => void }) {
     <div className="py-6 text-center">
       <LockOpen className="mx-auto size-10 text-primary" />
       <h2 className="mt-3 font-display text-xl font-bold">Portal unlocked</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Your portal tabs are open for the next hour.</p>
+      <p className="mt-1 text-sm text-muted-foreground">Your portal tabs stay open until midnight (UK time).</p>
       <Button className="mt-4" onClick={onClose}>Continue</Button>
     </div>
   );
