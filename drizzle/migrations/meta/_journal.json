@@ -1310,6 +1310,13 @@
       "when": 1792578413202,
       "tag": "0186_customer_portal_code_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 187,
+      "version": "7",
+      "when": 1792579703953,
+      "tag": "0187_customer_portal_daily_code_reusable_links",
+      "breakpoints": true
     }
   ]
 }
