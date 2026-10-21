@@ -5,6 +5,7 @@ import { customerOrderDestination } from "@/lib/customer-order-notice";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { PortalTabs } from "@/components/app/PortalTabs";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -409,6 +410,7 @@ function ShopPage() {
   return (
     <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden min-w-0">
       <PaymentTestModeBanner />
+      <PortalTabs />
         <div className="flex min-h-0 min-w-0 flex-1 overflow-visible md:h-full md:max-h-full md:overflow-hidden">
           {view === "store" && <Storefront />}
           {view === "orders" &&

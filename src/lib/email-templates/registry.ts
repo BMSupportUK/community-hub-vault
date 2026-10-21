@@ -42,6 +42,7 @@ import { template as temporaryPassword } from './temporary-password'
 import { template as manualAccountLogin } from './manual-account-login'
 import { template as manualCredentialsAccess } from './manual-credentials-access'
 
+import { template as customerPortalLink } from './customer-portal-link'
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'manual-credentials-access': manualCredentialsAccess,
   'twofa-reset-admin': twofaResetAdmin,
@@ -59,6 +60,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'winner-notification': winnerNotification,
   'screen-lock-reset': screenLockReset,
   'account-approved': accountApproved,
+  'customer-portal-link': customerPortalLink,
   'fan-zone-approved': fanZoneApproved,
   'account-banned': accountBanned,
   'fan-zone-banned': fanZoneBanned,

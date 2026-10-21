@@ -29,6 +29,7 @@ import { getMyAppTransfer } from "@/lib/app-transfer.functions";
 
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
+import { PortalTabs } from "@/components/app/PortalTabs";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
@@ -480,6 +481,8 @@ function InstallGuidesPage() {
   };
 
   return (
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <PortalTabs active="guides" />
     <div className="flex h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background text-foreground md:overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 items-start md:h-full">
         <div className="min-h-0 min-w-0 flex-1 md:h-full">
@@ -1109,6 +1112,7 @@ function InstallGuidesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }

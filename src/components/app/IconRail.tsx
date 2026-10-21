@@ -18,6 +18,7 @@ import { useFanZoneFriendRequestCount } from "@/hooks/use-fan-zone-friend-reques
 import fantasyBench from "@/assets/boro-fantasy-bench.png.asset.json";
 import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
 import boroPredictionsGoal from "@/assets/boro-predictions-goal.png.asset.json";
+import { PortalExpiryWatcher } from "@/components/app/PortalExpiryWatcher";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
@@ -239,8 +240,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     // BM Support Inbox lives in the top header (before the mentions icon), not the rail.
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
-    { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
-    { to: "/install-guides", label: "Install Guides & BM App Store", icon: Wrench, show: true },
+    // Shop, My Orders and Install Guides live inside the Customer Portal tabs.
+    { to: "/portal", label: "Customer Portal", icon: ShoppingCart, show: true },
     { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, resetSportsGuides: true },
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
@@ -331,6 +332,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         ? "flex h-full"
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
+      <PortalExpiryWatcher />
       <div
         aria-label={!user || isFanZoneOnly || inFanZone ? "Boro Fan Zone" : "BM Support"}
         title={!user || isFanZoneOnly || inFanZone ? "Boro Fan Zone" : "BM Support"}

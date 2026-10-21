@@ -1780,6 +1780,57 @@ export type Database = {
           },
         ]
       }
+      customer_portal_links: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          token_hash: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          token_hash: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          token_hash?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      customer_portals: {
+        Row: {
+          code: string
+          created_at: string
+          reset_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          reset_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          reset_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       customer_renewal_date_corrections: {
         Row: {
           customer_id: string
@@ -7765,6 +7816,10 @@ export type Database = {
         Args: { p_display_name: string; p_user_id: string; p_username: string }
         Returns: boolean
       }
+      admin_customer_portal_code: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       admin_customer_subscription_details: { Args: never; Returns: Json }
       admin_customer_subscription_list: { Args: never; Returns: Json }
       admin_customer_subscriptions: { Args: never; Returns: Json }
@@ -7826,6 +7881,10 @@ export type Database = {
           id: string
           username: string
         }[]
+      }
+      admin_reset_customer_portal: {
+        Args: { p_user_id: string }
+        Returns: string
       }
       admin_revoke_user_sessions: {
         Args: { _keep_session: string; _target: string }
@@ -8298,6 +8357,7 @@ export type Database = {
         Args: { _password: string; _token: string }
         Returns: Json
       }
+      get_my_customer_portal_code: { Args: never; Returns: string }
       get_my_order_chat_access: {
         Args: { p_order_id: string }
         Returns: {
@@ -8500,6 +8560,26 @@ export type Database = {
         Returns: number
       }
       package_item_months: { Args: { p_name: string }; Returns: number }
+      portal_credentials_for_user: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      portal_ensure_code: { Args: { p_user_id: string }; Returns: string }
+      portal_issue_link: {
+        Args: { p_token_hash: string; p_user_id: string }
+        Returns: string
+      }
+      portal_redeem_link: {
+        Args: { p_token_hash: string }
+        Returns: {
+          expires_at: string
+          user_id: string
+        }[]
+      }
+      portal_verify_pin: {
+        Args: { p_email_key: string; p_pin_hash: string; p_pin_salt: string }
+        Returns: string
+      }
       post_job_application_message: {
         Args: { _body: string; _token: string }
         Returns: string

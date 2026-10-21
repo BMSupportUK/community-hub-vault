@@ -40,5 +40,6 @@
 - Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts. Pay by bank provider is a server-resolved app setting, GoCardless only when its secrets exist (switch without rebuild).
 - Shared planner handles cover exceptions. UK breaks retry empty plans, freeze real times, recheck duplicates. Rota UI/write guards close at UK midnight.
 - Cover and swap approvals use authenticated admin/management database functions with a single-slot, owner-context exception for today's rota; swap reassignment and status commit together so ordinary closed-day bookings remain blocked.
-- Secure-order video calls: one staff host holds the customer connection and relays it to other staff over a staff-only presence topic; a leaving staff member only ends the session when no other staff remain, and the next longest-present staff member takes over as host.
-- Ticket video calls start from the staff-only /video chat command: a hashed one-off token (30 min) in a ticket message renders a QR to the public /video/$token page, and calls reuse the secure-order multi-staff host/relay room.
+- Secure-order video calls: one staff host relays the customer to other staff via a staff-only topic; the session ends only when the last staff leaves, longest-present staff takes over.
+- Ticket video: staff-only /video command makes a hashed 30-min token QR to public /video/$token, reusing the secure-order host/relay room.
+- Customer Portal: `/portal/$code` issues one-use 24h hashed email links into the customer's own account; portal tabs replace separate rail entries.
