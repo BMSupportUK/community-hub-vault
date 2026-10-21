@@ -72,10 +72,13 @@ function ApprovedLayout() {
   const isPortalHome = (x: string) => x === "/portal" || x === "/portal/";
   const portalGate = (isPortalPath(path) && !isPortalHome(path)) || (isPortalPath(resolvedPath) && !isPortalHome(resolvedPath));
   const inner = portalGate ? <PortalLock><Outlet /></PortalLock> : <Outlet />;
-  const quickLinkPage = isPortalQuickLinkPath(path);
+  // Every BM Support page shares the portal header (pages that render their own
+  // PortalTabs are skipped), so the rail never falls back to its icon copies.
   const staffPortalUser = isStaffPortalUser(roles);
-  const staffTabs = staffPortalUser && (isStaffPortalPath(path) || quickLinkPage);
-  const customerTabs = !staffPortalUser && quickLinkPage;
+  const ownTabs = isPortalPath(path) && path !== "/shop" && path !== "/tickets";
+  const threadPage = path.startsWith("/tickets/");
+  const staffTabs = staffPortalUser && !threadPage && (!ownTabs || isStaffPortalPath(path) || isPortalQuickLinkPath(path));
+  const customerTabs = !staffPortalUser && !threadPage && (!isPortalPath(path) || path === "/shop");
   const page = (
     <DemoGate path={path}>
       {staffTabs || customerTabs ? (

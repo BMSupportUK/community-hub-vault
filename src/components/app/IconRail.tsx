@@ -136,7 +136,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   // The portal tab bars show the inbox/mentions/notification icons beside Home,
   // so the rail hides its copies on any page covered by a portal bar.
-  const pathShowsPortalBar = isStaffPortalPath(path) || isPortalPath(path) || isPortalQuickLinkPath(path);
+  const pathShowsPortalBar = !isFanZonePath(path) && !path.startsWith("/tickets/");
   const searchState = useRouterState({ select: (r) => r.location.search }) as Record<string, unknown>;
   const inFanZoneChrome = useInFanZoneChrome(path, isFanZoneOnly);
   const fanZoneInfo = useFanZoneMembership(user?.id ?? null);
