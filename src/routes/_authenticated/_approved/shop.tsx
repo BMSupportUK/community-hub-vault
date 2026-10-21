@@ -1,7 +1,6 @@
+import { CustomerOrderCard } from "@/components/checkout/CustomerOrderCard";
 import { ProviderInvoicePayment } from "@/components/checkout/ProviderInvoicePayment";
 import { RequestOrderPasswordButton } from "@/components/checkout/RequestOrderPasswordButton";
-import { Nameplate } from "@/components/app/Nameplate";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { customerOrderDestination } from "@/lib/customer-order-notice";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
@@ -1815,9 +1814,7 @@ function Storefront() {
               <InlinePolicy policyKey="triple_room" />
             </TabsContent>
             <TabsContent value="orders" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-5">
-              <MyOrdersTab
-                onOpenOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
-              />
+              <MyOrdersTab />
             </TabsContent>
             <TabsContent value="streaming_devices" className="mt-3 min-h-0 flex-1 overflow-visible md:flex md:h-full md:flex-col md:overflow-hidden -mx-3 sm:-mx-5">
               <Suspense fallback={<ShopLazyFallback />}>
@@ -3039,7 +3036,7 @@ function OrdersView({
   useEffect(() => {
     const ch = supabase
       .channel("orders-list")
-      .on("postgres_changes", { event: "*", schema: "private", table: "orders" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages" }, load)
       .subscribe();
     const onLocal = () => load();
@@ -3151,7 +3148,7 @@ function OrdersView({
   );
 
   const renderOrderList = (list: Order[]) => {
-  const activeId = selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
+  const activeId = scope === "all" && selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
   return (
     <div className={cn("grid grid-cols-1 gap-4 min-h-[60vh]", activeId && "lg:grid-cols-[1fr_380px]")}>
       {deleteConfirmDialog}
@@ -3167,7 +3164,9 @@ function OrdersView({
             No orders in this section.
           </div>
         )}
-        {list.map((o) => (
+        {list.map((o) => scope === "mine" ? (
+          <CustomerOrderCard key={o.id} order={o} onOpenCheckout={() => openSecureCheckout(o.id, () => toast.error("Could not open secure checkout"))} />
+        ) : (
           <div
             key={o.id}
             role="button"
@@ -3446,34 +3445,12 @@ function OrderDetail({
   return <OrderDetailImpl orderId={orderId} isAdmin={isAdmin} onBack={onBack} />;
 }
 
-function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
+function MyOrdersTab() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [tickets, setTickets] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [myPlate, setMyPlate] = useState<{
-    username: string | null;
-    display_name: string | null;
-    avatar_url: string | null;
-    equipped_nameplate_id: string | null;
-  } | null>(null);
-  useEffect(() => {
-    if (!user?.id) return;
-    let off = false;
-    supabase
-      .from("profiles")
-      .select("username, display_name, avatar_url, equipped_nameplate_id")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!off) setMyPlate((data as typeof myPlate) ?? null);
-      });
-    return () => {
-      off = true;
-    };
-  }, [user?.id]);
-  const placerName = myPlate?.display_name || myPlate?.username || "You";
   const [tab, setTab] = useState<"processing" | "completed" | "cancelled">("processing");
   const [month, setMonth] = useState(() => new Date().getMonth());
   const [year, setYear] = useState(() => new Date().getFullYear());
@@ -3511,9 +3488,13 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
     load();
     const onLocal = () => load();
     window.addEventListener("orders:changed", onLocal);
+    const channel = supabase.channel(`my-orders-cards-${user.id}-${crypto.randomUUID()}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, onLocal)
+      .subscribe();
     return () => {
       cancelled = true;
       window.removeEventListener("orders:changed", onLocal);
+      void supabase.removeChannel(channel);
     };
   }, [user?.id]);
 
@@ -3563,95 +3544,13 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
       </div>
     ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {list.map((o) => {
-          const ticketId = tickets[o.id];
-          return (
-            <div
-              key={o.id}
-              className="group overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 backdrop-blur shadow-lg shadow-purple-950/40 flex flex-col transition hover:-translate-y-0.5 hover:border-fuchsia-400/50 hover:shadow-xl hover:shadow-fuchsia-900/30"
-            >
-              <div className="relative h-16 overflow-hidden">
-                <Nameplate
-                  id={myPlate?.equipped_nameplate_id ?? null}
-                  className="absolute inset-0"
-                  fallbackStyle={{
-                    background:
-                      "linear-gradient(to bottom right, hsl(var(--primary)/0.45), hsl(330 80% 60% / 0.3), hsl(220 80% 60% / 0.3))",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-purple-950/80 to-transparent" />
-                <div className="relative h-full px-4 flex items-center gap-3">
-                  <Avatar className="h-10 w-10 ring-2 ring-purple-950/80 shadow-lg">
-                    <AvatarImage src={myPlate?.avatar_url ?? undefined} alt={placerName} />
-                    <AvatarFallback className="text-sm font-bold bg-gradient-primary text-primary-foreground">
-                      {placerName.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-white drop-shadow">{placerName}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-white/75">Placed by</div>
-                  </div>
-                  <span
-                    className={cn(
-                      "text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize shadow",
-                      STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100",
-                    )}
-                  >
-                    {o.status}
-                  </span>
-                </div>
-              </div>
-              <div className="p-4 flex flex-col gap-3 flex-1">
-              <div className="flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-purple-200/60">Order total</div>
-                  <div className="font-display font-bold text-2xl bg-gradient-to-r from-violet-300 via-fuchsia-300 to-blue-300 bg-clip-text text-transparent">
-                    {fmt(o.total_cents)}
-                  </div>
-                </div>
-                <span className="font-mono text-[10px] rounded-md border border-purple-500/30 bg-purple-900/40 px-1.5 py-0.5 text-purple-200/80">
-                  #{o.id.slice(0, 8)}
-                </span>
-              </div>
-              <div className="grid gap-1 rounded-lg border border-purple-500/20 bg-purple-900/30 p-2.5 text-[11px]">
-                {o.shipping_name && (
-                  <div className="flex justify-between gap-2">
-                    <span className="text-purple-200/60">Name</span>
-                    <span className="truncate text-purple-50">{o.shipping_name}</span>
-                  </div>
-                )}
-                <div className="flex justify-between gap-2">
-                  <span className="text-purple-200/60">Placed</span>
-                  <span className="text-purple-50">{new Date(o.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</span>
-                </div>
-              </div>
-              <div className="mt-auto pt-1 flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => onOpenOrder(o.id)}
-                  className="px-3 py-1.5 rounded-md bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:from-violet-500 hover:to-blue-500 inline-flex items-center gap-1"
-                >
-                  <Package className="size-3.5" /> View order
-                </button>
-                <button
-                  onClick={() => openSecureCheckout(o.id, onOpenOrder)}
-                  className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 inline-flex items-center gap-1"
-                >
-                  <Receipt className="size-3.5" /> Secure checkout
-                </button>
-                <RequestOrderPasswordButton orderId={o.id} />
-                {ticketId && (
-                  <button
-                    onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}
-                    className="px-3 py-1.5 rounded-md bg-purple-900/70 border border-purple-500/40 text-purple-50 text-xs font-medium hover:bg-purple-900 inline-flex items-center gap-1"
-                  >
-                    <Receipt className="size-3.5" /> Support ticket
-                  </button>
-                )}
-              </div>
-              </div>
-            </div>
-          );
-        })}
+        {list.map((order) => (
+          <CustomerOrderCard
+            key={order.id}
+            order={order}
+            onOpenCheckout={() => openSecureCheckout(order.id, () => toast.error("Could not open secure checkout"))}
+          />
+        ))}
       </div>
     );
 
