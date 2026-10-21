@@ -341,13 +341,13 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
           </button>
         </div>
       )}
-      {(orderPaid || !!link.account_setup_at) && <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
+      {orderPaid && <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
         <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> {renewal ? "Subscription extended (renewal)" : "Account set up"}</div>
         <p className="text-xs text-muted-foreground">{link.account_setup_at ? `Confirmed ${new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. The sale can now be completed.` : renewal ? "Confirm the customer's subscription has been extended. The sale can't be completed until you do." : "Confirm the customer's new account is set up. The sale can't be completed until you do."}</p>
         {canComplete && <button type="button" disabled={busy || ((!renewal || manualRenewal) && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : (renewal ? "Confirm extension is done" : "Confirm account is set up")}
         </button>}
-        {canComplete && link.account_setup_at && !orderCompleted && (
+        {canComplete && orderPaid && link.account_setup_at && !orderCompleted && (
           <button type="button" disabled={busy} onClick={completeSale} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-success text-background text-xs font-semibold disabled:opacity-60">
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {renewal ? "Complete renewal" : "Complete sale"}
           </button>
