@@ -37,7 +37,7 @@ for(const role of ['admin','management']) {
  assert.equal(notices.length,1);assert.equal(notices[0].user_id,order.user_id);assert.equal(notices[0].kind,'customer_order_payment');
  const link=(await db.query('SELECT * FROM order_checkout_links WHERE order_id=$1',[oid])).rows[0];
  assert.equal(link.claimed_by,order.user_id);assert.ok(!notices[0].body.includes(link.password));assert.ok(!notices[0].body.includes(link.token));
- const access=(await db.query('SELECT * FROM get_my_order_chat_access($1)',[oid])).rows;
+ await assert.rejects(db.query('SELECT * FROM get_my_order_chat_access($1)',[oid]),/Not authorized/);
  // The creating admin is not the owner and cannot fetch the customer's password.
 }
 await db.query("SELECT set_config('test.role','staff',false)");
@@ -48,7 +48,7 @@ await assert.rejects(db.query("SELECT admin_create_manual_order_v5('Customer',$1
 await assert.rejects(db.query("SELECT admin_create_manual_order_v5('Customer',$1::jsonb,'square',_site_user_id:='00000000-0000-0000-0000-000000000002')",[JSON.stringify([{product_id:'00000000-0000-0000-0000-000000000099',quantity:1}])]),/Unknown or inactive product/);
 assert.equal((await db.query('SELECT count(*)::int n FROM private.orders')).rows[0].n,before);
 await db.close();console.log('passed');
-`.replace("const access=(await db.query('SELECT * FROM get_my_order_chat_access($1)',[oid])).rows;", "await assert.rejects(db.query('SELECT * FROM get_my_order_chat_access($1)',[oid]),/Not authorized/);"),
+`,
   });
   expect(result.stderr).toBe("");
   expect(result.status).toBe(0);
