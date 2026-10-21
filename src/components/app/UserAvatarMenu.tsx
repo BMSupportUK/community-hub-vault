@@ -366,7 +366,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
           <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
             {inFanZone ? "Fan Zone account" : "Account"}
           </DropdownMenuLabel>
-          {!inFanZone ? (
+          {!inFanZone && staffPortalUser ? (
             <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
               <Pencil className="size-4 mr-2" />
               Edit profile
