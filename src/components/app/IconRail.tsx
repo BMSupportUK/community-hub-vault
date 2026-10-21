@@ -309,6 +309,15 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     return ai - bi;
   });
 
+  // The unlock control is not a page, so it never gets a saved rail position:
+  // pin it directly beside the Home button instead.
+  const unlockIndex = sorted.findIndex((i) => i.unlock);
+  if (unlockIndex >= 0) {
+    const [unlockItem] = sorted.splice(unlockIndex, 1);
+    const homeIndex = sorted.findIndex((i) => i.to === "/portal" || i.to === "/staff-portal");
+    sorted.splice(homeIndex + 1, 0, unlockItem);
+  }
+
   const reorder = async (targetKey: string) => {
     const src = dragKey.current;
     dragKey.current = null;
