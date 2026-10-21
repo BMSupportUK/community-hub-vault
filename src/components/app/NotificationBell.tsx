@@ -24,6 +24,8 @@ function playKindTone(kind: string, label: string) {
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { closeLocalNotifications } from "@/lib/local-notify";
 import { staffOrderNotificationLink } from "@/lib/order-notification-link";
+import { CustomerOrderNoticeActions } from "@/components/checkout/CustomerOrderNoticeActions";
+import { CUSTOMER_ORDER_PAYMENT_KIND, customerOrderNoticeId } from "@/lib/customer-order-notice";
 
 type Notif = {
   id: string;
@@ -134,6 +136,12 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
               action: n.link_path
                 ? { label: "Go to ticket", onClick: () => navigate({ to: n.link_path! } as never) }
                 : undefined,
+            });
+          } else if (n.kind === CUSTOMER_ORDER_PAYMENT_KIND && n.entity_id) {
+            const orderId = customerOrderNoticeId(n.source, n.kind, n.entity_id);
+            if (orderId) toast(n.title, {
+              description: <div className="space-y-3"><p>{n.body}</p><CustomerOrderNoticeActions orderId={orderId} /></div>,
+              duration: 20000,
             });
           } else if (n.kind === "order_paid") {
             // PaymentConfirmedAlert owns the sound + popup; a second toast and
@@ -441,6 +449,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
             {items.map((n) => {
               const Icon = iconFor(n.kind);
               const isUnread = !readIds.has(n.id);
+              const customerOrderId = customerOrderNoticeId(n.source, n.kind, n.entity_id);
               return (
                 <li
                   key={n.id}
@@ -479,7 +488,8 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
                         </button>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {(n.link_path || staffOrderNotificationLink(n.kind, n.entity_id)) && (
+                        {customerOrderId && <CustomerOrderNoticeActions orderId={customerOrderId} onOpen={() => setOpen(false)} />}
+                        {!customerOrderId && (n.link_path || staffOrderNotificationLink(n.kind, n.entity_id)) && (
                           <Button
                             size="sm"
                             variant="secondary"

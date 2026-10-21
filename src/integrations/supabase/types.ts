@@ -8243,6 +8243,13 @@ export type Database = {
         Args: { _password: string; _token: string }
         Returns: Json
       }
+      get_my_order_chat_access: {
+        Args: { p_order_id: string }
+        Returns: {
+          password: string
+          token: string
+        }[]
+      }
       get_or_create_fan_dm_thread: { Args: { _other: string }; Returns: string }
       get_pending_expiry_reminders: {
         Args: { _kind: string }

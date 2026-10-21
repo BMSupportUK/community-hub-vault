@@ -1,4 +1,5 @@
 import { ProviderInvoicePayment } from "@/components/checkout/ProviderInvoicePayment";
+import { customerOrderDestination } from "@/lib/customer-order-notice";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -1482,11 +1483,10 @@ function Storefront() {
     const row = (Array.isArray(link) ? link[0] : link) as { token: string; password: string } | null;
     if (!le && row?.token) {
       try { sessionStorage.setItem(`bm-pay-${row.token}`, row.password); } catch { /* ignore */ }
-      navigate({ to: "/pay/$token", params: { token: row.token } });
-    } else {
-      if (le) toast.error(le.message);
-      navigate({ to: "/shop", search: { view: "orders", id: order.id ?? undefined } });
     }
+    if (le) toast.error("Order placed, but secure checkout could not be prepared. Open your order to try again.");
+    setTab("orders");
+    navigate(customerOrderDestination());
   };
 
   return (
