@@ -10,6 +10,8 @@ import { Link } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import { PortalLock } from "@/components/app/PortalLock";
 import { isPortalPath } from "@/lib/customer-portal";
+import { StaffPortalTabs, isStaffPortalPath } from "@/components/app/StaffPortalTabs";
+import { isStaffPortalUser } from "@/lib/portal-home";
 
 const ApprovedDeferredExtras = lazy(() =>
   import("@/components/app/ApprovedDeferredExtras").then((module) => ({
@@ -67,9 +69,16 @@ function ApprovedLayout() {
   // The Customer Portal welcome page stays open; it offers its own Unlock button.
   const isPortalHome = (x: string) => x === "/portal" || x === "/portal/";
   const portalGate = (isPortalPath(path) && !isPortalHome(path)) || (isPortalPath(resolvedPath) && !isPortalHome(resolvedPath));
+  const inner = portalGate ? <PortalLock><Outlet /></PortalLock> : <Outlet />;
+  const staffTabs = isStaffPortalUser(roles) && isStaffPortalPath(path);
   const page = (
     <DemoGate path={path}>
-      {portalGate ? <PortalLock><Outlet /></PortalLock> : <Outlet />}
+      {staffTabs ? (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <StaffPortalTabs />
+          {inner}
+        </div>
+      ) : inner}
     </DemoGate>
   );
 
