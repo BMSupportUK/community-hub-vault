@@ -233,7 +233,7 @@ function WelcomePage() {
                 </div>
 
                 {/* Right column — staff status box or member subscription details. */}
-                <div className="order-2 flex min-h-0 min-w-0 flex-col gap-3 self-start">
+                <div className={`order-2 flex min-h-0 min-w-0 flex-col gap-3 ${isStaffAccount ? "self-stretch" : "self-start"}`}>
                   {isStaffAccount ? (
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                   ) : (
