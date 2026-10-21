@@ -1,179 +1,24 @@
-import { AdSenseSlot } from "@/components/app/AdSenseSlot";
-import { createFileRoute } from "@tanstack/react-router";
-import { Headphones, Star } from "lucide-react";
-import heroImg from "@/assets/member-hero.jpg";
-import { useAuth, type AppRole } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
-import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
-import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
-import { Nameplate } from "@/components/app/Nameplate";
-import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
-import { formatRoleLabel } from "@/lib/role-label";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
+import { portalHomePath } from "@/lib/portal-home";
 
+// Home now sends each person to their own portal (staff or customer).
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
-  component: WelcomePage,
+  component: HomeRedirect,
   head: () => ({
     meta: [
       { title: "Home | BM Support" },
-      { name: "description", content: "Your BM Support member home for community access, account services and support." },
+      { name: "description", content: "Opening your BM Support portal." },
       { property: "og:title", content: "Home | BM Support" },
-      { property: "og:description", content: "Your BM Support member home for community access, account services and support." },
+      { property: "og:description", content: "Opening your BM Support portal." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
 });
 
-function WelcomePage() {
-  const { user, hasRole, roles } = useAuth();
-  const isStaffAccount =
-    hasRole("admin") || hasRole("management") || hasRole("staff") || hasRole("moderator");
-  // Highest-priority staff role, used for the greeting line under the hero image.
-  const STAFF_ROLE_PRIORITY: AppRole[] = ["admin", "management", "moderator", "staff"];
-  const staffRole = STAFF_ROLE_PRIORITY.find((r) => roles.includes(r));
-  const staffRoleLabel = formatRoleLabel(staffRole);
-  const fallbackName = (user?.email ?? "there").split("@")[0];
-  const [displayName, setDisplayName] = useState<string>(fallbackName);
-  const [nameplateId, setNameplateId] = useState<string | null>(null);
-  const [isStaffShiftActive, setIsStaffShiftActive] = useState(false);
-  const name = displayName;
-
-  useEffect(() => {
-    if (!user?.id) return;
-    (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name, username, equipped_nameplate_id")
-        .eq("id", user.id)
-        .maybeSingle();
-      const n = data?.display_name || data?.username;
-      if (n) setDisplayName(n);
-      setNameplateId(data?.equipped_nameplate_id ?? null);
-    })();
-  }, [user?.id]);
-
-  return (
-    <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-visible md:overflow-y-auto">
-      {/* Hero */}
-      <div className="grid min-h-dvh w-full min-w-0 grid-rows-[auto_auto] overflow-x-hidden overflow-y-visible md:min-h-full">
-      <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
-        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px] md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
-          <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
-            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start md:grid-cols-2 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
-                {/* Left column — hero image with the greeting beneath, mirroring the staff home. */}
-                <div className="order-1 flex min-w-0 flex-col gap-3 self-start text-white">
-                  <div className="relative aspect-video w-full min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
-                    <div className="absolute inset-0">
-                      <img
-                        src={heroImg}
-                        alt="BM Support — community and support"
-                        width={1920}
-                        height={1080}
-                        className="h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
-                    </div>
-                  </div>
-                  {isStaffAccount && (
-                    <div className="px-1">
-                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-sm font-semibold text-sky-100/90">Hey {name}</span>
-                        {staffRoleLabel && (
-                          <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
-                            {staffRoleLabel}
-                          </span>
-                        )}
-                      </div>
-                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
-                        Welcome to The Staff Portal
-                      </h1>
-                      {/* Shift encouragement sits directly under the staff welcome heading. */}
-                      <p className={`mt-2.5 px-1 ${isStaffShiftActive ? "text-sm font-medium text-white/90" : "text-base font-semibold text-white"}`}>
-                        <Star className={`mr-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle ${isStaffShiftActive ? "" : "size-5"}`} />
-                        <span>
-                          {isStaffShiftActive
-                            ? `Have a great shift, ${name} — thanks for being on. We've got your back if anything comes up.`
-                            : `See you on your next shift, ${name} — enjoy your time away.`}
-                        </span>
-                        <Star className={`ml-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle ${isStaffShiftActive ? "" : "size-5"}`} />
-                      </p>
-                    </div>
-                  )}
-                  {!isStaffAccount && (
-                    // Member nameplate greeting stays under the picture; welcome text sits by the subscription box.
-                    <div className="px-1">
-                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-sm font-semibold text-sky-100/90">Hey</span>
-                        <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg">
-                          <Nameplate
-                            id={nameplateId}
-                            className="absolute inset-0"
-                            fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
-                          />
-                          <div className="relative flex h-full items-center px-2.5">
-                            <span className="truncate font-display text-sm font-semibold text-white">{name}</span>
-                          </div>
-                        </div>
-                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
-                          Member
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right column — staff status box or member subscription details. */}
-                <div className={`order-2 flex min-h-0 min-w-0 flex-col gap-3 ${isStaffAccount ? "self-stretch" : "self-start"}`}>
-                  {isStaffAccount ? (
-                    <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
-                  ) : (
-                    <>
-                      <SubscriptionDetailsCard compact embedded />
-                      {/* Welcome heading and message sit under the subscription box. */}
-                      <div className="px-1">
-                        <h1 className="break-words font-display text-lg font-bold leading-tight lg:text-xl">
-                          Welcome to The Customer Portal
-                        </h1>
-                        <p className="mt-2 text-xs font-medium text-white/90 lg:text-sm">
-                          <Star className="mr-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
-                          <span>Manage your account, orders and logins, and get help — all in one place.</span>
-                          <Star className="ml-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="relative z-10 mx-3 -mt-10 grid grid-cols-1 gap-2 sm:mx-5 sm:grid-cols-2 lg:mx-6">
-              {!hasRole("moderator") && (
-                <div
-                  className="inline-flex min-h-16 items-center justify-center gap-2 rounded-xl border-2 border-white/40 bg-surface/90 px-3 py-2.5 text-xs font-medium text-foreground shadow-[0_12px_30px_rgba(0,0,0,0.3)] backdrop-blur xl:gap-3 xl:px-4 xl:py-3 xl:text-sm"
-                >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 xl:size-9">
-                    <Headphones className="size-4 text-white" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-foreground">Expert Support</span>
-                    <span className="block text-[10px] text-muted-foreground xl:text-[11px]">We're always here to help.</span>
-                  </span>
-                  <span className="size-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60 xl:ml-2" />
-                </div>
-              )}
-              <ServiceStatusPill className="min-h-16 justify-center self-stretch gap-2 bg-surface/90 px-3 py-2.5 text-xs shadow-[0_12px_30px_rgba(0,0,0,0.3)] backdrop-blur xl:gap-3 xl:px-4 xl:py-3 xl:text-sm [&_.status-copy]:text-[10px] xl:[&_.status-copy]:text-[11px] [&_.status-icon]:size-8 xl:[&_.status-icon]:size-9 [&_.status-dot]:ml-0 xl:[&_.status-dot]:ml-2" />
-            </div>
-          </div>
-
-          <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
-            <AdSenseSlot slot="homeSkyscraper" />
-            </div>
-          </div>
-      </section>
-      </div>
-
-    </main>
-  );
+function HomeRedirect() {
+  const { roles, loading } = useAuth();
+  if (loading) return null;
+  return <Navigate to={portalHomePath(roles)} replace />;
 }
