@@ -344,42 +344,53 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
     { to: "/portal/settings", label: "Settings", icon: Settings, show: true },
   ] : [];
-  const sorted = [...visible].sort((a, b) => {
-    const ai = order[orderKey(a.to)] ?? items.findIndex((x) => x.to === a.to) * 10 + 1000;
-    const bi = order[orderKey(b.to)] ?? items.findIndex((x) => x.to === b.to) * 10 + 1000;
-    return ai - bi;
-  });
-
-  // The unlock control is not a page, so it never gets a saved rail position:
-  // pin it directly beside the Home button instead.
-  const unlockIndex = sorted.findIndex((i) => i.unlock);
-  if (unlockIndex >= 0) {
-    const [unlockItem] = sorted.splice(unlockIndex, 1);
+  // Default layout: base items, with the portal pages right after Home.
+  const base = [...visible];
+  const unlockIndex = base.findIndex((i) => i.unlock);
+  const unlockItem = unlockIndex >= 0 ? base.splice(unlockIndex, 1)[0] : null;
+  {
+    const homeIndex = base.findIndex((i) => i.to === "/portal" || i.to === "/staff-portal");
+    base.splice(homeIndex + 1, 0, ...portalItems.filter((i) => i.show).map((i) => ({ ...i, key: `portal:${i.key ?? i.to}` })));
+  }
+  // Admin-chosen order is shared by everyone; saved per rail (Fan Zone,
+  // staff, customer) so each role's icon set keeps its own sequence.
+  const railScope = inFanZone ? "fanzone" : isStaff ? "staff" : "member";
+  const idOf = (i: RailItem) => i.key ?? i.to;
+  const savedKey = (id: string) => `rail:${railScope}:${id}`;
+  const sorted = base
+    .map((i, idx) => ({ i, rank: order[savedKey(idOf(i))] ?? 100000 + idx }))
+    .sort((a, b) => a.rank - b.rank)
+    .map((x) => x.i);
+  // The unlock control is not a page: pin it directly beside Home.
+  if (unlockItem) {
     const homeIndex = sorted.findIndex((i) => i.to === "/portal" || i.to === "/staff-portal");
     sorted.splice(homeIndex + 1, 0, unlockItem);
-  }
-  {
-    const homeIndex = sorted.findIndex((i) => i.to === "/portal" || i.to === "/staff-portal");
-    const after = sorted[homeIndex + 1]?.unlock ? homeIndex + 2 : homeIndex + 1;
-    sorted.splice(after, 0, ...portalItems.filter((i) => i.show).map((i) => ({ ...i, key: `portal:${i.key ?? i.to}` })));
   }
 
   const reorder = async (targetKey: string) => {
     const src = dragKey.current;
     dragKey.current = null;
     if (!src || src === targetKey) return;
-    const keys = sorted.filter((i) => !i.unlock).map((i) => i.to);
+    const keys = sorted.filter((i) => !i.unlock).map(idOf);
     const from = keys.indexOf(src);
     const to = keys.indexOf(targetKey);
     if (from < 0 || to < 0) return;
     keys.splice(to, 0, keys.splice(from, 1)[0]);
-    const rows = keys.map((key, i) => ({ key: orderKey(key), sort_order: (i + 1) * 10 }));
-    // Merge so the other rail's saved order stays intact.
+    const rows = keys.map((key, i) => ({ key: savedKey(key), sort_order: (i + 1) * 10 }));
     const nextOrder = { ...order, ...Object.fromEntries(rows.map((r) => [r.key, r.sort_order])) };
     cachedNavOrder = nextOrder;
     setOrder(nextOrder);
-    await supabase.from("nav_order").upsert(rows, { onConflict: "key" });
+    const { error } = await supabase.from("nav_order").upsert(rows, { onConflict: "key" });
+    if (error) console.error("Saving rail order failed", error);
   };
+  const dragProps = (id: string) => ({
+    draggable: isAdmin,
+    onDragStart: () => { dragKey.current = id; },
+    onDragOver: (e: React.DragEvent) => { if (isAdmin) e.preventDefault(); },
+    onDrop: () => void reorder(id),
+    className: cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined),
+  });
+
 
   return (
     <aside className={cn(
