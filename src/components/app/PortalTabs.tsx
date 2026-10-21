@@ -7,6 +7,9 @@ import { useHasSalesAccount } from "@/hooks/use-sales-account";
 import { usePortalUnlocked } from "@/components/app/PortalLock";
 import { PortalUnlockButton } from "@/components/app/PortalUnlockButton";
 import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
+import { BmInboxBell } from "@/components/app/BmInboxBell";
+import { MentionsBadge } from "@/components/app/MentionsBadge";
+import { NotificationBell } from "@/components/app/NotificationBell";
 
 type Tab = "home" | "shop" | "orders" | "tickets" | "logins" | "guides" | "referrals" | "knowledge" | "settings";
 
@@ -25,6 +28,11 @@ export function PortalTabs({ active }: { active?: Tab }) {
     <nav aria-label="Customer Portal" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface/80 px-3 py-2 backdrop-blur sm:px-6">
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Customer Portal</span>
       <Link to="/portal" className={cn(item, current === "home" ? on : off)}><Home className="size-4" />Home</Link>
+      <div className="ml-1 flex shrink-0 items-center gap-1.5 [&_a]:size-9 [&_a]:rounded-lg [&_button]:size-9 [&_button]:rounded-lg">
+        <BmInboxBell />
+        <MentionsBadge />
+        <NotificationBell />
+      </div>
       {!isStaff && !unlocked && <PortalUnlockButton />}
       <PortalCountdown />
     </nav>
