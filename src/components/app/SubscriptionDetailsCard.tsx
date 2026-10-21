@@ -43,12 +43,13 @@ export function SubscriptionDetailsCard({
     let active = true;
     supabase
       .from("profiles")
-      .select("display_name, username")
+      .select("display_name, username, equipped_nameplate_id")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (!active) return;
         setCustomerName((data?.display_name || data?.username || null) as string | null);
+        setNameplateId((data?.equipped_nameplate_id ?? null) as string | null);
       });
     const load = () => {
       supabase
