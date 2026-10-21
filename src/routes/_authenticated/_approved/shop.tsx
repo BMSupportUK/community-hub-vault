@@ -1035,13 +1035,11 @@ function BuySteps({
           : placed
             ? ticketId ? "Awaiting your payment — open the support ticket for this order." : "Awaiting your payment — open your secure checkout page to pay."
             : "You'll get your own secure checkout page — pay by card or bank transfer.",
-      cta: cancelled ? "Browse products" : placed ? (ticketId ? "Open ticket" : "Open secure checkout") : undefined,
+      cta: cancelled ? "Browse products" : placed && ticketId ? "Open ticket" : undefined,
       action: cancelled
         ? onBrowse
-        : placed
-          ? ticketId
-            ? () => onViewTicket(ticketId)
-            : () => openSecureCheckout(latestOrder!.id, onViewOrder)
+        : placed && ticketId
+          ? () => onViewTicket(ticketId)
           : undefined,
     },
     {
