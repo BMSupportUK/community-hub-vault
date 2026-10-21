@@ -38,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/_approved")({
 function ApprovedLayout() {
   const { roles } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const resolvedPath = useRouterState({ select: (r) => r.resolvedLocation?.pathname ?? r.location.pathname });
   const perms = usePagePermissions();
   const isDemo = useIsDemoAccount();
 
@@ -61,9 +62,12 @@ function ApprovedLayout() {
     );
   }
 
+  // While navigating away, the old portal page can still render for a moment;
+  // keep the lock on if either the shown or the target page is a portal page.
+  const portalGate = isPortalPath(path) || isPortalPath(resolvedPath);
   const page = (
     <DemoGate path={path}>
-      {isPortalPath(path) ? <PortalLock><Outlet /></PortalLock> : <Outlet />}
+      {portalGate ? <PortalLock><Outlet /></PortalLock> : <Outlet />}
     </DemoGate>
   );
 
