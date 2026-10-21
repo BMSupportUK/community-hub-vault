@@ -14,6 +14,7 @@ import {
   startLiveHelp,
 } from "@/lib/live-help.functions";
 import { CustomerCheckoutChatPanel, StaffCheckoutChatPanel, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+import { CallWrapUp } from "@/components/checkout/CallWrapUp";
 import { VideoCallStage, staffPlaceholderMale } from "@/components/app/VideoCallStage";
 import { StaffCallViewer, StaffOnCallBox, useStaffCallRoom } from "@/components/checkout/StaffCallRoom";
 import { useAuth } from "@/hooks/use-auth";
