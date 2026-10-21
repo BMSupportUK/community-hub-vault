@@ -5,7 +5,7 @@
 - NHL Center Ice treats its listing clock as ET and converts to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use stated UK times.
 - Sports formats need split/safety/read-back tests; normalize dual-clock typos before title pairing; DAZN inline slots stay separate, qualifiers extend titles.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
-- Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
+- Every customer checkout requires the entered order password, including signed-in shop owners; paid, non-cancelled orders can open published guides through the same credentials.
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
 - Pre-account manual logins are order-private; claim moves them to customer credentials, the admin list's source of truth.
 - Signed-out checkout app logins use only token-gated SECURITY DEFINER reads, never the staff credentials view.
