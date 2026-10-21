@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Home, MessagesSquare, BookOpen, Settings, Trophy, KeyRound, Package, ShoppingCart, Ticket, Timer, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useHasSalesAccount } from "@/hooks/use-sales-account";
 import { usePortalUnlocked } from "@/components/app/PortalLock";
 import { PortalUnlockButton } from "@/components/app/PortalUnlockButton";
 import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
@@ -44,6 +45,7 @@ export function PortalTabs({ active }: { active?: Tab }) {
 
 function PortalCountdown() {
   const { isStaff } = useAuth();
+  const hasSales = useHasSalesAccount();
   const [left, setLeft] = useState<number | null>(null);
   useEffect(() => {
     const tick = () => { try { setLeft(portalSecondsRemaining(window.localStorage.getItem(PORTAL_EXPIRY_KEY))); } catch { setLeft(0); } };
@@ -51,7 +53,7 @@ function PortalCountdown() {
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
   }, []);
-  if (isStaff || !left) return null;
+  if (isStaff || hasSales || !left) return null;
   const low = left <= 300;
   return (
     <div role="timer" aria-label="Portal access remaining" className={cn("ml-auto inline-flex shrink-0 items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-sm font-bold shadow-lg", low ? "animate-pulse border-destructive bg-destructive text-destructive-foreground" : "border-primary bg-primary/15 text-foreground shadow-primary/30")}>

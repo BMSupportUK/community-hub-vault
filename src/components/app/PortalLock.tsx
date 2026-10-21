@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Lock, Timer } from "lucide-react";
 import { PortalCodeForm } from "@/components/app/PortalCodeForm";
 import { useAuth } from "@/hooks/use-auth";
+import { useHasSalesAccount } from "@/hooks/use-sales-account";
 import { requestMyPortalCode, unlockMyPortalCode } from "@/lib/customer-portal.functions";
 import { PORTAL_EXPIRY_KEY, PORTAL_USER_KEY, portalAccessValid, portalSecondsRemaining, portalCountdown } from "@/lib/customer-portal";
 
@@ -18,6 +19,7 @@ function unlocked(userId: string) {
 /** Customer content stays unmounted until the entered email code is verified. */
 export function PortalLock({ children }: { children: ReactNode }) {
   const { isStaff, user } = useAuth();
+  const hasSales = useHasSalesAccount();
   const send = useServerFn(requestMyPortalCode);
   const verify = useServerFn(unlockMyPortalCode);
   const [grant, setGrant] = useState<{ userId: string; open: boolean } | null>(null);
@@ -36,7 +38,7 @@ export function PortalLock({ children }: { children: ReactNode }) {
     document.addEventListener("visibilitychange", check);
     return () => { window.clearInterval(id); window.removeEventListener(PORTAL_LOCK_EVENT, check); window.removeEventListener("storage", check); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", check); };
   }, [user?.id]);
-  if (isStaff) return <>{children}</>;
+  if (isStaff || hasSales) return <>{children}</>;
   if (user && grant?.userId === user.id && grant.open) return <>{children}</>;
   async function unlock(code: string) {
     if (!user) throw new Error("Please sign in again.");
@@ -61,6 +63,7 @@ export function PortalLock({ children }: { children: ReactNode }) {
 /** True while the signed-in customer's portal is unlocked. */
 export function usePortalUnlocked() {
   const { user } = useAuth();
+  const hasSales = useHasSalesAccount();
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const check = () => setOpen(user ? unlocked(user.id) : false);
@@ -70,5 +73,5 @@ export function usePortalUnlocked() {
     window.addEventListener("storage", check);
     return () => { window.clearInterval(id); window.removeEventListener(PORTAL_LOCK_EVENT, check); window.removeEventListener("storage", check); };
   }, [user?.id]);
-  return open;
+  return open || hasSales;
 }
