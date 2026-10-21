@@ -1,3 +1,4 @@
+import { fetchOrderUserNames, orderCustomerName } from "@/lib/order-customer-name";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChartNoAxesCombined, ChartPie, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet, RefreshCw } from "lucide-react";
 import { ProfitSummaryChart } from "@/components/app/ProfitSummaryChart";
@@ -19,7 +20,7 @@ const PROFIT_STATUSES = ["paid", "processing", "shipped", "completed"];
 
 type Product = { id: string; name: string; price_cents: number };
 type Item = { product_id: string | null; product_name: string; unit_price_cents: number; quantity: number; unit_cost_cents: number | null };
-type Order = { id: string; status: string; total_cents: number; created_at: string; shipping_name: string | null; existing_username: string | null; order_items: Item[]; payments: ProfitPayment[] };
+type Order = { id: string; user_id?: string | null; status: string; total_cents: number; created_at: string; shipping_name: string | null; existing_username: string | null; order_items: Item[]; payments: ProfitPayment[] };
 
 const calc = calculateProfit;
 
@@ -36,12 +37,13 @@ export function ProfitCostsPanel() {
   const [saving, setSaving] = useState<string | null>(null);
   const [refreshingFees, setRefreshingFees] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
 
   const load = async () => {
     const [p, c, o] = await Promise.all([
       supabase.from("products").select("id, name, price_cents").order("name"),
       supabase.from("product_costs").select("product_id, cost_cents"),
-      supabase.from("orders").select("id, status, total_cents, created_at, shipping_name, existing_username").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("orders").select("id, user_id, status, total_cents, created_at, shipping_name, existing_username").order("created_at", { ascending: false }).limit(5000),
     ]);
     const loadError = p.error ?? c.error ?? o.error;
     if (loadError) { toast.error(loadError.message); return; }
@@ -84,6 +86,7 @@ export function ProfitCostsPanel() {
       }
     }
     setMethodOf(methods);
+    setUserNames(await fetchOrderUserNames((o.data ?? []).map((x) => x.user_id as string | null)));
     setOrders(((o.data ?? []) as unknown as Order[]).map((x) => ({ ...x, order_items: items.filter((i) => i.order_id === x.id), payments: payments[x.id] ?? [] })).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
     setLoaded(true);
   };
@@ -265,7 +268,7 @@ export function ProfitCostsPanel() {
                         {monthOrders.map((o) => { const f = calc(o); return (
                           <tr key={o.id} className="border-t border-border">
                             <td className="px-3 py-2 whitespace-nowrap">{new Date(o.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</td>
-                            <td className="px-3 py-2">{o.shipping_name || o.existing_username || "—"}</td>
+                            <td className="px-3 py-2">{orderCustomerName(o, userNames)}</td>
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{money(o.total_cents)}</td>
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{f.feesMissing ? (f.fees ? `${money(f.fees)} + unknown` : "Unknown") : money(f.fees)}</td>
                             <td className="px-3 py-2 whitespace-nowrap tabular-nums">{f.feesMissing ? "Unknown" : money(o.total_cents - f.fees)}</td>

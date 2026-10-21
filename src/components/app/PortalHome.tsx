@@ -150,8 +150,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                           Member
                         </span>
                       </div>
-                      <SubscriptionDetailsCard compact embedded />
-                      {/* Welcome heading and message sit under the subscription box. */}
+                      {/* Welcome heading and message sit above the subscription box. */}
                       <div className="px-1">
                         <h1 className="break-words font-display text-xl font-extrabold leading-tight lg:text-2xl bg-gradient-to-r from-white via-amber-100 to-pink-200 bg-clip-text text-transparent drop-shadow">
                           Welcome to The Customer Portal
@@ -162,6 +161,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                           <Star className="ml-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
                         </p>
                       </div>
+                      <SubscriptionDetailsCard compact embedded />
                     </>
                   )}
                 </div>
