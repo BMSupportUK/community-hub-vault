@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
-import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { ADMIN_CUSTOMERS_LINK, adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
+import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
 import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/page-access";
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
@@ -132,6 +134,7 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   };
 
   if (!(isFz ? canOpenFanZoneAdminPanel(roles) : canOpenAdminPanel(roles))) return <Navigate to="/home" />;
+  const isAdminRole = roles.includes("admin") || roles.includes("management");
 
   return (
     <main className="relative isolate h-full min-h-0 flex-1 overflow-y-auto overscroll-contain">

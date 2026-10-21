@@ -9,6 +9,21 @@ import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCar
 import { Nameplate } from "@/components/app/Nameplate";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { formatRoleLabel } from "@/lib/role-label";
+import { Clocks } from "@/components/app/Clocks";
+import { LockNowPill } from "@/components/app/ScreenLockProvider";
+import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
+
+/** Office time, lock, 2FA and VPN pills shown beside the "Hey" greeting. */
+function GreetingPills() {
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-2 [&_.hidden]:!flex">
+      <Clocks />
+      <LockNowPill />
+      <TwoFactorPill />
+      <VpnPill />
+    </div>
+  );
+}
 
 /** Portal home — staff layout for the Staff Portal, member layout for the Customer Portal. */
 export function PortalHome({ staff }: { staff: boolean }) {
