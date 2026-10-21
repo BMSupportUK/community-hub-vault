@@ -202,7 +202,7 @@ function WelcomePage() {
                     </div>
                   )}
                   {!isStaffAccount && (
-                    // Same layout as the staff greeting: under the picture, left column.
+                    // Member nameplate greeting stays under the picture; welcome text sits by the subscription box.
                     <div className="px-1">
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="text-sm font-semibold text-sky-100/90">Hey</span>
