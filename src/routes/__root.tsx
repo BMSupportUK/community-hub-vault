@@ -25,6 +25,7 @@ import { ToastNotificationBridge } from "@/components/app/ToastNotificationBridg
 import { LocalSendReceiverBridge } from "@/components/app/LocalSendReceiverBridge";
 import { BmSplash } from "@/components/app/BmSplash";
 import { BackToTopButton } from "@/components/app/BackToTopButton";
+import { CustomerAccountReturnBanner } from "@/components/app/CustomerAccountSwitch";
 
 
 function NotFoundComponent() {
@@ -184,6 +185,7 @@ function RootComponent() {
         <FanZonePresenceTracker />
         <ForceSignOutListener />
         <Outlet />
+        <CustomerAccountReturnBanner />
         {!hasOwnBackToTop && <BackToTopButton />}
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
         <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />

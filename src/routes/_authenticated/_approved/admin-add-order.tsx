@@ -12,6 +12,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { customerDate } from "@/lib/customer-date";
+import { OrderSiteUserPicker, type OrderSiteUser } from "@/components/checkout/OrderSiteUserPicker";
+import { canSelectOrderSiteUser } from "@/lib/customer-account-access";
 import {
   discountCodeCents, eligibleSubtotalCents,
   discountCodeLabel,
@@ -42,7 +44,7 @@ function money(cents: number) {
 }
 
 function AddOrderPage() {
-  const { hasRole, user } = useAuth();
+  const { hasRole, user, roles } = useAuth();
   const navigate = useNavigate();
   const [custName, setCustName] = useState("");
   const [products, setProducts] = useState<{ id: string; name: string; price_cents: number }[] | null>(null);
@@ -65,12 +67,13 @@ function AddOrderPage() {
   const [customersLoading, setCustomersLoading] = useState(true);
   const [customerCodes, setCustomerCodes] = useState<Record<string, CustomerDiscountCode>>({});
   const [appliedCode, setAppliedCode] = useState<CustomerDiscountCode | null>(null);
+  const [siteUser, setSiteUser] = useState<OrderSiteUser | null>(null);
 
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
   }, []);
   useEffect(() => {
-    if (!hasRole("admin")) return;
+    if (!canSelectOrderSiteUser(roles)) return;
     void supabase.rpc("admin_customer_subscription_list").then(({ data, error }) => {
       setLookupError(error?.message ?? "");
       setManualCustomers(((data ?? []) as unknown as ManualCustomer[]).filter((c) => !c.hasSiteAccount));
@@ -92,7 +95,7 @@ function AddOrderPage() {
     })();
   }, [user?.id]);
 
-  if (!hasRole("admin")) return <Navigate to="/admin" />;
+  if (!canSelectOrderSiteUser(roles)) return <Navigate to="/admin" />;
   if (!isAdminUnlocked(user?.id)) return <Navigate to="/admin" search={{ next: "/admin-add-order" } as never} />;
 
   // A code only comes off the packages it is allowed for.
@@ -109,7 +112,7 @@ function AddOrderPage() {
     if (!custName.trim()) return toast.error("Enter the customer name");
     if (!items.length) return toast.error("Pick at least one product");
     if (!customerKind) return toast.error("Is this a new or existing customer?");
-    if (customerKind === "existing" && (!customerId || !renewalAccountId)) return toast.error("Choose the manual customer and account to renew");
+    if (!siteUser && customerKind === "existing" && (!customerId || !renewalAccountId)) return toast.error("Choose the manual customer and account to renew");
     if (!payMethod) return toast.error("Pick the payment method");
     const mail = email.trim();
     if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return toast.error("Enter a valid email address");
@@ -126,7 +129,7 @@ function AddOrderPage() {
     const createdAt = isToday
       ? undefined
       : new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
-    const { data: id, error } = await supabase.rpc("admin_create_manual_order_v4", {
+    const { data: id, error } = await supabase.rpc("admin_create_manual_order_v5", {
       _customer_name: custName.trim(),
       _items: items,
       _method: payMethod,
@@ -134,9 +137,10 @@ function AddOrderPage() {
       _discount_cents: discountCents,
       _customer_kind: customerKind,
       _created_at: createdAt ? createdAt.toISOString() : undefined,
-      _customer_id: customerKind === "existing" ? customerId : undefined,
-      _account_id: customerKind === "existing" ? renewalAccountId : undefined,
-      _skip_registration: skipRegistration,
+      _customer_id: !siteUser && customerKind === "existing" ? customerId : undefined,
+      _account_id: !siteUser && customerKind === "existing" ? renewalAccountId : undefined,
+      _skip_registration: !siteUser && hasRole("admin") && skipRegistration,
+      _site_user_id: siteUser?.id,
     });
     if (error) { setBusy(false); return toast.error(error.message); }
     const { data: o } = await supabase.from("orders").select("order_ref").eq("id", id as string).maybeSingle();
@@ -168,7 +172,7 @@ function AddOrderPage() {
             <SecureLinkPanel orderId={created.id} withChat={false} />
             <div className="flex gap-2 pt-2">
               <button type="button" onClick={back} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Back to Orders</button>
-              <Button variant="outline" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setSkipRegistration(false); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }}>Add another</Button>
+              <Button variant="outline" onClick={() => { setCreated(null); setQty({}); setCustName(""); setEmail(""); setDiscount(""); setCustomerKind(""); setSkipRegistration(false); setPayMethod(""); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); setSiteUser(null); }}>Add another</Button>
             </div>
           </div>
         </div>
@@ -194,10 +198,16 @@ function AddOrderPage() {
             <Button key={kind} variant={customerKind === kind ? "default" : "outline"} aria-pressed={customerKind === kind} onClick={() => { setCustomerKind(kind); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }} className="min-w-0 flex-1 h-10 sm:flex-none sm:px-6">{kind === "new" ? "New customer" : "Existing customer"}</Button>
           ))}
         </div>
+        <OrderSiteUserPicker selected={siteUser} onSelect={(selected) => {
+          setSiteUser(selected); setCustomerId(""); setRenewalAccountId(""); setSkipRegistration(false);
+          setCustName(selected?.display_name || selected?.username || ""); setEmail(selected?.email || "");
+          setAppliedCode(selected ? customerCodes[selected.id] ?? null : null);
+          if (selected) setCustomerKind("existing");
+        }} />
         <div className="flex min-w-0 flex-row items-start gap-4 sm:gap-6" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
         <div className="min-w-0 flex-1 space-y-5" style={{ flex: "1 1 0%", minWidth: 0 }}>
           <input aria-label="Customer name" value={custName} onChange={(e) => { setCustName(e.target.value); setCustomerId(""); setRenewalAccountId(""); setAppliedCode(null); }} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+          <input type="email" readOnly={!!siteUser} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Customer email (needed for Stripe / Square invoices)" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
           <div className="space-y-2">
             {products === null ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
@@ -264,9 +274,9 @@ function AddOrderPage() {
         </div>
         <aside aria-label="Manual customers" className="shrink-0 self-stretch border-l border-border pl-4 sm:pl-6" style={{ flex: "0 0 auto", width: "clamp(180px, 30%, 380px)" }}>
           <div className="space-y-4 sticky top-6">
-            <label htmlFor="skip-registration" className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm"><Checkbox id="skip-registration" className="mt-0.5 shrink-0" checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} /><span>Bypass account creation at the end of this order</span></label>
-            {customerKind === "existing" && <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>}
-            {customerKind === "existing" ? <>
+            {!siteUser && hasRole("admin") && <label htmlFor="skip-registration" className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm"><Checkbox id="skip-registration" className="mt-0.5 shrink-0" checked={skipRegistration} onCheckedChange={(value) => setSkipRegistration(value === true)} /><span>Bypass account creation at the end of this order</span></label>}
+            {!siteUser && customerKind === "existing" && <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Users className="size-5 text-primary" />Manual customers</h2>}
+            {!siteUser && customerKind === "existing" ? <>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
                 <input aria-label="Search manual customers" placeholder="Search name or login" value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm" />

@@ -10,6 +10,7 @@ import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { canViewStaffCheckout, canCompleteCheckoutSteps } from "@/lib/checkout-access";
+import { canSelectOrderSiteUser } from "@/lib/customer-account-access";
 import { ManualOrderLinkButton } from "@/components/checkout/ManualOrderLinkDialog";
 import { calculateProfit, type ProfitPayment } from "@/lib/profit-calculation";
 import { orderPaymentGroup, orderPaymentLabel } from '@/lib/profit-payment-groups';
@@ -195,7 +196,7 @@ export function OrderStatusAdminCard() {
           <h2 className="font-display text-lg font-semibold">Orders</h2>
           <p className="text-sm text-muted-foreground">Every order with its current status, by year and month.</p>
         </div>
-        {isAdmin && (
+        {canSelectOrderSiteUser(roles) && (
           <Link to="/admin-add-order" className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
             <Plus className="size-4" /> Add manual order
           </Link>
