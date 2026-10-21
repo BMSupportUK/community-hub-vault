@@ -107,6 +107,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_customer_account_switches: {
+        Row: {
+          admin_id: string
+          customer_id: string
+          expires_at: string
+          id: string
+          return_token_hash: string
+          returned_at: string | null
+          started_at: string
+        }
+        Insert: {
+          admin_id: string
+          customer_id: string
+          expires_at?: string
+          id?: string
+          return_token_hash: string
+          returned_at?: string | null
+          started_at?: string
+        }
+        Update: {
+          admin_id?: string
+          customer_id?: string
+          expires_at?: string
+          id?: string
+          return_token_hash?: string
+          returned_at?: string | null
+          started_at?: string
+        }
+        Relationships: []
+      }
       admin_unlock_lockouts: {
         Row: {
           failed_count: number
