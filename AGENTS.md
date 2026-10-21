@@ -34,7 +34,7 @@
 - Manual registration exceptions persist on checkout links, enforced by admin-only RPCs and a write trigger; creation saves atomically and PIN access remains independent.
 <!-- LOVABLE:END -->
 - playSound resolves uploaded overrides for all web callers; closed-app Android tones require an APK rebuild.
-- Tests use `bun test`, not Vitest-only APIs; swap globals with `Object.defineProperty` and restore.
+- Tests use `bun test` (no Vitest APIs); restore swapped globals.
 - Customer payment notifications contain no passwords; copy actions fetch through an authenticated owner-only read RPC without changing payment methods.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 - Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts. Pay by bank provider is a server-resolved app setting, GoCardless only when its secrets exist (switch without rebuild).
@@ -43,4 +43,4 @@
 - Secure-order video calls: one staff host relays the customer to other staff via a staff-only topic; the session ends only when the last staff leaves, longest-present staff takes over.
 - Ticket video: staff-only /video command makes a hashed 30-min token QR to public /video/$token, reusing the secure-order host/relay room.
 - Portal: hashed email codes with atomic attempt limits; layout gates content and owns the live timer. User-bound state fails closed; tabs replace rail entries.
-- Sign-in lands on /home, which redirects by role via `src/lib/portal-home.ts`: staff to /staff-portal, members to /portal (Customer Portal Home tab); both share `PortalHome`.
+- /home redirects by role (`src/lib/portal-home.ts`): staff to /staff-portal, members to /portal; both render `PortalHome`.
