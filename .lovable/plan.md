@@ -18,10 +18,16 @@ Every customer (site-account and manual) gets their own private portal page with
 - Staff can copy the link but can't reset it.
 - The customer's email stays hidden from everyone except admin and management, as now.
 
+## Side rail
+
+- Add a **Customer Portal** link to the side rail. Signed-in customers go straight into their own portal; staff go to the customer portal admin view.
+- Remove **Shop** and **Install Guides** from the side rail, because they now live inside the portal. No duplicates.
+- Old Shop and Install Guides web addresses send people to the matching portal tab, so saved links keep working.
+
 ## Things that stay the same
 
 - Site-account customers can still sign in to the main site normally; the portal is an extra way in.
-- Order passwords for secure checkout, payment options, video help and the existing Install Guides page for members are left unchanged.
+- Order passwords for secure checkout, payment options and video help are left unchanged.
 - Test and hidden accounts don't get portals.
 
 ## Open point
