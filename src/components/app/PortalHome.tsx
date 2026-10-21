@@ -163,7 +163,6 @@ export function PortalHome({ staff }: { staff: boolean }) {
                       </div>
                       <SubscriptionDetailsCard compact embedded />
                     </>
-                    </>
                   )}
                 </div>
             </div>
