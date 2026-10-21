@@ -487,7 +487,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
                         </button>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {customerOrderId && <CustomerOrderNoticeActions orderId={customerOrderId} onOpen={() => setOpen(false)} onCopied={() => { void markRead(n.id); setOpen(false); }} />}
+                        {customerOrderId && <CustomerOrderNoticeActions orderId={customerOrderId} onOpen={() => setOpen(false)} />}
                         {!customerOrderId && (n.link_path || staffOrderNotificationLink(n.kind, n.entity_id)) && (
                           <Button
                             size="sm"

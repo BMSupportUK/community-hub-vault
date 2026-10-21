@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 /** Passwords are fetched only on a signed-in owner's explicit action, never stored in notifications. */
-export function CustomerOrderNoticeActions({ orderId, onOpen, onCopied }: { orderId: string; onOpen?: () => void; onCopied?: () => void }) {
+export function CustomerOrderNoticeActions({ orderId, onOpen }: { orderId: string; onOpen?: () => void }) {
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   async function act(copy: boolean) {
@@ -18,7 +18,6 @@ export function CustomerOrderNoticeActions({ orderId, onOpen, onCopied }: { orde
       if (error || !access?.token || !access.password) throw new Error("Your secure order could not be opened. Please try again.");
       if (copy) {
         await navigator.clipboard.writeText(access.password);
-        onCopied?.();
         toast.success("Secure-chat password copied");
       } else {
         onOpen?.();
