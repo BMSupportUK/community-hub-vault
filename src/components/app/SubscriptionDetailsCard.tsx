@@ -35,8 +35,18 @@ export function SubscriptionDetailsCard({
     if (!user) {
       setCreds([]);
       setLoaded(true);
+      setCustomerName(null);
       return;
     }
+    supabase
+      .from("profiles")
+      .select("display_name, username")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        setCustomerName((data?.display_name || data?.username || null) as string | null);
+      });
     let active = true;
     const load = () => {
       supabase
