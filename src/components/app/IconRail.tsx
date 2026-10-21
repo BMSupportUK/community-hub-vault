@@ -243,7 +243,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     // Home is each role's own portal: staff get the Staff Portal, customers the Customer Portal.
     { to: isStaff ? "/staff-portal" : "/portal", label: "Home", icon: Home, show: true },
     // Customers unlock their portal from beside the Home button.
-    { to: "/portal-unlock", label: "Unlock portal", icon: Lock, show: !isStaff, unlock: true },
+    { to: "/portal-unlock", label: "Unlock portal", icon: Lock, show: !!user && !isStaff, unlock: true },
     // BM Support Inbox lives in the top header (before the mentions icon), not the rail.
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     // Customers reach Tickets through the Customer Portal tabs; staff keep it here.
@@ -313,7 +313,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     const src = dragKey.current;
     dragKey.current = null;
     if (!src || src === targetKey) return;
-    const keys = sorted.map((i) => i.to);
+    const keys = sorted.filter((i) => !i.unlock).map((i) => i.to);
     const from = keys.indexOf(src);
     const to = keys.indexOf(targetKey);
     if (from < 0 || to < 0) return;
@@ -356,6 +356,13 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
             : i.to === "/home/$channel"
               ? path.startsWith("/home/")
               : path.startsWith(i.to);
+        if (i.unlock) {
+          return (
+            <div key={i.to} className="relative z-10 shrink-0">
+              <PortalRailUnlock />
+            </div>
+          );
+        }
         return (
           <div
             key={i.to}
