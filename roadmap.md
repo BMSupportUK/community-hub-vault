@@ -1,6 +1,11 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Account switching and site-user manual orders
+- [ ] Add audited admin-only login as customer with safe return to the original admin account.
+- [ ] Allow admin/management to select a site user in the manual-order dialog; assign the order and payment notification atomically.
+- [ ] Run access tests and verify switching, returning, and order ownership through the UI where security gates permit.
+
 ## Same-day cover and swap approvals
 - [x] Restore authorized same-day cover approvals without reopening closed rota bookings; applied database fix and isolated approval/sign-in read-back pass.
 - [x] Make shift swap reassignment and approval atomic; retain duplicate-shift protection. Ten database/cutoff regressions pass; signed-in Shifts opens without errors and preview build OK.
