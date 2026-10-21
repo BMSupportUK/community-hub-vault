@@ -1,13 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Copy, KeyRound, Loader2, Lock } from "lucide-react";
+import { KeyRound, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { ManualCredentialCards } from "@/components/app/ManualCredentialCards";
 import { readPortalCredentials } from "@/lib/customer-portal.functions";
-import { supabase } from "@/integrations/supabase/client";
 import type { ManualCredential } from "@/lib/manual-credentials-schema";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
@@ -21,16 +20,6 @@ export const Route = createFileRoute("/_authenticated/_approved/portal/logins")(
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex, nofollow" },
   ] }),
 });
-
-function PortalLink() {
-  const [url, setUrl] = useState<string | null>(null), [copied, setCopied] = useState(false);
-  useEffect(() => { void supabase.rpc("get_my_customer_portal_code").then(({ data }) => { if (data) setUrl(`${window.location.origin}/portal/${data}`); }); }, []);
-  if (!url) return null;
-  return <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface p-4">
-    <div className="min-w-0 flex-1"><p className="text-sm font-semibold">Your personal portal link</p><p className="truncate font-mono text-xs text-muted-foreground">{url}</p><p className="mt-1 text-xs text-muted-foreground">This address changes every day. Your login emails always contain the latest one.</p></div>
-    <Button variant="outline" size="sm" onClick={async () => { await navigator.clipboard.writeText(url); setCopied(true); toast.success("Portal link copied"); window.setTimeout(() => setCopied(false), 2000); }}>{copied ? <Check /> : <Copy />}Copy</Button>
-  </div>;
-}
 
 function PortalLoginsPage() {
   const read = useServerFn(readPortalCredentials);
@@ -56,7 +45,6 @@ function PortalLoginsPage() {
     <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8"><div className="mx-auto max-w-5xl rounded-2xl border border-border bg-background/80 p-4 backdrop-blur sm:p-6">
       <h1 className="mb-1 font-display text-2xl font-bold">My App Logins</h1>
       <p className="mb-6 text-sm text-muted-foreground">Your TV app usernames and passwords. Enter your PIN to show them for 10 minutes.</p>
-      <PortalLink />
       {!accounts ? <form onSubmit={submit} className="max-w-sm space-y-4 rounded-xl border border-border bg-surface p-5">
         <div className="flex items-center gap-2 font-semibold"><Lock className="size-4 text-primary" />Enter your 6-digit PIN</div>
         <p className="text-xs text-muted-foreground">First time? The PIN you enter now becomes your PIN. Five wrong tries locks access for one hour.</p>
