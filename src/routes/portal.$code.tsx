@@ -5,7 +5,7 @@ import { Loader2, Mail, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { requestPortalLink, redeemPortalLink } from "@/lib/customer-portal.functions";
-import { PORTAL_EXPIRY_KEY } from "@/lib/customer-portal";
+import { PORTAL_EXPIRY_KEY, PORTAL_USER_KEY } from "@/lib/customer-portal";
 
 export const Route = createFileRoute("/portal/$code")({
   validateSearch: (s: Record<string, unknown>): { t?: string } => ({ t: typeof s.t === "string" ? s.t : undefined }),
@@ -32,9 +32,11 @@ function PortalEntry() {
       try {
         const r = await redeem({ data: { code, token: t } });
         await supabase.auth.signOut({ scope: "local" });
-        const { error: otpError } = await supabase.auth.verifyOtp({ token_hash: r.tokenHash, type: "magiclink" });
-        if (otpError) throw new Error("We couldn't sign you in. Request a new link.");
+        const { data, error: otpError } = await supabase.auth.verifyOtp({ token_hash: r.tokenHash, type: "magiclink" });
+        if (otpError || !data.user) throw new Error("We couldn't sign you in. Request a new link.");
+        window.localStorage.setItem(PORTAL_USER_KEY, data.user.id);
         window.localStorage.setItem(PORTAL_EXPIRY_KEY, r.expiresAt);
+        window.dispatchEvent(new Event("bm-portal-lock-change"));
         navigate({ to: "/shop", replace: true });
       } catch (e) { setError(e instanceof Error ? e.message : "This link no longer works."); setOpening(false); navigate({ to: "/portal/$code", params: { code }, search: {}, replace: true }); }
     })();

@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test';
-import { portalSessionExpired, canResetPortal, canCopyPortal, PORTAL_LINK_HOURS } from '../src/lib/customer-portal';
+import { portalSessionExpired, portalAccessValid, isPortalPath, canResetPortal, canCopyPortal, PORTAL_LINK_HOURS } from '../src/lib/customer-portal';
 import { readFileSync } from 'node:fs';
 const sql = readFileSync(new URL('../drizzle/migrations/0185_customer_portal.sql', import.meta.url), 'utf8');
 test('login links last 24 hours', () => {
@@ -25,4 +25,19 @@ test('portal locks one hour after opening, never past the 24-hour link', async (
 test('portal address changes every 24 hours', () => {
   const m = readFileSync(new URL('../drizzle/migrations/0187_customer_portal_daily_code_reusable_links.sql', import.meta.url), 'utf8');
   expect(m).toContain("code_set_at <= now() - interval '24 hours'");
+});
+test('first entry and malformed expiry stay locked', () => {
+  expect(portalAccessValid(null, 'customer-a', 'customer-a')).toBe(false);
+  expect(portalAccessValid('invalid', 'customer-a', 'customer-a')).toBe(false);
+});
+test('an unlock belongs only to the customer who opened the link', () => {
+  const now = Date.parse('2026-10-21T10:00:00Z');
+  expect(portalAccessValid('2026-10-21T11:00:00Z', 'customer-a', 'customer-b', now)).toBe(false);
+  expect(portalAccessValid('2026-10-21T11:00:00Z', 'customer-a', 'customer-a', now)).toBe(true);
+  expect(portalAccessValid('2026-10-21T11:00:00Z', 'customer-a', 'customer-a', now + 3600_000)).toBe(false);
+});
+test('every customer portal destination is guarded, including direct ticket links', () => {
+  for (const path of ['/portal', '/portal/logins', '/shop', '/tickets', '/tickets/123', '/install-guides']) expect(isPortalPath(path)).toBe(true);
+  expect(isPortalPath('/home')).toBe(false);
+  expect(isPortalPath('/admin-customers')).toBe(false);
 });

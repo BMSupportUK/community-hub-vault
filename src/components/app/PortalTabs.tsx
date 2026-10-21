@@ -1,7 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { KeyRound, Package, ShoppingCart, Ticket, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PortalLock } from "@/components/app/PortalLock";
 
 type Tab = "shop" | "orders" | "tickets" | "logins" | "guides";
 
@@ -16,7 +15,6 @@ export function PortalTabs({ active }: { active?: Tab }) {
   const off = "text-muted-foreground hover:bg-surface-2 hover:text-foreground";
   return (
     <nav aria-label="Customer Portal" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface/80 px-3 py-2 backdrop-blur sm:px-6">
-      <PortalLock />
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Customer Portal</span>
       <Link to="/shop" className={cn(item, current === "shop" ? on : off)}><ShoppingCart className="size-4" />Shop</Link>
       <Link to="/shop" search={{ view: "orders" }} className={cn(item, current === "orders" ? on : off)}><Package className="size-4" />My Orders</Link>

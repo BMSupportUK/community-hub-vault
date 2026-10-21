@@ -8,6 +8,8 @@ import { DemoRoleBanner } from "@/components/app/DemoRoleBanner";
 import { useIsDemoAccount, isDemoLockedPath } from "@/hooks/use-demo-account";
 import { Link } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
+import { PortalLock } from "@/components/app/PortalLock";
+import { isPortalPath } from "@/lib/customer-portal";
 
 const ApprovedDeferredExtras = lazy(() =>
   import("@/components/app/ApprovedDeferredExtras").then((module) => ({
@@ -61,7 +63,7 @@ function ApprovedLayout() {
 
   const page = (
     <DemoGate path={path}>
-      <Outlet />
+      {isPortalPath(path) ? <PortalLock><Outlet /></PortalLock> : <Outlet />}
     </DemoGate>
   );
 
