@@ -4,9 +4,11 @@
 Use the secure order chat they already have. It is locked by their order password, so only they can open it.
 
 1. On the customer's card, admin or management clicks **Send portal access**.
-2. A one-use login link that lasts 24 hours is posted into that customer's secure order chat (the same place as the `/video` QR). It shows as a button plus a QR code they can scan on their phone.
-3. When they open it, they set their 6-digit PIN and are asked to **add an email address**. The email is confirmed with a code, so it can't be mistyped. From then on, they use the normal "Send me a login link" email.
-4. Their logins still only show after they enter the PIN, for 10 minutes.
+2. The customer's own portal link (`bmsupport.uk/portal/<their code>`) is posted into their secure order chat, with a QR code. This is their permanent way in, and they should save it.
+3. The first time only, the posted link also signs them straight in. That sign-in works once and lasts 24 hours.
+4. Once inside, they set their 6-digit PIN and **add an email address**, confirmed with a code. After that, opening their portal link and tapping "Send me a login link" emails them a new 24-hour login every time.
+5. If they still haven't added an email, staff can press Send portal access again to post a new one-time sign-in to the same portal link.
+6. Their logins still only show after they enter the PIN, for 10 minutes.
 
 ## Why not other options
 - Text or WhatsApp: messages can be read by anyone holding the phone, and the address isn't checked.
