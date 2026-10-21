@@ -757,7 +757,7 @@ function ProfilePage() {
             </div>
           </TabsContent>
 
-          {canSeeCreds && (
+          {canSeeCreds && !isOwner && (
             <TabsContent value="creds" className={paneClass}>
               <div className="space-y-6">
                 <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/50 backdrop-blur shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
