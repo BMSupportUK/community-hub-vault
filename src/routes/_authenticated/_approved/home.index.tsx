@@ -1,16 +1,14 @@
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Trophy, KeyRound, Star } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Headphones, Star } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { Nameplate } from "@/components/app/Nameplate";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
-import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 import { formatRoleLabel } from "@/lib/role-label";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
@@ -29,10 +27,6 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 
 function WelcomePage() {
   const { user, hasRole, roles } = useAuth();
-  // LOCKED: "N in chat" counter on the chatroom link. Do not change, restyle, or remove
-  // without explicit authorisation. See mem://constraints/chat-counters-locked
-  const chatroomCount = useTalkChannelTotalCount();
-  const canManage = hasRole("admin") || hasRole("management");
   const isStaffAccount =
     hasRole("admin") || hasRole("management") || hasRole("staff") || hasRole("moderator");
   // Highest-priority staff role, used for the greeting line under the hero image.
@@ -44,7 +38,6 @@ function WelcomePage() {
   const [nameplateId, setNameplateId] = useState<string | null>(null);
   const [isStaffShiftActive, setIsStaffShiftActive] = useState(false);
   const name = displayName;
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -59,99 +52,6 @@ function WelcomePage() {
       setNameplateId(data?.equipped_nameplate_id ?? null);
     })();
   }, [user?.id]);
-
-  const goToInvite = async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (error || !data?.username) {
-      toast.error("Set up your profile username first");
-      return;
-    }
-    navigate({ to: "/u/$username", params: { username: data.username }, search: { tab: "referrals" } });
-  };
-
-  const goToCredentials = async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (error || !data?.username) {
-      toast.error("Set up your profile username first");
-      return;
-    }
-    navigate({ to: "/u/$username", params: { username: data.username }, search: { tab: "creds" } });
-  };
-
-  
-
-  type CardDef = {
-    key: string;
-    icon: React.ComponentType<{ className?: string }>;
-    title: string;
-    desc: string;
-    to?: string;
-    params?: Record<string, string>;
-    onClick?: () => void;
-  };
-
-  const CARDS: Record<string, CardDef> = {
-    community: { key: "community", icon: Trophy, title: "Boro Fan Zone", desc: "Join the conversation with fellow Middlesbrough supporters.", to: "/forum" },
-    tickets: { key: "tickets", icon: Ticket, title: "Support tickets", desc: "Open or follow your support requests.", to: "/tickets" },
-    status: { key: "status", icon: KeyRound, title: "View Your Service Login Details", desc: "View your username and password and any other revelant app login information.", onClick: goToCredentials },
-    shop: { key: "shop", icon: ShoppingBag, title: "Shop", desc: "Browse plans, Purchase or renew your subscription", to: "/shop" },
-    "install-guides": { key: "install-guides", icon: BookOpen, title: "Install Guides & BM App Store Install Instructions", desc: "Step-by-step setup walkthroughs, now including instructions to install our App Store.", to: "/install-guides" },
-    invite: { key: "invite", icon: UserPlus, title: "Create an invite", desc: "Invite a friend and earn a referral bonus.", onClick: goToInvite },
-  };
-
-  const [order, setOrder] = useState<string[]>(Object.keys(CARDS));
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("home_quick_link_order")
-        .select("key, sort_order")
-        .order("sort_order", { ascending: true });
-      if (cancelled) return;
-      const known = Object.keys(CARDS);
-      const fromDb = (data ?? []).map((r) => r.key).filter((k) => known.includes(k));
-      const missing = known.filter((k) => !fromDb.includes(k));
-      setOrder([...fromDb, ...missing]);
-    })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const persistOrder = async (next: string[]) => {
-    setSaving(true);
-    const rows = next.map((key, i) => ({ key, sort_order: (i + 1) * 10, updated_by: user?.id ?? null, updated_at: new Date().toISOString() }));
-    const { error } = await supabase.from("home_quick_link_order").upsert(rows, { onConflict: "key" });
-    setSaving(false);
-    if (error) {
-      toast.error("Couldn't save order");
-    } else {
-      toast.success("Order saved");
-    }
-  };
-
-  const move = (key: string, dir: -1 | 1) => {
-    setOrder((prev) => {
-      const idx = prev.indexOf(key);
-      const target = idx + dir;
-      if (idx < 0 || target < 0 || target >= prev.length) return prev;
-      const next = [...prev];
-      [next[idx], next[target]] = [next[target], next[idx]];
-      void persistOrder(next);
-      return next;
-    });
-  };
 
   return (
     <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-visible md:overflow-y-auto">
@@ -273,122 +173,8 @@ function WelcomePage() {
             </div>
           </div>
       </section>
-
-      {/* Quick links */}
-      <section className="shrink-0 min-w-0 px-3 pt-1 pb-3 xl:px-4 xl:pt-2 xl:pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h2 className="font-display text-lg font-semibold">Jump back in</h2>
-          <Link
-            to="/home/$channel"
-            params={{ channel: "welcome" }}
-            className="text-sm text-sky-300 hover:text-sky-200 inline-flex items-center gap-2"
-          >
-            Open BM Support Customer Chat-room →
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-300">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {chatroomCount} in chat
-            </span>
-          </Link>
-        </div>
-        <div className="grid min-w-0 sm:grid-cols-2 gap-2">
-          {order.map((key, idx) => {
-            if (hasRole("moderator") && key === "tickets") return null;
-            const c = CARDS[key];
-            if (!c) return null;
-            const controls = canManage ? (
-              <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 z-10 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
-                <button
-                  type="button"
-                  aria-label="Move up"
-                  disabled={idx === 0 || saving}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); move(key, -1); }}
-                  className="size-6 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 disabled:opacity-30"
-                >
-                  <ArrowUp className="size-3.5" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Move down"
-                  disabled={idx === order.length - 1 || saving}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); move(key, 1); }}
-                  className="size-6 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 disabled:opacity-30"
-                >
-                  <ArrowDown className="size-3.5" />
-                </button>
-              </div>
-            ) : null;
-            return (
-              <div key={key} className="group relative h-full min-w-0">
-                {controls}
-                {c.to ? (
-                  <QuickCard to={c.to} params={c.params} icon={c.icon} title={c.title} desc={c.desc} />
-                ) : (
-                  <QuickAction onClick={c.onClick!} icon={c.icon} title={c.title} desc={c.desc} />
-                )}
-              </div>
-            );
-            })}
-        </div>
-      </section>
       </div>
 
     </main>
-  );
-}
-
-function QuickCard({
-  to,
-  params,
-  icon: Icon,
-  title,
-  desc,
-}: {
-  to: string;
-  params?: Record<string, string>;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <Link
-      to={to as never}
-      params={params as never}
-      className="group w-full h-14 rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all px-4 py-2 flex items-center gap-3 overflow-hidden"
-    >
-      <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
-        <Icon className="size-5" />
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate font-semibold text-sm text-foreground">{title}</span>
-        <span className="block truncate text-xs text-foreground/75 mt-0.5">{desc}</span>
-      </span>
-    </Link>
-  );
-}
-
-function QuickAction({
-  onClick,
-  icon: Icon,
-  title,
-  desc,
-}: {
-  onClick: () => void;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="group w-full h-14 text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all px-4 py-2 flex items-center gap-3 overflow-hidden"
-    >
-      <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
-        <Icon className="size-5" />
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate font-semibold text-sm text-foreground">{title}</span>
-        <span className="block truncate text-xs text-foreground/75 mt-0.5">{desc}</span>
-      </span>
-    </button>
   );
 }
