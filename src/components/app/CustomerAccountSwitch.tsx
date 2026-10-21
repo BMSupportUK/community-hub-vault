@@ -21,6 +21,7 @@ export function CustomerAccountSwitchButton({ customerId, name }: { customerId: 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Please sign in again.");
       const { tokenHash } = await startSwitch({ data: { customerId, accessToken: session.access_token, refreshToken: session.refresh_token } });
+      window.dispatchEvent(new Event("bm-customer-switch-status"));
       const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
       if (error) throw error;
       window.location.assign("/home");
@@ -39,7 +40,12 @@ export function CustomerAccountReturnBanner() {
   const returnAccount = useServerFn(returnToAdminAccount);
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { void getStatus().then((result) => setActive(result.active)).catch(() => {}); }, [user?.id]);
+  useEffect(() => {
+    const refresh = () => { void getStatus().then((result) => setActive(result.active)).catch(() => {}); };
+    refresh();
+    window.addEventListener("bm-customer-switch-status", refresh);
+    return () => window.removeEventListener("bm-customer-switch-status", refresh);
+  }, [user?.id]);
   if (!active) return null;
   const restore = async () => {
     setBusy(true);

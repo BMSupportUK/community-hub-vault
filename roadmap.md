@@ -2,9 +2,9 @@
 # Roadmap
 
 ## Account switching and site-user manual orders
-- [ ] Add audited admin-only login as customer with safe return to the original admin account.
-- [ ] Allow admin/management to select a site user in the manual-order dialog; assign the order and payment notification atomically.
-- [ ] Run access tests and verify switching, returning, and order ownership through the UI where security gates permit.
+- [x] Add audited admin-only login as customer and return with an HttpOnly original-session cookie; reject pending resets, demo/staff targets and customer two-factor accounts, and revalidate admin access on return.
+- [x] Allow admin/management to select a site user in the manual-order dialog; assign the order and password-free payment notification atomically. Fourteen regressions pass, authenticated picker returns 26 eligible users and preview build OK; no live orders created.
+- [ ] Verify switching, returning and selected-user order creation through the UI — signed-in Customers and Add order remain blocked by the dashboard password/PIN; requires admin unlock. Customer accounts with two-factor verification deliberately cannot be impersonated.
 
 ## Same-day cover and swap approvals
 - [x] Restore authorized same-day cover approvals without reopening closed rota bookings; applied database fix and isolated approval/sign-in read-back pass.
