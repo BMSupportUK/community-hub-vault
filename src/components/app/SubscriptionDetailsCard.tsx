@@ -30,6 +30,7 @@ export function SubscriptionDetailsCard({
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [customerName, setCustomerName] = useState<string | null>(null);
+  const [nameplateId, setNameplateId] = useState<string | null>(null);
   const [viewIndex, setViewIndex] = useState(0);
 
   useEffect(() => {
