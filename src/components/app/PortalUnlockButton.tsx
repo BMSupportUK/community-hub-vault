@@ -17,7 +17,7 @@ export function PortalUnlockButton() {
   }
   return (
     <>
-      <Button size="lg" onClick={() => setOpen(true)} className="gap-2 font-bold shadow-lg">
+      <Button size="sm" onClick={() => setOpen(true)} className="shrink-0 gap-2 font-bold shadow-lg">
         <Lock className="size-4" /> Unlock portal
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
