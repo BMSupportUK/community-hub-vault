@@ -52,7 +52,9 @@ export function OrderVideoCallCustomer({ token, password, mobile, inline = false
     const tick = async () => {
       const r = await poll({ data: { token, password } }).catch(() => null);
       if (off || !r?.ok) return;
-      setSession(r.session && (r.session.status === "waiting" || r.session.status === "live") ? r.session : null);
+      const open = r.session && (r.session.status === "waiting" || r.session.status === "live") ? r.session : null;
+      if (!open && sessionRef.current) setEndedId(sessionRef.current.id);
+      setSession(open);
     };
     const id = window.setInterval(tick, 3000);
     return () => { off = true; window.clearInterval(id); };
