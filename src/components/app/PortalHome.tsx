@@ -101,28 +101,6 @@ export function PortalHome({ staff }: { staff: boolean }) {
                       </p>
                     </div>
                   )}
-                  {!isStaffAccount && (
-                    // Member nameplate greeting stays under the picture; welcome text sits by the subscription box.
-                    <div className="px-1">
-                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-base font-bold text-amber-200 drop-shadow">Hey</span>
-                        <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg">
-                          <Nameplate
-                            id={nameplateId}
-                            className="absolute inset-0"
-                            fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
-                          />
-                          <div className="relative flex h-full items-center px-2.5">
-                            <span className="truncate font-display text-sm font-semibold text-white">{name}</span>
-                          </div>
-                        </div>
-                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
-                          Member
-                        </span>
-                        <GreetingPills />
-                      </div>
-                    </div>
-                  )}
                 </div>
 
               </div>
@@ -154,6 +132,24 @@ export function PortalHome({ staff }: { staff: boolean }) {
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                   ) : (
                     <>
+                      {/* Member: status icons first, then the "Hey" nameplate beneath them. */}
+                      <GreetingPills />
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-1">
+                        <span className="text-base font-bold text-amber-200 drop-shadow">Hey</span>
+                        <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg">
+                          <Nameplate
+                            id={nameplateId}
+                            className="absolute inset-0"
+                            fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
+                          />
+                          <div className="relative flex h-full items-center px-2.5">
+                            <span className="truncate font-display text-sm font-semibold text-white">{name}</span>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+                          Member
+                        </span>
+                      </div>
                       <SubscriptionDetailsCard compact embedded />
                       {/* Welcome heading and message sit under the subscription box. */}
                       <div className="px-1">
