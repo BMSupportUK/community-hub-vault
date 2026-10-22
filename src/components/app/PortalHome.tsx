@@ -14,6 +14,8 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { Clocks } from "@/components/app/Clocks";
 import { LockNowPill } from "@/components/app/ScreenLockProvider";
 import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
+import { PortalCounters } from "@/components/app/PortalCounters";
+import { dayBand, greetingFor, ukHour } from "@/lib/greeting";
 
 /** Office time, lock, 2FA and VPN pills shown beside the "Hey" greeting. */
 function GreetingPills() {
@@ -41,6 +43,12 @@ export function PortalHome({ staff }: { staff: boolean }) {
   const [nameplateId, setNameplateId] = useState<string | null>(null);
   const [isStaffShiftActive, setIsStaffShiftActive] = useState(false);
   const name = displayName;
+  const [hour, setHour] = useState(() => ukHour());
+  useEffect(() => {
+    const id = window.setInterval(() => setHour(ukHour()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const band = dayBand(hour);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -73,9 +81,24 @@ export function PortalHome({ staff }: { staff: boolean }) {
                         alt={isStaffAccount ? "BM Support staff working at office desks while colleagues walk between them" : "BM Support — community and support"}
                         width={1920}
                         height={isStaffAccount ? 832 : 1080}
-                        className="h-full w-full object-cover"
+                        className={`h-full w-full object-cover transition-[filter] duration-700 ${band === "morning" ? "brightness-110 saturate-110 sepia-[.15]" : band === "evening" ? "brightness-75 hue-rotate-15 saturate-90" : ""}`}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-violet-950/70 via-fuchsia-900/10 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-violet-950/20 to-transparent" />
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 p-4 lg:p-6">
+                      <p className="text-sm font-semibold text-amber-200 drop-shadow lg:text-base">{greetingFor(hour)}, {name}</p>
+                      <h1 className="mt-1 break-words font-display text-2xl font-extrabold leading-tight drop-shadow-lg lg:text-4xl bg-gradient-to-r from-white via-amber-100 to-pink-200 bg-clip-text text-transparent">
+                        {isStaffAccount ? "Welcome to The Staff Portal" : "Welcome to The Customer Portal"}
+                      </h1>
+                      <p className="mt-2 max-w-2xl text-xs font-medium text-white/90 drop-shadow lg:text-sm">
+                        <Star className="mr-1 inline-block size-3.5 -translate-y-px text-amber-200 align-middle" />
+                        {!isStaffAccount
+                          ? "Manage your account, orders and logins, and get help — all in one place."
+                          : isStaffShiftActive
+                            ? `Have a great shift, ${name} — thanks for being on. We've got your back if anything comes up.`
+                            : `See you on your next shift, ${name} — enjoy your time away.`}
+                        <Star className="ml-1 inline-block size-3.5 -translate-y-px text-amber-200 align-middle" />
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -122,22 +145,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                       {isStaffAccount ? (staffRoleLabel ?? "Staff") : "Member"}
                     </span>
                   </div>
-                  <div className="px-1">
-                    <h1 className="break-words font-display text-xl font-extrabold leading-tight lg:text-2xl bg-gradient-to-r from-white via-amber-100 to-pink-200 bg-clip-text text-transparent drop-shadow">
-                      {isStaffAccount ? "Welcome to The Staff Portal" : "Welcome to The Customer Portal"}
-                    </h1>
-                    <p className="mt-2 text-xs font-medium text-white/90 lg:text-sm">
-                      <Star className="mr-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
-                      <span>
-                        {!isStaffAccount
-                          ? "Manage your account, orders and logins, and get help — all in one place."
-                          : isStaffShiftActive
-                            ? `Have a great shift, ${name} — thanks for being on. We've got your back if anything comes up.`
-                            : `See you on your next shift, ${name} — enjoy your time away.`}
-                      </span>
-                      <Star className="ml-1 inline-block size-3.5 shrink-0 -translate-y-px text-amber-200 align-middle lg:size-4" />
-                    </p>
-                  </div>
+                  <PortalCounters staff={isStaffAccount} />
                   {isStaffAccount ? (
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                   ) : (
