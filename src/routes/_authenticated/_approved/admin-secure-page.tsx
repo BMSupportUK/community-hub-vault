@@ -30,22 +30,13 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-secure-pag
 
 function SecurePageAdmin() {
   const { roles } = useAuth();
-  const { order, ref: refParam, call: callParam, tab: tabParam } = Route.useSearch();
+  const { order, ref: refParam, tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<"order" | "screen">(tabParam ?? "order");
   const shares = useOrderScreenShares(order ?? "");
   const waiting = shares.filter((s) => s.status === "pending").length;
-  const call = useOrderVideoCallStaff(order ?? "");
+  const liveShares = shares.filter((s) => s.status !== "pending");
   const [orderRef, setOrderRef] = useState<string | null>(refParam ?? null);
   const [loaded, setLoaded] = useState(!!refParam);
-  const autoAnswered = useRef(false);
-
-  // Claimed from the Talk video help box: drop straight into that call.
-  useEffect(() => {
-    if (!callParam || autoAnswered.current || call.inCall || call.busy) return;
-    if (call.session?.id !== callParam) return;
-    autoAnswered.current = true;
-    void call.answer();
-  }, [callParam, call]);
 
   useEffect(() => {
     if (!order) return;
