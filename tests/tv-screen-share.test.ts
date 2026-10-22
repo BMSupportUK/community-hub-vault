@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { screenShareInProgress } from "./tv-remote";
+import { screenShareInProgress } from "../src/lib/tv-remote";
 
 describe("repeat screen share requests", () => {
   test("an ended session allows another request immediately", () => {
