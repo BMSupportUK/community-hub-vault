@@ -1380,6 +1380,13 @@
       "when": 1792700975107,
       "tag": "0196_tv_requested_at",
       "breakpoints": true
+    },
+    {
+      "idx": 197,
+      "version": "7",
+      "when": 1792701071171,
+      "tag": "0197_tv_answer_keep_link",
+      "breakpoints": true
     }
   ]
 }
