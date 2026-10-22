@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Download, Loader2, ShieldCheck, Tv, Play } from "lucide-react";
+import { CheckCircle2, Download, Loader2, Tv, Play } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RemoteHelper, remoteHelperAvailable, type RemoteHelperStatus } from "@/lib/remote-helper";
@@ -68,8 +68,6 @@ function TvHelperPage() {
     }
   };
 
-  const isFireTv = typeof navigator !== "undefined" && /\bAFT|Amazon|Silk/i.test(navigator.userAgent);
-
   return (
     <div className="mx-auto w-full max-w-3xl p-4 md:p-8">
       <div className="rounded-2xl border border-border bg-card p-6 shadow-glow md:p-8">
@@ -102,15 +100,7 @@ function TvHelperPage() {
                 {status.installed ? "Update Remote Helper" : "Install Remote Helper"}
               </Button>
             </Step>
-            {!isFireTv && (
-              <Step n={2} done={status.accessibilityOn} title="Turn on the Accessibility switch">
-                <p className="mb-2 text-sm text-muted-foreground">Choose BM Remote Helper, switch it on and press Allow.</p>
-                <Button onClick={() => RemoteHelper.openAccessibility()} disabled={!status.installed} variant="secondary" size="lg">
-                  <ShieldCheck className="h-4 w-4" /> Open Accessibility settings
-                </Button>
-              </Step>
-            )}
-            <Step n={isFireTv ? 2 : 3} done={false} title="Open the helper and read the code to staff">
+            <Step n={2} done={false} title="Open the helper and read the code to staff">
               <Button onClick={() => RemoteHelper.openHelper()} disabled={!status.installed} variant="secondary" size="lg">
                 <Play className="h-4 w-4" /> Open Remote Helper
               </Button>
