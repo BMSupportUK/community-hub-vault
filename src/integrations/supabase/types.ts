@@ -8074,6 +8074,14 @@ export type Database = {
           session_count: number
         }[]
       }
+      answer_tv_request: {
+        Args: { _id: string; _link_id?: string; _link_kind?: string }
+        Returns: {
+          device_name: string
+          id: string
+          topic: string
+        }[]
+      }
       app_credentials_visible: {
         Args: never
         Returns: {
