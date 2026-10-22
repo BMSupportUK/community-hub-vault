@@ -75,9 +75,24 @@ function SecurePageAdmin() {
         </div>
         <div className={tab === "order" ? "space-y-6" : "hidden"}>
           <div className="rounded-2xl border border-border bg-card/85 backdrop-blur-sm p-5 space-y-4">
-            <SecureLinkPanel orderId={order} chatBubble orderRef={orderRef} sidebarTop={<OrderVideoCallIncoming call={call} />} />
+            <SecureLinkPanel orderId={order} chatBubble orderRef={orderRef} sidebarTop={
+              <div className="rounded-xl border border-border bg-surface-1 p-3 space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                  <MonitorUp className="size-4 text-primary" /> Screen share
+                  {waiting > 0 && <span className="rounded-full bg-destructive px-2 text-xs font-bold text-destructive-foreground animate-pulse">{waiting} waiting</span>}
+                  {liveShares.length > 0 && <span className="rounded-full bg-primary/20 px-2 text-xs font-bold text-primary">{liveShares.length} in progress</span>}
+                </div>
+                {waiting === 0 && liveShares.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">When the customer presses Screen share help, the request appears here.</p>
+                ) : (
+                  <Link to="/screen-share/order/$orderId" params={{ orderId: order }}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
+                    <MonitorUp className="size-3.5" /> {waiting > 0 ? "Answer screen share request" : "Open screen share"}
+                  </Link>
+                )}
+              </div>
+            } />
           </div>
-          <OrderVideoCallStaffStage call={call} orderId={order} />
         </div>
         {tab === "screen" && (<div className="space-y-3"><Link to="/screen-share/order/$orderId" params={{ orderId: order }} className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Open this order's screen share page</Link><OrderScreenShareTab orderId={order} rows={shares} /></div>)}
       </div>
