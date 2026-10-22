@@ -24,7 +24,7 @@ import { awayIcon, awayElapsedLabel } from "@/lib/staff-away";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
-import { TalkVideoHelpButton } from "@/components/app/TalkVideoHelpButton";
+import { TalkScreenShareButton } from "@/components/app/TalkScreenShareButton";
 import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon, breaksLeft, ukMinutes } from "@/lib/breaks";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
@@ -841,7 +841,7 @@ export function WorkingStatusBox({
         {preparing && <span role="status" className="text-xs font-medium text-warning">Preparing for shift</span>}
         {awayPill}
         <DndDialogButton className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted" />
-        <TalkVideoHelpButton variant="icon" />
+        <TalkScreenShareButton variant="icon" />
         {(canAnswerTickets || roles.includes("moderator")) && (
           <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" readOnly={!canAnswerTickets} />
         )}
@@ -970,7 +970,7 @@ export function WorkingStatusBox({
           {/* Shift controls sit on one wrapping row under the Shifts tabs: video, tickets, then shift actions and Away. */}
           <div>
             <div className={cn("flex flex-wrap items-center", compact ? "gap-1" : "gap-3")}>
-              <TalkVideoHelpButton variant="icon" />
+              <TalkScreenShareButton variant="icon" />
               {(canAnswerTickets || roles.includes("moderator")) && (
                 <StaffTicketsButton
                   staffId={user.id}
