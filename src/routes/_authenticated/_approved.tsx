@@ -84,7 +84,9 @@ function ApprovedLayout() {
       {staffTabs || customerTabs ? (
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {staffTabs ? <StaffPortalTabs /> : <PortalTabs />}
-          {inner}
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+            {inner}
+          </div>
         </div>
       ) : inner}
     </DemoGate>
