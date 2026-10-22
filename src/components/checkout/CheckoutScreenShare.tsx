@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MonitorUp, CheckCircle2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { requestCheckoutScreenShare } from "@/lib/tv-help.functions";
+import { requestCheckoutScreenShare, getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
 
 /** Customer: ask staff to see the TV screen through BM Remote Helper. */
 export function CheckoutScreenShare({ token, password }: { token: string; password: string }) {
@@ -13,11 +13,20 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [live, setLive] = useState<string | null>(null);
+  const check = useServerFn(getCheckoutScreenShareStatus);
+  useEffect(() => {
+    let stop = false;
+    const load = () => check({ data: { token, password } }).then((r) => { if (!stop) { setLive(r.status); if (r.status) setDone(true); } }).catch(() => {});
+    load();
+    const t = window.setInterval(load, 5000);
+    return () => { stop = true; window.clearInterval(t); };
+  }, [token, password, check]);
 
   if (done) return (
     <div className="flex items-start gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm">
       <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
-      <p>Staff have been alerted. When they connect, press <strong>Allow</strong> and then <strong>Start</strong> on your TV.</p>
+      <p>{live && live !== "pending" ? <>Staff are connected to your TV. You can keep using your order page — the screen share carries on.</> : <>Staff have been alerted. When they connect, press <strong>Allow</strong> and then <strong>Start</strong> on your TV.</>}</p>
     </div>
   );
   if (!open) return (
