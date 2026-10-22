@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MonitorUp, CheckCircle2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [live, setLive] = useState<string | null>(null);
+  const wasOngoing = useRef(false);
   const check = useServerFn(getCheckoutScreenShareStatus);
   useEffect(() => {
     let stop = false;
@@ -23,7 +24,8 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       const ongoing = screenShareInProgress(r.status);
       setLive(ongoing ? r.status : null);
       setDone(ongoing);
-      if (!ongoing) { setOpen(false); setCode(""); setErr(null); }
+      if (!ongoing && wasOngoing.current) { setOpen(false); setCode(""); setErr(null); }
+      wasOngoing.current = ongoing;
     }).catch(() => {});
     load();
     const t = window.setInterval(load, 2000);
@@ -48,7 +50,7 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       setBusy(true); setErr(null);
       try {
         const r = await send({ data: { token, password, code } });
-        if (r.ok) { setLive("pending"); setDone(true); setOpen(false); setCode(""); } else setErr(r.error);
+        if (r.ok) { wasOngoing.current = true; setLive("pending"); setDone(true); setOpen(false); setCode(""); } else setErr(r.error);
       } catch { setErr("Something went wrong. Try again."); }
       finally { setBusy(false); }
     }}>
