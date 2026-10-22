@@ -27,6 +27,13 @@ function OrderScreenSharePage() {
   const { orderId } = Route.useParams();
   const { roles, loading } = useAuth();
   const rows = useOrderScreenShares(orderId);
+  const [chatToken, setChatToken] = useState<string | null>(null);
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.from("order_checkout_links").select("token").eq("order_id", orderId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (data?.token) setChatToken(data.token);
+    })();
+  }, [orderId]);
   if (loading) return null;
   if (!canUseTvRemote(roles)) return <Navigate to="/" />;
   return (
@@ -38,6 +45,7 @@ function OrderScreenSharePage() {
         <h1 className="flex items-center gap-2 text-xl font-bold"><MonitorUp className="h-5 w-5 text-primary" />Screen share for this order</h1>
       </div>
       <OrderScreenShareTab orderId={orderId} rows={rows} />
+      {chatToken && <StaffCheckoutChatBubble orderId={orderId} token={chatToken} />}
     </div>
   );
 }
