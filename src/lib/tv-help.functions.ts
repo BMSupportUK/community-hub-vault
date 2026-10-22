@@ -34,7 +34,7 @@ export const requestCheckoutScreenShare = createServerFn({ method: "POST" })
     await db.from("staff_notifications").insert({
       kind: "tv_help", title: "Screen share help requested",
       body: `${o?.existing_username || "A customer"} on sale ${o?.order_ref ?? ""} wants help on their TV (${s.device_name}).`.trim(),
-      link_path: `/admin-secure-page?order=${orderId}&tab=screen`, entity_id: s.id,
+      link_path: `/screen-share/order/${orderId}`, entity_id: s.id,
     });
     return { ok: true as const };
   });
