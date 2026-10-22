@@ -121,11 +121,13 @@ import { Route as AuthenticatedApprovedStaffPortalRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
 import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './routes/_authenticated/_approved/streaming-devices'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
+import { Route as AuthenticatedApprovedTvRemoteRouteImport } from './routes/_authenticated/_approved/tv-remote'
 import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
+import { Route as ApiPublicTvRouteImport } from './routes/api/public/tv'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
 import { Route as ApiPublicWiseEmailRouteImport } from './routes/api/public/wise-email'
@@ -834,6 +836,12 @@ const AuthenticatedApprovedTicketsRoute =
     path: '/tickets',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedTvRemoteRoute =
+  AuthenticatedApprovedTvRemoteRouteImport.update({
+    id: '/tv-remote',
+    path: '/tv-remote',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedVpnRoute =
   AuthenticatedApprovedVpnRouteImport.update({
     id: '/vpn',
@@ -860,6 +868,11 @@ const ApiPublicBoroMatchDetailRoute =
 const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   id: '/api/public/link-preview',
   path: '/api/public/link-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTvRoute = ApiPublicTvRouteImport.update({
+  id: '/api/public/tv',
+  path: '/api/public/tv',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
@@ -1370,11 +1383,13 @@ export interface FileRoutesByFullPath {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1552,11 +1567,13 @@ export interface FileRoutesByTo {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1740,11 +1757,13 @@ export interface FileRoutesById {
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/_authenticated/_approved/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/_authenticated/_approved/vpn': typeof AuthenticatedApprovedVpnRoute
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1927,11 +1946,13 @@ export interface FileRouteTypes {
     | '/status'
     | '/streaming-devices'
     | '/tickets'
+    | '/tv-remote'
     | '/vpn'
     | '/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2109,11 +2130,13 @@ export interface FileRouteTypes {
     | '/status'
     | '/streaming-devices'
     | '/tickets'
+    | '/tv-remote'
     | '/vpn'
     | '/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2296,11 +2319,13 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/streaming-devices'
     | '/_authenticated/_approved/tickets'
+    | '/_authenticated/_approved/tv-remote'
     | '/_authenticated/_approved/vpn'
     | '/_authenticated/_approved/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2408,6 +2433,7 @@ export interface RootRouteChildren {
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
+  ApiPublicTvRoute: typeof ApiPublicTvRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
   ApiPublicWiseEmailRoute: typeof ApiPublicWiseEmailRoute
@@ -3240,6 +3266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/tv-remote': {
+      id: '/_authenticated/_approved/tv-remote'
+      path: '/tv-remote'
+      fullPath: '/tv-remote'
+      preLoaderRoute: typeof AuthenticatedApprovedTvRemoteRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/vpn': {
       id: '/_authenticated/_approved/vpn'
       path: '/vpn'
@@ -3273,6 +3306,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/link-preview'
       fullPath: '/api/public/link-preview'
       preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tv': {
+      id: '/api/public/tv'
+      path: '/api/public/tv'
+      fullPath: '/api/public/tv'
+      preLoaderRoute: typeof ApiPublicTvRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/tweet': {
@@ -3913,6 +3953,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedStatusRoute: typeof AuthenticatedApprovedStatusRoute
   AuthenticatedApprovedStreamingDevicesRoute: typeof AuthenticatedApprovedStreamingDevicesRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
+  AuthenticatedApprovedTvRemoteRoute: typeof AuthenticatedApprovedTvRemoteRoute
   AuthenticatedApprovedVpnRoute: typeof AuthenticatedApprovedVpnRoute
   AuthenticatedApprovedWhatToWatchRoute: typeof AuthenticatedApprovedWhatToWatchRoute
   AuthenticatedApprovedAdminJobApplicationIdRoute: typeof AuthenticatedApprovedAdminJobApplicationIdRoute
@@ -4049,6 +4090,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedStreamingDevicesRoute:
     AuthenticatedApprovedStreamingDevicesRoute,
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
+  AuthenticatedApprovedTvRemoteRoute: AuthenticatedApprovedTvRemoteRoute,
   AuthenticatedApprovedVpnRoute: AuthenticatedApprovedVpnRoute,
   AuthenticatedApprovedWhatToWatchRoute: AuthenticatedApprovedWhatToWatchRoute,
   AuthenticatedApprovedAdminJobApplicationIdRoute:
@@ -4166,6 +4208,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
+  ApiPublicTvRoute: ApiPublicTvRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
   ApiPublicWiseEmailRoute: ApiPublicWiseEmailRoute,

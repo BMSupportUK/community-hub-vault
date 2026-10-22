@@ -338,6 +338,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/shifts", label: "Shifts", icon: CalendarClock, show: true },
     { to: "/shift-history", label: "Shift history", icon: History, show: true },
     { to: "/staff-pin", label: "Staff PIN", icon: KeyIcon, show: true },
+    { to: "/tv-remote", label: "TV Remote", icon: Tv, show: !isModOnly },
     { to: "/admin", key: "admin-panel", label: adminPanelLabel(roles), icon: LayoutDashboard, show: canOpenAdminPanel(roles) },
     { to: "/moderation", label: "Access Requests", icon: Shield, show: isAdmin, extra: <ModerationPendingBadge /> },
     { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge /> },

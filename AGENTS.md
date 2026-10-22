@@ -45,3 +45,4 @@
 - Ticket video: staff-only /video command makes a hashed 30-min token QR to public /video/$token, reusing the secure-order host/relay room.
 - Portal: hashed email codes with atomic attempt limits; layout gates content and owns the live timer. User-bound state fails closed; customer portal rail links appear only once unlocked.
 - /home redirects by role (`src/lib/portal-home.ts`): staff to /staff-portal, members to /portal; both render `PortalHome`.
+- TV Remote: the native helper app authenticates only by a hashed device token at /api/public/tv; staff join the random per-session broadcast topic returned by claim_tv_pair_code, so commands never reach other channels.

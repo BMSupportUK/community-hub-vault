@@ -9,7 +9,7 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 
 /** Pages that sit inside the Staff Portal tab bar (ticket threads keep their own bounded layout). */
 export function isStaffPortalPath(path: string) {
-  return ["/staff-portal", "/tickets", "/shifts", "/shift-history", "/staff-pin", "/staff"].includes(path.replace(/\/$/, "") || "/");
+  return ["/staff-portal", "/tickets", "/shifts", "/shift-history", "/staff-pin", "/tv-remote", "/staff"].includes(path.replace(/\/$/, "") || "/");
 }
 
 /** Staff Portal tab bar: tickets, shifts and other staff tools in one place. */

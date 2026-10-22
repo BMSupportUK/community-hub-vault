@@ -6970,6 +6970,84 @@ export type Database = {
           },
         ]
       }
+      tv_remote_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          session_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          session_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          session_id?: string | null
+        }
+        Relationships: []
+      }
+      tv_remote_sessions: {
+        Row: {
+          claimed_at: string | null
+          code_hash: string
+          consented_at: string | null
+          created_at: string
+          customer_label: string | null
+          device_name: string
+          device_token_hash: string
+          ended_at: string | null
+          ended_by: string | null
+          expires_at: string
+          id: string
+          ip_hash: string | null
+          staff_id: string | null
+          status: string
+          topic: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          code_hash: string
+          consented_at?: string | null
+          created_at?: string
+          customer_label?: string | null
+          device_name?: string
+          device_token_hash: string
+          ended_at?: string | null
+          ended_by?: string | null
+          expires_at?: string
+          id?: string
+          ip_hash?: string | null
+          staff_id?: string | null
+          status?: string
+          topic: string
+        }
+        Update: {
+          claimed_at?: string | null
+          code_hash?: string
+          consented_at?: string | null
+          created_at?: string
+          customer_label?: string | null
+          device_name?: string
+          device_token_hash?: string
+          ended_at?: string | null
+          ended_by?: string | null
+          expires_at?: string
+          id?: string
+          ip_hash?: string | null
+          staff_id?: string | null
+          status?: string
+          topic?: string
+        }
+        Relationships: []
+      }
       upcoming_event: {
         Row: {
           banner_url: string | null
@@ -8059,6 +8137,14 @@ export type Database = {
         Returns: boolean
       }
       claim_invite_access: { Args: never; Returns: boolean }
+      claim_tv_pair_code: {
+        Args: { _code: string; _customer?: string }
+        Returns: {
+          device_name: string
+          id: string
+          topic: string
+        }[]
+      }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       clear_admin_unlock_failures: { Args: never; Returns: undefined }
       clear_fan_dm_threads: { Args: { _threads: string[] }; Returns: number }
@@ -8103,6 +8189,7 @@ export type Database = {
         }[]
       }
       email_is_account_holder: { Args: { _email: string }; Returns: boolean }
+      end_tv_session: { Args: { _id: string }; Returns: undefined }
       export_app_credentials_for_backup: {
         Args: never
         Returns: {
@@ -8955,6 +9042,7 @@ export type Database = {
           username: string
         }[]
       }
+      touch_tv_session: { Args: { _id: string }; Returns: undefined }
       unmute_user: { Args: { _user_id: string }; Returns: boolean }
       upsert_my_signup_vpn: {
         Args: {

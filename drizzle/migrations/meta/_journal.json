@@ -1352,6 +1352,13 @@
       "when": 1792606401550,
       "tag": "0192_portal_unlock_until_uk_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 193,
+      "version": "7",
+      "when": 1792686439177,
+      "tag": "0193_tv_remote_sessions",
+      "breakpoints": true
     }
   ]
 }
