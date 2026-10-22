@@ -94,7 +94,7 @@ function SecurePageAdmin() {
             } />
           </div>
         </div>
-        {tab === "screen" && (<div className="space-y-3"><Link to="/screen-share/order/$orderId" params={{ orderId: order }} className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Open this order's screen share page</Link><OrderScreenShareTab orderId={order} rows={shares} /></div>)}
+        {tab === "screen" && <OrderScreenShareTab orderId={order} rows={shares} />}
       </div>
     </main>
   );

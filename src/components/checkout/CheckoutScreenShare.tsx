@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MonitorUp, CheckCircle2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { requestCheckoutScreenShare, getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
+import { screenShareInProgress } from "@/lib/tv-remote";
 
 /** Customer: ask staff to see the TV screen through BM Remote Helper. */
 export function CheckoutScreenShare({ token, password }: { token: string; password: string }) {
@@ -14,12 +15,20 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [live, setLive] = useState<string | null>(null);
+  const wasOngoing = useRef(false);
   const check = useServerFn(getCheckoutScreenShareStatus);
   useEffect(() => {
     let stop = false;
-    const load = () => check({ data: { token, password } }).then((r) => { if (!stop) { setLive(r.status); if (r.status) setDone(true); } }).catch(() => {});
+    const load = () => check({ data: { token, password } }).then((r) => {
+      if (stop) return;
+      const ongoing = screenShareInProgress(r.status);
+      setLive(ongoing ? r.status : null);
+      setDone(ongoing);
+      if (!ongoing && wasOngoing.current) { setOpen(false); setCode(""); setErr(null); }
+      wasOngoing.current = ongoing;
+    }).catch(() => {});
     load();
-    const t = window.setInterval(load, 5000);
+    const t = window.setInterval(load, 2000);
     return () => { stop = true; window.clearInterval(t); };
   }, [token, password, check]);
 
@@ -41,7 +50,7 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       setBusy(true); setErr(null);
       try {
         const r = await send({ data: { token, password, code } });
-        if (r.ok) setDone(true); else setErr(r.error);
+        if (r.ok) { wasOngoing.current = true; setLive("pending"); setDone(true); setOpen(false); setCode(""); } else setErr(r.error);
       } catch { setErr("Something went wrong. Try again."); }
       finally { setBusy(false); }
     }}>
