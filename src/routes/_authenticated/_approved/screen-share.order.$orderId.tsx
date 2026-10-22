@@ -1,8 +1,11 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { ArrowLeft, MonitorUp } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
+import { StaffCheckoutChatBubble } from "@/components/checkout/CheckoutChat";
+import { supabase } from "@/integrations/supabase/client";
 import { canUseTvRemote } from "@/lib/tv-remote";
 
 export const Route = createFileRoute("/_authenticated/_approved/screen-share/order/$orderId")({
