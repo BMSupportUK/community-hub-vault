@@ -151,6 +151,7 @@ import { Route as AuthenticatedApprovedPortalLoginsRouteImport } from './routes/
 import { Route as AuthenticatedApprovedPortalSettingsRouteImport } from './routes/_authenticated/_approved/portal.settings'
 import { Route as AuthenticatedApprovedPortalTvHelperRouteImport } from './routes/_authenticated/_approved/portal.tv-helper'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
+import { Route as AuthenticatedApprovedTvRemoteSessionIdRouteImport } from './routes/_authenticated/_approved/tv-remote_.$sessionId'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as ApiPublicATokenRouteImport } from './routes/api/public/a/$token'
 import { Route as ApiPublicAdsAdBannerTrackRouteImport } from './routes/api/public/ads/ad-banner-track'
@@ -198,7 +199,6 @@ import { Route as AuthenticatedApprovedFanzoneUUserIdRouteImport } from './route
 import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
-import { Route as AuthenticatedApprovedTvRemoteKindIdRouteImport } from './routes/_authenticated/_approved/tv-remote_.$kind.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -1009,6 +1009,12 @@ const AuthenticatedApprovedSportsGuidesNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
   } as any)
+const AuthenticatedApprovedTvRemoteSessionIdRoute =
+  AuthenticatedApprovedTvRemoteSessionIdRouteImport.update({
+    id: '/tv-remote_/$sessionId',
+    path: '/tv-remote/$sessionId',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedUUsernameRoute =
   AuthenticatedApprovedUUsernameRouteImport.update({
     id: '/u/$username',
@@ -1286,12 +1292,6 @@ const AuthenticatedApprovedSportsGuidesReadIdRoute =
     path: '/read/$id',
     getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
   } as any)
-const AuthenticatedApprovedTvRemoteKindIdRoute =
-  AuthenticatedApprovedTvRemoteKindIdRouteImport.update({
-    id: '/tv-remote_/$kind/$id',
-    path: '/tv-remote/$kind/$id',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -1432,6 +1432,7 @@ export interface FileRoutesByFullPath {
   '/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
   '/portal/tv-helper': typeof AuthenticatedApprovedPortalTvHelperRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
+  '/tv-remote/$sessionId': typeof AuthenticatedApprovedTvRemoteSessionIdRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
@@ -1481,7 +1482,6 @@ export interface FileRoutesByFullPath {
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
-  '/tv-remote/$kind/$id': typeof AuthenticatedApprovedTvRemoteKindIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1619,6 +1619,7 @@ export interface FileRoutesByTo {
   '/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
   '/portal/tv-helper': typeof AuthenticatedApprovedPortalTvHelperRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
+  '/tv-remote/$sessionId': typeof AuthenticatedApprovedTvRemoteSessionIdRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
@@ -1668,7 +1669,6 @@ export interface FileRoutesByTo {
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
-  '/tv-remote/$kind/$id': typeof AuthenticatedApprovedTvRemoteKindIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1812,6 +1812,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
   '/_authenticated/_approved/portal/tv-helper': typeof AuthenticatedApprovedPortalTvHelperRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
+  '/_authenticated/_approved/tv-remote_/$sessionId': typeof AuthenticatedApprovedTvRemoteSessionIdRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
@@ -1861,7 +1862,6 @@ export interface FileRoutesById {
   '/_authenticated/_approved/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
-  '/_authenticated/_approved/tv-remote_/$kind/$id': typeof AuthenticatedApprovedTvRemoteKindIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -2004,6 +2004,7 @@ export interface FileRouteTypes {
     | '/portal/settings'
     | '/portal/tv-helper'
     | '/sports-guides/new'
+    | '/tv-remote/$sessionId'
     | '/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
@@ -2053,7 +2054,6 @@ export interface FileRouteTypes {
     | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
-    | '/tv-remote/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -2191,6 +2191,7 @@ export interface FileRouteTypes {
     | '/portal/settings'
     | '/portal/tv-helper'
     | '/sports-guides/new'
+    | '/tv-remote/$sessionId'
     | '/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
@@ -2240,7 +2241,6 @@ export interface FileRouteTypes {
     | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
-    | '/tv-remote/$kind/$id'
   id:
     | '__root__'
     | '/'
@@ -2383,6 +2383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/portal/settings'
     | '/_authenticated/_approved/portal/tv-helper'
     | '/_authenticated/_approved/sports-guides/new'
+    | '/_authenticated/_approved/tv-remote_/$sessionId'
     | '/_authenticated/_approved/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
@@ -2432,7 +2433,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/forum/$board/$topic'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
-    | '/_authenticated/_approved/tv-remote_/$kind/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -3516,6 +3516,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesNewRouteImport
       parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
     }
+    '/_authenticated/_approved/tv-remote_/$sessionId': {
+      id: '/_authenticated/_approved/tv-remote_/$sessionId'
+      path: '/tv-remote/$sessionId'
+      fullPath: '/tv-remote/$sessionId'
+      preLoaderRoute: typeof AuthenticatedApprovedTvRemoteSessionIdRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/u/$username': {
       id: '/_authenticated/_approved/u/$username'
       path: '/u/$username'
@@ -3845,13 +3852,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesReadIdRouteImport
       parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
     }
-    '/_authenticated/_approved/tv-remote_/$kind/$id': {
-      id: '/_authenticated/_approved/tv-remote_/$kind/$id'
-      path: '/tv-remote/$kind/$id'
-      fullPath: '/tv-remote/$kind/$id'
-      preLoaderRoute: typeof AuthenticatedApprovedTvRemoteKindIdRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
   }
 }
 
@@ -4026,11 +4026,11 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedPortalLoginsRoute: typeof AuthenticatedApprovedPortalLoginsRoute
   AuthenticatedApprovedPortalSettingsRoute: typeof AuthenticatedApprovedPortalSettingsRoute
   AuthenticatedApprovedPortalTvHelperRoute: typeof AuthenticatedApprovedPortalTvHelperRoute
+  AuthenticatedApprovedTvRemoteSessionIdRoute: typeof AuthenticatedApprovedTvRemoteSessionIdRoute
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
   AuthenticatedApprovedPortalIndexRoute: typeof AuthenticatedApprovedPortalIndexRoute
   AuthenticatedApprovedFanzonePostsUserIdRoute: typeof AuthenticatedApprovedFanzonePostsUserIdRoute
   AuthenticatedApprovedFanzoneUUserIdRoute: typeof AuthenticatedApprovedFanzoneUUserIdRoute
-  AuthenticatedApprovedTvRemoteKindIdRoute: typeof AuthenticatedApprovedTvRemoteKindIdRoute
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
@@ -4174,14 +4174,14 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedPortalSettingsRoute,
   AuthenticatedApprovedPortalTvHelperRoute:
     AuthenticatedApprovedPortalTvHelperRoute,
+  AuthenticatedApprovedTvRemoteSessionIdRoute:
+    AuthenticatedApprovedTvRemoteSessionIdRoute,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
   AuthenticatedApprovedPortalIndexRoute: AuthenticatedApprovedPortalIndexRoute,
   AuthenticatedApprovedFanzonePostsUserIdRoute:
     AuthenticatedApprovedFanzonePostsUserIdRoute,
   AuthenticatedApprovedFanzoneUUserIdRoute:
     AuthenticatedApprovedFanzoneUUserIdRoute,
-  AuthenticatedApprovedTvRemoteKindIdRoute:
-    AuthenticatedApprovedTvRemoteKindIdRoute,
 }
 
 const AuthenticatedApprovedRouteWithChildren =
