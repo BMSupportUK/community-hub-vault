@@ -316,3 +316,7 @@
 ## Side icon rail ordering
 - [x] Add admin-only Owner Tools editor for separate staff/user orders with existing persisted keys and shared rendering helpers; two ordering regressions pass, preview build OK.
 - [ ] Verify editor save/reload through the UI — authenticated dashboard requires account password and staff PIN; no unlock bypass or shared order changed for testing.
+
+## TV Remote Helper
+- [ ] Confirm v1.2 helper works end-to-end on a real TV (code, Allow, Start, picture on staff TV Remote page). Waits on Dane J testing.
+- [ ] After that is confirmed: add a TV Remote button to secure checkout and tickets (staff-only). Ticket code is locked, so only do this once the user gives the go-ahead.
