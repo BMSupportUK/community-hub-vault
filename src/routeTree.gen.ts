@@ -121,6 +121,7 @@ import { Route as AuthenticatedApprovedStaffPortalRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
 import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './routes/_authenticated/_approved/streaming-devices'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
+import { Route as AuthenticatedApprovedTvRemoteRouteImport } from './routes/_authenticated/_approved/tv-remote'
 import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
@@ -835,6 +836,12 @@ const AuthenticatedApprovedTicketsRoute =
     path: '/tickets',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedTvRemoteRoute =
+  AuthenticatedApprovedTvRemoteRouteImport.update({
+    id: '/tv-remote',
+    path: '/tv-remote',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedVpnRoute =
   AuthenticatedApprovedVpnRouteImport.update({
     id: '/vpn',
@@ -1376,6 +1383,7 @@ export interface FileRoutesByFullPath {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
@@ -1559,6 +1567,7 @@ export interface FileRoutesByTo {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
@@ -1748,6 +1757,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/_authenticated/_approved/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/_authenticated/_approved/vpn': typeof AuthenticatedApprovedVpnRoute
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
@@ -1936,6 +1946,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/streaming-devices'
     | '/tickets'
+    | '/tv-remote'
     | '/vpn'
     | '/what-to-watch'
     | '/api/public/android-apk'
@@ -2119,6 +2130,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/streaming-devices'
     | '/tickets'
+    | '/tv-remote'
     | '/vpn'
     | '/what-to-watch'
     | '/api/public/android-apk'
@@ -2307,6 +2319,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/streaming-devices'
     | '/_authenticated/_approved/tickets'
+    | '/_authenticated/_approved/tv-remote'
     | '/_authenticated/_approved/vpn'
     | '/_authenticated/_approved/what-to-watch'
     | '/api/public/android-apk'
@@ -3253,6 +3266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/tv-remote': {
+      id: '/_authenticated/_approved/tv-remote'
+      path: '/tv-remote'
+      fullPath: '/tv-remote'
+      preLoaderRoute: typeof AuthenticatedApprovedTvRemoteRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/vpn': {
       id: '/_authenticated/_approved/vpn'
       path: '/vpn'
@@ -3933,6 +3953,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedStatusRoute: typeof AuthenticatedApprovedStatusRoute
   AuthenticatedApprovedStreamingDevicesRoute: typeof AuthenticatedApprovedStreamingDevicesRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
+  AuthenticatedApprovedTvRemoteRoute: typeof AuthenticatedApprovedTvRemoteRoute
   AuthenticatedApprovedVpnRoute: typeof AuthenticatedApprovedVpnRoute
   AuthenticatedApprovedWhatToWatchRoute: typeof AuthenticatedApprovedWhatToWatchRoute
   AuthenticatedApprovedAdminJobApplicationIdRoute: typeof AuthenticatedApprovedAdminJobApplicationIdRoute
@@ -4069,6 +4090,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedStreamingDevicesRoute:
     AuthenticatedApprovedStreamingDevicesRoute,
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
+  AuthenticatedApprovedTvRemoteRoute: AuthenticatedApprovedTvRemoteRoute,
   AuthenticatedApprovedVpnRoute: AuthenticatedApprovedVpnRoute,
   AuthenticatedApprovedWhatToWatchRoute: AuthenticatedApprovedWhatToWatchRoute,
   AuthenticatedApprovedAdminJobApplicationIdRoute:
