@@ -19,7 +19,7 @@ export type LiveRow = { id: string; topic: string; device_name: string; staff_id
 type Option = { id: string; label: string };
 
 /** Choose which sale or ticket the TV help is for; each one has its own page. */
-export function LinkPicker({ onPick }: { onPick: (kind: LinkKind, id: string) => void }) {
+export function LinkPicker({ onPick, title = "Start TV help" }: { onPick: (kind: LinkKind, id: string, label: string) => void; title?: string }) {
   const [kind, setKind] = useState<LinkKind>("ticket");
   const [orders, setOrders] = useState<Option[]>([]);
   const [tickets, setTickets] = useState<Option[]>([]);
@@ -37,12 +37,12 @@ export function LinkPicker({ onPick }: { onPick: (kind: LinkKind, id: string) =>
   const opts = kind === "order" ? orders : tickets;
   return (
     <section className="space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
-      <h2 className="text-lg font-semibold">Start TV help</h2>
+      <h2 className="text-lg font-semibold">{title}</h2>
       <div className="grid grid-cols-2 gap-2">
         <Button type="button" variant={kind === "ticket" ? "default" : "secondary"} onClick={() => setKind("ticket")}>Ticket</Button>
         <Button type="button" variant={kind === "order" ? "default" : "secondary"} onClick={() => setKind("order")}>Sale</Button>
       </div>
-      <select value="" onChange={(e) => e.target.value && onPick(kind, e.target.value)}
+      <select value="" onChange={(e) => { const o = opts.find((x) => x.id === e.target.value); if (o) onPick(kind, o.id, o.label); }}
         className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
         <option value="">{kind === "order" ? "Choose the sale…" : "Choose the ticket…"}</option>
         {opts.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
@@ -405,6 +405,42 @@ export function History() {
             </tbody>
           </table>
         </div>
+      )}
+    </section>
+  );
+}
+
+type RequestRow = { id: string; device_name: string; created_at: string; expires_at: string };
+
+/** Help requests sent from customers' TVs, waiting for staff to answer. */
+export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
+  const [rows, setRows] = useState<RequestRow[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from("tv_remote_sessions").select("id, device_name, created_at, expires_at")
+        .eq("status", "pending").gt("expires_at", new Date().toISOString()).order("created_at", { ascending: true });
+      setRows((data ?? []) as RequestRow[]);
+    };
+    void load();
+    const t = window.setInterval(load, 4000);
+    return () => window.clearInterval(t);
+  }, []);
+  const fmt = (s: string) => new Date(s).toLocaleTimeString("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" });
+  return (
+    <section className="rounded-2xl border bg-card p-6 shadow-sm">
+      <h2 className="mb-3 text-lg font-semibold">TV help requests</h2>
+      {rows.length === 0 ? <p className="text-sm text-muted-foreground">No customers waiting. Requests appear here when a customer opens BM Remote Helper on their TV.</p> : (
+        <ul className="space-y-2">
+          {rows.map((r) => (
+            <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{r.device_name}</p>
+                <p className="text-xs text-muted-foreground">Requested {fmt(r.created_at)}</p>
+              </div>
+              <Button size="sm" onClick={() => onOpen(r.id)}>Answer</Button>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
