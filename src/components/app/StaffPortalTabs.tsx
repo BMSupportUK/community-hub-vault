@@ -6,6 +6,9 @@ import { isStaffPortalUser } from "@/lib/portal-home";
 import { BmInboxBell } from "@/components/app/BmInboxBell";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { Clocks } from "@/components/app/Clocks";
+import { LockNowPill } from "@/components/app/ScreenLockProvider";
+import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 
 /** Pages that sit inside the Staff Portal tab bar (ticket threads keep their own bounded layout). */
 export function isStaffPortalPath(path: string) {
@@ -29,6 +32,12 @@ export function StaffPortalTabs() {
         <NotificationBell />
       </div>
       <Link to="/portal/settings" className={cls("/portal/settings")}><Settings className="size-4" />Settings</Link>
+      <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1.5 shadow-lg backdrop-blur [&_span.hidden]:!inline">
+        <Clocks />
+        <LockNowPill />
+        <TwoFactorPill />
+        <VpnPill />
+      </div>
     </nav>
   );
 }
