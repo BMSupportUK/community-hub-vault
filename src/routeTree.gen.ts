@@ -127,6 +127,7 @@ import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
+import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/public/remote-helper-apk'
 import { Route as ApiPublicTvRouteImport } from './routes/api/public/tv'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
@@ -870,6 +871,12 @@ const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   path: '/api/public/link-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRemoteHelperApkRoute =
+  ApiPublicRemoteHelperApkRouteImport.update({
+    id: '/api/public/remote-helper-apk',
+    path: '/api/public/remote-helper-apk',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTvRoute = ApiPublicTvRouteImport.update({
   id: '/api/public/tv',
   path: '/api/public/tv',
@@ -1389,6 +1396,7 @@ export interface FileRoutesByFullPath {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1573,6 +1581,7 @@ export interface FileRoutesByTo {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1763,6 +1772,7 @@ export interface FileRoutesById {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1952,6 +1962,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/remote-helper-apk'
     | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -2136,6 +2147,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/remote-helper-apk'
     | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -2325,6 +2337,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/remote-helper-apk'
     | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -2433,6 +2446,7 @@ export interface RootRouteChildren {
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
+  ApiPublicRemoteHelperApkRoute: typeof ApiPublicRemoteHelperApkRoute
   ApiPublicTvRoute: typeof ApiPublicTvRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
@@ -3306,6 +3320,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/link-preview'
       fullPath: '/api/public/link-preview'
       preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/remote-helper-apk': {
+      id: '/api/public/remote-helper-apk'
+      path: '/api/public/remote-helper-apk'
+      fullPath: '/api/public/remote-helper-apk'
+      preLoaderRoute: typeof ApiPublicRemoteHelperApkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/tv': {
@@ -4208,6 +4229,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
+  ApiPublicRemoteHelperApkRoute: ApiPublicRemoteHelperApkRoute,
   ApiPublicTvRoute: ApiPublicTvRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
