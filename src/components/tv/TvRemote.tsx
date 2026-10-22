@@ -480,11 +480,12 @@ export function OrderScreenShareTab({ orderId, rows }: { orderId: string; rows: 
   const { user } = useAuth();
   const [live, setLive] = useState<Live | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const closedSessions = useRef(new Set<string>());
   const uid = user?.id ?? null;
   // Rejoin a session this staff member is already dealing with (e.g. after refresh).
   useEffect(() => {
     if (live || !uid) return;
-    const mine = rows.find((r) => r.status !== "pending" && r.staff_id === uid);
+    const mine = rows.find((r) => r.status !== "pending" && r.staff_id === uid && !closedSessions.current.has(r.id));
     if (mine) setLive({ id: mine.id, topic: mine.topic, device: mine.device_name, host: true, linkKind: "order", linkId: orderId, hostId: uid });
   }, [rows, uid, live, orderId]);
   const answer = async (r: OrderReq) => {
@@ -495,13 +496,17 @@ export function OrderScreenShareTab({ orderId, rows }: { orderId: string; rows: 
     if (error || !row) { toast.error(error?.message ?? "Could not answer this request"); return; }
     setLive({ id: row.id, topic: row.topic, device: row.device_name, host: true, linkKind: "order", linkId: orderId, hostId: uid });
   };
-  if (live) return <RemoteSession key={live.id} live={live} onEnd={() => setLive(null)} />;
+  if (live) return <RemoteSession key={live.id} live={live} onEnd={() => {
+    closedSessions.current.add(live.id);
+    setLive(null);
+  }} />;
+  const currentRows = rows.filter((r) => !closedSessions.current.has(r.id));
   return (
     <section className="rounded-2xl border bg-card p-6 shadow-sm">
       <h2 className="mb-3 text-lg font-semibold">Screen share requests</h2>
-      {rows.length === 0 ? <p className="text-sm text-muted-foreground">No active screen share requests for this sale. When the customer presses Screen share help, it appears here.</p> : (
+      {currentRows.length === 0 ? <p className="text-sm text-muted-foreground">No active screen share requests for this sale. When the customer presses Screen share help, it appears here.</p> : (
         <ul className="space-y-2">
-          {rows.map((r) => (
+          {currentRows.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
               <div className="min-w-0">
                 <p className="truncate font-medium">{r.device_name}</p>

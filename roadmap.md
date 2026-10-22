@@ -318,5 +318,6 @@
 - [ ] Verify editor save/reload through the UI — authenticated dashboard requires account password and staff PIN; no unlock bypass or shared order changed for testing.
 
 ## TV Remote Helper
+- [ ] Remove the redundant secure-order screen share link and reset customer/staff controls automatically when a session ends; verify repeat requests without refreshing.
 - [ ] Confirm v1.2 helper works end-to-end on a real TV (code, Allow, Start, picture on staff TV Remote page). Waits on Dane J testing.
 - [ ] After that is confirmed: add a TV Remote button to secure checkout and tickets (staff-only). Ticket code is locked, so only do this once the user gives the go-ahead.

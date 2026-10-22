@@ -3,6 +3,11 @@ export const TV_PAIR_CODE_MINUTES = 10;
 export const TV_IDLE_MINUTES = 30;
 export const TV_REMOTE_ROLES = ["admin", "management", "staff"] as const;
 
+/** Only a pending request or an ongoing share blocks another help request. */
+export function screenShareInProgress(status: string | null): boolean {
+  return status === "pending" || status === "claimed" || status === "active";
+}
+
 export type TvKey =
   | "up" | "down" | "left" | "right" | "ok" | "back" | "home" | "menu"
   | "play_pause" | "volume_up" | "volume_down" | "mute";
