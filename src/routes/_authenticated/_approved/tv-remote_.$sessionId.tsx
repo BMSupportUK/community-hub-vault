@@ -56,7 +56,7 @@ function TvRequestPage() {
     setBusy(false);
     const r = Array.isArray(data) ? data[0] : null;
     if (error || !r) { toast.error(error?.message ?? "Could not answer this request"); return; }
-    setLive({ id: r.id, topic: r.topic, device: r.device_name, host: true, linkKind: link?.kind ?? null, linkId: link?.id ?? null, hostId: uid ?? null });
+    setLive({ id: r.id, topic: r.topic, device: r.device_name, host: true, linkKind: link?.kind ?? (row?.link_kind as LinkKind | null) ?? null, linkId: link?.id ?? row?.link_id ?? null, hostId: uid ?? null });
   };
 
   if (loading) return null;
@@ -78,7 +78,7 @@ function TvRequestPage() {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_1fr]">
             <LinkPicker title="Link a sale or ticket (for the chat)" onPick={(kind, id, label) => setLink({ kind, id, label })} />
             <section className="space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
-              <p className="text-sm">{link ? <>Chat: <strong>{link.label}</strong></> : "No chat linked yet — pick a sale or ticket, or answer without one."}</p>
+              <p className="text-sm">{link ? <>Chat: <strong>{link.label}</strong></> : row.link_kind === "order" ? "Requested from the customer's secure checkout — the sale chat will open." : "No chat linked yet — pick a sale or ticket, or answer without one."}</p>
               <Button className="w-full" disabled={busy} onClick={() => void answer()}>{busy ? "Answering…" : "Answer request"}</Button>
             </section>
           </div>
