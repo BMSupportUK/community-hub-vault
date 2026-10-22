@@ -35,7 +35,7 @@ function TvRequestPage() {
   const uid = user?.id;
 
   useEffect(() => {
-    if (live) return;
+    if (live || !uid) return;
     const load = async () => {
       const { data } = await supabase.from("tv_remote_sessions")
         .select("id, topic, device_name, status, staff_id, link_kind, link_id").eq("id", sessionId).maybeSingle();
