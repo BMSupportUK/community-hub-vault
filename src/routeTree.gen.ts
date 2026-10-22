@@ -198,6 +198,7 @@ import { Route as AuthenticatedApprovedFanzoneUUserIdRouteImport } from './route
 import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
+import { Route as AuthenticatedApprovedTvRemoteKindIdRouteImport } from './routes/_authenticated/_approved/tv-remote_.$kind.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -1285,6 +1286,12 @@ const AuthenticatedApprovedSportsGuidesReadIdRoute =
     path: '/read/$id',
     getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
   } as any)
+const AuthenticatedApprovedTvRemoteKindIdRoute =
+  AuthenticatedApprovedTvRemoteKindIdRouteImport.update({
+    id: '/tv-remote_/$kind/$id',
+    path: '/tv-remote/$kind/$id',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -1474,6 +1481,7 @@ export interface FileRoutesByFullPath {
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
+  '/tv-remote/$kind/$id': typeof AuthenticatedApprovedTvRemoteKindIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1660,6 +1668,7 @@ export interface FileRoutesByTo {
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
+  '/tv-remote/$kind/$id': typeof AuthenticatedApprovedTvRemoteKindIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1852,6 +1861,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
+  '/_authenticated/_approved/tv-remote_/$kind/$id': typeof AuthenticatedApprovedTvRemoteKindIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -2043,6 +2053,7 @@ export interface FileRouteTypes {
     | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
+    | '/tv-remote/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -2229,6 +2240,7 @@ export interface FileRouteTypes {
     | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
+    | '/tv-remote/$kind/$id'
   id:
     | '__root__'
     | '/'
@@ -2420,6 +2432,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/forum/$board/$topic'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
+    | '/_authenticated/_approved/tv-remote_/$kind/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -3832,6 +3845,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesReadIdRouteImport
       parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
     }
+    '/_authenticated/_approved/tv-remote_/$kind/$id': {
+      id: '/_authenticated/_approved/tv-remote_/$kind/$id'
+      path: '/tv-remote/$kind/$id'
+      fullPath: '/tv-remote/$kind/$id'
+      preLoaderRoute: typeof AuthenticatedApprovedTvRemoteKindIdRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
@@ -4010,6 +4030,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedPortalIndexRoute: typeof AuthenticatedApprovedPortalIndexRoute
   AuthenticatedApprovedFanzonePostsUserIdRoute: typeof AuthenticatedApprovedFanzonePostsUserIdRoute
   AuthenticatedApprovedFanzoneUUserIdRoute: typeof AuthenticatedApprovedFanzoneUUserIdRoute
+  AuthenticatedApprovedTvRemoteKindIdRoute: typeof AuthenticatedApprovedTvRemoteKindIdRoute
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
@@ -4159,6 +4180,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedFanzonePostsUserIdRoute,
   AuthenticatedApprovedFanzoneUUserIdRoute:
     AuthenticatedApprovedFanzoneUUserIdRoute,
+  AuthenticatedApprovedTvRemoteKindIdRoute:
+    AuthenticatedApprovedTvRemoteKindIdRoute,
 }
 
 const AuthenticatedApprovedRouteWithChildren =
