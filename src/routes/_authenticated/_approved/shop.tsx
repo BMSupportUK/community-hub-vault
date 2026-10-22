@@ -410,7 +410,6 @@ function ShopPage() {
   return (
     <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden min-w-0">
       <PaymentTestModeBanner />
-      <PortalTabs />
         <div className="flex min-h-0 min-w-0 flex-1 overflow-visible md:h-full md:max-h-full md:overflow-hidden">
           {view === "store" && <Storefront />}
           {view === "orders" &&
