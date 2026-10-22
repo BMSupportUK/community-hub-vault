@@ -418,7 +418,7 @@ export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase.from("tv_remote_sessions").select("id, device_name, created_at, expires_at")
-        .eq("status", "pending").gt("expires_at", new Date().toISOString()).order("created_at", { ascending: true });
+        .eq("status", "pending").not("requested_at", "is", null).gt("expires_at", new Date().toISOString()).order("requested_at", { ascending: true });
       setRows((data ?? []) as RequestRow[]);
     };
     void load();
@@ -429,7 +429,7 @@ export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
   return (
     <section className="rounded-2xl border bg-card p-6 shadow-sm">
       <h2 className="mb-3 text-lg font-semibold">TV help requests</h2>
-      {rows.length === 0 ? <p className="text-sm text-muted-foreground">No customers waiting. Requests appear here when a customer opens BM Remote Helper on their TV.</p> : (
+      {rows.length === 0 ? <p className="text-sm text-muted-foreground">No customers waiting. Requests appear here when a customer presses Screen share help on their secure checkout.</p> : (
         <ul className="space-y-2">
           {rows.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
