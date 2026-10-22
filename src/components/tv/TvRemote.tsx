@@ -291,6 +291,17 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
     return () => { window.clearInterval(t); window.removeEventListener("pointerdown", bump); window.removeEventListener("keydown", bump); };
   }, [live.id, live.host, end]);
 
+  // Everyone: notice when the customer ends it on the TV (broadcast can be missed).
+  useEffect(() => {
+    const t = window.setInterval(async () => {
+      const { data } = await supabase.from("tv_remote_sessions").select("status").eq("id", live.id).maybeSingle();
+      if (data && (data.status === "ended" || data.status === "expired")) {
+        ended.current = true; setTvState("gone"); toast.info("The customer ended the session on their TV."); onEndRef.current();
+      }
+    }, 4000);
+    return () => window.clearInterval(t);
+  }, [live.id]);
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <div className="space-y-4">
