@@ -126,6 +126,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         // sign-in goes straight to the app instead of flashing the welcome page.
         children: `(function(){try{if(location.pathname!=="/")return;var f=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf("sb-")===0&&k.indexOf("-auth-token")===k.length-11){f=true;break}}if(!f)return;var s=document.createElement("style");s.textContent="body{visibility:hidden!important;background:#000!important}";document.head.appendChild(s);location.replace("/home")}catch(e){}})();`,
       },
+      {
+        // Black-screen watchdog: after a publish, an open app window can hold
+        // script files that no longer exist, so the page loads but the app
+        // never starts — leaving a silent black window. This inline script
+        // runs even when the app bundle fails: if nothing has rendered after
+        // a few seconds it reloads once for the fresh files, and if that still
+        // fails it shows a readable message instead of a black screen.
+        children: `(function(){try{var KEY="bm-boot-watchdog";window.__bmBootOK=function(){document.documentElement.setAttribute("data-bm-booted","1");sessionStorage.removeItem(KEY)};window.addEventListener("load",function(){setTimeout(function(){if(document.documentElement.getAttribute("data-bm-booted"))return;if((document.body.innerText||"").trim().length>4)return;if(!sessionStorage.getItem(KEY)){sessionStorage.setItem(KEY,"1");var u=new URL(location.href);u.searchParams.set("bmr",Date.now().toString(36));location.replace(u.toString());return}var d=document.createElement("div");d.style.cssText="position:fixed;inset:0;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-family:sans-serif;padding:24px;z-index:2147483647";d.innerHTML="<div><h1 style='font-size:20px;margin-bottom:8px'>The app could not load</h1><p style='opacity:.7;font-size:14px'>Close this window and open BM Support again. If it keeps happening, clear the site data in your browser settings.</p></div>";document.body.appendChild(d)},9000)})}catch(e){}})();`,
+      },
     ],
   }),
   shellComponent: RootShell,
