@@ -20,6 +20,7 @@ export const RAIL_EDITOR_ITEMS = {
     { id: "portal:/shifts", label: "Shifts" },
     { id: "portal:/shift-history", label: "Shift history" },
     { id: "portal:/staff-pin", label: "Staff PIN" },
+    { id: "portal:/tv-remote", label: "TV Remote" },
     { id: "portal:admin-panel", label: "Admin Panel" },
     { id: "portal:/moderation", label: "Access Requests" },
     { id: "portal:admin-orders", label: "Shop Orders" },

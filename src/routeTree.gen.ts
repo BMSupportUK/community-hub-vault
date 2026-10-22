@@ -126,6 +126,7 @@ import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
+import { Route as ApiPublicTvRouteImport } from './routes/api/public/tv'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
 import { Route as ApiPublicWiseEmailRouteImport } from './routes/api/public/wise-email'
@@ -862,6 +863,11 @@ const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   path: '/api/public/link-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTvRoute = ApiPublicTvRouteImport.update({
+  id: '/api/public/tv',
+  path: '/api/public/tv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
   id: '/api/public/tweet',
   path: '/api/public/tweet',
@@ -1375,6 +1381,7 @@ export interface FileRoutesByFullPath {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1557,6 +1564,7 @@ export interface FileRoutesByTo {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1745,6 +1753,7 @@ export interface FileRoutesById {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1932,6 +1941,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2114,6 +2124,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2301,6 +2312,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2408,6 +2420,7 @@ export interface RootRouteChildren {
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
+  ApiPublicTvRoute: typeof ApiPublicTvRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
   ApiPublicWiseEmailRoute: typeof ApiPublicWiseEmailRoute
@@ -3273,6 +3286,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/link-preview'
       fullPath: '/api/public/link-preview'
       preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tv': {
+      id: '/api/public/tv'
+      path: '/api/public/tv'
+      fullPath: '/api/public/tv'
+      preLoaderRoute: typeof ApiPublicTvRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/tweet': {
@@ -4166,6 +4186,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
+  ApiPublicTvRoute: ApiPublicTvRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
   ApiPublicWiseEmailRoute: ApiPublicWiseEmailRoute,
