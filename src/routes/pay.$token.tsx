@@ -16,7 +16,6 @@ import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 import hero from "@/assets/checkout-family-tv.jpg";
 import { toast } from "sonner";
 import { DEMO_CHECKOUT_VIEW } from "@/lib/demo-data";
-import { isMobilePhone } from "@/lib/is-mobile-phone";
 import { isVideoTestOrder } from "@/lib/video-test-orders";
 import { Button } from "@/components/ui/button";
 
