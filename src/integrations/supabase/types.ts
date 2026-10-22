@@ -7008,6 +7008,8 @@ export type Database = {
           expires_at: string
           id: string
           ip_hash: string | null
+          link_id: string | null
+          link_kind: string | null
           staff_id: string | null
           status: string
           topic: string
@@ -7025,6 +7027,8 @@ export type Database = {
           expires_at?: string
           id?: string
           ip_hash?: string | null
+          link_id?: string | null
+          link_kind?: string | null
           staff_id?: string | null
           status?: string
           topic: string
@@ -7042,6 +7046,8 @@ export type Database = {
           expires_at?: string
           id?: string
           ip_hash?: string | null
+          link_id?: string | null
+          link_kind?: string | null
           staff_id?: string | null
           status?: string
           topic?: string
@@ -8138,7 +8144,12 @@ export type Database = {
       }
       claim_invite_access: { Args: never; Returns: boolean }
       claim_tv_pair_code: {
-        Args: { _code: string; _customer?: string }
+        Args: {
+          _code: string
+          _customer?: string
+          _link_id?: string
+          _link_kind?: string
+        }
         Returns: {
           device_name: string
           id: string
