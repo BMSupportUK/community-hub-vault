@@ -7010,6 +7010,7 @@ export type Database = {
           ip_hash: string | null
           link_id: string | null
           link_kind: string | null
+          requested_at: string | null
           staff_id: string | null
           status: string
           topic: string
@@ -7029,6 +7030,7 @@ export type Database = {
           ip_hash?: string | null
           link_id?: string | null
           link_kind?: string | null
+          requested_at?: string | null
           staff_id?: string | null
           status?: string
           topic: string
@@ -7048,6 +7050,7 @@ export type Database = {
           ip_hash?: string | null
           link_id?: string | null
           link_kind?: string | null
+          requested_at?: string | null
           staff_id?: string | null
           status?: string
           topic?: string

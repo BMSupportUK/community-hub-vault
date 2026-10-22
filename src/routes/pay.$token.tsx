@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
 import { continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
 import { switchCheckoutPayMethod } from "@/lib/checkout-pay.functions";
-import { OrderVideoCallCustomer } from "@/components/checkout/OrderVideoCall";
+import { CheckoutScreenShare } from "@/components/checkout/CheckoutScreenShare";
 import { OrderAppLogin } from "@/components/checkout/OrderAppLogin";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
@@ -16,7 +16,6 @@ import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 import hero from "@/assets/checkout-family-tv.jpg";
 import { toast } from "sonner";
 import { DEMO_CHECKOUT_VIEW } from "@/lib/demo-data";
-import { isMobilePhone } from "@/lib/is-mobile-phone";
 import { isVideoTestOrder } from "@/lib/video-test-orders";
 import { Button } from "@/components/ui/button";
 
@@ -228,7 +227,7 @@ function PayPage() {
           <PayByBankSection token={token} password={pw} hideCardNote={view.order.method === "wise"} />
         ) : undefined}
         appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}
-        videoHelp={(!canManage || isVideoTestOrder(token)) && !view.order.cancelled ? <OrderVideoCallCustomer token={token} password={pw} mobile={isMobilePhone()} inline /> : undefined}
+        videoHelp={(!canManage || isVideoTestOrder(token)) && !view.order.cancelled ? <CheckoutScreenShare token={token} password={pw} /> : undefined}
       />
       {canManage && view.order.id && (
         <Dialog open={loginOpen} onOpenChange={setLoginOpen}>

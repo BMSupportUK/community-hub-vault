@@ -1,0 +1,1 @@
+ALTER TABLE public.tv_remote_sessions ADD COLUMN IF NOT EXISTS requested_at timestamptz;
