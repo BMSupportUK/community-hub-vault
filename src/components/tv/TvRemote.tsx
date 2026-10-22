@@ -134,6 +134,9 @@ type Viewer = { id: string; username: string; nameplate: string | null; host: bo
  */
 export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }) {
   const { user } = useAuth();
+  const me = user?.id ?? null;
+  const onEndRef = useRef(onEnd);
+  onEndRef.current = onEnd;
   const [tvState, setTvState] = useState<"waiting" | "allowed" | "declined" | "gone">(live.host ? "waiting" : "allowed");
   const [hasVideo, setHasVideo] = useState(false);
   const [viewers, setViewers] = useState<Viewer[]>([]);
@@ -155,8 +158,8 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
       await supabase.rpc("end_tv_session", { _id: live.id });
     }
     if (reason) toast.info(reason);
-    onEnd();
-  }, [live.id, live.host, onEnd]);
+    onEndRef.current();
+  }, [live.id, live.host]);
 
   // Host only: relay the TV picture to one watching staff member.
   const relayTo = useCallback(async (viewerId: string) => {
@@ -220,9 +223,9 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
 
   // Staff-only room: presence (staff card) + picture relay.
   useEffect(() => {
-    if (!user) return;
+    if (!me) return;
     let cancelled = false;
-    const me = user.id;
+
     const ch = supabase.channel(`${live.topic}:staff`, { config: { broadcast: { self: false }, presence: { key: me } } });
     staffChan.current = ch;
     let viewerPeer: RTCPeerConnection | null = null;
@@ -274,7 +277,7 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
       relays.current.forEach((p) => p.close()); relays.current.clear();
       supabase.removeChannel(ch);
     };
-  }, [live.topic, live.host, user, relayTo, end]);
+  }, [live.topic, live.host, me, relayTo, end]);
 
   // Host keeps the session alive.
   useEffect(() => {
