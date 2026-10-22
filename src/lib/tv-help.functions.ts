@@ -38,3 +38,16 @@ export const requestCheckoutScreenShare = createServerFn({ method: "POST" })
     });
     return { ok: true as const };
   });
+
+/** Customer: is there a live screen-share request on this sale? (survives leaving/returning) */
+export const getCheckoutScreenShareStatus = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ token: z.string().min(8).max(200), password: z.string().min(1).max(200) }).parse(d))
+  .handler(async ({ data }) => {
+    const u = await unlock(data.token, data.password);
+    if (!u) return { status: null as string | null };
+    const { data: s } = await u.supabaseAdmin.from("tv_remote_sessions").select("status")
+      .eq("link_kind", "order").eq("link_id", u.link.order_id as string).not("requested_at", "is", null)
+      .in("status", ["pending", "claimed", "active"]).gt("expires_at", new Date().toISOString())
+      .order("requested_at", { ascending: false }).limit(1).maybeSingle();
+    return { status: (s?.status as string | undefined) ?? null };
+  });
