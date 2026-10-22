@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { Link } from "@tanstack/react-router";
 import { Eye, LogOut, Power, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -421,16 +422,31 @@ export function History() {
   );
 }
 
-type RequestRow = { id: string; device_name: string; created_at: string; expires_at: string };
+type RequestRow = { id: string; device_name: string; created_at: string; expires_at: string; link_kind: string | null; link_id: string | null };
 
 /** Help requests sent from customers' TVs, waiting for staff to answer. */
 export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
   const [rows, setRows] = useState<RequestRow[]>([]);
+  const [orderLabels, setOrderLabels] = useState<Record<string, string>>({});
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from("tv_remote_sessions").select("id, device_name, created_at, expires_at")
+      const { data } = await supabase.from("tv_remote_sessions").select("id, device_name, created_at, expires_at, link_kind, link_id")
         .eq("status", "pending").not("requested_at", "is", null).gt("expires_at", new Date().toISOString()).order("requested_at", { ascending: true });
-      setRows((data ?? []) as RequestRow[]);
+      const list = (data ?? []) as RequestRow[];
+      setRows(list);
+      // Label each request with the sale it belongs to, so staff open that
+      // order's own screen share page rather than a generic one.
+      const orderIds = [...new Set(list.filter((r) => r.link_kind === "order" && r.link_id).map((r) => r.link_id!))];
+      if (orderIds.length) {
+        const { data: summaries } = await supabase.rpc("staff_checkout_order_summary" as never);
+        const map: Record<string, string> = {};
+        for (const s of (summaries ?? []) as { id: string; order_ref: string | null; existing_username: string | null; shipping_name: string | null }[]) {
+          if (orderIds.includes(s.id)) map[s.id] = `${s.order_ref ?? s.id.slice(0, 8)} · ${s.existing_username || s.shipping_name || "Customer"}`;
+        }
+        setOrderLabels(map);
+      } else {
+        setOrderLabels({});
+      }
     };
     void load();
     const t = window.setInterval(load, 4000);
@@ -446,9 +462,17 @@ export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
             <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
               <div className="min-w-0">
                 <p className="truncate font-medium">{r.device_name}</p>
-                <p className="text-xs text-muted-foreground">Requested {fmt(r.created_at)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {r.link_kind === "order" && r.link_id ? `Sale ${orderLabels[r.link_id] ?? ""}` : r.link_kind === "ticket" ? "Support ticket" : "No sale linked"} · Requested {fmt(r.created_at)}
+                </p>
               </div>
-              <Button size="sm" onClick={() => onOpen(r.id)}>Answer</Button>
+              {r.link_kind === "order" && r.link_id ? (
+                <Button size="sm" asChild>
+                  <Link to="/screen-share/order/$orderId" params={{ orderId: r.link_id }}>Answer</Link>
+                </Button>
+              ) : (
+                <Button size="sm" onClick={() => onOpen(r.id)}>Answer</Button>
+              )}
             </li>
           ))}
         </ul>
