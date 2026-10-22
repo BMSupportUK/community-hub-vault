@@ -184,7 +184,7 @@ export function TalkScreenShareButton({ variant = "bar" }: { variant?: "bar" | "
                 {waiting.map((r) => (
                   <div key={r.id} className="rounded-md border border-destructive/40 bg-destructive/10 p-2">
                     <p className="truncate text-sm font-medium">Sale {label(r)}</p>
-                    <p className="text-[11px] text-muted-foreground">{r.device_name} · Waiting since {ago(r.requested_at ?? r.created_atFallback ?? "")}</p>
+                    <p className="text-[11px] text-muted-foreground">{r.device_name} · Waiting since {ago(r.requested_at ?? "")}</p>
                     <div className="mt-2">
                       <Button size="sm" className="h-8" onClick={() => goTo(r)}>
                         Answer
