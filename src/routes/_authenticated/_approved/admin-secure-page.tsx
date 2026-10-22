@@ -1,18 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MonitorUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
-import { OrderVideoCallIncoming, OrderVideoCallStaffStage, useOrderVideoCallStaff } from "@/components/checkout/OrderVideoCall";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { canViewStaffCheckout } from "@/lib/checkout-access";
 import shopHero from "@/assets/shop-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-secure-page")({
-  validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string; call?: string; tab?: "order" | "screen" } => ({
+  validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string; tab?: "order" | "screen" } => ({
     tab: search.tab === "screen" ? "screen" : undefined,
-    call: typeof search.call === "string" ? (search.call as string) : undefined,
     order: typeof search.order === "string" ? (search.order as string) : undefined,
     ref: typeof search.ref === "string" ? (search.ref as string) : undefined,
   }),
