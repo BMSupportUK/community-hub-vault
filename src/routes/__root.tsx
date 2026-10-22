@@ -160,6 +160,8 @@ function RootComponent() {
   useAppTheme();
   useEffect(() => {
     sessionStorage.removeItem("bm-stale-chunk-reloaded");
+    // Tell the black-screen watchdog the app started fine.
+    (window as unknown as { __bmBootOK?: () => void }).__bmBootOK?.();
   }, []);
 
   // Google Analytics: load gtag.js once, then send a page view on every
