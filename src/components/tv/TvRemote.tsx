@@ -8,8 +8,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
-import { StaffCheckoutChatPanel } from "@/components/checkout/CheckoutChat";
-import { StaffTicketCallChatPanel } from "@/components/app/TicketCallChat";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { normalizePairCode, sessionIdle } from "@/lib/tv-remote";
 
@@ -305,19 +303,16 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-      <div className="space-y-4">
-        <div className="relative aspect-video overflow-hidden rounded-2xl border bg-muted">
-          <video ref={video} autoPlay playsInline muted className={hasVideo ? "h-full w-full object-contain" : "hidden"} />
-          {!hasVideo && (
-            <div className="absolute inset-0 grid place-items-center p-6 text-center text-muted-foreground">
-              {!live.host ? "Connecting to the TV picture…" : tvState === "waiting" ? "Waiting for the customer to press Allow on the TV…" : "The TV screen will appear here once the customer presses Start sharing."}
-            </div>
-          )}
-        </div>
-        <StaffCard viewers={viewers} device={live.device} host={live.host} tvState={tvState} onEnd={() => void end()} />
+      <div className="relative aspect-video overflow-hidden rounded-2xl border bg-muted">
+        <video ref={video} autoPlay playsInline muted className={hasVideo ? "h-full w-full object-contain" : "hidden"} />
+        {!hasVideo && (
+          <div className="absolute inset-0 grid place-items-center p-6 text-center text-muted-foreground">
+            {!live.host ? "Connecting to the TV picture…" : tvState === "waiting" ? "Waiting for the customer to press Allow on the TV…" : "The TV screen will appear here once the customer presses Start sharing."}
+          </div>
+        )}
       </div>
-      <aside className="flex h-[min(80dvh,720px)] min-h-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <LinkedChat kind={live.linkKind} id={live.linkId} />
+      <aside className="self-start xl:sticky xl:top-4">
+        <StaffCard viewers={viewers} device={live.device} host={live.host} tvState={tvState} onEnd={() => void end()} />
       </aside>
     </div>
   );
@@ -356,27 +351,6 @@ function StaffCard({ viewers, device, host, tvState, onEnd }: { viewers: Viewer[
   );
 }
 
-function LinkedChat({ kind, id }: { kind: LinkKind | null; id: string | null }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [ownerId, setOwnerId] = useState<string | null>(null);
-  const [missing, setMissing] = useState(false);
-  useEffect(() => {
-    if (!kind || !id) return;
-    void (async () => {
-      if (kind === "order") {
-        const { data } = await supabase.from("order_checkout_links").select("token").eq("order_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle();
-        if (data?.token) setToken(data.token); else setMissing(true);
-      } else {
-        const { data } = await supabase.from("tickets").select("user_id").eq("id", id).maybeSingle();
-        if (data?.user_id) setOwnerId(data.user_id); else setMissing(true);
-      }
-    })();
-  }, [kind, id]);
-  if (!kind || !id) return <p className="p-5 text-sm text-muted-foreground">No sale or ticket linked to this session.</p>;
-  if (missing) return <p className="p-5 text-sm text-muted-foreground">Could not open the {kind === "order" ? "sale" : "ticket"} chat.</p>;
-  if (kind === "order") return token ? <StaffCheckoutChatPanel orderId={id} token={token} /> : <p className="p-5 text-sm text-muted-foreground">Loading chat…</p>;
-  return ownerId ? <StaffTicketCallChatPanel ticketId={id} ownerId={ownerId} /> : <p className="p-5 text-sm text-muted-foreground">Loading chat…</p>;
-}
 
 type HistoryRow = { id: string; device_name: string; customer_label: string | null; staff_id: string | null; status: string; claimed_at: string | null; ended_at: string | null; ended_by: string | null };
 
