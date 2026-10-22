@@ -61,6 +61,9 @@ function TvRequestPage() {
 
   if (loading) return null;
   if (!canUseTvRemote(roles)) return <Navigate to="/portal" replace />;
+  // A request raised from a sale's secure checkout belongs on that order's own
+  // screen share page — send any generic session link there instead.
+  if (row?.link_kind === "order" && row.link_id) return <Navigate to="/screen-share/order/$orderId" params={{ orderId: row.link_id }} replace />;
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 p-4 md:p-6">
       <header className="flex items-center gap-3">
