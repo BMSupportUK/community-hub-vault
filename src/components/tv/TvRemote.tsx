@@ -18,16 +18,11 @@ export type LiveRow = { id: string; topic: string; device_name: string; staff_id
 
 type Option = { id: string; label: string };
 
-export function PairForm({ onPaired }: { onPaired: (l: Live) => void }) {
-  const { user } = useAuth();
-  const [code, setCode] = useState("");
-  const [customer, setCustomer] = useState("");
+/** Choose which sale or ticket the TV help is for; each one has its own page. */
+export function LinkPicker({ onPick }: { onPick: (kind: LinkKind, id: string) => void }) {
   const [kind, setKind] = useState<LinkKind>("ticket");
-  const [linkId, setLinkId] = useState("");
   const [orders, setOrders] = useState<Option[]>([]);
   const [tickets, setTickets] = useState<Option[]>([]);
-  const [busy, setBusy] = useState(false);
-
   useEffect(() => {
     void (async () => {
       const [{ data: o }, { data: t }] = await Promise.all([
@@ -39,10 +34,31 @@ export function PairForm({ onPaired }: { onPaired: (l: Live) => void }) {
       setTickets(((t ?? []) as { id: string; subject: string | null }[]).map((r) => ({ id: r.id, label: r.subject || "Ticket" })));
     })();
   }, []);
+  const opts = kind === "order" ? orders : tickets;
+  return (
+    <section className="space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
+      <h2 className="text-lg font-semibold">Start TV help</h2>
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" variant={kind === "ticket" ? "default" : "secondary"} onClick={() => setKind("ticket")}>Ticket</Button>
+        <Button type="button" variant={kind === "order" ? "default" : "secondary"} onClick={() => setKind("order")}>Sale</Button>
+      </div>
+      <select value="" onChange={(e) => e.target.value && onPick(kind, e.target.value)}
+        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+        <option value="">{kind === "order" ? "Choose the sale…" : "Choose the ticket…"}</option>
+        {opts.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+      </select>
+    </section>
+  );
+}
 
+export function PairForm({ kind, linkId, onPaired }: { kind: LinkKind; linkId: string; onPaired: (l: Live) => void }) {
+  const { user } = useAuth();
+  const [code, setCode] = useState("");
+  const [customer, setCustomer] = useState("");
+  const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (code.length !== 6 || !linkId) return;
+    if (code.length !== 6) return;
     setBusy(true);
     const { data, error } = await supabase.rpc("claim_tv_pair_code", { _code: code, _customer: customer || undefined, _link_kind: kind, _link_id: linkId });
     setBusy(false);
@@ -50,7 +66,6 @@ export function PairForm({ onPaired }: { onPaired: (l: Live) => void }) {
     if (error || !row) { toast.error(error?.message ?? "That code is wrong or has expired"); return; }
     onPaired({ id: row.id, topic: row.topic, device: row.device_name, host: true, linkKind: kind, linkId, hostId: user?.id ?? null });
   };
-  const opts = kind === "order" ? orders : tickets;
   return (
     <form onSubmit={submit} className="space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
       <label className="block space-y-1.5">
@@ -58,37 +73,28 @@ export function PairForm({ onPaired }: { onPaired: (l: Live) => void }) {
         <Input inputMode="numeric" autoFocus value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))}
           placeholder="123456" className="h-14 text-center font-mono text-3xl tracking-[0.4em]" />
       </label>
-      <div className="space-y-1.5">
-        <span className="text-sm font-medium">What is this help for?</span>
-        <div className="grid grid-cols-2 gap-2">
-          <Button type="button" variant={kind === "ticket" ? "default" : "secondary"} onClick={() => { setKind("ticket"); setLinkId(""); }}>Ticket</Button>
-          <Button type="button" variant={kind === "order" ? "default" : "secondary"} onClick={() => { setKind("order"); setLinkId(""); }}>Sale</Button>
-        </div>
-        <select value={linkId} onChange={(e) => setLinkId(e.target.value)}
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-          <option value="">{kind === "order" ? "Choose the sale…" : "Choose the ticket…"}</option>
-          {opts.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select>
-      </div>
       <label className="block space-y-1.5">
         <span className="text-sm font-medium">Customer username (optional, for the log)</span>
         <Input value={customer} maxLength={80} onChange={(e) => setCustomer(e.target.value)} />
       </label>
-      <Button type="submit" className="w-full" disabled={busy || code.length !== 6 || !linkId}>{busy ? "Connecting…" : "Connect to TV"}</Button>
+      <Button type="submit" className="w-full" disabled={busy || code.length !== 6}>{busy ? "Connecting…" : "Connect to TV"}</Button>
     </form>
   );
 }
 
-export function LiveSessions({ onJoin }: { onJoin: (l: Live) => void }) {
+export function LiveSessions({ kind, linkId, onJoin }: { kind?: LinkKind; linkId?: string; onJoin: (l: Live) => void }) {
   const { user } = useAuth();
+  const uid = user?.id;
   const [rows, setRows] = useState<LiveRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from("tv_remote_sessions")
+      let q = supabase.from("tv_remote_sessions")
         .select("id, topic, device_name, staff_id, customer_label, link_kind, link_id")
-        .in("status", ["claimed", "active"]).gt("expires_at", new Date().toISOString()).order("claimed_at", { ascending: false });
-      const list = ((data ?? []) as LiveRow[]).filter((r) => r.staff_id && r.staff_id !== user?.id);
+        .in("status", ["claimed", "active"]).gt("expires_at", new Date().toISOString());
+      if (kind && linkId) q = q.eq("link_kind", kind).eq("link_id", linkId);
+      const { data } = await q.order("claimed_at", { ascending: false });
+      const list = ((data ?? []) as LiveRow[]).filter((r) => r.staff_id && r.staff_id !== uid);
       setRows(list);
       const ids = [...new Set(list.map((r) => r.staff_id!))];
       if (ids.length) {
@@ -99,11 +105,11 @@ export function LiveSessions({ onJoin }: { onJoin: (l: Live) => void }) {
     void load();
     const t = window.setInterval(load, 5000);
     return () => window.clearInterval(t);
-  }, [user?.id]);
+  }, [uid, kind, linkId]);
   return (
     <section className="rounded-2xl border bg-card p-6 shadow-sm">
       <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Eye className="h-5 w-5" />Live TV sessions</h2>
-      {rows.length === 0 ? <p className="text-sm text-muted-foreground">No other staff are on a TV right now.</p> : (
+      {rows.length === 0 ? <p className="text-sm text-muted-foreground">No other staff are on a TV {kind ? "for this one" : "right now"}.</p> : (
         <ul className="space-y-2">
           {rows.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
