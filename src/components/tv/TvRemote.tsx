@@ -445,3 +445,66 @@ export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
     </section>
   );
 }
+
+type OrderReq = { id: string; topic: string; device_name: string; status: string; staff_id: string | null; requested_at: string | null };
+
+/** Active screen-share requests for one sale, answered and watched in place. */
+export function useOrderScreenShares(orderId: string) {
+  const [rows, setRows] = useState<OrderReq[]>([]);
+  useEffect(() => {
+    if (!orderId) return;
+    const load = async () => {
+      const { data } = await supabase.from("tv_remote_sessions")
+        .select("id, topic, device_name, status, staff_id, requested_at")
+        .eq("link_kind", "order").eq("link_id", orderId).in("status", ["pending", "claimed", "active"])
+        .gt("expires_at", new Date().toISOString()).order("requested_at", { ascending: false });
+      setRows(((data ?? []) as OrderReq[]).filter((r) => r.status !== "pending" || r.requested_at));
+    };
+    void load();
+    const t = window.setInterval(load, 4000);
+    return () => window.clearInterval(t);
+  }, [orderId]);
+  return rows;
+}
+
+export function OrderScreenShareTab({ orderId, rows }: { orderId: string; rows: OrderReq[] }) {
+  const { user } = useAuth();
+  const [live, setLive] = useState<Live | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const uid = user?.id ?? null;
+  // Rejoin a session this staff member is already dealing with (e.g. after refresh).
+  useEffect(() => {
+    if (live || !uid) return;
+    const mine = rows.find((r) => r.status !== "pending" && r.staff_id === uid);
+    if (mine) setLive({ id: mine.id, topic: mine.topic, device: mine.device_name, host: true, linkKind: "order", linkId: orderId, hostId: uid });
+  }, [rows, uid, live, orderId]);
+  const answer = async (r: OrderReq) => {
+    setBusy(r.id);
+    const { data, error } = await supabase.rpc("answer_tv_request", { _id: r.id });
+    setBusy(null);
+    const row = Array.isArray(data) ? data[0] : null;
+    if (error || !row) { toast.error(error?.message ?? "Could not answer this request"); return; }
+    setLive({ id: row.id, topic: row.topic, device: row.device_name, host: true, linkKind: "order", linkId: orderId, hostId: uid });
+  };
+  if (live) return <RemoteSession key={live.id} live={live} onEnd={() => setLive(null)} />;
+  return (
+    <section className="rounded-2xl border bg-card p-6 shadow-sm">
+      <h2 className="mb-3 text-lg font-semibold">Screen share requests</h2>
+      {rows.length === 0 ? <p className="text-sm text-muted-foreground">No active screen share requests for this sale. When the customer presses Screen share help, it appears here.</p> : (
+        <ul className="space-y-2">
+          {rows.map((r) => (
+            <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{r.device_name}</p>
+                <p className="text-xs text-muted-foreground">{r.status === "pending" ? "Waiting for staff" : "Someone is dealing with it"}</p>
+              </div>
+              {r.status === "pending"
+                ? <Button size="sm" disabled={busy === r.id} onClick={() => void answer(r)}>{busy === r.id ? "Answering…" : "Answer"}</Button>
+                : <Button size="sm" variant="secondary" onClick={() => setLive({ id: r.id, topic: r.topic, device: r.device_name, host: r.staff_id === uid, linkKind: "order", linkId: orderId, hostId: r.staff_id })}>{r.staff_id === uid ? "Open" : "Watch"}</Button>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
