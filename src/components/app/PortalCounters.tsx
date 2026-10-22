@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useBmInbox } from "@/lib/bm-inbox";
 import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 
-const OPEN_TICKET = ["open", "in_progress", "waiting"];
+const OPEN_TICKET = ["open", "in_progress", "waiting"] as const;
 
 /** Live counters on the portal home sidebar; each tile opens its page. Read-only counts. */
 export function PortalCounters({ staff }: { staff: boolean }) {
