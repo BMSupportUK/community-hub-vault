@@ -127,6 +127,7 @@ import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
+import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/public/remote-helper-apk'
 import { Route as ApiPublicTvRouteImport } from './routes/api/public/tv'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
@@ -148,6 +149,7 @@ import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedPortalIndexRouteImport } from './routes/_authenticated/_approved/portal.index'
 import { Route as AuthenticatedApprovedPortalLoginsRouteImport } from './routes/_authenticated/_approved/portal.logins'
 import { Route as AuthenticatedApprovedPortalSettingsRouteImport } from './routes/_authenticated/_approved/portal.settings'
+import { Route as AuthenticatedApprovedPortalTvHelperRouteImport } from './routes/_authenticated/_approved/portal.tv-helper'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as ApiPublicATokenRouteImport } from './routes/api/public/a/$token'
@@ -870,6 +872,12 @@ const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   path: '/api/public/link-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRemoteHelperApkRoute =
+  ApiPublicRemoteHelperApkRouteImport.update({
+    id: '/api/public/remote-helper-apk',
+    path: '/api/public/remote-helper-apk',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTvRoute = ApiPublicTvRouteImport.update({
   id: '/api/public/tv',
   path: '/api/public/tv',
@@ -986,6 +994,12 @@ const AuthenticatedApprovedPortalSettingsRoute =
   AuthenticatedApprovedPortalSettingsRouteImport.update({
     id: '/portal/settings',
     path: '/portal/settings',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedPortalTvHelperRoute =
+  AuthenticatedApprovedPortalTvHelperRouteImport.update({
+    id: '/portal/tv-helper',
+    path: '/portal/tv-helper',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedSportsGuidesNewRoute =
@@ -1389,6 +1403,7 @@ export interface FileRoutesByFullPath {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1408,6 +1423,7 @@ export interface FileRoutesByFullPath {
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
   '/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
+  '/portal/tv-helper': typeof AuthenticatedApprovedPortalTvHelperRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1573,6 +1589,7 @@ export interface FileRoutesByTo {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1592,6 +1609,7 @@ export interface FileRoutesByTo {
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
   '/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
+  '/portal/tv-helper': typeof AuthenticatedApprovedPortalTvHelperRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1763,6 +1781,7 @@ export interface FileRoutesById {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1782,6 +1801,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/portal/logins': typeof AuthenticatedApprovedPortalLoginsRoute
   '/_authenticated/_approved/portal/settings': typeof AuthenticatedApprovedPortalSettingsRoute
+  '/_authenticated/_approved/portal/tv-helper': typeof AuthenticatedApprovedPortalTvHelperRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
@@ -1952,6 +1972,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/remote-helper-apk'
     | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -1971,6 +1992,7 @@ export interface FileRouteTypes {
     | '/home/$channel'
     | '/portal/logins'
     | '/portal/settings'
+    | '/portal/tv-helper'
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/a/$token'
@@ -2136,6 +2158,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/remote-helper-apk'
     | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -2155,6 +2178,7 @@ export interface FileRouteTypes {
     | '/home/$channel'
     | '/portal/logins'
     | '/portal/settings'
+    | '/portal/tv-helper'
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/a/$token'
@@ -2325,6 +2349,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
+    | '/api/public/remote-helper-apk'
     | '/api/public/tv'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -2344,6 +2369,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/portal/logins'
     | '/_authenticated/_approved/portal/settings'
+    | '/_authenticated/_approved/portal/tv-helper'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
     | '/api/public/a/$token'
@@ -2433,6 +2459,7 @@ export interface RootRouteChildren {
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
+  ApiPublicRemoteHelperApkRoute: typeof ApiPublicRemoteHelperApkRoute
   ApiPublicTvRoute: typeof ApiPublicTvRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
@@ -3308,6 +3335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/remote-helper-apk': {
+      id: '/api/public/remote-helper-apk'
+      path: '/api/public/remote-helper-apk'
+      fullPath: '/api/public/remote-helper-apk'
+      preLoaderRoute: typeof ApiPublicRemoteHelperApkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tv': {
       id: '/api/public/tv'
       path: '/api/public/tv'
@@ -3453,6 +3487,13 @@ declare module '@tanstack/react-router' {
       path: '/portal/settings'
       fullPath: '/portal/settings'
       preLoaderRoute: typeof AuthenticatedApprovedPortalSettingsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/portal/tv-helper': {
+      id: '/_authenticated/_approved/portal/tv-helper'
+      path: '/portal/tv-helper'
+      fullPath: '/portal/tv-helper'
+      preLoaderRoute: typeof AuthenticatedApprovedPortalTvHelperRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/sports-guides/new': {
@@ -3964,6 +4005,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedFanzoneProfileRoute: typeof AuthenticatedApprovedFanzoneProfileRoute
   AuthenticatedApprovedPortalLoginsRoute: typeof AuthenticatedApprovedPortalLoginsRoute
   AuthenticatedApprovedPortalSettingsRoute: typeof AuthenticatedApprovedPortalSettingsRoute
+  AuthenticatedApprovedPortalTvHelperRoute: typeof AuthenticatedApprovedPortalTvHelperRoute
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
   AuthenticatedApprovedPortalIndexRoute: typeof AuthenticatedApprovedPortalIndexRoute
   AuthenticatedApprovedFanzonePostsUserIdRoute: typeof AuthenticatedApprovedFanzonePostsUserIdRoute
@@ -4109,6 +4151,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedPortalLoginsRoute,
   AuthenticatedApprovedPortalSettingsRoute:
     AuthenticatedApprovedPortalSettingsRoute,
+  AuthenticatedApprovedPortalTvHelperRoute:
+    AuthenticatedApprovedPortalTvHelperRoute,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
   AuthenticatedApprovedPortalIndexRoute: AuthenticatedApprovedPortalIndexRoute,
   AuthenticatedApprovedFanzonePostsUserIdRoute:
@@ -4208,6 +4252,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
+  ApiPublicRemoteHelperApkRoute: ApiPublicRemoteHelperApkRoute,
   ApiPublicTvRoute: ApiPublicTvRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
