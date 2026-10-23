@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Link } from "@tanstack/react-router";
-import { Eye, LogOut, Power, Users } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Eye, Gamepad2, Home, LogOut, Pause, Power, Undo2, Users, Volume1, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
 import { getVideoIceServers } from "@/lib/video-call.functions";
-import { normalizePairCode, sessionIdle, screenShareDestination } from "@/lib/tv-remote";
+import { normalizePairCode, sessionIdle, screenShareDestination, canForwardRemote, REMOTE_PAD_KEYS } from "@/lib/tv-remote";
 import { useScreenLockKeepAlive } from "@/components/app/ScreenLockKeepAlive";
 
 export type LinkKind = "order" | "ticket";
@@ -149,6 +149,33 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
   const video = useRef<HTMLVideoElement | null>(null);
   const lastActivity = useRef(new Date());
   const ended = useRef(false);
+  const [control, setControl] = useState<ControlState | null>(null);
+  const [controller, setController] = useState<string | null>(null);
+  const controlRef = useRef<ControlState | null>(null);
+  const controllerRef = useRef<string | null>(null);
+
+  // Host: share who is in control and what the TV supports with the other staff.
+  const shareControl = useCallback(() => {
+    staffChan.current?.send({ type: "broadcast", event: "control_state", payload: { control: controlRef.current, controller: controllerRef.current } });
+  }, []);
+  const setControllerId = useCallback((id: string | null) => {
+    controllerRef.current = id; setController(id); shareControl();
+  }, [shareControl]);
+  useEffect(() => { if (live.host && me && !controllerRef.current) setControllerId(me); }, [live.host, me, setControllerId]);
+
+  const sendRemote = useCallback((ev: RemoteEvent, payload: Record<string, unknown>) => {
+    lastActivity.current = new Date();
+    if (live.host) {
+      if (canForwardRemote(controllerRef.current, me)) chan.current?.send({ type: "broadcast", event: ev, payload });
+    } else {
+      staffChan.current?.send({ type: "broadcast", event: "rc", payload: { from: me, ev, payload } });
+    }
+  }, [live.host, me]);
+  const takeControl = useCallback(() => {
+    if (!me) return;
+    if (live.host) setControllerId(me);
+    else staffChan.current?.send({ type: "broadcast", event: "take_control", payload: { from: me } });
+  }, [live.host, me, setControllerId]);
 
   const end = useCallback(async (reason?: string) => {
     if (ended.current) return;
@@ -215,12 +242,19 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
         if (payload?.from === "tv" && payload.candidate) pc.current?.addIceCandidate(payload.candidate).catch(() => {});
       })
       .on("broadcast", { event: "screen_off" }, () => setHasVideo(false))
+      .on("broadcast", { event: "control" }, ({ payload }) => {
+        const c = parseControl(payload);
+        controlRef.current = c; setControl(c); shareControl();
+      })
       .on("broadcast", { event: "end" }, () => { setTvState("gone"); void end("The TV ended the session."); })
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") channel.send({ type: "broadcast", event: "hello", payload: {} });
+        if (status === "SUBSCRIBED") {
+          channel.send({ type: "broadcast", event: "hello", payload: {} });
+          channel.send({ type: "broadcast", event: "control_req", payload: {} });
+        }
       });
     return () => { cancelled = true; pc.current?.close(); supabase.removeChannel(channel); };
-  }, [live.topic, live.host, end]);
+  }, [live.topic, live.host, end, shareControl]);
 
   // Staff-only room: presence (staff card) + picture relay.
   useEffect(() => {
@@ -230,14 +264,30 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
     const ch = supabase.channel(`${live.topic}:staff`, { config: { broadcast: { self: false }, presence: { key: me } } });
     staffChan.current = ch;
     let viewerPeer: RTCPeerConnection | null = null;
+    const st = () => new Set(Object.keys(ch.presenceState()));
     ch.on("presence", { event: "sync" }, () => {
       const st = ch.presenceState<Viewer>();
       const list = Object.values(st).map((v) => v[0]).filter(Boolean) as Viewer[];
       list.sort((a, b) => Number(b.host) - Number(a.host));
       setViewers(list);
       if (live.host) for (const id of [...relays.current.keys()]) if (!st[id]) { relays.current.get(id)?.close(); relays.current.delete(id); }
+      if (live.host && controllerRef.current && !st[controllerRef.current] && me) setControllerId(me);
     })
-      .on("broadcast", { event: "watch" }, ({ payload }) => { if (live.host && typeof payload?.from === "string") void relayTo(payload.from); })
+      .on("broadcast", { event: "watch" }, ({ payload }) => { if (live.host && typeof payload?.from === "string") { void relayTo(payload.from); shareControl(); } })
+      .on("broadcast", { event: "control_state" }, ({ payload }) => {
+        if (live.host) return;
+        setControl(parseControl(payload?.control));
+        setController(typeof payload?.controller === "string" ? payload.controller : null);
+      })
+      .on("broadcast", { event: "take_control" }, ({ payload }) => {
+        if (live.host && typeof payload?.from === "string" && st().has(payload.from)) setControllerId(payload.from);
+      })
+      .on("broadcast", { event: "rc" }, ({ payload }) => {
+        if (!live.host || !canForwardRemote(controllerRef.current, typeof payload?.from === "string" ? payload.from : null)) return;
+        const ev = payload?.ev as RemoteEvent;
+        const clean = cleanRemote(ev, payload?.payload);
+        if (clean) chan.current?.send({ type: "broadcast", event: ev, payload: clean });
+      })
       .on("broadcast", { event: "host_ready" }, () => { if (!live.host) ch.send({ type: "broadcast", event: "watch", payload: { from: me } }); })
       .on("broadcast", { event: "host_end" }, () => { if (!live.host) void end("The staff member dealing with it ended the session."); })
       .on("broadcast", { event: "r_offer" }, async ({ payload }) => {
@@ -278,7 +328,7 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
       relays.current.forEach((p) => p.close()); relays.current.clear();
       supabase.removeChannel(ch);
     };
-  }, [live.topic, live.host, me, relayTo, end]);
+  }, [live.topic, live.host, me, relayTo, end, shareControl, setControllerId]);
 
   // Host keeps the session alive.
   useEffect(() => {
@@ -313,10 +363,101 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
           </div>
         )}
       </div>
-      <aside className="self-start xl:sticky xl:top-4">
+      <aside className="space-y-4 self-start xl:sticky xl:top-4">
         <StaffCard viewers={viewers} device={live.device} host={live.host} tvState={tvState} onEnd={() => void end()} />
+        <RemotePad control={control} controller={controller} me={me} viewers={viewers} onSend={sendRemote} onTake={takeControl} />
       </aside>
     </div>
+  );
+}
+
+type ControlState = { fire: boolean; installed: boolean; enabled: boolean; apps: { pkg: string; label: string }[] };
+type RemoteEvent = "cmd" | "text" | "clear_text" | "launch";
+
+function parseControl(p: unknown): ControlState | null {
+  if (!p || typeof p !== "object") return null;
+  const o = p as Record<string, unknown>;
+  const apps = Array.isArray(o.apps) ? o.apps.filter((a): a is { pkg: string; label: string } =>
+    !!a && typeof (a as { pkg?: unknown }).pkg === "string" && typeof (a as { label?: unknown }).label === "string").slice(0, 80) : [];
+  return { fire: o.fire === true, installed: o.installed === true, enabled: o.enabled === true, apps };
+}
+
+/** Host-side check of commands relayed from other staff. */
+function cleanRemote(ev: RemoteEvent, p: unknown): Record<string, unknown> | null {
+  const o = (p && typeof p === "object" ? p : {}) as Record<string, unknown>;
+  if (ev === "cmd") return (REMOTE_PAD_KEYS as readonly string[]).includes(String(o.key)) ? { key: o.key } : null;
+  if (ev === "text") return typeof o.text === "string" ? { text: o.text.slice(0, 200) } : null;
+  if (ev === "clear_text") return {};
+  if (ev === "launch") return typeof o.pkg === "string" && /^[A-Za-z0-9_.]{1,150}$/.test(o.pkg) ? { pkg: o.pkg } : null;
+  return null;
+}
+
+function RemotePad({ control, controller, me, viewers, onSend, onTake }: {
+  control: ControlState | null; controller: string | null; me: string | null; viewers: Viewer[];
+  onSend: (ev: RemoteEvent, payload: Record<string, unknown>) => void; onTake: () => void;
+}) {
+  const [text, setText] = useState("");
+  const mine = !!me && controller === me;
+  const ready = !!control?.enabled;
+  const key = (k: (typeof REMOTE_PAD_KEYS)[number]) => onSend("cmd", { key: k });
+  const who = viewers.find((v) => v.id === controller)?.username ?? "another staff member";
+  const btn = "h-12 w-12";
+
+  let notice: string | null = null;
+  if (!control) notice = "Waiting for the TV to report remote control…";
+  else if (control.fire) notice = "Remote control isn't available on Fire TV — screen view only.";
+  else if (!control.installed) notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper and press Install (needs helper v1.4).";
+  else if (!control.enabled) notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper, press Open settings and switch on BM Remote Control.";
+
+  return (
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="flex items-center gap-2 font-semibold"><Gamepad2 className="h-4 w-4" />Remote control</p>
+        {ready && !mine && <Button size="sm" variant="secondary" onClick={onTake}>Take over</Button>}
+      </div>
+      {notice ? <p className="text-sm text-muted-foreground">{notice}</p> : (
+        <div className={mine ? "space-y-4" : "pointer-events-none space-y-4 opacity-50"} aria-disabled={!mine}>
+          {!mine && <p className="text-xs font-medium text-muted-foreground">Controlled by {who}</p>}
+          <div className="mx-auto grid w-fit grid-cols-3 gap-2">
+            <span />
+            <Button variant="outline" size="icon" className={btn} aria-label="Up" onClick={() => key("up")}><ChevronUp /></Button>
+            <span />
+            <Button variant="outline" size="icon" className={btn} aria-label="Left" onClick={() => key("left")}><ChevronLeft /></Button>
+            <Button size="icon" className={`${btn} rounded-full`} aria-label="OK" onClick={() => key("ok")}>OK</Button>
+            <Button variant="outline" size="icon" className={btn} aria-label="Right" onClick={() => key("right")}><ChevronRight /></Button>
+            <span />
+            <Button variant="outline" size="icon" className={btn} aria-label="Down" onClick={() => key("down")}><ChevronDown /></Button>
+            <span />
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button variant="secondary" size="sm" onClick={() => key("back")}><Undo2 className="mr-1 h-4 w-4" />Back</Button>
+            <Button variant="secondary" size="sm" onClick={() => key("home")}><Home className="mr-1 h-4 w-4" />Home</Button>
+            <Button variant="secondary" size="icon" aria-label="Play or pause" onClick={() => key("play_pause")}><Pause className="h-4 w-4" /></Button>
+            <Button variant="secondary" size="icon" aria-label="Volume down" onClick={() => key("volume_down")}><Volume1 className="h-4 w-4" /></Button>
+            <Button variant="secondary" size="icon" aria-label="Volume up" onClick={() => key("volume_up")}><Volume2 className="h-4 w-4" /></Button>
+          </div>
+          <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); if (text) { onSend("text", { text }); setText(""); } }}>
+            <p className="text-sm font-medium">Type text</p>
+            <p className="text-xs text-muted-foreground">Select a box on the TV first, then send.</p>
+            <div className="flex gap-2">
+              <Input value={text} maxLength={200} onChange={(e) => setText(e.target.value)} placeholder="Username, password…" />
+              <Button type="submit" size="sm" disabled={!text}>Send</Button>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => onSend("clear_text", {})}>Clear the TV box</Button>
+          </form>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Open app</p>
+            {control?.apps.length ? (
+              <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" defaultValue=""
+                onChange={(e) => { if (e.target.value) { onSend("launch", { pkg: e.target.value }); e.target.value = ""; } }}>
+                <option value="" disabled>Choose an app…</option>
+                {control.apps.map((a) => <option key={a.pkg} value={a.pkg}>{a.label}</option>)}
+              </select>
+            ) : <p className="text-xs text-muted-foreground">No apps reported by the TV.</p>}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
