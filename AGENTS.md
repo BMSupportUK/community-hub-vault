@@ -52,3 +52,4 @@
 - Checkout screen share controls derive ongoing state from the order-private status read; locally ended staff sessions cannot auto-rejoin stale polled rows, so subsequent requests remain available without refresh.
 - Remote Helper installs through the BM Support Android app's session installer (`RemoteHelperPlugin`), served from `/api/public/remote-helper-apk` (latest available app_builds row named like "Remote Helper"); Downloader installs trip Android 13+ restricted-settings on Accessibility.
 - TV remote control lives in a separate signature-protected BM Remote Control app installed by the helper's session installer (avoids Android 13+ restricted settings); only the host forwards commands, and only from the current controller.
+- Fire TV cannot self-enable remote control: Fire OS 7.6.6.9+/8.1.0.3+ blocks apps connecting to their own ADB (127.0.0.1:5555 closes with EOF); enabling must come from another device on the same Wi-Fi.
