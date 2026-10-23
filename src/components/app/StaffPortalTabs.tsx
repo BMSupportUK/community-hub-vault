@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Settings } from "lucide-react";
+import { Home, Settings, Tv, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { isStaffPortalUser } from "@/lib/portal-home";
@@ -9,6 +9,10 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 import { Clocks } from "@/components/app/Clocks";
 import { LockNowPill } from "@/components/app/ScreenLockProvider";
 import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
+import { adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
+import { canOpenTvRemoteOverview } from "@/lib/tv-remote";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 /** Pages that sit inside the Staff Portal tab bar (ticket threads keep their own bounded layout). */
 export function isStaffPortalPath(path: string) {
@@ -26,6 +30,20 @@ export function StaffPortalTabs() {
     <nav aria-label="Staff Portal" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface/80 px-3 py-2 backdrop-blur sm:px-6">
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Staff Portal</span>
       <Link to="/staff-portal" className={cls("/staff-portal")}><Home className="size-4" />Home</Link>
+      {canOpenAdminPanel(roles) && (
+        <Tooltip><TooltipTrigger asChild>
+          <Button asChild variant={p === "/admin" ? "default" : "ghost"} size="icon">
+            <Link to="/admin" aria-label={adminPanelLabel(roles)}><LayoutDashboard className="size-4" /></Link>
+          </Button>
+        </TooltipTrigger><TooltipContent>{adminPanelLabel(roles)}</TooltipContent></Tooltip>
+      )}
+      {canOpenTvRemoteOverview(roles) && (
+        <Tooltip><TooltipTrigger asChild>
+          <Button asChild variant={p === "/tv-remote" ? "default" : "ghost"} size="icon">
+            <Link to="/tv-remote" aria-label="TV Remote"><Tv className="size-4" /></Link>
+          </Button>
+        </TooltipTrigger><TooltipContent>TV Remote</TooltipContent></Tooltip>
+      )}
       <div className="ml-1 flex shrink-0 items-center gap-1.5 [&_a]:size-9 [&_a]:rounded-lg [&_button]:size-9 [&_button]:rounded-lg">
         <BmInboxBell />
         <MentionsBadge />

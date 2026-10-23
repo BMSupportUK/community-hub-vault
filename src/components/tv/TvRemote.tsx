@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
 import { getVideoIceServers } from "@/lib/video-call.functions";
-import { normalizePairCode, sessionIdle } from "@/lib/tv-remote";
+import { normalizePairCode, sessionIdle, screenShareDestination } from "@/lib/tv-remote";
 
 export type LinkKind = "order" | "ticket";
 export type Live = { id: string; topic: string; device: string; host: boolean; linkKind: LinkKind | null; linkId: string | null; hostId: string | null };
@@ -95,7 +95,7 @@ export function LiveSessions({ kind, linkId, onJoin }: { kind?: LinkKind; linkId
       const { data } = await q.order("claimed_at", { ascending: false });
       const list = ((data ?? []) as LiveRow[]).filter((r) => r.staff_id && r.staff_id !== uid);
       setRows(list);
-      const ids = [...new Set(list.map((r) => r.staff_id!))];
+      const ids = [...new Set(list.flatMap((r) => r.staff_id ? [r.staff_id] : []))];
       if (ids.length) {
         const { data: p } = await supabase.from("profiles").select("id, username").in("id", ids);
         setNames(Object.fromEntries((p ?? []).map((x) => [x.id, x.username ?? "Staff"])));
@@ -114,7 +114,7 @@ export function LiveSessions({ kind, linkId, onJoin }: { kind?: LinkKind; linkId
             <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
               <div className="min-w-0">
                 <p className="truncate font-medium">{r.device_name}{r.customer_label ? ` · ${r.customer_label}` : ""}</p>
-                <p className="text-xs text-muted-foreground">{names[r.staff_id!] ?? "Staff"} is dealing with it · {r.link_kind === "order" ? "Sale" : r.link_kind === "ticket" ? "Ticket" : "No chat"}</p>
+                <p className="text-xs text-muted-foreground">{(r.staff_id ? names[r.staff_id] : null) ?? "Staff"} is dealing with it · {r.link_kind === "order" ? "Sale" : r.link_kind === "ticket" ? "Ticket" : "No chat"}</p>
               </div>
               <Button size="sm" onClick={() => onJoin({ id: r.id, topic: r.topic, device: r.device_name, host: false, linkKind: (r.link_kind as LinkKind) ?? null, linkId: r.link_id, hostId: r.staff_id })}>Watch</Button>
             </li>
@@ -410,7 +410,7 @@ export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
       setRows(list);
       // Label each request with the sale it belongs to, so staff open that
       // order's own screen share page rather than a generic one.
-      const orderIds = [...new Set(list.filter((r) => r.link_kind === "order" && r.link_id).map((r) => r.link_id!))];
+      const orderIds = [...new Set(list.flatMap((r) => r.link_kind === "order" && r.link_id ? [r.link_id] : []))];
       if (orderIds.length) {
         const { data: summaries } = await supabase.rpc("staff_checkout_order_summary" as never);
         const map: Record<string, string> = {};
@@ -432,7 +432,9 @@ export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
       <h2 className="mb-3 text-lg font-semibold">TV help requests</h2>
       {rows.length === 0 ? <p className="text-sm text-muted-foreground">No customers waiting. Requests appear here when a customer presses Screen share help on their secure checkout.</p> : (
         <ul className="space-y-2">
-          {rows.map((r) => (
+          {rows.map((r) => {
+            const destination = screenShareDestination(r.link_kind, r.link_id);
+            return (
             <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
               <div className="min-w-0">
                 <p className="truncate font-medium">{r.device_name}</p>
@@ -440,15 +442,15 @@ export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
                   {r.link_kind === "order" && r.link_id ? `Sale ${orderLabels[r.link_id] ?? ""}` : r.link_kind === "ticket" ? "Support ticket" : "No sale linked"} · Requested {fmt(r.created_at)}
                 </p>
               </div>
-              {r.link_kind === "order" && r.link_id ? (
+              {destination ? (
                 <Button size="sm" asChild>
-                  <Link to="/screen-share/order/$orderId" params={{ orderId: r.link_id }}>Answer</Link>
+                  <Link {...destination}>Answer</Link>
                 </Button>
               ) : (
                 <Button size="sm" onClick={() => onOpen(r.id)}>Answer</Button>
               )}
             </li>
-          ))}
+          ); })}
         </ul>
       )}
     </section>
@@ -458,25 +460,25 @@ export function HelpRequests({ onOpen }: { onOpen: (id: string) => void }) {
 type OrderReq = { id: string; topic: string; device_name: string; status: string; staff_id: string | null; requested_at: string | null };
 
 /** Active screen-share requests for one sale, answered and watched in place. */
-export function useOrderScreenShares(orderId: string) {
+export function useOrderScreenShares(orderId: string, kind: LinkKind = "order") {
   const [rows, setRows] = useState<OrderReq[]>([]);
   useEffect(() => {
     if (!orderId) return;
     const load = async () => {
       const { data } = await supabase.from("tv_remote_sessions")
         .select("id, topic, device_name, status, staff_id, requested_at")
-        .eq("link_kind", "order").eq("link_id", orderId).in("status", ["pending", "claimed", "active"])
+        .eq("link_kind", kind).eq("link_id", orderId).in("status", ["pending", "claimed", "active"])
         .gt("expires_at", new Date().toISOString()).order("requested_at", { ascending: false });
       setRows(((data ?? []) as OrderReq[]).filter((r) => r.status !== "pending" || r.requested_at));
     };
     void load();
     const t = window.setInterval(load, 4000);
     return () => window.clearInterval(t);
-  }, [orderId]);
+  }, [orderId, kind]);
   return rows;
 }
 
-export function OrderScreenShareTab({ orderId, rows }: { orderId: string; rows: OrderReq[] }) {
+export function OrderScreenShareTab({ orderId, rows, kind = "order" }: { orderId: string; rows: OrderReq[]; kind?: LinkKind }) {
   const { user } = useAuth();
   const [live, setLive] = useState<Live | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -485,16 +487,17 @@ export function OrderScreenShareTab({ orderId, rows }: { orderId: string; rows: 
   // Rejoin a session this staff member is already dealing with (e.g. after refresh).
   useEffect(() => {
     if (live || !uid) return;
-    const mine = rows.find((r) => r.status !== "pending" && r.staff_id === uid && !closedSessions.current.has(r.id));
-    if (mine) setLive({ id: mine.id, topic: mine.topic, device: mine.device_name, host: true, linkKind: "order", linkId: orderId, hostId: uid });
-  }, [rows, uid, live, orderId]);
+    const active = rows.filter((r) => r.status !== "pending" && r.staff_id && !closedSessions.current.has(r.id));
+    const current = active.find((r) => r.staff_id === uid) ?? active[0];
+    if (current) setLive({ id: current.id, topic: current.topic, device: current.device_name, host: current.staff_id === uid, linkKind: kind, linkId: orderId, hostId: current.staff_id });
+  }, [rows, uid, live, orderId, kind]);
   const answer = async (r: OrderReq) => {
     setBusy(r.id);
     const { data, error } = await supabase.rpc("answer_tv_request", { _id: r.id });
     setBusy(null);
     const row = Array.isArray(data) ? data[0] : null;
     if (error || !row) { toast.error(error?.message ?? "Could not answer this request"); return; }
-    setLive({ id: row.id, topic: row.topic, device: row.device_name, host: true, linkKind: "order", linkId: orderId, hostId: uid });
+    setLive({ id: row.id, topic: row.topic, device: row.device_name, host: true, linkKind: kind, linkId: orderId, hostId: uid });
   };
   if (live) return <RemoteSession key={live.id} live={live} onEnd={() => {
     closedSessions.current.add(live.id);
@@ -504,7 +507,7 @@ export function OrderScreenShareTab({ orderId, rows }: { orderId: string; rows: 
   return (
     <section className="rounded-2xl border bg-card p-6 shadow-sm">
       <h2 className="mb-3 text-lg font-semibold">Screen share requests</h2>
-      {currentRows.length === 0 ? <p className="text-sm text-muted-foreground">No active screen share requests for this sale. When the customer presses Screen share help, it appears here.</p> : (
+      {currentRows.length === 0 ? <p className="text-sm text-muted-foreground">No active screen share requests for this {kind === "order" ? "sale" : "ticket"}. When the customer presses Screen share help, it appears here.</p> : (
         <ul className="space-y-2">
           {currentRows.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
@@ -514,7 +517,7 @@ export function OrderScreenShareTab({ orderId, rows }: { orderId: string; rows: 
               </div>
               {r.status === "pending"
                 ? <Button size="sm" disabled={busy === r.id} onClick={() => void answer(r)}>{busy === r.id ? "Answering…" : "Answer"}</Button>
-                : <Button size="sm" variant="secondary" onClick={() => setLive({ id: r.id, topic: r.topic, device: r.device_name, host: r.staff_id === uid, linkKind: "order", linkId: orderId, hostId: r.staff_id })}>{r.staff_id === uid ? "Open" : "Watch"}</Button>}
+                : <Button size="sm" variant="secondary" onClick={() => setLive({ id: r.id, topic: r.topic, device: r.device_name, host: r.staff_id === uid, linkKind: kind, linkId: orderId, hostId: r.staff_id })}>{r.staff_id === uid ? "Open" : "Watch"}</Button>}
             </li>
           ))}
         </ul>

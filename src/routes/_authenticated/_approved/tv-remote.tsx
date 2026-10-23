@@ -2,7 +2,7 @@ import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { Tv } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { HelpRequests, History, LiveSessions } from "@/components/tv/TvRemote";
-import { canSeeTvRemoteHistory, canUseTvRemote } from "@/lib/tv-remote";
+import { canOpenTvRemoteOverview, screenShareDestination } from "@/lib/tv-remote";
 
 export const Route = createFileRoute("/_authenticated/_approved/tv-remote")({
   component: TvRemotePage,
@@ -22,7 +22,7 @@ function TvRemotePage() {
   const { roles, loading } = useAuth();
   const navigate = useNavigate();
   if (loading) return null;
-  if (!canUseTvRemote(roles)) return <Navigate to="/portal" replace />;
+  if (!canOpenTvRemoteOverview(roles)) return <Navigate to="/home" replace />;
   const open = (sessionId: string) => navigate({ to: "/tv-remote/$sessionId", params: { sessionId } });
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 p-4 md:p-6">
@@ -35,9 +35,13 @@ function TvRemotePage() {
       </header>
       <div className="grid gap-6 lg:grid-cols-2">
         <HelpRequests onOpen={open} />
-        <LiveSessions onJoin={(l) => open(l.id)} />
+        <LiveSessions onJoin={(l) => {
+          const destination = screenShareDestination(l.linkKind, l.linkId);
+          if (destination) void navigate(destination);
+          else void open(l.id);
+        }} />
       </div>
-      {canSeeTvRemoteHistory(roles) && <History />}
+      <History />
     </div>
   );
 }
