@@ -59,7 +59,9 @@ export function PendingOrdersBadge() {
     };
     load();
     const channel = supabase
-      .channel("pending-orders-badge")
+      // Desktop rail stays mounted when the mobile drawer opens. Each mount
+      // needs its own channel, including a remount before cleanup completes.
+      .channel(`pending-orders-badge-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "orders" },
