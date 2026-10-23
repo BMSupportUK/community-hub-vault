@@ -150,6 +150,7 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
   const lastActivity = useRef(new Date());
   const ended = useRef(false);
   const [control, setControl] = useState<ControlState | null>(null);
+  const [noReport, setNoReport] = useState(false);
   const [controller, setController] = useState<string | null>(null);
   const controlRef = useRef<ControlState | null>(null);
   const controllerRef = useRef<string | null>(null);
@@ -237,14 +238,20 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
         if (s === "allowed" || s === "declined" || s === "waiting") setTvState(s);
         if (s === "declined") void end("The customer declined on the TV.");
       })
-      .on("broadcast", { event: "offer" }, ({ payload }) => { if (typeof payload?.sdp === "string") void setupPeer(payload.sdp); })
+      .on("broadcast", { event: "offer" }, ({ payload }) => {
+        if (typeof payload?.sdp !== "string") return;
+        // An offer proves the TV has allowed and joined; its earlier messages may have been missed.
+        setTvState("allowed");
+        if (!controlRef.current) channel.send({ type: "broadcast", event: "control_req", payload: {} });
+        void setupPeer(payload.sdp);
+      })
       .on("broadcast", { event: "ice" }, ({ payload }) => {
         if (payload?.from === "tv" && payload.candidate) pc.current?.addIceCandidate(payload.candidate).catch(() => {});
       })
       .on("broadcast", { event: "screen_off" }, () => setHasVideo(false))
       .on("broadcast", { event: "control" }, ({ payload }) => {
         const c = parseControl(payload);
-        controlRef.current = c; setControl(c); shareControl();
+        controlRef.current = c; setControl(c); setNoReport(false); shareControl();
       })
       .on("broadcast", { event: "end" }, () => { setTvState("gone"); void end("The TV ended the session."); })
       .subscribe((status) => {
@@ -253,7 +260,15 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
           channel.send({ type: "broadcast", event: "control_req", payload: {} });
         }
       });
-    return () => { cancelled = true; pc.current?.close(); supabase.removeChannel(channel); };
+    // The TV may join after us, so keep asking what it supports until it answers.
+    let asks = 0;
+    const ask = window.setInterval(() => {
+      if (controlRef.current) return;
+      asks += 1;
+      channel.send({ type: "broadcast", event: "control_req", payload: {} });
+      if (asks >= 5) setNoReport(true);
+    }, 3000);
+    return () => { cancelled = true; window.clearInterval(ask); pc.current?.close(); supabase.removeChannel(channel); };
   }, [live.topic, live.host, end, shareControl]);
 
   // Staff-only room: presence (staff card) + picture relay.
