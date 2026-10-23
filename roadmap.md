@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Ticket screen sharing
+- [ ] Keep the original ticket conversation as the entry view; add a dedicated Screen share tab, staff request action, customer TV-code entry and ticket-only pop-out chat.
+- [ ] Verify staff request, customer pairing and chat read-back; physical TV consent and picture require a real TV.
+
 ## Android navigation menu
 - [x] Repair duplicate order/moderation badge listeners that crash the mobile menu and uncover its Close button. Signed-in Android-touch browser verifies opening, three close/reopen cycles, Shift history navigation and reopening without errors; build OK. Saved JS browser regression could not launch its missing bundled browser; equivalent Python Playwright flow passed. Preview only; physical Android device remains unverified.
 
