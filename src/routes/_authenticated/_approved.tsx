@@ -84,7 +84,9 @@ function ApprovedLayout() {
       {staffTabs || customerTabs ? (
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {staffTabs ? <StaffPortalTabs /> : <PortalTabs />}
-          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+          {/* Pages without their own scroller rely on this area scrolling;
+              overflow-hidden here would clip them on locked viewports. */}
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-y-auto">
             {inner}
           </div>
         </div>
