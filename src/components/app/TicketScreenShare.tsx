@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { MessageCircle, MonitorUp, Send, X } from "lucide-react";
@@ -11,11 +11,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
 import { canUseTvRemote, normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
-import { isTicketScreenShareInvite, ticketScreenShareInvite } from "@/lib/ticket-screen-share";
+import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected } from "@/lib/ticket-screen-share";
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
-  const navigate = useNavigate();
-  return <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } })}><MonitorUp className="mr-2 size-4" />Open Screen share</Button></div>;
+  const { roles } = useAuth();
+  return canUseTvRemote(roles)
+    ? <p>TV screen requested — waiting for the customer to enter their TV code.</p>
+    : <CustomerTicketScreenShare ticketId={ticketId} />;
 }
 
 export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, children }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen"; children: ReactNode }) {
@@ -24,6 +26,22 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
   const navigate = useNavigate();
   const notify = useServerFn(notifyTicketReply);
   const [busy, setBusy] = useState(false);
+  const previousStatus = useRef<string | null>(null);
+  useEffect(() => {
+    let stopped = false;
+    const load = async () => {
+      const r = await supabase.rpc("ticket_screen_share_state", { _ticket_id: ticketId });
+      if (stopped || r.error) return;
+      const current = (r.data as { status: string | null }).status;
+      if (ticketShareConnected(previousStatus.current, current)) {
+        void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
+      }
+      previousStatus.current = current;
+    };
+    void load();
+    const timer = window.setInterval(load, 2000);
+    return () => { stopped = true; window.clearInterval(timer); };
+  }, [ticketId, navigate]);
   const request = async () => {
     if (!user || busy) return;
     setBusy(true);
@@ -32,7 +50,6 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
       if (error || !data) throw new Error(error?.message ?? "Could not send the request");
       await notify({ data: { ticketId, messageId: data.id } }).catch(() => null);
       toast.success("Screen share request sent to the customer");
-      void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
     } catch (e) { toast.error(e instanceof Error ? e.message : "Could not send the request"); }
     finally { setBusy(false); }
   };
@@ -52,6 +69,14 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
 
 export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, closed = false, visible = true }: { ticketId: string; ownerId: string; staff: boolean; closed?: boolean; visible?: boolean }) {
   const rows = useOrderScreenShares(staff ? ticketId : "", "ticket");
+  return <div className="space-y-4">
+    {staff ? <OrderScreenShareTab orderId={ticketId} rows={rows} kind="ticket" /> : <CustomerTicketScreenShare ticketId={ticketId} closed={closed} />}
+    {visible && <TicketScreenShareChat ticketId={ticketId} ownerId={ownerId} closed={closed} />}
+  </div>;
+}
+
+function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: string; closed?: boolean }) {
+  const navigate = useNavigate();
   const [state, setState] = useState<{ invited: boolean; status: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -64,8 +89,7 @@ export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, closed = 
     setState(r.data as { invited: boolean; status: string | null });
   }, [ticketId]);
   useEffect(() => { void load(); const timer = window.setInterval(load, 2000); return () => window.clearInterval(timer); }, [load]);
-  return <div className="space-y-4">
-    {staff ? <OrderScreenShareTab orderId={ticketId} rows={rows} kind="ticket" /> : <section className="mx-auto max-w-lg space-y-4">
+  return <section className="mx-auto w-full max-w-lg space-y-4 text-foreground">
       <h2 className="flex items-center gap-2 text-xl font-semibold"><MonitorUp className="size-5 text-primary" />Share your TV screen</h2>
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : !state ? <p>Checking screen share…</p> : screenShareInProgress(state.status) ? <p className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">{state.status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : "Staff are connected to your TV. You can return to your ticket while the screen share carries on."}</p> : closed ? <p>This ticket is closed.</p> : !state.invited ? <p className="text-sm text-muted-foreground">Waiting for staff to request your screen.</p> : <form className="space-y-3" onSubmit={async (e) => {
         e.preventDefault(); setBusy(true); setSubmitError(null);
@@ -73,12 +97,11 @@ export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, closed = 
           const r = await supabase.rpc("request_ticket_screen_share", { _ticket_id: ticketId, _code: code });
           if (r.error || !r.data) throw new Error(r.error?.message ?? "That code is wrong, expired or already connected. Check your TV.");
           setCode(""); await load();
+          void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
         } catch (e) { setSubmitError(e instanceof Error ? e.message : "Could not connect your TV"); }
         finally { setBusy(false); }
       }}><p className="text-sm">Open <strong>BM Remote Helper</strong> on your TV and enter its six-digit code.</p><Input aria-label="Code on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="h-12 text-center font-mono text-2xl" />{submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}<Button disabled={busy || code.length !== 6} type="submit" className="w-full">{busy ? "Connecting…" : "Send TV code to staff"}</Button></form>}
-    </section>}
-    {visible && <TicketScreenShareChat ticketId={ticketId} ownerId={ownerId} closed={closed} />}
-  </div>;
+    </section>;
 }
 
 function TicketScreenShareChat({ ticketId, ownerId, closed }: { ticketId: string; ownerId: string; closed: boolean }) {
