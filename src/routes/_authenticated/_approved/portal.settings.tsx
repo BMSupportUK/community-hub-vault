@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { Bell, Globe, Loader2, Palette, ShieldCheck, Smartphone, UserRound, Volume2 } from "lucide-react";
+import { Bell, Globe, Loader2, Palette, ShieldCheck, Smartphone, Tv, UserRound, Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PortalTabs } from "@/components/app/PortalTabs";
@@ -8,10 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { NotificationChannelPrefs } from "@/components/app/NotificationChannelPrefs";
 import { SoundSettings } from "@/components/app/SoundSettings";
+import { TvRemoteSetupPanel } from "@/components/app/TvRemoteSetupPanel";
 import { AccountSecurityView } from "@/components/app/AccountSecurityView";
 import { EditProfileModal, PersonalThemePanel, type ProfileRow } from "./u.$username";
 
-const TABS = ["profile", "theme", "security", "browser", "phone", "sounds"] as const;
+const TABS = ["profile", "theme", "security", "browser", "phone", "sounds", "tv"] as const;
 type SettingsTab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/_authenticated/_approved/portal/settings")({
@@ -54,6 +55,7 @@ function PortalSettingsPage() {
             <TabsTrigger value="browser" className={item}><Globe className="size-4" />Browser alerts</TabsTrigger>
             <TabsTrigger value="phone" className={item}><Smartphone className="size-4" />Phone alerts</TabsTrigger>
             <TabsTrigger value="sounds" className={item}><Volume2 className="size-4" />Sounds</TabsTrigger>
+            <TabsTrigger value="tv" className={item}><Tv className="size-4" />TV remote</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="pt-4">
@@ -78,6 +80,7 @@ function PortalSettingsPage() {
             <NotificationChannelPrefs channel="phone" />
           </TabsContent>
           <TabsContent value="sounds" className="pt-4"><SoundSettings /></TabsContent>
+          <TabsContent value="tv" className="pt-4"><TvRemoteSetupPanel /></TabsContent>
         </Tabs>
       </main>
     </div>
