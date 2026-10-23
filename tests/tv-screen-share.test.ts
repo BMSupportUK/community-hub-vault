@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { screenShareInProgress, screenShareDestination, canOpenTvRemoteOverview, canUseTvRemote } from "../src/lib/tv-remote";
+import { screenShareInProgress, screenShareDestination, screenShareRequestDestination, canOpenTvRemoteOverview, canUseTvRemote } from "../src/lib/tv-remote";
 
 describe("screen share destinations and overview access", () => {
+  test("request box opens the linked secure order on Screen share", () => {
+    expect(screenShareRequestDestination("order", "order-123")).toEqual({ to: "/admin-secure-page", search: { order: "order-123", tab: "screen" } });
+  });
+  test("request box opens the linked ticket screen, never TV Remote", () => {
+    expect(screenShareRequestDestination("ticket", "ticket-456")).toEqual({ to: "/screen-share/ticket/$ticketId", params: { ticketId: "ticket-456" } });
+    expect(screenShareRequestDestination("order", null)).toBeNull();
+  });
   test("order joins open the same order screen", () => {
     expect(screenShareDestination("order", "order-123")).toEqual({ to: "/screen-share/order/$orderId", params: { orderId: "order-123" } });
   });
