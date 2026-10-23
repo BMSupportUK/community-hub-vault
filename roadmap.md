@@ -2,7 +2,7 @@
 # Roadmap
 
 ## BM Support phone app release
-- [ ] Build and verify a signed phone APK containing the TV remote setup plugin, update the existing download, and publish the site.
+- [x] Build signed BM Support 1.2.8 (code 20) with TV remote setup; signature matches the previous release, five setup tests pass, download button serves identical APK bytes, build OK. Publishing requested for bmsupport.uk; deployment completion not yet verified.
 - [ ] Verify Turn on against a physical Fire TV — requires an Android phone and TV on the same home network.
 
 ## Account switching and site-user manual orders
