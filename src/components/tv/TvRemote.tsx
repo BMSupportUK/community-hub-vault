@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
 import { getVideoIceServers } from "@/lib/video-call.functions";
-import { normalizePairCode, sessionIdle, screenShareDestination, canForwardRemote, REMOTE_PAD_KEYS } from "@/lib/tv-remote";
+import { normalizePairCode, sessionIdle, screenShareDestination, canForwardRemote, REMOTE_PAD_KEYS, remoteSetupNotice, type RemoteControlReport } from "@/lib/tv-remote";
 import { useScreenLockKeepAlive } from "@/components/app/ScreenLockKeepAlive";
 
 export type LinkKind = "order" | "ticket";
