@@ -15,7 +15,8 @@ export function ModerationPendingBadge() {
     };
     load();
     const channel = supabase
-      .channel("moderation-pending-badge")
+      // The drawer and underlying rail can both show this badge at once.
+      .channel(`moderation-pending-badge-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "gate_applications" },

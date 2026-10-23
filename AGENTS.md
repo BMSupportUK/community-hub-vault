@@ -55,3 +55,4 @@
 - Fire TV cannot self-enable remote control: Fire OS 7.6.6.9+/8.1.0.3+ blocks apps connecting to their own ADB (127.0.0.1:5555 closes with EOF); enabling must come from another device on the same Wi-Fi.
 - Fire TV remote control is switched on from the BM Support Android phone app (Settings › TV remote, `TvRemoteSetupPlugin`) over Wi-Fi ADB to the TV's address; the helper exports control.apk to its external files dir so the phone can `pm install` it.
 - Phone APK releases use the permanent signing key and matching Gradle/android-release versions with the bundled asset pointer; the public download proxy is the single destination so existing installs upgrade in place.
+- Navigation badge realtime channels use a fresh name per effect mount because the mobile drawer and underlying rail coexist and cleanup is asynchronous.
