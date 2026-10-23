@@ -12,6 +12,7 @@ import {
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
 import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
 import { BmSplash } from "@/components/app/BmSplash";
+import { ScreenLockKeepAliveContext } from "@/components/app/ScreenLockKeepAlive";
 
 
 export interface ScreenLockSettings {
@@ -37,6 +38,11 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
   const [settings, setSettings] = useState<ScreenLockSettings | null>(null);
   const [ready, setReady] = useState(false);
   const [resumeChecking, setResumeChecking] = useState(false);
+  const [liveConnections, setLiveConnections] = useState(0);
+  const registerLiveConnection = useCallback(() => {
+    setLiveConnections((count) => count + 1);
+    return () => setLiveConnections((count) => Math.max(0, count - 1));
+  }, []);
   const [locked, setLocked] = useState(() => {
     if (typeof window === "undefined" || !user) return false;
     try {
@@ -408,8 +414,8 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
     return () => window.removeEventListener(LOCK_NOW_EVENT, handler);
   }, [doLock]);
 
-  // The provider replaces the entire signed-in shell while locked, so the lock
-  // screen can render directly. Keeping it in the React tree avoids a portal
+  // The lock screen renders directly alongside any concealed live TV relay.
+  // Keeping it in the React tree avoids a portal
   // host being detached during WebView resume, which cleared the entered code
   // and left the Unlock button disabled.
   useEffect(() => {
@@ -445,22 +451,23 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
     };
   }, [locked]);
 
-  // A known-locked screen goes straight to the lock screen: no reason to make
-  // someone stare at the loading screen before they can type their code.
-  if (user && ready && settings && locked) {
-    // Shift and break alerts must keep firing on time while locked, so they
-    // render alongside the lock screen and sit above it (see styles.css).
-    return (
-      <>
-        <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />
-        <div data-screen-lock-alerts>{lockedExtras}</div>
-      </>
-    );
-  }
   // Initial settings gate mounting; resume only covers the existing tree.
   if (user && !ready) return <BmSplash />;
   if (!user && screenLockMayBeLocked()) return <BmSplash />;
-  return <>{children}{resumeChecking && <BmSplash />}</>;
+  const showLock = Boolean(user && ready && settings && locked);
+  const keepConnection = liveConnections > 0;
+  return (
+    <ScreenLockKeepAliveContext.Provider value={registerLiveConnection}>
+      {/* Stable position preserves the TV peer and staff relays across locking.
+          hidden + inert conceal protected content and prevent keyboard access. */}
+      <div hidden={showLock} inert={showLock} aria-hidden={showLock ? true : undefined}>
+        {(!showLock || keepConnection) && children}
+      </div>
+      {showLock && settings && <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />}
+      {showLock && <div data-screen-lock-alerts>{!keepConnection && lockedExtras}</div>}
+      {resumeChecking && <BmSplash />}
+    </ScreenLockKeepAliveContext.Provider>
+  );
 }
 
 /** Header pill: lock the app immediately before stepping away from the PC. */
