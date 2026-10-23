@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { MonitorUp, CheckCircle2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { requestCheckoutScreenShare, getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
 import { screenShareInProgress, orderScreenShareAllowed } from "@/lib/tv-remote";
 
@@ -10,6 +11,8 @@ import { screenShareInProgress, orderScreenShareAllowed } from "@/lib/tv-remote"
 export function CheckoutScreenShare({ token, password }: { token: string; password: string }) {
   const send = useServerFn(requestCheckoutScreenShare);
   const [invited, setInvited] = useState(false);
+  const [open, setOpen] = useState(false);
+  const wasInvited = useRef(false);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -23,10 +26,13 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       if (stop) return;
       const ongoing = screenShareInProgress(r.status);
       setInvited(r.invited);
+      // Pop the TV-code box once when staff ask, like support tickets.
+      if (r.invited && !wasInvited.current && !ongoing) setOpen(true);
+      wasInvited.current = r.invited;
       setLive(ongoing ? r.status : null);
       setDone(ongoing);
       // When a share ends the code box comes straight back for another entry.
-      if (!ongoing && wasOngoing.current) { setCode(""); setErr(null); }
+      if (!ongoing && wasOngoing.current) { setCode(""); setErr(null); setOpen(true); }
       wasOngoing.current = ongoing;
     }).catch(() => {});
     load();
@@ -41,14 +47,20 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       <p>{live && live !== "pending" ? <>Staff are connected to your TV. You can keep using your order page — the screen share carries on.</> : <>Staff have been alerted. When they connect, press <strong>Allow</strong> and then <strong>Start</strong> on your TV.</>}</p>
     </div>
   );
-  return (
+  return (<>
+    <Button type="button" className="h-11 w-full" onClick={() => setOpen(true)}>
+      <MonitorUp className="mr-2 size-4" /> Enter TV code
+    </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Enter your TV code</DialogTitle><DialogDescription>BM Support has requested to see your TV screen.</DialogDescription></DialogHeader>
     <form className="space-y-3 rounded-xl border p-4" onSubmit={async (e) => {
       e.preventDefault();
       if (code.length !== 6) return;
       setBusy(true); setErr(null);
       try {
         const r = await send({ data: { token, password, code } });
-        if (r.ok) { wasOngoing.current = true; setLive("pending"); setDone(true); setCode(""); } else setErr(r.error);
+        if (r.ok) { wasOngoing.current = true; setLive("pending"); setDone(true); setCode(""); setOpen(false); } else setErr(r.error);
       } catch { setErr("Something went wrong. Try again."); }
       finally { setBusy(false); }
     }}>
@@ -61,5 +73,7 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
         {busy ? <Loader2 className="size-4 animate-spin" /> : "Connect TV"}
       </Button>
     </form>
-  );
+      </DialogContent>
+    </Dialog>
+  </>);
 }
