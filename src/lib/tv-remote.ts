@@ -24,7 +24,7 @@ export function canOpenTvRemoteOverview(roles: readonly string[]): boolean {
 export function screenShareDestination(kind: string | null, id: string | null) {
   if (!id) return null;
   if (kind === "order") return { to: "/screen-share/order/$orderId" as const, params: { orderId: id } };
-  if (kind === "ticket") return { to: "/screen-share/ticket/$ticketId" as const, params: { ticketId: id } };
+  if (kind === "ticket") return { to: "/tickets" as const, search: { id, tab: "screen" as const } };
   return null;
 }
 

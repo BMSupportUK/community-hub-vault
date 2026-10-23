@@ -8812,6 +8812,10 @@ export type Database = {
         Args: { _ticket_id: string }
         Returns: number
       }
+      request_ticket_screen_share: {
+        Args: { _code: string; _ticket_id: string }
+        Returns: string
+      }
       reset_job_application_password: { Args: { _id: string }; Returns: string }
       resolve_content_report: {
         Args: { _id: string; _notes?: string; _status: string }
@@ -9094,6 +9098,7 @@ export type Database = {
           username: string
         }[]
       }
+      ticket_screen_share_state: { Args: { _ticket_id: string }; Returns: Json }
       touch_tv_session: { Args: { _id: string }; Returns: undefined }
       unmute_user: { Args: { _user_id: string }; Returns: boolean }
       upsert_my_signup_vpn: {
