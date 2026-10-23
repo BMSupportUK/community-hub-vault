@@ -31,8 +31,6 @@ export const requestCheckoutScreenShare = createServerFn({ method: "POST" })
     if (!u) return { ok: false as const, error: "Your order could not be checked. Refresh and try again." };
     const db = u.supabaseAdmin;
     const orderId = u.link.order_id as string;
-    const { data: invite, error: inviteError } = await db.from("checkout_chat_messages").select("id").eq("order_id", orderId).eq("sender", "staff").not("staff_id", "is", null).like("content", `%${ORDER_SCREEN_SHARE_INVITE}%`).limit(1).maybeSingle();
-    if (inviteError || !invite) return { ok: false as const, error: "Wait for staff to request screen sharing on this order." };
     const failKind = `code_failed:${orderId}`;
     const since = new Date(Date.now() - 10 * 60_000).toISOString();
     const { count } = await db.from("tv_remote_events").select("id", { count: "exact", head: true }).eq("kind", failKind).gte("created_at", since);

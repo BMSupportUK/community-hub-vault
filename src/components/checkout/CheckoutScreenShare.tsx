@@ -49,7 +49,7 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
   );
   return (<>
     <Button type="button" className="h-11 w-full" onClick={() => setOpen(true)}>
-      <MonitorUp className="mr-2 size-4" /> Enter TV code
+      <MonitorUp className="mr-2 size-4" /> Share my TV screen
     </Button>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>

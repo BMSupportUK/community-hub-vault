@@ -26,11 +26,9 @@ describe("screen share destinations and overview access", () => {
 });
 
 describe("repeat screen share requests", () => {
-  test("customers cannot start order sharing until staff invite them", () => {
-    expect(orderScreenShareAllowed(false, null)).toBe(false);
-    expect(orderScreenShareAllowed(false, "ended")).toBe(false);
-    expect(orderScreenShareAllowed(true, null)).toBe(true);
-    expect(orderScreenShareAllowed(false, "active")).toBe(true);
+  test("customers can start order sharing themselves without a staff invite", () => {
+    expect(orderScreenShareAllowed(false, null)).toBe(true);
+    expect(orderScreenShareAllowed(false, "ended")).toBe(true);
   });
   test("an ended session allows another request immediately", () => {
     expect(screenShareInProgress("ended")).toBe(false);
