@@ -6970,6 +6970,36 @@ export type Database = {
           },
         ]
       }
+      tv_helper_diagnostics: {
+        Row: {
+          created_at: string
+          device: string | null
+          helper_version: string | null
+          id: string
+          ip_hash: string
+          message: string | null
+          step: string
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          helper_version?: string | null
+          id?: string
+          ip_hash: string
+          message?: string | null
+          step: string
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          helper_version?: string | null
+          id?: string
+          ip_hash?: string
+          message?: string | null
+          step?: string
+        }
+        Relationships: []
+      }
       tv_remote_events: {
         Row: {
           actor_id: string | null
