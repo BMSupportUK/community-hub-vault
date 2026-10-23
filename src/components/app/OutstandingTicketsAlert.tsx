@@ -27,7 +27,9 @@ export function OutstandingTicketsAlert() {
   const pathname = useLocation({ select: (location) => location.pathname });
   // Never interrupt the shop/orders flow with this dialog — a toast is enough there.
   const isSoundTestPage = (pathname === "/admin-sounds" || pathname === "/fan-zone-sounds") || pathname.startsWith("/shop");
-  const isTalkChannel = pathname === "/home" || pathname.startsWith("/home/");
+  // Talk channels and the Tickets page get a toast instead: a modal here would sit
+  // under other pop-ups (e.g. the TV-code box) and silently block typing in them.
+  const isTalkChannel = pathname === "/home" || pathname.startsWith("/home/") || pathname.startsWith("/tickets");
   const isStaffRole = hasAny(["admin", "management", "staff"]);
   const [open, setOpen] = useState(false);
   // Never cover a live video call; a pending pop-up waits until the call ends.
