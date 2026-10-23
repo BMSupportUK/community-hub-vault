@@ -21,12 +21,14 @@ import com.getcapacitor.BridgeActivity;
 
 import uk.bmsupport.app.localsend.LocalSendPlugin;
 import uk.bmsupport.app.remotehelper.RemoteHelperPlugin;
+import uk.bmsupport.app.tvremote.TvRemoteSetupPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(LocalSendPlugin.class);
         registerPlugin(RemoteHelperPlugin.class);
+        registerPlugin(TvRemoteSetupPlugin.class);
         super.onCreate(savedInstanceState);
         createDefaultNotificationChannel();
         createTicketReplyNotificationChannel();
