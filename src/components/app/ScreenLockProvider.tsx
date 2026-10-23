@@ -460,7 +460,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
     <ScreenLockKeepAliveContext.Provider value={registerLiveConnection}>
       {/* Stable position preserves the TV peer and staff relays across locking.
           hidden + inert conceal protected content and prevent keyboard access. */}
-      <div hidden={showLock} inert={showLock} aria-hidden={showLock ? true : undefined}>
+      <div className={showLock ? "hidden" : "contents"} hidden={showLock} inert={showLock} aria-hidden={showLock ? true : undefined}>
         {(!showLock || keepConnection) && children}
       </div>
       {showLock && settings && <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />}
