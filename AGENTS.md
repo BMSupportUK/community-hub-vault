@@ -57,3 +57,4 @@
 - Phone APK releases use the permanent signing key and matching Gradle/android-release versions with the bundled asset pointer; the public download proxy is the single destination so existing installs upgrade in place.
 - Navigation badge realtime channels use a fresh name per effect mount because the mobile drawer and underlying rail coexist and cleanup is asynchronous.
 - Ticket screen sharing keeps the original thread mounted as the default tab; the layout owns a single customer TV-code dialog reopened from public request messages, successful pairing/connection opens the share tab, and its pop-out only shows public replies so internal notes stay private.
+- Order screen sharing checks a saved staff-authored checkout invitation on both the status and pairing paths; the standalone customer helper URL redirects home to keep requests scoped to orders and tickets.
