@@ -14,6 +14,14 @@ const CORS = {
 
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("pair"), device_name: z.string().trim().min(1).max(60).optional() }),
+  // Setup progress from the TV helper, so we can see which remote-control step fails. No personal data.
+  z.object({
+    action: z.literal("diag"),
+    helper: z.string().max(20).optional(),
+    device: z.string().max(80).optional(),
+    step: z.string().min(1).max(60),
+    message: z.string().max(1500).optional(),
+  }),
   z.object({ action: z.enum(["status", "end", "ice"]), session_id: z.string().uuid(), device_token: z.string().regex(/^[0-9a-f]{64}$/) }),
   z.object({ action: z.literal("consent"), session_id: z.string().uuid(), device_token: z.string().regex(/^[0-9a-f]{64}$/), allow: z.boolean() }),
 ]);
@@ -64,6 +72,19 @@ export const Route = createFileRoute("/api/public/tv")({
         const body = parsed.data;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const db = supabaseAdmin;
+
+        if (body.action === "diag") {
+          const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for") ?? "unknown";
+          const ipHash = await sha256Hex(`tv:${ip}`);
+          const since = new Date(Date.now() - 10 * 60_000).toISOString();
+          const { count } = await db.from("tv_helper_diagnostics").select("id", { count: "exact", head: true }).eq("ip_hash", ipHash).gte("created_at", since);
+          if ((count ?? 0) >= 60) return json({ ok: false }, 429);
+          await db.from("tv_helper_diagnostics").insert({
+            ip_hash: ipHash, helper_version: body.helper ?? null, device: body.device ?? null,
+            step: body.step, message: body.message ?? null,
+          });
+          return json({ ok: true });
+        }
 
         if (body.action === "pair") {
           const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for") ?? "unknown";
