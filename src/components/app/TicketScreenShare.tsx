@@ -12,18 +12,18 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
 import { canUseTvRemote, normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
-import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected } from "@/lib/ticket-screen-share";
+import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, isCustomerTestTicket } from "@/lib/ticket-screen-share";
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
-  const { roles } = useAuth();
-  return canUseTvRemote(roles)
+  const { roles, user } = useAuth();
+  return canUseTvRemote(roles) && !isCustomerTestTicket(ticketId, user?.id)
     ? <p>TV screen requested — waiting for the customer to enter their TV code.</p>
     : <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => window.dispatchEvent(new CustomEvent("ticket-tv-code", { detail: ticketId }))}><MonitorUp className="mr-2 size-4" />Enter TV code</Button></div>;
 }
 
 export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, children }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen"; children: ReactNode }) {
   const { user, roles } = useAuth();
-  const staff = canUseTvRemote(roles);
+  const staff = canUseTvRemote(roles) && !isCustomerTestTicket(ticketId, user?.id);
   const navigate = useNavigate();
   const notify = useServerFn(notifyTicketReply);
   const [busy, setBusy] = useState(false);

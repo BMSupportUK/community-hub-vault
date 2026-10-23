@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Ticket screen sharing
+- [x] Show customer sharing controls to Dane on his specified open test ticket only; retain staff access on other tickets and owner-only pairing checks.
 - [x] Replace inline customer code entry with one TV-code pop-up per ticket, automatically opened on a staff invitation and reopenable from the request message; successful pairing closes it and opens Screen share.
 - [x] Put TV-code entry directly in the staff request message and switch to Screen share after successful pairing/connection; 24 tests pass and saved request card verified signed-in. Physical customer connection remains unverified below.
 - [x] Keep the original ticket conversation as the entry view; add a dedicated Screen share tab, staff request action, customer TV-code entry and ticket-only pop-out chat. Signed-in staff request, pop-out reply and original-thread read-back verified on desktop/phone; temporary ticket removed. Ticket pairing and existing permission tests pass.
