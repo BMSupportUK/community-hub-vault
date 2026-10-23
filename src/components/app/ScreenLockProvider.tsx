@@ -82,6 +82,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
       if (body.hasAttribute("data-scroll-locked")) body.removeAttribute("data-scroll-locked");
       if (body.style.overflow === "hidden") body.style.removeProperty("overflow");
       Array.from(body.children).forEach((child) => {
+        if (child.hasAttribute("data-screen-lock-content")) return;
         if (child.hasAttribute("inert")) child.removeAttribute("inert");
         if (child.getAttribute("aria-hidden") === "true") {
           child.removeAttribute("aria-hidden");
@@ -435,6 +436,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
       document.body.removeAttribute("data-scroll-locked");
       document.body.style.overflow = "hidden";
       Array.from(document.body.children).forEach((child) => {
+        if (child.hasAttribute("data-screen-lock-content")) return;
         if (child.hasAttribute("inert")) child.removeAttribute("inert");
         if (child.getAttribute("aria-hidden") === "true") {
           child.removeAttribute("aria-hidden");
@@ -460,7 +462,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
     <ScreenLockKeepAliveContext.Provider value={registerLiveConnection}>
       {/* Stable position preserves the TV peer and staff relays across locking.
           hidden + inert conceal protected content and prevent keyboard access. */}
-      <div className={showLock ? "hidden" : "contents"} hidden={showLock} inert={showLock} aria-hidden={showLock ? true : undefined}>
+      <div data-screen-lock-content className={showLock ? "hidden" : "contents"} hidden={showLock} inert={showLock} aria-hidden={showLock ? true : undefined}>
         {(!showLock || keepConnection) && children}
       </div>
       {showLock && settings && <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />}
