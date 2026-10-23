@@ -3,8 +3,7 @@ import { ArrowLeft, MonitorUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
-import { StaffTicketCallChatPanel } from "@/components/app/TicketCallChat";
+import { TicketScreenShareWorkspace } from "@/components/app/TicketScreenShare";
 import { supabase } from "@/integrations/supabase/client";
 import { canUseTvRemote } from "@/lib/tv-remote";
 
@@ -25,7 +24,6 @@ function TicketScreenSharePage() {
   const { ticketId } = Route.useParams();
   const { roles, loading } = useAuth();
   const allowed = canUseTvRemote(roles);
-  const rows = useOrderScreenShares(allowed ? ticketId : "", "ticket");
   const [ticket, setTicket] = useState<{ user_id: string; subject: string } | null>(null);
   useEffect(() => {
     if (!allowed) return;
@@ -40,11 +38,10 @@ function TicketScreenSharePage() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-4 p-4">
       <header className="flex flex-wrap items-center gap-3">
-        <Button asChild variant="outline" size="sm"><Link to="/tickets"><ArrowLeft className="mr-1 size-4" />Back to tickets</Link></Button>
+        <Button asChild variant="outline" size="sm"><Link to="/tickets" search={{ id: ticketId }}><ArrowLeft className="mr-1 size-4" />Back to ticket</Link></Button>
         <h1 className="flex items-center gap-2 text-xl font-bold"><MonitorUp className="size-5 text-primary" />Screen share · {ticket?.subject ?? "Support ticket"}</h1>
       </header>
-      <OrderScreenShareTab key={ticketId} orderId={ticketId} rows={rows} kind="ticket" />
-      {ticket && <section className="flex h-[480px] max-h-[70dvh] flex-col overflow-hidden rounded-lg border border-border bg-card"><StaffTicketCallChatPanel ticketId={ticketId} ownerId={ticket.user_id} /></section>}
+      {ticket && <TicketScreenShareWorkspace key={ticketId} ticketId={ticketId} ownerId={ticket.user_id} staff />}
     </div>
   );
 }

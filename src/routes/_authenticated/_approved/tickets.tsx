@@ -56,10 +56,13 @@ import {
 } from "@/lib/order-fulfilment.functions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TicketScreenShareLayout, TicketScreenShareInvite } from "@/components/app/TicketScreenShare";
+import { isTicketScreenShareInvite } from "@/lib/ticket-screen-share";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
-  validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1 } => ({
+  validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1; tab?: "screen" } => ({
+    tab: s.tab === "screen" ? "screen" : undefined,
     id: typeof s.id === "string" ? s.id : undefined,
     view: (s.view === "mine" || s.view === "all" || s.view === "assigned") ? s.view : undefined,
     new2fa: s.new2fa === 1 || s.new2fa === "1" ? 1 : undefined,
@@ -1048,6 +1051,7 @@ function TicketDetail({
   myRating: number; onRate: (v: number) => void;
 }) {
   const { hasAny, roles } = useAuth();
+  const shareTab = Route.useSearch().tab;
   const isAdmin = hasAny(["admin", "management"]);
   const tz = useUserTimezone();
   const navigate = useNavigate();
@@ -2028,6 +2032,7 @@ function TicketDetail({
 
 
   return (
+    <TicketScreenShareLayout key={ticket.id} ticketId={ticket.id} ownerId={ticket.user_id} closed={ticket.status === "closed"} tab={shareTab}>
     <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="min-h-0 max-h-[35%] shrink-0 overflow-y-auto overscroll-contain lg:max-h-none lg:overflow-visible border-b border-white/20 px-3 sm:px-5 py-2 sm:py-3 space-y-2 sm:space-y-3 bg-white/5 backdrop-blur">
@@ -2232,7 +2237,7 @@ function TicketDetail({
                   ) : (
                     (() => {
                       const invite = parseVideoInvite(m.content);
-                      return invite ? <TicketVideoInviteCard token={invite.token} text={invite.text} /> : <MentionText content={m.content} currentUsername={myUsername} />;
+                      return isTicketScreenShareInvite(m.content) ? <TicketScreenShareInvite ticketId={ticket.id} /> : invite ? <TicketVideoInviteCard token={invite.token} text={invite.text} /> : <MentionText content={m.content} currentUsername={myUsername} />;
                     })()
                   )}
                   <TicketAttachments items={m.attachments} />
@@ -2317,6 +2322,7 @@ function TicketDetail({
         </aside>
       )}
     </div>
+    </TicketScreenShareLayout>
   );
 }
 
