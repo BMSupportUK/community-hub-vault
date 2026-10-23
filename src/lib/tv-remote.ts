@@ -85,7 +85,7 @@ export type RemoteControlReport = {
 /** Staff-facing explanation of why the remote isn't ready yet (null when it is ready). */
 export function remoteSetupNotice(c: RemoteControlReport): string | null {
   if (c.enabled) return null;
-  const old = !c.helper ? " The customer's helper is out of date — ask them to update BM Remote Helper to v1.9 from Install Guides." : "";
+  const old = !c.helper ? " The customer's helper is out of date — ask them to update BM Remote Helper to v2.1 from Install Guides." : "";
   if (!c.installed) return "Step 1 missing: the remote control part isn't installed. Ask the customer to open BM Remote Helper and press Install." + old;
   if (c.fire) {
     if (c.adb === false) return "Step 2 missing: ADB debugging is off on the Fire TV. Settings > My Fire TV > Developer options > ADB debugging on, then press Turn on remote control in the helper." + old;

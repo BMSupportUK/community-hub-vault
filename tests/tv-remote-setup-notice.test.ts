@@ -17,6 +17,6 @@ describe("staff remote setup message", () => {
     expect(remoteSetupNotice({ ...base, error: "Nobody pressed Allow" })).toContain("Nobody pressed Allow");
   });
   test("old helper without version is told to update", () => {
-    expect(remoteSetupNotice({ fire: true, installed: true, enabled: false })).toContain("v1.9");
+    expect(remoteSetupNotice({ fire: true, installed: true, enabled: false })).toContain("v2.1");
   });
 });
