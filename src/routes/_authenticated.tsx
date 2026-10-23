@@ -13,7 +13,7 @@ import { pageLabelForPath } from "@/lib/page-labels";
 import { isPageAllowed, usePagePermissions } from "@/lib/page-access";
 import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
 
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
 import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
@@ -294,7 +294,8 @@ function AuthLayout() {
             >
               <Menu className="size-5" />
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-auto bg-rail border-r border-border">
+            <SheetContent side="left" className="p-0 w-auto bg-rail border-r border-border [&>button]:z-20" aria-describedby={undefined}>
+              <SheetTitle className="sr-only">Navigation</SheetTitle>
               {navOpen ? <IconRail inSheet /> : null}
             </SheetContent>
           </Sheet>
