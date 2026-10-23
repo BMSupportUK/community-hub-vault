@@ -54,6 +54,7 @@ export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, closed = 
   const rows = useOrderScreenShares(staff ? ticketId : "", "ticket");
   const [state, setState] = useState<{ invited: boolean; status: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
@@ -67,14 +68,14 @@ export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, closed = 
     {staff ? <OrderScreenShareTab orderId={ticketId} rows={rows} kind="ticket" /> : <section className="mx-auto max-w-lg space-y-4">
       <h2 className="flex items-center gap-2 text-xl font-semibold"><MonitorUp className="size-5 text-primary" />Share your TV screen</h2>
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : !state ? <p>Checking screen share…</p> : screenShareInProgress(state.status) ? <p className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">{state.status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : "Staff are connected to your TV. You can return to your ticket while the screen share carries on."}</p> : closed ? <p>This ticket is closed.</p> : !state.invited ? <p className="text-sm text-muted-foreground">Waiting for staff to request your screen.</p> : <form className="space-y-3" onSubmit={async (e) => {
-        e.preventDefault(); setBusy(true); setError(null);
+        e.preventDefault(); setBusy(true); setSubmitError(null);
         try {
           const r = await supabase.rpc("request_ticket_screen_share", { _ticket_id: ticketId, _code: code });
           if (r.error || !r.data) throw new Error(r.error?.message ?? "That code is wrong, expired or already connected. Check your TV.");
           setCode(""); await load();
-        } catch (e) { setError(e instanceof Error ? e.message : "Could not connect your TV"); }
+        } catch (e) { setSubmitError(e instanceof Error ? e.message : "Could not connect your TV"); }
         finally { setBusy(false); }
-      }}><p className="text-sm">Open <strong>BM Remote Helper</strong> on your TV and enter its six-digit code.</p><Input aria-label="Code on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="h-12 text-center font-mono text-2xl" /><Button disabled={busy || code.length !== 6} type="submit" className="w-full">{busy ? "Connecting…" : "Send TV code to staff"}</Button></form>}
+      }}><p className="text-sm">Open <strong>BM Remote Helper</strong> on your TV and enter its six-digit code.</p><Input aria-label="Code on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="h-12 text-center font-mono text-2xl" />{submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}<Button disabled={busy || code.length !== 6} type="submit" className="w-full">{busy ? "Connecting…" : "Send TV code to staff"}</Button></form>}
     </section>}
     {visible && <TicketScreenShareChat ticketId={ticketId} ownerId={ownerId} closed={closed} />}
   </div>;
