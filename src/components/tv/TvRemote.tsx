@@ -380,7 +380,7 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
       </div>
       <aside className="space-y-4 self-start xl:sticky xl:top-4">
         <StaffCard viewers={viewers} device={live.device} host={live.host} tvState={tvState} onEnd={() => void end()} />
-        <RemotePad control={control} controller={controller} me={me} viewers={viewers} onSend={sendRemote} onTake={takeControl} />
+        <RemotePad control={control} noReport={noReport && live.host} controller={controller} me={me} viewers={viewers} onSend={sendRemote} onTake={takeControl} />
       </aside>
     </div>
   );
@@ -407,19 +407,12 @@ function cleanRemote(ev: RemoteEvent, p: unknown): Record<string, unknown> | nul
   return null;
 }
 
-function RemotePad({ control, controller, me, viewers, onSend, onTake }: {
-  control: ControlState | null; controller: string | null; me: string | null; viewers: Viewer[];
-  onSend: (ev: RemoteEvent, payload: Record<string, unknown>) => void; onTake: () => void;
-}) {
-  const [text, setText] = useState("");
-  const mine = !!me && controller === me;
-  const ready = !!control?.enabled;
-  const key = (k: (typeof REMOTE_PAD_KEYS)[number]) => onSend("cmd", { key: k });
-  const who = viewers.find((v) => v.id === controller)?.username ?? "another staff member";
-  const btn = "h-12 w-12";
-
-  let notice: string | null = null;
-  if (!control) notice = "Waiting for the TV to report remote control…";
+function RemotePad({ control, noReport, controller, me, viewers, onSend, onTake }: {
+  control: ControlState | null; noReport: boolean; controller: string | null; me: string | null; viewers: Viewer[];
+...
+  if (!control) notice = noReport
+    ? "The TV isn't answering remote control requests. The customer's BM Remote Helper is probably an older version — ask them to update it to v1.4 from Install Guides, then start a new screen share."
+    : "Waiting for the TV to report remote control…";
   else if (control.fire) notice = "Remote control isn't available on Fire TV — screen view only.";
   else if (!control.installed) notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper and press Install (needs helper v1.4).";
   else if (!control.enabled) notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper, press Open settings and switch on BM Remote Control.";
