@@ -36,7 +36,7 @@ public final class AdbClient implements AutoCloseable {
     }
 
     /** Connects and signs in. Waits up to two minutes for the customer to press Allow on the TV. */
-    public static AdbClient connect(String host, int port, KeyPair keys, String keyName) throws Exception {
+    public static AdbClient connect(String host, int port, KeyPair keys, byte[] publicKeyLine) throws Exception {
         Socket s = new Socket();
         s.connect(new InetSocketAddress(host, port), 5000);
         s.setSoTimeout(120_000);
@@ -51,9 +51,7 @@ public final class AdbClient implements AutoCloseable {
                 if (!sentSig) {
                     c.send(AUTH, 2, 0, sign(keys, m.data)); sentSig = true;
                 } else if (!sentKey) {
-                    byte[] pub = (java.util.Base64.getEncoder().encodeToString(publicKey((RSAPublicKey) keys.getPublic())) + " " + keyName + "\0")
-                            .getBytes(StandardCharsets.UTF_8);
-                    c.send(AUTH, 3, 0, pub); sentKey = true;
+                    c.send(AUTH, 3, 0, publicKeyLine); sentKey = true;
                 } else throw new IOException("The TV refused this phone");
             }
         } catch (Exception e) { c.close(); throw e; }
@@ -100,7 +98,7 @@ public final class AdbClient implements AutoCloseable {
     }
 
     /** Android's ADB public key layout (little-endian words, 2048-bit). */
-    static byte[] publicKey(RSAPublicKey k) {
+    public static byte[] publicKey(RSAPublicKey k) {
         int words = 64;
         BigInteger r32 = BigInteger.ZERO.setBit(32);
         BigInteger n = k.getModulus();

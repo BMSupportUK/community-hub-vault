@@ -9,7 +9,10 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.interfaces.RSAPublicKey;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -35,7 +38,8 @@ public class TvRemoteSetupPlugin extends Plugin {
         String host = call.getString("host", "").trim();
         if (!host.matches("^\\d{1,3}(\\.\\d{1,3}){3}$")) { call.reject("Enter the TV's address exactly as it shows on the TV, e.g. 192.168.1.23"); return; }
         io.execute(() -> {
-            try (AdbClient adb = AdbClient.connect(host, 5555, keys(getContext()), "bm-support-phone")) {
+            KeyPair kp;
+            try (AdbClient adb = AdbClient.connect(host, 5555, kp = keys(getContext()), keyLine(kp))) {
                 notifyListeners("progress", new JSObject().put("step", "Connected. Switching remote control on…"));
                 String installed = adb.shell("pm path " + CONTROL);
                 if (!installed.contains("package:")) {
@@ -80,14 +84,31 @@ public class TvRemoteSetupPlugin extends Plugin {
         File priv = new File(dir, "key.pk8"), pub = new File(dir, "key.x509");
         KeyFactory kf = KeyFactory.getInstance("RSA");
         if (priv.exists() && pub.exists()) {
-            PrivateKey p = kf.generatePrivate(new PKCS8EncodedKeySpec(Files.readAllBytes(priv.toPath())));
-            PublicKey q = kf.generatePublic(new X509EncodedKeySpec(Files.readAllBytes(pub.toPath())));
+            PrivateKey p = kf.generatePrivate(new PKCS8EncodedKeySpec(readAll(priv)));
+            PublicKey q = kf.generatePublic(new X509EncodedKeySpec(readAll(pub)));
             return new KeyPair(q, p);
         }
         KeyPairGenerator g = KeyPairGenerator.getInstance("RSA"); g.initialize(2048);
         KeyPair kp = g.genKeyPair();
-        Files.write(priv.toPath(), kp.getPrivate().getEncoded());
-        Files.write(pub.toPath(), kp.getPublic().getEncoded());
+        writeAll(priv, kp.getPrivate().getEncoded());
+        writeAll(pub, kp.getPublic().getEncoded());
         return kp;
+    }
+
+    private static byte[] keyLine(KeyPair kp) {
+        String b64 = android.util.Base64.encodeToString(AdbClient.publicKey((RSAPublicKey) kp.getPublic()), android.util.Base64.NO_WRAP);
+        return (b64 + " bm-support-phone\0").getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static byte[] readAll(File f) throws Exception {
+        try (FileInputStream in = new FileInputStream(f)) {
+            byte[] b = new byte[(int) f.length()]; int o = 0, r;
+            while (o < b.length && (r = in.read(b, o, b.length - o)) > 0) o += r;
+            return b;
+        }
+    }
+
+    private static void writeAll(File f, byte[] b) throws Exception {
+        try (FileOutputStream out = new FileOutputStream(f)) { out.write(b); }
     }
 }
