@@ -9,7 +9,6 @@ import { screenShareInProgress, orderScreenShareAllowed } from "@/lib/tv-remote"
 /** Customer: ask staff to see the TV screen through BM Remote Helper. */
 export function CheckoutScreenShare({ token, password }: { token: string; password: string }) {
   const send = useServerFn(requestCheckoutScreenShare);
-  const [open, setOpen] = useState(false);
   const [invited, setInvited] = useState(false);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,7 +25,8 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       setInvited(r.invited);
       setLive(ongoing ? r.status : null);
       setDone(ongoing);
-      if (!ongoing && wasOngoing.current) { setOpen(false); setCode(""); setErr(null); }
+      // When a share ends the code box comes straight back for another entry.
+      if (!ongoing && wasOngoing.current) { setCode(""); setErr(null); }
       wasOngoing.current = ongoing;
     }).catch(() => {});
     load();
@@ -41,11 +41,6 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       <p>{live && live !== "pending" ? <>Staff are connected to your TV. You can keep using your order page — the screen share carries on.</> : <>Staff have been alerted. When they connect, press <strong>Allow</strong> and then <strong>Start</strong> on your TV.</>}</p>
     </div>
   );
-  if (!open) return (
-    <Button type="button" className="h-11 w-full" onClick={() => setOpen(true)}>
-      <MonitorUp className="mr-2 size-4" /> Enter TV code
-    </Button>
-  );
   return (
     <form className="space-y-3 rounded-xl border p-4" onSubmit={async (e) => {
       e.preventDefault();
@@ -53,10 +48,11 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       setBusy(true); setErr(null);
       try {
         const r = await send({ data: { token, password, code } });
-        if (r.ok) { wasOngoing.current = true; setLive("pending"); setDone(true); setOpen(false); setCode(""); } else setErr(r.error);
+        if (r.ok) { wasOngoing.current = true; setLive("pending"); setDone(true); setCode(""); } else setErr(r.error);
       } catch { setErr("Something went wrong. Try again."); }
       finally { setBusy(false); }
     }}>
+      <p className="flex items-center gap-2 text-sm font-semibold"><MonitorUp className="size-4 text-primary" />Staff have asked to see your TV screen</p>
       <p className="text-sm">Open <strong>BM Remote Helper</strong> on your TV and type the 6-digit code it shows.</p>
       <Input inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
         placeholder="123456" className="h-12 text-center font-mono text-2xl tracking-[0.4em]" autoFocus />
