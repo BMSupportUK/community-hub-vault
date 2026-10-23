@@ -39,6 +39,10 @@ function SecurePageAdmin() {
   const [loaded, setLoaded] = useState(!!refParam);
 
   useEffect(() => {
+    setTab(tabParam ?? "order");
+  }, [order, tabParam]);
+
+  useEffect(() => {
     if (!order) return;
     supabase.rpc("staff_checkout_order_summary" as never, { p_order_id: order } as never)
       .then(({ data }) => { setOrderRef((data as unknown as { order_ref: string }[] | null)?.[0]?.order_ref ?? null); setLoaded(true); });

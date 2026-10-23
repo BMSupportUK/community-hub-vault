@@ -28,6 +28,13 @@ export function screenShareDestination(kind: string | null, id: string | null) {
   return null;
 }
 
+/** Request-box actions open the secure order's own Screen share tab. */
+export function screenShareRequestDestination(kind: string | null, id: string | null) {
+  if (!id) return null;
+  if (kind === "order") return { to: "/admin-secure-page" as const, search: { order: id, tab: "screen" as const } };
+  return screenShareDestination(kind, id);
+}
+
 export function canSeeTvRemoteHistory(roles: readonly string[]): boolean {
   return roles.includes("admin") || roles.includes("management");
 }

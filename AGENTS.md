@@ -47,6 +47,7 @@
 - /home redirects by role (`src/lib/portal-home.ts`): staff to /staff-portal, members to /portal; both render `PortalHome`.
 - TV Remote: the native helper app authenticates only by a hashed device token at /api/public/tv; staff join the random per-session broadcast topic returned by claim_tv_pair_code, so commands never reach other channels.
 - Screen-share navigation resolves linked orders/tickets before mounting generic sessions; scoped pages join the existing host's relay. Overview access is separate from staff help access, preserving staff support while limiting global navigation.
+- Screen-share request-box actions open the secure checkout Screen share tab for orders and the scoped ticket sharing page for tickets; secure checkout synchronizes its selected tab with navigation search state.
 - Active TV screen-share components register a lock keep-alive; the lock conceals and inerts their stable subtree without closing host or viewer peers, while ordinary locked pages still unmount.
 - Checkout screen share controls derive ongoing state from the order-private status read; locally ended staff sessions cannot auto-rejoin stale polled rows, so subsequent requests remain available without refresh.
 - Remote Helper installs through the BM Support Android app's session installer (`RemoteHelperPlugin`), served from `/api/public/remote-helper-apk` (latest available app_builds row named like "Remote Helper"); Downloader installs trip Android 13+ restricted-settings on Accessibility.
