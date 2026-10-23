@@ -67,3 +67,11 @@ export function keyForKeyboard(key: string): TvKey | null {
     default: return null;
   }
 }
+
+/** Remote buttons on the staff panel (must match KEYS in the TV helper). */
+export const REMOTE_PAD_KEYS = ["up", "down", "left", "right", "ok", "back", "home", "play_pause", "volume_up", "volume_down"] as const;
+
+/** The host only forwards remote commands from the staff member currently in control. */
+export function canForwardRemote(controllerId: string | null, from: string | null): boolean {
+  return !!controllerId && !!from && controllerId === from;
+}
