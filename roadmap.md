@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Android navigation menu
-- [ ] Repair duplicate badge listeners that crash the mobile menu; verify touch opening, closing, reopening and navigation while signed in.
+- [x] Repair duplicate order/moderation badge listeners that crash the mobile menu and uncover its Close button. Signed-in Android-touch browser verifies opening, three close/reopen cycles, Shift history navigation and reopening without errors; build OK. Saved JS browser regression could not launch its missing bundled browser; equivalent Python Playwright flow passed. Preview only; physical Android device remains unverified.
 
 ## BM Support phone app release
 - [x] Build signed BM Support 1.2.8 (code 20) with TV remote setup; signature matches the previous release, five setup tests pass, download button serves identical APK bytes, build OK. Publishing requested for bmsupport.uk; deployment completion not yet verified.
