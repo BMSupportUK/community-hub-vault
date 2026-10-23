@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Download, Loader2, Tv, Play } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RemoteHelper, remoteHelperAvailable, type RemoteHelperStatus } from "@/lib/remote-helper";
 
 export const Route = createFileRoute("/_authenticated/_approved/portal/tv-helper")({
+  beforeLoad: () => { throw redirect({ to: "/portal", replace: true }); },
   component: TvHelperPage,
   head: () => ({
     meta: [
