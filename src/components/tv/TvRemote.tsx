@@ -422,9 +422,10 @@ function RemotePad({ control, noReport, controller, me, viewers, onSend, onTake 
   if (!control) notice = noReport
     ? "The TV isn't answering remote control requests. The customer's BM Remote Helper is probably an older version — ask them to update it to v1.4 from Install Guides, then start a new screen share."
     : "Waiting for the TV to report remote control…";
-  else if (control.fire) notice = "Remote control isn't available on Fire TV — screen view only.";
+  else if (control.enabled) notice = null;
+  else if (control.fire) notice = "Customer needs to finish Fire TV setup: in BM Remote Helper (v1.6) turn on ADB debugging, press Turn on remote control, then Allow on the debugging prompt. Until then it's screen view only.";
   else if (!control.installed) notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper and press Install (needs helper v1.4).";
-  else if (!control.enabled) notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper, press Open settings and switch on BM Remote Control.";
+  else notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper, press Open settings and switch on BM Remote Control.";
 
   return (
     <section className="rounded-2xl border bg-card p-5 shadow-sm">
