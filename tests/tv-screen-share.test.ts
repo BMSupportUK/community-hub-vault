@@ -6,14 +6,14 @@ describe("screen share destinations and overview access", () => {
     expect(screenShareRequestDestination("order", "order-123")).toEqual({ to: "/admin-secure-page", search: { order: "order-123", tab: "screen" } });
   });
   test("request box opens the linked ticket screen, never TV Remote", () => {
-    expect(screenShareRequestDestination("ticket", "ticket-456")).toEqual({ to: "/screen-share/ticket/$ticketId", params: { ticketId: "ticket-456" } });
+    expect(screenShareRequestDestination("ticket", "ticket-456")).toEqual({ to: "/tickets", search: { id: "ticket-456", tab: "screen" } });
     expect(screenShareRequestDestination("order", null)).toBeNull();
   });
   test("order joins open the same order screen", () => {
     expect(screenShareDestination("order", "order-123")).toEqual({ to: "/screen-share/order/$orderId", params: { orderId: "order-123" } });
   });
   test("ticket joins open the same ticket screen", () => {
-    expect(screenShareDestination("ticket", "ticket-456")).toEqual({ to: "/screen-share/ticket/$ticketId", params: { ticketId: "ticket-456" } });
+    expect(screenShareDestination("ticket", "ticket-456")).toEqual({ to: "/tickets", search: { id: "ticket-456", tab: "screen" } });
   });
   test("only admin can open the TV overview", () => {
     expect(canOpenTvRemoteOverview(["admin"])).toBe(true);

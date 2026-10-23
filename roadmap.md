@@ -2,8 +2,8 @@
 # Roadmap
 
 ## Ticket screen sharing
-- [ ] Keep the original ticket conversation as the entry view; add a dedicated Screen share tab, staff request action, customer TV-code entry and ticket-only pop-out chat.
-- [ ] Verify staff request, customer pairing and chat read-back; physical TV consent and picture require a real TV.
+- [x] Keep the original ticket conversation as the entry view; add a dedicated Screen share tab, staff request action, customer TV-code entry and ticket-only pop-out chat. Signed-in staff request, pop-out reply and original-thread read-back verified on desktop/phone; temporary ticket removed. Ticket pairing and existing permission tests pass.
+- [ ] Verify a real customer's TV-code submission, staff answer and physical TV consent/picture — requires the customer's signed-in ticket and real TV; isolated pairing/read-back passed.
 
 ## Android navigation menu
 - [x] Repair duplicate order/moderation badge listeners that crash the mobile menu and uncover its Close button. Signed-in Android-touch browser verifies opening, three close/reopen cycles, Shift history navigation and reopening without errors; build OK. Saved JS browser regression could not launch its missing bundled browser; equivalent Python Playwright flow passed. Preview only; physical Android device remains unverified.
@@ -334,7 +334,7 @@
 - [x] Keep joins on shared order/ticket screen-share pages before mounting a generic session; existing hosts and viewers join the same scoped room. Move admin-only TV Remote overview and role-gated dashboard icons after Home, remove both rail/editor entries. Twenty-five tests pass; signed-in header and active legacy order-session redirect checked; build OK. Preview only; ticket TV stream and physical-TV picture remain unverified.
 - [x] Remove redundant secure-order screen share link; customer controls reset from order status every two seconds and staff cannot reopen locally ended sessions from stale rows. Nine tests pass, staff tab and customer fresh-code entry checked in browser; build OK. Actual end/reconnect on a physical TV remains unverified and changes are preview-only.
 - [ ] Confirm v1.2 helper works end-to-end on a real TV (code, Allow, Start, picture on staff TV Remote page). Waits on Dane J testing.
-- [ ] After that is confirmed: add a TV Remote button to secure checkout and tickets (staff-only). Ticket code is locked, so only do this once the user gives the go-ahead.
+- [x] Add screen sharing to secure checkout and tickets following explicit approval; tickets retain their original entry conversation and use a separate share tab.
 - [x] Place the Order and Screen share buttons beside the "Secure page" heading on the staff secure checkout page. Heading and buttons checked on the same row in browser; build OK. Preview only.
 
 ## TV remote control (Google/Android TV)
