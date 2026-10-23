@@ -26,13 +26,12 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       if (stop) return;
       const ongoing = screenShareInProgress(r.status);
       setInvited(r.invited);
-      // Pop the TV-code box once when staff ask, like support tickets.
-      if (r.invited && !wasInvited.current && !ongoing) setOpen(true);
+      // The code box only opens when the customer presses the button.
       wasInvited.current = r.invited;
       setLive(ongoing ? r.status : null);
       setDone(ongoing);
-      // When a share ends the code box comes straight back for another entry.
-      if (!ongoing && wasOngoing.current) { setCode(""); setErr(null); setOpen(true); }
+      // When a share ends, reset so the button allows another entry.
+      if (!ongoing && wasOngoing.current) { setCode(""); setErr(null); }
       wasOngoing.current = ongoing;
     }).catch(() => {});
     load();
