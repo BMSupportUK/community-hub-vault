@@ -44,8 +44,12 @@ public class TvRemoteSetupPlugin extends Plugin {
                 String installed = adb.shell("pm path " + CONTROL);
                 if (!installed.contains("package:")) {
                     notifyListeners("progress", new JSObject().put("step", "Installing remote control on the TV…"));
-                    String apk = "/sdcard/Android/data/" + HELPER + "/files/control.apk";
+                    String src = "/sdcard/Android/data/" + HELPER + "/files/control.apk";
+                    String apk = "/data/local/tmp/bm-control.apk";
+                    // Fire OS's installer can't read /sdcard directly; copy to /data/local/tmp first.
+                    adb.shell("cp " + src + " " + apk + " && chmod 644 " + apk);
                     String res = adb.shell("pm install -r -d " + apk);
+                    adb.shell("rm -f " + apk);
                     if (!res.contains("Success")) {
                         call.reject("The TV couldn't install remote control. Open BM Remote Helper on the TV once, then try again. (" + res.trim() + ")");
                         return;
