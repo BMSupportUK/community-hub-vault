@@ -12,7 +12,7 @@ import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 import { adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
 import { canOpenTvRemoteOverview } from "@/lib/tv-remote";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 /** Pages that sit inside the Staff Portal tab bar (ticket threads keep their own bounded layout). */
 export function isStaffPortalPath(path: string) {
@@ -27,7 +27,7 @@ export function StaffPortalTabs() {
   const item = "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors";
   const cls = (to: string) => cn(item, p === to ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground");
   return (
-    <nav aria-label="Staff Portal" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface/80 px-3 py-2 backdrop-blur sm:px-6">
+    <TooltipProvider><nav aria-label="Staff Portal" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface/80 px-3 py-2 backdrop-blur sm:px-6">
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Staff Portal</span>
       <Link to="/staff-portal" className={cls("/staff-portal")}><Home className="size-4" />Home</Link>
       {canOpenAdminPanel(roles) && (
@@ -56,6 +56,6 @@ export function StaffPortalTabs() {
         <TwoFactorPill />
         <VpnPill />
       </div>
-    </nav>
+    </nav></TooltipProvider>
   );
 }

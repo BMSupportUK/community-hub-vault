@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { screenShareDestination } from "@/lib/tv-remote";
 
 type Row = {
   id: string;
@@ -14,6 +15,7 @@ type Row = {
   status: string;
   requested_at: string | null;
   link_id: string | null;
+  link_kind: string | null;
   staff_id: string | null;
 };
 
@@ -34,8 +36,8 @@ export function TalkScreenShareButton({ variant = "bar" }: { variant?: "bar" | "
 
   const load = useCallback(async () => {
     const { data } = await supabase.from("tv_remote_sessions")
-      .select("id, device_name, status, requested_at, link_id, staff_id")
-      .eq("link_kind", "order")
+      .select("id, device_name, status, requested_at, link_id, link_kind, staff_id")
+      .in("link_kind", ["order", "ticket"])
       .not("requested_at", "is", null)
       .in("status", ["pending", "claimed", "active"])
       .gt("expires_at", new Date().toISOString())
@@ -53,7 +55,7 @@ export function TalkScreenShareButton({ variant = "bar" }: { variant?: "bar" | "
   // Label each request with the sale it belongs to so staff open that order's
   // own screen share page.
   useEffect(() => {
-    const orderIds = [...new Set(rows.map((r) => r.link_id).filter(Boolean))] as string[];
+    const orderIds = [...new Set(rows.flatMap((r) => r.link_kind === "order" && r.link_id ? [r.link_id] : []))];
     if (!orderIds.length) { setOrderLabels({}); return; }
     void (async () => {
       const { data: summaries } = await supabase.rpc("staff_checkout_order_summary" as never);
@@ -71,12 +73,13 @@ export function TalkScreenShareButton({ variant = "bar" }: { variant?: "bar" | "
   const active = rows.filter((r) => r.status !== "pending");
 
   const goTo = (r: Row) => {
-    if (!r.link_id) return;
+    const destination = screenShareDestination(r.link_kind, r.link_id);
+    if (!destination) return;
     setOpen(false);
-    void navigate({ to: "/screen-share/order/$orderId", params: { orderId: r.link_id } });
+    void navigate(destination);
   };
 
-  const label = (r: Row) => (r.link_id ? orderLabels[r.link_id] ?? r.link_id.slice(0, 8) : r.device_name);
+  const label = (r: Row) => `${r.link_kind === "ticket" ? "Ticket" : "Sale"} ${r.link_id ? orderLabels[r.link_id] ?? r.link_id.slice(0, 8) : r.device_name}`;
 
   return (
     <>
@@ -183,7 +186,7 @@ export function TalkScreenShareButton({ variant = "bar" }: { variant?: "bar" | "
                 {waiting.length === 0 && <p className="p-2 text-xs text-muted-foreground">No customers waiting.</p>}
                 {waiting.map((r) => (
                   <div key={r.id} className="rounded-md border border-destructive/40 bg-destructive/10 p-2">
-                    <p className="truncate text-sm font-medium">Sale {label(r)}</p>
+                    <p className="truncate text-sm font-medium">{label(r)}</p>
                     <p className="text-[11px] text-muted-foreground">{r.device_name} · Waiting since {ago(r.requested_at ?? "")}</p>
                     <div className="mt-2">
                       <Button size="sm" className="h-8" onClick={() => goTo(r)}>
@@ -203,7 +206,7 @@ export function TalkScreenShareButton({ variant = "bar" }: { variant?: "bar" | "
                 {active.length === 0 && <p className="p-2 text-xs text-muted-foreground">No shares in progress.</p>}
                 {active.map((r) => (
                   <div key={r.id} className="rounded-md border border-border bg-background/60 p-2">
-                    <p className="truncate text-sm font-medium">Sale {label(r)}</p>
+                    <p className="truncate text-sm font-medium">{label(r)}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {r.device_name} · {r.staff_id === user.id ? "Dealt with by you" : "Someone is dealing with it"}{r.requested_at ? ` · ${ago(r.requested_at)}` : ""}
                     </p>
