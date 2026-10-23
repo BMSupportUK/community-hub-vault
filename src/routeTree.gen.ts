@@ -198,6 +198,7 @@ import { Route as AuthenticatedApprovedFanzonePostsUserIdRouteImport } from './r
 import { Route as AuthenticatedApprovedFanzoneUUserIdRouteImport } from './routes/_authenticated/_approved/fanzone.u.$userId'
 import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
 import { Route as AuthenticatedApprovedScreenShareOrderOrderIdRouteImport } from './routes/_authenticated/_approved/screen-share.order.$orderId'
+import { Route as AuthenticatedApprovedScreenShareTicketTicketIdRouteImport } from './routes/_authenticated/_approved/screen-share.ticket.$ticketId'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 
@@ -1287,6 +1288,12 @@ const AuthenticatedApprovedScreenShareOrderOrderIdRoute =
     path: '/screen-share/order/$orderId',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedScreenShareTicketTicketIdRoute =
+  AuthenticatedApprovedScreenShareTicketTicketIdRouteImport.update({
+    id: '/screen-share/ticket/$ticketId',
+    path: '/screen-share/ticket/$ticketId',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedSportsGuidesIdEditRoute =
   AuthenticatedApprovedSportsGuidesIdEditRouteImport.update({
     id: '/$id/edit',
@@ -1488,6 +1495,7 @@ export interface FileRoutesByFullPath {
   '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/screen-share/order/$orderId': typeof AuthenticatedApprovedScreenShareOrderOrderIdRoute
+  '/screen-share/ticket/$ticketId': typeof AuthenticatedApprovedScreenShareTicketTicketIdRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -1676,6 +1684,7 @@ export interface FileRoutesByTo {
   '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/screen-share/order/$orderId': typeof AuthenticatedApprovedScreenShareOrderOrderIdRoute
+  '/screen-share/ticket/$ticketId': typeof AuthenticatedApprovedScreenShareTicketTicketIdRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -1870,6 +1879,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/_authenticated/_approved/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/_authenticated/_approved/screen-share/order/$orderId': typeof AuthenticatedApprovedScreenShareOrderOrderIdRoute
+  '/_authenticated/_approved/screen-share/ticket/$ticketId': typeof AuthenticatedApprovedScreenShareTicketTicketIdRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -2063,6 +2073,7 @@ export interface FileRouteTypes {
     | '/fanzone/u/$userId'
     | '/forum/$board/$topic'
     | '/screen-share/order/$orderId'
+    | '/screen-share/ticket/$ticketId'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -2251,6 +2262,7 @@ export interface FileRouteTypes {
     | '/fanzone/u/$userId'
     | '/forum/$board/$topic'
     | '/screen-share/order/$orderId'
+    | '/screen-share/ticket/$ticketId'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
   id:
@@ -2444,6 +2456,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/fanzone/u/$userId'
     | '/_authenticated/_approved/forum/$board/$topic'
     | '/_authenticated/_approved/screen-share/order/$orderId'
+    | '/_authenticated/_approved/screen-share/ticket/$ticketId'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
   fileRoutesById: FileRoutesById
@@ -3858,6 +3871,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedScreenShareOrderOrderIdRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/screen-share/ticket/$ticketId': {
+      id: '/_authenticated/_approved/screen-share/ticket/$ticketId'
+      path: '/screen-share/ticket/$ticketId'
+      fullPath: '/screen-share/ticket/$ticketId'
+      preLoaderRoute: typeof AuthenticatedApprovedScreenShareTicketTicketIdRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/sports-guides/$id/edit': {
       id: '/_authenticated/_approved/sports-guides/$id/edit'
       path: '/$id/edit'
@@ -4052,6 +4072,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedFanzonePostsUserIdRoute: typeof AuthenticatedApprovedFanzonePostsUserIdRoute
   AuthenticatedApprovedFanzoneUUserIdRoute: typeof AuthenticatedApprovedFanzoneUUserIdRoute
   AuthenticatedApprovedScreenShareOrderOrderIdRoute: typeof AuthenticatedApprovedScreenShareOrderOrderIdRoute
+  AuthenticatedApprovedScreenShareTicketTicketIdRoute: typeof AuthenticatedApprovedScreenShareTicketTicketIdRoute
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
@@ -4205,6 +4226,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedFanzoneUUserIdRoute,
   AuthenticatedApprovedScreenShareOrderOrderIdRoute:
     AuthenticatedApprovedScreenShareOrderOrderIdRoute,
+  AuthenticatedApprovedScreenShareTicketTicketIdRoute:
+    AuthenticatedApprovedScreenShareTicketTicketIdRoute,
 }
 
 const AuthenticatedApprovedRouteWithChildren =
