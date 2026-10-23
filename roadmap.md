@@ -322,3 +322,4 @@
 - [x] Remove redundant secure-order screen share link; customer controls reset from order status every two seconds and staff cannot reopen locally ended sessions from stale rows. Nine tests pass, staff tab and customer fresh-code entry checked in browser; build OK. Actual end/reconnect on a physical TV remains unverified and changes are preview-only.
 - [ ] Confirm v1.2 helper works end-to-end on a real TV (code, Allow, Start, picture on staff TV Remote page). Waits on Dane J testing.
 - [ ] After that is confirmed: add a TV Remote button to secure checkout and tickets (staff-only). Ticket code is locked, so only do this once the user gives the go-ahead.
+- [x] Place the Order and Screen share buttons beside the "Secure page" heading on the staff secure checkout page. Heading and buttons checked on the same row in browser; build OK. Preview only.
