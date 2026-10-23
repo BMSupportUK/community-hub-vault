@@ -345,6 +345,19 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
     };
   }, [live.topic, live.host, me, relayTo, end, shareControl, setControllerId]);
 
+  // A picture that arrives while the Screen share tab is hidden can stay black once
+  // shown; restart playback whenever the video becomes visible again.
+  useEffect(() => {
+    const el = video.current;
+    if (!el || !hasVideo) return;
+    const kick = () => { if (el.srcObject && el.offsetParent !== null) void el.play().catch(() => {}); };
+    kick();
+    const ro = new ResizeObserver(kick);
+    ro.observe(el);
+    const t = window.setInterval(() => { if (el.paused || el.videoWidth === 0) kick(); }, 1500);
+    return () => { ro.disconnect(); window.clearInterval(t); };
+  }, [hasVideo]);
+
   // Host keeps the session alive.
   useEffect(() => {
     if (!live.host) return;
