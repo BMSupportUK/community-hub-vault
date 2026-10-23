@@ -35,6 +35,12 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-secure-pag
 function SecurePageAdmin() {
   const { roles } = useAuth();
   const invite = useServerFn(inviteOrderScreenShare);
+  const requestShare = async () => {
+    setSendingInvite(true);
+    try { await invite({ data: { orderId: order } }); toast.success("Screen share requested — the customer's TV code box is open"); }
+    catch { toast.error("Could not send screen share request"); }
+    finally { setSendingInvite(false); }
+  };
   const [sendingInvite, setSendingInvite] = useState(false);
   const { order, ref: refParam, tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<"order" | "screen">(tabParam ?? "order");
@@ -94,24 +100,18 @@ function SecurePageAdmin() {
                   {waiting > 0 && <span className="rounded-full bg-destructive px-2 text-xs font-bold text-destructive-foreground animate-pulse">{waiting} waiting</span>}
                   {liveShares.length > 0 && <span className="rounded-full bg-primary/20 px-2 text-xs font-bold text-primary">{liveShares.length} in progress</span>}
                 </div>
-                {waiting === 0 && liveShares.length === 0 ? (
-                  <Button size="sm" disabled={sendingInvite} onClick={async () => {
-                    setSendingInvite(true);
-                    try { await invite({ data: { orderId: order } }); toast.success("Screen share requested from the customer"); }
-                    catch { toast.error("Could not send screen share request"); }
-                    finally { setSendingInvite(false); }
-                  }}><MonitorUp className="mr-2 size-4" />Request screen share</Button>
-                ) : (
-                  <Link to="/screen-share/order/$orderId" params={{ orderId: order }}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">
-                    <MonitorUp className="size-3.5" /> {waiting > 0 ? "Answer screen share request" : "Open screen share"}
-                  </Link>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" disabled={sendingInvite} onClick={() => void requestShare()}><MonitorUp className="mr-2 size-4" />{sendingInvite ? "Sending…" : "Request screen share"}</Button>
+                  {(waiting > 0 || liveShares.length > 0) && <Button size="sm" variant="secondary" onClick={() => setTab("screen")}>{waiting > 0 ? "Answer screen share request" : "Open screen share"}</Button>}
+                </div>
               </div>
             } />
           </div>
         </div>
-        {tab === "screen" && <OrderScreenShareTab orderId={order} rows={shares} />}
+        {tab === "screen" && <div className="space-y-3">
+          <Button size="sm" disabled={sendingInvite} onClick={() => void requestShare()}><MonitorUp className="mr-2 size-4" />{sendingInvite ? "Sending…" : "Request screen share"}</Button>
+          <OrderScreenShareTab orderId={order} rows={shares} />
+        </div>}
       </div>
     </main>
   );
