@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { LinkPicker, RemoteSession, type Live, type LinkKind } from "@/components/tv/TvRemote";
-import { canUseTvRemote } from "@/lib/tv-remote";
+import { canUseTvRemote, canOpenTvRemoteOverview, screenShareDestination, screenShareInProgress } from "@/lib/tv-remote";
 
 export const Route = createFileRoute("/_authenticated/_approved/tv-remote_/$sessionId")({
   component: TvRequestPage,
@@ -41,7 +41,7 @@ function TvRequestPage() {
         .select("id, topic, device_name, status, staff_id, link_kind, link_id").eq("id", sessionId).maybeSingle();
       const r = (data as Row | null) ?? null;
       setRow(r);
-      if (r && r.status !== "pending" && r.staff_id) {
+      if (r && !screenShareDestination(r.link_kind, r.link_id) && screenShareInProgress(r.status) && r.status !== "pending" && r.staff_id) {
         setLive({ id: r.id, topic: r.topic, device: r.device_name, host: r.staff_id === uid, linkKind: (r.link_kind as LinkKind) ?? null, linkId: r.link_id, hostId: r.staff_id });
       }
     };
@@ -61,10 +61,9 @@ function TvRequestPage() {
 
   if (loading) return null;
   if (!canUseTvRemote(roles)) return <Navigate to="/portal" replace />;
-  // A request raised from a sale's secure checkout belongs on that order's own
-  // screen share page — send any generic session link there instead (but never
-  // yank staff out of a session they have already answered here).
-  if (!live && row?.link_kind === "order" && row.link_id) return <Navigate to="/screen-share/order/$orderId" params={{ orderId: row.link_id }} replace />;
+  const destination = row ? screenShareDestination(row.link_kind, row.link_id) : null;
+  if (destination) return <Navigate {...destination} replace />;
+  if (!canOpenTvRemoteOverview(roles) && row !== undefined) return <Navigate to="/home" replace />;
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 p-4 md:p-6">
       <header className="flex items-center gap-3">

@@ -16,6 +16,18 @@ export function canUseTvRemote(roles: readonly string[]): boolean {
   return roles.some((r) => (TV_REMOTE_ROLES as readonly string[]).includes(r));
 }
 
+/** The global overview is owner-only; staff keep order/ticket screen sharing. */
+export function canOpenTvRemoteOverview(roles: readonly string[]): boolean {
+  return roles.includes("admin");
+}
+
+export function screenShareDestination(kind: string | null, id: string | null) {
+  if (!id) return null;
+  if (kind === "order") return { to: "/screen-share/order/$orderId" as const, params: { orderId: id } };
+  if (kind === "ticket") return { to: "/screen-share/ticket/$ticketId" as const, params: { ticketId: id } };
+  return null;
+}
+
 export function canSeeTvRemoteHistory(roles: readonly string[]): boolean {
   return roles.includes("admin") || roles.includes("management");
 }

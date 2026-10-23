@@ -27,8 +27,8 @@ import { usePortalUnlocked } from "@/components/app/PortalLock";
 import { isPortalPath } from "@/lib/customer-portal";
 import { isStaffPortalPath } from "@/components/app/StaffPortalTabs";
 import { isPortalQuickLinkPath } from "@/components/app/portal-quick-links";
-import { CalendarClock, History, KeyRound as KeyIcon, LayoutDashboard, Shield, Receipt, ShieldCheck, Settings } from "lucide-react";
-import { ADMIN_CUSTOMERS_LINK, adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
+import { CalendarClock, History, KeyRound as KeyIcon, Shield, Receipt, ShieldCheck, Settings } from "lucide-react";
+import { ADMIN_CUSTOMERS_LINK } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
 import { RAIL_ORDER_CHANGED, railOrderRows, sortRailItems } from "./rail-order";
@@ -338,8 +338,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/shifts", label: "Shifts", icon: CalendarClock, show: true },
     { to: "/shift-history", label: "Shift history", icon: History, show: true },
     { to: "/staff-pin", label: "Staff PIN", icon: KeyIcon, show: true },
-    { to: "/tv-remote", label: "TV Remote", icon: Tv, show: !isModOnly },
-    { to: "/admin", key: "admin-panel", label: adminPanelLabel(roles), icon: LayoutDashboard, show: canOpenAdminPanel(roles) },
     { to: "/moderation", label: "Access Requests", icon: Shield, show: isAdmin, extra: <ModerationPendingBadge /> },
     { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge /> },
     { to: ADMIN_CUSTOMERS_LINK.to as string, key: "admin-customers", label: "Customers", icon: ShieldCheck, show: isAdmin, search: ADMIN_CUSTOMERS_LINK.search as Record<string, string> },
