@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
 import { getVideoIceServers } from "@/lib/video-call.functions";
-import { normalizePairCode, sessionIdle, screenShareDestination, canForwardRemote, REMOTE_PAD_KEYS } from "@/lib/tv-remote";
+import { normalizePairCode, sessionIdle, screenShareDestination, canForwardRemote, REMOTE_PAD_KEYS, remoteSetupNotice, type RemoteControlReport } from "@/lib/tv-remote";
 import { useScreenLockKeepAlive } from "@/components/app/ScreenLockKeepAlive";
 
 export type LinkKind = "order" | "ticket";
@@ -386,7 +386,7 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
   );
 }
 
-type ControlState = { fire: boolean; installed: boolean; enabled: boolean; apps: { pkg: string; label: string }[] };
+type ControlState = RemoteControlReport & { apps: { pkg: string; label: string }[] };
 type RemoteEvent = "cmd" | "text" | "clear_text" | "launch";
 
 function parseControl(p: unknown): ControlState | null {
@@ -394,7 +394,13 @@ function parseControl(p: unknown): ControlState | null {
   const o = p as Record<string, unknown>;
   const apps = Array.isArray(o.apps) ? o.apps.filter((a): a is { pkg: string; label: string } =>
     !!a && typeof (a as { pkg?: unknown }).pkg === "string" && typeof (a as { label?: unknown }).label === "string").slice(0, 80) : [];
-  return { fire: o.fire === true, installed: o.installed === true, enabled: o.enabled === true, apps };
+  return {
+    fire: o.fire === true, installed: o.installed === true, enabled: o.enabled === true, apps,
+    running: typeof o.running === "boolean" ? o.running : undefined, listed: typeof o.listed === "boolean" ? o.listed : undefined,
+    adb: typeof o.adb === "boolean" ? o.adb : undefined,
+    helper: typeof o.helper === "string" ? o.helper.slice(0, 20) : null,
+    error: typeof o.error === "string" ? o.error.slice(0, 300) : null,
+  };
 }
 
 /** Host-side check of commands relayed from other staff. */
@@ -420,12 +426,9 @@ function RemotePad({ control, noReport, controller, me, viewers, onSend, onTake 
 
   let notice: string | null = null;
   if (!control) notice = noReport
-    ? "The TV isn't answering remote control requests. The customer's BM Remote Helper is probably an older version — ask them to update it to v1.4 from Install Guides, then start a new screen share."
+    ? "The TV isn't answering remote control requests. The customer's BM Remote Helper is probably an older version — ask them to update it to v1.8 from Install Guides, then start a new screen share."
     : "Waiting for the TV to report remote control…";
-  else if (control.enabled) notice = null;
-  else if (control.fire) notice = "Customer needs to finish Fire TV setup: in BM Remote Helper (v1.6) turn on ADB debugging, press Turn on remote control, then Allow on the debugging prompt. Until then it's screen view only.";
-  else if (!control.installed) notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper and press Install (needs helper v1.4).";
-  else notice = "Remote control is off on this TV. Ask the customer to open BM Remote Helper, press Open settings and switch on BM Remote Control.";
+  else notice = remoteSetupNotice(control);
 
   return (
     <section className="rounded-2xl border bg-card p-5 shadow-sm">
