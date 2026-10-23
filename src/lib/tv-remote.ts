@@ -75,3 +75,22 @@ export const REMOTE_PAD_KEYS = ["up", "down", "left", "right", "ok", "back", "ho
 export function canForwardRemote(controllerId: string | null, from: string | null): boolean {
   return !!controllerId && !!from && controllerId === from;
 }
+
+/** What the TV helper reports about remote control (v1.8 adds the step-by-step fields). */
+export type RemoteControlReport = {
+  fire: boolean; installed: boolean; enabled: boolean;
+  running?: boolean; listed?: boolean; adb?: boolean; helper?: string | null; error?: string | null;
+};
+
+/** Staff-facing explanation of why the remote isn't ready yet (null when it is ready). */
+export function remoteSetupNotice(c: RemoteControlReport): string | null {
+  if (c.enabled) return null;
+  const old = !c.helper ? " The customer's helper is out of date — ask them to update BM Remote Helper to v1.8 from Install Guides." : "";
+  if (!c.installed) return "Step 1 missing: the remote control part isn't installed. Ask the customer to open BM Remote Helper and press Install." + old;
+  if (c.fire) {
+    if (c.adb === false) return "Step 2 missing: ADB debugging is off on the Fire TV. Settings > My Fire TV > Developer options > ADB debugging on, then press Turn on remote control in the helper." + old;
+    const err = c.error ? ` The TV said: "${c.error}"` : "";
+    return "Step 3 missing: remote control isn't switched on yet. Ask the customer to end this session, open BM Remote Helper, press Turn on remote control and press Allow on the TV." + err + old;
+  }
+  return "Remote control is off on this TV. Ask the customer to open BM Remote Helper, press Open settings and switch on BM Remote Control." + old;
+}
