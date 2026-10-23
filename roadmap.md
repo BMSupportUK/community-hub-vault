@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## BM Support phone app release
+- [ ] Build and verify a signed phone APK containing the TV remote setup plugin, update the existing download, and publish the site.
+- [ ] Verify Turn on against a physical Fire TV — requires an Android phone and TV on the same home network.
+
 ## Account switching and site-user manual orders
 - [x] Add audited admin-only login as customer and return with an HttpOnly original-session cookie; reject pending resets, demo/staff targets and customer two-factor accounts, and revalidate admin access on return.
 - [x] Allow admin/management to select a site user in the manual-order dialog; assign the order and password-free payment notification atomically. Fourteen regressions pass, authenticated picker returns 26 eligible users and preview build OK; no live orders created.
