@@ -12,4 +12,7 @@ export function isTicketScreenShareInvite(content: string) {
 }
 export function ticketShareConnected(previous: string | null, current: string | null) {
   return previous === "pending" && (current === "claimed" || current === "active");
+}// Staff jump to the Screen share tab the moment the customer's TV code creates a request.
+export function ticketShareRequested(previous: string | null | undefined, current: string | null) {
+  return previous !== undefined && previous !== "pending" && current === "pending";
 }
