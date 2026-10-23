@@ -1,7 +1,7 @@
 import { beforeAll, afterAll, test, expect } from "bun:test";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
-import { ticketScreenShareInvite, isTicketScreenShareInvite, ticketShareConnected, isCustomerTestTicket } from "../src/lib/ticket-screen-share";
+import { ticketScreenShareInvite, isTicketScreenShareInvite, ticketShareConnected, ticketShareRequested, isCustomerTestTicket } from "../src/lib/ticket-screen-share";
 const db = new PGlite();
 const owner = "00000000-0000-0000-0000-000000000001";
 const staff = "00000000-0000-0000-0000-000000000002";
@@ -18,6 +18,12 @@ test("switch to the share tab when staff connect, not when merely requesting", (
   expect(ticketShareConnected("pending", "active")).toBe(true);
   expect(ticketShareConnected("active", "active")).toBe(false);
   expect(ticketShareConnected("pending", "ended")).toBe(false);
+});
+test("staff jump to Screen share when the customer's code creates a request", () => {
+  expect(ticketShareRequested(null, "pending")).toBe(true);
+  expect(ticketShareRequested("ended", "pending")).toBe(true);
+  expect(ticketShareRequested("pending", "pending")).toBe(false);
+  expect(ticketShareRequested(undefined, "pending")).toBe(false);
 });
 beforeAll(async () => {
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;

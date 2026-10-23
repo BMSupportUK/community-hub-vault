@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
 import { canUseTvRemote, normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
-import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, isCustomerTestTicket } from "@/lib/ticket-screen-share";
+import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, ticketShareRequested, isCustomerTestTicket } from "@/lib/ticket-screen-share";
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
   const { roles, user } = useAuth();
@@ -29,7 +29,7 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
   const [busy, setBusy] = useState(false);
   const [codeOpen, setCodeOpen] = useState(false);
   const offered = useRef(false);
-  const previousStatus = useRef<string | null>(null);
+  const previousStatus = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     const open = (event: Event) => {
       if (!staff && (event as CustomEvent<string>).detail === ticketId) setCodeOpen(true);
@@ -49,7 +49,10 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
         setCodeOpen(true);
       }
       if (screenShareInProgress(current)) setCodeOpen(false);
-      if (ticketShareConnected(previousStatus.current, current)) {
+      if (staff && tab !== "screen" && ticketShareRequested(previousStatus.current, current)) {
+        void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
+      }
+      if (ticketShareConnected(previousStatus.current ?? null, current)) {
         void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
       }
       previousStatus.current = current;
