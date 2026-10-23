@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { normalizePairCode, sessionIdle, screenShareDestination } from "@/lib/tv-remote";
+import { useScreenLockKeepAlive } from "@/components/app/ScreenLockKeepAlive";
 
 export type LinkKind = "order" | "ticket";
 export type Live = { id: string; topic: string; device: string; host: boolean; linkKind: LinkKind | null; linkId: string | null; hostId: string | null };
@@ -132,6 +133,7 @@ type Viewer = { id: string; username: string; nameplate: string | null; host: bo
  * to other staff over a staff-only topic, so the TV app needs no changes.
  */
 export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }) {
+  useScreenLockKeepAlive();
   const { user } = useAuth();
   const me = user?.id ?? null;
   const onEndRef = useRef(onEnd);

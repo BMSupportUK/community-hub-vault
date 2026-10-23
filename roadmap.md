@@ -318,6 +318,7 @@
 - [ ] Verify editor save/reload through the UI — authenticated dashboard requires account password and staff PIN; no unlock bypass or shared order changed for testing.
 
 ## TV Remote Helper
+- [x] Preserve active TV host/viewer connections during staff portal lock. Signed-in browser verifies the same video stays mounted, no peers close and hidden/inert protection remains intact; 13 session tests pass, build OK. Saved browser regression added; JS runner lacks its browser binary, equivalent Python browser check passed. Physical TV relay continuity remains unverified; preview only.
 - [x] Keep joins on shared order/ticket screen-share pages before mounting a generic session; existing hosts and viewers join the same scoped room. Move admin-only TV Remote overview and role-gated dashboard icons after Home, remove both rail/editor entries. Twenty-five tests pass; signed-in header and active legacy order-session redirect checked; build OK. Preview only; ticket TV stream and physical-TV picture remain unverified.
 - [x] Remove redundant secure-order screen share link; customer controls reset from order status every two seconds and staff cannot reopen locally ended sessions from stale rows. Nine tests pass, staff tab and customer fresh-code entry checked in browser; build OK. Actual end/reconnect on a physical TV remains unverified and changes are preview-only.
 - [ ] Confirm v1.2 helper works end-to-end on a real TV (code, Allow, Start, picture on staff TV Remote page). Waits on Dane J testing.
