@@ -29,3 +29,4 @@ Boro score predictions = Championship (league) fixtures ONLY. Never let cup ties
 
 - [Seasonal Talk effects](mem://features/seasonal-talk-effects.md) — Halloween all October, Christmas snow all December (UK time), Talk channels only
 - [Breaks auto-start](mem://features/breaks-auto-start.md) — Breaks start automatically at scheduled times; no manual start buttons
+- [Order screen share customer-started](mem://features/order-screen-share-customer-start.md) — Secure checkout: customer always has Share my TV screen button; tickets need staff request

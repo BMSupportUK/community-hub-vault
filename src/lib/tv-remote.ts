@@ -3,8 +3,9 @@ export const TV_PAIR_CODE_MINUTES = 10;
 export const TV_IDLE_MINUTES = 30;
 export const TV_REMOTE_ROLES = ["admin", "management", "staff"] as const;
 export const ORDER_SCREEN_SHARE_INVITE = "[[order-screen-share]]";
-export function orderScreenShareAllowed(invited: boolean, status: string | null) {
-  return invited || screenShareInProgress(status);
+// Secure checkout sharing is customer-initiated: the button is always offered.
+export function orderScreenShareAllowed(_invited: boolean, _status: string | null) {
+  return true;
 }
 
 /** Only a pending request or an ongoing share blocks another help request. */

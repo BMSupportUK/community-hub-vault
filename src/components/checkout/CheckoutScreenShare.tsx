@@ -49,7 +49,7 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
   );
   return (<>
     <Button type="button" className="h-11 w-full" onClick={() => setOpen(true)}>
-      <MonitorUp className="mr-2 size-4" /> Enter TV code
+      <MonitorUp className="mr-2 size-4" /> Share my TV screen
     </Button>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
@@ -64,7 +64,7 @@ export function CheckoutScreenShare({ token, password }: { token: string; passwo
       } catch { setErr("Something went wrong. Try again."); }
       finally { setBusy(false); }
     }}>
-      <p className="flex items-center gap-2 text-sm font-semibold"><MonitorUp className="size-4 text-primary" />Staff have asked to see your TV screen</p>
+      <p className="flex items-center gap-2 text-sm font-semibold"><MonitorUp className="size-4 text-primary" />Share your TV screen with BM Support</p>
       <p className="text-sm">Open <strong>BM Remote Helper</strong> on your TV and type the 6-digit code it shows.</p>
       <Input inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
         placeholder="123456" className="h-12 text-center font-mono text-2xl tracking-[0.4em]" autoFocus />
