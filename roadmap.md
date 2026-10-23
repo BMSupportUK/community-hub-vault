@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Ticket screen sharing
+- [x] Put TV-code entry directly in the staff request message and switch to Screen share after successful pairing/connection; 24 tests pass and saved request card verified signed-in. Physical customer connection remains unverified below.
 - [x] Keep the original ticket conversation as the entry view; add a dedicated Screen share tab, staff request action, customer TV-code entry and ticket-only pop-out chat. Signed-in staff request, pop-out reply and original-thread read-back verified on desktop/phone; temporary ticket removed. Ticket pairing and existing permission tests pass.
 - [ ] Verify a real customer's TV-code submission, staff answer and physical TV consent/picture — requires the customer's signed-in ticket and real TV; isolated pairing/read-back passed.
 

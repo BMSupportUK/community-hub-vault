@@ -1,11 +1,18 @@
 import { beforeAll, afterAll, test, expect } from "bun:test";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
-import { ticketScreenShareInvite, isTicketScreenShareInvite } from "../src/lib/ticket-screen-share";
+import { ticketScreenShareInvite, isTicketScreenShareInvite, ticketShareConnected } from "../src/lib/ticket-screen-share";
 const db = new PGlite();
 const owner = "00000000-0000-0000-0000-000000000001";
 const staff = "00000000-0000-0000-0000-000000000002";
 const ticket = "00000000-0000-0000-0000-000000000010";
+test("switch to the share tab when staff connect, not when merely requesting", () => {
+  expect(ticketShareConnected(null, "pending")).toBe(false);
+  expect(ticketShareConnected("pending", "claimed")).toBe(true);
+  expect(ticketShareConnected("pending", "active")).toBe(true);
+  expect(ticketShareConnected("active", "active")).toBe(false);
+  expect(ticketShareConnected("pending", "ended")).toBe(false);
+});
 beforeAll(async () => {
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
     CREATE SCHEMA auth; CREATE TYPE public.app_role AS ENUM('admin','management','staff','member');
