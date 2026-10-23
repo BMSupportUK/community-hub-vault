@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
@@ -17,7 +18,7 @@ export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
   const { roles } = useAuth();
   return canUseTvRemote(roles)
     ? <p>TV screen requested — waiting for the customer to enter their TV code.</p>
-    : <CustomerTicketScreenShare ticketId={ticketId} />;
+    : <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => window.dispatchEvent(new CustomEvent("ticket-tv-code", { detail: ticketId }))}><MonitorUp className="mr-2 size-4" />Enter TV code</Button></div>;
 }
 
 export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, children }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen"; children: ReactNode }) {
@@ -26,13 +27,28 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
   const navigate = useNavigate();
   const notify = useServerFn(notifyTicketReply);
   const [busy, setBusy] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const offered = useRef(false);
   const previousStatus = useRef<string | null>(null);
+  useEffect(() => {
+    const open = (event: Event) => {
+      if (!staff && (event as CustomEvent<string>).detail === ticketId) setCodeOpen(true);
+    };
+    window.addEventListener("ticket-tv-code", open);
+    return () => window.removeEventListener("ticket-tv-code", open);
+  }, [ticketId, staff]);
   useEffect(() => {
     let stopped = false;
     const load = async () => {
       const r = await supabase.rpc("ticket_screen_share_state", { _ticket_id: ticketId });
       if (stopped || r.error) return;
-      const current = (r.data as { status: string | null }).status;
+      const state = r.data as { status: string | null; invited: boolean };
+      const current = state.status;
+      if (!staff && !closed && state.invited && !screenShareInProgress(current) && !offered.current && tab !== "screen") {
+        offered.current = true;
+        setCodeOpen(true);
+      }
+      if (screenShareInProgress(current)) setCodeOpen(false);
       if (ticketShareConnected(previousStatus.current, current)) {
         void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
       }
@@ -41,7 +57,7 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
     void load();
     const timer = window.setInterval(load, 2000);
     return () => { stopped = true; window.clearInterval(timer); };
-  }, [ticketId, navigate]);
+  }, [ticketId, navigate, staff, closed, tab]);
   const request = async () => {
     if (!user || busy) return;
     setBusy(true);
@@ -54,6 +70,12 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
     finally { setBusy(false); }
   };
   return <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <Dialog open={!staff && codeOpen} onOpenChange={setCodeOpen}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Enter your TV code</DialogTitle><DialogDescription>BM Support has requested to see your TV screen.</DialogDescription></DialogHeader>
+        <CustomerTicketScreenShare ticketId={ticketId} closed={closed} onConnected={() => setCodeOpen(false)} />
+      </DialogContent>
+    </Dialog>
     <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card p-2 text-foreground">
       <Tabs value={tab === "screen" ? "screen" : "ticket"} onValueChange={(value) => void navigate({ to: "/tickets", search: { id: ticketId, tab: value === "screen" ? "screen" : undefined } })}>
         <TabsList><TabsTrigger value="ticket"><MessageCircle className="mr-2 size-4" />Ticket</TabsTrigger><TabsTrigger value="screen"><MonitorUp className="mr-2 size-4" />Screen share</TabsTrigger></TabsList>
@@ -75,7 +97,7 @@ export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, closed = 
   </div>;
 }
 
-function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: string; closed?: boolean }) {
+function CustomerTicketScreenShare({ ticketId, closed = false, onConnected }: { ticketId: string; closed?: boolean; onConnected?: () => void }) {
   const navigate = useNavigate();
   const [state, setState] = useState<{ invited: boolean; status: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -97,10 +119,11 @@ function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: str
           const r = await supabase.rpc("request_ticket_screen_share", { _ticket_id: ticketId, _code: code });
           if (r.error || !r.data) throw new Error(r.error?.message ?? "That code is wrong, expired or already connected. Check your TV.");
           setCode(""); await load();
+          onConnected?.();
           void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
         } catch (e) { setSubmitError(e instanceof Error ? e.message : "Could not connect your TV"); }
         finally { setBusy(false); }
-      }}><p className="text-sm">Open <strong>BM Remote Helper</strong> on your TV and enter its six-digit code.</p><Input aria-label="Code on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="h-12 text-center font-mono text-2xl" />{submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}<Button disabled={busy || code.length !== 6} type="submit" className="w-full">{busy ? "Connecting…" : "Send TV code to staff"}</Button></form>}
+      }}><p className="text-sm">Open <strong>BM Remote Helper</strong> on your TV and enter its six-digit code.</p><Input aria-label="Code on your TV" inputMode="numeric" autoFocus value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="h-12 text-center font-mono text-2xl" />{submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}<Button disabled={busy || code.length !== 6} type="submit" className="w-full">{busy ? "Connecting…" : "Connect TV"}</Button></form>}
     </section>;
 }
 
