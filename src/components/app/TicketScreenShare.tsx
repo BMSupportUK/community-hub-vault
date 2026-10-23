@@ -84,15 +84,17 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
     </div>
     <div className={tab === "screen" ? "hidden" : "flex min-h-0 flex-1 flex-col"}>{children}</div>
     <div className={tab === "screen" ? "min-h-0 flex-1 overflow-y-auto bg-background p-3 text-foreground sm:p-5" : "hidden"}>
-      <TicketScreenShareWorkspace ticketId={ticketId} ownerId={ownerId} staff={staff} closed={closed} visible={tab === "screen"} />
+      <TicketScreenShareWorkspace ticketId={ticketId} ownerId={ownerId} staff={staff} viewer={canUseTvRemote(roles)} closed={closed} visible={tab === "screen"} />
     </div>
   </div>;
 }
 
-export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, closed = false, visible = true }: { ticketId: string; ownerId: string; staff: boolean; closed?: boolean; visible?: boolean }) {
-  const rows = useOrderScreenShares(staff ? ticketId : "", "ticket");
+export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, viewer = staff, closed = false, visible = true }: { ticketId: string; ownerId: string; staff: boolean; viewer?: boolean; closed?: boolean; visible?: boolean }) {
+  // On the owner's customer-view test ticket, staff still get the live viewer below the code box.
+  const rows = useOrderScreenShares(viewer ? ticketId : "", "ticket");
   return <div className="space-y-4">
-    {staff ? <OrderScreenShareTab orderId={ticketId} rows={rows} kind="ticket" /> : <CustomerTicketScreenShare ticketId={ticketId} closed={closed} />}
+    {!staff && <CustomerTicketScreenShare ticketId={ticketId} closed={closed} />}
+    {viewer && <OrderScreenShareTab orderId={ticketId} rows={rows} kind="ticket" />}
     {visible && <TicketScreenShareChat ticketId={ticketId} ownerId={ownerId} closed={closed} />}
   </div>;
 }
