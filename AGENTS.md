@@ -51,3 +51,4 @@
 - Active TV screen-share components register a lock keep-alive; the lock conceals and inerts their stable subtree without closing host or viewer peers, while ordinary locked pages still unmount.
 - Checkout screen share controls derive ongoing state from the order-private status read; locally ended staff sessions cannot auto-rejoin stale polled rows, so subsequent requests remain available without refresh.
 - Remote Helper installs through the BM Support Android app's session installer (`RemoteHelperPlugin`), served from `/api/public/remote-helper-apk` (latest available app_builds row named like "Remote Helper"); Downloader installs trip Android 13+ restricted-settings on Accessibility.
+- TV remote control lives in a separate signature-protected BM Remote Control app installed by the helper's session installer (avoids Android 13+ restricted settings); only the host forwards commands, and only from the current controller.

@@ -325,3 +325,6 @@
 - [ ] Confirm v1.2 helper works end-to-end on a real TV (code, Allow, Start, picture on staff TV Remote page). Waits on Dane J testing.
 - [ ] After that is confirmed: add a TV Remote button to secure checkout and tickets (staff-only). Ticket code is locked, so only do this once the user gives the go-ahead.
 - [x] Place the Order and Screen share buttons beside the "Secure page" heading on the staff secure checkout page. Heading and buttons checked on the same row in browser; build OK. Preview only.
+
+## TV remote control (Google/Android TV)
+- [x] Helper v1.4 source: bundled BM Remote Control app installed via session installer; staff remote pad (D-pad, OK/Back/Home, type text, open app), controller-only rule. Blocked: rebuild/sign in Android Studio and test on a real Google TV.
