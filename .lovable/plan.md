@@ -1,29 +1,25 @@
-# TV remote control during screen share
+# Remote control for Google TV and Android TV (Fire TV stays screen view only)
 
-## What staff get
-On the order's Screen share tab and on the ticket screen share page, a remote control panel sits in the right sidebar under the staff box (who's dealing, End button):
-- D-pad (up/down/left/right), OK, Back, Home
-- Type text box: staff type, press Send, and the text goes into whatever field is selected on the TV
-- Open app: a list of the customer's installed apps that opens the chosen one
+## Why the switch wouldn't stay on (likely causes, not yet confirmed on a real TV)
+1. **Android's "restricted settings" block.** On Android 13+, apps installed from a downloaded file (for example through Downloader) can't turn on Accessibility, and on TVs the switch just flips back off. Apps installed through a proper installer, such as the BM Support app's installer, are not blocked.
+2. **A setup mistake in the helper.** It asks to read remote button presses without declaring that it's allowed to. Some TVs then turn the switch off straight away. If the helper crashes on start-up, it also turns off.
 
-Only the staff member dealing with the session can press the buttons. Other staff who are watching see the remote greyed out with "Controlled by <name>", and they can take over.
+## What changes
+- **Helper app v1.4**
+  - Fix the remote-control setup so the switch can stay on.
+  - Guard the start-up code so it can't crash the switch off.
+  - Send button presses (D-pad, OK, Back, Home), typed text into the selected box, and an app list with an "open app" action.
+  - Tell staff whether remote control is on or off.
+- **Install route.** Customers on Google and Android TV must install the helper with the BM Support app's install button, not Downloader, so the restricted-settings block doesn't apply. If it's still greyed out, the helper shows the backup steps: Settings, Apps, BM Remote Helper, then the 3-dot menu and "Allow restricted settings".
+- **Staff remote panel.** On the order's Screen share tab and the ticket screen share page, a sidebar remote has a D-pad, OK/Back/Home, a Type text box and an Open app list. Only the staff member dealing with the session can press buttons. Other staff see "Controlled by <name>" and can take over.
+- **Fire TV.** The panel shows "Remote control isn't available on Fire TV — screen view only."
 
-## Customer side
-- The helper app asks the customer to turn on "BM Remote Helper" in Accessibility one time. It shows steps for their TV type and includes "Allow restricted settings" for Google/Android TV.
-- If the customer skips that step, screen view still works, and staff see "Remote control is off on this TV" in place of the buttons.
-- The customer still has to press Allow on the TV for each session, and End session stops control straight away.
-
-## Fire TV: "Unlock TV remote" button in the BM Support phone app
-Fire TV hides the Accessibility switch, so a one-off command has to switch it on. Staff can't send that command from the website, because the TV is only reachable inside the customer's home Wi-Fi. Instead:
-- The BM Support Android app on the customer's phone gets an "Unlock TV remote" screen (on the same Wi-Fi as the TV).
-- The customer turns on ADB debugging on the TV, types the TV's IP address, and presses Connect. The TV shows a pop-up and they press Allow.
-- The app sends the one command, then shows "Remote control unlocked". This is done once per TV.
-- When control is off on a Fire TV, the staff panel shows these steps so staff can talk the customer through them.
-- iPhone customers would need a PC instead, because iPhones can't send this command.
+## What you'll need to do
+Rebuild and sign helper v1.4 in Android Studio with the same key, then upload it to Install Guides as "BM Remote Helper". Test on one Google TV before telling customers about it.
 
 ## Technical details
-- Helper APK v1.4: re-add the AccessibilityService (dpad via `performGlobalAction` and focus navigation, `ACTION_SET_TEXT` on the focused node, launch via `PackageManager.getLaunchIntentForPackage`). It reports `controlEnabled` and its app list over the existing session data channel. You need to rebuild and sign it in Android Studio, then upload it to Install Guides.
-- BM Support Android app v1.2.7: a Capacitor plugin with an embedded ADB-over-TCP client (port 5555, RSA key pairing). It runs only `settings put secure enabled_accessibility_services <helper>/<service>` and `settings put secure accessibility_enabled 1`, with no free-form shell. It also needs an APK rebuild.
-- Commands go over the existing per-session WebRTC data channel from the host staff. Viewer staff send them through the staff-only relay topic, so there's no new public endpoint.
-- A `RemotePad` component in `TvRemote.tsx` is shared by the order and ticket pages. Holding control is tracked in session state.
-- Tests cover the controller-only rule.
+- `accessibility_config.xml`: add `android:canRequestFilterKeyEvents="true"`, `canPerformGestures`, `notificationTimeout`, and `settingsActivity`. Wrap `onServiceConnected` and `onAccessibilityEvent` in try/catch.
+- Commands: `performGlobalAction` (BACK/HOME), focus traversal via `focusSearch` with `ACTION_FOCUS`/`ACTION_CLICK` for the D-pad and OK, `ACTION_SET_TEXT` on the input focus, and `getLaunchIntentForPackage` for Open app.
+- Transport: the existing per-session WebRTC data channel from the host. Viewers send commands through the staff-only relay topic, and the host forwards only the controller's commands.
+- `RemotePad` in `TvRemote.tsx`, shared by order and ticket pages. Controller id is held in session state, with a test for the controller-only rule.
+- Video code stays untouched apart from adding the remote panel to the screen share pages, which you asked for.
