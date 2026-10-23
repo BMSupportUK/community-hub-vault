@@ -13,9 +13,9 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.2.5",
-  versionCode: 17,
-  /** Raw CDN asset (served as application/zip) — proxied by /api/public/android-apk. */
+  versionName: "1.2.8",
+  versionCode: 20,
+  /** Signed CDN asset — proxied by /api/public/android-apk for versioned downloads. */
   assetUrl: androidApkAsset.url,
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
   url: "/api/public/android-apk",
@@ -23,5 +23,5 @@ export const ANDROID_RELEASE = {
   /** QR target: a landing page with one tap-to-download button, so camera
    *  apps / link previews opening the URL can't start duplicate downloads. */
   qrUrl: "https://bmsupport.uk/get-android-app",
-  notes: "Missed clock-in now has its own spoken alert, and ticket-reply and early-finish alerts always use their own voice.",
+  notes: "Adds TV remote setup in Settings: use your Android phone on the same Wi-Fi to switch Fire TV remote control on.",
 } as const;
