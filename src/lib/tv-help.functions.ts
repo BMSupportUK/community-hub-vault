@@ -1,6 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { unlock } from "@/lib/checkout.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { ORDER_SCREEN_SHARE_INVITE } from "@/lib/tv-remote";
+
+export const inviteOrderScreenShare = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: allowed, error: roleError } = await context.supabase.rpc("has_any_role", { _user_id: context.userId, _roles: ["admin", "management", "staff"] });
+    if (roleError || !allowed) throw new Error("Forbidden");
+    const { error } = await context.supabase.from("checkout_chat_messages").insert({ order_id: data.orderId, sender: "staff", staff_id: context.userId, content: `Please connect your TV using the screen-sharing code box on this order. ${ORDER_SCREEN_SHARE_INVITE}` });
+    if (error) throw new Error("Could not send screen share request");
+    return { ok: true };
+  });
 
 async function sha256Hex(s: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
@@ -18,6 +31,8 @@ export const requestCheckoutScreenShare = createServerFn({ method: "POST" })
     if (!u) return { ok: false as const, error: "Your order could not be checked. Refresh and try again." };
     const db = u.supabaseAdmin;
     const orderId = u.link.order_id as string;
+    const { data: invite, error: inviteError } = await db.from("checkout_chat_messages").select("id").eq("order_id", orderId).eq("sender", "staff").not("staff_id", "is", null).like("content", `%${ORDER_SCREEN_SHARE_INVITE}%`).limit(1).maybeSingle();
+    if (inviteError || !invite) return { ok: false as const, error: "Wait for staff to request screen sharing on this order." };
     const failKind = `code_failed:${orderId}`;
     const since = new Date(Date.now() - 10 * 60_000).toISOString();
     const { count } = await db.from("tv_remote_events").select("id", { count: "exact", head: true }).eq("kind", failKind).gte("created_at", since);
@@ -44,10 +59,11 @@ export const getCheckoutScreenShareStatus = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ token: z.string().min(8).max(200), password: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data }) => {
     const u = await unlock(data.token, data.password);
-    if (!u) return { status: null as string | null };
+    if (!u) return { status: null as string | null, invited: false };
+    const { data: invite } = await u.supabaseAdmin.from("checkout_chat_messages").select("id").eq("order_id", u.link.order_id as string).eq("sender", "staff").not("staff_id", "is", null).like("content", `%${ORDER_SCREEN_SHARE_INVITE}%`).limit(1).maybeSingle();
     const { data: s } = await u.supabaseAdmin.from("tv_remote_sessions").select("status")
       .eq("link_kind", "order").eq("link_id", u.link.order_id as string).not("requested_at", "is", null)
       .in("status", ["pending", "claimed", "active"]).gt("expires_at", new Date().toISOString())
       .order("requested_at", { ascending: false }).limit(1).maybeSingle();
-    return { status: (s?.status as string | undefined) ?? null };
+    return { status: (s?.status as string | undefined) ?? null, invited: !!invite };
   });

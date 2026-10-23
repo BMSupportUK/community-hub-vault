@@ -347,7 +347,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/home/$channel", label: "Talk", icon: MessagesSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     { to: "/portal/logins", label: "Service Credentials", icon: KeyIcon, show: true },
     { to: "/install-guides", label: "Install Guides", icon: Wrench, show: true },
-    { to: "/portal/tv-helper", label: "TV Remote Helper", icon: Tv, show: true },
     { to: "/knowledge-base", label: "Knowledge Base", icon: BookOpen, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
   ] : [];
