@@ -7,6 +7,10 @@ import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { canViewStaffCheckout } from "@/lib/checkout-access";
 import shopHero from "@/assets/shop-hero.jpg";
+import { useServerFn } from "@tanstack/react-start";
+import { inviteOrderScreenShare } from "@/lib/tv-help.functions";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-secure-page")({
   validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string; tab?: "order" | "screen" } => ({
@@ -30,6 +34,8 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-secure-pag
 
 function SecurePageAdmin() {
   const { roles } = useAuth();
+  const invite = useServerFn(inviteOrderScreenShare);
+  const [sendingInvite, setSendingInvite] = useState(false);
   const { order, ref: refParam, tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<"order" | "screen">(tabParam ?? "order");
   const shares = useOrderScreenShares(order ?? "");
@@ -89,7 +95,12 @@ function SecurePageAdmin() {
                   {liveShares.length > 0 && <span className="rounded-full bg-primary/20 px-2 text-xs font-bold text-primary">{liveShares.length} in progress</span>}
                 </div>
                 {waiting === 0 && liveShares.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">When the customer presses Screen share help, the request appears here.</p>
+                  <Button size="sm" disabled={sendingInvite} onClick={async () => {
+                    setSendingInvite(true);
+                    try { await invite({ data: { orderId: order } }); toast.success("Screen share requested from the customer"); }
+                    catch { toast.error("Could not send screen share request"); }
+                    finally { setSendingInvite(false); }
+                  }}><MonitorUp className="mr-2 size-4" />Request screen share</Button>
                 ) : (
                   <Link to="/screen-share/order/$orderId" params={{ orderId: order }}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">

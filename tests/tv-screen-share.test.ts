@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { screenShareInProgress, screenShareDestination, screenShareRequestDestination, canOpenTvRemoteOverview, canUseTvRemote } from "../src/lib/tv-remote";
+import { screenShareInProgress, screenShareDestination, screenShareRequestDestination, canOpenTvRemoteOverview, canUseTvRemote, orderScreenShareAllowed } from "../src/lib/tv-remote";
 
 describe("screen share destinations and overview access", () => {
   test("request box opens the linked secure order on Screen share", () => {
@@ -26,6 +26,12 @@ describe("screen share destinations and overview access", () => {
 });
 
 describe("repeat screen share requests", () => {
+  test("customers cannot start order sharing until staff invite them", () => {
+    expect(orderScreenShareAllowed(false, null)).toBe(false);
+    expect(orderScreenShareAllowed(false, "ended")).toBe(false);
+    expect(orderScreenShareAllowed(true, null)).toBe(true);
+    expect(orderScreenShareAllowed(false, "active")).toBe(true);
+  });
   test("an ended session allows another request immediately", () => {
     expect(screenShareInProgress("ended")).toBe(false);
     expect(screenShareInProgress(null)).toBe(false);
