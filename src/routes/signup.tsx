@@ -361,11 +361,19 @@ function SignupPage() {
             className="h-auto max-h-[45vh] w-auto max-w-full drop-shadow-[0_25px_60px_rgba(217,70,239,0.45)]"
           />
           <h2 className="font-display text-2xl font-bold mt-4 text-foreground">
-            Join the community
+            Welcome to BM Support
           </h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Create your account to help customers, join channels, and track your shifts together.
+            Customers create an account for orders, credentials and support. Staff create one for their portal, shifts and team tools.
           </p>
+          <div className="mt-5 w-full max-w-sm rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-left">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-200/80">
+              Boro Fan Zone
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Want the football forum? Sign up for Boro Fan Zone for match-day banter, transfer talk and the boards.
+            </p>
+          </div>
         </div>
       </aside>
 
