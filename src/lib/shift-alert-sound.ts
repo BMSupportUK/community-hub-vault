@@ -1,3 +1,5 @@
+export const LATE_END_WARNING_MS = 2 * 60_000;
+
 export function shiftAlertSoundEvent(
   slotId: string,
   stage: "start" | "end",
