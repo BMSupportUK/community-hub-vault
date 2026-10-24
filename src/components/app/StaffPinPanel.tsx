@@ -55,17 +55,20 @@ export function StaffPinPanel() {
     { id: "reset", label: "Reset PIN", icon: RefreshCw },
   ];
 
+  const cardClass =
+    "rounded-3xl border border-white/15 bg-card/80 p-5 shadow-2xl backdrop-blur-xl sm:p-6";
+
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-surface-1 border border-border">
+      <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/15 bg-card/70 p-1.5 shadow-xl backdrop-blur-xl">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium transition-all ${
               tab === id
-                ? "bg-primary text-primary-foreground shadow"
-                : "text-muted-foreground hover:text-foreground hover:bg-surface-2"
+                ? "bg-gradient-primary text-primary-foreground shadow-glow"
+                : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
             }`}
           >
             <Icon className="size-4" /> {label}
@@ -74,9 +77,9 @@ export function StaffPinPanel() {
       </div>
 
       {tab === "view" && (
-        <div className="rounded-2xl border border-border bg-surface-1 p-5 sm:p-6 shadow-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="size-11 rounded-xl bg-primary/15 grid place-items-center">
+        <div className={cardClass}>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="grid size-11 place-items-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
               {pin === undefined ? <Lock className="size-5 text-primary" /> : <KeyRound className="size-5 text-primary" />}
             </div>
             <div>
@@ -88,20 +91,20 @@ export function StaffPinPanel() {
             <>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && reveal()} placeholder="Account password"
-                className="w-full mb-3 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
-              <button onClick={reveal} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+                className="mb-3 w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/30" />
+              <button onClick={reveal} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary py-2.5 font-medium text-primary-foreground shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60">
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />} Show my PIN
               </button>
             </>
           ) : pin ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-center gap-3 py-4 px-3 rounded-xl bg-surface-2 border border-primary/30">
-                <span className="font-mono text-3xl">{pin}</span>
+              <div className="flex items-center justify-center gap-3 rounded-xl border border-primary/40 bg-primary/10 px-3 py-4 shadow-glow">
+                <span className="font-mono text-3xl font-bold tracking-[0.35em] text-gradient-primary">{pin}</span>
                 <Button size="icon" variant="outline" className="shrink-0" onClick={() => void copyPin()} aria-label="Copy my staff PIN" title="Copy PIN">
                   <Copy className="size-4" />
                 </Button>
               </div>
-              {issuedAt && <p className="text-xs text-muted-foreground text-center">Issued {new Date(issuedAt).toLocaleString("en-GB")}</p>}
+              {issuedAt && <p className="text-center text-xs text-muted-foreground">Issued {new Date(issuedAt).toLocaleString("en-GB")}</p>}
               <button onClick={() => setPin(undefined)} className="w-full text-xs text-muted-foreground underline">Hide</button>
             </div>
           ) : (
@@ -111,9 +114,9 @@ export function StaffPinPanel() {
       )}
 
       {tab === "reset" && (
-        <div className="rounded-2xl border border-border bg-surface-1 p-5 sm:p-6 shadow-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="size-11 rounded-xl bg-primary/15 grid place-items-center">
+        <div className={cardClass}>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="grid size-11 place-items-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
               <ShieldCheck className="size-5 text-primary" />
             </div>
             <div>
@@ -122,8 +125,8 @@ export function StaffPinPanel() {
             </div>
           </div>
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Reason (optional)"
-            className="w-full mb-3 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
-          <button onClick={requestReset} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+            className="mb-3 w-full rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/30" />
+          <button onClick={requestReset} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary py-2.5 text-sm font-medium text-primary-foreground shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />} Request a new PIN
           </button>
         </div>
