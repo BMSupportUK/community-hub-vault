@@ -46,10 +46,10 @@ export const Route = createFileRoute("/_authenticated/_approved/install-guides")
     ],
   }),
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: typeof search.tab === "string" ? search.tab : undefined,
+    ...(typeof search.tab === "string" ? { tab: search.tab } : {}),
     // Set when a member arrives from their secure checkout page, so we can offer
     // a back link straight to that order.
-    checkout: typeof search.checkout === "string" ? search.checkout : undefined,
+    ...(typeof search.checkout === "string" ? { checkout: search.checkout } : {}),
   }),
   component: InstallGuidesPage,
 });
