@@ -4,7 +4,7 @@
 A small, separate Android phone app ("BM TV Enabler") that a customer downloads without needing the full BM Support app or an account. It switches on BM Remote Control on their Amazon Fire TV, so staff can then control the TV during a screen share.
 
 ## What the customer does
-1. Open the download page on their Android phone (bmsupport.uk/tv-enabler) and install the app.
+1. Open Install Guides, go to the new **TV Remote Enabler** tab and press **Get the app link**. A QR code appears. Scan it with the Android phone and install the app.
 2. On the Fire TV, open BM Remote Helper. It shows the TV's address (for example 192.168.1.23).
 3. In the phone app, type that address and press **Turn on remote control**. Phone and TV must be on the same Wi-Fi.
 4. On the TV, tick "Always allow" and press **Allow**.
@@ -15,8 +15,8 @@ A small, separate Android phone app ("BM TV Enabler") that a customer downloads 
 - An optional "Find my TV" button that scans the home Wi-Fi for Fire TVs, so typing the address is optional.
 
 ## Where it appears
-- A new public download page with simple instructions and a QR code.
-- The Fire TV helper's instructions will say "Install BM TV Enabler on your phone" next to the QR code. They will no longer send customers to the full BM Support app.
+- A new separate **TV Remote Enabler** tab inside Install Guides. It has a short how-to, a **Get the app link** button, and a pop-up with a QR code (plus a plain link) to scan and install. The app is not downloaded through the BM Support app.
+- The Fire TV helper's instructions will say "Get BM TV Enabler from Install Guides". They will no longer send customers to the full BM Support app.
 - The current BM Support app's Settings › TV remote option stays as it is for staff and existing users.
 
 ## Limits
@@ -29,6 +29,6 @@ A small, separate Android phone app ("BM TV Enabler") that a customer downloads 
 - Reuses the Wi-Fi ADB client and the install steps from `TvRemoteSetupPlugin.java`: copy control.apk to /data/local/tmp, `pm install`, then enable the accessibility service. The code is moved into a shared module so both apps use the same steps.
 - Optional subnet scan of port 5555 for discovery.
 - The APK is served through a new public download route, `/api/public/tv-enabler-apk`, taking the latest app_builds row named "TV Enabler". It follows the same pattern as remote-helper-apk.
-- New public page `src/routes/tv-enabler.tsx` with its own head() metadata.
-- Update the helper's on-TV instructions/QR to point to the new page. A new helper build is needed for this.
+- New `enabler` tab in `install-guides.tsx`, using the existing `tab` search param. The button opens a Dialog showing a QR code generated from the absolute APK download URL.
+- Update the helper's on-TV instructions to point to Install Guides. A new helper build is needed for this.
 - Record the rule in AGENTS.md. Build the APK in the sandbox and upload it. The build can be checked here, but a real Fire TV test is still needed on your side.
