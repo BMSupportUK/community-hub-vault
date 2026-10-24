@@ -23,6 +23,18 @@ public final class DeviceDiscoveryTest {
         check(DeviceDiscovery.safeLocation("192.168.1.24", "http://192.168.1.24:8008/description.xml"), "Allow a device's own local description");
         check(!DeviceDiscovery.safeLocation("192.168.1.24", "http://example.com/description.xml"), "Never follow names to another host");
         check(new DiscoveredDevice("192.168.1.25", null).address.equals("192.168.1.25"), "Keep selectable addresses when names are unavailable");
-        System.out.println("Device discovery: 8 checks passed");
+        String fireXml = "<root><device><friendlyName>Living Room</friendlyName><manufacturer>Amazon</manufacturer><modelName>AFTMM</modelName></device></root>";
+        DeviceDiscovery.Description fire = DeviceDiscovery.parseDescription(fireXml.getBytes(StandardCharsets.UTF_8));
+        check(fire != null && fire.fireTv && "Living Room".equals(fire.name), "Identify Amazon Fire TV by model, not its chosen name");
+        DeviceDiscovery.Description google = DeviceDiscovery.parseDescription(fireXml.replace("Amazon", "Google").getBytes(StandardCharsets.UTF_8));
+        check(google != null && !google.fireTv, "Do not list Google devices");
+        DeviceDiscovery.Description tablet = DeviceDiscovery.parseDescription(fireXml.replace("AFTMM", "Fire HD 10").getBytes(StandardCharsets.UTF_8));
+        check(tablet != null && !tablet.fireTv, "Do not list Amazon tablets");
+        DiscoveredDevice off = new DiscoveredDevice("192.168.1.24", "Bedroom Fire TV", false);
+        check(!off.debuggingReachable, "Retain Fire TVs with debugging unreachable");
+        check(DiscoveredDevice.selected(List.of(devices.get(0), off), 1) == off, "Allow explicitly selecting a Fire TV with debugging unreachable");
+        DeviceDiscovery.Description namedFire = DeviceDiscovery.parseDescription(fireXml.replace("AFTMM", "Fire TV Stick 4K").getBytes(StandardCharsets.UTF_8));
+        check(namedFire != null && namedFire.fireTv, "Recognize full Fire TV model names");
+        System.out.println("Device discovery: 14 checks passed");
     }
 }
