@@ -94,7 +94,7 @@ public class MainActivity extends Activity {
         });
     }
 
-    /** Looks for a device with Wi-Fi debugging open (port 5555) on this phone's network. */
+    /** Lists advertised Fire TVs, including those whose debugging port is closed. */
     private void scan() {
         if (busy) return;
         WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
@@ -104,18 +104,23 @@ public class MainActivity extends Activity {
         setBusy(true);
         say("Looking for your TV on the Wi-Fi…", MUTED);
         io.execute(() -> {
+            WifiManager.MulticastLock lock = wm.createMulticastLock("bm-fire-tv-discovery");
+            lock.setReferenceCounted(false);
             try {
+                lock.acquire();
                 List<DiscoveredDevice> found = DeviceDiscovery.scan(base);
                 ui.post(() -> {
                     setBusy(false);
                     if (isFinishing() || isDestroyed()) return;
-                    if (found.isEmpty()) say("No TV found. Check ADB debugging is ON on the TV, or type the address from BM Remote Helper.", WARN);
+                    if (found.isEmpty()) say("No Fire TV found. Keep the TV awake on the same Wi-Fi, or type the address from BM Remote Helper. Some TVs don't advertise themselves.", WARN);
                     else showDevices(found);
                 });
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 ui.post(() -> { setBusy(false); say("Search stopped. Try again or type the TV address.", WARN); });
-            }
+            } catch (Exception e) {
+                ui.post(() -> { setBusy(false); say("Couldn't search this Wi-Fi. Try again or type the TV address.", WARN); });
+            } finally { if (lock.isHeld()) lock.release(); }
         });
     }
 
@@ -124,7 +129,7 @@ public class MainActivity extends Activity {
         for (int i = 0; i < devices.size(); i++) labels[i] = devices.get(i).label();
         final int[] selected = {-1};
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Choose your TV")
+                .setTitle("Choose your Fire TV")
                 .setSingleChoiceItems(labels, -1, (d, index) -> {
                     selected[0] = index;
                     ((AlertDialog) d).getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
@@ -133,7 +138,11 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Use this TV", (d, which) -> {
                     DiscoveredDevice device = DiscoveredDevice.selected(devices, selected[0]);
                     address.setText(device.address);
-                    say("Selected " + device.name + " (" + device.address + "). Check it matches BM Remote Helper, then press Turn on remote control.", OK);
+                    if (device.debuggingReachable) {
+                        say("Selected " + device.name + " (" + device.address + "). Check it matches BM Remote Helper, then press Turn on remote control.", OK);
+                    } else {
+                        say("Selected " + device.name + " (" + device.address + "). ADB debugging isn't reachable. On this Fire TV open Settings › My Fire TV › Developer options and switch ADB debugging on, then try again. Wi-Fi isolation can also block it. This app can't switch ADB debugging on remotely.", WARN);
+                    }
                 }).create();
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false));
         dialog.show();

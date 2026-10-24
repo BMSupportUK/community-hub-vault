@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.NodeList;
 
-/** Finds debugging-enabled devices and reads names advertised through local DIAL/UPnP.
+/** Finds Amazon Fire TVs through local DIAL/UPnP independently of debugging status.
  * Never authenticates with ADB, installs anything, or changes a TV during discovery. */
 final class DeviceDiscovery {
     static List<DiscoveredDevice> scan(String base) throws InterruptedException {
@@ -30,13 +30,12 @@ final class DeviceDiscovery {
             for (int i = 1; i < 255; i++) {
                 String host = base + i;
                 pool.execute(() -> {
-                    try (Socket socket = new Socket()) {
-                        socket.connect(new InetSocketAddress(host, 5555), 400);
-                    } catch (Exception ignored) { return; }
                     String location = locations.get(host);
-                    String name = readName(host, location == null
+                    Description description = readDescription(host, location == null
                             ? "http://" + host + ":8008/ssdp/device-desc.xml" : location);
-                    found.put(host, new DiscoveredDevice(host, name));
+                    if (description == null || !description.fireTv) return;
+                    boolean reachable = debuggingReachable(host);
+                    found.put(host, new DiscoveredDevice(host, description.name, reachable));
                 });
             }
             pool.shutdown();
@@ -86,6 +85,19 @@ final class DeviceDiscovery {
     }
 
     static String readName(String host, String location) {
+        Description description = readDescription(host, location);
+        return description == null ? null : description.name;
+    }
+
+    private static boolean debuggingReachable(String host) {
+        // Only a TCP reachability check: never send an ADB handshake or an enable command.
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, 5555), 400);
+            return true;
+        } catch (Exception ignored) { return false; }
+    }
+
+    static Description readDescription(String host, String location) {
         if (!safeLocation(host, location)) return null;
         HttpURLConnection connection = null;
         try {
@@ -105,12 +117,23 @@ final class DeviceDiscovery {
                 }
                 xml = out.toByteArray();
             }
-            return parseName(xml);
+            return parseDescription(xml);
         } catch (Exception ignored) { return null; }
         finally { if (connection != null) connection.disconnect(); }
     }
 
     static String parseName(byte[] xml) {
+        Description description = parseDescription(xml);
+        return description == null ? null : description.name;
+    }
+
+    static final class Description {
+        final String name;
+        final boolean fireTv;
+        Description(String name, boolean fireTv) { this.name = name; this.fireTv = fireTv; }
+    }
+
+    static Description parseDescription(byte[] xml) {
         try {
             // Reject declarations that could read external files or expand entities.
             String raw = new String(xml, StandardCharsets.UTF_8);
@@ -120,10 +143,32 @@ final class DeviceDiscovery {
             factory.setExpandEntityReferences(false);
             javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
             builder.setEntityResolver((publicId, systemId) -> new org.xml.sax.InputSource(new java.io.StringReader("")));
-            NodeList names = builder.parse(new java.io.ByteArrayInputStream(xml)).getElementsByTagNameNS("*", "friendlyName");
-            if (names.getLength() == 0) return null;
-            String name = names.item(0).getTextContent().replaceAll("[\\p{Cntrl}]", " ").trim();
-            return name.isEmpty() ? null : name.substring(0, Math.min(100, name.length()));
+            org.w3c.dom.Document doc = builder.parse(new java.io.ByteArrayInputStream(xml));
+            NodeList devices = doc.getElementsByTagNameNS("*", "device");
+            Description fallback = null;
+            for (int i = 0; i < devices.getLength(); i++) {
+                org.w3c.dom.Node device = devices.item(i);
+                String name = childText(device, "friendlyName");
+                String manufacturer = childText(device, "manufacturer").toLowerCase(java.util.Locale.ROOT);
+                String model = (childText(device, "modelName") + " " + childText(device, "modelDescription"))
+                        .toLowerCase(java.util.Locale.ROOT);
+                boolean fireTv = manufacturer.contains("amazon") &&
+                        (model.contains("fire tv") || model.contains("firetv") || model.matches(".*\\baft[a-z0-9]+\\b.*"));
+                Description result = new Description(name.isEmpty() ? null : name, fireTv);
+                if (fireTv) return result;
+                if (fallback == null) fallback = result;
+            }
+            return fallback;
         } catch (Exception ignored) { return null; }
+    }
+
+    private static String childText(org.w3c.dom.Node device, String tag) {
+        for (org.w3c.dom.Node node = device.getFirstChild(); node != null; node = node.getNextSibling()) {
+            if (tag.equals(node.getLocalName()) || tag.equals(node.getNodeName())) {
+                String value = node.getTextContent().replaceAll("[\\p{Cntrl}]", " ").trim();
+                return value.substring(0, Math.min(100, value.length()));
+            }
+        }
+        return "";
     }
 }
