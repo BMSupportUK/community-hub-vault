@@ -33,7 +33,8 @@ function StaffPinPage() {
   return (
     <div className="relative isolate h-full min-h-dvh w-full min-w-0 flex-1 overflow-y-auto lg:min-h-0">
       <img src={pinIllustration} alt="" aria-hidden="true" className="absolute inset-0 -z-20 size-full object-cover object-center" />
-      <div className="absolute inset-0 -z-10 bg-background/70" />
+      <div className="absolute inset-0 -z-10 bg-background/90" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background/70 via-background/90 to-background" />
       {/* Soft glow accents */}
       <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 size-[420px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-0 right-0 -z-10 size-[360px] rounded-full bg-fuchsia-500/15 blur-[120px]" />

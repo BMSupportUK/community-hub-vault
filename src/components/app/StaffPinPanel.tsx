@@ -56,11 +56,13 @@ export function StaffPinPanel() {
   ];
 
   const cardClass =
-    "rounded-3xl border border-white/15 bg-card/80 p-5 shadow-2xl backdrop-blur-xl sm:p-6";
+    "rounded-3xl border border-primary/40 bg-card/85 p-5 shadow-2xl ring-1 ring-white/20 backdrop-blur-xl sm:p-6";
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/15 bg-card/70 p-1.5 shadow-xl backdrop-blur-xl">
+      {/* Top card: tab switcher, given a bright bordered shell so it stands out from the page. */}
+      <div className="rounded-[1.15rem] bg-gradient-to-r from-primary/70 via-fuchsia-400/50 to-primary/70 p-[1.5px] shadow-glow">
+        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-card/85 p-1.5 backdrop-blur-xl">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
