@@ -358,3 +358,8 @@
 
 ## TV remote enabling program for computers (parked)
 - [ ] Deferred by Dane J on 23 Oct 2026 — review in the future, do not build until he asks. Windows and Mac programs that switch Fire TV remote control on over the home Wi-Fi (the phone-app route shipped in Settings › TV remote already covers Android). Unsigned builds mean a first-run "Windows protected your PC" / macOS "Open Anyway" warning, with staff talking customers through it; a Mac Terminal one-liner is the warning-free alternative. Both would need download buttons in Settings › TV remote and a build on a Windows PC and a Mac, since they cannot be produced or signed here.
+
+## BM TV Enabler (customer phone app)
+- [x] Standalone signed Android app v1.0 (address entry, Find my TV scan, step progress), uploaded; Install Guides "TV Remote Enabler" tab with QR pop-up; download route serves identical bytes. Preview only.
+- [ ] Real Fire TV test with an Android phone — waits on Dane J.
+- [ ] Point BM Remote Helper's on-TV text at Install Guides — helper source is outside this project; needs the next helper rebuild.
