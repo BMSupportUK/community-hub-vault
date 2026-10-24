@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Ticket } from "lucide-react";
@@ -76,7 +76,7 @@ export function StaffTicketsButton({
   /** Moderators: overview only — no claim button, no ticket links. */
   readOnly?: boolean;
   /** Render as a portal counter tile instead of the round icon. */
-  tile?: (unclaimed: number) => React.ReactNode;
+  tile?: (unclaimed: number) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const unclaimed = useUnclaimedCount();
