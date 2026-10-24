@@ -17,16 +17,14 @@ import { VpnBadge } from "@/lib/vpn-flags";
 import { formatRoleLabel } from "@/lib/role-label";
 import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
-import { MemberScreenShareButton } from "@/components/app/MemberScreenShareButton";
-import { RemoteSession, type Live } from "@/components/tv/TvRemote";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
   head: () => ({ meta: [
     { title: "Members Directory | BM Support" },
-    { name: "description", content: "BM Support member profiles, community activity and staff screen-sharing assistance." },
+    { name: "description", content: "BM Support member profiles and community activity." },
     { property: "og:title", content: "Members Directory | BM Support" },
-    { property: "og:description", content: "BM Support member profiles, community activity and staff screen-sharing assistance." },
+    { property: "og:description", content: "BM Support member profiles and community activity." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
@@ -111,7 +109,6 @@ function MembersPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"online" | "offline">("online");
-  const [share, setShare] = useState<{ live: Live; name: string } | null>(null);
 
   const load = async () => {
     if (isDemo) {
@@ -228,15 +225,6 @@ function MembersPage() {
     return <Navigate to="/home" replace />;
   }
 
-  if (share) return (
-    <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6">
-      <div className="mx-auto max-w-7xl space-y-4">
-        <h1 className="text-xl font-bold">Screen share with {share.name}</h1>
-        <RemoteSession key={share.live.id} live={share.live} onEnd={() => setShare(null)} />
-      </div>
-    </main>
-  );
-
   return (
     <main className="flex-1 overflow-y-auto">
       {/* Hero */}
@@ -330,7 +318,6 @@ function MembersPage() {
                 aria-hidden
               />
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
-                <div className="flex items-end justify-between gap-2">
                 <div className="relative w-fit">
                   <img
                     src={p.avatar_url || DEFAULT_AVATAR_URL}
@@ -338,9 +325,6 @@ function MembersPage() {
                     className="size-16 rounded-2xl object-cover ring-4 ring-surface"
                   />
                   <PresenceDot userId={p.id} isOnline={isOnline} ringClass="ring-surface" />
-                </div>
-                <MemberScreenShareButton name={p.username || name} disabled={share !== null}
-                  onPaired={(live, memberName) => setShare({ live, name: memberName })} />
                 </div>
                 <div className="mt-3">
                   <Link
