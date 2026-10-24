@@ -7,7 +7,7 @@ public final class DeviceDiscoveryTest {
     private static void check(boolean value, String rule) {
         if (!value) throw new AssertionError(rule);
     }
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         List<DiscoveredDevice> devices = List.of(
                 new DiscoveredDevice("192.168.1.23", "Living Room Fire TV"),
                 new DiscoveredDevice("192.168.1.24", "Bedroom Fire TV"));
@@ -35,6 +35,29 @@ public final class DeviceDiscoveryTest {
         check(DiscoveredDevice.selected(List.of(devices.get(0), off), 1) == off, "Allow explicitly selecting a Fire TV with debugging unreachable");
         DeviceDiscovery.Description namedFire = DeviceDiscovery.parseDescription(fireXml.replace("AFTMM", "Fire TV Stick 4K").getBytes(StandardCharsets.UTF_8));
         check(namedFire != null && namedFire.fireTv, "Recognize full Fire TV model names");
-        System.out.println("Device discovery: 14 checks passed");
+        com.sun.net.httpserver.HttpServer tv = com.sun.net.httpserver.HttpServer.create(
+                new java.net.InetSocketAddress("127.0.0.1", 8008), 0);
+        tv.createContext("/ssdp/device-desc.xml", exchange -> {
+            byte[] body = fireXml.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length);
+            try (java.io.OutputStream out = exchange.getResponseBody()) { out.write(body); }
+        });
+        tv.start();
+        try {
+            List<DiscoveredDevice> offResults = DeviceDiscovery.scan("127.0.0.");
+            check(offResults.size() == 1 && "Living Room".equals(offResults.get(0).name)
+                    && !offResults.get(0).debuggingReachable,
+                    "Actual scan finds a named Fire TV without an open debugging port");
+            try (java.net.ServerSocket adb = new java.net.ServerSocket(5555, 1, java.net.InetAddress.getByName("127.0.0.1"))) {
+                List<DiscoveredDevice> onResults = DeviceDiscovery.scan("127.0.0.");
+                check(onResults.size() == 1 && onResults.get(0).debuggingReachable,
+                        "Actual scan marks the same TV reachable when debugging opens");
+                adb.setSoTimeout(1000);
+                try (java.net.Socket probe = adb.accept()) {
+                    check(probe.getInputStream().read() == -1, "Discovery closes its TCP probe without sending ADB authentication");
+                }
+            }
+        } finally { tv.stop(0); }
+        System.out.println("Device discovery: 17 checks passed");
     }
 }
