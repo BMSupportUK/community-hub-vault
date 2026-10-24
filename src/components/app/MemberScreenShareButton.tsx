@@ -21,7 +21,8 @@ export function MemberScreenShareButton({ name, disabled, onPaired }: {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  if (!user || demo || !canUseTvRemote(roles)) return null;
+  // Member-list screen sharing is admin only; other staff roles never see it.
+  if (!user || demo || !canUseTvRemote(roles) || !roles.includes("admin")) return null;
 
   return <>
     <TooltipProvider><Tooltip>
