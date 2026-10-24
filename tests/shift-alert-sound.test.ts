@@ -18,3 +18,9 @@ test("end sound waits for the visible question instead of being consumed in the 
   expect(shiftAlertSoundEvent("today", "end", 1000, 1000, false)).toBeNull();
   expect(shiftAlertSoundEvent("today", "end", 1000, 2000, true)?.tone).toBe("shift_over");
 });
+import { test as lateTest, expect as lateExpect } from "bun:test";
+import { shiftAlertSoundEvent as lateEvent } from "../src/lib/shift-alert-sound";
+lateTest("ending-soon warning is skipped in the final 2 minutes", () => {
+  lateExpect(lateEvent("s", "end", 100_000, 0, false)).toBeNull();
+  lateExpect(lateEvent("s", "end", 600_000, 0, false)?.tone).toBe("shift_end");
+});
