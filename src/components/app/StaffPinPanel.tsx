@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Copy, Eye, KeyRound, Loader2, Lock, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 type Tab = "view" | "reset";
 
-export function StaffPinPanel() {
+export function StaffPinPanel({ header }: { header?: ReactNode } = {}) {
   const revealFn = useServerFn(revealMyStaffPin);
   const requestFn = useServerFn(requestStaffPinReset);
   const [tab, setTab] = useState<Tab>("view");
@@ -60,9 +60,11 @@ export function StaffPinPanel() {
 
   return (
     <div className="space-y-4">
-      {/* Top card: tab switcher, given a bright bordered shell so it stands out from the page. */}
-      <div className="rounded-[1.15rem] bg-gradient-to-r from-primary/70 via-fuchsia-400/50 to-primary/70 p-[1.5px] shadow-glow">
-        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-card/85 p-1.5 backdrop-blur-xl">
+      {/* Top card: page heading + tab switcher inside one bright bordered card so it stands out. */}
+      <div className="rounded-[1.65rem] bg-gradient-to-br from-primary via-fuchsia-400/80 to-primary p-[2px] shadow-glow">
+        <div className="rounded-[1.55rem] bg-card/80 p-5 backdrop-blur-xl sm:p-6">
+          {header && <div className="mb-5">{header}</div>}
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border bg-background/50 p-1.5">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -76,6 +78,7 @@ export function StaffPinPanel() {
             <Icon className="size-4" /> {label}
           </button>
         ))}
+          </div>
         </div>
       </div>
 
