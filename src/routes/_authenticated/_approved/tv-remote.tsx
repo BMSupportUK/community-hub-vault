@@ -80,17 +80,21 @@ function TvRemotePage() {
         </div>
       </header>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <HelpRequests onOpen={open} />
-          <LiveSessions onJoin={(l) => {
-            const destination = screenShareDestination(l.linkKind, l.linkId);
-            if (destination) void navigate(destination);
-            else void open(l.id);
-          }} />
+        <div className="min-w-0 space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <HelpRequests onOpen={open} />
+            <LiveSessions onJoin={(l) => {
+              const destination = screenShareDestination(l.linkKind, l.linkId);
+              if (destination) void navigate(destination);
+              else void open(l.id);
+            }} />
+          </div>
+          <History />
         </div>
-        <ConnectByCodeBox />
+        <aside className="space-y-6 lg:border-l lg:border-border lg:pl-6">
+          <ConnectByCodeBox />
+        </aside>
       </div>
-      <History />
     </div>
   );
 }
