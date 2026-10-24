@@ -6,7 +6,7 @@
 - Portal homes share one layout: hero image fills the left column; sidebar shows "Hey" + nameplate + role badge, welcome text, then Working Status (staff) or subscription box (members). Staff shows the status pills in the Staff Portal header, right side; members keep the pills in their sidebar.
 - Portal Home headers hold alerts; bottom destinations share that header. Rail/editor share scoped saved ordering helpers; status by "Hey", pages in rail, phones use floating menu.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; mobile ticket headers cap+scroll to keep messages/composers.
-- Shared portal headers must wrap the route outlet in a remaining-height flex row; nested page layouts can return sibling columns and must not inherit the header's column direction.
+- Shared portal headers must wrap the route outlet in a remaining-height flex row; nested page layouts can return sibling columns and must not inherit the header's column direction. A page that renders its own bar must pick the bar of the portal its viewer belongs to, so staff never land on the customer bar.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: all staff per channel.
 - Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
