@@ -8,7 +8,7 @@ import type { Live } from "@/components/tv/TvRemote";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function MemberScreenShareButton({ name, disabled, onPaired }: {
   name: string;
@@ -24,7 +24,7 @@ export function MemberScreenShareButton({ name, disabled, onPaired }: {
   if (!user || demo || !canUseTvRemote(roles)) return null;
 
   return <>
-    <Tooltip>
+    <TooltipProvider><Tooltip>
       <TooltipTrigger asChild>
         <Button type="button" variant="outline" size="icon" disabled={disabled}
           aria-label={`Screen share with ${name}`} className="size-8 shrink-0 text-primary"
@@ -33,7 +33,7 @@ export function MemberScreenShareButton({ name, disabled, onPaired }: {
         </Button>
       </TooltipTrigger>
       <TooltipContent>Screen share</TooltipContent>
-    </Tooltip>
+    </Tooltip></TooltipProvider>
     <Dialog open={open} onOpenChange={(value) => { if (!busy) setOpen(value); }}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
         <DialogHeader>
