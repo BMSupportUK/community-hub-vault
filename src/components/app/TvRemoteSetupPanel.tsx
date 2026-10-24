@@ -56,7 +56,7 @@ export function TvRemoteSetupPanel() {
           {step && <p className="text-sm font-medium text-primary">{step}</p>}
           {error && <p className="text-sm text-destructive">{error}</p>}
           {done && <p className="flex items-center gap-2 text-sm font-medium text-primary"><CheckCircle2 className="size-4" />Remote control is on. Open BM Remote Helper on the TV to get your code.</p>}
-          <p className="text-xs text-muted-foreground">If the TV is restarted you'll need to do this again.</p>
+          <p className="text-xs text-muted-foreground">You only need to do this once — the TV keeps these settings when it is switched off. If it can't connect later, open BM Remote Helper on the TV and check its address: the router may have given it a new one.</p>
         </div>
       ) : (
         <p className="rounded-lg border border-border bg-background p-3 text-sm">
