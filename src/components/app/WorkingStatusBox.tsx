@@ -37,6 +37,7 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
 import { BreakPlanRows, NextBreakPill } from "@/components/app/BreakPlanRows";
+import { StaffBreakChip } from "@/components/app/StaffBreakChip";
 import { offerTicketHandover } from "@/lib/break-handover";
 import { isPreparingForShift } from "@/lib/shift-start";
 import { Button } from "@/components/ui/button";
@@ -838,6 +839,7 @@ export function WorkingStatusBox({
         <span className="font-display text-[10px] font-bold tracking-wider uppercase text-muted-foreground whitespace-nowrap hidden lg:inline">
           Staff Shift Controls
         </span>
+        {brk && <StaffBreakChip kind={brk.kind as BreakKind} startedAt={brk.started_at} className="shrink-0 px-2 text-[11px]" />}
         <NextBreakPill userId={user.id} usedKinds={usedKinds} />
         <ShiftEndCountdown compact />
         {ActionIcons({ compact: true })}
