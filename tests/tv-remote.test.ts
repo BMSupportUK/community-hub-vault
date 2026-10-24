@@ -18,6 +18,9 @@ describe("TV remote rules", () => {
     expect(canUseTvRemote(["admin"])).toBe(true);
     expect(canUseTvRemote(["user"])).toBe(false);
     expect(canUseTvRemote(["moderator"])).toBe(false);
+    expect(canUseTvRemote(["subscriber"])).toBe(false);
+    expect(canUseTvRemote(["member"])).toBe(false);
+    expect(canUseTvRemote([])).toBe(false);
   });
   test("only admin and management see session history", () => {
     expect(canSeeTvRemoteHistory(["staff"])).toBe(false);
@@ -25,6 +28,8 @@ describe("TV remote rules", () => {
   });
   test("code input keeps six digits", () => {
     expect(normalizePairCode("12 34-567")).toBe("123456");
+    expect(normalizePairCode("12345")).toBe("12345");
+    expect(normalizePairCode("abc12 34-56xyz")).toBe("123456");
   });
   test("keyboard mapping", () => {
     expect(keyForKeyboard("Enter")).toBe("ok");
