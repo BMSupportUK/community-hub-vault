@@ -32,6 +32,7 @@ import installHero from "@/assets/install-guides-bg.jpg";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
+import { TvEnablerPanel } from "@/components/app/TvEnablerPanel";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
@@ -503,6 +504,7 @@ function InstallGuidesPage() {
               <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-auto lg:max-w-full lg:flex-nowrap lg:rounded-full">
                 <TabsTrigger value="welcome" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
+                <TabsTrigger value="enabler" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">TV Remote Enabler</TabsTrigger>
                 {canSeeAppTab && (
                   <TabsTrigger value="get-app" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Download BM Support Apps"}</TabsTrigger>
                 )}
@@ -570,6 +572,10 @@ function InstallGuidesPage() {
           )}
 
 
+
+          <TabsContent value="enabler" className="mt-0 min-w-0">
+            <TvEnablerPanel />
+          </TabsContent>
 
           <TabsContent value="welcome" className="mt-0 min-w-0">
             <div className="relative overflow-hidden rounded-lg border border-border shadow-glow min-h-[60vh] lg:min-h-[70vh]">
