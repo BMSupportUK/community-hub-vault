@@ -616,7 +616,7 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
 
   // "MLB event 1 name: Mets x Nationals" → channel "MLB 1", event after "name:".
   // "Florugby: Event0 name: …" — a colon after the brand is allowed too.
-  const brandEvent = head.match(/^([a-z][a-z0-9 +&'./-]*?)\s*:?\s+event\s*:?\s*(\d{1,3})\s+name\s*:\s*(.+)$/i);
+  const brandEvent = head.match(/^([a-z][a-z0-9 +&'./-]*?)\s*:?\s+event\s*:?\s*(\d{1,3})(?:\s+name\s*:|\s*:)\s*(.+)$/i);
   if (brandEvent?.[1] && brandEvent[2] && brandEvent[3]) {
     return {
       date: eventDate || date,
