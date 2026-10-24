@@ -2,8 +2,9 @@
 # Roadmap
 
 ## Member card screen sharing
-- [ ] Add staff-only screen-sharing icon with six-digit code pop-up to Members Directory cards, reuse authorized TV pairing and existing viewer.
-- [ ] Verify staff code entry and member visibility; physical TV connection requires a real device code and consent.
+- [x] Add staff-only screen-sharing icon with click-open six-digit code pop-up to Members Directory cards, reuse authorized TV pairing and existing viewer without changing order/ticket sharing.
+- [x] Signed-in staff card click, six-digit typing, disabled incomplete submission and failed-code retry verified; simulated successful pairing opens the existing viewer. Twenty-four sharing tests pass, including member/subscriber exclusion; build OK.
+- [ ] Verify physical TV connection and picture — requires a real device code and customer consent; no live TV session claimed during checks.
 
 ## GoCardless £1 live demo test
 - [ ] Prepare a demo-only £1 GoCardless payment while retaining the customer provider — live API refused the £1 Instant Bank Pay request on 24 Oct 2026 with 403 "Creditor account not fully verified"; account reports in_review. No payment link, order or charge created.
