@@ -44,10 +44,10 @@ export const Route = createFileRoute("/")({
   pendingComponent: () => <BmSplash />,
   head: () => ({
     meta: [
-      { title: "BM Support | Customer Portal" },
-      { name: "description", content: "Access BM Support services, community updates, support tickets and account tools from one secure customer portal." },
-      { property: "og:title", content: "BM Support | Customer Portal" },
-      { property: "og:description", content: "Access BM Support services, community updates, support tickets and account tools from one secure customer portal." },
+      { title: "BM Support | Member & Staff Portal" },
+      { name: "description", content: "Access BM Support services, community updates, support tickets, schedules and account tools from one secure portal for members and staff." },
+      { property: "og:title", content: "BM Support | Member & Staff Portal" },
+      { property: "og:description", content: "Access BM Support services, community updates, support tickets, schedules and account tools from one secure portal for members and staff." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -149,7 +149,7 @@ function Landing() {
                 Your all-in-one server for BM Support — stay connected, all in one place.
               </p>
               <p className="text-[clamp(0.85rem,min(1.6vw,2vh),1.125rem)] leading-relaxed text-red-100/80 max-w-xl">
-                Access community channels, manage your time, view schedules, get support, and explore our services. Everything you need is just one click away.
+                Whether you're a member or part of the team, access community channels, keep on top of your schedule and shifts, get support, and explore our services. Everything you need is just one click away.
               </p>
             </div>
 
