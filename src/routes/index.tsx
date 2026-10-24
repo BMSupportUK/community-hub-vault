@@ -44,10 +44,10 @@ export const Route = createFileRoute("/")({
   pendingComponent: () => <BmSplash />,
   head: () => ({
     meta: [
-      { title: "BM Support | Customer Portal" },
-      { name: "description", content: "Access BM Support services, community updates, support tickets and account tools from one secure customer portal." },
-      { property: "og:title", content: "BM Support | Customer Portal" },
-      { property: "og:description", content: "Access BM Support services, community updates, support tickets and account tools from one secure customer portal." },
+      { title: "BM Support | Member & Staff Portal" },
+      { name: "description", content: "Access BM Support services, community updates, support tickets, schedules and account tools from one secure portal for members and staff." },
+      { property: "og:title", content: "BM Support | Member & Staff Portal" },
+      { property: "og:description", content: "Access BM Support services, community updates, support tickets, schedules and account tools from one secure portal for members and staff." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
