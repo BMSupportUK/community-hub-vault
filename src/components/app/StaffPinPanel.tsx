@@ -76,6 +76,7 @@ export function StaffPinPanel() {
             <Icon className="size-4" /> {label}
           </button>
         ))}
+        </div>
       </div>
 
       {tab === "view" && (
