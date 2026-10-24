@@ -15,17 +15,17 @@ export const Route = createFileRoute("/about")({
   component: AboutPage,
   head: () => ({
     meta: [
-      { title: "About BM Support | Middlesbrough UK & Overseas" },
+      { title: "About BM Support | North East UK & Overseas" },
       {
         name: "description",
         content:
-          "Learn about BM Support — a Middlesbrough-based team serving customers across the UK and overseas. See our opening hours and location.",
+          "Learn about BM Support — a North East UK-based team serving customers across the UK and overseas. See our opening hours and location.",
       },
-      { property: "og:title", content: "About BM Support | Middlesbrough UK & Overseas" },
+      { property: "og:title", content: "About BM Support | North East UK & Overseas" },
       {
         property: "og:description",
         content:
-          "Middlesbrough-based team serving the UK and overseas. Opening hours and location.",
+          "North East UK-based team serving the UK and overseas. Opening hours and location.",
       },
       { property: "og:type", content: "website" },
       { rel: "canonical", href: "https://bmsupport.uk/about" },
@@ -133,11 +133,11 @@ function AboutPage() {
     url: "https://bmsupport.uk",
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Middlesbrough",
+      addressLocality: "North East UK",
       addressCountry: "UK",
     },
     areaServed: [
-      { "@type": "Place", name: "Middlesbrough, United Kingdom" },
+      { "@type": "Place", name: "North East UK, United Kingdom" },
       { "@type": "Place", name: "United Kingdom" },
       { "@type": "Place", name: "Overseas" },
     ],
@@ -153,7 +153,7 @@ function AboutPage() {
         <main className="flex-1 min-w-0">
         <section className="px-6 py-10 md:py-14 max-w-6xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-6">
-            <MapPin className="size-3" /> Middlesbrough, UK & Overseas
+            <MapPin className="size-3" /> North East UK & Overseas
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight mb-4">
             About <span className="bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">BM Support</span>
@@ -227,14 +227,14 @@ function AboutPage() {
                 <TabsContent value="location" className="m-0">
                   <div className="relative h-[260px] w-full sm:h-[320px]">
                     <iframe
-                      title="BM Support — Middlesbrough location"
+                      title="BM Support — North East UK location"
                       src="https://www.openstreetmap.org/export/embed.html?bbox=-1.2697%2C54.5475%2C-1.1897%2C54.5875&amp;layer=mapnik&amp;marker=54.5742%2C-1.2350"
                       className="w-full h-full border-0 pointer-events-none"
                       loading="lazy"
                     />
                   </div>
                   <div className="px-5 py-3 text-xs text-muted-foreground border-t border-border flex justify-between">
-                    <span>Middlesbrough, UK</span>
+                    <span>North East UK</span>
                     <a
                       href="https://www.openstreetmap.org/?mlat=54.5742&mlon=-1.2350#map=14/54.5742/-1.2350"
                       target="_blank"
@@ -313,7 +313,7 @@ function AboutPage() {
       </div>
 
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
-        BM Support — Middlesbrough, UK & Overseas
+        BM Support — North East UK & Overseas
       </footer>
 
       {editing && (

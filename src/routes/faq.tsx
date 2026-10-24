@@ -10,8 +10,8 @@ export const Route = createFileRoute("/faq")({
   component: FaqPage,
   head: () => ({
     meta: [
-      { title: "FAQ — BM Support Packages | Middlesbrough UK & Overseas" },
-      { name: "description", content: "Frequently asked questions about BM Support's digital access packages in Middlesbrough, across the UK, and overseas." },
+      { title: "FAQ — BM Support Packages | North East UK & Overseas" },
+      { name: "description", content: "Frequently asked questions about BM Support's digital access packages in North East UK, across the UK, and overseas." },
       { property: "og:title", content: "FAQ — BM Support Packages" },
       { property: "og:description", content: "Answers to common questions about our UK and overseas support packages." },
       { property: "og:type", content: "website" },
@@ -149,7 +149,7 @@ function FaqPage() {
       </div>
 
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
-        BM Support — Middlesbrough, UK & Overseas
+        BM Support — North East UK & Overseas
       </footer>
 
       {editing && (
