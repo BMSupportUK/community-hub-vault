@@ -2,7 +2,7 @@
 # Roadmap
 
 ## GoCardless £1 live demo test
-- [ ] Prepare a demo-only £1 GoCardless payment while retaining the customer provider.
+- [ ] Prepare a demo-only £1 GoCardless payment while retaining the customer provider — live API refused the £1 Instant Bank Pay request on 24 Oct 2026 with 403 "Creditor account not fully verified"; account reports in_review. No payment link, order or charge created.
 - [ ] Verify the real payment after Dane pays; only then switch customer Open Banking to GoCardless (awaits real payment).
 
 ## Ticket screen sharing
