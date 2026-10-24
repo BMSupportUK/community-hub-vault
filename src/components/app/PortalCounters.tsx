@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ComponentType } from "react";
-import { LifeBuoy, MessagesSquare, Radio, Receipt } from "lucide-react";
+import { LifeBuoy, MessagesSquare, MonitorUp, Radio, Receipt } from "lucide-react";
+import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
+import { StaffOrdersButton } from "@/components/app/StaffOrdersButton";
+import { TalkScreenShareButton } from "@/components/app/TalkScreenShareButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useBmInbox } from "@/lib/bm-inbox";
@@ -9,8 +12,8 @@ import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 const OPEN_TICKET = ["open", "in_progress", "waiting"] as const;
 
 /** Live counters on the portal home sidebar; each tile opens its page. Read-only counts. */
-export function PortalCounters({ staff }: { staff: boolean }) {
-  const { user, hasRole } = useAuth();
+export function PortalCounters({ staff, staffName = "" }: { staff: boolean; staffName?: string }) {
+  const { user, hasRole, hasAny } = useAuth();
   const inbox = useBmInbox();
   const talk = useTalkChannelTotalCount();
   const canOrders = staff && (hasRole("admin") || hasRole("management"));
@@ -53,17 +56,38 @@ export function PortalCounters({ staff }: { staff: boolean }) {
         : []),
   ];
 
+  const body = (value: number, label: string, Icon: ComponentType<{ className?: string }>, alert = false) => (
+    <>
+      <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${alert ? "bg-destructive animate-pulse" : "bg-white/15"}`}><Icon className="size-4" /></span>
+      <span className="min-w-0">
+        <span className="block font-display text-lg font-extrabold leading-none tabular-nums">{value > 99 ? "99+" : value}</span>
+        <span className="block truncate text-[10px] font-medium text-white/80">{label}</span>
+      </span>
+    </>
+  );
+  const ticketStaff = staff && (hasAny(["admin", "management", "staff"]) || hasRole("moderator"));
+  const shareStaff = staff && hasAny(["admin", "management", "staff"]);
+
+  // Staff tiles for tickets, orders and screen shares open the same overview
+  // boxes as before and show their live hover tooltips.
   return (
     <div className="grid grid-cols-2 gap-2">
-      {tiles.map(({ label, value, Icon, to, search }) => (
-        <Link key={label} to={to as never} search={search as never} className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 text-white transition-colors hover:bg-white/20">
-          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/15"><Icon className="size-4" /></span>
-          <span className="min-w-0">
-            <span className="block font-display text-lg font-extrabold leading-none tabular-nums">{value > 99 ? "99+" : value}</span>
-            <span className="block truncate text-[10px] font-medium text-white/80">{label}</span>
-          </span>
-        </Link>
-      ))}
+      {tiles.map(({ label, value, Icon, to, search }) => {
+        if (label === "Open tickets" && ticketStaff && user) {
+          return <StaffTicketsButton key={label} staffId={user.id} staffName={staffName} placement="below" readOnly={!hasAny(["admin", "management", "staff"])} tile={(u) => body(value, label, Icon, u > 0)} />;
+        }
+        if (label === "Orders waiting" && canOrders) {
+          return <StaffOrdersButton key={label} tile={() => body(value, label, Icon)} />;
+        }
+        return (
+          <Link key={label} to={to as never} search={search as never} className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 text-white transition-colors hover:bg-white/20">
+            {body(value, label, Icon)}
+          </Link>
+        );
+      })}
+      {shareStaff && (
+        <TalkScreenShareButton variant="icon" tile={(w, a) => body(w + a, w > 0 ? "Screen shares waiting" : "Screen shares", MonitorUp, w > 0)} />
+      )}
     </div>
   );
 }
