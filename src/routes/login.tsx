@@ -96,20 +96,6 @@ function LoginPage() {
     navigate({ to: (next ?? "/home") as never });
   };
 
-  // One-tap demo sign-in for the showcase guest account. No captcha needed —
-  // the account is a locked-down demo with sample data only.
-  const signInAsGuest = async () => {
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: "guest48h@bmsupport.uk",
-      password: "BMS-Guest-2026!xK7q",
-    });
-    if (error) { setBusy(false); return toast.error(error.message); }
-    clearScreenLockState();
-    setBusy(false);
-    toast.success("Signed in as guest");
-    navigate({ to: (next ?? "/home") as never });
-  };
 
   return (
     <div
