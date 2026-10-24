@@ -1,0 +1,37 @@
+plugins { id 'com.android.application' }
+
+// Standalone customer app: switches BM Remote Control on for a Fire TV over home Wi-Fi.
+// Signed with the same permanent BM key as the BM Support app (see android/SIGNING.md).
+def ksPass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+
+android {
+    namespace = "uk.bmsupport.tvenabler"
+    compileSdk = 36
+    defaultConfig {
+        applicationId "uk.bmsupport.tvenabler"
+        minSdkVersion 24
+        targetSdkVersion 36
+        versionCode 1
+        versionName "1.0"
+    }
+    signingConfigs {
+        release {
+            if (ksPass) {
+                storeFile file(System.getenv("ANDROID_KEYSTORE_PATH") ?: "../../android/keystore/bmsupport-release.jks")
+                storePassword ksPass
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "bmsupport"
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: ksPass
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (ksPass) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
