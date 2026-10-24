@@ -278,11 +278,14 @@ export function WorkingStatusBox({
   stackActions = false,
   variant = "card",
   compact = false,
+  showTools = true,
   onShiftStatusChange,
 }: {
   stackActions?: boolean;
   variant?: "card" | "header";
   compact?: boolean;
+  /** Tickets + screen share icons in the controls row; the portal home shows them above the box instead. */
+  showTools?: boolean;
   onShiftStatusChange?: (isActive: boolean) => void;
 } = {}) {
   const { user, roles, hasAny } = useAuth();
@@ -967,11 +970,12 @@ export function WorkingStatusBox({
               </button>
             ))}
           </div>
-          {/* Shift controls sit on one wrapping row under the Shifts tabs: video, tickets, then shift actions and Away. */}
+          {/* Shift controls sit on one wrapping row under the Shifts tabs: shift actions and Away.
+              Tickets and screen share move above the box on the portal home (showTools=false). */}
           <div>
             <div className={cn("flex flex-wrap items-center", compact ? "gap-1" : "gap-3")}>
-              <TalkScreenShareButton variant="icon" />
-              {(canAnswerTickets || roles.includes("moderator")) && (
+              {showTools && <TalkScreenShareButton variant="icon" />}
+              {showTools && (canAnswerTickets || roles.includes("moderator")) && (
                 <StaffTicketsButton
                   staffId={user.id}
                   staffName={displayName}
