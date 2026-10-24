@@ -159,19 +159,6 @@ function LoginPage() {
         New here?{" "}
         <Link to="/signup" className="text-primary hover:underline">Join BM Support</Link>
       </div>
-      <div className="mt-4 pt-4 border-t border-border/60">
-        <button
-          type="button"
-          onClick={signInAsGuest}
-          disabled={busy}
-          className="w-full h-11 rounded-lg border border-border bg-surface text-foreground font-medium hover:bg-accent disabled:opacity-50"
-        >
-          Continue as guest
-        </button>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          Look around with the demo account — sample data only.
-        </p>
-      </div>
           </div>
         </div>
       </main>
