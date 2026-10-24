@@ -1,0 +1,8 @@
+uk.bmsupport.tvenabler.app-pngs-0 /dev-server/tv-enabler/app/build/generated/res/pngs/release
+uk.bmsupport.tvenabler.app-resValues-1 /dev-server/tv-enabler/app/build/generated/res/resValues/release
+uk.bmsupport.tvenabler.app-updated_navigation_xml-2 /dev-server/tv-enabler/app/build/generated/updated_navigation_xml/release
+uk.bmsupport.tvenabler.app-packageReleaseResources-3 /dev-server/tv-enabler/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
+uk.bmsupport.tvenabler.app-packageReleaseResources-4 /dev-server/tv-enabler/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
+uk.bmsupport.tvenabler.app-release-5 /dev-server/tv-enabler/app/build/intermediates/merged_res/release/mergeReleaseResources
+uk.bmsupport.tvenabler.app-main-6 /dev-server/tv-enabler/app/src/main/res
+uk.bmsupport.tvenabler.app-release-7 /dev-server/tv-enabler/app/src/release/res
