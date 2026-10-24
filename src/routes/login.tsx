@@ -120,10 +120,10 @@ function LoginPage() {
             className="h-auto max-h-[45vh] w-auto max-w-full drop-shadow-[0_25px_60px_rgba(139,92,246,0.45)]"
           />
           <h2 className="font-display text-2xl font-bold mt-4 text-foreground">
-            Welcome back to the community
+            Welcome to BM Support
           </h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Sign in to continue helping customers, joining channels, and tracking your shifts.
+            Members sign in for orders, credentials and support. Staff sign in for their portal, shifts and team tools.
           </p>
         </div>
       </aside>
@@ -138,7 +138,7 @@ function LoginPage() {
           </Link>
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 sm:p-8 shadow-soft">
             <h1 className="font-display text-2xl font-bold">Sign in</h1>
-            <p className="text-sm text-muted-foreground mb-6">Welcome back to the server.</p>
+            <p className="text-sm text-muted-foreground mb-6">Welcome — sign in as a member or a member of staff.</p>
             <form onSubmit={submit} className="space-y-3">
         <Field label="Email" type="email" value={email} onChange={setEmail} />
         <Field label="Password" type="password" value={password} onChange={setPassword} />
