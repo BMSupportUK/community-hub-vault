@@ -1,6 +1,7 @@
 package uk.bmsupport.tvenabler;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -16,13 +17,10 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends Activity {
     private static final String[] STEPS = {"Connect to the TV", "Press Allow on the TV", "Install remote control", "Switch remote control on", "Done"};
@@ -106,20 +104,39 @@ public class MainActivity extends Activity {
         setBusy(true);
         say("Looking for your TV on the Wi-Fi…", MUTED);
         io.execute(() -> {
-            ExecutorService pool = Executors.newFixedThreadPool(32);
-            List<String> found = java.util.Collections.synchronizedList(new ArrayList<>());
-            for (int i = 1; i < 255; i++) {
-                String h = base + i;
-                pool.execute(() -> { try (Socket s = new Socket()) { s.connect(new InetSocketAddress(h, 5555), 400); found.add(h); } catch (Exception ignored) { } });
+            try {
+                List<DiscoveredDevice> found = DeviceDiscovery.scan(base);
+                ui.post(() -> {
+                    setBusy(false);
+                    if (isFinishing() || isDestroyed()) return;
+                    if (found.isEmpty()) say("No TV found. Check ADB debugging is ON on the TV, or type the address from BM Remote Helper.", WARN);
+                    else showDevices(found);
+                });
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                ui.post(() -> { setBusy(false); say("Search stopped. Try again or type the TV address.", WARN); });
             }
-            pool.shutdown();
-            try { pool.awaitTermination(30, TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
-            ui.post(() -> {
-                setBusy(false);
-                if (found.isEmpty()) say("No TV found. Check ADB debugging is ON on the TV, or type the address from BM Remote Helper.", WARN);
-                else { address.setText(found.get(0)); say(found.size() == 1 ? "Found your TV. Press Turn on remote control." : "Found " + found.size() + " devices — check the address matches BM Remote Helper.", OK); }
-            });
         });
+    }
+
+    private void showDevices(List<DiscoveredDevice> devices) {
+        CharSequence[] labels = new CharSequence[devices.size()];
+        for (int i = 0; i < devices.size(); i++) labels[i] = devices.get(i).label();
+        final int[] selected = {-1};
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Choose your TV")
+                .setSingleChoiceItems(labels, -1, (d, index) -> {
+                    selected[0] = index;
+                    ((AlertDialog) d).getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                })
+                .setNegativeButton("Cancel", (d, which) -> say("No TV selected. You can search again or type its address.", MUTED))
+                .setPositiveButton("Use this TV", (d, which) -> {
+                    DiscoveredDevice device = DiscoveredDevice.selected(devices, selected[0]);
+                    address.setText(device.address);
+                    say("Selected " + device.name + " (" + device.address + "). Check it matches BM Remote Helper, then press Turn on remote control.", OK);
+                }).create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false));
+        dialog.show();
     }
 
     private void setBusy(boolean b) { busy = b; turnOn.setEnabled(!b); find.setEnabled(!b); turnOn.setAlpha(b ? .5f : 1f); find.setAlpha(b ? .5f : 1f); }
