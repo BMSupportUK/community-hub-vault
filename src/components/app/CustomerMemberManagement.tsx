@@ -29,6 +29,8 @@ import { toast } from "sonner";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
 import { MemberSecurityActions, AddUserButton } from "@/components/app/MemberSecurityActions";
+import { MemberScreenShareButton } from "@/components/app/MemberScreenShareButton";
+import { RemoteSession, type Live } from "@/components/tv/TvRemote";
 import { deleteMember, listMemberEmails, updateMemberEmail, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
@@ -111,6 +113,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [addRolesFor, setAddRolesFor] = useState<string | null>(null);
+  const [share, setShare] = useState<{ live: Live; name: string } | null>(null);
   
 
   const loadAll = async (quiet = false) => {
@@ -330,6 +333,11 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     return <RolesGate onUnlocked={() => setRolesUnlocked(true)} />;
   }
 
+  if (share) return <section className="min-w-0 w-full space-y-4">
+    <h2 className="text-xl font-bold">Screen share with {share.name}</h2>
+    <RemoteSession key={share.live.id} live={share.live} onEnd={() => setShare(null)} />
+  </section>;
+
   const memberExtras = (userId: string) => {
     const row = rows.find((r) => r.id === userId);
     if (!row) return null;
@@ -354,6 +362,8 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     if (!row) return null;
     const banned = row.roles.includes("banned");
     return <>
+      <MemberScreenShareButton name={row.username || row.display_name || "Member"} disabled={share !== null}
+        onPaired={(live, name) => setShare({ live, name })} />
       <Button variant="ghost" size="icon" className="size-6" title="View location history" aria-label={`View location history for ${row.username || row.display_name}`} onClick={() => setHistoryFor(row)}><MapPin className="size-4" /></Button>
       <Button variant="ghost" size="icon" className={cn("size-6", banned && "text-destructive")} title={banned ? "Lift ban" : "Ban user"} aria-label={`${banned ? "Lift ban on" : "Ban"} ${row.username || row.display_name}`} disabled={saving !== null || row.id === user?.id} onClick={() => void banMember(row)}><Ban className="size-4" /></Button>
       <Button variant="ghost" size="icon" className="size-6 hover:text-destructive" title="Delete member" aria-label={`Delete member ${row.username || row.display_name}`} disabled={deletingUser === row.id || row.id === user?.id} onClick={() => void removeMember(row)}>{deletingUser === row.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}</Button>
