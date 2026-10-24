@@ -11,6 +11,7 @@ import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCar
 import { Nameplate } from "@/components/app/Nameplate";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
+import { StaffOrdersButton } from "@/components/app/StaffOrdersButton";
 import { TalkScreenShareButton } from "@/components/app/TalkScreenShareButton";
 import { formatRoleLabel } from "@/lib/role-label";
 import { Clocks } from "@/components/app/Clocks";
@@ -150,7 +151,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                   <PortalCounters staff={isStaffAccount} />
                   {isStaffAccount ? (
                     <>
-                      {/* Tickets and screen share sit above the Working Status box, each with its own hover tooltip. */}
+                      {/* Tickets, orders and screen share sit above the Working Status box, each with its own hover tooltip. */}
                       {hasAny(["admin", "management", "staff", "moderator"]) && (
                         <div className="flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 p-1.5 shadow-lg backdrop-blur">
                           {(hasAny(["admin", "management", "staff"]) || roles.includes("moderator")) && (
@@ -162,6 +163,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                               readOnly={!hasAny(["admin", "management", "staff"])}
                             />
                           )}
+                          {hasAny(["admin", "management"]) && <StaffOrdersButton />}
                           <TalkScreenShareButton variant="icon" />
                         </div>
                       )}

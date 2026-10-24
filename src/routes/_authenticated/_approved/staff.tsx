@@ -179,8 +179,8 @@ function StaffPage() {
   });
 
   return (
-    <Tabs defaultValue="admin">
-      <div className="flex-1 overflow-y-auto bg-background">
+    <Tabs defaultValue="admin" className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-background">
         <header className="px-4 pt-6 pb-5 border-b border-border bg-surface/70 backdrop-blur sm:px-8 sm:pt-8 sm:pb-6">
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:flex lg:flex-wrap">
             <div className="size-11 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow shrink-0">
