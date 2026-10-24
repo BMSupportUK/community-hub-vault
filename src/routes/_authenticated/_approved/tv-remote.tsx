@@ -1,8 +1,13 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
-import { Tv } from "lucide-react";
+import { useState } from "react";
+import { Loader2, MonitorUp, Tv } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { HelpRequests, History, LiveSessions } from "@/components/tv/TvRemote";
-import { canOpenTvRemoteOverview, screenShareDestination } from "@/lib/tv-remote";
+import { canConnectTvByCode, canOpenTvRemoteOverview, normalizePairCode, screenShareDestination } from "@/lib/tv-remote";
 
 export const Route = createFileRoute("/_authenticated/_approved/tv-remote")({
   component: TvRemotePage,
