@@ -38,7 +38,6 @@ import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
 import { BreakPlanRows, NextBreakPill } from "@/components/app/BreakPlanRows";
 import { StaffBreakChip } from "@/components/app/StaffBreakChip";
-import type { BreakKind } from "@/lib/breaks";
 import { offerTicketHandover } from "@/lib/break-handover";
 import { isPreparingForShift } from "@/lib/shift-start";
 import { Button } from "@/components/ui/button";
