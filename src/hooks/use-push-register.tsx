@@ -168,6 +168,8 @@ export function usePushRegister() {
         const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
           const kind = notification.data?.kind;
           const incidentEvent = notification.data?.event;
+          const expiresAt = Number(notification.data?.expiresAt);
+          if (Number.isFinite(expiresAt) && expiresAt > 0 && Date.now() > expiresAt) return;
           // Every alert type uses its own native channel + recording, the same
           // ones the closed-app path uses, so the open app speaks too.
           const alert = phoneAlertFor(typeof kind === "string" ? kind : undefined, incidentEvent);
