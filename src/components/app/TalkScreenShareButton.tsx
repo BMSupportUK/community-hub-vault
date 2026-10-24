@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import { MonitorUp } from "lucide-react";
@@ -25,7 +25,7 @@ function ago(iso: string) {
 }
 
 /** Talk sidebar: screen share help box listing waiting and active customer shares. */
-export function TalkScreenShareButton({ variant = "bar" }: { variant?: "bar" | "icon" }) {
+export function TalkScreenShareButton({ variant = "bar", tile }: { variant?: "bar" | "icon"; tile?: (waiting: number, active: number) => ReactNode }) {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "staff"]);
   const navigate = useNavigate();
@@ -125,14 +125,14 @@ export function TalkScreenShareButton({ variant = "bar" }: { variant?: "bar" | "
                   ? `${active.length} screen share${active.length === 1 ? "" : "s"} in progress`
                   : "Screen share requests"
             }
-            className={`relative grid size-8 shrink-0 place-items-center rounded-full transition-colors ${
+            className={tile ? "flex w-full items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 text-left text-white transition-colors hover:bg-white/20" : `relative grid size-8 shrink-0 place-items-center rounded-full transition-colors ${
               waiting.length > 0
                 ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
                 : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
             }`}
           >
-            <MonitorUp className="size-3.5" />
-            {waiting.length > 0 && (
+            {tile ? tile(waiting.length, active.length) : <MonitorUp className="size-3.5" />}
+            {!tile && waiting.length > 0 && (
               <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-background px-1 text-[9px] font-bold leading-4 text-destructive ring-1 ring-destructive">
                 {waiting.length > 99 ? "99+" : waiting.length}
               </span>

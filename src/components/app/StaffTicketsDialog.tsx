@@ -66,6 +66,7 @@ export function StaffTicketsButton({
   placement = "above",
   className,
   readOnly = false,
+  tile,
 }: {
   staffId: string;
   staffName: string;
@@ -74,6 +75,8 @@ export function StaffTicketsButton({
   className?: string;
   /** Moderators: overview only — no claim button, no ticket links. */
   readOnly?: boolean;
+  /** Render as a portal counter tile instead of the round icon. */
+  tile?: (unclaimed: number) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const unclaimed = useUnclaimedCount();
@@ -124,7 +127,7 @@ export function StaffTicketsButton({
           title={unclaimed > 0 ? `${unclaimed} unclaimed ticket${unclaimed === 1 ? "" : "s"}${readOnly ? "" : " – click to claim"}` : "Ticket overview"}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); setHoverAnchor(null); setOpen(true); }}
-          className={cn(
+          className={tile ? "flex w-full items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 text-left text-white transition-colors hover:bg-white/20" : cn(
             "relative grid place-items-center",
             placement === "below"
               ? cn(
@@ -139,8 +142,8 @@ export function StaffTicketsButton({
                 ),
           )}
         >
-          <Ticket className="size-3.5" />
-          {unclaimed > 0 && (
+          {tile ? tile(unclaimed) : <Ticket className="size-3.5" />}
+          {!tile && unclaimed > 0 && (
             <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-background px-1 text-[9px] font-bold leading-4 text-destructive ring-1 ring-destructive">
               {unclaimed > 99 ? "99+" : unclaimed}
             </span>

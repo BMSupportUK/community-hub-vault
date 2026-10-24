@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import { Receipt } from "lucide-react";
@@ -13,7 +13,7 @@ type Counts = { fresh: number; awaiting: number; setup: number };
  * account setup — the same split as the shop orders workflow tabs.
  * Clicking opens the admin dashboard Orders tab. Admin and management only.
  */
-export function StaffOrdersButton({ className }: { className?: string }) {
+export function StaffOrdersButton({ className, tile }: { className?: string; tile?: (count: number) => ReactNode }) {
   const navigate = useNavigate();
   const [counts, setCounts] = useState<Counts>({ fresh: 0, awaiting: 0, setup: 0 });
   const [hoverAnchor, setHoverAnchor] = useState<{ bottom: number; left?: number; right?: number } | null>(null);
@@ -78,15 +78,15 @@ export function StaffOrdersButton({ className }: { className?: string }) {
           aria-label="Shop orders"
           title={total > 0 ? `${total} order${total === 1 ? "" : "s"} need attention` : "Shop orders"}
           onClick={() => { setHoverAnchor(null); void navigate({ to: "/admin", search: { tab: "order-status" } as never }); }}
-          className={cn(
+          className={tile ? "flex w-full items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 text-left text-white transition-colors hover:bg-white/20" : cn(
             "relative grid size-8 shrink-0 place-items-center rounded-full transition-colors",
             counts.fresh > 0
               ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
               : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
           )}
         >
-          <Receipt className="size-4" />
-          {counts.fresh > 0 && (
+          {tile ? tile(total) : <Receipt className="size-4" />}
+          {!tile && counts.fresh > 0 && (
             <span className="absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-4 text-destructive-foreground">
               {counts.fresh > 99 ? "99+" : counts.fresh}
             </span>
