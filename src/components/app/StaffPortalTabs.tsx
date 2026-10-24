@@ -1,7 +1,8 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Settings, Tv, LayoutDashboard } from "lucide-react";
+import { Home, Settings, Tv, LayoutDashboard, ShoppingCart, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { isPageAllowed, usePagePermissions } from "@/lib/page-access";
 import { isStaffPortalUser } from "@/lib/portal-home";
 import { BmInboxBell } from "@/components/app/BmInboxBell";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
