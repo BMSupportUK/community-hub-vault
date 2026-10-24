@@ -3,7 +3,8 @@
 
 ## TV sessions in Owner Tools
 - [x] Move live sessions and history out of TV Remote into an admin-only Owner Tools section with a matching dashboard box; keep requests and the code sidebar on TV Remote.
-- [ ] Verify TV Remote and the Owner Tools box in the signed-in preview.
+- [x] Signed-in TV Remote confirms requests and code sidebar remain, with no live/history sections; nineteen existing tests pass and build OK.
+- [ ] Verify the Owner Tools box and session section after dashboard unlock — blocked by the existing account password/staff PIN gate; no bypass used.
 
 ## Member card screen sharing
 - [x] Move the icon and connected viewer to the admin dashboard members list only, beside its existing member actions; remove them from Members Directory. Sixteen sharing tests pass, build OK, signed-in Directory confirms zero sharing icons.
