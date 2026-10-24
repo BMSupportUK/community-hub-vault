@@ -46,6 +46,7 @@
 - Portal: hashed email codes with atomic attempt limits; layout gates content and owns the live timer. User-bound state fails closed; customer portal rail links appear only once unlocked.
 - /home redirects by role (`src/lib/portal-home.ts`): staff to /staff-portal, members to /portal; both render `PortalHome`.
 - TV Remote: the native helper app authenticates only by a hashed device token at /api/public/tv; staff join the random per-session broadcast topic returned by claim_tv_pair_code, so commands never reach other channels.
+- Member-card screen sharing uses the existing staff-authorized pairing RPC and RemoteSession viewer within Members Directory; the code dialog never mounts a viewer until pairing succeeds, keeping order/ticket flows unchanged.
 - Screen-share navigation resolves linked orders/tickets before mounting generic sessions; scoped pages join the existing host's relay. Overview access is separate from staff help access, preserving staff support while limiting global navigation.
 - Screen-share request-box actions open the secure checkout Screen share tab for orders and the scoped ticket sharing page for tickets; secure checkout synchronizes its selected tab with navigation search state.
 - Active TV screen-share components register a lock keep-alive; the lock conceals and inerts their stable subtree without closing host or viewer peers, while ordinary locked pages still unmount.
