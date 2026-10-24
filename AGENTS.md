@@ -48,6 +48,7 @@
 - TV Remote: the native helper app authenticates only by a hashed device token at /api/public/tv; staff join the random per-session broadcast topic returned by claim_tv_pair_code, so commands never reach other channels.
 - Member-card screen sharing lives in the admin dashboard's member-header slot behind its existing access gates, uses the staff-authorized pairing RPC and RemoteSession viewer, and never appears in Members Directory; order/ticket flows remain unchanged.
 - Screen-share navigation resolves linked orders/tickets before mounting generic sessions; scoped pages join the existing host's relay. Overview access is separate from staff help access, preserving staff support while limiting global navigation.
+- TV session lists reuse the existing live/history components inside the admin-only Owner Tools section; TV Remote retains requests and its code sidebar to keep session administration separate from connection setup.
 - Screen-share request-box actions open the secure checkout Screen share tab for orders and the scoped ticket sharing page for tickets; secure checkout synchronizes its selected tab with navigation search state.
 - Active TV screen-share components register a lock keep-alive; the lock conceals and inerts their stable subtree without closing host or viewer peers, while ordinary locked pages still unmount.
 - Checkout screen share controls derive ongoing state from the order-private status read; locally ended staff sessions cannot auto-rejoin stale polled rows, so subsequent requests remain available without refresh.
