@@ -149,7 +149,7 @@ function Landing() {
                 Your all-in-one server for BM Support — stay connected, all in one place.
               </p>
               <p className="text-[clamp(0.85rem,min(1.6vw,2vh),1.125rem)] leading-relaxed text-red-100/80 max-w-xl">
-                Access community channels, manage your time, view schedules, get support, and explore our services. Everything you need is just one click away.
+                Whether you're a member or part of the team, access community channels, keep on top of your schedule and shifts, get support, and explore our services. Everything you need is just one click away.
               </p>
             </div>
 
