@@ -44,6 +44,11 @@ export function canSeeTvRemoteHistory(roles: readonly string[]): boolean {
   return roles.includes("admin") || roles.includes("management");
 }
 
+/** Entering a customer's six-digit code from the TV Remote page is admin/management only. */
+export function canConnectTvByCode(roles: readonly string[]): boolean {
+  return roles.includes("admin") || roles.includes("management");
+}
+
 export function normalizePairCode(input: string): string {
   return input.replace(/\D/g, "").slice(0, 6);
 }

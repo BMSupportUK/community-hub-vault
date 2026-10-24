@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { canSeeTvRemoteHistory, canUseTvRemote, keyForKeyboard, normalizePairCode, pairCodeExpired, sessionIdle } from "../src/lib/tv-remote";
+import { canConnectTvByCode, canSeeTvRemoteHistory, canUseTvRemote, keyForKeyboard, normalizePairCode, pairCodeExpired, sessionIdle } from "../src/lib/tv-remote";
 
 describe("TV remote rules", () => {
   test("pair code lasts 10 minutes", () => {
@@ -25,6 +25,14 @@ describe("TV remote rules", () => {
   test("only admin and management see session history", () => {
     expect(canSeeTvRemoteHistory(["staff"])).toBe(false);
     expect(canSeeTvRemoteHistory(["management"])).toBe(true);
+  });
+  test("only admin and management can connect with a customer's code", () => {
+    expect(canConnectTvByCode(["admin"])).toBe(true);
+    expect(canConnectTvByCode(["management"])).toBe(true);
+    expect(canConnectTvByCode(["staff"])).toBe(false);
+    expect(canConnectTvByCode(["moderator"])).toBe(false);
+    expect(canConnectTvByCode(["user"])).toBe(false);
+    expect(canConnectTvByCode([])).toBe(false);
   });
   test("code input keeps six digits", () => {
     expect(normalizePairCode("12 34-567")).toBe("123456");
