@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, Globe, Clock, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, MessageSquareQuestion, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop, ReceiptText, UserPlus } from "lucide-react";
+import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, Globe, Clock, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, CircleHelp, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop, ReceiptText, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -602,7 +602,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop, art: toolArtDesign },
     { tabKey: "rail-order", label: "Side icon rail", desc: "Staff and customer icon orders.", icon: LayoutGrid, art: toolArtDesign, adminOnly: true },
     { tabKey: "tv-sessions", label: "TV Remote sessions", desc: "Live TV sessions and session history.", icon: MonitorPlay, art: toolArtDevices, adminOnly: true },
-    { tabKey: "faqs", label: "FAQ boxes", desc: "Add, edit, delete and re-order the boxes on the public FAQ page.", icon: MessageSquareQuestion, art: toolArtDocs },
+    { tabKey: "faqs", label: "FAQ boxes", desc: "Add, edit, delete and re-order the boxes on the public FAQ page.", icon: CircleHelp, art: toolArtDocs },
     { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
   ];

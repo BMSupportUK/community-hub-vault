@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, MessageSquareQuestion, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CircleHelp, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -83,7 +83,7 @@ export function FaqsAdmin({ onBack }: { onBack: () => void }) {
         <Button variant="outline" size="icon" onClick={onBack} aria-label="Back to Owner tools" title="Back to Owner tools">
           <ArrowLeft className="size-4" />
         </Button>
-        <MessageSquareQuestion className="size-6 text-primary" />
+        <CircleHelp className="size-6 text-primary" />
         <h2 className="font-display text-2xl font-bold">FAQ boxes</h2>
         <div className="ml-auto">
           <Button
