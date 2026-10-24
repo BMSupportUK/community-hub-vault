@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## GoCardless £1 live demo test
+- [ ] Prepare a demo-only £1 GoCardless payment while retaining the customer provider.
+- [ ] Verify the real payment after Dane pays; only then switch customer Open Banking to GoCardless (awaits real payment).
+
 ## Ticket screen sharing
 - [x] Require a saved staff invitation for order code entry in both customer controls and the request handler; add Request screen share on the staff secure order page.
 - [x] Remove the standalone customer TV Remote Helper icon/editor entry and redirect its old page to Customer Portal; signed-in redirect verified without page errors, 17 sharing tests pass. Real order invitation/TV connection remains unverified.
