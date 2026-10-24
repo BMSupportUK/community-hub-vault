@@ -23,6 +23,7 @@ export function isStaffPortalPath(path: string) {
 /** Staff Portal tab bar: tickets, shifts and other staff tools in one place. */
 export function StaffPortalTabs() {
   const { roles } = useAuth();
+  const perms = usePagePermissions();
   const p = useLocation().pathname.replace(/\/$/, "");
   if (!isStaffPortalUser(roles)) return null;
   const item = "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors";
@@ -31,6 +32,20 @@ export function StaffPortalTabs() {
     <TooltipProvider><nav aria-label="Staff Portal" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface/80 px-3 py-2 backdrop-blur sm:px-6">
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Staff Portal</span>
       <Link to="/staff-portal" className={cls("/staff-portal")}><Home className="size-4" />Home</Link>
+      {isPageAllowed("shop", roles, perms) && (
+        <Tooltip><TooltipTrigger asChild>
+          <Button asChild variant={p === "/shop" ? "default" : "ghost"} size="icon">
+            <Link to="/shop" aria-label="Shop"><ShoppingCart className="size-4" /></Link>
+          </Button>
+        </TooltipTrigger><TooltipContent>Shop</TooltipContent></Tooltip>
+      )}
+      {isPageAllowed("install-guides", roles, perms) && (
+        <Tooltip><TooltipTrigger asChild>
+          <Button asChild variant={p === "/install-guides" ? "default" : "ghost"} size="icon">
+            <Link to="/install-guides" aria-label="Install Guides"><Wrench className="size-4" /></Link>
+          </Button>
+        </TooltipTrigger><TooltipContent>Install Guides</TooltipContent></Tooltip>
+      )}
       {canOpenAdminPanel(roles) && (
         <Tooltip><TooltipTrigger asChild>
           <Button asChild variant={p === "/admin" ? "default" : "ghost"} size="icon">
