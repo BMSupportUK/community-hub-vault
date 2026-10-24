@@ -10,6 +10,8 @@ import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { Nameplate } from "@/components/app/Nameplate";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
+import { TalkScreenShareButton } from "@/components/app/TalkScreenShareButton";
 import { formatRoleLabel } from "@/lib/role-label";
 import { Clocks } from "@/components/app/Clocks";
 import { LockNowPill } from "@/components/app/ScreenLockProvider";
