@@ -16,6 +16,7 @@
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Shift sounds deduplicate warning and due phases separately; the shift-over clip plays when the visible still-working question opens, not from a hidden end toast.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
+- Remote-help articles and PDFs share source content in `resources/remote-help-guides`; PDF companion rows use private `guide-files` paths beside existing video rows so adding written guides never replaces Watch actions.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
 - Dialogs fit mobile dvh; dense views drop phone columns.
