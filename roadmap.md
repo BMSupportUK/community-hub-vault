@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Member card screen sharing
+- [ ] Move the icon and connected viewer to the admin dashboard members list only; remove them from Members Directory.
 - [x] Add staff-only screen-sharing icon with click-open six-digit code pop-up to Members Directory cards, reuse authorized TV pairing and existing viewer without changing order/ticket sharing.
 - [x] Signed-in staff card click, six-digit typing, disabled incomplete submission and failed-code retry verified; simulated successful pairing opens the existing viewer. Twenty-four sharing tests pass, including member/subscriber exclusion; build OK.
 - [ ] Verify physical TV connection and picture — requires a real device code and customer consent; no live TV session claimed during checks.
