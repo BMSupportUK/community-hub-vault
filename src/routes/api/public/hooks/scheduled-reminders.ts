@@ -1,3 +1,4 @@
+import { LATE_END_WARNING_MS } from "@/lib/shift-alert-sound";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { pushToUser } from "@/lib/fcm.server";
@@ -39,6 +40,8 @@ type AlertJob = {
   body: string;
   url: string;
   kind: string;
+  /** Phone drops the alert if it arrives after this time (ms). */
+  expiresAt?: number;
 };
 
 const londonFmt = new Intl.DateTimeFormat("en-GB", {
@@ -283,7 +286,9 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             });
           }
           // END warn — heads-up shortly before the shift finishes.
-          if (isOpenForSlot && toEnd > 0 && toEnd <= WARN_MS) {
+          // Skip a late warning: inside the final 2 minutes it would clash
+          // with the "Shift has ended" alert and its own recording.
+          if (isOpenForSlot && toEnd > LATE_END_WARNING_MS && toEnd <= WARN_MS) {
             jobs.push({
               key: `slot:${slot.id}:end:warn`,
               userId,
@@ -291,6 +296,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               body: `Your shift ends in ${Math.max(1, Math.round(toEnd / 60000))} min.`,
               url: "/clock",
               kind: "shift_end_warn",
+              expiresAt: endsAt,
             });
           }
           // Demo account: clock out automatically at the slot's end time.
@@ -552,7 +558,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               pushToUser(job.userId, {
                 title: job.title,
                 body: job.body,
-                data: { kind: job.kind, url: job.url, alertKey: job.key },
+                data: { kind: job.kind, url: job.url, alertKey: job.key, ...(job.expiresAt ? { expiresAt: String(job.expiresAt) } : {}) },
               }).catch((e) => ({ sent: 0, failed: 0, skipped: String(e) } as { sent: number; failed: number; skipped?: string })),
               broadcastToUser(job.userId, job.title, job.body, job.url, job.key).catch((e) => ({ sent: 0, error: String(e) } as { sent: number; error?: string })),
             ]);

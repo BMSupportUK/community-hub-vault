@@ -186,6 +186,10 @@ async function sendFcmToTokens(
           data: args.data ?? {},
           android: {
             priority: "HIGH",
+            // Time-limited alerts (e.g. "shift ending soon") must not arrive late.
+            ...(args.data?.expiresAt
+              ? { ttl: `${Math.max(1, Math.floor((Number(args.data.expiresAt) - Date.now()) / 1000))}s` }
+              : {}),
             notification: {
               // Spoken alerts have dedicated native channels so Android uses
               // the bundled uploaded MP3 while the app is backgrounded/closed.
