@@ -537,6 +537,7 @@ import toolArtTeam from "@/assets/tools/team.png";
 
 function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const isFz = zone === "fanzone";
+  const navigate = useNavigate();
   const { hasRole, roles } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
