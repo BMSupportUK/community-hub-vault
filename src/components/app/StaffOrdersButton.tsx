@@ -76,7 +76,6 @@ export function StaffOrdersButton({ className, tile }: { className?: string; til
         <button
           type="button"
           aria-label="Shop orders"
-          title={total > 0 ? `${total} order${total === 1 ? "" : "s"} need attention` : "Shop orders"}
           onClick={() => { setHoverAnchor(null); void navigate({ to: "/admin", search: { tab: "order-status" } as never }); }}
           className={tile ? "flex w-full items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 text-left text-white transition-colors hover:bg-white/20" : cn(
             "relative grid size-8 shrink-0 place-items-center rounded-full transition-colors",
@@ -95,21 +94,33 @@ export function StaffOrdersButton({ className, tile }: { className?: string; til
         {hoverAnchor &&
           createPortal(
             <div
-              className="pointer-events-none fixed z-[120] w-44 -translate-y-2 rounded-xl border border-border bg-popover p-3 text-xs shadow-2xl"
+              className={cn(
+                "pointer-events-none fixed z-[80] w-max rounded-md border border-border bg-background px-2.5 py-1.5 text-left shadow-xl",
+                hoverAnchor.left !== undefined && "-translate-x-1/2",
+              )}
               style={{
-                bottom: window.innerHeight - hoverAnchor.bottom + 8,
-                left: hoverAnchor.left !== undefined ? hoverAnchor.left : undefined,
-                right: hoverAnchor.right !== undefined ? hoverAnchor.right : undefined,
-                transform: hoverAnchor.left !== undefined ? "translateX(-50%)" : undefined,
+                top: hoverAnchor.bottom + 6,
+                ...(hoverAnchor.left !== undefined ? { left: hoverAnchor.left } : { right: (hoverAnchor.right ?? 0) + 8 }),
               }}
             >
-              <p className="mb-1.5 font-semibold text-foreground">Shop orders</p>
-              <div className="space-y-1 text-muted-foreground">
-                <p className="flex justify-between"><span>New</span><span className="font-medium text-foreground">{counts.fresh}</span></p>
-                <p className="flex justify-between"><span>Awaiting payment</span><span className="font-medium text-foreground">{counts.awaiting}</span></p>
-                <p className="flex justify-between"><span>Account setup</span><span className="font-medium text-foreground">{counts.setup}</span></p>
+              <div className="flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-destructive" />New
+                </span>
+                <span className="font-bold text-destructive">{counts.fresh}</span>
               </div>
-              <p className="mt-1.5 text-[10px] text-muted-foreground/70">Click to open Orders</p>
+              <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-amber-500" />Awaiting payment
+                </span>
+                <span className="font-bold text-amber-400">{counts.awaiting}</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />Account setup
+                </span>
+                <span className="font-bold text-emerald-400">{counts.setup}</span>
+              </div>
             </div>,
             document.body,
           )}
