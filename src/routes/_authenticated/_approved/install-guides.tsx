@@ -30,6 +30,8 @@ import { getMyAppTransfer } from "@/lib/app-transfer.functions";
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
 import { PortalTabs } from "@/components/app/PortalTabs";
+import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
+import { isStaffPortalUser } from "@/lib/portal-home";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
@@ -124,7 +126,7 @@ type UnlockedGuide = {
 
 
 function InstallGuidesPage() {
-  const { user, hasAny } = useAuth();
+  const { user, hasAny, roles } = useAuth();
   const queryClient = useQueryClient();
   const canManageGuides = hasAny(["admin", "management"]);
   const canViewGuides = hasAny(["subscriber", "admin", "management", "staff"]);
@@ -482,7 +484,7 @@ function InstallGuidesPage() {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-    <PortalTabs active="guides" />
+    {isStaffPortalUser(roles) ? <StaffPortalTabs /> : <PortalTabs active="guides" />}
     <div className="flex h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background text-foreground md:overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 items-start md:h-full">
         <div className="min-h-0 min-w-0 flex-1 md:h-full">
