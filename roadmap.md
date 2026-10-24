@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## TV sessions in Owner Tools
+- [x] Move live sessions and history out of TV Remote into an admin-only Owner Tools section with a matching dashboard box; keep requests and the code sidebar on TV Remote.
+- [ ] Verify TV Remote and the Owner Tools box in the signed-in preview.
+
 ## Member card screen sharing
 - [x] Move the icon and connected viewer to the admin dashboard members list only, beside its existing member actions; remove them from Members Directory. Sixteen sharing tests pass, build OK, signed-in Directory confirms zero sharing icons.
 - [ ] Verify the icon and code pop-up through the admin members list — the existing dashboard password/staff PIN gate blocks screen verification; no security bypass used.
