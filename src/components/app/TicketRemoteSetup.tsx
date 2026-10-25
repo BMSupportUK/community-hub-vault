@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
+import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { CheckCircle2, Circle, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +61,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     return <section className="mx-auto max-w-2xl space-y-3 text-foreground">
       <h2 className="text-xl font-semibold">Remote access setup</h2>
       {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
+        <RemoteSetupProgress row={row} />
         <p className="text-sm">Device: <strong>{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</strong> · {row.completed_at ? <span className="font-semibold text-primary">Confirmed by the apps</span> : row.app_checked_at ? "App reported — waiting on the rest" : "Waiting for the app to report"}</p>
         <ol className="space-y-2">{REMOTE_SETUP_STEPS[row.device].map((s, i) => (
           <li key={i} className="flex items-center gap-2 text-sm">{stepDone(s, row) ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}{s.title}</li>
@@ -93,14 +95,15 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
         <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
       </form>
     </div>}
-    {!row.completed_at && !closed && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
+    {!closed && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
       <h3 className="font-semibold">Your setup code</h3>
-      <p className="text-sm text-muted-foreground">Type this code into BM TV Enabler (or BM Support app › Settings › TV remote). The app checks your TV and ticks the steps below by itself.</p>
+      <p className="text-sm text-muted-foreground">Type this eight-digit code into BM TV Enabler to link its checked progress to this ticket. It remains available when your TV is already set up.</p>
       {setupCode
         ? <p className="font-mono text-3xl font-bold tracking-widest">{setupCode.slice(0, 4)} {setupCode.slice(4)}</p>
         : <Button size="sm" disabled={busy} onClick={() => void issue()}>Show my setup code</Button>}
-      {setupCode && <p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p>}
+      {setupCode && <><p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p><Button size="sm" variant="outline" disabled={busy} onClick={() => void issue()}>New setup code</Button></>}
     </div>}
+    <RemoteSetupProgress row={row} />
     {steps.map((s, i) => {
       const done = stepDone(s, row);
       return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
