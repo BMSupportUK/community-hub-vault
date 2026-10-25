@@ -4,7 +4,6 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <queries><package android:name="uk.bmsupport.app" /></queries>
     <application
         android:label="BM TV Enabler"
         android:icon="@mipmap/ic_launcher"

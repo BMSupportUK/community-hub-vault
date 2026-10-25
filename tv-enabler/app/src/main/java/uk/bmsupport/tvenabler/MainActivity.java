@@ -73,7 +73,7 @@ public class MainActivity extends Activity {
         setupCode.setInputType(InputType.TYPE_CLASS_NUMBER);
         setupCode.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(8)});
         col.addView(setupCode, lp(dp(12)));
-        openSupport = button("Open BM Support to get my setup code", Color.parseColor("#2A3050"));
+        openSupport = button("Open BM Remote Helper on TV to show my code", Color.parseColor("#2A3050"));
         openSupport.setOnClickListener(v -> openBmSupport()); col.addView(openSupport, lp(dp(8)));
         find = button("Find my Fire TV", Color.parseColor("#2A3050"));
         find.setOnClickListener(v -> scan()); col.addView(find, lp(dp(8)));
@@ -197,11 +197,19 @@ public class MainActivity extends Activity {
         });
     }
 
-    /** Opens the BM Support app (or the website if it isn't installed) so the customer can get their setup code. */
+    /** Opens BM Remote Helper (the code app) on the TV so the customer can enter its code on the website. */
     private void openBmSupport() {
-        android.content.Intent i = getPackageManager().getLaunchIntentForPackage("uk.bmsupport.app");
-        if (i == null) i = new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://bmsupport.uk/home"));
-        try { startActivity(i); } catch (Exception e) { say("Couldn't open BM Support. Open your ticket or order's Remote setup tab on bmsupport.uk.", WARN); }
+        if (busy) return;
+        final String host = address.getText().toString().trim();
+        if (!SetupWizard.validHost(host)) { say("Type the TV's address first.", WARN); return; }
+        setBusy(true); say("Opening BM Remote Helper on your TV…", MUTED);
+        io.execute(() -> {
+            String msg = null;
+            try { Enabler.openCodeApp(this, host); } catch (Exception e) { msg = Enabler.friendly(e); }
+            final String err = msg;
+            ui.post(() -> { if (isFinishing() || isDestroyed()) return; setBusy(false);
+                say(err != null ? err : "✓ BM Remote Helper is open on your TV. Enter its six-digit code in your ticket or order's Remote setup tab on bmsupport.uk.", err != null ? ACCENT : OK); });
+        });
     }
 
     private void confirmReset() {
