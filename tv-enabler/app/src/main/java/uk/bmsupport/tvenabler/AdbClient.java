@@ -2,11 +2,14 @@ package uk.bmsupport.tvenabler;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Arrays;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -71,6 +74,48 @@ public final class AdbClient implements AutoCloseable {
             if (m.cmd == CLSE) { if (remote != 0) send(CLSE, local, remote, new byte[0]); break; }
         }
         return buf.toString("UTF-8");
+    }
+
+    /** Pushes a local file to the TV using the ADB SYNC service (used to install BM Remote Helper). */
+    public void push(File local, String remotePath) throws IOException {
+        int localId = nextLocal++;
+        send(OPEN, localId, 0, "sync:\0".getBytes(StandardCharsets.UTF_8));
+        int remote = 0;
+        while (true) {
+            Msg m = read();
+            if (m.a1 != localId) continue;
+            if (m.cmd == OKAY) { remote = m.a0; break; }
+            if (m.cmd == CLSE) throw new IOException("The TV refused the file send");
+        }
+        sendSync(localId, remote, "SEND", (remotePath + ",33206").getBytes(StandardCharsets.UTF_8));
+        byte[] buf = new byte[65536];
+        try (FileInputStream in = new FileInputStream(local)) {
+            int r;
+            while ((r = in.read(buf)) > 0) sendSync(localId, remote, "DATA", Arrays.copyOf(buf, r));
+        }
+        ByteBuffer done = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt((int) (System.currentTimeMillis() / 1000));
+        sendSync(localId, remote, "DONE", done.array());
+        ByteArrayOutputStream resp = new ByteArrayOutputStream();
+        while (true) {
+            Msg m = read();
+            if (m.a1 != localId) continue;
+            if (m.cmd == WRTE) { resp.write(m.data); send(OKAY, localId, m.a0, new byte[0]); continue; }
+            if (m.cmd == CLSE) { send(CLSE, localId, remote, new byte[0]); break; }
+        }
+        byte[] r = resp.toByteArray();
+        if (r.length < 8) throw new IOException("No answer from the TV during the file send");
+        String id = new String(r, 0, 4, StandardCharsets.UTF_8);
+        if (!"OKAY".equals(id)) {
+            int len = ByteBuffer.wrap(r, 4, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
+            String msg = r.length > 8 ? new String(r, 8, Math.min(len, r.length - 8), StandardCharsets.UTF_8) : "unknown reason";
+            throw new IOException("The TV refused the file: " + msg);
+        }
+    }
+
+    private void sendSync(int localId, int remote, String id, byte[] payload) throws IOException {
+        ByteBuffer b = ByteBuffer.allocate(8 + payload.length).order(ByteOrder.LITTLE_ENDIAN);
+        b.put(id.getBytes(StandardCharsets.UTF_8)).putInt(payload.length).put(payload);
+        send(WRTE, localId, remote, b.array());
     }
 
     private void send(int cmd, int a0, int a1, byte[] data) throws IOException {

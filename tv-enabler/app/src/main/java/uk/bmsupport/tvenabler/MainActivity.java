@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
-    private static final String[] STEPS = {"Connect to the TV", "Press Allow on the TV", "Install remote control", "Switch remote control on", "Done"};
+    private static final String[] STEPS = {"Connect to the TV", "Press Allow on the TV", "Install BM Remote Helper on the TV", "Install remote control", "Switch remote control on", "Done"};
     private static final int BG = Color.parseColor("#0F1220"), FG = Color.WHITE, MUTED = Color.parseColor("#A9B0C7"),
             ACCENT = Color.parseColor("#E23B4E"), OK = Color.parseColor("#3CCB7F"), WARN = Color.parseColor("#F5C04A");
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -43,8 +43,8 @@ public class MainActivity extends Activity {
         col.setBackgroundColor(BG);
 
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("Switches on BM Remote Control on your Fire TV or Android TV so BM Support staff can help you with the remote.", 15, MUTED, false));
-        col.addView(text("1. Open BM Remote Helper on the TV — it shows the TV's address.\n2. Make sure this phone is on the same Wi-Fi as the TV.\n3. Type the address below and press Turn on remote control.", 15, FG, false));
+        col.addView(text("Sets up your Fire TV or Android TV for BM Support: it installs BM Remote Helper and remote control on the TV for you, then switches remote control on.", 15, MUTED, false));
+        col.addView(text("1. Make sure this phone is on the same Wi-Fi as the TV.\n2. Press Find my TV and choose your TV, or type its address below.\n3. Press Turn on remote control — everything on the TV is installed for you.", 15, FG, false));
 
         col.addView(text("Your setup code from the Remote setup tab on your support ticket:", 15, FG, false));
         setupCode = new EditText(this);
@@ -99,7 +99,7 @@ public class MainActivity extends Activity {
                 ui.post(() -> say("Telling BM Support your TV is ready…", MUTED));
                 String err = Enabler.report(sc, c);
                 if (err != null) { ui.post(() -> { say("Remote control is on, but: " + err, ACCENT); turnOn.setText("Try again"); setBusy(false); }); return; }
-                ui.post(() -> { for (int i = 0; i < STEPS.length; i++) done(i); say("Remote control is on and BM Support has been told. Now open BM Remote Helper on the TV and type its code on your ticket.", OK); turnOn.setText("Turn on remote control"); setBusy(false); });
+                ui.post(() -> { for (int i = 0; i < STEPS.length; i++) done(i); say("Remote control is on and BM Support has been told. BM Remote Helper is now open on your TV — type its six-digit code on your ticket.", OK); turnOn.setText("Turn on remote control"); setBusy(false); });
             } catch (Exception e) {
                 String m = Enabler.friendly(e);
                 ui.post(() -> { say(m, ACCENT); turnOn.setText("Try again"); setBusy(false); });

@@ -23,14 +23,14 @@ export function TvEnablerPanel() {
           <Tv className="size-6 text-primary" /> TV Remote Enabler
         </h2>
         <p className="mt-2 text-muted-foreground">
-          A small Android phone app that switches on BM Remote Control on your Amazon Fire TV, so our staff can help you with the remote during a screen share.
+          A small Android phone app that sets up your Amazon Fire TV for you — it installs BM Remote Helper and remote control on the TV, then switches remote control on, so our staff can help you with the remote during a screen share.
         </p>
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-foreground">
           <li>Press <strong>Get the app link</strong> and scan the QR code with your Android phone, then install the app.</li>
-          <li>On the Fire TV, open <strong>BM Remote Helper</strong> — it shows the TV's address.</li>
           <li>Make sure the phone and TV are on the same Wi-Fi.</li>
-          <li>In the phone app, type the address (or press <strong>Find my TV</strong>) and press <strong>Turn on remote control</strong>.</li>
-          <li>On the TV, tick <strong>Always allow</strong> and press <strong>Allow</strong>.</li>
+          <li>In the phone app, press <strong>Find my TV</strong> and pick your TV (or type its address), then press <strong>Turn on remote control</strong>.</li>
+          <li>On the TV, tick <strong>Always allow</strong> and press <strong>Allow</strong>. The app installs everything on the TV for you.</li>
+          <li>BM Remote Helper opens on the TV — type its six-digit code on your support ticket.</li>
         </ol>
         <p className="mt-3 text-sm text-muted-foreground">Android phones only. ADB debugging must be on in the Fire TV's Developer options.</p>
         <Button className="mt-5 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90" onClick={() => setOpen(true)}>
