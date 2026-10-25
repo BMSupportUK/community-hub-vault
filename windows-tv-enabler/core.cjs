@@ -30,7 +30,7 @@ function accessibilityList(current) {
   return [...new Set(entries), SERVICE].join(':');
 }
 
-async function enable(host, adb, progress, delay = ms => new Promise(r => setTimeout(r, ms))) {
+async function enable(host, adb, progress, delay = ms => new Promise(r => setTimeout(r, ms)), fetchImpl = globalThis.fetch, tempDir = require('node:os').tmpdir()) {
   if (!privateAddress(host)) throw new Error('Enter the local TV address shown in BM Remote Helper, for example 192.168.1.25.');
   const serial = `${host}:5555`;
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
@@ -45,13 +45,33 @@ async function enable(host, adb, progress, delay = ms => new Promise(r => setTim
       if (i === 10 || i === 30) await adb(['connect', serial]);
       await delay(1000);
     }
-    if (!connected) throw new Error('The TV did not approve this computer. Check ADB debugging is ON, then try again and press Allow on the TV.');
-    if (!(await shell(`pm path ${HELPER}`)).includes('package:')) throw new Error('Install and open BM Remote Helper on the Fire TV first, then try again.');
+    if (!connected) throw new Error('The TV did not approve this computer. Check debugging is ON on the TV (ADB debugging on Fire TV, Network debugging on Android / Google TV), then try again and press Allow on the TV.');
+    let helper = (await shell(`pm path ${HELPER}`)).includes('package:');
+    if (!helper) {
+      progress('Installing BM Remote Helper on the TV…');
+      const apk = await downloadHelper(tempDir, fetchImpl);
+      try {
+        await adb(['-s', serial, 'push', apk, '/data/local/tmp/bm-helper.apk']);
+        const result = await shell('pm install -r -d /data/local/tmp/bm-helper.apk');
+        if (!result.includes('Success')) throw new Error(`The TV could not install BM Remote Helper: ${result.trim().slice(0, 400)}`);
+      } finally {
+        await shell('rm -f /data/local/tmp/bm-helper.apk').catch(() => {});
+        require('node:fs').rmSync(apk, { force: true });
+      }
+      helper = (await shell(`pm path ${HELPER}`)).includes('package:');
+      if (!helper) throw new Error('BM Remote Helper did not install on the TV. Try again.');
+    }
+    progress('Opening BM Remote Helper on the TV…');
+    await shell(`monkey -p ${HELPER} -c android.intent.category.LAUNCHER 1`).catch(() => {});
     if (!(await shell(`pm path ${CONTROL}`)).includes('package:')) {
       progress('Installing BM Remote Control on the TV…');
       const temp = '/data/local/tmp/bm-control.apk';
       const source = `/sdcard/Android/data/${HELPER}/files/control.apk`;
-      const copied = await shell(`cp ${source} ${temp} && chmod 644 ${temp} && echo BM_COPY_OK`);
+      let copied = '';
+      for (let i = 0; i < 15 && !copied.includes('BM_COPY_OK'); i++) {
+        copied = await shell(`cp ${source} ${temp} && chmod 644 ${temp} && echo BM_COPY_OK`);
+        if (!copied.includes('BM_COPY_OK')) await delay(2000);
+      }
       if (!copied.includes('BM_COPY_OK')) throw new Error('Could not find the remote-control installer. Open BM Remote Helper on the TV once, then try again.');
       try {
         const result = await shell(`pm install -r -d ${temp}`);
