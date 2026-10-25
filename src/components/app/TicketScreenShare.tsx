@@ -19,9 +19,10 @@ import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnecte
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
   const { roles, user } = useAuth();
+  const navigate = useNavigate();
   return canUseTvRemote(roles) && !isCustomerTestTicket(ticketId, user?.id)
     ? <p>TV screen requested — waiting for the customer to enter their TV code.</p>
-    : <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => window.dispatchEvent(new CustomEvent("ticket-tv-code", { detail: ticketId }))}><MonitorUp className="mr-2 size-4" />Enter TV code</Button></div>;
+    : <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => void navigate({ to: "/tickets", search: { id: ticketId, tab: "setup" } })}><MonitorUp className="mr-2 size-4" />Enter TV code</Button></div>;
 }
 
 export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, children }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen" | "setup"; children: ReactNode }) {
@@ -32,18 +33,9 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
   const [busy, setBusy] = useState(false);
   const setup = useTicketRemoteSetup(ticketId);
   const setupReady = canRequestTicketScreenShare(setup.row);
-  const [codeOpen, setCodeOpen] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [autoAnswer, setAutoAnswer] = useState(false);
-  const offered = useRef(false);
   const previousStatus = useRef<string | null | undefined>(undefined);
-  useEffect(() => {
-    const open = (event: Event) => {
-      if (!staff && (event as CustomEvent<string>).detail === ticketId) setCodeOpen(true);
-    };
-    window.addEventListener("ticket-tv-code", open);
-    return () => window.removeEventListener("ticket-tv-code", open);
-  }, [ticketId, staff]);
   useEffect(() => {
     let stopped = false;
     const load = async () => {
@@ -51,7 +43,6 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
       if (stopped || r.error) return;
       const state = r.data as { status: string | null; invited: boolean };
       const current = state.status;
-      if (screenShareInProgress(current)) setCodeOpen(false);
       if (staff) setWaiting(current === "pending");
       if (staff && ticketShareRequested(previousStatus.current, current)) toast.info("The customer has entered their TV code — press Answer screen share");
       if (ticketShareConnected(previousStatus.current ?? null, current)) {
@@ -75,12 +66,7 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
     finally { setBusy(false); }
   };
   return <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-    <Dialog open={!staff && codeOpen} onOpenChange={setCodeOpen}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Enter your TV code</DialogTitle><DialogDescription>BM Support has requested to see your TV screen.</DialogDescription></DialogHeader>
-        <CustomerTicketScreenShare ticketId={ticketId} closed={closed} onConnected={() => setCodeOpen(false)} />
-      </DialogContent>
-    </Dialog>
+
     <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card p-2 text-foreground">
       <Tabs value={tab ?? "ticket"} onValueChange={(value) => void navigate({ to: "/tickets", search: { id: ticketId, tab: value === "screen" ? "screen" : value === "setup" ? "setup" : undefined } })}>
         <TabsList><TabsTrigger value="ticket"><MessageCircle className="mr-2 size-4" />Ticket</TabsTrigger><TabsTrigger value="setup"><Wrench className="mr-2 size-4" />Remote setup{setupReady && <CheckCircle2 className="ml-1 size-4 text-primary" />}</TabsTrigger><TabsTrigger value="screen"><MonitorUp className="mr-2 size-4" />Screen share</TabsTrigger></TabsList>
