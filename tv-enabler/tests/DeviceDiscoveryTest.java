@@ -58,6 +58,19 @@ public final class DeviceDiscoveryTest {
                 }
             }
         } finally { tv.stop(0); }
-        System.out.println("Device discovery: 17 checks passed");
+        com.sun.net.httpserver.HttpServer upnpTv = com.sun.net.httpserver.HttpServer.create(
+                new java.net.InetSocketAddress("127.0.0.1", 50000), 0);
+        upnpTv.createContext("/rootdesc.xml", exchange -> {
+            byte[] body = fireXml.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length);
+            try (java.io.OutputStream out = exchange.getResponseBody()) { out.write(body); }
+        });
+        upnpTv.start();
+        try {
+            List<DiscoveredDevice> upnpResults = DeviceDiscovery.scan("127.0.0.");
+            check(upnpResults.size() == 1 && "Living Room".equals(upnpResults.get(0).name),
+                    "Scan finds a Fire TV that only advertises its UPnP description on port 50000");
+        } finally { upnpTv.stop(0); }
+        System.out.println("Device discovery: 18 checks passed");
     }
 }

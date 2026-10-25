@@ -22,24 +22,41 @@ import org.w3c.dom.NodeList;
 /** Finds Amazon Fire TVs through local DIAL/UPnP independently of debugging status.
  * Never authenticates with ADB, installs anything, or changes a TV during discovery. */
 final class DeviceDiscovery {
+    /** Fire TV models advertise their description on different ports/paths:
+     * Sticks use DIAL on 8008, Cubes and Fire TVs use UPnP on 50000. Try them all. */
+    private static final String[] FALLBACK_PATHS = {
+            "http://%s:8008/ssdp/device-desc.xml",
+            "http://%s:8008/dd.xml",
+            "http://%s:50000/rootdesc.xml",
+            "http://%s:50000/description.xml",
+    };
+
     static List<DiscoveredDevice> scan(String base) throws InterruptedException {
-        Map<String, String> locations = advertisedLocations(base);
+        Advertised advertised = advertisedLocations(base);
         Map<String, DiscoveredDevice> found = new ConcurrentHashMap<>();
-        ExecutorService pool = Executors.newFixedThreadPool(32);
+        ExecutorService pool = Executors.newFixedThreadPool(48);
         try {
             for (int i = 1; i < 255; i++) {
                 String host = base + i;
                 pool.execute(() -> {
-                    String location = locations.get(host);
-                    Description description = readDescription(host, location == null
-                            ? "http://" + host + ":8008/ssdp/device-desc.xml" : location);
-                    if (description == null || !description.fireTv) return;
+                    Description description = null;
+                    String location = advertised.locations.get(host);
+                    if (location != null) description = readDescription(host, location);
+                    if (description == null) {
+                        for (String path : FALLBACK_PATHS) {
+                            description = readDescription(host, String.format(path, host));
+                            if (description != null) break;
+                        }
+                    }
+                    boolean hinted = advertised.fireTvHints.containsKey(host);
+                    if ((description == null || !description.fireTv) && !hinted) return;
                     boolean reachable = debuggingReachable(host);
-                    found.put(host, new DiscoveredDevice(host, description.name, reachable));
+                    String name = description == null ? null : description.name;
+                    found.put(host, new DiscoveredDevice(host, name, reachable));
                 });
             }
             pool.shutdown();
-            if (!pool.awaitTermination(30, TimeUnit.SECONDS)) pool.shutdownNow();
+            if (!pool.awaitTermination(60, TimeUnit.SECONDS)) pool.shutdownNow();
             List<DiscoveredDevice> devices = new ArrayList<>(found.values());
             devices.sort((a, b) -> {
                 int byName = a.name.compareToIgnoreCase(b.name);
@@ -51,14 +68,22 @@ final class DeviceDiscovery {
 
     private static int lastOctet(String host) { return Integer.parseInt(host.substring(host.lastIndexOf('.') + 1)); }
 
-    private static Map<String, String> advertisedLocations(String base) {
-        Map<String, String> locations = new HashMap<>();
+    private static final class Advertised {
+        final Map<String, String> locations = new HashMap<>();
+        final Map<String, Boolean> fireTvHints = new HashMap<>();
+    }
+
+    private static Advertised advertisedLocations(String base) {
+        Advertised advertised = new Advertised();
         try (DatagramSocket socket = new DatagramSocket()) {
-            socket.setSoTimeout(500);
-            String request = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 1\r\nST: ssdp:all\r\n\r\n";
-            byte[] bytes = request.getBytes(StandardCharsets.UTF_8);
-            socket.send(new DatagramPacket(bytes, bytes.length, InetAddress.getByName("239.255.255.250"), 1900));
-            long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            socket.setSoTimeout(400);
+            // Ask twice: once for everything, once for the DIAL service Fire TVs answer to.
+            for (String st : new String[] {"ssdp:all", "urn:dial-multiscreen-org:service:dial:1"}) {
+                String request = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\nST: " + st + "\r\n\r\n";
+                byte[] bytes = request.getBytes(StandardCharsets.UTF_8);
+                socket.send(new DatagramPacket(bytes, bytes.length, InetAddress.getByName("239.255.255.250"), 1900));
+            }
+            long end = System.nanoTime() + TimeUnit.SECONDS.toNanos(4);
             while (System.nanoTime() < end) {
                 byte[] buffer = new byte[8192];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -66,15 +91,20 @@ final class DeviceDiscovery {
                 String host = packet.getAddress().getHostAddress();
                 if (!host.startsWith(base)) continue;
                 String response = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
+                String lower = response.toLowerCase(java.util.Locale.ROOT);
+                // A Fire TV answers with its own server banner even when its description can't be fetched.
+                if (lower.contains("amazon") || lower.contains("aft") || lower.contains("dial")) {
+                    advertised.fireTvHints.put(host, Boolean.TRUE);
+                }
                 for (String line : response.split("\r?\n")) {
                     if (line.regionMatches(true, 0, "location:", 0, 9)) {
                         String location = line.substring(9).trim();
-                        if (safeLocation(host, location)) locations.put(host, location);
+                        if (safeLocation(host, location)) advertised.locations.put(host, location);
                     }
                 }
             }
         } catch (Exception ignored) { /* Manual address entry remains available. */ }
-        return locations;
+        return advertised;
     }
 
     static boolean safeLocation(String host, String location) {
@@ -92,7 +122,7 @@ final class DeviceDiscovery {
     private static boolean debuggingReachable(String host) {
         // Only a TCP reachability check: never send an ADB handshake or an enable command.
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(host, 5555), 400);
+            socket.connect(new InetSocketAddress(host, 5555), 600);
             return true;
         } catch (Exception ignored) { return false; }
     }
@@ -102,8 +132,8 @@ final class DeviceDiscovery {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) new URL(location).openConnection();
-            connection.setConnectTimeout(700);
-            connection.setReadTimeout(700);
+            connection.setConnectTimeout(1500);
+            connection.setReadTimeout(1500);
             connection.setInstanceFollowRedirects(false);
             if (connection.getResponseCode() != 200) return null;
             byte[] xml;
