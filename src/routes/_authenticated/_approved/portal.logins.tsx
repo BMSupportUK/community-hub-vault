@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { KeyRound, Loader2, Lock } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PortalTabs } from "@/components/app/PortalTabs";
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/_approved/portal/logins")(
 function PortalLoginsPage() {
   const read = useServerFn(readPortalCredentials);
   const [pin, setPin] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
-  const [accounts, setAccounts] = useState<ManualCredential[] | null>(null), [expiresAt, setExpiresAt] = useState<number | null>(null), [now, setNow] = useState(() => Date.now());
+  const [accounts, setAccounts] = useState<ManualCredential[] | null>(null), [qdCodes, setQdCodes] = useState<{ id: string; label: string; code: string; notes: string | null }[]>([]), [view, setView] = useState<"logins" | "info">("logins"), [copied, setCopied] = useState<string | null>(null), [expiresAt, setExpiresAt] = useState<number | null>(null), [now, setNow] = useState(() => Date.now());
   useEffect(() => { if (!expiresAt) return; const t = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(t); }, [expiresAt]);
   const remaining = expiresAt ? Math.max(0, expiresAt - now) : 0;
   useEffect(() => { if (expiresAt && remaining === 0) { setAccounts(null); setExpiresAt(null); setError("Your 10-minute viewing time has ended. Enter your PIN again to view your logins."); } }, [expiresAt, remaining]);
@@ -32,7 +32,7 @@ function PortalLoginsPage() {
     e.preventDefault(); setError("");
     if (!/^\d{6}$/.test(pin)) { setError("Enter your 6-digit PIN."); return; }
     setBusy(true);
-    try { const r = await read({ data: { pin } }); setAccounts(r.accounts); setExpiresAt(new Date(r.expiresAt).getTime()); setNow(Date.now()); if (r.created) toast.success("Your PIN is saved. Use it next time to view your logins."); }
+    try { const r = await read({ data: { pin } }); setAccounts(r.accounts); setQdCodes(r.qdCodes); setExpiresAt(new Date(r.expiresAt).getTime()); setNow(Date.now()); if (r.created) toast.success("Your PIN is saved. Use it next time to view your logins."); }
     catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setPin(""); setBusy(false); }
   }
@@ -52,7 +52,16 @@ function PortalLoginsPage() {
         <Button type="submit" className="w-full" disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <KeyRound />}Show my logins</Button>
       </form> : <>
         <div role="timer" className="mb-6 rounded-lg border border-border bg-surface p-4"><div className="flex items-center justify-between text-sm"><span>These details hide automatically for your security</span><span className="font-mono text-lg font-semibold text-primary">{Math.floor(remaining / 60000)}:{String(Math.floor(remaining / 1000) % 60).padStart(2, "0")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width] duration-1000" style={{ width: `${(remaining / 600000) * 100}%` }} /></div></div>
-        {accounts.length ? <ManualCredentialCards customers={[{ userId: "portal", displayName: "My accounts", accounts }]} /> : <p className="text-sm text-muted-foreground">No app logins have been saved on your orders yet.</p>}
+        <div role="tablist" className="mb-4 inline-flex rounded-xl border border-border bg-surface p-1">
+          {(["logins", "info"] as const).map((v) => <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)} className={`rounded-lg px-4 py-2 text-sm font-semibold ${view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{v === "logins" ? "Login Credentials" : "App Information"}</button>)}
+        </div>
+        {view === "logins" ? (accounts.length ? <ManualCredentialCards customers={[{ userId: "portal", displayName: "My accounts", accounts }]} /> : <p className="text-sm text-muted-foreground">No app logins have been saved on your account yet.</p>)
+        : qdCodes.length ? <div className="grid gap-3 sm:grid-cols-2">{qdCodes.map((q) => <div key={q.id} className="rounded-xl border border-border bg-surface p-4">
+            <div className="text-xs text-muted-foreground">QD code · {q.label}</div>
+            <div className="mt-1 flex items-center justify-between gap-3"><span className="break-all font-mono text-lg font-semibold">{q.code}</span>
+              <button type="button" onClick={() => { void navigator.clipboard.writeText(q.code); setCopied(q.id); setTimeout(() => setCopied(null), 1500); }} className="inline-flex shrink-0 items-center gap-1 text-xs text-primary hover:underline">{copied === q.id ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}{copied === q.id ? "Copied" : "Copy"}</button></div>
+            {q.notes && <p className="mt-2 text-xs text-muted-foreground">{q.notes}</p>}
+          </div>)}</div> : <p className="text-sm text-muted-foreground">No app information has been added yet.</p>}
       </>}
       {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
     </div></main>
