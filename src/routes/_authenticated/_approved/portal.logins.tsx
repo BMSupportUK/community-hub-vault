@@ -73,7 +73,7 @@ function PortalLoginsPage() {
         {resetDone ? <p role="status" className="rounded-md border border-border bg-surface-2 p-3 text-xs text-muted-foreground">Your PIN has been cleared and our team has been told. Enter a new 6-digit PIN above — it becomes your new PIN.</p>
         : <button type="button" disabled={resetBusy} onClick={async () => {
             setError(""); setResetBusy(true);
-            try { await requestReset({ data: {} }); setResetDone(true); }
+            try { await requestReset(); setResetDone(true); }
             catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
             finally { setResetBusy(false); }
           }} className="flex w-full items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-primary hover:underline disabled:opacity-60">
