@@ -6874,6 +6874,7 @@ export type Database = {
           device: string
           ticket_id: string
           updated_at: string
+          verified_session_id: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -6881,6 +6882,7 @@ export type Database = {
           device: string
           ticket_id: string
           updated_at?: string
+          verified_session_id?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -6888,6 +6890,7 @@ export type Database = {
           device?: string
           ticket_id?: string
           updated_at?: string
+          verified_session_id?: string | null
         }
         Relationships: []
       }
@@ -8862,6 +8865,10 @@ export type Database = {
         Args: { _join_date: string; _leave_date?: string; _user_id: string }
         Returns: undefined
       }
+      save_ticket_remote_setup: {
+        Args: { _device: string; _steps: number[]; _ticket_id: string }
+        Returns: undefined
+      }
       set_my_fan_alias: {
         Args: { _alias: string; _avatar: string }
         Returns: undefined
@@ -9141,6 +9148,10 @@ export type Database = {
       }
       user_qualifies_for_customer_nameplate: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      verify_ticket_remote_setup: {
+        Args: { _code: string; _ticket_id: string }
         Returns: boolean
       }
       wc_calc_points: {

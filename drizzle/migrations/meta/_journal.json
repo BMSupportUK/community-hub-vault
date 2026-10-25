@@ -1408,6 +1408,13 @@
       "when": 1792929413099,
       "tag": "0200_ticket_remote_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 201,
+      "version": "7",
+      "when": 1792929524217,
+      "tag": "0201_ticket_remote_setup_rpcs",
+      "breakpoints": true
     }
   ]
 }
