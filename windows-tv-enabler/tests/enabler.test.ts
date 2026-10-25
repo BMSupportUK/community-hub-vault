@@ -67,7 +67,7 @@ describe('Windows TV Enabler safety and setup', () => {
   test('never succeeds when the Helper download fails or the TV skips final confirmation', async () => {
     const adb = async (a: string[]) => a[0] === 'devices' ? '192.168.1.25:5555\tdevice' : '';
     const failedDownload = async () => ({ ok: false, status: 502, arrayBuffer: async () => new ArrayBuffer(0) });
-    await expect(enable('192.168.1.25', adb, () => {}, async () => {}, failedDownload as never, '/tmp/bm-test-' + Date.now())).rejects.toThrow("Couldn't download BM Remote Helper");
+    await expect(enable('192.168.1.25', adb, () => {}, async () => {}, failedDownload as never, '/tmp/bm-test-' + Date.now())).rejects.toThrow("Could not download BM Remote Helper");
     const notOn = async (a: string[]) => {
       if (a[0] === 'devices') return '192.168.1.25:5555\tdevice';
       if (a[3]?.startsWith('pm path')) return 'package:/installed';
