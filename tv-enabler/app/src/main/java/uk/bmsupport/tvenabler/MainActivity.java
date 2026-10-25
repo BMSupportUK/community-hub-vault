@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final SetupWizard wizard = new SetupWizard();
     private EditText address, setupCode;
-    private Button turnOn, find, amazonBtn, androidBtn, next, reset, back;
+    private Button turnOn, find, amazonBtn, androidBtn, next, reset, back, openSupport;
     private TextView status, deviceHelp, heading, description;
     private LinearLayout devicePick;
     private String device;
@@ -73,6 +73,8 @@ public class MainActivity extends Activity {
         setupCode.setInputType(InputType.TYPE_CLASS_NUMBER);
         setupCode.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(8)});
         col.addView(setupCode, lp(dp(12)));
+        openSupport = button("Open BM Support to get my setup code", Color.parseColor("#2A3050"));
+        openSupport.setOnClickListener(v -> openBmSupport()); col.addView(openSupport, lp(dp(8)));
         find = button("Find my Fire TV", Color.parseColor("#2A3050"));
         find.setOnClickListener(v -> scan()); col.addView(find, lp(dp(8)));
         status = text("", 16, WARN, false); col.addView(status, lp(dp(12)));
@@ -105,6 +107,7 @@ public class MainActivity extends Activity {
         address.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
         find.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
         setupCode.setVisibility(s == SetupWizard.Step.REPORT ? View.VISIBLE : View.GONE);
+        openSupport.setVisibility(s == SetupWizard.Step.REPORT && wizard.ready ? View.VISIBLE : View.GONE);
         next.setVisibility(wizard.completed ? View.VISIBLE : View.GONE);
         turnOn.setVisibility(wizard.completed || s == SetupWizard.Step.DONE ? View.GONE : View.VISIBLE);
         back.setVisibility(s == SetupWizard.Step.CHECK && !wizard.completed ? View.VISIBLE : View.GONE);
@@ -192,6 +195,13 @@ public class MainActivity extends Activity {
                 ui.post(() -> { if (!isFinishing() && !isDestroyed()) { setBusy(false); say(message, ACCENT); turnOn.setText("Try again"); } });
             }
         });
+    }
+
+    /** Opens the BM Support app (or the website if it isn't installed) so the customer can get their setup code. */
+    private void openBmSupport() {
+        android.content.Intent i = getPackageManager().getLaunchIntentForPackage("uk.bmsupport.app");
+        if (i == null) i = new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://bmsupport.uk/home"));
+        try { startActivity(i); } catch (Exception e) { say("Couldn't open BM Support. Open your ticket or order's Remote setup tab on bmsupport.uk.", WARN); }
     }
 
     private void confirmReset() {
