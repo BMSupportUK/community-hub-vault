@@ -605,7 +605,7 @@ export function AppTransferPanel({ onUploadClick, remoteDevice }: { onUploadClic
         {!builds ? (
           <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label="Loading APK downloads" />
         ) : remoteBuilds.length ? (
-          <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-4">
             {remoteBuilds.map((build) => <AppCard key={build.id} build={build} transfer={byBuild.get(build.id)} now={now} />)}
           </div>
         ) : (
