@@ -32,7 +32,7 @@ final class Enabler {
     static Checks enable(Context ctx, String host, Progress p) throws Exception {
         Checks c = new Checks();
         p.step(0, "Connecting to the TV…");
-        p.step(1, "Look at the TV: tick Always allow, then press Allow.");
+        p.step(1, "Look at the TV: tick Always allow, then press Allow. No box on the TV? Switch debugging off and on again on the TV and keep watching.");
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
             c.adb = true;
@@ -132,7 +132,11 @@ final class Enabler {
     }
 
     static String friendly(Exception e) {
-        if (e instanceof java.net.SocketTimeoutException) return "Nobody pressed Allow on the TV in time. Press Try again, then press Allow on the TV.";
+        if (e instanceof AdbClient.NotReachable)
+            return "Couldn't find the TV at that address. Check the address matches the TV, that debugging is ON on the TV (ADB debugging on Fire TV, Network debugging on Android / Google TV), and that this phone is on the same Wi-Fi as the TV — not mobile data or a guest network.";
+        if (e instanceof AdbClient.NotAuthorized)
+            return "The TV never showed its Allow box, or it wasn't pressed. On the TV: switch debugging OFF and back ON, keep the TV awake on its home screen, then press Try again and watch the TV for the Allow box.";
+        if (e instanceof java.net.SocketTimeoutException) return "The TV stopped answering. Press Try again, then press Allow on the TV.";
         if (e instanceof java.net.ConnectException || e instanceof java.net.NoRouteToHostException)
             return "Couldn't reach the TV. Check the address, that this phone is on the same Wi-Fi as the TV, and that debugging is ON on the TV (ADB debugging on Fire TV, Network debugging on Android / Google TV).";
         if (e instanceof IllegalStateException) return e.getMessage();
