@@ -10,7 +10,7 @@ export const inviteOrderScreenShare = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: allowed, error: roleError } = await context.supabase.rpc("has_any_role", { _user_id: context.userId, _roles: ["admin", "management", "staff"] });
     if (roleError || !allowed) throw new Error("Forbidden");
-    const { error } = await context.supabase.from("checkout_chat_messages").insert({ order_id: data.orderId, sender: "staff", staff_id: context.userId, content: `Please connect your TV using the screen-sharing code box on this order. ${ORDER_SCREEN_SHARE_INVITE}` });
+    const { error } = await context.supabase.from("checkout_chat_messages").insert({ order_id: data.orderId, sender: "staff", staff_id: context.userId, content: `Please open the Remote setup tab at the top of this order, follow the steps, then enter your TV code there. ${ORDER_SCREEN_SHARE_INVITE}` });
     if (error) throw new Error("Could not send screen share request");
     return { ok: true };
   });
