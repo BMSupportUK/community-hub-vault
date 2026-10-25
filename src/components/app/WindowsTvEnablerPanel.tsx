@@ -1,6 +1,6 @@
 import { Download, Monitor, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import windowsInstaller from "@/assets/BM-TV-Enabler-Setup-1.0.0.exe.asset.json";
+import windowsInstaller from "@/assets/BM-TV-Enabler-Setup-1.1.0.exe.asset.json";
 
 export function WindowsTvEnablerPanel() {
   return (
@@ -25,9 +25,9 @@ export function WindowsTvEnablerPanel() {
       <aside aria-label="Windows app download" className="min-w-0 self-start rounded-lg border border-border bg-surface/70 p-5 sm:p-6">
         <h3 className="flex items-center gap-2 font-display text-xl font-semibold text-foreground"><Download className="size-5 shrink-0 text-primary" /> Windows download</h3>
         <p className="mt-3 text-muted-foreground">Free Windows app for enabling BM Remote Control on your Amazon Fire TV. No Android phone or BM Support app login required.</p>
-        <p className="mt-3 text-sm font-medium text-foreground">Windows 10 / 11 · 64-bit · Version 1.0 · {Math.round(windowsInstaller.size / 1024 / 1024)} MB</p>
+        <p className="mt-3 text-sm font-medium text-foreground">Windows 10 / 11 · 64-bit · Version 1.1 · {Math.round(windowsInstaller.size / 1024 / 1024)} MB</p>
         <Button asChild className="mt-5 h-auto w-full whitespace-normal py-3 text-center">
-          <a href={windowsInstaller.url} download="BM-TV-Enabler-Setup-1.0.0.exe"><Download className="size-4 shrink-0" /> Download Windows installer</a>
+          <a href={windowsInstaller.url} download="BM-TV-Enabler-Setup-1.1.0.exe"><Download className="size-4 shrink-0" /> Download Windows installer</a>
         </Button>
         <div className="mt-5 flex items-start gap-2 border-l-2 border-primary pl-3 text-sm text-muted-foreground">
           <ShieldAlert className="mt-0.5 size-4 shrink-0 text-primary" />
