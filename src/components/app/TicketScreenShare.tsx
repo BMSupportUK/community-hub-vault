@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
-import { canUseTvRemote, normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
+import { canUseTvRemote } from "@/lib/tv-remote";
 import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, ticketShareRequested, isCustomerTestTicket } from "@/lib/ticket-screen-share";
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
