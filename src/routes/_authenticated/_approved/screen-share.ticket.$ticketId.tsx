@@ -3,7 +3,7 @@ import { ArrowLeft, MonitorUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { TicketScreenShareWorkspace } from "@/components/app/TicketScreenShare";
+import { TicketScreenShareWorkspace, ScreenShareOfficeBackdrop } from "@/components/app/TicketScreenShare";
 import { supabase } from "@/integrations/supabase/client";
 import { canUseTvRemote } from "@/lib/tv-remote";
 
