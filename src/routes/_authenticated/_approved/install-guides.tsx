@@ -761,9 +761,15 @@ function InstallGuidesPage() {
                               renderGuideGrid(items, (fromId, toId) => { if (category) void reorderRemoteHelperBlogs(category.id, fromId, toId); })
                             )}
                           </TabsContent>
-                          <TabsContent value="device-apps" className="mt-5 min-w-0 space-y-6">
-                            <AppTransferPanel remoteDevice={device.key} />
-                            {device.key === "amazon" && <TvEnablerPanel />}
+                          <TabsContent value="device-apps" className="mt-5 min-w-0">
+                            {device.key === "amazon" ? (
+                              <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
+                                <AppTransferPanel remoteDevice={device.key} />
+                                <TvEnablerPanel />
+                              </div>
+                            ) : (
+                              <AppTransferPanel remoteDevice={device.key} />
+                            )}
                           </TabsContent>
                         </Tabs>
                       </TabsContent>
