@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
-import { canUseTvRemote, normalizePairCode } from "@/lib/tv-remote";
+import { canUseTvRemote } from "@/lib/tv-remote";
 import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, ticketShareRequested, isCustomerTestTicket } from "@/lib/ticket-screen-share";
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
@@ -105,8 +105,6 @@ function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: str
   const navigate = useNavigate();
   const [state, setState] = useState<{ invited: boolean; status: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     const r = await supabase.rpc("ticket_screen_share_state", { _ticket_id: ticketId });
     if (r.error) { setError("Screen sharing is unavailable for this ticket."); return; }
@@ -119,14 +117,6 @@ function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: str
   const waiting = status === "pending" || status === "claimed";
   const title = error ? "Screen share unavailable" : !state ? "Checking screen share…" : live ? "Your TV screen is being shared" : status === "claimed" ? "Staff are connecting" : status === "pending" ? "Waiting for staff to answer" : closed ? "Ticket closed" : "No screen share running";
   const text = error ? error : !state ? "" : live ? "Staff can see your TV now. You can return to your ticket while the screen share carries on." : status === "claimed" ? "Staff have answered. Press Allow and then Start on your TV." : status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : closed ? "This ticket is closed, so screen sharing is no longer available." : "To share your screen, enter the code from BM Remote Helper on the Remote setup tab.";
-  const sendCode = async () => {
-    setBusy(true);
-    const { data, error: e } = await supabase.rpc("verify_ticket_remote_setup" as never, { _ticket_id: ticketId, _code: code } as never);
-    if (e) toast.error(e.message);
-    else if (!data) toast.error("That code isn't live. Check BM Remote Helper is open on the TV and try the code it shows now.");
-    else { toast.success("Code sent — staff have been alerted"); setCode(""); }
-    setBusy(false); void load();
-  };
   return <section className="mx-auto w-full max-w-lg space-y-3 text-foreground">
     <div role="status" className={`space-y-3 rounded-lg border p-5 ${live ? "border-primary bg-primary/15" : waiting ? "border-primary/50 bg-primary/10" : "border-border bg-card/80"}`}>
       <h2 className="flex items-center gap-2 text-xl font-semibold">
