@@ -19,7 +19,6 @@ test("Helper code only unlocks after ADB, Helper and Accessibility are reported"
 });
 
 test("Android / Google TV needs no debugging check before the Helper code", () => {
-  const { appChecksPassed } = require("../src/lib/ticket-remote-setup");
   expect(appChecksPassed(null, "android")).toBe(true);
   expect(appChecksPassed(null, "amazon")).toBe(false);
 });
