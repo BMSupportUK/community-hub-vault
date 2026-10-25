@@ -26,11 +26,17 @@ final class Enabler {
 
     interface Progress { void step(int index, String text); }
 
-    static void enable(Context ctx, String host, Progress p) throws Exception {
+    /** What the TV really has, read over ADB — sent to the website so customers can't just tick steps. */
+    static final class Checks { boolean adb, helper, control, accessibility; }
+
+    static Checks enable(Context ctx, String host, Progress p) throws Exception {
+        Checks c = new Checks();
         p.step(0, "Connecting to the TV…");
         p.step(1, "Look at the TV: tick Always allow, then press Allow.");
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
+            c.adb = true;
+            c.helper = adb.shell("pm path " + HELPER).contains("package:");
             String installed = adb.shell("pm path " + CONTROL);
             if (!installed.contains("package:")) {
                 p.step(2, "Installing remote control on the TV…");
@@ -60,7 +66,28 @@ final class Enabler {
             adb.shell("settings put secure accessibility_enabled 1");
             if (!adb.shell("settings get secure enabled_accessibility_services").contains(CONTROL + "/"))
                 throw new IllegalStateException("The TV refused to switch remote control on.");
+            c.control = adb.shell("pm path " + CONTROL).contains("package:");
+            c.accessibility = adb.shell("settings get secure enabled_accessibility_services").contains(CONTROL + "/")
+                    && adb.shell("settings get secure accessibility_enabled").trim().equals("1");
         }
+        return c;
+    }
+
+    /** Sends the checks to bmsupport.uk against the customer's ticket setup code. Returns an error message or null. */
+    static String report(String setupCode, Checks c) {
+        try {
+            java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-setup").openConnection();
+            h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
+            h.setRequestProperty("Content-Type", "application/json");
+            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.4\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+                    + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
+            try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
+            int code = h.getResponseCode(); h.disconnect();
+            if (code == 200) return null;
+            if (code == 404) return "That setup code isn't valid. Check the code on your support ticket's Remote setup tab.";
+            if (code == 429) return "Too many tries. Wait 15 minutes.";
+            return "Couldn't tell BM Support (error " + code + "). Try again.";
+        } catch (Exception e) { return "Couldn't reach BM Support. Check the phone's internet and try again."; }
     }
 
     static String friendly(Exception e) {

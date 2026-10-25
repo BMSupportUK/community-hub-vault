@@ -28,7 +28,7 @@ public class MainActivity extends Activity {
             ACCENT = Color.parseColor("#E23B4E"), OK = Color.parseColor("#3CCB7F"), WARN = Color.parseColor("#F5C04A");
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
-    private EditText address;
+    private EditText address, setupCode;
     private Button turnOn, find;
     private TextView status;
     private final List<TextView> stepViews = new ArrayList<>();
@@ -43,8 +43,16 @@ public class MainActivity extends Activity {
         col.setBackgroundColor(BG);
 
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("Switches on BM Remote Control on your Amazon Fire TV so BM Support staff can help you with the remote.", 15, MUTED, false));
+        col.addView(text("Switches on BM Remote Control on your Fire TV or Android TV so BM Support staff can help you with the remote.", 15, MUTED, false));
         col.addView(text("1. Open BM Remote Helper on the TV — it shows the TV's address.\n2. Make sure this phone is on the same Wi-Fi as the TV.\n3. Type the address below and press Turn on remote control.", 15, FG, false));
+
+        col.addView(text("Your setup code from the Remote setup tab on your support ticket:", 15, FG, false));
+        setupCode = new EditText(this);
+        setupCode.setHint("8-digit setup code");
+        setupCode.setHintTextColor(MUTED); setupCode.setTextColor(FG); setupCode.setTextSize(20);
+        setupCode.setInputType(InputType.TYPE_CLASS_NUMBER);
+        setupCode.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(9) });
+        col.addView(setupCode, lp(dp(8)));
 
         address = new EditText(this);
         address.setHint("TV address, e.g. 192.168.1.23");
@@ -79,14 +87,19 @@ public class MainActivity extends Activity {
         if (busy) return;
         String host = address.getText().toString().trim();
         if (!host.matches("^\\d{1,3}(\\.\\d{1,3}){3}$")) { say("Type the TV's address exactly as it shows on the TV, e.g. 192.168.1.23", WARN); return; }
+        String sc = setupCode.getText().toString().replaceAll("\\D", "");
+        if (sc.length() != 8) { say("Type the 8-digit setup code shown on your support ticket's Remote setup tab.", WARN); return; }
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("host", host).apply();
         setBusy(true);
         resetSteps();
         say("Working… keep this app open.", MUTED);
         io.execute(() -> {
             try {
-                Enabler.enable(this, host, (i, msg) -> ui.post(() -> { mark(i); say(msg, i == 1 ? WARN : MUTED); }));
-                ui.post(() -> { for (int i = 0; i < STEPS.length; i++) done(i); say("Remote control is on. You can close this app.", OK); turnOn.setText("Turn on remote control"); setBusy(false); });
+                Enabler.Checks c = Enabler.enable(this, host, (i, msg) -> ui.post(() -> { mark(i); say(msg, i == 1 ? WARN : MUTED); }));
+                ui.post(() -> say("Telling BM Support your TV is ready…", MUTED));
+                String err = Enabler.report(sc, c);
+                if (err != null) { ui.post(() -> { say("Remote control is on, but: " + err, ACCENT); turnOn.setText("Try again"); setBusy(false); }); return; }
+                ui.post(() -> { for (int i = 0; i < STEPS.length; i++) done(i); say("Remote control is on and BM Support has been told. Now open BM Remote Helper on the TV and type its code on your ticket.", OK); turnOn.setText("Turn on remote control"); setBusy(false); });
             } catch (Exception e) {
                 String m = Enabler.friendly(e);
                 ui.post(() -> { say(m, ACCENT); turnOn.setText("Try again"); setBusy(false); });
