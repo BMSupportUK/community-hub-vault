@@ -395,3 +395,5 @@
 - [x] Checked key + signature against Google's official adb (identical). Fixed real protocol faults: key now re-sent when the TV asks again (AOSP retry), connection kept open while the Allow box is up (was cut every 20s), retries on refused/reset, file push now follows ADB flow control/DONE format. Error shows the exact stage reached. Fake-TV test `tv-enabler/tests/AdbClientTest.java` passes; signed 1.8 live via /api/public/tv-enabler-apk (checksum verified).
 - [ ] Real TV test with 1.8 (needs Dane J's TV).
 - [ ] BM Support phone app has the same connection fix in source; needs an APK rebuild to ship it.
+- [x] Helper download fixed: link looked for "Remote Helper" but the helper is uploaded as "BM Support Remote" (2.3, verified package uk.bmsupport.remote with control.apk). Needs Publish to go live.
+- [x] Enabler QR opens a single Download button page (no duplicate downloads); phone download never serves the Windows installer. Needs Publish.

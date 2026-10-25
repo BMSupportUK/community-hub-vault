@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 /**
- * Serves the latest available "BM Remote Helper" APK uploaded in
+ * Serves the latest available BM Remote Helper (TV app, uploaded as "BM Support Remote") APK uploaded in
  * Install Guides → App APK. Used by the BM Support Android app's
  * in-app installer. Only returns a build an admin has published.
  */
@@ -13,7 +13,8 @@ export const Route = createFileRoute("/api/public/remote-helper-apk")({
         const { data: row } = await supabaseAdmin
           .from("app_builds")
           .select("file_path, version_name")
-          .ilike("app_name", "%remote helper%")
+          // The TV helper is uploaded in Install Guides as "BM Support Remote" (older uploads: "Remote Helper").
+          .or("app_name.ilike.%remote helper%,app_name.ilike.bm support remote%")
           .eq("is_available", true)
           .not("file_path", "is", null)
           .order("created_at", { ascending: false })
