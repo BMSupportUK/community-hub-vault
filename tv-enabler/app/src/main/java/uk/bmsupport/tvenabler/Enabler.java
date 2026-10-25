@@ -110,13 +110,19 @@ final class Enabler {
         return out;
     }
 
-    /** BM Remote Helper exports control.apk when it first runs; wait for that file to appear. */
-    private static void waitForExport(AdbClient adb, String path) throws Exception {
-        for (int i = 0; i < 15; i++) {
-            if (adb.shell("ls " + path).contains("control.apk")) return;
-            Thread.sleep(2000);
+    /** Pulls assets/control.apk out of the downloaded BM Remote Helper APK. */
+    private static File extractControl(Context ctx, File helperApk) throws java.io.IOException {
+        File out = new File(ctx.getCacheDir(), "bm-control.apk");
+        try (java.util.zip.ZipFile z = new java.util.zip.ZipFile(helperApk)) {
+            java.util.zip.ZipEntry e = z.getEntry("assets/control.apk");
+            if (e == null) throw new IllegalStateException("The BM Remote Helper download is missing remote control. Tell BM Support.");
+            try (java.io.InputStream in = z.getInputStream(e); FileOutputStream o = new FileOutputStream(out)) {
+                byte[] buf = new byte[65536]; int r;
+                while ((r = in.read(buf)) > 0) o.write(buf, 0, r);
+            }
         }
-        throw new IllegalStateException("BM Remote Helper didn't get ready on the TV. Open it on the TV once, then press Try again.");
+        if (out.length() < 10_000) { out.delete(); throw new java.io.IOException("Couldn't unpack remote control. Press Try again."); }
+        return out;
     }
 
     /** Sends the checks to bmsupport.uk against the customer's ticket setup code. Returns an error message or null. */
@@ -125,7 +131,7 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-setup").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.8\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.9\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             int code = h.getResponseCode(); h.disconnect();
