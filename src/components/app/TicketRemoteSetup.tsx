@@ -57,19 +57,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     await reload(); setBusy(false);
   };
   if (row === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
-  if (!customer) {
-    return <section className="mx-auto max-w-2xl space-y-3 text-foreground">
-      <h2 className="text-xl font-semibold">Remote access setup</h2>
-      {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
-        <RemoteSetupProgress row={row} />
-        <p className="text-sm">Device: <strong>{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</strong> · {row.completed_at ? <span className="font-semibold text-primary">Confirmed by the apps</span> : row.app_checked_at ? "App reported — waiting on the rest" : "Waiting for the app to report"}</p>
-        <ol className="space-y-2">{REMOTE_SETUP_STEPS[row.device].map((s, i) => (
-          <li key={i} className="flex items-center gap-2 text-sm">{stepDone(s, row) ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}{s.title}</li>
-        ))}</ol>
-        <p className="text-xs text-muted-foreground">Ticks come only from BM TV Enabler / BM Support app checking the TV, and from BM Remote Helper's live code — the customer can't tick them.</p>
-      </>}
-    </section>;
-  }
+  if (!customer) return <StaffRemoteSetup ticketId={ticketId} row={row} reload={reload} />;
   if (!row) {
     return <section className="mx-auto max-w-2xl space-y-4 text-foreground">
       <h2 className="text-xl font-semibold">Which TV device are you using?</h2>
@@ -82,6 +70,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   }
   const steps = REMOTE_SETUP_STEPS[row.device];
   const ready = appChecksPassed(row.app_checks, row.device);
+  const complete = Boolean(row.completed_at);
   const main = <section className="min-w-0 space-y-4 text-foreground">
     <div className="flex flex-wrap items-center gap-2">
       <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
@@ -104,7 +93,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       {setupCode && <><p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p><Button size="sm" variant="outline" disabled={busy} onClick={() => void issue()}>New setup code</Button></>}
     </div>}
     <RemoteSetupProgress row={row} />
-    {steps.map((s, i) => {
+    {!complete && steps.map((s, i) => {
       const done = stepDone(s, row);
       return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
         <h3 className="flex items-center gap-2 font-semibold">{done ? <CheckCircle2 className="size-5 text-primary" /> : <span className="flex size-5 items-center justify-center rounded-full border border-border text-xs">{i + 1}</span>}{s.title}</h3>
@@ -117,6 +106,30 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     {main}
     <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr /><div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">No Android phone? Use a Windows PC</h3><p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, type the same setup code, and it ticks the steps the same way.</p><Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup-1.2.0.exe">Download for Windows</a></Button><p className="text-xs text-muted-foreground">Windows 10 / 11 · free, unsigned — choose More info › Run anyway if warned.</p></div></aside>
   </div>;
+}
+
+/** Staff view: subscribes itself so ticks and completion appear in real time. */
+function StaffRemoteSetup({ ticketId, row, reload }: { ticketId: string; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
+  useEffect(() => {
+    const channel = supabase.channel(`ticket-remote-setup-staff-${ticketId}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "ticket_remote_setup", filter: `ticket_id=eq.${ticketId}` }, () => { void reload(); })
+      .subscribe();
+    const t = window.setInterval(() => { void reload(); }, 5000);
+    return () => { window.clearInterval(t); void supabase.removeChannel(channel); };
+  }, [ticketId, reload]);
+  return <section className="mx-auto max-w-2xl space-y-3 text-foreground">
+    <h2 className="text-xl font-semibold">Remote access setup</h2>
+    {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
+      <RemoteSetupProgress row={row} />
+      <p className="text-sm">Device: <strong>{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</strong> · {row.completed_at ? <span className="font-semibold text-primary">Confirmed by the apps</span> : row.app_checked_at ? "App reported — waiting on the rest" : "Waiting for the app to report"}</p>
+      {!row.completed_at && <>
+        <ol className="space-y-2">{REMOTE_SETUP_STEPS[row.device].map((s, i) => (
+          <li key={i} className="flex items-center gap-2 text-sm">{stepDone(s, row) ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}{s.title}</li>
+        ))}</ol>
+        <p className="text-xs text-muted-foreground">Ticks come only from BM TV Enabler / BM Support app checking the TV, and from BM Remote Helper's live code — the customer can't tick them.</p>
+      </>}
+    </>}
+  </section>;
 }
 
 function EnablerQr() {
