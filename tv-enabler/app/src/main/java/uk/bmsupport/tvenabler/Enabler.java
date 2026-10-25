@@ -17,8 +17,8 @@ import java.security.spec.X509EncodedKeySpec;
 
 /**
  * Same steps as the BM Support app's Settings › TV remote (TvRemoteSetupPlugin):
- * connect to the TV's Wi-Fi debugging, install BM Remote Control from the helper's
- * exported copy, then switch its accessibility service on.
+ * connect to the TV's Wi-Fi debugging, push the helper's bundled control APK from
+ * the phone, then switch its accessibility service on.
  */
 final class Enabler {
     static final String CONTROL = "uk.bmsupport.remote.control";
@@ -30,6 +30,41 @@ final class Enabler {
     static final class Checks { boolean adb, helper, control, accessibility; }
 
     static Checks enable(Context ctx, String host, Progress p) throws Exception {
+        return enableUntil(ctx, host, 4, p);
+    }
+
+    /** Read-only readiness check; only launch the code app when every check passes. */
+    static Checks checkExisting(Context ctx, String host, Progress p) throws Exception {
+        p.step(0, "Checking this TV's installed apps and remote-control permissions…");
+        p.step(1, "If the TV asks, tick Always allow and press Allow. Keep this phone app open.");
+        KeyPair kp = keys(ctx);
+        try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
+            Checks c = readChecks(adb);
+            if (SetupWizard.ready(c.adb, c.helper, c.control, c.accessibility)) {
+                p.step(5, "This TV is already set up. Opening BM Remote Helper to show your code…");
+                openHelper(adb);
+            }
+            return c;
+        }
+    }
+
+    private static Checks readChecks(AdbClient adb) throws Exception {
+        Checks c = new Checks(); c.adb = true;
+        c.helper = adb.shell("pm path " + HELPER).contains("package:");
+        c.control = adb.shell("pm path " + CONTROL).contains("package:");
+        c.accessibility = adb.shell("settings get secure enabled_accessibility_services").contains(CONTROL + "/")
+                && adb.shell("settings get secure accessibility_enabled").trim().equals("1");
+        return c;
+    }
+
+    private static void openHelper(AdbClient adb) throws Exception {
+        String result = adb.shell("monkey -p " + HELPER + " -c android.intent.category.LAUNCHER 1");
+        if (!result.contains("Events injected: 1"))
+            throw new IllegalStateException("Couldn't open BM Remote Helper. Open it on the TV to see your code, then try again.");
+    }
+
+    /** Staged wizard uses the proven install path, stopping before the next customer confirmation. */
+    static Checks enableUntil(Context ctx, String host, int stopAfter, Progress p) throws Exception {
         Checks c = new Checks();
         p.step(0, "Connecting to the TV…");
         p.step(1, "Look at the TV: tick Always allow, then press Allow. No box on the TV? Switch debugging off and on again on the TV and keep watching.");
@@ -38,7 +73,8 @@ final class Enabler {
             c.adb = true;
             c.helper = adb.shell("pm path " + HELPER).contains("package:");
             boolean needControl = !adb.shell("pm path " + CONTROL).contains("package:");
-            File apk = (!c.helper || needControl) ? downloadHelper(ctx) : null;
+            if (!c.helper || (needControl && stopAfter >= 3)) p.step(stopAfter >= 3 && c.helper ? 3 : 2, "Downloading BM Remote Helper and its bundled remote control to this phone…");
+            File apk = (!c.helper || (needControl && stopAfter >= 3)) ? downloadHelper(ctx) : null;
             try {
                 if (!c.helper) {
                     p.step(2, "Installing BM Remote Helper on the TV…");
@@ -51,7 +87,8 @@ final class Enabler {
                     if (!c.helper) throw new IllegalStateException("BM Remote Helper didn't install on the TV. Try again.");
                 }
                 p.step(2, "Opening BM Remote Helper on the TV…");
-                adb.shell("monkey -p " + HELPER + " -c android.intent.category.LAUNCHER 1");
+                openHelper(adb);
+                if (stopAfter == 2) return readChecks(adb);
                 if (needControl) {
                     p.step(3, "Installing remote control on the TV…");
                     // The remote-control app ships inside the helper download (assets/control.apk).
@@ -70,6 +107,7 @@ final class Enabler {
                         throw new IllegalStateException("Remote control didn't install on the TV. Press Try again.");
                 }
             } finally { if (apk != null) apk.delete(); }
+            if (stopAfter == 3) return readChecks(adb);
             p.step(4, "Switching remote control on…");
             String service = CONTROL + "/" + CONTROL + ".ControlService";
             String current = adb.shell("settings get secure enabled_accessibility_services").trim();
@@ -92,7 +130,9 @@ final class Enabler {
             c.accessibility = adb.shell("settings get secure enabled_accessibility_services").contains(CONTROL + "/")
                     && adb.shell("settings get secure accessibility_enabled").trim().equals("1");
             // Leave BM Remote Helper open on the TV so its six-digit code is on screen.
-            try { adb.shell("monkey -p " + HELPER + " -c android.intent.category.LAUNCHER 1"); } catch (Exception ignored) { }
+            openHelper(adb);
+            if (!SetupWizard.ready(c.adb, c.helper, c.control, c.accessibility))
+                throw new IllegalStateException("Remote control isn't fully enabled yet. Press Try again.");
         }
         return c;
     }
@@ -131,7 +171,7 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-setup").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.10\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.11\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             int code = h.getResponseCode(); h.disconnect();
