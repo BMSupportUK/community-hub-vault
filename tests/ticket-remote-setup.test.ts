@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { canRequestTicketScreenShare, manualStepsDone, REMOTE_SETUP_STEPS } from "../src/lib/ticket-remote-setup";
+import { appChecksPassed, canRequestTicketScreenShare, REMOTE_SETUP_STEPS, stepDone } from "../src/lib/ticket-remote-setup";
 
 test("staff cannot request screen share until the app confirms setup", () => {
   expect(canRequestTicketScreenShare(null)).toBe(false);
@@ -7,8 +7,13 @@ test("staff cannot request screen share until the app confirms setup", () => {
   expect(canRequestTicketScreenShare({ completed_at: "2026-10-25T12:00:00Z" })).toBe(true);
 });
 
-test("app code check only after every card is confirmed", () => {
-  const manual = REMOTE_SETUP_STEPS.android.map((_, i) => i).filter((i) => !REMOTE_SETUP_STEPS.android[i]!.appCheck);
-  expect(manualStepsDone("android", manual.slice(1))).toBe(false);
-  expect(manualStepsDone("android", manual)).toBe(true);
+test("no step is done without an app report", () => {
+  const empty = { app_checks: {}, app_checked_at: null, completed_at: null };
+  for (const d of ["amazon", "android"] as const) for (const s of REMOTE_SETUP_STEPS[d]) expect(stepDone(s, empty)).toBe(false);
+});
+
+test("Helper code only unlocks after ADB, Helper and Accessibility are reported", () => {
+  expect(appChecksPassed({ adb: true, helper: true, accessibility: false })).toBe(false);
+  expect(appChecksPassed({ adb: true, helper: false, accessibility: true })).toBe(false);
+  expect(appChecksPassed({ adb: true, helper: true, accessibility: true })).toBe(true);
 });

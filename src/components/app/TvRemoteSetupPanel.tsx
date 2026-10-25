@@ -36,7 +36,7 @@ export function TvRemoteSetupPanel() {
       const sc = setupCode.replace(/\D/g, "");
       if (sc.length === 8 && res.checks) {
         setStep("Telling BM Support your TV is ready…");
-        const r = await fetch("/api/public/remote-setup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: sc, app: "bm-support-phone", checks: res.checks }) });
+        const r = await fetch("https://bmsupport.uk/api/public/remote-setup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: sc, app: "bm-support-phone", checks: res.checks }) });
         if (!r.ok) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "Couldn't tell BM Support. Try again.");
       }
       setDone(true); setStep(null);
