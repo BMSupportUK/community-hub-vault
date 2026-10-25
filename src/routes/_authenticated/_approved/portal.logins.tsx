@@ -40,7 +40,9 @@ function AppInformationPanel({ codes }: { codes: QdCode[] }) {
 
 function PortalLoginsPage() {
   const read = useServerFn(readPortalCredentials);
+  const requestReset = useServerFn(requestPortalPinReset);
   const [pin, setPin] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [resetBusy, setResetBusy] = useState(false), [resetDone, setResetDone] = useState(false);
   const [accounts, setAccounts] = useState<ManualCredential[] | null>(null), [qdCodes, setQdCodes] = useState<QdCode[]>([]), [expiresAt, setExpiresAt] = useState<number | null>(null), [now, setNow] = useState(() => Date.now());
   useEffect(() => { if (!expiresAt) return; const t = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(t); }, [expiresAt]);
   const remaining = expiresAt ? Math.max(0, expiresAt - now) : 0;
