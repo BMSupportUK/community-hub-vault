@@ -61,8 +61,8 @@ import { isTicketScreenShareInvite } from "@/lib/ticket-screen-share";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
-  validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1; tab?: "screen" } => ({
-    tab: s.tab === "screen" ? "screen" : undefined,
+  validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1; tab?: "screen" | "setup" } => ({
+    tab: s.tab === "screen" ? "screen" : s.tab === "setup" ? "setup" : undefined,
     id: typeof s.id === "string" ? s.id : undefined,
     view: (s.view === "mine" || s.view === "all" || s.view === "assigned") ? s.view : undefined,
     new2fa: s.new2fa === 1 || s.new2fa === "1" ? 1 : undefined,

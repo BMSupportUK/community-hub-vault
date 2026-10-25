@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { MessageCircle, MonitorUp, Send, X } from "lucide-react";
+import { CheckCircle2, MessageCircle, MonitorUp, Send, Wrench, X } from "lucide-react";
+import { TicketRemoteSetup, useTicketRemoteSetup } from "@/components/app/TicketRemoteSetup";
+import { canRequestTicketScreenShare } from "@/lib/ticket-remote-setup";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,12 +23,14 @@ export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
     : <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => window.dispatchEvent(new CustomEvent("ticket-tv-code", { detail: ticketId }))}><MonitorUp className="mr-2 size-4" />Enter TV code</Button></div>;
 }
 
-export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, children }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen"; children: ReactNode }) {
+export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, children }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen" | "setup"; children: ReactNode }) {
   const { user, roles } = useAuth();
   const staff = canUseTvRemote(roles) && !isCustomerTestTicket(ticketId, user?.id);
   const navigate = useNavigate();
   const notify = useServerFn(notifyTicketReply);
   const [busy, setBusy] = useState(false);
+  const setup = useTicketRemoteSetup(ticketId);
+  const setupReady = canRequestTicketScreenShare(setup.row);
   const [codeOpen, setCodeOpen] = useState(false);
   const offered = useRef(false);
   const previousStatus = useRef<string | null | undefined>(undefined);
@@ -62,7 +66,7 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
     return () => { stopped = true; window.clearInterval(timer); };
   }, [ticketId, navigate, staff, closed, tab]);
   const request = async () => {
-    if (!user || busy) return;
+    if (!user || busy || !setupReady) return;
     setBusy(true);
     try {
       const { data, error } = await supabase.from("ticket_messages").insert({ ticket_id: ticketId, sender_id: user.id, content: ticketScreenShareInvite(), is_internal: false }).select("id").single();
@@ -80,12 +84,13 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
       </DialogContent>
     </Dialog>
     <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card p-2 text-foreground">
-      <Tabs value={tab === "screen" ? "screen" : "ticket"} onValueChange={(value) => void navigate({ to: "/tickets", search: { id: ticketId, tab: value === "screen" ? "screen" : undefined } })}>
-        <TabsList><TabsTrigger value="ticket"><MessageCircle className="mr-2 size-4" />Ticket</TabsTrigger><TabsTrigger value="screen"><MonitorUp className="mr-2 size-4" />Screen share</TabsTrigger></TabsList>
+      <Tabs value={tab ?? "ticket"} onValueChange={(value) => void navigate({ to: "/tickets", search: { id: ticketId, tab: value === "screen" ? "screen" : value === "setup" ? "setup" : undefined } })}>
+        <TabsList><TabsTrigger value="ticket"><MessageCircle className="mr-2 size-4" />Ticket</TabsTrigger><TabsTrigger value="setup"><Wrench className="mr-2 size-4" />Remote setup{setupReady && <CheckCircle2 className="ml-1 size-4 text-primary" />}</TabsTrigger><TabsTrigger value="screen"><MonitorUp className="mr-2 size-4" />Screen share</TabsTrigger></TabsList>
       </Tabs>
-      {staff && !closed && <Button size="sm" className="ml-auto" disabled={busy} onClick={() => void request()}><MonitorUp className="mr-2 size-4" />{busy ? "Sending…" : "Request screen share"}</Button>}
+      {staff && !closed && <Button size="sm" className="ml-auto" disabled={busy || !setupReady} title={setupReady ? undefined : "The customer must finish Remote setup first"} onClick={() => void request()}><MonitorUp className="mr-2 size-4" />{busy ? "Sending…" : setupReady ? "Request screen share" : "Waiting for customer setup"}</Button>}
     </div>
-    <div className={tab === "screen" ? "hidden" : "flex min-h-0 flex-1 flex-col"}>{children}</div>
+    {tab === "setup" && <div className="min-h-0 flex-1 overflow-y-auto bg-background p-3 sm:p-5"><TicketRemoteSetup ticketId={ticketId} customer={!staff} closed={closed} row={setup.row} reload={setup.reload} /></div>}
+    <div className={tab ? "hidden" : "flex min-h-0 flex-1 flex-col"}>{children}</div>
     <div className={tab === "screen" ? "min-h-0 flex-1 overflow-y-auto bg-background p-3 text-foreground sm:p-5" : "hidden"}>
       <TicketScreenShareWorkspace ticketId={ticketId} ownerId={ownerId} staff={staff} viewer={canUseTvRemote(roles)} closed={closed} visible={tab === "screen"} />
     </div>
