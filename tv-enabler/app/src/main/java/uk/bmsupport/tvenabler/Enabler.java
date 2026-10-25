@@ -57,6 +57,12 @@ final class Enabler {
         return c;
     }
 
+    /** Opens BM Remote Helper on the TV so it shows a fresh six-digit screen-share code. */
+    static void openCodeApp(Context ctx, String host) throws Exception {
+        KeyPair kp = keys(ctx);
+        try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) { openHelper(adb); }
+    }
+
     private static void openHelper(AdbClient adb) throws Exception {
         String result = adb.shell("monkey -p " + HELPER + " -c android.intent.category.LAUNCHER 1");
         if (!result.contains("Events injected: 1"))
