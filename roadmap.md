@@ -376,3 +376,8 @@
 - [x] Standalone signed Android app v1.0 (address entry, Find my TV scan, step progress), uploaded; Install Guides "TV Remote Enabler" tab with QR pop-up; download route serves identical bytes. Preview only.
 - [ ] Real Fire TV test with an Android phone — waits on Dane J.
 - [ ] Point BM Remote Helper's on-TV text at Install Guides — helper source is outside this project; needs the next helper rebuild.
+
+## Merge BM Remote Helper into BM TV Enabler
+- [ ] TV Enabler phone app installs BM Remote Helper (and remote control) on the TV itself over Wi-Fi ADB, so customers never install the helper separately; one app does the whole Amazon setup.
+- [ ] Update Amazon Remote setup steps copy to match the one-app flow.
+- [ ] Build signed TV Enabler 1.5, upload to app-builds, register release; verify download route serves it.
