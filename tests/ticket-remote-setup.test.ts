@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { appChecksPassed, canRequestTicketScreenShare, REMOTE_SETUP_STEPS, stepDone } from "../src/lib/ticket-remote-setup";
+import { appChecksPassed, canRequestTicketScreenShare, REMOTE_SETUP_STEPS, stepDone, remoteSetupProgress } from "../src/lib/ticket-remote-setup";
 
 test("staff cannot request screen share until the app confirms setup", () => {
   expect(canRequestTicketScreenShare(null)).toBe(false);
@@ -22,4 +22,14 @@ test("Android / Google TV uses the same app checks as Amazon before the Helper c
   expect(appChecksPassed(null, "android")).toBe(false);
   expect(appChecksPassed(null, "amazon")).toBe(false);
   expect(appChecksPassed({ adb: true, helper: true, accessibility: true }, "android")).toBe(true);
+});
+
+test("setup progress follows the latest measured TV stages, not previous completion", () => {
+  const row = { app_checked_at: "2026-10-25T20:16:00Z", completed_at: null };
+  expect(remoteSetupProgress({ ...row, app_checks: null }).stage).toBe(0);
+  expect(remoteSetupProgress({ ...row, app_checks: { adb: true } }).stage).toBe(1);
+  expect(remoteSetupProgress({ ...row, app_checks: { adb: true, helper: true } }).stage).toBe(2);
+  expect(remoteSetupProgress({ ...row, app_checks: { adb: true, helper: true, control: true } }).stage).toBe(3);
+  expect(remoteSetupProgress({ ...row, app_checks: { adb: true, helper: true, control: true, accessibility: true } }).stage).toBe(4);
+  expect(remoteSetupProgress({ ...row, completed_at: row.app_checked_at, app_checks: { adb: false } }).stage).toBe(0);
 });
