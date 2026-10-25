@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
         String host = address.getText().toString().trim();
         if (!host.matches("^\\d{1,3}(\\.\\d{1,3}){3}$")) { say("Type the TV's address exactly as it shows on the TV, e.g. 192.168.1.23", WARN); return; }
         String sc = setupCode.getText().toString().replaceAll("\\D", "");
-        if (sc.length() != 8) { say("Type the 8-digit setup code shown on your support ticket's Remote setup tab.", WARN); return; }
+        if (sc.length() != 8) { say("Type the 8-digit setup code shown on the Remote setup tab of your ticket or order.", WARN); return; }
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("host", host).apply();
         setBusy(true);
         resetSteps();
