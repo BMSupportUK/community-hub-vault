@@ -748,16 +748,24 @@ function InstallGuidesPage() {
                     const items = remoteHelperBlogs.filter((b) => b.category_id === category?.id);
                     return (
                       <TabsContent key={device.key} value={device.key} className="mt-6 min-w-0 space-y-6">
-                        <AppTransferPanel remoteDevice={device.key} />
-                        {device.key === "amazon" && <TvEnablerPanel />}
-                        <section className="min-w-0">
-                          <h2 className="mb-4 font-display text-2xl font-bold text-foreground">{device.label} guides</h2>
-                          {items.length === 0 ? (
-                            <p className="text-muted-foreground">No guides in this section yet.</p>
-                          ) : (
-                            renderGuideGrid(items, (fromId, toId) => { if (category) void reorderRemoteHelperBlogs(category.id, fromId, toId); })
-                          )}
-                        </section>
+                        <Tabs defaultValue="device-guides" className="min-w-0">
+                          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface-2 p-1 sm:w-fit" aria-label={`${device.label} sections`}>
+                            <TabsTrigger value="device-guides" className="whitespace-normal px-4 py-2">Guides</TabsTrigger>
+                            <TabsTrigger value="device-apps" className="whitespace-normal px-4 py-2">App downloads</TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="device-guides" className="mt-5 min-w-0">
+                            <h2 className="mb-4 font-display text-2xl font-bold text-foreground">{device.label} guides</h2>
+                            {items.length === 0 ? (
+                              <p className="text-muted-foreground">No guides in this section yet.</p>
+                            ) : (
+                              renderGuideGrid(items, (fromId, toId) => { if (category) void reorderRemoteHelperBlogs(category.id, fromId, toId); })
+                            )}
+                          </TabsContent>
+                          <TabsContent value="device-apps" className="mt-5 min-w-0 space-y-6">
+                            <AppTransferPanel remoteDevice={device.key} />
+                            {device.key === "amazon" && <TvEnablerPanel />}
+                          </TabsContent>
+                        </Tabs>
                       </TabsContent>
                     );
                   })}
