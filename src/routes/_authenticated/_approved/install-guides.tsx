@@ -64,10 +64,10 @@ const IG_SHOW_EDITOR_KEY = "install-guides-show-editor";
 /** Categories holding the BM TV Enabler / BM Remote Helper (remote support) guides.
  *  These cards render in the TV Remote Enabler tab, not the Guides tab. */
 const REMOTE_HELPER_CAT_SLUGS = ["remote-helper-amazon", "remote-helper-android"];
-const REMOTE_HELPER_SECTION_NAMES: Record<string, string> = {
-  "remote-helper-amazon": "Amazon Fire TV",
-  "remote-helper-android": "Android / Google TV",
-};
+const REMOTE_DEVICES = [
+  { key: "amazon", slug: "remote-helper-amazon", label: "Amazon Fire TV" },
+  { key: "android", slug: "remote-helper-android", label: "Android / Google TV" },
+] as const;
 
 /** Pulls the guide password out of text like "Enter e2n4Zq to view guide". */
 function extractGuideCode(text: string | null | undefined): string | null {
@@ -733,24 +733,33 @@ function InstallGuidesPage() {
               />
             ) : (
               <div className="max-w-6xl space-y-6">
-                <TvEnablerPanel />
-                {remoteHelperCategories.map((c) => {
-                  const items = remoteHelperBlogs.filter((b) => b.category_id === c.id);
-                  return (
-                    <section key={c.id} className="min-w-0">
-                      <h2 className="font-display text-2xl font-bold mb-4 text-foreground">
-                        {REMOTE_HELPER_SECTION_NAMES[c.slug] ?? c.name} guides
-                      </h2>
-                      {items.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-violet-500/30 p-12 text-center text-muted-foreground">
-                          No guides in this section yet.
-                        </div>
-                      ) : (
-                        renderGuideGrid(items, (fromId, toId) => { void reorderRemoteHelperBlogs(c.id, fromId, toId); })
-                      )}
-                    </section>
-                  );
-                })}
+                <Tabs defaultValue="amazon" className="min-w-0">
+                  <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface-2 p-1 sm:w-fit">
+                    {REMOTE_DEVICES.map((device) => (
+                      <TabsTrigger key={device.key} value={device.key} className="whitespace-normal px-4 py-2 text-center">
+                        {device.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  {REMOTE_DEVICES.map((device) => {
+                    const category = remoteHelperCategories.find((c) => c.slug === device.slug);
+                    const items = remoteHelperBlogs.filter((b) => b.category_id === category?.id);
+                    return (
+                      <TabsContent key={device.key} value={device.key} className="mt-6 min-w-0 space-y-6">
+                        <AppTransferPanel remoteDevice={device.key} />
+                        {device.key === "amazon" && <TvEnablerPanel />}
+                        <section className="min-w-0">
+                          <h2 className="mb-4 font-display text-2xl font-bold text-foreground">{device.label} guides</h2>
+                          {items.length === 0 ? (
+                            <p className="text-muted-foreground">No guides in this section yet.</p>
+                          ) : (
+                            renderGuideGrid(items, (fromId, toId) => { if (category) void reorderRemoteHelperBlogs(category.id, fromId, toId); })
+                          )}
+                        </section>
+                      </TabsContent>
+                    );
+                  })}
+                </Tabs>
               </div>
             )}
           </TabsContent>
