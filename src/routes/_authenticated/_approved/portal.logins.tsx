@@ -69,7 +69,7 @@ function PortalLoginsPage() {
         <Button type="submit" className="w-full" disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <KeyRound />}Show my logins</Button>
       </form> : <>
         <div role="timer" className="mb-6 rounded-lg border border-border bg-surface p-4"><div className="flex items-center justify-between text-sm"><span>These details hide automatically for your security</span><span className="font-mono text-lg font-semibold text-primary">{Math.floor(remaining / 60000)}:{String(Math.floor(remaining / 1000) % 60).padStart(2, "0")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width] duration-1000" style={{ width: `${(remaining / 600000) * 100}%` }} /></div></div>
-        {accounts.length ? <ManualCredentialCards customers={[{ userId: "portal", displayName: "My accounts", accounts }]} aside={<AppInformationPanel codes={qdCodes} />} />
+        {accounts.length ? <ManualCredentialCards readOnly customers={[{ userId: "portal", displayName: "My accounts", accounts }]} aside={<AppInformationPanel codes={qdCodes} />} />
         : <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_15rem]">
           <p className="text-sm text-muted-foreground">No app logins have been saved on your account yet.</p>
           <AppInformationPanel codes={qdCodes} />
