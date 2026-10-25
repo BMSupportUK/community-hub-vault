@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
-import { canUseTvRemote } from "@/lib/tv-remote";
+import { canUseTvRemote, normalizePairCode } from "@/lib/tv-remote";
 import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, ticketShareRequested, isCustomerTestTicket } from "@/lib/ticket-screen-share";
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
@@ -105,6 +105,8 @@ function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: str
   const navigate = useNavigate();
   const [state, setState] = useState<{ invited: boolean; status: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     const r = await supabase.rpc("ticket_screen_share_state", { _ticket_id: ticketId });
     if (r.error) { setError("Screen sharing is unavailable for this ticket."); return; }
@@ -116,8 +118,24 @@ function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: str
   const live = status === "active";
   const waiting = status === "pending" || status === "claimed";
   const title = error ? "Screen share unavailable" : !state ? "Checking screen share…" : live ? "Your TV screen is being shared" : status === "claimed" ? "Staff are connecting" : status === "pending" ? "Waiting for staff to answer" : closed ? "Ticket closed" : "No screen share running";
-  const text = error ? error : !state ? "" : live ? "Staff can see your TV now. You can return to your ticket while the screen share carries on." : status === "claimed" ? "Staff have answered. Press Allow and then Start on your TV." : status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : closed ? "This ticket is closed, so screen sharing is no longer available." : "To share your screen, open BM Remote Helper on your TV and enter the code it shows on the Remote setup tab.";
-  return <section className="mx-auto w-full max-w-lg text-foreground">
+  const text = error ? error : !state ? "" : live ? "Staff can see your TV now. You can return to your ticket while the screen share carries on." : status === "claimed" ? "Staff have answered. Press Allow and then Start on your TV." : status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : closed ? "This ticket is closed, so screen sharing is no longer available." : "Enter your TV code above to start a screen share.";
+  const sendCode = async () => {
+    setBusy(true);
+    const { data, error: e } = await supabase.rpc("verify_ticket_remote_setup" as never, { _ticket_id: ticketId, _code: code } as never);
+    if (e) toast.error(e.message);
+    else if (!data) toast.error("That code isn't live. Check BM Remote Helper is open on the TV and try the code it shows now.");
+    else { toast.success("Code sent — staff have been alerted"); setCode(""); }
+    setBusy(false); void load();
+  };
+  return <section className="mx-auto w-full max-w-lg space-y-3 text-foreground">
+    {state && !error && !closed && !live && !waiting && <form className="space-y-2 rounded-lg border border-primary/40 bg-card/90 p-4" onSubmit={(e) => { e.preventDefault(); void sendCode(); }}>
+      <h3 className="font-semibold">Enter your TV code</h3>
+      <p className="text-sm text-muted-foreground">Open BM Remote Helper on your TV and type the six-digit code it shows.</p>
+      <div className="flex gap-2">
+        <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
+        <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
+      </div>
+    </form>}
     <div role="status" className={`space-y-3 rounded-lg border p-5 ${live ? "border-primary bg-primary/15" : waiting ? "border-primary/50 bg-primary/10" : "border-border bg-card/80"}`}>
       <h2 className="flex items-center gap-2 text-xl font-semibold">
         <span className={`size-2.5 shrink-0 rounded-full ${live ? "bg-primary animate-pulse" : waiting ? "bg-primary/70 animate-pulse" : "bg-muted-foreground"}`} aria-hidden="true" />
