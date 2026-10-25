@@ -85,8 +85,32 @@ final class Enabler {
             c.control = adb.shell("pm path " + CONTROL).contains("package:");
             c.accessibility = adb.shell("settings get secure enabled_accessibility_services").contains(CONTROL + "/")
                     && adb.shell("settings get secure accessibility_enabled").trim().equals("1");
+            // Leave BM Remote Helper open on the TV so its six-digit code is on screen.
+            try { adb.shell("monkey -p " + HELPER + " -c android.intent.category.LAUNCHER 1"); } catch (Exception ignored) { }
         }
         return c;
+    }
+
+    /** Downloads the latest BM Remote Helper APK from bmsupport.uk so the customer never installs it by hand. */
+    private static File downloadHelper(Context ctx) throws java.io.IOException {
+        File out = new File(ctx.getCacheDir(), "bm-helper.apk");
+        java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-helper-apk").openConnection();
+        h.setConnectTimeout(15000); h.setReadTimeout(60000); h.setInstanceFollowRedirects(true);
+        try (java.io.InputStream in = h.getInputStream(); FileOutputStream o = new FileOutputStream(out)) {
+            byte[] buf = new byte[65536]; int r;
+            while ((r = in.read(buf)) > 0) o.write(buf, 0, r);
+        } finally { h.disconnect(); }
+        if (out.length() < 100_000) { out.delete(); throw new java.io.IOException("Couldn't download BM Remote Helper. Check the phone's internet and try again."); }
+        return out;
+    }
+
+    /** BM Remote Helper exports control.apk when it first runs; wait for that file to appear. */
+    private static void waitForExport(AdbClient adb, String path) throws Exception {
+        for (int i = 0; i < 15; i++) {
+            if (adb.shell("ls " + path).contains("control.apk")) return;
+            Thread.sleep(2000);
+        }
+        throw new IllegalStateException("BM Remote Helper didn't get ready on the TV. Open it on the TV once, then press Try again.");
     }
 
     /** Sends the checks to bmsupport.uk against the customer's ticket setup code. Returns an error message or null. */
@@ -95,7 +119,7 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-setup").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.4\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.5\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             int code = h.getResponseCode(); h.disconnect();
