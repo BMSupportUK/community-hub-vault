@@ -380,4 +380,5 @@
 ## Merge BM Remote Helper into BM TV Enabler
 - [x] TV Enabler 1.5 installs BM Remote Helper (downloads latest from the site, ADB SYNC push, pm install, launches it) plus remote control; one app does the whole Amazon setup. Discovery tests pass, signed build verified, download route serves identical bytes.
 - [x] Update Amazon Remote setup steps and Install Guides enabler tab copy to match the one-app flow; build OK.
-- [ ] Verify the 1.5 one-app flow against a physical Fire TV — requires an Android phone and TV on the same home network.
+- [x] TV Enabler 1.6 asks Amazon Fire TV or Android / Google TV first, shows the right debugging setting per device, and reports the device with the checks; the site rejects a device that does not match the ticket. Signed build verified, download route serves identical bytes, discovery tests pass.
+- [ ] Verify the 1.6 one-app flow against a physical Fire TV and Android TV — requires an Android phone and TV on the same home network.
