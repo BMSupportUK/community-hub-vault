@@ -10,18 +10,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
-import { canUseTvRemote, normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
+import { canUseTvRemote } from "@/lib/tv-remote";
 import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, ticketShareRequested, isCustomerTestTicket } from "@/lib/ticket-screen-share";
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
   const { roles, user } = useAuth();
+  const navigate = useNavigate();
   return canUseTvRemote(roles) && !isCustomerTestTicket(ticketId, user?.id)
     ? <p>TV screen requested — waiting for the customer to enter their TV code.</p>
-    : <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => window.dispatchEvent(new CustomEvent("ticket-tv-code", { detail: ticketId }))}><MonitorUp className="mr-2 size-4" />Enter TV code</Button></div>;
+    : <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => void navigate({ to: "/tickets", search: { id: ticketId, tab: "setup" } })}><MonitorUp className="mr-2 size-4" />Enter TV code</Button></div>;
 }
 
 export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, children }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen" | "setup"; children: ReactNode }) {
@@ -32,18 +32,9 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
   const [busy, setBusy] = useState(false);
   const setup = useTicketRemoteSetup(ticketId);
   const setupReady = canRequestTicketScreenShare(setup.row);
-  const [codeOpen, setCodeOpen] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [autoAnswer, setAutoAnswer] = useState(false);
-  const offered = useRef(false);
   const previousStatus = useRef<string | null | undefined>(undefined);
-  useEffect(() => {
-    const open = (event: Event) => {
-      if (!staff && (event as CustomEvent<string>).detail === ticketId) setCodeOpen(true);
-    };
-    window.addEventListener("ticket-tv-code", open);
-    return () => window.removeEventListener("ticket-tv-code", open);
-  }, [ticketId, staff]);
   useEffect(() => {
     let stopped = false;
     const load = async () => {
@@ -51,7 +42,6 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
       if (stopped || r.error) return;
       const state = r.data as { status: string | null; invited: boolean };
       const current = state.status;
-      if (screenShareInProgress(current)) setCodeOpen(false);
       if (staff) setWaiting(current === "pending");
       if (staff && ticketShareRequested(previousStatus.current, current)) toast.info("The customer has entered their TV code — press Answer screen share");
       if (ticketShareConnected(previousStatus.current ?? null, current)) {
@@ -75,12 +65,7 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
     finally { setBusy(false); }
   };
   return <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-    <Dialog open={!staff && codeOpen} onOpenChange={setCodeOpen}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Enter your TV code</DialogTitle><DialogDescription>BM Support has requested to see your TV screen.</DialogDescription></DialogHeader>
-        <CustomerTicketScreenShare ticketId={ticketId} closed={closed} onConnected={() => setCodeOpen(false)} />
-      </DialogContent>
-    </Dialog>
+
     <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card p-2 text-foreground">
       <Tabs value={tab ?? "ticket"} onValueChange={(value) => void navigate({ to: "/tickets", search: { id: ticketId, tab: value === "screen" ? "screen" : value === "setup" ? "setup" : undefined } })}>
         <TabsList><TabsTrigger value="ticket"><MessageCircle className="mr-2 size-4" />Ticket</TabsTrigger><TabsTrigger value="setup"><Wrench className="mr-2 size-4" />Remote setup{setupReady && <CheckCircle2 className="ml-1 size-4 text-primary" />}</TabsTrigger><TabsTrigger value="screen"><MonitorUp className="mr-2 size-4" />Screen share</TabsTrigger></TabsList>
@@ -115,13 +100,11 @@ export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, viewer = 
   </div>;
 }
 
-function CustomerTicketScreenShare({ ticketId, closed = false, onConnected }: { ticketId: string; closed?: boolean; onConnected?: () => void }) {
+/** Customer Screen share tab: live status only. New TV codes are entered on the Remote setup tab. */
+function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: string; closed?: boolean }) {
   const navigate = useNavigate();
   const [state, setState] = useState<{ invited: boolean; status: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     const r = await supabase.rpc("ticket_screen_share_state", { _ticket_id: ticketId });
     if (r.error) { setError("Screen sharing is unavailable for this ticket."); return; }
@@ -129,20 +112,21 @@ function CustomerTicketScreenShare({ ticketId, closed = false, onConnected }: { 
     setState(r.data as { invited: boolean; status: string | null });
   }, [ticketId]);
   useEffect(() => { void load(); const timer = window.setInterval(load, 2000); return () => window.clearInterval(timer); }, [load]);
-  return <section className="mx-auto w-full max-w-lg space-y-4 text-foreground">
-      <h2 className="flex items-center gap-2 text-xl font-semibold"><MonitorUp className="size-5 text-primary" />Share your TV screen</h2>
-      {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : !state ? <p>Checking screen share…</p> : screenShareInProgress(state.status) ? <p className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">{state.status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : "Staff are connected to your TV. You can return to your ticket while the screen share carries on."}</p> : closed ? <p>This ticket is closed.</p> : !state.invited ? <p className="text-sm text-muted-foreground">Waiting for staff to request your screen.</p> : <form className="space-y-3" onSubmit={async (e) => {
-        e.preventDefault(); setBusy(true); setSubmitError(null);
-        try {
-          const r = await supabase.rpc("request_ticket_screen_share", { _ticket_id: ticketId, _code: code });
-          if (r.error || !r.data) throw new Error(r.error?.message ?? "That code is wrong, expired or already connected. Check your TV.");
-          setCode(""); await load();
-          onConnected?.();
-          void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
-        } catch (e) { setSubmitError(e instanceof Error ? e.message : "Could not connect your TV"); }
-        finally { setBusy(false); }
-      }}><p className="text-sm">Open <strong>BM Remote Helper</strong> on your TV and enter its six-digit code.</p><Input aria-label="Code on your TV" inputMode="numeric" autoFocus value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="h-12 text-center font-mono text-2xl" />{submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}<Button disabled={busy || code.length !== 6} type="submit" className="w-full">{busy ? "Connecting…" : "Connect TV"}</Button></form>}
-    </section>;
+  const status = state?.status ?? null;
+  const live = status === "active";
+  const waiting = status === "pending" || status === "claimed";
+  const title = error ? "Screen share unavailable" : !state ? "Checking screen share…" : live ? "Your TV screen is being shared" : status === "claimed" ? "Staff are connecting" : status === "pending" ? "Waiting for staff to answer" : closed ? "Ticket closed" : "No screen share running";
+  const text = error ? error : !state ? "" : live ? "Staff can see your TV now. You can return to your ticket while the screen share carries on." : status === "claimed" ? "Staff have answered. Press Allow and then Start on your TV." : status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : closed ? "This ticket is closed, so screen sharing is no longer available." : "To share your screen, open BM Remote Helper on your TV and enter the code it shows on the Remote setup tab.";
+  return <section className="mx-auto w-full max-w-lg text-foreground">
+    <div role="status" className={`space-y-3 rounded-lg border p-5 ${live ? "border-primary bg-primary/15" : waiting ? "border-primary/50 bg-primary/10" : "border-border bg-card/80"}`}>
+      <h2 className="flex items-center gap-2 text-xl font-semibold">
+        <span className={`size-2.5 shrink-0 rounded-full ${live ? "bg-primary animate-pulse" : waiting ? "bg-primary/70 animate-pulse" : "bg-muted-foreground"}`} aria-hidden="true" />
+        <MonitorUp className="size-5 text-primary" />{title}
+      </h2>
+      {text && <p className={`text-sm ${error ? "text-destructive" : ""}`}>{text}</p>}
+      {state && !error && !closed && !live && !waiting && <Button onClick={() => void navigate({ to: "/tickets", search: { id: ticketId, tab: "setup" } })}><Wrench className="mr-2 size-4" />Go to Remote setup</Button>}
+    </div>
+  </section>;
 }
 
 function TicketScreenShareChat({ ticketId, ownerId, closed }: { ticketId: string; ownerId: string; closed: boolean }) {
