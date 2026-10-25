@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import QRCode from "qrcode";
+import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { CheckCircle2, Circle, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,7 +71,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   }
   const steps = REMOTE_SETUP_STEPS[row.device];
   const ready = appChecksPassed(row.app_checks);
-  return <section className="mx-auto max-w-2xl space-y-4 text-foreground">
+  const main = <section className="min-w-0 space-y-4 text-foreground">
     <div className="flex flex-wrap items-center gap-2">
       <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
       {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
@@ -96,4 +98,20 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       </article>;
     })}
   </section>;
+  if (row.device !== "amazon") return <div className="mx-auto max-w-2xl">{main}</div>;
+  return <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+    {main}
+    <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr /></aside>
+  </div>;
+}
+
+function EnablerQr() {
+  const [qr, setQr] = useState<string | null>(null);
+  useEffect(() => { QRCode.toDataURL(TV_ENABLER_URL, { width: 400, margin: 1 }).then(setQr).catch(() => setQr(null)); }, []);
+  return <>
+    <h3 className="font-semibold">Get BM TV Enabler</h3>
+    <p className="text-sm text-muted-foreground">Scan with your Android phone to download and install the app.</p>
+    {qr ? <img src={qr} alt="QR code to download BM TV Enabler" width={220} height={220} className="mx-auto rounded-md bg-card p-2" /> : <p className="text-sm text-muted-foreground">Loading…</p>}
+    <a href={TV_ENABLER_URL} className="block text-xs text-primary underline">Or tap here on your phone</a>
+  </>;
 }
