@@ -17,3 +17,8 @@ test("Helper code only unlocks after ADB, Helper and Accessibility are reported"
   expect(appChecksPassed({ adb: true, helper: false, accessibility: true })).toBe(false);
   expect(appChecksPassed({ adb: true, helper: true, accessibility: true })).toBe(true);
 });
+
+test("Android / Google TV needs no debugging check before the Helper code", () => {
+  expect(appChecksPassed(null, "android")).toBe(true);
+  expect(appChecksPassed(null, "amazon")).toBe(false);
+});
