@@ -43,9 +43,31 @@ describe('Windows TV Enabler safety and setup', () => {
     expect(calls.some(a => a[3] === `settings put secure enabled_accessibility_services com.example/com.example.Reader:${SERVICE}`)).toBe(true);
     expect(calls.at(-1)).toEqual(['disconnect', serial]);
   });
-  test('never succeeds without the Helper or final TV confirmation', async () => {
-    const noHelper = async (a: string[]) => a[0] === 'devices' ? '192.168.1.25:5555\tdevice' : '';
-    await expect(enable('192.168.1.25', noHelper, () => {}, async () => {})).rejects.toThrow('Install and open BM Remote Helper');
+  test('installs BM Remote Helper itself when the TV does not have it', async () => {
+    const calls: string[][] = []; const serial = '192.168.1.25:5555';
+    let helperInstalled = false;
+    const adb = async (args: string[]) => {
+      calls.push(args);
+      if (args[0] === 'devices') return `${serial}\tdevice\n`;
+      if (args[2] === 'push') { helperInstalled = true; return ''; }
+      const command = args[3] || '';
+      if (command === 'pm path uk.bmsupport.remote') return helperInstalled ? 'package:/data/app/helper.apk' : '';
+      if (command.startsWith('cp ')) return 'BM_COPY_OK';
+      if (command.startsWith('pm install')) return 'Success';
+      if (command === 'settings get secure accessibility_enabled') return '1';
+      if (command === 'settings get secure enabled_accessibility_services') return SERVICE;
+      return '';
+    };
+    const fakeApk = async () => ({ ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(200000) });
+    expect(await enable('192.168.1.25', adb, () => {}, async () => {}, fakeApk as never, '/tmp/bm-test-' + Date.now())).toMatchObject({ success: true });
+    expect(calls.some(a => a[2] === 'push' && a[4] === '/data/local/tmp/bm-helper.apk')).toBe(true);
+    expect(calls.some(a => a[3] === 'pm install -r -d /data/local/tmp/bm-helper.apk')).toBe(true);
+    expect(calls.some(a => a[3]?.startsWith('monkey -p uk.bmsupport.remote'))).toBe(true);
+  });
+  test('never succeeds when the Helper download fails or the TV skips final confirmation', async () => {
+    const adb = async (a: string[]) => a[0] === 'devices' ? '192.168.1.25:5555\tdevice' : '';
+    const failedDownload = async () => ({ ok: false, status: 502, arrayBuffer: async () => new ArrayBuffer(0) });
+    await expect(enable('192.168.1.25', adb, () => {}, async () => {}, failedDownload as never, '/tmp/bm-test-' + Date.now())).rejects.toThrow("Couldn't download BM Remote Helper");
     const notOn = async (a: string[]) => {
       if (a[0] === 'devices') return '192.168.1.25:5555\tdevice';
       if (a[3]?.startsWith('pm path')) return 'package:/installed';
@@ -60,13 +82,16 @@ describe('Windows TV Enabler safety and setup', () => {
     expect(calls.some(a => a.includes('shell'))).toBe(false);
   });
 });
-test('Windows app reports checks against the ticket setup code', async () => {
+test('Windows app reports checks and device against the ticket setup code', async () => {
   const { report } = require('../core.cjs');
   const sent: { url: string; body: string }[] = [];
   const post = async (url: string, o: { body: string }) => { sent.push({ url, body: o.body }); return { ok: true, status: 200 }; };
-  await report('12345678', { adb: true, helper: true, control: true, accessibility: true }, post);
+  await report('12345678', { adb: true, helper: true, control: true, accessibility: true }, 'amazon', post);
   expect(sent[0]!.url).toBe('https://bmsupport.uk/api/public/remote-setup');
   expect(JSON.parse(sent[0]!.body).code).toBe('12345678');
-  await expect(report('123', {}, post)).rejects.toThrow();
-  await expect(report('12345678', {}, async () => ({ ok: false, status: 404 }))).rejects.toThrow(/isn't valid/);
+  expect(JSON.parse(sent[0]!.body).device).toBe('amazon');
+  await expect(report('123', {}, 'amazon', post)).rejects.toThrow();
+  await expect(report('12345678', {}, undefined, post)).rejects.toThrow(/Choose which TV/);
+  await expect(report('12345678', {}, 'android', async () => ({ ok: false, status: 404 }))).rejects.toThrow(/isn't valid/);
+  await expect(report('12345678', {}, 'android', async () => ({ ok: false, status: 409 }))).rejects.toThrow(/other TV type/);
 });
