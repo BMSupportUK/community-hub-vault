@@ -32,17 +32,18 @@ else {
       if (!trusted(event) || busy) throw new Error('Another task is already running.');
       busy = true; try { return await scan(); } finally { busy = false; }
     });
-    ipcMain.handle('bm:enable', async (event, address, code) => {
+    ipcMain.handle('bm:enable', async (event, address, code, device) => {
       if (!trusted(event) || busy) throw new Error('Another task is already running.');
       busy = true;
       const say = text => { if (!window.isDestroyed()) window.webContents.send('bm:progress', text); };
       try {
         const clean = String(code ?? '').replace(/\D/g, '');
         if (clean.length !== 8) throw new Error('Type the 8-digit setup code shown on your support ticket\'s Remote setup tab.');
-        const result = await enable(address, adb, say);
+        if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV you are setting up first: Amazon Fire TV or Android / Google TV.');
+        const result = await enable(address, adb, say, undefined, undefined, path.join(app.getPath('temp'), 'bm-tv-enabler'));
         say('Telling BM Support your TV is ready…');
-        await report(clean, result.checks);
-        say('Remote control is on and BM Support has been told. Now open BM Remote Helper on the TV and type its code on your ticket.');
+        await report(clean, result.checks, device);
+        say('Remote control is on and BM Support has been told. BM Remote Helper is now open on your TV — type its six-digit code on your ticket.');
         return result;
       }
       finally { busy = false; }
