@@ -40,13 +40,16 @@ function AppInformationPanel({ codes }: { codes: QdCode[] }) {
 
 function PortalLoginsPage() {
   const read = useServerFn(readPortalCredentials);
+  const requestReset = useServerFn(requestPortalPinReset);
   const [pin, setPin] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [resetBusy, setResetBusy] = useState(false), [resetDone, setResetDone] = useState(false);
   const [accounts, setAccounts] = useState<ManualCredential[] | null>(null), [qdCodes, setQdCodes] = useState<QdCode[]>([]), [expiresAt, setExpiresAt] = useState<number | null>(null), [now, setNow] = useState(() => Date.now());
   useEffect(() => { if (!expiresAt) return; const t = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(t); }, [expiresAt]);
   const remaining = expiresAt ? Math.max(0, expiresAt - now) : 0;
   useEffect(() => { if (expiresAt && remaining === 0) { setAccounts(null); setExpiresAt(null); setError("Your 10-minute viewing time has ended. Enter your PIN again to view your logins."); } }, [expiresAt, remaining]);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
+    setResetDone(false);
     if (!/^\d{6}$/.test(pin)) { setError("Enter your 6-digit PIN."); return; }
     setBusy(true);
     try { const r = await read({ data: { pin } }); setAccounts(r.accounts); setQdCodes(r.qdCodes); setExpiresAt(new Date(r.expiresAt).getTime()); setNow(Date.now()); if (r.created) toast.success("Your PIN is saved. Use it next time to view your logins."); }
@@ -67,6 +70,15 @@ function PortalLoginsPage() {
         <p className="text-xs text-muted-foreground">First time? The PIN you enter now becomes your PIN. Five wrong tries locks access for one hour.</p>
         <input aria-label="6-digit PIN" type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))} className="w-full rounded-md border border-border bg-surface-2 px-3 py-3 text-center font-mono text-lg tracking-[0.5em]" />
         <Button type="submit" className="w-full" disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <KeyRound />}Show my logins</Button>
+        {resetDone ? <p role="status" className="rounded-md border border-border bg-surface-2 p-3 text-xs text-muted-foreground">Your PIN has been cleared and our team has been told. Enter a new 6-digit PIN above — it becomes your new PIN.</p>
+        : <button type="button" disabled={resetBusy} onClick={async () => {
+            setError(""); setResetBusy(true);
+            try { await requestReset(); setResetDone(true); }
+            catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
+            finally { setResetBusy(false); }
+          }} className="flex w-full items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-primary hover:underline disabled:opacity-60">
+          {resetBusy ? <Loader2 className="size-3.5 animate-spin" /> : null}Forgot your PIN? Reset it
+        </button>}
       </form> : <>
         <div role="timer" className="mb-6 rounded-lg border border-border bg-surface p-4"><div className="flex items-center justify-between text-sm"><span>These details hide automatically for your security</span><span className="font-mono text-lg font-semibold text-primary">{Math.floor(remaining / 60000)}:{String(Math.floor(remaining / 1000) % 60).padStart(2, "0")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-[width] duration-1000" style={{ width: `${(remaining / 600000) * 100}%` }} /></div></div>
         {accounts.length ? <ManualCredentialCards readOnly customers={[{ userId: "portal", displayName: "My accounts", accounts }]} aside={<AppInformationPanel codes={qdCodes} />} />
