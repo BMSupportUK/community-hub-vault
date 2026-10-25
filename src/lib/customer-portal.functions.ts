@@ -99,6 +99,41 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
     return { accounts, qdCodes, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
 
+/** Signed-in customer: reset their own app-logins PIN and alert staff. The next PIN they enter becomes the new one. */
+export const requestPortalPinReset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    setResponseHeader("cache-control", "no-store");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ok } = await supabaseAdmin.rpc("manual_credentials_throttle", { p_key: `portal-pin-reset:${context.userId}`, p_limit: 3 });
+    if (!ok) throw new Error("Too many reset requests. Please try again in an hour.");
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const email = user.user?.email?.trim().toLowerCase();
+    if (!email) throw new Error("Your account has no email saved. Please contact support.");
+    const key = await hash(email);
+    const { data: cleared } = await supabaseAdmin
+      .from("manual_credential_access")
+      .update({ pin_hash: null, pin_salt: null, pin_attempts: 0, pin_locked_until: null })
+      .eq("email_key", key)
+      .not("pin_hash", "is", null)
+      .select("email_key");
+    if (!cleared?.length) throw new Error("You have not set a PIN yet — the first PIN you enter becomes your PIN.");
+    const { data: me } = await supabaseAdmin.from("profiles").select("username").eq("id", context.userId).maybeSingle();
+    const who = (me as { username?: string } | null)?.username || email;
+    try {
+      await supabaseAdmin.from("staff_notifications").insert({
+        kind: "pin_reset",
+        title: "Customer reset their app-logins PIN",
+        body: `${who} asked to reset the PIN on their app logins. Their old PIN is cleared; the next PIN they enter becomes the new one.`,
+        link_path: "/admin",
+        entity_id: context.userId,
+      } as never);
+    } catch (e) {
+      console.error("PIN reset staff alert failed:", e);
+    }
+    return { reset: true };
+  });
+
 /** Signed-in customer: email a fresh login code. */
 export const requestMyPortalCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
