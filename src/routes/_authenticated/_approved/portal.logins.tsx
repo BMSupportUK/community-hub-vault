@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { ManualCredentialCards } from "@/components/app/ManualCredentialCards";
-import { readPortalCredentials } from "@/lib/customer-portal.functions";
+import { readPortalCredentials, requestPortalPinReset } from "@/lib/customer-portal.functions";
 import type { ManualCredential } from "@/lib/manual-credentials-schema";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
