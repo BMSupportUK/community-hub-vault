@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { execFile } = require('node:child_process');
-const { enable } = require('../core.cjs');
+const { enable, report } = require('../core.cjs');
 const { scan } = require('../discovery.cjs');
 let window; let busy = false;
 const page = path.join(__dirname, '..', 'dist', 'index.html');
@@ -32,10 +32,19 @@ else {
       if (!trusted(event) || busy) throw new Error('Another task is already running.');
       busy = true; try { return await scan(); } finally { busy = false; }
     });
-    ipcMain.handle('bm:enable', async (event, address) => {
+    ipcMain.handle('bm:enable', async (event, address, code) => {
       if (!trusted(event) || busy) throw new Error('Another task is already running.');
       busy = true;
-      try { return await enable(address, adb, text => { if (!window.isDestroyed()) window.webContents.send('bm:progress', text); }); }
+      const say = text => { if (!window.isDestroyed()) window.webContents.send('bm:progress', text); };
+      try {
+        const clean = String(code ?? '').replace(/\D/g, '');
+        if (clean.length !== 8) throw new Error('Type the 8-digit setup code shown on your support ticket\'s Remote setup tab.');
+        const result = await enable(address, adb, say);
+        say('Telling BM Support your TV is ready…');
+        await report(clean, result.checks);
+        say('Remote control is on and BM Support has been told. Now open BM Remote Helper on the TV and type its code on your ticket.');
+        return result;
+      }
       finally { busy = false; }
     });
     window.loadFile(page);
