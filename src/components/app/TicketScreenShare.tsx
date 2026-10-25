@@ -32,6 +32,8 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
   const setup = useTicketRemoteSetup(ticketId);
   const setupReady = canRequestTicketScreenShare(setup.row);
   const [codeOpen, setCodeOpen] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [autoAnswer, setAutoAnswer] = useState(false);
   const offered = useRef(false);
   const previousStatus = useRef<string | null | undefined>(undefined);
   useEffect(() => {
@@ -53,9 +55,8 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
         setCodeOpen(true);
       }
       if (screenShareInProgress(current)) setCodeOpen(false);
-      if (staff && tab !== "screen" && ticketShareRequested(previousStatus.current, current)) {
-        void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
-      }
+      if (staff) setWaiting(current === "pending");
+      if (staff && ticketShareRequested(previousStatus.current, current)) toast.info("The customer has entered their TV code — press Answer screen share");
       if (ticketShareConnected(previousStatus.current ?? null, current)) {
         void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } });
       }
@@ -87,22 +88,23 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
       <Tabs value={tab ?? "ticket"} onValueChange={(value) => void navigate({ to: "/tickets", search: { id: ticketId, tab: value === "screen" ? "screen" : value === "setup" ? "setup" : undefined } })}>
         <TabsList><TabsTrigger value="ticket"><MessageCircle className="mr-2 size-4" />Ticket</TabsTrigger><TabsTrigger value="setup"><Wrench className="mr-2 size-4" />Remote setup{setupReady && <CheckCircle2 className="ml-1 size-4 text-primary" />}</TabsTrigger><TabsTrigger value="screen"><MonitorUp className="mr-2 size-4" />Screen share</TabsTrigger></TabsList>
       </Tabs>
-      {staff && !closed && <Button size="sm" className="ml-auto" disabled={busy || !setupReady} title={setupReady ? undefined : "The customer must finish Remote setup first"} onClick={() => void request()}><MonitorUp className="mr-2 size-4" />{busy ? "Sending…" : setupReady ? "Request screen share" : "Waiting for customer setup"}</Button>}
+      {staff && !closed && waiting && <Button size="sm" className="ml-auto animate-pulse" onClick={() => { setAutoAnswer(true); void navigate({ to: "/tickets", search: { id: ticketId, tab: "screen" } }); }}><MonitorUp className="mr-2 size-4" />Answer screen share</Button>}
+      {staff && !closed && !waiting && <Button size="sm" className="ml-auto" disabled={busy || !setupReady} title={setupReady ? undefined : "The customer must finish Remote setup first"} onClick={() => void request()}><MonitorUp className="mr-2 size-4" />{busy ? "Sending…" : setupReady ? "Request screen share" : "Waiting for customer setup"}</Button>}
     </div>
     {tab === "setup" && <div className="min-h-0 flex-1 overflow-y-auto bg-background p-3 sm:p-5"><TicketRemoteSetup ticketId={ticketId} customer={!staff} closed={closed} row={setup.row} reload={setup.reload} /></div>}
     <div className={tab ? "hidden" : "flex min-h-0 flex-1 flex-col"}>{children}</div>
     <div className={tab === "screen" ? "min-h-0 flex-1 overflow-y-auto bg-background p-3 text-foreground sm:p-5" : "hidden"}>
-      <TicketScreenShareWorkspace ticketId={ticketId} ownerId={ownerId} staff={staff} viewer={canUseTvRemote(roles)} closed={closed} visible={tab === "screen"} />
+      <TicketScreenShareWorkspace ticketId={ticketId} ownerId={ownerId} staff={staff} viewer={canUseTvRemote(roles)} closed={closed} visible={tab === "screen"} autoAnswer={autoAnswer} onAutoAnswered={() => setAutoAnswer(false)} />
     </div>
   </div>;
 }
 
-export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, viewer = staff, closed = false, visible = true }: { ticketId: string; ownerId: string; staff: boolean; viewer?: boolean; closed?: boolean; visible?: boolean }) {
+export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, viewer = staff, closed = false, visible = true, autoAnswer = false, onAutoAnswered }: { ticketId: string; ownerId: string; staff: boolean; viewer?: boolean; closed?: boolean; visible?: boolean; autoAnswer?: boolean; onAutoAnswered?: () => void }) {
   // On the owner's customer-view test ticket, staff still get the live viewer below the code box.
   const rows = useOrderScreenShares(viewer ? ticketId : "", "ticket");
   return <div className="space-y-4">
     {!staff && <CustomerTicketScreenShare ticketId={ticketId} closed={closed} />}
-    {viewer && <OrderScreenShareTab orderId={ticketId} rows={rows} kind="ticket" />}
+    {viewer && <OrderScreenShareTab orderId={ticketId} rows={rows} kind="ticket" autoAnswer={autoAnswer} onAutoAnswered={onAutoAnswered} />}
     {visible && <TicketScreenShareChat ticketId={ticketId} ownerId={ownerId} closed={closed} />}
   </div>;
 }
