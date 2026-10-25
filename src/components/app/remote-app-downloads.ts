@@ -5,7 +5,7 @@ type AppIdentity = { appName?: string | null; fileName?: string | null };
 export function remoteAppKind(build: AppIdentity): "enabler" | "helper" | null {
   const name = `${build.appName ?? ""} ${build.fileName ?? ""}`;
   if (/tv[\s_-]*enabler/i.test(name)) return "enabler";
-  if (/remote[\s_-]*(helper|support)/i.test(name)) return "helper";
+  if (/remote[\s_-]*(helper|support)|bm[\s_-]*support[\s_-]*remote/i.test(name)) return "helper";
   return null;
 }
 

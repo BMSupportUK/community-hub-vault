@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { matchesRemoteDevice, remoteAppKind } from "./remote-app-downloads";
+import { matchesRemoteDevice, remoteAppKind } from "../src/components/app/remote-app-downloads";
 
 describe("remote APK placement", () => {
   test("TV Enabler belongs to Amazon only", () => {
@@ -8,7 +8,7 @@ describe("remote APK placement", () => {
     expect(matchesRemoteDevice(app, "android")).toBe(false);
   });
   test("Remote Helper and Remote Support belong to both TV platforms", () => {
-    for (const appName of ["BM Remote Helper", "BM Remote Support"]) {
+    for (const appName of ["BM Remote Helper", "BM Remote Support", "BM Support Remote"]) {
       expect(matchesRemoteDevice({ appName }, "amazon")).toBe(true);
       expect(matchesRemoteDevice({ appName }, "android")).toBe(true);
     }
