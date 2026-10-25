@@ -13,7 +13,7 @@ final class SetupWizard {
     void next() {
         if (!completed) return;
         switch (step) {
-            case CHECK: step = Step.DEVICE; break;
+            case CHECK: step = ready ? Step.REPORT : Step.DEVICE; break;
             case HELPER: step = Step.CONTROL; break;
             case CONTROL: step = Step.ACTIVATE; break;
             case ACTIVATE: step = Step.REPORT; break;
