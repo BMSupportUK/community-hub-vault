@@ -397,3 +397,5 @@
 - [ ] BM Support phone app has the same connection fix in source; needs an APK rebuild to ship it.
 - [x] Helper download fixed: link looked for "Remote Helper" but the helper is uploaded as "BM Support Remote" (2.3, verified package uk.bmsupport.remote with control.apk). Needs Publish to go live.
 - [x] Enabler QR opens a single Download button page (no duplicate downloads); phone download never serves the Windows installer. Needs Publish.
+- [x] Enabler 1.9: remote control failed with "Unable to open" because the TV couldn't read the helper's copied file. Now the phone unpacks control.apk from the helper download and pushes it directly. Signed, live via /api/public/tv-enabler-apk (checksum verified). Needs a real Fire TV test.
+- [ ] Same fix still to apply to BM Support app Settings › TV remote and the Windows Enabler (both still copy the TV-side file).
