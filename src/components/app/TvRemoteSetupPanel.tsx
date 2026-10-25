@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { remoteHelperAvailable } from "@/lib/remote-helper";
 
+type DiscoveredTv = { address: string; name: string; debuggingReachable: boolean };
+
 type TvRemoteSetupPlugin = {
   enable(o: { host: string }): Promise<{ ok: boolean; checks?: { adb: boolean; helper: boolean; control: boolean; accessibility: boolean } }>;
+  discover(): Promise<{ devices?: DiscoveredTv[] }>;
   addListener(e: "progress", cb: (d: { step: string }) => void): Promise<PluginListenerHandle>;
 };
 const TvRemoteSetup = registerPlugin<TvRemoteSetupPlugin>("TvRemoteSetup");
