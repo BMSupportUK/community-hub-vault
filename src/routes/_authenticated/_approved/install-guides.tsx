@@ -61,6 +61,14 @@ const IG_EDIT_KEY = "install-guides-editing";
 const IG_READ_KEY = "install-guides-reading";
 const IG_SHOW_EDITOR_KEY = "install-guides-show-editor";
 
+/** Categories holding the BM TV Enabler / BM Remote Helper (remote support) guides.
+ *  These cards render in the TV Remote Enabler tab, not the Guides tab. */
+const REMOTE_HELPER_CAT_SLUGS = ["remote-helper-amazon", "remote-helper-android"];
+const REMOTE_HELPER_SECTION_NAMES: Record<string, string> = {
+  "remote-helper-amazon": "Amazon Fire TV",
+  "remote-helper-android": "Android / Google TV",
+};
+
 /** Pulls the guide password out of text like "Enter e2n4Zq to view guide". */
 function extractGuideCode(text: string | null | undefined): string | null {
   if (!text) return null;
@@ -273,6 +281,11 @@ function InstallGuidesPage() {
   const load = () => queryClient.invalidateQueries({ queryKey: ["install-guides-data"] });
 
   useEffect(() => {
+    if (activeCat && REMOTE_HELPER_CAT_SLUGS.includes(categories.find((c) => c.id === activeCat)?.slug ?? "")) {
+      // Remote Helper categories moved to the TV Remote Enabler tab — drop the stale selection.
+      setActiveCat(null);
+      return;
+    }
     if (!activeCat && categories.length && tab === "guides") {
       const android = categories.find(
         (c) => c.slug === "android" || c.name.toLowerCase() === "android",
@@ -301,6 +314,20 @@ function InstallGuidesPage() {
   }, [blogs, activeCat, search]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
+
+  // TV Remote Enabler tab content: the two Remote Helper categories and their cards.
+  const sidebarCategories = useMemo(
+    () => categories.filter((c) => !REMOTE_HELPER_CAT_SLUGS.includes(c.slug)),
+    [categories],
+  );
+  const remoteHelperCategories = useMemo(
+    () => categories.filter((c) => REMOTE_HELPER_CAT_SLUGS.includes(c.slug)),
+    [categories],
+  );
+  const remoteHelperBlogs = useMemo(
+    () => blogs.filter((b) => remoteHelperCategories.some((c) => c.id === b.category_id)),
+    [blogs, remoteHelperCategories],
+  );
 
   // Persist new-guide draft so it survives closing the dialog or leaving the page.
   useEffect(() => {
@@ -483,6 +510,130 @@ function InstallGuidesPage() {
     );
   };
 
+  // Reorders cards within one TV Remote Enabler section (per Remote Helper category).
+  const reorderRemoteHelperBlogs = async (categoryId: string, fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    const inCat = blogs.filter((b) => b.category_id === categoryId);
+    const others = blogs.filter((b) => b.category_id !== categoryId);
+    const fromIdx = inCat.findIndex((b) => b.id === fromId);
+    const toIdx = inCat.findIndex((b) => b.id === toId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = inCat.splice(fromIdx, 1);
+    inCat.splice(toIdx, 0, moved);
+    const updated = inCat.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
+    queryClient.setQueryData<typeof dataQuery.data>(["install-guides-data"], (prev) => prev ? { ...prev, blogs: [...others, ...updated] } : prev);
+    await Promise.all(
+      updated.map((b) => supabase.from("install_blogs").update({ sort_order: b.sort_order }).eq("id", b.id))
+    );
+  };
+
+  // Guide card grid shared by the Guides tab and the TV Remote Enabler tab.
+  const renderGuideGrid = (items: Blog[], onReorder: (fromId: string, toId: string) => void) => (
+    <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
+      {items.map((b) => (
+        <article
+          key={b.id}
+          data-guide-id={b.id}
+          draggable={canManageGuides}
+          onDragStart={() => { dragBlogId.current = b.id; }}
+          onDragOver={(e) => { if (canManageGuides) e.preventDefault(); }}
+          onDrop={(e) => {
+            if (!canManageGuides) return;
+            e.preventDefault();
+            if (dragBlogId.current) onReorder(dragBlogId.current, b.id);
+            dragBlogId.current = null;
+          }}
+          className="min-w-0 rounded-lg bg-surface/70 border border-border overflow-hidden flex flex-col group hover:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] transition-shadow"
+        >
+          <div className="aspect-[16/10] bg-surface-2/70 relative overflow-hidden">
+            {b.image_url ? (
+              <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+            ) : b.video_url || b.video_steps?.length ? (
+              <div className="w-full h-full grid place-items-center bg-gradient-to-br from-violet-900/60 to-black text-white/70">
+                <Film className="size-10" />
+              </div>
+            ) : (
+              <div className="w-full h-full grid place-items-center text-muted-foreground">
+                {b.pdf_url ? <FileText className="size-10" /> : <ImageIcon className="size-10" />}
+              </div>
+            )}
+            {(b.video_url || b.video_steps?.length > 0) && (
+              <button
+                type="button"
+                onClick={() => setPlayingVideo(b)}
+                className="absolute inset-0 grid place-items-center bg-black/30 hover:bg-black/50 transition"
+                aria-label="Play video"
+              >
+                <span className="size-16 rounded-full bg-white/90 grid place-items-center shadow-2xl group-hover:scale-110 transition-transform">
+                  <Play className="size-7 text-violet-700 fill-violet-700 ml-1" />
+                </span>
+              </button>
+            )}
+            {(b.video_url || b.video_steps?.length > 0) && (
+              <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-1">
+                <Film className="size-3" /> Video
+              </span>
+            )}
+
+            {canManageGuides && (
+              <div className="absolute bottom-2 left-2 size-8 rounded-md bg-background/70 backdrop-blur grid place-items-center text-foreground cursor-grab">
+                <GripVertical className="size-4" />
+              </div>
+            )}
+          </div>
+          <div className="p-4 flex-1 flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              <span className="text-xs px-2 py-1 rounded-md bg-primary/25 text-foreground font-semibold border border-primary/40">
+                {categories.find((c) => c.id === b.category_id)?.name}
+              </span>
+              {b.badge && (
+                <span className="text-xs px-2 py-1 rounded-md bg-primary/15 text-primary-glow font-medium">{b.badge}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{b.title}</h3>
+            </div>
+            {b.excerpt && (
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>
+                {extractGuideCode(b.excerpt) && (
+                  <CopyPasswordButton code={extractGuideCode(b.excerpt)!} />
+                )}
+              </div>
+            )}
+            <div className="mt-auto pt-3 flex items-center gap-2">
+              {b.file_path || b.pdf_url ? (
+                <GuideVaultCardActions
+                  blogId={b.id}
+                  title={b.title}
+                  onOpen={(res) => {
+                    focusGuideId.current = b.id;
+                    setUnlocked({ blog: b, ...res });
+                  }}
+                />
+              ) : (
+                <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; if (b.video_url || b.video_steps?.length) setPlayingVideo(b); else setReading(b); }}>
+                  {b.video_url || b.video_steps?.length ? "Click to Watch" : "Click to Read"}
+                </Button>
+              )}
+
+              {canManageGuides && (
+                <>
+                  <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { focusGuideId.current = b.id; setEditing(b); setShowEditor(true); }}>
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => deleteBlog(b.id)}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
     {isStaffPortalUser(roles) ? <StaffPortalTabs /> : <PortalTabs active="guides" />}
@@ -574,7 +725,34 @@ function InstallGuidesPage() {
 
 
           <TabsContent value="enabler" className="mt-0 min-w-0">
-            <TvEnablerPanel />
+            {!canViewGuides ? (
+              <AccessRequestPanel
+                section="guides"
+                title="Remote help guides are for subscribers"
+                description="The TV Enabler and Remote Helper walkthroughs are available to subscribers. Request access and an admin will be notified straight away."
+              />
+            ) : (
+              <div className="max-w-6xl space-y-6">
+                <TvEnablerPanel />
+                {remoteHelperCategories.map((c) => {
+                  const items = remoteHelperBlogs.filter((b) => b.category_id === c.id);
+                  return (
+                    <section key={c.id} className="min-w-0">
+                      <h2 className="font-display text-2xl font-bold mb-4 text-foreground">
+                        {REMOTE_HELPER_SECTION_NAMES[c.slug] ?? c.name} guides
+                      </h2>
+                      {items.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-violet-500/30 p-12 text-center text-muted-foreground">
+                          No guides in this section yet.
+                        </div>
+                      ) : (
+                        renderGuideGrid(items, (fromId, toId) => { void reorderRemoteHelperBlogs(c.id, fromId, toId); })
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="welcome" className="mt-0 min-w-0">
@@ -620,7 +798,7 @@ function InstallGuidesPage() {
               <aside className="rounded-2xl bg-surface/70 border border-border p-4 h-fit">
                 <h3 className="font-display font-semibold mb-3 px-2 text-foreground">Categories</h3>
                 <div className="space-y-1">
-                  {categories.map((c) => {
+                  {sidebarCategories.map((c) => {
                     const active = c.id === activeCat;
                     const n = counts[c.id] ?? 0;
                     return (
@@ -682,109 +860,7 @@ function InstallGuidesPage() {
                     No guides in this category yet.
                   </div>
                 ) : (
-                   <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
-                    {filtered.map((b) => (
-                      <article
-                        key={b.id}
-                        data-guide-id={b.id}
-                        draggable={canManageGuides}
-                        onDragStart={() => { dragBlogId.current = b.id; }}
-                        onDragOver={(e) => { if (canManageGuides) e.preventDefault(); }}
-                        onDrop={(e) => {
-                          if (!canManageGuides) return;
-                          e.preventDefault();
-                          if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
-                          dragBlogId.current = null;
-                        }}
-                         className="min-w-0 rounded-lg bg-surface/70 border border-border overflow-hidden flex flex-col group hover:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] transition-shadow"
-                      >
-                        <div className="aspect-[16/10] bg-surface-2/70 relative overflow-hidden">
-                          {b.image_url ? (
-                            <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
-                          ) : b.video_url || b.video_steps?.length ? (
-                            <div className="w-full h-full grid place-items-center bg-gradient-to-br from-violet-900/60 to-black text-white/70">
-                              <Film className="size-10" />
-                            </div>
-                          ) : (
-                            <div className="w-full h-full grid place-items-center text-muted-foreground">
-                              {b.pdf_url ? <FileText className="size-10" /> : <ImageIcon className="size-10" />}
-                            </div>
-                          )}
-                          {(b.video_url || b.video_steps?.length > 0) && (
-                            <button
-                              type="button"
-                              onClick={() => setPlayingVideo(b)}
-                              className="absolute inset-0 grid place-items-center bg-black/30 hover:bg-black/50 transition"
-                              aria-label="Play video"
-                            >
-                              <span className="size-16 rounded-full bg-white/90 grid place-items-center shadow-2xl group-hover:scale-110 transition-transform">
-                                <Play className="size-7 text-violet-700 fill-violet-700 ml-1" />
-                              </span>
-                            </button>
-                          )}
-                          {(b.video_url || b.video_steps?.length > 0) && (
-                            <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-1">
-                              <Film className="size-3" /> Video
-                            </span>
-                          )}
-
-                          {canManageGuides && (
-                            <div className="absolute bottom-2 left-2 size-8 rounded-md bg-background/70 backdrop-blur grid place-items-center text-foreground cursor-grab">
-                              <GripVertical className="size-4" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-4 flex-1 flex flex-col gap-2">
-                          <div className="flex flex-wrap gap-2">
-                            <span className="text-xs px-2 py-1 rounded-md bg-primary/25 text-foreground font-semibold border border-primary/40">
-                              {categories.find((c) => c.id === b.category_id)?.name}
-                            </span>
-                            {b.badge && (
-                              <span className="text-xs px-2 py-1 rounded-md bg-primary/15 text-primary-glow font-medium">{b.badge}</span>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{b.title}</h3>
-                          </div>
-                          {b.excerpt && (
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>
-                              {extractGuideCode(b.excerpt) && (
-                                <CopyPasswordButton code={extractGuideCode(b.excerpt)!} />
-                              )}
-                            </div>
-                          )}
-                          <div className="mt-auto pt-3 flex items-center gap-2">
-                            {b.file_path || b.pdf_url ? (
-                              <GuideVaultCardActions
-                                blogId={b.id}
-                                title={b.title}
-                                onOpen={(res) => {
-                                  focusGuideId.current = b.id;
-                                  setUnlocked({ blog: b, ...res });
-                                }}
-                              />
-                            ) : (
-                              <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; if (b.video_url || b.video_steps?.length) setPlayingVideo(b); else setReading(b); }}>
-                                 {b.video_url || b.video_steps?.length ? "Click to Watch" : "Click to Read"}
-                              </Button>
-                            )}
-
-                            {canManageGuides && (
-                              <>
-                                <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { focusGuideId.current = b.id; setEditing(b); setShowEditor(true); }}>
-                                  <Pencil className="size-4" />
-                                </Button>
-                                <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => deleteBlog(b.id)}>
-                                  <Trash2 className="size-4" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
+                  renderGuideGrid(filtered, reorderBlogs)
                 )}
               </section>
               </div>
