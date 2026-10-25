@@ -50,10 +50,6 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
       if (stopped || r.error) return;
       const state = r.data as { status: string | null; invited: boolean };
       const current = state.status;
-      if (!staff && !closed && state.invited && !screenShareInProgress(current) && !offered.current && tab !== "screen") {
-        offered.current = true;
-        setCodeOpen(true);
-      }
       if (screenShareInProgress(current)) setCodeOpen(false);
       if (staff) setWaiting(current === "pending");
       if (staff && ticketShareRequested(previousStatus.current, current)) toast.info("The customer has entered their TV code — press Answer screen share");
