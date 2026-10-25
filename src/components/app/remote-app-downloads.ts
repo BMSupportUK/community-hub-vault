@@ -10,6 +10,7 @@ export function remoteAppKind(build: AppIdentity): "enabler" | "helper" | null {
 }
 
 export function matchesRemoteDevice(build: AppIdentity, device: RemoteDevice): boolean {
-  const kind = remoteAppKind(build);
-  return kind === "helper" || (kind === "enabler" && device === "amazon");
+  // The TV Enabler APK is never offered as a download card — Amazon customers
+  // install it by scanning the QR code in the TV Remote Enabler instructions.
+  return remoteAppKind(build) === "helper";
 }
