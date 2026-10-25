@@ -798,7 +798,7 @@ function InstallGuidesPage() {
               <aside className="rounded-2xl bg-surface/70 border border-border p-4 h-fit">
                 <h3 className="font-display font-semibold mb-3 px-2 text-foreground">Categories</h3>
                 <div className="space-y-1">
-                  {categories.map((c) => {
+                  {sidebarCategories.map((c) => {
                     const active = c.id === activeCat;
                     const n = counts[c.id] ?? 0;
                     return (
