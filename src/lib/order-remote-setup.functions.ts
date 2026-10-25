@@ -82,7 +82,7 @@ export const verifyOrderRemoteSetup = createServerFn({ method: "POST" })
       await db.from("staff_notifications").insert({
         kind: "tv_help", title: "Order screen share ready",
         body: `${o?.existing_username || "A customer"} confirmed their TV on sale ${o?.order_ref ?? ""}.`.trim(),
-        link_path: `/admin-secure-page?order=${orderId}&tab=screen`, entity_id: s.id,
+        link_path: `/screen-share/order/${orderId}`, entity_id: s.id,
       });
     }
     return { ok: true as const };

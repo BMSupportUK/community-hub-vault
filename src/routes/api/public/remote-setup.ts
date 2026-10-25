@@ -38,14 +38,18 @@ export const Route = createFileRoute("/api/public/remote-setup")({
         await db.from("tv_helper_diagnostics").insert({ ip_hash: ipHash, helper_version: parsed.data.app ?? null, step: "setup_report", message: JSON.stringify(parsed.data.checks) });
 
         const hash = await sha256Hex(parsed.data.code);
-        const { data: row } = await db.from("ticket_remote_setup").select("ticket_id, device, setup_code_expires_at")
-          .eq("setup_code_hash", hash).maybeSingle();
-        if (!row || !row.setup_code_expires_at || new Date(row.setup_code_expires_at) < new Date())
-          return json({ error: "That setup code isn't valid. Check the code on your support ticket's Remote setup tab." }, 404);
+        // A setup code belongs to either a support ticket or a secure order.
+        const now = new Date();
+        const { data: t } = await db.from("ticket_remote_setup").select("ticket_id, device, setup_code_expires_at").eq("setup_code_hash", hash).maybeSingle();
+        const { data: o } = t ? { data: null } : await db.from("order_remote_setup").select("order_id, device, setup_code_expires_at").eq("setup_code_hash", hash).maybeSingle();
+        const row = t ?? o;
+        if (!row || !row.setup_code_expires_at || new Date(row.setup_code_expires_at) < now)
+          return json({ error: "That setup code isn't valid. Check the code on your Remote setup tab." }, 404);
         if (parsed.data.device && row.device && parsed.data.device !== row.device)
-          return json({ error: "Device type doesn't match the ticket" }, 409);
-        await db.from("ticket_remote_setup").update({ app_checks: parsed.data.checks, app_checked_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-          .eq("ticket_id", row.ticket_id);
+          return json({ error: "Device type doesn't match the setup" }, 409);
+        const patch = { app_checks: parsed.data.checks, app_checked_at: now.toISOString(), updated_at: now.toISOString() };
+        if (t) await db.from("ticket_remote_setup").update(patch).eq("ticket_id", t.ticket_id);
+        else await db.from("order_remote_setup").update(patch).eq("order_id", (o as { order_id: string }).order_id);
         return json({ ok: true });
       },
     },
