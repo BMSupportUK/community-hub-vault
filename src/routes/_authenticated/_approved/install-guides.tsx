@@ -733,9 +733,9 @@ function InstallGuidesPage() {
                 description="The TV Enabler and Remote Helper walkthroughs are available to subscribers. Request access and an admin will be notified straight away."
               />
             ) : (
-              <div className="max-w-6xl space-y-6">
+              <div className="w-full space-y-6">
                 <Tabs defaultValue="amazon" className="min-w-0">
-                  <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-surface-2 p-1 sm:w-fit">
+                  <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface-2 p-1 sm:grid-cols-4">
                     {REMOTE_DEVICES.map((device) => (
                       <TabsTrigger key={device.key} value={device.key} className="whitespace-normal px-4 py-2 text-center">
                         {device.label}
@@ -749,7 +749,7 @@ function InstallGuidesPage() {
                     return (
                       <TabsContent key={device.key} value={device.key} className="mt-6 min-w-0 space-y-6">
                         <Tabs defaultValue="device-guides" className="min-w-0">
-                          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface-2 p-1 sm:w-fit" aria-label={`${device.label} sections`}>
+                          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface-2 p-1" aria-label={`${device.label} sections`}>
                             <TabsTrigger value="device-guides" className="whitespace-normal px-4 py-2">Guides</TabsTrigger>
                             <TabsTrigger value="device-apps" className="whitespace-normal px-4 py-2">App downloads</TabsTrigger>
                           </TabsList>
@@ -968,9 +968,11 @@ function InstallGuidesPage() {
         </Tabs>
       </div>
 
-      <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6">
-        <AdSenseSlot slot="sidebar" />
-      </aside>
+      {tab !== "enabler" && (
+        <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6">
+          <AdSenseSlot slot="sidebar" />
+        </aside>
+      )}
       </div>
 
       {/* Guide viewer — the link is short-lived and view-only */}
