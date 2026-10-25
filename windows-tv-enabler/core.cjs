@@ -87,17 +87,21 @@ async function enable(host, adb, progress, delay = ms => new Promise(r => setTim
     const actual = (await shell('settings get secure enabled_accessibility_services')).trim().split(':');
     const on = (await shell('settings get secure accessibility_enabled')).trim();
     if (!actual.includes(SERVICE) || on !== '1') throw new Error('The TV did not confirm remote control is enabled. Open BM Remote Helper and try again.');
-    progress('Remote control is enabled. Return to BM Remote Helper and use the TV code in your support ticket or order when staff request it.');
+    // Leave BM Remote Helper open on the TV so its six-digit code is on screen.
+    await shell(`monkey -p ${HELPER} -c android.intent.category.LAUNCHER 1`).catch(() => {});
+    progress('Remote control is enabled. BM Remote Helper is open on the TV — type its six-digit code on your support ticket.');
     // Real TV state, reported to bmsupport.uk against the customer's ticket setup code.
     const checks = { adb: true, helper: true, control: (await shell(`pm path ${CONTROL}`)).includes('package:'), accessibility: true };
     return { success: true, checks };
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
 }
 
-async function report(code, checks, post = globalThis.fetch) {
+async function report(code, checks, device, post = globalThis.fetch) {
   if (!/^\d{8}$/.test(code)) throw new Error('Type the 8-digit setup code shown on your support ticket\'s Remote setup tab.');
-  const res = await post('https://bmsupport.uk/api/public/remote-setup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, app: 'windows-tv-enabler-1.1', checks }) });
+  if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV you are setting up first: Amazon Fire TV or Android / Google TV.');
+  const res = await post('https://bmsupport.uk/api/public/remote-setup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, app: 'windows-tv-enabler-1.2', device, checks }) });
   if (res.status === 404) throw new Error('Remote control is on, but that setup code isn\'t valid. Check the code on your support ticket\'s Remote setup tab and press Turn on again.');
+  if (res.status === 409) throw new Error('Remote control is on, but your ticket is set up for the other TV type. Press Change device on the ticket\'s Remote setup tab, or pick the other TV type in this app.');
   if (res.status === 429) throw new Error('Too many tries. Wait 15 minutes, then try again.');
   if (!res.ok) throw new Error(`Remote control is on, but BM Support couldn't be told (error ${res.status}). Try again.`);
 }
