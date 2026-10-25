@@ -61,6 +61,14 @@ const IG_EDIT_KEY = "install-guides-editing";
 const IG_READ_KEY = "install-guides-reading";
 const IG_SHOW_EDITOR_KEY = "install-guides-show-editor";
 
+/** Categories holding the BM TV Enabler / BM Remote Helper (remote support) guides.
+ *  These cards render in the TV Remote Enabler tab, not the Guides tab. */
+const REMOTE_HELPER_CAT_SLUGS = ["remote-helper-amazon", "remote-helper-android"];
+const REMOTE_HELPER_SECTION_NAMES: Record<string, string> = {
+  "remote-helper-amazon": "Amazon Fire TV",
+  "remote-helper-android": "Android / Google TV",
+};
+
 /** Pulls the guide password out of text like "Enter e2n4Zq to view guide". */
 function extractGuideCode(text: string | null | undefined): string | null {
   if (!text) return null;
