@@ -70,6 +70,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   }
   const steps = REMOTE_SETUP_STEPS[row.device];
   const ready = appChecksPassed(row.app_checks, row.device);
+  const complete = Boolean(row.completed_at);
   const main = <section className="min-w-0 space-y-4 text-foreground">
     <div className="flex flex-wrap items-center gap-2">
       <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
