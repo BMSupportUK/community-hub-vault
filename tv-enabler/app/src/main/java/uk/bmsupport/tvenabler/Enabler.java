@@ -131,13 +131,13 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-setup").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.9\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.10\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             int code = h.getResponseCode(); h.disconnect();
             if (code == 200) return null;
-            if (code == 404) return "That setup code isn't valid. Check the code on your support ticket's Remote setup tab.";
-            if (code == 409) return "Your ticket is set up for the other TV type. Press Change device on the ticket's Remote setup tab, or pick the other TV type in this app.";
+            if (code == 404) return "That setup code isn't valid. Check the code on your ticket or order's Remote setup tab.";
+            if (code == 409) return "Your ticket or order is set up for the other TV type. Press Change device on its Remote setup tab, or pick the other TV type in this app.";
             if (code == 429) return "Too many tries. Wait 15 minutes.";
             return "Couldn't tell BM Support (error " + code + "). Try again.";
         } catch (Exception e) { return "Couldn't reach BM Support. Check the phone's internet and try again."; }

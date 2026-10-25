@@ -69,7 +69,7 @@ public class MainActivity extends Activity {
 
         col.addView(text("1. Switch on the setting above on the TV.\n2. Make sure this phone is on the same Wi-Fi as the TV.\n3. Press Find my TV and choose your TV, or type its address below.\n4. Press Turn on remote control — everything on the TV is installed for you.", 15, FG, false));
 
-        col.addView(text("Your setup code from the Remote setup tab on your support ticket:", 15, FG, false));
+        col.addView(text("Your setup code from the Remote setup tab on your support ticket or order:", 15, FG, false));
         setupCode = new EditText(this);
         setupCode.setHint("8-digit setup code");
         setupCode.setHintTextColor(MUTED); setupCode.setTextColor(FG); setupCode.setTextSize(20);
