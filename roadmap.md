@@ -2,7 +2,9 @@
 # Roadmap
 
 ## TV Enabler guided setup
-- [ ] Keep eight-digit linking codes available after previous completion and sync TV Enabler's checked stages to ticket/order Remote setup; build and verify the signed update.
+- [x] Finish with a fresh TV check inside Enabler; website linking separate and optional, including already-ready TVs. Wizard, ADB and discovery tests pass; signed 1.13 live download checksum and upgrade certificate verified.
+- [x] Keep eight-digit linking codes available after previous completion and sync measured Enabler snapshots to ticket/order Remote setup. Thirteen web regressions pass; signed-in GJ test ticket shows confirmed Android setup progress; preview build OK.
+- [ ] Verify customer code renewal and incremental read-back on physical TV; requires phone/TV on same Wi-Fi. Website changes await publishing; native 1.13 is already available through the existing QR.
 - [x] Add debugging confirmation, live existing-TV check/quick-open, device-specific staged installation, next-step confirmations and safe reset; preserve the Amazon ADB/direct-push path.
 - [x] Wizard, ADB and discovery Java regressions plus ten order/ticket tests pass; signed TV Enabler 1.11 built and registered. Live download checksum matches and signing certificate is unchanged.
 - [ ] Verify on physical Amazon and Android TVs — requires customer devices on the same Wi-Fi.

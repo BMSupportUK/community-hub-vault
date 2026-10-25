@@ -48,8 +48,11 @@ export const Route = createFileRoute("/api/public/remote-setup")({
         if (parsed.data.device && row.device && parsed.data.device !== row.device)
           return json({ error: "Device type doesn't match the setup" }, 409);
         const patch = { app_checks: parsed.data.checks, app_checked_at: now.toISOString(), updated_at: now.toISOString() };
-        if (t) await db.from("ticket_remote_setup").update(patch).eq("ticket_id", t.ticket_id);
-        else await db.from("order_remote_setup").update(patch).eq("order_id", (o as { order_id: string }).order_id);
+        const result = t
+          ? await db.from("ticket_remote_setup").update(patch).eq("ticket_id", t.ticket_id).eq("setup_code_hash", hash).gt("setup_code_expires_at", now.toISOString()).select("ticket_id")
+          : o ? await db.from("order_remote_setup").update(patch).eq("order_id", o.order_id).eq("setup_code_hash", hash).gt("setup_code_expires_at", now.toISOString()).select("order_id") : null;
+        if (!result || result.error) return json({ error: "Couldn't save TV checks. Try again." }, 503);
+        if (!result.data?.length) return json({ error: "That setup code is no longer valid. Show a new code on Remote setup." }, 404);
         return json({ ok: true });
       },
     },

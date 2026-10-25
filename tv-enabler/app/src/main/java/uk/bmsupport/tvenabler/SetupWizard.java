@@ -10,6 +10,11 @@ final class SetupWizard {
     void checked(boolean isReady) { if (step != Step.CHECK) return; ready = isReady; completed = true; }
     void chooseDevice() { if (step == Step.DEVICE) { step = ready ? Step.REPORT : Step.HELPER; completed = false; } }
     void operationCompleted() { completed = true; }
+    void confirmTv(boolean isReady) {
+        if (step != Step.REPORT) return;
+        ready = isReady;
+        completed = isReady;
+    }
     void next() {
         if (!completed) return;
         switch (step) {

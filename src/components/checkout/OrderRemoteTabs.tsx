@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
+import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
 import { REMOTE_SETUP_STEPS, appChecksPassed, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 import { getOrderRemoteSetup, issueOrderSetupCode, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
@@ -75,13 +76,14 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
           <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
         </form>
       </div>}
-      {!row.completed_at && <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4">
+      <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4">
         <h3 className="font-semibold">Your setup code</h3>
-        <p className="text-sm text-muted-foreground">Type this code into BM TV Enabler. The app checks your TV and ticks the steps below by itself.</p>
+        <p className="text-sm text-muted-foreground">Type this eight-digit code into BM TV Enabler to link its checked progress to this order. It remains available when your TV is already set up.</p>
         {setupCode ? <p className="font-mono text-3xl font-bold tracking-widest">{setupCode.slice(0, 4)} {setupCode.slice(4)}</p>
           : <Button size="sm" disabled={busy} onClick={() => void issue()}>Show my setup code</Button>}
-        {setupCode && <p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p>}
-      </div>}
+        {setupCode && <><p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p><Button size="sm" variant="outline" disabled={busy} onClick={() => void issue()}>New setup code</Button></>}
+      </div>
+      <RemoteSetupProgress row={row} />
       {REMOTE_SETUP_STEPS[row.device].map((s, i) => {
         const done = stepDone(s, row);
         return <article key={i} className={`space-y-2 rounded-xl border p-4 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
