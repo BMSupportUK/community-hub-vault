@@ -137,7 +137,7 @@ public class MainActivity extends Activity {
                 description.setText("We'll enable BM Remote Control's accessibility permission and check it on the TV, then open BM Remote Helper again so your code is visible.");
                 turnOn.setText("Activate and check permissions"); break;
             case REPORT:
-                heading.setText(wizard.ready ? "4. Confirm with BM Support" : "7. Confirm with BM Support");
+                heading.setText(wizard.ready ? "3. Confirm with BM Support" : "7. Confirm with BM Support");
                 description.setText("Enter the eight-digit setup code from your ticket or order's Remote setup tab. We'll send the TV's verified checks to BM Support. Then enter the six-digit code shown by BM Remote Helper on your TV into that same Remote setup tab.");
                 turnOn.setText("Confirm TV setup"); break;
             case DONE:
@@ -159,7 +159,7 @@ public class MainActivity extends Activity {
         final SetupWizard.Step stage = wizard.step;
         final String selectedDevice = device;
         final String code = setupCode.getText().toString().replaceAll("\\D", "");
-        if (stage == SetupWizard.Step.REPORT && (code.length() != 8 || checks == null || selectedDevice == null)) {
+        if (stage == SetupWizard.Step.REPORT && (code.length() != 8 || checks == null || (selectedDevice == null && !wizard.ready))) {
             say("Enter the current eight-digit setup code from your ticket or order's Remote setup tab.", WARN); return;
         }
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("host", host).apply();

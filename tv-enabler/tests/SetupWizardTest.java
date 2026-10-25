@@ -7,8 +7,8 @@ public final class SetupWizardTest {
         w.next(); check(w.step == SetupWizard.Step.DEBUGGING, "Debugging needs explicit confirmation");
         w.confirmDebugging(); check(w.step == SetupWizard.Step.CHECK, "Check existing setup is step two");
         w.next(); check(w.step == SetupWizard.Step.CHECK, "Cannot skip actual TV check");
-        w.checked(true); w.next(); w.chooseDevice();
-        check(w.step == SetupWizard.Step.REPORT, "Ready TV skips installs and activation");
+        w.checked(true); w.next();
+        check(w.step == SetupWizard.Step.REPORT, "Ready TV skips device choice, installs and activation");
         w.reset(); w.confirmDebugging(); w.checked(false); w.next(); w.chooseDevice();
         check(w.step == SetupWizard.Step.HELPER, "Incomplete TV starts helper install");
         w.next(); check(w.step == SetupWizard.Step.HELPER, "Incomplete operation cannot advance");
