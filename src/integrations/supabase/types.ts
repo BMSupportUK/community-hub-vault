@@ -6867,6 +6867,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_remote_setup: {
+        Row: {
+          completed_at: string | null
+          confirmed_steps: number[]
+          device: string
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          confirmed_steps?: number[]
+          device: string
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          confirmed_steps?: number[]
+          device?: string
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ticket_video_calls: {
         Row: {
           created_at: string
