@@ -79,7 +79,22 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
       supabaseAdmin.rpc("manual_credentials_for_email", { p_email: email }),
       supabaseAdmin.from("qd_dns_codes").select("id,label,code,notes").order("label"),
     ]);
-    const accounts = [...((site as unknown as ManualCredential[]) ?? []), ...((manual as unknown as ManualCredential[]) ?? [])];
+    // Every source is read so one failing still shows the others; the same login appears once,
+    // keeping the copy that has a password and the latest expiry.
+    const byLogin = new Map<string, ManualCredential>();
+    for (const a of [...((site as unknown as ManualCredential[]) ?? []), ...((manual as unknown as ManualCredential[]) ?? [])]) {
+      const key = (a.login ?? "").trim().toLowerCase() || `id:${a.id}`;
+      const prev = byLogin.get(key);
+      if (!prev) { byLogin.set(key, a); continue; }
+      byLogin.set(key, {
+        ...prev,
+        password: prev.password || a.password,
+        expiresAt: [prev.expiresAt, a.expiresAt].filter(Boolean).sort().pop() ?? null,
+        name: prev.name || a.name,
+        accountType: prev.accountType || a.accountType,
+      });
+    }
+    const accounts = [...byLogin.values()];
     const qdCodes = (qd ?? []).map((q) => ({ id: String(q.id), label: String(q.label), code: String(q.code), notes: q.notes ? String(q.notes) : null }));
     return { accounts, qdCodes, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
