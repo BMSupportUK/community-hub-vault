@@ -33,6 +33,7 @@ import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
 import { TvEnablerPanel } from "@/components/app/TvEnablerPanel";
+import { WindowsTvEnablerPanel } from "@/components/app/WindowsTvEnablerPanel";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
@@ -734,12 +735,13 @@ function InstallGuidesPage() {
             ) : (
               <div className="max-w-6xl space-y-6">
                 <Tabs defaultValue="amazon" className="min-w-0">
-                  <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface-2 p-1 sm:w-fit">
+                  <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-surface-2 p-1 sm:w-fit">
                     {REMOTE_DEVICES.map((device) => (
                       <TabsTrigger key={device.key} value={device.key} className="whitespace-normal px-4 py-2 text-center">
                         {device.label}
                       </TabsTrigger>
                     ))}
+                    <TabsTrigger value="windows" className="whitespace-normal px-4 py-2 text-center">Windows</TabsTrigger>
                   </TabsList>
                   {REMOTE_DEVICES.map((device) => {
                     const category = remoteHelperCategories.find((c) => c.slug === device.slug);
@@ -759,6 +761,9 @@ function InstallGuidesPage() {
                       </TabsContent>
                     );
                   })}
+                  <TabsContent value="windows" className="mt-6 min-w-0">
+                    {isDemo ? <p className="text-muted-foreground">Downloads are not available on the demo.</p> : <WindowsTvEnablerPanel />}
+                  </TabsContent>
                 </Tabs>
               </div>
             )}
