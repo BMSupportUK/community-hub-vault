@@ -18,7 +18,15 @@ export function useTicketRemoteSetup(ticketId: string) {
     const { data } = await supabase.from("ticket_remote_setup" as never).select("device,app_checks,app_checked_at,completed_at").eq("ticket_id", ticketId).maybeSingle();
     setRow((data as RemoteSetupRow) ?? null);
   }, [ticketId]);
-  useEffect(() => { void load(); const t = window.setInterval(load, 3000); return () => window.clearInterval(t); }, [load]);
+  useEffect(() => {
+    void load();
+    // Ticks appear the moment the app reports; the slow poll is only a fallback.
+    const channel = supabase.channel(`ticket-remote-setup-${ticketId}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "ticket_remote_setup", filter: `ticket_id=eq.${ticketId}` }, () => { void load(); })
+      .subscribe();
+    const t = window.setInterval(load, 10000);
+    return () => { window.clearInterval(t); void supabase.removeChannel(channel); };
+  }, [load, ticketId]);
   return { row, reload: load };
 }
 
