@@ -23,11 +23,29 @@ export function TvRemoteSetupPanel() {
   const [host, setHost] = useState("");
   const [setupCode, setSetupCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [found, setFound] = useState<DiscoveredTv[] | null>(null);
+  const [scanNote, setScanNote] = useState<string | null>(null);
   const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   useEffect(() => { setNative(remoteHelperAvailable()); setHost(localStorage.getItem("bm-tv-address") ?? ""); }, []);
+
+  async function findTv() {
+    setScanning(true); setScanNote(null); setError(null);
+    try {
+      const res = await TvRemoteSetup.discover();
+      const list = res.devices ?? [];
+      setFound(list);
+      setScanNote(list.length === 0
+        ? "No Fire TV found. Keep the TV awake on the same Wi-Fi, or type the address from BM Remote Helper — some TVs don't advertise themselves."
+        : null);
+    } catch (e) {
+      setFound(null);
+      setScanNote(e instanceof Error ? e.message : String(e));
+    } finally { setScanning(false); }
+  }
 
   async function run() {
     setBusy(true); setError(null); setDone(false);
