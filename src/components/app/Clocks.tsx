@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { ShiftHeaderNotice } from "@/components/app/ShiftHeaderNotice";
 import {
   bankHolidayName,
   londonDateKey,
@@ -474,6 +475,7 @@ export function Clocks() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className="flex items-center gap-2">
+        <ShiftHeaderNotice />
         <DialogTrigger asChild>
           <button
             type="button"

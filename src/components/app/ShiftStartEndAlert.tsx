@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Play, StopCircle, Clock } from "lucide-react";
+import { StopCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,6 +7,7 @@ import { addDaysToDateStr, useTimezone } from "@/hooks/use-timezone";
 import { phoneToneSrc } from "@/lib/phone-alert-sounds";
 import { shiftAlertSoundEvent } from "@/lib/shift-alert-sound";
 import { playSound } from "@/lib/sound";
+import { publishShiftHeaderNotice } from "@/components/app/ShiftHeaderNotice";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,8 +51,6 @@ type Stage = "start" | "end";
 const autoClockedSlots = new Set<string>();
 const autoEndedShifts = new Set<string>();
 const playedStageAlerts = new Set<string>();
-// Toasts the user closed — don't recreate them on the next countdown tick.
-const dismissedStageToasts = new Set<string>();
 const stillWorkingShifts = new Set<string>();
 const askedAtWrittenShifts = new Set<string>();
 
@@ -203,73 +202,16 @@ export function ShiftStartEndAlert() {
     }
   }, [candidate, active]);
 
-  // Render or update the non-blocking warning toast.
+  // Publish the countdown to the header, never a bottom notification.
   useEffect(() => {
-    if (!active) {
-      toast.dismiss("shift-start-warning");
-      toast.dismiss("shift-end-warning");
-      return;
-    }
+    toast.dismiss("shift-start-warning");
+    toast.dismiss("shift-end-warning");
+    if (!active) { publishShiftHeaderNotice(null); return; }
     const { startsAt, endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
-    const isStart = active.stage === "start";
-    const target = isStart ? startsAt : endsAt;
-    const remaining = target - now;
-    const overdue = remaining <= 0;
-    const toastId = isStart ? "shift-start-warning" : "shift-end-warning";
-    const dismissKey = `${active.slot.id}:${active.stage}:${overdue ? "over" : "warn"}`;
-    if (dismissedStageToasts.has(dismissKey)) return;
-    const title = isStart
-      ? overdue ? "Shift has started" : "Shift starting soon"
-      : overdue ? "Shift has ended" : "Shift ending soon";
-
-    const Icon = isStart ? Play : StopCircle;
-    const accent = isStart ? "text-emerald-500" : "text-amber-500";
-
-    toast.info(
-      <div className="flex items-start gap-3">
-        <div className={`grid place-items-center size-10 rounded-full shrink-0 ${isStart ? "bg-emerald-500/15" : "bg-amber-500/15"} ${overdue ? "animate-pulse" : ""}`}>
-          <Icon className={`size-5 ${accent}`} />
-        </div>
-        <div className="min-w-0">
-          <div className="font-semibold text-sm">{title}</div>
-          <div className="text-xs text-muted-foreground mt-0.5">
-            {isStart ? (
-              overdue ? (
-                <>Your shift has started. Please clock in.</>
-              ) : (
-                <>
-                  Your shift starts in{" "}
-                  <span className={`font-semibold inline-flex items-center gap-1 ${accent}`}>
-                    <Clock className="size-3" /> {fmtCountdown(remaining)}
-                  </span>
-                  .
-                </>
-              )
-            ) : (
-              overdue ? (
-                <>Your shift has ended. Please clock out.</>
-              ) : (
-                <>
-                  Your shift ends in{" "}
-                  <span className={`font-semibold inline-flex items-center gap-1 ${accent}`}>
-                    <Clock className="size-3" /> {fmtCountdown(remaining)}
-                  </span>
-                  .
-                </>
-              )
-            )}
-          </div>
-        </div>
-      </div>,
-      {
-        id: toastId,
-        duration: Infinity,
-        dismissible: true,
-        className: `no-os-notify ${isStart ? "border-l-4 border-l-emerald-500" : "border-l-4 border-l-amber-500"}`,
-        onDismiss: () => dismissedStageToasts.add(dismissKey),
-      }
-    );
+    const remaining = (active.stage === "start" ? startsAt : endsAt) - now;
+    publishShiftHeaderNotice({ stage: active.stage, overdue: remaining <= 0, countdown: fmtCountdown(remaining) });
   }, [active, now, shiftWindowToUtcMs]);
+  useEffect(() => () => publishShiftHeaderNotice(null), []);
 
   // End of shift: ask if they're still working, then allow 1 minute from
   // when the visible question is first shown before clocking them out.

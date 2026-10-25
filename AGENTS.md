@@ -15,6 +15,7 @@
 - Android alerts use per-type tones on versioned channels; sound corrections need a new channel ID because Android retains the first sound.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Shift sounds deduplicate warning and due phases separately; the shift-over clip plays when the visible still-working question opens, not from a hidden end toast.
+- ShiftStartEndAlert owns lifecycle/audio and publishes countdown presentation to ShiftHeaderNotice inside Clocks before Office Time; do not mount duplicate shift controllers in headers or restore bottom warning toasts.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - Remote-help articles and PDFs share source content in `resources/remote-help-guides`; PDF companion rows use private `guide-files` paths beside existing video rows so adding written guides never replaces Watch actions.
 - Install Guides reuses AppTransferPanel's secured APK cards in device-specific remote-help tabs and excludes those APKs from general downloads, keeping one download flow and unchanged access checks.
