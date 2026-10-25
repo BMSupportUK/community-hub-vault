@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
