@@ -85,7 +85,13 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
       {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
     </div>
-    {row.completed_at && <p className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm font-semibold">All done — the apps confirmed your TV is ready. Staff can now request your screen.</p>}
+    {row.completed_at && <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/10 p-3">
+      <p className="text-sm font-semibold">All done — your TV is ready. To share your screen again, open BM Remote Helper on the TV and enter the new six-digit code it shows.</p>
+      {!closed && <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
+        <Input aria-label="New code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
+        <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
+      </form>}
+    </div>}
     {!row.completed_at && !closed && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
       <h3 className="font-semibold">Your setup code</h3>
       <p className="text-sm text-muted-foreground">Type this code into BM TV Enabler (or BM Support app › Settings › TV remote). The app checks your TV and ticks the steps below by itself.</p>
