@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import screenShareOfficeBg from "@/assets/screen-share-office-bg.jpg";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, MessageCircle, MonitorUp, Send, Wrench, X } from "lucide-react";
@@ -89,10 +90,19 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
     </div>
     {tab === "setup" && <div className="min-h-0 flex-1 overflow-y-auto bg-background p-3 sm:p-5"><TicketRemoteSetup ticketId={ticketId} customer={!staff} closed={closed} row={setup.row} reload={setup.reload} /></div>}
     <div className={tab ? "hidden" : "flex min-h-0 flex-1 flex-col"}>{children}</div>
-    <div className={tab === "screen" ? "min-h-0 flex-1 overflow-y-auto bg-background p-3 text-foreground sm:p-5" : "hidden"}>
+    <div className={tab === "screen" ? "relative isolate min-h-0 flex-1 overflow-y-auto p-3 text-foreground sm:p-5" : "hidden"}>
+      {tab === "screen" && <ScreenShareOfficeBackdrop />}
       <TicketScreenShareWorkspace ticketId={ticketId} ownerId={ownerId} staff={staff} viewer={canUseTvRemote(roles)} closed={closed} visible={tab === "screen"} autoAnswer={autoAnswer} onAutoAnswered={() => setAutoAnswer(false)} />
     </div>
   </div>;
+}
+
+/** Dimmed office illustration behind Screen share pages: workers at desks waiting to take calls. */
+export function ScreenShareOfficeBackdrop() {
+  return <>
+    <img src={screenShareOfficeBg} alt="" aria-hidden="true" loading="lazy" width={1920} height={1080} className="pointer-events-none absolute inset-0 -z-20 size-full object-cover object-center" />
+    <div className="pointer-events-none absolute inset-0 -z-10 bg-background/85" aria-hidden="true" />
+  </>;
 }
 
 export function TicketScreenShareWorkspace({ ticketId, ownerId, staff, viewer = staff, closed = false, visible = true, autoAnswer = false, onAutoAnswered }: { ticketId: string; ownerId: string; staff: boolean; viewer?: boolean; closed?: boolean; visible?: boolean; autoAnswer?: boolean; onAutoAnswered?: () => void }) {
