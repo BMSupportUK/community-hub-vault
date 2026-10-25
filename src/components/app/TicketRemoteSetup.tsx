@@ -5,14 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { normalizePairCode } from "@/lib/tv-remote";
-import { REMOTE_SETUP_STEPS, manualStepsDone, type SetupDevice } from "@/lib/ticket-remote-setup";
+import { REMOTE_SETUP_STEPS, appChecksPassed, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
-export type RemoteSetupRow = { device: SetupDevice; confirmed_steps: number[]; completed_at: string | null } | null;
+export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null } | null;
 
 export function useTicketRemoteSetup(ticketId: string) {
   const [row, setRow] = useState<RemoteSetupRow | undefined>(undefined);
   const load = useCallback(async () => {
-    const { data } = await supabase.from("ticket_remote_setup" as never).select("device,confirmed_steps,completed_at").eq("ticket_id", ticketId).maybeSingle();
+    const { data } = await supabase.from("ticket_remote_setup" as never).select("device,app_checks,app_checked_at,completed_at").eq("ticket_id", ticketId).maybeSingle();
     setRow((data as RemoteSetupRow) ?? null);
   }, [ticketId]);
   useEffect(() => { void load(); const t = window.setInterval(load, 3000); return () => window.clearInterval(t); }, [load]);
@@ -22,11 +22,19 @@ export function useTicketRemoteSetup(ticketId: string) {
 export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: { ticketId: string; customer: boolean; closed: boolean; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
-  const save = async (device: SetupDevice, steps: number[]) => {
+  const [setupCode, setSetupCode] = useState<string | null>(null);
+  const save = async (device: SetupDevice) => {
     setBusy(true);
-    const { error } = await supabase.rpc("save_ticket_remote_setup" as never, { _ticket_id: ticketId, _device: device, _steps: steps } as never);
+    const { error } = await supabase.rpc("save_ticket_remote_setup" as never, { _ticket_id: ticketId, _device: device, _steps: [] } as never);
     if (error) toast.error(error.message);
+    setSetupCode(null);
     await reload(); setBusy(false);
+  };
+  const issue = async () => {
+    setBusy(true);
+    const { data, error } = await supabase.rpc("issue_ticket_setup_code" as never, { _ticket_id: ticketId } as never);
+    if (error) toast.error(error.message); else setSetupCode(data as unknown as string);
+    setBusy(false);
   };
   const verify = async () => {
     setBusy(true);
@@ -41,11 +49,11 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     return <section className="mx-auto max-w-2xl space-y-3 text-foreground">
       <h2 className="text-xl font-semibold">Remote access setup</h2>
       {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
-        <p className="text-sm">Device: <strong>{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</strong> · {row.completed_at ? <span className="font-semibold text-primary">Confirmed by BM Remote Helper</span> : "In progress"}</p>
-        <ol className="space-y-2">{REMOTE_SETUP_STEPS[row.device].map((s, i) => {
-          const done = s.appCheck ? !!row.completed_at : row.confirmed_steps.includes(i);
-          return <li key={i} className="flex items-center gap-2 text-sm">{done ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}{s.title}</li>;
-        })}</ol>
+        <p className="text-sm">Device: <strong>{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</strong> · {row.completed_at ? <span className="font-semibold text-primary">Confirmed by the apps</span> : row.app_checked_at ? "App reported — waiting on the rest" : "Waiting for the app to report"}</p>
+        <ol className="space-y-2">{REMOTE_SETUP_STEPS[row.device].map((s, i) => (
+          <li key={i} className="flex items-center gap-2 text-sm">{stepDone(s, row) ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}{s.title}</li>
+        ))}</ol>
+        <p className="text-xs text-muted-foreground">Ticks come only from BM TV Enabler / BM Support app checking the TV, and from BM Remote Helper's live code — the customer can't tick them.</p>
       </>}
     </section>;
   }
@@ -54,32 +62,37 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <h2 className="text-xl font-semibold">Which TV device are you using?</h2>
       <p className="text-sm text-muted-foreground">Complete these steps so our team can help you through screen sharing.</p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Button variant="outline" className="h-24 flex-col gap-2" disabled={busy || closed} onClick={() => void save("amazon", [])}><Tv className="size-6" />Amazon Fire TV</Button>
-        <Button variant="outline" className="h-24 flex-col gap-2" disabled={busy || closed} onClick={() => void save("android", [])}><Smartphone className="size-6" />Android / Google TV</Button>
+        <Button variant="outline" className="h-24 flex-col gap-2" disabled={busy || closed} onClick={() => void save("amazon")}><Tv className="size-6" />Amazon Fire TV</Button>
+        <Button variant="outline" className="h-24 flex-col gap-2" disabled={busy || closed} onClick={() => void save("android")}><Smartphone className="size-6" />Android / Google TV</Button>
       </div>
     </section>;
   }
   const steps = REMOTE_SETUP_STEPS[row.device];
-  const confirmed = row.confirmed_steps;
-  const manualDone = manualStepsDone(row.device, confirmed);
+  const ready = appChecksPassed(row.app_checks);
   return <section className="mx-auto max-w-2xl space-y-4 text-foreground">
     <div className="flex flex-wrap items-center gap-2">
       <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
-      {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon", [])}>Change device</Button>}
+      {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
     </div>
-    {row.completed_at && <p className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm font-semibold">All done — BM Remote Helper confirmed it's working. Staff can now request your screen.</p>}
+    {row.completed_at && <p className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm font-semibold">All done — the apps confirmed your TV is ready. Staff can now request your screen.</p>}
+    {!row.completed_at && !closed && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
+      <h3 className="font-semibold">Your setup code</h3>
+      <p className="text-sm text-muted-foreground">Type this code into BM TV Enabler (or BM Support app › Settings › TV remote). The app checks your TV and ticks the steps below by itself.</p>
+      {setupCode
+        ? <p className="font-mono text-3xl font-bold tracking-widest">{setupCode.slice(0, 4)} {setupCode.slice(4)}</p>
+        : <Button size="sm" disabled={busy} onClick={() => void issue()}>Show my setup code</Button>}
+      {setupCode && <p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p>}
+    </div>}
     {steps.map((s, i) => {
-      const done = s.appCheck ? !!row.completed_at : confirmed.includes(i);
-      const prevDone = steps.slice(0, i).every((p, j) => p.appCheck || confirmed.includes(j));
-      return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"} ${prevDone ? "" : "opacity-50"}`}>
+      const done = stepDone(s, row);
+      return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
         <h3 className="flex items-center gap-2 font-semibold">{done ? <CheckCircle2 className="size-5 text-primary" /> : <span className="flex size-5 items-center justify-center rounded-full border border-border text-xs">{i + 1}</span>}{s.title}</h3>
         <p className="text-sm text-muted-foreground">{s.body}</p>
-        {!done && prevDone && !closed && (s.appCheck
-          ? manualDone && <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
-              <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
-              <Button type="submit" disabled={busy || code.length !== 6}>Confirm</Button>
-            </form>
-          : <Button size="sm" disabled={busy} onClick={() => void save(row.device, [...confirmed, i])}>Confirm</Button>)}
+        {!done && <p className="text-xs text-muted-foreground">{s.proof === "code" ? (ready ? "" : "Unlocks once the app has checked your TV.") : "Ticks automatically when the app checks your TV."}</p>}
+        {!done && s.proof === "code" && ready && !closed && <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
+          <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
+          <Button type="submit" disabled={busy || code.length !== 6}>Confirm</Button>
+        </form>}
       </article>;
     })}
   </section>;

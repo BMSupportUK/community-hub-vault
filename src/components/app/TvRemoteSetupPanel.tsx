@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { remoteHelperAvailable } from "@/lib/remote-helper";
 
 type TvRemoteSetupPlugin = {
-  enable(o: { host: string }): Promise<{ ok: boolean }>;
+  enable(o: { host: string }): Promise<{ ok: boolean; checks?: { adb: boolean; helper: boolean; control: boolean; accessibility: boolean } }>;
   addListener(e: "progress", cb: (d: { step: string }) => void): Promise<PluginListenerHandle>;
 };
 const TvRemoteSetup = registerPlugin<TvRemoteSetupPlugin>("TvRemoteSetup");
@@ -18,6 +18,7 @@ export function isTvAddress(v: string): boolean {
 export function TvRemoteSetupPanel() {
   const [native, setNative] = useState(false);
   const [host, setHost] = useState("");
+  const [setupCode, setSetupCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +31,16 @@ export function TvRemoteSetupPanel() {
     setStep("Connecting to your TV… a box saying \"Allow debugging?\" will appear on the TV. Tick Always allow, then press Allow.");
     localStorage.setItem("bm-tv-address", host.trim());
     const sub = await TvRemoteSetup.addListener("progress", (d) => setStep(d.step));
-    try { await TvRemoteSetup.enable({ host: host.trim() }); setDone(true); setStep(null); }
+    try {
+      const res = await TvRemoteSetup.enable({ host: host.trim() });
+      const sc = setupCode.replace(/\D/g, "");
+      if (sc.length === 8 && res.checks) {
+        setStep("Telling BM Support your TV is ready…");
+        const r = await fetch("https://bmsupport.uk/api/public/remote-setup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: sc, app: "bm-support-phone", checks: res.checks }) });
+        if (!r.ok) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "Couldn't tell BM Support. Try again.");
+      }
+      setDone(true); setStep(null);
+    }
     catch (e) { setError(e instanceof Error ? e.message : String(e)); setStep(null); }
     finally { void sub.remove(); setBusy(false); }
   }
@@ -49,6 +59,7 @@ export function TvRemoteSetupPanel() {
       </ol>
       {native ? (
         <div className="space-y-3">
+          <Input inputMode="numeric" placeholder="Setup code from your support ticket (8 digits)" value={setupCode} onChange={(e) => setSetupCode(e.target.value.replace(/\D/g, "").slice(0, 8))} disabled={busy} />
           <Input inputMode="decimal" placeholder="TV address, e.g. 192.168.1.23" value={host} onChange={(e) => setHost(e.target.value)} disabled={busy} />
           <Button onClick={run} disabled={busy || !isTvAddress(host)}>
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Tv className="size-4" />}Turn on

@@ -72,7 +72,13 @@ public class TvRemoteSetupPlugin extends Plugin {
                 adb.shell("settings put secure accessibility_enabled 1");
                 String saved = adb.shell("settings get secure enabled_accessibility_services");
                 if (!saved.contains(CONTROL + "/")) { call.reject("The TV refused to switch remote control on."); return; }
-                call.resolve(new JSObject().put("ok", true));
+                // Real TV state, reported to the website so ticket setup steps can't just be ticked.
+                JSObject checks = new JSObject();
+                checks.put("adb", true);
+                checks.put("helper", adb.shell("pm path " + HELPER).contains("package:"));
+                checks.put("control", adb.shell("pm path " + CONTROL).contains("package:"));
+                checks.put("accessibility", saved.contains(CONTROL + "/") && adb.shell("settings get secure accessibility_enabled").trim().equals("1"));
+                call.resolve(new JSObject().put("ok", true).put("checks", checks));
             } catch (java.net.SocketTimeoutException e) {
                 call.reject("Nobody pressed Allow on the TV in time. Try again and press Allow on the TV.");
             } catch (java.net.ConnectException | java.net.NoRouteToHostException e) {
