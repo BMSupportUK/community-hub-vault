@@ -64,7 +64,7 @@ public final class AdbClient implements AutoCloseable {
      * first sign-in request before reconnecting; once the key is sent we wait the full remaining time.
      */
     static AdbClient connect(String host, int port, KeyPair keys, byte[] publicKeyLine, long totalMs, int quietMs) throws Exception {
-        long deadline = System.currentTimeMillis() + totalMs;
+        long start = System.currentTimeMillis(), deadline = start + totalMs;
         boolean everConnected = false, everAsked = false, everSentKey = false;
         String stage = "never answered";
         while (System.currentTimeMillis() < deadline) {
@@ -74,6 +74,7 @@ public final class AdbClient implements AutoCloseable {
             } catch (IOException e) {
                 try { s.close(); } catch (IOException ignored) { }
                 if (!everConnected) stage = "nothing answered (" + e.getClass().getSimpleName() + ")";
+                if (!everConnected && System.currentTimeMillis() - start > 20_000) break;
                 pause(2000);
                 continue;
             }

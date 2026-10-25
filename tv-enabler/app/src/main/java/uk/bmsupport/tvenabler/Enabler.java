@@ -119,7 +119,7 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-setup").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.7\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.8\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             int code = h.getResponseCode(); h.disconnect();
@@ -134,8 +134,11 @@ final class Enabler {
     static String friendly(Exception e) {
         if (e instanceof AdbClient.NotReachable)
             return "Couldn't find the TV at that address. Check the address matches the TV, that debugging is ON on the TV (ADB debugging on Fire TV, Network debugging on Android / Google TV), and that this phone is on the same Wi-Fi as the TV — not mobile data or a guest network.";
-        if (e instanceof AdbClient.NotAuthorized)
-            return "The TV never showed its Allow box, or it wasn't pressed. On the TV: switch debugging OFF and back ON, keep the TV awake on its home screen, then press Try again and watch the TV for the Allow box.";
+        if (e instanceof AdbClient.NotAuthorized) {
+            if (((AdbClient.NotAuthorized) e).keySent)
+                return "The TV was asked to show its Allow box but Allow wasn't pressed. Keep the TV awake on its home screen (not a screensaver or app), press Try again, then tick Always allow and press Allow on the TV. (Detail: " + e.getMessage() + ")";
+            return "The TV answered but never asked to let this phone in, so no Allow box could appear. On the TV switch debugging OFF and back ON (or restart the TV), check it's the right TV address, then press Try again. (Detail: " + e.getMessage() + ")";
+        }
         if (e instanceof java.net.SocketTimeoutException) return "The TV stopped answering. Press Try again, then press Allow on the TV.";
         if (e instanceof java.net.ConnectException || e instanceof java.net.NoRouteToHostException)
             return "Couldn't reach the TV. Check the address, that this phone is on the same Wi-Fi as the TV, and that debugging is ON on the TV (ADB debugging on Fire TV, Network debugging on Android / Google TV).";
