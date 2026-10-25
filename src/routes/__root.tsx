@@ -118,7 +118,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" },
     ],
     scripts: [
       {
@@ -133,7 +132,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         // runs even when the app bundle fails: if nothing has rendered after
         // a few seconds it reloads once for the fresh files, and if that still
         // fails it shows a readable message instead of a black screen.
-        children: `(function(){try{var KEY="bm-boot-watchdog";window.__bmBootOK=function(){document.documentElement.setAttribute("data-bm-booted","1");sessionStorage.removeItem(KEY)};window.addEventListener("load",function(){setTimeout(function(){if(document.documentElement.getAttribute("data-bm-booted"))return;if((document.body.innerText||"").trim().length>4)return;if(!sessionStorage.getItem(KEY)){sessionStorage.setItem(KEY,"1");var u=new URL(location.href);u.searchParams.set("bmr",Date.now().toString(36));location.replace(u.toString());return}var d=document.createElement("div");d.style.cssText="position:fixed;inset:0;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-family:sans-serif;padding:24px;z-index:2147483647";d.innerHTML="<div><h1 style='font-size:20px;margin-bottom:8px'>The app could not load</h1><p style='opacity:.7;font-size:14px'>Close this window and open BM Support again. If it keeps happening, clear the site data in your browser settings.</p></div>";document.body.appendChild(d)},9000)})}catch(e){}})();`,
+        children: `(function(){try{var KEY="bm-boot-watchdog";window.__bmBootOK=function(){document.documentElement.setAttribute("data-bm-booted","1");sessionStorage.removeItem(KEY)};setTimeout(function(){if(document.documentElement.getAttribute("data-bm-booted"))return;if(!document.body)return;if((document.body.innerText||"").trim().length>4)return;if(!sessionStorage.getItem(KEY)){sessionStorage.setItem(KEY,"1");var u=new URL(location.href);u.searchParams.set("bmr",Date.now().toString(36));location.replace(u.toString());return}var d=document.createElement("div");d.style.cssText="position:fixed;inset:0;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-family:sans-serif;padding:24px;z-index:2147483647";d.innerHTML="<div><h1 style='font-size:20px;margin-bottom:8px'>The app could not load</h1><p style='opacity:.7;font-size:14px'>Close this window and open BM Support again. If it keeps happening, clear the site data in your browser settings.</p></div>";document.body.appendChild(d)},12000)}catch(e){}})();`,
+      },
+      {
+        // Web fonts load without blocking the page: a slow or blocked font
+        // server must never leave every page blank while it waits.
+        children: `(function(){try{var l=document.createElement("link");l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap";document.head.appendChild(l)}catch(e){}})();`,
       },
     ],
   }),
