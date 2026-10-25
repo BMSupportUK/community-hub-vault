@@ -32,7 +32,7 @@ export function TvEnablerPanel() {
           <li>On the TV, tick <strong>Always allow</strong> and press <strong>Allow</strong>. The app installs everything on the TV for you.</li>
           <li>BM Remote Helper opens on the TV — type its six-digit code on your support ticket.</li>
         </ol>
-        <p className="mt-3 text-sm text-muted-foreground">Android phones only. ADB debugging (Fire TV) or Network debugging (Android / Google TV) must be on in the TV's Developer options.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Android phones only. ADB debugging (Fire TV) or Network or Wireless debugging (Android / Google TV) must be on in the TV's Developer options.</p>
         <Button className="mt-5 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90" onClick={() => setOpen(true)}>
           <QrCode className="size-4" /> Get the app link
         </Button>

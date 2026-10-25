@@ -69,7 +69,7 @@ public class MainActivity extends Activity {
 
         col.addView(text("1. Switch on the setting above on the TV.\n2. Make sure this phone is on the same Wi-Fi as the TV.\n3. Press Find my TV and choose your TV, or type its address below.\n4. Press Turn on remote control — everything on the TV is installed for you.", 15, FG, false));
 
-        col.addView(text("Your setup code from the Remote setup tab on your support ticket:", 15, FG, false));
+        col.addView(text("Your setup code from the Remote setup tab on your support ticket or order:", 15, FG, false));
         setupCode = new EditText(this);
         setupCode.setHint("8-digit setup code");
         setupCode.setHintTextColor(MUTED); setupCode.setTextColor(FG); setupCode.setTextSize(20);
@@ -113,7 +113,7 @@ public class MainActivity extends Activity {
         androidBtn.setBackgroundColor(amazon ? Color.parseColor("#2A3050") : ACCENT);
         deviceHelp.setText(amazon
             ? "On the TV: Settings › My Fire TV › About — press the device name 7 times, then Settings › My Fire TV › Developer options › ADB debugging ON."
-            : "On the TV: Settings › System › About — press Android TV OS build 7 times, then Settings › System › Developer options › Network debugging ON.");
+            : "On the TV: Settings › System › About — press Android TV OS build 7 times, then Settings › System › Developer options › Network debugging ON (or Wireless debugging ON if your TV has that instead).");
     }
 
     private void start() {
@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
         String host = address.getText().toString().trim();
         if (!host.matches("^\\d{1,3}(\\.\\d{1,3}){3}$")) { say("Type the TV's address exactly as it shows on the TV, e.g. 192.168.1.23", WARN); return; }
         String sc = setupCode.getText().toString().replaceAll("\\D", "");
-        if (sc.length() != 8) { say("Type the 8-digit setup code shown on your support ticket's Remote setup tab.", WARN); return; }
+        if (sc.length() != 8) { say("Type the 8-digit setup code shown on the Remote setup tab of your ticket or order.", WARN); return; }
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("host", host).apply();
         setBusy(true);
         resetSteps();
@@ -189,7 +189,7 @@ public class MainActivity extends Activity {
                         say("Selected " + dev.name + " (" + dev.address + "). Now press Turn on remote control.", OK);
                     } else {
                         String how = "android".equals(device)
-                            ? "Settings › System › Developer options › Network debugging"
+                            ? "Settings › System › Developer options › Network debugging (or Wireless debugging)"
                             : "Settings › My Fire TV › Developer options › ADB debugging";
                         say("Selected " + dev.name + " (" + dev.address + "). Debugging isn't reachable — on the TV open " + how + " and switch it on, then try again. Wi-Fi isolation can also block it. This app can't switch it on remotely.", WARN);
                     }

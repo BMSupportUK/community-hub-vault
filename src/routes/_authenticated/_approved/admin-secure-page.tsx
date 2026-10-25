@@ -11,10 +11,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { inviteOrderScreenShare } from "@/lib/tv-help.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { OrderRemoteSetupStatus } from "@/components/checkout/OrderRemoteSetupStatus";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-secure-page")({
-  validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string; tab?: "order" | "screen" } => ({
-    tab: search.tab === "screen" ? "screen" : undefined,
+  validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string; tab?: "order" | "remote" | "screen" } => ({
+    tab: search.tab === "screen" ? "screen" : search.tab === "remote" ? "remote" : undefined,
     order: typeof search.order === "string" ? (search.order as string) : undefined,
     ref: typeof search.ref === "string" ? (search.ref as string) : undefined,
   }),
@@ -37,13 +38,13 @@ function SecurePageAdmin() {
   const invite = useServerFn(inviteOrderScreenShare);
   const requestShare = async () => {
     setSendingInvite(true);
-    try { await invite({ data: { orderId: order } }); toast.success("Screen share requested — the customer's TV code box is open"); }
+    try { await invite({ data: { orderId: order } }); toast.success("Screen share requested — the customer has been asked to finish Remote setup"); }
     catch { toast.error("Could not send screen share request"); }
     finally { setSendingInvite(false); }
   };
   const [sendingInvite, setSendingInvite] = useState(false);
   const { order, ref: refParam, tab: tabParam } = Route.useSearch();
-  const [tab, setTab] = useState<"order" | "screen">(tabParam ?? "order");
+  const [tab, setTab] = useState<"order" | "remote" | "screen">(tabParam ?? "order");
   const shares = useOrderScreenShares(order ?? "");
   const waiting = shares.filter((s) => s.status === "pending").length;
   const liveShares = shares.filter((s) => s.status !== "pending");
@@ -83,6 +84,8 @@ function SecurePageAdmin() {
             <div className="inline-flex rounded-xl border border-border bg-card/85 p-1 backdrop-blur-sm" role="tablist">
           <button type="button" role="tab" aria-selected={tab === "order"} onClick={() => setTab("order")}
             className={`rounded-lg px-4 py-2 text-sm font-semibold ${tab === "order" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>Order</button>
+          <button type="button" role="tab" aria-selected={tab === "remote"} onClick={() => setTab("remote")}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold ${tab === "remote" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>Remote setup</button>
           <button type="button" role="tab" aria-selected={tab === "screen"} onClick={() => setTab("screen")}
             className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${tab === "screen" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
             Screen share{waiting > 0 && <span className="rounded-full bg-destructive px-2 text-xs text-destructive-foreground animate-pulse">{waiting}</span>}
@@ -108,6 +111,7 @@ function SecurePageAdmin() {
             } />
           </div>
         </div>
+        {tab === "remote" && <OrderRemoteSetupStatus orderId={order} />}
         {tab === "screen" && <div className="space-y-3">
           <Button size="sm" disabled={sendingInvite} onClick={() => void requestShare()}><MonitorUp className="mr-2 size-4" />{sendingInvite ? "Sending…" : "Request screen share"}</Button>
           <OrderScreenShareTab orderId={order} rows={shares} />

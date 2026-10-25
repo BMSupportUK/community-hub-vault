@@ -4993,6 +4993,42 @@ export type Database = {
         }
         Relationships: []
       }
+      order_remote_setup: {
+        Row: {
+          app_checked_at: string | null
+          app_checks: Json
+          completed_at: string | null
+          device: string
+          order_id: string
+          setup_code_expires_at: string | null
+          setup_code_hash: string | null
+          updated_at: string
+          verified_session_id: string | null
+        }
+        Insert: {
+          app_checked_at?: string | null
+          app_checks?: Json
+          completed_at?: string | null
+          device: string
+          order_id: string
+          setup_code_expires_at?: string | null
+          setup_code_hash?: string | null
+          updated_at?: string
+          verified_session_id?: string | null
+        }
+        Update: {
+          app_checked_at?: string | null
+          app_checks?: Json
+          completed_at?: string | null
+          device?: string
+          order_id?: string
+          setup_code_expires_at?: string | null
+          setup_code_hash?: string | null
+          updated_at?: string
+          verified_session_id?: string | null
+        }
+        Relationships: []
+      }
       order_support_session_messages: {
         Row: {
           content: string

@@ -13,7 +13,7 @@ export function WindowsTvEnablerPanel() {
       <h3 className="mt-6 font-display text-lg font-semibold text-foreground">Install and connect</h3>
       <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm text-foreground">
         <li>Download and run the installer on your Windows computer. Follow the installation prompts, then open <strong>BM TV Enabler</strong>.</li>
-        <li>Choose which TV you are setting up: <strong>Amazon Fire TV</strong> or <strong>Android / Google TV</strong>. The app shows the exact setting to switch on — ADB debugging on Fire TV, Network debugging on Android / Google TV.</li>
+        <li>Choose which TV you are setting up: <strong>Amazon Fire TV</strong> or <strong>Android / Google TV</strong>. The app shows the exact setting to switch on — ADB debugging on Fire TV, Network or Wireless debugging on Android / Google TV.</li>
         <li>Connect the computer and TV to the same home network, not guest Wi-Fi. Disconnect any VPN. If Windows requests network access, allow it only on your trusted private network.</li>
         <li>In the Windows app, press <strong>Find my TV</strong> and select the correct TV by name and address, or type its address. Debugging marked not reachable can mean the switch is off or the network is blocking it.</li>
         <li>Press <strong>Turn on remote control</strong>. When the TV asks <strong>Allow USB debugging?</strong>, tick <strong>Always allow from this computer</strong> and choose <strong>Allow</strong>.</li>

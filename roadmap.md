@@ -399,3 +399,5 @@
 - [x] Enabler QR opens a single Download button page (no duplicate downloads); phone download never serves the Windows installer. Needs Publish.
 - [x] Enabler 1.9: remote control failed with "Unable to open" because the TV couldn't read the helper's copied file. Now the phone unpacks control.apk from the helper download and pushes it directly. Signed, live via /api/public/tv-enabler-apk (checksum verified). Needs a real Fire TV test.
 - [ ] Same fix still to apply to BM Support app Settings › TV remote and the Windows Enabler (both still copy the TV-side file).
+- [x] Android/Google TV instructions mention Wireless debugging (site + Enabler 1.10, live, checksum verified).
+- [x] Orders get the ticket Remote setup flow: customer tabs Order / Remote setup / Screen share; staff secure page gets a read-only Remote setup tab. Not yet tested end-to-end on a real order.

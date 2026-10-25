@@ -12,7 +12,7 @@ export const REMOTE_SETUP_STEPS: Record<SetupDevice, SetupStep[]> = {
     { title: "Open BM Remote Helper", body: "BM TV Enabler opens BM Remote Helper on the TV for you. Type the six-digit code it shows below.", proof: "code" },
   ],
   android: [
-    { title: "Turn on developer options and network debugging", body: "On your TV go to Settings › System › About and press Android TV OS build 7 times. Then Settings › System › Developer options › Network debugging ON.", proof: "adb" },
+    { title: "Turn on developer options and debugging", body: "On your TV go to Settings › System › About and press Android TV OS build 7 times. Then Settings › System › Developer options and switch ON Network debugging — or Wireless debugging if that's what your TV has. Leave it switched on.", proof: "adb" },
     { title: "Install BM TV Enabler on your phone or PC", body: "Scan the QR code on the right with your Android phone, or download the Windows version. Keep the phone or PC on the same Wi-Fi as the TV.", proof: "reported" },
     { title: "Turn on remote control", body: "In BM TV Enabler type the setup code below, press Find my TV, pick your TV, then press Turn on remote control. The app installs BM Remote Helper and remote control on the TV for you. On the TV tick Always allow and press Allow.", proof: "accessibility" },
     { title: "Open BM Remote Helper", body: "BM TV Enabler opens BM Remote Helper on the TV for you. Type the six-digit code it shows below.", proof: "code" },
