@@ -106,4 +106,4 @@ async function report(code, checks, device, post = globalThis.fetch) {
   if (!res.ok) throw new Error(`Remote control is on, but BM Support couldn't be told (error ${res.status}). Try again.`);
 }
 
-module.exports = { report, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, enable };
+module.exports = { report, downloadHelper, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, enable };
