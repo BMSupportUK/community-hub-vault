@@ -131,6 +131,7 @@ import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/publi
 import { Route as ApiPublicRemoteSetupRouteImport } from './routes/api/public/remote-setup'
 import { Route as ApiPublicTvRouteImport } from './routes/api/public/tv'
 import { Route as ApiPublicTvEnablerApkRouteImport } from './routes/api/public/tv-enabler-apk'
+import { Route as ApiPublicTvEnablerWindowsRouteImport } from './routes/api/public/tv-enabler-windows'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
 import { Route as ApiPublicWiseEmailRouteImport } from './routes/api/public/wise-email'
@@ -898,6 +899,12 @@ const ApiPublicTvEnablerApkRoute = ApiPublicTvEnablerApkRouteImport.update({
   path: '/api/public/tv-enabler-apk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTvEnablerWindowsRoute =
+  ApiPublicTvEnablerWindowsRouteImport.update({
+    id: '/api/public/tv-enabler-windows',
+    path: '/api/public/tv-enabler-windows',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
   id: '/api/public/tweet',
   path: '/api/public/tweet',
@@ -1440,6 +1447,7 @@ export interface FileRoutesByFullPath {
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tv-enabler-apk': typeof ApiPublicTvEnablerApkRoute
+  '/api/public/tv-enabler-windows': typeof ApiPublicTvEnablerWindowsRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1631,6 +1639,7 @@ export interface FileRoutesByTo {
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tv-enabler-apk': typeof ApiPublicTvEnablerApkRoute
+  '/api/public/tv-enabler-windows': typeof ApiPublicTvEnablerWindowsRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1828,6 +1837,7 @@ export interface FileRoutesById {
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tv-enabler-apk': typeof ApiPublicTvEnablerApkRoute
+  '/api/public/tv-enabler-windows': typeof ApiPublicTvEnablerWindowsRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -2024,6 +2034,7 @@ export interface FileRouteTypes {
     | '/api/public/remote-setup'
     | '/api/public/tv'
     | '/api/public/tv-enabler-apk'
+    | '/api/public/tv-enabler-windows'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2215,6 +2226,7 @@ export interface FileRouteTypes {
     | '/api/public/remote-setup'
     | '/api/public/tv'
     | '/api/public/tv-enabler-apk'
+    | '/api/public/tv-enabler-windows'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2411,6 +2423,7 @@ export interface FileRouteTypes {
     | '/api/public/remote-setup'
     | '/api/public/tv'
     | '/api/public/tv-enabler-apk'
+    | '/api/public/tv-enabler-windows'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2526,6 +2539,7 @@ export interface RootRouteChildren {
   ApiPublicRemoteSetupRoute: typeof ApiPublicRemoteSetupRoute
   ApiPublicTvRoute: typeof ApiPublicTvRoute
   ApiPublicTvEnablerApkRoute: typeof ApiPublicTvEnablerApkRoute
+  ApiPublicTvEnablerWindowsRoute: typeof ApiPublicTvEnablerWindowsRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
   ApiPublicWiseEmailRoute: typeof ApiPublicWiseEmailRoute
@@ -3426,6 +3440,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/tv-enabler-apk'
       fullPath: '/api/public/tv-enabler-apk'
       preLoaderRoute: typeof ApiPublicTvEnablerApkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tv-enabler-windows': {
+      id: '/api/public/tv-enabler-windows'
+      path: '/api/public/tv-enabler-windows'
+      fullPath: '/api/public/tv-enabler-windows'
+      preLoaderRoute: typeof ApiPublicTvEnablerWindowsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/tweet': {
@@ -4365,6 +4386,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRemoteSetupRoute: ApiPublicRemoteSetupRoute,
   ApiPublicTvRoute: ApiPublicTvRoute,
   ApiPublicTvEnablerApkRoute: ApiPublicTvEnablerApkRoute,
+  ApiPublicTvEnablerWindowsRoute: ApiPublicTvEnablerWindowsRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
   ApiPublicWiseEmailRoute: ApiPublicWiseEmailRoute,
