@@ -93,7 +93,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       {setupCode && <><p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p><Button size="sm" variant="outline" disabled={busy} onClick={() => void issue()}>New setup code</Button></>}
     </div>}
     <RemoteSetupProgress row={row} />
-    {steps.map((s, i) => {
+    {!complete && steps.map((s, i) => {
       const done = stepDone(s, row);
       return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
         <h3 className="flex items-center gap-2 font-semibold">{done ? <CheckCircle2 className="size-5 text-primary" /> : <span className="flex size-5 items-center justify-center rounded-full border border-border text-xs">{i + 1}</span>}{s.title}</h3>
