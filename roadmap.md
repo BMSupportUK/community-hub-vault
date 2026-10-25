@@ -386,3 +386,7 @@
 ## Windows TV Enabler one-app flow
 - [x] Windows Enabler 1.2.0 matches the phone app: Amazon/Android device choice with per-device debugging instructions, downloads and installs BM Remote Helper itself, opens it, enables remote control, reports device with checks. 9 tests pass; installer rebuilt (checksum verified against pinned ADB/Electron), served via /api/public/tv-enabler-windows; both download buttons updated.
 - [ ] Verify the Windows 1.2.0 flow on a real Windows PC + TV — requires physical devices.
+
+## TV Enabler 1.7 connection fix
+- [x] "Nobody pressed Allow" fired even when the TV never showed its Allow box: single-shot connection + connect-timeout misreported. 1.7 retries the whole ADB connection for 2 minutes (re-triggers the Allow box on stuck TVs) and separates "TV not found at that address" from "found but never accepted". Built signed, live via /api/public/tv-enabler-apk (checksum verified).
+- [ ] Dane J to retest on the real Fire TV — needs the physical TV.
