@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
-import { canUseTvRemote } from "@/lib/tv-remote";
+import { canUseTvRemote, normalizePairCode } from "@/lib/tv-remote";
 import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, ticketShareRequested, isCustomerTestTicket } from "@/lib/ticket-screen-share";
 
 export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
@@ -118,7 +118,7 @@ function CustomerTicketScreenShare({ ticketId, closed = false }: { ticketId: str
   const live = status === "active";
   const waiting = status === "pending" || status === "claimed";
   const title = error ? "Screen share unavailable" : !state ? "Checking screen share…" : live ? "Your TV screen is being shared" : status === "claimed" ? "Staff are connecting" : status === "pending" ? "Waiting for staff to answer" : closed ? "Ticket closed" : "No screen share running";
-  const text = error ? error : !state ? "" : live ? "Staff can see your TV now. You can return to your ticket while the screen share carries on." : status === "claimed" ? "Staff have answered. Press Allow and then Start on your TV." : status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : closed ? "This ticket is closed, so screen sharing is no longer available." : "To share your screen, open BM Remote Helper on your TV and enter the code it shows on the Remote setup tab.";
+  const text = error ? error : !state ? "" : live ? "Staff can see your TV now. You can return to your ticket while the screen share carries on." : status === "claimed" ? "Staff have answered. Press Allow and then Start on your TV." : status === "pending" ? "Staff have been alerted. When they answer, press Allow and then Start on your TV." : closed ? "This ticket is closed, so screen sharing is no longer available." : "Enter your TV code above to start a screen share.";
   const sendCode = async () => {
     setBusy(true);
     const { data, error: e } = await supabase.rpc("verify_ticket_remote_setup" as never, { _ticket_id: ticketId, _code: code } as never);
