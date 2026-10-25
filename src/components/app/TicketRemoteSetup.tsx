@@ -85,12 +85,13 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
       {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
     </div>
-    {row.completed_at && <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/10 p-3">
-      <p className="text-sm font-semibold">All done — your TV is ready. To share your screen again, open BM Remote Helper on the TV and enter the new six-digit code it shows.</p>
-      {!closed && <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
-        <Input aria-label="New code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
+    {(row.completed_at || ready) && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+      <h3 className="font-semibold">Your TV code</h3>
+      <p className="text-sm">{row.completed_at ? "All done — your TV is ready. " : ""}Open BM Remote Helper on the TV and enter the six-digit code it shows.</p>
+      <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
+        <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
         <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
-      </form>}
+      </form>
     </div>}
     {!row.completed_at && !closed && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
       <h3 className="font-semibold">Your setup code</h3>
@@ -105,11 +106,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
         <h3 className="flex items-center gap-2 font-semibold">{done ? <CheckCircle2 className="size-5 text-primary" /> : <span className="flex size-5 items-center justify-center rounded-full border border-border text-xs">{i + 1}</span>}{s.title}</h3>
         <p className="text-sm text-muted-foreground">{s.body}</p>
-        {!done && <p className="text-xs text-muted-foreground">{s.proof === "code" ? (ready ? "" : "Unlocks once the app has checked your TV.") : "Ticks automatically when the app checks your TV."}</p>}
-        {!done && s.proof === "code" && ready && !closed && <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
-          <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
-          <Button type="submit" disabled={busy || code.length !== 6}>Confirm</Button>
-        </form>}
+        {!done && <p className="text-xs text-muted-foreground">{s.proof === "code" ? (ready ? "Enter the TV code in the box at the top." : "Unlocks once the app has checked your TV.") : "Ticks automatically when the app checks your TV."}</p>}
       </article>;
     })}
   </section>;
