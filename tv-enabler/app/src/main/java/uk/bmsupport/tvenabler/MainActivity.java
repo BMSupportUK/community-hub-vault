@@ -182,13 +182,16 @@ public class MainActivity extends Activity {
                     ((AlertDialog) d).getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                 })
                 .setNegativeButton("Cancel", (d, which) -> say("No TV selected. You can search again or type its address.", MUTED))
-                .setPositiveButton("Use this TV", (d, which) -> {
-                    DiscoveredDevice device = DiscoveredDevice.selected(devices, selected[0]);
-                    address.setText(device.address);
-                    if (device.debuggingReachable) {
-                        say("Selected " + device.name + " (" + device.address + "). Check it matches BM Remote Helper, then press Turn on remote control.", OK);
+            .setPositiveButton("Use this TV", (d, which) -> {
+                    DiscoveredDevice dev = DiscoveredDevice.selected(devices, selected[0]);
+                    address.setText(dev.address);
+                    if (dev.debuggingReachable) {
+                        say("Selected " + dev.name + " (" + dev.address + "). Now press Turn on remote control.", OK);
                     } else {
-                        say("Selected " + device.name + " (" + device.address + "). ADB debugging isn't reachable. On this Fire TV open Settings › My Fire TV › Developer options and switch ADB debugging on, then try again. Wi-Fi isolation can also block it. This app can't switch ADB debugging on remotely.", WARN);
+                        String how = "android".equals(device)
+                            ? "Settings › System › Developer options › Network debugging"
+                            : "Settings › My Fire TV › Developer options › ADB debugging";
+                        say("Selected " + dev.name + " (" + dev.address + "). Debugging isn't reachable — on the TV open " + how + " and switch it on, then try again. Wi-Fi isolation can also block it. This app can't switch it on remotely.", WARN);
                     }
                 }).create();
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false));
