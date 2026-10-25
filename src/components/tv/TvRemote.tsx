@@ -655,7 +655,7 @@ export function useOrderScreenShares(orderId: string, kind: LinkKind = "order") 
   return rows;
 }
 
-export function OrderScreenShareTab({ orderId, rows, kind = "order" }: { orderId: string; rows: OrderReq[]; kind?: LinkKind }) {
+export function OrderScreenShareTab({ orderId, rows, kind = "order", autoAnswer = false, onAutoAnswered }: { orderId: string; rows: OrderReq[]; kind?: LinkKind; autoAnswer?: boolean; onAutoAnswered?: () => void }) {
   const { user } = useAuth();
   const [live, setLive] = useState<Live | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -676,6 +676,14 @@ export function OrderScreenShareTab({ orderId, rows, kind = "order" }: { orderId
     if (error || !row) { toast.error(error?.message ?? "Could not answer this request"); return; }
     setLive({ id: row.id, topic: row.topic, device: row.device_name, host: true, linkKind: kind, linkId: orderId, hostId: uid });
   };
+  // Answer pressed in the ticket header: answer the waiting request as soon as it is listed here.
+  useEffect(() => {
+    if (!autoAnswer || live || busy) return;
+    const pending = rows.find((r) => r.status === "pending" && !closedSessions.current.has(r.id));
+    if (!pending) return;
+    onAutoAnswered?.();
+    void answer(pending);
+  }, [autoAnswer, rows, live, busy]);
   if (live) return <RemoteSession key={live.id} live={live} onEnd={() => {
     closedSessions.current.add(live.id);
     setLive(null);
