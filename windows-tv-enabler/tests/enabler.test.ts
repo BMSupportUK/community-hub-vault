@@ -38,7 +38,7 @@ describe('Windows TV Enabler safety and setup', () => {
       if (command === 'settings get secure enabled_accessibility_services') return calls.filter(a => a[3]?.startsWith('settings put secure enabled_accessibility_services')).length ? SERVICE : 'com.example/com.example.Reader';
       return '';
     };
-    expect(await enable('192.168.1.25', adb, () => {}, async () => {})).toEqual({ success: true });
+    expect(await enable('192.168.1.25', adb, () => {}, async () => {})).toMatchObject({ success: true, checks: { adb: true, helper: true, accessibility: true } });
     expect(calls.some(a => a[3] === 'pm install -r -d /data/local/tmp/bm-control.apk')).toBe(true);
     expect(calls.some(a => a[3] === `settings put secure enabled_accessibility_services com.example/com.example.Reader:${SERVICE}`)).toBe(true);
     expect(calls.at(-1)).toEqual(['disconnect', serial]);
@@ -59,4 +59,14 @@ describe('Windows TV Enabler safety and setup', () => {
     await expect(enable('192.168.1.25', async (args: string[]) => { calls.push(args); return args[0] === 'devices' ? '192.168.1.25:5555\tunauthorized' : ''; }, () => {}, async () => {})).rejects.toThrow('did not approve');
     expect(calls.some(a => a.includes('shell'))).toBe(false);
   });
+});
+test('Windows app reports checks against the ticket setup code', async () => {
+  const { report } = require('../core.cjs');
+  const sent: { url: string; body: string }[] = [];
+  const post = async (url: string, o: { body: string }) => { sent.push({ url, body: o.body }); return { ok: true, status: 200 }; };
+  await report('12345678', { adb: true, helper: true, control: true, accessibility: true }, post);
+  expect(sent[0]!.url).toBe('https://bmsupport.uk/api/public/remote-setup');
+  expect(JSON.parse(sent[0]!.body).code).toBe('12345678');
+  await expect(report('123', {}, post)).rejects.toThrow();
+  await expect(report('12345678', {}, async () => ({ ok: false, status: 404 }))).rejects.toThrow(/isn't valid/);
 });
