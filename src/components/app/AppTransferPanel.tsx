@@ -18,6 +18,7 @@ import {
 } from "@/lib/app-transfer.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { matchesRemoteDevice, remoteAppKind, type RemoteDevice } from "./remote-app-downloads";
 
 type Build = Awaited<ReturnType<typeof listAppBuilds>>[number];
 type Transfer = Awaited<ReturnType<typeof listMyAppTransfers>>[number];
@@ -547,7 +548,7 @@ function RequestAccessPanel() {
   );
 }
 
-export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void } = {}) {
+export function AppTransferPanel({ onUploadClick, remoteDevice }: { onUploadClick?: () => void; remoteDevice?: RemoteDevice } = {}) {
   const fetchBuilds = useServerFn(listAppBuilds);
   const fetchTransfers = useServerFn(listMyAppTransfers);
   const now = useTick();
@@ -577,6 +578,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   const grouped = useMemo(() => {
     const map: Record<string, Build[]> = {};
     for (const b of builds ?? []) {
+      if (remoteAppKind(b)) continue;
       const key = (b.category ?? "bm_store") as string;
       (map[key] ??= []).push(b);
     }
@@ -594,6 +596,24 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   const firstTab = "bm_store";
 
   if (!canDownload) return <RequestAccessPanel />;
+
+  if (remoteDevice) {
+    const remoteBuilds = (builds ?? []).filter((build) => matchesRemoteDevice(build, remoteDevice));
+    return (
+      <div className="min-w-0 space-y-4">
+        <h2 className="font-display text-2xl font-bold text-foreground">APK downloads</h2>
+        {!builds ? (
+          <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label="Loading APK downloads" />
+        ) : remoteBuilds.length ? (
+          <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+            {remoteBuilds.map((build) => <AppCard key={build.id} build={build} transfer={byBuild.get(build.id)} now={now} />)}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No remote APK downloads are available yet.</p>
+        )}
+      </div>
+    );
+  }
 
   if (!builds || builds.length === 0) {
     return (
