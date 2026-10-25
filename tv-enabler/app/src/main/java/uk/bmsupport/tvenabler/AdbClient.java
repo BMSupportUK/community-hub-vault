@@ -38,26 +38,57 @@ public final class AdbClient implements AutoCloseable {
         socket = s; in = new DataInputStream(s.getInputStream()); out = s.getOutputStream();
     }
 
-    /** Connects and signs in. Waits up to two minutes for the customer to press Allow on the TV. */
+    /** The TV never answered at all — wrong address, debugging off, or Wi-Fi isolation. */
+    public static final class NotReachable extends IOException {
+        NotReachable(String msg) { super(msg); }
+    }
+
+    /** The TV was reached but the Allow box was never accepted in time. */
+    public static final class NotAuthorized extends IOException {
+        NotAuthorized(String msg) { super(msg); }
+    }
+
+    /**
+     * Connects and signs in. Retries the whole connection for up to two minutes — like desktop
+     * adb, which re-issues connect — because a TV with a stuck debugging state often ignores the
+     * first connection and only shows the Allow box on a later one.
+     */
     public static AdbClient connect(String host, int port, KeyPair keys, byte[] publicKeyLine) throws Exception {
-        Socket s = new Socket();
-        s.connect(new InetSocketAddress(host, port), 5000);
-        s.setSoTimeout(120_000);
-        AdbClient c = new AdbClient(s);
-        try {
-            c.send(CNXN, 0x01000000, 256 * 1024, "host::\0".getBytes(StandardCharsets.UTF_8));
-            boolean sentSig = false, sentKey = false;
-            while (true) {
-                Msg m = c.read();
-                if (m.cmd == CNXN) return c;
-                if (m.cmd != AUTH || m.a0 != 1) throw new IOException("Unexpected reply from TV");
-                if (!sentSig) {
-                    c.send(AUTH, 2, 0, sign(keys, m.data)); sentSig = true;
-                } else if (!sentKey) {
-                    c.send(AUTH, 3, 0, publicKeyLine); sentKey = true;
-                } else throw new IOException("The TV refused this phone");
+        long deadline = System.currentTimeMillis() + 120_000;
+        boolean everConnected = false;
+        while (System.currentTimeMillis() < deadline) {
+            Socket s = new Socket();
+            try {
+                s.connect(new InetSocketAddress(host, port), 5000);
+            } catch (java.net.SocketTimeoutException | java.net.NoRouteToHostException e) {
+                try { Thread.sleep(2000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); throw e; }
+                continue;
             }
-        } catch (Exception e) { c.close(); throw e; }
+            everConnected = true;
+            s.setSoTimeout(20_000);
+            AdbClient c = new AdbClient(s);
+            try {
+                c.send(CNXN, 0x01000000, 256 * 1024, "host::\0".getBytes(StandardCharsets.UTF_8));
+                boolean sentSig = false, sentKey = false;
+                while (true) {
+                    Msg m = c.read();
+                    if (m.cmd == CNXN) { s.setSoTimeout(120_000); return c; }
+                    if (m.cmd != AUTH || m.a0 != 1) throw new IOException("Unexpected reply from TV");
+                    if (!sentSig) {
+                        c.send(AUTH, 2, 0, sign(keys, m.data)); sentSig = true;
+                    } else if (!sentKey) {
+                        c.send(AUTH, 3, 0, publicKeyLine); sentKey = true;
+                    } else throw new IOException("The TV refused this phone");
+                }
+            } catch (java.net.SocketTimeoutException e) {
+                // TV went quiet mid-handshake (stuck debugging state or unanswered Allow box):
+                // close and reconnect, which re-triggers the Allow box on the TV.
+                c.close();
+            } catch (Exception e) { c.close(); throw e; }
+        }
+        if (!everConnected)
+            throw new NotReachable("Nothing answered at that address");
+        throw new NotAuthorized("The TV never accepted this phone");
     }
 
     /** Runs a shell command on the TV and returns what it printed. */
