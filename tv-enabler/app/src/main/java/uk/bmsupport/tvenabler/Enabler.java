@@ -37,10 +37,26 @@ final class Enabler {
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
             c.adb = true;
             c.helper = adb.shell("pm path " + HELPER).contains("package:");
+            if (!c.helper) {
+                p.step(2, "Installing BM Remote Helper on the TV…");
+                File apk = downloadHelper(ctx);
+                try {
+                    adb.push(apk, "/data/local/tmp/bm-helper.apk");
+                    String res = adb.shell("pm install -r -d /data/local/tmp/bm-helper.apk");
+                    adb.shell("rm -f /data/local/tmp/bm-helper.apk");
+                    if (!res.contains("Success"))
+                        throw new IllegalStateException("The TV couldn't install BM Remote Helper. (" + res.trim() + ")");
+                } finally { apk.delete(); }
+                c.helper = adb.shell("pm path " + HELPER).contains("package:");
+                if (!c.helper) throw new IllegalStateException("BM Remote Helper didn't install on the TV. Try again.");
+            }
+            p.step(2, "Opening BM Remote Helper on the TV…");
+            adb.shell("monkey -p " + HELPER + " -c android.intent.category.LAUNCHER 1");
             String installed = adb.shell("pm path " + CONTROL);
             if (!installed.contains("package:")) {
-                p.step(2, "Installing remote control on the TV…");
+                p.step(3, "Installing remote control on the TV…");
                 String src = "/sdcard/Android/data/" + HELPER + "/files/control.apk";
+                waitForExport(adb, src);
                 String apk = "/data/local/tmp/bm-control.apk";
                 adb.shell("cp " + src + " " + apk + " && chmod 644 " + apk);
                 String res = adb.shell("pm install -r -d " + apk);
@@ -48,7 +64,7 @@ final class Enabler {
                 if (!res.contains("Success"))
                     throw new IllegalStateException("The TV couldn't install remote control. Open BM Remote Helper on the TV once, then try again. (" + res.trim() + ")");
             }
-            p.step(3, "Switching remote control on…");
+            p.step(4, "Switching remote control on…");
             String service = CONTROL + "/" + CONTROL + ".ControlService";
             String current = adb.shell("settings get secure enabled_accessibility_services").trim();
             StringBuilder list = new StringBuilder();
