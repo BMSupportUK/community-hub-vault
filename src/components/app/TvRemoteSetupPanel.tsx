@@ -82,9 +82,26 @@ export function TvRemoteSetupPanel() {
         <div className="space-y-3">
           <Input inputMode="numeric" placeholder="Setup code from your support ticket (8 digits)" value={setupCode} onChange={(e) => setSetupCode(e.target.value.replace(/\D/g, "").slice(0, 8))} disabled={busy} />
           <Input inputMode="decimal" placeholder="TV address, e.g. 192.168.1.23" value={host} onChange={(e) => setHost(e.target.value)} disabled={busy} />
-          <Button onClick={run} disabled={busy || !isTvAddress(host)}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <Tv className="size-4" />}Turn on
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={run} disabled={busy || !isTvAddress(host)}>
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <Tv className="size-4" />}Turn on
+            </Button>
+            <Button variant="outline" onClick={() => void findTv()} disabled={busy || scanning}>
+              {scanning ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}Find my TV
+            </Button>
+          </div>
+          {found && found.length > 0 && (
+            <div className="space-y-2 rounded-lg border border-border bg-background p-3">
+              <p className="text-sm font-medium">Choose your Fire TV</p>
+              {found.map((d) => (
+                <button key={d.address} type="button" onClick={() => { setHost(d.address); localStorage.setItem("bm-tv-address", d.address); setScanNote(d.debuggingReachable ? null : `${d.name}: ADB debugging isn't reachable — switch it on in Settings › My Fire TV › Developer options, then try again.`); }} className="w-full rounded-md border border-border p-2 text-left text-sm hover:border-primary/60">
+                  <span className="font-medium">{d.name}</span>
+                  <span className="block text-xs text-muted-foreground">{d.address} · {d.debuggingReachable ? "ADB debugging reachable" : "ADB debugging not reachable — may be off"}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {scanNote && <p className="text-sm text-muted-foreground">{scanNote}</p>}
           {step && <p className="text-sm font-medium text-primary">{step}</p>}
           {error && <p className="text-sm text-destructive">{error}</p>}
           {done && <p className="flex items-center gap-2 text-sm font-medium text-primary"><CheckCircle2 className="size-4" />Remote control is on. Open BM Remote Helper on the TV to get your code.</p>}
