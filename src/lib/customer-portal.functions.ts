@@ -74,12 +74,14 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
     if (error) throw new Error("Secure access is temporarily unavailable.");
     if (result === "locked") throw new Error("Too many wrong PINs. Access is locked for one hour.");
     if (result === "invalid") throw new Error("Wrong PIN. After five wrong tries, access is locked for one hour.");
-    const [{ data: site }, { data: manual }] = await Promise.all([
+    const [{ data: site }, { data: manual }, { data: qd }] = await Promise.all([
       supabaseAdmin.rpc("portal_credentials_for_user", { p_user_id: context.userId }),
       supabaseAdmin.rpc("manual_credentials_for_email", { p_email: email }),
+      supabaseAdmin.from("qd_dns_codes").select("id,label,code,notes").order("label"),
     ]);
     const accounts = [...((site as unknown as ManualCredential[]) ?? []), ...((manual as unknown as ManualCredential[]) ?? [])];
-    return { accounts, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
+    const qdCodes = (qd ?? []).map((q) => ({ id: String(q.id), label: String(q.label), code: String(q.code), notes: q.notes ? String(q.notes) : null }));
+    return { accounts, qdCodes, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
 
 /** Signed-in customer: email a fresh login code. */

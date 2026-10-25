@@ -1464,6 +1464,13 @@
       "when": 1792958415975,
       "tag": "0208_register_tv_enabler_1_12",
       "breakpoints": true
+    },
+    {
+      "idx": 209,
+      "version": "7",
+      "when": 1792964508411,
+      "tag": "0209_portal_credentials_include_owner_creds",
+      "breakpoints": true
     }
   ]
 }
