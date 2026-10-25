@@ -2,8 +2,8 @@
 # Roadmap
 
 ## TV Enabler guided setup
-- [ ] Add debugging confirmation, live existing-TV check/quick-open, device-specific staged installation, next-step confirmations and safe reset.
-- [ ] Run native wizard/protocol regressions and build/sign the updated phone APK.
+- [x] Add debugging confirmation, live existing-TV check/quick-open, device-specific staged installation, next-step confirmations and safe reset; preserve the Amazon ADB/direct-push path.
+- [x] Wizard, ADB and discovery Java regressions plus ten order/ticket tests pass; signed TV Enabler 1.11 built and registered. Live download checksum matches and signing certificate is unchanged.
 - [ ] Verify on physical Amazon and Android TVs — requires customer devices on the same Wi-Fi.
 
 ## TV sessions in Owner Tools
