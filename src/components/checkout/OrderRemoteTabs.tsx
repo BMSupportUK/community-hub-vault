@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
-import { CheckCircle2, Circle, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
+import { CheckCircle2, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
