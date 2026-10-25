@@ -49,6 +49,7 @@ function PortalLoginsPage() {
   useEffect(() => { if (expiresAt && remaining === 0) { setAccounts(null); setExpiresAt(null); setError("Your 10-minute viewing time has ended. Enter your PIN again to view your logins."); } }, [expiresAt, remaining]);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
+    setResetDone(false);
     if (!/^\d{6}$/.test(pin)) { setError("Enter your 6-digit PIN."); return; }
     setBusy(true);
     try { const r = await read({ data: { pin } }); setAccounts(r.accounts); setQdCodes(r.qdCodes); setExpiresAt(new Date(r.expiresAt).getTime()); setNow(Date.now()); if (r.created) toast.success("Your PIN is saved. Use it next time to view your logins."); }
