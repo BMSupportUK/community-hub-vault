@@ -15,7 +15,11 @@ public final class SetupWizardTest {
         w.operationCompleted(); w.next(); check(w.step == SetupWizard.Step.CONTROL, "Helper confirmation advances to control");
         w.operationCompleted(); w.next(); check(w.step == SetupWizard.Step.ACTIVATE, "Control confirmation advances to activation");
         w.operationCompleted(); w.next(); check(w.step == SetupWizard.Step.REPORT, "Activation confirmation advances to reporting");
-        w.operationCompleted(); w.next(); check(w.step == SetupWizard.Step.DONE, "Reporting confirmation finishes wizard");
+        w.next(); check(w.step == SetupWizard.Step.REPORT, "Finish requires a fresh TV confirmation");
+        w.confirmTv(false); w.next(); check(w.step == SetupWizard.Step.REPORT && !w.ready, "Failed TV check cannot finish setup");
+        w.confirmTv(true); w.next(); check(w.step == SetupWizard.Step.DONE && w.ready, "Confirmed TV finishes without any website code");
+        w.reset(); w.confirmDebugging(); w.checked(true); w.next(); w.confirmTv(true); w.next();
+        check(w.step == SetupWizard.Step.DONE && w.ready, "Previously ready TV also finishes without device choice or website code");
         w.reset(); check(w.step == SetupWizard.Step.DEBUGGING && !w.ready && !w.completed, "Reset clears all wizard confirmations");
         check(SetupWizard.ready(true, true, true, true), "All actual checks make TV ready");
         for (int missing = 0; missing < 4; missing++) {
