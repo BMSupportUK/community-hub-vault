@@ -2,6 +2,7 @@
 # Roadmap
 
 ## TV Enabler guided setup
+- [ ] Finish with a fresh TV check inside Enabler; make website linking separate and optional, including for already-ready TVs.
 - [ ] Keep eight-digit linking codes available after previous completion and sync TV Enabler's checked stages to ticket/order Remote setup; build and verify the signed update.
 - [x] Add debugging confirmation, live existing-TV check/quick-open, device-specific staged installation, next-step confirmations and safe reset; preserve the Amazon ADB/direct-push path.
 - [x] Wizard, ADB and discovery Java regressions plus ten order/ticket tests pass; signed TV Enabler 1.11 built and registered. Live download checksum matches and signing certificate is unchanged.
