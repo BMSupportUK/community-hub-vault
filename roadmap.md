@@ -361,8 +361,8 @@
 ## TV remote control (Google/Android TV)
 - [x] Helper v1.4 source: bundled BM Remote Control app installed via session installer; staff remote pad (D-pad, OK/Back/Home, type text, open app), controller-only rule. Blocked: rebuild/sign in Android Studio and test on a real Google TV.
 
-## TV remote enabling program for computers (parked)
-- [ ] Deferred by Dane J on 23 Oct 2026 — review in the future, do not build until he asks. Windows and Mac programs that switch Fire TV remote control on over the home Wi-Fi (the phone-app route shipped in Settings › TV remote already covers Android). Unsigned builds mean a first-run "Windows protected your PC" / macOS "Open Anyway" warning, with staff talking customers through it; a Mac Terminal one-liner is the warning-free alternative. Both would need download buttons in Settings › TV remote and a build on a Windows PC and a Mac, since they cannot be produced or signed here.
+## TV remote enabling program for computers
+- [ ] Mac program remains deferred by Dane J — do not build or add downloads until he asks. Windows was revived on 25 Oct 2026 and is tracked below.
 
 ## BM TV Enabler (customer phone app)
 - [ ] Create a free unsigned Windows TV Enabler installer, add its download under a Windows tab, and verify package contents and the download; real Windows/Fire TV operation requires physical-device testing.
