@@ -1443,6 +1443,13 @@
       "when": 1792936857132,
       "tag": "0205_android_setup_code_only",
       "breakpoints": true
+    },
+    {
+      "idx": 206,
+      "version": "7",
+      "when": 1792938250403,
+      "tag": "0206_android_remote_setup_requires_app_checks",
+      "breakpoints": true
     }
   ]
 }
