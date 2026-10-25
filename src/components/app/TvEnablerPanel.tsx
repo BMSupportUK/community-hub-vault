@@ -17,7 +17,7 @@ export function TvEnablerPanel() {
   }, [open, qr]);
 
   return (
-    <div className="max-w-3xl space-y-5">
+    <div className="w-full space-y-5">
       <div className="rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
         <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground">
           <Tv className="size-6 text-primary" /> TV Remote Enabler
