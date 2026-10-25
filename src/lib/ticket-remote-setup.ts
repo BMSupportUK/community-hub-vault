@@ -13,11 +13,10 @@ export const REMOTE_SETUP_STEPS: Record<SetupDevice, SetupStep[]> = {
     { title: "Open BM Remote Helper", body: "Open BM Remote Helper on the TV and type the six-digit code it shows below.", proof: "code" },
   ],
   android: [
-    { title: "Turn on developer options and debugging", body: "On your TV go to Settings › System › About and press Android TV OS build 7 times. Then go back to Settings › System › Developer options › turn on USB debugging (and Network / Wireless debugging if shown).", proof: "adb" },
-    { title: "Install BM Remote Helper", body: "Allow unknown apps for Downloader, then follow Install Guides › TV Remote Enabler › Android / Google TV to install BM Remote Helper.", proof: "helper" },
-    { title: "Install BM TV Enabler on your phone", body: "Install BM TV Enabler (or use the BM Support app › Settings › TV remote) on a phone on the same Wi-Fi as the TV.", proof: "reported" },
-    { title: "Turn on remote control", body: "In the app type the setup code below and the TV address, then press Turn on remote control. On the TV tick Always allow and press Allow.", proof: "accessibility" },
-    { title: "Open BM Remote Helper", body: "Open BM Remote Helper on the TV and type the six-digit code it shows below.", proof: "code" },
+    { title: "Install BM Support Remote on the TV", body: "Follow Install Guides › TV Remote Enabler › Android / Google TV to download BM Support Remote (v2.3) with Downloader, then open BM Remote Helper.", proof: "code" },
+    { title: "Install remote control", body: "In BM Remote Helper press Install, then Install again on the next screen. If asked, allow BM Remote Helper to install apps, press Back and try again.", proof: "code" },
+    { title: "Turn on remote control", body: "Press Open settings, choose BM Remote Control and switch it on, then press Back. Greyed out? Settings › Apps › BM Remote Control › menu › Allow restricted settings, then try again.", proof: "code" },
+    { title: "Enter the code from BM Remote Helper", body: "BM Remote Helper now shows a six-digit code. Type it in the box at the top of this page.", proof: "code" },
   ],
 };
 
@@ -30,7 +29,8 @@ export function stepDone(step: SetupStep, row: { app_checks: AppChecks | null; a
 }
 
 /** The final Helper code is only offered once the apps have reported every TV check. */
-export function appChecksPassed(c: AppChecks | null | undefined) {
+export function appChecksPassed(c: AppChecks | null | undefined, device?: SetupDevice) {
+  if (device === "android") return true;
   return !!(c?.adb && c.helper && c.accessibility);
 }
 

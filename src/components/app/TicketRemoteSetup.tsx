@@ -79,7 +79,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     </section>;
   }
   const steps = REMOTE_SETUP_STEPS[row.device];
-  const ready = appChecksPassed(row.app_checks);
+  const ready = appChecksPassed(row.app_checks, row.device);
   const main = <section className="min-w-0 space-y-4 text-foreground">
     <div className="flex flex-wrap items-center gap-2">
       <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
@@ -93,7 +93,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
         <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
       </form>
     </div>}
-    {!row.completed_at && !closed && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
+    {!row.completed_at && !closed && row.device === "amazon" && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
       <h3 className="font-semibold">Your setup code</h3>
       <p className="text-sm text-muted-foreground">Type this code into BM TV Enabler (or BM Support app › Settings › TV remote). The app checks your TV and ticks the steps below by itself.</p>
       {setupCode
