@@ -36,6 +36,41 @@ public class TvRemoteSetupPlugin extends Plugin {
     private static final String HELPER = "uk.bmsupport.remote";
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
+    /**
+     * Find-my-TV scan, moved over from the old standalone BM TV Enabler app:
+     * read-only DIAL/UPnP discovery of Fire TVs on the phone's Wi-Fi, never
+     * touching ADB or the TV.
+     */
+    @PluginMethod
+    public void discover(PluginCall call) {
+        WifiManager wm = (WifiManager) getContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        int ip = wm == null ? 0 : wm.getConnectionInfo().getIpAddress();
+        if (ip == 0) { call.reject("Connect this phone to your home Wi-Fi first."); return; }
+        String base = (ip & 0xff) + "." + ((ip >> 8) & 0xff) + "." + ((ip >> 16) & 0xff) + ".";
+        io.execute(() -> {
+            WifiManager.MulticastLock lock = wm.createMulticastLock("bm-fire-tv-discovery");
+            lock.setReferenceCounted(false);
+            try {
+                lock.acquire();
+                List<DiscoveredDevice> devices = DeviceDiscovery.scan(base);
+                JSArray arr = new JSArray();
+                for (DiscoveredDevice d : devices) {
+                    JSObject o = new JSObject();
+                    o.put("address", d.address);
+                    o.put("name", d.name);
+                    o.put("debuggingReachable", d.debuggingReachable);
+                    arr.put(o);
+                }
+                call.resolve(new JSObject().put("devices", arr));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                call.reject("Search stopped. Try again or type the TV address.");
+            } catch (Exception e) {
+                call.reject("Couldn't search this Wi-Fi. Try again or type the TV address.");
+            } finally { if (lock.isHeld()) lock.release(); }
+        });
+    }
+
     @PluginMethod
     public void enable(PluginCall call) {
         String host = call.getString("host", "").trim();
