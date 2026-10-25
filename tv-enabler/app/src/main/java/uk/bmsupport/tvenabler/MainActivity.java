@@ -107,7 +107,7 @@ public class MainActivity extends Activity {
         address.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
         find.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
         setupCode.setVisibility(s == SetupWizard.Step.REPORT ? View.VISIBLE : View.GONE);
-        openSupport.setVisibility(s == SetupWizard.Step.REPORT && wizard.ready ? View.VISIBLE : View.GONE);
+        openSupport.setVisibility((s == SetupWizard.Step.REPORT || s == SetupWizard.Step.DONE) && wizard.ready ? View.VISIBLE : View.GONE);
         next.setVisibility(wizard.completed ? View.VISIBLE : View.GONE);
         turnOn.setVisibility(wizard.completed || s == SetupWizard.Step.DONE ? View.GONE : View.VISIBLE);
         back.setVisibility(s == SetupWizard.Step.CHECK && !wizard.completed ? View.VISIBLE : View.GONE);
