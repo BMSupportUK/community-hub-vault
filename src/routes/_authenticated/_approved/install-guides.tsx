@@ -725,7 +725,34 @@ function InstallGuidesPage() {
 
 
           <TabsContent value="enabler" className="mt-0 min-w-0">
-            <TvEnablerPanel />
+            {!canViewGuides ? (
+              <AccessRequestPanel
+                section="guides"
+                title="Remote help guides are for subscribers"
+                description="The TV Enabler and Remote Helper walkthroughs are available to subscribers. Request access and an admin will be notified straight away."
+              />
+            ) : (
+              <div className="max-w-6xl space-y-6">
+                <TvEnablerPanel />
+                {remoteHelperCategories.map((c) => {
+                  const items = remoteHelperBlogs.filter((b) => b.category_id === c.id);
+                  return (
+                    <section key={c.id} className="min-w-0">
+                      <h2 className="font-display text-2xl font-bold mb-4 text-foreground">
+                        {REMOTE_HELPER_SECTION_NAMES[c.slug] ?? c.name} guides
+                      </h2>
+                      {items.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-violet-500/30 p-12 text-center text-muted-foreground">
+                          No guides in this section yet.
+                        </div>
+                      ) : (
+                        renderGuideGrid(items, (fromId, toId) => { void reorderRemoteHelperBlogs(c.id, fromId, toId); })
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="welcome" className="mt-0 min-w-0">
