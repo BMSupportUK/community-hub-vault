@@ -401,3 +401,4 @@
 - [ ] Same fix still to apply to BM Support app Settings › TV remote and the Windows Enabler (both still copy the TV-side file).
 - [x] Android/Google TV instructions mention Wireless debugging (site + Enabler 1.10, live, checksum verified).
 - [x] Orders get the ticket Remote setup flow: customer tabs Order / Remote setup / Screen share; staff secure page gets a read-only Remote setup tab. Not yet tested end-to-end on a real order.
+- [ ] Make DEMO-TV1 use the customer Remote setup tabs for staff testing and verify device selection/code issuance through the secure order.
