@@ -57,19 +57,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     await reload(); setBusy(false);
   };
   if (row === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
-  if (!customer) {
-    return <section className="mx-auto max-w-2xl space-y-3 text-foreground">
-      <h2 className="text-xl font-semibold">Remote access setup</h2>
-      {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
-        <RemoteSetupProgress row={row} />
-        <p className="text-sm">Device: <strong>{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</strong> · {row.completed_at ? <span className="font-semibold text-primary">Confirmed by the apps</span> : row.app_checked_at ? "App reported — waiting on the rest" : "Waiting for the app to report"}</p>
-        <ol className="space-y-2">{REMOTE_SETUP_STEPS[row.device].map((s, i) => (
-          <li key={i} className="flex items-center gap-2 text-sm">{stepDone(s, row) ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}{s.title}</li>
-        ))}</ol>
-        <p className="text-xs text-muted-foreground">Ticks come only from BM TV Enabler / BM Support app checking the TV, and from BM Remote Helper's live code — the customer can't tick them.</p>
-      </>}
-    </section>;
-  }
+  if (!customer) return <StaffRemoteSetup ticketId={ticketId} row={row} reload={reload} />;
   if (!row) {
     return <section className="mx-auto max-w-2xl space-y-4 text-foreground">
       <h2 className="text-xl font-semibold">Which TV device are you using?</h2>
