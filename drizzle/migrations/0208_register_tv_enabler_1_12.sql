@@ -1,0 +1,3 @@
+UPDATE public.app_builds SET is_current = false WHERE app_name = 'BM TV Enabler' AND is_current;
+INSERT INTO public.app_builds (file_path, file_name, file_size, version_name, release_notes, is_current, is_available, app_name, sort_order, announce_updates, category)
+VALUES ('tv-enabler/BMTvEnabler-1.12.apk', 'BMTvEnabler-1.12.apk', 113768, '1.12', 'Already set-up TVs skip the TV type step and get a button that opens BM Remote Helper on the TV to show the screen-share code.', true, true, 'BM TV Enabler', 99, false, 'bm_store');

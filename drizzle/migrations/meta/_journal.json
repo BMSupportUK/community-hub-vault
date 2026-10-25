@@ -1457,6 +1457,13 @@
       "when": 1792943831514,
       "tag": "0207_order_remote_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 208,
+      "version": "7",
+      "when": 1792958415975,
+      "tag": "0208_register_tv_enabler_1_12",
+      "breakpoints": true
     }
   ]
 }
