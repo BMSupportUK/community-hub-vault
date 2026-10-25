@@ -7,7 +7,7 @@ import { formatCredentialTime } from '@/lib/credential-time';
 import type { ManualCredentialCustomer } from '@/lib/manual-credentials-schema';
 import { toast } from 'sonner';
 
-export function ManualCredentialCards({ customers, onSaved, aside }: { customers: ManualCredentialCustomer[]; onSaved?: () => void; aside?: ReactNode }) {
+export function ManualCredentialCards({ customers, onSaved, aside, readOnly = false }: { customers: ManualCredentialCustomer[]; onSaved?: () => void; aside?: ReactNode; readOnly?: boolean }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
