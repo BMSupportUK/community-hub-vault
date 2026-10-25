@@ -5,13 +5,13 @@ Free, unsigned per-user installer for Windows 10/11 x64. No paid signing, BM log
 ## Customer setup
 1. Download BM TV Enabler Setup from Install Guides → TV Remote Enabler → Windows.
 2. Run the installer. If SmartScreen offers it, choose More info → Run anyway only for the download obtained directly from BM Support. Follow the installer and launch BM TV Enabler.
-3. Connect the computer and Fire TV to the same home network. Avoid guest Wi-Fi and disconnect VPN. If Windows asks about network access, allow it for your trusted private home network only.
-4. Install and open BM Remote Helper on the Fire TV using the Amazon guides in the same section. Leave it open; it exports the control APK required by this app.
-5. Enable ADB debugging on the TV: Settings → My Fire TV → Developer options → ADB debugging → ON. Some models use Device & Software. If Developer options is hidden, open About, highlight the device name and press OK seven times, then go back.
-6. Press Find my TV and explicitly select the correct named TV, or enter the TV address displayed in BM Remote Helper. No device is selected or enabled automatically. “Debugging not reachable” may mean debugging is off or the network is blocking access; it is not proof the switch is off.
-7. Press Turn on remote control. On the TV, approve Allow USB debugging? and tick Always allow from this computer. You have up to a minute to approve.
-8. Wait for the green confirmation. The app installs BM Remote Control if absent and enables its Accessibility service without removing other services.
-9. Close this Windows app. Go back to BM Remote Helper on the TV. In your support ticket or order, enter the six-digit TV code only when staff request screen sharing, then approve the connection/screen-sharing prompt on the TV.
+3. Choose which TV you are setting up: Amazon Fire TV or Android / Google TV. The app shows the exact setting to switch on for that TV — ADB debugging (Fire TV: Settings → My Fire TV → Developer options) or Network debugging (Android / Google TV: Settings → System → Developer options). If Developer options is hidden, open About and press the device name / Android TV OS build seven times, then go back.
+4. Connect the computer and TV to the same home network. Avoid guest Wi-Fi and disconnect VPN. If Windows asks about network access, allow it for your trusted private home network only.
+5. Press Find my TV and explicitly select the correct named TV, or enter the TV address. No device is selected or enabled automatically. “Debugging not reachable” may mean debugging is off or the network is blocking access; it is not proof the switch is off.
+6. Press Turn on remote control. On the TV, approve Allow USB debugging? and tick Always allow from this computer. You have up to a minute to approve.
+7. The app downloads the latest BM Remote Helper from bmsupport.uk, installs it on the TV, opens it, installs BM Remote Control if absent and enables its Accessibility service without removing other services.
+8. Wait for the green confirmation. BM Remote Helper is left open on the TV showing its six-digit code — type that code on your support ticket's Remote setup tab.
+9. Close this Windows app. In your support ticket or order, enter the six-digit TV code only when staff request screen sharing, then approve the connection/screen-sharing prompt on the TV.
 10. End support from the ticket/order or TV Helper when finished. The Windows app does not start a support session or let anyone view your TV by itself.
 
 The TV's debugging switch is a manual TV-side prerequisite; this program cannot remotely turn a closed debugging switch on. Setup normally persists through restarts. If connection fails later, check the TV's current address. Factory reset or TV software changes may require setup again. Do not forward port 5555 on your router or expose debugging to the internet.
