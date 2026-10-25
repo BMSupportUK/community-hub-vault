@@ -19,7 +19,7 @@
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - Remote-help articles and PDFs share source content in `resources/remote-help-guides`; PDF companion rows use private `guide-files` paths beside existing video rows so adding written guides never replaces Watch actions.
 - Install Guides reuses AppTransferPanel's secured APK cards in device-specific remote-help tabs and excludes those APKs from general downloads, keeping one download flow and unchanged access checks.
-- Windows TV Enabler lives separately in `windows-tv-enabler/`, loads local static assets in isolated Electron, bundles official ADB, and mirrors native enable steps; its unsigned per-user NSIS installer is an immutable asset in the gated Windows Install Guides tab, without altering the site's Vite configuration.
+- Windows TV Enabler lives separately in `windows-tv-enabler/`, loads local static assets in isolated Electron, bundles official ADB, and mirrors the phone enabler's one-app flow (device choice, helper download + install, control enable); its unsigned per-user NSIS installer is served from the app-builds bucket via `/api/public/tv-enabler-windows` (latest available app_builds row named like "TV Enabler%Windows"), without altering the site's Vite configuration.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
 - Dialogs fit mobile dvh; dense views drop phone columns.

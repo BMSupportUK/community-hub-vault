@@ -382,3 +382,7 @@
 - [x] Update Amazon Remote setup steps and Install Guides enabler tab copy to match the one-app flow; build OK.
 - [x] TV Enabler 1.6 asks Amazon Fire TV or Android / Google TV first, shows the right debugging setting per device, and reports the device with the checks; the site rejects a device that does not match the ticket. Signed build verified, download route serves identical bytes, discovery tests pass.
 - [ ] Verify the 1.6 one-app flow against a physical Fire TV and Android TV — requires an Android phone and TV on the same home network.
+
+## Windows TV Enabler one-app flow
+- [x] Windows Enabler 1.2.0 matches the phone app: Amazon/Android device choice with per-device debugging instructions, downloads and installs BM Remote Helper itself, opens it, enables remote control, reports device with checks. 9 tests pass; installer rebuilt (checksum verified against pinned ADB/Electron), served via /api/public/tv-enabler-windows; both download buttons updated.
+- [ ] Verify the Windows 1.2.0 flow on a real Windows PC + TV — requires physical devices.
