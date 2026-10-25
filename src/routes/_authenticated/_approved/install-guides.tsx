@@ -281,6 +281,11 @@ function InstallGuidesPage() {
   const load = () => queryClient.invalidateQueries({ queryKey: ["install-guides-data"] });
 
   useEffect(() => {
+    if (activeCat && REMOTE_HELPER_CAT_SLUGS.includes(categories.find((c) => c.id === activeCat)?.slug ?? "")) {
+      // Remote Helper categories moved to the TV Remote Enabler tab — drop the stale selection.
+      setActiveCat(null);
+      return;
+    }
     if (!activeCat && categories.length && tab === "guides") {
       const android = categories.find(
         (c) => c.slug === "android" || c.name.toLowerCase() === "android",
@@ -309,6 +314,20 @@ function InstallGuidesPage() {
   }, [blogs, activeCat, search]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
+
+  // TV Remote Enabler tab content: the two Remote Helper categories and their cards.
+  const sidebarCategories = useMemo(
+    () => categories.filter((c) => !REMOTE_HELPER_CAT_SLUGS.includes(c.slug)),
+    [categories],
+  );
+  const remoteHelperCategories = useMemo(
+    () => categories.filter((c) => REMOTE_HELPER_CAT_SLUGS.includes(c.slug)),
+    [categories],
+  );
+  const remoteHelperBlogs = useMemo(
+    () => blogs.filter((b) => remoteHelperCategories.some((c) => c.id === b.category_id)),
+    [blogs, remoteHelperCategories],
+  );
 
   // Persist new-guide draft so it survives closing the dialog or leaving the page.
   useEffect(() => {
