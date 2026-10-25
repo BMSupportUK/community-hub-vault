@@ -8,7 +8,7 @@ export const REMOTE_SETUP_STEPS: Record<SetupDevice, SetupStep[]> = {
   amazon: [
     { title: "Turn on developer options and ADB debugging", body: "On your Fire TV go to Settings › My Fire TV › About and press the device name 7 times. Then Settings › My Fire TV › Developer options › ADB debugging ON.", proof: "adb" },
     { title: "Install BM Remote Helper on the TV", body: "Follow Install Guides › TV Remote Enabler › Amazon to install BM Remote Helper using Downloader, then open it once.", proof: "helper" },
-    { title: "Install BM TV Enabler on your phone", body: "Scan the QR code in Install Guides › TV Remote Enabler › Amazon with your Android phone. Keep the phone on the same Wi-Fi as the TV.", proof: "reported" },
+    { title: "Install BM TV Enabler on your phone or PC", body: "Scan the QR code on the right with your Android phone, or download the Windows version. Keep the phone or PC on the same Wi-Fi as the TV.", proof: "reported" },
     { title: "Turn on remote control", body: "In BM TV Enabler type the setup code below, press Find my TV, pick your Fire TV, then press Turn on remote control. On the TV tick Always allow and press Allow.", proof: "accessibility" },
     { title: "Open BM Remote Helper", body: "Open BM Remote Helper on the TV and type the six-digit code it shows below.", proof: "code" },
   ],
