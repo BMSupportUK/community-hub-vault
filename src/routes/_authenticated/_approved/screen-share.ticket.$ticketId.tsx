@@ -36,12 +36,13 @@ function TicketScreenSharePage() {
   if (loading) return null;
   if (!allowed) return <Navigate to="/home" replace />;
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-4 p-4">
-      <header className="flex flex-wrap items-center gap-3">
+    <div className="relative isolate mx-auto w-full min-h-full max-w-7xl space-y-4 p-4">
+      <ScreenShareOfficeBackdrop />
+      <header className="relative flex flex-wrap items-center gap-3">
         <Button asChild variant="outline" size="sm"><Link to="/tickets" search={{ id: ticketId }}><ArrowLeft className="mr-1 size-4" />Back to ticket</Link></Button>
         <h1 className="flex items-center gap-2 text-xl font-bold"><MonitorUp className="size-5 text-primary" />Screen share · {ticket?.subject ?? "Support ticket"}</h1>
       </header>
-      {ticket && <TicketScreenShareWorkspace key={ticketId} ticketId={ticketId} ownerId={ticket.user_id} staff />}
+      {ticket && <div className="relative"><TicketScreenShareWorkspace key={ticketId} ticketId={ticketId} ownerId={ticket.user_id} staff /></div>}
     </div>
   );
 }
