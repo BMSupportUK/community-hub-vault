@@ -390,3 +390,8 @@
 ## TV Enabler 1.7 connection fix
 - [x] "Nobody pressed Allow" fired even when the TV never showed its Allow box: single-shot connection + connect-timeout misreported. 1.7 retries the whole ADB connection for 2 minutes (re-triggers the Allow box on stuck TVs) and separates "TV not found at that address" from "found but never accepted". Built signed, live via /api/public/tv-enabler-apk (checksum verified).
 - [ ] Dane J to retest on the real Fire TV — needs the physical TV.
+
+## TV Enabler 1.8 Allow-box fix
+- [x] Checked key + signature against Google's official adb (identical). Fixed real protocol faults: key now re-sent when the TV asks again (AOSP retry), connection kept open while the Allow box is up (was cut every 20s), retries on refused/reset, file push now follows ADB flow control/DONE format. Error shows the exact stage reached. Fake-TV test `tv-enabler/tests/AdbClientTest.java` passes; signed 1.8 live via /api/public/tv-enabler-apk (checksum verified).
+- [ ] Real TV test with 1.8 (needs Dane J's TV).
+- [ ] BM Support phone app has the same connection fix in source; needs an APK rebuild to ship it.
