@@ -1,6 +1,11 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## TV Enabler guided setup
+- [x] Add debugging confirmation, live existing-TV check/quick-open, device-specific staged installation, next-step confirmations and safe reset; preserve the Amazon ADB/direct-push path.
+- [x] Wizard, ADB and discovery Java regressions plus ten order/ticket tests pass; signed TV Enabler 1.11 built and registered. Live download checksum matches and signing certificate is unchanged.
+- [ ] Verify on physical Amazon and Android TVs — requires customer devices on the same Wi-Fi.
+
 ## TV sessions in Owner Tools
 - [x] Move live sessions and history out of TV Remote into an admin-only Owner Tools section with a matching dashboard box; keep requests and the code sidebar on TV Remote.
 - [x] Signed-in TV Remote confirms requests and code sidebar remain, with no live/history sections; nineteen existing tests pass and build OK.
