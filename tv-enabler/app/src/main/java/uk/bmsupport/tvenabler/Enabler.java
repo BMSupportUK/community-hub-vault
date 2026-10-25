@@ -145,7 +145,7 @@ final class Enabler {
 
     static String friendly(Exception e) {
         if (e instanceof AdbClient.NotReachable)
-            return "Couldn't find the TV at that address. Check the address matches the TV, that debugging is ON on the TV (ADB debugging on Fire TV, Network debugging on Android / Google TV), and that this phone is on the same Wi-Fi as the TV — not mobile data or a guest network.";
+            return "Couldn't find the TV at that address. Check the address matches the TV, that debugging is ON on the TV (ADB debugging on Fire TV, Network or Wireless debugging on Android / Google TV), and that this phone is on the same Wi-Fi as the TV — not mobile data or a guest network.";
         if (e instanceof AdbClient.NotAuthorized) {
             if (((AdbClient.NotAuthorized) e).keySent)
                 return "The TV was asked to show its Allow box but Allow wasn't pressed. Keep the TV awake on its home screen (not a screensaver or app), press Try again, then tick Always allow and press Allow on the TV. (Detail: " + e.getMessage() + ")";
@@ -153,7 +153,7 @@ final class Enabler {
         }
         if (e instanceof java.net.SocketTimeoutException) return "The TV stopped answering. Press Try again, then press Allow on the TV.";
         if (e instanceof java.net.ConnectException || e instanceof java.net.NoRouteToHostException)
-            return "Couldn't reach the TV. Check the address, that this phone is on the same Wi-Fi as the TV, and that debugging is ON on the TV (ADB debugging on Fire TV, Network debugging on Android / Google TV).";
+            return "Couldn't reach the TV. Check the address, that this phone is on the same Wi-Fi as the TV, and that debugging is ON on the TV (ADB debugging on Fire TV, Network or Wireless debugging on Android / Google TV).";
         if (e instanceof IllegalStateException) return e.getMessage();
         return "Couldn't switch remote control on: " + e.getMessage();
     }

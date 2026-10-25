@@ -113,7 +113,7 @@ public class MainActivity extends Activity {
         androidBtn.setBackgroundColor(amazon ? Color.parseColor("#2A3050") : ACCENT);
         deviceHelp.setText(amazon
             ? "On the TV: Settings › My Fire TV › About — press the device name 7 times, then Settings › My Fire TV › Developer options › ADB debugging ON."
-            : "On the TV: Settings › System › About — press Android TV OS build 7 times, then Settings › System › Developer options › Network debugging ON.");
+            : "On the TV: Settings › System › About — press Android TV OS build 7 times, then Settings › System › Developer options › Network debugging ON (or Wireless debugging ON if your TV has that instead).");
     }
 
     private void start() {
@@ -189,7 +189,7 @@ public class MainActivity extends Activity {
                         say("Selected " + dev.name + " (" + dev.address + "). Now press Turn on remote control.", OK);
                     } else {
                         String how = "android".equals(device)
-                            ? "Settings › System › Developer options › Network debugging"
+                            ? "Settings › System › Developer options › Network debugging (or Wireless debugging)"
                             : "Settings › My Fire TV › Developer options › ADB debugging";
                         say("Selected " + dev.name + " (" + dev.address + "). Debugging isn't reachable — on the TV open " + how + " and switch it on, then try again. Wi-Fi isolation can also block it. This app can't switch it on remotely.", WARN);
                     }
