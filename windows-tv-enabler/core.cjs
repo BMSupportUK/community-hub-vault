@@ -1,6 +1,21 @@
 const CONTROL = 'uk.bmsupport.remote.control';
 const HELPER = 'uk.bmsupport.remote';
 const SERVICE = `${CONTROL}/${CONTROL}.ControlService`;
+const HELPER_APK_URL = 'https://bmsupport.uk/api/public/remote-helper-apk';
+
+/** Downloads the latest BM Remote Helper APK so the customer never installs it by hand. */
+async function downloadHelper(destDir, fetchImpl = globalThis.fetch) {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const res = await fetchImpl(HELPER_APK_URL);
+  if (!res.ok) throw new Error(`Couldn't download BM Remote Helper (error ${res.status}). Check the internet connection and try again.`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.length < 100000) throw new Error('Couldn't download BM Remote Helper. Check the internet connection and try again.');
+  fs.mkdirSync(destDir, { recursive: true });
+  const file = path.join(destDir, 'bm-helper.apk');
+  fs.writeFileSync(file, buf);
+  return file;
+}
 
 function privateAddress(value) {
   if (typeof value !== 'string' || !/^\d{1,3}(\.\d{1,3}){3}$/.test(value)) return false;
