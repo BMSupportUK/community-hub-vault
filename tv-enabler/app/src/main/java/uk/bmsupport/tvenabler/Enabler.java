@@ -114,17 +114,18 @@ final class Enabler {
     }
 
     /** Sends the checks to bmsupport.uk against the customer's ticket setup code. Returns an error message or null. */
-    static String report(String setupCode, Checks c) {
+    static String report(String setupCode, Checks c, String device) {
         try {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-setup").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.5\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.6\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             int code = h.getResponseCode(); h.disconnect();
             if (code == 200) return null;
             if (code == 404) return "That setup code isn't valid. Check the code on your support ticket's Remote setup tab.";
+            if (code == 409) return "Your ticket is set up for the other TV type. Press Change device on the ticket's Remote setup tab, or pick the other TV type in this app.";
             if (code == 429) return "Too many tries. Wait 15 minutes.";
             return "Couldn't tell BM Support (error " + code + "). Try again.";
         } catch (Exception e) { return "Couldn't reach BM Support. Check the phone's internet and try again."; }
@@ -133,7 +134,7 @@ final class Enabler {
     static String friendly(Exception e) {
         if (e instanceof java.net.SocketTimeoutException) return "Nobody pressed Allow on the TV in time. Press Try again, then press Allow on the TV.";
         if (e instanceof java.net.ConnectException || e instanceof java.net.NoRouteToHostException)
-            return "Couldn't reach the TV. Check the address, that this phone is on the same Wi-Fi as the TV, and that ADB debugging is ON on the TV.";
+            return "Couldn't reach the TV. Check the address, that this phone is on the same Wi-Fi as the TV, and that debugging is ON on the TV (ADB debugging on Fire TV, Network debugging on Android / Google TV).";
         if (e instanceof IllegalStateException) return e.getMessage();
         return "Couldn't switch remote control on: " + e.getMessage();
     }

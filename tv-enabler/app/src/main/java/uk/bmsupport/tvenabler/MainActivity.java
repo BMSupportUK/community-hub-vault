@@ -29,13 +29,15 @@ public class MainActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private EditText address, setupCode;
-    private Button turnOn, find;
-    private TextView status;
+    private Button turnOn, find, amazonBtn, androidBtn;
+    private TextView status, deviceHelp;
+    private String device;
     private final List<TextView> stepViews = new ArrayList<>();
     private boolean busy;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        SharedPreferences prefs = getSharedPreferences("tv", MODE_PRIVATE);
         int pad = dp(20);
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -43,8 +45,29 @@ public class MainActivity extends Activity {
         col.setBackgroundColor(BG);
 
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("Sets up your Fire TV or Android TV for BM Support: it installs BM Remote Helper and remote control on the TV for you, then switches remote control on.", 15, MUTED, false));
-        col.addView(text("1. Make sure this phone is on the same Wi-Fi as the TV.\n2. Press Find my TV and choose your TV, or type its address below.\n3. Press Turn on remote control — everything on the TV is installed for you.", 15, FG, false));
+        col.addView(text("Sets up your TV for BM Support: it installs BM Remote Helper and remote control on the TV for you, then switches remote control on.", 15, MUTED, false));
+
+        col.addView(text("Which TV are you setting up?", 15, FG, true));
+        LinearLayout pick = new LinearLayout(this);
+        pick.setOrientation(LinearLayout.HORIZONTAL);
+        amazonBtn = button("Amazon Fire TV", Color.parseColor("#2A3050"));
+        androidBtn = button("Android / Google TV", Color.parseColor("#2A3050"));
+        LinearLayout.LayoutParams halfL = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        halfL.rightMargin = dp(6);
+        LinearLayout.LayoutParams halfR = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        halfR.leftMargin = dp(6);
+        pick.addView(amazonBtn, halfL);
+        pick.addView(androidBtn, halfR);
+        col.addView(pick, lp(dp(4)));
+        deviceHelp = text("", 14, MUTED, false);
+        col.addView(deviceHelp, lp(dp(2)));
+        amazonBtn.setOnClickListener(v -> pickDevice("amazon"));
+        androidBtn.setOnClickListener(v -> pickDevice("android"));
+        device = prefs.getString("device", null);
+        if (device != null) pickDevice(device);
+        else deviceHelp.setText("Choose one — the setting to switch on is different on each.");
+
+        col.addView(text("1. Switch on the setting above on the TV.\n2. Make sure this phone is on the same Wi-Fi as the TV.\n3. Press Find my TV and choose your TV, or type its address below.\n4. Press Turn on remote control — everything on the TV is installed for you.", 15, FG, false));
 
         col.addView(text("Your setup code from the Remote setup tab on your support ticket:", 15, FG, false));
         setupCode = new EditText(this);
@@ -61,7 +84,6 @@ public class MainActivity extends Activity {
         address.setTextSize(20);
         address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         address.setKeyListener(android.text.method.DigitsKeyListener.getInstance("0123456789."));
-        SharedPreferences prefs = getSharedPreferences("tv", MODE_PRIVATE);
         address.setText(prefs.getString("host", ""));
         col.addView(address, lp(dp(16)));
 
@@ -83,8 +105,20 @@ public class MainActivity extends Activity {
         setContentView(sv);
     }
 
+    private void pickDevice(String d) {
+        device = d;
+        getSharedPreferences("tv", MODE_PRIVATE).edit().putString("device", d).apply();
+        boolean amazon = d.equals("amazon");
+        amazonBtn.setBackgroundColor(amazon ? ACCENT : Color.parseColor("#2A3050"));
+        androidBtn.setBackgroundColor(amazon ? Color.parseColor("#2A3050") : ACCENT);
+        deviceHelp.setText(amazon
+            ? "On the TV: Settings › My Fire TV › About — press the device name 7 times, then Settings › My Fire TV › Developer options › ADB debugging ON."
+            : "On the TV: Settings › System › About — press Android TV OS build 7 times, then Settings › System › Developer options › Network debugging ON.");
+    }
+
     private void start() {
         if (busy) return;
+        if (device == null) { say("First choose which TV you're setting up: Amazon Fire TV or Android / Google TV.", WARN); return; }
         String host = address.getText().toString().trim();
         if (!host.matches("^\\d{1,3}(\\.\\d{1,3}){3}$")) { say("Type the TV's address exactly as it shows on the TV, e.g. 192.168.1.23", WARN); return; }
         String sc = setupCode.getText().toString().replaceAll("\\D", "");
@@ -97,7 +131,7 @@ public class MainActivity extends Activity {
             try {
                 Enabler.Checks c = Enabler.enable(this, host, (i, msg) -> ui.post(() -> { mark(i); say(msg, i == 1 ? WARN : MUTED); }));
                 ui.post(() -> say("Telling BM Support your TV is ready…", MUTED));
-                String err = Enabler.report(sc, c);
+                String err = Enabler.report(sc, c, device);
                 if (err != null) { ui.post(() -> { say("Remote control is on, but: " + err, ACCENT); turnOn.setText("Try again"); setBusy(false); }); return; }
                 ui.post(() -> { for (int i = 0; i < STEPS.length; i++) done(i); say("Remote control is on and BM Support has been told. BM Remote Helper is now open on your TV — type its six-digit code on your ticket.", OK); turnOn.setText("Turn on remote control"); setBusy(false); });
             } catch (Exception e) {
@@ -148,13 +182,16 @@ public class MainActivity extends Activity {
                     ((AlertDialog) d).getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
                 })
                 .setNegativeButton("Cancel", (d, which) -> say("No TV selected. You can search again or type its address.", MUTED))
-                .setPositiveButton("Use this TV", (d, which) -> {
-                    DiscoveredDevice device = DiscoveredDevice.selected(devices, selected[0]);
-                    address.setText(device.address);
-                    if (device.debuggingReachable) {
-                        say("Selected " + device.name + " (" + device.address + "). Check it matches BM Remote Helper, then press Turn on remote control.", OK);
+            .setPositiveButton("Use this TV", (d, which) -> {
+                    DiscoveredDevice dev = DiscoveredDevice.selected(devices, selected[0]);
+                    address.setText(dev.address);
+                    if (dev.debuggingReachable) {
+                        say("Selected " + dev.name + " (" + dev.address + "). Now press Turn on remote control.", OK);
                     } else {
-                        say("Selected " + device.name + " (" + device.address + "). ADB debugging isn't reachable. On this Fire TV open Settings › My Fire TV › Developer options and switch ADB debugging on, then try again. Wi-Fi isolation can also block it. This app can't switch ADB debugging on remotely.", WARN);
+                        String how = "android".equals(device)
+                            ? "Settings › System › Developer options › Network debugging"
+                            : "Settings › My Fire TV › Developer options › ADB debugging";
+                        say("Selected " + dev.name + " (" + dev.address + "). Debugging isn't reachable — on the TV open " + how + " and switch it on, then try again. Wi-Fi isolation can also block it. This app can't switch it on remotely.", WARN);
                     }
                 }).create();
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false));
