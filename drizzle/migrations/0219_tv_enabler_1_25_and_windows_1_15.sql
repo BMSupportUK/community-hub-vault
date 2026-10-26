@@ -1,0 +1,4 @@
+UPDATE public.app_builds SET is_current=false WHERE app_name IN ('TV Enabler','BM TV Enabler for Windows');
+INSERT INTO public.app_builds (app_name, category, file_name, file_path, file_size, is_available, is_current, release_notes, version_name, sort_order, announce_updates) VALUES
+('TV Enabler','bm_store','BM-TV-Enabler-1.25.apk','tv-enabler/BM-TV-Enabler-1.25.apk',116832,true,true,'The app now reads whether the TV is Amazon or Android itself, so customers no longer pick the TV type.','1.25',0,false),
+('BM TV Enabler for Windows','bm_store','BM-TV-Enabler-Setup-1.15.0.exe','tv-enabler/BM-TV-Enabler-Setup-1.15.0.exe',105838954,true,true,'The app now reads whether the TV is Amazon or Android itself, so customers no longer pick the TV type.','1.15.0',0,false);
