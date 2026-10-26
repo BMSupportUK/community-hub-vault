@@ -116,6 +116,8 @@ async function connect(host, adb, progress, delay = ms => new Promise(r => setTi
 async function readChecks(shell) {
   return {
     adb: true,
+    // The TV reports its own make, so customers never have to pick Amazon or Android.
+    type: (await shell('getprop ro.product.manufacturer')).trim().toLowerCase() === 'amazon' ? 'amazon' : 'android',
     helper: (await shell(`pm path ${HELPER}`)).includes('package:'),
     control: (await shell(`pm path ${CONTROL}`)).includes('package:'),
     accessibility: (await shell('settings get secure enabled_accessibility_services')).includes(SERVICE)

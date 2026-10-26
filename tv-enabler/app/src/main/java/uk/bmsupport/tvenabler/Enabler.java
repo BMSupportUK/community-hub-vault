@@ -27,7 +27,7 @@ final class Enabler {
     interface Progress { void step(int index, String text); }
 
     /** What the TV really has, read over ADB — sent to the website so customers can't just tick steps. */
-    static final class Checks { boolean adb, helper, control, accessibility; }
+    static final class Checks { boolean adb, helper, control, accessibility; /** "amazon" or "android", read from the TV itself. */ String type; }
 
     static Checks enable(Context ctx, String host, Progress p) throws Exception {
         return enableUntil(ctx, host, 4, p);
@@ -45,6 +45,7 @@ final class Enabler {
 
     private static Checks readChecks(AdbClient adb) throws Exception {
         Checks c = new Checks(); c.adb = true;
+        c.type = adb.shell("getprop ro.product.manufacturer").trim().equalsIgnoreCase("Amazon") ? "amazon" : "android";
         c.helper = adb.shell("pm path " + HELPER).contains("package:");
         c.control = adb.shell("pm path " + CONTROL).contains("package:");
         c.accessibility = adb.shell("settings get secure enabled_accessibility_services").contains(CONTROL + "/")

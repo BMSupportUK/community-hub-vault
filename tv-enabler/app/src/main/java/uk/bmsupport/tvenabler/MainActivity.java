@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.24", 14, MUTED, false));
+        col.addView(text("TV setup · 1.25", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -213,6 +213,8 @@ public class MainActivity extends Activity {
                     if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.setupFinished(ready);
+                        // The TV tells us its own make, so customers never pick Amazon or Android.
+                        if (checks.type != null) { device = checks.type; getSharedPreferences("tv", MODE_PRIVATE).edit().putString("device", device).apply(); }
                         // Linked by the website QR: send straight there, no button or code needed.
                         if (ready && linkCode() != null && device != null) ui.post(this::start);
                         say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);

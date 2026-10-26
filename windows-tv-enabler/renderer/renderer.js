@@ -122,6 +122,7 @@ async function run(stage, host) {
       }
       const ok = isReadyNow();
       wizard.setupFinished(ok);
+      if (checks.type === 'amazon' || checks.type === 'android') { device = checks.type; localStorage.setItem('bm-tv-device', device); }
       say(ok ? '✓ TV setup confirmed: both apps installed and remote control switched on.' : 'The TV is not fully ready yet. Press Try again.', !ok);
     }
   } catch (error) {
