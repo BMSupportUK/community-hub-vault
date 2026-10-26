@@ -43,17 +43,28 @@ function PayRoute() {
   return token === "demo" ? <DemoPayPage /> : token === "demo-payment" ? <DemoPayPage unpaid /> : <PayPage />;
 }
 
+/** The checkout header picture behind the whole page, dimmed so panels stay readable. */
+function CheckoutBackdrop() {
+  return (
+    <div className="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
+      <img src={hero} alt="" className="h-full w-full object-cover object-center" />
+      <div className="absolute inset-0 bg-background/60" />
+    </div>
+  );
+}
+
 /** Sample secure order for the demo account — no live data, actions do nothing. */
 function DemoPayPage({ unpaid = false }: { unpaid?: boolean }) {
   const demoOnly = async () => { toast.info("This is a sample order on the demo account"); };
   return (
-    <main className="min-h-screen overflow-y-auto">
+    <main className="relative isolate min-h-screen overflow-y-auto">
+      <CheckoutBackdrop />
       <div className="w-full px-3 pt-3">
         <Link to="/shop" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Back to my orders
         </Link>
       </div>
-      <CheckoutTemplate view={(unpaid ? { ...DEMO_CHECKOUT_VIEW, canPayByBank: true, order: { ...DEMO_CHECKOUT_VIEW.order, method: "square", paidAt: null, paymentSentAt: null, status: "pending" } } : DEMO_CHECKOUT_VIEW) as CheckoutView} preview onSwitchPayMethod={demoOnly} onPaymentSent={demoOnly} onContinueToSetup={demoOnly} payByBank={<PayByBankSection token="demo" password="" preview />} />
+      <CheckoutTemplate transparent view={(unpaid ? { ...DEMO_CHECKOUT_VIEW, canPayByBank: true, order: { ...DEMO_CHECKOUT_VIEW.order, method: "square", paidAt: null, paymentSentAt: null, status: "pending" } } : DEMO_CHECKOUT_VIEW) as CheckoutView} preview onSwitchPayMethod={demoOnly} onPaymentSent={demoOnly} onContinueToSetup={demoOnly} payByBank={<PayByBankSection token="demo" password="" preview />} />
     </main>
   );
 }
@@ -124,7 +135,8 @@ function PayPage() {
 
   if (checkingAccess) {
     return (
-      <main className="min-h-screen grid place-items-center bg-background" aria-label="Opening secure checkout">
+      <main className="relative isolate min-h-screen grid place-items-center" aria-label="Opening secure checkout">
+        <CheckoutBackdrop />
         <Loader2 className="size-8 animate-spin text-primary" />
       </main>
     );
@@ -132,7 +144,8 @@ function PayPage() {
 
   if (!unlocked || !view) {
     return (
-      <main className="min-h-screen grid place-items-center bg-background px-5 py-10">
+      <main className="relative isolate min-h-screen grid place-items-center px-5 py-10">
+        <CheckoutBackdrop />
         <form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-border bg-card overflow-hidden text-center">
           <img src={hero} alt="Family watching TV together" className="w-full aspect-[16/9] object-cover" />
           <div className="p-6 space-y-4">
@@ -163,7 +176,8 @@ function PayPage() {
 
   const pw = password ?? "";
   return (
-    <main className="min-h-screen overflow-y-auto order-chat-gutter">
+    <main className="relative isolate min-h-screen overflow-y-auto order-chat-gutter">
+      <CheckoutBackdrop />
       {/* Members get a way back to their order screen; link-only customers
           (manual orders) arrived by link, so there is nothing to go back to. */}
       {user && (
@@ -177,7 +191,7 @@ function PayPage() {
         </div>
       )}
       {(() => { const template = (
-      <CheckoutTemplate
+      <CheckoutTemplate transparent
         view={view}
         claimToken={token}
         onPaymentSent={async () => { await sendPaymentSent({ data: { token, password: pw } }); await load(pw); }}

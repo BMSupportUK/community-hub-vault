@@ -95,7 +95,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 }
 
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise" | "crypto") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, payByBank, onPaymentSent, onContinueToSetup, onSwitchPayMethod, moveToSetup, addLoginDetails, completeSale, appLogin, videoHelp, transparent = false }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; payByBank?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<boolean | void>; onSwitchPayMethod?: (method: "square" | "wise" | "crypto") => Promise<void> | void; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode; appLogin?: ReactNode; videoHelp?: ReactNode; transparent?: boolean }) {
   const [sending, setSending] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [payChoice, setPayChoice] = useState<PayMethodChoice>("bank");
@@ -236,7 +236,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   else if (paid) { heading = "Thank you — we've got your payment!"; sub = "We'll set everything up and let you know when it's complete."; }
 
   return (
-    <div className="min-h-full bg-background text-foreground">
+    <div className={`min-h-full ${transparent ? "bg-transparent" : "bg-background"} text-foreground`}>
       <div className="w-full px-3 pb-24">
         <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-auto max-h-[420px] object-contain bg-card rounded-b-2xl" />
         <div className="px-2 sm:px-4 -mt-2 pb-6 space-y-6">
