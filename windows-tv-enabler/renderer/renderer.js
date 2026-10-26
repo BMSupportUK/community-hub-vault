@@ -16,6 +16,7 @@ const heading = el('heading'), description = el('description'), devicePick = el(
 
 let device = null, checks = null, busy = false, confirmCode = '', appsResults = [];
 let confirmExpiresAt = 0;
+let refreshToken = '', refreshHost = '', refreshBusy = false;
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
 const startButton = document.getElementById('welcome-start'), pinInput = el('pin-input'), pinMsg = el('pin-msg');
 const loggedIn = () => Number(localStorage.getItem('bm-pin-expires') || 0) > Date.now();
@@ -170,6 +171,7 @@ async function run(stage, host) {
       } else {
         const issued = await window.bmTv.confirmCode(checks, device, host);
         confirmCode = issued.code; confirmExpiresAt = issued.expiresAtMs;
+        refreshToken = issued.refreshToken || ''; refreshHost = host;
         say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
       }
     } else {
@@ -277,3 +279,11 @@ scan.addEventListener('click', () => runScan(false));
 window.bmTv.progress(text => say(text));
 render();
 setInterval(() => { if (wizard.step === Step.DONE && confirmCode && !busy) render(); }, 1000);
+setInterval(async () => {
+  if (busy || refreshBusy || document.hidden || wizard.step !== Step.DONE || !refreshToken || Date.now() >= confirmExpiresAt) return;
+  refreshBusy = true;
+  try {
+    if (await window.bmTv.refresh(refreshHost, refreshToken)) say('✓ New TV connection sent. Press Connect on your ticket or order.');
+  } catch (error) { say(cleanError(error), true); }
+  finally { refreshBusy = false; }
+}, 4000);
