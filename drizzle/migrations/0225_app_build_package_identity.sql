@@ -1,0 +1,2 @@
+ALTER TABLE public.app_builds ADD COLUMN IF NOT EXISTS package_name text;
+COMMENT ON COLUMN public.app_builds.package_name IS 'Verified AndroidManifest package identity used to skip existing TV apps before download';
