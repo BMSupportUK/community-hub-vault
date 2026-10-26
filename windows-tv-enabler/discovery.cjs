@@ -40,6 +40,14 @@ function readDescription(host, url) {
     req.on('timeout', () => req.destroy()); req.on('error', () => resolve(null));
   });
 }
+/** 0 = no answer, 1 = device there but debugging closed (refused), 2 = debugging open. TCP only. */
+function probe(host) {
+  return new Promise(resolve => {
+    const socket = net.createConnection({ host, port: 5555 });
+    const done = result => { socket.destroy(); resolve(result); };
+    socket.setTimeout(500); socket.once('connect', () => done(2)); socket.once('timeout', () => done(0)); socket.once('error', e => done(e && e.code === 'ECONNREFUSED' ? 1 : 0));
+  });
+}
 function reachable(host) {
   return new Promise(resolve => {
     const socket = net.createConnection({ host, port: 5555 });
@@ -80,6 +88,19 @@ async function scan(type = 'amazon') {
   const hints = await advertised(networks);
   const hosts = networks.flatMap(b => Array.from({ length: 254 }, (_, i) => b + (i + 1)));
   const devices = []; let next = 0;
+  if (type === 'all') {
+    await Promise.all(Array.from({ length: 48 }, async () => {
+      while (next < hosts.length) {
+        const host = hosts[next++]; const hint = hints.get(host);
+        const p = await probe(host);
+        if (!p && !hint) continue;
+        const desc = hint?.location ? await readDescription(host, hint.location) : p ? await readDescription(host, `http://${host}${paths[0]}`) : null;
+        const amazon = Boolean(desc?.amazon || hint?.hinted);
+        devices.push({ address: host, name: desc?.name || (amazon ? 'Amazon device — name unavailable' : 'Unknown device'), debugging: p === 2, amazon });
+      }
+    }));
+    return devices.sort((a, b) => (b.amazon - a.amazon) || (b.debugging - a.debugging) || a.address.localeCompare(b.address, undefined, { numeric: true }));
+  }
   await Promise.all(Array.from({ length: 48 }, async () => {
     while (next < hosts.length) {
       const host = hosts[next++]; const hint = hints.get(host);

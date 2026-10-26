@@ -242,24 +242,32 @@ appsHave.addEventListener('click', () => pickApps('have'));
 appsBack.addEventListener('click', () => pickApps(null));
 pickAmazon.addEventListener('click', () => pickDevice('amazon'));
 pickAndroid.addEventListener('click', () => pickDevice('android'));
-scan.addEventListener('click', async () => {
+async function runScan(all) {
   if (busy) return;
-  setBusy(true); devices.replaceChildren(); scanStatus.textContent = 'Looking for TVs on your home network…';
+  setBusy(true); devices.replaceChildren(); scanStatus.textContent = all ? 'Looking for every device on your home network…' : 'Looking for TVs on your home network…';
   try {
-    const found = await window.bmTv.scan(device);
-    scanStatus.textContent = found.length ? `${found.length} TV${found.length === 1 ? '' : 's'} found. Select the one you want.` : 'No TVs found. Check both devices are on the same home network, then type the TV address.';
+    const found = await window.bmTv.scan(all ? 'all' : device);
+    scanStatus.textContent = found.length ? (all ? `${found.length} device${found.length === 1 ? '' : 's'} found. Greyed-out ones can't be set up.` : `${found.length} TV${found.length === 1 ? '' : 's'} found. Select the one you want.`)
+      : all ? 'Nothing answered on this network. Check both devices are on the same home network, then type the TV address.' : 'No TVs found. Some TVs don\'t announce themselves — try Show all devices, or type the TV address.';
     for (const tv of found) {
+      const locked = all && !tv.debugging;
       const button = document.createElement('button'); button.type = 'button'; button.className = 'device';
       const label = document.createElement('span'); label.textContent = tv.name;
       const ip = document.createElement('small'); ip.textContent = tv.address; label.append(ip);
       const state = document.createElement('span'); state.className = tv.debugging ? 'state' : 'state unreachable';
-      state.textContent = tv.debugging ? 'Debugging reachable' : 'Debugging not reachable — check switch';
+      state.textContent = locked ? 'Can\'t be set up — debugging is off or it isn\'t a TV' : tv.debugging ? 'Debugging reachable' : 'Debugging not reachable — check switch';
       button.append(label, state);
-      button.addEventListener('click', () => { devices.querySelectorAll('button').forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-pressed', 'false'); }); button.classList.add('selected'); button.setAttribute('aria-pressed', 'true'); address.value = tv.address; });
+      if (locked) { button.disabled = true; button.dataset.locked = '1'; button.style.opacity = '0.45'; }
+      else button.addEventListener('click', () => { devices.querySelectorAll('button').forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-pressed', 'false'); }); button.classList.add('selected'); button.setAttribute('aria-pressed', 'true'); address.value = tv.address; });
       button.setAttribute('aria-pressed', 'false'); devices.append(button);
     }
+    if (!found.length && !all) {
+      const more = document.createElement('button'); more.type = 'button'; more.textContent = 'Show all devices';
+      more.addEventListener('click', () => runScan(true)); devices.append(more);
+    }
   } catch (error) { scanStatus.textContent = cleanError(error); }
-  finally { setBusy(false); }
-});
+  finally { setBusy(false); devices.querySelectorAll('button[data-locked]').forEach(b => { b.disabled = true; }); }
+}
+scan.addEventListener('click', () => runScan(false));
 window.bmTv.progress(text => say(text));
 render();

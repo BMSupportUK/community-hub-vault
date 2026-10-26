@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('bmTv', {
   login: pin => ipcRenderer.invoke('bm:login', pin),
-  scan: type => ipcRenderer.invoke('bm:scan', type === 'android' ? 'android' : 'amazon'),
+  scan: type => ipcRenderer.invoke('bm:scan', type === 'android' || type === 'all' ? type : 'amazon'),
   showCode: (address, code) => ipcRenderer.invoke('bm:show-code', address, code),
   linkReport: (code, checks, device, address) => ipcRenderer.invoke('bm:link-report', code, checks, device, address),
   pair: (ip, pairPort, code) => ipcRenderer.invoke('bm:pair', ip, pairPort, code),
