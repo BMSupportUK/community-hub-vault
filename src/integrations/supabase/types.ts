@@ -5027,6 +5027,7 @@ export type Database = {
         Row: {
           app_checked_at: string | null
           app_checks: Json
+          checks_used_at: string | null
           completed_at: string | null
           device: string
           order_id: string
@@ -5038,6 +5039,7 @@ export type Database = {
         Insert: {
           app_checked_at?: string | null
           app_checks?: Json
+          checks_used_at?: string | null
           completed_at?: string | null
           device: string
           order_id: string
@@ -5049,6 +5051,7 @@ export type Database = {
         Update: {
           app_checked_at?: string | null
           app_checks?: Json
+          checks_used_at?: string | null
           completed_at?: string | null
           device?: string
           order_id?: string
@@ -6937,6 +6940,7 @@ export type Database = {
         Row: {
           app_checked_at: string | null
           app_checks: Json
+          checks_used_at: string | null
           completed_at: string | null
           confirmed_steps: number[]
           device: string
@@ -6949,6 +6953,7 @@ export type Database = {
         Insert: {
           app_checked_at?: string | null
           app_checks?: Json
+          checks_used_at?: string | null
           completed_at?: string | null
           confirmed_steps?: number[]
           device: string
@@ -6961,6 +6966,7 @@ export type Database = {
         Update: {
           app_checked_at?: string | null
           app_checks?: Json
+          checks_used_at?: string | null
           completed_at?: string | null
           confirmed_steps?: number[]
           device?: string

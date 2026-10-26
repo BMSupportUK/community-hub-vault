@@ -1492,6 +1492,13 @@
       "when": 1793015789972,
       "tag": "0212_enabler_confirm_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 213,
+      "version": "7",
+      "when": 1793016981185,
+      "tag": "0213_fresh_device_check_per_share",
+      "breakpoints": true
     }
   ]
 }
