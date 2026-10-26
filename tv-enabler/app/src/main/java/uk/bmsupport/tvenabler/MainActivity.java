@@ -204,6 +204,7 @@ public class MainActivity extends Activity {
         readLink(getIntent());
         render();
         ui.postDelayed(expiryTick, 1000);
+        ui.postDelayed(refreshTick, 4000);
     }
 
     @Override protected void onNewIntent(android.content.Intent intent) { super.onNewIntent(intent); setIntent(intent); readLink(intent); render(); }
@@ -225,14 +226,14 @@ public class MainActivity extends Activity {
     }
 
     private void pickApps(String a) {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         apps = a;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply();
         render();
     }
 
     private void pickDevice(String d) {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         device = d;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("device", d).apply();
         render();
@@ -327,7 +328,7 @@ public class MainActivity extends Activity {
     }
 
     private void start() {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         if (wizard.step == SetupWizard.Step.DEBUGGING) { wizard.confirmDebugging(); say("", MUTED); render(); return; }
         final String host = address.getText().toString().trim();
         if (!SetupWizard.validHost(host)) { say("Type the TV's address exactly as it shows on the TV, e.g. 192.168.1.23.", WARN); return; }
@@ -416,26 +417,26 @@ public class MainActivity extends Activity {
     private void startFresh() {
         welcomeDone = true;
         if (wizard.step == SetupWizard.Step.DEBUGGING || wizard.step == SetupWizard.Step.DONE) {
-            if (wizard.step == SetupWizard.Step.DONE) { wizard.reset(); checks = null; confirmCode.setText(""); appsResults = new java.util.ArrayList<>(); }
+            if (wizard.step == SetupWizard.Step.DONE) { wizard.reset(); checks = null; confirmCode.setText(""); refreshToken = null; refreshHost = null; appsResults = new java.util.ArrayList<>(); }
             apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply();
         }
         render();
     }
 
     private void confirmReset() {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         new AlertDialog.Builder(this).setTitle("Reset setup?")
                 .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
                     wizard.reset(); checks = null; device = null; apps = null; appsResults = new java.util.ArrayList<>();
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps").apply();
-                    address.setText(""); confirmCode.setText(""); say("", MUTED); render();
+                    address.setText(""); confirmCode.setText(""); refreshToken = null; refreshHost = null; say("", MUTED); render();
                 }).show();
     }
 
     /** Lists advertised Fire TVs, including those whose debugging port is closed. */
     private void scan() {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         int ip = wm == null ? 0 : wm.getConnectionInfo().getIpAddress();
         if (ip == 0) { say("Connect this phone to your home Wi-Fi first.", WARN); return; }
@@ -473,7 +474,7 @@ public class MainActivity extends Activity {
     }
 
     private void scanAll() {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         int ip = wm == null ? 0 : wm.getConnectionInfo().getIpAddress();
         if (ip == 0) { say("Connect this phone to your home Wi-Fi first.", WARN); return; }
