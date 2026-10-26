@@ -54,11 +54,14 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     setSetupCode(null); setCode("");
     await reload(); setBusy(false);
   };
-  const issue = async () => {
-    setBusy(true);
-    const { data, error } = await supabase.rpc("issue_ticket_setup_code" as never, { _ticket_id: ticketId } as never);
-    if (error) toast.error(error.message); else setSetupCode(data as unknown as string);
-    setBusy(false);
+  const redeem = async (c: string) => {
+    const { data, error } = await supabase.rpc("redeem_ticket_enabler_code" as never, { _ticket_id: ticketId, _code: c } as never);
+    const r = data as unknown as string;
+    if (error) { toast.error(error.message); throw error; }
+    if (r === "device_mismatch") { toast.error("BM TV Enabler was set up for the other TV type. Press Change device, or pick the other TV type in the app."); throw new Error(r); }
+    if (r !== "ok") { toast.error("That code isn't valid. Check BM TV Enabler and type the code it shows now."); throw new Error(r); }
+    toast.success("BM TV Enabler confirmed your TV");
+    await reload();
   };
   const verify = async () => {
     setBusy(true);
@@ -97,14 +100,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
         <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
       </form>
     </div>}
-    {!closed && !complete && !ready && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
-      <h3 className="font-semibold">Your setup code</h3>
-      <p className="text-sm text-muted-foreground">Type this eight-digit code into BM TV Enabler to link its checked progress to this ticket. It remains available when your TV is already set up.</p>
-      {setupCode
-        ? <p className="font-mono text-3xl font-bold tracking-widest">{setupCode.slice(0, 4)} {setupCode.slice(4)}</p>
-        : <Button size="sm" disabled={busy} onClick={() => void issue()}>Show my setup code</Button>}
-      {setupCode && <><p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p><Button size="sm" variant="outline" disabled={busy} onClick={() => void issue()}>New setup code</Button></>}
-    </div>}
+    {!closed && !complete && !ready && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
     <RemoteSetupProgress row={row} />
     {!complete && steps.map((s, i) => {
       const done = stepDone(s, row);
