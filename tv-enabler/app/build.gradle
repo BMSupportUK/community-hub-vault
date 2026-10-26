@@ -11,8 +11,8 @@ android {
         applicationId "uk.bmsupport.tvenabler"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 36
-        versionName "1.35"
+        versionCode 37
+        versionName "1.36"
     }
     signingConfigs {
         release {

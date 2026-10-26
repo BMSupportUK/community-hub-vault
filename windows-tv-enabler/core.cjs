@@ -313,7 +313,7 @@ async function readHelperCode(host, adb, progress, delay = ms => new Promise(r =
   return null;
 }
 
-async function requestConfirmCode(checks, device, post = globalThis.fetch, helperCode = null) {
+async function requestConfirmCode(checks, device, post = globalThis.fetch, helperCode = null, withExpiry = false) {
   if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV this is first: Amazon Fire TV or Android / Google TV.');
   if (!checks || !(checks.adb && checks.helper && checks.control && checks.accessibility)) throw new Error('Check the TV again first.');
   let res;
@@ -322,7 +322,8 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch, helpe
   if (res.status === 429) throw new Error('Too many tries. Wait 15 minutes, then try again.');
   const body = res.ok ? await res.json().catch(() => null) : null;
   if (!body || !/^[A-Z0-9]{6}$/.test(body.code || '')) throw new Error(`Couldn't get a code from BM Support (error ${res.status}). Try again.`);
-  return body.code;
+  if (withExpiry && !Number.isFinite(body.expiresAtMs)) throw new Error('BM Support needs updating before a new confirmation code can be issued.');
+  return withExpiry ? { code: body.code, expiresAtMs: body.expiresAtMs } : body.code;
 }
 
 /** BM TV Enabler login: swaps the customer's 6-digit ticket/order PIN for a 24-hour token. */
