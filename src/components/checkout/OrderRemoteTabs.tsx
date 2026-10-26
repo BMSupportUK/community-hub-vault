@@ -14,7 +14,7 @@ import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChe
 import { getOrderRemoteSetup, redeemOrderEnablerCode, resetOrderRemoteSetup, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
 import { getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
 
-type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null } | null;
+type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
 type Tab = "order" | "remote" | "screen";
 
 /** Customer secure order: Order / Remote setup / Screen share tabs across the top. */
@@ -54,6 +54,10 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
     if (!window.confirm("Restart the TV setup from the beginning? Your saved progress and codes for this order will be cleared.")) return;
     void run(async () => { await resetFn({ data: { token, password } }); setCode(""); toast.success("Setup restarted — choose your device to begin again"); });
   };
+  const connect = () => run(async () => {
+    const r = await verifyFn({ data: { token, password } });
+    if (!r.ok) toast.error(r.error); else toast.success("Connected — staff have been told your TV is ready");
+  });
   const verify = () => run(async () => {
     const r = await verifyFn({ data: { token, password, code } });
     if (!r.ok) toast.error(r.error); else { toast.success("BM Remote Helper confirmed — staff have been told your TV is ready"); setCode(""); }
@@ -78,7 +82,12 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
         <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={restart}>Restart setup</Button>
       </div>
-      {fresh && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+      {fresh && row.pending_session_id && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+        <h3 className="font-semibold">Your TV is ready</h3>
+        <p className="text-sm">BM TV Enabler has already picked up the code from BM Remote Helper. Press Connect to send your screen-share request to staff.</p>
+        <Button size="lg" className="w-full" disabled={busy} onClick={() => void connect()}>Connect</Button>
+      </div>}
+      {fresh && !row.pending_session_id && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
         <h3 className="font-semibold">Your TV code</h3>
         <p className="text-sm">Your TV was just checked. Open BM Remote Helper on the TV and enter the six-digit code it shows.</p>
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
