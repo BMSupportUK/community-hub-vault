@@ -48,8 +48,11 @@ export function canRequestTicketScreenShare(setup: { completed_at: string | null
 }
 
 /** Latest measured app snapshot, kept separate from the live screen-share code. */
-export function remoteSetupProgress(row: { app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null }) {
+export function remoteSetupProgress(row: { app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null }, now = Date.now()) {
   const c = row.app_checks;
+  // An old or already-used check is not current: show it as needing a fresh check, not as done.
+  if (row.app_checked_at && c && appChecksPassed(c) && !checksFresh(row, now))
+    return { stage: 0, title: "Waiting for a fresh TV check", detail: "Your last check has been used or is over 2 hours old. Run BM TV Enabler again so it can check your TV before this screen share." };
   if (!row.app_checked_at || !c) return { stage: 0, title: "Waiting for TV Enabler", detail: "Finish setup in BM TV Enabler, then type the code it shows into the box above." };
   if (!c.adb) return { stage: 0, title: "Waiting for the TV connection", detail: "Enabler has reported, but the TV connection is not confirmed." };
   if (!c.helper) return { stage: 1, title: "TV connected — Helper installation next", detail: "Continue the BM Remote Helper installation step in Enabler." };
