@@ -47,12 +47,18 @@ function PortalLoginsPage() {
   useEffect(() => { if (!expiresAt) return; const t = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(t); }, [expiresAt]);
   const remaining = expiresAt ? Math.max(0, expiresAt - now) : 0;
   useEffect(() => { if (expiresAt && remaining === 0) { setAccounts(null); setExpiresAt(null); setError("Your 10-minute viewing time has ended. Enter your PIN again to view your logins."); } }, [expiresAt, remaining]);
+  const [tempPin, setTempPin] = useState<string | null>(null), [newPin, setNewPin] = useState(""), [newPin2, setNewPin2] = useState("");
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
     setResetDone(false);
-    if (!/^\d{6}$/.test(pin)) { setError("Enter your 6-digit PIN."); return; }
+    if (tempPin) {
+      if (!/^\d{6}$/.test(newPin)) { setError("Your new PIN must be 6 digits."); return; }
+      if (newPin !== newPin2) { setError("The two new PINs don't match."); return; }
+    } else if (!/^\d{6}$/.test(pin)) { setError("Enter your 6-digit PIN."); return; }
     setBusy(true);
-    try { const r = await read({ data: { pin } }); setAccounts(r.accounts); setQdCodes(r.qdCodes); setExpiresAt(new Date(r.expiresAt).getTime()); setNow(Date.now()); if (r.created) toast.success("Your PIN is saved. Use it next time to view your logins."); }
+    try { const r = await read({ data: tempPin ? { pin: tempPin, newPin } : { pin } });
+      if (r.mustChange) { setTempPin(pin); toast.info("That was a temporary PIN. Please choose your own new PIN."); return; }
+      if (tempPin) { toast.success("Your new PIN is saved."); setTempPin(null); setNewPin(""); setNewPin2(""); } setAccounts(r.accounts); setQdCodes(r.qdCodes); setExpiresAt(new Date(r.expiresAt).getTime()); setNow(Date.now()); if (r.created) toast.success("Your PIN is saved. Use it next time to view your logins."); }
     catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setPin(""); setBusy(false); }
   }
@@ -65,7 +71,13 @@ function PortalLoginsPage() {
     <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8"><div className="mx-auto max-w-5xl rounded-2xl border border-border bg-background/80 p-4 backdrop-blur sm:p-6">
       <h1 className="mb-1 font-display text-2xl font-bold">My App Logins</h1>
       <p className="mb-6 text-sm text-muted-foreground">Your TV app usernames and passwords. Enter your PIN to show them for 10 minutes.</p>
-      {!accounts ? <form onSubmit={submit} className="max-w-sm space-y-4 rounded-xl border border-border bg-surface p-5">
+      {!accounts && tempPin ? <form onSubmit={submit} className="max-w-sm space-y-4 rounded-xl border border-border bg-surface p-5">
+        <div className="flex items-center gap-2 font-semibold"><KeyRound className="size-4 text-primary" />Choose your new PIN</div>
+        <p className="text-xs text-muted-foreground">The PIN we sent you was temporary. Pick your own 6-digit PIN to see your logins — the temporary one stops working.</p>
+        <input aria-label="New 6-digit PIN" type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))} className="w-full rounded-md border border-border bg-surface-2 px-3 py-3 text-center font-mono text-lg tracking-[0.5em]" />
+        <input aria-label="Repeat new PIN" type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={newPin2} onChange={(e) => setNewPin2(e.target.value.replace(/\D/g, "").slice(0, 6))} className="w-full rounded-md border border-border bg-surface-2 px-3 py-3 text-center font-mono text-lg tracking-[0.5em]" />
+        <Button type="submit" className="w-full" disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <KeyRound />}Save new PIN</Button>
+      </form> : !accounts ? <form onSubmit={submit} className="max-w-sm space-y-4 rounded-xl border border-border bg-surface p-5">
         <div className="flex items-center gap-2 font-semibold"><Lock className="size-4 text-primary" />Enter your 6-digit PIN</div>
         <p className="text-xs text-muted-foreground">First time? The PIN you enter now becomes your PIN. Five wrong tries locks access for one hour.</p>
         <input aria-label="6-digit PIN" type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))} className="w-full rounded-md border border-border bg-surface-2 px-3 py-3 text-center font-mono text-lg tracking-[0.5em]" />

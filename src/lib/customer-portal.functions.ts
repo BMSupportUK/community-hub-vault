@@ -60,7 +60,7 @@ export const redeemPortalCode = createServerFn({ method: "POST" })
 /** Signed-in: show the customer's own app logins after their 6-digit PIN. First use sets the PIN. */
 export const readPortalCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ pin: z.string().regex(/^\d{6}$/, "Enter a 6-digit PIN.") }).strict().parse(input))
+  .inputValidator((input) => z.object({ pin: z.string().regex(/^\d{6}$/, "Enter a 6-digit PIN."), newPin: z.string().regex(/^\d{6}$/, "Your new PIN must be 6 digits.").optional() }).strict().parse(input))
   .handler(async ({ data, context }) => {
     setResponseHeader("cache-control", "no-store");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -74,6 +74,17 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
     if (error) throw new Error("Secure access is temporarily unavailable.");
     if (result === "locked") throw new Error("Too many wrong PINs. Access is locked for one hour.");
     if (result === "invalid") throw new Error("Wrong PIN. After five wrong tries, access is locked for one hour.");
+    const { data: flag } = await supabaseAdmin.from("manual_credential_access").select("pin_must_change").eq("email_key", key).maybeSingle();
+    if (flag?.pin_must_change) {
+      // A PIN sent in a ticket is temporary: logins stay hidden until the customer picks their own.
+      if (!data.newPin) return { mustChange: true as const, accounts: [], qdCodes: [], created: false, expiresAt: new Date().toISOString() };
+      if (data.newPin === data.pin) throw new Error("Choose a new PIN that is different from the one we sent you.");
+      const newSalt = hex(crypto.getRandomValues(new Uint8Array(24)));
+      const { error: upErr } = await supabaseAdmin.from("manual_credential_access")
+        .update({ pin_hash: await hashPin(data.newPin, newSalt), pin_salt: newSalt, pin_must_change: false, pin_attempts: 0, pin_locked_until: null })
+        .eq("email_key", key);
+      if (upErr) throw new Error("We couldn't save your new PIN. Please try again.");
+    }
     const [{ data: site }, { data: manual }, { data: qd }] = await Promise.all([
       supabaseAdmin.rpc("portal_credentials_for_user", { p_user_id: context.userId }),
       supabaseAdmin.rpc("manual_credentials_for_email", { p_email: email }),
@@ -96,7 +107,7 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
     }
     const accounts = [...byLogin.values()];
     const qdCodes = (qd ?? []).map((q) => ({ id: String(q.id), label: String(q.label), code: String(q.code), notes: q.notes ? String(q.notes) : null }));
-    return { accounts, qdCodes, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
+    return { mustChange: false as const, accounts, qdCodes, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
 
 /** Signed-in customer: reset their own app-logins PIN and alert staff. The next PIN they enter becomes the new one. */
@@ -159,4 +170,36 @@ export const unlockMyPortalCode = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { verifyPortalCode } = await import("@/lib/customer-portal-code.server");
     return { expiresAt: await verifyPortalCode(supabaseAdmin, context.userId, data.loginCode) };
+  });
+
+/** Forgot Account Login ticket owner: post a temporary 6-digit PIN into the ticket; it must be changed on first use. */
+export const sendTicketTempPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ ticketId: z.string().uuid() }).strict().parse(input))
+  .handler(async ({ data, context }) => {
+    setResponseHeader("cache-control", "no-store");
+    const { data: t } = await context.supabase.from("tickets").select("id, user_id, status, ticket_categories(slug)").eq("id", data.ticketId).maybeSingle();
+    const slug = (t as { ticket_categories?: { slug?: string } | null } | null)?.ticket_categories?.slug;
+    if (!t || t.user_id !== context.userId || slug !== "account") throw new Error("Not allowed");
+    if (t.status === "closed") throw new Error("This ticket is closed.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ok } = await supabaseAdmin.rpc("manual_credentials_throttle", { p_key: `ticket-temp-pin:${context.userId}`, p_limit: 3 });
+    if (!ok) throw new Error("Too many PIN requests. Please try again in an hour.");
+    const { data: user } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const email = user.user?.email?.trim().toLowerCase();
+    if (!email) throw new Error("Your account has no email saved. Please wait for our team.");
+    const key = await hash(email);
+    const pin = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
+    const salt = hex(crypto.getRandomValues(new Uint8Array(24)));
+    const { error } = await supabaseAdmin.from("manual_credential_access").upsert(
+      { email_key: key, pin_hash: await hashPin(pin, salt), pin_salt: salt, pin_attempts: 0, pin_locked_until: null, pin_must_change: true },
+      { onConflict: "email_key" },
+    );
+    if (error) throw new Error("We couldn't make a new PIN. Please try again.");
+    const reply = `🔑 **Login helper**\n\nHere's your temporary PIN: **${pin}**\n\n1. Open **Service Credentials** and enter this PIN.\n2. You'll then be asked to choose your own new 6-digit PIN — this temporary one stops working once you do.\n\n🔗 [Open Service Credentials](/portal/logins)\n\nLet me know how you get on using the buttons below.`;
+    await supabaseAdmin.from("ticket_messages").insert([
+      { ticket_id: data.ticketId, sender_id: context.userId, content: "I've lost my PIN", is_internal: false },
+      { ticket_id: data.ticketId, sender_id: context.userId, content: reply, is_internal: false },
+    ]);
+    return { sent: true };
   });
