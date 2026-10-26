@@ -70,3 +70,4 @@
 - TV Enabler confirms a fresh TV check before finishing; website linking optional, stages sync by expiring code; reset keeps RSA authorization. Helper opens once per run; Remote setup has Restart setup.
 - Ticket screen-share requests unlock only after the customer's Remote setup is confirmed by a live BM Remote Helper code (server-verified RPC), so staff never invite before the TV app works.
 - TV Enabler website linking: hashed confirmation codes bind atomically to one ticket/order on first redemption; ticket and service-only order RPCs allow repeats until original expiry, without transferring sessions between scopes. Apps display the server-returned expiry. The old eight-digit path stays for older versions.
+- Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
