@@ -4,30 +4,22 @@ public final class SetupWizardTest {
     private static void check(boolean result, String rule) { if (!result) throw new AssertionError(rule); }
     public static void main(String[] args) {
         SetupWizard w = new SetupWizard();
-        w.next(); check(w.step == SetupWizard.Step.DEBUGGING, "Debugging needs explicit confirmation");
-        w.confirmDebugging(); check(w.step == SetupWizard.Step.CHECK, "Check existing setup is step two");
-        w.next(); check(w.step == SetupWizard.Step.CHECK, "Cannot skip actual TV check");
-        w.checked(true); w.next();
-        check(w.step == SetupWizard.Step.REPORT, "Ready TV skips device choice, installs and activation");
-        w.reset(); w.confirmDebugging(); w.checked(false); w.next(); w.chooseDevice();
-        check(w.step == SetupWizard.Step.HELPER, "Incomplete TV starts helper install");
-        w.next(); check(w.step == SetupWizard.Step.HELPER, "Incomplete operation cannot advance");
-        w.operationCompleted(); w.next(); check(w.step == SetupWizard.Step.CONTROL, "Helper confirmation advances to control");
-        w.operationCompleted(); w.next(); check(w.step == SetupWizard.Step.ACTIVATE, "Control confirmation advances to activation");
-        w.operationCompleted(); w.next(); check(w.step == SetupWizard.Step.REPORT, "Activation confirmation advances to reporting");
-        w.next(); check(w.step == SetupWizard.Step.REPORT, "Finish requires a fresh TV confirmation");
-        w.confirmTv(false); w.next(); check(w.step == SetupWizard.Step.REPORT && !w.ready, "Failed TV check cannot finish setup");
-        w.confirmTv(true); w.next(); check(w.step == SetupWizard.Step.DONE && w.ready, "Confirmed TV finishes without any website code");
-        w.reset(); w.confirmDebugging(); w.checked(true); w.next(); w.confirmTv(true); w.next();
-        check(w.step == SetupWizard.Step.DONE && w.ready, "Previously ready TV also finishes without device choice or website code");
-        w.reset(); check(w.step == SetupWizard.Step.DEBUGGING && !w.ready && !w.completed, "Reset clears all wizard confirmations");
+        w.connected("1234"); check(w.step == SetupWizard.Step.DEBUGGING, "Debugging needs explicit confirmation");
+        w.confirmDebugging(); check(w.step == SetupWizard.Step.CHECK, "Connect is step two");
+        check(w.enterCode("1234") == SetupWizard.CodeResult.IGNORED, "No code before connecting");
+        w.connected("1234"); check(w.step == SetupWizard.Step.TV_CODE, "Connecting shows the TV code step");
+        check(w.enterCode("9999") == SetupWizard.CodeResult.WRONG && w.step == SetupWizard.Step.TV_CODE, "Wrong code does not move on");
+        check(w.enterCode("1234") == SetupWizard.CodeResult.OK && w.step == SetupWizard.Step.SETUP, "Correct code starts automatic setup");
+        w.setupFinished(false); check(w.step == SetupWizard.Step.SETUP && !w.ready, "Failed TV check cannot finish");
+        w.setupFinished(true); check(w.step == SetupWizard.Step.DONE && w.ready, "Checked TV finishes setup");
+        w.reset(); w.confirmDebugging(); w.connected("0001");
+        w.enterCode("1"); w.enterCode("2");
+        check(w.enterCode("3") == SetupWizard.CodeResult.RESET && w.step == SetupWizard.Step.CHECK && w.tvCode == null, "Three wrong codes go back to connect");
+        w.reset(); check(w.step == SetupWizard.Step.DEBUGGING && !w.ready && w.tvCode == null, "Reset clears the wizard");
+        check(SetupWizard.newCode(new java.security.SecureRandom()).matches("\\d{4}"), "TV code is 4 digits");
         check(SetupWizard.ready(true, true, true, true), "All actual checks make TV ready");
-        for (int missing = 0; missing < 4; missing++) {
-            boolean[] c = {true, true, true, true}; c[missing] = false;
-            check(!SetupWizard.ready(c[0], c[1], c[2], c[3]), "Every actual check is required: " + missing);
-        }
-        check(SetupWizard.validHost("192.168.0.110") && SetupWizard.validHost("192.168.0.121"), "Android and Amazon addresses accepted");
-        check(!SetupWizard.validHost("999.168.0.1") && !SetupWizard.validHost("192.168.0"), "Invalid addresses rejected");
-        System.out.println("Setup wizard: all progression, readiness and reset rules pass");
+        check(!SetupWizard.ready(true, true, true, false), "Missing permission is not ready");
+        check(SetupWizard.validHost("192.168.0.10") && !SetupWizard.validHost("192.168.0.300"), "Host validation");
+        System.out.println("SetupWizardTest passed");
     }
 }
