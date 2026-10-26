@@ -86,6 +86,50 @@ final class DeviceDiscovery {
         } finally { pool.shutdownNow(); }
     }
 
+    /** "Show all devices": everything that answers on the Wi-Fi, Amazon first. Only devices with
+     * debugging open can be picked; the rest are shown so nothing is missed. Read-only like scan(). */
+    static List<DiscoveredDevice> scanAll(String base) throws InterruptedException {
+        Advertised advertised = advertisedLocations(base);
+        Map<String, DiscoveredDevice> found = new ConcurrentHashMap<>();
+        Map<String, Boolean> amazonHosts = new ConcurrentHashMap<>();
+        ExecutorService pool = Executors.newFixedThreadPool(48);
+        try {
+            for (int i = 1; i < 255; i++) {
+                String host = base + i;
+                pool.execute(() -> {
+                    int probe = probe(host);
+                    String location = advertised.locations.get(host);
+                    Description description = location != null ? readDescription(host, location)
+                            : probe > 0 ? readDescription(host, String.format(FALLBACK_PATHS[0], host)) : null;
+                    if (probe == 0 && description == null && !advertised.fireTvHints.containsKey(host) && !advertised.dialHints.containsKey(host)) return;
+                    boolean amazon = advertised.fireTvHints.containsKey(host) || (description != null && (description.fireTv || description.amazon));
+                    if (amazon) amazonHosts.put(host, Boolean.TRUE);
+                    String name = description != null && description.name != null ? description.name : amazon ? "Amazon device — name unavailable" : "Unknown device";
+                    found.put(host, new DiscoveredDevice(host, name, probe == 2));
+                });
+            }
+            pool.shutdown();
+            if (!pool.awaitTermination(60, TimeUnit.SECONDS)) pool.shutdownNow();
+            List<DiscoveredDevice> devices = new ArrayList<>(found.values());
+            devices.sort((a, b) -> {
+                int am = Boolean.compare(!amazonHosts.containsKey(a.address), !amazonHosts.containsKey(b.address));
+                if (am != 0) return am;
+                int ok = Boolean.compare(!a.debuggingReachable, !b.debuggingReachable);
+                return ok != 0 ? ok : Integer.compare(lastOctet(a.address), lastOctet(b.address));
+            });
+            return devices;
+        } finally { pool.shutdownNow(); }
+    }
+
+    /** 0 = no answer, 1 = device there but debugging closed (connection refused), 2 = debugging open. TCP only. */
+    private static int probe(String host) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, 5555), 500);
+            return 2;
+        } catch (java.net.ConnectException e) { return 1; }
+        catch (Exception ignored) { return 0; }
+    }
+
     private static int lastOctet(String host) { return Integer.parseInt(host.substring(host.lastIndexOf('.') + 1)); }
 
     private static final class Advertised {
