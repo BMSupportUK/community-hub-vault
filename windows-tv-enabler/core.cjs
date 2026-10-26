@@ -129,7 +129,8 @@ async function installHelper(host, adb, progress, delay, fetchImpl = globalThis.
     }
     progress('Opening BM Remote Helper on the TV…');
     await shell(`monkey -p ${HELPER} -c android.intent.category.LAUNCHER 1`).catch(() => {});
-    return readChecks(shell);
+    const result = await readChecks(shell);
+    return result;
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
 }
 
@@ -151,7 +152,8 @@ async function installControl(host, adb, progress, delay, fetchImpl = globalThis
       } finally { await shell(`rm -f ${temp}`).catch(() => {}); }
       if (!(await shell(`pm path ${CONTROL}`)).includes('package:')) throw new Error('BM Remote Control did not install on the TV. Try again.');
     }
-    return readChecks(shell);
+    const result = await readChecks(shell);
+    return result;
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
 }
 
@@ -172,7 +174,8 @@ async function activate(host, adb, progress, delay) {
     // Leave BM Remote Helper open on the TV so its six-digit code is on screen.
     progress('Opening BM Remote Helper on the TV…');
     await shell(`monkey -p ${HELPER} -c android.intent.category.LAUNCHER 1`).catch(() => {});
-    return readChecks(shell);
+    const result = await readChecks(shell);
+    return result;
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
 }
 
