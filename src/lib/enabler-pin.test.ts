@@ -1,3 +1,4 @@
+// @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { describe, expect, test } from "bun:test";
 import { PIN_TTL_MS, PIN_MAX_TRIES, isPinFormat, makePin, pinUsable } from "./enabler-pin";
 
