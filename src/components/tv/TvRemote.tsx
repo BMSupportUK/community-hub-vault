@@ -396,10 +396,17 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
         {hasVideo && !firstFrame && (
           <div className="pointer-events-none absolute inset-0">
             <img src={connectingArt} alt="Support staff connecting to the customer's TV" width={1600} height={912} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 grid place-items-center bg-background/40">
-              <div className="flex items-center gap-3 rounded-full bg-background/85 px-6 py-3 text-lg font-semibold text-foreground shadow-lg">
-                <span className="h-3 w-3 animate-pulse rounded-full bg-primary" />
-                Connecting to the TV screen…
+            <div className="absolute inset-0 grid place-items-center bg-background/45 p-6">
+              <div className="w-full max-w-xl space-y-4 rounded-2xl bg-background/90 p-6 text-center shadow-2xl ring-1 ring-primary/30">
+                <div className="flex items-center justify-center gap-3 text-lg font-semibold text-foreground">
+                  <span className="h-3 w-3 animate-pulse rounded-full bg-primary" />
+                  Connecting to the TV screen…
+                </div>
+                <div className="flex items-center justify-center gap-3 rounded-xl bg-primary px-5 py-4 text-base font-extrabold uppercase leading-snug tracking-wide text-primary-foreground shadow-glow sm:text-xl">
+                  <Home className="h-7 w-7 shrink-0" aria-hidden="true" />
+                  Press the Home button on the remote to get the picture
+                </div>
+                <p className="text-sm text-muted-foreground">The TV only sends a picture when something on its screen moves.</p>
               </div>
             </div>
           </div>
