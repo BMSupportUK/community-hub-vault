@@ -65,12 +65,12 @@ public class MainActivity extends Activity {
         devicePick.addView(amazonBtn, halfL); devicePick.addView(androidBtn, halfR);
         col.addView(devicePick, lp(dp(12)));
         deviceHelp = text("", 15, MUTED, false); col.addView(deviceHelp, lp(dp(8)));
-        appsNew = button("No, this is a new setup", Color.parseColor("#2A3050"));
-        appsHave = button("Yes, I already have them", Color.parseColor("#2A3050"));
+        appsNew = button("Install our apps", Color.parseColor("#2A3050"));
+        appsHave = button("Screen-share support", Color.parseColor("#2A3050"));
         appsBack = button("Back", Color.parseColor("#2A3050"));
         appsNew.setOnClickListener(v -> pickApps("new"));
         appsHave.setOnClickListener(v -> pickApps("have"));
-        appsBack.setOnClickListener(v -> { if (!busy) { device = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("device").apply(); render(); } });
+        appsBack.setOnClickListener(v -> { if (!busy) { apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply(); render(); } });
         col.addView(appsNew, lp(dp(12))); col.addView(appsHave, lp(dp(8))); col.addView(appsBack, lp(dp(8)));
         amazonBtn.setOnClickListener(v -> pickDevice("amazon"));
         androidBtn.setOnClickListener(v -> pickDevice("android"));
@@ -147,9 +147,11 @@ public class MainActivity extends Activity {
 
     private void render() {
         SetupWizard.Step s = wizard.step;
-        boolean askApps = s == SetupWizard.Step.DEBUGGING && device != null && apps == null;
-        for (View v : new View[]{appsNew, appsHave, appsBack}) v.setVisibility(askApps ? View.VISIBLE : View.GONE);
-        boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps) || (s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
+        boolean askApps = s == SetupWizard.Step.DEBUGGING && apps == null;
+        boolean install = "new".equals(apps);
+        appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
+        appsBack.setVisibility(s == SetupWizard.Step.DEBUGGING && apps != null ? View.VISIBLE : View.GONE);
+        boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
         devicePick.setVisibility(pick ? View.VISIBLE : View.GONE);
         deviceHelp.setVisibility(pick ? View.VISIBLE : View.GONE);
         address.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
@@ -158,7 +160,7 @@ public class MainActivity extends Activity {
         showAgain.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         confirmCode.setVisibility(s == SetupWizard.Step.DONE && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
         next.setVisibility(View.GONE);
-        turnOn.setVisibility(s == SetupWizard.Step.DEBUGGING && (device == null || apps == null) ? View.GONE : View.VISIBLE);
+        turnOn.setVisibility((s == SetupWizard.Step.DEBUGGING && (device == null || apps == null)) || (s == SetupWizard.Step.DONE && install) ? View.GONE : View.VISIBLE);
         find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
         back.setVisibility(s == SetupWizard.Step.CHECK || s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         amazonBtn.setBackgroundColor("amazon".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
@@ -166,8 +168,8 @@ public class MainActivity extends Activity {
         switch (s) {
             case DEBUGGING:
                 if (askApps) {
-                    heading.setText("Do you already have our apps on this TV?");
-                    description.setText("New customer? Choose \"No, this is a new setup\" and we'll install all our apps on the TV for you. Already have them? Choose \"Yes\" and we'll only switch on remote control.");
+                    heading.setText("What do you need?");
+                    description.setText("Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.");
                     break;
                 }
                 heading.setText(device == null ? "Which TV are you setting up?" : "1. Enable TV debugging");
@@ -185,10 +187,16 @@ public class MainActivity extends Activity {
                 description.setText("Look at your TV — the 4-digit code is now on screen (on Android / Google TV it shows as the TV's device name on the About page). Type it below so we know this is your TV. After that, setup runs by itself.");
                 turnOn.setText("Confirm code and set up my TV"); break;
             case SETUP:
-                heading.setText("4. Setting up your TV");
+                heading.setText(install ? "4. Installing our apps" : "4. Setting up your TV");
+                if (install) { description.setText("We're putting our apps on your TV one by one. Keep both devices awake."); turnOn.setText("Try again"); break; }
                 description.setText("We check what's already on the TV, install BM Remote Helper and remote control if needed, switch remote control on, then check everything again. Keep both devices awake.");
                 turnOn.setText("Try again"); break;
             case DONE:
+                if (install) {
+                    heading.setText("Your apps are installed");
+                    description.setText("Everything is on your TV. You can close this app. To install again, press Reset setup.");
+                    break;
+                }
                 heading.setText("TV setup confirmed");
                 deviceHelp.setText("Which TV is this? Choose the same type as your ticket or order.");
                 description.setText(confirmCode.length() > 0
@@ -229,31 +237,32 @@ public class MainActivity extends Activity {
                 }
                 final boolean linkedSent = sentTo != null;
                 final String issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
-                if (run == SetupWizard.Step.SETUP) {
+                final boolean installOnly = "new".equals(apps);
+                if (run == SetupWizard.Step.SETUP && installOnly) appsFailed = Enabler.installOurApps(this, host, progress);
+                else if (run == SetupWizard.Step.SETUP) {
                     checks = Enabler.checkExisting(this, host, progress);
                     if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
                         Enabler.enableUntil(this, host, 4, progress);
                         progress.step(0, "Checking everything on the TV one last time…");
                         checks = Enabler.checkExisting(this, host, progress);
                     }
-                    if ("new".equals(apps) && SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility))
-                        appsFailed = Enabler.installOurApps(this, host, progress);
                 }
                 ui.post(() -> {
                     if (isFinishing() || isDestroyed()) return;
                     setBusy(false);
-                    if (run == SetupWizard.Step.SETUP) {
+                    if (run == SetupWizard.Step.SETUP && installOnly) {
+                        wizard.setupFinished(true);
+                        if (appsFailed.isEmpty()) say("✓ Our apps are installed on your TV.", OK);
+                        else say("Done. These apps didn't install: " + String.join(", ", appsFailed) + ". Press Reset setup to try again.", WARN);
+                        appsFailed = new java.util.ArrayList<>();
+                    } else if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.setupFinished(ready);
                         // The TV tells us its own make, so customers never pick Amazon or Android.
                         if (checks.type != null) { device = checks.type; getSharedPreferences("tv", MODE_PRIVATE).edit().putString("device", device).apply(); }
                         // Linked by the website QR: send straight there, no button or code needed.
                         if (ready && linkCode() != null && device != null) ui.post(this::start);
-                        String done = appsFailed.isEmpty()
-                                ? ("new".equals(apps) ? "✓ TV setup confirmed: our apps are installed and remote control is switched on." : "✓ TV setup confirmed: both apps installed and remote control switched on.")
-                                : "✓ TV setup confirmed. These apps didn't install: " + String.join(", ", appsFailed) + ".";
-                        appsFailed = new java.util.ArrayList<>();
-                        say(ready ? done : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
+                        say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
                         else { confirmCode.setText(issued.substring(0, 3) + "-" + issued.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
