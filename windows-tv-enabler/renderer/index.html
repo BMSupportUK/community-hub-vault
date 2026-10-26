@@ -1,10 +1,25 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'"><title>BM TV Enabler</title><link rel="stylesheet" href="style.css"></head>
 <body><main>
-<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.2</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
-<section><h2>Which TV are you setting up?</h2><div class="device-pick" role="group" aria-label="TV type"><button id="pick-amazon" type="button" class="secondary">Amazon Fire TV</button><button id="pick-android" type="button" class="secondary">Android / Google TV</button></div><p id="device-help" class="hint">Choose one — the setting to switch on is different on each.</p></section>
-<section class="preparation"><h2>Before you connect</h2><ol><li>Switch on the setting above on the TV.</li><li>Connect this computer and the TV to the same home network. Avoid guest Wi-Fi and disconnect any VPN.</li><li>Press <strong>Turn on remote control</strong> — this app installs BM Remote Helper and remote control on the TV for you.</li></ol></section>
-<section><h2>Your setup code</h2><label for="setup-code">8-digit code from the Remote setup tab on your support ticket<input id="setup-code" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="1234 5678"></label></section><section><h2>Choose your TV</h2><div class="address-row"><label for="address">TV address<input id="address" inputmode="decimal" autocomplete="off" maxlength="15" placeholder="192.168.1.25"></label><button id="scan" class="secondary">Find my TV</button></div><p class="hint">Select your TV below, or type its address.</p><div id="devices" role="group" aria-label="Discovered TVs"></div><p id="scan-status" role="status"></p><button id="enable" class="primary">Turn on remote control <span aria-hidden="true">→</span></button></section>
-<section class="connection"><h2>Allow the connection on your TV</h2><p>When the TV asks <strong>Allow USB debugging?</strong>, tick <strong>Always allow from this computer</strong> and choose <strong>Allow</strong>.</p><p id="progress" role="status" aria-live="polite">Ready to connect.</p></section>
+<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.3</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
+<section class="wizard">
+  <h2 id="heading">1. Enable TV debugging</h2>
+  <p id="description"></p>
+  <div id="device-pick" class="device-pick" role="group" aria-label="TV type" hidden><button id="pick-amazon" type="button">Amazon Fire TV</button><button id="pick-android" type="button">Android / Google TV</button></div>
+  <p id="device-help" class="hint" hidden></p>
+  <div id="address-block" hidden>
+    <div class="address-row"><label for="address">TV address<input id="address" inputmode="decimal" autocomplete="off" maxlength="15" placeholder="192.168.1.25"></label><button id="scan" type="button">Find my TV</button></div>
+    <p class="hint">Find my TV searches Amazon devices only. Android / Google TV users: type the address from the TV's network settings.</p>
+    <div id="devices" role="group" aria-label="Discovered TVs"></div>
+    <p id="scan-status" role="status"></p>
+  </div>
+  <div id="code-block" hidden><label for="setup-code">8-digit code from the Remote setup tab on your ticket or order (optional)<input id="setup-code" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="1234 5678"></label></div>
+  <button id="open-helper" type="button" hidden>Open BM Remote Helper on TV to show my code</button>
+  <div class="connection"><p>When the TV asks <strong>Allow USB debugging?</strong>, tick <strong>Always allow from this computer</strong> and choose <strong>Allow</strong>.</p><p id="progress" role="status" aria-live="polite"></p></div>
+  <button id="action" class="primary" type="button">I've switched debugging on — next <span aria-hidden="true">→</span></button>
+  <button id="next" class="primary" type="button" hidden>Done — next step <span aria-hidden="true">→</span></button>
+  <button id="back" type="button" hidden>Back to debugging instructions</button>
+  <button id="reset" type="button">Reset setup</button>
+</section>
 <footer>Free · No BM Support login required · Windows 10 / 11 (64-bit)<p>This app enables BM Remote Control, not the TV's debugging switch. Staff support still starts through your ticket or order.</p></footer>
-</main><script src="renderer.js"></script></body></html>
+</main><script src="wizard.js"></script><script src="renderer.js"></script></body></html>
