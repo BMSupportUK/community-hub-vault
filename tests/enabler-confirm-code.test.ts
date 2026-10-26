@@ -10,8 +10,10 @@ test("code lasts 2 hours", () => {
   expect(confirmCodeState(row({ expires_at: new Date(now.getTime() - 1).toISOString() }), "android", now)).toBe("invalid");
   expect(confirmCodeState(row(), "android", now)).toBe("ok");
 });
-test("code works only once", () => {
-  expect(confirmCodeState(row({ used_at: now.toISOString() }), "android", now)).toBe("invalid");
+test("code remains usable after first submission for the full two hours", () => {
+  const used = row({ used_at: now.toISOString() });
+  expect(confirmCodeState(used, "android", new Date(now.getTime() + CONFIRM_TTL_MS - 1))).toBe("ok");
+  expect(confirmCodeState(used, "android", new Date(now.getTime() + CONFIRM_TTL_MS))).toBe("invalid");
 });
 test("other TV type is rejected", () => {
   expect(confirmCodeState(row({ device: "amazon" }), "android", now)).toBe("device_mismatch");

@@ -63,7 +63,7 @@ export const issueOrderSetupCode = createServerFn({ method: "POST" })
     return code;
   });
 
-/** Code shown by BM TV Enabler after it confirms the TV: copies its checks onto this order (single use). */
+/** Code shown by BM TV Enabler: reusable on this order until its original expiry. */
 export const redeemOrderEnablerCode = createServerFn({ method: "POST" })
   .inputValidator((d) => Access.extend({ code: z.string().min(1).max(20) }).parse(d))
   .handler(async ({ data }) => {
@@ -79,9 +79,9 @@ export const redeemOrderEnablerCode = createServerFn({ method: "POST" })
     const state = confirmCodeState(c, setup.device);
     if (state === "invalid") { await db.from("tv_remote_events").insert({ kind: failKind }); return { ok: false as const, error: "That code isn't valid. Check BM TV Enabler and type the code it shows now." }; }
     if (state === "device_mismatch") return { ok: false as const, error: "BM TV Enabler was set up for the other TV type. Press Change device, or pick the other TV type in the app." };
-    const { data: claimed } = await db.from("enabler_confirm_codes").update({ used_at: new Date().toISOString() }).eq("code_hash", hash).is("used_at", null).select("code_hash");
-    if (!claimed?.length) return { ok: false as const, error: "That code has already been used. Get a new one in BM TV Enabler." };
-    await db.from("order_remote_setup").update({ app_checks: c!.checks, app_checked_at: new Date().toISOString(), pending_session_id: (c as { session_id?: string | null }).session_id ?? null, updated_at: new Date().toISOString() }).eq("order_id", orderId);
+    const { data: result, error } = await db.rpc("redeem_order_enabler_code", { _order_id: orderId, _code_hash: hash });
+    if (error) throw new Error("Could not confirm your TV. Try again.");
+    if (result !== "ok") return { ok: false as const, error: result === "scope_mismatch" ? "That code belongs to another ticket or order. Get a new code in BM TV Enabler." : "That code has expired. Press New code in BM TV Enabler." };
     return { ok: true as const };
   });
 

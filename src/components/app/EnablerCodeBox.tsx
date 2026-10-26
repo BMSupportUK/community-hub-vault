@@ -14,6 +14,6 @@ export function EnablerCodeBox({ disabled, onSubmit }: { disabled?: boolean; onS
       <Input aria-label="Code from BM TV Enabler" autoCapitalize="characters" value={formatConfirmCode(code)} onChange={(e) => setCode(normalizeConfirmCode(e.target.value))} placeholder="K7P-4QX" className="font-mono text-lg uppercase" />
       <Button type="submit" disabled={disabled || busy || code.length !== 6}>Confirm</Button>
     </form>
-    <p className="text-xs text-muted-foreground">Each code works once and lasts 2 hours. Need another? Press New code in the app.</p>
+    <p className="text-xs text-muted-foreground">You can reuse this code on the same ticket or order for 2 hours. After it expires, press New code in BM TV Enabler.</p>
   </div>;
 }

@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Enabler confirmation code reuse
+- [ ] Allow repeat confirmation on the same ticket/order until two-hour expiry, preserving access and TV session checks.
+- [ ] Show expiry and request a new code in phone and Windows Enabler; test and release both downloads.
+
 ## TV Enabler guided setup
 - [x] Finish with a fresh TV check inside Enabler; website linking separate and optional, including already-ready TVs. Wizard, ADB and discovery tests pass; signed 1.13 live download checksum and upgrade certificate verified.
 - [x] Keep eight-digit linking codes available after previous completion and sync measured Enabler snapshots to ticket/order Remote setup. Thirteen web regressions pass; signed-in GJ test ticket shows confirmed Android setup progress; preview build OK.
