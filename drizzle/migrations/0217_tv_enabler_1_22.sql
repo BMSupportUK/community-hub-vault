@@ -1,0 +1,4 @@
+UPDATE public.app_builds SET is_current=false WHERE app_name IN ('TV Enabler','BM TV Enabler for Windows');
+INSERT INTO public.app_builds (app_name, category, file_name, file_path, file_size, is_available, is_current, release_notes, version_name, sort_order, announce_updates) VALUES
+('TV Enabler','bm_store','BM-TV-Enabler-1.22.apk','tv-enabler/BM-TV-Enabler-1.22.apk',116812,true,true,'BM Remote Helper now closes on the TV as soon as its code is picked up.','1.22',0,false),
+('BM TV Enabler for Windows','bm_store','BM-TV-Enabler-Setup-1.12.0.exe','tv-enabler/BM-TV-Enabler-Setup-1.12.0.exe',105850544,true,true,'BM Remote Helper now closes on the TV as soon as its code is picked up.','1.12.0',0,false);

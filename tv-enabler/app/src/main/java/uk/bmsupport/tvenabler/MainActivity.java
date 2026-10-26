@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.21", 14, MUTED, false));
+        col.addView(text("TV setup · 1.22", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);

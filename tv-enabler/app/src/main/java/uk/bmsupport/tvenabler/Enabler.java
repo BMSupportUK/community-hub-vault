@@ -75,7 +75,7 @@ final class Enabler {
                 for (int i = 0; i < 4; i++) {
                     String xml = adb.shell("uiautomator dump /data/local/tmp/bm-ui.xml >/dev/null 2>&1; cat /data/local/tmp/bm-ui.xml; rm -f /data/local/tmp/bm-ui.xml");
                     String c = helperCodeFrom(xml);
-                    if (c != null) return c;
+                    if (c != null) { try { adb.shell("input keyevent KEYCODE_HOME"); } catch (Exception ignored) { } return c; }
                     Thread.sleep(1500);
                 }
             }
