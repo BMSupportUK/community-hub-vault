@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
         if (!loggedIn) { welcomeBox.addView(pinMsg, lp(dp(14))); welcomeBox.addView(pinInput, lp(dp(6))); }
         Button startBtn = button(loggedIn ? "Get started" : "Log in", ACCENT);
         startBtn.setOnClickListener(v -> {
-            if (prefs.getLong("pinExpires", 0) > System.currentTimeMillis()) { welcomeDone = true; render(); return; }
+            if (prefs.getLong("pinExpires", 0) > System.currentTimeMillis()) { startFresh(); return; }
             final String pin = pinInput.getText().toString().trim();
             if (!pin.matches("\\d{6}")) { pinMsg.setText("Type the 6-digit PIN."); return; }
             startBtn.setEnabled(false); pinMsg.setText("Checking your PIN…");
@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> {
                     startBtn.setEnabled(true);
                     if (fe != null) { pinMsg.setText(fe); return; }
-                    welcomeDone = true; render();
+                    startFresh();
                 });
             }).start();
         });
@@ -382,6 +382,16 @@ public class MainActivity extends Activity {
         });
     }
 
+
+    /** After the welcome/PIN, always begin at "What do you need?" unless a setup is mid-way. */
+    private void startFresh() {
+        welcomeDone = true;
+        if (wizard.step == SetupWizard.Step.DEBUGGING || wizard.step == SetupWizard.Step.DONE) {
+            if (wizard.step == SetupWizard.Step.DONE) { wizard.reset(); checks = null; confirmCode.setText(""); appsResults = new java.util.ArrayList<>(); }
+            apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply();
+        }
+        render();
+    }
 
     private void confirmReset() {
         if (busy) return;
