@@ -33,15 +33,16 @@ public class MainActivity extends Activity {
     private Button showAgain;
     private final java.security.SecureRandom random = new java.security.SecureRandom();
     private TextView confirmCode;
-    private Button turnOn, find, amazonBtn, androidBtn, next, reset, back;
+    private Button turnOn, find, amazonBtn, androidBtn, next, reset;
     private TextView status, deviceHelp, heading, description;
     private LinearLayout devicePick;
     private String device;
     private Enabler.Checks checks;
     private boolean busy;
     private String apps;
-    private volatile java.util.List<String> appsFailed = new java.util.ArrayList<>();
+    private volatile java.util.List<Enabler.AppResult> appsResults = new java.util.ArrayList<>();
     private Button appsNew, appsHave, appsBack;
+    private LinearLayout appsList;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -92,15 +93,15 @@ public class MainActivity extends Activity {
         confirmCode = text("", 40, OK, true);
         confirmCode.setGravity(Gravity.CENTER); confirmCode.setTextIsSelectable(true);
         col.addView(confirmCode, lp(dp(12)));
+        appsList = new LinearLayout(this);
+        appsList.setOrientation(LinearLayout.VERTICAL);
+        col.addView(appsList, lp(dp(8)));
         find = button("Find my Fire TV", Color.parseColor("#2A3050"));
         find.setOnClickListener(v -> scan()); col.addView(find, lp(dp(8)));
         status = text("", 16, WARN, false); col.addView(status, lp(dp(12)));
         turnOn = button("", ACCENT); turnOn.setOnClickListener(v -> start()); col.addView(turnOn, lp(dp(12)));
         next = button("Done — next step", ACCENT);
         next.setOnClickListener(v -> { say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
-        back = button("Back to debugging instructions", Color.parseColor("#2A3050"));
-        back.setOnClickListener(v -> { if (!busy) { wizard.reset(); checks = null; tvCodeInput.setText(""); confirmCode.setText(""); say("", MUTED); render(); } });
-        col.addView(back, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
         ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(col); setContentView(sv);
