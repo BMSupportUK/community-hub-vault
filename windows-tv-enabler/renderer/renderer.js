@@ -91,7 +91,7 @@ function render() {
   heading.textContent = titles[s];
   if (s === Step.DONE && install) {
     heading.textContent = 'Your apps are installed';
-    description.textContent = 'Everything is on your TV. You can close this app. To install again, press Reset setup.';
+    description.textContent = 'Each app is listed below with what happened. You can close this app. To install again, press Reset setup.';
   } else if (s === Step.DONE) {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
     description.textContent = confirmCode
