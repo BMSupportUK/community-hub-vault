@@ -97,7 +97,7 @@ public class MainActivity extends Activity {
                     java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-login").openConnection();
                     h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
                     h.setRequestProperty("content-type", "application/json");
-                    h.getOutputStream().write(("{\"pin\":\"" + pin + "\",\"app\":\"phone-1.31\"}").getBytes("UTF-8"));
+                    h.getOutputStream().write(("{\"pin\":\"" + pin + "\",\"app\":\"phone-1.32\"}").getBytes("UTF-8"));
                     int code = h.getResponseCode();
                     java.io.InputStream in = code < 400 ? h.getInputStream() : h.getErrorStream();
                     String body = in == null ? "{}" : new String(readAll(in), "UTF-8");
