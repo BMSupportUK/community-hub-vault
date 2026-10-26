@@ -189,10 +189,17 @@ final class Enabler {
         return c;
     }
 
+    /** One app's outcome during Install our apps: INSTALLED, ALREADY (already on the TV) or FAILED. */
+    static final class AppResult {
+        static final int INSTALLED = 0, ALREADY = 1, FAILED = 2;
+        final String name; final int status;
+        AppResult(String name, int status) { this.name = name; this.status = status; }
+    }
+
     /** New-customer setups: installs every app an admin ticked "Install on TV during setup".
-     * A newer copy already on the TV (downgrade refused) counts as installed. Never fatal; returns names that failed. */
-    static java.util.List<String> installOurApps(Context ctx, String host, Progress p) throws Exception {
-        java.util.List<String> failed = new java.util.ArrayList<>();
+     * A newer copy already on the TV (downgrade refused) counts as already there. Never fatal; returns one AppResult per app. */
+    static java.util.List<AppResult> installOurApps(Context ctx, String host, Progress p) throws Exception {
+        java.util.List<AppResult> results = new java.util.ArrayList<>();
         org.json.JSONArray apps;
         try {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/tv-install-list").openConnection();
@@ -221,12 +228,14 @@ final class Enabler {
                     } finally { h.disconnect(); }
                     adb.push(out, "/data/local/tmp/bm-app.apk");
                     String res = adb.shell("pm install -r /data/local/tmp/bm-app.apk");
-                    if (!res.contains("Success") && !res.contains("VERSION_DOWNGRADE")) failed.add(name);
-                } catch (Exception e) { failed.add(name); }
+                    if (res.contains("Success")) results.add(new AppResult(name, AppResult.INSTALLED));
+                    else if (res.contains("VERSION_DOWNGRADE")) results.add(new AppResult(name, AppResult.ALREADY));
+                    else results.add(new AppResult(name, AppResult.FAILED));
+                } catch (Exception e) { results.add(new AppResult(name, AppResult.FAILED)); }
                 finally { out.delete(); try { adb.shell("rm -f /data/local/tmp/bm-app.apk"); } catch (Exception ignored) {} }
             }
         }
-        return failed;
+        return results;
     }
 
     /** Downloads the latest BM Remote Helper APK from bmsupport.uk so the customer never installs it by hand. */

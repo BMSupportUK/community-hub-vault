@@ -25,6 +25,11 @@ test('installs every ticked app, skips unsafe paths, and keeps going after a fai
   ]), '/tmp/bm-apps-' + Date.now());
   expect(result.installed).toEqual(['Player', 'Newer on TV']);
   expect(result.failed).toEqual(['Broken']);
+  expect(result.results).toEqual([
+    { name: 'Player', status: 'installed' },
+    { name: 'Newer on TV', status: 'already' },
+    { name: 'Broken', status: 'failed' },
+  ]);
 });
 
 test('nothing ticked stops with a message and never touches the TV', async () => {

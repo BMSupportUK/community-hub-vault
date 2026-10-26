@@ -33,15 +33,16 @@ public class MainActivity extends Activity {
     private Button showAgain;
     private final java.security.SecureRandom random = new java.security.SecureRandom();
     private TextView confirmCode;
-    private Button turnOn, find, amazonBtn, androidBtn, next, reset, back;
+    private Button turnOn, find, amazonBtn, androidBtn, next, reset;
     private TextView status, deviceHelp, heading, description;
     private LinearLayout devicePick;
     private String device;
     private Enabler.Checks checks;
     private boolean busy;
     private String apps;
-    private volatile java.util.List<String> appsFailed = new java.util.ArrayList<>();
+    private volatile java.util.List<Enabler.AppResult> appsResults = new java.util.ArrayList<>();
     private Button appsNew, appsHave, appsBack;
+    private LinearLayout appsList;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -51,7 +52,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.27", 14, MUTED, false));
+        col.addView(text("TV setup · 1.28", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -92,15 +93,15 @@ public class MainActivity extends Activity {
         confirmCode = text("", 40, OK, true);
         confirmCode.setGravity(Gravity.CENTER); confirmCode.setTextIsSelectable(true);
         col.addView(confirmCode, lp(dp(12)));
+        appsList = new LinearLayout(this);
+        appsList.setOrientation(LinearLayout.VERTICAL);
+        col.addView(appsList, lp(dp(8)));
         find = button("Find my Fire TV", Color.parseColor("#2A3050"));
         find.setOnClickListener(v -> scan()); col.addView(find, lp(dp(8)));
         status = text("", 16, WARN, false); col.addView(status, lp(dp(12)));
         turnOn = button("", ACCENT); turnOn.setOnClickListener(v -> start()); col.addView(turnOn, lp(dp(12)));
         next = button("Done — next step", ACCENT);
         next.setOnClickListener(v -> { say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
-        back = button("Back to debugging instructions", Color.parseColor("#2A3050"));
-        back.setOnClickListener(v -> { if (!busy) { wizard.reset(); checks = null; tvCodeInput.setText(""); confirmCode.setText(""); say("", MUTED); render(); } });
-        col.addView(back, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
         ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(col); setContentView(sv);
@@ -162,7 +163,24 @@ public class MainActivity extends Activity {
         next.setVisibility(View.GONE);
         turnOn.setVisibility((s == SetupWizard.Step.DEBUGGING && (device == null || apps == null)) || (s == SetupWizard.Step.DONE && install) ? View.GONE : View.VISIBLE);
         find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
-        back.setVisibility(s == SetupWizard.Step.CHECK || s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
+        appsList.setVisibility(s == SetupWizard.Step.DONE && install && !appsResults.isEmpty() ? View.VISIBLE : View.GONE);
+        if (appsList.getVisibility() == View.VISIBLE) {
+            appsList.removeAllViews();
+            for (Enabler.AppResult r : appsResults) {
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                TextView name = text(r.name, 16, FG, true);
+                LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+                row.addView(name, np);
+                TextView state = text(r.status == Enabler.AppResult.INSTALLED ? "Installed"
+                        : r.status == Enabler.AppResult.ALREADY ? "Already on your TV"
+                        : "Didn't install — press Reset setup to try again", 14,
+                        r.status == Enabler.AppResult.FAILED ? WARN : OK, false);
+                state.setGravity(Gravity.END);
+                row.addView(state);
+                appsList.addView(row);
+            }
+        }
         amazonBtn.setBackgroundColor("amazon".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
         androidBtn.setBackgroundColor("android".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
         switch (s) {
@@ -194,7 +212,7 @@ public class MainActivity extends Activity {
             case DONE:
                 if (install) {
                     heading.setText("Your apps are installed");
-                    description.setText("Everything is on your TV. You can close this app. To install again, press Reset setup.");
+                    description.setText("Each app is listed below with what happened. You can close this app. To install again, press Reset setup.");
                     break;
                 }
                 heading.setText("TV setup confirmed");
@@ -238,7 +256,7 @@ public class MainActivity extends Activity {
                 final boolean linkedSent = sentTo != null;
                 final String issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 final boolean installOnly = "new".equals(apps);
-                if (run == SetupWizard.Step.SETUP && installOnly) appsFailed = Enabler.installOurApps(this, host, progress);
+                if (run == SetupWizard.Step.SETUP && installOnly) appsResults = Enabler.installOurApps(this, host, progress);
                 else if (run == SetupWizard.Step.SETUP) {
                     checks = Enabler.checkExisting(this, host, progress);
                     if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
@@ -252,9 +270,10 @@ public class MainActivity extends Activity {
                     setBusy(false);
                     if (run == SetupWizard.Step.SETUP && installOnly) {
                         wizard.setupFinished(true);
-                        if (appsFailed.isEmpty()) say("✓ Our apps are installed on your TV.", OK);
-                        else say("Done. These apps didn't install: " + String.join(", ", appsFailed) + ". Press Reset setup to try again.", WARN);
-                        appsFailed = new java.util.ArrayList<>();
+                        long failedCount = 0;
+                        for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
+                        if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
+                        else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Reset setup to try again.", WARN);
                     } else if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.setupFinished(ready);
@@ -299,7 +318,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Reset setup?")
                 .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
-                    wizard.reset(); checks = null; device = null; apps = null;
+                    wizard.reset(); checks = null; device = null; apps = null; appsResults = new java.util.ArrayList<>();
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps").apply();
                     address.setText(""); confirmCode.setText(""); say("", MUTED); render();
                 }).show();
@@ -365,7 +384,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, showAgain, appsNew, appsHave, appsBack}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, showAgain, appsNew, appsHave, appsBack}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
