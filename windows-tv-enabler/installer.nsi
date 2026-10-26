@@ -23,7 +23,7 @@ Section "BM TV Enabler"
   CreateShortcut "$SMPROGRAMS\BM TV Enabler\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   CreateShortcut "$DESKTOP\BM TV Enabler.lnk" "$INSTDIR\BM TV Enabler.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMTVEnabler" "DisplayName" "BM TV Enabler"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMTVEnabler" "DisplayVersion" "1.11.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMTVEnabler" "DisplayVersion" "1.12.0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMTVEnabler" "Publisher" "BM Support"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMTVEnabler" "UninstallString" '"$INSTDIR\Uninstall.exe"'
 SectionEnd
