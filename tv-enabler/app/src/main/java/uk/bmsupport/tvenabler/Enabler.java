@@ -189,6 +189,47 @@ final class Enabler {
         return c;
     }
 
+    /** New-customer setups: installs every app an admin ticked "Install on TV during setup".
+     * A newer copy already on the TV (downgrade refused) counts as installed. Never fatal; returns names that failed. */
+    static java.util.List<String> installOurApps(Context ctx, String host, Progress p) throws Exception {
+        java.util.List<String> failed = new java.util.ArrayList<>();
+        org.json.JSONArray apps;
+        try {
+            java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/tv-install-list").openConnection();
+            h.setConnectTimeout(15000); h.setReadTimeout(30000);
+            try (java.io.InputStream in = h.getInputStream()) { apps = new org.json.JSONObject(new String(readAll(in), java.nio.charset.StandardCharsets.UTF_8)).optJSONArray("apps"); }
+            finally { h.disconnect(); }
+        } catch (Exception e) { return failed; }
+        if (apps == null || apps.length() == 0) return failed;
+        KeyPair kp = keys(ctx);
+        try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
+            for (int i = 0; i < apps.length(); i++) {
+                org.json.JSONObject a = apps.optJSONObject(i);
+                if (a == null) continue;
+                String path = a.optString("path", "");
+                String name = a.optString("name", "app");
+                if (name.length() > 80) name = name.substring(0, 80);
+                if (!path.startsWith("/api/public/tv-install-apk/")) continue;
+                p.step(0, "Installing " + name + " (" + (i + 1) + " of " + apps.length() + ")…");
+                File out = new File(ctx.getCacheDir(), "bm-app.apk");
+                try {
+                    java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk" + path).openConnection();
+                    h.setConnectTimeout(15000); h.setReadTimeout(120000);
+                    try (java.io.InputStream in = h.getInputStream(); FileOutputStream o = new FileOutputStream(out)) {
+                        byte[] buf = new byte[65536]; int r;
+                        while ((r = in.read(buf)) > 0) o.write(buf, 0, r);
+                    } finally { h.disconnect(); }
+                    adb.push(out, "/data/local/tmp/bm-app.apk");
+                    String res = adb.shell("pm install -r /data/local/tmp/bm-app.apk");
+                    if (!res.contains("Success") && !res.contains("VERSION_DOWNGRADE")) failed.add(name);
+                } catch (Exception e) { failed.add(name); }
+                finally { out.delete(); try { adb.shell("rm -f /data/local/tmp/bm-app.apk"); } catch (Exception ignored) {} }
+            }
+            try { openHelper(adb); } catch (Exception ignored) {}
+        }
+        return failed;
+    }
+
     /** Downloads the latest BM Remote Helper APK from bmsupport.uk so the customer never installs it by hand. */
     private static File downloadHelper(Context ctx) throws java.io.IOException {
         File out = new File(ctx.getCacheDir(), "bm-helper.apk");
