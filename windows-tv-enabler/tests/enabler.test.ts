@@ -183,3 +183,20 @@ test('Windows app gets a confirmation code only for a fully confirmed TV', async
   await expect(requestConfirmCode({ ...all, accessibility: false }, 'android', post)).rejects.toThrow(/Check the TV/);
   await expect(requestConfirmCode(all, undefined, post)).rejects.toThrow(/Choose which TV/);
 });
+
+test('reads the six-digit Helper code only from the BM Remote Helper window', () => {
+  const { helperCodeFrom } = require('../core.cjs');
+  expect(helperCodeFrom('<node text="482 913" package="uk.bmsupport.remote" />')).toBe('482913');
+  expect(helperCodeFrom('<node text="482913" package="com.amazon.tv.launcher" />')).toBe(null);
+  expect(helperCodeFrom('<node text="12345" package="uk.bmsupport.remote" />')).toBe(null);
+});
+test('sends the Helper code with the confirmation request only when it is six digits', async () => {
+  const { requestConfirmCode } = require('../core.cjs');
+  const sent: string[] = [];
+  const post = async (_u: string, init: { body: string }) => { sent.push(init.body); return { ok: true, status: 200, json: async () => ({ code: 'K7P4QX' }) }; };
+  const all = { adb: true, helper: true, control: true, accessibility: true };
+  await requestConfirmCode(all, 'amazon', post, '123456');
+  await requestConfirmCode(all, 'amazon', post, null);
+  expect(JSON.parse(sent[0]).helperCode).toBe('123456');
+  expect(JSON.parse(sent[1]).helperCode).toBeUndefined();
+});
