@@ -206,10 +206,10 @@ async function enable(host, adb, progress, delay = ms => new Promise(r => setTim
   return { success: true, checks };
 }
 
-async function report(code, checks, device, post = globalThis.fetch) {
-  if (!/^\d{8}$/.test(code)) throw new Error('Type the 8-digit setup code shown on your support ticket\'s Remote setup tab.');
+async function report(code, checks, device, post = globalThis.fetch, helperCode = null) {
+  if (!/^\d{8}$/.test(code)) throw new Error('Type the 8-digit link code shown on your ticket or order\'s Remote setup tab.');
   if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV you are setting up first: Amazon Fire TV or Android / Google TV.');
-  const res = await post('https://bmsupport.uk/api/public/remote-setup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, app: 'windows-tv-enabler-1.3', device, checks }) });
+  const res = await post('https://bmsupport.uk/api/public/remote-setup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, app: 'windows-tv-enabler-1.7', device, checks, ...(/^\d{6}$/.test(helperCode || '') ? { helperCode } : {}) }) });
   if (res.status === 404) throw new Error('That setup code isn\'t valid. Check the code on your ticket or order\'s Remote setup tab and try again.');
   if (res.status === 409) throw new Error('Your ticket or order is set up for the other TV type. Press Change device on its Remote setup tab, or pick the other TV type in this app.');
   if (res.status === 429) throw new Error('Too many tries. Wait 15 minutes, then try again.');
