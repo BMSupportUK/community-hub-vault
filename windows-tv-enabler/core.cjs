@@ -212,9 +212,8 @@ async function showTvCode(host, code, adb, progress, delay) {
   if (!/^\d{4}$/.test(code)) throw new Error('bad code');
   const serial = await connect(host, adb, progress, delay);
   try {
-    await adb(['-s', serial, 'shell', `cmd notification post -S bigtext -t 'BM TV Enabler' bm_tv_code 'Your BM TV Enabler code is ${code}'`]);
-    // Android / Google TV hide shell notifications: briefly name the TV after the code and open its About page.
-    await adb(['-s', serial, 'shell', SHOW_CODE.replace('CODE', code)]).catch(() => {});
+    // Pressing Allow on the chosen TV confirms it; just put back any name an older version changed.
+    await adb(['-s', serial, 'shell', RESTORE_NAME]).catch(() => {});
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
 }
 

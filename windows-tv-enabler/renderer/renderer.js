@@ -40,7 +40,7 @@ function pickDevice(value) {
 
 const DESCRIPTIONS = {
   [Step.DEBUGGING]: 'Put this computer and your TV on the same home network (avoid guest Wi-Fi and disconnect any VPN). Switch on the setting for your TV:\n\nAmazon Fire TV\nSettings › My Fire TV › About — press the device name 7 times. Go back to Developer options and switch ADB debugging ON.\n\nAndroid / Google TV\nSettings › System › About — press Android TV OS build 7 times. Go back to Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.',
-  [Step.CHECK]: 'Type the TV\'s address from its network settings, or use Find my TV (Amazon devices only).\n\nWhen the TV asks, tick Always allow and press Allow. A 4-digit code will then appear on the TV screen.',
+  [Step.CHECK]: 'Type the TV\'s address from its network settings, or use Find my TV (Amazon devices only).\n\nWhen the TV asks, tick Always allow and press Allow. Setup then runs by itself.',
   [Step.TV_CODE]: 'Look at your TV — the 4-digit code is now on screen (on Android / Google TV it shows as the TV\'s device name on the About page). Type it below so we know this is your TV. After that, setup runs by itself.',
   [Step.SETUP]: 'We check what\'s already on the TV, install BM Remote Helper and remote control if needed, switch remote control on, then check everything again. Keep both devices awake.',
 };
@@ -90,10 +90,10 @@ async function showCode(host, existing) {
   say('Connecting… keep this app open and watch your TV for an Allow box.');
   try {
     await window.bmTv.showCode(host, code);
-    if (!existing) wizard.connected(code);
-    say('✓ Connected. Look for the 4-digit code on your TV.');
+    say('✓ Connected to your TV. Setting it up now…');
+    setBusy(false); wizard.paired(); render(); run(Step.SETUP, host); return;
   } catch (error) { say(cleanError(error), true); }
-  finally { setBusy(false); render(); }
+  setBusy(false); render();
 }
 
 async function run(stage, host) {

@@ -62,9 +62,8 @@ final class Enabler {
         p.step(1, "Connecting… If the TV asks, tick Always allow and press Allow.");
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
-            adb.shell("cmd notification post -S bigtext -t 'BM TV Enabler' bm_tv_code 'Your BM TV Enabler code is " + code + "'");
-            // Android / Google TV hide shell notifications: briefly name the TV after the code and open its About page.
-            adb.shell(SHOW_CODE.replace("CODE", code));
+            // Pressing Allow on the chosen TV confirms it; just put back any name an older version changed.
+            adb.shell(RESTORE_NAME);
         }
     }
 
