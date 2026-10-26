@@ -33,10 +33,12 @@ startButton.addEventListener('click', async () => {
   welcomeSection.hidden = true;
   wizardSection.hidden = false;
   // Every session after the welcome/PIN starts at "What do you need?" unless a setup is mid-way.
-  if (wizard.step === Step.DEBUGGING || wizard.step === Step.DONE) {
+  const validConfirmation = wizard.step === Step.DONE && confirmCode && Date.now() < confirmExpiresAt;
+  if (!validConfirmation && (wizard.step === Step.DEBUGGING || wizard.step === Step.DONE)) {
     if (wizard.step === Step.DONE) { wizard.reset(); checks = null; confirmCode = ''; appsResults = []; }
     apps = null; localStorage.removeItem('bm-tv-apps'); render();
   }
+  render();
   window.scrollTo(0, 0);
 });
 const savedAddress = localStorage.getItem('bm-tv-address');
@@ -45,6 +47,15 @@ const savedDevice = localStorage.getItem('bm-tv-device');
 if (savedDevice === 'amazon' || savedDevice === 'android') device = savedDevice;
 let apps = localStorage.getItem('bm-tv-apps');
 if (apps !== 'new' && apps !== 'have') apps = null;
+try {
+  const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation') || 'null');
+  if (saved && validHost(saved.host || '') && device && wizard.resumeConfirmation(saved.code, saved.expiresAtMs)) {
+    confirmCode = saved.code; confirmExpiresAt = saved.expiresAtMs;
+    refreshToken = /^[0-9a-f]{64}$/.test(saved.refreshToken || '') ? saved.refreshToken : '';
+    refreshHost = saved.host; address.value = saved.host; apps = 'have';
+    checks = { adb: true, helper: true, control: true, accessibility: true, type: device };
+  }
+} catch { localStorage.removeItem('bm-tv-confirmation'); }
 
 function say(text, isError) {
   progress.textContent = text;
@@ -172,6 +183,7 @@ async function run(stage, host) {
         const issued = await window.bmTv.confirmCode(checks, device, host);
         confirmCode = issued.code; confirmExpiresAt = issued.expiresAtMs;
         refreshToken = issued.refreshToken || ''; refreshHost = host;
+        localStorage.setItem('bm-tv-confirmation', JSON.stringify({ code: confirmCode, expiresAtMs: confirmExpiresAt, refreshToken, host, device }));
         say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
       }
     } else {
@@ -240,6 +252,8 @@ reset.addEventListener('click', () => {
   if (busy) return;
   if (!window.confirm('Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this computer\'s TV authorization are kept.')) return;
   wizard.reset(); checks = null; device = null; apps = null; confirmCode = ''; appsResults = [];
+  confirmExpiresAt = 0; refreshToken = ''; refreshHost = '';
+  localStorage.removeItem('bm-tv-confirmation');
   localStorage.removeItem('bm-tv-address'); localStorage.removeItem('bm-tv-device'); localStorage.removeItem('bm-tv-apps');
   address.value = ''; say(''); render();
 });

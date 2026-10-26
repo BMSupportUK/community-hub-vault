@@ -20,6 +20,11 @@ public final class SetupWizardTest {
         check(SetupWizard.ready(true, true, true, true), "All actual checks make TV ready");
         check(!SetupWizard.ready(true, true, true, false), "Missing permission is not ready");
         check(SetupWizard.validHost("192.168.0.10") && !SetupWizard.validHost("192.168.0.300"), "Host validation");
+        w.reset();
+        long expiry = 1000L + 24L * 60 * 60 * 1000;
+        check(w.resumeConfirmation("K7P4QX", expiry, expiry - 1) && w.step == SetupWizard.Step.DONE, "Reopen restores confirmation until original 24-hour expiry");
+        w.reset();
+        check(!w.resumeConfirmation("K7P4QX", expiry, expiry) && w.step == SetupWizard.Step.DEBUGGING, "Expired confirmation cannot resume setup");
         System.out.println("SetupWizardTest passed");
     }
 }

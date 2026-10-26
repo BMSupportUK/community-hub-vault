@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         contentBox.setBackgroundColor(BG);
         contentBox.addView(text("BM TV Enabler", 26, FG, true));
-        contentBox.addView(text("TV setup · 1.38", 14, MUTED, false));
+        contentBox.addView(text("TV setup · 1.39", 14, MUTED, false));
         // Welcome on open: logo, message and Get started before the wizard.
         welcomeBox = new LinearLayout(this);
         welcomeBox.setOrientation(LinearLayout.VERTICAL);
@@ -201,6 +201,17 @@ public class MainActivity extends Activity {
         if (!"amazon".equals(device) && !"android".equals(device)) device = null;
         apps = prefs.getString("apps", null);
         if (!"new".equals(apps) && !"have".equals(apps)) apps = null;
+        String savedCode = prefs.getString("confirmation", null);
+        long savedExpiry = prefs.getLong("confirmationExpiry", 0);
+        String savedHost = prefs.getString("confirmationHost", null);
+        if (savedHost != null && SetupWizard.validHost(savedHost) && device != null
+                && wizard.resumeConfirmation(savedCode, savedExpiry, System.currentTimeMillis())) {
+            confirmExpiresAt = savedExpiry;
+            refreshHost = savedHost; refreshToken = prefs.getString("confirmationToken", "");
+            address.setText(savedHost); apps = "have";
+            checks = new Enabler.Checks(); checks.adb = checks.helper = checks.control = checks.accessibility = true; checks.type = device;
+            confirmCode.setText(savedCode.substring(0, 3) + "-" + savedCode.substring(3));
+        }
         readLink(getIntent());
         render();
         ui.postDelayed(expiryTick, 1000);
@@ -384,7 +395,13 @@ public class MainActivity extends Activity {
                         say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
-                        else if (issued != null) { refreshToken = issued.refreshToken; refreshHost = host; confirmExpiresAt = issued.expiresAt; confirmCode.setText(issued.code.substring(0, 3) + "-" + issued.code.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
+                        else if (issued != null) {
+                            refreshToken = issued.refreshToken; refreshHost = host; confirmExpiresAt = issued.expiresAt;
+                            getSharedPreferences("tv", MODE_PRIVATE).edit().putString("confirmation", issued.code)
+                                .putLong("confirmationExpiry", issued.expiresAt).putString("confirmationToken", issued.refreshToken)
+                                .putString("confirmationHost", host).putString("device", selectedDevice).commit();
+                            confirmCode.setText(issued.code.substring(0, 3) + "-" + issued.code.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK);
+                        }
                     }
                     render();
                 });
@@ -416,7 +433,8 @@ public class MainActivity extends Activity {
     /** After the welcome/PIN, always begin at "What do you need?" unless a setup is mid-way. */
     private void startFresh() {
         welcomeDone = true;
-        if (wizard.step == SetupWizard.Step.DEBUGGING || wizard.step == SetupWizard.Step.DONE) {
+        boolean validConfirmation = wizard.step == SetupWizard.Step.DONE && confirmCode.length() > 0 && System.currentTimeMillis() < confirmExpiresAt;
+        if (!validConfirmation && (wizard.step == SetupWizard.Step.DEBUGGING || wizard.step == SetupWizard.Step.DONE)) {
             if (wizard.step == SetupWizard.Step.DONE) { wizard.reset(); checks = null; confirmCode.setText(""); refreshToken = null; refreshHost = null; appsResults = new java.util.ArrayList<>(); }
             apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply();
         }
@@ -429,7 +447,8 @@ public class MainActivity extends Activity {
                 .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
                     wizard.reset(); checks = null; device = null; apps = null; appsResults = new java.util.ArrayList<>();
-                    getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps").apply();
+                    getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps")
+                        .remove("confirmation").remove("confirmationExpiry").remove("confirmationToken").remove("confirmationHost").commit();
                     address.setText(""); confirmCode.setText(""); refreshToken = null; refreshHost = null; say("", MUTED); render();
                 }).show();
     }
