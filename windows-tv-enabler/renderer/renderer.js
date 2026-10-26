@@ -15,6 +15,7 @@ const heading = el('heading'), description = el('description'), devicePick = el(
   pairButton = el('pair'), pairCode = el('pair-code'), pairPort = el('pair-port');
 
 let device = null, checks = null, busy = false, confirmCode = '', appsResults = [];
+let confirmExpiresAt = 0;
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
 const startButton = document.getElementById('welcome-start'), pinInput = el('pin-input'), pinMsg = el('pin-msg');
 const loggedIn = () => Number(localStorage.getItem('bm-pin-expires') || 0) > Date.now();
@@ -86,7 +87,8 @@ function render() {
   tvCodeBlock.hidden = s !== Step.TV_CODE;
   codeBlock.hidden = !(s === Step.DONE && confirmCode) || install;
   linkBlock.hidden = !(s === Step.DONE && wizard.ready) || install;
-  codeBlock.textContent = confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
+  const expired = Boolean(confirmCode) && Date.now() >= confirmExpiresAt;
+  codeBlock.textContent = expired ? 'Expired' : confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
   next.hidden = true;
   action.hidden = (s === Step.DEBUGGING && (device == null || apps == null)) || (s === Step.DONE && install);
   pairBlock.hidden = device !== 'android';
@@ -116,8 +118,10 @@ function render() {
     description.textContent = 'Each app is listed below with what happened. You can close this app. To install again, press Reset setup.';
   } else if (s === Step.DONE) {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
-    description.textContent = confirmCode
-      ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead).'
+    const minutes = Math.max(0, Math.ceil((confirmExpiresAt - Date.now()) / 60000));
+    heading.textContent = expired ? 'Confirmation code expired' : 'TV setup confirmed';
+    description.textContent = expired ? 'Expired — press New code to get a fresh confirmation code.' : confirmCode
+      ? `Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. You can reuse it on the same ticket or order for 24 hours.\n\nExpires in ${Math.floor(minutes / 60)}h ${minutes % 60}m.\n\nThen press Connect on that tab to request screen sharing.`
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
     action.firstChild.textContent = confirmCode ? 'New code ' : 'Get my confirmation code ';
   } else if (askApps) {
@@ -164,7 +168,8 @@ async function run(stage, host) {
         await window.bmTv.linkReport(link, checks, device, host);
         say('✓ Sent to your ticket or order. On the website, press Connect.');
       } else {
-        confirmCode = await window.bmTv.confirmCode(checks, device, host);
+        const issued = await window.bmTv.confirmCode(checks, device, host);
+        confirmCode = issued.code; confirmExpiresAt = issued.expiresAtMs;
         say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
       }
     } else {
@@ -271,3 +276,4 @@ async function runScan(all) {
 scan.addEventListener('click', () => runScan(false));
 window.bmTv.progress(text => say(text));
 render();
+setInterval(() => { if (wizard.step === Step.DONE && confirmCode && !busy) render(); }, 1000);

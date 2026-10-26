@@ -287,8 +287,12 @@ final class Enabler {
     }
     static final class LinkExpired extends IllegalStateException { LinkExpired() { super("The website link has expired. Press New link code on your Remote setup tab and scan it again."); } }
 
-    static String requestConfirmCode(Checks c, String device) { return requestConfirmCode(c, device, null); }
-    static String requestConfirmCode(Checks c, String device, String helperCode) {
+    static final class Confirmation {
+        final String code; final long expiresAt;
+        Confirmation(String code, long expiresAt) { this.code = code; this.expiresAt = expiresAt; }
+    }
+    static Confirmation requestConfirmCode(Checks c, String device) { return requestConfirmCode(c, device, null); }
+    static Confirmation requestConfirmCode(Checks c, String device, String helperCode) {
         int code;
         String resp;
         try {
@@ -306,7 +310,9 @@ final class Enabler {
         if (code == 429) throw new IllegalStateException("Too many tries. Wait 15 minutes.");
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"code\"\\s*:\\s*\"([A-Z0-9]{6})\"").matcher(resp);
         if (code != 200 || !m.find()) throw new IllegalStateException("Couldn't get a code from BM Support (error " + code + "). Try again.");
-        return m.group(1);
+        java.util.regex.Matcher expiry = java.util.regex.Pattern.compile("\"expiresAtMs\"\\s*:\\s*(\\d+)").matcher(resp);
+        if (!expiry.find()) throw new IllegalStateException("BM Support needs updating before a new confirmation code can be issued.");
+        return new Confirmation(m.group(1), Long.parseLong(expiry.group(1)));
     }
 
     private static byte[] readAll(java.io.InputStream in) throws java.io.IOException {

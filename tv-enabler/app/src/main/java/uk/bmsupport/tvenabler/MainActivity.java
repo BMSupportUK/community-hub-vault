@@ -34,6 +34,10 @@ public class MainActivity extends Activity {
     private Button showAgain;
     private final java.security.SecureRandom random = new java.security.SecureRandom();
     private TextView confirmCode;
+    private long confirmExpiresAt;
+    private final Runnable expiryTick = new Runnable() {
+        public void run() { if (isFinishing() || isDestroyed()) return; if (wizard.step == SetupWizard.Step.DONE && confirmCode.length() > 0 && !busy) render(); ui.postDelayed(this, 1000); }
+    };
     private Button turnOn, find, amazonBtn, androidBtn, next, reset;
     private TextView status, deviceHelp, heading, description;
     private LinearLayout devicePick;
@@ -56,7 +60,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         contentBox.setBackgroundColor(BG);
         contentBox.addView(text("BM TV Enabler", 26, FG, true));
-        contentBox.addView(text("TV setup · 1.30", 14, MUTED, false));
+        contentBox.addView(text("TV setup · 1.36", 14, MUTED, false));
         // Welcome on open: logo, message and Get started before the wizard.
         welcomeBox = new LinearLayout(this);
         welcomeBox.setOrientation(LinearLayout.VERTICAL);
@@ -180,6 +184,7 @@ public class MainActivity extends Activity {
         if (!"new".equals(apps) && !"have".equals(apps)) apps = null;
         readLink(getIntent());
         render();
+        ui.postDelayed(expiryTick, 1000);
     }
 
     @Override protected void onNewIntent(android.content.Intent intent) { super.onNewIntent(intent); setIntent(intent); readLink(intent); render(); }
@@ -287,8 +292,13 @@ public class MainActivity extends Activity {
                 }
                 heading.setText("TV setup confirmed");
                 deviceHelp.setText("Which TV is this? Choose the same type as your ticket or order.");
-                description.setText(confirmCode.length() > 0
-                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead)."
+                boolean expired = confirmCode.length() > 0 && System.currentTimeMillis() >= confirmExpiresAt;
+                heading.setText(expired ? "Confirmation code expired" : "TV setup confirmed");
+                confirmCode.setVisibility(expired ? View.GONE : confirmCode.getVisibility());
+                long minutes = Math.max(0, (confirmExpiresAt - System.currentTimeMillis() + 59999) / 60000);
+                description.setText(expired ? "Expired — press New code to get a fresh confirmation code."
+                        : confirmCode.length() > 0
+                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. You can reuse it on the same ticket or order for 24 hours.\n\nExpires in " + (minutes / 60) + "h " + (minutes % 60) + "m.\n\nThen press Connect on that tab to request screen sharing."
                         : "Your TV is ready. Get your confirmation code, then type it on your ticket or order's Remote setup tab.");
                 if (linkCode() != null) { description.setText("Your TV is ready and this app is linked to your ticket or order. Press the button to send everything to the website, then press Connect there."); turnOn.setText("Send to the website"); }
                 else turnOn.setText(confirmCode.length() > 0 ? "New code" : "Get my confirmation code");
@@ -324,7 +334,7 @@ public class MainActivity extends Activity {
                     catch (Enabler.LinkExpired e) { getSharedPreferences("tv", MODE_PRIVATE).edit().remove("link").apply(); throw e; }
                 }
                 final boolean linkedSent = sentTo != null;
-                final String issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
+                final Enabler.Confirmation issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 final boolean installOnly = "new".equals(apps);
                 if (run == SetupWizard.Step.SETUP && installOnly) appsResults = Enabler.installOurApps(this, host, progress);
                 else if (run == SetupWizard.Step.SETUP) {
@@ -354,7 +364,7 @@ public class MainActivity extends Activity {
                         say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
-                        else { confirmCode.setText(issued.substring(0, 3) + "-" + issued.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
+                        else if (issued != null) { confirmExpiresAt = issued.expiresAt; confirmCode.setText(issued.code.substring(0, 3) + "-" + issued.code.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
                     }
                     render();
                 });
@@ -526,6 +536,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         p.topMargin = top; return p;
     }
+    @Override protected void onDestroy() { ui.removeCallbacks(expiryTick); super.onDestroy(); }
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
     private static byte[] readAll(java.io.InputStream in) throws java.io.IOException {
         java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream(); byte[] b = new byte[4096]; int n;

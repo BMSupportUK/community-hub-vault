@@ -53,7 +53,7 @@ else {
     ipcMain.handle('bm:install-apps', task(address => installOurApps(address, adb, say, undefined, undefined, tempDir())));
     ipcMain.handle('bm:activate', task(address => activate(address, adb, say)));
     ipcMain.handle('bm:open-code-app', task(address => openCodeApp(address, adb, say)));
-    ipcMain.handle('bm:confirm-code', task(async (checks, device, address) => requestConfirmCode(checks, device, undefined, address ? await readHelperCode(address, adb, say) : null)));
+    ipcMain.handle('bm:confirm-code', task(async (checks, device, address) => requestConfirmCode(checks, device, undefined, address ? await readHelperCode(address, adb, say) : null, true)));
     window.loadFile(page);
   });
   app.on('window-all-closed', () => {

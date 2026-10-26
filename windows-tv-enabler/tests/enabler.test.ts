@@ -191,6 +191,14 @@ test('reads the six-digit Helper code only from the BM Remote Helper window', ()
   expect(helperCodeFrom('<node text="482913" package="com.amazon.tv.launcher" />')).toBe(null);
   expect(helperCodeFrom('<node text="12345" package="uk.bmsupport.remote" />')).toBe(null);
 });
+test('confirmation response preserves the exact 24-hour server expiry', async () => {
+  const { requestConfirmCode } = require('../core.cjs');
+  const issuedAt = Date.parse('2026-10-26T23:00:00Z');
+  const expiresAtMs = issuedAt + 24 * 3600_000;
+  const all = { adb: true, helper: true, control: true, accessibility: true };
+  const post = async () => Response.json({ code: 'K7P4QX', expiresAtMs });
+  expect(await requestConfirmCode(all, 'amazon', post, null, true)).toEqual({ code: 'K7P4QX', expiresAtMs: Date.parse('2026-10-27T23:00:00Z') });
+});
 test('sends the Helper code with the confirmation request only when it is six digits', async () => {
   const { requestConfirmCode } = require('../core.cjs');
   const sent: string[] = [];
