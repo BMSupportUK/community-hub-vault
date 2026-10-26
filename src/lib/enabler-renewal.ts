@@ -1,3 +1,24 @@
+// Matches the existing queued-request lifetime; a stalled request can be retried.
+export const RENEWAL_WAIT_MS = 3 * 60_000;
+export class RenewalRequestGate {
+  expiresAt = 0;
+  previousSession: string | null = null;
+  waiting(now = Date.now()) { return this.expiresAt > now; }
+  begin(session: string | null, now = Date.now()) {
+    if (this.waiting(now)) return false;
+    this.previousSession = session;
+    this.expiresAt = now + RENEWAL_WAIT_MS;
+    return true;
+  }
+  finish(state: string) {
+    if (state !== "queued" && state !== "in_progress") this.reset();
+  }
+  sync(session: string | null, now = Date.now()) {
+    if (!this.waiting(now) || (session && session !== this.previousSession)) this.reset();
+  }
+  reset() { this.expiresAt = 0; this.previousSession = null; }
+}
+
 export function renewalMessage(state: string): string {
   switch (state) {
     case "queued": return "Keep BM TV Enabler open on the same Wi-Fi as your TV. It will bring the new connection here automatically.";

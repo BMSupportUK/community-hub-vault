@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { renewalMessage } from "@/lib/enabler-renewal";
+import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
@@ -38,6 +39,7 @@ export function useTicketRemoteSetup(ticketId: string) {
 export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: { ticketId: string; customer: boolean; closed: boolean; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [renewal, setRenewal] = useState("");
+  const renewalGate = useEnablerRenewalGate(`ticket:${ticketId}`, row?.pending_session_id ?? null);
   const save = async (device: SetupDevice) => {
     setBusy(true);
     const { error } = await supabase.rpc("save_ticket_remote_setup" as never, { _ticket_id: ticketId, _device: device, _steps: [] } as never);
@@ -50,6 +52,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     const { error } = await supabase.rpc("reset_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
     if (error) toast.error(error.message); else toast.success("Setup restarted — choose your device to begin again");
     setRenewal("");
+    renewalGate.reset();
     await reload(); setBusy(false);
   };
   const redeem = async (c: string) => {
@@ -70,11 +73,18 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     await reload(); setBusy(false);
   };
   const renew = async () => {
+    if (busy || !renewalGate.begin()) return;
     setBusy(true);
-    const { data, error } = await supabase.rpc("request_ticket_enabler_connection", { _ticket_id: ticketId });
-    if (error) toast.error(error.message);
-    else { setRenewal(renewalMessage(String(data))); if (data !== "queued") toast.error(renewalMessage(String(data))); }
-    await reload(); setBusy(false);
+    try {
+      const { data, error } = await supabase.rpc("request_ticket_enabler_connection", { _ticket_id: ticketId });
+      renewalGate.finish(error ? "failed" : String(data));
+      if (error) toast.error(error.message);
+      else { setRenewal(renewalMessage(String(data))); if (data !== "queued") toast.error(renewalMessage(String(data))); }
+      await reload();
+    } catch (e) {
+      renewalGate.finish("failed");
+      toast.error(e instanceof Error ? e.message : "Could not request a new connection");
+    } finally { setBusy(false); }
   };
   if (row === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!customer) return <StaffRemoteSetup ticketId={ticketId} row={row} reload={reload} />;
@@ -106,7 +116,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     {!closed && (!fresh || !row.pending_session_id) && (ready || complete) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Get a new TV connection</h3>
       <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Your valid 24-hour confirmation reference stays the same."}</p>
-      <Button size="lg" className="w-full" disabled={busy} onClick={() => void renew()}>Get new connection</Button>
+      <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
     </div>}
     {!closed && !fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
     <RemoteSetupProgress row={row} />
