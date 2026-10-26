@@ -72,13 +72,13 @@ final class Enabler {
         try {
             KeyPair kp = keys(ctx);
             try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
-                // Bring Helper up just long enough to read its code; it goes back to Home once read.
+                // Helper must stay on screen: Android only shows its screen-share Allow box while it is in front.
                 adb.shell("monkey -p " + HELPER + " -c android.intent.category.LAUNCHER 1");
                 Thread.sleep(2500);
                 for (int i = 0; i < 6; i++) {
                     String xml = adb.shell("uiautomator dump /data/local/tmp/bm-ui.xml >/dev/null 2>&1; cat /data/local/tmp/bm-ui.xml; rm -f /data/local/tmp/bm-ui.xml");
                     String c = helperCodeFrom(xml);
-                    if (c != null) { try { adb.shell("input keyevent KEYCODE_HOME"); } catch (Exception ignored) { } return c; }
+                    if (c != null) return c;
                     Thread.sleep(1500);
                 }
             }
