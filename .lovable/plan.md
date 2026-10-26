@@ -11,7 +11,7 @@
 - **Apps installed by BM TV Enabler.** In the admin APK section, each app gets an **Install on TV during setup** tick box. During setup, BM TV Enabler (phone and Windows) installs every ticked app the TV doesn't have yet, and updates any that are older, the same way it already installs BM Remote Helper. No Install box appears and staff don't have to do anything.
 - **Downloader** is uploaded to the APK section and ticked, so it always goes on during setup.
 - The Enabler's progress text names each app as it goes, for example "Installing Downloader (2 of 3)…". If one app fails, setup carries on and the rest still install.
-- If a TV was set up with an older Enabler and still has no Downloader, the pop-up says so and offers to open Downloader's app store page on the TV as a backup.
+- **Nothing relies on the app stores.** Downloader always comes from our own copy in the APK section, so it doesn't matter if Downloader is taken off the Amazon or Google stores. If a TV was set up with an older Enabler and has no Downloader, the pop-up tells staff to ask the customer to run BM TV Enabler again, which installs it from our copy.
 - Each sent link is added as a staff-only note on the ticket or order, saying which app, who sent it and when.
 
 ## Why it works this way
