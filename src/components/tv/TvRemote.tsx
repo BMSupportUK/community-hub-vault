@@ -11,6 +11,7 @@ import { Nameplate } from "@/components/app/Nameplate";
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { normalizePairCode, sessionIdle, screenShareDestination, canForwardRemote, REMOTE_PAD_KEYS, remoteSetupNotice, type RemoteControlReport } from "@/lib/tv-remote";
 import { useScreenLockKeepAlive } from "@/components/app/ScreenLockKeepAlive";
+import connectingArt from "@/assets/screen-share-connecting.jpg";
 
 export type LinkKind = "order" | "ticket";
 export type Live = { id: string; topic: string; device: string; host: boolean; linkKind: LinkKind | null; linkId: string | null; hostId: string | null };
@@ -140,6 +141,7 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
   onEndRef.current = onEnd;
   const [tvState, setTvState] = useState<"waiting" | "allowed" | "declined" | "gone">(live.host ? "waiting" : "allowed");
   const [hasVideo, setHasVideo] = useState(false);
+  const [firstFrame, setFirstFrame] = useState(false);
   const [viewers, setViewers] = useState<Viewer[]>([]);
   const chan = useRef<RealtimeChannel | null>(null);
   const staffChan = useRef<RealtimeChannel | null>(null);
@@ -349,12 +351,13 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
   // shown; restart playback whenever the video becomes visible again.
   useEffect(() => {
     const el = video.current;
+    if (!hasVideo) setFirstFrame(false);
     if (!el || !hasVideo) return;
     const kick = () => { if (el.srcObject && el.offsetParent !== null) void el.play().catch(() => {}); };
     kick();
     const ro = new ResizeObserver(kick);
     ro.observe(el);
-    const t = window.setInterval(() => { if (el.paused || el.videoWidth === 0) kick(); }, 1500);
+    const t = window.setInterval(() => { if (el.videoWidth > 0) setFirstFrame(true); if (el.paused || el.videoWidth === 0) kick(); }, 1500);
     return () => { ro.disconnect(); window.clearInterval(t); };
   }, [hasVideo]);
 
@@ -384,10 +387,21 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <div className="relative aspect-video overflow-hidden rounded-2xl border bg-muted">
-        <video ref={video} autoPlay playsInline muted className={hasVideo ? "h-full w-full object-contain" : "hidden"} />
+        <video ref={video} autoPlay playsInline muted onLoadedData={() => setFirstFrame(true)} onResize={() => setFirstFrame(true)} className={hasVideo ? "h-full w-full object-contain" : "hidden"} />
         {!hasVideo && (
           <div className="absolute inset-0 grid place-items-center p-6 text-center text-muted-foreground">
             {!live.host ? "Connecting to the TV picture…" : tvState === "waiting" ? "Waiting for the customer to press Allow on the TV…" : "The TV screen will appear here once the customer presses Start sharing."}
+          </div>
+        )}
+        {hasVideo && !firstFrame && (
+          <div className="pointer-events-none absolute inset-0">
+            <img src={connectingArt} alt="Support staff connecting to the customer's TV" width={1600} height={912} className="h-full w-full object-cover" />
+            <div className="absolute inset-0 grid place-items-center bg-background/40">
+              <div className="flex items-center gap-3 rounded-full bg-background/85 px-6 py-3 text-lg font-semibold text-foreground shadow-lg">
+                <span className="h-3 w-3 animate-pulse rounded-full bg-primary" />
+                Connecting to the TV screen…
+              </div>
+            </div>
           </div>
         )}
       </div>
