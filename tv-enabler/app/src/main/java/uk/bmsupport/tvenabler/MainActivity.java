@@ -309,10 +309,10 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, openSupport}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, openSupport, showAgain}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
-        address.setEnabled(!b);
+        address.setEnabled(!b); tvCodeInput.setEnabled(!b);
     }
     private void say(String s, int color) { status.setText(s); status.setTextColor(color); }
 
