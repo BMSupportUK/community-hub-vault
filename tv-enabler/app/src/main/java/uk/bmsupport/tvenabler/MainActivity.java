@@ -419,16 +419,20 @@ public class MainActivity extends Activity {
             try {
                 lock.acquire();
                 final boolean wantAndroid = "android".equals(device);
-                List<DiscoveredDevice> found = DeviceDiscovery.scan(base, wantAndroid);
+                // No type filter: list every device on the Wi-Fi with its name, Amazon first.
+                List<DiscoveredDevice> found = DeviceDiscovery.scanAll(base);
                 ui.post(() -> {
                     setBusy(false);
                     if (isFinishing() || isDestroyed()) return;
                     if (found.isEmpty()) {
+                        say("Nothing answered on this Wi-Fi. Keep the TV awake on the same Wi-Fi, or type the TV's address.", WARN);
+                    } else showDevices(found, false);
+                    if (false) {
                         say((wantAndroid ? "No Android TV found." : "No Fire TV found.") + " Keep the TV awake on the same Wi-Fi, try Show all devices, or type the TV's address.", WARN);
                         new AlertDialog.Builder(this).setTitle(wantAndroid ? "No Android TV found" : "No Fire TV found")
                                 .setMessage("Some TVs don't announce themselves. Show everything on this Wi-Fi? Only devices that can be set up can be picked.")
                                 .setNegativeButton("Cancel", null).setPositiveButton("Show all devices", (d, w) -> scanAll()).show();
-                    } else showDevices(found, false);
+                    }
                 });
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -477,7 +481,7 @@ public class MainActivity extends Activity {
         }
         final int[] selected = {-1};
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(all ? "All devices on this Wi-Fi" : "android".equals(device) ? "Choose your Android TV" : "Choose your Fire TV")
+                .setTitle("Choose your TV")
                 .setSingleChoiceItems(labels, -1, (d, index) -> {
                     boolean ok = !all || devices.get(index).debuggingReachable;
                     selected[0] = ok ? index : -1;

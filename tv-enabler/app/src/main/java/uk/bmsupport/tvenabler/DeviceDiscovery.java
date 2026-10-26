@@ -99,8 +99,14 @@ final class DeviceDiscovery {
                 pool.execute(() -> {
                     int probe = probe(host);
                     String location = advertised.locations.get(host);
-                    Description description = location != null ? readDescription(host, location)
-                            : probe > 0 ? readDescription(host, String.format(FALLBACK_PATHS[0], host)) : null;
+                    Description description = location != null ? readDescription(host, location) : null;
+                    if (description == null || description.name == null) {
+                        for (String path : FALLBACK_PATHS) {
+                            Description d = readDescription(host, String.format(path, host));
+                            if (d != null && (description == null || d.name != null)) description = d;
+                            if (description != null && description.name != null) break;
+                        }
+                    }
                     if (probe == 0 && description == null && !advertised.fireTvHints.containsKey(host) && !advertised.dialHints.containsKey(host)) return;
                     boolean amazon = advertised.fireTvHints.containsKey(host) || (description != null && (description.fireTv || description.amazon));
                     if (amazon) amazonHosts.put(host, Boolean.TRUE);
