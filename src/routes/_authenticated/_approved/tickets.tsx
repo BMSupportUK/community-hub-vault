@@ -1,3 +1,4 @@
+import { ACCOUNT_HELPER_SLUG, HELPER_CHOICES, accountHelperWelcome, showHelperButtons, skipOutOfHours, type HelperChoice } from "@/lib/account-helper";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { DEMO_LATEST_ORDER, DEMO_MEMBERS, DEMO_STAFF, DEMO_ROLES, demoTickets, DEMO_PROFILE_MAP } from "@/lib/demo-data";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -862,13 +863,11 @@ function NewTicketForm({
     if (e2) return toast.error(e2.message);
 
     const cat = categories.find((c) => c.id === parsed.data.category_id);
-    if (cat?.slug === "account") {
-      const profileUrl = `${window.location.origin}/profile`;
+    if (cat?.slug === ACCOUNT_HELPER_SLUG) {
       await supabase.from("ticket_messages").insert({
         ticket_id: t.id,
         sender_id: user!.id,
-        content:
-          `👋 Welcome to BM Support!\n\nFor account-related questions, your app login details and DNS codes are available on your profile page.\n\n🔗 [Click here to view your Profile & Credentials](${profileUrl})\n\nOr open your avatar menu and go to Profile → Credentials & DNS, then enter your account password and vault PIN to reveal them.\n\nIf you still need help after checking, reply here and a staff member will get back to you.`,
+        content: accountHelperWelcome(window.location.origin),
         is_internal: false,
       });
     }
@@ -902,7 +901,7 @@ function NewTicketForm({
       });
     }
 
-    const oohMsg = await getOutOfHoursMessage();
+    const oohMsg = skipOutOfHours(cat?.slug) ? null : await getOutOfHoursMessage();
     if (oohMsg) {
       await supabase.from("ticket_messages").insert({
         ticket_id: t.id,
@@ -1477,6 +1476,17 @@ function TicketDetail({
       setPayCheckPhase("failed");
       toast.error((e as Error).message || "Failed to refresh payment status");
     } finally { setOrderBusy(false); }
+  };
+
+  const [helperBusy, setHelperBusy] = useState(false);
+  const helperReply = async (choice: HelperChoice) => {
+    setHelperBusy(true);
+    const { data, error } = await supabase.rpc("account_helper_reply", { _ticket_id: ticket.id, _choice: choice });
+    setHelperBusy(false);
+    if (error) { toast.error(error.message); return; }
+    if (data === "closed") toast.success("Glad you're back in — ticket closed");
+    await load();
+    notifyTicketChanged();
   };
 
   const load = async () => {
@@ -2247,6 +2257,16 @@ function TicketDetail({
           );
         })}
 
+        {showHelperButtons({ slug: cat?.slug, status: ticket.status, isOwner: ticket.user_id === currentUserId, messages }) && (
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
+            {HELPER_CHOICES.map((c) => (
+              <button key={c.id} type="button" disabled={helperBusy} onClick={() => void helperReply(c.id)}
+                className="rounded-full border border-white/40 bg-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/25 disabled:opacity-50">
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {othersTyping && Object.keys(othersTyping).length > 0 && ticket.status !== "closed" && (() => {
