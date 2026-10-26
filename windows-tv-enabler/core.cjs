@@ -278,4 +278,4 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch, helpe
   return body.code;
 }
 
-module.exports = { helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };
+module.exports = { splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };
