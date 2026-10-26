@@ -155,7 +155,7 @@ public class MainActivity extends Activity {
                 turnOn.setText("Connect to this TV"); break;
             case TV_CODE:
                 heading.setText("3. Type the code on your TV");
-                description.setText("Look at your TV — a message with a 4-digit code has appeared (on some TVs it's in the notifications). Type it below so we know this is your TV. After that, setup runs by itself.");
+                description.setText("Look at your TV — the 4-digit code is now on screen (on Android / Google TV it shows as the TV's device name on the About page). Type it below so we know this is your TV. After that, setup runs by itself.");
                 turnOn.setText("Confirm code and set up my TV"); break;
             case SETUP:
                 heading.setText("4. Setting up your TV");

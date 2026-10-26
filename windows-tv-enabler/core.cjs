@@ -138,6 +138,7 @@ async function installHelper(host, adb, progress, delay, fetchImpl = globalThis.
   const serial = await connect(host, adb, progress, delay);
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
   try {
+    await shell(RESTORE_NAME).catch(() => {});
     if (!(await shell(`pm path ${HELPER}`)).includes('package:')) {
       progress('Downloading BM Remote Helper…');
       const apk = await ensureHelperApk(tempDir, fetchImpl);
@@ -203,13 +204,17 @@ async function activate(host, adb, progress, delay) {
 
 /** Opens BM Remote Helper (the code app) on the TV so the customer can read its six-digit code. */
 /** Connects (Allow box on first use) and puts the 4-digit check code on the TV screen. */
+const SHOW_CODE = 'if [ "$(getprop ro.product.manufacturer)" != Amazon ]; then [ -f /data/local/tmp/bm-name ] || settings get global device_name > /data/local/tmp/bm-name; settings put global device_name \'BM TV Enabler code CODE\'; am start -a android.settings.DEVICE_INFO_SETTINGS >/dev/null 2>&1; fi';
+/** Puts the TV's own name back after the code check. */
+const RESTORE_NAME = 'if [ -f /data/local/tmp/bm-name ]; then n=$(cat /data/local/tmp/bm-name); if [ -z "$n" ] || [ "$n" = null ]; then settings delete global device_name; else settings put global device_name "$n"; fi; rm -f /data/local/tmp/bm-name; fi';
+
 async function showTvCode(host, code, adb, progress, delay) {
   if (!/^\d{4}$/.test(code)) throw new Error('bad code');
   const serial = await connect(host, adb, progress, delay);
   try {
     await adb(['-s', serial, 'shell', `cmd notification post -S bigtext -t 'BM TV Enabler' bm_tv_code 'Your BM TV Enabler code is ${code}'`]);
-    // Android / Google TV keep notifications hidden: open the panel so the code is on screen.
-    await adb(['-s', serial, 'shell', 'cmd statusbar expand-notifications >/dev/null 2>&1 || am start -a android.settings.NOTIFICATION_SETTINGS >/dev/null 2>&1']).catch(() => {});
+    // Android / Google TV hide shell notifications: briefly name the TV after the code and open its About page.
+    await adb(['-s', serial, 'shell', SHOW_CODE.replace('CODE', code)]).catch(() => {});
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
 }
 
