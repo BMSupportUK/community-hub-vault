@@ -12,7 +12,7 @@ import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
 import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
-import { getOrderRemoteSetup, redeemOrderEnablerCode, resetOrderRemoteSetup, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
+import { getOrderRemoteSetup, redeemOrderEnablerCode, resetOrderRemoteSetup, issueOrderSetupCode, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
 import { getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
 
 type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
