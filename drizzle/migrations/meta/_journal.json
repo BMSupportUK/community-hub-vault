@@ -1541,6 +1541,13 @@
       "when": 1793045416435,
       "tag": "0219_tv_enabler_1_25_and_windows_1_15",
       "breakpoints": true
+    },
+    {
+      "idx": 220,
+      "version": "7",
+      "when": 1793047430915,
+      "tag": "0220_app_builds_install_on_tv",
+      "breakpoints": true
     }
   ]
 }

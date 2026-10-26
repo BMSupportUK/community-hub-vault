@@ -215,6 +215,7 @@ export type Database = {
           file_size: number | null
           id: string
           install_instructions: string | null
+          install_on_tv: boolean
           is_available: boolean
           is_current: boolean
           release_notes: string | null
@@ -234,6 +235,7 @@ export type Database = {
           file_size?: number | null
           id?: string
           install_instructions?: string | null
+          install_on_tv?: boolean
           is_available?: boolean
           is_current?: boolean
           release_notes?: string | null
@@ -253,6 +255,7 @@ export type Database = {
           file_size?: number | null
           id?: string
           install_instructions?: string | null
+          install_on_tv?: boolean
           is_available?: boolean
           is_current?: boolean
           release_notes?: string | null

@@ -39,6 +39,9 @@ public class MainActivity extends Activity {
     private String device;
     private Enabler.Checks checks;
     private boolean busy;
+    private String apps;
+    private volatile java.util.List<String> appsFailed = new java.util.ArrayList<>();
+    private Button appsNew, appsHave, appsBack;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -48,7 +51,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.25", 14, MUTED, false));
+        col.addView(text("TV setup · 1.27", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -62,6 +65,13 @@ public class MainActivity extends Activity {
         devicePick.addView(amazonBtn, halfL); devicePick.addView(androidBtn, halfR);
         col.addView(devicePick, lp(dp(12)));
         deviceHelp = text("", 15, MUTED, false); col.addView(deviceHelp, lp(dp(8)));
+        appsNew = button("No, this is a new setup", Color.parseColor("#2A3050"));
+        appsHave = button("Yes, I already have them", Color.parseColor("#2A3050"));
+        appsBack = button("Back", Color.parseColor("#2A3050"));
+        appsNew.setOnClickListener(v -> pickApps("new"));
+        appsHave.setOnClickListener(v -> pickApps("have"));
+        appsBack.setOnClickListener(v -> { if (!busy) { device = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("device").apply(); render(); } });
+        col.addView(appsNew, lp(dp(12))); col.addView(appsHave, lp(dp(8))); col.addView(appsBack, lp(dp(8)));
         amazonBtn.setOnClickListener(v -> pickDevice("amazon"));
         androidBtn.setOnClickListener(v -> pickDevice("android"));
         address = new EditText(this);
@@ -97,6 +107,8 @@ public class MainActivity extends Activity {
         // A remembered platform/address is a convenience, never proof that a TV is ready.
         device = prefs.getString("device", null);
         if (!"amazon".equals(device) && !"android".equals(device)) device = null;
+        apps = prefs.getString("apps", null);
+        if (!"new".equals(apps) && !"have".equals(apps)) apps = null;
         readLink(getIntent());
         render();
     }
@@ -119,6 +131,13 @@ public class MainActivity extends Activity {
         return c;
     }
 
+    private void pickApps(String a) {
+        if (busy) return;
+        apps = a;
+        getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply();
+        render();
+    }
+
     private void pickDevice(String d) {
         if (busy) return;
         device = d;
@@ -128,7 +147,9 @@ public class MainActivity extends Activity {
 
     private void render() {
         SetupWizard.Step s = wizard.step;
-        boolean pick = s == SetupWizard.Step.DEBUGGING || (s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
+        boolean askApps = s == SetupWizard.Step.DEBUGGING && device != null && apps == null;
+        for (View v : new View[]{appsNew, appsHave, appsBack}) v.setVisibility(askApps ? View.VISIBLE : View.GONE);
+        boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps) || (s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
         devicePick.setVisibility(pick ? View.VISIBLE : View.GONE);
         deviceHelp.setVisibility(pick ? View.VISIBLE : View.GONE);
         address.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
@@ -137,13 +158,18 @@ public class MainActivity extends Activity {
         showAgain.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         confirmCode.setVisibility(s == SetupWizard.Step.DONE && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
         next.setVisibility(View.GONE);
-        turnOn.setVisibility(s == SetupWizard.Step.DEBUGGING && device == null ? View.GONE : View.VISIBLE);
+        turnOn.setVisibility(s == SetupWizard.Step.DEBUGGING && (device == null || apps == null) ? View.GONE : View.VISIBLE);
         find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
         back.setVisibility(s == SetupWizard.Step.CHECK || s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         amazonBtn.setBackgroundColor("amazon".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
         androidBtn.setBackgroundColor("android".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
         switch (s) {
             case DEBUGGING:
+                if (askApps) {
+                    heading.setText("Do you already have our apps on this TV?");
+                    description.setText("New customer? Choose \"No, this is a new setup\" and we'll install all our apps on the TV for you. Already have them? Choose \"Yes\" and we'll only switch on remote control.");
+                    break;
+                }
                 heading.setText(device == null ? "Which TV are you setting up?" : "1. Enable TV debugging");
                 deviceHelp.setText(device == null ? "Choose your TV to see the right steps." : "Wrong TV? Choose the other one.");
                 if (device == null) description.setText("");
@@ -210,6 +236,8 @@ public class MainActivity extends Activity {
                         progress.step(0, "Checking everything on the TV one last time…");
                         checks = Enabler.checkExisting(this, host, progress);
                     }
+                    if ("new".equals(apps) && SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility))
+                        appsFailed = Enabler.installOurApps(this, host, progress);
                 }
                 ui.post(() -> {
                     if (isFinishing() || isDestroyed()) return;
@@ -221,7 +249,11 @@ public class MainActivity extends Activity {
                         if (checks.type != null) { device = checks.type; getSharedPreferences("tv", MODE_PRIVATE).edit().putString("device", device).apply(); }
                         // Linked by the website QR: send straight there, no button or code needed.
                         if (ready && linkCode() != null && device != null) ui.post(this::start);
-                        say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
+                        String done = appsFailed.isEmpty()
+                                ? ("new".equals(apps) ? "✓ TV setup confirmed: our apps are installed and remote control is switched on." : "✓ TV setup confirmed: both apps installed and remote control switched on.")
+                                : "✓ TV setup confirmed. These apps didn't install: " + String.join(", ", appsFailed) + ".";
+                        appsFailed = new java.util.ArrayList<>();
+                        say(ready ? done : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
                         else { confirmCode.setText(issued.substring(0, 3) + "-" + issued.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
@@ -258,8 +290,8 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Reset setup?")
                 .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
-                    wizard.reset(); checks = null; device = null;
-                    getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").apply();
+                    wizard.reset(); checks = null; device = null; apps = null;
+                    getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps").apply();
                     address.setText(""); confirmCode.setText(""); say("", MUTED); render();
                 }).show();
     }
@@ -324,7 +356,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, showAgain}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, showAgain, appsNew, appsHave, appsBack}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
