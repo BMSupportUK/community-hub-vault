@@ -31,7 +31,11 @@ final class DeviceDiscovery {
             "http://%s:50000/description.xml",
     };
 
-    static List<DiscoveredDevice> scan(String base) throws InterruptedException {
+    static List<DiscoveredDevice> scan(String base) throws InterruptedException { return scan(base, false); }
+
+    /** android=false lists only Fire TVs; android=true lists TV-like devices that aren't Amazon
+     * (Cast/DIAL TVs, or anything with network debugging open). */
+    static List<DiscoveredDevice> scan(String base, boolean android) throws InterruptedException {
         Advertised advertised = advertisedLocations(base);
         Map<String, DiscoveredDevice> found = new ConcurrentHashMap<>();
         ExecutorService pool = Executors.newFixedThreadPool(48);
@@ -44,14 +48,24 @@ final class DeviceDiscovery {
                     if (location != null) description = readDescription(host, location);
                     if (description == null) {
                         for (String path : FALLBACK_PATHS) {
-                            description = readDescription(host, String.format(path, host));
-                            if (description != null) break;
+                            Description d = readDescription(host, String.format(path, host));
+                            if (d != null) description = d;
+                            if (d != null && (d.fireTv || d.amazon || d.cast)) break;
                         }
                     }
-                    boolean hinted = advertised.fireTvHints.containsKey(host);
-                    if ((description == null || !description.fireTv) && !hinted) return;
-                    boolean reachable = debuggingReachable(host);
+                    boolean amazon = advertised.fireTvHints.containsKey(host)
+                            || (description != null && (description.fireTv || description.amazon));
                     String name = description == null ? null : description.name;
+                    if (android) {
+                        if (amazon) return;
+                        boolean reachable = debuggingReachable(host);
+                        if (!reachable && !(description != null && description.cast) && !advertised.dialHints.containsKey(host)) return;
+                        found.put(host, new DiscoveredDevice(host, name == null ? "Android / Google TV — name unavailable" : name, reachable));
+                        return;
+                    }
+                    if (description != null && !description.fireTv && !advertised.fireTvHints.containsKey(host)) return;
+                    if (!amazon) return;
+                    boolean reachable = debuggingReachable(host);
                     found.put(host, new DiscoveredDevice(host, name, reachable));
                 });
             }
@@ -71,6 +85,7 @@ final class DeviceDiscovery {
     private static final class Advertised {
         final Map<String, String> locations = new HashMap<>();
         final Map<String, Boolean> fireTvHints = new HashMap<>();
+        final Map<String, Boolean> dialHints = new HashMap<>();
     }
 
     private static Advertised advertisedLocations(String base) {
@@ -93,9 +108,8 @@ final class DeviceDiscovery {
                 String response = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
                 String lower = response.toLowerCase(java.util.Locale.ROOT);
                 // A Fire TV answers with its own server banner even when its description can't be fetched.
-                if (lower.contains("amazon") || lower.contains("aft") || lower.contains("dial")) {
-                    advertised.fireTvHints.put(host, Boolean.TRUE);
-                }
+                if (lower.contains("amazon") || lower.contains("aft")) advertised.fireTvHints.put(host, Boolean.TRUE);
+                else if (lower.contains("dial") || lower.contains("google") || lower.contains("android")) advertised.dialHints.put(host, Boolean.TRUE);
                 for (String line : response.split("\r?\n")) {
                     if (line.regionMatches(true, 0, "location:", 0, 9)) {
                         String location = line.substring(9).trim();
@@ -147,7 +161,8 @@ final class DeviceDiscovery {
                 }
                 xml = out.toByteArray();
             }
-            return parseDescription(xml);
+            Description d = parseDescription(xml);
+            return d == null ? null : new Description(d.name, d.fireTv, d.amazon, new URL(location).getPort() == 8008);
         } catch (Exception ignored) { return null; }
         finally { if (connection != null) connection.disconnect(); }
     }
@@ -159,8 +174,9 @@ final class DeviceDiscovery {
 
     static final class Description {
         final String name;
-        final boolean fireTv;
-        Description(String name, boolean fireTv) { this.name = name; this.fireTv = fireTv; }
+        final boolean fireTv, amazon, cast;
+        Description(String name, boolean fireTv) { this(name, fireTv, fireTv, false); }
+        Description(String name, boolean fireTv, boolean amazon, boolean cast) { this.name = name; this.fireTv = fireTv; this.amazon = amazon; this.cast = cast; }
     }
 
     static Description parseDescription(byte[] xml) {
@@ -184,7 +200,7 @@ final class DeviceDiscovery {
                         .toLowerCase(java.util.Locale.ROOT);
                 boolean fireTv = manufacturer.contains("amazon") &&
                         (model.contains("fire tv") || model.contains("firetv") || model.matches(".*\\baft[a-z0-9]+\\b.*"));
-                Description result = new Description(name.isEmpty() ? null : name, fireTv);
+                Description result = new Description(name.isEmpty() ? null : name, fireTv, manufacturer.contains("amazon"), false);
                 if (fireTv) return result;
                 if (fallback == null) fallback = result;
             }
