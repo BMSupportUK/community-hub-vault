@@ -1,0 +1,44 @@
+import { expect, test } from "bun:test";
+import { PGlite } from "@electric-sql/pglite";
+
+test("renewal keeps the 24-hour reference, binds only its scope and exposes one fresh pending session", async () => {
+  const db = new PGlite();
+  await db.exec(`
+    create role anon; create role authenticated; create role service_role;
+    create schema auth; create function auth.uid() returns uuid language sql as $$ select '00000000-0000-0000-0000-000000000001'::uuid $$;
+    create table tickets(id uuid primary key,user_id uuid,status text);
+    create table enabler_confirm_codes(code_hash text primary key, expires_at timestamptz,created_at timestamptz default now(),bound_ticket_id uuid,bound_order_id uuid,session_id uuid,device text,checks jsonb);
+    create table tv_remote_sessions(id uuid primary key,code_hash text,status text,expires_at timestamptz,link_id uuid,link_kind text);
+    create table ticket_remote_setup(ticket_id uuid,device text,pending_session_id uuid,updated_at timestamptz,app_checks jsonb,app_checked_at timestamptz,checks_used_at timestamptz);
+    create table order_remote_setup(order_id uuid,device text,pending_session_id uuid,updated_at timestamptz,app_checks jsonb,app_checked_at timestamptz,checks_used_at timestamptz);
+  `);
+  await db.exec(await Bun.file("drizzle/migrations/0226_enabler_connection_renewal.sql").text());
+  const id = "00000000-0000-0000-0000-000000000002", old = "00000000-0000-0000-0000-000000000003", fresh = "00000000-0000-0000-0000-000000000004";
+  await db.query(`insert into tickets values($1,'00000000-0000-0000-0000-000000000001','open')`, [id]);
+  await db.query(`insert into ticket_remote_setup(ticket_id,device,checks_used_at) values($1,'amazon',now())`, [id]);
+  await db.query(`insert into tv_remote_sessions values($1,'old','ended',now()+interval '1 hour',$2,'ticket'),($3,'fresh','pending',now()+interval '1 hour',null,null)`, [old,id,fresh]);
+  await db.query(`insert into enabler_confirm_codes(code_hash,expires_at,bound_ticket_id,session_id,device,refresh_token_hash) values('reference',now()+interval '24 hours',$1,$2,'amazon','secret')`, [id,old]);
+  const before = await db.query<{expires_at: Date}>(`select expires_at from enabler_confirm_codes`);
+  const request = await db.query<{result:string}>(`select request_ticket_enabler_connection($1) as result`, [id]);
+  expect(request.rows[0]?.result).toBe("queued");
+  const unauthorized = await db.query<{result:{state:string}}>(`select enabler_refresh_task('wrong') as result`);
+  expect(unauthorized.rows[0]?.result.state).toBe("expired");
+  const task = await db.query<{result:{state:string,requestId:string}}>(`select enabler_refresh_task('secret') as result`);
+  expect(task.rows[0]?.result.state).toBe("refresh");
+  const duplicate = await db.query<{result:{state:string}}>(`select enabler_refresh_task('secret') as result`);
+  expect(duplicate.rows[0]?.result.state).toBe("idle");
+  const checks = {adb:true,helper:true,control:true,accessibility:true};
+  const complete = await db.query<{result:{state:string}}>(`select enabler_refresh_task('secret',$1,'fresh',$2) as result`, [task.rows[0]?.result.requestId, JSON.stringify(checks)]);
+  expect(complete.rows[0]?.result.state).toBe("done");
+  const read = await db.query<{pending_session_id:string,checks_used_at:null}>(`select pending_session_id,checks_used_at from ticket_remote_setup`);
+  expect(read.rows[0]?.pending_session_id).toBe(fresh);
+  expect(read.rows[0]?.checks_used_at).toBeNull();
+  const after = await db.query<{expires_at:Date,code_hash:string}>(`select expires_at,code_hash from enabler_confirm_codes`);
+  expect(after.rows[0]?.expires_at).toEqual(before.rows[0]?.expires_at);
+  expect(after.rows[0]?.code_hash).toBe("reference");
+  await db.query(`update tv_remote_sessions set status='active' where id=$1`, [fresh]);
+  const active = await db.query<{result:string}>(`select request_ticket_enabler_connection($1) as result`, [id]);
+  expect(active.rows[0]?.result).toBe("in_progress");
+  await expect(db.query(`select request_ticket_enabler_connection('00000000-0000-0000-0000-000000000099')`)).rejects.toThrow("Only the ticket customer");
+  await db.close();
+});
