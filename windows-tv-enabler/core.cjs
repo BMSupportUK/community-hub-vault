@@ -172,7 +172,7 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
   if (!apps.length) throw new Error('No apps are set up to install yet. Please contact BM Support.');
   const serial = await connect(host, adb, progress, delay);
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
-  const installed = [], failed = [];
+  const installed = [], failed = [], results = [];
   try {
     for (let i = 0; i < apps.length; i++) {
       const app = apps[i]; const name = String(app.name || 'app').slice(0, 80);
@@ -185,12 +185,14 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
         fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
         await adb(['-s', serial, 'push', file, '/data/local/tmp/bm-app.apk']);
         const result = await shell('pm install -r /data/local/tmp/bm-app.apk');
-        if (result.includes('Success') || result.includes('VERSION_DOWNGRADE')) installed.push(name); else failed.push(name);
-      } catch { failed.push(name); }
+        if (result.includes('Success')) { installed.push(name); results.push({ name, status: 'installed' }); }
+        else if (result.includes('VERSION_DOWNGRADE')) { installed.push(name); results.push({ name, status: 'already' }); }
+        else { failed.push(name); results.push({ name, status: 'failed' }); }
+      } catch { failed.push(name); results.push({ name, status: 'failed' }); }
       finally { try { fs.unlinkSync(file); } catch {} await shell('rm -f /data/local/tmp/bm-app.apk').catch(() => {}); }
     }
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
-  return { installed, failed };
+  return { installed, failed, results };
 }
 
 /** Wizard step: install BM Remote Control from the copy bundled inside the Helper APK. */
