@@ -4,7 +4,8 @@
 ## Current Enabler follow-ups
 - [x] Check selected TV packages before APK download; skip existing apps and preserve per-app outcomes in phone and Windows source. Verified actual QD, Smart Player and BM Store package identities.
 - [x] Phone 1.37 signed and current; downloaded bytes match. 33 JS tests and both Java inventory/wizard tests pass; preview build OK. With the current published website it skips TV transfer/install after APK identity reading; publishing the website update enables skipping APK download too. Windows source updated, installer remains 1.25.
-- [ ] Refresh Helper connection automatically when reusing the setup confirmation reference; blocked by missing Helper source/verified session-refresh interface. Website cannot itself issue LAN ADB commands; ended sessions cannot safely be revived.
+- [ ] Add Get new connection on ticket/order Remote setup; queue a scoped request for the open Enabler app, read a fresh Helper session automatically and show Connect without manual code entry. Inspection of the stored Helper APK confirms foreground render requests a new session when sharing is not running.
+- [ ] Test renewal permissions/state transitions, build updated phone and Windows downloads and verify customer controls.
 - [ ] Physical TV verification — requires the customer's phone and TV on the same Wi-Fi.
 
 ## Enabler confirmation code reuse
