@@ -10,7 +10,7 @@ const heading = el('heading'), description = el('description'), devicePick = el(
   codeBlock = el('code-block'), openHelper = el('open-helper'),
   progress = el('progress'), action = el('action'), next = el('next'), back = el('back'), reset = el('reset'),
   pickAmazon = el('pick-amazon'), pickAndroid = el('pick-android'),
-  tvCodeBlock = el('tv-code-block'), tvCodeInput = el('tv-code'), showAgain = el('show-again');
+  tvCodeBlock = el('tv-code-block'), linkBlock = el('link-block'), linkCode = el('link-code'), tvCodeInput = el('tv-code'), showAgain = el('show-again');
 
 let device = null, checks = null, busy = false, confirmCode = '';
 const savedAddress = localStorage.getItem('bm-tv-address');
@@ -26,7 +26,7 @@ function say(text, isError) {
 function setBusy(value) {
   busy = value;
   for (const b of [action, next, back, reset, scan, openHelper, pickAmazon, pickAndroid, showAgain]) b.disabled = value;
-  address.disabled = value; tvCodeInput.disabled = value;
+  address.disabled = value; tvCodeInput.disabled = value; linkCode.disabled = value;
   devices.querySelectorAll('button').forEach(b => { b.disabled = value; });
 }
 
@@ -52,6 +52,7 @@ function render() {
   addressBlock.hidden = s !== Step.CHECK;
   tvCodeBlock.hidden = s !== Step.TV_CODE;
   codeBlock.hidden = !(s === Step.DONE && confirmCode);
+  linkBlock.hidden = !(s === Step.DONE && wizard.ready);
   codeBlock.textContent = confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
   openHelper.hidden = !(s === Step.DONE && wizard.ready);
   next.hidden = true;
@@ -101,8 +102,14 @@ async function run(stage, host) {
     if (stage === Step.DONE) {
       if (!checks || !wizard.ready) { say('Check the TV again first.', true); return; }
       if (device == null) { say('Choose which TV this is first.', true); return; }
-      confirmCode = await window.bmTv.confirmCode(checks, device, host);
-      say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
+      const link = linkCode.value.replace(/\D/g, '');
+      if (link.length === 8) {
+        await window.bmTv.linkReport(link, checks, device, host);
+        say('✓ Sent to your ticket or order. On the website, press Connect.');
+      } else {
+        confirmCode = await window.bmTv.confirmCode(checks, device, host);
+        say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
+      }
     } else {
       checks = await window.bmTv.check(host);
       const isReadyNow = () => allReady(checks.adb, checks.helper, checks.control, checks.accessibility);
