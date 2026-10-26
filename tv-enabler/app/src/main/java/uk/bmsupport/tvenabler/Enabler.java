@@ -199,8 +199,8 @@ final class Enabler {
             h.setConnectTimeout(15000); h.setReadTimeout(30000);
             try (java.io.InputStream in = h.getInputStream()) { apps = new org.json.JSONObject(new String(readAll(in), java.nio.charset.StandardCharsets.UTF_8)).optJSONArray("apps"); }
             finally { h.disconnect(); }
-        } catch (Exception e) { return failed; }
-        if (apps == null || apps.length() == 0) return failed;
+        } catch (Exception e) { throw new IllegalStateException("Couldn't get the app list. Check the phone's internet and try again."); }
+        if (apps == null || apps.length() == 0) throw new IllegalStateException("No apps are set up to install yet. Please contact BM Support.");
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
             for (int i = 0; i < apps.length(); i++) {
@@ -225,7 +225,6 @@ final class Enabler {
                 } catch (Exception e) { failed.add(name); }
                 finally { out.delete(); try { adb.shell("rm -f /data/local/tmp/bm-app.apk"); } catch (Exception ignored) {} }
             }
-            try { openHelper(adb); } catch (Exception ignored) {}
         }
         return failed;
     }
