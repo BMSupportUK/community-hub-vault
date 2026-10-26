@@ -2,10 +2,11 @@
 export const ACCOUNT_HELPER_SLUG = "account";
 export const HELPER_PROMPT_PREFIX = "🔑 **Login helper**";
 
-export type HelperChoice = "logged_in" | "cant_find" | "still_stuck";
+export type HelperChoice = "logged_in" | "cant_find" | "lost_pin" | "still_stuck";
 export const HELPER_CHOICES: { id: HelperChoice; label: string }[] = [
   { id: "logged_in", label: "I found them and I'm logged in" },
   { id: "cant_find", label: "I can't find them" },
+  { id: "lost_pin", label: "I've lost my PIN" },
   { id: "still_stuck", label: "I found them but still can't log in" },
 ];
 
