@@ -59,6 +59,8 @@ final class Enabler {
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
             adb.shell("cmd notification post -S bigtext -t 'BM TV Enabler' bm_tv_code 'Your BM TV Enabler code is " + code + "'");
+            // Android / Google TV keep notifications hidden: open the panel so the code is on screen.
+            adb.shell("cmd statusbar expand-notifications >/dev/null 2>&1 || am start -a android.settings.NOTIFICATION_SETTINGS >/dev/null 2>&1");
         }
     }
 
