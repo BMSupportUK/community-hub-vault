@@ -208,6 +208,8 @@ async function showTvCode(host, code, adb, progress, delay) {
   const serial = await connect(host, adb, progress, delay);
   try {
     await adb(['-s', serial, 'shell', `cmd notification post -S bigtext -t 'BM TV Enabler' bm_tv_code 'Your BM TV Enabler code is ${code}'`]);
+    // Android / Google TV keep notifications hidden: open the panel so the code is on screen.
+    await adb(['-s', serial, 'shell', 'cmd statusbar expand-notifications >/dev/null 2>&1 || am start -a android.settings.NOTIFICATION_SETTINGS >/dev/null 2>&1']).catch(() => {});
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
 }
 
