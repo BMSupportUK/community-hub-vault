@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { execFile } = require('node:child_process');
-const { checkExisting, installHelper, installControl, activate, openCodeApp, report } = require('../core.cjs');
+const { checkExisting, installHelper, installControl, activate, openCodeApp, requestConfirmCode } = require('../core.cjs');
 const { scan } = require('../discovery.cjs');
 let window; let busy = false;
 const page = path.join(__dirname, '..', 'dist', 'index.html');
@@ -48,12 +48,7 @@ else {
     ipcMain.handle('bm:install-control', task(address => installControl(address, adb, say, undefined, undefined, tempDir())));
     ipcMain.handle('bm:activate', task(address => activate(address, adb, say)));
     ipcMain.handle('bm:open-code-app', task(address => openCodeApp(address, adb, say)));
-    ipcMain.handle('bm:report', task((code, checks, device) => {
-      const clean = String(code ?? '').replace(/\D/g, '');
-      if (clean.length !== 8) throw new Error('Type the 8-digit setup code shown on your ticket or order\'s Remote setup tab.');
-      if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV you are setting up first: Amazon Fire TV or Android / Google TV.');
-      return report(clean, checks, device);
-    }));
+    ipcMain.handle('bm:confirm-code', task((checks, device) => requestConfirmCode(checks, device)));
     window.loadFile(page);
   });
   app.on('window-all-closed', () => {

@@ -193,7 +193,7 @@ async function enable(host, adb, progress, delay = ms => new Promise(r => setTim
   await installHelper(host, adb, progress, delay, fetchImpl, tempDir);
   await installControl(host, adb, progress, delay, fetchImpl, tempDir, extractImpl);
   const checks = await activate(host, adb, progress, delay);
-  progress('Remote control is enabled. BM Remote Helper is open on the TV — type its six-digit code on your support ticket.');
+  progress('Remote control is enabled. BM Remote Helper is open on the TV — type its six-digit code on your ticket or order.');
   return { success: true, checks };
 }
 
@@ -207,4 +207,17 @@ async function report(code, checks, device, post = globalThis.fetch) {
   if (!res.ok) throw new Error(`BM Support couldn't be told (error ${res.status}). Try again.`);
 }
 
-module.exports = { report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };
+/** Asks BM Support for a short single-use code carrying the confirmed TV checks. */
+async function requestConfirmCode(checks, device, post = globalThis.fetch) {
+  if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV this is first: Amazon Fire TV or Android / Google TV.');
+  if (!checks || !(checks.adb && checks.helper && checks.control && checks.accessibility)) throw new Error('Check the TV again first.');
+  let res;
+  try { res = await post('https://bmsupport.uk/api/public/enabler-confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ app: 'windows-tv-enabler-1.4', device, checks }) }); }
+  catch { throw new Error('Couldn\'t reach BM Support. Check the internet connection and try again.'); }
+  if (res.status === 429) throw new Error('Too many tries. Wait 15 minutes, then try again.');
+  const body = res.ok ? await res.json().catch(() => null) : null;
+  if (!body || !/^[A-Z0-9]{6}$/.test(body.code || '')) throw new Error(`Couldn't get a code from BM Support (error ${res.status}). Try again.`);
+  return body.code;
+}
+
+module.exports = { requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'"><title>BM TV Enabler</title><link rel="stylesheet" href="style.css"></head>
 <body><main>
-<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.3</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
+<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.4</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
 <section class="wizard">
   <h2 id="heading">1. Enable TV debugging</h2>
   <p id="description"></p>
@@ -13,7 +13,7 @@
     <div id="devices" role="group" aria-label="Discovered TVs"></div>
     <p id="scan-status" role="status"></p>
   </div>
-  <div id="code-block" hidden><label for="setup-code">8-digit code from the Remote setup tab on your ticket or order (optional)<input id="setup-code" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="1234 5678"></label></div>
+  <div id="code-block" class="confirm-code" hidden></div>
   <button id="open-helper" type="button" hidden>Open BM Remote Helper on TV to show my code</button>
   <div class="connection"><p>When the TV asks <strong>Allow USB debugging?</strong>, tick <strong>Always allow from this computer</strong> and choose <strong>Allow</strong>.</p><p id="progress" role="status" aria-live="polite"></p></div>
   <button id="action" class="primary" type="button">I've switched debugging on — next <span aria-hidden="true">→</span></button>
