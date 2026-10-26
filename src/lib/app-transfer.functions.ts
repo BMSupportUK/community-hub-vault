@@ -315,6 +315,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       .insert({
         file_path: data.filePath,
         file_name: data.fileName,
+        package_name: await (await import("@/lib/apk-package.server")).storedApkPackage(data.filePath, data.fileName),
         file_size: data.fileSize ?? null,
         version_name: data.versionName ?? null,
         release_notes: data.releaseNotes ?? null,
@@ -388,6 +389,10 @@ export const updateAppBuild = createServerFn({ method: "POST" })
     if (data.filePath !== undefined && data.filePath) patch.file_path = data.filePath;
     if (data.fileName !== undefined && data.fileName) patch.file_name = data.fileName;
     if (data.fileSize !== undefined) patch.file_size = data.fileSize;
+    if (data.filePath) {
+      const { data: current } = await supabaseAdmin.from("app_builds").select("file_name").eq("id", data.id).maybeSingle();
+      patch.package_name = await (await import("@/lib/apk-package.server")).storedApkPackage(data.filePath, data.fileName || current?.file_name || "");
+    }
     if (data.announceUpdates !== undefined) patch.announce_updates = data.announceUpdates;
     if (data.installOnTv !== undefined) patch.install_on_tv = data.installOnTv;
     if (data.category !== undefined && data.category) patch.category = data.category;

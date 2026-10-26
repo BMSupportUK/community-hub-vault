@@ -161,7 +161,7 @@ async function installHelper(host, adb, progress, delay, fetchImpl = globalThis.
 
 const SITE = 'https://bmsupport.uk';
 /** New-customer setups: installs every app an admin ticked "Install on TV during setup".
- * A newer copy already on the TV (downgrade refused) counts as already installed. Never fatal. */
+ * Existing packages bypass download, transfer and installation. Never fatal. */
 async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis.fetch, tempDir = require('node:os').tmpdir()) {
   const fs = require('node:fs'); const path = require('node:path');
   let apps = [];
@@ -174,8 +174,15 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
   const installed = [], failed = [], results = [];
   try {
+    progress('Checking which apps are already on your TV…');
+    const packages = new Set((await shell('pm list packages')).split(/\r?\n/).map(line => line.trim()).filter(line => /^package:[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(line)).map(line => line.slice(8)));
     for (let i = 0; i < apps.length; i++) {
       const app = apps[i]; const name = String(app.name || 'app').slice(0, 80);
+      if (typeof app.packageName === 'string' && packages.has(app.packageName)) {
+        progress(`${name} — already on your TV, skipping (${i + 1} of ${apps.length})`);
+        installed.push(name); results.push({ name, status: 'already' });
+        continue;
+      }
       progress(`Installing ${name} (${i + 1} of ${apps.length})…`);
       const file = path.join(tempDir, `bm-app-${i}.apk`);
       try {
@@ -185,7 +192,7 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
         fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
         await adb(['-s', serial, 'push', file, '/data/local/tmp/bm-app.apk']);
         const result = await shell('pm install -r /data/local/tmp/bm-app.apk');
-        if (result.includes('Success')) { installed.push(name); results.push({ name, status: 'installed' }); }
+        if (result.includes('Success')) { installed.push(name); results.push({ name, status: 'installed' }); if (typeof app.packageName === 'string') packages.add(app.packageName); }
         else if (result.includes('VERSION_DOWNGRADE')) { installed.push(name); results.push({ name, status: 'already' }); }
         else { failed.push(name); results.push({ name, status: 'failed' }); }
       } catch { failed.push(name); results.push({ name, status: 'failed' }); }
