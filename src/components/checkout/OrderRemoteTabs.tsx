@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
+import { getOrderEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
@@ -41,6 +42,8 @@ export function OrderRemoteTabs({ token, password, children }: { token: string; 
 }
 
 function OrderRemoteSetup({ token, password }: { token: string; password: string }) {
+  const confirmationStatusFn = useServerFn(getOrderEnablerConfirmationStatus);
+  const confirmationStatus = useCallback(() => confirmationStatusFn({ data: { token, password } }), [confirmationStatusFn, token, password]);
   const get = useServerFn(getOrderRemoteSetup), saveFn = useServerFn(saveOrderRemoteSetup), redeemFn = useServerFn(redeemOrderEnablerCode), verifyFn = useServerFn(verifyOrderRemoteSetup), resetFn = useServerFn(resetOrderRemoteSetup), issueFn = useServerFn(issueOrderSetupCode);
   const [row, setRow] = useState<Row | undefined>(undefined);
   const [busy, setBusy] = useState(false);
@@ -105,7 +108,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Your valid 24-hour confirmation reference stays the same."}</p>
         <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
       </div>}
-      {!fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
+      {!fresh && <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} />}
       <RemoteSetupProgress row={row} />
       {!row.completed_at && REMOTE_SETUP_STEPS[row.device].map((s, i) => {
         const done = stepDone(s, row);
