@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current Enabler follow-ups
-- [ ] Disable customer confirmation-code box against the saved 24-hour reference expiry on tickets/orders, independently of consumed TV checks; verify expiry and greyed-out controls.
+- [x] Customer ticket/order confirmation box uses owner/password-verified bound-reference expiry, independent of consumed checks and login PIN. Sixteen tests pass; real code box with simulated expiry dims/disables while valid and allows submission after expiry; preview build OK. Real customer check remains below.
 - [x] Ticket/order Get new connection disables immediately and stays locked while queued; shared scope-bound tab-persistent gate clears on replacement or timeout. Twelve tests pass; actual ticket control with simulated queued reply stays disabled after repeated presses; preview build OK. Real customer/TV checks remain below.
 - [x] Check selected TV packages before APK download; skip existing apps and preserve per-app outcomes in phone and Windows source. Verified actual QD, Smart Player and BM Store package identities.
 - [x] Phone 1.37 signed and current; downloaded bytes match. 33 JS tests and both Java inventory/wizard tests pass; preview build OK. With the current published website it skips TV transfer/install after APK identity reading; publishing the website update enables skipping APK download too. Windows source updated, installer remains 1.25.
