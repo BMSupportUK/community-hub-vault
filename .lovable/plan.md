@@ -8,7 +8,8 @@
   2. Opens the Downloader app on the TV and types the link in by itself.
   3. The download starts. Staff then press **Install** on the TV's own install box using the on-screen remote.
 - The pop-up shows the link and when it runs out, plus a **Type it again** button in case the TV missed it.
-- If the TV doesn't have Downloader, the pop-up says so and offers to open the Downloader page in the app store on the TV.
+- **Downloader goes on automatically.** During setup, BM TV Enabler (phone and Windows) checks whether Downloader is on the TV. If it isn't, the Enabler installs it the same way it already installs BM Remote Helper, so staff never have to. The Downloader app file is uploaded once to the downloads list under the name "Downloader", and the Enabler always uses the latest copy there.
+- If a TV was set up with an older Enabler and still has no Downloader, the pop-up says so and offers to open Downloader's app store page on the TV as a backup.
 - Each sent link is added as a staff-only note on the ticket or order, saying which app, who sent it and when.
 
 ## Why it works this way
