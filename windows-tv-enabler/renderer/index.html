@@ -1,12 +1,14 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'"><title>BM TV Enabler</title><link rel="stylesheet" href="style.css"></head>
 <body><main>
-<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.16</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
+<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.17</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
 <section class="wizard">
   <h2 id="heading">1. Enable TV debugging</h2>
   <p id="description"></p>
   <div id="device-pick" class="device-pick" role="group" aria-label="TV type" hidden><button id="pick-amazon" type="button">Amazon Fire TV</button><button id="pick-android" type="button">Android / Google TV</button></div>
   <p id="device-help" class="hint" hidden></p>
+  <div id="apps-pick" class="device-pick" role="group" aria-label="Our apps" hidden><button id="apps-new" type="button">No, this is a new setup</button><button id="apps-have" type="button">Yes, I already have them</button></div>
+  <button id="apps-back" type="button" hidden>Back</button>
   <div id="address-block" hidden>
     <div class="address-row"><label for="address">TV address<input id="address" inputmode="decimal" autocomplete="off" maxlength="15" placeholder="192.168.1.25"></label><button id="scan" type="button">Find my TV</button></div>
     <p id="scan-hint" class="hint"></p>

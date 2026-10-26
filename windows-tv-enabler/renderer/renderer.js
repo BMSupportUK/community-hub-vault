@@ -11,13 +11,16 @@ const heading = el('heading'), description = el('description'), devicePick = el(
   progress = el('progress'), action = el('action'), next = el('next'), back = el('back'), reset = el('reset'),
   pickAmazon = el('pick-amazon'), pairBlock = el('pair-block'), scanHint = el('scan-hint'), pickAndroid = el('pick-android'),
   tvCodeBlock = el('tv-code-block'), linkBlock = el('link-block'), linkCode = el('link-code'), tvCodeInput = el('tv-code'), showAgain = el('show-again'),
+  appsPick = el('apps-pick'), appsNew = el('apps-new'), appsHave = el('apps-have'), appsBack = el('apps-back'),
   pairButton = el('pair'), pairCode = el('pair-code'), pairPort = el('pair-port');
 
-let device = null, checks = null, busy = false, confirmCode = '';
+let device = null, checks = null, busy = false, confirmCode = '', appsFailed = [];
 const savedAddress = localStorage.getItem('bm-tv-address');
 if (savedAddress) address.value = savedAddress;
 const savedDevice = localStorage.getItem('bm-tv-device');
 if (savedDevice === 'amazon' || savedDevice === 'android') device = savedDevice;
+let apps = localStorage.getItem('bm-tv-apps');
+if (apps !== 'new' && apps !== 'have') apps = null;
 
 function say(text, isError) {
   progress.textContent = text;
@@ -26,7 +29,7 @@ function say(text, isError) {
 
 function setBusy(value) {
   busy = value;
-  for (const b of [action, next, back, reset, scan, pickAmazon, pickAndroid, showAgain, pairButton]) b.disabled = value;
+  for (const b of [action, next, back, reset, scan, pickAmazon, pickAndroid, showAgain, pairButton, appsNew, appsHave, appsBack]) b.disabled = value;
   address.disabled = value; tvCodeInput.disabled = value; linkCode.disabled = value; pairCode.disabled = value; pairPort.disabled = value;
   devices.querySelectorAll('button').forEach(b => { b.disabled = value; });
 }
@@ -51,7 +54,9 @@ const DESCRIPTIONS = {
 
 function render() {
   const s = wizard.step;
-  const pick = s === Step.DEBUGGING || (s === Step.DONE && device == null && !confirmCode);
+  const askApps = s === Step.DEBUGGING && device != null && apps == null;
+  const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && device == null && !confirmCode);
+  appsPick.hidden = !askApps; appsBack.hidden = !askApps;
   devicePick.hidden = !pick;
   deviceHelp.hidden = !pick;
   addressBlock.hidden = s !== Step.CHECK;
@@ -60,7 +65,7 @@ function render() {
   linkBlock.hidden = !(s === Step.DONE && wizard.ready);
   codeBlock.textContent = confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
   next.hidden = true;
-  action.hidden = s === Step.DEBUGGING && device == null;
+  action.hidden = s === Step.DEBUGGING && (device == null || apps == null);
   pairBlock.hidden = device !== 'android';
   scan.textContent = device === 'android' ? 'Find my Android TV' : 'Find my Fire TV';
   scanHint.textContent = device === 'android' ? 'Find my Android TV lists Android / Google TVs on your network (Amazon devices are left out). If yours isn\'t listed, type the address from the TV\'s network settings.' : 'Find my Fire TV lists only Amazon Fire TVs on your network, so you can pick the right one if you have more than one.';
@@ -78,6 +83,9 @@ function render() {
       ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead).'
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
     action.firstChild.textContent = confirmCode ? 'New code ' : 'Get my confirmation code ';
+  } else if (askApps) {
+    heading.textContent = 'Do you already have our apps on this TV?';
+    description.textContent = 'New customer? Choose "No, this is a new setup" and we\'ll install all our apps on the TV for you. Already have them? Choose "Yes" and we\'ll only switch on remote control.';
   } else if (s === Step.DEBUGGING) {
     heading.textContent = device ? '1. Enable TV debugging' : 'Which TV are you setting up?';
     deviceHelp.textContent = device ? 'Wrong TV? Choose the other one.' : 'Choose your TV to see the right steps.';
@@ -132,10 +140,15 @@ async function run(stage, host) {
         say('Checking everything on the TV one last time…');
         checks = await window.bmTv.check(host);
       }
+      if (apps === 'new' && isReadyNow()) {
+        const result = await window.bmTv.installApps(host);
+        if (result.failed.length) appsFailed = result.failed;
+      }
       const ok = isReadyNow();
       wizard.setupFinished(ok);
       if (checks.type === 'amazon' || checks.type === 'android') { device = checks.type; localStorage.setItem('bm-tv-device', device); }
-      say(ok ? '✓ TV setup confirmed: both apps installed and remote control switched on.' : 'The TV is not fully ready yet. Press Try again.', !ok);
+      say(ok ? (appsFailed.length ? `✓ TV setup confirmed. These apps didn't install: ${appsFailed.join(', ')}.` : (apps === 'new' ? '✓ TV setup confirmed: our apps are installed and remote control is switched on.' : '✓ TV setup confirmed: both apps installed and remote control switched on.')) : 'The TV is not fully ready yet. Press Try again.', !ok);
+      appsFailed = [];
     }
   } catch (error) {
     say(cleanError(error), true);
@@ -181,10 +194,14 @@ back.addEventListener('click', () => { if (!busy) { wizard.reset(); checks = nul
 reset.addEventListener('click', () => {
   if (busy) return;
   if (!window.confirm('Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this computer\'s TV authorization are kept.')) return;
-  wizard.reset(); checks = null; device = null; confirmCode = '';
-  localStorage.removeItem('bm-tv-address'); localStorage.removeItem('bm-tv-device');
+  wizard.reset(); checks = null; device = null; apps = null; confirmCode = '';
+  localStorage.removeItem('bm-tv-address'); localStorage.removeItem('bm-tv-device'); localStorage.removeItem('bm-tv-apps');
   address.value = ''; say(''); render();
 });
+function pickApps(value) { if (busy) return; apps = value; if (value) localStorage.setItem('bm-tv-apps', value); else localStorage.removeItem('bm-tv-apps'); render(); }
+appsNew.addEventListener('click', () => pickApps('new'));
+appsHave.addEventListener('click', () => pickApps('have'));
+appsBack.addEventListener('click', () => { if (busy) return; device = null; localStorage.removeItem('bm-tv-device'); render(); });
 pickAmazon.addEventListener('click', () => pickDevice('amazon'));
 pickAndroid.addEventListener('click', () => pickDevice('android'));
 scan.addEventListener('click', async () => {
