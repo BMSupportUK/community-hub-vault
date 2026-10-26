@@ -163,7 +163,24 @@ public class MainActivity extends Activity {
         next.setVisibility(View.GONE);
         turnOn.setVisibility((s == SetupWizard.Step.DEBUGGING && (device == null || apps == null)) || (s == SetupWizard.Step.DONE && install) ? View.GONE : View.VISIBLE);
         find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
-        back.setVisibility(s == SetupWizard.Step.CHECK || s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
+        appsList.setVisibility(s == SetupWizard.Step.DONE && install && !appsResults.isEmpty() ? View.VISIBLE : View.GONE);
+        if (appsList.getVisibility() == View.VISIBLE) {
+            appsList.removeAllViews();
+            for (Enabler.AppResult r : appsResults) {
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                TextView name = text(r.name, 16, FG, true);
+                LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+                row.addView(name, np);
+                TextView state = text(r.status == Enabler.AppResult.INSTALLED ? "Installed"
+                        : r.status == Enabler.AppResult.ALREADY ? "Already on your TV"
+                        : "Didn't install — press Reset setup to try again", 14,
+                        r.status == Enabler.AppResult.FAILED ? WARN : OK, false);
+                state.setGravity(Gravity.END);
+                row.addView(state);
+                appsList.addView(row);
+            }
+        }
         amazonBtn.setBackgroundColor("amazon".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
         androidBtn.setBackgroundColor("android".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
         switch (s) {
@@ -195,7 +212,7 @@ public class MainActivity extends Activity {
             case DONE:
                 if (install) {
                     heading.setText("Your apps are installed");
-                    description.setText("Everything is on your TV. You can close this app. To install again, press Reset setup.");
+                    description.setText("Each app is listed below with what happened. You can close this app. To install again, press Reset setup.");
                     break;
                 }
                 heading.setText("TV setup confirmed");
@@ -239,7 +256,7 @@ public class MainActivity extends Activity {
                 final boolean linkedSent = sentTo != null;
                 final String issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 final boolean installOnly = "new".equals(apps);
-                if (run == SetupWizard.Step.SETUP && installOnly) appsFailed = Enabler.installOurApps(this, host, progress);
+                if (run == SetupWizard.Step.SETUP && installOnly) appsResults = Enabler.installOurApps(this, host, progress);
                 else if (run == SetupWizard.Step.SETUP) {
                     checks = Enabler.checkExisting(this, host, progress);
                     if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
@@ -253,9 +270,10 @@ public class MainActivity extends Activity {
                     setBusy(false);
                     if (run == SetupWizard.Step.SETUP && installOnly) {
                         wizard.setupFinished(true);
-                        if (appsFailed.isEmpty()) say("✓ Our apps are installed on your TV.", OK);
-                        else say("Done. These apps didn't install: " + String.join(", ", appsFailed) + ". Press Reset setup to try again.", WARN);
-                        appsFailed = new java.util.ArrayList<>();
+                        long failedCount = 0;
+                        for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
+                        if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
+                        else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Reset setup to try again.", WARN);
                     } else if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.setupFinished(ready);
