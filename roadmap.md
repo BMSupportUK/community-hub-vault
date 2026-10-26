@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Enabler confirmation code reuse
-- [ ] Allow repeat confirmation on the same ticket/order until two-hour expiry, preserving access and TV session checks.
+- [ ] Allow repeat confirmation on the same ticket/order until 24-hour expiry, preserving access and TV session checks.
 - [ ] Show expiry and request a new code in phone and Windows Enabler; test and release both downloads.
 
 ## TV Enabler guided setup

@@ -1,6 +1,6 @@
-// BM TV Enabler confirmation codes: 6 characters, reusable on their bound ticket/order for 2 hours.
+// BM TV Enabler confirmation codes: 6 characters, reusable on their bound ticket/order for 24 hours.
 export const CONFIRM_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-export const CONFIRM_TTL_MS = 2 * 60 * 60 * 1000;
+export const CONFIRM_TTL_MS = 24 * 60 * 60 * 1000;
 
 export function normalizeConfirmCode(s: string): string {
   return s.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
