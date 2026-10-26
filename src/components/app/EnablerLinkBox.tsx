@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
-import { getSetupCode, saveSetupCode } from "@/lib/setup-code-store";
+import { readSetupCode, writeSetupCode } from "@/lib/setup-code-store";
 
 /** Phone deep link the BM TV Enabler app opens from a camera scan. */
 export const enablerLinkUrl = (code: string) => `bmtvenabler://link?code=${code}`;
@@ -11,11 +11,11 @@ export function EnablerLinkBox({ storeKey, issue, disabled }: { storeKey: string
   const [code, setCode] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { setCode(getSetupCode(storeKey)); }, [storeKey]);
+  useEffect(() => { setCode(readSetupCode(storeKey)); }, [storeKey]);
   useEffect(() => { if (code) QRCode.toDataURL(enablerLinkUrl(code), { width: 360, margin: 1 }).then(setQr).catch(() => setQr(null)); else setQr(null); }, [code]);
   const make = async () => {
     setBusy(true);
-    try { const c = await issue(); saveSetupCode(storeKey, c); setCode(c); } finally { setBusy(false); }
+    try { const c = await issue(); writeSetupCode(storeKey, c); setCode(c); } finally { setBusy(false); }
   };
   return <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
     <h3 className="font-semibold">Link BM TV Enabler — no typing</h3>
