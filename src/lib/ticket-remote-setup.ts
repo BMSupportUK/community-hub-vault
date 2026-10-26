@@ -32,9 +32,9 @@ export function appChecksPassed(c: AppChecks | null | undefined, _device?: Setup
   return !!(c?.adb && c.helper && c.accessibility);
 }
 
-export const FRESH_CHECK_MS = 2 * 3600_000;
+export const FRESH_CHECK_MS = 24 * 3600_000;
 type FreshRow = { app_checks: AppChecks | null; app_checked_at: string | null; checks_used_at?: string | null };
-/** A TV check counts for one screen share and only for 2 hours. */
+/** A TV check counts for one screen share and only for 24 hours. */
 export function checksFresh(row: FreshRow | null | undefined, now = Date.now()) {
   if (!row?.app_checked_at || !appChecksPassed(row.app_checks)) return false;
   const at = Date.parse(row.app_checked_at);
@@ -52,7 +52,7 @@ export function remoteSetupProgress(row: { app_checks: AppChecks | null; app_che
   const c = row.app_checks;
   // An old or already-used check is not current: show it as needing a fresh check, not as done.
   if (row.app_checked_at && c && appChecksPassed(c) && !checksFresh(row, now))
-    return { stage: 0, title: "Waiting for a fresh TV check", detail: "Your last check has been used or is over 2 hours old. Run BM TV Enabler again so it can check your TV before this screen share." };
+    return { stage: 0, title: "Waiting for a fresh TV check", detail: "Your last check has been used or is over 24 hours old. Run BM TV Enabler again so it can check your TV before this screen share." };
   if (!row.app_checked_at || !c) return { stage: 0, title: "Waiting for TV Enabler", detail: "Finish setup in BM TV Enabler, then type the code it shows into the box above." };
   if (!c.adb) return { stage: 0, title: "Waiting for the TV connection", detail: "Enabler has reported, but the TV connection is not confirmed." };
   if (!c.helper) return { stage: 1, title: "TV connected — Helper installation next", detail: "Continue the BM Remote Helper installation step in Enabler." };
