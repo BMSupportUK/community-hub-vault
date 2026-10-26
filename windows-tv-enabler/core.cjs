@@ -169,7 +169,7 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
     const res = await fetchImpl(`${SITE}/api/public/tv-install-list`);
     if (res.ok) apps = ((await res.json()).apps || []).filter(a => a && typeof a.path === 'string' && a.path.startsWith('/api/public/tv-install-apk/'));
   } catch {}
-  if (!apps.length) return { installed: [], failed: [] };
+  if (!apps.length) throw new Error('No apps are set up to install yet. Please contact BM Support.');
   const serial = await connect(host, adb, progress, delay);
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
   const installed = [], failed = [];

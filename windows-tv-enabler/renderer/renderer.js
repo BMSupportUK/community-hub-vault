@@ -14,7 +14,7 @@ const heading = el('heading'), description = el('description'), devicePick = el(
   appsPick = el('apps-pick'), appsNew = el('apps-new'), appsHave = el('apps-have'), appsBack = el('apps-back'),
   pairButton = el('pair'), pairCode = el('pair-code'), pairPort = el('pair-port');
 
-let device = null, checks = null, busy = false, confirmCode = '', appsFailed = [];
+let device = null, checks = null, busy = false, confirmCode = '';
 const savedAddress = localStorage.getItem('bm-tv-address');
 if (savedAddress) address.value = savedAddress;
 const savedDevice = localStorage.getItem('bm-tv-device');
@@ -54,18 +54,19 @@ const DESCRIPTIONS = {
 
 function render() {
   const s = wizard.step;
-  const askApps = s === Step.DEBUGGING && device != null && apps == null;
-  const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && device == null && !confirmCode);
-  appsPick.hidden = !askApps; appsBack.hidden = !askApps;
+  const askApps = s === Step.DEBUGGING && apps == null;
+  const install = apps === 'new';
+  const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && !install && device == null && !confirmCode);
+  appsPick.hidden = !askApps; appsBack.hidden = !(s === Step.DEBUGGING && apps != null);
   devicePick.hidden = !pick;
   deviceHelp.hidden = !pick;
   addressBlock.hidden = s !== Step.CHECK;
   tvCodeBlock.hidden = s !== Step.TV_CODE;
-  codeBlock.hidden = !(s === Step.DONE && confirmCode);
-  linkBlock.hidden = !(s === Step.DONE && wizard.ready);
+  codeBlock.hidden = !(s === Step.DONE && confirmCode) || install;
+  linkBlock.hidden = !(s === Step.DONE && wizard.ready) || install;
   codeBlock.textContent = confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
   next.hidden = true;
-  action.hidden = s === Step.DEBUGGING && (device == null || apps == null);
+  action.hidden = (s === Step.DEBUGGING && (device == null || apps == null)) || (s === Step.DONE && install);
   pairBlock.hidden = device !== 'android';
   scan.textContent = device === 'android' ? 'Find my Android TV' : 'Find my Fire TV';
   scanHint.textContent = device === 'android' ? 'Find my Android TV lists Android / Google TVs on your network (Amazon devices are left out). If yours isn\'t listed, type the address from the TV\'s network settings.' : 'Find my Fire TV lists only Amazon Fire TVs on your network, so you can pick the right one if you have more than one.';
@@ -74,18 +75,21 @@ function render() {
   pickAndroid.classList.toggle('selected', device === 'android');
   pickAmazon.setAttribute('aria-pressed', String(device === 'amazon'));
   pickAndroid.setAttribute('aria-pressed', String(device === 'android'));
-  const titles = { [Step.DEBUGGING]: '1. Enable TV debugging', [Step.CHECK]: '2. Connect to your TV', [Step.TV_CODE]: '3. Type the code on your TV', [Step.SETUP]: '4. Setting up your TV', [Step.DONE]: 'TV setup confirmed' };
+  const titles = { [Step.DEBUGGING]: '1. Enable TV debugging', [Step.CHECK]: '2. Connect to your TV', [Step.TV_CODE]: '3. Type the code on your TV', [Step.SETUP]: install ? '4. Installing our apps' : '4. Setting up your TV', [Step.DONE]: 'TV setup confirmed' };
   const labels = { [Step.DEBUGGING]: 'I\'ve switched debugging on — next ', [Step.CHECK]: 'Connect to this TV ', [Step.TV_CODE]: 'Confirm code and set up my TV ', [Step.SETUP]: 'Try again ' };
   heading.textContent = titles[s];
-  if (s === Step.DONE) {
+  if (s === Step.DONE && install) {
+    heading.textContent = 'Your apps are installed';
+    description.textContent = 'Everything is on your TV. You can close this app. To install again, press Reset setup.';
+  } else if (s === Step.DONE) {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
     description.textContent = confirmCode
       ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead).'
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
     action.firstChild.textContent = confirmCode ? 'New code ' : 'Get my confirmation code ';
   } else if (askApps) {
-    heading.textContent = 'Do you already have our apps on this TV?';
-    description.textContent = 'New customer? Choose "No, this is a new setup" and we\'ll install all our apps on the TV for you. Already have them? Choose "Yes" and we\'ll only switch on remote control.';
+    heading.textContent = 'What do you need?';
+    description.textContent = 'Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.';
   } else if (s === Step.DEBUGGING) {
     heading.textContent = device ? '1. Enable TV debugging' : 'Which TV are you setting up?';
     deviceHelp.textContent = device ? 'Wrong TV? Choose the other one.' : 'Choose your TV to see the right steps.';
@@ -131,6 +135,12 @@ async function run(stage, host) {
         say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
       }
     } else {
+      if (apps === 'new') {
+        const result = await window.bmTv.installApps(host);
+        wizard.setupFinished(true);
+        say(result.failed.length ? `Done. These apps didn't install: ${result.failed.join(', ')}. Press Reset setup to try again.` : `✓ ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} installed on your TV.`, result.failed.length > 0);
+        return;
+      }
       checks = await window.bmTv.check(host);
       const isReadyNow = () => allReady(checks.adb, checks.helper, checks.control, checks.accessibility);
       if (!isReadyNow()) {
@@ -140,15 +150,10 @@ async function run(stage, host) {
         say('Checking everything on the TV one last time…');
         checks = await window.bmTv.check(host);
       }
-      if (apps === 'new' && isReadyNow()) {
-        const result = await window.bmTv.installApps(host);
-        if (result.failed.length) appsFailed = result.failed;
-      }
       const ok = isReadyNow();
       wizard.setupFinished(ok);
       if (checks.type === 'amazon' || checks.type === 'android') { device = checks.type; localStorage.setItem('bm-tv-device', device); }
-      say(ok ? (appsFailed.length ? `✓ TV setup confirmed. These apps didn't install: ${appsFailed.join(', ')}.` : (apps === 'new' ? '✓ TV setup confirmed: our apps are installed and remote control is switched on.' : '✓ TV setup confirmed: both apps installed and remote control switched on.')) : 'The TV is not fully ready yet. Press Try again.', !ok);
-      appsFailed = [];
+      say(ok ? '✓ TV setup confirmed: both apps installed and remote control switched on.' : 'The TV is not fully ready yet. Press Try again.', !ok);
     }
   } catch (error) {
     say(cleanError(error), true);
@@ -201,7 +206,7 @@ reset.addEventListener('click', () => {
 function pickApps(value) { if (busy) return; apps = value; if (value) localStorage.setItem('bm-tv-apps', value); else localStorage.removeItem('bm-tv-apps'); render(); }
 appsNew.addEventListener('click', () => pickApps('new'));
 appsHave.addEventListener('click', () => pickApps('have'));
-appsBack.addEventListener('click', () => { if (busy) return; device = null; localStorage.removeItem('bm-tv-device'); render(); });
+appsBack.addEventListener('click', () => pickApps(null));
 pickAmazon.addEventListener('click', () => pickDevice('amazon'));
 pickAndroid.addEventListener('click', () => pickDevice('android'));
 scan.addEventListener('click', async () => {

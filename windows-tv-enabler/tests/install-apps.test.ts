@@ -27,9 +27,8 @@ test('installs every ticked app, skips unsafe paths, and keeps going after a fai
   expect(result.failed).toEqual(['Broken']);
 });
 
-test('nothing ticked means nothing installed and no TV connection', async () => {
+test('nothing ticked stops with a message and never touches the TV', async () => {
   let touched = false;
-  const result = await installOurApps('192.168.1.25', async () => { touched = true; return ''; }, () => {}, async () => {}, fakeFetch([]), '/tmp');
-  expect(result).toEqual({ installed: [], failed: [] });
+  await expect(installOurApps('192.168.1.25', async () => { touched = true; return ''; }, () => {}, async () => {}, fakeFetch([]), '/tmp')).rejects.toThrow('No apps are set up');
   expect(touched).toBe(false);
 });
