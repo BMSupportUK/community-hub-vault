@@ -121,7 +121,6 @@ async function run(stage, host) {
         checks = await window.bmTv.check(host);
       }
       const ok = isReadyNow();
-      if (ok) { say('Opening BM Remote Helper on your TV…'); await window.bmTv.openCodeApp(host); }
       wizard.setupFinished(ok);
       say(ok ? '✓ TV setup confirmed: both apps installed and remote control switched on. BM Remote Helper is open on your TV.' : 'The TV is not fully ready yet. Press Try again.', !ok);
     }
