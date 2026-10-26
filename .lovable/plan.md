@@ -1,7 +1,7 @@
 # Send one of our apps to the customer's TV
 
 ## What staff will see
-- A new **Send an app** button in the Remote control section of the screen-share panel, for both ticket and order sessions.
+- A new **Send an app** button in the Remote control section of the screen-share panel. It works the same on **tickets** (ticket Screen share tab) and **orders** (secure checkout Screen share tab), and the link is tied to that ticket or order.
 - Pressing it opens a pop-up that lists our current apps from the downloads list, with the name and version of each (for example BM Remote Helper and the player apps).
 - Staff pick an app and press **Send to TV**. The site then:
   1. Makes a short link for that app that works for **24 hours**, such as `bmsupport.uk/a/7K2QXP`, tied to this ticket or order.
