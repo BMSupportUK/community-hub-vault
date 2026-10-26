@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current Enabler follow-ups
+- [ ] Diagnose and repair missing TV Allow after reconnect; verify session continuity and release matching phone/Windows fixes.
 - [x] Check selected TV packages before APK download; skip existing apps and preserve per-app outcomes in phone and Windows source. Verified actual QD, Smart Player and BM Store package identities.
 - [x] Phone 1.37 signed and current; downloaded bytes match. 33 JS tests and both Java inventory/wizard tests pass; preview build OK. With the current published website it skips TV transfer/install after APK identity reading; publishing the website update enables skipping APK download too. Windows source updated, installer remains 1.25.
 - [x] Add Get new connection on ticket/order Remote setup; scoped one-consumer request brings fresh Helper session automatically and exposes Connect with no manual Helper input. Stored Helper lifecycle inspected; foreground open Enabler required.
