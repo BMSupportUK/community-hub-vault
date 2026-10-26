@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { execFile } = require('node:child_process');
-const { enable, report } = require('../core.cjs');
+const { checkExisting, installHelper, installControl, activate, openCodeApp, report } = require('../core.cjs');
 const { scan } = require('../discovery.cjs');
 let window; let busy = false;
 const page = path.join(__dirname, '..', 'dist', 'index.html');
@@ -20,6 +20,20 @@ function adb(args) {
     else resolve(stdout);
   }));
 }
+
+const say = text => { if (window && !window.isDestroyed()) window.webContents.send('bm:progress', text); };
+const tempDir = () => path.join(app.getPath('temp'), 'bm-tv-enabler');
+
+/** One guarded task at a time, only from our own window. */
+function task(handler) {
+  return async (event, ...args) => {
+    if (!trusted(event) || busy) throw new Error('Another task is already running.');
+    busy = true;
+    try { return await handler(...args); }
+    finally { busy = false; }
+  };
+}
+
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
@@ -28,26 +42,18 @@ else {
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());
-    ipcMain.handle('bm:scan', async event => {
-      if (!trusted(event) || busy) throw new Error('Another task is already running.');
-      busy = true; try { return await scan(); } finally { busy = false; }
-    });
-    ipcMain.handle('bm:enable', async (event, address, code, device) => {
-      if (!trusted(event) || busy) throw new Error('Another task is already running.');
-      busy = true;
-      const say = text => { if (!window.isDestroyed()) window.webContents.send('bm:progress', text); };
-      try {
-        const clean = String(code ?? '').replace(/\D/g, '');
-        if (clean.length !== 8) throw new Error('Type the 8-digit setup code shown on your support ticket\'s Remote setup tab.');
-        if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV you are setting up first: Amazon Fire TV or Android / Google TV.');
-        const result = await enable(address, adb, say, undefined, undefined, path.join(app.getPath('temp'), 'bm-tv-enabler'));
-        say('Telling BM Support your TV is ready…');
-        await report(clean, result.checks, device);
-        say('Remote control is on and BM Support has been told. BM Remote Helper is now open on your TV — type its six-digit code on your ticket.');
-        return result;
-      }
-      finally { busy = false; }
-    });
+    ipcMain.handle('bm:scan', task(() => scan()));
+    ipcMain.handle('bm:check', task(address => checkExisting(address, adb, say)));
+    ipcMain.handle('bm:install-helper', task(address => installHelper(address, adb, say, undefined, undefined, tempDir())));
+    ipcMain.handle('bm:install-control', task(address => installControl(address, adb, say, undefined, undefined, tempDir())));
+    ipcMain.handle('bm:activate', task(address => activate(address, adb, say)));
+    ipcMain.handle('bm:open-code-app', task(address => openCodeApp(address, adb, say)));
+    ipcMain.handle('bm:report', task((code, checks, device) => {
+      const clean = String(code ?? '').replace(/\D/g, '');
+      if (clean.length !== 8) throw new Error('Type the 8-digit setup code shown on your ticket or order\'s Remote setup tab.');
+      if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV you are setting up first: Amazon Fire TV or Android / Google TV.');
+      return report(clean, checks, device);
+    }));
     window.loadFile(page);
   });
   app.on('window-all-closed', () => {
