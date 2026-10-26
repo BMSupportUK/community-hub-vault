@@ -52,6 +52,16 @@ final class Enabler {
         return c;
     }
 
+    /** Connects (Allow box on first use) and puts the 4-digit check code on the TV screen. */
+    static void showTvCode(Context ctx, String host, String code, Progress p) throws Exception {
+        if (!code.matches("\\d{4}")) throw new IllegalArgumentException("bad code");
+        p.step(1, "Connecting… If the TV asks, tick Always allow and press Allow.");
+        KeyPair kp = keys(ctx);
+        try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
+            adb.shell("cmd notification post -S bigtext -t 'BM TV Enabler' bm_tv_code 'Your BM TV Enabler code is " + code + "'");
+        }
+    }
+
     /** Opens BM Remote Helper on the TV so it shows a fresh six-digit screen-share code. */
     static void openCodeApp(Context ctx, String host) throws Exception {
         KeyPair kp = keys(ctx);

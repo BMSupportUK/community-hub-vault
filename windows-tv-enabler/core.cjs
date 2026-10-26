@@ -180,6 +180,15 @@ async function activate(host, adb, progress, delay) {
 }
 
 /** Opens BM Remote Helper (the code app) on the TV so the customer can read its six-digit code. */
+/** Connects (Allow box on first use) and puts the 4-digit check code on the TV screen. */
+async function showTvCode(host, code, adb, progress, delay) {
+  if (!/^\d{4}$/.test(code)) throw new Error('bad code');
+  const serial = await connect(host, adb, progress, delay);
+  try {
+    await adb(['-s', serial, 'shell', `cmd notification post -S bigtext -t 'BM TV Enabler' bm_tv_code 'Your BM TV Enabler code is ${code}'`]);
+  } finally { await adb(['disconnect', serial]).catch(() => {}); }
+}
+
 async function openCodeApp(host, adb, progress, delay) {
   const serial = await connect(host, adb, progress, delay);
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
@@ -220,4 +229,4 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch) {
   return body.code;
 }
 
-module.exports = { requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };
+module.exports = { showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };
