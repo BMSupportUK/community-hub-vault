@@ -63,8 +63,14 @@ final class DeviceDiscovery {
                         found.put(host, new DiscoveredDevice(host, name == null ? "Android / Google TV — name unavailable" : name, reachable));
                         return;
                     }
-                    if (description != null && !description.fireTv && !advertised.fireTvHints.containsKey(host)) return;
-                    if (!amazon) return;
+                    // Amazon maker or Fire TV hint is enough; a silent box with debugging open is listed too,
+                    // because many Fire TVs don't answer DIAL/UPnP. Known non-Amazon devices stay out.
+                    if (!amazon) {
+                        boolean knownOther = (description != null) || advertised.dialHints.containsKey(host);
+                        if (knownOther || !debuggingReachable(host)) return;
+                        found.put(host, new DiscoveredDevice(host, "Fire TV — name unavailable", true));
+                        return;
+                    }
                     boolean reachable = debuggingReachable(host);
                     found.put(host, new DiscoveredDevice(host, name, reachable));
                 });
