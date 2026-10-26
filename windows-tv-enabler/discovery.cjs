@@ -87,7 +87,8 @@ async function scan(type = 'amazon') {
       for (const p of paths) { if (desc?.amazon || desc?.cast) break; desc = (await readDescription(host, `http://${host}${p}`)) || desc; }
       const amazon = Boolean(desc?.amazon || hint?.hinted);
       if (type === 'amazon') {
-        if (!amazon) continue;
+        // Many Fire TVs don't answer DIAL/UPnP: list a silent device with debugging open; known non-Amazon stays out.
+        if (!amazon) { if (desc || hint?.dial || !(await reachable(host))) continue; devices.push({ address: host, name: 'Amazon Fire TV — name unavailable', debugging: true }); continue; }
         devices.push({ address: host, name: desc?.name || 'Amazon Fire TV — name unavailable', debugging: await reachable(host) });
       } else {
         if (amazon) continue;
