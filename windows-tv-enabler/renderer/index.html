@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'"><title>BM TV Enabler</title><link rel="stylesheet" href="style.css"></head>
 <body><main>
-<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.15</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
+<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.16</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
 <section class="wizard">
   <h2 id="heading">1. Enable TV debugging</h2>
   <p id="description"></p>
@@ -9,7 +9,7 @@
   <p id="device-help" class="hint" hidden></p>
   <div id="address-block" hidden>
     <div class="address-row"><label for="address">TV address<input id="address" inputmode="decimal" autocomplete="off" maxlength="15" placeholder="192.168.1.25"></label><button id="scan" type="button">Find my TV</button></div>
-    <p class="hint">Find my TV searches Amazon devices only. Android / Google TV users: type the address from the TV's network settings.</p>
+    <p id="scan-hint" class="hint"></p>
     <details id="pair-block"><summary>Android / Google TV with Wireless debugging: pair with code</summary>
       <p class="hint">On the TV: Developer options › Wireless debugging › Pair device with pairing code. Type the code and the port after the colon on that screen. In TV address above, type the IP address &amp; Port from the main Wireless debugging screen, e.g. 192.168.1.25:41235.</p>
       <div class="address-row"><label for="pair-code">6-digit pairing code<input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="123456"></label><label for="pair-port">Pairing port<input id="pair-port" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="37123"></label></div>

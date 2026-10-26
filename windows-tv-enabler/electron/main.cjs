@@ -42,7 +42,7 @@ else {
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());
-    ipcMain.handle('bm:scan', task(() => scan()));
+    ipcMain.handle('bm:scan', task(type => scan(type === 'android' ? 'android' : 'amazon')));
     ipcMain.handle('bm:show-code', task((address, code) => showTvCode(address, code, adb, say)));
     ipcMain.handle('bm:link-report', task(async (code, checks, device, address) => report(code, checks, device, undefined, await readHelperCode(address, adb, say))));
     ipcMain.handle('bm:pair', task((ip, pairPort, code) => pair(ip, pairPort, code, adb, say)));

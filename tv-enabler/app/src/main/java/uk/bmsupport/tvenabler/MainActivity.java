@@ -128,7 +128,7 @@ public class MainActivity extends Activity {
 
     private void render() {
         SetupWizard.Step s = wizard.step;
-        boolean pick = s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0;
+        boolean pick = s == SetupWizard.Step.DEBUGGING || (s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
         devicePick.setVisibility(pick ? View.VISIBLE : View.GONE);
         deviceHelp.setVisibility(pick ? View.VISIBLE : View.GONE);
         address.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
@@ -137,18 +137,22 @@ public class MainActivity extends Activity {
         showAgain.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         confirmCode.setVisibility(s == SetupWizard.Step.DONE && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
         next.setVisibility(View.GONE);
-        turnOn.setVisibility(View.VISIBLE);
+        turnOn.setVisibility(s == SetupWizard.Step.DEBUGGING && device == null ? View.GONE : View.VISIBLE);
+        find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
         back.setVisibility(s == SetupWizard.Step.CHECK || s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         amazonBtn.setBackgroundColor("amazon".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
         androidBtn.setBackgroundColor("android".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
         switch (s) {
             case DEBUGGING:
-                heading.setText("1. Enable TV debugging");
-                description.setText("Put this phone and your TV on the same Wi-Fi. Switch on the setting for your TV:\n\nAmazon Fire TV\nSettings › My Fire TV › About — press the device name 7 times. Go back to Developer options and switch ADB debugging ON.\n\nAndroid / Google TV\nSettings › System › About — press Android TV OS build 7 times. Go back to Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.");
+                heading.setText(device == null ? "Which TV are you setting up?" : "1. Enable TV debugging");
+                deviceHelp.setText(device == null ? "Choose your TV to see the right steps." : "Wrong TV? Choose the other one.");
+                if (device == null) description.setText("");
+                else if ("amazon".equals(device)) description.setText("Put this phone and your Fire TV on the same Wi-Fi.\n\nOn the Fire TV: Settings › My Fire TV › About — press the device name 7 times. Go back to My Fire TV › Developer options and switch ADB debugging ON.");
+                else description.setText("Put this phone and your TV on the same Wi-Fi.\n\nOn the TV: Settings › System › About — press Android TV OS build 7 times. Go back to System › Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.");
                 turnOn.setText("I've switched debugging on — next"); break;
             case CHECK:
                 heading.setText("2. Connect to your TV");
-                description.setText("Type the TV's address from its network settings. Find my Fire TV searches Amazon devices only. Android / Google TV users: type the address.\n\nWhen the TV asks, tick Always allow and press Allow. Setup then runs by itself.");
+                description.setText(("android".equals(device) ? "Press Find my Android TV and pick yours (Amazon devices are left out), or type the address from the TV's network settings." : "Press Find my Fire TV and pick yours — only Amazon Fire TVs are listed — or type the address from the TV's network settings.") + "\n\nWhen the TV asks, tick Always allow and press Allow. Setup then runs by itself.");
                 turnOn.setText("Connect to this TV"); break;
             case TV_CODE:
                 heading.setText("3. Type the code on your TV");
@@ -274,11 +278,12 @@ public class MainActivity extends Activity {
             lock.setReferenceCounted(false);
             try {
                 lock.acquire();
-                List<DiscoveredDevice> found = DeviceDiscovery.scan(base);
+                final boolean wantAndroid = "android".equals(device);
+                List<DiscoveredDevice> found = DeviceDiscovery.scan(base, wantAndroid);
                 ui.post(() -> {
                     setBusy(false);
                     if (isFinishing() || isDestroyed()) return;
-                    if (found.isEmpty()) say("No Fire TV found. Keep the TV awake on the same Wi-Fi, or type the address from BM Remote Helper. Some TVs don't advertise themselves.", WARN);
+                    if (found.isEmpty()) say((wantAndroid ? "No Android TV found." : "No Fire TV found.") + " Keep the TV awake on the same Wi-Fi, or type the address from BM Remote Helper. Some TVs don't advertise themselves.", WARN);
                     else showDevices(found);
                 });
             } catch (InterruptedException e) {
@@ -295,7 +300,7 @@ public class MainActivity extends Activity {
         for (int i = 0; i < devices.size(); i++) labels[i] = devices.get(i).label();
         final int[] selected = {-1};
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Choose your Fire TV")
+                .setTitle("android".equals(device) ? "Choose your Android TV" : "Choose your Fire TV")
                 .setSingleChoiceItems(labels, -1, (d, index) -> {
                     selected[0] = index;
                     ((AlertDialog) d).getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);

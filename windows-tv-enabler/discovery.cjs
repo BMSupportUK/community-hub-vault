@@ -19,6 +19,14 @@ function parseDescription(xml) {
   if (!/amazon/i.test(maker) || !/fire\s?tv|\baft[a-z0-9]+\b/i.test(model)) return null;
   return { name: field('friendlyName') || 'Amazon Fire TV — name unavailable' };
 }
+/** Any device description: name plus whether it is an Amazon device (for filtering Android lists). */
+function parseInfo(xml) {
+  if (xml.length > 65536 || /<!DOCTYPE|<!ENTITY/i.test(xml) || !/<(?:[\w-]+:)?device\b/i.test(xml)) return null;
+  const amazon = parseDescription(xml);
+  if (amazon) return { name: amazon.name, amazon: true };
+  const name = (xml.match(/<(?:[\w-]+:)?friendlyName\b[^>]*>([\s\S]*?)<\//i)?.[1] || '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/[\x00-\x1f]/g, ' ').trim().slice(0, 100);
+  return { name: name || null, amazon: /<(?:[\w-]+:)?manufacturer\b[^>]*>[^<]*amazon/i.test(xml) };
+}
 function readDescription(host, url) {
   if (!safeLocation(host, url)) return Promise.resolve(null);
   return new Promise(resolve => {
@@ -26,7 +34,7 @@ function readDescription(host, url) {
       if (res.statusCode !== 200) { res.resume(); resolve(null); return; }
       let xml = ''; res.setEncoding('utf8');
       res.on('data', s => { xml += s; if (xml.length > 65536) req.destroy(); });
-      res.on('end', () => resolve(parseDescription(xml)));
+      res.on('end', () => { const info = parseInfo(xml); resolve(info ? { ...info, cast: new URL(url).port === '8008' } : null); });
       res.on('error', () => resolve(null));
     });
     req.on('timeout', () => req.destroy()); req.on('error', () => resolve(null));
@@ -50,7 +58,7 @@ async function advertised(networks) {
       if (!privateAddress(info.address) || !info.address.startsWith(base)) return;
       const text = data.toString('utf8');
       const location = text.match(/^location:\s*(.+)$/im)?.[1]?.trim();
-      found.set(info.address, { location: location && safeLocation(info.address, location) ? location : null, hinted: /amazon|\baft[a-z0-9]+\b/i.test(text) });
+      found.set(info.address, { location: location && safeLocation(info.address, location) ? location : null, hinted: /amazon|\baft[a-z0-9]+\b/i.test(text), dial: /dial-multiscreen|google|android/i.test(text) });
     });
     socket.bind(0, () => {
       timer = setTimeout(done, 4200);
@@ -64,9 +72,11 @@ async function advertised(networks) {
   })));
   return found;
 }
-async function scan() {
+/** type 'amazon' lists only Fire TVs; type 'android' lists TV-like devices that are not Amazon
+ * (Cast/DIAL TVs, or anything with network debugging open), so customers only see their kind. */
+async function scan(type = 'amazon') {
   const networks = bases();
-  if (!networks.length) throw new Error('Connect your computer to the same home network as the Fire TV, or enter the TV address manually.');
+  if (!networks.length) throw new Error('Connect your computer to the same home network as the TV, or enter the TV address manually.');
   const hints = await advertised(networks);
   const hosts = networks.flatMap(b => Array.from({ length: 254 }, (_, i) => b + (i + 1)));
   const devices = []; let next = 0;
@@ -74,11 +84,19 @@ async function scan() {
     while (next < hosts.length) {
       const host = hosts[next++]; const hint = hints.get(host);
       let desc = hint?.location ? await readDescription(host, hint.location) : null;
-      for (const p of paths) { if (desc) break; desc = await readDescription(host, `http://${host}${p}`); }
-      if (!desc && !hint?.hinted) continue;
-      devices.push({ address: host, name: desc?.name || 'Amazon Fire TV — name unavailable', debugging: await reachable(host) });
+      for (const p of paths) { if (desc?.amazon || desc?.cast) break; desc = (await readDescription(host, `http://${host}${p}`)) || desc; }
+      const amazon = Boolean(desc?.amazon || hint?.hinted);
+      if (type === 'amazon') {
+        if (!amazon) continue;
+        devices.push({ address: host, name: desc?.name || 'Amazon Fire TV — name unavailable', debugging: await reachable(host) });
+      } else {
+        if (amazon) continue;
+        const debugging = await reachable(host);
+        if (!debugging && !desc?.cast && !hint?.dial) continue;
+        devices.push({ address: host, name: desc?.name || 'Android / Google TV — name unavailable', debugging });
+      }
     }
   }));
   return devices.sort((a, b) => a.name.localeCompare(b.name) || a.address.localeCompare(b.address, undefined, { numeric: true }));
 }
-module.exports = { scan, safeLocation, parseDescription };
+module.exports = { scan, safeLocation, parseDescription, parseInfo };
