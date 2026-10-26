@@ -64,7 +64,7 @@ function DemoPayPage({ unpaid = false }: { unpaid?: boolean }) {
           <ArrowLeft className="size-4" /> Back to my orders
         </Link>
       </div>
-      <CheckoutTemplate view={(unpaid ? { ...DEMO_CHECKOUT_VIEW, canPayByBank: true, order: { ...DEMO_CHECKOUT_VIEW.order, method: "square", paidAt: null, paymentSentAt: null, status: "pending" } } : DEMO_CHECKOUT_VIEW) as CheckoutView} preview onSwitchPayMethod={demoOnly} onPaymentSent={demoOnly} onContinueToSetup={demoOnly} payByBank={<PayByBankSection token="demo" password="" preview />} />
+      <CheckoutTemplate transparent view={(unpaid ? { ...DEMO_CHECKOUT_VIEW, canPayByBank: true, order: { ...DEMO_CHECKOUT_VIEW.order, method: "square", paidAt: null, paymentSentAt: null, status: "pending" } } : DEMO_CHECKOUT_VIEW) as CheckoutView} preview onSwitchPayMethod={demoOnly} onPaymentSent={demoOnly} onContinueToSetup={demoOnly} payByBank={<PayByBankSection token="demo" password="" preview />} />
     </main>
   );
 }
