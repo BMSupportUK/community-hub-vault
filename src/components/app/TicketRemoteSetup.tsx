@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { readSetupCode, writeSetupCode } from "@/lib/setup-code-store";
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
@@ -34,7 +35,10 @@ export function useTicketRemoteSetup(ticketId: string) {
 export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: { ticketId: string; customer: boolean; closed: boolean; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
-  const [setupCode, setSetupCode] = useState<string | null>(null);
+  const [setupCode, setSetupCodeState] = useState<string | null>(null);
+  const scope = `ticket:${ticketId}`;
+  useEffect(() => { setSetupCodeState(readSetupCode(scope)); }, [scope]);
+  const setSetupCode = (c: string | null) => { writeSetupCode(scope, c); setSetupCodeState(c); };
   const save = async (device: SetupDevice) => {
     setBusy(true);
     const { error } = await supabase.rpc("save_ticket_remote_setup" as never, { _ticket_id: ticketId, _device: device, _steps: [] } as never);
@@ -93,7 +97,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
         <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
       </form>
     </div>}
-    {!closed && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
+    {!closed && !complete && !ready && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
       <h3 className="font-semibold">Your setup code</h3>
       <p className="text-sm text-muted-foreground">Type this eight-digit code into BM TV Enabler to link its checked progress to this ticket. It remains available when your TV is already set up.</p>
       {setupCode

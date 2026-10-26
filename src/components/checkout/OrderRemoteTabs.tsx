@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { readSetupCode, writeSetupCode } from "@/lib/setup-code-store";
 import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import { CheckCircle2, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
@@ -40,7 +41,10 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   const [row, setRow] = useState<Row | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
-  const [setupCode, setSetupCode] = useState<string | null>(null);
+  const [setupCode, setSetupCodeState] = useState<string | null>(null);
+  const scope = `order:${token}`;
+  useEffect(() => { setSetupCodeState(readSetupCode(scope)); }, [scope]);
+  const setSetupCode = (c: string | null) => { writeSetupCode(scope, c); setSetupCodeState(c); };
   const load = useCallback(async () => { try { setRow((await get({ data: { token, password } })) as Row); } catch { setRow(null); } }, [get, token, password]);
   useEffect(() => { void load(); const t = window.setInterval(load, 4000); return () => window.clearInterval(t); }, [load]);
   const run = async (f: () => Promise<void>) => { setBusy(true); try { await f(); } catch (e) { toast.error(e instanceof Error ? e.message : "Something went wrong"); } await load(); setBusy(false); };
@@ -81,13 +85,13 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
           <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
         </form>
       </div>}
-      <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4">
+      {!row.completed_at && !ready && <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4">
         <h3 className="font-semibold">Your setup code</h3>
         <p className="text-sm text-muted-foreground">Type this eight-digit code into BM TV Enabler to link its checked progress to this order. It remains available when your TV is already set up.</p>
         {setupCode ? <p className="font-mono text-3xl font-bold tracking-widest">{setupCode.slice(0, 4)} {setupCode.slice(4)}</p>
           : <Button size="sm" disabled={busy} onClick={() => void issue()}>Show my setup code</Button>}
         {setupCode && <><p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p><Button size="sm" variant="outline" disabled={busy} onClick={() => void issue()}>New setup code</Button></>}
-      </div>
+      </div>}
       <RemoteSetupProgress row={row} />
       {!row.completed_at && REMOTE_SETUP_STEPS[row.device].map((s, i) => {
         const done = stepDone(s, row);
