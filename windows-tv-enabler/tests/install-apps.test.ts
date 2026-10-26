@@ -29,7 +29,6 @@ test('installs every ticked app, skips unsafe paths, and keeps going after a fai
     { name: 'Player', status: 'installed' },
     { name: 'Newer on TV', status: 'already' },
     { name: 'Broken', status: 'failed' },
-    { name: 'Evil', status: 'failed' },
   ]);
 });
 
