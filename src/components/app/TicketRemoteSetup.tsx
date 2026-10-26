@@ -42,6 +42,14 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     setSetupCode(null);
     await reload(); setBusy(false);
   };
+  const restart = async () => {
+    if (!window.confirm("Restart the TV setup from the beginning? Your saved progress and codes for this ticket will be cleared.")) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("reset_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
+    if (error) toast.error(error.message); else toast.success("Setup restarted — choose your device to begin again");
+    setSetupCode(null); setCode("");
+    await reload(); setBusy(false);
+  };
   const issue = async () => {
     setBusy(true);
     const { data, error } = await supabase.rpc("issue_ticket_setup_code" as never, { _ticket_id: ticketId } as never);
