@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
+import { getTicketEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
 import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
@@ -38,6 +39,8 @@ export function useTicketRemoteSetup(ticketId: string) {
 
 export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: { ticketId: string; customer: boolean; closed: boolean; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
+  const confirmationStatusFn = useServerFn(getTicketEnablerConfirmationStatus);
+  const confirmationStatus = useCallback(() => confirmationStatusFn({ data: { ticketId } }), [confirmationStatusFn, ticketId]);
   const [renewal, setRenewal] = useState("");
   const renewalGate = useEnablerRenewalGate(`ticket:${ticketId}`, row?.pending_session_id ?? null);
   const save = async (device: SetupDevice) => {
@@ -118,7 +121,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Your valid 24-hour confirmation reference stays the same."}</p>
       <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
     </div>}
-    {!closed && !fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
+    {!closed && !fresh && <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} />}
     <RemoteSetupProgress row={row} />
     {!complete && steps.map((s, i) => {
       const done = stepDone(s, row);

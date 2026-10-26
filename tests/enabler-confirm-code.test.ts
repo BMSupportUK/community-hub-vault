@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { confirmCodeState, makeConfirmCode, normalizeConfirmCode, CONFIRM_TTL_MS } from "../src/lib/enabler-confirm-code";
+import { confirmationActive, confirmCodeState, makeConfirmCode, normalizeConfirmCode, CONFIRM_TTL_MS } from "../src/lib/enabler-confirm-code";
 
 const now = new Date("2026-10-26T12:00:00Z");
 const row = (o: Partial<{ device: string; expires_at: string; used_at: string | null }> = {}) =>
@@ -9,6 +9,12 @@ test("code lasts 24 hours", () => {
   expect(CONFIRM_TTL_MS).toBe(24 * 60 * 60 * 1000);
   expect(confirmCodeState(row({ expires_at: new Date(now.getTime() - 1).toISOString() }), "android", now)).toBe("invalid");
   expect(confirmCodeState(row(), "android", now)).toBe("ok");
+});
+test("customer code entry remains locked for the full reference lifetime, even after TV checks were consumed", () => {
+  const expiresAt = "2026-10-27T12:00:00Z";
+  expect(confirmationActive(expiresAt, Date.parse("2026-10-27T11:59:59Z"))).toBe(true);
+  expect(confirmationActive(expiresAt, Date.parse("2026-10-27T12:00:00Z"))).toBe(false);
+  expect(confirmationActive(null, now.getTime())).toBe(false);
 });
 test("code remains usable after first submission for the full 24 hours", () => {
   const used = row({ used_at: now.toISOString() });
