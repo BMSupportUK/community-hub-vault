@@ -144,7 +144,7 @@ action.addEventListener('click', () => {
 
 showAgain.addEventListener('click', () => { if (!busy && wizard.tvCode) showCode(address.value.trim(), wizard.tvCode); });
 
-next.addEventListener('click', () => { wizard.next(); say(''); render(); });
+next.addEventListener('click', () => render());
 back.addEventListener('click', () => { if (!busy) { wizard.reset(); checks = null; confirmCode = ''; say(''); render(); } });
 reset.addEventListener('click', () => {
   if (busy) return;
