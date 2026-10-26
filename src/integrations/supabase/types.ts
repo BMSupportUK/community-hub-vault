@@ -8893,6 +8893,10 @@ export type Database = {
         Returns: string
       }
       reset_job_application_password: { Args: { _id: string }; Returns: string }
+      reset_ticket_remote_setup: {
+        Args: { _ticket_id: string }
+        Returns: undefined
+      }
       resolve_content_report: {
         Args: { _id: string; _notes?: string; _status: string }
         Returns: undefined
