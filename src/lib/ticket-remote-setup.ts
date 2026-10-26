@@ -9,13 +9,13 @@ export const REMOTE_SETUP_STEPS: Record<SetupDevice, SetupStep[]> = {
     { title: "Turn on developer options and ADB debugging", body: "On your Fire TV go to Settings › My Fire TV › About and press the device name 7 times. Then Settings › My Fire TV › Developer options › ADB debugging ON.", proof: "adb" },
     { title: "Install BM TV Enabler on your phone or PC", body: "Scan the QR code on the right with your Android phone, or download the Windows version. Keep the phone or PC on the same Wi-Fi as the TV.", proof: "reported" },
     { title: "Turn on remote control", body: "In BM TV Enabler, connect to your Fire TV and press Allow on the TV. The app then sets everything up by itself. When it confirms your TV, type the code the app shows into the “Type the code from BM TV Enabler” box at the top of this page.", proof: "accessibility" },
-    { title: "Send your screen-share request", body: "BM TV Enabler opens BM Remote Helper on your TV by itself and sends its code straight here — just press Connect at the top of this page. Only if no Connect button appears, open BM Remote Helper on the TV and type the six-digit code it shows.", proof: "code" },
+    { title: "Send your screen-share request", body: "BM TV Enabler brings your TV connection here automatically. Press Connect when ready. For another session, press Get new connection and keep Enabler open on the same Wi-Fi as your TV.", proof: "code" },
   ],
   android: [
     { title: "Turn on developer options and debugging", body: "On your TV go to Settings › System › About and press Android TV OS build 7 times. Then Settings › System › Developer options and switch ON Network debugging — or Wireless debugging if that's what your TV has. Leave it switched on. Using the Windows app with Wireless debugging? You can also choose Pair device with pairing code on the TV and type that code into the app.", proof: "adb" },
     { title: "Install BM TV Enabler on your phone or PC", body: "Scan the QR code on the right with your Android phone, or download the Windows version. Keep the phone or PC on the same Wi-Fi as the TV.", proof: "reported" },
     { title: "Turn on remote control", body: "In BM TV Enabler, type your TV's address, connect and press Allow on the TV. The app then sets everything up by itself. When it confirms your TV, type the code the app shows into the “Type the code from BM TV Enabler” box at the top of this page.", proof: "accessibility" },
-    { title: "Send your screen-share request", body: "BM TV Enabler opens BM Remote Helper on your TV by itself and sends its code straight here — just press Connect at the top of this page. Only if no Connect button appears, open BM Remote Helper on the TV and type the six-digit code it shows.", proof: "code" },
+    { title: "Send your screen-share request", body: "BM TV Enabler brings your TV connection here automatically. Press Connect when ready. For another session, press Get new connection and keep Enabler open on the same Wi-Fi as your TV.", proof: "code" },
   ],
 };
 
@@ -58,5 +58,5 @@ export function remoteSetupProgress(row: { app_checks: AppChecks | null; app_che
   if (!c.helper) return { stage: 1, title: "TV connected — Helper installation next", detail: "Continue the BM Remote Helper installation step in Enabler." };
   if (!c.control) return { stage: 2, title: "BM Remote Helper installed — remote control next", detail: "Continue the remote-control installation step in Enabler." };
   if (!c.accessibility) return { stage: 3, title: "Apps installed — activation next", detail: "Continue the permission activation step in Enabler." };
-  return { stage: 4, title: "TV setup confirmed by Enabler", detail: row.completed_at ? "Your TV code has also been confirmed. After a screen share ends, run BM TV Enabler again — it brings the fresh check and code together." : "Type the code BM TV Enabler shows into the box above to confirm your TV." };
+  return { stage: 4, title: "TV setup confirmed by Enabler", detail: row.completed_at ? "After a screen share ends, press Get new connection and keep BM TV Enabler open. It brings the next connection here automatically." : "Type the confirmation reference BM TV Enabler shows into the box above to confirm your TV." };
 }

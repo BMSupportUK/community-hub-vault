@@ -44,11 +44,13 @@ export const Route = createFileRoute("/api/public/enabler-confirm")({
         for (let i = 0; i < 5; i++) {
           const code = makeConfirmCode();
           const expiresAt = new Date(Date.now() + CONFIRM_TTL_MS).toISOString();
+          const refreshToken = [...crypto.getRandomValues(new Uint8Array(32))].map(b => b.toString(16).padStart(2, "0")).join("");
           const { error } = await db.from("enabler_confirm_codes").insert({
             code_hash: await sha256Hex(code), device: parsed.data.device, checks: parsed.data.checks,
             app: parsed.data.app ?? null, session_id: sessionId, expires_at: expiresAt,
+            refresh_token_hash: await sha256Hex(refreshToken),
           });
-          if (!error) return json({ code, helperLinked: !!sessionId, expiresAt, expiresAtMs: Date.parse(expiresAt) });
+          if (!error) return json({ code, helperLinked: !!sessionId, expiresAt, expiresAtMs: Date.parse(expiresAt), refreshToken });
         }
         return json({ error: "Couldn't make a code. Try again." }, 503);
       },

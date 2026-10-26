@@ -85,6 +85,15 @@ export const redeemOrderEnablerCode = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const requestOrderEnablerConnection = createServerFn({ method: "POST" })
+  .inputValidator((d) => Access.parse(d))
+  .handler(async ({ data }) => {
+    const { db, orderId } = await open(data.token, data.password);
+    const { data: result, error } = await db.rpc("request_enabler_connection", { _kind: "order", _id: orderId });
+    if (error) throw new Error("Could not request a new connection.");
+    return String(result);
+  });
+
 /** Live Helper code: confirms setup, links the TV to this order and alerts staff (same as tickets). */
 export const verifyOrderRemoteSetup = createServerFn({ method: "POST" })
   .inputValidator((d) => Access.extend({ code: z.string().regex(/^\d{6}$/).optional() }).parse(d))
@@ -101,12 +110,13 @@ export const verifyOrderRemoteSetup = createServerFn({ method: "POST" })
     if ((count ?? 0) >= 8) return { ok: false as const, error: "Too many wrong codes. Wait 15 minutes." };
     // No typed code = Connect button: use the Helper session BM TV Enabler read off the TV.
     const pending = (r as { pending_session_id?: string | null }).pending_session_id ?? null;
-    if (!data.code && !pending) return { ok: false as const, error: "Type the six-digit code shown in BM Remote Helper on the TV." };
+    if (!data.code && !pending) return { ok: false as const, error: "Press Get new connection and keep BM TV Enabler open." };
     const q = db.from("tv_remote_sessions").select("id, device_name").eq("status", "pending").gt("expires_at", new Date().toISOString());
-    const { data: s } = await (data.code ? q.eq("code_hash", await sha256Hex(data.code)) : q.eq("id", pending!)).maybeSingle();
+    if (!data.code && !pending) return { ok: false as const, error: "Request a new connection first." };
+    const { data: s } = await (data.code ? q.eq("code_hash", await sha256Hex(data.code)) : q.eq("id", pending ?? "")).maybeSingle();
     if (!s && !data.code) {
       await db.from("order_remote_setup").update({ pending_session_id: null }).eq("order_id", orderId);
-      return { ok: false as const, error: "The TV code has expired. Open BM Remote Helper on the TV and type the code it shows now." };
+      return { ok: false as const, error: "The TV connection has ended. Press Get new connection and keep BM TV Enabler open." };
     }
     if (!s) {
       await db.from("tv_remote_events").insert({ kind: failKind });
