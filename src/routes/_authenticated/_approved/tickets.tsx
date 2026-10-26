@@ -1481,6 +1481,11 @@ function TicketDetail({
   const [helperBusy, setHelperBusy] = useState(false);
   const helperReply = async (choice: HelperChoice) => {
     setHelperBusy(true);
+    if (choice === "lost_pin") {
+      try { const { sendTicketTempPin } = await import("@/lib/customer-portal.functions"); await sendTicketTempPin({ data: { ticketId: ticket.id } }); }
+      catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); }
+      setHelperBusy(false); await load(); notifyTicketChanged(); return;
+    }
     const { data, error } = await supabase.rpc("account_helper_reply", { _ticket_id: ticket.id, _choice: choice });
     setHelperBusy(false);
     if (error) { toast.error(error.message); return; }
