@@ -411,3 +411,7 @@
 - [x] Orders get the ticket Remote setup flow: customer tabs Order / Remote setup / Screen share; staff secure page gets a read-only Remote setup tab. Not yet tested end-to-end on a real order.
 - [ ] Make DEMO-TV1 use the customer Remote setup tabs for staff testing and verify device selection/code issuance through the secure order.
 - [x] TV Enabler 1.12: ready TVs skip the TV type step; button opens BM Remote Helper on the TV for the screen-share code. Signed with permanent key, registered.
+
+## Windows TV Enabler wizard
+- [x] Port the phone wizard to Windows 1.3: debugging confirm, existing-setup check with quick-open, device choice only when needed, staged Helper/control install, in-app TV confirmation, optional website linking, reset; control.apk now pushed from the helper download (no TV-side copy). 20 tests pass.
+- [ ] Rebuild and register the unsigned NSIS installer; verify on a physical Windows PC + TV.
