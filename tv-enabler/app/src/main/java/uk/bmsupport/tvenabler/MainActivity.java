@@ -220,6 +220,8 @@ public class MainActivity extends Activity {
                     if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.setupFinished(ready);
+                        // Linked by the website QR: send straight there, no button or code needed.
+                        if (ready && linkCode() != null && device != null) ui.post(this::start);
                         say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on. BM Remote Helper is open on your TV." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
