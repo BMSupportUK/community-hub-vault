@@ -104,7 +104,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         return <article key={i} className={`space-y-2 rounded-xl border p-4 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
           <h3 className="flex items-center gap-2 font-semibold">{done ? <CheckCircle2 className="size-5 text-primary" /> : <span className="flex size-5 items-center justify-center rounded-full border border-border text-xs">{i + 1}</span>}{s.title}</h3>
           <p className="text-sm text-muted-foreground">{s.body}</p>
-          {!done && <p className="text-xs text-muted-foreground">{s.proof === "code" ? (ready ? "Enter the TV code in the box at the top." : "Unlocks once the app has checked your TV.") : "Ticks automatically when the app checks your TV."}</p>}
+          {!done && <p className="text-xs text-muted-foreground">{s.proof === "code" ? (ready ? "Press Connect at the top, or type the TV code there." : "Unlocks once the app has checked your TV.") : "Ticks automatically when the app checks your TV."}</p>}
         </article>;
       })}
     </section>
