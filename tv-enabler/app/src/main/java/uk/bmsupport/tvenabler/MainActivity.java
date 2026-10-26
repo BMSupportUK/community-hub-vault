@@ -29,13 +29,14 @@ public class MainActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final SetupWizard wizard = new SetupWizard();
-    private EditText address, setupCode;
+    private EditText address;
+    private TextView confirmCode;
     private Button turnOn, find, amazonBtn, androidBtn, next, reset, back, openSupport;
     private TextView status, deviceHelp, heading, description;
     private LinearLayout devicePick;
     private String device;
     private Enabler.Checks checks;
-    private boolean busy, websiteSynced;
+    private boolean busy;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -67,12 +68,9 @@ public class MainActivity extends Activity {
         address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         address.setKeyListener(android.text.method.DigitsKeyListener.getInstance("0123456789."));
         address.setText(prefs.getString("host", "")); col.addView(address, lp(dp(12)));
-        setupCode = new EditText(this);
-        setupCode.setHint("8-digit ticket or order setup code");
-        setupCode.setHintTextColor(MUTED); setupCode.setTextColor(FG); setupCode.setTextSize(20);
-        setupCode.setInputType(InputType.TYPE_CLASS_NUMBER);
-        setupCode.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(8)});
-        col.addView(setupCode, lp(dp(12)));
+        confirmCode = text("", 40, OK, true);
+        confirmCode.setGravity(Gravity.CENTER); confirmCode.setTextIsSelectable(true);
+        col.addView(confirmCode, lp(dp(12)));
         openSupport = button("Open BM Remote Helper on TV to show my code", Color.parseColor("#2A3050"));
         openSupport.setOnClickListener(v -> openBmSupport()); col.addView(openSupport, lp(dp(8)));
         find = button("Find my Fire TV", Color.parseColor("#2A3050"));
@@ -82,7 +80,7 @@ public class MainActivity extends Activity {
         next = button("Done — next step", ACCENT);
         next.setOnClickListener(v -> { wizard.next(); say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
         back = button("Back to debugging instructions", Color.parseColor("#2A3050"));
-        back.setOnClickListener(v -> { if (!busy) { wizard.reset(); checks = null; websiteSynced = false; say("", MUTED); render(); } });
+        back.setOnClickListener(v -> { if (!busy) { wizard.reset(); checks = null; confirmCode.setText(""); say("", MUTED); render(); } });
         col.addView(back, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
@@ -102,11 +100,12 @@ public class MainActivity extends Activity {
 
     private void render() {
         SetupWizard.Step s = wizard.step;
-        devicePick.setVisibility(s == SetupWizard.Step.DEVICE ? View.VISIBLE : View.GONE);
-        deviceHelp.setVisibility(s == SetupWizard.Step.DEVICE ? View.VISIBLE : View.GONE);
+        boolean pick = s == SetupWizard.Step.DEVICE || (s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
+        devicePick.setVisibility(pick ? View.VISIBLE : View.GONE);
+        deviceHelp.setVisibility(pick ? View.VISIBLE : View.GONE);
         address.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
         find.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
-        setupCode.setVisibility(s != SetupWizard.Step.DEBUGGING && s != SetupWizard.Step.DEVICE ? View.VISIBLE : View.GONE);
+        confirmCode.setVisibility(s == SetupWizard.Step.DONE && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
         openSupport.setVisibility((s == SetupWizard.Step.REPORT || s == SetupWizard.Step.DONE) && wizard.ready ? View.VISIBLE : View.GONE);
         next.setVisibility(wizard.completed ? View.VISIBLE : View.GONE);
         turnOn.setVisibility(wizard.completed ? View.GONE : View.VISIBLE);
@@ -121,7 +120,7 @@ public class MainActivity extends Activity {
                 turnOn.setText("I've switched debugging on — next"); break;
             case CHECK:
                 heading.setText("2. Check your TV");
-                description.setText("Type the TV's address from its network settings. Find my Fire TV searches Amazon devices only. Android / Google TV users: type the address.\n\nWe'll check whether the apps and permissions are already set up. If they are, BM Remote Helper opens straight away — nothing is reinstalled.\n\nOptional: enter the eight-digit setup code from your ticket or order's Remote setup tab to send checked progress there. No website code? You can still finish TV setup.");
+                description.setText("Type the TV's address from its network settings. Find my Fire TV searches Amazon devices only. Android / Google TV users: type the address.\n\nWe'll check whether the apps and permissions are already set up. If they are, BM Remote Helper opens straight away — nothing is reinstalled.");
                 turnOn.setText("Check this TV"); break;
             case DEVICE:
                 heading.setText("3. Confirm your TV type");
@@ -142,12 +141,15 @@ public class MainActivity extends Activity {
                 turnOn.setText("Activate and check permissions"); break;
             case REPORT:
                 heading.setText(wizard.ready ? "3. Confirm TV setup" : "7. Confirm TV setup");
-                description.setText("We'll check the TV one last time: BM Remote Helper installed, remote control installed, and its permission switched on. If everything checks out, setup is finished and BM Remote Helper stays open on the TV with your six-digit screen-share code.\n\nThis confirms setup inside this app. An eight-digit website linking code is optional — it is not needed to finish TV setup.");
+                description.setText("We'll check the TV one last time: BM Remote Helper installed, remote control installed, and its permission switched on. If everything checks out, setup is finished and BM Remote Helper stays open on the TV with your six-digit screen-share code.\n\nWhen it's confirmed you'll get a short code to type on your ticket or order's Remote setup tab.");
                 turnOn.setText("Check and confirm TV setup"); break;
             case DONE:
                 heading.setText("TV setup confirmed");
-                description.setText((websiteSynced ? "Your ticket or order has received the TV checks. " : "Your TV is ready. Website linking is separate: enter the optional eight-digit setup code below and send the checks to your ticket or order. ") + "Then enter the six-digit code shown on the TV in the website's Remote setup tab to request screen sharing.\n\nUse the button below to reopen BM Remote Helper for a new code. Reset setup starts again without uninstalling TV apps or removing authorization.");
-                turnOn.setText(websiteSynced ? "Send TV checks again" : "Send TV checks to my ticket or order"); break;
+                deviceHelp.setText("Which TV is this? Choose the same type as your ticket or order.");
+                description.setText(confirmCode.length() > 0
+                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen enter the six-digit code shown on the TV in the same tab to request screen sharing. Use the button below to reopen BM Remote Helper for a new TV code."
+                        : "Your TV is ready. Get your confirmation code, then type it on your ticket or order's Remote setup tab.");
+                turnOn.setText(confirmCode.length() > 0 ? "New code" : "Get my confirmation code"); break;
         }
         setBusy(busy);
     }
@@ -163,19 +165,15 @@ public class MainActivity extends Activity {
         if (!SetupWizard.validHost(host)) { say("Type the TV's address exactly as it shows on the TV, e.g. 192.168.1.23.", WARN); return; }
         final SetupWizard.Step stage = wizard.step;
         final String selectedDevice = device;
-        final String code = setupCode.getText().toString().replaceAll("\\D", "");
-        if (stage == SetupWizard.Step.DONE && (code.length() != 8 || checks == null || !wizard.ready)) {
-            say("Enter the current eight-digit setup code from your ticket or order's Remote setup tab.", WARN); return;
-        }
+        if (stage == SetupWizard.Step.DONE && (checks == null || !wizard.ready)) { say("Check the TV again first.", WARN); return; }
+        if (stage == SetupWizard.Step.DONE && device == null) { say("Choose which TV this is first.", WARN); return; }
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("host", host).apply();
-        setBusy(true); say(stage == SetupWizard.Step.DONE ? "Sending checked TV setup to your ticket or order…" : "Checking your TV… keep this app open and watch your TV for an Allow box.", MUTED);
+        setBusy(true); say(stage == SetupWizard.Step.DONE ? "Getting your confirmation code…" : "Checking your TV… keep this app open and watch your TV for an Allow box.", MUTED);
         io.execute(() -> {
             try {
                 Enabler.Progress progress = (i, msg) -> ui.post(() -> { if (!isFinishing() && !isDestroyed()) say(msg, i == 1 ? WARN : MUTED); });
-                if (stage == SetupWizard.Step.DONE) {
-                    String err = Enabler.report(code, checks, null);
-                    if (err != null) throw new IllegalStateException(err);
-                } else {
+                final String issued = stage == SetupWizard.Step.DONE ? Enabler.requestConfirmCode(checks, selectedDevice) : null;
+                if (stage != SetupWizard.Step.DONE) {
                     checks = stage == SetupWizard.Step.CHECK || stage == SetupWizard.Step.REPORT ? Enabler.checkExisting(this, host, progress)
                             : Enabler.enableUntil(this, host, stage == SetupWizard.Step.HELPER ? 2 : stage == SetupWizard.Step.CONTROL ? 3 : 4, progress);
                     // Already-set-up TV: open the code app once, straight away. The confirm step only re-checks.
@@ -184,14 +182,9 @@ public class MainActivity extends Activity {
                         Enabler.openCodeApp(this, host);
                     }
                 }
-                // Only measured snapshots are sent. A website error never undoes a successful TV operation.
-                final String syncError = stage != SetupWizard.Step.DONE && code.length() == 8
-                        ? Enabler.report(code, checks, stage == SetupWizard.Step.CHECK || stage == SetupWizard.Step.REPORT ? null : selectedDevice) : null;
-                final boolean sent = stage == SetupWizard.Step.DONE || (code.length() == 8 && syncError == null);
                 ui.post(() -> {
                     if (isFinishing() || isDestroyed()) return;
                     setBusy(false);
-                    websiteSynced = sent;
                     if (stage == SetupWizard.Step.CHECK) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.checked(ready);
@@ -201,12 +194,12 @@ public class MainActivity extends Activity {
                         wizard.confirmTv(ready);
                         say(ready ? "✓ TV setup confirmed: both apps installed and remote-control permission enabled. Your TV code app is open. Press finish." : "The TV is not fully ready. Go back to debugging instructions and check setup again.", ready ? OK : WARN);
                     } else if (stage == SetupWizard.Step.DONE) {
-                        say("✓ Your ticket or order has received the checked TV setup. Enter the six-digit TV code on its Remote setup tab.", OK);
+                        confirmCode.setText(issued.substring(0, 3) + "-" + issued.substring(3));
+                        say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK);
                     } else {
                         wizard.operationCompleted();
                         say("✓ This step is complete and checked on the TV. Confirm to continue.", OK);
                     }
-                    if (syncError != null) say("TV step checked. Website sync pending: " + syncError + " You can finish TV setup and retry linking on the final screen.", WARN);
                     render();
                 });
             } catch (Exception e) {
@@ -234,11 +227,11 @@ public class MainActivity extends Activity {
     private void confirmReset() {
         if (busy) return;
         new AlertDialog.Builder(this).setTitle("Reset setup?")
-                .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and entered setup code? Installed TV apps and this phone's TV authorization are kept.")
+                .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
-                    wizard.reset(); checks = null; device = null; websiteSynced = false;
+                    wizard.reset(); checks = null; device = null;
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").apply();
-                    address.setText(""); setupCode.setText(""); say("", MUTED); render();
+                    address.setText(""); confirmCode.setText(""); say("", MUTED); render();
                 }).show();
     }
 
@@ -304,7 +297,7 @@ public class MainActivity extends Activity {
         for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, openSupport}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
-        address.setEnabled(!b); setupCode.setEnabled(!b);
+        address.setEnabled(!b);
     }
     private void say(String s, int color) { status.setText(s); status.setTextColor(color); }
 
