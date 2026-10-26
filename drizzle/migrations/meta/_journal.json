@@ -1499,6 +1499,13 @@
       "when": 1793016981185,
       "tag": "0213_fresh_device_check_per_share",
       "breakpoints": true
+    },
+    {
+      "idx": 214,
+      "version": "7",
+      "when": 1793018127589,
+      "tag": "0214_helper_code_auto_connect",
+      "breakpoints": true
     }
   ]
 }
