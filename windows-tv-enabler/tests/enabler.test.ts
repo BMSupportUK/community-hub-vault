@@ -6,25 +6,21 @@ const { parseDescription, safeLocation } = require('../discovery.cjs');
 
 /** Builds a minimal zip holding one stored (uncompressed) entry. */
 function storedZip(name: string, data: Buffer): Buffer {
+  const nameBuf = Buffer.from(name, 'utf8');
   const local = Buffer.alloc(30);
   local.writeUInt32LE(0x04034b50, 0);
-  local.writeUInt16LE(0, 8); local.writeUInt16LE(0, 10);
-  local.writeUInt32LE(0, 12); local.writeUInt32LE(0, 14); local.writeUInt32LE(0, 18);
-  local.writeUInt32LE(data.length, 22); local.writeUInt32LE(data.length, 26);
-  local.writeUInt16LE(name.length, 28); local.writeUInt16LE(0, 30 - 2);
-  const nameBuf = Buffer.from(name, 'utf8');
+  local.writeUInt32LE(data.length, 18); local.writeUInt32LE(data.length, 22);
+  local.writeUInt16LE(nameBuf.length, 26); local.writeUInt16LE(0, 28);
   const central = Buffer.alloc(46);
   central.writeUInt32LE(0x02014b50, 0);
-  central.writeUInt16LE(0, 10); central.writeUInt32LE(0, 12); central.writeUInt32LE(0, 16);
-  central.writeUInt32LE(0, 20); central.writeUInt32LE(data.length, 24); central.writeUInt32LE(data.length, 28 - 4);
   central.writeUInt32LE(data.length, 20); central.writeUInt32LE(data.length, 24);
-  central.writeUInt16LE(name.length, 28); central.writeUInt16LE(0, 30); central.writeUInt16LE(0, 32);
+  central.writeUInt16LE(nameBuf.length, 28); central.writeUInt16LE(0, 30); central.writeUInt16LE(0, 32);
   central.writeUInt32LE(0, 42);
   const body = Buffer.concat([local, nameBuf, data]);
   const eocd = Buffer.alloc(22);
   eocd.writeUInt32LE(0x06054b50, 0);
   eocd.writeUInt16LE(1, 8); eocd.writeUInt16LE(1, 10);
-  eocd.writeUInt32LE(46 + name.length, 12);
+  eocd.writeUInt32LE(46 + nameBuf.length, 12);
   eocd.writeUInt32LE(body.length, 16);
   return Buffer.concat([body, central, nameBuf, eocd]);
 }
