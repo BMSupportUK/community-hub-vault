@@ -264,7 +264,7 @@ async function readHelperCode(host, adb, progress, delay = ms => new Promise(r =
       for (let i = 0; i < 4; i++) {
         const xml = await adb(['-s', serial, 'shell', 'uiautomator dump /data/local/tmp/bm-ui.xml >/dev/null 2>&1; cat /data/local/tmp/bm-ui.xml; rm -f /data/local/tmp/bm-ui.xml']);
         const code = helperCodeFrom(xml);
-        if (code) return code;
+        if (code) { await adb(['-s', serial, 'shell', 'input keyevent KEYCODE_HOME']).catch(() => {}); return code; }
         await delay(1500);
       }
     } finally { await adb(['disconnect', serial]).catch(() => {}); }
