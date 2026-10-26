@@ -8,8 +8,8 @@
   "platformToolsSource": "https://dl.google.com/android/repository/platform-tools-latest-windows.zip",
   "platformToolsZipSha256": "45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99",
   "adbSha256": "b4a6b455702684652cccf7b46258b29e653538904359a58fd4931cf3ef286b3f",
-  "installerSha256": "d0ef204f7aff9826c1a6cf6eeac3c05f46625f96fd5a300845ad428adfa95509",
-  "installerBytes": 105794644,
+  "installerSha256": "1d6b4103ce21ac0880cc3e52828376ca1240700e473f7f7876d6a60ff46db899",
+  "installerBytes": 105751935,
   "signed": false,
   "packaging": "@electron/packager --no-asar then NSIS; local executable and DLLs stay outside archives"
 }
