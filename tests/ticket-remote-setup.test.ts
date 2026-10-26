@@ -25,7 +25,7 @@ test("Android / Google TV uses the same app checks as Amazon before the Helper c
 });
 
 test("setup progress follows the latest measured TV stages, not previous completion", () => {
-  const row = { app_checked_at: "2026-10-25T20:16:00Z", completed_at: null };
+  const row = { app_checked_at: new Date().toISOString(), completed_at: null };
   expect(remoteSetupProgress({ ...row, app_checks: null }).stage).toBe(0);
   expect(remoteSetupProgress({ ...row, app_checks: { adb: true } }).stage).toBe(1);
   expect(remoteSetupProgress({ ...row, app_checks: { adb: true, helper: true } }).stage).toBe(2);
