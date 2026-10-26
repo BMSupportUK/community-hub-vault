@@ -45,7 +45,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.13", 14, MUTED, false));
+        col.addView(text("TV setup · 1.14", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -138,11 +138,11 @@ public class MainActivity extends Activity {
                 turnOn.setText("Install remote control"); break;
             case ACTIVATE:
                 heading.setText("6. Activate remote control");
-                description.setText("We'll enable BM Remote Control's accessibility permission and check it on the TV, then open BM Remote Helper again so your code is visible.");
+                description.setText("We'll enable BM Remote Control's accessibility permission and check it on the TV, then open BM Remote Helper so your code is visible.");
                 turnOn.setText("Activate and check permissions"); break;
             case REPORT:
                 heading.setText(wizard.ready ? "3. Confirm TV setup" : "7. Confirm TV setup");
-                description.setText("We'll check the TV again: BM Remote Helper installed, remote control installed, and its permission switched on. Then we'll open BM Remote Helper on the TV to show your six-digit screen-share code.\n\nThis confirms setup inside this app. An eight-digit website linking code is optional — it is not needed to finish TV setup.");
+                description.setText("We'll check the TV one last time: BM Remote Helper installed, remote control installed, and its permission switched on. If everything checks out, setup is finished and BM Remote Helper stays open on the TV with your six-digit screen-share code.\n\nThis confirms setup inside this app. An eight-digit website linking code is optional — it is not needed to finish TV setup.");
                 turnOn.setText("Check and confirm TV setup"); break;
             case DONE:
                 heading.setText("TV setup confirmed");
@@ -178,6 +178,11 @@ public class MainActivity extends Activity {
                 } else {
                     checks = stage == SetupWizard.Step.CHECK || stage == SetupWizard.Step.REPORT ? Enabler.checkExisting(this, host, progress)
                             : Enabler.enableUntil(this, host, stage == SetupWizard.Step.HELPER ? 2 : stage == SetupWizard.Step.CONTROL ? 3 : 4, progress);
+                    // Already-set-up TV: open the code app once, straight away. The confirm step only re-checks.
+                    if (stage == SetupWizard.Step.CHECK && SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
+                        progress.step(5, "This TV is already set up. Opening BM Remote Helper to show your code…");
+                        Enabler.openCodeApp(this, host);
+                    }
                 }
                 // Only measured snapshots are sent. A website error never undoes a successful TV operation.
                 final String syncError = stage != SetupWizard.Step.DONE && code.length() == 8

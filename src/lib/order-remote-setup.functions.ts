@@ -41,6 +41,15 @@ export const saveOrderRemoteSetup = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Restart: clears the saved setup so the customer can run the steps again from device choice. */
+export const resetOrderRemoteSetup = createServerFn({ method: "POST" })
+  .inputValidator((d) => Access.parse(d))
+  .handler(async ({ data }) => {
+    const { db, orderId } = await open(data.token, data.password);
+    await db.from("order_remote_setup").delete().eq("order_id", orderId);
+    return { ok: true };
+  });
+
 export const issueOrderSetupCode = createServerFn({ method: "POST" })
   .inputValidator((d) => Access.parse(d))
   .handler(async ({ data }) => {
