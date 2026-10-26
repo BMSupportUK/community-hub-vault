@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.16", 14, MUTED, false));
+        col.addView(text("TV setup · 1.17", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -173,7 +173,7 @@ public class MainActivity extends Activity {
         io.execute(() -> {
             try {
                 Enabler.Progress progress = (i, msg) -> ui.post(() -> { if (!isFinishing() && !isDestroyed()) say(msg, i == 1 ? WARN : MUTED); });
-                final String issued = run == SetupWizard.Step.DONE ? Enabler.requestConfirmCode(checks, selectedDevice) : null;
+                final String issued = run == SetupWizard.Step.DONE ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 if (run == SetupWizard.Step.SETUP) {
                     checks = Enabler.checkExisting(this, host, progress);
                     if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {

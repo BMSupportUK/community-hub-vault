@@ -62,6 +62,37 @@ final class Enabler {
         }
     }
 
+    /** Reads the six-digit code BM Remote Helper shows on the TV screen; null when it can't be read. */
+    static String readHelperCode(Context ctx, String host) {
+        try {
+            KeyPair kp = keys(ctx);
+            try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
+                for (int i = 0; i < 4; i++) {
+                    String xml = adb.shell("uiautomator dump /data/local/tmp/bm-ui.xml >/dev/null 2>&1; cat /data/local/tmp/bm-ui.xml; rm -f /data/local/tmp/bm-ui.xml");
+                    String c = helperCodeFrom(xml);
+                    if (c != null) return c;
+                    Thread.sleep(1500);
+                }
+            }
+        } catch (Exception ignored) { }
+        return null;
+    }
+
+    /** Finds a six-digit number in a BM Remote Helper node of a uiautomator dump. */
+    static String helperCodeFrom(String xml) {
+        if (xml == null) return null;
+        java.util.regex.Matcher node = java.util.regex.Pattern.compile("<node [^>]*>").matcher(xml);
+        while (node.find()) {
+            String n = node.group();
+            if (!n.contains("package=\"" + HELPER + "\"")) continue;
+            java.util.regex.Matcher t = java.util.regex.Pattern.compile("text=\"([0-9 \\-]{6,11})\"").matcher(n);
+            if (!t.find()) continue;
+            String digits = t.group(1).replaceAll("[^0-9]", "");
+            if (digits.length() == 6) return digits;
+        }
+        return null;
+    }
+
     /** Opens BM Remote Helper on the TV so it shows a fresh six-digit screen-share code. */
     static void openCodeApp(Context ctx, String host) throws Exception {
         KeyPair kp = keys(ctx);
@@ -177,14 +208,15 @@ final class Enabler {
     }
 
     /** Asks bmsupport.uk for a short single-use code carrying the confirmed TV checks. Throws IllegalStateException with a friendly message. */
-    static String requestConfirmCode(Checks c, String device) {
+    static String requestConfirmCode(Checks c, String device) { return requestConfirmCode(c, device, null); }
+    static String requestConfirmCode(Checks c, String device, String helperCode) {
         int code;
         String resp;
         try {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-confirm").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"app\":\"tv-enabler-1.15\",\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"app\":\"tv-enabler-1.17\"," + (helperCode != null && helperCode.matches("\\d{6}") ? "\"helperCode\":\"" + helperCode + "\"," : "") + "\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             code = h.getResponseCode();
