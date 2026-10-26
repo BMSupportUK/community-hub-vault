@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { EnablerCodeBox } from "@/components/app/EnablerCodeBox";
 import { EnablerLinkBox } from "@/components/app/EnablerLinkBox";
+import { EnablerPinBox } from "@/components/app/EnablerPinBox";
+import { createOrderEnablerPin, getOrderEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import { CheckCircle2, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
@@ -108,7 +110,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         </article>;
       })}
     </section>
-    <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4">
+    <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4"><OrderPin token={token} password={password} />
       <EnablerQr />
       <div className="space-y-2 border-t border-border pt-3">
         <h3 className="font-semibold">No Android phone? Use a Windows PC</h3>
@@ -117,6 +119,13 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
       </div>
     </aside>
   </div>;
+}
+
+function OrderPin({ token, password }: { token: string; password: string }) {
+  const createFn = useServerFn(createOrderEnablerPin), statusFn = useServerFn(getOrderEnablerPinStatus);
+  const create = useCallback(() => createFn({ data: { token, password } }), [createFn, token, password]);
+  const status = useCallback(() => statusFn({ data: { token, password } }), [statusFn, token, password]);
+  return <EnablerPinBox scopeKey={`order:${token}`} create={create} status={status} />;
 }
 
 function EnablerQr() {

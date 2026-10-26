@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { EnablerCodeBox } from "@/components/app/EnablerCodeBox";
 import { EnablerLinkBox } from "@/components/app/EnablerLinkBox";
+import { EnablerPinBox } from "@/components/app/EnablerPinBox";
+import { useServerFn } from "@tanstack/react-start";
+import { createTicketEnablerPin, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
@@ -124,7 +127,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   </section>;
   return <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
     {main}
-    <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr /><div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">No Android phone? Use a Windows PC</h3><p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, then type the code it shows here — it ticks the steps the same way.</p><Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup.exe">Download for Windows</a></Button><p className="text-xs text-muted-foreground">Windows 10 / 11 · free, unsigned — choose More info › Run anyway if warned.</p></div></aside>
+    <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4">{!closed && <TicketPin ticketId={ticketId} />}<EnablerQr /><div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">No Android phone? Use a Windows PC</h3><p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, then type the code it shows here — it ticks the steps the same way.</p><Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup.exe">Download for Windows</a></Button><p className="text-xs text-muted-foreground">Windows 10 / 11 · free, unsigned — choose More info › Run anyway if warned.</p></div></aside>
   </div>;
 }
 
@@ -139,6 +142,7 @@ function StaffRemoteSetup({ ticketId, row, reload }: { ticketId: string; row: Re
   }, [ticketId, reload]);
   return <section className="mx-auto max-w-2xl space-y-3 text-foreground">
     <h2 className="text-xl font-semibold">Remote access setup</h2>
+    <TicketPin ticketId={ticketId} staff />
     {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
       <RemoteSetupProgress row={row} />
       <p className="text-sm">Device: <strong>{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</strong> · {row.completed_at ? <span className="font-semibold text-primary">Confirmed by the apps</span> : row.app_checked_at ? "App reported — waiting on the rest" : "Waiting for the app to report"}</p>
@@ -150,6 +154,13 @@ function StaffRemoteSetup({ ticketId, row, reload }: { ticketId: string; row: Re
       </>}
     </>}
   </section>;
+}
+
+function TicketPin({ ticketId, staff }: { ticketId: string; staff?: boolean }) {
+  const createFn = useServerFn(createTicketEnablerPin), statusFn = useServerFn(getTicketEnablerPinStatus);
+  const create = useCallback(() => createFn({ data: { ticketId } }), [createFn, ticketId]);
+  const status = useCallback(() => statusFn({ data: { ticketId } }), [statusFn, ticketId]);
+  return <EnablerPinBox scopeKey={`ticket:${ticketId}`} staff={staff} create={staff ? undefined : create} status={status} />;
 }
 
 function EnablerQr() {
