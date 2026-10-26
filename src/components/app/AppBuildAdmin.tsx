@@ -195,6 +195,18 @@ function BuildCard({
             <span className="block text-xs text-muted-foreground">Only turn this on for the BM Support Android app</span>
           </span>
         </label>
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <Switch
+            checked={build.installOnTv}
+            onCheckedChange={(v) =>
+              patch({ id: build.id, installOnTv: v }).catch(() => toast.error("Couldn't change the TV setup setting"))
+            }
+          />
+          <span>
+            Install on TV during setup
+            <span className="block text-xs text-muted-foreground">BM TV Enabler installs it for new customers</span>
+          </span>
+        </label>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
