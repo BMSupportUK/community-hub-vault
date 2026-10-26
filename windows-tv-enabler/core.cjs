@@ -330,7 +330,7 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch, helpe
   const body = res.ok ? await res.json().catch(() => null) : null;
   if (!body || !/^[A-Z0-9]{6}$/.test(body.code || '')) throw new Error(`Couldn't get a code from BM Support (error ${res.status}). Try again.`);
   if (withExpiry && !Number.isFinite(body.expiresAtMs)) throw new Error('BM Support needs updating before a new confirmation code can be issued.');
-  return withExpiry ? { code: body.code, expiresAtMs: body.expiresAtMs } : body.code;
+  return withExpiry ? { code: body.code, expiresAtMs: body.expiresAtMs, refreshToken: body.refreshToken } : body.code;
 }
 
 /** BM TV Enabler login: swaps the customer's 6-digit ticket/order PIN for a 24-hour token. */
@@ -344,4 +344,28 @@ async function loginWithPin(pin, post = globalThis.fetch) {
   return { token: body.token, expiresAtMs: Number(body.expiresAtMs) };
 }
 
-module.exports = { loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
+async function refreshConnection(host, token, adb, progress, post = globalThis.fetch, delay = ms => new Promise(r => setTimeout(r, ms))) {
+  if (!/^[0-9a-f]{64}$/.test(token || '')) throw new Error('Get a new Enabler confirmation reference first.');
+  const send = async body => {
+    const res = await post(`${SITE}/api/public/enabler-refresh`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error('Enabler reference expired or website update needed.');
+    return res.json();
+  };
+  const task = await send({ token });
+  if (task.state !== 'refresh') return false;
+  if (!/^[0-9a-f-]{36}$/.test(task.requestId || '')) throw new Error('Invalid refresh request.');
+  try {
+    const checks = await checkExisting(host, adb, progress, delay);
+    if (!(checks.adb && checks.helper && checks.control && checks.accessibility)) throw new Error('Check the TV setup again.');
+    const serial = await connect(host, adb, progress, delay);
+    try { await adb(['-s', serial, 'shell', `am force-stop ${HELPER}`]); }
+    finally { await adb(['disconnect', serial]).catch(() => {}); }
+    const helperCode = await readHelperCode(host, adb, progress, delay);
+    if (!helperCode) throw new Error('Could not read the new TV connection. Try Get new connection again.');
+    const result = await send({ token, requestId: task.requestId, helperCode, checks });
+    if (result.state !== 'done') throw new Error('Could not send the new TV connection. Try again.');
+    return true;
+  } catch (error) { await send({ token, requestId: task.requestId }).catch(() => {}); throw error; }
+}
+
+module.exports = { refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
