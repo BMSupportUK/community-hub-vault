@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
         status = text("", 16, WARN, false); col.addView(status, lp(dp(12)));
         turnOn = button("", ACCENT); turnOn.setOnClickListener(v -> start()); col.addView(turnOn, lp(dp(12)));
         next = button("Done — next step", ACCENT);
-        next.setOnClickListener(v -> { wizard.next(); say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
+        next.setOnClickListener(v -> { say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
         back = button("Back to debugging instructions", Color.parseColor("#2A3050"));
         back.setOnClickListener(v -> { if (!busy) { wizard.reset(); checks = null; tvCodeInput.setText(""); confirmCode.setText(""); say("", MUTED); render(); } });
         col.addView(back, lp(dp(8)));
