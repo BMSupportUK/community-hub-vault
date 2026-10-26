@@ -8034,6 +8034,10 @@ export type Database = {
       }
     }
     Functions: {
+      account_helper_reply: {
+        Args: { _choice: string; _ticket_id: string }
+        Returns: string
+      }
       ad_event_stats: {
         Args: { _days?: number }
         Returns: {
