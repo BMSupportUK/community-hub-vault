@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { execFile } = require('node:child_process');
-const { pair, report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, requestConfirmCode, loginWithPin } = require('../core.cjs');
+const { refreshConnection, pair, report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, requestConfirmCode, loginWithPin } = require('../core.cjs');
 const { scan } = require('../discovery.cjs');
 let window; let busy = false;
 const page = path.join(__dirname, '..', 'dist', 'index.html');
@@ -43,6 +43,7 @@ else {
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());
     ipcMain.handle('bm:login', task(pin => loginWithPin(pin)));
+    ipcMain.handle('bm:refresh', task((address, token) => refreshConnection(address, token, adb, say)));
     ipcMain.handle('bm:scan', task(type => scan(type === 'android' || type === 'all' ? type : 'amazon')));
     ipcMain.handle('bm:show-code', task((address, code) => showTvCode(address, code, adb, say)));
     ipcMain.handle('bm:link-report', task(async (code, checks, device, address) => report(code, checks, device, undefined, await readHelperCode(address, adb, say))));

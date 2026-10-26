@@ -305,8 +305,8 @@ final class Enabler {
     static final class LinkExpired extends IllegalStateException { LinkExpired() { super("The website link has expired. Press New link code on your Remote setup tab and scan it again."); } }
 
     static final class Confirmation {
-        final String code; final long expiresAt;
-        Confirmation(String code, long expiresAt) { this.code = code; this.expiresAt = expiresAt; }
+        final String code; final long expiresAt; final String refreshToken;
+        Confirmation(String code, long expiresAt, String token) { this.code = code; this.expiresAt = expiresAt; this.refreshToken = token; }
     }
     static Confirmation requestConfirmCode(Checks c, String device) { return requestConfirmCode(c, device, null); }
     static Confirmation requestConfirmCode(Checks c, String device, String helperCode) {
@@ -329,7 +329,41 @@ final class Enabler {
         if (code != 200 || !m.find()) throw new IllegalStateException("Couldn't get a code from BM Support (error " + code + "). Try again.");
         java.util.regex.Matcher expiry = java.util.regex.Pattern.compile("\"expiresAtMs\"\\s*:\\s*(\\d+)").matcher(resp);
         if (!expiry.find()) throw new IllegalStateException("BM Support needs updating before a new confirmation code can be issued.");
-        return new Confirmation(m.group(1), Long.parseLong(expiry.group(1)));
+        return new Confirmation(m.group(1), Long.parseLong(expiry.group(1)), refreshTokenFrom(resp));
+    }
+
+    private static String refreshTokenFrom(String response) {
+        try { return new org.json.JSONObject(response).optString("refreshToken", ""); } catch (Exception e) { return ""; }
+    }
+    private static org.json.JSONObject refreshPost(org.json.JSONObject body) throws Exception {
+        java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-refresh").openConnection();
+        h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(10000); h.setReadTimeout(15000);
+        h.setRequestProperty("Content-Type", "application/json");
+        try {
+            try (java.io.OutputStream out = h.getOutputStream()) { out.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
+            if (h.getResponseCode() != 200) throw new IllegalStateException("Enabler reference expired or website update needed.");
+            try (java.io.InputStream in = h.getInputStream()) { return new org.json.JSONObject(new String(readAll(in), StandardCharsets.UTF_8)); }
+        } finally { h.disconnect(); }
+    }
+    static boolean refreshConnection(Context ctx, String host, String token) throws Exception {
+        org.json.JSONObject task = refreshPost(new org.json.JSONObject().put("token", token));
+        if (!"refresh".equals(task.optString("state"))) return false;
+        String request = task.getString("requestId");
+        try {
+            Checks checks = checkExisting(ctx, host, (i, text) -> {});
+            if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) throw new IllegalStateException("Check TV setup again.");
+            KeyPair kp = keys(ctx);
+            try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) { adb.shell("am force-stop " + HELPER); }
+            String code = readHelperCode(ctx, host);
+            if (code == null) throw new IllegalStateException("Couldn't read the fresh TV connection.");
+            org.json.JSONObject result = new org.json.JSONObject().put("token", token).put("requestId", request).put("helperCode", code)
+                .put("checks", new org.json.JSONObject().put("adb", checks.adb).put("helper", checks.helper).put("control", checks.control).put("accessibility", checks.accessibility));
+            if (!"done".equals(refreshPost(result).optString("state"))) throw new IllegalStateException("Couldn't send the new connection. Press Get new connection again.");
+            return true;
+        } catch (Exception error) {
+            try { refreshPost(new org.json.JSONObject().put("token", token).put("requestId", request)); } catch (Exception ignored) {}
+            throw error;
+        }
     }
 
     private static byte[] readAll(java.io.InputStream in) throws java.io.IOException {

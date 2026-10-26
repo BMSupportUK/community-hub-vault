@@ -35,6 +35,25 @@ public class MainActivity extends Activity {
     private final java.security.SecureRandom random = new java.security.SecureRandom();
     private TextView confirmCode;
     private long confirmExpiresAt;
+    private String refreshToken, refreshHost;
+    private boolean refreshBusy;
+    private final Runnable refreshTick = new Runnable() {
+        public void run() {
+            if (isFinishing() || isDestroyed()) return;
+            if (!busy && !refreshBusy && hasWindowFocus() && refreshToken != null && refreshToken.length() == 64 && refreshHost != null && System.currentTimeMillis() < confirmExpiresAt) {
+                final String token = refreshToken, host = refreshHost;
+                refreshBusy = true;
+                io.execute(() -> {
+                    try {
+                        boolean done = Enabler.refreshConnection(MainActivity.this, host, token);
+                        if (done) ui.post(() -> say("✓ New TV connection sent. Press Connect on your ticket or order.", OK));
+                    } catch (Exception e) { ui.post(() -> say(Enabler.friendly(e), WARN)); }
+                    finally { ui.post(() -> refreshBusy = false); }
+                });
+            }
+            ui.postDelayed(this, 4000);
+        }
+    };
     private final Runnable expiryTick = new Runnable() {
         public void run() { if (isFinishing() || isDestroyed()) return; if (wizard.step == SetupWizard.Step.DONE && confirmCode.length() > 0 && !busy) render(); ui.postDelayed(this, 1000); }
     };
@@ -60,7 +79,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         contentBox.setBackgroundColor(BG);
         contentBox.addView(text("BM TV Enabler", 26, FG, true));
-        contentBox.addView(text("TV setup · 1.36", 14, MUTED, false));
+        contentBox.addView(text("TV setup · 1.38", 14, MUTED, false));
         // Welcome on open: logo, message and Get started before the wizard.
         welcomeBox = new LinearLayout(this);
         welcomeBox.setOrientation(LinearLayout.VERTICAL);
@@ -185,6 +204,7 @@ public class MainActivity extends Activity {
         readLink(getIntent());
         render();
         ui.postDelayed(expiryTick, 1000);
+        ui.postDelayed(refreshTick, 4000);
     }
 
     @Override protected void onNewIntent(android.content.Intent intent) { super.onNewIntent(intent); setIntent(intent); readLink(intent); render(); }
@@ -206,14 +226,14 @@ public class MainActivity extends Activity {
     }
 
     private void pickApps(String a) {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         apps = a;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply();
         render();
     }
 
     private void pickDevice(String d) {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         device = d;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("device", d).apply();
         render();
@@ -308,7 +328,7 @@ public class MainActivity extends Activity {
     }
 
     private void start() {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         if (wizard.step == SetupWizard.Step.DEBUGGING) { wizard.confirmDebugging(); say("", MUTED); render(); return; }
         final String host = address.getText().toString().trim();
         if (!SetupWizard.validHost(host)) { say("Type the TV's address exactly as it shows on the TV, e.g. 192.168.1.23.", WARN); return; }
@@ -364,7 +384,7 @@ public class MainActivity extends Activity {
                         say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
-                        else if (issued != null) { confirmExpiresAt = issued.expiresAt; confirmCode.setText(issued.code.substring(0, 3) + "-" + issued.code.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
+                        else if (issued != null) { refreshToken = issued.refreshToken; refreshHost = host; confirmExpiresAt = issued.expiresAt; confirmCode.setText(issued.code.substring(0, 3) + "-" + issued.code.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
                     }
                     render();
                 });
@@ -397,26 +417,26 @@ public class MainActivity extends Activity {
     private void startFresh() {
         welcomeDone = true;
         if (wizard.step == SetupWizard.Step.DEBUGGING || wizard.step == SetupWizard.Step.DONE) {
-            if (wizard.step == SetupWizard.Step.DONE) { wizard.reset(); checks = null; confirmCode.setText(""); appsResults = new java.util.ArrayList<>(); }
+            if (wizard.step == SetupWizard.Step.DONE) { wizard.reset(); checks = null; confirmCode.setText(""); refreshToken = null; refreshHost = null; appsResults = new java.util.ArrayList<>(); }
             apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply();
         }
         render();
     }
 
     private void confirmReset() {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         new AlertDialog.Builder(this).setTitle("Reset setup?")
                 .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
                     wizard.reset(); checks = null; device = null; apps = null; appsResults = new java.util.ArrayList<>();
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps").apply();
-                    address.setText(""); confirmCode.setText(""); say("", MUTED); render();
+                    address.setText(""); confirmCode.setText(""); refreshToken = null; refreshHost = null; say("", MUTED); render();
                 }).show();
     }
 
     /** Lists advertised Fire TVs, including those whose debugging port is closed. */
     private void scan() {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         int ip = wm == null ? 0 : wm.getConnectionInfo().getIpAddress();
         if (ip == 0) { say("Connect this phone to your home Wi-Fi first.", WARN); return; }
@@ -454,7 +474,7 @@ public class MainActivity extends Activity {
     }
 
     private void scanAll() {
-        if (busy) return;
+        if (busy || refreshBusy) return;
         WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         int ip = wm == null ? 0 : wm.getConnectionInfo().getIpAddress();
         if (ip == 0) { say("Connect this phone to your home Wi-Fi first.", WARN); return; }
@@ -536,7 +556,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         p.topMargin = top; return p;
     }
-    @Override protected void onDestroy() { ui.removeCallbacks(expiryTick); super.onDestroy(); }
+    @Override protected void onDestroy() { ui.removeCallbacks(expiryTick); ui.removeCallbacks(refreshTick); super.onDestroy(); }
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
     private static byte[] readAll(java.io.InputStream in) throws java.io.IOException {
         java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream(); byte[] b = new byte[4096]; int n;

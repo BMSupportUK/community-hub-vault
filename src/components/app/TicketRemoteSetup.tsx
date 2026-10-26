@@ -12,8 +12,7 @@ import { CheckCircle2, Circle, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { normalizePairCode } from "@/lib/tv-remote";
+import { renewalMessage } from "@/lib/enabler-renewal";
 import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
@@ -38,7 +37,7 @@ export function useTicketRemoteSetup(ticketId: string) {
 
 export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: { ticketId: string; customer: boolean; closed: boolean; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
-  const [code, setCode] = useState("");
+  const [renewal, setRenewal] = useState("");
   const save = async (device: SetupDevice) => {
     setBusy(true);
     const { error } = await supabase.rpc("save_ticket_remote_setup" as never, { _ticket_id: ticketId, _device: device, _steps: [] } as never);
@@ -50,7 +49,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     setBusy(true);
     const { error } = await supabase.rpc("reset_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
     if (error) toast.error(error.message); else toast.success("Setup restarted — choose your device to begin again");
-    setCode("");
+    setRenewal("");
     await reload(); setBusy(false);
   };
   const redeem = async (c: string) => {
@@ -66,16 +65,15 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     setBusy(true);
     const { data, error } = await supabase.rpc("connect_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
     if (error) toast.error(error.message);
-    else if (!data) toast.error("The TV code has expired. Open BM Remote Helper on the TV and type the code it shows now.");
+    else if (!data) toast.error("The TV connection has ended. Press Get new connection and keep BM TV Enabler open.");
     else toast.success("Connected — staff have been told your TV is ready");
     await reload(); setBusy(false);
   };
-  const verify = async () => {
+  const renew = async () => {
     setBusy(true);
-    const { data, error } = await supabase.rpc("verify_ticket_remote_setup" as never, { _ticket_id: ticketId, _code: code } as never);
+    const { data, error } = await supabase.rpc("request_ticket_enabler_connection", { _ticket_id: ticketId });
     if (error) toast.error(error.message);
-    else if (!data) toast.error("That code isn't live. Check BM Remote Helper is open on the TV and try the code it shows now.");
-    else { toast.success("BM Remote Helper confirmed — staff can now request your screen"); setCode(""); }
+    else { setRenewal(renewalMessage(String(data))); if (data !== "queued") toast.error(renewalMessage(String(data))); }
     await reload(); setBusy(false);
   };
   if (row === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -105,15 +103,11 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <p className="text-sm">BM TV Enabler has already picked up the code from BM Remote Helper. Press Connect to send your screen-share request to staff.</p>
       <Button size="lg" className="w-full" disabled={busy} onClick={() => void connect()}>Connect</Button>
     </div>}
-    {fresh && !closed && !row.pending_session_id && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
-      <h3 className="font-semibold">Your TV code</h3>
-      <p className="text-sm">Your TV was just checked, but BM TV Enabler couldn't read the code BM Remote Helper shows. Open BM Remote Helper on the TV and type the six-digit code here.</p>
-      <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
-        <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
-        <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
-      </form>
+    {!closed && (!fresh || !row.pending_session_id) && (ready || complete) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+      <h3 className="font-semibold">Get a new TV connection</h3>
+      <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Your valid 24-hour confirmation reference stays the same."}</p>
+      <Button size="lg" className="w-full" disabled={busy} onClick={() => void renew()}>Get new connection</Button>
     </div>}
-    {!closed && !fresh && complete && <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"><h3 className="font-semibold">Check your TV again</h3><p>Before each screen share, open BM TV Enabler so it can check your TV is still set up, then type the new code it shows below.</p></div>}
     {!closed && !fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
     <RemoteSetupProgress row={row} />
     {!complete && steps.map((s, i) => {
@@ -121,7 +115,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
         <h3 className="flex items-center gap-2 font-semibold">{done ? <CheckCircle2 className="size-5 text-primary" /> : <span className="flex size-5 items-center justify-center rounded-full border border-border text-xs">{i + 1}</span>}{s.title}</h3>
         <p className="text-sm text-muted-foreground">{s.body}</p>
-        {!done && <p className="text-xs text-muted-foreground">{s.proof === "code" ? (ready ? "Press Connect at the top, or type the TV code there." : "Unlocks once the app has checked your TV.") : "Ticks automatically when the app checks your TV."}</p>}
+        {!done && <p className="text-xs text-muted-foreground">{s.proof === "code" ? (ready ? "Press Connect once Enabler brings your TV connection here." : "Unlocks once the app has checked your TV.") : "Ticks automatically when the app checks your TV."}</p>}
       </article>;
     })}
   </section>;
