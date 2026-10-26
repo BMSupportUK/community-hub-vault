@@ -28,4 +28,8 @@ The TV can't take a file pushed straight to it during screen share, because BM R
 - Public route `/api/public/a/$code`: looks up the hashed code, rejects it if expired, and streams that APK from private storage with an `application/vnd.android.package-archive` content type and the original filename.
 - `TvRemote.tsx` remote panel: a "Send an app" dialog that reads available `app_builds` rows. On send it uses the existing `launch` event (`com.esaba.downloader`), waits, then sends the existing `text` event with the short URL and an `ok` key. It does not add any new TV command.
 - Staff-only internal note on the linked ticket or order, using the existing internal-note path.
-- Tests: links expire after 24 hours, and non-staff callers are refused.
+- Tests: links expire after 24 hours, non-staff callers are refused, and only ticked apps appear in the install list.
+- `app_builds`: new column `install_on_tv boolean default false`, set from a tick box in the admin APK section (admin/management only, using the existing update policy).
+- Public route `/api/public/tv-install-list`: returns only the ticked, available current builds (package name, version, file name, and a download path). No private data is included.
+- Public route `/api/public/tv-install-apk/$id`: streams the APK only if that build is ticked and available.
+- BM TV Enabler (phone `Enabler.java` and Windows `core.cjs`, kept identical): after installing Helper, it fetches the list and checks each app's installed version. Missing or older apps are pushed and installed with the existing ADB push and `pm install -r` path. A failure is skipped. New versions: phone 1.27 and Windows 1.17, released as current downloads.
