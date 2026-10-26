@@ -1,8 +1,8 @@
 # BM TV Enabler installs our apps for new customers
 
 ## What you'll see (admin)
-- In the admin APK section, each app gets an **Install on TV during setup** tick box. Tick the apps a new customer needs, for example Downloader and the player apps.
-- Downloader is uploaded there and ticked like any other app. It always comes from our own copy, so it doesn't matter if it's taken off the Amazon or Google stores.
+- In the admin APK section, each app gets an **Install on TV during setup** tick box. Tick the apps a new customer needs, for example the player apps.
+- Ticked apps come straight from our own copies, so Downloader and the app stores aren't needed.
 
 ## What the customer sees in BM TV Enabler (phone and Windows)
 1. **Which TV are you setting up?** Amazon Fire TV or Android / Google TV. This is the same as now.
