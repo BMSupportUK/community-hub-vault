@@ -102,6 +102,7 @@ function mapBuild(data: any) {
     sortOrder: (data.sort_order as number | null) ?? 0,
     installInstructions: (data.install_instructions as string | null) ?? null,
     announceUpdates: !!data.announce_updates,
+    installOnTv: !!data.install_on_tv,
     category: ((data.category as string | null) ?? "bm_store") as AppBuildCategory,
     createdAt: data.created_at as string,
   };
@@ -137,7 +138,7 @@ export const listAppBuilds = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, category, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, install_on_tv, category, created_at",
       )
       .eq("is_current", true)
       .eq("is_available", true)
@@ -154,7 +155,7 @@ export const listAppBuildsAdmin = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, category, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, install_on_tv, category, created_at",
       )
       .eq("is_current", true)
       .order("sort_order", { ascending: true })
@@ -301,6 +302,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       sortOrder?: number | null;
       installInstructions?: string | null;
       announceUpdates?: boolean;
+      installOnTv?: boolean;
       category?: AppBuildCategory | null;
     }) => data,
   )
@@ -321,6 +323,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
         sort_order: data.sortOrder ?? 0,
         install_instructions: data.installInstructions ?? null,
         announce_updates: data.announceUpdates ?? false,
+        install_on_tv: data.installOnTv ?? false,
         category: data.category ?? "bm_store",
         is_current: true,
         is_available: data.isAvailable ?? true,
@@ -367,6 +370,7 @@ export const updateAppBuild = createServerFn({ method: "POST" })
       fileName?: string | null;
       fileSize?: number | null;
       announceUpdates?: boolean;
+      installOnTv?: boolean;
       category?: AppBuildCategory | null;
     }) => data,
   )
@@ -385,6 +389,7 @@ export const updateAppBuild = createServerFn({ method: "POST" })
     if (data.fileName !== undefined && data.fileName) patch.file_name = data.fileName;
     if (data.fileSize !== undefined) patch.file_size = data.fileSize;
     if (data.announceUpdates !== undefined) patch.announce_updates = data.announceUpdates;
+    if (data.installOnTv !== undefined) patch.install_on_tv = data.installOnTv;
     if (data.category !== undefined && data.category) patch.category = data.category;
     const { error } = await supabaseAdmin.from("app_builds").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
