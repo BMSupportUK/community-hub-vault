@@ -2359,6 +2359,8 @@ export type Database = {
       enabler_confirm_codes: {
         Row: {
           app: string | null
+          bound_order_id: string | null
+          bound_ticket_id: string | null
           checks: Json
           code_hash: string
           created_at: string
@@ -2369,6 +2371,8 @@ export type Database = {
         }
         Insert: {
           app?: string | null
+          bound_order_id?: string | null
+          bound_ticket_id?: string | null
           checks: Json
           code_hash: string
           created_at?: string
@@ -2379,6 +2383,8 @@ export type Database = {
         }
         Update: {
           app?: string | null
+          bound_order_id?: string | null
+          bound_ticket_id?: string | null
           checks?: Json
           code_hash?: string
           created_at?: string
@@ -8330,6 +8336,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      apply_enabler_confirmation: {
+        Args: { _hash: string; _id: string; _kind: string }
+        Returns: string
+      }
       archive_old_closed_tickets: { Args: never; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
       bm_inbox_action: {
@@ -8982,6 +8992,10 @@ export type Database = {
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
+      redeem_order_enabler_code: {
+        Args: { _code_hash: string; _order_id: string }
+        Returns: string
+      }
       redeem_ticket_enabler_code: {
         Args: { _code: string; _ticket_id: string }
         Returns: string
