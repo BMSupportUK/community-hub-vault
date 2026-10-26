@@ -133,6 +133,7 @@ import { Route as ApiPublicRemoteSetupRouteImport } from './routes/api/public/re
 import { Route as ApiPublicTvRouteImport } from './routes/api/public/tv'
 import { Route as ApiPublicTvEnablerApkRouteImport } from './routes/api/public/tv-enabler-apk'
 import { Route as ApiPublicTvEnablerWindowsRouteImport } from './routes/api/public/tv-enabler-windows'
+import { Route as ApiPublicTvInstallListRouteImport } from './routes/api/public/tv-install-list'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
 import { Route as ApiPublicWiseEmailRouteImport } from './routes/api/public/wise-email'
@@ -194,6 +195,7 @@ import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes
 import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './routes/api/public/hooks/wc-prediction-reminders'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as ApiPublicTvInstallApkIdRouteImport } from './routes/api/public/tv-install-apk.$id'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -911,6 +913,11 @@ const ApiPublicTvEnablerWindowsRoute =
     path: '/api/public/tv-enabler-windows',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTvInstallListRoute = ApiPublicTvInstallListRouteImport.update({
+  id: '/api/public/tv-install-list',
+  path: '/api/public/tv-install-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
   id: '/api/public/tweet',
   path: '/api/public/tweet',
@@ -1267,6 +1274,11 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTvInstallApkIdRoute = ApiPublicTvInstallApkIdRouteImport.update({
+  id: '/api/public/tv-install-apk/$id',
+  path: '/api/public/tv-install-apk/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -1455,6 +1467,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tv-enabler-apk': typeof ApiPublicTvEnablerApkRoute
   '/api/public/tv-enabler-windows': typeof ApiPublicTvEnablerWindowsRoute
+  '/api/public/tv-install-list': typeof ApiPublicTvInstallListRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1514,6 +1527,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/tv-install-apk/$id': typeof ApiPublicTvInstallApkIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1648,6 +1662,7 @@ export interface FileRoutesByTo {
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tv-enabler-apk': typeof ApiPublicTvEnablerApkRoute
   '/api/public/tv-enabler-windows': typeof ApiPublicTvEnablerWindowsRoute
+  '/api/public/tv-install-list': typeof ApiPublicTvInstallListRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1707,6 +1722,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/tv-install-apk/$id': typeof ApiPublicTvInstallApkIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1847,6 +1863,7 @@ export interface FileRoutesById {
   '/api/public/tv': typeof ApiPublicTvRoute
   '/api/public/tv-enabler-apk': typeof ApiPublicTvEnablerApkRoute
   '/api/public/tv-enabler-windows': typeof ApiPublicTvEnablerWindowsRoute
+  '/api/public/tv-install-list': typeof ApiPublicTvInstallListRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
@@ -1906,6 +1923,7 @@ export interface FileRoutesById {
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/tv-install-apk/$id': typeof ApiPublicTvInstallApkIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -2045,6 +2063,7 @@ export interface FileRouteTypes {
     | '/api/public/tv'
     | '/api/public/tv-enabler-apk'
     | '/api/public/tv-enabler-windows'
+    | '/api/public/tv-install-list'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2104,6 +2123,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wc-prediction-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/api/public/tv-install-apk/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -2238,6 +2258,7 @@ export interface FileRouteTypes {
     | '/api/public/tv'
     | '/api/public/tv-enabler-apk'
     | '/api/public/tv-enabler-windows'
+    | '/api/public/tv-install-list'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2297,6 +2318,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wc-prediction-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/api/public/tv-install-apk/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -2436,6 +2458,7 @@ export interface FileRouteTypes {
     | '/api/public/tv'
     | '/api/public/tv-enabler-apk'
     | '/api/public/tv-enabler-windows'
+    | '/api/public/tv-install-list'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/api/public/wise-email'
@@ -2495,6 +2518,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wc-prediction-reminders'
     | '/api/public/payments/webhook'
     | '/api/public/telegram/webhook'
+    | '/api/public/tv-install-apk/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -2553,6 +2577,7 @@ export interface RootRouteChildren {
   ApiPublicTvRoute: typeof ApiPublicTvRoute
   ApiPublicTvEnablerApkRoute: typeof ApiPublicTvEnablerApkRoute
   ApiPublicTvEnablerWindowsRoute: typeof ApiPublicTvEnablerWindowsRoute
+  ApiPublicTvInstallListRoute: typeof ApiPublicTvInstallListRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
   ApiPublicWiseEmailRoute: typeof ApiPublicWiseEmailRoute
@@ -2594,6 +2619,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWcPredictionRemindersRoute: typeof ApiPublicHooksWcPredictionRemindersRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
+  ApiPublicTvInstallApkIdRoute: typeof ApiPublicTvInstallApkIdRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -3469,6 +3495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTvEnablerWindowsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tv-install-list': {
+      id: '/api/public/tv-install-list'
+      path: '/api/public/tv-install-list'
+      fullPath: '/api/public/tv-install-list'
+      preLoaderRoute: typeof ApiPublicTvInstallListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tweet': {
       id: '/api/public/tweet'
       path: '/api/public/tweet'
@@ -3894,6 +3927,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/telegram/webhook'
       fullPath: '/api/public/telegram/webhook'
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tv-install-apk/$id': {
+      id: '/api/public/tv-install-apk/$id'
+      path: '/api/public/tv-install-apk/$id'
+      fullPath: '/api/public/tv-install-apk/$id'
+      preLoaderRoute: typeof ApiPublicTvInstallApkIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/preview': {
@@ -4408,6 +4448,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTvRoute: ApiPublicTvRoute,
   ApiPublicTvEnablerApkRoute: ApiPublicTvEnablerApkRoute,
   ApiPublicTvEnablerWindowsRoute: ApiPublicTvEnablerWindowsRoute,
+  ApiPublicTvInstallListRoute: ApiPublicTvInstallListRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
   ApiPublicWiseEmailRoute: ApiPublicWiseEmailRoute,
@@ -4458,6 +4499,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksWcPredictionRemindersRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
+  ApiPublicTvInstallApkIdRoute: ApiPublicTvInstallApkIdRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
