@@ -1,0 +1,5 @@
+UPDATE public.app_builds SET is_current=false, updated_at=now() WHERE app_name='TV Enabler' AND version_name='1.20';
+UPDATE public.app_builds SET is_current=false, updated_at=now() WHERE app_name='BM TV Enabler for Windows' AND version_name='1.10.0';
+INSERT INTO public.app_builds (app_name, file_path, file_name, file_size, version_name, release_notes, is_current, is_available, category) VALUES
+('TV Enabler','tv-enabler/BM-TV-Enabler-1.21.apk','BM-TV-Enabler-1.21.apk',116760,'1.21','Removed the Open BM Remote Helper button: the app opens it by itself and the TV code reaches the website on its own.',true,true,'bm_store'),
+('BM TV Enabler for Windows','tv-enabler/BM-TV-Enabler-Setup-1.11.0.exe','BM-TV-Enabler-Setup-1.11.0.exe',105665973,'1.11.0','Removed the Open BM Remote Helper button: the app opens it by itself and the TV code reaches the website on its own.',true,true,'bm_store');

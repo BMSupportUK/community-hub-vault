@@ -7,7 +7,7 @@ const el = id => document.getElementById(id);
 const heading = el('heading'), description = el('description'), devicePick = el('device-pick'),
   deviceHelp = el('device-help'), addressBlock = el('address-block'), address = el('address'),
   scan = el('scan'), devices = el('devices'), scanStatus = el('scan-status'),
-  codeBlock = el('code-block'), openHelper = el('open-helper'),
+  codeBlock = el('code-block'),
   progress = el('progress'), action = el('action'), next = el('next'), back = el('back'), reset = el('reset'),
   pickAmazon = el('pick-amazon'), pickAndroid = el('pick-android'),
   tvCodeBlock = el('tv-code-block'), linkBlock = el('link-block'), linkCode = el('link-code'), tvCodeInput = el('tv-code'), showAgain = el('show-again'),
@@ -26,7 +26,7 @@ function say(text, isError) {
 
 function setBusy(value) {
   busy = value;
-  for (const b of [action, next, back, reset, scan, openHelper, pickAmazon, pickAndroid, showAgain, pairButton]) b.disabled = value;
+  for (const b of [action, next, back, reset, scan, pickAmazon, pickAndroid, showAgain, pairButton]) b.disabled = value;
   address.disabled = value; tvCodeInput.disabled = value; linkCode.disabled = value; pairCode.disabled = value; pairPort.disabled = value;
   devices.querySelectorAll('button').forEach(b => { b.disabled = value; });
 }
@@ -55,7 +55,6 @@ function render() {
   codeBlock.hidden = !(s === Step.DONE && confirmCode);
   linkBlock.hidden = !(s === Step.DONE && wizard.ready);
   codeBlock.textContent = confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
-  openHelper.hidden = !(s === Step.DONE && wizard.ready);
   next.hidden = true;
   action.hidden = false;
   back.hidden = !(s === Step.CHECK || s === Step.TV_CODE);
@@ -69,7 +68,7 @@ function render() {
   if (s === Step.DONE) {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
     description.textContent = confirmCode
-      ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead). Use the button above to reopen BM Remote Helper for a new TV code.'
+      ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead).'
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
     action.firstChild.textContent = confirmCode ? 'New code ' : 'Get my confirmation code ';
   } else {
@@ -173,17 +172,6 @@ reset.addEventListener('click', () => {
   wizard.reset(); checks = null; device = null; confirmCode = '';
   localStorage.removeItem('bm-tv-address'); localStorage.removeItem('bm-tv-device');
   address.value = ''; say(''); render();
-});
-openHelper.addEventListener('click', async () => {
-  if (busy) return;
-  const host = address.value.trim();
-  if (!validHost(host)) { say('Type the TV\'s address first.', true); return; }
-  setBusy(true); say('Opening BM Remote Helper on your TV…');
-  try {
-    await window.bmTv.openCodeApp(host);
-    say('✓ BM Remote Helper is open on your TV. Enter its six-digit code in your ticket or order\'s Remote setup tab on bmsupport.uk.');
-  } catch (error) { say(cleanError(error), true); }
-  finally { setBusy(false); render(); }
 });
 pickAmazon.addEventListener('click', () => pickDevice('amazon'));
 pickAndroid.addEventListener('click', () => pickDevice('android'));

@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
     private Button showAgain;
     private final java.security.SecureRandom random = new java.security.SecureRandom();
     private TextView confirmCode;
-    private Button turnOn, find, amazonBtn, androidBtn, next, reset, back, openSupport;
+    private Button turnOn, find, amazonBtn, androidBtn, next, reset, back;
     private TextView status, deviceHelp, heading, description;
     private LinearLayout devicePick;
     private String device;
@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.18", 14, MUTED, false));
+        col.addView(text("TV setup · 1.21", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -82,8 +82,6 @@ public class MainActivity extends Activity {
         confirmCode = text("", 40, OK, true);
         confirmCode.setGravity(Gravity.CENTER); confirmCode.setTextIsSelectable(true);
         col.addView(confirmCode, lp(dp(12)));
-        openSupport = button("Open BM Remote Helper on TV to show my code", Color.parseColor("#2A3050"));
-        openSupport.setOnClickListener(v -> openBmSupport()); col.addView(openSupport, lp(dp(8)));
         find = button("Find my Fire TV", Color.parseColor("#2A3050"));
         find.setOnClickListener(v -> scan()); col.addView(find, lp(dp(8)));
         status = text("", 16, WARN, false); col.addView(status, lp(dp(12)));
@@ -138,7 +136,6 @@ public class MainActivity extends Activity {
         tvCodeInput.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         showAgain.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         confirmCode.setVisibility(s == SetupWizard.Step.DONE && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
-        openSupport.setVisibility(s == SetupWizard.Step.DONE && wizard.ready ? View.VISIBLE : View.GONE);
         next.setVisibility(View.GONE);
         turnOn.setVisibility(View.VISIBLE);
         back.setVisibility(s == SetupWizard.Step.CHECK || s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
@@ -165,7 +162,7 @@ public class MainActivity extends Activity {
                 heading.setText("TV setup confirmed");
                 deviceHelp.setText("Which TV is this? Choose the same type as your ticket or order.");
                 description.setText(confirmCode.length() > 0
-                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead). Use the button below to reopen BM Remote Helper for a new TV code."
+                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead)."
                         : "Your TV is ready. Get your confirmation code, then type it on your ticket or order's Remote setup tab.");
                 if (linkCode() != null) { description.setText("Your TV is ready and this app is linked to your ticket or order. Press the button to send everything to the website, then press Connect there."); turnOn.setText("Send to the website"); }
                 else turnOn.setText(confirmCode.length() > 0 ? "New code" : "Get my confirmation code");
@@ -253,20 +250,6 @@ public class MainActivity extends Activity {
         });
     }
 
-    /** Opens BM Remote Helper (the code app) on the TV so the customer can enter its code on the website. */
-    private void openBmSupport() {
-        if (busy) return;
-        final String host = address.getText().toString().trim();
-        if (!SetupWizard.validHost(host)) { say("Type the TV's address first.", WARN); return; }
-        setBusy(true); say("Opening BM Remote Helper on your TV…", MUTED);
-        io.execute(() -> {
-            String msg = null;
-            try { Enabler.openCodeApp(this, host); } catch (Exception e) { msg = Enabler.friendly(e); }
-            final String err = msg;
-            ui.post(() -> { if (isFinishing() || isDestroyed()) return; setBusy(false);
-                say(err != null ? err : "✓ BM Remote Helper is open on your TV. Enter its six-digit code in your ticket or order's Remote setup tab on bmsupport.uk.", err != null ? ACCENT : OK); });
-        });
-    }
 
     private void confirmReset() {
         if (busy) return;
@@ -338,7 +321,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, openSupport, showAgain}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, showAgain}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
