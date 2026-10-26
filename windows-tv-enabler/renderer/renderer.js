@@ -7,11 +7,11 @@ const el = id => document.getElementById(id);
 const heading = el('heading'), description = el('description'), devicePick = el('device-pick'),
   deviceHelp = el('device-help'), addressBlock = el('address-block'), address = el('address'),
   scan = el('scan'), devices = el('devices'), scanStatus = el('scan-status'),
-  codeBlock = el('code-block'), setupCode = el('setup-code'), openHelper = el('open-helper'),
+  codeBlock = el('code-block'), openHelper = el('open-helper'),
   progress = el('progress'), action = el('action'), next = el('next'), back = el('back'), reset = el('reset'),
   pickAmazon = el('pick-amazon'), pickAndroid = el('pick-android');
 
-let device = null, checks = null, busy = false, websiteSynced = false;
+let device = null, checks = null, busy = false, confirmCode = '';
 const savedAddress = localStorage.getItem('bm-tv-address');
 if (savedAddress) address.value = savedAddress;
 const savedDevice = localStorage.getItem('bm-tv-device');
@@ -25,7 +25,7 @@ function say(text, isError) {
 function setBusy(value) {
   busy = value;
   for (const b of [action, next, back, reset, scan, openHelper, pickAmazon, pickAndroid]) b.disabled = value;
-  address.disabled = value; setupCode.disabled = value;
+  address.disabled = value;
   devices.querySelectorAll('button').forEach(b => { b.disabled = value; });
 }
 
@@ -38,7 +38,7 @@ function pickDevice(value) {
 
 const DESCRIPTIONS = {
   [Step.DEBUGGING]: 'Put this computer and your TV on the same home network (avoid guest Wi-Fi and disconnect any VPN). Switch on the setting for your TV:\n\nAmazon Fire TV\nSettings › My Fire TV › About — press the device name 7 times. Go back to Developer options and switch ADB debugging ON.\n\nAndroid / Google TV\nSettings › System › About — press Android TV OS build 7 times. Go back to Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.',
-  [Step.CHECK]: 'Type the TV\'s address from its network settings, or use Find my TV (Amazon devices only).\n\nWe\'ll check whether the apps and permissions are already set up. If they are, BM Remote Helper opens straight away — nothing is reinstalled.\n\nOptional: enter the eight-digit setup code from your ticket or order\'s Remote setup tab to send checked progress there. No website code? You can still finish TV setup.',
+  [Step.CHECK]: 'Type the TV\'s address from its network settings, or use Find my TV (Amazon devices only).\n\nWe\'ll check whether the apps and permissions are already set up. If they are, BM Remote Helper opens straight away — nothing is reinstalled.',
   [Step.HELPER]: 'This app downloads BM Remote Helper and sends it to the TV over your home network, then opens it on the TV. Keep both devices awake; press Allow on the TV if asked.',
   [Step.CONTROL]: 'This app extracts the remote-control app bundled with BM Remote Helper, sends it to the TV and installs it. Existing installed apps are kept.',
   [Step.ACTIVATE]: 'We\'ll enable BM Remote Control\'s accessibility permission and check it on the TV, then open BM Remote Helper so your code is visible.',
@@ -46,10 +46,12 @@ const DESCRIPTIONS = {
 
 function render() {
   const s = wizard.step;
-  devicePick.hidden = s !== Step.DEVICE;
-  deviceHelp.hidden = s !== Step.DEVICE;
+  const pick = s === Step.DEVICE || (s === Step.DONE && device == null && !confirmCode);
+  devicePick.hidden = !pick;
+  deviceHelp.hidden = !pick;
   addressBlock.hidden = s !== Step.CHECK;
-  codeBlock.hidden = s === Step.DEBUGGING || s === Step.DEVICE;
+  codeBlock.hidden = !(s === Step.DONE && confirmCode);
+  codeBlock.textContent = confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
   openHelper.hidden = !((s === Step.REPORT || s === Step.DONE) && wizard.ready);
   next.hidden = !wizard.completed;
   action.hidden = wizard.completed;
@@ -90,13 +92,15 @@ function render() {
       action.firstChild.textContent = 'Activate and check permissions '; break;
     case Step.REPORT:
       heading.textContent = wizard.ready ? '3. Confirm TV setup' : '7. Confirm TV setup';
-      description.textContent = 'We\'ll check the TV one last time: BM Remote Helper installed, remote control installed, and its permission switched on. If everything checks out, setup is finished and BM Remote Helper stays open on the TV with your six-digit screen-share code.\n\nThis confirms setup inside this app. An eight-digit website linking code is optional — it is not needed to finish TV setup.';
+      description.textContent = 'We\'ll check the TV one last time: BM Remote Helper installed, remote control installed, and its permission switched on. If everything checks out, setup is finished and BM Remote Helper stays open on the TV with your six-digit screen-share code.\n\nWhen it\'s confirmed you\'ll get a short code to type on your ticket or order\'s Remote setup tab.';
       action.firstChild.textContent = 'Check and confirm TV setup '; break;
     case Step.DONE:
       heading.textContent = 'TV setup confirmed';
-      description.textContent = (websiteSynced ? 'Your ticket or order has received the TV checks. ' : 'Your TV is ready. Website linking is separate: enter the optional eight-digit setup code below and send the checks to your ticket or order. ')
-        + 'Then enter the six-digit code shown on the TV in the website\'s Remote setup tab to request screen sharing.\n\nUse the button above to reopen BM Remote Helper for a new code. Reset setup starts again without uninstalling TV apps or removing authorization.';
-      action.firstChild.textContent = websiteSynced ? 'Send TV checks again ' : 'Send TV checks to my ticket or order '; break;
+      deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
+      description.textContent = confirmCode
+        ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen enter the six-digit code shown on the TV in the same tab to request screen sharing. Use the button above to reopen BM Remote Helper for a new TV code.'
+        : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
+      action.firstChild.textContent = confirmCode ? 'New code ' : 'Get my confirmation code '; break;
   }
   setBusy(busy);
 }
@@ -105,34 +109,18 @@ function cleanError(error) {
   return String(error?.message || error).replace(/^Error invoking remote method '[^']+': Error: /, '');
 }
 
-/** Optional website sync after a stage: never blocks or undoes a finished TV step. */
-async function syncWebsite(stage) {
-  const code = setupCode.value.replace(/\D/g, '');
-  if (code.length !== 8 || !checks) return;
-  try {
-    await window.bmTv.report(code, checks, stage === Step.CHECK || stage === Step.REPORT ? (device || 'amazon') : device);
-    websiteSynced = true;
-  } catch (error) {
-    say(`TV step checked. Website sync pending: ${cleanError(error)} You can finish TV setup and retry linking on the final screen.`, true);
-  }
-}
-
 async function run(stage) {
   const host = address.value.trim();
   if (!validHost(host)) { say('Type the TV\'s address exactly as it shows on the TV, e.g. 192.168.1.25.', true); return; }
   localStorage.setItem('bm-tv-address', host);
   setBusy(true);
-  say(stage === Step.DONE ? 'Sending checked TV setup to your ticket or order…' : 'Checking your TV… keep this app open and watch your TV for an Allow box.');
+  say(stage === Step.DONE ? 'Getting your confirmation code…' : 'Checking your TV… keep this app open and watch your TV for an Allow box.');
   try {
     if (stage === Step.DONE) {
-      const code = setupCode.value.replace(/\D/g, '');
-      if (code.length !== 8 || !checks || !wizard.ready) {
-        say('Enter the current eight-digit setup code from your ticket or order\'s Remote setup tab.', true);
-        return;
-      }
-      await window.bmTv.report(code, checks, device);
-      websiteSynced = true;
-      say('✓ Your ticket or order has received the checked TV setup. Enter the six-digit TV code on its Remote setup tab.');
+      if (!checks || !wizard.ready) { say('Check the TV again first.', true); return; }
+      if (device == null) { say('Choose which TV this is first.', true); return; }
+      confirmCode = await window.bmTv.confirmCode(checks, device);
+      say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
     } else if (stage === Step.CHECK || stage === Step.REPORT) {
       checks = await window.bmTv.check(host);
       const isReady = allReady(checks.adb, checks.helper, checks.control, checks.accessibility);
@@ -147,14 +135,12 @@ async function run(stage) {
         wizard.confirmTv(isReady);
         say(isReady ? '✓ TV setup confirmed: both apps installed and remote-control permission enabled. Your TV code app is open. Press finish.' : 'The TV is not fully ready. Go back to debugging instructions and check setup again.', !isReady);
       }
-      await syncWebsite(stage);
     } else {
       if (stage === Step.HELPER) checks = await window.bmTv.installHelper(host);
       else if (stage === Step.CONTROL) checks = await window.bmTv.installControl(host);
       else checks = await window.bmTv.activate(host);
       wizard.operationCompleted();
       say('✓ This step is complete and checked on the TV. Confirm to continue.');
-      await syncWebsite(stage);
     }
   } catch (error) {
     say(cleanError(error), true);
@@ -177,13 +163,13 @@ action.addEventListener('click', () => {
 });
 
 next.addEventListener('click', () => { wizard.next(); say(''); render(); });
-back.addEventListener('click', () => { if (!busy) { wizard.reset(); checks = null; websiteSynced = false; say(''); render(); } });
+back.addEventListener('click', () => { if (!busy) { wizard.reset(); checks = null; confirmCode = ''; say(''); render(); } });
 reset.addEventListener('click', () => {
   if (busy) return;
-  if (!window.confirm('Start again from debugging instructions and clear the saved TV address, device choice and entered setup code? Installed TV apps and this computer\'s TV authorization are kept.')) return;
-  wizard.reset(); checks = null; device = null; websiteSynced = false;
+  if (!window.confirm('Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this computer\'s TV authorization are kept.')) return;
+  wizard.reset(); checks = null; device = null; confirmCode = '';
   localStorage.removeItem('bm-tv-address'); localStorage.removeItem('bm-tv-device');
-  address.value = ''; setupCode.value = ''; say(''); render();
+  address.value = ''; say(''); render();
 });
 openHelper.addEventListener('click', async () => {
   if (busy) return;

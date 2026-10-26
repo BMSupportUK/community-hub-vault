@@ -126,6 +126,7 @@ import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenti
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
+import { Route as ApiPublicEnablerConfirmRouteImport } from './routes/api/public/enabler-confirm'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/public/remote-helper-apk'
 import { Route as ApiPublicRemoteSetupRouteImport } from './routes/api/public/remote-setup'
@@ -873,6 +874,11 @@ const ApiPublicBoroMatchDetailRoute =
     path: '/api/public/boro-match-detail',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicEnablerConfirmRoute = ApiPublicEnablerConfirmRouteImport.update({
+  id: '/api/public/enabler-confirm',
+  path: '/api/public/enabler-confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   id: '/api/public/link-preview',
   path: '/api/public/link-preview',
@@ -1442,6 +1448,7 @@ export interface FileRoutesByFullPath {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
+  '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
@@ -1634,6 +1641,7 @@ export interface FileRoutesByTo {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
+  '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
@@ -1832,6 +1840,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
+  '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
@@ -2029,6 +2038,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
+    | '/api/public/enabler-confirm'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
@@ -2221,6 +2231,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
+    | '/api/public/enabler-confirm'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
@@ -2418,6 +2429,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
+    | '/api/public/enabler-confirm'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
@@ -2534,6 +2546,7 @@ export interface RootRouteChildren {
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
+  ApiPublicEnablerConfirmRoute: typeof ApiPublicEnablerConfirmRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicRemoteHelperApkRoute: typeof ApiPublicRemoteHelperApkRoute
   ApiPublicRemoteSetupRoute: typeof ApiPublicRemoteSetupRoute
@@ -3405,6 +3418,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/boro-match-detail'
       fullPath: '/api/public/boro-match-detail'
       preLoaderRoute: typeof ApiPublicBoroMatchDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/enabler-confirm': {
+      id: '/api/public/enabler-confirm'
+      path: '/api/public/enabler-confirm'
+      fullPath: '/api/public/enabler-confirm'
+      preLoaderRoute: typeof ApiPublicEnablerConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/link-preview': {
@@ -4381,6 +4401,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
+  ApiPublicEnablerConfirmRoute: ApiPublicEnablerConfirmRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicRemoteHelperApkRoute: ApiPublicRemoteHelperApkRoute,
   ApiPublicRemoteSetupRoute: ApiPublicRemoteSetupRoute,

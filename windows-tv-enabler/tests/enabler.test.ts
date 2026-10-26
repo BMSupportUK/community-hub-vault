@@ -172,3 +172,14 @@ test('Windows app reports checks and device against the ticket setup code', asyn
   await expect(report('12345678', {}, 'android', async () => ({ ok: false, status: 404 }))).rejects.toThrow(/isn't valid/);
   await expect(report('12345678', {}, 'android', async () => ({ ok: false, status: 409 }))).rejects.toThrow(/other TV type/);
 });
+
+test('Windows app gets a confirmation code only for a fully confirmed TV', async () => {
+  const { requestConfirmCode } = require('../core.cjs');
+  const all = { adb: true, helper: true, control: true, accessibility: true };
+  let sent: any;
+  const post = async (_u: string, o: any) => { sent = JSON.parse(o.body); return { ok: true, status: 200, json: async () => ({ code: 'K7P4QX' }) }; };
+  expect(await requestConfirmCode(all, 'android', post)).toBe('K7P4QX');
+  expect(sent.device).toBe('android');
+  await expect(requestConfirmCode({ ...all, accessibility: false }, 'android', post)).rejects.toThrow(/Check the TV/);
+  await expect(requestConfirmCode(all, undefined, post)).rejects.toThrow(/Choose which TV/);
+});

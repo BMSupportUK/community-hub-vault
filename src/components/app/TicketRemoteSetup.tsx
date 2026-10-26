@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { readSetupCode, writeSetupCode } from "@/lib/setup-code-store";
+import { EnablerCodeBox } from "@/components/app/EnablerCodeBox";
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
@@ -35,15 +35,10 @@ export function useTicketRemoteSetup(ticketId: string) {
 export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: { ticketId: string; customer: boolean; closed: boolean; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
-  const [setupCode, setSetupCodeState] = useState<string | null>(null);
-  const scope = `ticket:${ticketId}`;
-  useEffect(() => { setSetupCodeState(readSetupCode(scope)); }, [scope]);
-  const setSetupCode = (c: string | null) => { writeSetupCode(scope, c); setSetupCodeState(c); };
   const save = async (device: SetupDevice) => {
     setBusy(true);
     const { error } = await supabase.rpc("save_ticket_remote_setup" as never, { _ticket_id: ticketId, _device: device, _steps: [] } as never);
     if (error) toast.error(error.message);
-    setSetupCode(null);
     await reload(); setBusy(false);
   };
   const restart = async () => {
@@ -51,14 +46,17 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     setBusy(true);
     const { error } = await supabase.rpc("reset_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
     if (error) toast.error(error.message); else toast.success("Setup restarted — choose your device to begin again");
-    setSetupCode(null); setCode("");
+    setCode("");
     await reload(); setBusy(false);
   };
-  const issue = async () => {
-    setBusy(true);
-    const { data, error } = await supabase.rpc("issue_ticket_setup_code" as never, { _ticket_id: ticketId } as never);
-    if (error) toast.error(error.message); else setSetupCode(data as unknown as string);
-    setBusy(false);
+  const redeem = async (c: string) => {
+    const { data, error } = await supabase.rpc("redeem_ticket_enabler_code" as never, { _ticket_id: ticketId, _code: c } as never);
+    const r = data as unknown as string;
+    if (error) { toast.error(error.message); throw error; }
+    if (r === "device_mismatch") { toast.error("BM TV Enabler was set up for the other TV type. Press Change device, or pick the other TV type in the app."); throw new Error(r); }
+    if (r !== "ok") { toast.error("That code isn't valid. Check BM TV Enabler and type the code it shows now."); throw new Error(r); }
+    toast.success("BM TV Enabler confirmed your TV");
+    await reload();
   };
   const verify = async () => {
     setBusy(true);
@@ -97,14 +95,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
         <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
       </form>
     </div>}
-    {!closed && !complete && !ready && <div className="rounded-xl border border-primary/40 bg-card p-4 space-y-2">
-      <h3 className="font-semibold">Your setup code</h3>
-      <p className="text-sm text-muted-foreground">Type this eight-digit code into BM TV Enabler to link its checked progress to this ticket. It remains available when your TV is already set up.</p>
-      {setupCode
-        ? <p className="font-mono text-3xl font-bold tracking-widest">{setupCode.slice(0, 4)} {setupCode.slice(4)}</p>
-        : <Button size="sm" disabled={busy} onClick={() => void issue()}>Show my setup code</Button>}
-      {setupCode && <><p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p><Button size="sm" variant="outline" disabled={busy} onClick={() => void issue()}>New setup code</Button></>}
-    </div>}
+    {!closed && !complete && !ready && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
     <RemoteSetupProgress row={row} />
     {!complete && steps.map((s, i) => {
       const done = stepDone(s, row);
@@ -117,7 +108,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   </section>;
   return <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
     {main}
-    <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr /><div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">No Android phone? Use a Windows PC</h3><p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, type the same setup code, and it ticks the steps the same way.</p><Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup-1.2.0.exe">Download for Windows</a></Button><p className="text-xs text-muted-foreground">Windows 10 / 11 · free, unsigned — choose More info › Run anyway if warned.</p></div></aside>
+    <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr /><div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">No Android phone? Use a Windows PC</h3><p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, then type the code it shows here — it ticks the steps the same way.</p><Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup.exe">Download for Windows</a></Button><p className="text-xs text-muted-foreground">Windows 10 / 11 · free, unsigned — choose More info › Run anyway if warned.</p></div></aside>
   </div>;
 }
 

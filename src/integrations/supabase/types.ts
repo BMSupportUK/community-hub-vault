@@ -2353,6 +2353,36 @@ export type Database = {
         }
         Relationships: []
       }
+      enabler_confirm_codes: {
+        Row: {
+          app: string | null
+          checks: Json
+          code_hash: string
+          created_at: string
+          device: string
+          expires_at: string
+          used_at: string | null
+        }
+        Insert: {
+          app?: string | null
+          checks: Json
+          code_hash: string
+          created_at?: string
+          device: string
+          expires_at: string
+          used_at?: string | null
+        }
+        Update: {
+          app?: string | null
+          checks?: Json
+          code_hash?: string
+          created_at?: string
+          device?: string
+          expires_at?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       fan_zone_appeal_messages: {
         Row: {
           appeal_id: string
@@ -8861,6 +8891,10 @@ export type Database = {
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
+      redeem_ticket_enabler_code: {
+        Args: { _code: string; _ticket_id: string }
+        Returns: string
+      }
       referral_reward_cutoff: { Args: never; Returns: string }
       referral_reward_eligible: {
         Args: { p_order_id: string }

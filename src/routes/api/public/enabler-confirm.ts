@@ -1,0 +1,48 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import { CONFIRM_TTL_MS, makeConfirmCode } from "@/lib/enabler-confirm-code";
+
+/**
+ * Called by BM TV Enabler (phone/Windows) once it has confirmed the TV. Returns a short
+ * single-use code the customer types on their ticket/order Remote setup tab. Stores only
+ * a hash plus the TV checks and type — no personal data.
+ */
+const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type" };
+const json = (d: unknown, status = 200) => Response.json(d, { status, headers: CORS });
+const Body = z.object({
+  app: z.string().max(40).optional(),
+  device: z.enum(["amazon", "android"]),
+  checks: z.object({ adb: z.boolean(), helper: z.boolean(), control: z.boolean(), accessibility: z.boolean() }),
+});
+async function sha256Hex(s: string) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export const Route = createFileRoute("/api/public/enabler-confirm")({
+  server: {
+    handlers: {
+      OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
+      POST: async ({ request }) => {
+        const parsed = Body.safeParse(await request.json().catch(() => null));
+        if (!parsed.success) return json({ error: "Invalid request" }, 400);
+        const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+        const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for") ?? "unknown";
+        const ipHash = await sha256Hex(`setup:${ip}`);
+        const { count } = await db.from("tv_helper_diagnostics").select("id", { count: "exact", head: true })
+          .eq("ip_hash", ipHash).eq("step", "enabler_confirm").gte("created_at", new Date(Date.now() - 15 * 60_000).toISOString());
+        if ((count ?? 0) >= 20) return json({ error: "Too many tries. Wait 15 minutes." }, 429);
+        await db.from("tv_helper_diagnostics").insert({ ip_hash: ipHash, helper_version: parsed.data.app ?? null, step: "enabler_confirm", message: JSON.stringify(parsed.data.checks) });
+        for (let i = 0; i < 5; i++) {
+          const code = makeConfirmCode();
+          const { error } = await db.from("enabler_confirm_codes").insert({
+            code_hash: await sha256Hex(code), device: parsed.data.device, checks: parsed.data.checks,
+            app: parsed.data.app ?? null, expires_at: new Date(Date.now() + CONFIRM_TTL_MS).toISOString(),
+          });
+          if (!error) return json({ code });
+        }
+        return json({ error: "Couldn't make a code. Try again." }, 503);
+      },
+    },
+  },
+});

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { readSetupCode, writeSetupCode } from "@/lib/setup-code-store";
+import { EnablerCodeBox } from "@/components/app/EnablerCodeBox";
 import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import { CheckCircle2, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
@@ -11,7 +11,7 @@ import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
 import { REMOTE_SETUP_STEPS, appChecksPassed, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
-import { getOrderRemoteSetup, issueOrderSetupCode, resetOrderRemoteSetup, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
+import { getOrderRemoteSetup, redeemOrderEnablerCode, resetOrderRemoteSetup, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
 import { getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
 
 type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null } | null;
@@ -37,22 +37,22 @@ export function OrderRemoteTabs({ token, password, children }: { token: string; 
 }
 
 function OrderRemoteSetup({ token, password }: { token: string; password: string }) {
-  const get = useServerFn(getOrderRemoteSetup), saveFn = useServerFn(saveOrderRemoteSetup), issueFn = useServerFn(issueOrderSetupCode), verifyFn = useServerFn(verifyOrderRemoteSetup), resetFn = useServerFn(resetOrderRemoteSetup);
+  const get = useServerFn(getOrderRemoteSetup), saveFn = useServerFn(saveOrderRemoteSetup), redeemFn = useServerFn(redeemOrderEnablerCode), verifyFn = useServerFn(verifyOrderRemoteSetup), resetFn = useServerFn(resetOrderRemoteSetup);
   const [row, setRow] = useState<Row | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
-  const [setupCode, setSetupCodeState] = useState<string | null>(null);
-  const scope = `order:${token}`;
-  useEffect(() => { setSetupCodeState(readSetupCode(scope)); }, [scope]);
-  const setSetupCode = (c: string | null) => { writeSetupCode(scope, c); setSetupCodeState(c); };
   const load = useCallback(async () => { try { setRow((await get({ data: { token, password } })) as Row); } catch { setRow(null); } }, [get, token, password]);
   useEffect(() => { void load(); const t = window.setInterval(load, 4000); return () => window.clearInterval(t); }, [load]);
   const run = async (f: () => Promise<void>) => { setBusy(true); try { await f(); } catch (e) { toast.error(e instanceof Error ? e.message : "Something went wrong"); } await load(); setBusy(false); };
-  const save = (device: SetupDevice) => run(async () => { await saveFn({ data: { token, password, device } }); setSetupCode(null); });
-  const issue = () => run(async () => { setSetupCode(await issueFn({ data: { token, password } })); });
+  const save = (device: SetupDevice) => run(async () => { await saveFn({ data: { token, password, device } }); });
+  const redeem = async (c: string) => {
+    const r = await redeemFn({ data: { token, password, code: c } });
+    if (!r.ok) { toast.error(r.error); throw new Error(r.error); }
+    toast.success("BM TV Enabler confirmed your TV"); await load();
+  };
   const restart = () => {
     if (!window.confirm("Restart the TV setup from the beginning? Your saved progress and codes for this order will be cleared.")) return;
-    void run(async () => { await resetFn({ data: { token, password } }); setSetupCode(null); setCode(""); toast.success("Setup restarted — choose your device to begin again"); });
+    void run(async () => { await resetFn({ data: { token, password } }); setCode(""); toast.success("Setup restarted — choose your device to begin again"); });
   };
   const verify = () => run(async () => {
     const r = await verifyFn({ data: { token, password, code } });
@@ -85,13 +85,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
           <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
         </form>
       </div>}
-      {!row.completed_at && !ready && <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4">
-        <h3 className="font-semibold">Your setup code</h3>
-        <p className="text-sm text-muted-foreground">Type this eight-digit code into BM TV Enabler to link its checked progress to this order. It remains available when your TV is already set up.</p>
-        {setupCode ? <p className="font-mono text-3xl font-bold tracking-widest">{setupCode.slice(0, 4)} {setupCode.slice(4)}</p>
-          : <Button size="sm" disabled={busy} onClick={() => void issue()}>Show my setup code</Button>}
-        {setupCode && <><p className="text-xs text-muted-foreground">Valid for 2 hours. Showing a new code cancels the old one.</p><Button size="sm" variant="outline" disabled={busy} onClick={() => void issue()}>New setup code</Button></>}
-      </div>}
+      {!row.completed_at && !ready && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
       <RemoteSetupProgress row={row} />
       {!row.completed_at && REMOTE_SETUP_STEPS[row.device].map((s, i) => {
         const done = stepDone(s, row);
@@ -106,8 +100,8 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
       <EnablerQr />
       <div className="space-y-2 border-t border-border pt-3">
         <h3 className="font-semibold">No Android phone? Use a Windows PC</h3>
-        <p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, type the same setup code, and it ticks the steps the same way.</p>
-        <Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup-1.2.0.exe">Download for Windows</a></Button>
+        <p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, then type the code it shows here — it ticks the steps the same way.</p>
+        <Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup.exe">Download for Windows</a></Button>
       </div>
     </aside>
   </div>;

@@ -6,7 +6,7 @@ contextBridge.exposeInMainWorld('bmTv', {
   installControl: address => ipcRenderer.invoke('bm:install-control', address),
   activate: address => ipcRenderer.invoke('bm:activate', address),
   openCodeApp: address => ipcRenderer.invoke('bm:open-code-app', address),
-  report: (code, checks, device) => ipcRenderer.invoke('bm:report', code, checks, device),
+  confirmCode: (checks, device) => ipcRenderer.invoke('bm:confirm-code', checks, device),
   progress: callback => {
     const listener = (_, text) => callback(text);
     ipcRenderer.on('bm:progress', listener);

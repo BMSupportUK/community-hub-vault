@@ -19,7 +19,6 @@
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - Remote-help articles and PDFs share source content in `resources/remote-help-guides`; PDF companion rows use private `guide-files` paths beside existing video rows so adding written guides never replaces Watch actions.
 - Install Guides reuses AppTransferPanel's secured APK cards in device-specific remote-help tabs and excludes those APKs from general downloads, keeping one download flow and unchanged access checks.
-- Windows TV Enabler (`windows-tv-enabler/`): isolated Electron, local assets, bundled official ADB; mirrors the phone enabler's wizard step-for-step — `renderer/wizard.js` ports `SetupWizard.java`, both change together; pushes control.apk extracted from the helper download. Unsigned NSIS installer served via `/api/public/tv-enabler-windows` (app_builds row "TV Enabler%Windows").
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
 - Dialogs fit mobile dvh; dense views drop phone columns.
@@ -69,3 +68,4 @@
 - Phone TV ADB clients (`tv-enabler` and BM Support's `tvremote`) stay identical: resend keys on later AUTH and keep pending Allow connections open so AOSP prompts survive.
 - TV Enabler confirms a fresh TV check before finishing; website linking optional, stages sync by expiring code; reset keeps RSA authorization. Helper opens once per run; Remote setup has Restart setup.
 - Ticket screen-share requests unlock only after the customer's Remote setup is confirmed by a live BM Remote Helper code (server-verified RPC), so staff never invite before the TV app works.
+- TV Enabler website linking: apps get a hashed single-use 2-hour code from `/api/public/enabler-confirm` after a confirmed TV check; customers redeem it on ticket/order Remote setup (ticket RPC / order server fn) to copy the checks. The old 8-digit `/api/public/remote-setup` path stays only for older app versions.
