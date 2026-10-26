@@ -187,7 +187,8 @@ public class MainActivity extends Activity {
                 description.setText("Look at your TV — the 4-digit code is now on screen (on Android / Google TV it shows as the TV's device name on the About page). Type it below so we know this is your TV. After that, setup runs by itself.");
                 turnOn.setText("Confirm code and set up my TV"); break;
             case SETUP:
-                heading.setText("4. Setting up your TV");
+                heading.setText(install ? "4. Installing our apps" : "4. Setting up your TV");
+                if (install) { description.setText("We're putting our apps on your TV one by one. Keep both devices awake."); turnOn.setText("Try again"); break; }
                 description.setText("We check what's already on the TV, install BM Remote Helper and remote control if needed, switch remote control on, then check everything again. Keep both devices awake.");
                 turnOn.setText("Try again"); break;
             case DONE:
