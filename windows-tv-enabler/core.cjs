@@ -159,6 +159,40 @@ async function installHelper(host, adb, progress, delay, fetchImpl = globalThis.
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
 }
 
+const SITE = 'https://bmsupport.uk';
+/** New-customer setups: installs every app an admin ticked "Install on TV during setup".
+ * A newer copy already on the TV (downgrade refused) counts as already installed. Never fatal. */
+async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis.fetch, tempDir = require('node:os').tmpdir()) {
+  const fs = require('node:fs'); const path = require('node:path');
+  let apps = [];
+  try {
+    const res = await fetchImpl(`${SITE}/api/public/tv-install-list`);
+    if (res.ok) apps = ((await res.json()).apps || []).filter(a => a && typeof a.path === 'string' && a.path.startsWith('/api/public/tv-install-apk/'));
+  } catch {}
+  if (!apps.length) return { installed: [], failed: [] };
+  const serial = await connect(host, adb, progress, delay);
+  const shell = cmd => adb(['-s', serial, 'shell', cmd]);
+  const installed = [], failed = [];
+  try {
+    for (let i = 0; i < apps.length; i++) {
+      const app = apps[i]; const name = String(app.name || 'app').slice(0, 80);
+      progress(`Installing ${name} (${i + 1} of ${apps.length})…`);
+      const file = path.join(tempDir, `bm-app-${i}.apk`);
+      try {
+        const res = await fetchImpl(SITE + app.path);
+        if (!res.ok) throw new Error('download');
+        fs.mkdirSync(tempDir, { recursive: true });
+        fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
+        await adb(['-s', serial, 'push', file, '/data/local/tmp/bm-app.apk']);
+        const result = await shell('pm install -r /data/local/tmp/bm-app.apk');
+        if (result.includes('Success') || result.includes('VERSION_DOWNGRADE')) installed.push(name); else failed.push(name);
+      } catch { failed.push(name); }
+      finally { try { fs.unlinkSync(file); } catch {} await shell('rm -f /data/local/tmp/bm-app.apk').catch(() => {}); }
+    }
+  } finally { await adb(['disconnect', serial]).catch(() => {}); }
+  return { installed, failed };
+}
+
 /** Wizard step: install BM Remote Control from the copy bundled inside the Helper APK. */
 async function installControl(host, adb, progress, delay, fetchImpl = globalThis.fetch, tempDir = require('node:os').tmpdir(), extractImpl = extractControl) {
   const serial = await connect(host, adb, progress, delay);
@@ -289,4 +323,4 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch, helpe
   return body.code;
 }
 
-module.exports = { splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };
+module.exports = { splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };

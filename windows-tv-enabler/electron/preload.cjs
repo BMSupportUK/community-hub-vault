@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('bmTv', {
   check: address => ipcRenderer.invoke('bm:check', address),
   installHelper: address => ipcRenderer.invoke('bm:install-helper', address),
   installControl: address => ipcRenderer.invoke('bm:install-control', address),
+  installApps: address => ipcRenderer.invoke('bm:install-apps', address),
   activate: address => ipcRenderer.invoke('bm:activate', address),
   openCodeApp: address => ipcRenderer.invoke('bm:open-code-app', address),
   confirmCode: (checks, device, address) => ipcRenderer.invoke('bm:confirm-code', checks, device, address),
