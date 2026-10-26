@@ -8,13 +8,13 @@ export const REMOTE_SETUP_STEPS: Record<SetupDevice, SetupStep[]> = {
   amazon: [
     { title: "Turn on developer options and ADB debugging", body: "On your Fire TV go to Settings › My Fire TV › About and press the device name 7 times. Then Settings › My Fire TV › Developer options › ADB debugging ON.", proof: "adb" },
     { title: "Install BM TV Enabler on your phone or PC", body: "Scan the QR code on the right with your Android phone, or download the Windows version. Keep the phone or PC on the same Wi-Fi as the TV.", proof: "reported" },
-    { title: "Turn on remote control", body: "Follow BM TV Enabler's wizard: confirm debugging, find and check your Fire TV, then confirm each installation and activation step. Already-ready TVs skip installation. When it confirms your TV, type the code it shows into the box at the top of this page.", proof: "accessibility" },
+    { title: "Turn on remote control", body: "In BM TV Enabler, connect to your Fire TV and press Allow on the TV, then type the 4-digit code the TV shows into the app. The app then sets everything up by itself. When it confirms your TV, type the code it shows into the box at the top of this page.", proof: "accessibility" },
     { title: "Open BM Remote Helper", body: "Confirm TV setup inside BM TV Enabler, then use its Open BM Remote Helper button to show the TV's six-digit code. Enter that code at the top of this Remote setup page.", proof: "code" },
   ],
   android: [
     { title: "Turn on developer options and debugging", body: "On your TV go to Settings › System › About and press Android TV OS build 7 times. Then Settings › System › Developer options and switch ON Network debugging — or Wireless debugging if that's what your TV has. Leave it switched on.", proof: "adb" },
     { title: "Install BM TV Enabler on your phone or PC", body: "Scan the QR code on the right with your Android phone, or download the Windows version. Keep the phone or PC on the same Wi-Fi as the TV.", proof: "reported" },
-    { title: "Turn on remote control", body: "Follow BM TV Enabler's wizard: confirm debugging, type your TV's address and check it, then confirm each installation and activation step. Already-ready TVs skip installation. When it confirms your TV, type the code it shows into the box at the top of this page.", proof: "accessibility" },
+    { title: "Turn on remote control", body: "In BM TV Enabler, type your TV's address, connect and press Allow on the TV, then type the 4-digit code the TV shows into the app. The app then sets everything up by itself. When it confirms your TV, type the code it shows into the box at the top of this page.", proof: "accessibility" },
     { title: "Open BM Remote Helper", body: "Confirm TV setup inside BM TV Enabler, then use its Open BM Remote Helper button to show the TV's six-digit code. Enter that code at the top of this Remote setup page.", proof: "code" },
   ],
 };
