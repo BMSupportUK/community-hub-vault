@@ -1,0 +1,9 @@
+import { expect, test } from "bun:test";
+import { checksFresh } from "../src/lib/ticket-remote-setup";
+const ok = { adb: true, helper: true, control: true, accessibility: true };
+const now = Date.parse("2026-10-26T12:00:00Z");
+const iso = (minsAgo: number) => new Date(now - minsAgo * 60_000).toISOString();
+test("check older than 2 hours is not fresh", () => { expect(checksFresh({ app_checks: ok, app_checked_at: iso(121) }, now)).toBe(false); });
+test("check already used for a share is not fresh", () => { expect(checksFresh({ app_checks: ok, app_checked_at: iso(30), checks_used_at: iso(10) }, now)).toBe(false); });
+test("new check after a share is fresh again", () => { expect(checksFresh({ app_checks: ok, app_checked_at: iso(5), checks_used_at: iso(40) }, now)).toBe(true); });
+test("failed checks are never fresh", () => { expect(checksFresh({ app_checks: { adb: true }, app_checked_at: iso(1) }, now)).toBe(false); });

@@ -32,6 +32,16 @@ export function appChecksPassed(c: AppChecks | null | undefined, _device?: Setup
   return !!(c?.adb && c.helper && c.accessibility);
 }
 
+export const FRESH_CHECK_MS = 2 * 3600_000;
+type FreshRow = { app_checks: AppChecks | null; app_checked_at: string | null; checks_used_at?: string | null };
+/** A TV check counts for one screen share and only for 2 hours. */
+export function checksFresh(row: FreshRow | null | undefined, now = Date.now()) {
+  if (!row?.app_checked_at || !appChecksPassed(row.app_checks)) return false;
+  const at = Date.parse(row.app_checked_at);
+  if (now - at > FRESH_CHECK_MS) return false;
+  return !row.checks_used_at || Date.parse(row.checks_used_at) < at;
+}
+
 /** Staff can only request a screen share once the TV app has confirmed setup. */
 export function canRequestTicketScreenShare(setup: { completed_at: string | null } | null | undefined) {
   return !!setup?.completed_at;
