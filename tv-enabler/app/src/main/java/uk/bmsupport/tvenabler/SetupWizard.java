@@ -22,6 +22,8 @@ final class SetupWizard {
         if (++tries >= MAX_TRIES) { step = Step.CHECK; tvCode = null; tries = 0; return CodeResult.RESET; }
         return CodeResult.WRONG;
     }
+    /** Wireless debugging pairing code from the TV already proves it's the right TV. */
+    void paired() { if (step == Step.CHECK) { tvCode = null; tries = 0; step = Step.SETUP; } }
     void setupFinished(boolean isReady) { if (step != Step.SETUP) return; ready = isReady; if (isReady) step = Step.DONE; }
     void reset() { step = Step.DEBUGGING; ready = false; tvCode = null; tries = 0; }
     static String newCode(SecureRandom r) { return String.format(java.util.Locale.ROOT, "%04d", r.nextInt(10000)); }
