@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { execFile } = require('node:child_process');
-const { readHelperCode, showTvCode, checkExisting, installHelper, installControl, activate, openCodeApp, requestConfirmCode } = require('../core.cjs');
+const { report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, activate, openCodeApp, requestConfirmCode } = require('../core.cjs');
 const { scan } = require('../discovery.cjs');
 let window; let busy = false;
 const page = path.join(__dirname, '..', 'dist', 'index.html');
@@ -44,6 +44,7 @@ else {
     window.webContents.on('will-navigate', event => event.preventDefault());
     ipcMain.handle('bm:scan', task(() => scan()));
     ipcMain.handle('bm:show-code', task((address, code) => showTvCode(address, code, adb, say)));
+    ipcMain.handle('bm:link-report', task(async (code, checks, device, address) => report(code, checks, device, undefined, await readHelperCode(address, adb, say))));
     ipcMain.handle('bm:check', task(address => checkExisting(address, adb, say)));
     ipcMain.handle('bm:install-helper', task(address => installHelper(address, adb, say, undefined, undefined, tempDir())));
     ipcMain.handle('bm:install-control', task(address => installControl(address, adb, say, undefined, undefined, tempDir())));

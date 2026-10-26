@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.17", 14, MUTED, false));
+        col.addView(text("TV setup · 1.18", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -99,7 +99,26 @@ public class MainActivity extends Activity {
         // A remembered platform/address is a convenience, never proof that a TV is ready.
         device = prefs.getString("device", null);
         if (!"amazon".equals(device) && !"android".equals(device)) device = null;
+        readLink(getIntent());
         render();
+    }
+
+    @Override protected void onNewIntent(android.content.Intent intent) { super.onNewIntent(intent); setIntent(intent); readLink(intent); render(); }
+
+    /** A scanned website QR (bmtvenabler://link?code=12345678) links this app to the ticket/order. */
+    private void readLink(android.content.Intent intent) {
+        android.net.Uri u = intent == null ? null : intent.getData();
+        String c = u == null ? null : u.getQueryParameter("code");
+        if (c == null || !c.matches("\\d{8}")) return;
+        getSharedPreferences("tv", MODE_PRIVATE).edit().putString("link", c).putLong("link_at", System.currentTimeMillis()).apply();
+        say("✓ Linked to your ticket or order. Your TV checks and TV code will be sent there automatically.", OK);
+    }
+
+    private String linkCode() {
+        SharedPreferences p = getSharedPreferences("tv", MODE_PRIVATE);
+        String c = p.getString("link", null);
+        if (c == null || System.currentTimeMillis() - p.getLong("link_at", 0) > 2 * 3600_000L) return null;
+        return c;
     }
 
     private void pickDevice(String d) {
@@ -148,7 +167,9 @@ public class MainActivity extends Activity {
                 description.setText(confirmCode.length() > 0
                         ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead). Use the button below to reopen BM Remote Helper for a new TV code."
                         : "Your TV is ready. Get your confirmation code, then type it on your ticket or order's Remote setup tab.");
-                turnOn.setText(confirmCode.length() > 0 ? "New code" : "Get my confirmation code"); break;
+                if (linkCode() != null) { description.setText("Your TV is ready and this app is linked to your ticket or order. Press the button to send everything to the website, then press Connect there."); turnOn.setText("Send to the website"); }
+                else turnOn.setText(confirmCode.length() > 0 ? "New code" : "Get my confirmation code");
+                break;
         }
         setBusy(busy);
     }
@@ -173,7 +194,14 @@ public class MainActivity extends Activity {
         io.execute(() -> {
             try {
                 Enabler.Progress progress = (i, msg) -> ui.post(() -> { if (!isFinishing() && !isDestroyed()) say(msg, i == 1 ? WARN : MUTED); });
-                final String issued = run == SetupWizard.Step.DONE ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
+                final String link = linkCode();
+                String sentTo = null;
+                if (run == SetupWizard.Step.DONE && link != null) {
+                    try { Enabler.reportLinked(link, checks, selectedDevice, Enabler.readHelperCode(this, host)); sentTo = link; }
+                    catch (Enabler.LinkExpired e) { getSharedPreferences("tv", MODE_PRIVATE).edit().remove("link").apply(); throw e; }
+                }
+                final boolean linkedSent = sentTo != null;
+                final String issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 if (run == SetupWizard.Step.SETUP) {
                     checks = Enabler.checkExisting(this, host, progress);
                     if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
@@ -192,10 +220,12 @@ public class MainActivity extends Activity {
                     if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.setupFinished(ready);
+                        // Linked by the website QR: send straight there, no button or code needed.
+                        if (ready && linkCode() != null && device != null) ui.post(this::start);
                         say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on. BM Remote Helper is open on your TV." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
-                        confirmCode.setText(issued.substring(0, 3) + "-" + issued.substring(3));
-                        say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK);
+                        if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
+                        else { confirmCode.setText(issued.substring(0, 3) + "-" + issued.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
                     }
                     render();
                 });

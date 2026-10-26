@@ -13,6 +13,7 @@ const Body = z.object({
   code: z.string().regex(/^\d{8}$/),
   app: z.string().max(40).optional(),
   device: z.enum(["amazon", "android"]).optional(),
+  helperCode: z.string().regex(/^\d{6}$/).optional(),
   checks: z.object({ adb: z.boolean(), helper: z.boolean(), control: z.boolean(), accessibility: z.boolean() }),
 });
 
@@ -47,13 +48,20 @@ export const Route = createFileRoute("/api/public/remote-setup")({
           return json({ error: "That setup code isn't valid. Check the code on your Remote setup tab." }, 404);
         if (parsed.data.device && row.device && parsed.data.device !== row.device)
           return json({ error: "Device type doesn't match the setup" }, 409);
-        const patch = { app_checks: parsed.data.checks, app_checked_at: now.toISOString(), updated_at: now.toISOString() };
+        // Optional live BM Remote Helper code read off the TV: the website then offers a Connect button.
+        let sessionId: string | null = null;
+        if (parsed.data.helperCode) {
+          const { data: s } = await db.from("tv_remote_sessions").select("id").eq("code_hash", await sha256Hex(parsed.data.helperCode))
+            .eq("status", "pending").gt("expires_at", now.toISOString()).is("link_id", null).maybeSingle();
+          sessionId = s?.id ?? null;
+        }
+        const patch = { app_checks: parsed.data.checks, app_checked_at: now.toISOString(), pending_session_id: sessionId, updated_at: now.toISOString() };
         const result = t
           ? await db.from("ticket_remote_setup").update(patch).eq("ticket_id", t.ticket_id).eq("setup_code_hash", hash).gt("setup_code_expires_at", now.toISOString()).select("ticket_id")
           : o ? await db.from("order_remote_setup").update(patch).eq("order_id", o.order_id).eq("setup_code_hash", hash).gt("setup_code_expires_at", now.toISOString()).select("order_id") : null;
         if (!result || result.error) return json({ error: "Couldn't save TV checks. Try again." }, 503);
         if (!result.data?.length) return json({ error: "That setup code is no longer valid. Show a new code on Remote setup." }, 404);
-        return json({ ok: true });
+        return json({ ok: true, helperLinked: !!sessionId });
       },
     },
   },

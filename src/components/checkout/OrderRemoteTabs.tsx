@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { EnablerCodeBox } from "@/components/app/EnablerCodeBox";
+import { EnablerLinkBox } from "@/components/app/EnablerLinkBox";
 import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import { CheckCircle2, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
@@ -11,7 +12,7 @@ import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
 import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
-import { getOrderRemoteSetup, redeemOrderEnablerCode, resetOrderRemoteSetup, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
+import { getOrderRemoteSetup, redeemOrderEnablerCode, resetOrderRemoteSetup, issueOrderSetupCode, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
 import { getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
 
 type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
@@ -37,7 +38,7 @@ export function OrderRemoteTabs({ token, password, children }: { token: string; 
 }
 
 function OrderRemoteSetup({ token, password }: { token: string; password: string }) {
-  const get = useServerFn(getOrderRemoteSetup), saveFn = useServerFn(saveOrderRemoteSetup), redeemFn = useServerFn(redeemOrderEnablerCode), verifyFn = useServerFn(verifyOrderRemoteSetup), resetFn = useServerFn(resetOrderRemoteSetup);
+  const get = useServerFn(getOrderRemoteSetup), saveFn = useServerFn(saveOrderRemoteSetup), redeemFn = useServerFn(redeemOrderEnablerCode), verifyFn = useServerFn(verifyOrderRemoteSetup), resetFn = useServerFn(resetOrderRemoteSetup), issueFn = useServerFn(issueOrderSetupCode);
   const [row, setRow] = useState<Row | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
@@ -96,7 +97,8 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         </form>
       </div>}
       {!fresh && row.completed_at && <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"><h3 className="font-semibold">Check your TV again</h3><p>Before each screen share, open BM TV Enabler so it can check your TV is still set up, then type the new code it shows below.</p></div>}
-      {!fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
+      {!fresh && <EnablerLinkBox storeKey={`order:${token}`} disabled={busy} issue={() => issueFn({ data: { token, password } })} />}
+      {!fresh && <details className="rounded-xl border border-border bg-card p-3 text-sm"><summary className="cursor-pointer font-medium">Got a code from BM TV Enabler instead?</summary><div className="pt-3"><EnablerCodeBox disabled={busy} onSubmit={redeem} /></div></details>}
       <RemoteSetupProgress row={row} />
       {!row.completed_at && REMOTE_SETUP_STEPS[row.device].map((s, i) => {
         const done = stepDone(s, row);
