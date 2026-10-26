@@ -200,3 +200,23 @@ test('sends the Helper code with the confirmation request only when it is six di
   expect(JSON.parse(sent[0]).helperCode).toBe('123456');
   expect(JSON.parse(sent[1]).helperCode).toBeUndefined();
 });
+
+describe('Wireless debugging pairing (Windows)', () => {
+  const { pair, splitAddress, connect } = require('../core.cjs');
+  test('address port parsing', () => {
+    expect(splitAddress('192.168.1.25')).toEqual({ ip: '192.168.1.25', port: 5555 });
+    expect(splitAddress('192.168.1.25:41235').port).toBe(41235);
+    expect(splitAddress('192.168.1.25:1:2').port).toBe(null);
+  });
+  test('pairs with adb pair and rejects a wrong code', async () => {
+    const calls: string[][] = [];
+    await pair('192.168.1.25', 37123, '123456', async (a: string[]) => { calls.push(a); return 'Successfully paired to 192.168.1.25:37123'; }, () => {});
+    expect(calls[0]).toEqual(['pair', '192.168.1.25:37123', '123456']);
+    await expect(pair('192.168.1.25', 37123, '123456', async () => 'Failed: Wrong password', () => {})).rejects.toThrow("Code didn't work");
+    await expect(pair('8.8.8.8', 37123, '123456', async () => 'Successfully paired', () => {})).rejects.toThrow();
+  });
+  test('connect uses the wireless debugging port', async () => {
+    const serial = await connect('192.168.1.25:41235', async (a: string[]) => a[0] === 'devices' ? 'List\n192.168.1.25:41235\tdevice\n' : '', () => {}, async () => {});
+    expect(serial).toBe('192.168.1.25:41235');
+  });
+});

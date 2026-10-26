@@ -3,6 +3,7 @@ contextBridge.exposeInMainWorld('bmTv', {
   scan: () => ipcRenderer.invoke('bm:scan'),
   showCode: (address, code) => ipcRenderer.invoke('bm:show-code', address, code),
   linkReport: (code, checks, device, address) => ipcRenderer.invoke('bm:link-report', code, checks, device, address),
+  pair: (ip, pairPort, code) => ipcRenderer.invoke('bm:pair', ip, pairPort, code),
   check: address => ipcRenderer.invoke('bm:check', address),
   installHelper: address => ipcRenderer.invoke('bm:install-helper', address),
   installControl: address => ipcRenderer.invoke('bm:install-control', address),
