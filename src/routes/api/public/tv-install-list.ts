@@ -21,9 +21,11 @@ export const Route = createFileRoute("/api/public/tv-install-list")({
         const { validAndroidPackage } = await import("@/lib/apk-package");
         for (const row of data ?? []) {
           if (!validAndroidPackage(row.package_name) && row.file_path) {
-            const { storedApkPackage } = await import("@/lib/apk-package.server");
-            row.package_name = await storedApkPackage(row.file_path, row.file_name);
-            if (row.package_name) await supabaseAdmin.from("app_builds").update({ package_name: row.package_name }).eq("id", row.id);
+            try {
+              const { storedApkPackage } = await import("@/lib/apk-package.server");
+              row.package_name = await storedApkPackage(row.file_path, row.file_name);
+              if (row.package_name) await supabaseAdmin.from("app_builds").update({ package_name: row.package_name }).eq("id", row.id);
+            } catch { row.package_name = null; }
           }
         }
         const apps = (data ?? []).map((r) => ({

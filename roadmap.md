@@ -2,9 +2,9 @@
 # Roadmap
 
 ## Current Enabler follow-ups
-- [ ] Check selected TV packages before APK download; skip existing apps and preserve per-app outcomes in phone and Windows.
-- [ ] Verify tests and release the updated phone installer.
-- [ ] Refresh Helper connection automatically when reusing the setup confirmation reference; no manual Helper-code entry.
+- [x] Check selected TV packages before APK download; skip existing apps and preserve per-app outcomes in phone and Windows source. Verified actual QD, Smart Player and BM Store package identities.
+- [x] Phone 1.37 signed and current; downloaded bytes match. 33 JS tests and both Java inventory/wizard tests pass; preview build OK. With the current published website it skips TV transfer/install after APK identity reading; publishing the website update enables skipping APK download too. Windows source updated, installer remains 1.25.
+- [ ] Refresh Helper connection automatically when reusing the setup confirmation reference; blocked by missing Helper source/verified session-refresh interface. Website cannot itself issue LAN ADB commands; ended sessions cannot safely be revived.
 - [ ] Physical TV verification — requires the customer's phone and TV on the same Wi-Fi.
 
 ## Enabler confirmation code reuse
