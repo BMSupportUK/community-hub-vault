@@ -104,7 +104,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     </div>}
     {fresh && !closed && !row.pending_session_id && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Your TV code</h3>
-      <p className="text-sm">Your TV was just checked. Open BM Remote Helper on the TV and enter the six-digit code it shows.</p>
+      <p className="text-sm">Your TV was just checked, but BM TV Enabler couldn't read the code BM Remote Helper shows. Open BM Remote Helper on the TV and type the six-digit code here.</p>
       <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
         <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
         <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>

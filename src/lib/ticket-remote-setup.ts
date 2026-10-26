@@ -8,14 +8,14 @@ export const REMOTE_SETUP_STEPS: Record<SetupDevice, SetupStep[]> = {
   amazon: [
     { title: "Turn on developer options and ADB debugging", body: "On your Fire TV go to Settings › My Fire TV › About and press the device name 7 times. Then Settings › My Fire TV › Developer options › ADB debugging ON.", proof: "adb" },
     { title: "Install BM TV Enabler on your phone or PC", body: "Scan the QR code on the right with your Android phone, or download the Windows version. Keep the phone or PC on the same Wi-Fi as the TV.", proof: "reported" },
-    { title: "Turn on remote control", body: "In BM TV Enabler, connect to your Fire TV and press Allow on the TV, then type the 4-digit code the TV shows into the app. The app then sets everything up by itself. When it confirms your TV, type the code the app shows into the “Type the code from BM TV Enabler” box at the top of this page.", proof: "accessibility" },
-    { title: "Open BM Remote Helper", body: "When BM TV Enabler has confirmed your TV, press its Open BM Remote Helper button. The TV's six-digit code is usually sent here automatically — just press Connect at the top of this page. If no Connect button appears, type the code shown on the TV instead.", proof: "code" },
+    { title: "Turn on remote control", body: "In BM TV Enabler, connect to your Fire TV and press Allow on the TV. The app then sets everything up by itself. When it confirms your TV, type the code the app shows into the “Type the code from BM TV Enabler” box at the top of this page.", proof: "accessibility" },
+    { title: "Send your screen-share request", body: "BM TV Enabler opens BM Remote Helper on your TV by itself and sends its code straight here — just press Connect at the top of this page. Only if no Connect button appears, open BM Remote Helper on the TV and type the six-digit code it shows.", proof: "code" },
   ],
   android: [
     { title: "Turn on developer options and debugging", body: "On your TV go to Settings › System › About and press Android TV OS build 7 times. Then Settings › System › Developer options and switch ON Network debugging — or Wireless debugging if that's what your TV has. Leave it switched on. Using the Windows app with Wireless debugging? You can also choose Pair device with pairing code on the TV and type that code into the app.", proof: "adb" },
     { title: "Install BM TV Enabler on your phone or PC", body: "Scan the QR code on the right with your Android phone, or download the Windows version. Keep the phone or PC on the same Wi-Fi as the TV.", proof: "reported" },
-    { title: "Turn on remote control", body: "In BM TV Enabler, type your TV's address, connect and press Allow on the TV, then type the 4-digit code the TV shows into the app. The app then sets everything up by itself. When it confirms your TV, type the code the app shows into the “Type the code from BM TV Enabler” box at the top of this page.", proof: "accessibility" },
-    { title: "Open BM Remote Helper", body: "When BM TV Enabler has confirmed your TV, press its Open BM Remote Helper button. The TV's six-digit code is usually sent here automatically — just press Connect at the top of this page. If no Connect button appears, type the code shown on the TV instead.", proof: "code" },
+    { title: "Turn on remote control", body: "In BM TV Enabler, type your TV's address, connect and press Allow on the TV. The app then sets everything up by itself. When it confirms your TV, type the code the app shows into the “Type the code from BM TV Enabler” box at the top of this page.", proof: "accessibility" },
+    { title: "Send your screen-share request", body: "BM TV Enabler opens BM Remote Helper on your TV by itself and sends its code straight here — just press Connect at the top of this page. Only if no Connect button appears, open BM Remote Helper on the TV and type the six-digit code it shows.", proof: "code" },
   ],
 };
 
@@ -58,5 +58,5 @@ export function remoteSetupProgress(row: { app_checks: AppChecks | null; app_che
   if (!c.helper) return { stage: 1, title: "TV connected — Helper installation next", detail: "Continue the BM Remote Helper installation step in Enabler." };
   if (!c.control) return { stage: 2, title: "BM Remote Helper installed — remote control next", detail: "Continue the remote-control installation step in Enabler." };
   if (!c.accessibility) return { stage: 3, title: "Apps installed — activation next", detail: "Continue the permission activation step in Enabler." };
-  return { stage: 4, title: "TV setup confirmed by Enabler", detail: row.completed_at ? "Your TV code has also been confirmed. Open BM Remote Helper for a fresh code after a screen share ends." : "Open BM Remote Helper on the TV and enter its six-digit code above to send your screen-share request." };
+  return { stage: 4, title: "TV setup confirmed by Enabler", detail: row.completed_at ? "Your TV code has also been confirmed. After a screen share ends, run BM TV Enabler again — it brings the fresh check and code together." : "Type the code BM TV Enabler shows into the box above to confirm your TV." };
 }
