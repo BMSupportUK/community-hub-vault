@@ -136,7 +136,7 @@ public class MainActivity extends Activity {
         next.setOnClickListener(v -> { say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
-        ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(col); setContentView(sv);
+        ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(root); setContentView(sv);
         // A remembered platform/address is a convenience, never proof that a TV is ready.
         device = prefs.getString("device", null);
         if (!"amazon".equals(device) && !"android".equals(device)) device = null;
@@ -179,6 +179,8 @@ public class MainActivity extends Activity {
     }
 
     private void render() {
+        welcomeBox.setVisibility(welcomeDone ? View.GONE : View.VISIBLE);
+        contentBox.setVisibility(welcomeDone ? View.VISIBLE : View.GONE);
         SetupWizard.Step s = wizard.step;
         boolean askApps = s == SetupWizard.Step.DEBUGGING && apps == null;
         boolean install = "new".equals(apps);
