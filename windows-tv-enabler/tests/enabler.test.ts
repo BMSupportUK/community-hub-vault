@@ -1,8 +1,33 @@
 import { describe, expect, test } from 'bun:test';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { enable, SERVICE, CONTROL, privateAddress, accessibilityList } = require('../core.cjs');
+const { enable, checkExisting, installHelper, installControl, activate, extractControl, SERVICE, CONTROL, privateAddress, accessibilityList } = require('../core.cjs');
 const { parseDescription, safeLocation } = require('../discovery.cjs');
+
+/** Builds a minimal zip holding one stored (uncompressed) entry. */
+function storedZip(name: string, data: Buffer): Buffer {
+  const local = Buffer.alloc(30);
+  local.writeUInt32LE(0x04034b50, 0);
+  local.writeUInt16LE(0, 8); local.writeUInt16LE(0, 10);
+  local.writeUInt32LE(0, 12); local.writeUInt32LE(0, 14); local.writeUInt32LE(0, 18);
+  local.writeUInt32LE(data.length, 22); local.writeUInt32LE(data.length, 26);
+  local.writeUInt16LE(name.length, 28); local.writeUInt16LE(0, 30 - 2);
+  const nameBuf = Buffer.from(name, 'utf8');
+  const central = Buffer.alloc(46);
+  central.writeUInt32LE(0x02014b50, 0);
+  central.writeUInt16LE(0, 10); central.writeUInt32LE(0, 12); central.writeUInt32LE(0, 16);
+  central.writeUInt32LE(0, 20); central.writeUInt32LE(data.length, 24); central.writeUInt32LE(data.length, 28 - 4);
+  central.writeUInt32LE(data.length, 20); central.writeUInt32LE(data.length, 24);
+  central.writeUInt16LE(name.length, 28); central.writeUInt16LE(0, 30); central.writeUInt16LE(0, 32);
+  central.writeUInt32LE(0, 42);
+  const body = Buffer.concat([local, nameBuf, data]);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(1, 8); eocd.writeUInt16LE(1, 10);
+  eocd.writeUInt32LE(46 + name.length, 12);
+  eocd.writeUInt32LE(body.length, 16);
+  return Buffer.concat([body, central, nameBuf, eocd]);
+}
 
 describe('Windows TV Enabler safety and setup', () => {
   test('accepts only local private IPv4 targets, rejects command injection/public addresses', () => {
@@ -25,21 +50,55 @@ describe('Windows TV Enabler safety and setup', () => {
     expect(safeLocation('192.168.1.25', 'http://example.com:8008/dd.xml')).toBe(false);
     expect(safeLocation('192.168.1.25', 'http://192.168.1.25:80/admin')).toBe(false);
   });
-  test('installs from Helper via local temp path, enables and reads confirmation', async () => {
+  test('extracts the bundled remote-control app from the Helper package', () => {
+    const fs = require('node:fs');
+    const dir = '/tmp/bm-zip-' + Date.now();
+    fs.mkdirSync(dir, { recursive: true });
+    const apk = dir + '/helper.apk';
+    const payload = Buffer.alloc(150000, 7);
+    fs.writeFileSync(apk, storedZip('assets/control.apk', payload));
+    const out = extractControl(apk, dir + '/control.apk');
+    expect(fs.readFileSync(out).length).toBe(150000);
+    expect(() => extractControl(apk, dir + '/missing.apk')).not.toThrow();
+    fs.writeFileSync(apk, storedZip('assets/other.apk', payload));
+    expect(() => extractControl(apk, dir + '/none.apk')).toThrow(/does not contain/);
+  });
+  test('checkExisting reads real TV state without changing anything', async () => {
     const calls: string[][] = []; const serial = '192.168.1.25:5555';
     const adb = async (args: string[]) => {
       calls.push(args);
       if (args[0] === 'devices') return `${serial}\tdevice\n`;
       const command = args[3] || '';
       if (command === 'pm path uk.bmsupport.remote') return 'package:/data/app/helper.apk';
-      if (command.startsWith('cp ')) return 'BM_COPY_OK';
+      if (command === `pm path ${CONTROL}`) return '';
+      if (command === 'settings get secure enabled_accessibility_services') return 'com.example/com.example.Reader';
+      if (command === 'settings get secure accessibility_enabled') return '1';
+      return '';
+    };
+    const checks = await checkExisting('192.168.1.25', adb, () => {}, async () => {});
+    expect(checks).toEqual({ adb: true, helper: true, control: false, accessibility: false });
+    expect(calls.some(a => a[3]?.startsWith('settings put'))).toBe(false);
+    expect(calls.some(a => a[3]?.startsWith('pm install'))).toBe(false);
+    expect(calls.at(-1)).toEqual(['disconnect', serial]);
+  });
+  test('installs from a pushed control app, enables and reads confirmation', async () => {
+    const calls: string[][] = []; const serial = '192.168.1.25:5555';
+    const adb = async (args: string[]) => {
+      calls.push(args);
+      if (args[0] === 'devices') return `${serial}\tdevice\n`;
+      const command = args[3] || '';
+      if (command === 'pm path uk.bmsupport.remote') return 'package:/data/app/helper.apk';
       if (command.startsWith('pm install')) return 'Success';
       if (command === 'settings get secure accessibility_enabled') return '1';
       if (command === 'settings get secure enabled_accessibility_services') return calls.filter(a => a[3]?.startsWith('settings put secure enabled_accessibility_services')).length ? SERVICE : 'com.example/com.example.Reader';
       return '';
     };
-    expect(await enable('192.168.1.25', adb, () => {}, async () => {})).toMatchObject({ success: true, checks: { adb: true, helper: true, accessibility: true } });
+    const fakeApk = async () => ({ ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(200000) });
+    const fakeExtract = (_apk: string, dest: string) => { require('node:fs').writeFileSync(dest, Buffer.alloc(150000)); return dest; };
+    expect(await enable('192.168.1.25', adb, () => {}, async () => {}, fakeApk as never, '/tmp/bm-test-' + Date.now(), fakeExtract)).toMatchObject({ success: true, checks: { adb: true, helper: true, accessibility: true } });
+    expect(calls.some(a => a[2] === 'push' && a[4] === '/data/local/tmp/bm-control.apk')).toBe(true);
     expect(calls.some(a => a[3] === 'pm install -r -d /data/local/tmp/bm-control.apk')).toBe(true);
+    expect(calls.some(a => a[3]?.startsWith('cp '))).toBe(false);
     expect(calls.some(a => a[3] === `settings put secure enabled_accessibility_services com.example/com.example.Reader:${SERVICE}`)).toBe(true);
     expect(calls.at(-1)).toEqual(['disconnect', serial]);
   });
@@ -52,17 +111,34 @@ describe('Windows TV Enabler safety and setup', () => {
       if (args[2] === 'push') { helperInstalled = true; return ''; }
       const command = args[3] || '';
       if (command === 'pm path uk.bmsupport.remote') return helperInstalled ? 'package:/data/app/helper.apk' : '';
-      if (command.startsWith('cp ')) return 'BM_COPY_OK';
       if (command.startsWith('pm install')) return 'Success';
       if (command === 'settings get secure accessibility_enabled') return '1';
       if (command === 'settings get secure enabled_accessibility_services') return SERVICE;
       return '';
     };
     const fakeApk = async () => ({ ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(200000) });
-    expect(await enable('192.168.1.25', adb, () => {}, async () => {}, fakeApk as never, '/tmp/bm-test-' + Date.now())).toMatchObject({ success: true });
+    const fakeExtract = (_apk: string, dest: string) => { require('node:fs').writeFileSync(dest, Buffer.alloc(150000)); return dest; };
+    const checks = await installHelper('192.168.1.25', adb, () => {}, async () => {}, fakeApk as never, '/tmp/bm-test-' + Date.now());
+    expect(checks.helper).toBe(true);
     expect(calls.some(a => a[2] === 'push' && a[4] === '/data/local/tmp/bm-helper.apk')).toBe(true);
     expect(calls.some(a => a[3] === 'pm install -r -d /data/local/tmp/bm-helper.apk')).toBe(true);
     expect(calls.some(a => a[3]?.startsWith('monkey -p uk.bmsupport.remote'))).toBe(true);
+    expect(await enable('192.168.1.25', adb, () => {}, async () => {}, fakeApk as never, '/tmp/bm-test-' + Date.now(), fakeExtract)).toMatchObject({ success: true });
+  });
+  test('installControl skips the install when remote control is already present', async () => {
+    const calls: string[][] = []; const serial = '192.168.1.25:5555';
+    const adb = async (args: string[]) => {
+      calls.push(args);
+      if (args[0] === 'devices') return `${serial}\tdevice\n`;
+      const command = args[3] || '';
+      if (command.startsWith('pm path')) return 'package:/installed';
+      if (command === 'settings get secure accessibility_enabled') return '1';
+      if (command === 'settings get secure enabled_accessibility_services') return SERVICE;
+      return '';
+    };
+    const checks = await installControl('192.168.1.25', adb, () => {}, async () => {});
+    expect(checks.control).toBe(true);
+    expect(calls.some(a => a[3]?.startsWith('pm install'))).toBe(false);
   });
   test('never succeeds when the Helper download fails or the TV skips final confirmation', async () => {
     const adb = async (a: string[]) => a[0] === 'devices' ? '192.168.1.25:5555\tdevice' : '';
@@ -74,7 +150,7 @@ describe('Windows TV Enabler safety and setup', () => {
       if (a[3] === 'settings get secure enabled_accessibility_services') return SERVICE;
       return '0';
     };
-    await expect(enable('192.168.1.25', notOn, () => {}, async () => {})).rejects.toThrow('did not confirm');
+    await expect(activate('192.168.1.25', notOn, () => {}, async () => {})).rejects.toThrow('did not confirm');
   });
   test('does not enable a TV that has not approved debugging', async () => {
     const calls: string[][] = [];
