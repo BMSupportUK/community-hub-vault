@@ -9,7 +9,7 @@
   "platformToolsZipSha256": "e2534a447f848b39a6b26d4feae33c037449eb6ac83ab36075ae7a6e61188edb",
   "adbSha256": "e2534a447f848b39a6b26d4feae33c037449eb6ac83ab36075ae7a6e61188edb",
   "installerSha256": "e2534a447f848b39a6b26d4feae33c037449eb6ac83ab36075ae7a6e61188edb",
-  "installerBytes": 105752943,
+  "installerBytes": 105858260,
   "signed": false,
   "packaging": "@electron/packager --no-asar then NSIS; local executable and DLLs stay outside archives"
 }
