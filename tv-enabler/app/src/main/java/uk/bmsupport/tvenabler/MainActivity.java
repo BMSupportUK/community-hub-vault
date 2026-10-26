@@ -151,7 +151,7 @@ public class MainActivity extends Activity {
                 turnOn.setText("I've switched debugging on — next"); break;
             case CHECK:
                 heading.setText("2. Connect to your TV");
-                description.setText("Type the TV's address from its network settings. Find my Fire TV searches Amazon devices only. Android / Google TV users: type the address.\n\nWhen the TV asks, tick Always allow and press Allow. A 4-digit code will then appear on the TV screen.");
+                description.setText("Type the TV's address from its network settings. Find my Fire TV searches Amazon devices only. Android / Google TV users: type the address.\n\nWhen the TV asks, tick Always allow and press Allow. Setup then runs by itself.");
                 turnOn.setText("Connect to this TV"); break;
             case TV_CODE:
                 heading.setText("3. Type the code on your TV");
@@ -245,8 +245,7 @@ public class MainActivity extends Activity {
             try {
                 Enabler.showTvCode(this, host, code, (i, msg) -> ui.post(() -> { if (!isFinishing() && !isDestroyed()) say(msg, i == 1 ? WARN : MUTED); }));
                 ui.post(() -> { if (isFinishing() || isDestroyed()) return; setBusy(false);
-                    if (existing == null) wizard.connected(code);
-                    say("✓ Connected. Look for the 4-digit code on your TV.", OK); render(); });
+                    wizard.paired(); say("✓ Connected to your TV. Setting it up now…", OK); render(); turnOn.performClick(); });
             } catch (Exception e) {
                 String message = Enabler.friendly(e);
                 ui.post(() -> { if (!isFinishing() && !isDestroyed()) { setBusy(false); say(message, ACCENT); render(); turnOn.setText(existing == null ? "Try again" : turnOn.getText()); } });
