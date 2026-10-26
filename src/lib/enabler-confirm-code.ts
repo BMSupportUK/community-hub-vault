@@ -1,4 +1,4 @@
-// BM TV Enabler confirmation codes: 6 characters from an alphabet without look-alikes, valid 2 hours, single use.
+// BM TV Enabler confirmation codes: 6 characters, reusable on their bound ticket/order for 2 hours.
 export const CONFIRM_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const CONFIRM_TTL_MS = 2 * 60 * 60 * 1000;
 
@@ -17,6 +17,6 @@ export function makeConfirmCode(random: Uint32Array = crypto.getRandomValues(new
 type CodeRow = { device: string; expires_at: string; used_at: string | null };
 /** Why a stored code can or cannot be used now on a setup for `device`. */
 export function confirmCodeState(row: CodeRow | null, device: string, now = new Date()): "ok" | "invalid" | "device_mismatch" {
-  if (!row || row.used_at || new Date(row.expires_at) <= now) return "invalid";
+  if (!row || new Date(row.expires_at) <= now) return "invalid";
   return row.device === device ? "ok" : "device_mismatch";
 }

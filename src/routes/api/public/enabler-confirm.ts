@@ -4,7 +4,7 @@ import { CONFIRM_TTL_MS, makeConfirmCode } from "@/lib/enabler-confirm-code";
 
 /**
  * Called by BM TV Enabler (phone/Windows) once it has confirmed the TV. Returns a short
- * single-use code the customer types on their ticket/order Remote setup tab. Stores only
+ * reusable code the customer types on their ticket/order Remote setup tab. Stores only
  * a hash plus the TV checks and type — no personal data.
  */
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type" };
@@ -43,11 +43,12 @@ export const Route = createFileRoute("/api/public/enabler-confirm")({
         }
         for (let i = 0; i < 5; i++) {
           const code = makeConfirmCode();
+          const expiresAt = new Date(Date.now() + CONFIRM_TTL_MS).toISOString();
           const { error } = await db.from("enabler_confirm_codes").insert({
             code_hash: await sha256Hex(code), device: parsed.data.device, checks: parsed.data.checks,
-            app: parsed.data.app ?? null, session_id: sessionId, expires_at: new Date(Date.now() + CONFIRM_TTL_MS).toISOString(),
+            app: parsed.data.app ?? null, session_id: sessionId, expires_at: expiresAt,
           });
-          if (!error) return json({ code, helperLinked: !!sessionId });
+          if (!error) return json({ code, helperLinked: !!sessionId, expiresAt, expiresAtMs: Date.parse(expiresAt) });
         }
         return json({ error: "Couldn't make a code. Try again." }, 503);
       },
