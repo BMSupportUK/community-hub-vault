@@ -9,6 +9,7 @@ import { CheckCircle2, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { renewalMessage } from "@/lib/enabler-renewal";
+import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
@@ -44,6 +45,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   const [row, setRow] = useState<Row | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [renewal, setRenewal] = useState("");
+  const renewalGate = useEnablerRenewalGate(`order:${token}`, row?.pending_session_id ?? null);
   const renewFn = useServerFn(requestOrderEnablerConnection);
   const load = useCallback(async () => { try { setRow((await get({ data: { token, password } })) as Row); } catch { setRow(null); } }, [get, token, password]);
   useEffect(() => { void load(); const t = window.setInterval(load, 4000); return () => window.clearInterval(t); }, [load]);
@@ -56,17 +58,23 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   };
   const restart = () => {
     if (!window.confirm("Restart the TV setup from the beginning? Your saved progress and codes for this order will be cleared.")) return;
-    void run(async () => { await resetFn({ data: { token, password } }); setRenewal(""); toast.success("Setup restarted — choose your device to begin again"); });
+    void run(async () => { await resetFn({ data: { token, password } }); setRenewal(""); renewalGate.reset(); toast.success("Setup restarted — choose your device to begin again"); });
   };
   const connect = () => run(async () => {
     const r = await verifyFn({ data: { token, password } });
     if (!r.ok) toast.error(r.error); else toast.success("Connected — staff have been told your TV is ready");
   });
-  const renew = () => run(async () => {
-    const state = await renewFn({ data: { token, password } });
-    setRenewal(renewalMessage(state));
-    if (state !== "queued") toast.error(renewalMessage(state));
-  });
+  const renew = () => {
+    if (busy || !renewalGate.begin()) return;
+    return run(async () => {
+      try {
+        const state = await renewFn({ data: { token, password } });
+        renewalGate.finish(state);
+        setRenewal(renewalMessage(state));
+        if (state !== "queued") toast.error(renewalMessage(state));
+      } catch (e) { renewalGate.finish("failed"); throw e; }
+    });
+  };
 
   if (row === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!row) return <section className="mx-auto max-w-2xl space-y-4 text-foreground">
@@ -95,7 +103,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
       {(!fresh || !row.pending_session_id) && (ready || row.completed_at) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
         <h3 className="font-semibold">Get a new TV connection</h3>
         <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Your valid 24-hour confirmation reference stays the same."}</p>
-        <Button size="lg" className="w-full" disabled={busy} onClick={() => void renew()}>Get new connection</Button>
+        <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
       </div>}
       {!fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
       <RemoteSetupProgress row={row} />
