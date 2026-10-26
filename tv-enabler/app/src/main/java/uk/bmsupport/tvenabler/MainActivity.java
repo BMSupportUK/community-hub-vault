@@ -178,6 +178,11 @@ public class MainActivity extends Activity {
                 } else {
                     checks = stage == SetupWizard.Step.CHECK || stage == SetupWizard.Step.REPORT ? Enabler.checkExisting(this, host, progress)
                             : Enabler.enableUntil(this, host, stage == SetupWizard.Step.HELPER ? 2 : stage == SetupWizard.Step.CONTROL ? 3 : 4, progress);
+                    // Already-set-up TV: open the code app once, straight away. The confirm step only re-checks.
+                    if (stage == SetupWizard.Step.CHECK && SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
+                        progress.step(5, "This TV is already set up. Opening BM Remote Helper to show your code…");
+                        Enabler.openCodeApp(this, host);
+                    }
                 }
                 // Only measured snapshots are sent. A website error never undoes a successful TV operation.
                 final String syncError = stage != SetupWizard.Step.DONE && code.length() == 8
