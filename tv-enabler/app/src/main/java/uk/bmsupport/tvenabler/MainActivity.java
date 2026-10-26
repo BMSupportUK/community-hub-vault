@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
                     String body = in == null ? "{}" : new String(readAll(in), "UTF-8");
                     org.json.JSONObject j = new org.json.JSONObject(body);
                     if (code >= 400 || !j.has("token")) err = j.optString("error", "PIN not recognised.");
-                    else { exp = java.time.Instant.parse(j.getString("expiresAt").replace("+00:00", "Z")).toEpochMilli(); prefs.edit().putString("pinToken", j.getString("token")).putLong("pinExpires", exp).apply(); }
+                    else { exp = j.getLong("expiresAtMs"); prefs.edit().putString("pinToken", j.getString("token")).putLong("pinExpires", exp).apply(); }
                 } catch (Exception e) { err = "Couldn't reach bmsupport.uk. Check your internet and try again."; }
                 final String fe = err;
                 runOnUiThread(() -> {

@@ -41,7 +41,7 @@ export const Route = createFileRoute("/api/public/enabler-login")({
         const token = [...raw].map((b) => b.toString(16).padStart(2, "0")).join("");
         const { error } = await db.from("enabler_device_tokens").insert({ pin_id: row.id, token_hash: await sha256Hex(token), expires_at: row.expires_at });
         if (error) return json({ error: "Couldn't log in. Try again." }, 503);
-        return json({ token, expiresAt: row.expires_at });
+        return json({ token, expiresAt: row.expires_at, expiresAtMs: new Date(row.expires_at).getTime() });
       },
     },
   },
