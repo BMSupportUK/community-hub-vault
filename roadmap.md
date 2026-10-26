@@ -414,4 +414,5 @@
 
 ## Windows TV Enabler wizard
 - [x] Port the phone wizard to Windows 1.3: debugging confirm, existing-setup check with quick-open, device choice only when needed, staged Helper/control install, in-app TV confirmation, optional website linking, reset; control.apk now pushed from the helper download (no TV-side copy). 20 tests pass.
-- [ ] Rebuild and register the unsigned NSIS installer; verify on a physical Windows PC + TV.
+- [x] Rebuilt and registered the unsigned NSIS 1.3.0 installer; live download checksum verified.
+- [ ] Verify the wizard on a physical Windows PC + TV.
