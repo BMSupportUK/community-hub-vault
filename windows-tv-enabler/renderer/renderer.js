@@ -122,7 +122,7 @@ async function run(stage, host) {
       }
       const ok = isReadyNow();
       wizard.setupFinished(ok);
-      say(ok ? '✓ TV setup confirmed: both apps installed and remote control switched on. BM Remote Helper is open on your TV.' : 'The TV is not fully ready yet. Press Try again.', !ok);
+      say(ok ? '✓ TV setup confirmed: both apps installed and remote control switched on.' : 'The TV is not fully ready yet. Press Try again.', !ok);
     }
   } catch (error) {
     say(cleanError(error), true);
