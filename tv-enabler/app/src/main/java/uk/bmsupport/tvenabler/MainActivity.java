@@ -14,6 +14,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -43,16 +44,47 @@ public class MainActivity extends Activity {
     private volatile java.util.List<Enabler.AppResult> appsResults = new java.util.ArrayList<>();
     private Button appsNew, appsHave, appsBack;
     private LinearLayout appsList;
+    private LinearLayout welcomeBox, contentBox;
+    private boolean welcomeDone;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         SharedPreferences prefs = getSharedPreferences("tv", MODE_PRIVATE);
         LinearLayout col = new LinearLayout(this);
+        contentBox = col;
         col.setOrientation(LinearLayout.VERTICAL);
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
-        col.setBackgroundColor(BG);
-        col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.28", 14, MUTED, false));
+        contentBox.setBackgroundColor(BG);
+        contentBox.addView(text("BM TV Enabler", 26, FG, true));
+        contentBox.addView(text("TV setup · 1.29", 14, MUTED, false));
+        // Welcome on open: logo, message and Get started before the wizard.
+        welcomeBox = new LinearLayout(this);
+        welcomeBox.setOrientation(LinearLayout.VERTICAL);
+        welcomeBox.setGravity(Gravity.CENTER_HORIZONTAL);
+        welcomeBox.setPadding(dp(12), dp(24), dp(12), dp(16));
+        welcomeBox.setBackgroundColor(BG);
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.bm_logo);
+        logo.setContentDescription("BM Support");
+        LinearLayout.LayoutParams logoLp = new LinearLayout.LayoutParams(dp(190), dp(190));
+        logoLp.gravity = Gravity.CENTER_HORIZONTAL;
+        welcomeBox.addView(logo, logoLp);
+        TextView welcomeTitle = text("Welcome to BM TV Enabler", 24, FG, true);
+        welcomeTitle.setGravity(Gravity.CENTER);
+        welcomeBox.addView(welcomeTitle, lp(dp(10)));
+        TextView welcomeText = text("This free app from BM Support sets up your TV with our apps or gets it ready for staff screen-share support — just follow the steps. Put this device and your TV on the same Wi-Fi to begin.", 16, MUTED, false);
+        welcomeText.setGravity(Gravity.CENTER);
+        welcomeBox.addView(welcomeText, lp(dp(4)));
+        Button startBtn = button("Get started", ACCENT);
+        startBtn.setOnClickListener(v -> { welcomeDone = true; render(); });
+        LinearLayout.LayoutParams startLp = new LinearLayout.LayoutParams(dp(240), LinearLayout.LayoutParams.WRAP_CONTENT);
+        startLp.gravity = Gravity.CENTER_HORIZONTAL; startLp.topMargin = dp(12);
+        welcomeBox.addView(startBtn, startLp);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(BG);
+        root.addView(welcomeBox);
+        root.addView(contentBox);
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -104,7 +136,7 @@ public class MainActivity extends Activity {
         next.setOnClickListener(v -> { say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
-        ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(col); setContentView(sv);
+        ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(root); setContentView(sv);
         // A remembered platform/address is a convenience, never proof that a TV is ready.
         device = prefs.getString("device", null);
         if (!"amazon".equals(device) && !"android".equals(device)) device = null;
@@ -147,6 +179,8 @@ public class MainActivity extends Activity {
     }
 
     private void render() {
+        welcomeBox.setVisibility(welcomeDone ? View.GONE : View.VISIBLE);
+        contentBox.setVisibility(welcomeDone ? View.VISIBLE : View.GONE);
         SetupWizard.Step s = wizard.step;
         boolean askApps = s == SetupWizard.Step.DEBUGGING && apps == null;
         boolean install = "new".equals(apps);

@@ -38,7 +38,7 @@ if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
   app.whenReady().then(() => {
-    window = new BrowserWindow({ width: 860, height: 880, minWidth: 620, minHeight: 640, backgroundColor: '#10101a', title: 'BM TV Enabler', autoHideMenuBar: true,
+    window = new BrowserWindow({ width: 860, height: 880, minWidth: 620, minHeight: 640, backgroundColor: '#10101a', title: 'BM TV Enabler', autoHideMenuBar: true, icon: path.join(__dirname, '..', 'build.ico'),
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());

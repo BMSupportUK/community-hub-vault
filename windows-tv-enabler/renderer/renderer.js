@@ -15,6 +15,12 @@ const heading = el('heading'), description = el('description'), devicePick = el(
   pairButton = el('pair'), pairCode = el('pair-code'), pairPort = el('pair-port');
 
 let device = null, checks = null, busy = false, confirmCode = '', appsResults = [];
+const welcomeSection = el('welcome'), wizardSection = el('wizard');
+document.getElementById('welcome-start').addEventListener('click', () => {
+  welcomeSection.hidden = true;
+  wizardSection.hidden = false;
+  window.scrollTo(0, 0);
+});
 const savedAddress = localStorage.getItem('bm-tv-address');
 if (savedAddress) address.value = savedAddress;
 const savedDevice = localStorage.getItem('bm-tv-device');
