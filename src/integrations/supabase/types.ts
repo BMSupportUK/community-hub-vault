@@ -2369,6 +2369,10 @@ export type Database = {
           created_at: string
           device: string
           expires_at: string
+          refresh_request_id: string | null
+          refresh_requested_at: string | null
+          refresh_state: string | null
+          refresh_token_hash: string | null
           session_id: string | null
           used_at: string | null
         }
@@ -2381,6 +2385,10 @@ export type Database = {
           created_at?: string
           device: string
           expires_at: string
+          refresh_request_id?: string | null
+          refresh_requested_at?: string | null
+          refresh_state?: string | null
+          refresh_token_hash?: string | null
           session_id?: string | null
           used_at?: string | null
         }
@@ -2393,6 +2401,10 @@ export type Database = {
           created_at?: string
           device?: string
           expires_at?: string
+          refresh_request_id?: string | null
+          refresh_requested_at?: string | null
+          refresh_state?: string | null
+          refresh_token_hash?: string | null
           session_id?: string | null
           used_at?: string | null
         }
@@ -8450,6 +8462,15 @@ export type Database = {
         }[]
       }
       email_is_account_holder: { Args: { _email: string }; Returns: boolean }
+      enabler_refresh_task: {
+        Args: {
+          _checks?: Json
+          _helper_hash?: string
+          _request_id?: string
+          _token_hash: string
+        }
+        Returns: Json
+      }
       end_tv_session: { Args: { _id: string }; Returns: undefined }
       export_app_credentials_for_backup: {
         Args: never
@@ -9022,6 +9043,10 @@ export type Database = {
         Args: { p_original_id: string; p_rows: Json }
         Returns: number
       }
+      request_enabler_connection: {
+        Args: { _id: string; _kind: string }
+        Returns: string
+      }
       request_my_order_password: {
         Args: { p_order_id: string }
         Returns: boolean
@@ -9029,6 +9054,10 @@ export type Database = {
       request_ticket_admin_help: {
         Args: { _ticket_id: string }
         Returns: number
+      }
+      request_ticket_enabler_connection: {
+        Args: { _ticket_id: string }
+        Returns: string
       }
       request_ticket_screen_share: {
         Args: { _code: string; _ticket_id: string }
