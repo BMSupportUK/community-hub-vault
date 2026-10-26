@@ -37,3 +37,26 @@ test('nothing ticked stops with a message and never touches the TV', async () =>
   await expect(installOurApps('192.168.1.25', async () => { touched = true; return ''; }, () => {}, async () => {}, fakeFetch([]), '/tmp')).rejects.toThrow('No apps are set up');
   expect(touched).toBe(false);
 });
+
+test('existing TV packages skip download, push and install; missing packages still install', async () => {
+  const downloads: string[] = [], commands: string[][] = [];
+  const fetchApps = async (url: string) => {
+    downloads.push(url);
+    if (url.endsWith('/tv-install-list')) return new Response(JSON.stringify({ apps: [
+      { name: 'Already there', packageName: 'uk.bmsupport.player', path: '/api/public/tv-install-apk/old' },
+      { name: 'Missing app', packageName: 'uk.bmsupport.newplayer', path: '/api/public/tv-install-apk/new' },
+    ] }));
+    return new Response(new Uint8Array(10));
+  };
+  const adb = async (args: string[]) => {
+    commands.push(args);
+    if (args[0] === 'devices') return '192.168.1.25:5555\tdevice';
+    if (args.includes('pm list packages')) return 'package:uk.bmsupport.player\r\npackage:com.amazon.tv.launcher';
+    return 'Success';
+  };
+  const result = await installOurApps('192.168.1.25', adb, () => {}, async () => {}, fetchApps, '/tmp/bm-skip-' + Date.now());
+  expect(downloads.filter(url => url.includes('/tv-install-apk/'))).toEqual(['https://bmsupport.uk/api/public/tv-install-apk/new']);
+  expect(commands.filter(args => args.includes('push')).length).toBe(1);
+  expect(commands.filter(args => args.includes('pm install -r /data/local/tmp/bm-app.apk')).length).toBe(1);
+  expect(result.results).toEqual([{ name: 'Already there', status: 'already' }, { name: 'Missing app', status: 'installed' }]);
+});

@@ -1,6 +1,12 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Current Enabler follow-ups
+- [x] Check selected TV packages before APK download; skip existing apps and preserve per-app outcomes in phone and Windows source. Verified actual QD, Smart Player and BM Store package identities.
+- [x] Phone 1.37 signed and current; downloaded bytes match. 33 JS tests and both Java inventory/wizard tests pass; preview build OK. With the current published website it skips TV transfer/install after APK identity reading; publishing the website update enables skipping APK download too. Windows source updated, installer remains 1.25.
+- [ ] Refresh Helper connection automatically when reusing the setup confirmation reference; blocked by missing Helper source/verified session-refresh interface. Website cannot itself issue LAN ADB commands; ended sessions cannot safely be revived.
+- [ ] Physical TV verification — requires the customer's phone and TV on the same Wi-Fi.
+
 ## Enabler confirmation code reuse
 - [x] Repeat confirmation is accepted on the same ticket/order until expiry; atomic scope binding preserves access and session checks. Recent codes extended to 24 hours.
 - [x] Phone 1.36 and Windows 1.25 built and uploaded as current downloads; 42 tests pass, API returns 24-hour expiry, Windows expired-state check passes, phone signature/download verified.

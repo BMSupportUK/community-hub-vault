@@ -197,7 +197,7 @@ final class Enabler {
     }
 
     /** New-customer setups: installs every app an admin ticked "Install on TV during setup".
-     * A newer copy already on the TV (downgrade refused) counts as already there. Never fatal; returns one AppResult per app. */
+     * Existing packages bypass downloads and installation. Never fatal; returns one AppResult per app. */
     static java.util.List<AppResult> installOurApps(Context ctx, String host, Progress p) throws Exception {
         java.util.List<AppResult> results = new java.util.ArrayList<>();
         org.json.JSONArray apps;
@@ -210,6 +210,8 @@ final class Enabler {
         if (apps == null || apps.length() == 0) throw new IllegalStateException("No apps are set up to install yet. Please contact BM Support.");
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
+            p.step(0, "Checking which apps are already on your TV…");
+            java.util.Set<String> installed = InstalledApps.from(adb.shell("pm list packages"));
             for (int i = 0; i < apps.length(); i++) {
                 org.json.JSONObject a = apps.optJSONObject(i);
                 if (a == null) continue;
@@ -217,6 +219,12 @@ final class Enabler {
                 String name = a.optString("name", "app");
                 if (name.length() > 80) name = name.substring(0, 80);
                 if (!path.startsWith("/api/public/tv-install-apk/")) continue;
+                String packageName = a.optString("packageName", "");
+                if (InstalledApps.contains(installed, packageName)) {
+                    p.step(0, name + " — already on your TV, skipping (" + (i + 1) + " of " + apps.length() + ")");
+                    results.add(new AppResult(name, AppResult.ALREADY));
+                    continue;
+                }
                 p.step(0, "Installing " + name + " (" + (i + 1) + " of " + apps.length() + ")…");
                 File out = new File(ctx.getCacheDir(), "bm-app.apk");
                 try {
@@ -226,9 +234,18 @@ final class Enabler {
                         byte[] buf = new byte[65536]; int r;
                         while ((r = in.read(buf)) > 0) o.write(buf, 0, r);
                     } finally { h.disconnect(); }
+                    // Older website versions do not send packageName; still avoid the TV transfer/install.
+                    android.content.pm.PackageInfo info = ctx.getPackageManager().getPackageArchiveInfo(out.getAbsolutePath(), 0);
+                    if (info != null && InstalledApps.contains(installed, info.packageName)) {
+                        results.add(new AppResult(name, AppResult.ALREADY));
+                        continue;
+                    }
                     adb.push(out, "/data/local/tmp/bm-app.apk");
                     String res = adb.shell("pm install -r /data/local/tmp/bm-app.apk");
-                    if (res.contains("Success")) results.add(new AppResult(name, AppResult.INSTALLED));
+                    if (res.contains("Success")) {
+                        results.add(new AppResult(name, AppResult.INSTALLED));
+                        if (info != null && InstalledApps.validPackage(info.packageName)) installed.add(info.packageName);
+                    }
                     else if (res.contains("VERSION_DOWNGRADE")) results.add(new AppResult(name, AppResult.ALREADY));
                     else results.add(new AppResult(name, AppResult.FAILED));
                 } catch (Exception e) { results.add(new AppResult(name, AppResult.FAILED)); }

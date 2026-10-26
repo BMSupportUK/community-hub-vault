@@ -218,6 +218,7 @@ export type Database = {
           install_on_tv: boolean
           is_available: boolean
           is_current: boolean
+          package_name: string | null
           release_notes: string | null
           sort_order: number
           updated_at: string
@@ -238,6 +239,7 @@ export type Database = {
           install_on_tv?: boolean
           is_available?: boolean
           is_current?: boolean
+          package_name?: string | null
           release_notes?: string | null
           sort_order?: number
           updated_at?: string
@@ -258,6 +260,7 @@ export type Database = {
           install_on_tv?: boolean
           is_available?: boolean
           is_current?: boolean
+          package_name?: string | null
           release_notes?: string | null
           sort_order?: number
           updated_at?: string

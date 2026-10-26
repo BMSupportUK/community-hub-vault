@@ -1576,6 +1576,13 @@
       "when": 1793055516039,
       "tag": "0224_reusable_enabler_confirmation_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 225,
+      "version": "7",
+      "when": 1793056854800,
+      "tag": "0225_app_build_package_identity",
+      "breakpoints": true
     }
   ]
 }
