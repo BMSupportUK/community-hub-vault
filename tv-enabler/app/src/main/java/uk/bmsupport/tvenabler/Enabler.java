@@ -53,14 +53,18 @@ final class Enabler {
     }
 
     /** Connects (Allow box on first use) and puts the 4-digit check code on the TV screen. */
+    static final String SHOW_CODE = "if [ \"$(getprop ro.product.manufacturer)\" != Amazon ]; then [ -f /data/local/tmp/bm-name ] || settings get global device_name > /data/local/tmp/bm-name; settings put global device_name 'BM TV Enabler code CODE'; am start -a android.settings.DEVICE_INFO_SETTINGS >/dev/null 2>&1; fi";
+    /** Puts the TV's own name back after the code check. */
+    static final String RESTORE_NAME = "if [ -f /data/local/tmp/bm-name ]; then n=$(cat /data/local/tmp/bm-name); if [ -z \"$n\" ] || [ \"$n\" = null ]; then settings delete global device_name; else settings put global device_name \"$n\"; fi; rm -f /data/local/tmp/bm-name; fi";
+
     static void showTvCode(Context ctx, String host, String code, Progress p) throws Exception {
         if (!code.matches("\\d{4}")) throw new IllegalArgumentException("bad code");
         p.step(1, "Connecting… If the TV asks, tick Always allow and press Allow.");
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
             adb.shell("cmd notification post -S bigtext -t 'BM TV Enabler' bm_tv_code 'Your BM TV Enabler code is " + code + "'");
-            // Android / Google TV keep notifications hidden: open the panel so the code is on screen.
-            adb.shell("cmd statusbar expand-notifications >/dev/null 2>&1 || am start -a android.settings.NOTIFICATION_SETTINGS >/dev/null 2>&1");
+            // Android / Google TV hide shell notifications: briefly name the TV after the code and open its About page.
+            adb.shell(SHOW_CODE.replace("CODE", code));
         }
     }
 
@@ -115,6 +119,7 @@ final class Enabler {
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
             c.adb = true;
+            adb.shell(RESTORE_NAME);
             c.helper = adb.shell("pm path " + HELPER).contains("package:");
             boolean needControl = !adb.shell("pm path " + CONTROL).contains("package:");
             if (!c.helper || (needControl && stopAfter >= 3)) p.step(stopAfter >= 3 && c.helper ? 3 : 2, "Downloading BM Remote Helper and its bundled remote control to this phone…");

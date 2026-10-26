@@ -41,7 +41,7 @@ function pickDevice(value) {
 const DESCRIPTIONS = {
   [Step.DEBUGGING]: 'Put this computer and your TV on the same home network (avoid guest Wi-Fi and disconnect any VPN). Switch on the setting for your TV:\n\nAmazon Fire TV\nSettings › My Fire TV › About — press the device name 7 times. Go back to Developer options and switch ADB debugging ON.\n\nAndroid / Google TV\nSettings › System › About — press Android TV OS build 7 times. Go back to Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.',
   [Step.CHECK]: 'Type the TV\'s address from its network settings, or use Find my TV (Amazon devices only).\n\nWhen the TV asks, tick Always allow and press Allow. A 4-digit code will then appear on the TV screen.',
-  [Step.TV_CODE]: 'Look at your TV — a message with a 4-digit code has appeared (on some TVs it\'s in the notifications). Type it below so we know this is your TV. After that, setup runs by itself.',
+  [Step.TV_CODE]: 'Look at your TV — the 4-digit code is now on screen (on Android / Google TV it shows as the TV\'s device name on the About page). Type it below so we know this is your TV. After that, setup runs by itself.',
   [Step.SETUP]: 'We check what\'s already on the TV, install BM Remote Helper and remote control if needed, switch remote control on, then check everything again. Keep both devices awake.',
 };
 
