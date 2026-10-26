@@ -97,7 +97,7 @@ public class MainActivity extends Activity {
                     java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-login").openConnection();
                     h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
                     h.setRequestProperty("content-type", "application/json");
-                    h.getOutputStream().write(("{\"pin\":\"" + pin + "\",\"app\":\"phone-1.32\"}").getBytes("UTF-8"));
+                    h.getOutputStream().write(("{\"pin\":\"" + pin + "\",\"app\":\"phone-1.33\"}").getBytes("UTF-8"));
                     int code = h.getResponseCode();
                     java.io.InputStream in = code < 400 ? h.getInputStream() : h.getErrorStream();
                     String body = in == null ? "{}" : new String(readAll(in), "UTF-8");
@@ -423,8 +423,12 @@ public class MainActivity extends Activity {
                 ui.post(() -> {
                     setBusy(false);
                     if (isFinishing() || isDestroyed()) return;
-                    if (found.isEmpty()) say((wantAndroid ? "No Android TV found." : "No Fire TV found.") + " Keep the TV awake on the same Wi-Fi, or type the address from BM Remote Helper. Some TVs don't advertise themselves.", WARN);
-                    else showDevices(found);
+                    if (found.isEmpty()) {
+                        say((wantAndroid ? "No Android TV found." : "No Fire TV found.") + " Keep the TV awake on the same Wi-Fi, try Show all devices, or type the TV's address.", WARN);
+                        new AlertDialog.Builder(this).setTitle(wantAndroid ? "No Android TV found" : "No Fire TV found")
+                                .setMessage("Some TVs don't announce themselves. Show everything on this Wi-Fi? Only devices that can be set up can be picked.")
+                                .setNegativeButton("Cancel", null).setPositiveButton("Show all devices", (d, w) -> scanAll()).show();
+                    } else showDevices(found, false);
                 });
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -435,15 +439,49 @@ public class MainActivity extends Activity {
         });
     }
 
-    private void showDevices(List<DiscoveredDevice> devices) {
+    private void scanAll() {
+        if (busy) return;
+        WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        int ip = wm == null ? 0 : wm.getConnectionInfo().getIpAddress();
+        if (ip == 0) { say("Connect this phone to your home Wi-Fi first.", WARN); return; }
+        String base = (ip & 0xff) + "." + ((ip >> 8) & 0xff) + "." + ((ip >> 16) & 0xff) + ".";
+        setBusy(true);
+        say("Looking for every device on the Wi-Fi…", MUTED);
+        io.execute(() -> {
+            WifiManager.MulticastLock lock = wm.createMulticastLock("bm-all-discovery");
+            lock.setReferenceCounted(false);
+            try {
+                lock.acquire();
+                List<DiscoveredDevice> found = DeviceDiscovery.scanAll(base);
+                ui.post(() -> {
+                    setBusy(false);
+                    if (isFinishing() || isDestroyed()) return;
+                    if (found.isEmpty()) say("Nothing answered on this Wi-Fi. Check the phone and TV are on the same Wi-Fi, or type the TV's address.", WARN);
+                    else showDevices(found, true);
+                });
+            } catch (Exception e) {
+                ui.post(() -> { setBusy(false); say("Couldn't search this Wi-Fi. Try again or type the TV address.", WARN); });
+            } finally { if (lock.isHeld()) lock.release(); }
+        });
+    }
+
+    private void showDevices(List<DiscoveredDevice> devices, boolean all) {
         CharSequence[] labels = new CharSequence[devices.size()];
-        for (int i = 0; i < devices.size(); i++) labels[i] = devices.get(i).label();
+        for (int i = 0; i < devices.size(); i++) {
+            DiscoveredDevice dv = devices.get(i);
+            if (all && !dv.debuggingReachable) {
+                android.text.SpannableString g = new android.text.SpannableString(dv.name + "\n" + dv.address + "\nCan't be set up — debugging is off or it isn't a TV");
+                g.setSpan(new android.text.style.ForegroundColorSpan(Color.parseColor("#6B7280")), 0, g.length(), 0);
+                labels[i] = g;
+            } else labels[i] = dv.label();
+        }
         final int[] selected = {-1};
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("android".equals(device) ? "Choose your Android TV" : "Choose your Fire TV")
+                .setTitle(all ? "All devices on this Wi-Fi" : "android".equals(device) ? "Choose your Android TV" : "Choose your Fire TV")
                 .setSingleChoiceItems(labels, -1, (d, index) -> {
-                    selected[0] = index;
-                    ((AlertDialog) d).getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+                    boolean ok = !all || devices.get(index).debuggingReachable;
+                    selected[0] = ok ? index : -1;
+                    ((AlertDialog) d).getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(ok);
                 })
                 .setNegativeButton("Cancel", (d, which) -> say("No TV selected. You can search again or type its address.", MUTED))
             .setPositiveButton("Use this TV", (d, which) -> {
