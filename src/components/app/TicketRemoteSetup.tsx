@@ -111,12 +111,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       </form>
     </div>}
     {!closed && !fresh && complete && <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"><h3 className="font-semibold">Check your TV again</h3><p>Before each screen share, open BM TV Enabler so it can check your TV is still set up, then type the new code it shows below.</p></div>}
-    {!closed && !fresh && <EnablerLinkBox storeKey={`ticket:${ticketId}`} disabled={busy} issue={async () => {
-      const { data, error } = await supabase.rpc("issue_ticket_setup_code" as never, { _ticket_id: ticketId } as never);
-      if (error) { toast.error(error.message); throw error; }
-      return data as unknown as string;
-    }} />}
-    {!closed && !fresh && <details className="rounded-xl border border-border bg-card p-3 text-sm"><summary className="cursor-pointer font-medium">Got a code from BM TV Enabler instead?</summary><div className="pt-3"><EnablerCodeBox disabled={busy} onSubmit={redeem} /></div></details>}
+    {!closed && !fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
     <RemoteSetupProgress row={row} />
     {!complete && steps.map((s, i) => {
       const done = stepDone(s, row);

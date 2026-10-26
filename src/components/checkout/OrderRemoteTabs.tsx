@@ -97,8 +97,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         </form>
       </div>}
       {!fresh && row.completed_at && <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"><h3 className="font-semibold">Check your TV again</h3><p>Before each screen share, open BM TV Enabler so it can check your TV is still set up, then type the new code it shows below.</p></div>}
-      {!fresh && <EnablerLinkBox storeKey={`order:${token}`} disabled={busy} issue={() => issueFn({ data: { token, password } })} />}
-      {!fresh && <details className="rounded-xl border border-border bg-card p-3 text-sm"><summary className="cursor-pointer font-medium">Got a code from BM TV Enabler instead?</summary><div className="pt-3"><EnablerCodeBox disabled={busy} onSubmit={redeem} /></div></details>}
+      {!fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
       <RemoteSetupProgress row={row} />
       {!row.completed_at && REMOTE_SETUP_STEPS[row.device].map((s, i) => {
         const done = stepDone(s, row);
