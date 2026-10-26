@@ -9,7 +9,7 @@ const heading = el('heading'), description = el('description'), devicePick = el(
   scan = el('scan'), devices = el('devices'), scanStatus = el('scan-status'),
   codeBlock = el('code-block'),
   progress = el('progress'), action = el('action'), next = el('next'), back = el('back'), reset = el('reset'),
-  pickAmazon = el('pick-amazon'), pickAndroid = el('pick-android'),
+  pickAmazon = el('pick-amazon'), pairBlock = el('pair-block'), scanHint = el('scan-hint'), pickAndroid = el('pick-android'),
   tvCodeBlock = el('tv-code-block'), linkBlock = el('link-block'), linkCode = el('link-code'), tvCodeInput = el('tv-code'), showAgain = el('show-again'),
   pairButton = el('pair'), pairCode = el('pair-code'), pairPort = el('pair-port');
 
@@ -38,16 +38,20 @@ function pickDevice(value) {
   render();
 }
 
+const DEBUG_HELP = {
+  amazon: 'Put this computer and your Fire TV on the same home network (avoid guest Wi-Fi and disconnect any VPN).\n\nOn the Fire TV: Settings › My Fire TV › About — press the device name 7 times. Go back to My Fire TV › Developer options and switch ADB debugging ON.',
+  android: 'Put this computer and your TV on the same home network (avoid guest Wi-Fi and disconnect any VPN).\n\nOn the TV: Settings › System › About — press Android TV OS build 7 times. Go back to System › Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.',
+};
 const DESCRIPTIONS = {
-  [Step.DEBUGGING]: 'Put this computer and your TV on the same home network (avoid guest Wi-Fi and disconnect any VPN). Switch on the setting for your TV:\n\nAmazon Fire TV\nSettings › My Fire TV › About — press the device name 7 times. Go back to Developer options and switch ADB debugging ON.\n\nAndroid / Google TV\nSettings › System › About — press Android TV OS build 7 times. Go back to Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.',
-  [Step.CHECK]: 'Type the TV\'s address from its network settings, or use Find my TV (Amazon devices only).\n\nWhen the TV asks, tick Always allow and press Allow. Setup then runs by itself.',
+  [Step.DEBUGGING]: '',
+  [Step.CHECK]: 'Type the TV\'s address from its network settings, or press Find my TV and pick yours from the list.\n\nWhen the TV asks, tick Always allow and press Allow. Setup then runs by itself.',
   [Step.TV_CODE]: 'Look at your TV — the 4-digit code is now on screen (on Android / Google TV it shows as the TV\'s device name on the About page). Type it below so we know this is your TV. After that, setup runs by itself.',
   [Step.SETUP]: 'We check what\'s already on the TV, install BM Remote Helper and remote control if needed, switch remote control on, then check everything again. Keep both devices awake.',
 };
 
 function render() {
   const s = wizard.step;
-  const pick = s === Step.DONE && device == null && !confirmCode;
+  const pick = s === Step.DEBUGGING || (s === Step.DONE && device == null && !confirmCode);
   devicePick.hidden = !pick;
   deviceHelp.hidden = !pick;
   addressBlock.hidden = s !== Step.CHECK;
@@ -56,7 +60,10 @@ function render() {
   linkBlock.hidden = !(s === Step.DONE && wizard.ready);
   codeBlock.textContent = confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
   next.hidden = true;
-  action.hidden = false;
+  action.hidden = s === Step.DEBUGGING && device == null;
+  pairBlock.hidden = device !== 'android';
+  scan.textContent = device === 'android' ? 'Find my Android TV' : 'Find my Fire TV';
+  scanHint.textContent = device === 'android' ? 'Find my Android TV lists Android / Google TVs on your network (Amazon devices are left out). If yours isn\'t listed, type the address from the TV\'s network settings.' : 'Find my Fire TV lists only Amazon Fire TVs on your network, so you can pick the right one if you have more than one.';
   back.hidden = !(s === Step.CHECK || s === Step.TV_CODE);
   pickAmazon.classList.toggle('selected', device === 'amazon');
   pickAndroid.classList.toggle('selected', device === 'android');
@@ -71,6 +78,11 @@ function render() {
       ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead).'
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
     action.firstChild.textContent = confirmCode ? 'New code ' : 'Get my confirmation code ';
+  } else if (s === Step.DEBUGGING) {
+    heading.textContent = device ? '1. Enable TV debugging' : 'Which TV are you setting up?';
+    deviceHelp.textContent = device ? 'Wrong TV? Choose the other one.' : 'Choose your TV to see the right steps.';
+    description.textContent = device ? DEBUG_HELP[device] : '';
+    action.firstChild.textContent = labels[s];
   } else {
     description.textContent = DESCRIPTIONS[s];
     action.firstChild.textContent = labels[s];
@@ -179,7 +191,7 @@ scan.addEventListener('click', async () => {
   if (busy) return;
   setBusy(true); devices.replaceChildren(); scanStatus.textContent = 'Looking for TVs on your home network…';
   try {
-    const found = await window.bmTv.scan();
+    const found = await window.bmTv.scan(device);
     scanStatus.textContent = found.length ? `${found.length} TV${found.length === 1 ? '' : 's'} found. Select the one you want.` : 'No TVs found. Check both devices are on the same home network, then type the TV address.';
     for (const tv of found) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'device';
