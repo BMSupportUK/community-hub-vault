@@ -1,0 +1,4 @@
+UPDATE public.app_builds SET is_current=false WHERE app_name IN ('TV Enabler','BM TV Enabler for Windows');
+INSERT INTO public.app_builds (app_name, category, file_name, file_path, file_size, is_available, is_current, release_notes, version_name, sort_order, announce_updates) VALUES
+('TV Enabler','bm_store','BM-TV-Enabler-1.24.apk','tv-enabler/BM-TV-Enabler-1.24.apk',116732,true,true,'BM Remote Helper now stays on the TV after setup so the screen-share Allow box can appear.','1.24',0,false),
+('BM TV Enabler for Windows','bm_store','BM-TV-Enabler-Setup-1.14.0.exe','tv-enabler/BM-TV-Enabler-Setup-1.14.0.exe',105842204,true,true,'BM Remote Helper now stays on the TV after setup so the screen-share Allow box can appear.','1.14.0',0,false);

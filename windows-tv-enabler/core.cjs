@@ -261,13 +261,13 @@ async function readHelperCode(host, adb, progress, delay = ms => new Promise(r =
   try {
     const serial = await connect(host, adb, progress, delay);
     try {
-      // Bring Helper up just long enough to read its code; it goes back to Home once read.
+      // Helper must stay on screen: Android only shows its screen-share Allow box while it is in front.
       await adb(['-s', serial, 'shell', `monkey -p ${HELPER} -c android.intent.category.LAUNCHER 1`]).catch(() => {});
       await delay(2500);
       for (let i = 0; i < 6; i++) {
         const xml = await adb(['-s', serial, 'shell', 'uiautomator dump /data/local/tmp/bm-ui.xml >/dev/null 2>&1; cat /data/local/tmp/bm-ui.xml; rm -f /data/local/tmp/bm-ui.xml']);
         const code = helperCodeFrom(xml);
-        if (code) { await adb(['-s', serial, 'shell', 'input keyevent KEYCODE_HOME']).catch(() => {}); return code; }
+        if (code) return code;
         await delay(1500);
       }
     } finally { await adb(['disconnect', serial]).catch(() => {}); }
