@@ -4391,6 +4391,7 @@ export type Database = {
           pin_attempts: number
           pin_hash: string | null
           pin_locked_until: string | null
+          pin_must_change: boolean
           pin_salt: string | null
           session_expires_at: string | null
           session_hash: string | null
@@ -4403,6 +4404,7 @@ export type Database = {
           pin_attempts?: number
           pin_hash?: string | null
           pin_locked_until?: string | null
+          pin_must_change?: boolean
           pin_salt?: string | null
           session_expires_at?: string | null
           session_hash?: string | null
@@ -4415,6 +4417,7 @@ export type Database = {
           pin_attempts?: number
           pin_hash?: string | null
           pin_locked_until?: string | null
+          pin_must_change?: boolean
           pin_salt?: string | null
           session_expires_at?: string | null
           session_hash?: string | null

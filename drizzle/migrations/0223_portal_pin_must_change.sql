@@ -1,0 +1,1 @@
+ALTER TABLE public.manual_credential_access ADD COLUMN IF NOT EXISTS pin_must_change boolean NOT NULL DEFAULT false;
