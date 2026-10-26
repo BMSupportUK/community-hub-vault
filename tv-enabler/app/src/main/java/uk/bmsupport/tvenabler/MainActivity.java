@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.22", 14, MUTED, false));
+        col.addView(text("TV setup · 1.23", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -206,10 +206,6 @@ public class MainActivity extends Activity {
                         progress.step(0, "Checking everything on the TV one last time…");
                         checks = Enabler.checkExisting(this, host, progress);
                     }
-                    if (SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
-                        progress.step(0, "Opening BM Remote Helper on your TV…");
-                        Enabler.openCodeApp(this, host);
-                    }
                 }
                 ui.post(() -> {
                     if (isFinishing() || isDestroyed()) return;
@@ -219,7 +215,7 @@ public class MainActivity extends Activity {
                         wizard.setupFinished(ready);
                         // Linked by the website QR: send straight there, no button or code needed.
                         if (ready && linkCode() != null && device != null) ui.post(this::start);
-                        say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on. BM Remote Helper is open on your TV." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
+                        say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
                         else { confirmCode.setText(issued.substring(0, 3) + "-" + issued.substring(3)); say("✓ Code ready. Type it on your ticket or order's Remote setup tab.", OK); }
