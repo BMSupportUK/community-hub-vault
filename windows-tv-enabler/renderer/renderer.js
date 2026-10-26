@@ -30,6 +30,11 @@ startButton.addEventListener('click', async () => {
   }
   welcomeSection.hidden = true;
   wizardSection.hidden = false;
+  // Every session after the welcome/PIN starts at "What do you need?" unless a setup is mid-way.
+  if (wizard.step === Step.DEBUGGING || wizard.step === Step.DONE) {
+    if (wizard.step === Step.DONE) { wizard.reset(); checks = null; confirmCode = ''; appsResults = []; }
+    apps = null; localStorage.removeItem('bm-tv-apps'); render();
+  }
   window.scrollTo(0, 0);
 });
 const savedAddress = localStorage.getItem('bm-tv-address');
