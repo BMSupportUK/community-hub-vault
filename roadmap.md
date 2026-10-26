@@ -2,8 +2,10 @@
 # Roadmap
 
 ## Enabler confirmation code reuse
-- [ ] Allow repeat confirmation on the same ticket/order until 24-hour expiry, preserving access and TV session checks.
-- [ ] Show expiry and request a new code in phone and Windows Enabler; test and release both downloads.
+- [x] Repeat confirmation is accepted on the same ticket/order until expiry; atomic scope binding preserves access and session checks. Recent codes extended to 24 hours.
+- [x] Phone 1.36 and Windows 1.25 built and uploaded as current downloads; 42 tests pass, API returns 24-hour expiry, Windows expired-state check passes, phone signature/download verified.
+- [ ] Publish website issuance/order changes — awaits the user's publish request; new app code issuance requires the updated website response.
+- [ ] Verify repeat confirmation and screen connection on a physical TV — requires the customer's TV, consent and current Helper session; expiry does not extend ended Helper sessions.
 
 ## TV Enabler guided setup
 - [x] Finish with a fresh TV check inside Enabler; website linking separate and optional, including already-ready TVs. Wizard, ADB and discovery tests pass; signed 1.13 live download checksum and upgrade certificate verified.
