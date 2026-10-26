@@ -83,6 +83,7 @@ async function advertised(networks) {
 /** type 'amazon' lists only Fire TVs; type 'android' lists TV-like devices that are not Amazon
  * (Cast/DIAL TVs, or anything with network debugging open), so customers only see their kind. */
 async function scan(type = 'amazon') {
+  type = 'all'; // No type filter: list every device with its name, Amazon first.
   const networks = bases();
   if (!networks.length) throw new Error('Connect your computer to the same home network as the TV, or enter the TV address manually.');
   const hints = await advertised(networks);
@@ -94,7 +95,8 @@ async function scan(type = 'amazon') {
         const host = hosts[next++]; const hint = hints.get(host);
         const p = await probe(host);
         if (!p && !hint) continue;
-        const desc = hint?.location ? await readDescription(host, hint.location) : p ? await readDescription(host, `http://${host}${paths[0]}`) : null;
+        let desc = hint?.location ? await readDescription(host, hint.location) : null;
+        for (const path of paths) { if (desc?.name) break; desc = (await readDescription(host, `http://${host}${path}`)) || desc; }
         const amazon = Boolean(desc?.amazon || hint?.hinted);
         devices.push({ address: host, name: desc?.name || (amazon ? 'Amazon device — name unavailable' : 'Unknown device'), debugging: p === 2, amazon });
       }
