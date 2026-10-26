@@ -10,11 +10,11 @@ import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { normalizePairCode, screenShareInProgress } from "@/lib/tv-remote";
-import { REMOTE_SETUP_STEPS, appChecksPassed, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
+import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 import { getOrderRemoteSetup, redeemOrderEnablerCode, resetOrderRemoteSetup, saveOrderRemoteSetup, verifyOrderRemoteSetup } from "@/lib/order-remote-setup.functions";
 import { getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
 
-type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null } | null;
+type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null } | null;
 type Tab = "order" | "remote" | "screen";
 
 /** Customer secure order: Order / Remote setup / Screen share tabs across the top. */
@@ -70,6 +70,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   </section>;
 
   const ready = appChecksPassed(row.app_checks, row.device);
+  const fresh = checksFresh(row);
   return <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
     <section className="min-w-0 space-y-4 text-foreground">
       <div className="flex flex-wrap items-center gap-2">
@@ -77,15 +78,16 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
         <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={restart}>Restart setup</Button>
       </div>
-      {(row.completed_at || ready) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+      {fresh && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
         <h3 className="font-semibold">Your TV code</h3>
-        <p className="text-sm">{row.completed_at ? "All done — your TV is ready. " : ""}Open BM Remote Helper on the TV and enter the six-digit code it shows.</p>
+        <p className="text-sm">Your TV was just checked. Open BM Remote Helper on the TV and enter the six-digit code it shows.</p>
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
           <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
           <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
         </form>
       </div>}
-      {!row.completed_at && !ready && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
+      {!fresh && row.completed_at && <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"><h3 className="font-semibold">Check your TV again</h3><p>Before each screen share, open BM TV Enabler so it can check your TV is still set up, then type the new code it shows below.</p></div>}
+      {!fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
       <RemoteSetupProgress row={row} />
       {!row.completed_at && REMOTE_SETUP_STEPS[row.device].map((s, i) => {
         const done = stepDone(s, row);

@@ -10,14 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { normalizePairCode } from "@/lib/tv-remote";
-import { REMOTE_SETUP_STEPS, appChecksPassed, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
+import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
-export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null } | null;
+export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null } | null;
 
 export function useTicketRemoteSetup(ticketId: string) {
   const [row, setRow] = useState<RemoteSetupRow | undefined>(undefined);
   const load = useCallback(async () => {
-    const { data } = await supabase.from("ticket_remote_setup" as never).select("device,app_checks,app_checked_at,completed_at").eq("ticket_id", ticketId).maybeSingle();
+    const { data } = await supabase.from("ticket_remote_setup" as never).select("device,app_checks,app_checked_at,completed_at,checks_used_at").eq("ticket_id", ticketId).maybeSingle();
     setRow((data as RemoteSetupRow) ?? null);
   }, [ticketId]);
   useEffect(() => {
@@ -80,6 +80,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   }
   const steps = REMOTE_SETUP_STEPS[row.device];
   const ready = appChecksPassed(row.app_checks, row.device);
+  const fresh = checksFresh(row);
   const complete = Boolean(row.completed_at);
   const main = <section className="min-w-0 space-y-4 text-foreground">
     <div className="flex flex-wrap items-center gap-2">
@@ -87,15 +88,16 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
       {!closed && <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={() => void restart()}>Restart setup</Button>}
     </div>
-    {(row.completed_at || ready) && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+    {fresh && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Your TV code</h3>
-      <p className="text-sm">{row.completed_at ? "All done — your TV is ready. " : ""}Open BM Remote Helper on the TV and enter the six-digit code it shows.</p>
+      <p className="text-sm">Your TV was just checked. Open BM Remote Helper on the TV and enter the six-digit code it shows.</p>
       <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void verify(); }}>
         <Input aria-label="Code shown on your TV" inputMode="numeric" value={code} onChange={(e) => setCode(normalizePairCode(e.target.value))} placeholder="123456" className="font-mono text-lg" />
         <Button type="submit" disabled={busy || code.length !== 6}>Send to staff</Button>
       </form>
     </div>}
-    {!closed && !complete && !ready && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
+    {!closed && !fresh && complete && <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"><h3 className="font-semibold">Check your TV again</h3><p>Before each screen share, open BM TV Enabler so it can check your TV is still set up, then type the new code it shows below.</p></div>}
+    {!closed && !fresh && <EnablerCodeBox disabled={busy} onSubmit={redeem} />}
     <RemoteSetupProgress row={row} />
     {!complete && steps.map((s, i) => {
       const done = stepDone(s, row);
