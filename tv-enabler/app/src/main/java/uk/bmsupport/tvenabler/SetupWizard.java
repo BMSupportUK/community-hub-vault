@@ -26,6 +26,11 @@ final class SetupWizard {
     void paired() { if (step == Step.CHECK) { tvCode = null; tries = 0; step = Step.SETUP; } }
     void setupFinished(boolean isReady) { if (step != Step.SETUP) return; ready = isReady; if (isReady) step = Step.DONE; }
     void reset() { step = Step.DEBUGGING; ready = false; tvCode = null; tries = 0; }
+    boolean resumeConfirmation(String code, long expiresAt, long now) {
+        if (code == null || !code.matches("[A-Z0-9]{6}") || expiresAt <= now) return false;
+        step = Step.DONE; ready = true; tvCode = null; tries = 0;
+        return true;
+    }
     static String newCode(SecureRandom r) { return String.format(java.util.Locale.ROOT, "%04d", r.nextInt(10000)); }
     static boolean ready(boolean adb, boolean helper, boolean control, boolean accessibility) {
         return adb && helper && control && accessibility;

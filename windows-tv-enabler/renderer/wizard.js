@@ -19,6 +19,11 @@ const SetupWizard = (() => {
     paired() { if (this.step === Step.CHECK) { this.tvCode = null; this.tries = 0; this.step = Step.SETUP; } }
     setupFinished(isReady) { if (this.step !== Step.SETUP) return; this.ready = isReady; if (isReady) this.step = Step.DONE; }
     reset() { this.step = Step.DEBUGGING; this.ready = false; this.tvCode = null; this.tries = 0; }
+    resumeConfirmation(code, expiresAt, now = Date.now()) {
+      if (!/^[A-Z0-9]{6}$/.test(code || '') || !Number.isFinite(expiresAt) || expiresAt <= now) return false;
+      this.step = Step.DONE; this.ready = true; this.tvCode = null; this.tries = 0;
+      return true;
+    }
   }
   function newCode() {
     const n = new Uint32Array(1); globalThis.crypto.getRandomValues(n);

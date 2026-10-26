@@ -4,6 +4,15 @@ const require = createRequire(import.meta.url);
 const { Step, CodeResult, Wizard, newCode, ready, validHost } = require('../renderer/wizard.js');
 
 describe('Windows wizard matches the phone setup flow', () => {
+  test('reopening restores a confirmation only until its original 24-hour expiry', () => {
+    const expires = 1000 + 24 * 60 * 60 * 1000;
+    const w = new Wizard();
+    expect(w.resumeConfirmation('K7P4QX', expires, expires - 1)).toBe(true);
+    expect(w.step).toBe(Step.DONE);
+    w.reset();
+    expect(w.resumeConfirmation('K7P4QX', expires, expires)).toBe(false);
+    expect(w.step).toBe(Step.DEBUGGING);
+  });
   test('debugging must be confirmed before connecting', () => {
     const w = new Wizard();
     w.connected('1234');
