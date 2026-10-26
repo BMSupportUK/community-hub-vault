@@ -74,10 +74,32 @@ function accessibilityList(current) {
   return [...new Set(entries), SERVICE].join(':');
 }
 
+/** "ip" uses the classic port 5555; "ip:port" is the Wireless debugging port shown on Android / Google TV. */
+function splitAddress(address) {
+  const [ip, port, extra] = String(address).split(':');
+  if (extra !== undefined) return { ip, port: null };
+  const n = port === undefined ? 5555 : Number(port);
+  return { ip, port: Number.isInteger(n) && n > 0 && n < 65536 ? n : null };
+}
+
+const PAIR_FAILED = 'Code didn\'t work — open the pairing screen on the TV again for a new code.';
+/** Wireless debugging pairing: the TV shows a 6-digit code and pairing port; pairing replaces the Allow box. */
+async function pair(ip, pairPort, code, adb, progress) {
+  if (!privateAddress(ip)) throw new Error('Enter the TV address shown on the TV, for example 192.168.1.25.');
+  const p = Number(pairPort);
+  if (!/^\d{6}$/.test(String(code)) || !Number.isInteger(p) || p < 1 || p > 65535) throw new Error('Type the 6-digit code and the pairing port shown on the TV.');
+  progress('Pairing with your TV…');
+  let out;
+  try { out = await adb(['pair', `${ip}:${p}`, String(code)]); } catch { throw new Error(PAIR_FAILED); }
+  if (!/Successfully paired/i.test(out)) throw new Error(PAIR_FAILED);
+  progress('✓ Paired with your TV.');
+}
+
 /** Connects to the TV and waits for the customer to approve the Allow box. Returns the serial. */
 async function connect(host, adb, progress, delay = ms => new Promise(r => setTimeout(r, ms))) {
-  if (!privateAddress(host)) throw new Error('Enter the local TV address shown in BM Remote Helper, for example 192.168.1.25.');
-  const serial = `${host}:5555`;
+  const { ip, port } = splitAddress(host);
+  if (!privateAddress(ip) || !port) throw new Error('Enter the local TV address shown in BM Remote Helper, for example 192.168.1.25.');
+  const serial = `${ip}:${port}`;
   progress('Connecting… Look at the TV, tick Always allow from this computer, then press Allow.');
   await adb(['connect', serial]);
   for (let i = 0; i < 60; i++) {
