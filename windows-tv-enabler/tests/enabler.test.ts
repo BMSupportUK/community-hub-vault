@@ -69,10 +69,11 @@ describe('Windows TV Enabler safety and setup', () => {
       if (command === `pm path ${CONTROL}`) return '';
       if (command === 'settings get secure enabled_accessibility_services') return 'com.example/com.example.Reader';
       if (command === 'settings get secure accessibility_enabled') return '1';
+      if (command === 'getprop ro.product.manufacturer') return 'Amazon\n';
       return '';
     };
     const checks = await checkExisting('192.168.1.25', adb, () => {}, async () => {});
-    expect(checks).toEqual({ adb: true, helper: true, control: false, accessibility: false });
+    expect(checks).toEqual({ adb: true, type: 'amazon', helper: true, control: false, accessibility: false });
     expect(calls.some(a => a[3]?.startsWith('settings put'))).toBe(false);
     expect(calls.some(a => a[3]?.startsWith('pm install'))).toBe(false);
     expect(calls.at(-1)).toEqual(['disconnect', serial]);
