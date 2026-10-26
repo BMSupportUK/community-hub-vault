@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.27", 14, MUTED, false));
+        col.addView(text("TV setup · 1.28", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -318,7 +318,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Reset setup?")
                 .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
-                    wizard.reset(); checks = null; device = null; apps = null;
+                    wizard.reset(); checks = null; device = null; apps = null; appsResults = new java.util.ArrayList<>();
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps").apply();
                     address.setText(""); confirmCode.setText(""); say("", MUTED); render();
                 }).show();
@@ -384,7 +384,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, showAgain, appsNew, appsHave, appsBack}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, showAgain, appsNew, appsHave, appsBack}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
