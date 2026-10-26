@@ -356,7 +356,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, showAgain}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, back, showAgain, appsNew, appsHave, appsBack}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
