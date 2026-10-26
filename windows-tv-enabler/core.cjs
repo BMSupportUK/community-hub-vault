@@ -217,11 +217,38 @@ async function report(code, checks, device, post = globalThis.fetch) {
 }
 
 /** Asks BM Support for a short single-use code carrying the confirmed TV checks. */
-async function requestConfirmCode(checks, device, post = globalThis.fetch) {
+/** Finds a six-digit number in a BM Remote Helper node of a uiautomator dump. */
+function helperCodeFrom(xml) {
+  for (const node of String(xml || '').match(/<node [^>]*>/g) || []) {
+    if (!node.includes(`package="${HELPER}"`)) continue;
+    const t = node.match(/text="([0-9 \-]{6,11})"/);
+    const digits = t ? t[1].replace(/[^0-9]/g, '') : '';
+    if (digits.length === 6) return digits;
+  }
+  return null;
+}
+
+/** Reads the code BM Remote Helper shows on the TV; null when it can't be read. */
+async function readHelperCode(host, adb, progress, delay = ms => new Promise(r => setTimeout(r, ms))) {
+  try {
+    const serial = await connect(host, adb, progress, delay);
+    try {
+      for (let i = 0; i < 4; i++) {
+        const xml = await adb(['-s', serial, 'shell', 'uiautomator dump /data/local/tmp/bm-ui.xml >/dev/null 2>&1; cat /data/local/tmp/bm-ui.xml; rm -f /data/local/tmp/bm-ui.xml']);
+        const code = helperCodeFrom(xml);
+        if (code) return code;
+        await delay(1500);
+      }
+    } finally { await adb(['disconnect', serial]).catch(() => {}); }
+  } catch { /* fall back to typing the code */ }
+  return null;
+}
+
+async function requestConfirmCode(checks, device, post = globalThis.fetch, helperCode = null) {
   if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV this is first: Amazon Fire TV or Android / Google TV.');
   if (!checks || !(checks.adb && checks.helper && checks.control && checks.accessibility)) throw new Error('Check the TV again first.');
   let res;
-  try { res = await post('https://bmsupport.uk/api/public/enabler-confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ app: 'windows-tv-enabler-1.4', device, checks }) }); }
+  try { res = await post('https://bmsupport.uk/api/public/enabler-confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ app: 'windows-tv-enabler-1.6', device, checks, ...(/^\d{6}$/.test(helperCode || '') ? { helperCode } : {}) }) }); }
   catch { throw new Error('Couldn\'t reach BM Support. Check the internet connection and try again.'); }
   if (res.status === 429) throw new Error('Too many tries. Wait 15 minutes, then try again.');
   const body = res.ok ? await res.json().catch(() => null) : null;
@@ -229,4 +256,4 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch) {
   return body.code;
 }
 
-module.exports = { showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };
+module.exports = { helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, activate, openCodeApp, enable };
