@@ -103,13 +103,15 @@ describe('Windows TV Enabler safety and setup', () => {
   });
   test('installs BM Remote Helper itself when the TV does not have it', async () => {
     const calls: string[][] = []; const serial = '192.168.1.25:5555';
-    let helperInstalled = false;
+    let helperInstalled = false; let controlInstalled = false;
     const adb = async (args: string[]) => {
       calls.push(args);
       if (args[0] === 'devices') return `${serial}\tdevice\n`;
+      if (args[2] === 'push' && args[4] === '/data/local/tmp/bm-control.apk') { controlInstalled = true; return ''; }
       if (args[2] === 'push') { helperInstalled = true; return ''; }
       const command = args[3] || '';
       if (command === 'pm path uk.bmsupport.remote') return helperInstalled ? 'package:/data/app/helper.apk' : '';
+      if (command === `pm path ${CONTROL}`) return controlInstalled ? 'package:/data/app/control.apk' : '';
       if (command.startsWith('pm install')) return 'Success';
       if (command === 'settings get secure accessibility_enabled') return '1';
       if (command === 'settings get secure enabled_accessibility_services') return SERVICE;
