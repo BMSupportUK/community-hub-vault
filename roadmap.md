@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current Enabler follow-ups
-- [ ] Grey out Get new connection immediately on tickets and orders; prevent repeat clicks while queued, preserve waiting state across tab changes and verify recovery.
+- [x] Ticket/order Get new connection disables immediately and stays locked while queued; shared scope-bound tab-persistent gate clears on replacement or timeout. Twelve tests pass; actual ticket control with simulated queued reply stays disabled after repeated presses; preview build OK. Real customer/TV checks remain below.
 - [x] Check selected TV packages before APK download; skip existing apps and preserve per-app outcomes in phone and Windows source. Verified actual QD, Smart Player and BM Store package identities.
 - [x] Phone 1.37 signed and current; downloaded bytes match. 33 JS tests and both Java inventory/wizard tests pass; preview build OK. With the current published website it skips TV transfer/install after APK identity reading; publishing the website update enables skipping APK download too. Windows source updated, installer remains 1.25.
 - [x] Add Get new connection on ticket/order Remote setup; scoped one-consumer request brings fresh Helper session automatically and exposes Connect with no manual Helper input. Stored Helper lifecycle inspected; foreground open Enabler required.
