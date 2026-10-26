@@ -1,8 +1,8 @@
 # BM TV Enabler installs our apps for new customers
 
 ## What you'll see (admin)
-- In the admin APK section, each app gets an **Install on TV during setup** tick box. Tick the apps a new customer needs, for example Downloader and the player apps.
-- Downloader is uploaded there and ticked like any other app. It always comes from our own copy, so it doesn't matter if it's taken off the Amazon or Google stores.
+- In the admin APK section, each app gets an **Install on TV during setup** tick box. Tick the apps a new customer needs, for example the player apps.
+- Ticked apps come straight from our own copies, so Downloader and the app stores aren't needed.
 
 ## What the customer sees in BM TV Enabler (phone and Windows)
 1. **Which TV are you setting up?** Amazon Fire TV or Android / Google TV. This is the same as now.
@@ -10,7 +10,7 @@
    - **No, this is a new setup.** The Enabler installs every ticked app.
    - **Yes, I already have them.** No apps are installed, and setup only switches on remote control as it does today.
 3. Debugging steps for the chosen TV, then connect, then setup, as now.
-4. During setup, if they chose "new setup", the progress text names each app as it goes, for example "Installing Downloader (2 of 4)…". Apps go straight on with no Install box on the TV. An app already on the TV at the same or a newer version is skipped. If one app fails, the rest still install, and the final screen lists anything that didn't install.
+4. During setup, if they chose "new setup", the progress text names each app as it goes, for example "Installing Purple Player (2 of 4)…". Apps go straight on with no Install box on the TV. An app already on the TV at the same or a newer version is skipped. If one app fails, the rest still install, and the final screen lists anything that didn't install.
 - Their answer is remembered with the TV type and cleared by **Reset setup**. The step has a **Back** button.
 
 ## Not included
