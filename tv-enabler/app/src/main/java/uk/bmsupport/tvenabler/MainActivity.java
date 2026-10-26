@@ -43,11 +43,14 @@ public class MainActivity extends Activity {
     private volatile java.util.List<Enabler.AppResult> appsResults = new java.util.ArrayList<>();
     private Button appsNew, appsHave, appsBack;
     private LinearLayout appsList;
+    private LinearLayout welcomeBox, contentBox;
+    private boolean welcomeDone;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         SharedPreferences prefs = getSharedPreferences("tv", MODE_PRIVATE);
         LinearLayout col = new LinearLayout(this);
+        contentBox = col;
         col.setOrientation(LinearLayout.VERTICAL);
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
