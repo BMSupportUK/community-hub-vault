@@ -43,11 +43,22 @@ function PayRoute() {
   return token === "demo" ? <DemoPayPage /> : token === "demo-payment" ? <DemoPayPage unpaid /> : <PayPage />;
 }
 
+/** The checkout header picture behind the whole page, dimmed so panels stay readable. */
+function CheckoutBackdrop() {
+  return (
+    <div className="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
+      <img src={hero} alt="" className="h-full w-full object-cover object-center" />
+      <div className="absolute inset-0 bg-background/60" />
+    </div>
+  );
+}
+
 /** Sample secure order for the demo account — no live data, actions do nothing. */
 function DemoPayPage({ unpaid = false }: { unpaid?: boolean }) {
   const demoOnly = async () => { toast.info("This is a sample order on the demo account"); };
   return (
-    <main className="min-h-screen overflow-y-auto">
+    <main className="relative isolate min-h-screen overflow-y-auto">
+      <CheckoutBackdrop />
       <div className="w-full px-3 pt-3">
         <Link to="/shop" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Back to my orders
