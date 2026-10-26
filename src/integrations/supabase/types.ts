@@ -2389,6 +2389,68 @@ export type Database = {
         }
         Relationships: []
       }
+      enabler_device_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          pin_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          pin_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          pin_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enabler_device_tokens_pin_id_fkey"
+            columns: ["pin_id"]
+            isOneToOne: false
+            referencedRelation: "enabler_login_pins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enabler_login_pins: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          order_id: string | null
+          pin_hash: string
+          revoked_at: string | null
+          ticket_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          order_id?: string | null
+          pin_hash: string
+          revoked_at?: string | null
+          ticket_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string | null
+          pin_hash?: string
+          revoked_at?: string | null
+          ticket_id?: string | null
+        }
+        Relationships: []
+      }
       fan_zone_appeal_messages: {
         Row: {
           appeal_id: string
