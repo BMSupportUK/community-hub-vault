@@ -36,7 +36,7 @@ export function OrderRemoteTabs({ token, password, children }: { token: string; 
 }
 
 function OrderRemoteSetup({ token, password }: { token: string; password: string }) {
-  const get = useServerFn(getOrderRemoteSetup), saveFn = useServerFn(saveOrderRemoteSetup), issueFn = useServerFn(issueOrderSetupCode), verifyFn = useServerFn(verifyOrderRemoteSetup);
+  const get = useServerFn(getOrderRemoteSetup), saveFn = useServerFn(saveOrderRemoteSetup), issueFn = useServerFn(issueOrderSetupCode), verifyFn = useServerFn(verifyOrderRemoteSetup), resetFn = useServerFn(resetOrderRemoteSetup);
   const [row, setRow] = useState<Row | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
@@ -46,6 +46,10 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   const run = async (f: () => Promise<void>) => { setBusy(true); try { await f(); } catch (e) { toast.error(e instanceof Error ? e.message : "Something went wrong"); } await load(); setBusy(false); };
   const save = (device: SetupDevice) => run(async () => { await saveFn({ data: { token, password, device } }); setSetupCode(null); });
   const issue = () => run(async () => { setSetupCode(await issueFn({ data: { token, password } })); });
+  const restart = () => {
+    if (!window.confirm("Restart the TV setup from the beginning? Your saved progress and codes for this order will be cleared.")) return;
+    void run(async () => { await resetFn({ data: { token, password } }); setSetupCode(null); setCode(""); toast.success("Setup restarted — choose your device to begin again"); });
+  };
   const verify = () => run(async () => {
     const r = await verifyFn({ data: { token, password, code } });
     if (!r.ok) toast.error(r.error); else { toast.success("BM Remote Helper confirmed — staff have been told your TV is ready"); setCode(""); }
