@@ -33,18 +33,13 @@ final class Enabler {
         return enableUntil(ctx, host, 4, p);
     }
 
-    /** Read-only readiness check; only launch the code app when every check passes. */
+    /** Read-only readiness check — never opens apps; the wizard opens the code app once itself. */
     static Checks checkExisting(Context ctx, String host, Progress p) throws Exception {
         p.step(0, "Checking this TV's installed apps and remote-control permissions…");
         p.step(1, "If the TV asks, tick Always allow and press Allow. Keep this phone app open.");
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
-            Checks c = readChecks(adb);
-            if (SetupWizard.ready(c.adb, c.helper, c.control, c.accessibility)) {
-                p.step(5, "This TV is already set up. Opening BM Remote Helper to show your code…");
-                openHelper(adb);
-            }
-            return c;
+            return readChecks(adb);
         }
     }
 
@@ -177,7 +172,7 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-setup").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.13\"," + (device == null ? "" : "\"device\":\"" + device + "\",") + "\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"code\":\"" + setupCode + "\",\"app\":\"tv-enabler-1.14\"," + (device == null ? "" : "\"device\":\"" + device + "\",") + "\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             int code = h.getResponseCode(); h.disconnect();
