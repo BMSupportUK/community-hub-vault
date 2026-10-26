@@ -1,33 +1,30 @@
 package uk.bmsupport.tvenabler;
 
-/** UI-independent progression: confirmations never substitute for real TV checks. */
+import java.security.SecureRandom;
+
+/** UI-independent progression. The code shown on the TV proves the customer picked their own TV;
+ *  after that, setup runs automatically and only a real TV check can finish it. */
 final class SetupWizard {
-    enum Step { DEBUGGING, CHECK, DEVICE, HELPER, CONTROL, ACTIVATE, REPORT, DONE }
+    enum Step { DEBUGGING, CHECK, TV_CODE, SETUP, DONE }
+    enum CodeResult { OK, WRONG, RESET, IGNORED }
+    static final int MAX_TRIES = 3;
     Step step = Step.DEBUGGING;
-    boolean ready, completed;
+    boolean ready;
+    String tvCode;
+    int tries;
 
     void confirmDebugging() { if (step == Step.DEBUGGING) step = Step.CHECK; }
-    void checked(boolean isReady) { if (step != Step.CHECK) return; ready = isReady; completed = true; }
-    void chooseDevice() { if (step == Step.DEVICE) { step = ready ? Step.REPORT : Step.HELPER; completed = false; } }
-    void operationCompleted() { completed = true; }
-    void confirmTv(boolean isReady) {
-        if (step != Step.REPORT) return;
-        ready = isReady;
-        completed = isReady;
+    /** Connected and the code was put on the TV screen. */
+    void connected(String code) { if (step != Step.CHECK) return; tvCode = code; tries = 0; step = Step.TV_CODE; }
+    CodeResult enterCode(String typed) {
+        if (step != Step.TV_CODE || tvCode == null) return CodeResult.IGNORED;
+        if (tvCode.equals(typed == null ? "" : typed.trim())) { step = Step.SETUP; tvCode = null; return CodeResult.OK; }
+        if (++tries >= MAX_TRIES) { step = Step.CHECK; tvCode = null; tries = 0; return CodeResult.RESET; }
+        return CodeResult.WRONG;
     }
-    void next() {
-        if (!completed) return;
-        switch (step) {
-            case CHECK: step = ready ? Step.REPORT : Step.DEVICE; break;
-            case HELPER: step = Step.CONTROL; break;
-            case CONTROL: step = Step.ACTIVATE; break;
-            case ACTIVATE: step = Step.REPORT; break;
-            case REPORT: step = Step.DONE; break;
-            default: return;
-        }
-        completed = false;
-    }
-    void reset() { step = Step.DEBUGGING; ready = false; completed = false; }
+    void setupFinished(boolean isReady) { if (step != Step.SETUP) return; ready = isReady; if (isReady) step = Step.DONE; }
+    void reset() { step = Step.DEBUGGING; ready = false; tvCode = null; tries = 0; }
+    static String newCode(SecureRandom r) { return String.format(java.util.Locale.ROOT, "%04d", r.nextInt(10000)); }
     static boolean ready(boolean adb, boolean helper, boolean control, boolean accessibility) {
         return adb && helper && control && accessibility;
     }
