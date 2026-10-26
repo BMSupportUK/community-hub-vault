@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         col.setBackgroundColor(BG);
         col.addView(text("BM TV Enabler", 26, FG, true));
-        col.addView(text("TV setup · 1.16", 14, MUTED, false));
+        col.addView(text("TV setup · 1.17", 14, MUTED, false));
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
                 heading.setText("TV setup confirmed");
                 deviceHelp.setText("Which TV is this? Choose the same type as your ticket or order.");
                 description.setText(confirmCode.length() > 0
-                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen enter the six-digit code shown on the TV in the same tab to request screen sharing. Use the button below to reopen BM Remote Helper for a new TV code."
+                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead). Use the button below to reopen BM Remote Helper for a new TV code."
                         : "Your TV is ready. Get your confirmation code, then type it on your ticket or order's Remote setup tab.");
                 turnOn.setText(confirmCode.length() > 0 ? "New code" : "Get my confirmation code"); break;
         }
@@ -173,7 +173,7 @@ public class MainActivity extends Activity {
         io.execute(() -> {
             try {
                 Enabler.Progress progress = (i, msg) -> ui.post(() -> { if (!isFinishing() && !isDestroyed()) say(msg, i == 1 ? WARN : MUTED); });
-                final String issued = run == SetupWizard.Step.DONE ? Enabler.requestConfirmCode(checks, selectedDevice) : null;
+                final String issued = run == SetupWizard.Step.DONE ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 if (run == SetupWizard.Step.SETUP) {
                     checks = Enabler.checkExisting(this, host, progress);
                     if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {

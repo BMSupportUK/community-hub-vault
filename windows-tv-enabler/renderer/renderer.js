@@ -67,7 +67,7 @@ function render() {
   if (s === Step.DONE) {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
     description.textContent = confirmCode
-      ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen enter the six-digit code shown on the TV in the same tab to request screen sharing. Use the button above to reopen BM Remote Helper for a new TV code.'
+      ? 'Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works once and lasts 2 hours.\n\nThen press Connect on that tab to request screen sharing (if it asks, type the six-digit code shown on the TV instead). Use the button above to reopen BM Remote Helper for a new TV code.'
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
     action.firstChild.textContent = confirmCode ? 'New code ' : 'Get my confirmation code ';
   } else {
@@ -101,7 +101,7 @@ async function run(stage, host) {
     if (stage === Step.DONE) {
       if (!checks || !wizard.ready) { say('Check the TV again first.', true); return; }
       if (device == null) { say('Choose which TV this is first.', true); return; }
-      confirmCode = await window.bmTv.confirmCode(checks, device);
+      confirmCode = await window.bmTv.confirmCode(checks, device, host);
       say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
     } else {
       checks = await window.bmTv.check(host);

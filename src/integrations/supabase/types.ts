@@ -2361,6 +2361,7 @@ export type Database = {
           created_at: string
           device: string
           expires_at: string
+          session_id: string | null
           used_at: string | null
         }
         Insert: {
@@ -2370,6 +2371,7 @@ export type Database = {
           created_at?: string
           device: string
           expires_at: string
+          session_id?: string | null
           used_at?: string | null
         }
         Update: {
@@ -2379,6 +2381,7 @@ export type Database = {
           created_at?: string
           device?: string
           expires_at?: string
+          session_id?: string | null
           used_at?: string | null
         }
         Relationships: []
@@ -5031,6 +5034,7 @@ export type Database = {
           completed_at: string | null
           device: string
           order_id: string
+          pending_session_id: string | null
           setup_code_expires_at: string | null
           setup_code_hash: string | null
           updated_at: string
@@ -5043,6 +5047,7 @@ export type Database = {
           completed_at?: string | null
           device: string
           order_id: string
+          pending_session_id?: string | null
           setup_code_expires_at?: string | null
           setup_code_hash?: string | null
           updated_at?: string
@@ -5055,6 +5060,7 @@ export type Database = {
           completed_at?: string | null
           device?: string
           order_id?: string
+          pending_session_id?: string | null
           setup_code_expires_at?: string | null
           setup_code_hash?: string | null
           updated_at?: string
@@ -6944,6 +6950,7 @@ export type Database = {
           completed_at: string | null
           confirmed_steps: number[]
           device: string
+          pending_session_id: string | null
           setup_code_expires_at: string | null
           setup_code_hash: string | null
           ticket_id: string
@@ -6957,6 +6964,7 @@ export type Database = {
           completed_at?: string | null
           confirmed_steps?: number[]
           device: string
+          pending_session_id?: string | null
           setup_code_expires_at?: string | null
           setup_code_hash?: string | null
           ticket_id: string
@@ -6970,6 +6978,7 @@ export type Database = {
           completed_at?: string | null
           confirmed_steps?: number[]
           device?: string
+          pending_session_id?: string | null
           setup_code_expires_at?: string | null
           setup_code_hash?: string | null
           ticket_id?: string
@@ -8312,6 +8321,10 @@ export type Database = {
       clear_admin_unlock_failures: { Args: never; Returns: undefined }
       clear_fan_dm_threads: { Args: { _threads: string[] }; Returns: number }
       close_ticket: { Args: { _ticket_id: string }; Returns: undefined }
+      connect_ticket_remote_setup: {
+        Args: { _ticket_id: string }
+        Returns: boolean
+      }
       create_app_role: {
         Args: { _label: string; _name: string }
         Returns: undefined

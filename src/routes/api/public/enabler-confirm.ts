@@ -12,6 +12,7 @@ const json = (d: unknown, status = 200) => Response.json(d, { status, headers: C
 const Body = z.object({
   app: z.string().max(40).optional(),
   device: z.enum(["amazon", "android"]),
+  helperCode: z.string().regex(/^\d{6}$/).optional(),
   checks: z.object({ adb: z.boolean(), helper: z.boolean(), control: z.boolean(), accessibility: z.boolean() }),
 });
 async function sha256Hex(s: string) {
@@ -33,13 +34,20 @@ export const Route = createFileRoute("/api/public/enabler-confirm")({
           .eq("ip_hash", ipHash).eq("step", "enabler_confirm").gte("created_at", new Date(Date.now() - 15 * 60_000).toISOString());
         if ((count ?? 0) >= 20) return json({ error: "Too many tries. Wait 15 minutes." }, 429);
         await db.from("tv_helper_diagnostics").insert({ ip_hash: ipHash, helper_version: parsed.data.app ?? null, step: "enabler_confirm", message: JSON.stringify(parsed.data.checks) });
+        // Optional live BM Remote Helper code read off the TV: keep only the pending session it points to.
+        let sessionId: string | null = null;
+        if (parsed.data.helperCode) {
+          const { data: s } = await db.from("tv_remote_sessions").select("id").eq("code_hash", await sha256Hex(parsed.data.helperCode))
+            .eq("status", "pending").gt("expires_at", new Date().toISOString()).is("link_id", null).maybeSingle();
+          sessionId = s?.id ?? null;
+        }
         for (let i = 0; i < 5; i++) {
           const code = makeConfirmCode();
           const { error } = await db.from("enabler_confirm_codes").insert({
             code_hash: await sha256Hex(code), device: parsed.data.device, checks: parsed.data.checks,
-            app: parsed.data.app ?? null, expires_at: new Date(Date.now() + CONFIRM_TTL_MS).toISOString(),
+            app: parsed.data.app ?? null, session_id: sessionId, expires_at: new Date(Date.now() + CONFIRM_TTL_MS).toISOString(),
           });
-          if (!error) return json({ code });
+          if (!error) return json({ code, helperLinked: !!sessionId });
         }
         return json({ error: "Couldn't make a code. Try again." }, 503);
       },
