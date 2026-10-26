@@ -38,3 +38,14 @@ describe('Windows wizard matches the phone setup flow', () => {
     expect(validHost('192.168.0.300')).toBe(false);
   });
 });
+
+describe('Wireless debugging pairing', () => {
+  test('pairing from connect goes straight to setup, not before debugging is confirmed', () => {
+    const w = new Wizard(); w.paired(); expect(w.step).toBe(Step.DEBUGGING);
+    w.confirmDebugging(); w.paired(); expect(w.step).toBe(Step.SETUP);
+  });
+  test('address may carry the wireless debugging port', () => {
+    expect(validHost('192.168.1.25:41235')).toBe(true);
+    expect(validHost('192.168.1.25:70000')).toBe(false);
+  });
+});

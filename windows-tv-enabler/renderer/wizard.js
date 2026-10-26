@@ -15,6 +15,8 @@ const SetupWizard = (() => {
       if (++this.tries >= MAX_TRIES) { this.step = Step.CHECK; this.tvCode = null; this.tries = 0; return CodeResult.RESET; }
       return CodeResult.WRONG;
     }
+    /** Wireless debugging pairing code from the TV already proves it's the right TV. */
+    paired() { if (this.step === Step.CHECK) { this.tvCode = null; this.tries = 0; this.step = Step.SETUP; } }
     setupFinished(isReady) { if (this.step !== Step.SETUP) return; this.ready = isReady; if (isReady) this.step = Step.DONE; }
     reset() { this.step = Step.DEBUGGING; this.ready = false; this.tvCode = null; this.tries = 0; }
   }
@@ -24,8 +26,10 @@ const SetupWizard = (() => {
   }
   function ready(adb, helper, control, accessibility) { return adb && helper && control && accessibility; }
   function validHost(host) {
-    if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return false;
-    return host.split('.').every(part => Number(part) <= 255);
+    const m = /^(\d{1,3}(?:\.\d{1,3}){3})(?::(\d{1,5}))?$/.exec(host);
+    if (!m) return false;
+    if (m[2] !== undefined && (Number(m[2]) < 1 || Number(m[2]) > 65535)) return false;
+    return m[1].split('.').every(part => Number(part) <= 255);
   }
   return { Step, CodeResult, MAX_TRIES, Wizard, newCode, ready, validHost };
 })();

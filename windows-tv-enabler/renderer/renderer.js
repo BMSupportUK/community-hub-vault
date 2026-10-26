@@ -10,7 +10,8 @@ const heading = el('heading'), description = el('description'), devicePick = el(
   codeBlock = el('code-block'), openHelper = el('open-helper'),
   progress = el('progress'), action = el('action'), next = el('next'), back = el('back'), reset = el('reset'),
   pickAmazon = el('pick-amazon'), pickAndroid = el('pick-android'),
-  tvCodeBlock = el('tv-code-block'), linkBlock = el('link-block'), linkCode = el('link-code'), tvCodeInput = el('tv-code'), showAgain = el('show-again');
+  tvCodeBlock = el('tv-code-block'), linkBlock = el('link-block'), linkCode = el('link-code'), tvCodeInput = el('tv-code'), showAgain = el('show-again'),
+  pairButton = el('pair'), pairCode = el('pair-code'), pairPort = el('pair-port');
 
 let device = null, checks = null, busy = false, confirmCode = '';
 const savedAddress = localStorage.getItem('bm-tv-address');
@@ -25,8 +26,8 @@ function say(text, isError) {
 
 function setBusy(value) {
   busy = value;
-  for (const b of [action, next, back, reset, scan, openHelper, pickAmazon, pickAndroid, showAgain]) b.disabled = value;
-  address.disabled = value; tvCodeInput.disabled = value; linkCode.disabled = value;
+  for (const b of [action, next, back, reset, scan, openHelper, pickAmazon, pickAndroid, showAgain, pairButton]) b.disabled = value;
+  address.disabled = value; tvCodeInput.disabled = value; linkCode.disabled = value; pairCode.disabled = value; pairPort.disabled = value;
   devices.querySelectorAll('button').forEach(b => { b.disabled = value; });
 }
 
@@ -147,6 +148,19 @@ action.addEventListener('click', () => {
     tvCodeInput.value = ''; render();
   }
   run(wizard.step, host);
+});
+
+pairButton.addEventListener('click', async () => {
+  if (busy || wizard.step !== Step.CHECK) return;
+  const host = address.value.trim();
+  if (!validHost(host) || !host.includes(':')) { say('In TV address, type the IP address & Port from the Wireless debugging screen, e.g. 192.168.1.25:41235.', true); return; }
+  const code = pairCode.value.replace(/\D/g, ''), port = pairPort.value.replace(/\D/g, '');
+  if (code.length !== 6 || !port) { say('Type the 6-digit code and the pairing port shown on the TV.', true); return; }
+  localStorage.setItem('bm-tv-address', host);
+  setBusy(true);
+  try { await window.bmTv.pair(host.split(':')[0], Number(port), code); }
+  catch (error) { setBusy(false); say(cleanError(error), true); return; }
+  setBusy(false); pairCode.value = ''; wizard.paired(); render(); run(Step.SETUP, host);
 });
 
 showAgain.addEventListener('click', () => { if (!busy && wizard.tvCode) showCode(address.value.trim(), wizard.tvCode); });
