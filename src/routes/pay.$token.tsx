@@ -147,7 +147,6 @@ function PayPage() {
       <main className="relative isolate min-h-screen grid place-items-center px-5 py-10">
         <CheckoutBackdrop />
         <form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-border bg-card overflow-hidden text-center">
-          <img src={hero} alt="Family watching TV together" className="w-full aspect-[16/9] object-cover" />
           <div className="p-6 space-y-4">
             <div className="mx-auto size-12 rounded-full bg-primary/15 text-primary grid place-items-center"><Lock className="size-6" /></div>
             <div className="space-y-1.5">
