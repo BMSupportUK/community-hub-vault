@@ -87,10 +87,10 @@ export const redeemOrderEnablerCode = createServerFn({ method: "POST" })
 
 /** Live Helper code: confirms setup, links the TV to this order and alerts staff (same as tickets). */
 export const verifyOrderRemoteSetup = createServerFn({ method: "POST" })
-  .inputValidator((d) => Access.extend({ code: z.string().regex(/^\d{6}$/) }).parse(d))
+  .inputValidator((d) => Access.extend({ code: z.string().regex(/^\d{6}$/).optional() }).parse(d))
   .handler(async ({ data }) => {
     const { db, orderId } = await open(data.token, data.password);
-    const { data: r } = await db.from("order_remote_setup").select("app_checks, app_checked_at, checks_used_at").eq("order_id", orderId).maybeSingle();
+    const { data: r } = await db.from("order_remote_setup").select("app_checks, app_checked_at, checks_used_at, pending_session_id").eq("order_id", orderId).maybeSingle();
     if (!r) return { ok: false as const, error: "Choose your device first." };
     const { checksFresh } = await import("@/lib/ticket-remote-setup");
     if (!checksFresh(r as never)) return { ok: false as const, error: "Check your TV again in BM TV Enabler and type its new code first." };
@@ -99,13 +99,20 @@ export const verifyOrderRemoteSetup = createServerFn({ method: "POST" })
     const failKind = `setup_code_failed:${orderId}`;
     const { count } = await db.from("tv_remote_events").select("id", { count: "exact", head: true }).eq("kind", failKind).gte("created_at", new Date(Date.now() - 15 * 60_000).toISOString());
     if ((count ?? 0) >= 8) return { ok: false as const, error: "Too many wrong codes. Wait 15 minutes." };
-    const { data: s } = await db.from("tv_remote_sessions").select("id, device_name")
-      .eq("code_hash", await sha256Hex(data.code)).eq("status", "pending").gt("expires_at", new Date().toISOString()).maybeSingle();
+    // No typed code = Connect button: use the Helper session BM TV Enabler read off the TV.
+    const pending = (r as { pending_session_id?: string | null }).pending_session_id ?? null;
+    if (!data.code && !pending) return { ok: false as const, error: "Type the six-digit code shown in BM Remote Helper on the TV." };
+    const q = db.from("tv_remote_sessions").select("id, device_name").eq("status", "pending").gt("expires_at", new Date().toISOString());
+    const { data: s } = await (data.code ? q.eq("code_hash", await sha256Hex(data.code)) : q.eq("id", pending!)).maybeSingle();
+    if (!s && !data.code) {
+      await db.from("order_remote_setup").update({ pending_session_id: null }).eq("order_id", orderId);
+      return { ok: false as const, error: "The TV code has expired. Open BM Remote Helper on the TV and type the code it shows now." };
+    }
     if (!s) {
       await db.from("tv_remote_events").insert({ kind: failKind });
       return { ok: false as const, error: "That code isn't live. Check BM Remote Helper is open on the TV and try the code it shows now." };
     }
-    await db.from("order_remote_setup").update({ completed_at: new Date().toISOString(), checks_used_at: new Date().toISOString(), verified_session_id: s.id, updated_at: new Date().toISOString() }).eq("order_id", orderId);
+    await db.from("order_remote_setup").update({ completed_at: new Date().toISOString(), checks_used_at: new Date().toISOString(), verified_session_id: s.id, pending_session_id: null, updated_at: new Date().toISOString() }).eq("order_id", orderId);
     const { data: live } = await db.from("tv_remote_sessions").select("id").eq("link_kind", "order").eq("link_id", orderId)
       .in("status", ["pending", "claimed", "active"]).gt("expires_at", new Date().toISOString()).limit(1).maybeSingle();
     if (!live) {
