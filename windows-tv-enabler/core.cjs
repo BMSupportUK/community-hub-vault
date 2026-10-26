@@ -325,4 +325,15 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch, helpe
   return body.code;
 }
 
-module.exports = { splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
+/** BM TV Enabler login: swaps the customer's 6-digit ticket/order PIN for a 24-hour token. */
+async function loginWithPin(pin, post = globalThis.fetch) {
+  if (!/^\d{6}$/.test(String(pin || ''))) throw new Error('Type the 6-digit PIN.');
+  let res;
+  try { res = await post('https://bmsupport.uk/api/public/enabler-login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pin: String(pin), app: 'windows-1.20' }) }); }
+  catch { throw new Error('Couldn\'t reach bmsupport.uk. Check the internet connection and try again.'); }
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || !body.token) throw new Error((body && body.error) || `PIN not recognised (error ${res.status}).`);
+  return { token: body.token, expiresAtMs: Number(body.expiresAtMs) };
+}
+
+module.exports = { loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };

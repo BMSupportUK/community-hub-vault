@@ -16,7 +16,18 @@ const heading = el('heading'), description = el('description'), devicePick = el(
 
 let device = null, checks = null, busy = false, confirmCode = '', appsResults = [];
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
-document.getElementById('welcome-start').addEventListener('click', () => {
+const startButton = document.getElementById('welcome-start'), pinInput = el('pin-input'), pinMsg = el('pin-msg');
+const loggedIn = () => Number(localStorage.getItem('bm-pin-expires') || 0) > Date.now();
+if (loggedIn()) { el('pin-box').hidden = true; startButton.textContent = 'Get started'; }
+startButton.addEventListener('click', async () => {
+  if (!loggedIn()) {
+    startButton.disabled = true; pinMsg.textContent = 'Checking your PIN…';
+    try {
+      const r = await window.bmTv.login(pinInput.value.trim());
+      localStorage.setItem('bm-pin-token', r.token); localStorage.setItem('bm-pin-expires', String(r.expiresAtMs));
+    } catch (e) { pinMsg.textContent = (e && e.message ? e.message : String(e)).replace(/^Error invoking remote method '[^']+': (Error: )?/, ''); startButton.disabled = false; return; }
+    startButton.disabled = false;
+  }
   welcomeSection.hidden = true;
   wizardSection.hidden = false;
   window.scrollTo(0, 0);

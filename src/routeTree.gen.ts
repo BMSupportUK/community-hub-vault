@@ -127,6 +127,7 @@ import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicEnablerConfirmRouteImport } from './routes/api/public/enabler-confirm'
+import { Route as ApiPublicEnablerLoginRouteImport } from './routes/api/public/enabler-login'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/public/remote-helper-apk'
 import { Route as ApiPublicRemoteSetupRouteImport } from './routes/api/public/remote-setup'
@@ -881,6 +882,11 @@ const ApiPublicEnablerConfirmRoute = ApiPublicEnablerConfirmRouteImport.update({
   path: '/api/public/enabler-confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEnablerLoginRoute = ApiPublicEnablerLoginRouteImport.update({
+  id: '/api/public/enabler-login',
+  path: '/api/public/enabler-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   id: '/api/public/link-preview',
   path: '/api/public/link-preview',
@@ -1461,6 +1467,7 @@ export interface FileRoutesByFullPath {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
+  '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
@@ -1656,6 +1663,7 @@ export interface FileRoutesByTo {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
+  '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
@@ -1857,6 +1865,7 @@ export interface FileRoutesById {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
+  '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
@@ -2057,6 +2066,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/enabler-confirm'
+    | '/api/public/enabler-login'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
@@ -2252,6 +2262,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/enabler-confirm'
+    | '/api/public/enabler-login'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
@@ -2452,6 +2463,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/enabler-confirm'
+    | '/api/public/enabler-login'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
@@ -2571,6 +2583,7 @@ export interface RootRouteChildren {
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicEnablerConfirmRoute: typeof ApiPublicEnablerConfirmRoute
+  ApiPublicEnablerLoginRoute: typeof ApiPublicEnablerLoginRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicRemoteHelperApkRoute: typeof ApiPublicRemoteHelperApkRoute
   ApiPublicRemoteSetupRoute: typeof ApiPublicRemoteSetupRoute
@@ -3451,6 +3464,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/enabler-confirm'
       fullPath: '/api/public/enabler-confirm'
       preLoaderRoute: typeof ApiPublicEnablerConfirmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/enabler-login': {
+      id: '/api/public/enabler-login'
+      path: '/api/public/enabler-login'
+      fullPath: '/api/public/enabler-login'
+      preLoaderRoute: typeof ApiPublicEnablerLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/link-preview': {
@@ -4442,6 +4462,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicEnablerConfirmRoute: ApiPublicEnablerConfirmRoute,
+  ApiPublicEnablerLoginRoute: ApiPublicEnablerLoginRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicRemoteHelperApkRoute: ApiPublicRemoteHelperApkRoute,
   ApiPublicRemoteSetupRoute: ApiPublicRemoteSetupRoute,

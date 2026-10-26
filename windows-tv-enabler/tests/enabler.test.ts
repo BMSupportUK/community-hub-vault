@@ -221,3 +221,16 @@ describe('Wireless debugging pairing (Windows)', () => {
     expect(serial).toBe('192.168.1.25:41235');
   });
 });
+
+import { test as pinTest, expect as pinExpect } from 'bun:test';
+pinTest('PIN login rejects non 6-digit PIN without calling the site', async () => {
+  const core = require('../core.cjs');
+  let called = false;
+  await pinExpect(core.loginWithPin('123', async () => { called = true; return new Response('{}'); })).rejects.toThrow('6-digit');
+  pinExpect(called).toBe(false);
+});
+pinTest('PIN login returns token and expiry', async () => {
+  const core = require('../core.cjs');
+  const r = await core.loginWithPin('123456', async () => Response.json({ token: 'x'.repeat(64), expiresAtMs: 42 }));
+  pinExpect(r).toEqual({ token: 'x'.repeat(64), expiresAtMs: 42 });
+});

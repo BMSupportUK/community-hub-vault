@@ -56,7 +56,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         contentBox.setBackgroundColor(BG);
         contentBox.addView(text("BM TV Enabler", 26, FG, true));
-        contentBox.addView(text("TV setup · 1.29", 14, MUTED, false));
+        contentBox.addView(text("TV setup · 1.30", 14, MUTED, false));
         // Welcome on open: logo, message and Get started before the wizard.
         welcomeBox = new LinearLayout(this);
         welcomeBox.setOrientation(LinearLayout.VERTICAL);
@@ -75,8 +75,44 @@ public class MainActivity extends Activity {
         TextView welcomeText = text("This free app from BM Support sets up your TV with our apps or gets it ready for staff screen-share support — just follow the steps. Put this device and your TV on the same Wi-Fi to begin.", 16, MUTED, false);
         welcomeText.setGravity(Gravity.CENTER);
         welcomeBox.addView(welcomeText, lp(dp(4)));
-        Button startBtn = button("Get started", ACCENT);
-        startBtn.setOnClickListener(v -> { welcomeDone = true; render(); });
+        // PIN login: customers get a 24-hour PIN on their ticket/order at bmsupport.uk.
+        final boolean loggedIn = prefs.getLong("pinExpires", 0) > System.currentTimeMillis();
+        final EditText pinInput = new EditText(this);
+        pinInput.setHint("6-digit PIN from your ticket or order");
+        pinInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        pinInput.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(6) });
+        pinInput.setTextColor(FG); pinInput.setHintTextColor(MUTED); pinInput.setGravity(Gravity.CENTER); pinInput.setTextSize(20);
+        final TextView pinMsg = text(loggedIn ? "You're logged in." : "Type your BM TV Enabler PIN to continue. Get it from the Remote setup tab on your ticket or order at bmsupport.uk — it lasts 24 hours.", 14, MUTED, false);
+        pinMsg.setGravity(Gravity.CENTER);
+        if (!loggedIn) { welcomeBox.addView(pinMsg, lp(dp(14))); welcomeBox.addView(pinInput, lp(dp(6))); }
+        Button startBtn = button(loggedIn ? "Get started" : "Log in", ACCENT);
+        startBtn.setOnClickListener(v -> {
+            if (prefs.getLong("pinExpires", 0) > System.currentTimeMillis()) { welcomeDone = true; render(); return; }
+            final String pin = pinInput.getText().toString().trim();
+            if (!pin.matches("\\d{6}")) { pinMsg.setText("Type the 6-digit PIN."); return; }
+            startBtn.setEnabled(false); pinMsg.setText("Checking your PIN…");
+            new Thread(() -> {
+                String err = null; long exp = 0;
+                try {
+                    java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-login").openConnection();
+                    h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
+                    h.setRequestProperty("content-type", "application/json");
+                    h.getOutputStream().write(("{\"pin\":\"" + pin + "\",\"app\":\"phone-1.30\"}").getBytes("UTF-8"));
+                    int code = h.getResponseCode();
+                    java.io.InputStream in = code < 400 ? h.getInputStream() : h.getErrorStream();
+                    String body = in == null ? "{}" : new String(readAll(in), "UTF-8");
+                    org.json.JSONObject j = new org.json.JSONObject(body);
+                    if (code >= 400 || !j.has("token")) err = j.optString("error", "PIN not recognised.");
+                    else { exp = j.getLong("expiresAtMs"); prefs.edit().putString("pinToken", j.getString("token")).putLong("pinExpires", exp).apply(); }
+                } catch (Exception e) { err = "Couldn't reach bmsupport.uk. Check your internet and try again."; }
+                final String fe = err;
+                runOnUiThread(() -> {
+                    startBtn.setEnabled(true);
+                    if (fe != null) { pinMsg.setText(fe); return; }
+                    welcomeDone = true; render();
+                });
+            }).start();
+        });
         LinearLayout.LayoutParams startLp = new LinearLayout.LayoutParams(dp(240), LinearLayout.LayoutParams.WRAP_CONTENT);
         startLp.gravity = Gravity.CENTER_HORIZONTAL; startLp.topMargin = dp(12);
         welcomeBox.addView(startBtn, startLp);
@@ -439,4 +475,8 @@ public class MainActivity extends Activity {
         p.topMargin = top; return p;
     }
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
+    private static byte[] readAll(java.io.InputStream in) throws java.io.IOException {
+        java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream(); byte[] b = new byte[4096]; int n;
+        while ((n = in.read(b)) > 0) o.write(b, 0, n); return o.toByteArray();
+    }
 }

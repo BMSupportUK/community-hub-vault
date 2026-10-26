@@ -1548,6 +1548,13 @@
       "when": 1793047430915,
       "tag": "0220_app_builds_install_on_tv",
       "breakpoints": true
+    },
+    {
+      "idx": 221,
+      "version": "7",
+      "when": 1793051069510,
+      "tag": "0221_enabler_login_pins",
+      "breakpoints": true
     }
   ]
 }
