@@ -2,3 +2,4 @@
 
 .confirm-code{font:700 44px/1.2 ui-monospace,Consolas,monospace;letter-spacing:.12em;text-align:center;padding:16px;border-radius:12px;border:1px solid currentColor}
 #apps-result{margin:14px 0;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:6px 16px}.app-row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}.app-row:last-child{border-bottom:0}.app-state{font-size:13px;color:var(--accent);text-align:right}.app-state.failed{color:var(--danger)}
+.welcome-logo{display:block;width:190px;height:190px;margin:10px auto 2px}#welcome{text-align:center}#welcome p{color:var(--muted);font-size:15px;max-width:560px;margin:12px auto 0}#welcome-start{max-width:300px;margin:20px auto 0;display:block;text-align:center}
