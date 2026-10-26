@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
         devicePick.setOrientation(LinearLayout.HORIZONTAL);
-        amazonBtn = button("Amazon Fire TV", Color.parseColor("#2A3050"));
+        amazonBtn = button("Amazon Fire TV / Stick", Color.parseColor("#2A3050"));
         androidBtn = button("Android / Google TV", Color.parseColor("#2A3050"));
         LinearLayout.LayoutParams halfL = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
         halfL.rightMargin = dp(6);
