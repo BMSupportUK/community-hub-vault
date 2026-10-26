@@ -238,7 +238,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   return (
     <div className={`min-h-full ${transparent ? "bg-transparent" : "bg-background"} text-foreground`}>
       <div className="w-full px-3 pb-24">
-        <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-auto max-h-[420px] object-contain bg-card rounded-b-2xl" />
+        {/* When the page already paints this picture as its own dimmed backdrop
+            (transparent), the header banner would just repeat it. */}
+        {transparent ? null : <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-auto max-h-[420px] object-contain bg-card rounded-b-2xl" />}
         <div className="px-2 sm:px-4 -mt-2 pb-6 space-y-6">
           <div className="text-center pt-6 space-y-2">
             {(paid || order.cancelled) && (
