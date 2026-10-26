@@ -1,7 +1,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('bmTv', {
   scan: () => ipcRenderer.invoke('bm:scan'),
-  enable: (address, code, device) => ipcRenderer.invoke('bm:enable', address, code, device),
+  check: address => ipcRenderer.invoke('bm:check', address),
+  installHelper: address => ipcRenderer.invoke('bm:install-helper', address),
+  installControl: address => ipcRenderer.invoke('bm:install-control', address),
+  activate: address => ipcRenderer.invoke('bm:activate', address),
+  openCodeApp: address => ipcRenderer.invoke('bm:open-code-app', address),
+  report: (code, checks, device) => ipcRenderer.invoke('bm:report', code, checks, device),
   progress: callback => {
     const listener = (_, text) => callback(text);
     ipcRenderer.on('bm:progress', listener);
