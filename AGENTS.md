@@ -69,3 +69,4 @@
 - Phone TV ADB clients (`tv-enabler` and BM Support's `tvremote`) stay identical: resend keys on later AUTH and keep pending Allow connections open so AOSP prompts survive.
 - TV Enabler confirms a fresh TV check before finishing; website linking optional, stages sync by expiring code; reset keeps RSA authorization. Helper opens once per run; Remote setup has Restart setup.
 - Ticket screen-share requests unlock only after the customer's Remote setup is confirmed by a live BM Remote Helper code (server-verified RPC), so staff never invite before the TV app works.
+- TV Enabler website linking: apps get a hashed single-use 2-hour code from `/api/public/enabler-confirm` after a confirmed TV check; customers redeem it on ticket/order Remote setup (ticket RPC / order server fn) to copy the checks. The old 8-digit `/api/public/remote-setup` path stays only for older app versions.
