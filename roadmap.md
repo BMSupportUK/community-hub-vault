@@ -1,6 +1,12 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Current Enabler follow-ups
+- [ ] Check selected TV packages before APK download; skip existing apps and preserve per-app outcomes in phone and Windows.
+- [ ] Verify tests and release the updated phone installer.
+- [ ] Refresh Helper connection automatically when reusing the setup confirmation reference; no manual Helper-code entry.
+- [ ] Physical TV verification — requires the customer's phone and TV on the same Wi-Fi.
+
 ## Enabler confirmation code reuse
 - [x] Repeat confirmation is accepted on the same ticket/order until expiry; atomic scope binding preserves access and session checks. Recent codes extended to 24 hours.
 - [x] Phone 1.36 and Windows 1.25 built and uploaded as current downloads; 42 tests pass, API returns 24-hour expiry, Windows expired-state check passes, phone signature/download verified.
