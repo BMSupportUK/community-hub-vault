@@ -1653,6 +1653,13 @@
       "when": 1793105232623,
       "tag": "0235_auto_claim_ticket_on_first_staff_reply",
       "breakpoints": true
+    },
+    {
+      "idx": 236,
+      "version": "7",
+      "when": 1793105936828,
+      "tag": "0236_enabler_reference_reuse_across_scopes",
+      "breakpoints": true
     }
   ]
 }
