@@ -24,12 +24,6 @@ const SetupWizard = (() => {
       this.step = Step.DONE; this.ready = true; this.tvCode = null; this.tries = 0;
       return true;
     }
-    /** A used reference resumes without its code: the TV stays confirmed and a new code can be issued. */
-    resumeUsed(expiresAt, now = Date.now()) {
-      if (!Number.isFinite(expiresAt) || expiresAt <= now) return false;
-      this.step = Step.DONE; this.ready = true; this.tvCode = null; this.tries = 0;
-      return true;
-    }
   }
   function newCode() {
     const n = new Uint32Array(1); globalThis.crypto.getRandomValues(n);

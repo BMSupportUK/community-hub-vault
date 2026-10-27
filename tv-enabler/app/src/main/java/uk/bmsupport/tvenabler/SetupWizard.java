@@ -36,12 +36,6 @@ final class SetupWizard {
         step = Step.DONE; ready = true; tvCode = null; tries = 0;
         return true;
     }
-    /** A used reference resumes without its code: the TV stays confirmed and a new code can be issued. */
-    boolean resumeUsed(long expiresAt, long now) {
-        if (expiresAt <= now) return false;
-        step = Step.DONE; ready = true; tvCode = null; tries = 0;
-        return true;
-    }
     static String newCode(SecureRandom r) { return String.format(java.util.Locale.ROOT, "%04d", r.nextInt(10000)); }
     static boolean ready(boolean adb, boolean helper, boolean control, boolean accessibility) {
         return adb && helper && control && accessibility;
