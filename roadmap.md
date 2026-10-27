@@ -2,8 +2,8 @@
 # Roadmap
 
 ## Enabler sharing-reference expiry
-- [ ] Update phone and Windows to clear server-expired sharing references, offer New code, and explain expiry on screen-share end; retain install references and PINs.
-- [ ] Run app regressions and simulate Windows end → clear → new-code flow.
+- [x] Update phone and Windows to clear server-expired sharing references, offer New code, and explain expiry on screen-share end; retain install references and PINs.
+- [x] 47 Windows tests and phone wizard tests pass; phone Java compiles. Simulated Windows expiry clears only sharing storage and New code saves a replacement. Physical TV end-to-end check requires customer devices.
 - [ ] Release updated installers — awaits user release request.
 
 ## Enabler appearance refresh
