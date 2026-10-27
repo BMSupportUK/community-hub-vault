@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { Step, CodeResult, Wizard, newCode, ready, validHost } = require('../renderer/wizard.js');
+const { Step, CodeResult, Wizard, newCode, ready, validHost, installFinished } = require('../renderer/wizard.js');
 
 describe('Windows wizard matches the phone setup flow', () => {
   test('reopening restores a confirmation only until its original 24-hour expiry', () => {

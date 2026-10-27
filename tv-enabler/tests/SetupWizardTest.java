@@ -25,6 +25,10 @@ public final class SetupWizardTest {
         check(w.resumeConfirmation("K7P4QX", expiry, expiry - 1) && w.step == SetupWizard.Step.DONE, "Reopen restores confirmation until original 24-hour expiry");
         w.reset();
         check(!w.resumeConfirmation("K7P4QX", expiry, expiry) && w.step == SetupWizard.Step.DEBUGGING, "Expired confirmation cannot resume setup");
+        check(SetupWizard.installFinished(SetupWizard.Step.DONE, "new"), "Finished install offers return to the start, not reset");
+        check(!SetupWizard.installFinished(SetupWizard.Step.DONE, "have"), "Screen-share finish still offers reset");
+        check(!SetupWizard.installFinished(SetupWizard.Step.SETUP, "new"), "Still installing is not a finished run");
+        check(!SetupWizard.installFinished(SetupWizard.Step.DONE, null), "No choice made is not a finished install");
         System.out.println("SetupWizardTest passed");
     }
 }
