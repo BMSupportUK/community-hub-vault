@@ -69,7 +69,7 @@ function RemoteHelpSteps() {
     <p className="text-sm text-muted-foreground">Prefer not to do it yourself? Staff can connect to your TV by screen share and install everything for you while you watch.</p>
     <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
     <p className="text-sm text-muted-foreground">Staff only see your TV while you're connected, and you can end it at any time.</p>
-    <div className="grid gap-6 sm:grid-cols-2"><EnablerQr /><WindowsEnablerDownload /></div>
+    <div className="grid gap-6 sm:grid-cols-2 xl:hidden"><EnablerQr /><WindowsEnablerDownload /></div>
     {open ? (
       <Button onClick={createTicket} disabled={creating}>
         {creating ? <Loader2 className="size-4 animate-spin" /> : <Headset className="size-4" />}
@@ -97,7 +97,17 @@ const DEBUGGING: Record<"amazon" | "android", string[]> = {
   ],
 };
 
-const STORE_KEY = "install-guides-device";
+export const INSTALL_SETUP_DEVICE_KEY = "install-guides-device";
+
+/** The device the customer picked on the setup screen, restored on reload. */
+export function readStoredSetupDevice(): SetupDeviceKey | null {
+  try {
+    const v = sessionStorage.getItem(INSTALL_SETUP_DEVICE_KEY);
+    return v && DEVICES.some((d) => d.key === v) ? (v as SetupDeviceKey) : null;
+  } catch {
+    return null;
+  }
+}
 
 function EnablerQr() {
   const [qr, setQr] = useState<string | null>(null);
@@ -156,18 +166,22 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
   </div>;
 }
 
+/** Enabler downloads for the sidebar — shown there instead of the advert on the staff-help screen. */
+export function EnablerDownloadSidebar() {
+  return <div className="space-y-5 rounded-lg border border-border bg-surface/70 p-4">
+    <h3 className="font-display text-lg font-bold text-foreground">Get BM TV Enabler</h3>
+    <p className="text-sm text-muted-foreground">Scan with your Android phone, or use a Windows PC on the same Wi-Fi as the TV.</p>
+    <EnablerQr />
+    <WindowsEnablerDownload />
+  </div>;
+}
+
 /** "What are you setting up?" — device picker that leads into the matching setup. */
-export function DeviceInstallSetup({ alternative }: {
+export function DeviceInstallSetup({ alternative, device, onPick }: {
   alternative: ReactNode;
+  device: SetupDeviceKey | null;
+  onPick: (d: SetupDeviceKey | null) => void;
 }) {
-  const [device, setDevice] = useState<SetupDeviceKey | null>(null);
-  useEffect(() => {
-    try { const v = sessionStorage.getItem(STORE_KEY); if (v && DEVICES.some((d) => d.key === v)) setDevice(v as SetupDeviceKey); } catch { /* ignore */ }
-  }, []);
-  const pick = (d: SetupDeviceKey | null) => {
-    setDevice(d);
-    try { if (d) sessionStorage.setItem(STORE_KEY, d); else sessionStorage.removeItem(STORE_KEY); } catch { /* ignore */ }
-  };
   const chosen = DEVICES.find((d) => d.key === device);
 
   return <div className="w-full space-y-6">
@@ -177,7 +191,7 @@ export function DeviceInstallSetup({ alternative }: {
         <p className="mt-1 text-sm text-muted-foreground">Pick your device and we'll walk you through it one step at a time.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {DEVICES.map(({ key, label, note, icon: Icon }) => (
-            <button key={key} type="button" onClick={() => pick(key)} className="flex flex-col items-start gap-2 rounded-lg border border-border bg-surface-2 p-4 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <button key={key} type="button" onClick={() => onPick(key)} className="flex flex-col items-start gap-2 rounded-lg border border-border bg-surface-2 p-4 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <Icon className="size-6 text-primary" />
               <span className="font-semibold text-foreground">{label}</span>
               <span className="text-xs text-muted-foreground">{note}</span>
@@ -187,7 +201,7 @@ export function DeviceInstallSetup({ alternative }: {
       </> : <>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground"><chosen.icon className="size-6 text-primary" />{chosen.label}</h2>
-          <Button variant="outline" size="sm" onClick={() => pick(null)}><ArrowLeft className="size-4" />Change device</Button>
+          <Button variant="outline" size="sm" onClick={() => onPick(null)}><ArrowLeft className="size-4" />Change device</Button>
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
           ? <TvSteps device={chosen.key} />
