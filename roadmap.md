@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Remote setup step layout
+- [ ] Show ticket and order instructions one step at a time with progress, retaining all existing checks and connection gates.
+- [ ] Move customer Enabler access PIN below the app QR and verify the layout.
+
 ## Enabler new reference after use
 - [x] Both apps enable New code after capability-verified ticket/order use or expiry; unused references stay locked and original scope/expiry remain unchanged.
 - [x] Signed phone 1.42 and Windows 1.30 built/uploaded; live downloads checksum-match. 43 Bun tests and Java wizard checks pass; simulated Windows flow confirms unlock, issuance and relock. Website build OK.
