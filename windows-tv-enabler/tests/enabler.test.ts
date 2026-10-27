@@ -210,6 +210,18 @@ test('sends the Helper code with the confirmation request only when it is six di
   expect(JSON.parse(sent[1]).helperCode).toBeUndefined();
 });
 
+test('install confirmations send their kind and only need the TV connection', async () => {
+  const { requestConfirmCode } = require('../core.cjs');
+  const sent: any[] = [];
+  const post = async (_u: string, o: any) => { sent.push(JSON.parse(o.body)); return { ok: true, status: 200, json: async () => ({ code: 'K7P4QX', expiresAtMs: 1000, refreshToken: 'a'.repeat(64) }) }; };
+  const partial = { adb: true, helper: true, control: true, accessibility: false };
+  await requestConfirmCode(partial, 'amazon', post, null, true, 'install');
+  expect(sent[0].kind).toBe('install');
+  expect(sent[0].helperCode).toBeUndefined();
+  await expect(requestConfirmCode({ ...partial, adb: false }, 'amazon', post, null, true, 'install')).rejects.toThrow(/Install the apps/);
+  await expect(requestConfirmCode(partial, 'amazon', post, null, true, 'share')).rejects.toThrow(/Check the TV/);
+});
+
 describe('Wireless debugging pairing (Windows)', () => {
   const { pair, splitAddress, connect } = require('../core.cjs');
   test('address port parsing', () => {

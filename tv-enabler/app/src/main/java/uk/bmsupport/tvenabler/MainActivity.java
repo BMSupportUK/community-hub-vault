@@ -38,24 +38,50 @@ public class MainActivity extends Activity {
     private String refreshToken, refreshHost;
     private boolean refreshBusy;
     private boolean confirmationUsed;
+    // The install section gets its own reference, remembered for its 24-hour validity like the share one.
+    private TextView installCodeView;
+    private String installCodeText = "";
+    private long installExpiresAt;
+    private String installRefreshToken;
+    private boolean installUsed;
     private final Runnable refreshTick = new Runnable() {
         public void run() {
             if (isFinishing() || isDestroyed()) return;
-            if (!busy && !refreshBusy && hasWindowFocus() && refreshToken != null && refreshToken.length() == 64 && refreshHost != null && System.currentTimeMillis() < confirmExpiresAt) {
-                final String token = refreshToken, host = refreshHost;
-                refreshBusy = true;
-                io.execute(() -> {
-                    try {
-                        boolean done = Enabler.refreshConnection(MainActivity.this, host, token, used -> ui.post(() -> {
-                            if (!token.equals(refreshToken) || !used) return;
-                            confirmationUsed = true;
-                            getSharedPreferences("tv", MODE_PRIVATE).edit().putBoolean("confirmationUsed", true).apply();
-                            render();
-                        }));
-                        if (done) ui.post(() -> say("✓ New TV connection sent. Press Connect on your ticket or order.", OK));
-                    } catch (Exception e) { ui.post(() -> say(Enabler.friendly(e), WARN)); }
-                    finally { ui.post(() -> refreshBusy = false); }
-                });
+            if (!busy && !refreshBusy && hasWindowFocus()) {
+                if (refreshToken != null && refreshToken.length() == 64 && refreshHost != null && System.currentTimeMillis() < confirmExpiresAt) {
+                    final String token = refreshToken, host = refreshHost;
+                    refreshBusy = true;
+                    io.execute(() -> {
+                        try {
+                            boolean done = Enabler.refreshConnection(MainActivity.this, host, token, used -> ui.post(() -> {
+                                if (!token.equals(refreshToken) || !used) return;
+                                confirmationUsed = true;
+                                getSharedPreferences("tv", MODE_PRIVATE).edit().putBoolean("confirmationUsed", true).apply();
+                                render();
+                            }));
+                            if (done) ui.post(() -> say("✓ New TV connection sent. Press Connect on your ticket or order.", OK));
+                        } catch (Exception e) { ui.post(() -> say(Enabler.friendly(e), WARN)); }
+                        finally { ui.post(() -> refreshBusy = false); }
+                    });
+                } else if (installRefreshToken != null && installRefreshToken.length() == 64 && !installUsed && System.currentTimeMillis() < installExpiresAt) {
+                    // The install reference only needs its usage check — renewals never apply to it.
+                    final String token = installRefreshToken, host = address.getText().toString().trim();
+                    if (SetupWizard.validHost(host)) {
+                        refreshBusy = true;
+                        io.execute(() -> {
+                            try {
+                                Enabler.refreshConnection(MainActivity.this, host, token, used -> ui.post(() -> {
+                                    if (!token.equals(installRefreshToken) || !used) return;
+                                    installUsed = true;
+                                    getSharedPreferences("tv", MODE_PRIVATE).edit().putBoolean("confirmationInstallUsed", true).apply();
+                                    say("✓ Install reference used on your ticket or order. New code is now available.", OK);
+                                    render();
+                                }));
+                            } catch (Exception ignored) { /* install usage check is best-effort */ }
+                            finally { ui.post(() -> refreshBusy = false); }
+                        });
+                    }
+                }
             }
             ui.postDelayed(this, 4000);
         }
@@ -85,7 +111,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         contentBox.setBackgroundColor(BG);
         contentBox.addView(text("BM TV Enabler", 26, FG, true));
-        contentBox.addView(text("TV setup · 1.42", 14, MUTED, false));
+        contentBox.addView(text("TV setup · 1.43", 14, MUTED, false));
         // Welcome on open: logo, message and Get started before the wizard.
         welcomeBox = new LinearLayout(this);
         welcomeBox.setOrientation(LinearLayout.VERTICAL);
@@ -190,6 +216,9 @@ public class MainActivity extends Activity {
         confirmCode = text("", 40, OK, true);
         confirmCode.setGravity(Gravity.CENTER); confirmCode.setTextIsSelectable(true);
         col.addView(confirmCode, lp(dp(12)));
+        installCodeView = text("", 40, OK, true);
+        installCodeView.setGravity(Gravity.CENTER); installCodeView.setTextIsSelectable(true);
+        col.addView(installCodeView, lp(dp(4)));
         appsList = new LinearLayout(this);
         appsList.setOrientation(LinearLayout.VERTICAL);
         col.addView(appsList, lp(dp(8)));
@@ -198,7 +227,7 @@ public class MainActivity extends Activity {
         status = text("", 16, WARN, false); col.addView(status, lp(dp(12)));
         turnOn = button("", ACCENT); turnOn.setOnClickListener(v -> start()); col.addView(turnOn, lp(dp(12)));
         next = button("Done — next step", ACCENT);
-        next.setOnClickListener(v -> { say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
+        next.setOnClickListener(v -> newInstallCode()); col.addView(next, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
         startAgain = button("Return to the start", ACCENT);
@@ -254,9 +283,27 @@ public class MainActivity extends Activity {
 
     private boolean confirmationValid() { return confirmCode.length() > 0 && System.currentTimeMillis() < confirmExpiresAt; }
 
+    /** Restore the install reference the same way: it lasts 24 hours from creation. */
+    private boolean restoreInstallConfirmation() {
+        SharedPreferences prefs = getSharedPreferences("tv", MODE_PRIVATE);
+        String code = prefs.getString("confirmationInstall", null);
+        long expiry = prefs.getLong("confirmationInstallExpiry", 0);
+        String host = prefs.getString("confirmationInstallHost", null);
+        if (code == null || host == null || !SetupWizard.validHost(host) || device == null
+                || !wizard.resumeConfirmation(code, expiry, System.currentTimeMillis())) return false;
+        installCodeText = code; installExpiresAt = expiry;
+        installUsed = prefs.getBoolean("confirmationInstallUsed", false);
+        installRefreshToken = prefs.getString("confirmationInstallToken", "");
+        address.setText(host); apps = "new";
+        appsResults = new java.util.ArrayList<>();
+        return true;
+    }
+
     private void pickApps(String a) {
         if (busy || refreshBusy) return;
         if ("have".equals(a) && restoreConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
+        // A remembered install reference skips re-installing: the apps are already on the TV.
+        if ("new".equals(a) && restoreInstallConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
         apps = a;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply();
         // Debugging was already confirmed on this TV: go straight to Connect with the saved address.
@@ -291,7 +338,15 @@ public class MainActivity extends Activity {
         tvCodeInput.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         showAgain.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         confirmCode.setVisibility(s == SetupWizard.Step.DONE && !install && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
-        next.setVisibility(View.GONE);
+        installCodeView.setVisibility(installDone && installCodeText.length() > 0 ? View.VISIBLE : View.GONE);
+        if (installCodeView.getVisibility() == View.VISIBLE) installCodeView.setText(System.currentTimeMillis() >= installExpiresAt ? "Expired" : installCodeText.substring(0, 3) + "-" + installCodeText.substring(3));
+        boolean installDoneCode = installDone && installCodeText.length() > 0;
+        next.setVisibility(installDoneCode ? View.VISIBLE : View.GONE);
+        if (installDoneCode) {
+            boolean canNew = SetupWizard.canIssueConfirmation(true, installExpiresAt, installUsed, System.currentTimeMillis()) && !busy;
+            next.setText(installUsed || System.currentTimeMillis() >= installExpiresAt ? "New code" : "New code — available after use or expiry");
+            next.setEnabled(canNew); next.setAlpha(canNew ? 1f : 0.4f);
+        }
         turnOn.setVisibility((s == SetupWizard.Step.DEBUGGING && (device == null || apps == null)) || (s == SetupWizard.Step.DONE && install) ? View.GONE : View.VISIBLE);
         find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
         appsList.setVisibility(installDone && !appsResults.isEmpty() ? View.VISIBLE : View.GONE);
@@ -343,7 +398,12 @@ public class MainActivity extends Activity {
             case DONE:
                 if (install) {
                     heading.setText("Your apps are installed");
-                    description.setText("Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.");
+                    long iMinutes = Math.max(0, (installExpiresAt - System.currentTimeMillis() + 59999) / 60000);
+                    description.setText(installCodeText.length() > 0 && System.currentTimeMillis() < installExpiresAt
+                            ? "Each app is listed below with what happened.\n\nType the code shown into the Remote setup tab on your ticket or order at bmsupport.uk to confirm the apps are installed. It lasts 24 hours — expires in " + (iMinutes / 60) + "h " + (iMinutes % 60) + "m."
+                            : installCodeText.length() > 0
+                            ? "Each app is listed below with what happened. Your install code has expired — press New code for a fresh one."
+                            : "Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.");
                     break;
                 }
                 heading.setText("TV setup confirmed");
@@ -396,7 +456,21 @@ public class MainActivity extends Activity {
                 final boolean linkedSent = sentTo != null;
                 final Enabler.Confirmation issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 final boolean installOnly = "new".equals(apps);
-                if (run == SetupWizard.Step.SETUP && installOnly) appsResults = Enabler.installOurApps(this, host, progress);
+                final Enabler.Confirmation[] installIssued = new Enabler.Confirmation[1];
+                if (run == SetupWizard.Step.SETUP && installOnly) {
+                    appsResults = Enabler.installOurApps(this, host, progress);
+                    boolean anyFailed = false;
+                    for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) { anyFailed = true; break; }
+                    if (!anyFailed) {
+                        try {
+                            progress.step(0, "Confirming the installation…");
+                            Enabler.Checks verify = Enabler.checkExisting(this, host, (i, t) -> {});
+                            Enabler.Checks proof = new Enabler.Checks();
+                            proof.adb = true; proof.helper = verify.helper; proof.control = verify.control; proof.accessibility = false;
+                            installIssued[0] = Enabler.requestConfirmCode(proof, verify.type != null ? verify.type : selectedDevice, null, "install");
+                        } catch (Exception ignored) { /* The apps are on the TV either way; the code is extra proof for the ticket or order. */ }
+                    }
+                }
                 else if (run == SetupWizard.Step.SETUP) {
                     checks = Enabler.checkExisting(this, host, progress);
                     if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
@@ -410,6 +484,13 @@ public class MainActivity extends Activity {
                     setBusy(false);
                     if (run == SetupWizard.Step.SETUP && installOnly) {
                         wizard.setupFinished(true);
+                        if (installIssued[0] != null) {
+                            installCodeText = installIssued[0].code; installExpiresAt = installIssued[0].expiresAt;
+                            installRefreshToken = installIssued[0].refreshToken; installUsed = false;
+                            getSharedPreferences("tv", MODE_PRIVATE).edit().putString("confirmationInstall", installIssued[0].code)
+                                .putLong("confirmationInstallExpiry", installIssued[0].expiresAt).putString("confirmationInstallToken", installIssued[0].refreshToken)
+                                .putBoolean("confirmationInstallUsed", false).putString("confirmationInstallHost", host).commit();
+                        }
                         long failedCount = 0;
                         for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
                         if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
@@ -483,14 +564,37 @@ public class MainActivity extends Activity {
         say("", MUTED); render();
     }
 
+    /** A fresh install reference after the last one was used on a ticket/order or expired. */
+    private void newInstallCode() {
+        if (busy || refreshBusy || !SetupWizard.installFinished(wizard.step, apps)) return;
+        if (!SetupWizard.canIssueConfirmation(installCodeText.length() > 0, installExpiresAt, installUsed, System.currentTimeMillis())) return;
+        final String host = address.getText().toString().trim();
+        if (!SetupWizard.validHost(host)) { say("Type the TV's address first.", WARN); return; }
+        setBusy(true); say("Checking your TV…", MUTED);
+        io.execute(() -> {
+            try {
+                Enabler.Checks verify = Enabler.checkExisting(this, host, (i, t) -> {});
+                Enabler.Checks proof = new Enabler.Checks();
+                proof.adb = true; proof.helper = verify.helper; proof.control = verify.control; proof.accessibility = false;
+                final Enabler.Confirmation issued = Enabler.requestConfirmCode(proof, verify.type != null ? verify.type : device, null, "install");
+                getSharedPreferences("tv", MODE_PRIVATE).edit().putString("confirmationInstall", issued.code)
+                    .putLong("confirmationInstallExpiry", issued.expiresAt).putString("confirmationInstallToken", issued.refreshToken)
+                    .putBoolean("confirmationInstallUsed", false).putString("confirmationInstallHost", host).commit();
+                ui.post(() -> { if (isFinishing() || isDestroyed()) return; installCodeText = issued.code; installExpiresAt = issued.expiresAt; installRefreshToken = issued.refreshToken; installUsed = false; setBusy(false); say("✓ New install code ready. Type it on your ticket or order's Remote setup tab.", OK); render(); });
+            } catch (Exception e) { ui.post(() -> { if (!isFinishing() && !isDestroyed()) { setBusy(false); say(Enabler.friendly(e), WARN); render(); } }); }
+        });
+    }
+
     private void confirmReset() {
         if (busy || refreshBusy) return;
         new AlertDialog.Builder(this).setTitle("Reset setup?")
                 .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
                     wizard.reset(); checks = null; device = null; apps = null; appsResults = new java.util.ArrayList<>();
+                    installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false;
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps")
-                        .remove("confirmation").remove("confirmationExpiry").remove("confirmationToken").remove("confirmationHost").commit();
+                        .remove("confirmation").remove("confirmationExpiry").remove("confirmationToken").remove("confirmationHost")
+                        .remove("confirmationInstall").remove("confirmationInstallExpiry").remove("confirmationInstallToken").remove("confirmationInstallHost").remove("confirmationInstallUsed").commit();
                     address.setText(""); confirmCode.setText(""); refreshToken = null; refreshHost = null; say("", MUTED); render();
                 }).show();
     }

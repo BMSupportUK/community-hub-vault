@@ -309,14 +309,16 @@ final class Enabler {
         Confirmation(String code, long expiresAt, String token) { this.code = code; this.expiresAt = expiresAt; this.refreshToken = token; }
     }
     static Confirmation requestConfirmCode(Checks c, String device) { return requestConfirmCode(c, device, null); }
-    static Confirmation requestConfirmCode(Checks c, String device, String helperCode) {
+    static Confirmation requestConfirmCode(Checks c, String device, String helperCode) { return requestConfirmCode(c, device, helperCode, "share"); }
+    /** kind "share" confirms the TV for screen sharing; "install" only confirms the apps are on the TV. */
+    static Confirmation requestConfirmCode(Checks c, String device, String helperCode, String kind) {
         int code;
         String resp;
         try {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-confirm").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"app\":\"tv-enabler-1.17\"," + (helperCode != null && helperCode.matches("\\d{6}") ? "\"helperCode\":\"" + helperCode + "\"," : "") + "\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"app\":\"tv-enabler-1.17\",\"kind\":\"" + kind + "\"," + (helperCode != null && helperCode.matches("\\d{6}") ? "\"helperCode\":\"" + helperCode + "\"," : "") + "\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             code = h.getResponseCode();

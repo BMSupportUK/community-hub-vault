@@ -59,7 +59,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   const redeem = async (c: string) => {
     const r = await redeemFn({ data: { token, password, code: c } });
     if (!r.ok) { toast.error(r.error); throw new Error(r.error); }
-    toast.success("BM TV Enabler confirmed your TV"); await load();
+    toast.success(r.install ? "BM TV Enabler confirmed your apps are installed" : "BM TV Enabler confirmed your TV"); await load();
   };
   const restart = () => {
     if (!window.confirm("Restart the TV setup from the beginning? The ticks on this page will be cleared. A BM TV Enabler reference that is still within its 24 hours keeps working — just press Get new connection.")) return;

@@ -81,8 +81,8 @@ export const redeemOrderEnablerCode = createServerFn({ method: "POST" })
     if (state === "device_mismatch") return { ok: false as const, error: "BM TV Enabler was set up for the other TV type. Press Change device, or pick the other TV type in the app." };
     const { data: result, error } = await db.rpc("redeem_order_enabler_code", { _order_id: orderId, _code_hash: hash });
     if (error) throw new Error("Could not confirm your TV. Try again.");
-    if (result !== "ok") return { ok: false as const, error: result === "scope_mismatch" ? "That code belongs to another ticket or order. Get a new code in BM TV Enabler." : "That code has expired. Press New code in BM TV Enabler." };
-    return { ok: true as const };
+    if (result !== "ok" && result !== "ok_install") return { ok: false as const, error: result === "scope_mismatch" ? "That code belongs to another ticket or order. Get a new code in BM TV Enabler." : "That code has expired. Press New code in BM TV Enabler." };
+    return { ok: true as const, install: result === "ok_install" };
   });
 
 export const requestOrderEnablerConnection = createServerFn({ method: "POST" })

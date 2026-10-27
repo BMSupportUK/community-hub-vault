@@ -1618,6 +1618,13 @@
       "when": 1793062640108,
       "tag": "0230_enabler_connection_must_be_fresh",
       "breakpoints": true
+    },
+    {
+      "idx": 231,
+      "version": "7",
+      "when": 1793091659618,
+      "tag": "0231_enabler_install_codes",
+      "breakpoints": true
     }
   ]
 }

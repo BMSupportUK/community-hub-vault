@@ -65,8 +65,8 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     const r = data as unknown as string;
     if (error) { toast.error(error.message); throw error; }
     if (r === "device_mismatch") { toast.error("BM TV Enabler was set up for the other TV type. Press Change device, or pick the other TV type in the app."); throw new Error(r); }
-    if (r !== "ok") { toast.error("That code isn't valid. Check BM TV Enabler and type the code it shows now."); throw new Error(r); }
-    toast.success("BM TV Enabler confirmed your TV");
+    if (r !== "ok" && r !== "ok_install") { toast.error("That code isn't valid. Check BM TV Enabler and type the code it shows now."); throw new Error(r); }
+    toast.success(r === "ok_install" ? "BM TV Enabler confirmed your apps are installed" : "BM TV Enabler confirmed your TV");
     await reload();
   };
   const connect = async () => {
