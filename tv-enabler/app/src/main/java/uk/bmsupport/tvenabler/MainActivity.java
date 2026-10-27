@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         contentBox.setBackgroundColor(BG);
         contentBox.addView(text("BM TV Enabler", 26, FG, true));
-        contentBox.addView(text("TV setup · 1.39", 14, MUTED, false));
+        contentBox.addView(text("TV setup · 1.40", 14, MUTED, false));
         // Welcome on open: logo, message and Get started before the wizard.
         welcomeBox = new LinearLayout(this);
         welcomeBox.setOrientation(LinearLayout.VERTICAL);
@@ -389,7 +389,7 @@ public class MainActivity extends Activity {
                         long failedCount = 0;
                         for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
                         if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
-                        else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Reset setup to try again.", WARN);
+                        else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Return to the start to try again.", WARN);
                     } else if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.setupFinished(ready);
@@ -444,6 +444,15 @@ public class MainActivity extends Activity {
             apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply();
         }
         render();
+    }
+
+    /** A finished app-install run goes back to "What do you need?" — the saved TV address,
+     *  device choice and TV authorization are kept, so nothing restarts from scratch. */
+    private void backToStart() {
+        if (busy || refreshBusy) return;
+        wizard.reset(); checks = null; apps = null; appsResults = new java.util.ArrayList<>();
+        getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply();
+        say("", MUTED); render();
     }
 
     private void confirmReset() {
@@ -560,7 +569,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, showAgain, appsNew, appsHave, appsBack}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, startAgain, showAgain, appsNew, appsHave, appsBack}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
