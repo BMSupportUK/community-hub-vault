@@ -2,12 +2,16 @@ const CONTROL = 'uk.bmsupport.remote.control';
 const HELPER = 'uk.bmsupport.remote';
 const SERVICE = `${CONTROL}/${CONTROL}.ControlService`;
 const HELPER_APK_URL = 'https://bmsupport.uk/api/public/remote-helper-apk';
+/** Enabler login token, sent with app downloads so the website's download log knows the customer. */
+let enablerToken = '';
+function setEnablerToken(token) { enablerToken = /^[0-9a-f]{20,200}$/i.test(String(token || '')) ? String(token) : ''; }
+const downloadInit = () => (enablerToken ? { headers: { 'x-enabler-token': enablerToken } } : undefined);
 
 /** Downloads the latest BM Remote Helper APK so the customer never installs it by hand. */
 async function downloadHelper(destDir, fetchImpl = globalThis.fetch) {
   const fs = require('node:fs');
   const path = require('node:path');
-  const res = await fetchImpl(HELPER_APK_URL);
+  const res = await fetchImpl(HELPER_APK_URL, downloadInit());
   if (!res.ok) throw new Error(`Could not download BM Remote Helper (error ${res.status}). Check the internet connection and try again.`);
   const buf = Buffer.from(await res.arrayBuffer());
   if (buf.length < 100000) throw new Error('Could not download BM Remote Helper. Check the internet connection and try again.');
@@ -186,7 +190,7 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
       progress(`Installing ${name} (${i + 1} of ${apps.length})…`);
       const file = path.join(tempDir, `bm-app-${i}.apk`);
       try {
-        const res = await fetchImpl(SITE + app.path);
+        const res = await fetchImpl(SITE + app.path, downloadInit());
         if (!res.ok) throw new Error('download');
         fs.mkdirSync(tempDir, { recursive: true });
         fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
@@ -338,7 +342,7 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch, helpe
 async function loginWithPin(pin, post = globalThis.fetch) {
   if (!/^\d{6}$/.test(String(pin || ''))) throw new Error('Type the 6-digit PIN.');
   let res;
-  try { res = await post('https://bmsupport.uk/api/public/enabler-login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pin: String(pin), app: 'windows-1.23' }) }); }
+  try { res = await post('https://bmsupport.uk/api/public/enabler-login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pin: String(pin), app: 'windows-1.33' }) }); }
   catch { throw new Error('Couldn\'t reach bmsupport.uk. Check the internet connection and try again.'); }
   const body = await res.json().catch(() => null);
   if (!res.ok || !body || !body.token) throw new Error((body && body.error) || `PIN not recognised (error ${res.status}).`);
@@ -370,4 +374,4 @@ async function refreshConnection(host, token, adb, progress, post = globalThis.f
   } catch (error) { await send({ token, requestId: task.requestId }).catch(() => {}); throw error; }
 }
 
-module.exports = { refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
+module.exports = { setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
