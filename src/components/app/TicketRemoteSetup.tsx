@@ -8,6 +8,7 @@ import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
+import { RemoteSetupWizard } from "@/components/app/RemoteSetupWizard";
 import { CheckCircle2, Circle, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,7 +103,6 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       </div>
     </section>;
   }
-  const steps = REMOTE_SETUP_STEPS[row.device];
   const ready = appChecksPassed(row.app_checks, row.device);
   const fresh = checksFresh(row);
   const canConnect = connectionReady(row) && !renewalGate.waiting;
@@ -113,6 +113,9 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
       {!closed && <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={() => void restart()}>Restart setup</Button>}
     </div>
+    <RemoteSetupWizard row={row} referenceActive={referenceActive}
+      confirmation={!closed && !fresh ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null}
+      connection={<>
     {canConnect && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Your TV is ready</h3>
       <p className="text-sm">BM TV Enabler has already picked up the code from BM Remote Helper. Press Connect to send your screen-share request to staff.</p>
@@ -123,20 +126,12 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
       <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
     </div>}
-    {!closed && !fresh && <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} />}
-    <RemoteSetupProgress row={row} referenceActive={referenceActive} />
-    {!complete && steps.map((s, i) => {
-      const done = stepDone(s, row);
-      return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
-        <h3 className="flex items-center gap-2 font-semibold">{done ? <CheckCircle2 className="size-5 text-primary" /> : <span className="flex size-5 items-center justify-center rounded-full border border-border text-xs">{i + 1}</span>}{s.title}</h3>
-        <p className="text-sm text-muted-foreground">{s.body}</p>
-        {!done && <p className="text-xs text-muted-foreground">{s.proof === "code" ? (ready ? "Press Connect once Enabler brings your TV connection here." : "Unlocks once the app has checked your TV.") : "Ticks automatically when the app checks your TV."}</p>}
-      </article>;
-    })}
+    {!canConnect && !ready && !complete && !referenceActive && <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the previous step.</p>}
+    </>} />
   </section>;
   return <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
     {main}
-    <aside className="h-fit space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-center text-foreground lg:sticky lg:top-4">{!closed && <TicketPin ticketId={ticketId} />}<EnablerQr /><div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">No Android phone? Use a Windows PC</h3><p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, then type the code it shows here — it ticks the steps the same way.</p><Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup.exe">Download for Windows</a></Button><p className="text-xs text-muted-foreground">Windows 10 / 11 · free, unsigned — choose More info › Run anyway if warned.</p></div></aside>
+    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr />{!closed && <TicketPin ticketId={ticketId} />}<div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">No Android phone? Use a Windows PC</h3><p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, then type the code it shows here — it ticks the steps the same way.</p><Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup.exe">Download for Windows</a></Button><p className="text-xs text-muted-foreground">Windows 10 / 11 · free, unsigned — choose More info › Run anyway if warned.</p></div></aside>
   </div>;
 }
 
