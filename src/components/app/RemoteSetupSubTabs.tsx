@@ -7,10 +7,10 @@ export function RemoteSetupSubTabs({ setup, connection, code }: { setup: ReactNo
   const [tab, setTab] = useState<SubTab>("setup");
   const btn = (t: SubTab, label: string) => (
     <button type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-      className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold ${tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>
+      className={`w-full whitespace-nowrap rounded-lg px-3 py-1.5 text-center text-sm font-semibold ${tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>
   );
   return <div className="space-y-4">
-    <div className="flex flex-col gap-1 rounded-xl border border-border bg-card/85 p-1 sm:flex-row sm:flex-nowrap sm:overflow-x-auto sm:[scrollbar-width:none] sm:[&::-webkit-scrollbar]:hidden" role="tablist">
+    <div className="grid grid-cols-1 gap-1 rounded-xl border border-border bg-card/85 p-1" role="tablist">
       {btn("setup", "Remote setup")}{btn("connection", "Connect Screen")}{btn("code", "BM TV Enabler Connection Status")}
     </div>
     <div className={tab === "setup" ? "" : "hidden"}>{setup}</div>
