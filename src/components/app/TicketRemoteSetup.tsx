@@ -109,7 +109,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const linked = ready || complete || referenceActive;
   const stage: 1 | 2 | 3 = canConnect ? 3 : linked ? 2 : 1;
   const codeBox = !closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null;
-  const chips = [["App linked", linked], ["TV found", canConnect], ["Ready to share", canConnect]] as const;
+  const chips = [["App linked", linked], ["TV connected", canConnect], ["Ready to share", canConnect]] as const;
   return <div className="relative isolate mx-auto max-w-3xl overflow-hidden rounded-2xl border border-border text-foreground">
     <img src={helpBg} alt="" aria-hidden="true" loading="lazy" width={1920} height={1088} className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />
     <div className="pointer-events-none absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
@@ -134,9 +134,9 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
         </>}
         {stage === 2 && <>
           <h3 className="text-lg font-semibold">Keep BM TV Enabler open on your phone</h3>
-          <p className="text-sm" role="status">{renewal || "Press the button and we'll ask the app to find your TV. Your phone must be on the same Wi-Fi as the TV."}</p>
+          <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on your phone, on the same Wi-Fi as your TV. Press the button and the app will connect to your TV for you."}</p>
           <Button size="lg" className="h-14 w-full text-base" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>
-            {renewalGate.waiting ? <><Loader2 className="mr-2 size-5 animate-spin" />Finding your TV…</> : "Find my TV"}
+            {renewalGate.waiting ? <><Loader2 className="mr-2 size-5 animate-spin" />Waiting for BM TV Enabler…</> : "Send to BM TV Enabler"}
           </Button>
         </>}
         {stage === 3 && <>
