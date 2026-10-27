@@ -1,19 +1,38 @@
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
-import { ArrowLeft, ArrowRight, ChevronDown, Monitor, Smartphone, Tv } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, ArrowRight, ChevronDown, Headset, Monitor, Smartphone, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 
-export type SetupDeviceKey = "amazon" | "android" | "windows" | "ios";
+export type SetupDeviceKey = "amazon" | "android" | "windows" | "ios" | "remote";
 
 const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof Tv }[] = [
   { key: "amazon", label: "Amazon Fire TV", note: "Fire Stick, Cube or Fire TV", icon: Tv },
   { key: "android", label: "Android / Google TV", note: "Android boxes and Google TV", icon: Tv },
   { key: "windows", label: "Windows PC", note: "Set up a TV from your computer", icon: Monitor },
   { key: "ios", label: "iPhone / iPad", note: "Apple phones and tablets", icon: Smartphone },
+  { key: "remote", label: "Help from staff", note: "Let staff install it with you by screen share", icon: Headset },
 ];
+
+/** Remote connection screen: staff help the customer install over a ticket-scoped screen share. */
+function RemoteHelpSteps() {
+  const steps = [
+    <>Open a ticket and say you'd like help installing the apps.</>,
+    <>In the ticket open the <strong className="text-foreground">Remote setup</strong> tab and follow its steps with BM TV Enabler on your Android phone or Windows PC.</>,
+    <>In the Enabler choose <strong className="text-foreground">Start a screen share</strong>, find your TV and press <strong className="text-foreground">Allow</strong> on the TV.</>,
+    <>Type the Enabler reference into the ticket. A member of staff will then connect, see your TV screen and install the apps with you.</>,
+  ];
+  return <div className="space-y-4">
+    <p className="text-sm text-muted-foreground">Prefer not to do it yourself? Staff can connect to your TV by screen share and install everything for you while you watch.</p>
+    <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+    <p className="text-sm text-muted-foreground">Staff only see your TV while you're connected, and you can end it at any time.</p>
+    <div className="grid gap-6 sm:grid-cols-2"><EnablerQr /><WindowsEnablerDownload /></div>
+    <Button asChild><Link to="/tickets"><Headset className="size-4" />Open a ticket for help</Link></Button>
+  </div>;
+}
 
 const DEBUGGING: Record<"amazon" | "android", string[]> = {
   amazon: [
@@ -114,7 +133,7 @@ export function DeviceInstallSetup({ renderGuides, renderFallback, windows, ios 
       {!chosen ? <>
         <h2 className="font-display text-2xl font-bold text-foreground">What are you setting up?</h2>
         <p className="mt-1 text-sm text-muted-foreground">Pick your device and we'll walk you through it one step at a time.</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {DEVICES.map(({ key, label, note, icon: Icon }) => (
             <button key={key} type="button" onClick={() => pick(key)} className="flex flex-col items-start gap-2 rounded-lg border border-border bg-surface-2 p-4 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <Icon className="size-6 text-primary" />
@@ -130,7 +149,7 @@ export function DeviceInstallSetup({ renderGuides, renderFallback, windows, ios 
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
           ? <TvSteps device={chosen.key} guides={renderGuides(chosen.key)} fallback={renderFallback(chosen.key)} />
-          : chosen.key === "windows" ? windows : ios}
+          : chosen.key === "windows" ? windows : chosen.key === "remote" ? <RemoteHelpSteps /> : ios}
       </>}
     </div>
   </div>;
