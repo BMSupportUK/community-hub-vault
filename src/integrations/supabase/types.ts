@@ -2502,6 +2502,7 @@ export type Database = {
           expires_at: string
           id: string
           order_id: string | null
+          pin_encrypted: string | null
           pin_hash: string
           revoked_at: string | null
           ticket_id: string | null
@@ -2512,6 +2513,7 @@ export type Database = {
           expires_at: string
           id?: string
           order_id?: string | null
+          pin_encrypted?: string | null
           pin_hash: string
           revoked_at?: string | null
           ticket_id?: string | null
@@ -2522,6 +2524,7 @@ export type Database = {
           expires_at?: string
           id?: string
           order_id?: string | null
+          pin_encrypted?: string | null
           pin_hash?: string
           revoked_at?: string | null
           ticket_id?: string | null
@@ -8832,6 +8835,15 @@ export type Database = {
           password: string
           token: string
         }[]
+      }
+      get_or_create_enabler_login_pin: {
+        Args: {
+          _id: string
+          _pin_encrypted: string
+          _pin_hash: string
+          _scope: string
+        }
+        Returns: Json
       }
       get_or_create_fan_dm_thread: { Args: { _other: string }; Returns: string }
       get_pending_expiry_reminders: {

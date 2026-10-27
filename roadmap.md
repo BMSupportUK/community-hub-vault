@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Enabler login PIN reuse
+- [x] Reuse owner-scoped PINs with encrypted redisplay and atomic expiry-only issuance; seven tests pass and build OK. Signed-in legacy PIN cannot be replaced early. Legacy hash-only PINs remain usable on their original browser until expiry.
+- [ ] Verify newly issued PIN read-back through the customer UI after the current legacy PIN expires; existing ticket/account PINs have no recoverable display value, so neither was revoked for testing. Publish awaits user request.
+
 ## Install Guides self-install columns
 - [x] Replace TV setup adverts with separate phone/Windows Enabler columns and existing ticket-bound PIN request; staff-help action reads Return to Self Install. Preview build OK; five PIN tests pass; signed-in return navigation verified. PIN issuance requires an existing customer ticket/order and was not exercised.
 
