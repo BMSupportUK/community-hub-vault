@@ -66,3 +66,24 @@ test("Connect requires a new automatically delivered connection, never a consume
   expect(connectionReady({ ...row, pending_session_id: null })).toBe(false);
   expect(connectionReady({ ...row, checks_used_at: row.app_checked_at })).toBe(false);
 });
+test("a newly bound reference with no customer request never restarts BM Remote Helper", async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(`
+      create role anon; create role authenticated; create role service_role;
+      create schema auth; create function auth.uid() returns uuid language sql as $$ select '${owner}'::uuid $$;
+      create table tickets(id uuid primary key,user_id uuid,status text,subject text);
+      create table enabler_confirm_codes(code_hash text primary key,expires_at timestamptz,created_at timestamptz default now(),bound_ticket_id uuid,bound_order_id uuid,session_id uuid,device text,checks jsonb,used_at timestamptz);
+      create table tv_remote_sessions(id uuid primary key,code_hash text,status text,expires_at timestamptz,link_id uuid,link_kind text,requested_at timestamptz);
+      create table ticket_remote_setup(ticket_id uuid,device text,pending_session_id uuid,verified_session_id uuid,updated_at timestamptz,app_checks jsonb,app_checked_at timestamptz,checks_used_at timestamptz,completed_at timestamptz);
+      create table order_remote_setup(order_id uuid,device text,pending_session_id uuid,verified_session_id uuid,updated_at timestamptz,app_checks jsonb,app_checked_at timestamptz,checks_used_at timestamptz,completed_at timestamptz);
+    `);
+    await db.exec(await Bun.file("drizzle/migrations/0226_enabler_connection_renewal.sql").text());
+    await db.exec(await Bun.file("drizzle/migrations/0229_enabler_refresh_no_restart_without_request.sql").text());
+    await db.query(`insert into tickets values($1,$2,'open','Test')`, [scope, owner]);
+    await db.query(`insert into tv_remote_sessions values($1,'first','pending',now()+interval '1 hour',null,null,null)`, [first]);
+    await db.query(`insert into enabler_confirm_codes(code_hash,expires_at,session_id,device,checks,refresh_token_hash,bound_ticket_id) values('reference',now()+interval '24 hours',$1,'amazon',$2,'secret',$3)`, [first, checks, scope]);
+    const task = (await db.query<{ result: { state: string } }>(`select enabler_refresh_task('secret') as result`)).rows[0]!.result;
+    expect(task.state).toBe("idle");
+  } finally { await db.close(); }
+});
