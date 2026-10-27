@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { checksFresh } from "../src/lib/ticket-remote-setup";
+import { describe, expect, test } from "bun:test";
+import { checksFresh, remoteSetupProgress } from "../src/lib/ticket-remote-setup";
 const ok = { adb: true, helper: true, control: true, accessibility: true };
 const now = Date.parse("2026-10-26T12:00:00Z");
 const iso = (minsAgo: number) => new Date(now - minsAgo * 60_000).toISOString();
