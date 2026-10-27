@@ -213,12 +213,23 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
     let cancelled = false;
     const channel = supabase.channel(live.topic, { config: { broadcast: { self: false } } });
     chan.current = channel;
+    // TV candidates can arrive while we fetch relay servers; hold them until the offer is applied.
+    let pending: RTCIceCandidateInit[] = [];
+    let ready = false;
     const setupPeer = async (sdp: string) => {
+      ready = false;
       const { iceServers } = await getVideoIceServers();
       if (cancelled) return;
       pc.current?.close();
       const peer = new RTCPeerConnection({ iceServers });
       pc.current = peer;
+      peer.oniceconnectionstatechange = () => {
+        // A failed picture path doesn't affect the remote buttons; ask the TV to offer again.
+        if (peer.iceConnectionState === "failed" && pc.current === peer && !cancelled) {
+          setHasVideo(false);
+          channel.send({ type: "broadcast", event: "hello", payload: {} });
+        }
+      };
       peer.ontrack = (ev) => {
         const s = ev.streams[0] ?? new MediaStream([ev.track]);
         stream.current = s;
@@ -230,6 +241,9 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
         if (ev.candidate) channel.send({ type: "broadcast", event: "ice", payload: { from: "staff", candidate: ev.candidate.toJSON() } });
       };
       await peer.setRemoteDescription({ type: "offer", sdp });
+      ready = true;
+      const held = pending; pending = [];
+      for (const c of held) await peer.addIceCandidate(c).catch(() => {});
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
       channel.send({ type: "broadcast", event: "answer", payload: { sdp: answer.sdp } });
@@ -248,7 +262,9 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
         void setupPeer(payload.sdp);
       })
       .on("broadcast", { event: "ice" }, ({ payload }) => {
-        if (payload?.from === "tv" && payload.candidate) pc.current?.addIceCandidate(payload.candidate).catch(() => {});
+        if (payload?.from !== "tv" || !payload.candidate) return;
+        if (ready && pc.current) pc.current.addIceCandidate(payload.candidate).catch(() => {});
+        else pending.push(payload.candidate);
       })
       .on("broadcast", { event: "screen_off" }, () => setHasVideo(false))
       .on("broadcast", { event: "control" }, ({ payload }) => {
