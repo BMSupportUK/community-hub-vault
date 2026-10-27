@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { logDownload } from "@/lib/download-log.server";
 import { ANDROID_RELEASE } from "@/lib/android-release";
 
 /**
@@ -61,6 +62,7 @@ async function handle(request: Request, method: "GET" | "HEAD") {
     return new Response("App file unavailable", { status: 502 });
   }
 
+  await logDownload(request, { source: "android_apk", appName: "BM Support", version: uploaded?.version ?? ANDROID_RELEASE.versionName, bytes: Number(upstream.headers.get("content-length")) || null });
   const fileName = `BMSupport-${uploaded?.version ?? ANDROID_RELEASE.versionName}.apk`;
   const headers = new Headers();
   headers.set("content-type", "application/vnd.android.package-archive");

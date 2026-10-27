@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { deviceFromUserAgent, clientIpFromHeaders } from "@/lib/device-from-user-agent";
+import { logDownload } from "@/lib/download-log.server";
 import { isSafeToken, isTransferLive } from "@/lib/app-transfer";
 
 // GET /api/public/a/:token
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/api/public/a/$token")({
         const nowIso = new Date().toISOString();
         const { data: transfer } = await supabaseAdmin
           .from("app_transfers")
-          .select("id, build_id, expires_at, download_count, last_download_started_at")
+          .select("id, user_id, build_id, expires_at, download_count, last_download_started_at")
           .eq("token", token)
           .maybeSingle();
         if (!transfer || !isTransferLive(transfer.expires_at as string, nowIso)) {
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/api/public/a/$token")({
 
         const { data: build } = await supabaseAdmin
           .from("app_builds")
-          .select("file_path, file_name, is_available")
+          .select("app_name, version_name, file_path, file_name, is_available")
           .eq("id", transfer.build_id)
           .maybeSingle();
         if (!build || !build.is_available) return new Response("Not found", { status: 404 });
@@ -58,6 +59,8 @@ export const Route = createFileRoute("/api/public/a/$token")({
           : 0;
         const isQuickRepeat = lastStart > 0 && Date.now() - lastStart < 2 * 60 * 1000;
         const countIt = !isRangeContinuation && !isQuickRepeat;
+
+        if (countIt) await logDownload(request, { source: "transfer_link", buildId: transfer.build_id as string, appName: build.app_name || build.file_name, version: build.version_name, userId: transfer.user_id as string, bytes: totalBytes });
 
         await supabaseAdmin
           .from("app_transfers")

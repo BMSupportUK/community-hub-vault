@@ -314,6 +314,54 @@ export type Database = {
         }
         Relationships: []
       }
+      app_download_log: {
+        Row: {
+          app_name: string | null
+          build_id: string | null
+          bytes: number | null
+          created_at: string
+          device: string | null
+          id: string
+          ip: string | null
+          order_id: string | null
+          source: string
+          ticket_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          version_name: string | null
+        }
+        Insert: {
+          app_name?: string | null
+          build_id?: string | null
+          bytes?: number | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          ip?: string | null
+          order_id?: string | null
+          source: string
+          ticket_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          version_name?: string | null
+        }
+        Update: {
+          app_name?: string | null
+          build_id?: string | null
+          bytes?: number | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          ip?: string | null
+          order_id?: string | null
+          source?: string
+          ticket_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          version_name?: string | null
+        }
+        Relationships: []
+      }
       app_installs: {
         Row: {
           app_version: string | null

@@ -23,7 +23,7 @@ let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshT
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
 const startButton = document.getElementById('welcome-start'), pinInput = el('pin-input'), pinMsg = el('pin-msg');
 const loggedIn = () => Number(localStorage.getItem('bm-pin-expires') || 0) > Date.now();
-if (loggedIn()) { el('pin-box').hidden = true; startButton.textContent = 'Get started'; }
+if (loggedIn()) { window.bmTv.setToken && window.bmTv.setToken(localStorage.getItem('bm-pin-token') || ''); el('pin-box').hidden = true; startButton.textContent = 'Get started'; }
 startButton.addEventListener('click', async () => {
   if (!loggedIn()) {
     startButton.disabled = true; pinMsg.textContent = 'Checking your PIN…';

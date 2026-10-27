@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { execFile } = require('node:child_process');
-const { refreshConnection, pair, report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, requestConfirmCode, loginWithPin } = require('../core.cjs');
+const { refreshConnection, pair, report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, requestConfirmCode, loginWithPin, setEnablerToken } = require('../core.cjs');
 const { scan } = require('../discovery.cjs');
 let window; let busy = false;
 const page = path.join(__dirname, '..', 'dist', 'index.html');
@@ -42,7 +42,8 @@ else {
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());
-    ipcMain.handle('bm:login', task(pin => loginWithPin(pin)));
+    ipcMain.handle('bm:login', task(async pin => { const r = await loginWithPin(pin); setEnablerToken(r.token); return r; }));
+    ipcMain.handle('bm:set-token', (_e, token) => { setEnablerToken(token); return true; });
     ipcMain.handle('bm:refresh', task(async (address, token) => {
       let referenceUsed = false;
       const done = await refreshConnection(address, token, adb, say, undefined, undefined, used => { referenceUsed = used; });

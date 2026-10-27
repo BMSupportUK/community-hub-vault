@@ -1625,6 +1625,13 @@
       "when": 1793091659618,
       "tag": "0231_enabler_install_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 232,
+      "version": "7",
+      "when": 1793093904141,
+      "tag": "0232_app_download_log",
+      "breakpoints": true
     }
   ]
 }

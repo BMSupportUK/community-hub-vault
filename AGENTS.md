@@ -7,10 +7,10 @@
 - Portal Home headers hold alerts; bottom destinations share that header. Rail/editor share scoped saved ordering helpers; status by "Hey", pages in rail, phones use floating menu.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; mobile ticket headers cap+scroll to keep messages/composers.
 - Shared portal headers must wrap the route outlet in a remaining-height flex row; nested page layouts can return sibling columns and must not inherit the header's column direction. A page that renders its own bar must pick the bar of the portal its viewer belongs to, so staff never land on the customer bar.
-- Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
+- Gmail forwarding confirmations: captured by the email receiver, shown only to admins on Bank Transfer.
 - Talk: all staff per channel.
 - Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
-- Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn so no stale online users remain.
+- Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn (no stale online users).
 - Staff Away reads user_dnd_status (current window); triggers store shift-linked history.
 - Android alerts use per-type tones on versioned channels; sound corrections need a new channel ID because Android retains the first sound.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
@@ -21,8 +21,7 @@
 - Install Guides reuses AppTransferPanel's secured APK cards in device-specific remote-help tabs and excludes those APKs from general downloads, keeping one download flow and unchanged access checks.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
-- Dialogs fit mobile dvh; dense views drop phone columns.
-- Knowledge Base is full-page with category/ratings rails.
+- Dialogs fit mobile dvh; dense views drop phone columns. Knowledge Base is full-page with category/ratings rails.
 - Video help uses P2P WebRTC and a fixed-size customer canvas; rotation must not reshape or rebuild the encoder (causes black video).
 - Gender-matched customer defaults never replace custom picks; staff/Fan Zone-only excluded.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
@@ -57,10 +56,9 @@
 - Checkout screen share controls derive ongoing state from the order-private status read; locally ended staff sessions cannot auto-rejoin stale polled rows, so subsequent requests remain available without refresh.
 - Remote Helper installs through the BM Support Android app's session installer (`RemoteHelperPlugin`), served from `/api/public/remote-helper-apk` (latest available app_builds row named like "Remote Helper" or "BM Support Remote", the name it is uploaded under); Downloader installs trip Android 13+ restricted-settings on Accessibility.
 - TV remote control lives in a separate signature-protected BM Remote Control app installed by the helper's session installer (avoids Android 13+ restricted settings); only the host forwards commands, and only from the current controller.
-- Fire TV cannot self-enable remote control: Fire OS 7.6.6.9+/8.1.0.3+ blocks apps connecting to their own ADB (127.0.0.1:5555 closes with EOF); enabling must come from another device on the same Wi-Fi.
-- Fire TV remote control is switched on from another device over Wi-Fi ADB (BM TV Enabler, or BM Support app Settings › TV remote via `TvRemoteSetupPlugin`).
+- Fire TV blocks self-ADB (Fire OS 7.6.6.9+/8.1.0.3+, 127.0.0.1:5555 EOF), so remote control is switched on from another device over Wi-Fi ADB (BM TV Enabler, or BM Support Settings › TV remote via `TvRemoteSetupPlugin`).
 - Phone APK releases use the permanent signing key and matching Gradle/android-release versions with the bundled asset pointer; the public download proxy is the single destination so existing installs upgrade in place.
-- Navigation badge realtime channels use a fresh name per effect mount because the mobile drawer and underlying rail coexist and cleanup is asynchronous.
+- Nav badge realtime channels use a fresh name per mount (drawer and rail coexist; cleanup is async).
 - Ticket screen sharing keeps the original thread mounted as the default tab; the layout owns a single customer TV-code dialog reopened from public request messages, successful pairing/connection opens the share tab, and its pop-out only shows public replies so internal notes stay private.
 - Order Remote setup mirrors tickets: customer secure orders show Order / Remote setup / Screen share tabs; `order_remote_setup` (staff-read RLS, customer access only via link+password server functions) is ticked by the shared `/api/public/remote-setup` report and a live Helper code, which links the TV to the order and alerts staff. The legacy invitation-gated pairing path remains only for staff test orders; the standalone customer helper URL redirects home to keep requests scoped to orders and tickets.
 - BM TV Enabler (`tv-enabler/`) is PIN-gated and signed with the permanent BM key. Install Guides' QR opens `/api/public/tv-enabler-apk`, selecting the latest available non-Windows build, with one Download button (`?download=1` streams APK); never show an APK card. Over ADB SYNC, install Helper from `/api/public/remote-helper-apk`, then push its `assets/control.apk` directly from the phone to `/data/local/tmp`; never read the Helper's Android/data export (Fire OS blocks it) or use Downloader. Enable steps mirror `TvRemoteSetupPlugin`.
@@ -72,3 +70,5 @@
 - TV Enabler website linking: hashed confirmation codes bind atomically to one ticket/order on first redemption; ticket and service-only order RPCs allow repeats until original expiry, without transferring sessions between scopes. Apps display the server-returned expiry. The old eight-digit path stays for older versions.
 - Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
+- Install Guides setup uses one device picker (TVs: Enabler wizard + collapsed secured downloads; iOS: existing panel); legacy `?tab=enabler|get-app` maps to `setup`.
+- All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
