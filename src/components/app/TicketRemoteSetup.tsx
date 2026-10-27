@@ -129,7 +129,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
 
       {closed ? <p className="text-center text-sm">This ticket is closed.</p> : <div className="mx-auto max-w-xl space-y-4 rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur">
         {stage === 1 && <>
-          <h3 className="text-lg font-semibold">1. Get BM TV Enabler on your Android phone</h3>
+          <h3 className="text-lg font-semibold">1. Get BM TV Enabler — on your Android phone or a Windows PC</h3>
           <div className="grid items-start gap-4 sm:grid-cols-2">
             <div className="space-y-2 text-center"><EnablerQr compact /></div>
             <TicketPin ticketId={ticketId} />
@@ -159,9 +159,12 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => void restart()}>Restart setup</Button>
           </div>
           {stage !== 1 && <><p className="font-semibold">Enter a different BM TV Enabler reference</p>{codeBox}<TicketPin ticketId={ticketId} /></>}
-          <div className="space-y-2 border-t border-border pt-4 text-center"><WindowsEnablerDownload /></div>
         </div>
       </details>}
+
+      {!closed && <aside className="mx-auto max-w-xl rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur">
+        <WindowsEnablerDownload />
+      </aside>}
     </section>
   </div>;
 }
