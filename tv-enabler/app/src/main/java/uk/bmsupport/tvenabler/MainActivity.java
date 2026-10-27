@@ -330,7 +330,7 @@ public class MainActivity extends Activity {
         reset.setVisibility(installDone ? View.GONE : View.VISIBLE);
         startAgain.setVisibility(askApps ? View.GONE : View.VISIBLE);
         appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
-        appsBack.setVisibility(s == SetupWizard.Step.DEBUGGING && apps != null ? View.VISIBLE : View.GONE);
+        appsBack.setVisibility(View.GONE); // Return to home already covers going back to the options.
         boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
         devicePick.setVisibility(pick ? View.VISIBLE : View.GONE);
         deviceHelp.setVisibility(pick ? View.VISIBLE : View.GONE);

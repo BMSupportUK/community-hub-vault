@@ -117,7 +117,7 @@ function render() {
   const supportDone = s === Step.DONE && !install;
   reset.hidden = installDone; startAgain.hidden = askApps;
   const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && !install && device == null && !confirmCode);
-  appsPick.hidden = !askApps; appsBack.hidden = !(s === Step.DEBUGGING && apps != null);
+  appsPick.hidden = !askApps; appsBack.hidden = true; // Return to home already covers going back to the options.
   devicePick.hidden = !pick;
   deviceHelp.hidden = !pick;
   addressBlock.hidden = s !== Step.CHECK;
