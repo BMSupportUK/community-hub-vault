@@ -3,6 +3,7 @@
 
 ## Enabler appearance refresh
 - [ ] Refresh phone and Windows presentation without changing setup, PIN or connection behavior.
+- [ ] Make Windows visibly follow one step at a time, matching the phone wizard.
 - [ ] Run existing tests and inspect Windows screens; validate phone compilation where tools permit.
 
 ## Windows Enabler installation reporting
