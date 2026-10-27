@@ -1,5 +1,7 @@
 # Windows TV Enabler rules
 
+- Enabler presentation uses shared semantic palette roles on both platforms; Windows explicitly honors hidden panels and derives progress only from the existing wizard state, so styling cannot expose other steps or advance checks.
+
 - APK push/install commands get an extended deadline; uncertain app-install replies are reconciled by exact enabled package identity in the current TV profile, so a lost reply is not reported as failure.
 
 - Windows TV Enabler (`windows-tv-enabler/`): isolated Electron, local assets, bundled official ADB; mirrors the phone enabler's wizard step-for-step — `renderer/wizard.js` ports `SetupWizard.java`, both change together; pushes control.apk extracted from the helper download. Unsigned NSIS installer served via `/api/public/tv-enabler-windows` (app_builds row "TV Enabler%Windows").
