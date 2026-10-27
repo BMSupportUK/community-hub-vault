@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Enabler appearance refresh
+- [ ] Refresh phone and Windows presentation without changing setup, PIN or connection behavior.
+- [ ] Run existing tests and inspect Windows screens; validate phone compilation where tools permit.
+
 ## Windows Enabler installation reporting
 - [x] Extend Windows APK push/install deadlines and reconcile uncertain replies against enabled current-profile package identities; 45 Windows tests pass, including lost replies, delayed installs and genuine failures. Physical reproduction remains unverified.
 - [ ] Physical Windows/TV verification — requires customer devices. Rebuilt release not requested yet.
