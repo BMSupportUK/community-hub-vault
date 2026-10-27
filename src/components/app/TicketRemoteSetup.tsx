@@ -55,7 +55,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     await reload(); setBusy(false);
   };
   const restart = async () => {
-    if (!window.confirm("Restart the TV setup from the beginning? The ticks on this page will be cleared. A BM TV Enabler reference that is still within its 24 hours keeps working — just press Get new connection.")) return;
+    if (!window.confirm("Restart the TV setup from the beginning? The ticks on this page will be cleared. You will then type the reference your BM TV Enabler app shows now.")) return;
     setBusy(true);
     const { error } = await supabase.rpc("reset_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
     if (error) toast.error(error.message); else toast.success("Setup restarted — choose your device to begin again");
