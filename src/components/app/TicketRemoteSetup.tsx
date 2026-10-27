@@ -138,11 +138,13 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
           {codeBox}
         </>}
         {stage === 2 && <>
-          <h3 className="text-lg font-semibold">Keep BM TV Enabler open on your phone</h3>
-          <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on your phone, on the same Wi-Fi as your TV. Press the button and the app will connect to your TV for you."}</p>
+          <h3 className="text-lg font-semibold">Keep BM TV Enabler open on your phone or PC</h3>
+          <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open, on the same Wi-Fi as your TV. Press the button and the app will connect to your TV for you."}</p>
           <Button size="lg" className="h-14 w-full text-base" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>
             {renewalGate.waiting ? <><Loader2 className="mr-2 size-5 animate-spin" />Waiting for BM TV Enabler…</> : "Send to BM TV Enabler"}
           </Button>
+          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">Only the BM TV Enabler showing the reference below will get this. If your app is showing a <strong>different code</strong> (for example you used your phone instead of your PC), press <strong>Change reference number</strong> and type the code your app shows now — the ticks will update straight away.</p>
+          {codeBox}
         </>}
         {stage === 3 && <>
           <h3 className="text-lg font-semibold">Your TV is ready</h3>
@@ -158,7 +160,8 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
             <Button size="sm" variant="outline" disabled={busy} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Switch to {row.device === "amazon" ? "Android / Google TV" : "Amazon Fire TV"}</Button>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => void restart()}>Restart setup</Button>
           </div>
-          {stage !== 1 && <><p className="font-semibold">Enter a different BM TV Enabler reference</p>{codeBox}<TicketPin ticketId={ticketId} /></>}
+          {stage === 3 && <><p className="font-semibold">Enter a different BM TV Enabler reference</p>{codeBox}</>}
+          {stage !== 1 && <TicketPin ticketId={ticketId} />}
         </div>
       </details>}
 
