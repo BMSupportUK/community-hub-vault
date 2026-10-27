@@ -2,14 +2,15 @@
 # Roadmap
 
 ## Enabler appearance refresh
+- [x] Release both redesigned apps: signed phone 1.50 and Windows 1.39.0; permanent assets and current download records updated.
 - [x] Refresh phone and Windows presentation without changing setup, PIN or connection behavior.
 - [x] Make Windows visibly follow one step at a time, matching the phone wizard; explicit hidden-panel styling prevents inactive controls from appearing.
 - [x] Windows 45 tests and four phone Java suites pass; phone debug APK compiles. Windows simulated choices/debugging/connect/return/pairing inspected, including narrow-window overflow.
-- [ ] Inspect the redesigned native phone screen on a real phone — requires a physical device; release awaits user request.
+- [ ] Inspect the redesigned native phone screen on a real phone — requires a physical device. Phone 1.50 and Windows 1.39.0 released.
 
 ## Windows Enabler installation reporting
 - [x] Extend Windows APK push/install deadlines and reconcile uncertain replies against enabled current-profile package identities; 45 Windows tests pass, including lost replies, delayed installs and genuine failures. Physical reproduction remains unverified.
-- [ ] Physical Windows/TV verification — requires customer devices. Rebuilt release not requested yet.
+- [ ] Physical Windows/TV verification — requires customer devices. Windows 1.39.0 released with the reporting fix.
 
 ## Enabler login PIN reuse
 - [x] Reuse owner-scoped PINs with encrypted redisplay and atomic expiry-only issuance; seven tests pass and build OK. Signed-in legacy PIN cannot be replaced early. Legacy hash-only PINs remain usable on their original browser until expiry.
