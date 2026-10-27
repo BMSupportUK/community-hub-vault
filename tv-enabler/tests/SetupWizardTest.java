@@ -29,6 +29,11 @@ public final class SetupWizardTest {
         check(w.resumeConfirmation("K7P4QX", expiry, expiry - 1) && w.step == SetupWizard.Step.DONE, "Reopen restores confirmation until original 24-hour expiry");
         w.reset();
         check(!w.resumeConfirmation("K7P4QX", expiry, expiry) && w.step == SetupWizard.Step.DEBUGGING, "Expired confirmation cannot resume setup");
+        w.reset();
+        check(w.resumeUsed(expiry, expiry - 1) && w.step == SetupWizard.Step.DONE && w.ready, "Used reference resumes without its code");
+        check(SetupWizard.canIssueConfirmation(false, expiry, true, expiry - 1), "Used reference allows a new code straight away");
+        w.reset();
+        check(!w.resumeUsed(expiry, expiry) && w.step == SetupWizard.Step.DEBUGGING, "Expired used reference cannot resume");
         check(SetupWizard.installFinished(SetupWizard.Step.DONE, "new"), "Finished install offers return to the start, not reset");
         check(!SetupWizard.installFinished(SetupWizard.Step.DONE, "have"), "Screen-share finish still offers reset");
         check(!SetupWizard.installFinished(SetupWizard.Step.SETUP, "new"), "Still installing is not a finished run");
