@@ -102,13 +102,6 @@ export const revealEnablerPin = createServerFn({ method: "POST" })
     const s = data.ticketId ? await status(supabaseAdmin, "ticket_id", data.ticketId, true) : await status(supabaseAdmin, "user_id", context.userId, true);
     if (!s.expires_at) throw new Error("There's no valid PIN. Get a new one.");
     if (!s.pin) throw new Error("This older PIN can't be revealed. Use the device where you requested it until it expires.");
-    const ends = new Date(s.expires_at).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" });
-    await supabaseAdmin.from("user_notifications").insert({
-      user_id: context.userId, kind: "enabler_pin", title: "Your BM TV Enabler PIN",
-      body: `Your BM TV Enabler PIN is ${s.pin}. It's valid until ${ends} (UK time).`,
-      link_path: data.ticketId ? `/tickets?id=${data.ticketId}` : "/install-guides",
-      source_type: "enabler_pin", source_id: data.ticketId ?? null,
-    } as never);
     return { pin: s.pin, expires_at: s.expires_at };
   });
 
