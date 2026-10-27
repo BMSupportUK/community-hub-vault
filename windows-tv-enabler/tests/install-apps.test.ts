@@ -1,7 +1,43 @@
 import { expect, test } from 'bun:test';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { installOurApps } = require('../core.cjs');
+const { installOurApps, adbTimeout } = require('../core.cjs');
+
+test('Windows allows slow transfers and installs without extending ordinary command deadlines', () => {
+  expect(adbTimeout(['-s', '192.168.1.25:5555', 'push', 'app.apk', '/data/local/tmp/app.apk'])).toBe(180000);
+  expect(adbTimeout(['-s', '192.168.1.25:5555', 'shell', 'pm install -r /data/local/tmp/bm-app.apk'])).toBe(180000);
+  expect(adbTimeout(['devices'])).toBe(25000);
+});
+
+for (const reply of ['timeout', 'empty', 'delayed', 'disabled', 'other-profile', 'missing']) {
+  test(`uncertain install reply (${reply}) is checked against enabled current-profile packages`, async () => {
+    let installing = false;
+    let reads = 0;
+    const adb = async (args: string[]) => {
+      if (args[0] === 'devices') return '192.168.1.25:5555\tdevice';
+      if (args.includes('pm install -r /data/local/tmp/bm-app.apk')) {
+        installing = true;
+        if (reply === 'timeout') throw new Error('timeout');
+        return '';
+      }
+      if (args.includes('pm list packages --user current')) {
+        if (!installing) return 'package:com.amazon.tv.launcher';
+        reads++;
+        return reply === 'missing' || reply === 'other-profile' || (reply === 'delayed' && reads < 3) ? '' : 'package:uk.bmsupport.player';
+      }
+      if (args.includes('pm list packages -d --user current')) return installing && reply === 'disabled' ? 'package:uk.bmsupport.player' : '';
+      if (args.includes('pm list packages')) return 'package:uk.bmsupport.player';
+      return '';
+    };
+    const result = await installOurApps('192.168.1.25', adb, () => {}, async () => {}, fakeFetch([
+      { name: 'QD', packageName: 'uk.bmsupport.player', path: '/api/public/tv-install-apk/qd' },
+    ]), '/tmp/bm-install-check-' + reply + '-' + Date.now());
+    const installed = ['timeout', 'empty', 'delayed'].includes(reply);
+    expect(result.results).toEqual([{ name: 'QD', status: installed ? 'installed' : 'failed' }]);
+    expect(result.failed).toEqual(installed ? [] : ['QD']);
+    if (reply === 'delayed') expect(reads).toBe(3);
+  });
+}
 
 const fakeFetch = (apps: unknown[]) => (async (url: string) => {
   if (url.endsWith('/api/public/tv-install-list')) return new Response(JSON.stringify({ apps }));

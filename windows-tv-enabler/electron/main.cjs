@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { execFile } = require('node:child_process');
-const { refreshConnection, pair, report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, requestConfirmCode, loginWithPin, setEnablerToken } = require('../core.cjs');
+const { adbTimeout, refreshConnection, pair, report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, requestConfirmCode, loginWithPin, setEnablerToken } = require('../core.cjs');
 const { scan } = require('../discovery.cjs');
 let window; let busy = false;
 const page = path.join(__dirname, '..', 'dist', 'index.html');
@@ -13,7 +13,7 @@ function adb(args) {
   const keys = path.join(app.getPath('userData'), 'adb'); fs.mkdirSync(keys, { recursive: true });
   const executable = path.join(__dirname, '..', 'tools', 'adb.exe');
   return new Promise((resolve, reject) => execFile(executable, ['-P', '5038', ...args], {
-    windowsHide: true, timeout: 25000, maxBuffer: 1024 * 1024,
+    windowsHide: true, timeout: adbTimeout(args), maxBuffer: 1024 * 1024,
     env: { ...process.env, ANDROID_USER_HOME: keys, ADB_VENDOR_KEYS: path.join(keys, 'adbkey') },
   }, (error, stdout, stderr) => {
     if (error) reject(new Error(`Could not communicate with the TV. Check its address and ADB debugging switch. ${stderr?.trim().slice(0, 200) || ''}`));

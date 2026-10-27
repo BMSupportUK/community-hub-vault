@@ -1,5 +1,7 @@
 # Windows TV Enabler rules
 
+- APK push/install commands get an extended deadline; uncertain app-install replies are reconciled by exact enabled package identity in the current TV profile, so a lost reply is not reported as failure.
+
 - Windows TV Enabler (`windows-tv-enabler/`): isolated Electron, local assets, bundled official ADB; mirrors the phone enabler's wizard step-for-step — `renderer/wizard.js` ports `SetupWizard.java`, both change together; pushes control.apk extracted from the helper download. Unsigned NSIS installer served via `/api/public/tv-enabler-windows` (app_builds row "TV Enabler%Windows").
 - After reading the Helper code, never send the TV Home or close BM Remote Helper (both apps): Android only shows its screen-share Allow box while the Helper is in front.
 - BM TV Enabler opens on its welcome/PIN screen, then resumes a saved unexpired confirmation at DONE without TV commands; otherwise starts with "What do you need?". Persist the original confirmation expiry, renewal capability and selected TV locally; explicit Reset clears them. Phone and Windows change together.
