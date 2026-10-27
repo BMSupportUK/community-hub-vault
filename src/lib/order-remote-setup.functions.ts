@@ -94,46 +94,13 @@ export const requestOrderEnablerConnection = createServerFn({ method: "POST" })
     return String(result);
   });
 
-/** Live Helper code: confirms setup, links the TV to this order and alerts staff (same as tickets). */
+/** Consume only the fresh connection delivered automatically by Enabler. */
 export const verifyOrderRemoteSetup = createServerFn({ method: "POST" })
-  .inputValidator((d) => Access.extend({ code: z.string().regex(/^\d{6}$/).optional() }).parse(d))
+  .inputValidator((d) => Access.parse(d))
   .handler(async ({ data }) => {
     const { db, orderId } = await open(data.token, data.password);
-    const { data: r } = await db.from("order_remote_setup").select("app_checks, app_checked_at, checks_used_at, pending_session_id").eq("order_id", orderId).maybeSingle();
-    if (!r) return { ok: false as const, error: "Choose your device first." };
-    const { checksFresh } = await import("@/lib/ticket-remote-setup");
-    if (!checksFresh(r as never)) return { ok: false as const, error: "Check your TV again in BM TV Enabler and type its new code first." };
-    const c = (r.app_checks ?? {}) as Record<string, boolean>;
-    if (!(c.adb && c.helper && c.accessibility)) return { ok: false as const, error: "BM TV Enabler has not confirmed your TV yet. Run Turn on remote control in the app first." };
-    const failKind = `setup_code_failed:${orderId}`;
-    const { count } = await db.from("tv_remote_events").select("id", { count: "exact", head: true }).eq("kind", failKind).gte("created_at", new Date(Date.now() - 15 * 60_000).toISOString());
-    if ((count ?? 0) >= 8) return { ok: false as const, error: "Too many wrong codes. Wait 15 minutes." };
-    // No typed code = Connect button: use the Helper session BM TV Enabler read off the TV.
-    const pending = (r as { pending_session_id?: string | null }).pending_session_id ?? null;
-    if (!data.code && !pending) return { ok: false as const, error: "Press Get new connection and keep BM TV Enabler open." };
-    const q = db.from("tv_remote_sessions").select("id, device_name").eq("status", "pending").gt("expires_at", new Date().toISOString());
-    if (!data.code && !pending) return { ok: false as const, error: "Request a new connection first." };
-    const { data: s } = await (data.code ? q.eq("code_hash", await sha256Hex(data.code)) : q.eq("id", pending ?? "")).maybeSingle();
-    if (!s && !data.code) {
-      await db.from("order_remote_setup").update({ pending_session_id: null }).eq("order_id", orderId);
-      return { ok: false as const, error: "The TV connection has ended. Press Get new connection and keep BM TV Enabler open." };
-    }
-    if (!s) {
-      await db.from("tv_remote_events").insert({ kind: failKind });
-      return { ok: false as const, error: "That code isn't live. Check BM Remote Helper is open on the TV and try the code it shows now." };
-    }
-    await db.from("order_remote_setup").update({ completed_at: new Date().toISOString(), checks_used_at: new Date().toISOString(), verified_session_id: s.id, pending_session_id: null, updated_at: new Date().toISOString() }).eq("order_id", orderId);
-    const { data: live } = await db.from("tv_remote_sessions").select("id").eq("link_kind", "order").eq("link_id", orderId)
-      .in("status", ["pending", "claimed", "active"]).gt("expires_at", new Date().toISOString()).limit(1).maybeSingle();
-    if (!live) {
-      await db.from("tv_remote_sessions").update({ link_kind: "order", link_id: orderId, requested_at: new Date().toISOString() }).eq("id", s.id).is("link_id", null);
-      await db.from("tv_remote_events").insert({ session_id: s.id, kind: "customer_requested" });
-      const { data: o } = await db.from("orders").select("order_ref, existing_username").eq("id", orderId).maybeSingle();
-      await db.from("staff_notifications").insert({
-        kind: "tv_help", title: "Order screen share ready",
-        body: `${o?.existing_username || "A customer"} confirmed their TV on sale ${o?.order_ref ?? ""}.`.trim(),
-        link_path: `/screen-share/order/${orderId}`, entity_id: s.id,
-      });
-    }
+    const { data: connected, error } = await db.rpc("consume_enabler_connection", { _kind: "order", _id: orderId });
+    if (error) throw new Error("Could not connect your TV. Please try again.");
+    if (!connected) return { ok: false as const, error: "Press Get new connection and keep BM TV Enabler open. Each screen share needs a new TV connection." };
     return { ok: true as const };
   });

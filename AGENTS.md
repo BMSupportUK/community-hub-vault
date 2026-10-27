@@ -72,3 +72,5 @@
 - TV Enabler website linking: hashed confirmation codes bind atomically to one ticket/order on first redemption; ticket and service-only order RPCs allow repeats until original expiry, without transferring sessions between scopes. Apps display the server-returned expiry. The old eight-digit path stays for older versions.
 - Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal buttons share a scope-bound UI request gate, persisted through tab changes and released by a replacement session or the existing queue timeout, to prevent repeat clicks without changing authorization.
+
+- Ticket/order Connect atomically consumes only an unlinked, never-requested Enabler-delivered session; reference redemption cannot revive consumed checks, preventing connection reuse and duplicate staff alerts.
