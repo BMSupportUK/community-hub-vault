@@ -2418,6 +2418,7 @@ export type Database = {
           device: string
           expires_at: string
           kind: string
+          pin_id: string | null
           reference_display: string | null
           refresh_request_id: string | null
           refresh_requested_at: string | null
@@ -2436,6 +2437,7 @@ export type Database = {
           device: string
           expires_at: string
           kind?: string
+          pin_id?: string | null
           reference_display?: string | null
           refresh_request_id?: string | null
           refresh_requested_at?: string | null
@@ -2454,6 +2456,7 @@ export type Database = {
           device?: string
           expires_at?: string
           kind?: string
+          pin_id?: string | null
           reference_display?: string | null
           refresh_request_id?: string | null
           refresh_requested_at?: string | null
