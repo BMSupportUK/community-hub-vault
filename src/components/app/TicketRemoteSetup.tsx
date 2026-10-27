@@ -111,8 +111,10 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const main = <section className="min-w-0 space-y-4 text-foreground">
     <div className="flex flex-wrap items-center gap-2">
       <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
-      {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
-      {!closed && <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={() => void restart()}>Restart setup</Button>}
+      {!closed && <div className="ml-auto flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="ghost" disabled={busy} onClick={() => void restart()}>Restart setup</Button>
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device setup</Button>
+      </div>}
     </div>
     <RemoteSetupSubTabs
       setup={<RemoteSetupWizard row={row} referenceActive={referenceActive}
