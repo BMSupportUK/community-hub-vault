@@ -1,6 +1,6 @@
 /* Wizard UI mirroring the phone BM TV Enabler: one step at a time, real TV checks
    before every advance, optional website linking, safe reset. */
-const { Step, CodeResult, Wizard, newCode, ready: allReady, validHost } = SetupWizard;
+const { Step, CodeResult, Wizard, newCode, ready: allReady, validHost, installFinished } = SetupWizard;
 const wizard = new Wizard();
 
 const el = id => document.getElementById(id);
@@ -8,7 +8,7 @@ const heading = el('heading'), description = el('description'), devicePick = el(
   deviceHelp = el('device-help'), addressBlock = el('address-block'), address = el('address'),
   scan = el('scan'), devices = el('devices'), scanStatus = el('scan-status'),
   codeBlock = el('code-block'),
-  progress = el('progress'), action = el('action'), next = el('next'), reset = el('reset'), appsResult = el('apps-result'),
+  progress = el('progress'), action = el('action'), next = el('next'), reset = el('reset'), startAgain = el('start-again'), appsResult = el('apps-result'),
   pickAmazon = el('pick-amazon'), pairBlock = el('pair-block'), scanHint = el('scan-hint'), pickAndroid = el('pick-android'),
   tvCodeBlock = el('tv-code-block'), linkBlock = el('link-block'), linkCode = el('link-code'), tvCodeInput = el('tv-code'), showAgain = el('show-again'),
   appsPick = el('apps-pick'), appsNew = el('apps-new'), appsHave = el('apps-have'), appsBack = el('apps-back'),
@@ -64,7 +64,7 @@ function say(text, isError) {
 
 function setBusy(value) {
   busy = value;
-  for (const b of [action, next, reset, scan, pickAmazon, pickAndroid, showAgain, pairButton, appsNew, appsHave, appsBack]) b.disabled = value;
+  for (const b of [action, next, reset, startAgain, scan, pickAmazon, pickAndroid, showAgain, pairButton, appsNew, appsHave, appsBack]) b.disabled = value;
   address.disabled = value; tvCodeInput.disabled = value; linkCode.disabled = value; pairCode.disabled = value; pairPort.disabled = value;
   devices.querySelectorAll('button').forEach(b => { b.disabled = value; });
 }
@@ -91,6 +91,8 @@ function render() {
   const s = wizard.step;
   const askApps = s === Step.DEBUGGING && apps == null;
   const install = apps === 'new';
+  const installDone = installFinished(s, apps);
+  reset.hidden = installDone; startAgain.hidden = !installDone;
   const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && !install && device == null && !confirmCode);
   appsPick.hidden = !askApps; appsBack.hidden = !(s === Step.DEBUGGING && apps != null);
   devicePick.hidden = !pick;
@@ -106,7 +108,7 @@ function render() {
   pairBlock.hidden = device !== 'android';
   scan.textContent = device === 'android' ? 'Find my Android TV' : 'Find my Fire TV';
   scanHint.textContent = device === 'android' ? 'Find my Android TV lists Android / Google TVs on your network (Amazon devices are left out). If yours isn\'t listed, type the address from the TV\'s network settings.' : 'Find my Fire TV lists only Amazon Fire TVs on your network, so you can pick the right one if you have more than one.';
-  appsResult.hidden = !(s === Step.DONE && install && appsResults.length);
+  appsResult.hidden = !(installDone && appsResults.length);
   if (!appsResult.hidden) {
     appsResult.replaceChildren();
     for (const r of appsResults) {
