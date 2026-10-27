@@ -18,7 +18,7 @@
 - ShiftStartEndAlert owns lifecycle/audio and publishes countdown presentation to ShiftHeaderNotice inside Clocks before Office Time; do not mount duplicate shift controllers in headers or restore bottom warning toasts.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - Remote-help articles and PDFs share source content in `resources/remote-help-guides`; PDF companion rows use private `guide-files` paths beside existing video rows so adding written guides never replaces Watch actions.
-- Install Guides reuses AppTransferPanel's secured APK cards in device-specific remote-help tabs and excludes those APKs from general downloads, keeping one download flow and unchanged access checks.
+- Install Guides keeps AppTransferPanel's secured APK cards and the Remote Helper guides in the Guides tab, excluding those APKs from general downloads.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
 - Dialogs fit mobile dvh; dense views drop phone columns. Knowledge Base is full-page with category/ratings rails.
