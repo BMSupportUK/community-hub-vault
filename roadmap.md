@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current Enabler follow-ups
-- [ ] Enforce a new automatically delivered Enabler connection for every ticket/order screen share; block reuse and verify both paths.
+- [x] Enforce single-use Enabler-delivered ticket/order connections atomically, preserve reference expiry on repeat redemption, and hide Connect while renewal waits. All 27 regressions pass including both request → automatic refresh → Connect → reject reuse paths; preview build OK. Physical TV/customer UI flow still requires the checks below.
 - [x] Phone 1.39 and Windows 1.27 persist confirmation/expiry/renewal capability/TV, restore valid DONE without TV commands, and return to choices after expiry. Thirteen JS and Java wizard tests pass; Windows reload tested; signed phone and both current downloads checksum-verified. Physical-device reopening remains unverified.
 - [x] Customer ticket/order confirmation box uses owner/password-verified bound-reference expiry, independent of consumed checks and login PIN. Sixteen tests pass; real code box with simulated expiry dims/disables while valid and allows submission after expiry; preview build OK. Real customer check remains below.
 - [x] Ticket/order Get new connection disables immediately and stays locked while queued; shared scope-bound tab-persistent gate clears on replacement or timeout. Twelve tests pass; actual ticket control with simulated queued reply stays disabled after repeated presses; preview build OK. Real customer/TV checks remain below.
