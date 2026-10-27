@@ -21,8 +21,7 @@
 - Install Guides reuses AppTransferPanel's secured APK cards in device-specific remote-help tabs and excludes those APKs from general downloads, keeping one download flow and unchanged access checks.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
-- Dialogs fit mobile dvh; dense views drop phone columns.
-- Knowledge Base is full-page with category/ratings rails.
+- Dialogs fit mobile dvh; dense views drop phone columns. Knowledge Base is full-page with category/ratings rails.
 - Video help uses P2P WebRTC and a fixed-size customer canvas; rotation must not reshape or rebuild the encoder (causes black video).
 - Gender-matched customer defaults never replace custom picks; staff/Fan Zone-only excluded.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
