@@ -6,8 +6,8 @@ import { REMOTE_SETUP_STEPS, stepDone, type AppChecks, type SetupDevice } from "
 type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null };
 
 /** Instruction navigation is presentation only; app reports still own all verified checks. */
-export function RemoteSetupWizard({ row, referenceActive, confirmation, connection }: {
-  row: Row; referenceActive: boolean; confirmation: ReactNode; connection: ReactNode;
+export function RemoteSetupWizard({ row, referenceActive, confirmation, waiting, connection }: {
+  row: Row; referenceActive: boolean; confirmation: ReactNode; waiting?: ReactNode; connection: ReactNode;
 }) {
   const steps = REMOTE_SETUP_STEPS[row.device];
   const firstIncomplete = steps.findIndex(step => !stepDone(step, row));
@@ -34,11 +34,12 @@ export function RemoteSetupWizard({ row, referenceActive, confirmation, connecti
       <h3 className="flex items-start gap-2 text-lg font-semibold">{stepDone(step, row) && <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />}{step.title}</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
       <div className={current >= 2 ? "" : "hidden"}>{confirmation}</div>
-      {current === steps.length - 1 && connection}
+      {current >= 2 && waiting}
     </section>
     <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
       <Button variant="outline" disabled={current === 0} onClick={() => setCurrent(value => Math.max(0, value - 1))}><ArrowLeft className="size-4" />Back</Button>
       {current < steps.length - 1 && <Button onClick={() => setCurrent(value => Math.min(steps.length - 1, value + 1))}>Next<ArrowRight className="size-4" /></Button>}
     </div>
+    {connection}
   </div>;
 }
