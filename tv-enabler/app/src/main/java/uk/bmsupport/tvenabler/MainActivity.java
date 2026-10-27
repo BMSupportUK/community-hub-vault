@@ -203,17 +203,7 @@ public class MainActivity extends Activity {
         if (!"amazon".equals(device) && !"android".equals(device)) device = null;
         apps = prefs.getString("apps", null);
         if (!"new".equals(apps) && !"have".equals(apps)) apps = null;
-        String savedCode = prefs.getString("confirmation", null);
-        long savedExpiry = prefs.getLong("confirmationExpiry", 0);
-        String savedHost = prefs.getString("confirmationHost", null);
-        if (savedHost != null && SetupWizard.validHost(savedHost) && device != null
-                && wizard.resumeConfirmation(savedCode, savedExpiry, System.currentTimeMillis())) {
-            confirmExpiresAt = savedExpiry;
-            refreshHost = savedHost; refreshToken = prefs.getString("confirmationToken", "");
-            address.setText(savedHost); apps = "have";
-            checks = new Enabler.Checks(); checks.adb = checks.helper = checks.control = checks.accessibility = true; checks.type = device;
-            confirmCode.setText(savedCode.substring(0, 3) + "-" + savedCode.substring(3));
-        }
+        restoreConfirmation();
         readLink(getIntent());
         render();
         ui.postDelayed(expiryTick, 1000);
@@ -238,8 +228,28 @@ public class MainActivity extends Activity {
         return c;
     }
 
+    /** A saved, unexpired screen-share reference is reused as-is: no setup re-run and no new code until it expires. */
+    private boolean restoreConfirmation() {
+        SharedPreferences prefs = getSharedPreferences("tv", MODE_PRIVATE);
+        String savedCode = prefs.getString("confirmation", null);
+        long savedExpiry = prefs.getLong("confirmationExpiry", 0);
+        String savedHost = prefs.getString("confirmationHost", null);
+        String savedDevice = prefs.getString("device", null);
+        if (savedHost == null || !SetupWizard.validHost(savedHost) || savedDevice == null
+                || !wizard.resumeConfirmation(savedCode, savedExpiry, System.currentTimeMillis())) return false;
+        device = savedDevice; confirmExpiresAt = savedExpiry;
+        refreshHost = savedHost; refreshToken = prefs.getString("confirmationToken", "");
+        address.setText(savedHost); apps = "have";
+        checks = new Enabler.Checks(); checks.adb = checks.helper = checks.control = checks.accessibility = true; checks.type = device;
+        confirmCode.setText(savedCode.substring(0, 3) + "-" + savedCode.substring(3));
+        return true;
+    }
+
+    private boolean confirmationValid() { return confirmCode.length() > 0 && System.currentTimeMillis() < confirmExpiresAt; }
+
     private void pickApps(String a) {
         if (busy || refreshBusy) return;
+        if ("have".equals(a) && restoreConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
         apps = a;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply();
         render();
@@ -259,8 +269,9 @@ public class MainActivity extends Activity {
         boolean askApps = s == SetupWizard.Step.DEBUGGING && apps == null;
         boolean install = "new".equals(apps);
         boolean installDone = SetupWizard.installFinished(s, apps);
+        boolean supportDone = s == SetupWizard.Step.DONE && !install;
         reset.setVisibility(installDone ? View.GONE : View.VISIBLE);
-        startAgain.setVisibility(installDone ? View.VISIBLE : View.GONE);
+        startAgain.setVisibility(installDone || supportDone ? View.VISIBLE : View.GONE);
         appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
         appsBack.setVisibility(s == SetupWizard.Step.DEBUGGING && apps != null ? View.VISIBLE : View.GONE);
         boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
@@ -337,10 +348,13 @@ public class MainActivity extends Activity {
                         ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. You can reuse it on the same ticket or order for 24 hours.\n\nExpires in " + (minutes / 60) + "h " + (minutes % 60) + "m.\n\nThen press Connect on that tab to request screen sharing."
                         : "Your TV is ready. Get your confirmation code, then type it on your ticket or order's Remote setup tab.");
                 if (linkCode() != null) { description.setText("Your TV is ready and this app is linked to your ticket or order. Press the button to send everything to the website, then press Connect there."); turnOn.setText("Send to the website"); }
-                else turnOn.setText(confirmCode.length() > 0 ? "New code" : "Get my confirmation code");
+                else turnOn.setText(confirmCode.length() > 0 ? (expired ? "New code" : "New code — available when this one expires") : "Get my confirmation code");
+                if (!expired && confirmCode.length() > 0) description.setText(description.getText() + "\n\nNeed apps installed too? Press Return to the start — this code is kept until it expires.");
                 break;
         }
         setBusy(busy);
+        // The remembered reference stays valid for 24 hours, even after closing the app: no new code until then.
+        if (supportDone && confirmationValid() && linkCode() == null) { turnOn.setEnabled(false); turnOn.setAlpha(0.4f); }
     }
 
     private void start() {
@@ -450,7 +464,9 @@ public class MainActivity extends Activity {
      *  device choice and TV authorization are kept, so nothing restarts from scratch. */
     private void backToStart() {
         if (busy || refreshBusy) return;
-        wizard.reset(); checks = null; apps = null; appsResults = new java.util.ArrayList<>();
+        // Saved screen-share reference (code, expiry, refresh token, TV) is kept until it expires.
+        wizard.reset(); apps = null; appsResults = new java.util.ArrayList<>();
+        if (!confirmationValid()) checks = null;
         getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply();
         say("", MUTED); render();
     }
