@@ -1,6 +1,11 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Enabler install-complete return to start
+- [x] The finished app-install screen now offers "Return to the start" instead of Reset setup in both Enabler apps; the TV address, device choice and TV authorization are kept, only the install choice and result list clear. Phone and Windows wizard tests pass.
+- [x] Phone 1.40 (versionCode 41) signed with the permanent BM key and Windows 1.28.0 installer built, uploaded and registered as the current downloads; both live download endpoints serve the new files. Physical TV/PC checks remain below.
+- [ ] Verify the finished-install screen on a physical TV and Windows PC — requires the customer's devices.
+
 ## Current Enabler follow-ups
 - [x] Enforce single-use Enabler-delivered ticket/order connections atomically, preserve reference expiry on repeat redemption, and hide Connect while renewal waits. All 27 regressions pass including both request → automatic refresh → Connect → reject reuse paths; preview build OK. Physical TV/customer UI flow still requires the checks below.
 - [x] Phone 1.39 and Windows 1.27 persist confirmation/expiry/renewal capability/TV, restore valid DONE without TV commands, and return to choices after expiry. Thirteen JS and Java wizard tests pass; Windows reload tested; signed phone and both current downloads checksum-verified. Physical-device reopening remains unverified.
