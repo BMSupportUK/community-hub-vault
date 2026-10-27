@@ -58,3 +58,13 @@ describe('Wireless debugging pairing', () => {
     expect(validHost('192.168.1.25:70000')).toBe(false);
   });
 });
+
+describe('Finished app install', () => {
+  test('the finished install screen offers return to the start, never reset', () => {
+    expect(installFinished(Step.DONE, 'new')).toBe(true);
+    expect(installFinished(Step.DONE, 'have')).toBe(false);
+    expect(installFinished(Step.DONE, null)).toBe(false);
+    expect(installFinished(Step.SETUP, 'new')).toBe(false);
+    expect(installFinished(Step.DEBUGGING, 'new')).toBe(false);
+  });
+});
