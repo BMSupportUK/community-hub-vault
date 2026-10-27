@@ -2,8 +2,10 @@
 # Roadmap
 
 ## Remote setup step layout
-- [ ] Show ticket and order instructions one step at a time with progress, retaining all existing checks and connection gates.
-- [ ] Move customer Enabler access PIN below the app QR and verify the layout.
+- [x] Customer ticket/order instructions use one shared four-step view with progress and Next/Back; existing checks and Connect/renewal gates unchanged. Twenty regressions pass, browser step navigation verified, preview build OK.
+- [x] Both customer sidebars place the Enabler access PIN below the app QR; source ordering verified.
+- [ ] Verify the full customer ticket/order screen with a real customer session — isolated step controls verified only; awaits customer access.
+- [ ] Publish the layout — awaits the user's publish request.
 
 ## Enabler new reference after use
 - [x] Both apps enable New code after capability-verified ticket/order use or expiry; unused references stay locked and original scope/expiry remain unchanged.
