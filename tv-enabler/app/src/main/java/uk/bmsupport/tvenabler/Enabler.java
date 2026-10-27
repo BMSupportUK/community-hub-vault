@@ -229,6 +229,7 @@ final class Enabler {
                 File out = new File(ctx.getCacheDir(), "bm-app.apk");
                 try {
                     java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk" + path).openConnection();
+                    tagDownload(ctx, h);
                     h.setConnectTimeout(15000); h.setReadTimeout(120000);
                     try (java.io.InputStream in = h.getInputStream(); FileOutputStream o = new FileOutputStream(out)) {
                         byte[] buf = new byte[65536]; int r;
@@ -255,10 +256,17 @@ final class Enabler {
         return results;
     }
 
+    /** Sends the Enabler login token with app downloads so the website's download log knows the customer. */
+    private static void tagDownload(Context ctx, java.net.HttpURLConnection h) {
+        String t = ctx.getSharedPreferences("tv", Context.MODE_PRIVATE).getString("pinToken", "");
+        if (t != null && t.matches("[0-9a-fA-F]{20,200}")) h.setRequestProperty("x-enabler-token", t);
+    }
+
     /** Downloads the latest BM Remote Helper APK from bmsupport.uk so the customer never installs it by hand. */
     private static File downloadHelper(Context ctx) throws java.io.IOException {
         File out = new File(ctx.getCacheDir(), "bm-helper.apk");
         java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/remote-helper-apk").openConnection();
+        tagDownload(ctx, h);
         h.setConnectTimeout(15000); h.setReadTimeout(60000); h.setInstanceFollowRedirects(true);
         try (java.io.InputStream in = h.getInputStream(); FileOutputStream o = new FileOutputStream(out)) {
             byte[] buf = new byte[65536]; int r;
