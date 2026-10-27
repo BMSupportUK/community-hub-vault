@@ -7,7 +7,6 @@ import { revealEnablerPin, createTicketEnablerPin, getTicketEnablerPinStatus } f
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
-import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import helpBg from "@/assets/remote-setup-help-bg.jpg";
 import { CheckCircle2, Circle, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
