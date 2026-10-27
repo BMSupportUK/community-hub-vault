@@ -358,7 +358,7 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch, helpe
   // Install references only prove the apps reached the TV; share references need the full TV check.
   if (kind === 'install' ? !checks || !checks.adb : !checks || !(checks.adb && checks.helper && checks.control && checks.accessibility)) throw new Error(kind === 'install' ? 'Install the apps on the TV first.' : 'Check the TV again first.');
   let res;
-  try { res = await post('https://bmsupport.uk/api/public/enabler-confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ app: 'windows-tv-enabler-1.6', protocol: 3, device, checks, kind, ...(/^\d{6}$/.test(helperCode || '') ? { helperCode } : {}) }) }); }
+  try { res = await post('https://bmsupport.uk/api/public/enabler-confirm', { method: 'POST', headers: { 'content-type': 'application/json', ...(enablerToken ? { 'x-enabler-token': enablerToken } : {}) }, body: JSON.stringify({ app: 'windows-tv-enabler-1.6', protocol: 3, device, checks, kind, ...(/^\d{6}$/.test(helperCode || '') ? { helperCode } : {}) }) }); }
   catch { throw new Error('Couldn\'t reach BM Support. Check the internet connection and try again.'); }
   if (res.status === 429) throw new Error('Too many tries. Wait 15 minutes, then try again.');
   if (res.status === 426) throw new Error('Please update BM TV Enabler from bmsupport.uk to get a new code.');

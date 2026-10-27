@@ -260,6 +260,9 @@ final class Enabler {
         return results;
     }
 
+    /** Login token from this run's PIN sign-in; sent with confirmations so the website knows which customer's app checked the TV. */
+    static volatile String loginToken = "";
+
     /** Sends the Enabler login token with app downloads so the website's download log knows the customer. */
     private static void tagDownload(Context ctx, java.net.HttpURLConnection h) {
         String t = ctx.getSharedPreferences("tv", Context.MODE_PRIVATE).getString("pinToken", "");
@@ -331,6 +334,7 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-confirm").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
+            if (loginToken != null && loginToken.matches("[0-9a-fA-F]{20,200}")) h.setRequestProperty("x-enabler-token", loginToken);
             String body = "{\"app\":\"tv-enabler-1.17\",\"protocol\":3,\"kind\":\"" + kind + "\"," + (helperCode != null && helperCode.matches("\\d{6}") ? "\"helperCode\":\"" + helperCode + "\"," : "") + "\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
