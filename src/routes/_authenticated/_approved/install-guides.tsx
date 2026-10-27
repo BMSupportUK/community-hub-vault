@@ -147,8 +147,9 @@ function InstallGuidesPage() {
     if (tabParam) setTab(legacyTab(tabParam)!);
   }, [tabParam]);
   // Which device screen the setup tab is showing — the sidebar swaps the advert
-  // for the Enabler downloads while the customer is on the staff-help screen.
+  // for the Enabler downloads on TV self-install and staff-help screens.
   const [setupDevice, setSetupDevice] = useState<SetupDeviceKey | null>(() => readStoredSetupDevice());
+  const showEnablerDownloads = tab === "setup" && (setupDevice === "remote" || setupDevice === "amazon" || setupDevice === "android");
   const pickSetupDevice = (d: SetupDeviceKey | null) => {
     setSetupDevice(d);
     try {
@@ -900,8 +901,8 @@ function InstallGuidesPage() {
       </div>
 
       {tab !== "enabler" && (
-        <aside className={`hidden xl:block w-full xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6 ${tab === "setup" && setupDevice === "remote" ? "xl:w-[560px]" : "xl:w-[300px]"}`}>
-          {tab === "setup" && setupDevice === "remote" ? <EnablerDownloadSidebar /> : <AdSenseSlot slot="sidebar" />}
+        <aside className={`hidden xl:block w-full xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6 ${showEnablerDownloads ? "xl:w-[560px]" : "xl:w-[300px]"}`}>
+          {showEnablerDownloads ? <EnablerDownloadSidebar /> : <AdSenseSlot slot="sidebar" />}
         </aside>
       )}
       </div>

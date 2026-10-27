@@ -1,6 +1,9 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Install Guides self-install columns
+- [ ] Replace TV setup adverts with separate phone/Windows Enabler columns and the existing ticket-bound PIN request; rename staff-help back action to Return to Self Install.
+
 ## Remote setup step layout
 - [x] Customer ticket/order instructions use one shared four-step view with progress and Next/Back; existing checks and Connect/renewal gates unchanged. Twenty regressions pass, browser step navigation verified, preview build OK.
 - [x] Both customer sidebars place the Enabler access PIN below the app QR; source ordering verified.

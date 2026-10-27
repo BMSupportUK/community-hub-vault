@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Download, Headset, Loader2, Tv } from "lucide-react";
+import { ArrowLeft, ArrowRight, Download, Headset, KeyRound, Loader2, Tv } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -141,10 +141,19 @@ function StaffHelpEnablerPin() {
     })();
     return () => { stopped = true; };
   }, [user]);
-  const create = useCallback(() => createFn({ data: { ticketId: ticketId! } }), [createFn, ticketId]);
-  const status = useCallback(() => statusFn({ data: { ticketId: ticketId! } }), [statusFn, ticketId]);
+  const create = useCallback(() => {
+    if (!ticketId) throw new Error("Open a help ticket first to request your PIN.");
+    return createFn({ data: { ticketId } });
+  }, [createFn, ticketId]);
+  const status = useCallback(() => {
+    if (!ticketId) return Promise.resolve({ expires_at: null });
+    return statusFn({ data: { ticketId } });
+  }, [statusFn, ticketId]);
   if (ticketId === undefined) return <div className="h-28 animate-pulse rounded-md bg-muted" />;
-  if (!ticketId) return <p className="text-xs text-muted-foreground">Your BM TV Enabler PIN appears here once you've opened a help ticket — press <strong className="text-foreground">Open a ticket for help</strong> below.</p>;
+  if (!ticketId) return <div className="space-y-2">
+    <Button disabled className="w-full whitespace-normal"><KeyRound className="size-4 shrink-0" />Get BM TV Enabler PIN</Button>
+    <p className="text-xs text-muted-foreground">Get your PIN from your order's Remote setup tab, or open a ticket in Help from staff to request one here.</p>
+  </div>;
   return <EnablerPinBox scopeKey={`ticket:${ticketId}`} create={create} status={status} />;
 }
 
@@ -156,8 +165,7 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
     {
       title: "Get BM TV Enabler",
       body: <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">BM TV Enabler installs the BM apps on your TV for you. Use it on an Android phone or a Windows PC on the same Wi-Fi as the TV. When it opens, type the access PIN from your ticket or order's Remote setup tab.</p>
-        <div className="grid gap-6 sm:grid-cols-2"><EnablerQr /><WindowsEnablerDownload /></div>
+        <p className="text-sm text-muted-foreground">BM TV Enabler installs the BM apps on your TV for you. Use it on an Android phone or a Windows PC on the same Wi-Fi as the TV. When it opens, type your BM TV Enabler access PIN.</p>
       </div>,
     },
     {
@@ -177,7 +185,8 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
       </div>,
     },
   ];
-  const step = steps[current]!;
+  const step = steps[current];
+  if (!step) return null;
   return <div className="space-y-5">
     <div className="space-y-3 border-y border-border py-4">
       <div className="flex items-center justify-between text-sm"><span className="font-semibold">Step {current + 1} of {steps.length}</span><span className="text-muted-foreground">{step.title}</span></div>
@@ -194,14 +203,14 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
   </div>;
 }
 
-/** Enabler downloads for the sidebar — phone and Windows each in their own column on the staff-help screen. */
+/** Shared phone and Windows columns for TV self-install and staff help. */
 export function EnablerDownloadSidebar() {
-  return <div className="grid grid-cols-2 gap-4">
-    <div className="space-y-4 rounded-lg border border-border bg-surface/70 p-4">
+  return <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+    <div className="min-w-0 space-y-4 rounded-lg border border-border bg-surface/70 p-4">
       <EnablerQr />
       <StaffHelpEnablerPin />
     </div>
-    <div className="rounded-lg border border-border bg-surface/70 p-4">
+    <div className="min-w-0 rounded-lg border border-border bg-surface/70 p-4">
       <WindowsEnablerDownload />
     </div>
   </div>;
@@ -232,10 +241,10 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
       </> : <>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground"><chosen.icon className="size-6 text-primary" />{chosen.label}</h2>
-          <Button variant="outline" size="sm" onClick={() => onPick(null)}><ArrowLeft className="size-4" />Change device</Button>
+          <Button variant="outline" size="sm" onClick={() => onPick(null)}><ArrowLeft className="size-4" />{chosen.key === "remote" ? "Return to Self Install" : "Change device"}</Button>
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
-          ? <TvSteps device={chosen.key} />
+          ? <div className="space-y-6"><TvSteps device={chosen.key} /><div className="xl:hidden"><EnablerDownloadSidebar /></div></div>
           : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
       </>}
     </div>
