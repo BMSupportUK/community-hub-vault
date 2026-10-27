@@ -2369,6 +2369,7 @@ export type Database = {
           created_at: string
           device: string
           expires_at: string
+          kind: string
           reference_display: string | null
           refresh_request_id: string | null
           refresh_requested_at: string | null
@@ -2386,6 +2387,7 @@ export type Database = {
           created_at?: string
           device: string
           expires_at: string
+          kind?: string
           reference_display?: string | null
           refresh_request_id?: string | null
           refresh_requested_at?: string | null
@@ -2403,6 +2405,7 @@ export type Database = {
           created_at?: string
           device?: string
           expires_at?: string
+          kind?: string
           reference_display?: string | null
           refresh_request_id?: string | null
           refresh_requested_at?: string | null
