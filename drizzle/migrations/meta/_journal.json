@@ -1611,6 +1611,13 @@
       "when": 1793061796492,
       "tag": "0229_enabler_refresh_no_restart_without_request",
       "breakpoints": true
+    },
+    {
+      "idx": 230,
+      "version": "7",
+      "when": 1793062640108,
+      "tag": "0230_enabler_connection_must_be_fresh",
+      "breakpoints": true
     }
   ]
 }
