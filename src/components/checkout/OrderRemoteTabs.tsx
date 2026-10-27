@@ -1,167 +1,77 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { EnablerCodeBox } from "@/components/app/EnablerCodeBox";
-import { EnablerLinkBox } from "@/components/app/EnablerLinkBox";
-import { EnablerPinBox } from "@/components/app/EnablerPinBox";
-import { createOrderEnablerPin, getOrderEnablerPinStatus } from "@/lib/enabler-pin.functions";
+import { useState, type ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import QRCode from "qrcode";
-import { CheckCircle2, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
+import { Headset, Loader2, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { renewalMessage } from "@/lib/enabler-renewal";
-import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
-import { getOrderEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
-import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
-import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
-import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
-import { RemoteSetupWizard } from "@/components/app/RemoteSetupWizard";
-import { RemoteSetupSubTabs } from "@/components/app/RemoteSetupSubTabs";
-import { screenShareInProgress } from "@/lib/tv-remote";
-import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, connectionReady, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
-import { getOrderRemoteSetup, redeemOrderEnablerCode, resetOrderRemoteSetup, issueOrderSetupCode, saveOrderRemoteSetup, verifyOrderRemoteSetup, requestOrderEnablerConnection } from "@/lib/order-remote-setup.functions";
-import { getCheckoutScreenShareStatus } from "@/lib/tv-help.functions";
+import { sendNewTicketPush } from "@/lib/push.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { useBusinessOpen } from "@/hooks/use-business-open";
+import { supabase } from "@/integrations/supabase/client";
 
-type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
-type Tab = "order" | "remote" | "screen";
-
-/** Customer secure order: Order / Remote setup / Screen share tabs across the top. */
-export function OrderRemoteTabs({ token, password, children }: { token: string; password: string; children: ReactNode }) {
-  const [tab, setTab] = useState<Tab>("order");
-  const btn = (t: Tab, label: string) => (
-    <button type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-      className={`rounded-lg px-4 py-2 text-sm font-semibold ${tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>
-  );
+/** Customer secure order: the order page itself, plus raising a ticket for remote installation help. */
+export function OrderRemoteTabs({ orderRef, children }: { orderRef: string | null; children: ReactNode }) {
   return <>
     <div className="w-full px-3 pt-3">
-      <div className="inline-flex flex-wrap rounded-xl border border-border bg-card/85 p-1 backdrop-blur-sm" role="tablist">
-        {btn("order", "Order")}{btn("remote", "Remote setup")}{btn("screen", "Screen share")}
-      </div>
+      <RemoteHelpBar orderRef={orderRef} />
     </div>
-    <div className={tab === "order" ? "" : "hidden"}>{children}</div>
-    {tab === "remote" && <div className="px-3 py-6"><OrderRemoteSetup token={token} password={password} /></div>}
-    {tab === "screen" && <div className="px-3 py-6"><OrderShareStatus token={token} password={password} onSetup={() => setTab("remote")} /></div>}
+    {children}
   </>;
 }
 
-function OrderRemoteSetup({ token, password }: { token: string; password: string }) {
-  const confirmationStatusFn = useServerFn(getOrderEnablerConfirmationStatus);
-  const confirmationStatus = useCallback(() => confirmationStatusFn({ data: { token, password } }), [confirmationStatusFn, token, password]);
-  const get = useServerFn(getOrderRemoteSetup), saveFn = useServerFn(saveOrderRemoteSetup), redeemFn = useServerFn(redeemOrderEnablerCode), verifyFn = useServerFn(verifyOrderRemoteSetup), resetFn = useServerFn(resetOrderRemoteSetup), issueFn = useServerFn(issueOrderSetupCode);
-  const [row, setRow] = useState<Row | undefined>(undefined);
-  const [busy, setBusy] = useState(false);
-  const [renewal, setRenewal] = useState("");
-  const [referenceActive, setReferenceActive] = useState(false);
-  const renewalGate = useEnablerRenewalGate(`order:${token}`, row ? [row.pending_session_id ?? "", row.app_checked_at ?? "", row.checks_used_at ?? ""].join("|") : null);
-  const renewFn = useServerFn(requestOrderEnablerConnection);
-  const load = useCallback(async () => { try { setRow((await get({ data: { token, password } })) as Row); } catch { setRow(null); } }, [get, token, password]);
-  useEffect(() => { void load(); const t = window.setInterval(load, 4000); return () => window.clearInterval(t); }, [load]);
-  const run = async (f: () => Promise<void>) => { setBusy(true); try { await f(); } catch (e) { toast.error(e instanceof Error ? e.message : "Something went wrong"); } await load(); setBusy(false); };
-  const save = (device: SetupDevice) => run(async () => { await saveFn({ data: { token, password, device } }); });
-  const redeem = async (c: string) => {
-    const r = await redeemFn({ data: { token, password, code: c } });
-    if (!r.ok) { toast.error(r.error); throw new Error(r.error); }
-    toast.success(r.install ? "BM TV Enabler confirmed your apps are installed" : "BM TV Enabler confirmed your TV"); await load();
-  };
-  const restart = () => {
-    if (!window.confirm("Restart the TV setup from the beginning? The ticks on this page will be cleared. A BM TV Enabler reference that is still within its 24 hours keeps working — just press Get new connection.")) return;
-    void run(async () => { await resetFn({ data: { token, password } }); setRenewal(""); renewalGate.reset(); toast.success("Setup restarted — choose your device to begin again"); });
-  };
-  const connect = () => run(async () => {
-    const r = await verifyFn({ data: { token, password } });
-    if (!r.ok) toast.error(r.error); else toast.success("Connected — staff have been told your TV is ready");
-  });
-  const renew = () => {
-    if (busy || !renewalGate.begin()) return;
-    return run(async () => {
-      try {
-        const state = await renewFn({ data: { token, password } });
-        renewalGate.finish(state);
-        setRenewal(renewalMessage(state));
-        if (state !== "queued") toast.error(renewalMessage(state));
-      } catch (e) { renewalGate.finish("failed"); throw e; }
-    });
+const HELP_SUBJECT_BASE = "Remote installation help";
+
+function RemoteHelpBar({ orderRef }: { orderRef: string | null }) {
+  const open = useBusinessOpen();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [creating, setCreating] = useState(false);
+  const notifyNewTicket = useServerFn(sendNewTicketPush);
+
+  const createTicket = async () => {
+    if (!user || creating) return;
+    setCreating(true);
+    try {
+      const subject = orderRef ? `${HELP_SUBJECT_BASE} — order ${orderRef}` : HELP_SUBJECT_BASE;
+      const content = `Hi,\n\nI'd like a member of staff to install the BM apps on my TV for me by screen share.\n\nMy order reference is ${orderRef ?? "(not supplied)"}. I'll complete the Remote setup in this ticket so you can connect.\n\nThank you!`;
+      const { data: cat } = await supabase.from("ticket_categories").select("id").eq("slug", "general").maybeSingle();
+      if (!cat) throw new Error("Could not open the ticket. Please try again.");
+      const { data: t, error } = await supabase
+        .from("tickets")
+        .insert({ user_id: user.id, subject, category_id: cat.id, priority: "normal" })
+        .select("id")
+        .single();
+      if (error || !t) throw new Error(error?.message ?? "Could not open the ticket. Please try again.");
+      const { error: msgErr } = await supabase.from("ticket_messages").insert({
+        ticket_id: t.id, sender_id: user.id, content, is_internal: false,
+      });
+      if (msgErr) throw new Error(msgErr.message);
+      // Fire-and-forget staff push, same as the New ticket form.
+      void notifyNewTicket({ data: { ticketId: t.id, subject, categorySlug: "general" } })
+        .catch((e) => console.error("[secure-order] new ticket push failed", e));
+      toast.success("Ticket opened");
+      await navigate({ to: "/tickets", search: { id: t.id } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open the ticket. Please try again.");
+      setCreating(false);
+    }
   };
 
-  if (row === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
-  if (!row) return <section className="mx-auto max-w-2xl space-y-4 text-foreground">
-    <h2 className="text-xl font-semibold">Which TV device are you using?</h2>
-    <p className="text-sm text-muted-foreground">Complete these steps so our team can help you through screen sharing.</p>
-    <div className="grid gap-3 sm:grid-cols-2">
-      <Button variant="outline" className="h-24 flex-col gap-2" disabled={busy} onClick={() => void save("amazon")}><Tv className="size-6" />Amazon Fire TV</Button>
-      <Button variant="outline" className="h-24 flex-col gap-2" disabled={busy} onClick={() => void save("android")}><Smartphone className="size-6" />Android / Google TV</Button>
-    </div>
+  return <section className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card/85 p-3 backdrop-blur-sm">
+    <Tv className="size-5 shrink-0 text-primary" />
+    <p className="min-w-0 flex-1 text-sm text-muted-foreground">
+      <span className="font-semibold text-foreground">Need us to install the apps for you?</span>{" "}
+      Raise a ticket and a member of staff will connect to your TV by screen share.
+    </p>
+    {open ? (
+      <Button size="sm" onClick={createTicket} disabled={creating || !user}>
+        {creating ? <Loader2 className="size-4 animate-spin" /> : <Headset className="size-4" />}
+        {creating ? "Opening ticket…" : "Raise a ticket"}
+      </Button>
+    ) : (
+      <Button size="sm" disabled><Headset className="size-4" />Raise a ticket</Button>
+    )}
+    {!open && <p className="w-full text-xs text-muted-foreground">Support is only available during office hours — try again when we're open and this button will create the ticket for you.</p>}
+    {open && !user && <p className="w-full text-xs text-muted-foreground">Sign in to your BM account first so we can open the ticket for you.</p>}
   </section>;
-
-  const ready = appChecksPassed(row.app_checks, row.device);
-  const fresh = checksFresh(row);
-  const canConnect = connectionReady(row) && !renewalGate.waiting;
-  return <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_260px_260px]">
-    <section className="min-w-0 space-y-4 text-foreground">
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
-        {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
-        <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={restart}>Restart setup</Button>
-      </div>
-      <RemoteSetupSubTabs
-        setup={<RemoteSetupWizard row={row} referenceActive={referenceActive}
-          waiting={!canConnect && !ready && !row.completed_at && !referenceActive ? <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the Change code tab.</p> : null} />}
-        code={<EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} />}
-        connection={<>
-      {canConnect && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
-        <h3 className="font-semibold">Your TV is ready</h3>
-        <p className="text-sm">BM TV Enabler has already picked up the code from BM Remote Helper. Press Connect to send your screen-share request to staff.</p>
-        <Button size="lg" className="w-full" disabled={busy} onClick={() => void connect()}>Connect</Button>
-      </div>}
-      {(!canConnect) && (ready || row.completed_at || referenceActive) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
-        <h3 className="font-semibold">Get a new TV connection</h3>
-        <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
-        <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
-      </div>}
-      {!canConnect && !(ready || row.completed_at || referenceActive) && <p className="text-sm text-muted-foreground">Enter your BM TV Enabler reference in the Change code tab first.</p>}
-      </>} />
-
-    </section>
-    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4">
-      <EnablerQr /><OrderPin token={token} password={password} />
-    </aside>
-    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4">
-      <WindowsEnablerDownload />
-    </aside>
-  </div>;
-}
-
-function OrderPin({ token, password }: { token: string; password: string }) {
-  const createFn = useServerFn(createOrderEnablerPin), statusFn = useServerFn(getOrderEnablerPinStatus);
-  const create = useCallback(() => createFn({ data: { token, password } }), [createFn, token, password]);
-  const status = useCallback(() => statusFn({ data: { token, password } }), [statusFn, token, password]);
-  return <EnablerPinBox scopeKey={`order:${token}`} create={create} status={status} />;
-}
-
-function EnablerQr() {
-  const [qr, setQr] = useState<string | null>(null);
-  useEffect(() => { QRCode.toDataURL(TV_ENABLER_URL, { width: 400, margin: 1 }).then(setQr).catch(() => setQr(null)); }, []);
-  return <>
-    <h3 className="font-semibold">Get BM TV Enabler</h3>
-    <p className="text-sm text-muted-foreground">Scan with your Android phone to download and install the app.</p>
-    {qr ? <img src={qr} alt="QR code to download BM TV Enabler" width={220} height={220} className="mx-auto rounded-md bg-card p-2" /> : <p className="text-sm text-muted-foreground">Loading…</p>}
-    <a href={TV_ENABLER_URL} className="block text-xs text-primary underline">Or tap here on your phone</a>
-  </>;
-}
-
-/** Screen share tab: status only — codes are entered on Remote setup. */
-function OrderShareStatus({ token, password, onSetup }: { token: string; password: string; onSetup: () => void }) {
-  const check = useServerFn(getCheckoutScreenShareStatus);
-  const [status, setStatus] = useState<string | null | undefined>(undefined);
-  useEffect(() => {
-    let stop = false;
-    const load = () => check({ data: { token, password } }).then((r) => { if (!stop) setStatus(screenShareInProgress(r.status) ? r.status : null); }).catch(() => {});
-    load(); const t = window.setInterval(load, 2000);
-    return () => { stop = true; window.clearInterval(t); };
-  }, [token, password, check]);
-  const box = (icon: ReactNode, title: string, body: ReactNode) => <section className="mx-auto max-w-2xl space-y-3 rounded-xl border border-primary/40 bg-card p-5 text-foreground">
-    <h2 className="flex items-center gap-2 text-lg font-semibold">{icon}{title}</h2><div className="text-sm text-muted-foreground">{body}</div></section>;
-  if (status === undefined) return <p className="text-sm text-muted-foreground">Loading…</p>;
-  if (status === "pending") return box(<Loader2 className="size-5 animate-spin text-primary" />, "Waiting for staff", "Staff have been told your TV is ready. When they connect, press Allow and then Start on your TV.");
-  if (status) return box(<CheckCircle2 className="size-5 text-primary" />, "Your screen is being shared", "Staff are connected to your TV. You can keep using your order page — the screen share carries on.");
-  return box(<MonitorUp className="size-5 text-primary" />, "No screen share yet", <>Request a new connection on Remote setup, then press Connect when your TV is ready.<div className="mt-3"><Button size="sm" onClick={onSetup}>Go to Remote setup</Button></div></>);
 }
