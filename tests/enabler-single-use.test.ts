@@ -26,7 +26,8 @@ for (const kind of ["ticket", "order"] as const) {
       `);
       await db.exec(await Bun.file("drizzle/migrations/0226_enabler_connection_renewal.sql").text());
       await db.exec(await Bun.file("drizzle/migrations/0227_single_use_enabler_connections.sql").text());
-      await db.query(`insert into tickets values($1,$2,'open','Test'); insert into orders values('${scope}','TEST','Test')`, [scope, owner]);
+      await db.query(`insert into tickets values($1,$2,'open','Test')`, [scope, owner]);
+      await db.query(`insert into orders values($1,'TEST','Test')`, [scope]);
       await db.query(`insert into ${kind}_remote_setup(${kind}_id,device) values($1,'amazon')`, [scope]);
       await db.query(`insert into tv_remote_sessions values($1,'first','pending',now()+interval '1 hour',null,null,null),($2,'next','pending',now()+interval '1 hour',null,null,null)`, [first, next]);
       await db.query(`insert into enabler_confirm_codes(code_hash,expires_at,session_id,device,checks,refresh_token_hash) values('reference',now()+interval '24 hours',$1,'amazon',$2,'secret')`, [first, checks]);
