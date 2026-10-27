@@ -1,10 +1,16 @@
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Download, Headset, Tv } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, ArrowRight, Download, Headset, Loader2, Tv } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
+import { useAuth } from "@/hooks/use-auth";
+import { useBusinessOpen } from "@/hooks/use-business-open";
+import { supabase } from "@/integrations/supabase/client";
+import { sendNewTicketPush } from "@/lib/push.functions";
 
 export type SetupDeviceKey = "amazon" | "android" | "alternative" | "remote";
 
@@ -15,10 +21,46 @@ const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof 
   { key: "remote", label: "Help from staff", note: "Let staff install it with you by screen share", icon: Headset },
 ];
 
+const STAFF_HELP_SUBJECT = "Help installing the apps on my TV";
+const STAFF_HELP_MESSAGE = "Hi,\n\nI'd like a member of staff to install the BM apps on my TV for me by screen share. I'm following the Install Guides \"Help from staff\" steps and will complete the Remote setup in this ticket so you can connect.\n\nThank you!";
+
 /** Remote connection screen: staff help the customer install over a ticket-scoped screen share. */
 function RemoteHelpSteps() {
+  const open = useBusinessOpen();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [creating, setCreating] = useState(false);
+  const notifyNewTicket = useServerFn(sendNewTicketPush);
+
+  const createTicket = async () => {
+    if (!user || creating) return;
+    setCreating(true);
+    try {
+      const { data: cat } = await supabase.from("ticket_categories").select("id").eq("slug", "general").maybeSingle();
+      if (!cat) throw new Error("Could not open the ticket. Please try again.");
+      const { data: t, error } = await supabase
+        .from("tickets")
+        .insert({ user_id: user.id, subject: STAFF_HELP_SUBJECT, category_id: cat.id, priority: "normal" })
+        .select("id")
+        .single();
+      if (error || !t) throw new Error(error?.message ?? "Could not open the ticket. Please try again.");
+      const { error: msgErr } = await supabase.from("ticket_messages").insert({
+        ticket_id: t.id, sender_id: user.id, content: STAFF_HELP_MESSAGE, is_internal: false,
+      });
+      if (msgErr) throw new Error(msgErr.message);
+      // Fire-and-forget staff push, same as the New ticket form.
+      void notifyNewTicket({ data: { ticketId: t.id, subject: STAFF_HELP_SUBJECT, categorySlug: "general" } })
+        .catch((e) => console.error("[install-guides] new ticket push failed", e));
+      toast.success("Ticket opened");
+      await navigate({ to: "/tickets", search: { id: t.id } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open the ticket. Please try again.");
+      setCreating(false);
+    }
+  };
+
   const steps = [
-    <>Open a ticket and say you'd like help installing the apps.</>,
+    <>Press <strong className="text-foreground">Open a ticket for help</strong> below — it creates the ticket for you and opens it straight away (only while our office is open).</>,
     <>In the ticket open the <strong className="text-foreground">Remote setup</strong> tab and follow its steps with BM TV Enabler on your Android phone or Windows PC.</>,
     <>In the Enabler choose <strong className="text-foreground">Start a screen share</strong>, find your TV and press <strong className="text-foreground">Allow</strong> on the TV.</>,
     <>Type the Enabler reference into the ticket. A member of staff will then connect, see your TV screen and install the apps with you.</>,
@@ -28,7 +70,17 @@ function RemoteHelpSteps() {
     <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
     <p className="text-sm text-muted-foreground">Staff only see your TV while you're connected, and you can end it at any time.</p>
     <div className="grid gap-6 sm:grid-cols-2"><EnablerQr /><WindowsEnablerDownload /></div>
-    <Button asChild><Link to="/tickets"><Headset className="size-4" />Open a ticket for help</Link></Button>
+    {open ? (
+      <Button onClick={createTicket} disabled={creating}>
+        {creating ? <Loader2 className="size-4 animate-spin" /> : <Headset className="size-4" />}
+        {creating ? "Opening ticket…" : "Open a ticket for help"}
+      </Button>
+    ) : (
+      <div className="space-y-2">
+        <Button disabled><Headset className="size-4" />Open a ticket for help</Button>
+        <p className="text-sm text-muted-foreground">Our office is closed right now, so this is only available during office hours. Try again when we're open and the button will create the ticket for you.</p>
+      </div>
+    )}
   </div>;
 }
 
