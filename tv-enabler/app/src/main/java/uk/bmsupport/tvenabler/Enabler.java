@@ -312,6 +312,7 @@ final class Enabler {
         if (code == 404) throw new LinkExpired();
         if (code == 409) throw new IllegalStateException("Your ticket or order is set up for the other TV type. Press Change device on its Remote setup tab, or pick the other TV type here.");
         if (code == 429) throw new IllegalStateException("Too many tries. Wait 15 minutes.");
+        if (code == 426) throw new IllegalStateException("Please update BM TV Enabler from bmsupport.uk to get a new code.");
         if (code >= 400) throw new IllegalStateException("BM Support couldn't be told (error " + code + "). Try again.");
     }
     static final class LinkExpired extends IllegalStateException { LinkExpired() { super("The website link has expired. Press New link code on your Remote setup tab and scan it again."); } }
@@ -330,7 +331,7 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-confirm").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"app\":\"tv-enabler-1.17\",\"kind\":\"" + kind + "\"," + (helperCode != null && helperCode.matches("\\d{6}") ? "\"helperCode\":\"" + helperCode + "\"," : "") + "\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"app\":\"tv-enabler-1.17\",\"protocol\":3,\"kind\":\"" + kind + "\"," + (helperCode != null && helperCode.matches("\\d{6}") ? "\"helperCode\":\"" + helperCode + "\"," : "") + "\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             code = h.getResponseCode();
@@ -339,6 +340,7 @@ final class Enabler {
             h.disconnect();
         } catch (Exception e) { throw new IllegalStateException("Couldn't reach BM Support. Check the phone's internet and try again."); }
         if (code == 429) throw new IllegalStateException("Too many tries. Wait 15 minutes.");
+        if (code == 426) throw new IllegalStateException("Please update BM TV Enabler from bmsupport.uk to get a new code.");
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"code\"\\s*:\\s*\"([A-Z0-9]{6})\"").matcher(resp);
         if (code != 200 || !m.find()) throw new IllegalStateException("Couldn't get a code from BM Support (error " + code + "). Try again.");
         java.util.regex.Matcher expiry = java.util.regex.Pattern.compile("\"expiresAtMs\"\\s*:\\s*(\\d+)").matcher(resp);

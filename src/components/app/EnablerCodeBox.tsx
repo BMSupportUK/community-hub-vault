@@ -37,6 +37,6 @@ export function EnablerCodeBox({ disabled, onSubmit, status, onActiveChange }: {
     </div>
     {active && <p className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-foreground" role="status">Connected to BM TV Enabler reference <strong className="font-mono text-base tracking-wider">{reference ?? "not shown — made before this update; press New code in BM TV Enabler and type the new one"}</strong>. Check it matches the code in the app.</p>}
     {active && !replacing && <Button type="button" variant="outline" size="sm" className="w-full" disabled={disabled || busy} onClick={() => setReplacing(true)}>Change reference number</Button>}
-    <p className="text-xs text-muted-foreground">You can reuse this code on the same ticket or order for 24 hours. After it expires, press New code in BM TV Enabler.</p>
+    <p className="text-xs text-muted-foreground">Each code works on one ticket or order only, until that ticket or order is closed (24 hours at most). For another ticket or order, press New code in BM TV Enabler.</p>
   </div>;
 }

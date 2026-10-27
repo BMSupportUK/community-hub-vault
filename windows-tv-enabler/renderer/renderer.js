@@ -180,10 +180,10 @@ function render() {
     const minutes = Math.max(0, Math.ceil((confirmExpiresAt - Date.now()) / 60000));
     heading.textContent = expired ? 'Confirmation code expired' : 'TV setup confirmed';
     description.textContent = expired ? 'Expired — press New code to get a fresh confirmation code.' : confirmCode
-      ? `Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. You can reuse it on the same ticket or order for 24 hours.\n\nExpires in ${Math.floor(minutes / 60)}h ${minutes % 60}m.\n\nThen press Connect on that tab to request screen sharing.`
+      ? `Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works on that one ticket or order only, until it is closed.\n\nExpires in ${Math.floor(minutes / 60)}h ${minutes % 60}m.\n\nThen press Connect on that tab to request screen sharing.`
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
     action.firstChild.textContent = confirmCode ? (expired || confirmationUsed ? 'New code ' : 'New code — available after use or expiry ') : 'Get my confirmation code ';
-    if (!expired && confirmationUsed) description.textContent += '\n\nThis reference has been used on a ticket or order. New code is now available for another ticket or order; the existing reference stays valid on its original page until expiry.';
+    if (!expired && confirmationUsed) description.textContent += '\n\nThis reference has been used on a ticket or order. Press New code for your next ticket or order — each one needs its own code.';
     if (!expired && confirmCode) description.textContent += '\n\nNeed apps installed too? Press Return to home — this code is kept until it expires.';
   } else if (askApps) {
     heading.textContent = 'What do you need?';
