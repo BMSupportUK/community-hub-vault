@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Windows Enabler installation reporting
-- [ ] Correct short installation timeouts and verify uncertain results against the selected TV's active-profile packages; run Windows regressions.
+- [x] Extend Windows APK push/install deadlines and reconcile uncertain replies against enabled current-profile package identities; 45 Windows tests pass, including lost replies, delayed installs and genuine failures. Physical reproduction remains unverified.
 - [ ] Physical Windows/TV verification — requires customer devices. Rebuilt release not requested yet.
 
 ## Enabler login PIN reuse
