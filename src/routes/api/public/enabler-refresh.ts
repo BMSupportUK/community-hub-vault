@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { enablerReferenceUsed } from "@/lib/enabler-confirm-code";
 
 const Body = z.object({
   token: z.string().regex(/^[0-9a-f]{64}$/),
@@ -20,14 +21,15 @@ export const Route = createFileRoute("/api/public/enabler-refresh")({
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const tokenHash = await hash(body.data.token);
       // Unpredictable per-confirmation capability, never the short customer reference.
-      const { data: authority } = await supabaseAdmin.from("enabler_confirm_codes").select("expires_at").eq("refresh_token_hash", tokenHash).gt("expires_at", new Date().toISOString()).maybeSingle();
+      const { data: authority } = await supabaseAdmin.from("enabler_confirm_codes").select("expires_at,used_at,bound_ticket_id,bound_order_id").eq("refresh_token_hash", tokenHash).gt("expires_at", new Date().toISOString()).maybeSingle();
       if (!authority) return Response.json({ state: "expired" }, { status: 403, headers });
       const { data, error } = await supabaseAdmin.rpc("enabler_refresh_task", {
         _token_hash: tokenHash, _request_id: body.data.requestId ?? undefined,
         _helper_hash: body.data.helperCode ? await hash(body.data.helperCode) : undefined,
         _checks: body.data.checks,
       });
-      return Response.json(error ? { state: "failed" } : data, { status: error ? 503 : 200, headers });
+      const result = data && typeof data === "object" && !Array.isArray(data) ? data : { state: "failed" };
+      return Response.json(error ? { state: "failed" } : { ...result, referenceUsed: enablerReferenceUsed(authority) }, { status: error ? 503 : 200, headers });
     },
   } },
 });

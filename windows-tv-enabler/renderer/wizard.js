@@ -38,6 +38,9 @@ const SetupWizard = (() => {
   }
   /** A finished app-install run offers "Return to the start", never "Reset setup". */
   function installFinished(step, apps) { return step === Step.DONE && apps === 'new'; }
-  return { Step, CodeResult, MAX_TRIES, Wizard, newCode, ready, validHost, installFinished };
+  function canIssueConfirmation(hasCode, expiresAt, used, now = Date.now()) {
+    return !hasCode || used || expiresAt <= now;
+  }
+  return { Step, CodeResult, MAX_TRIES, Wizard, newCode, ready, validHost, installFinished, canIssueConfirmation };
 })();
 if (typeof module !== 'undefined') module.exports = SetupWizard;

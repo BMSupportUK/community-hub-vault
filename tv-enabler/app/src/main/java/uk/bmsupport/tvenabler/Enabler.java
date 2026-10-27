@@ -345,8 +345,9 @@ final class Enabler {
             try (java.io.InputStream in = h.getInputStream()) { return new org.json.JSONObject(new String(readAll(in), StandardCharsets.UTF_8)); }
         } finally { h.disconnect(); }
     }
-    static boolean refreshConnection(Context ctx, String host, String token) throws Exception {
+    static boolean refreshConnection(Context ctx, String host, String token, java.util.function.Consumer<Boolean> onUsage) throws Exception {
         org.json.JSONObject task = refreshPost(new org.json.JSONObject().put("token", token));
+        onUsage.accept(task.optBoolean("referenceUsed", false));
         if (!"refresh".equals(task.optString("state"))) return false;
         String request = task.getString("requestId");
         try {

@@ -28,6 +28,9 @@ final class SetupWizard {
     void reset() { step = Step.DEBUGGING; ready = false; tvCode = null; tries = 0; }
     /** A finished app-install run offers "Return to the start", never "Reset setup". */
     static boolean installFinished(Step step, String apps) { return step == Step.DONE && "new".equals(apps); }
+    static boolean canIssueConfirmation(boolean hasCode, long expiresAt, boolean used, long now) {
+        return !hasCode || used || expiresAt <= now;
+    }
     boolean resumeConfirmation(String code, long expiresAt, long now) {
         if (code == null || !code.matches("[A-Z0-9]{6}") || expiresAt <= now) return false;
         step = Step.DONE; ready = true; tvCode = null; tries = 0;
