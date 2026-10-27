@@ -49,7 +49,7 @@ export function EnablerPinBox({ scopeKey, staff, create, status, reveal }: {
   const doReveal = async () => {
     if (!reveal) return;
     setBusy(true);
-    try { const p = await reveal(); setPin(p); setActive(p.expires_at); setRevealed(true); toast.success("PIN sent to your notifications"); }
+    try { const p = await reveal(); setPin(p); setActive(p.expires_at); setRevealed(true); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't reveal the PIN"); }
     setBusy(false);
   };
@@ -71,7 +71,6 @@ export function EnablerPinBox({ scopeKey, staff, create, status, reveal }: {
         <p className="text-center font-mono text-3xl font-bold tracking-[0.3em] text-muted-foreground">••••••</p>
         <p className="text-center text-xs text-muted-foreground">Valid for {fmt(left)}</p>
         <Button className="w-full" variant="outline" disabled={busy} onClick={() => void doReveal()}>Reveal PIN</Button>
-        <p className="text-xs text-muted-foreground">Revealing also sends the PIN to your notifications.</p>
       </> : live ? <p className="text-xs text-muted-foreground">Your existing PIN is valid for {fmt(left)}. For PINs issued before this update, use the device where you requested it. A new PIN is available after expiry.</p>
         : <Button className="w-full" disabled={busy || !checked} onClick={() => void make()}>{checked ? "Get BM TV Enabler PIN" : "Checking PIN…"}</Button>}
     </>}
