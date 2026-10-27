@@ -6,3 +6,4 @@
 - Both Enabler apps require a 24-hour PIN login (from the customer's ticket/order Remote setup tab) before Get started; `/api/public/enabler-login` swaps the PIN for a device token. Phone and Windows change together.
 - A customer-requested renewal uses a per-confirmation secret capability, claimed once; never restart Helper during active/claimed sharing. Only for renewal of a non-active connection, cold-start Helper and keep it foregrounded for fresh consent.
 - Both apps persist reference usage reported by the capability-verified refresh endpoint; New code gates use that usage or expiry, never local guesses. This enables another scope without transferring the original binding.
+- Install and Screen-share support each issue their own 24-hour reference (`enabler_confirm_codes.kind`: install vs share), remembered per section in both apps; install references never attach a Helper session and renewals only queue on share references. Phone and Windows change together.
