@@ -9,6 +9,7 @@ import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { RemoteSetupWizard } from "@/components/app/RemoteSetupWizard";
+import { RemoteSetupSubTabs } from "@/components/app/RemoteSetupSubTabs";
 import { CheckCircle2, Circle, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,9 +114,10 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
       {!closed && <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={() => void restart()}>Restart setup</Button>}
     </div>
-    <RemoteSetupWizard row={row} referenceActive={referenceActive}
-      confirmation={!closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null}
-      waiting={!canConnect && !ready && !complete && !referenceActive ? <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the previous step.</p> : null}
+    <RemoteSetupSubTabs
+      setup={<RemoteSetupWizard row={row} referenceActive={referenceActive}
+        waiting={!canConnect && !ready && !complete && !referenceActive ? <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the Change code tab.</p> : null} />}
+      code={!closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : <p className="text-sm text-muted-foreground">This ticket is closed.</p>}
       connection={<>
     {canConnect && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Your TV is ready</h3>
@@ -127,6 +129,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
       <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
     </div>}
+    {!closed && !canConnect && !(ready || complete || referenceActive) && <p className="text-sm text-muted-foreground">Enter your BM TV Enabler reference in the Change code tab first.</p>}
     </>} />
   </section>;
   return <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_260px_260px]">
