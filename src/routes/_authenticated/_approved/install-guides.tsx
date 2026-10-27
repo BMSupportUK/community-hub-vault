@@ -33,7 +33,7 @@ import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
 import { TvEnablerPanel } from "@/components/app/TvEnablerPanel";
-import { DeviceInstallSetup } from "@/components/app/DeviceInstallSetup";
+import { DeviceInstallSetup, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
 
 
@@ -146,6 +146,16 @@ function InstallGuidesPage() {
   useEffect(() => {
     if (tabParam) setTab(legacyTab(tabParam)!);
   }, [tabParam]);
+  // Which device screen the setup tab is showing — the sidebar swaps the advert
+  // for the Enabler downloads while the customer is on the staff-help screen.
+  const [setupDevice, setSetupDevice] = useState<SetupDeviceKey | null>(() => readStoredSetupDevice());
+  const pickSetupDevice = (d: SetupDeviceKey | null) => {
+    setSetupDevice(d);
+    try {
+      if (d) sessionStorage.setItem(INSTALL_SETUP_DEVICE_KEY, d);
+      else sessionStorage.removeItem(INSTALL_SETUP_DEVICE_KEY);
+    } catch { /* ignore */ }
+  };
   const [activeCat, setActiveCat] = useState<string | null>(() => {
     try { return sessionStorage.getItem(IG_CAT_KEY); } catch { return null; }
   });
@@ -683,6 +693,8 @@ function InstallGuidesPage() {
 
           <TabsContent value="setup" className="mt-0 min-w-0">
             <DeviceInstallSetup
+              device={setupDevice}
+              onPick={pickSetupDevice}
               alternative={
                 <IllustratedHero
                   image={downloadIllustration}
@@ -889,7 +901,7 @@ function InstallGuidesPage() {
 
       {tab !== "enabler" && (
         <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6">
-          <AdSenseSlot slot="sidebar" />
+          {tab === "setup" && setupDevice === "remote" ? <EnablerDownloadSidebar /> : <AdSenseSlot slot="sidebar" />}
         </aside>
       )}
       </div>
