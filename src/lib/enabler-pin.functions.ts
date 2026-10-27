@@ -111,3 +111,14 @@ export const revealEnablerPin = createServerFn({ method: "POST" })
     } as never);
     return { pin: s.pin, expires_at: s.expires_at };
   });
+
+/** Signed-in customer: cancel their current account PIN and issue a fresh 24-hour one. */
+export const resetAccountEnablerPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("enabler_login_pins").update({ revoked_at: new Date().toISOString() } as never)
+      .eq("user_id", context.userId).is("revoked_at", null);
+    if (error) throw new Error("Couldn't reset your PIN. Try again.");
+    return issue(supabaseAdmin, { user_id: context.userId });
+  });
