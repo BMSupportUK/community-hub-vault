@@ -361,9 +361,17 @@ final class Enabler {
         h.setRequestProperty("Content-Type", "application/json");
         try {
             try (java.io.OutputStream out = h.getOutputStream()) { out.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
-            if (h.getResponseCode() != 200) throw new IllegalStateException("Enabler reference expired or website update needed.");
-            try (java.io.InputStream in = h.getInputStream()) { return new org.json.JSONObject(new String(readAll(in), StandardCharsets.UTF_8)); }
+            int status = h.getResponseCode();
+            java.io.InputStream stream = status < 400 ? h.getInputStream() : h.getErrorStream();
+            org.json.JSONObject response;
+            try (java.io.InputStream in = stream) { response = new org.json.JSONObject(in == null ? "{}" : new String(readAll(in), StandardCharsets.UTF_8)); }
+            if (SetupWizard.referenceExpired(status, response.optString("state"))) throw new ReferenceExpired();
+            if (status != 200) throw new IllegalStateException("Could not check your Enabler reference. Check your internet and try again.");
+            return response;
         } finally { h.disconnect(); }
+    }
+    static final class ReferenceExpired extends IllegalStateException {
+        ReferenceExpired() { super("Sharing reference expired. Press New code before sharing again."); }
     }
     static boolean refreshConnection(Context ctx, String host, String token, java.util.function.Consumer<Boolean> onUsage) throws Exception {
         org.json.JSONObject task = refreshPost(new org.json.JSONObject().put("token", token));

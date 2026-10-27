@@ -9,6 +9,22 @@ test("used reference is reported while idle without running TV commands", async 
   expect(commands).toBe(0);
 });
 
+test("ended screen share reports expiry before 24 hours without touching the TV", async () => {
+  let expired = false, commands = 0;
+  const done = await refreshConnection("192.168.1.25", "a".repeat(64), async () => { commands++; return ""; }, () => {},
+    async () => Response.json({ state: "expired" }, { status: 403 }), async () => {}, () => {}, () => { expired = true; });
+  expect(expired).toBe(true);
+  expect(done).toBe(false);
+  expect(commands).toBe(0);
+});
+
+test("server errors do not invalidate a saved sharing reference", async () => {
+  let expired = false;
+  await expect(refreshConnection("192.168.1.25", "a".repeat(64), async () => "", () => {},
+    async () => Response.json({ state: "expired" }, { status: 500 }), async () => {}, () => {}, () => { expired = true; })).rejects.toThrow();
+  expect(expired).toBe(false);
+});
+
 test("no queued renewal means no TV commands, including while sharing is active", async () => {
   for (const state of ["idle", "in_progress", "expired"]) {
     let commands = 0;

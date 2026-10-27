@@ -45,9 +45,9 @@ else {
     ipcMain.handle('bm:login', task(async pin => { const r = await loginWithPin(pin); setEnablerToken(r.token); return r; }));
     ipcMain.handle('bm:set-token', (_e, token) => { setEnablerToken(token); return true; });
     ipcMain.handle('bm:refresh', task(async (address, token) => {
-      let referenceUsed = false;
-      const done = await refreshConnection(address, token, adb, say, undefined, undefined, used => { referenceUsed = used; });
-      return { done, referenceUsed };
+      let referenceUsed = false, expired = false;
+      const done = await refreshConnection(address, token, adb, say, undefined, undefined, used => { referenceUsed = used; }, () => { expired = true; });
+      return { done, referenceUsed, expired };
     }));
     ipcMain.handle('bm:scan', task(type => scan(type === 'android' || type === 'all' ? type : 'amazon')));
     ipcMain.handle('bm:show-code', task((address, code) => showTvCode(address, code, adb, say)));

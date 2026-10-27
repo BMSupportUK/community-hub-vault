@@ -1,6 +1,11 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Enabler sharing-reference expiry
+- [x] Update phone and Windows to clear server-expired sharing references, offer New code, and explain expiry on screen-share end; retain install references and PINs.
+- [x] 47 Windows tests and phone wizard tests pass; phone Java compiles. Simulated Windows expiry clears only sharing storage and New code saves a replacement. Physical TV end-to-end check requires customer devices.
+- [ ] Release updated installers — awaits user release request.
+
 ## Enabler appearance refresh
 - [x] Release both redesigned apps: signed phone 1.50 and Windows 1.39.0; permanent assets and current download records updated.
 - [x] Tick-order release: phone 1.51 (code 52) and Windows 1.40.0 built from the tick-reporting source, signed/permanent-key verified, 4 Java suites + 45 Windows tests pass, uploaded to app-builds and set current; live download endpoints serve the new files. Website tick-order changes are preview-only — publish before customers rely on them.
