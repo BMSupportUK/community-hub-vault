@@ -21,7 +21,7 @@ export class RenewalRequestGate {
 
 export function renewalMessage(state: string): string {
   switch (state) {
-    case "queued": return "Keep BM TV Enabler open on the same Wi-Fi as your TV. It will bring the new connection here automatically.";
+    case "queued": return "Look at your TV now: a box asks to allow debugging or screen sharing. Press Allow (tick \"Always allow\" if shown). Keep BM TV Enabler open until this page moves on.";
     case "update_app": return "Update BM TV Enabler, then enter its confirmation reference once to enable automatic reconnection.";
     case "in_progress": return "Your current screen-share request is still open. End it before requesting another connection.";
     case "expired": return "Your Enabler reference has expired. Get a new confirmation reference in BM TV Enabler.";
