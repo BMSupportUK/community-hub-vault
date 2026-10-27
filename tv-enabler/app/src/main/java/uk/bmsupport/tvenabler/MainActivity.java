@@ -5,6 +5,9 @@ import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.content.res.ColorStateList;
+import android.widget.ProgressBar;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,8 +29,9 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     private static boolean pinOkThisRun = false;
-    private static final int BG = Color.parseColor("#0F1220"), FG = Color.WHITE, MUTED = Color.parseColor("#A9B0C7"),
-            ACCENT = Color.parseColor("#E23B4E"), OK = Color.parseColor("#3CCB7F"), WARN = Color.parseColor("#F5C04A");
+    private static final int BG = Color.parseColor("#121416"), FG = Color.parseColor("#F6F7F8"), MUTED = Color.parseColor("#AFB7BF"),
+            SURFACE = Color.parseColor("#1D2125"), BORDER = Color.parseColor("#394149"),
+            ACCENT = Color.parseColor("#ED4055"), OK = Color.parseColor("#62DFB3"), WARN = Color.parseColor("#F5C04A");
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final SetupWizard wizard = new SetupWizard();
@@ -91,7 +95,8 @@ public class MainActivity extends Activity {
         public void run() { if (isFinishing() || isDestroyed()) return; if (wizard.step == SetupWizard.Step.DONE && confirmCode.length() > 0 && !busy) render(); ui.postDelayed(this, 1000); }
     };
     private Button turnOn, find, amazonBtn, androidBtn, next, reset, startAgain;
-    private TextView status, deviceHelp, heading, description;
+    private TextView status, deviceHelp, heading, description, stepLabel;
+    private ProgressBar stepProgress;
     private LinearLayout devicePick;
     private String device;
     private Enabler.Checks checks;
@@ -109,26 +114,32 @@ public class MainActivity extends Activity {
         LinearLayout col = new LinearLayout(this);
         contentBox = col;
         col.setOrientation(LinearLayout.VERTICAL);
-        col.setPadding(dp(20), dp(32), dp(20), dp(24));
+        col.setPadding(dp(24), dp(24), dp(24), dp(24));
         contentBox.setBackgroundColor(BG);
-        contentBox.addView(text("BM TV Enabler", 26, FG, true));
-        contentBox.addView(text("TV setup · 1.43", 14, MUTED, false));
+        contentBox.addView(text("BM SUPPORT", 12, OK, true));
+        contentBox.addView(text("BM TV Enabler", 28, FG, true));
+        contentBox.addView(text("TV setup · " + BuildConfig.VERSION_NAME, 12, MUTED, false));
+        stepLabel = text("", 12, OK, true); col.addView(stepLabel, lp(dp(20)));
+        stepProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        stepProgress.setMax(4); stepProgress.setProgressTintList(ColorStateList.valueOf(ACCENT));
+        stepProgress.setProgressBackgroundTintList(ColorStateList.valueOf(BORDER));
+        col.addView(stepProgress, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(6)));
         // Welcome on open: logo, message and Get started before the wizard.
         welcomeBox = new LinearLayout(this);
         welcomeBox.setOrientation(LinearLayout.VERTICAL);
         welcomeBox.setGravity(Gravity.CENTER_HORIZONTAL);
-        welcomeBox.setPadding(dp(12), dp(24), dp(12), dp(16));
+        welcomeBox.setPadding(dp(24), dp(28), dp(24), dp(24));
         welcomeBox.setBackgroundColor(BG);
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.bm_logo);
         logo.setContentDescription("BM Support");
-        LinearLayout.LayoutParams logoLp = new LinearLayout.LayoutParams(dp(190), dp(190));
+        LinearLayout.LayoutParams logoLp = new LinearLayout.LayoutParams(dp(112), dp(112));
         logoLp.gravity = Gravity.CENTER_HORIZONTAL;
         welcomeBox.addView(logo, logoLp);
         TextView welcomeTitle = text("Welcome to BM TV Enabler", 24, FG, true);
         welcomeTitle.setGravity(Gravity.CENTER);
         welcomeBox.addView(welcomeTitle, lp(dp(10)));
-        TextView welcomeText = text("This free app from BM Support sets up your TV with our apps or gets it ready for staff screen-share support — just follow the steps. Put this device and your TV on the same Wi-Fi to begin.", 16, MUTED, false);
+        TextView welcomeText = text("Install your TV apps or connect with BM Support. Keep this phone and your TV on the same Wi-Fi.", 16, MUTED, false);
         welcomeText.setGravity(Gravity.CENTER);
         welcomeBox.addView(welcomeText, lp(dp(4)));
         // PIN login: customers get a 24-hour PIN on their ticket/order at bmsupport.uk.
@@ -137,7 +148,7 @@ public class MainActivity extends Activity {
         pinInput.setHint("6-digit BM TV Enabler PIN");
         pinInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         pinInput.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(6) });
-        pinInput.setTextColor(FG); pinInput.setHintTextColor(MUTED); pinInput.setGravity(Gravity.CENTER); pinInput.setTextSize(20);
+        pinInput.setTextColor(FG); pinInput.setHintTextColor(MUTED); pinInput.setGravity(Gravity.CENTER); pinInput.setTextSize(20); styleInput(pinInput);
         final TextView pinMsg = text(loggedIn ? "You're logged in." : "Type your BM TV Enabler PIN to continue. Find it in Settings › BM TV Enabler PIN at bmsupport.uk (or your ticket/order Remote setup tab). It changes every 24 hours.", 14, MUTED, false);
         pinMsg.setGravity(Gravity.CENTER);
         if (!loggedIn) { welcomeBox.addView(pinMsg, lp(dp(14))); welcomeBox.addView(pinInput, lp(dp(6))); }
@@ -180,19 +191,17 @@ public class MainActivity extends Activity {
         heading = text("", 22, FG, true); col.addView(heading, lp(dp(20)));
         description = text("", 16, MUTED, false); col.addView(description, lp(dp(8)));
         devicePick = new LinearLayout(this);
-        devicePick.setOrientation(LinearLayout.HORIZONTAL);
-        amazonBtn = button("Amazon Fire TV / Stick", Color.parseColor("#2A3050"));
-        androidBtn = button("Android / Google TV", Color.parseColor("#2A3050"));
-        LinearLayout.LayoutParams halfL = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-        halfL.rightMargin = dp(6);
-        LinearLayout.LayoutParams halfR = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-        halfR.leftMargin = dp(6);
+        devicePick.setOrientation(LinearLayout.VERTICAL);
+        amazonBtn = button("Amazon Fire TV / Stick", SURFACE);
+        androidBtn = button("Android / Google TV", SURFACE);
+        LinearLayout.LayoutParams halfL = lp(0);
+        LinearLayout.LayoutParams halfR = lp(dp(10));
         devicePick.addView(amazonBtn, halfL); devicePick.addView(androidBtn, halfR);
         col.addView(devicePick, lp(dp(12)));
         deviceHelp = text("", 15, MUTED, false); col.addView(deviceHelp, lp(dp(8)));
-        appsNew = button("Install our apps", Color.parseColor("#2A3050"));
-        appsHave = button("Screen-share support", Color.parseColor("#2A3050"));
-        appsBack = button("Back", Color.parseColor("#2A3050"));
+        appsNew = button("Install our apps", SURFACE);
+        appsHave = button("Screen-share support", SURFACE);
+        appsBack = button("Back", SURFACE);
         appsNew.setOnClickListener(v -> pickApps("new"));
         appsHave.setOnClickListener(v -> pickApps("have"));
         appsBack.setOnClickListener(v -> { if (!busy) { apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply(); render(); } });
@@ -201,38 +210,40 @@ public class MainActivity extends Activity {
         androidBtn.setOnClickListener(v -> pickDevice("android"));
         address = new EditText(this);
         address.setHint("TV address, e.g. 192.168.1.23");
-        address.setHintTextColor(MUTED); address.setTextColor(FG); address.setTextSize(20);
+        address.setHintTextColor(MUTED); address.setTextColor(FG); address.setTextSize(17); styleInput(address);
         address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         address.setKeyListener(android.text.method.DigitsKeyListener.getInstance("0123456789."));
         address.setText(prefs.getString("host", "")); col.addView(address, lp(dp(12)));
         tvCodeInput = new EditText(this);
         tvCodeInput.setHint("4-digit code on your TV");
-        tvCodeInput.setHintTextColor(MUTED); tvCodeInput.setTextColor(FG); tvCodeInput.setTextSize(28);
+        tvCodeInput.setHintTextColor(MUTED); tvCodeInput.setTextColor(FG); tvCodeInput.setTextSize(28); styleInput(tvCodeInput);
         tvCodeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
         tvCodeInput.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(4) });
         col.addView(tvCodeInput, lp(dp(12)));
-        showAgain = button("Show code again on TV", Color.parseColor("#2A3050"));
+        showAgain = button("Show code again on TV", SURFACE);
         showAgain.setOnClickListener(v -> { if (!busy && wizard.tvCode != null) showCode(address.getText().toString().trim(), wizard.tvCode); });
         col.addView(showAgain, lp(dp(8)));
         confirmCode = text("", 40, OK, true);
-        confirmCode.setGravity(Gravity.CENTER); confirmCode.setTextIsSelectable(true);
+        confirmCode.setGravity(Gravity.CENTER); confirmCode.setTextIsSelectable(true); styleReference(confirmCode);
         col.addView(confirmCode, lp(dp(12)));
         installCodeView = text("", 40, OK, true);
-        installCodeView.setGravity(Gravity.CENTER); installCodeView.setTextIsSelectable(true);
+        installCodeView.setGravity(Gravity.CENTER); installCodeView.setTextIsSelectable(true); styleReference(installCodeView);
         col.addView(installCodeView, lp(dp(4)));
         appsList = new LinearLayout(this);
         appsList.setOrientation(LinearLayout.VERTICAL);
         col.addView(appsList, lp(dp(8)));
-        find = button("Find my Fire TV", Color.parseColor("#2A3050"));
+        find = button("Find my Fire TV", SURFACE);
         find.setOnClickListener(v -> scan()); col.addView(find, lp(dp(8)));
         status = text("", 16, WARN, false); col.addView(status, lp(dp(12)));
         turnOn = button("", ACCENT); turnOn.setOnClickListener(v -> start()); col.addView(turnOn, lp(dp(12)));
         next = button("Done — next step", ACCENT);
         next.setOnClickListener(v -> newInstallCode()); col.addView(next, lp(dp(8)));
-        reset = button("Reset setup", Color.parseColor("#2A3050"));
-        reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
-        startAgain = button("Return to home", ACCENT);
-        startAgain.setOnClickListener(v -> backToStart()); col.addView(startAgain, lp(dp(20)));
+        reset = button("Reset setup", SURFACE);
+        reset.setOnClickListener(v -> confirmReset());
+        reset.setTextColor(MUTED); reset.setBackground(background(BG, BG));
+        startAgain = button("Return to home", SURFACE);
+        startAgain.setOnClickListener(v -> backToStart()); col.addView(startAgain, lp(dp(24)));
+        col.addView(reset, lp(dp(8)));
         ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(root); setContentView(sv);
         // A remembered platform/address is a convenience, never proof that a TV is ready.
         device = prefs.getString("device", null);
@@ -325,6 +336,12 @@ public class MainActivity extends Activity {
         SetupWizard.Step s = wizard.step;
         boolean askApps = s == SetupWizard.Step.DEBUGGING && apps == null;
         boolean install = "new".equals(apps);
+        boolean showSteps = !askApps && !(s == SetupWizard.Step.DEBUGGING && device == null);
+        stepLabel.setVisibility(showSteps ? View.VISIBLE : View.GONE);
+        stepProgress.setVisibility(showSteps ? View.VISIBLE : View.GONE);
+        int stage = s == SetupWizard.Step.DEBUGGING ? 1 : s == SetupWizard.Step.CHECK || s == SetupWizard.Step.TV_CODE ? 2 : s == SetupWizard.Step.SETUP ? 3 : 4;
+        stepLabel.setText(s == SetupWizard.Step.DONE ? "Setup complete" : "Step " + stage + " of 4");
+        stepProgress.setProgress(stage);
         boolean installDone = SetupWizard.installFinished(s, apps);
         boolean supportDone = s == SetupWizard.Step.DONE && !install;
         reset.setVisibility(installDone ? View.GONE : View.VISIBLE);
@@ -355,21 +372,22 @@ public class MainActivity extends Activity {
             appsList.removeAllViews();
             for (Enabler.AppResult r : appsResults) {
                 LinearLayout row = new LinearLayout(this);
-                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setOrientation(LinearLayout.VERTICAL);
+                row.setPadding(0, dp(12), 0, dp(12));
                 TextView name = text(r.name, 16, FG, true);
-                LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+                LinearLayout.LayoutParams np = lp(0);
                 row.addView(name, np);
                 TextView state = text(r.status == Enabler.AppResult.INSTALLED ? "Installed"
                         : r.status == Enabler.AppResult.ALREADY ? "Already on your TV"
                         : "Didn't install — press Return to home to try again", 14,
                         r.status == Enabler.AppResult.FAILED ? WARN : OK, false);
-                state.setGravity(Gravity.END);
+                state.setGravity(Gravity.START);
                 row.addView(state);
                 appsList.addView(row);
             }
         }
-        amazonBtn.setBackgroundColor("amazon".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
-        androidBtn.setBackgroundColor("android".equals(device) ? ACCENT : Color.parseColor("#2A3050"));
+        amazonBtn.setBackground(background(SURFACE, "amazon".equals(device) ? OK : BORDER));
+        androidBtn.setBackground(background(SURFACE, "android".equals(device) ? OK : BORDER));
         switch (s) {
             case DEBUGGING:
                 if (askApps) {
@@ -707,16 +725,30 @@ public class MainActivity extends Activity {
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
     }
-    private void say(String s, int color) { status.setText(s); status.setTextColor(color); }
+    private void say(String s, int color) { status.setText(s); status.setTextColor(color); status.setVisibility(s.isEmpty() ? View.GONE : View.VISIBLE); }
 
     private TextView text(String s, int sp, int color, boolean bold) {
         TextView t = new TextView(this); t.setText(s); t.setTextSize(sp); t.setTextColor(color);
         if (bold) t.setTypeface(Typeface.DEFAULT_BOLD);
-        t.setPadding(0, dp(6), 0, dp(6)); return t;
+        t.setPadding(0, dp(4), 0, dp(4)); t.setLineSpacing(dp(3), 1f); return t;
     }
     private Button button(String s, int color) {
         Button btn = new Button(this); btn.setText(s); btn.setAllCaps(false); btn.setTextSize(17); btn.setTextColor(FG);
-        btn.setBackgroundColor(color); btn.setGravity(Gravity.CENTER); btn.setMinHeight(dp(52)); return btn;
+        btn.setBackgroundTintList(null); btn.setBackground(background(color, color == ACCENT ? ACCENT : BORDER));
+        btn.setTypeface(Typeface.DEFAULT, Typeface.BOLD); btn.setPadding(dp(16), dp(14), dp(16), dp(14));
+        btn.setGravity(Gravity.CENTER); btn.setMinHeight(dp(56)); return btn;
+    }
+    private GradientDrawable background(int fill, int stroke) {
+        GradientDrawable shape = new GradientDrawable(); shape.setColor(fill);
+        shape.setCornerRadius(dp(8)); shape.setStroke(dp(1), stroke); return shape;
+    }
+    private void styleInput(EditText input) {
+        input.setBackgroundTintList(null); input.setBackground(background(SURFACE, BORDER));
+        input.setPadding(dp(14), dp(12), dp(14), dp(12)); input.setMinHeight(dp(56));
+    }
+    private void styleReference(TextView value) {
+        value.setBackground(background(SURFACE, OK)); value.setPadding(dp(16), dp(20), dp(16), dp(20));
+        value.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
     }
     private LinearLayout.LayoutParams lp(int top) {
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
