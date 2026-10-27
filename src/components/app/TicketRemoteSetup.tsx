@@ -159,9 +159,12 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => void restart()}>Restart setup</Button>
           </div>
           {stage !== 1 && <><p className="font-semibold">Enter a different BM TV Enabler reference</p>{codeBox}<TicketPin ticketId={ticketId} /></>}
-          <div className="space-y-2 border-t border-border pt-4 text-center"><WindowsEnablerDownload /></div>
         </div>
       </details>}
+
+      {!closed && <aside className="mx-auto max-w-xl rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur">
+        <WindowsEnablerDownload />
+      </aside>}
     </section>
   </div>;
 }
