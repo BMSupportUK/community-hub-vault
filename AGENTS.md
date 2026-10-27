@@ -10,7 +10,7 @@
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: all staff per channel.
 - Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
-- Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn so no stale online users remain.
+- Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn (no stale online users).
 - Staff Away reads user_dnd_status (current window); triggers store shift-linked history.
 - Android alerts use per-type tones on versioned channels; sound corrections need a new channel ID because Android retains the first sound.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
