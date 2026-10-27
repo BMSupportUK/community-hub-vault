@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { unlock } from "@/lib/checkout.server";
-import { PIN_TTL_MS, makePin, pinHash } from "@/lib/enabler-pin";
+import { makePin, pinHash } from "@/lib/enabler-pin";
 import { decryptPin, encryptPin } from "@/lib/enabler-pin-crypto.server";
 
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
