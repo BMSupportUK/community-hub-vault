@@ -1,10 +1,24 @@
 import { test, expect } from "bun:test";
-import { appChecksPassed, canRequestTicketScreenShare, REMOTE_SETUP_STEPS, stepDone, remoteSetupProgress } from "../src/lib/ticket-remote-setup";
+import { appChecksPassed, canRequestTicketScreenShare, REMOTE_SETUP_STEPS, stepDone, remoteSetupProgress, staffRemoteSetupReady, connectionReady } from "../src/lib/ticket-remote-setup";
 
 test("staff cannot request screen share until the app confirms setup", () => {
   expect(canRequestTicketScreenShare(null)).toBe(false);
   expect(canRequestTicketScreenShare({ completed_at: null })).toBe(false);
   expect(canRequestTicketScreenShare({ completed_at: "2026-10-25T12:00:00Z" })).toBe(true);
+});
+
+test("staff ready tick remains complete when starting screen sharing consumes the TV check", () => {
+  const row = {
+    app_checks: { adb: true, helper: true, accessibility: true },
+    app_checked_at: "2026-10-27T20:46:55.786Z",
+    checks_used_at: "2026-10-27T20:48:05.824Z",
+    completed_at: "2026-10-27T20:48:05.824Z",
+    pending_session_id: null,
+  };
+  const now = Date.parse("2026-10-27T20:49:00Z");
+  expect(staffRemoteSetupReady(row, now)).toBe(true);
+  expect(connectionReady(row, now)).toBe(false);
+  expect(staffRemoteSetupReady({ ...row, completed_at: null }, now)).toBe(false);
 });
 
 test("no step is done without an app report", () => {
