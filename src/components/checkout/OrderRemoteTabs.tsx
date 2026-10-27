@@ -102,7 +102,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={restart}>Restart setup</Button>
       </div>
       <RemoteSetupWizard row={row} referenceActive={referenceActive}
-        confirmation={!fresh ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null}
+        confirmation={<EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} />}
         connection={<>
       {canConnect && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
         <h3 className="font-semibold">Your TV is ready</h3>

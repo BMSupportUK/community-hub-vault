@@ -114,7 +114,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       {!closed && <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={() => void restart()}>Restart setup</Button>}
     </div>
     <RemoteSetupWizard row={row} referenceActive={referenceActive}
-      confirmation={!closed && !fresh ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null}
+      confirmation={!closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null}
       connection={<>
     {canConnect && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Your TV is ready</h3>
