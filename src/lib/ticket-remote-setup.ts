@@ -42,6 +42,11 @@ export function checksFresh(row: FreshRow | null | undefined, now = Date.now()) 
   return !row.checks_used_at || Date.parse(row.checks_used_at) < at;
 }
 
+/** The Enabler-delivered session must be new, not the last consumed connection. */
+export function connectionReady(row: (FreshRow & { pending_session_id?: string | null; verified_session_id?: string | null }) | null | undefined, now = Date.now()) {
+  return !!row?.pending_session_id && row.pending_session_id !== row.verified_session_id && checksFresh(row, now);
+}
+
 /** Staff can only request a screen share once the TV app has confirmed setup. */
 export function canRequestTicketScreenShare(setup: { completed_at: string | null } | null | undefined) {
   return !!setup?.completed_at;

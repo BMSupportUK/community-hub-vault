@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { getTicketEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
-import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
+import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, connectionReady, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
 
@@ -104,6 +104,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const steps = REMOTE_SETUP_STEPS[row.device];
   const ready = appChecksPassed(row.app_checks, row.device);
   const fresh = checksFresh(row);
+  const canConnect = connectionReady(row) && !renewalGate.waiting;
   const complete = Boolean(row.completed_at);
   const main = <section className="min-w-0 space-y-4 text-foreground">
     <div className="flex flex-wrap items-center gap-2">
@@ -111,14 +112,14 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       {!row.completed_at && <Button size="sm" variant="ghost" className="ml-auto" disabled={busy || closed} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device</Button>}
       {!closed && <Button size="sm" variant="ghost" className={row.completed_at ? "ml-auto" : ""} disabled={busy} onClick={() => void restart()}>Restart setup</Button>}
     </div>
-    {fresh && !closed && row.pending_session_id && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+    {canConnect && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Your TV is ready</h3>
       <p className="text-sm">BM TV Enabler has already picked up the code from BM Remote Helper. Press Connect to send your screen-share request to staff.</p>
       <Button size="lg" className="w-full" disabled={busy} onClick={() => void connect()}>Connect</Button>
     </div>}
-    {!closed && (!fresh || !row.pending_session_id) && (ready || complete) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+    {!closed && (!canConnect) && (ready || complete) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Get a new TV connection</h3>
-      <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Your valid 24-hour confirmation reference stays the same."}</p>
+      <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
       <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
     </div>}
     {!closed && !fresh && <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} />}

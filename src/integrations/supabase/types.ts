@@ -8422,6 +8422,10 @@ export type Database = {
         Args: { _ticket_id: string }
         Returns: boolean
       }
+      consume_enabler_connection: {
+        Args: { _id: string; _kind: string }
+        Returns: boolean
+      }
       create_app_role: {
         Args: { _label: string; _name: string }
         Returns: undefined
