@@ -7,6 +7,7 @@ def ksPass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
 android {
     namespace = "uk.bmsupport.tvenabler"
     compileSdk = 36
+    buildFeatures { buildConfig = true }
     defaultConfig {
         applicationId "uk.bmsupport.tvenabler"
         minSdkVersion 24

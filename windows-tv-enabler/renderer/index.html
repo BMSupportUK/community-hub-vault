@@ -2,8 +2,9 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'"><title>BM TV Enabler</title><link rel="stylesheet" href="style.css"></head>
 <body><main>
 <header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.38</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
-<section id="welcome" class="wizard"><img class="welcome-logo" src="logo.png" alt="BM Support"><h2>Welcome to BM TV Enabler</h2><p>This free app from BM Support sets up your TV with our apps or gets it ready for staff screen-share support — just follow the steps. Put this computer and your TV on the same Wi-Fi to begin.</p><div id="pin-box"><p id="pin-msg">Type your BM TV Enabler PIN to continue. Find it in Settings › BM TV Enabler PIN at bmsupport.uk (or your ticket/order Remote setup tab). It changes every 24 hours.</p><input id="pin-input" inputmode="numeric" maxlength="6" type="password" placeholder="6-digit PIN" autocomplete="off"></div><button id="welcome-start" class="primary" type="button">Log in</button></section>
+<section id="welcome" class="wizard"><img class="welcome-logo" src="logo.png" alt="BM Support"><h2>Welcome to BM TV Enabler</h2><p>Install your TV apps or connect with BM Support. Keep this computer and your TV on the same Wi-Fi.</p><div id="pin-box"><p id="pin-msg">Type your BM TV Enabler PIN to continue. Find it in Settings › BM TV Enabler PIN at bmsupport.uk (or your ticket/order Remote setup tab). It changes every 24 hours.</p><input id="pin-input" inputmode="numeric" maxlength="6" type="password" placeholder="6-digit PIN" autocomplete="off"></div><button id="welcome-start" class="primary" type="button">Log in</button></section>
 <section class="wizard" id="wizard" hidden>
+  <div id="step-progress" aria-label="Setup progress"><p id="step-label" class="step-label"></p><div class="step-track" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
   <h2 id="heading">1. Enable TV debugging</h2>
   <p id="description"></p>
   <div id="device-pick" class="device-pick" role="group" aria-label="TV type" hidden><button id="pick-amazon" type="button">Amazon Fire TV / Stick</button><button id="pick-android" type="button">Android / Google TV</button></div>
@@ -25,11 +26,11 @@
   <div id="link-block" hidden><label for="link-code">Link code from your ticket or order (optional — sends everything there, no code to type on the website)<input id="link-code" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="12345678"></label></div>
   <div id="code-block" class="confirm-code" hidden></div>
   <div id="apps-result" hidden></div>
-  <div class="connection"><p>When the TV asks <strong>Allow USB debugging?</strong>, tick <strong>Always allow from this computer</strong> and choose <strong>Allow</strong>.</p><p id="progress" role="status" aria-live="polite"></p></div>
+  <div class="connection" id="connection-notice"><p>When the TV asks <strong>Allow USB debugging?</strong>, tick <strong>Always allow from this computer</strong> and choose <strong>Allow</strong>.</p><p id="progress" role="status" aria-live="polite"></p></div>
   <button id="action" class="primary" type="button">I've switched debugging on — next <span aria-hidden="true">→</span></button>
   <button id="next" class="primary" type="button" hidden>Done — next step <span aria-hidden="true">→</span></button>
-  <button id="reset" type="button">Reset setup</button>
-  <button id="start-again" type="button" hidden>Return to home</button>
+  <div class="navigation"><button id="reset" type="button">Reset setup</button>
+  <button id="start-again" type="button" hidden>Return to home</button></div>
 </section>
-<footer>Free · No BM Support login required · Windows 10 / 11 (64-bit)<p>This app enables BM Remote Control, not the TV's debugging switch. Staff support still starts through your ticket or order.</p></footer>
+<footer>BM Support · Windows 10 / 11 (64-bit)</footer>
 </main><script src="wizard.js"></script><script src="renderer.js"></script></body></html>

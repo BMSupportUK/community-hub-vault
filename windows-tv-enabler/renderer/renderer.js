@@ -82,6 +82,7 @@ const confirmationValid = () => Boolean(confirmCode) && Date.now() < confirmExpi
 function say(text, isError) {
   progress.textContent = text;
   progress.classList.toggle('error', Boolean(isError));
+  el('connection-notice').hidden = wizard.step !== Step.CHECK && !text;
 }
 
 function setBusy(value) {
@@ -115,6 +116,16 @@ function render() {
   const install = apps === 'new';
   const installDone = installFinished(s, apps);
   const supportDone = s === Step.DONE && !install;
+  // Presentation follows the actual wizard; it never advances TV checks.
+  const stepIndex = s === Step.DEBUGGING ? 0 : s === Step.CHECK ? 1 : s === Step.TV_CODE ? 1 : s === Step.SETUP ? 2 : 3;
+  el('step-progress').hidden = askApps || (s === Step.DEBUGGING && device == null);
+  el('step-label').textContent = s === Step.DONE ? 'Setup complete' : `Step ${stepIndex + 1} of 4`;
+  document.querySelectorAll('.step-track span').forEach((segment, index) => {
+    segment.classList.toggle('complete', index < stepIndex || s === Step.DONE);
+    segment.classList.toggle('current', index === stepIndex && s !== Step.DONE);
+  });
+  el('connection-notice').hidden = s !== Step.CHECK && !progress.textContent;
+  el('connection-notice').querySelector('p').hidden = s !== Step.CHECK;
   reset.hidden = installDone; startAgain.hidden = askApps;
   const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && !install && device == null && !confirmCode);
   appsPick.hidden = !askApps; appsBack.hidden = true; // Return to home already covers going back to the options.
@@ -153,7 +164,7 @@ function render() {
   pickAndroid.classList.toggle('selected', device === 'android');
   pickAmazon.setAttribute('aria-pressed', String(device === 'amazon'));
   pickAndroid.setAttribute('aria-pressed', String(device === 'android'));
-  const titles = { [Step.DEBUGGING]: '1. Enable TV debugging', [Step.CHECK]: '2. Connect to your TV', [Step.TV_CODE]: '3. Type the code on your TV', [Step.SETUP]: install ? '4. Installing our apps' : '4. Setting up your TV', [Step.DONE]: 'TV setup confirmed' };
+  const titles = { [Step.DEBUGGING]: '1. Enable TV debugging', [Step.CHECK]: '2. Connect to your TV', [Step.TV_CODE]: '2. Confirm your TV', [Step.SETUP]: install ? '3. Installing our apps' : '3. Setting up your TV', [Step.DONE]: 'TV setup confirmed' };
   const labels = { [Step.DEBUGGING]: 'I\'ve switched debugging on — next ', [Step.CHECK]: 'Connect to this TV ', [Step.TV_CODE]: 'Confirm code and set up my TV ', [Step.SETUP]: 'Try again ' };
   heading.textContent = titles[s];
   if (s === Step.DONE && install) {
