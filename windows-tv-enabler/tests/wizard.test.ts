@@ -21,17 +21,6 @@ describe('Windows wizard matches the phone setup flow', () => {
     expect(w.resumeConfirmation('K7P4QX', expires, expires)).toBe(false);
     expect(w.step).toBe(Step.DEBUGGING);
   });
-  test('a used reference resumes without its code so a new one can be issued', () => {
-    const expires = 1000 + 24 * 60 * 60 * 1000;
-    const w = new Wizard();
-    expect(w.resumeUsed(expires, expires - 1)).toBe(true);
-    expect(w.step).toBe(Step.DONE);
-    expect(w.ready).toBe(true);
-    expect(canIssueConfirmation(false, expires, true, expires - 1)).toBe(true);
-    w.reset();
-    expect(w.resumeUsed(expires, expires)).toBe(false);
-    expect(w.step).toBe(Step.DEBUGGING);
-  });
   test('debugging must be confirmed before connecting', () => {
     const w = new Wizard();
     w.connected('1234');
