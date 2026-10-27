@@ -115,3 +115,21 @@ export const resetAccountEnablerPin = createServerFn({ method: "POST" })
     if (error) throw new Error("Couldn't reset your PIN. Try again.");
     return issue(supabaseAdmin, { user_id: context.userId });
   });
+
+/** True once BM TV Enabler has signed in (PIN swapped for a live device token) with this ticket's or its customer's PIN. */
+export const getTicketEnablerLoggedIn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ ticketId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    // RLS: only the ticket's customer or staff who can see the ticket get past this read.
+    const { data: t } = await context.supabase.from("tickets").select("id, user_id").eq("id", data.ticketId).maybeSingle();
+    if (!t) return { loggedIn: false };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const now = new Date().toISOString();
+    const { data: pins } = await supabaseAdmin.from("enabler_login_pins").select("id")
+      .or(`ticket_id.eq.${t.id},user_id.eq.${t.user_id}`).is("revoked_at", null).gt("expires_at", now);
+    const ids = (pins ?? []).map((p) => p.id);
+    if (!ids.length) return { loggedIn: false };
+    const { count } = await supabaseAdmin.from("enabler_device_tokens").select("id", { count: "exact", head: true }).in("pin_id", ids).gt("expires_at", now);
+    return { loggedIn: (count ?? 0) > 0 };
+  });
