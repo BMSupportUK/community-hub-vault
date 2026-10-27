@@ -381,8 +381,8 @@ async function loginWithPin(pin, post = globalThis.fetch) {
 
 async function refreshConnection(host, token, adb, progress, post = globalThis.fetch, delay = ms => new Promise(r => setTimeout(r, ms)), onUsage = () => {}, onExpired = () => {}) {
   if (!/^[0-9a-f]{64}$/.test(token || '')) throw new Error('Get a new Enabler confirmation reference first.');
-  const send = async body => {
-    const res = await post(`${SITE}/api/public/enabler-refresh`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const send = async request => {
+    const res = await post(`${SITE}/api/public/enabler-refresh`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(request) });
     const body = await res.json().catch(() => null);
     if ((res.ok || res.status === 403) && body?.state === 'expired') {
       onExpired();
