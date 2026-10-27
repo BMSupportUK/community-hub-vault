@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { CONFIRM_TTL_MS, makeConfirmCode } from "@/lib/enabler-confirm-code";
+import { CONFIRM_TTL_MS, makeConfirmCode, formatConfirmCode } from "@/lib/enabler-confirm-code";
 
 /**
  * Called by BM TV Enabler (phone/Windows) once it has confirmed the TV. Returns a short
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/public/enabler-confirm")({
           const { error } = await db.from("enabler_confirm_codes").insert({
             code_hash: await sha256Hex(code), device: parsed.data.device, checks: parsed.data.checks,
             app: parsed.data.app ?? null, session_id: sessionId, expires_at: expiresAt,
-            refresh_token_hash: await sha256Hex(refreshToken),
+            refresh_token_hash: await sha256Hex(refreshToken), reference_display: formatConfirmCode(code),
           });
           if (!error) return json({ code, helperLinked: !!sessionId, expiresAt, expiresAtMs: Date.parse(expiresAt), refreshToken });
         }

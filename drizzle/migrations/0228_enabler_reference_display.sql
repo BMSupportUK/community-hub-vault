@@ -1,0 +1,2 @@
+ALTER TABLE public.enabler_confirm_codes ADD COLUMN IF NOT EXISTS reference_display text;
+COMMENT ON COLUMN public.enabler_confirm_codes.reference_display IS 'Formatted reference shown only to the verified ticket/order owner so they can match it to BM TV Enabler.';
