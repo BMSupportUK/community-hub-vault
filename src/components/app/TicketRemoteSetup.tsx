@@ -105,39 +105,60 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     </section>;
   }
   const ready = appChecksPassed(row.app_checks, row.device);
-  const fresh = checksFresh(row);
   const canConnect = connectionReady(row) && !renewalGate.waiting;
   const complete = Boolean(row.completed_at);
-  const main = <section className="min-w-0 space-y-4 text-foreground">
-    <div className="flex flex-wrap items-center gap-2">
-      <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
-      {!closed && <div className="ml-auto flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="ghost" disabled={busy} onClick={() => void restart()}>Restart setup</Button>
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Change device setup</Button>
+  const linked = ready || complete || referenceActive;
+  const stage: 1 | 2 | 3 = canConnect ? 3 : linked ? 2 : 1;
+  const codeBox = !closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null;
+  const chips = [["App linked", linked], ["TV found", canConnect], ["Ready to share", canConnect]] as const;
+  return <div className="relative isolate mx-auto max-w-3xl overflow-hidden rounded-2xl border border-border text-foreground">
+    <img src={helpBg} alt="" aria-hidden="true" loading="lazy" width={1920} height={1088} className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />
+    <div className="pointer-events-none absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
+    <section className="space-y-6 p-5 sm:p-8">
+      <header className="space-y-3 text-center">
+        <h2 className="text-2xl font-bold sm:text-3xl">Share your TV screen with BM Support</h2>
+        <p className="text-sm text-muted-foreground">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</p>
+        <ol className="flex flex-wrap justify-center gap-2" aria-label="Progress">
+          {chips.map(([label, done]) => <li key={label} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${done ? "border-primary bg-primary/20 font-semibold" : "border-border bg-card/70 text-muted-foreground"}`}>{done ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4" />}{label}</li>)}
+        </ol>
+      </header>
+
+      {closed ? <p className="text-center text-sm">This ticket is closed.</p> : <div className="mx-auto max-w-xl space-y-4 rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur">
+        {stage === 1 && <>
+          <h3 className="text-lg font-semibold">1. Get BM TV Enabler on your Android phone</h3>
+          <div className="grid items-start gap-4 sm:grid-cols-2">
+            <div className="space-y-2 text-center"><EnablerQr compact /></div>
+            <TicketPin ticketId={ticketId} />
+          </div>
+          <h3 className="pt-2 text-lg font-semibold">2. Open the app, choose Screen-share support, then type its reference here</h3>
+          {codeBox}
+        </>}
+        {stage === 2 && <>
+          <h3 className="text-lg font-semibold">Keep BM TV Enabler open on your phone</h3>
+          <p className="text-sm" role="status">{renewal || "Press the button and we'll ask the app to find your TV. Your phone must be on the same Wi-Fi as the TV."}</p>
+          <Button size="lg" className="h-14 w-full text-base" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>
+            {renewalGate.waiting ? <><Loader2 className="mr-2 size-5 animate-spin" />Finding your TV…</> : "Find my TV"}
+          </Button>
+        </>}
+        {stage === 3 && <>
+          <h3 className="text-lg font-semibold">Your TV is ready</h3>
+          <p className="text-sm">Press the button and a member of staff will join your screen.</p>
+          <Button size="lg" className="h-16 w-full text-lg" disabled={busy} onClick={() => void connect()}><MonitorUp className="mr-2 size-6" />Connect my screen</Button>
+        </>}
       </div>}
-    </div>
-    <RemoteSetupSubTabs
-      setup={<RemoteSetupWizard row={row} referenceActive={referenceActive}
-        waiting={!canConnect && !ready && !complete && !referenceActive ? <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the BM TV Enabler Connection Status tab.</p> : null} />}
-      code={!closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : <p className="text-sm text-muted-foreground">This ticket is closed.</p>}
-      connection={<>
-    {canConnect && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
-      <h3 className="font-semibold">Your TV is ready</h3>
-      <p className="text-sm">BM TV Enabler has already picked up the code from BM Remote Helper. Press Connect to send your screen-share request to staff.</p>
-      <Button size="lg" className="w-full" disabled={busy} onClick={() => void connect()}>Connect</Button>
-    </div>}
-    {!closed && (!canConnect) && (ready || complete || referenceActive) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
-      <h3 className="font-semibold">Get a new TV connection</h3>
-      <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
-      <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
-    </div>}
-    {!closed && !canConnect && !(ready || complete || referenceActive) && <p className="text-sm text-muted-foreground">Enter your BM TV Enabler reference in the BM TV Enabler Connection Status tab first.</p>}
-    </>} />
-  </section>;
-  return <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_260px_260px]">
-    {main}
-    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr />{!closed && <TicketPin ticketId={ticketId} />}</aside>
-    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4"><WindowsEnablerDownload /></aside>
+
+      {!closed && <details className="mx-auto max-w-xl rounded-xl border border-border bg-card/80 p-4 text-sm">
+        <summary className="cursor-pointer font-semibold">Having trouble?</summary>
+        <div className="mt-4 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Switch to {row.device === "amazon" ? "Android / Google TV" : "Amazon Fire TV"}</Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => void restart()}>Restart setup</Button>
+          </div>
+          {stage !== 1 && <><p className="font-semibold">Enter a different BM TV Enabler reference</p>{codeBox}<TicketPin ticketId={ticketId} /></>}
+          <div className="space-y-2 border-t border-border pt-4 text-center"><WindowsEnablerDownload /></div>
+        </div>
+      </details>}
+    </section>
   </div>;
 }
 
