@@ -114,7 +114,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const stage: 1 | 2 | 3 = canConnect ? 3 : linked ? 2 : 1;
   const codeBox = !closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={markReferenceActive} /> : null;
   const tvConnected = ready || complete;
-  const shareReady = connectionReady(row) || complete;
+  const shareReady = connectionReady(row);
   const chips = [["App linked", linked || tvConnected], ["TV connected", tvConnected], ["Ready to share", shareReady]] as const;
   return <div className="relative isolate -m-4 min-h-[calc(100dvh-8rem)] overflow-hidden text-foreground sm:-m-6">
     <img src={helpBg} alt="" aria-hidden="true" loading="lazy" width={1920} height={1088} className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />
@@ -140,10 +140,10 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
           {codeBox}
         </>}
         {stage === 2 && <>
-          <h3 className="text-lg font-semibold">Keep BM TV Enabler open on your phone or PC</h3>
-          <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open, on the same Wi-Fi as your TV. Press the button and the app will connect to your TV for you."}</p>
+          <h3 className="text-lg font-semibold">{tvConnected ? "Press Allow on your TV" : "Keep BM TV Enabler open on your phone or PC"}</h3>
+          <p className="text-sm" role="status">{renewal || (tvConnected ? "Your TV has been checked. Now look at your TV: a box asks to allow debugging. Press Allow (tick \"Always allow\" if shown) and keep BM TV Enabler open. If no box appears, press the button below." : "Keep BM TV Enabler open, on the same Wi-Fi as your TV. Press the button and the app will connect to your TV for you.")}</p>
           <Button size="lg" className="h-14 w-full text-base" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>
-            {renewalGate.waiting ? <><Loader2 className="mr-2 size-5 animate-spin" />Waiting for you to press Allow on your TV…</> : "Send to BM TV Enabler"}
+            {renewalGate.waiting ? <><Loader2 className="mr-2 size-5 animate-spin" />Waiting for you to press Allow on your TV…</> : (tvConnected ? "Ask my TV again" : "Send to BM TV Enabler")}
           </Button>
           <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">Only the BM TV Enabler showing the reference below will get this. If your app is showing a <strong>different code</strong> (for example you used your phone instead of your PC), press <strong>Change reference number</strong> and type the code your app shows now — the ticks will update straight away.</p>
           {codeBox}
