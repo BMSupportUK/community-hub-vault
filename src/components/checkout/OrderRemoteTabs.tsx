@@ -12,7 +12,7 @@ import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { getOrderEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
-import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
+import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { RemoteSetupWizard } from "@/components/app/RemoteSetupWizard";
 import { screenShareInProgress } from "@/lib/tv-remote";
@@ -94,7 +94,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   const ready = appChecksPassed(row.app_checks, row.device);
   const fresh = checksFresh(row);
   const canConnect = connectionReady(row) && !renewalGate.waiting;
-  return <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+  return <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_260px_260px]">
     <section className="min-w-0 space-y-4 text-foreground">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
