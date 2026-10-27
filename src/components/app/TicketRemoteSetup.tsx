@@ -44,6 +44,9 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const confirmationStatus = useCallback(() => confirmationStatusFn({ data: { ticketId } }), [confirmationStatusFn, ticketId]);
   const [renewal, setRenewal] = useState("");
   const [referenceActive, setReferenceActive] = useState(false);
+  // Sticky: the code box remounts when the card changes and briefly reports "not active"
+  // while it re-checks, which used to bounce the card between screens (flicker).
+  const markReferenceActive = useCallback((active: boolean) => { if (active) setReferenceActive(true); }, []);
   const renewalGate = useEnablerRenewalGate(`ticket:${ticketId}`, row ? [row.pending_session_id ?? "", row.app_checked_at ?? "", (row as { checks_used_at?: string | null }).checks_used_at ?? ""].join("|") : null);
   const save = async (device: SetupDevice) => {
     setBusy(true);
@@ -108,7 +111,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const complete = Boolean(row.completed_at);
   const linked = ready || complete || referenceActive;
   const stage: 1 | 2 | 3 = canConnect ? 3 : linked ? 2 : 1;
-  const codeBox = !closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null;
+  const codeBox = !closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={markReferenceActive} /> : null;
   const tvConnected = ready || complete;
   const shareReady = connectionReady(row) || complete;
   const chips = [["App linked", linked || tvConnected], ["TV connected", tvConnected], ["Ready to share", shareReady]] as const;
