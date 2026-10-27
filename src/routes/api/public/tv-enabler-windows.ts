@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { logDownload } from "@/lib/download-log.server";
 
 /**
  * Serves the latest available "BM TV Enabler for Windows" installer (Install Guides → TV Remote Enabler → Windows).
@@ -8,11 +9,11 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/tv-enabler-windows")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: row } = await supabaseAdmin
           .from("app_builds")
-          .select("file_path, version_name")
+          .select("id, app_name, file_path, version_name")
           .ilike("app_name", "%tv enabler%windows%")
           .eq("is_available", true)
           .not("file_path", "is", null)
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/api/public/tv-enabler-windows")({
           "content-disposition": `attachment; filename="BM-TV-Enabler-Setup-${row.version_name ?? "latest"}.exe"`,
           "cache-control": "no-store",
         });
+        await logDownload(request, { source: "enabler_windows", buildId: row.id, appName: row.app_name, version: row.version_name, bytes: Number(upstream.headers.get("content-length")) || null });
         const len = upstream.headers.get("content-length");
         if (len) headers.set("content-length", len);
         return new Response(upstream.body, { status: 200, headers });

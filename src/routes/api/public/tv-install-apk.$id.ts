@@ -1,15 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { logDownload } from "@/lib/download-log.server";
 
 /** Streams one APK, only when an admin ticked it for TV setup and it's available. */
 export const Route = createFileRoute("/api/public/tv-install-apk/$id")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
         if (!/^[0-9a-f-]{36}$/i.test(params.id)) return new Response("Not found", { status: 404 });
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: row } = await supabaseAdmin
           .from("app_builds")
-          .select("file_path, file_name")
+          .select("app_name, file_path, file_name, version_name")
           .eq("id", params.id)
           .eq("install_on_tv", true)
           .eq("is_available", true)
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/api/public/tv-install-apk/$id")({
           "content-disposition": `attachment; filename="${(row.file_name ?? "app.apk").replace(/[^\w.\- ]/g, "")}"`,
           "cache-control": "no-store",
         });
+        await logDownload(request, { source: "tv_install", buildId: params.id, appName: row.app_name || row.file_name, version: row.version_name, bytes: Number(upstream.headers.get("content-length")) || null });
         const len = upstream.headers.get("content-length");
         if (len) headers.set("content-length", len);
         return new Response(upstream.body, { status: 200, headers });

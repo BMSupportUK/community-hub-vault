@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { logDownload } from "@/lib/download-log.server";
 
 /**
  * Serves the latest available BM Remote Helper (TV app, uploaded as "BM Support Remote") APK uploaded in
@@ -8,11 +9,11 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/remote-helper-apk")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: row } = await supabaseAdmin
           .from("app_builds")
-          .select("file_path, version_name")
+          .select("id, app_name, file_path, version_name")
           // The TV helper is uploaded in Install Guides as "BM Support Remote" (older uploads: "Remote Helper").
           .or("app_name.ilike.%remote helper%,app_name.ilike.bm support remote%")
           .eq("is_available", true)
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/api/public/remote-helper-apk")({
           "content-disposition": `attachment; filename="BMRemoteHelper-${row.version_name ?? "latest"}.apk"`,
           "cache-control": "no-store",
         });
+        await logDownload(request, { source: "remote_helper", buildId: row.id, appName: row.app_name, version: row.version_name, bytes: Number(upstream.headers.get("content-length")) || null });
         const len = upstream.headers.get("content-length");
         if (len) headers.set("content-length", len);
         return new Response(upstream.body, { status: 200, headers });

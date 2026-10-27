@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { logDownload } from "@/lib/download-log.server";
 
 /**
  * Serves the latest available "BM TV Enabler" phone APK (Install Guides → App APK).
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/api/public/tv-enabler-apk")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: row } = await supabaseAdmin
           .from("app_builds")
-          .select("file_path, version_name")
+          .select("id, app_name, file_path, version_name")
           .ilike("app_name", "%tv enabler%")
           .not("app_name", "ilike", "%windows%")
           .eq("is_available", true)
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/api/public/tv-enabler-apk")({
           "content-disposition": `attachment; filename="BMTvEnabler-${row.version_name ?? "latest"}.apk"`,
           "cache-control": "no-store",
         });
+        await logDownload(request, { source: "enabler_phone", buildId: row.id, appName: row.app_name, version: row.version_name, bytes: Number(upstream.headers.get("content-length")) || null });
         const len = upstream.headers.get("content-length");
         if (len) headers.set("content-length", len);
         return new Response(upstream.body, { status: 200, headers });
