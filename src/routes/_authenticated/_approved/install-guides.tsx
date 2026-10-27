@@ -34,6 +34,8 @@ import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
 import { TvEnablerPanel } from "@/components/app/TvEnablerPanel";
 import { WindowsTvEnablerPanel } from "@/components/app/WindowsTvEnablerPanel";
+import { DeviceInstallSetup } from "@/components/app/DeviceInstallSetup";
+import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
@@ -147,9 +149,10 @@ function InstallGuidesPage() {
   const { tab: tabParam, checkout: checkoutToken } = Route.useSearch();
   // Opening the guides screen always starts on the Welcome tab (deep links
   // with an explicit ?tab= still win); we never restore the last viewed tab.
-  const [tab, setTab] = useState<string>(() => tabParam || "welcome");
+  const legacyTab = (t?: string) => (t === "enabler" || t === "get-app" ? "setup" : t);
+  const [tab, setTab] = useState<string>(() => legacyTab(tabParam) || "welcome");
   useEffect(() => {
-    if (tabParam) setTab(tabParam);
+    if (tabParam) setTab(legacyTab(tabParam)!);
   }, [tabParam]);
   const [activeCat, setActiveCat] = useState<string | null>(() => {
     try { return sessionStorage.getItem(IG_CAT_KEY); } catch { return null; }
@@ -197,10 +200,9 @@ function InstallGuidesPage() {
     new Date(myTransferQuery.data.expiresAt).getTime() > nowTick;
 
   useEffect(() => {
-    const isRestrictedAdminTab = tab === "categories" || tab === "app-apk";
+    const isRestrictedAdminTab = tab === "categories" || tab === "app-apk" || tab === "download-log";
     if (
-      (tab === "get-app" && !canSeeAppTab) ||
-      (tab === "transfers" && !canSeeTransfers) ||
+            (tab === "transfers" && !canSeeTransfers) ||
       (isRestrictedAdminTab && !canManageGuides)
     ) {
       setTab("welcome");
@@ -656,10 +658,7 @@ function InstallGuidesPage() {
               <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-auto lg:max-w-full lg:flex-nowrap lg:rounded-full">
                 <TabsTrigger value="welcome" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
-                <TabsTrigger value="enabler" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">TV Remote Enabler</TabsTrigger>
-                {canSeeAppTab && (
-                  <TabsTrigger value="get-app" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Download BM Support Apps"}</TabsTrigger>
-                )}
+                <TabsTrigger value="setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Set up a device"}</TabsTrigger>
                 {canManageCategories && (
                   <TabsTrigger value="categories" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Categories</TabsTrigger>
                 )}
@@ -670,13 +669,16 @@ function InstallGuidesPage() {
                   <TabsTrigger value="app-apk" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">App APK</TabsTrigger>
                 )}
                 {canManageGuides && (
+                  <TabsTrigger value="download-log" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Download log</TabsTrigger>
+                )}
+                {canManageGuides && (
                   <TabsTrigger value="approvals" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Approvals</TabsTrigger>
                 )}
               </TabsList>
             </div>
           </header>
 
-        <div className={`relative isolate min-w-0 min-h-0 flex-1 px-2 py-3 sm:px-8 md:overflow-y-auto md:py-6 ${tab === "get-app" || tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
+        <div className={`relative isolate min-w-0 min-h-0 flex-1 px-2 py-3 sm:px-8 md:overflow-y-auto md:py-6 ${tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
               <div className="max-w-5xl space-y-4">
@@ -691,15 +693,9 @@ function InstallGuidesPage() {
             </TabsContent>
           )}
 
-          {canSeeAppTab && (
-            <TabsContent value="get-app" className="mt-0 min-w-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
-              <IllustratedHero
-                image={downloadIllustration}
-                title="Download the BM Support Apps"
-                text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
-              >
-                <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
-              </IllustratedHero>
+          {canManageGuides && (
+            <TabsContent value="download-log" className="mt-6">
+              <div className="max-w-6xl"><DownloadLogAdmin /></div>
             </TabsContent>
           )}
 
@@ -725,62 +721,29 @@ function InstallGuidesPage() {
 
 
 
-          <TabsContent value="enabler" className="mt-0 min-w-0">
-            {!canViewGuides ? (
-              <AccessRequestPanel
-                section="guides"
-                title="Remote help guides are for subscribers"
-                description="The TV Enabler and Remote Helper walkthroughs are available to subscribers. Request access and an admin will be notified straight away."
-              />
-            ) : (
-              <div className="w-full space-y-6">
-                <Tabs defaultValue="amazon" className="min-w-0">
-                  <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface-2 p-1 sm:grid-cols-4">
-                    {REMOTE_DEVICES.map((device) => (
-                      <TabsTrigger key={device.key} value={device.key} className="whitespace-normal px-4 py-2 text-center">
-                        {device.label}
-                      </TabsTrigger>
-                    ))}
-                    <TabsTrigger value="windows" className="whitespace-normal px-4 py-2 text-center">Windows</TabsTrigger>
-                  </TabsList>
-                  {REMOTE_DEVICES.map((device) => {
-                    const category = remoteHelperCategories.find((c) => c.slug === device.slug);
-                    const items = remoteHelperBlogs.filter((b) => b.category_id === category?.id);
-                    return (
-                      <TabsContent key={device.key} value={device.key} className="mt-6 min-w-0 space-y-6">
-                        <Tabs defaultValue="device-guides" className="min-w-0">
-                          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface-2 p-1" aria-label={`${device.label} sections`}>
-                            <TabsTrigger value="device-guides" className="whitespace-normal px-4 py-2">Guides</TabsTrigger>
-                            <TabsTrigger value="device-apps" className="whitespace-normal px-4 py-2">App downloads</TabsTrigger>
-                          </TabsList>
-                          <TabsContent value="device-guides" className="mt-5 min-w-0">
-                            <h2 className="mb-4 font-display text-2xl font-bold text-foreground">{device.label} guides</h2>
-                            {items.length === 0 ? (
-                              <p className="text-muted-foreground">No guides in this section yet.</p>
-                            ) : (
-                              renderGuideGrid(items, (fromId, toId) => { if (category) void reorderRemoteHelperBlogs(category.id, fromId, toId); })
-                            )}
-                          </TabsContent>
-                          <TabsContent value="device-apps" className="mt-5 min-w-0">
-                            {device.key === "amazon" ? (
-                              <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
-                                <AppTransferPanel remoteDevice={device.key} />
-                                <TvEnablerPanel />
-                              </div>
-                            ) : (
-                              <AppTransferPanel remoteDevice={device.key} />
-                            )}
-                          </TabsContent>
-                        </Tabs>
-                      </TabsContent>
-                    );
-                  })}
-                  <TabsContent value="windows" className="mt-6 min-w-0">
-                    {isDemo ? <p className="text-muted-foreground">Downloads are not available on the demo.</p> : <WindowsTvEnablerPanel />}
-                  </TabsContent>
-                </Tabs>
-              </div>
-            )}
+          <TabsContent value="setup" className="mt-0 min-w-0">
+            <DeviceInstallSetup
+              renderGuides={(key) => {
+                const slug = REMOTE_DEVICES.find((d) => d.key === key)!.slug;
+                const category = remoteHelperCategories.find((c) => c.slug === slug);
+                const items = remoteHelperBlogs.filter((b) => b.category_id === category?.id);
+                if (!canViewGuides) return <AccessRequestPanel section="guides" title="Guides are for subscribers" description="The setup guides are available to subscribers. Request access and an admin will be notified straight away." />;
+                return items.length === 0
+                  ? <p className="text-sm text-muted-foreground">No guides in this section yet.</p>
+                  : renderGuideGrid(items, (fromId, toId) => { if (category) void reorderRemoteHelperBlogs(category.id, fromId, toId); });
+              }}
+              renderFallback={(key) => isDemo ? <p className="text-sm text-muted-foreground">Downloads are not available on the demo.</p> : <AppTransferPanel remoteDevice={key} />}
+              windows={isDemo ? <p className="text-muted-foreground">Downloads are not available on the demo.</p> : <WindowsTvEnablerPanel />}
+              ios={
+                <IllustratedHero
+                  image={downloadIllustration}
+                  title="Download the BM Support Apps"
+                  text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
+                >
+                  <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
+                </IllustratedHero>
+              }
+            />
           </TabsContent>
 
           <TabsContent value="welcome" className="mt-0 min-w-0">
@@ -805,6 +768,7 @@ function InstallGuidesPage() {
                   Browse by category, search for what you need, and open PDFs directly in your browser.
                 </p>
                 <Button className="mt-6 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90" onClick={() => setTab("guides")}>Browse guides</Button>
+                <Button variant="outline" className="mt-6 ml-2" onClick={() => setTab("setup")}>Set up a device</Button>
               </div>
             </div>
           </TabsContent>
