@@ -616,7 +616,7 @@ function InstallGuidesPage() {
         <div className="min-h-0 min-w-0 flex-1 md:h-full">
         <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 min-w-0 w-full flex-col md:h-full">
           <header className="min-w-0 shrink-0 border-b border-border bg-surface/60 px-3 pb-3 pt-4 backdrop-blur sm:px-8 md:px-6 md:py-3">
-            <div className="grid min-w-0 grid-cols-1 gap-3 2xl:grid-cols-[minmax(0,1fr)_auto] 2xl:items-center">
+            <div className="grid min-w-0 grid-cols-1 gap-3">
               <div className="min-w-0">
                 {checkoutToken && (
                   <Button asChild variant="outline" size="sm" className="mb-2">
@@ -901,7 +901,7 @@ function InstallGuidesPage() {
       </div>
 
       {tab !== "enabler" && (
-        <aside className={`hidden xl:block w-full xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6 ${showEnablerDownloads ? "xl:w-[560px]" : "xl:w-[300px]"}`}>
+        <aside className={`hidden xl:block w-full xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6 ${showEnablerDownloads ? "xl:w-[300px] 2xl:w-[540px]" : "xl:w-[300px]"}`}>
           {showEnablerDownloads ? <EnablerDownloadSidebar /> : <AdSenseSlot slot="sidebar" />}
         </aside>
       )}
