@@ -344,7 +344,7 @@ async function loginWithPin(pin, post = globalThis.fetch) {
   return { token: body.token, expiresAtMs: Number(body.expiresAtMs) };
 }
 
-async function refreshConnection(host, token, adb, progress, post = globalThis.fetch, delay = ms => new Promise(r => setTimeout(r, ms))) {
+async function refreshConnection(host, token, adb, progress, post = globalThis.fetch, delay = ms => new Promise(r => setTimeout(r, ms)), onUsage = () => {}) {
   if (!/^[0-9a-f]{64}$/.test(token || '')) throw new Error('Get a new Enabler confirmation reference first.');
   const send = async body => {
     const res = await post(`${SITE}/api/public/enabler-refresh`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
@@ -352,6 +352,7 @@ async function refreshConnection(host, token, adb, progress, post = globalThis.f
     return res.json();
   };
   const task = await send({ token });
+  onUsage(task.referenceUsed === true);
   if (task.state !== 'refresh') return false;
   if (!/^[0-9a-f-]{36}$/.test(task.requestId || '')) throw new Error('Invalid refresh request.');
   try {

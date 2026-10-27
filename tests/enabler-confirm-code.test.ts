@@ -1,5 +1,13 @@
 import { test, expect } from "bun:test";
-import { confirmationActive, confirmCodeState, makeConfirmCode, normalizeConfirmCode, CONFIRM_TTL_MS } from "../src/lib/enabler-confirm-code";
+import { enablerReferenceUsed, confirmationActive, confirmCodeState, makeConfirmCode, normalizeConfirmCode, CONFIRM_TTL_MS } from "../src/lib/enabler-confirm-code";
+
+test("reference use includes either ticket or order binding, without exposing its scope", () => {
+  const unused = { used_at: null, bound_ticket_id: null, bound_order_id: null };
+  expect(enablerReferenceUsed(unused)).toBe(false);
+  expect(enablerReferenceUsed({ ...unused, bound_ticket_id: "ticket" })).toBe(true);
+  expect(enablerReferenceUsed({ ...unused, bound_order_id: "order" })).toBe(true);
+  expect(enablerReferenceUsed({ ...unused, used_at: "2026-10-27T08:07:00Z" })).toBe(true);
+});
 
 const now = new Date("2026-10-26T12:00:00Z");
 const row = (o: Partial<{ device: string; expires_at: string; used_at: string | null }> = {}) =>

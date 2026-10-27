@@ -1,6 +1,12 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Enabler new reference after use
+- [x] Both apps enable New code after capability-verified ticket/order use or expiry; unused references stay locked and original scope/expiry remain unchanged.
+- [x] Signed phone 1.42 and Windows 1.30 built/uploaded; live downloads checksum-match. 43 Bun tests and Java wizard checks pass; simulated Windows flow confirms unlock, issuance and relock. Website build OK.
+- [ ] Publish the reference-use response — awaits the user's publish request; updated apps need it to recognise ticket/order use.
+- [ ] Verify on physical phone/Windows and TV — requires customer devices; simulated interaction does not verify TV consent.
+
 ## Enabler install-complete return to start
 - [x] The finished app-install screen now offers "Return to the start" instead of Reset setup in both Enabler apps; the TV address, device choice and TV authorization are kept, only the install choice and result list clear. Phone and Windows wizard tests pass.
 - [x] Phone 1.40 (versionCode 41) signed with the permanent BM key and Windows 1.28.0 installer built, uploaded and registered as the current downloads; both live download endpoints serve the new files. Physical TV/PC checks remain below.

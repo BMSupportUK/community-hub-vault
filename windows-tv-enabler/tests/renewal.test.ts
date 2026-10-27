@@ -2,6 +2,13 @@ import { expect, test } from "bun:test";
 import { createRequire } from "node:module";
 const { refreshConnection } = createRequire(import.meta.url)("../core.cjs");
 
+test("used reference is reported while idle without running TV commands", async () => {
+  let used = false, commands = 0;
+  expect(await refreshConnection("192.168.1.25", "a".repeat(64), async () => { commands++; return ""; }, () => {}, async () => Response.json({ state: "idle", referenceUsed: true }), async () => {}, (value: boolean) => { used = value; })).toBe(false);
+  expect(used).toBe(true);
+  expect(commands).toBe(0);
+});
+
 test("no queued renewal means no TV commands, including while sharing is active", async () => {
   for (const state of ["idle", "in_progress", "expired"]) {
     let commands = 0;

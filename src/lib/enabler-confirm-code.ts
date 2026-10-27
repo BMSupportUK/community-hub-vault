@@ -2,6 +2,11 @@
 export const CONFIRM_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const CONFIRM_TTL_MS = 24 * 60 * 60 * 1000;
 
+/** Usage is read only after validating the per-reference capability. Never expose scope IDs. */
+export function enablerReferenceUsed(row: { used_at: string | null; bound_ticket_id: string | null; bound_order_id: string | null }): boolean {
+  return row.used_at !== null || row.bound_ticket_id !== null || row.bound_order_id !== null;
+}
+
 export function confirmationActive(expiresAt: string | null, now = Date.now()): boolean {
   return expiresAt !== null && Date.parse(expiresAt) > now;
 }
