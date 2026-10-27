@@ -47,15 +47,21 @@ const savedDevice = localStorage.getItem('bm-tv-device');
 if (savedDevice === 'amazon' || savedDevice === 'android') device = savedDevice;
 let apps = localStorage.getItem('bm-tv-apps');
 if (apps !== 'new' && apps !== 'have') apps = null;
-try {
-  const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation') || 'null');
-  if (saved && validHost(saved.host || '') && device && wizard.resumeConfirmation(saved.code, saved.expiresAtMs)) {
-    confirmCode = saved.code; confirmExpiresAt = saved.expiresAtMs;
+/** A saved, unexpired screen-share reference is reused as-is: no setup re-run and no new code until it expires. */
+function restoreConfirmation() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation') || 'null');
+    const savedType = saved && (saved.device || localStorage.getItem('bm-tv-device'));
+    if (!saved || !validHost(saved.host || '') || !savedType || !wizard.resumeConfirmation(saved.code, saved.expiresAtMs)) return false;
+    device = savedType; confirmCode = saved.code; confirmExpiresAt = saved.expiresAtMs;
     refreshToken = /^[0-9a-f]{64}$/.test(saved.refreshToken || '') ? saved.refreshToken : '';
     refreshHost = saved.host; address.value = saved.host; apps = 'have';
     checks = { adb: true, helper: true, control: true, accessibility: true, type: device };
-  }
-} catch { localStorage.removeItem('bm-tv-confirmation'); }
+    return true;
+  } catch { localStorage.removeItem('bm-tv-confirmation'); return false; }
+}
+restoreConfirmation();
+const confirmationValid = () => Boolean(confirmCode) && Date.now() < confirmExpiresAt;
 
 function say(text, isError) {
   progress.textContent = text;
@@ -92,7 +98,8 @@ function render() {
   const askApps = s === Step.DEBUGGING && apps == null;
   const install = apps === 'new';
   const installDone = installFinished(s, apps);
-  reset.hidden = installDone; startAgain.hidden = !installDone;
+  const supportDone = s === Step.DONE && !install;
+  reset.hidden = installDone; startAgain.hidden = !(installDone || supportDone);
   const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && !install && device == null && !confirmCode);
   appsPick.hidden = !askApps; appsBack.hidden = !(s === Step.DEBUGGING && apps != null);
   devicePick.hidden = !pick;
@@ -137,7 +144,8 @@ function render() {
     description.textContent = expired ? 'Expired — press New code to get a fresh confirmation code.' : confirmCode
       ? `Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. You can reuse it on the same ticket or order for 24 hours.\n\nExpires in ${Math.floor(minutes / 60)}h ${minutes % 60}m.\n\nThen press Connect on that tab to request screen sharing.`
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
-    action.firstChild.textContent = confirmCode ? 'New code ' : 'Get my confirmation code ';
+    action.firstChild.textContent = confirmCode ? (expired ? 'New code ' : 'New code — available when this one expires ') : 'Get my confirmation code ';
+    if (!expired && confirmCode) description.textContent += '\n\nNeed apps installed too? Press Return to the start — this code is kept until it expires.';
   } else if (askApps) {
     heading.textContent = 'What do you need?';
     description.textContent = 'Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.';
@@ -151,6 +159,8 @@ function render() {
     action.firstChild.textContent = labels[s];
   }
   setBusy(busy);
+  // The remembered reference stays valid for 24 hours, even after closing the app: no new code until then.
+  if (supportDone && confirmationValid() && !linkCode.value.trim()) action.disabled = true;
 }
 
 function cleanError(error) {
@@ -254,7 +264,9 @@ next.addEventListener('click', () => render());
  *  device choice and TV authorization are kept, so nothing restarts from scratch. */
 function backToStart() {
   if (busy) return;
-  wizard.reset(); checks = null; apps = null; appsResults = [];
+  // The saved screen-share reference (code, expiry, refresh token, TV) is kept until it expires.
+  wizard.reset(); apps = null; appsResults = [];
+  if (!confirmationValid()) checks = null;
   localStorage.removeItem('bm-tv-apps');
   say(''); render();
 }
@@ -269,7 +281,14 @@ reset.addEventListener('click', () => {
   localStorage.removeItem('bm-tv-address'); localStorage.removeItem('bm-tv-device'); localStorage.removeItem('bm-tv-apps');
   address.value = ''; say(''); render();
 });
-function pickApps(value) { if (busy) return; apps = value; if (value) localStorage.setItem('bm-tv-apps', value); else localStorage.removeItem('bm-tv-apps'); render(); }
+function pickApps(value) {
+  if (busy) return;
+  if (value === 'have' && restoreConfirmation()) { localStorage.setItem('bm-tv-apps', value); say(''); render(); return; }
+  apps = value; if (value) localStorage.setItem('bm-tv-apps', value); else localStorage.removeItem('bm-tv-apps');
+  // Debugging was already confirmed on this TV: go straight to Connect with the saved address.
+  if (value && device && validHost(address.value.trim())) wizard.confirmDebugging();
+  render();
+}
 appsNew.addEventListener('click', () => pickApps('new'));
 appsHave.addEventListener('click', () => pickApps('have'));
 appsBack.addEventListener('click', () => pickApps(null));
@@ -306,7 +325,7 @@ window.bmTv.progress(text => say(text));
 render();
 setInterval(() => { if (wizard.step === Step.DONE && confirmCode && !busy) render(); }, 1000);
 setInterval(async () => {
-  if (busy || refreshBusy || document.hidden || wizard.step !== Step.DONE || !refreshToken || Date.now() >= confirmExpiresAt) return;
+  if (busy || refreshBusy || document.hidden || !refreshToken || Date.now() >= confirmExpiresAt) return;
   refreshBusy = true;
   try {
     if (await window.bmTv.refresh(refreshHost, refreshToken)) say('✓ New TV connection sent. Press Connect on your ticket or order.');
