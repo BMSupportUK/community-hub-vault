@@ -7,7 +7,7 @@ type Row = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: 
 
 /** Instruction navigation is presentation only; app reports still own all verified checks. */
 export function RemoteSetupWizard({ row, referenceActive, confirmation, waiting, connection }: {
-  row: Row; referenceActive: boolean; confirmation: ReactNode; waiting?: ReactNode; connection: ReactNode;
+  row: Row; referenceActive: boolean; confirmation?: ReactNode; waiting?: ReactNode; connection?: ReactNode;
 }) {
   const steps = REMOTE_SETUP_STEPS[row.device];
   const firstIncomplete = steps.findIndex(step => !stepDone(step, row));
