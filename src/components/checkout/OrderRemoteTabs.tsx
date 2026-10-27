@@ -103,6 +103,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
       </div>
       <RemoteSetupWizard row={row} referenceActive={referenceActive}
         confirmation={<EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} />}
+        waiting={!canConnect && !ready && !row.completed_at && !referenceActive ? <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the previous step.</p> : null}
         connection={<>
       {canConnect && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
         <h3 className="font-semibold">Your TV is ready</h3>
@@ -114,7 +115,6 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
         <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
         <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
       </div>}
-      {!canConnect && !ready && !row.completed_at && !referenceActive && <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the previous step.</p>}
       </>} />
     </section>
     <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4">

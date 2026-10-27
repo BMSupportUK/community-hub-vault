@@ -115,6 +115,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     </div>
     <RemoteSetupWizard row={row} referenceActive={referenceActive}
       confirmation={!closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null}
+      waiting={!canConnect && !ready && !complete && !referenceActive ? <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the previous step.</p> : null}
       connection={<>
     {canConnect && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Your TV is ready</h3>
@@ -126,7 +127,6 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
       <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
     </div>}
-    {!canConnect && !ready && !complete && !referenceActive && <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the previous step.</p>}
     </>} />
   </section>;
   return <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_260px_260px]">
