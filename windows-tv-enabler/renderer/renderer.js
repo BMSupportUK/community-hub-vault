@@ -116,7 +116,7 @@ function render() {
       const name = document.createElement('strong'); name.textContent = r.name;
       const state = document.createElement('span');
       state.className = r.status === 'failed' ? 'app-state failed' : 'app-state';
-      state.textContent = r.status === 'installed' ? 'Installed' : r.status === 'already' ? 'Already on your TV' : "Didn't install — press Reset setup to try again";
+      state.textContent = r.status === 'installed' ? 'Installed' : r.status === 'already' ? 'Already on your TV' : "Didn't install — press Return to the start to try again";
       row.append(name, state); appsResult.append(row);
     }
   }
@@ -129,7 +129,7 @@ function render() {
   heading.textContent = titles[s];
   if (s === Step.DONE && install) {
     heading.textContent = 'Your apps are installed';
-    description.textContent = 'Each app is listed below with what happened. You can close this app. To install again, press Reset setup.';
+    description.textContent = 'Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.';
   } else if (s === Step.DONE) {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
     const minutes = Math.max(0, Math.ceil((confirmExpiresAt - Date.now()) / 60000));
@@ -193,7 +193,7 @@ async function run(stage, host) {
         const result = await window.bmTv.installApps(host);
         appsResults = result.results || [];
         wizard.setupFinished(true);
-        say(result.failed.length ? `Done, but ${result.failed.length} app${result.failed.length === 1 ? '' : 's'} didn't install — see the list below. Press Reset setup to try again.` : `✓ All done — ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} on your TV. See the list below.`, result.failed.length > 0);
+        say(result.failed.length ? `Done, but ${result.failed.length} app${result.failed.length === 1 ? '' : 's'} didn't install — see the list below. Press Return to the start to try again.` : `✓ All done — ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} on your TV. See the list below.`, result.failed.length > 0);
         return;
       }
       checks = await window.bmTv.check(host);
@@ -250,6 +250,16 @@ pairButton.addEventListener('click', async () => {
 showAgain.addEventListener('click', () => { if (!busy && wizard.tvCode) showCode(address.value.trim(), wizard.tvCode); });
 
 next.addEventListener('click', () => render());
+/** A finished app-install run goes back to "What do you need?" — the saved TV address,
+ *  device choice and TV authorization are kept, so nothing restarts from scratch. */
+function backToStart() {
+  if (busy) return;
+  wizard.reset(); checks = null; apps = null; appsResults = [];
+  localStorage.removeItem('bm-tv-apps');
+  say(''); render();
+}
+startAgain.addEventListener('click', backToStart);
+
 reset.addEventListener('click', () => {
   if (busy) return;
   if (!window.confirm('Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this computer\'s TV authorization are kept.')) return;
