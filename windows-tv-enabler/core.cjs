@@ -7,6 +7,11 @@ let enablerToken = '';
 function setEnablerToken(token) { enablerToken = /^[0-9a-f]{20,200}$/i.test(String(token || '')) ? String(token) : ''; }
 const downloadInit = () => (enablerToken ? { headers: { 'x-enabler-token': enablerToken } } : undefined);
 
+/** Wi-Fi APK transfers and installations need longer than ordinary TV commands. */
+function adbTimeout(args) {
+  return args.includes('push') || (args.includes('shell') && args.some(arg => /^pm install\b/.test(arg))) ? 180000 : 25000;
+}
+
 /** Downloads the latest BM Remote Helper APK so the customer never installs it by hand. */
 async function downloadHelper(destDir, fetchImpl = globalThis.fetch) {
   const fs = require('node:fs');
@@ -167,6 +172,7 @@ const SITE = 'https://bmsupport.uk';
 /** New-customer setups: installs every app an admin ticked "Install on TV during setup".
  * Existing packages bypass download, transfer and installation. Never fatal. */
 async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis.fetch, tempDir = require('node:os').tmpdir()) {
+  const wait = delay || (ms => new Promise(resolve => setTimeout(resolve, ms)));
   const fs = require('node:fs'); const path = require('node:path');
   let apps = [];
   try {
@@ -186,6 +192,19 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
     if (!/package:/.test(String(listed || ''))) listed = await shell('pm list packages');
     const disabled = new Set(parsePackages(await shell('pm list packages -d --user current').catch(() => '')));
     const packages = new Set(parsePackages(listed).filter(p => !disabled.has(p)));
+    const verifyInstalled = async packageName => {
+      if (typeof packageName !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(packageName)) return false;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        if (attempt) await wait(2000);
+        try {
+          // Global inventory could include disabled apps or apps on another profile.
+          const current = parsePackages(await shell('pm list packages --user current'));
+          const disabledNow = parsePackages(await shell('pm list packages -d --user current'));
+          if (current.includes(packageName) && !disabledNow.includes(packageName)) return true;
+        } catch { /* The TV may still be finishing; retry the read only. */ }
+      }
+      return false;
+    };
     for (let i = 0; i < apps.length; i++) {
       const app = apps[i]; const name = String(app.name || 'app').slice(0, 80);
       if (typeof app.packageName === 'string' && packages.has(app.packageName)) {
@@ -201,9 +220,12 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
         fs.mkdirSync(tempDir, { recursive: true });
         fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
         await adb(['-s', serial, 'push', file, '/data/local/tmp/bm-app.apk']);
-        const result = await shell('pm install -r /data/local/tmp/bm-app.apk');
-        if (result.includes('Success')) { installed.push(name); results.push({ name, status: 'installed' }); if (typeof app.packageName === 'string') packages.add(app.packageName); }
-        else if (result.includes('VERSION_DOWNGRADE')) { installed.push(name); results.push({ name, status: 'already' }); }
+        let result = '';
+        try { result = await shell('pm install -r /data/local/tmp/bm-app.apk'); }
+        catch { /* A lost reply does not prove installation failed. */ }
+        const confirmed = result.includes('Success') || await verifyInstalled(app.packageName);
+        if (confirmed) { installed.push(name); results.push({ name, status: result.includes('VERSION_DOWNGRADE') ? 'already' : 'installed' }); if (typeof app.packageName === 'string') packages.add(app.packageName); }
+        else if (result.includes('VERSION_DOWNGRADE') && !app.packageName) { installed.push(name); results.push({ name, status: 'already' }); }
         else { failed.push(name); results.push({ name, status: 'failed' }); }
       } catch { failed.push(name); results.push({ name, status: 'failed' }); }
       finally { try { fs.unlinkSync(file); } catch {} await shell('rm -f /data/local/tmp/bm-app.apk').catch(() => {}); }
@@ -380,4 +402,4 @@ async function refreshConnection(host, token, adb, progress, post = globalThis.f
   } catch (error) { await send({ token, requestId: task.requestId }).catch(() => {}); throw error; }
 }
 
-module.exports = { setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
+module.exports = { adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };

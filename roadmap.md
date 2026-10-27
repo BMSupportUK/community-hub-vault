@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Windows Enabler installation reporting
+- [x] Extend Windows APK push/install deadlines and reconcile uncertain replies against enabled current-profile package identities; 45 Windows tests pass, including lost replies, delayed installs and genuine failures. Physical reproduction remains unverified.
+- [ ] Physical Windows/TV verification — requires customer devices. Rebuilt release not requested yet.
+
 ## Enabler login PIN reuse
 - [x] Reuse owner-scoped PINs with encrypted redisplay and atomic expiry-only issuance; seven tests pass and build OK. Signed-in legacy PIN cannot be replaced early. Legacy hash-only PINs remain usable on their original browser until expiry.
 - [ ] Verify newly issued PIN read-back through the customer UI after the current legacy PIN expires; existing ticket/account PINs have no recoverable display value, so neither was revoked for testing. Publish awaits user request.
