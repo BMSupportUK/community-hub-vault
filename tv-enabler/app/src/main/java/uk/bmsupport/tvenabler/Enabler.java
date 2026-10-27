@@ -211,7 +211,11 @@ final class Enabler {
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
             p.step(0, "Checking which apps are already on your TV…");
-            java.util.Set<String> installed = InstalledApps.from(adb.shell("pm list packages"));
+            // Only apps installed and enabled for the TV's current profile count as "already there".
+            String listed = adb.shell("pm list packages --user current");
+            if (listed == null || !listed.contains("package:")) listed = adb.shell("pm list packages");
+            java.util.Set<String> installed = InstalledApps.from(listed);
+            try { installed.removeAll(InstalledApps.from(adb.shell("pm list packages -d --user current"))); } catch (Exception ignored) {}
             for (int i = 0; i < apps.length(); i++) {
                 org.json.JSONObject a = apps.optJSONObject(i);
                 if (a == null) continue;
