@@ -34,7 +34,7 @@ startButton.addEventListener('click', async () => {
   welcomeSection.hidden = true;
   wizardSection.hidden = false;
   // Every session after the welcome/PIN starts at "What do you need?" unless a setup is mid-way.
-  const validConfirmation = wizard.step === Step.DONE && (confirmCode || confirmationUsed) && Date.now() < confirmExpiresAt;
+  const validConfirmation = wizard.step === Step.DONE && confirmCode && Date.now() < confirmExpiresAt;
   if (!validConfirmation && (wizard.step === Step.DEBUGGING || wizard.step === Step.DONE)) {
     if (wizard.step === Step.DONE) { wizard.reset(); checks = null; confirmCode = ''; appsResults = []; }
     apps = null; localStorage.removeItem('bm-tv-apps'); render();
@@ -53,13 +53,9 @@ function restoreConfirmation() {
   try {
     const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation') || 'null');
     const savedType = saved && (saved.device || localStorage.getItem('bm-tv-device'));
-    if (!saved || !validHost(saved.host || '') || !savedType) return false;
-    const used = saved.referenceUsed === true;
-    // A used reference is removed: resume the confirmed TV without its code so a new one can be issued.
-    const resumed = used ? wizard.resumeUsed(saved.expiresAtMs) : wizard.resumeConfirmation(saved.code, saved.expiresAtMs);
-    if (!resumed) return false;
-    device = savedType; confirmCode = used ? '' : saved.code; confirmExpiresAt = saved.expiresAtMs;
-    confirmationUsed = used;
+    if (!saved || !validHost(saved.host || '') || !savedType || !wizard.resumeConfirmation(saved.code, saved.expiresAtMs)) return false;
+    device = savedType; confirmCode = saved.code; confirmExpiresAt = saved.expiresAtMs;
+    confirmationUsed = saved.referenceUsed === true;
     refreshToken = /^[0-9a-f]{64}$/.test(saved.refreshToken || '') ? saved.refreshToken : '';
     refreshHost = saved.host; address.value = saved.host; apps = 'have';
     checks = { adb: true, helper: true, control: true, accessibility: true, type: device };
@@ -149,10 +145,9 @@ function render() {
     heading.textContent = expired ? 'Confirmation code expired' : 'TV setup confirmed';
     description.textContent = expired ? 'Expired — press New code to get a fresh confirmation code.' : confirmCode
       ? `Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. You can reuse it on the same ticket or order for 24 hours.\n\nExpires in ${Math.floor(minutes / 60)}h ${minutes % 60}m.\n\nThen press Connect on that tab to request screen sharing.`
-      : confirmationUsed
-      ? 'Your reference was used on your ticket or order. Press Get my confirmation code for a new one — each ticket or order needs its own reference.'
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
-    action.firstChild.textContent = confirmCode ? (expired ? 'New code ' : 'New code — available after use or expiry ') : 'Get my confirmation code ';
+    action.firstChild.textContent = confirmCode ? (expired || confirmationUsed ? 'New code ' : 'New code — available after use or expiry ') : 'Get my confirmation code ';
+    if (!expired && confirmationUsed) description.textContent += '\n\nThis reference has been used on a ticket or order. New code is now available for another ticket or order; the existing reference stays valid on its original page until expiry.';
     if (!expired && confirmCode) description.textContent += '\n\nNeed apps installed too? Press Return to the start — this code is kept until it expires.';
   } else if (askApps) {
     heading.textContent = 'What do you need?';
@@ -341,14 +336,9 @@ setInterval(async () => {
     const result = await window.bmTv.refresh(refreshHost, token);
     if (token !== refreshToken) return;
     if (result.referenceUsed === true) {
-      // One reference per ticket or order: remove the used code and allow a new one straight away.
-      // The refresh capability is kept until expiry so a renewal on the original page still works.
       confirmationUsed = true;
-      confirmCode = '';
       const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation') || 'null');
-      if (saved && saved.refreshToken === token) localStorage.setItem('bm-tv-confirmation', JSON.stringify({ ...saved, code: '', referenceUsed: true }));
-      say('✓ Reference used on your ticket or order. You can get a new code for another ticket or order.');
-      render();
+      if (saved && saved.refreshToken === token) localStorage.setItem('bm-tv-confirmation', JSON.stringify({ ...saved, referenceUsed: true }));
     }
     if (result.done) say('✓ New TV connection sent. Press Connect on your ticket or order.');
   } catch (error) { say(cleanError(error), true); }
