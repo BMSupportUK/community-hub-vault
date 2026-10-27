@@ -18,6 +18,8 @@ let device = null, checks = null, busy = false, confirmCode = '', appsResults = 
 let confirmExpiresAt = 0;
 let confirmationUsed = false;
 let refreshToken = '', refreshHost = '', refreshBusy = false;
+// The install section gets its own reference, remembered for its 24-hour validity like the share one.
+let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshToken = '';
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
 const startButton = document.getElementById('welcome-start'), pinInput = el('pin-input'), pinMsg = el('pin-msg');
 const loggedIn = () => Number(localStorage.getItem('bm-pin-expires') || 0) > Date.now();
@@ -63,6 +65,17 @@ function restoreConfirmation() {
   } catch { localStorage.removeItem('bm-tv-confirmation'); return false; }
 }
 restoreConfirmation();
+/** Restore the install reference the same way: it lasts 24 hours from creation. */
+function restoreInstallConfirmation() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation-install') || 'null');
+    if (!saved || !validHost(saved.host || '') || !/^[A-Z0-9]{6}$/.test(saved.code || '') || !Number.isFinite(saved.expiresAtMs) || saved.expiresAtMs <= Date.now()) return false;
+    installCode = saved.code; installExpiresAt = saved.expiresAtMs; installUsed = saved.referenceUsed === true;
+    installRefreshToken = /^[0-9a-f]{64}$/.test(saved.refreshToken || '') ? saved.refreshToken : '';
+    return true;
+  } catch { localStorage.removeItem('bm-tv-confirmation-install'); return false; }
+}
+restoreInstallConfirmation();
 const confirmationValid = () => Boolean(confirmCode) && Date.now() < confirmExpiresAt;
 
 function say(text, isError) {
@@ -108,11 +121,17 @@ function render() {
   deviceHelp.hidden = !pick;
   addressBlock.hidden = s !== Step.CHECK;
   tvCodeBlock.hidden = s !== Step.TV_CODE;
-  codeBlock.hidden = !(s === Step.DONE && confirmCode) || install;
+  const shownCode = install ? installCode : confirmCode;
+  const shownExpiry = install ? installExpiresAt : confirmExpiresAt;
+  codeBlock.hidden = !(s === Step.DONE && shownCode);
   linkBlock.hidden = !(s === Step.DONE && wizard.ready) || install;
   const expired = Boolean(confirmCode) && Date.now() >= confirmExpiresAt;
-  codeBlock.textContent = expired ? 'Expired' : confirmCode ? `${confirmCode.slice(0, 3)}-${confirmCode.slice(3)}` : '';
-  next.hidden = true;
+  codeBlock.textContent = shownCode && Date.now() >= shownExpiry ? 'Expired' : shownCode ? `${shownCode.slice(0, 3)}-${shownCode.slice(3)}` : '';
+  next.hidden = !(installDone && installCode);
+  if (!next.hidden) {
+    next.textContent = installUsed || Date.now() >= installExpiresAt ? 'New code' : 'New code — available after use or expiry';
+    next.disabled = busy || !canIssueConfirmation(Boolean(installCode), installExpiresAt, installUsed);
+  }
   action.hidden = (s === Step.DEBUGGING && (device == null || apps == null)) || (s === Step.DONE && install);
   pairBlock.hidden = device !== 'android';
   scan.textContent = device === 'android' ? 'Find my Android TV' : 'Find my Fire TV';
@@ -138,7 +157,12 @@ function render() {
   heading.textContent = titles[s];
   if (s === Step.DONE && install) {
     heading.textContent = 'Your apps are installed';
-    description.textContent = 'Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.';
+    const iMinutes = Math.max(0, Math.ceil((installExpiresAt - Date.now()) / 60000));
+    description.textContent = installCode && Date.now() < installExpiresAt
+      ? `Each app is listed below with what happened.\n\nType the code shown into the Remote setup tab on your ticket or order at bmsupport.uk to confirm the apps are installed. It lasts 24 hours — expires in ${Math.floor(iMinutes / 60)}h ${iMinutes % 60}m.`
+      : installCode
+      ? 'Each app is listed below with what happened. Your install code has expired — press New code for a fresh one.'
+      : 'Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.';
   } else if (s === Step.DONE) {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
     const minutes = Math.max(0, Math.ceil((confirmExpiresAt - Date.now()) / 60000));
