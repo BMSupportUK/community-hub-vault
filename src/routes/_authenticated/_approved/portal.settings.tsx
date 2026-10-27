@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { Bell, Globe, Loader2, Palette, ShieldCheck, Smartphone, Tv, UserRound, Volume2 } from "lucide-react";
+import { Bell, Globe, KeyRound, Loader2, Palette, ShieldCheck, Smartphone, Tv, UserRound, Volume2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PortalTabs } from "@/components/app/PortalTabs";
@@ -9,10 +9,11 @@ import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggl
 import { NotificationChannelPrefs } from "@/components/app/NotificationChannelPrefs";
 import { SoundSettings } from "@/components/app/SoundSettings";
 import { TvRemoteSetupPanel } from "@/components/app/TvRemoteSetupPanel";
+import { AccountEnablerPinSettings } from "@/components/app/AccountEnablerPinSettings";
 import { AccountSecurityView } from "@/components/app/AccountSecurityView";
 import { EditProfileModal, PersonalThemePanel, type ProfileRow } from "./u.$username";
 
-const TABS = ["profile", "theme", "security", "browser", "phone", "sounds", "tv"] as const;
+const TABS = ["profile", "theme", "security", "browser", "phone", "sounds", "tv", "enabler"] as const;
 type SettingsTab = (typeof TABS)[number];
 
 export const Route = createFileRoute("/_authenticated/_approved/portal/settings")({
@@ -56,8 +57,10 @@ function PortalSettingsPage() {
             <TabsTrigger value="phone" className={item}><Smartphone className="size-4" />Phone alerts</TabsTrigger>
             <TabsTrigger value="sounds" className={item}><Volume2 className="size-4" />Sounds</TabsTrigger>
             <TabsTrigger value="tv" className={item}><Tv className="size-4" />TV remote</TabsTrigger>
+            {!isStaff && <TabsTrigger value="enabler" className={item}><KeyRound className="size-4" />BM TV Enabler PIN</TabsTrigger>}
           </TabsList>
 
+          <TabsContent value="enabler" className="pt-4"><AccountEnablerPinSettings /></TabsContent>
           <TabsContent value="profile" className="pt-4">
             {profile ? (
               <EditProfileModal inline profile={profile} isStaffProfile={isStaff} onClose={() => {}} onSaved={load} />
