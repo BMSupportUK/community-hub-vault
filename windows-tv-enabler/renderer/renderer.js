@@ -164,7 +164,7 @@ function render() {
   pickAndroid.classList.toggle('selected', device === 'android');
   pickAmazon.setAttribute('aria-pressed', String(device === 'amazon'));
   pickAndroid.setAttribute('aria-pressed', String(device === 'android'));
-  const titles = { [Step.DEBUGGING]: '1. Enable TV debugging', [Step.CHECK]: '2. Connect to your TV', [Step.TV_CODE]: '3. Type the code on your TV', [Step.SETUP]: install ? '4. Installing our apps' : '4. Setting up your TV', [Step.DONE]: 'TV setup confirmed' };
+  const titles = { [Step.DEBUGGING]: '1. Enable TV debugging', [Step.CHECK]: '2. Connect to your TV', [Step.TV_CODE]: '2. Confirm your TV', [Step.SETUP]: install ? '3. Installing our apps' : '3. Setting up your TV', [Step.DONE]: 'TV setup confirmed' };
   const labels = { [Step.DEBUGGING]: 'I\'ve switched debugging on — next ', [Step.CHECK]: 'Connect to this TV ', [Step.TV_CODE]: 'Confirm code and set up my TV ', [Step.SETUP]: 'Try again ' };
   heading.textContent = titles[s];
   if (s === Step.DONE && install) {

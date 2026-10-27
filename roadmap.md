@@ -2,9 +2,10 @@
 # Roadmap
 
 ## Enabler appearance refresh
-- [ ] Refresh phone and Windows presentation without changing setup, PIN or connection behavior.
-- [ ] Make Windows visibly follow one step at a time, matching the phone wizard.
-- [ ] Run existing tests and inspect Windows screens; validate phone compilation where tools permit.
+- [x] Refresh phone and Windows presentation without changing setup, PIN or connection behavior.
+- [x] Make Windows visibly follow one step at a time, matching the phone wizard; explicit hidden-panel styling prevents inactive controls from appearing.
+- [x] Windows 45 tests and four phone Java suites pass; phone debug APK compiles. Windows simulated choices/debugging/connect/return/pairing inspected, including narrow-window overflow.
+- [ ] Inspect the redesigned native phone screen on a real phone — requires a physical device; release awaits user request.
 
 ## Windows Enabler installation reporting
 - [x] Extend Windows APK push/install deadlines and reconcile uncertain replies against enabled current-profile package identities; 45 Windows tests pass, including lost replies, delayed installs and genuine failures. Physical reproduction remains unverified.
