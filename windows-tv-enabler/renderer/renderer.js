@@ -159,6 +159,8 @@ function render() {
     action.firstChild.textContent = labels[s];
   }
   setBusy(busy);
+  // The remembered reference stays valid for 24 hours, even after closing the app: no new code until then.
+  if (supportDone && confirmationValid() && !linkCode.value.trim()) action.disabled = true;
 }
 
 function cleanError(error) {
