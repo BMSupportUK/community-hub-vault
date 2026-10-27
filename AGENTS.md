@@ -18,7 +18,7 @@
 - ShiftStartEndAlert owns lifecycle/audio and publishes countdown presentation to ShiftHeaderNotice inside Clocks before Office Time; do not mount duplicate shift controllers in headers or restore bottom warning toasts.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
 - Remote-help articles and PDFs share source content in `resources/remote-help-guides`; PDF companion rows use private `guide-files` paths beside existing video rows so adding written guides never replaces Watch actions.
-- Install Guides reuses AppTransferPanel's secured APK cards in device-specific remote-help tabs and excludes those APKs from general downloads, keeping one download flow and unchanged access checks.
+- Install Guides keeps AppTransferPanel's secured APK cards and the Remote Helper guides in the Guides tab, excluding those APKs from general downloads.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
 - Ask location opt-in only at the direct BM security gate, never referrals/Fan Zone; refusal blocks ticket requests and tags appeals. Elsewhere capture GPS silently only with existing permission.
 - Dialogs fit mobile dvh; dense views drop phone columns. Knowledge Base is full-page with category/ratings rails.
@@ -70,5 +70,5 @@
 - TV Enabler website linking: hashed confirmation codes bind atomically to one ticket/order on first redemption; ticket and service-only order RPCs allow repeats until original expiry, without transferring sessions between scopes. Apps display the server-returned expiry. The old eight-digit path stays for older versions.
 - Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
-- Install Guides device picker: TVs (Enabler wizard + collapsed downloads), Alternative Install methods, Help from staff; no Windows option; legacy ?tab names map to setup.
+- Install Guides device picker: TVs get the Enabler wizard only; Alternative Install methods and Help from staff follow; guides and downloads keep their own tabs.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.

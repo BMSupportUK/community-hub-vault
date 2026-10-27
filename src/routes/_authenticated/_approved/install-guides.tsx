@@ -63,13 +63,6 @@ const IG_EDIT_KEY = "install-guides-editing";
 const IG_READ_KEY = "install-guides-reading";
 const IG_SHOW_EDITOR_KEY = "install-guides-show-editor";
 
-/** Categories holding the BM TV Enabler / BM Remote Helper (remote support) guides.
- *  These cards render in the TV Remote Enabler tab, not the Guides tab. */
-const REMOTE_HELPER_CAT_SLUGS = ["remote-helper-amazon", "remote-helper-android"];
-const REMOTE_DEVICES = [
-  { key: "amazon", slug: "remote-helper-amazon", label: "Amazon Fire TV" },
-  { key: "android", slug: "remote-helper-android", label: "Android / Google TV" },
-] as const;
 
 /** Pulls the guide password out of text like "Enter e2n4Zq to view guide". */
 function extractGuideCode(text: string | null | undefined): string | null {
@@ -283,11 +276,6 @@ function InstallGuidesPage() {
   const load = () => queryClient.invalidateQueries({ queryKey: ["install-guides-data"] });
 
   useEffect(() => {
-    if (activeCat && REMOTE_HELPER_CAT_SLUGS.includes(categories.find((c) => c.id === activeCat)?.slug ?? "")) {
-      // Remote Helper categories moved to the TV Remote Enabler tab — drop the stale selection.
-      setActiveCat(null);
-      return;
-    }
     if (!activeCat && categories.length && tab === "guides") {
       const android = categories.find(
         (c) => c.slug === "android" || c.name.toLowerCase() === "android",
@@ -317,19 +305,8 @@ function InstallGuidesPage() {
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
-  // TV Remote Enabler tab content: the two Remote Helper categories and their cards.
-  const sidebarCategories = useMemo(
-    () => categories.filter((c) => !REMOTE_HELPER_CAT_SLUGS.includes(c.slug)),
-    [categories],
-  );
-  const remoteHelperCategories = useMemo(
-    () => categories.filter((c) => REMOTE_HELPER_CAT_SLUGS.includes(c.slug)),
-    [categories],
-  );
-  const remoteHelperBlogs = useMemo(
-    () => blogs.filter((b) => remoteHelperCategories.some((c) => c.id === b.category_id)),
-    [blogs, remoteHelperCategories],
-  );
+  // The Guides tab lists every category, including the Remote Helper ones.
+  const sidebarCategories = categories;
 
   // Persist new-guide draft so it survives closing the dialog or leaving the page.
   useEffect(() => {
@@ -512,22 +489,6 @@ function InstallGuidesPage() {
     );
   };
 
-  // Reorders cards within one TV Remote Enabler section (per Remote Helper category).
-  const reorderRemoteHelperBlogs = async (categoryId: string, fromId: string, toId: string) => {
-    if (fromId === toId) return;
-    const inCat = blogs.filter((b) => b.category_id === categoryId);
-    const others = blogs.filter((b) => b.category_id !== categoryId);
-    const fromIdx = inCat.findIndex((b) => b.id === fromId);
-    const toIdx = inCat.findIndex((b) => b.id === toId);
-    if (fromIdx < 0 || toIdx < 0) return;
-    const [moved] = inCat.splice(fromIdx, 1);
-    inCat.splice(toIdx, 0, moved);
-    const updated = inCat.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
-    queryClient.setQueryData<typeof dataQuery.data>(["install-guides-data"], (prev) => prev ? { ...prev, blogs: [...others, ...updated] } : prev);
-    await Promise.all(
-      updated.map((b) => supabase.from("install_blogs").update({ sort_order: b.sort_order }).eq("id", b.id))
-    );
-  };
 
   // Guide card grid shared by the Guides tab and the TV Remote Enabler tab.
   const renderGuideGrid = (items: Blog[], onReorder: (fromId: string, toId: string) => void) => (
@@ -722,16 +683,6 @@ function InstallGuidesPage() {
 
           <TabsContent value="setup" className="mt-0 min-w-0">
             <DeviceInstallSetup
-              renderGuides={(key) => {
-                const slug = REMOTE_DEVICES.find((d) => d.key === key)!.slug;
-                const category = remoteHelperCategories.find((c) => c.slug === slug);
-                const items = remoteHelperBlogs.filter((b) => b.category_id === category?.id);
-                if (!canViewGuides) return <AccessRequestPanel section="guides" title="Guides are for subscribers" description="The setup guides are available to subscribers. Request access and an admin will be notified straight away." />;
-                return items.length === 0
-                  ? <p className="text-sm text-muted-foreground">No guides in this section yet.</p>
-                  : renderGuideGrid(items, (fromId, toId) => { if (category) void reorderRemoteHelperBlogs(category.id, fromId, toId); });
-              }}
-              renderFallback={(key) => isDemo ? <p className="text-sm text-muted-foreground">Downloads are not available on the demo.</p> : <AppTransferPanel remoteDevice={key} />}
               alternative={
                 <IllustratedHero
                   image={downloadIllustration}

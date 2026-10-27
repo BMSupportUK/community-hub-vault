@@ -1,9 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, ChevronDown, Download, Headset, Tv } from "lucide-react";
+import { ArrowLeft, ArrowRight, Download, Headset, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 
@@ -59,8 +58,8 @@ function EnablerQr() {
   </div>;
 }
 
-/** One-step-at-a-time Enabler setup for a TV, with the manual downloads kept as a backup. */
-function TvSteps({ device, guides, fallback }: { device: "amazon" | "android"; guides: ReactNode; fallback: ReactNode }) {
+/** One-step-at-a-time Enabler setup for a TV. */
+function TvSteps({ device }: { device: "amazon" | "android" }) {
   const [current, setCurrent] = useState(0);
   useEffect(() => setCurrent(0), [device]);
   const steps: { title: string; body: ReactNode }[] = [
@@ -77,14 +76,16 @@ function TvSteps({ device, guides, fallback }: { device: "amazon" | "android"; g
     },
     {
       title: "Install the apps",
-      body: <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-        <li>In BM TV Enabler choose <strong className="text-foreground">Install apps</strong>.</li>
-        <li>Press <strong className="text-foreground">Find my TV</strong> and pick your TV.</li>
-        <li>On the TV tick <strong className="text-foreground">Always allow</strong> and press <strong className="text-foreground">Allow</strong>.</li>
-        <li>The Enabler installs each BM app and skips any already on your TV, then lists what it did.</li>
-      </ol>,
+      body: <div className="space-y-3">
+        <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+          <li>In BM TV Enabler choose <strong className="text-foreground">Install apps</strong>.</li>
+          <li>Press <strong className="text-foreground">Find my TV</strong> and pick your TV.</li>
+          <li>On the TV tick <strong className="text-foreground">Always allow</strong> and press <strong className="text-foreground">Allow</strong>.</li>
+          <li>The Enabler installs each BM app and skips any already on your TV, then lists what it did.</li>
+        </ol>
+        <p className="text-sm text-muted-foreground">Once they're on your TV, the <strong className="text-foreground">Guides</strong> tab shows how to use each app.</p>
+      </div>,
     },
-    { title: "All done — your guides", body: <div className="space-y-3"><p className="text-sm text-muted-foreground">Your apps are on the TV. These guides show you how to use them.</p>{guides}</div> },
   ];
   const step = steps[current]!;
   return <div className="space-y-5">
@@ -100,20 +101,11 @@ function TvSteps({ device, guides, fallback }: { device: "amazon" | "android"; g
       <Button variant="outline" disabled={current === 0} onClick={() => setCurrent((v) => Math.max(0, v - 1))}><ArrowLeft className="size-4" />Back</Button>
       {current < steps.length - 1 && <Button onClick={() => setCurrent((v) => v + 1)}>Next<ArrowRight className="size-4" /></Button>}
     </div>
-    <Collapsible className="rounded-lg border border-border bg-surface/60">
-      <CollapsibleTrigger className="group flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-foreground">
-        Can't use the Enabler? Download the apps instead
-        <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="px-4 pb-4">{fallback}</CollapsibleContent>
-    </Collapsible>
   </div>;
 }
 
 /** "What are you setting up?" — device picker that leads into the matching setup. */
-export function DeviceInstallSetup({ renderGuides, renderFallback, alternative }: {
-  renderGuides: (device: "amazon" | "android") => ReactNode;
-  renderFallback: (device: "amazon" | "android") => ReactNode;
+export function DeviceInstallSetup({ alternative }: {
   alternative: ReactNode;
 }) {
   const [device, setDevice] = useState<SetupDeviceKey | null>(null);
@@ -146,7 +138,7 @@ export function DeviceInstallSetup({ renderGuides, renderFallback, alternative }
           <Button variant="outline" size="sm" onClick={() => pick(null)}><ArrowLeft className="size-4" />Change device</Button>
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
-          ? <TvSteps device={chosen.key} guides={renderGuides(chosen.key)} fallback={renderFallback(chosen.key)} />
+          ? <TvSteps device={chosen.key} />
           : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
       </>}
     </div>
