@@ -8,16 +8,15 @@ import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
-import { RemoteSetupWizard } from "@/components/app/RemoteSetupWizard";
-import { RemoteSetupSubTabs } from "@/components/app/RemoteSetupSubTabs";
-import { CheckCircle2, Circle, Smartphone, Tv } from "lucide-react";
+import helpBg from "@/assets/remote-setup-help-bg.jpg";
+import { CheckCircle2, Circle, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { getTicketEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
-import { REMOTE_SETUP_STEPS, appChecksPassed, checksFresh, connectionReady, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
+import { REMOTE_SETUP_STEPS, appChecksPassed, connectionReady, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
 
@@ -194,13 +193,13 @@ function TicketPin({ ticketId, staff }: { ticketId: string; staff?: boolean }) {
   return <EnablerPinBox scopeKey={`ticket:${ticketId}`} staff={staff} create={staff ? undefined : create} status={status} reveal={staff ? undefined : () => revealFn({ data: { ticketId } })} />;
 }
 
-function EnablerQr() {
+function EnablerQr({ compact }: { compact?: boolean }) {
   const [qr, setQr] = useState<string | null>(null);
   useEffect(() => { QRCode.toDataURL(TV_ENABLER_URL, { width: 400, margin: 1 }).then(setQr).catch(() => setQr(null)); }, []);
   return <>
     <h3 className="font-semibold">Get BM TV Enabler</h3>
     <p className="text-sm text-muted-foreground">Scan with your Android phone to download and install the app.</p>
-    {qr ? <img src={qr} alt="QR code to download BM TV Enabler" width={220} height={220} className="mx-auto rounded-md bg-card p-2" /> : <p className="text-sm text-muted-foreground">Loading…</p>}
+    {qr ? <img src={qr} alt="QR code to download BM TV Enabler" width={compact ? 160 : 220} height={compact ? 160 : 220} className="mx-auto rounded-md bg-card p-2" /> : <p className="text-sm text-muted-foreground">Loading…</p>}
     <a href={TV_ENABLER_URL} className="block text-xs text-primary underline">Or tap here on your phone</a>
   </>;
 }
