@@ -31,6 +31,9 @@ final class SetupWizard {
     static boolean canIssueConfirmation(boolean hasCode, long expiresAt, boolean used, long now) {
         return !hasCode || used || expiresAt <= now;
     }
+    static boolean referenceExpired(int status, String state) {
+        return (status == 200 || status == 403) && "expired".equals(state);
+    }
     boolean resumeConfirmation(String code, long expiresAt, long now) {
         if (code == null || !code.matches("[A-Z0-9]{6}") || expiresAt <= now) return false;
         step = Step.DONE; ready = true; tvCode = null; tries = 0;

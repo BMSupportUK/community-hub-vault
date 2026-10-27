@@ -26,6 +26,10 @@ public final class SetupWizardTest {
         check(SetupWizard.canIssueConfirmation(true, expiry, true, expiry - 1), "Ticket/order use enables new code before expiry");
         check(SetupWizard.canIssueConfirmation(true, expiry, false, expiry), "24h expiry enables new code");
         check(SetupWizard.canIssueConfirmation(false, 0, false, 1000), "First code can be issued");
+        check(SetupWizard.referenceExpired(403, "expired"), "Screen-share end expires the reference before 24 hours");
+        check(SetupWizard.referenceExpired(200, "expired"), "Successful expired-state response also clears the reference");
+        check(!SetupWizard.referenceExpired(500, "expired") && !SetupWizard.referenceExpired(403, "error"), "Connectivity/server failures must keep the saved reference");
+        check(SetupWizard.canIssueConfirmation(false, 0, false, expiry - 1), "Cleared ended-share reference permits a fresh code immediately");
         check(w.resumeConfirmation("K7P4QX", expiry, expiry - 1) && w.step == SetupWizard.Step.DONE, "Reopen restores confirmation until original 24-hour expiry");
         w.reset();
         check(!w.resumeConfirmation("K7P4QX", expiry, expiry) && w.step == SetupWizard.Step.DEBUGGING, "Expired confirmation cannot resume setup");

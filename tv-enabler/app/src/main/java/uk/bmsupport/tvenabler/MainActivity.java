@@ -43,7 +43,8 @@ public class MainActivity extends Activity {
     private String refreshToken, refreshHost;
     private boolean refreshBusy;
     private boolean confirmationUsed;
-    // The install section gets its own reference, remembered for its 24-hour validity like the share one.
+    private boolean sharingReferenceExpired;
+    // Install references and PINs are independent of screen-share expiry.
     private TextView installCodeView;
     private String installCodeText = "";
     private long installExpiresAt;
@@ -65,6 +66,16 @@ public class MainActivity extends Activity {
                                 render();
                             }));
                             if (done) ui.post(() -> say("✓ New TV connection sent. Press Connect on your ticket or order.", OK));
+                        } catch (Enabler.ReferenceExpired e) {
+                            ui.post(() -> {
+                                if (!token.equals(refreshToken)) return;
+                                confirmCode.setText(""); confirmExpiresAt = 0; refreshToken = null; confirmationUsed = false;
+                                sharingReferenceExpired = true;
+                                getSharedPreferences("tv", MODE_PRIVATE).edit().remove("confirmation").remove("confirmationExpiry")
+                                    .remove("confirmationToken").remove("confirmationHost").remove("confirmationUsed").apply();
+                                say("Sharing reference expired. Press New code before sharing again.", WARN);
+                                render();
+                            });
                         } catch (Exception e) { ui.post(() -> say(Enabler.friendly(e), WARN)); }
                         finally { ui.post(() -> refreshBusy = false); }
                     });
@@ -427,16 +438,16 @@ public class MainActivity extends Activity {
                 }
                 heading.setText("TV setup confirmed");
                 deviceHelp.setText("Which TV is this? Choose the same type as your ticket or order.");
-                boolean expired = confirmCode.length() > 0 && System.currentTimeMillis() >= confirmExpiresAt;
+                boolean expired = sharingReferenceExpired || (confirmCode.length() > 0 && System.currentTimeMillis() >= confirmExpiresAt);
                 heading.setText(expired ? "Confirmation code expired" : "TV setup confirmed");
                 confirmCode.setVisibility(expired ? View.GONE : confirmCode.getVisibility());
                 long minutes = Math.max(0, (confirmExpiresAt - System.currentTimeMillis() + 59999) / 60000);
-                description.setText(expired ? "Expired — press New code to get a fresh confirmation code."
+                description.setText(expired ? "This sharing reference has expired. Press New code, then enter the new reference on your ticket or order to share again."
                         : confirmCode.length() > 0
-                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works on that one ticket or order only, until it is closed.\n\nExpires in " + (minutes / 60) + "h " + (minutes % 60) + "m.\n\nThen press Connect on that tab to request screen sharing."
+                        ? "Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It expires when screen sharing ends or the ticket/order closes. You will need a new reference to share again.\n\nMaximum time remaining: " + (minutes / 60) + "h " + (minutes % 60) + "m.\n\nThen press Connect on that tab to request screen sharing."
                         : "Your TV is ready. Get your confirmation code, then type it on your ticket or order's Remote setup tab.");
                 if (linkCode() != null) { description.setText("Your TV is ready and this app is linked to your ticket or order. Press the button to send everything to the website, then press Connect there."); turnOn.setText("Send to the website"); }
-                else turnOn.setText(confirmCode.length() > 0 ? (expired || confirmationUsed ? "New code" : "New code — available after use or expiry") : "Get my confirmation code");
+                else turnOn.setText(expired ? "New code" : confirmCode.length() > 0 ? (confirmationUsed ? "New code" : "New code — available after use or expiry") : "Get my confirmation code");
                 if (!expired && confirmationUsed) description.setText(description.getText() + "\n\nThis reference has been used on a ticket or order. Press New code for your next ticket or order — each one needs its own code.");
                 if (!expired && confirmCode.length() > 0) description.setText(description.getText() + "\n\nNeed apps installed too? Press Return to home — this code is kept until it expires.");
                 break;
@@ -526,7 +537,7 @@ public class MainActivity extends Activity {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
                         else if (issued != null) {
                             refreshToken = issued.refreshToken; refreshHost = host; confirmExpiresAt = issued.expiresAt;
-                            confirmationUsed = false;
+                            confirmationUsed = false; sharingReferenceExpired = false;
                             getSharedPreferences("tv", MODE_PRIVATE).edit().putString("confirmation", issued.code)
                                 .putBoolean("confirmationUsed", false)
                                 .putLong("confirmationExpiry", issued.expiresAt).putString("confirmationToken", issued.refreshToken)
@@ -610,7 +621,7 @@ public class MainActivity extends Activity {
                 .setMessage("This can't be undone. Your saved TV address, device choice and BM TV Enabler reference codes will be cleared, and the new code you create next takes over from the old one. Installed TV apps and this phone's TV authorization are kept.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Confirm reset", (d, which) -> {
                     wizard.reset(); checks = null; device = null; apps = null; appsResults = new java.util.ArrayList<>();
-                    installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false;
+                    installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false; sharingReferenceExpired = false;
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps")
                         .remove("confirmation").remove("confirmationExpiry").remove("confirmationToken").remove("confirmationHost")
                         .remove("confirmationInstall").remove("confirmationInstallExpiry").remove("confirmationInstallToken").remove("confirmationInstallHost").remove("confirmationInstallUsed").commit();
@@ -753,6 +764,10 @@ public class MainActivity extends Activity {
     private LinearLayout.LayoutParams lp(int top) {
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         p.topMargin = top; return p;
+    }
+    @Override public void onWindowFocusChanged(boolean focused) {
+        super.onWindowFocusChanged(focused);
+        if (focused && confirmCode != null) { ui.removeCallbacks(refreshTick); ui.post(refreshTick); }
     }
     @Override protected void onDestroy() { ui.removeCallbacks(expiryTick); ui.removeCallbacks(refreshTick); super.onDestroy(); }
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }

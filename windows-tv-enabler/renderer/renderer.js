@@ -180,10 +180,10 @@ function render() {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
     const minutes = Math.max(0, Math.ceil((confirmExpiresAt - Date.now()) / 60000));
     heading.textContent = expired ? 'Confirmation code expired' : 'TV setup confirmed';
-    description.textContent = expired ? 'Expired — press New code to get a fresh confirmation code.' : confirmCode
-      ? `Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It works on that one ticket or order only, until it is closed.\n\nExpires in ${Math.floor(minutes / 60)}h ${minutes % 60}m.\n\nThen press Connect on that tab to request screen sharing.`
+    description.textContent = expired ? 'This sharing reference has expired. Press New code, then enter the new reference on your ticket or order to share again.' : confirmCode
+      ? `Type this code into the Remote setup tab on your ticket or order at bmsupport.uk. It expires when screen sharing ends or the ticket/order closes. You will need a new reference to share again.\n\nMaximum time remaining: ${Math.floor(minutes / 60)}h ${minutes % 60}m.\n\nThen press Connect on that tab to request screen sharing.`
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
-    action.firstChild.textContent = confirmCode ? (expired || confirmationUsed ? 'New code ' : 'New code — available after use or expiry ') : 'Get my confirmation code ';
+    action.firstChild.textContent = expired ? 'New code ' : confirmCode ? (confirmationUsed ? 'New code ' : 'New code — available after use or expiry ') : 'Get my confirmation code ';
     if (!expired && confirmationUsed) description.textContent += '\n\nThis reference has been used on a ticket or order. Press New code for your next ticket or order — each one needs its own code.';
     if (!expired && confirmCode) description.textContent += '\n\nNeed apps installed too? Press Return to home — this code is kept until it expires.';
   } else if (askApps) {
@@ -233,7 +233,7 @@ async function run(stage, host) {
       } else {
         const issued = await window.bmTv.confirmCode(checks, device, host);
         confirmCode = issued.code; confirmExpiresAt = issued.expiresAtMs;
-        confirmationUsed = false;
+        confirmationUsed = false; sharingReferenceExpired = false;
         refreshToken = issued.refreshToken || ''; refreshHost = host;
         localStorage.setItem('bm-tv-confirmation', JSON.stringify({ code: confirmCode, expiresAtMs: confirmExpiresAt, refreshToken, host, device, referenceUsed: false }));
         say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
@@ -344,6 +344,7 @@ reset.addEventListener('click', () => {
   if (!window.confirm('Reset setup?\n\nThis can\'t be undone. Your saved TV address, device choice and BM TV Enabler reference codes will be cleared, and the new code you create next takes over from the old one. Installed TV apps and this computer\'s TV authorization are kept.\n\nPress OK to confirm the reset.')) return;
   wizard.reset(); checks = null; device = null; apps = null; confirmCode = ''; appsResults = [];
   confirmExpiresAt = 0; refreshToken = ''; refreshHost = '';
+  sharingReferenceExpired = false;
   installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = '';
   localStorage.removeItem('bm-tv-confirmation');
   localStorage.removeItem('bm-tv-confirmation-install');
@@ -397,7 +398,7 @@ scan.addEventListener('click', () => runScan(false));
 window.bmTv.progress(text => say(text));
 render();
 setInterval(() => { if (wizard.step === Step.DONE && (confirmCode || installCode) && !busy) render(); }, 1000);
-setInterval(async () => {
+async function checkReferences() {
   if (busy || refreshBusy || document.hidden) return;
   refreshBusy = true;
   const token = refreshToken;
@@ -405,6 +406,14 @@ setInterval(async () => {
     if (token && Date.now() < confirmExpiresAt) {
       const result = await window.bmTv.refresh(refreshHost, token);
       if (token === refreshToken) {
+        if (result.expired === true) {
+          confirmCode = ''; confirmExpiresAt = 0; refreshToken = ''; confirmationUsed = false;
+          sharingReferenceExpired = true;
+          localStorage.removeItem('bm-tv-confirmation');
+          say('Sharing reference expired. Press New code before sharing again.');
+          render();
+          return;
+        }
         if (result.referenceUsed === true) {
           confirmationUsed = true;
           const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation') || 'null');
@@ -414,6 +423,7 @@ setInterval(async () => {
       }
     }
   } catch (error) { say(cleanError(error), true); }
+  finally { refreshBusy = false; }
   // The install reference only needs its usage check — renewals never apply to it.
   try {
     if (installRefreshToken && !installUsed && Date.now() < installExpiresAt) {
@@ -428,4 +438,7 @@ setInterval(async () => {
     }
   } catch { /* install usage check is best-effort */ }
   finally { refreshBusy = false; }
-}, 4000);
+}
+setInterval(checkReferences, 4000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReferences(); });
+window.addEventListener('focus', checkReferences);
