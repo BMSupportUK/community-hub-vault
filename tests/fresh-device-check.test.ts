@@ -16,3 +16,13 @@ test("used check shows as waiting for a fresh check, not confirmed", () => {
 test("fresh check shows as confirmed", () => {
   expect(remoteSetupProgress({ app_checks: ok, app_checked_at: iso(5), completed_at: null }, now).stage).toBe(4);
 });
+
+describe("active Enabler reference after the page is reset", () => {
+  const empty = { app_checks: {}, app_checked_at: null, completed_at: null, checks_used_at: null };
+  test("an active reference asks for a new connection, not the code again", () => {
+    expect(remoteSetupProgress(empty, Date.now(), true).title).toBe("Your BM TV Enabler reference is still active");
+  });
+  test("without a reference the page still waits for the Enabler code", () => {
+    expect(remoteSetupProgress(empty, Date.now(), false).title).toBe("Waiting for TV Enabler");
+  });
+});
