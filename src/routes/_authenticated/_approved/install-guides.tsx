@@ -33,7 +33,6 @@ import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
 import { TvEnablerPanel } from "@/components/app/TvEnablerPanel";
-import { WindowsTvEnablerPanel } from "@/components/app/WindowsTvEnablerPanel";
 import { DeviceInstallSetup } from "@/components/app/DeviceInstallSetup";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
 
@@ -733,8 +732,7 @@ function InstallGuidesPage() {
                   : renderGuideGrid(items, (fromId, toId) => { if (category) void reorderRemoteHelperBlogs(category.id, fromId, toId); });
               }}
               renderFallback={(key) => isDemo ? <p className="text-sm text-muted-foreground">Downloads are not available on the demo.</p> : <AppTransferPanel remoteDevice={key} />}
-              windows={isDemo ? <p className="text-muted-foreground">Downloads are not available on the demo.</p> : <WindowsTvEnablerPanel />}
-              ios={
+              alternative={
                 <IllustratedHero
                   image={downloadIllustration}
                   title="Download the BM Support Apps"

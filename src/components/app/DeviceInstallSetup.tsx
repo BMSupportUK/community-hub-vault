@@ -1,19 +1,18 @@
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, ChevronDown, Headset, Monitor, Smartphone, Tv } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Download, Headset, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 
-export type SetupDeviceKey = "amazon" | "android" | "windows" | "ios" | "remote";
+export type SetupDeviceKey = "amazon" | "android" | "alternative" | "remote";
 
 const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof Tv }[] = [
   { key: "amazon", label: "Amazon Fire TV", note: "Fire Stick, Cube or Fire TV", icon: Tv },
   { key: "android", label: "Android / Google TV", note: "Android boxes and Google TV", icon: Tv },
-  { key: "windows", label: "Windows PC", note: "Set up a TV from your computer", icon: Monitor },
-  { key: "ios", label: "iPhone / iPad", note: "Apple phones and tablets", icon: Smartphone },
+  { key: "alternative", label: "Alternative Install methods", note: "Other ways to get the apps", icon: Download },
   { key: "remote", label: "Help from staff", note: "Let staff install it with you by screen share", icon: Headset },
 ];
 
@@ -112,11 +111,10 @@ function TvSteps({ device, guides, fallback }: { device: "amazon" | "android"; g
 }
 
 /** "What are you setting up?" — device picker that leads into the matching setup. */
-export function DeviceInstallSetup({ renderGuides, renderFallback, windows, ios }: {
+export function DeviceInstallSetup({ renderGuides, renderFallback, alternative }: {
   renderGuides: (device: "amazon" | "android") => ReactNode;
   renderFallback: (device: "amazon" | "android") => ReactNode;
-  windows: ReactNode;
-  ios: ReactNode;
+  alternative: ReactNode;
 }) {
   const [device, setDevice] = useState<SetupDeviceKey | null>(null);
   useEffect(() => {
@@ -133,7 +131,7 @@ export function DeviceInstallSetup({ renderGuides, renderFallback, windows, ios 
       {!chosen ? <>
         <h2 className="font-display text-2xl font-bold text-foreground">What are you setting up?</h2>
         <p className="mt-1 text-sm text-muted-foreground">Pick your device and we'll walk you through it one step at a time.</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {DEVICES.map(({ key, label, note, icon: Icon }) => (
             <button key={key} type="button" onClick={() => pick(key)} className="flex flex-col items-start gap-2 rounded-lg border border-border bg-surface-2 p-4 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <Icon className="size-6 text-primary" />
@@ -149,7 +147,7 @@ export function DeviceInstallSetup({ renderGuides, renderFallback, windows, ios 
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
           ? <TvSteps device={chosen.key} guides={renderGuides(chosen.key)} fallback={renderFallback(chosen.key)} />
-          : chosen.key === "windows" ? windows : chosen.key === "remote" ? <RemoteHelpSteps /> : ios}
+          : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
       </>}
     </div>
   </div>;

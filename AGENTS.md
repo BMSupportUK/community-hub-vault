@@ -70,5 +70,5 @@
 - TV Enabler website linking: hashed confirmation codes bind atomically to one ticket/order on first redemption; ticket and service-only order RPCs allow repeats until original expiry, without transferring sessions between scopes. Apps display the server-returned expiry. The old eight-digit path stays for older versions.
 - Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
-- Install Guides setup uses one device picker (TVs: Enabler wizard + collapsed secured downloads; iOS: existing panel); legacy `?tab=enabler|get-app` maps to `setup`.
+- Install Guides device picker: TVs (Enabler wizard + collapsed downloads), Alternative Install methods, Help from staff; no Windows option; legacy ?tab names map to setup.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
