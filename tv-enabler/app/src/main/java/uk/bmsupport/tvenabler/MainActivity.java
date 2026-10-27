@@ -38,6 +38,12 @@ public class MainActivity extends Activity {
     private String refreshToken, refreshHost;
     private boolean refreshBusy;
     private boolean confirmationUsed;
+    // The install section gets its own reference, remembered for its 24-hour validity like the share one.
+    private TextView installCodeView;
+    private String installCodeText = "";
+    private long installExpiresAt;
+    private String installRefreshToken;
+    private boolean installUsed;
     private final Runnable refreshTick = new Runnable() {
         public void run() {
             if (isFinishing() || isDestroyed()) return;
@@ -190,6 +196,9 @@ public class MainActivity extends Activity {
         confirmCode = text("", 40, OK, true);
         confirmCode.setGravity(Gravity.CENTER); confirmCode.setTextIsSelectable(true);
         col.addView(confirmCode, lp(dp(12)));
+        installCodeView = text("", 40, OK, true);
+        installCodeView.setGravity(Gravity.CENTER); installCodeView.setTextIsSelectable(true);
+        col.addView(installCodeView, lp(dp(4)));
         appsList = new LinearLayout(this);
         appsList.setOrientation(LinearLayout.VERTICAL);
         col.addView(appsList, lp(dp(8)));
@@ -198,7 +207,7 @@ public class MainActivity extends Activity {
         status = text("", 16, WARN, false); col.addView(status, lp(dp(12)));
         turnOn = button("", ACCENT); turnOn.setOnClickListener(v -> start()); col.addView(turnOn, lp(dp(12)));
         next = button("Done — next step", ACCENT);
-        next.setOnClickListener(v -> { say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
+        next.setOnClickListener(v -> newInstallCode()); col.addView(next, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
         startAgain = button("Return to the start", ACCENT);
