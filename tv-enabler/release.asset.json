@@ -1,11 +1,1 @@
-{
-  "version": 1,
-  "asset_id": "07d0b575-ff37-4542-b962-b2a4e369145b",
-  "project_id": "5e1fe153-4c10-4ade-8c98-e355fcdea791",
-  "url": "/__l5e/assets-v1/07d0b575-ff37-4542-b962-b2a4e369145b/BM-TV-Enabler-1.50.apk",
-  "r2_key": "a/v1/5e1fe153-4c10-4ade-8c98-e355fcdea791/07d0b575-ff37-4542-b962-b2a4e369145b/BM-TV-Enabler-1.50.apk",
-  "original_filename": "BM-TV-Enabler-1.50.apk",
-  "size": 233772,
-  "content_type": "application/zip",
-  "created_at": "2026-10-27T18:31:54Z"
-}
+{"version": 1, "asset_id": "07d0b575-ff37-4542-b962-b2a4e369145b", "project_id": "5e1fe153-4c10-4ade-8c98-e355fcdea791", "storage_bucket": "app-builds", "storage_path": "tv-enabler/BM-TV-Enabler-1.51.apk", "url": "https://bmsupport.uk/api/public/tv-enabler-apk?download=1", "original_filename": "BM-TV-Enabler-1.51.apk", "size": 233844, "sha256": "6874b06378329e0b465a7233d04d2b49d478f0c1dbd41b38316c726ca9b729b2", "content_type": "application/vnd.android.package-archive", "created_at": "2026-10-27T20:35:00Z"}

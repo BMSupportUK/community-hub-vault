@@ -1,11 +1,1 @@
-{
-  "version": 1,
-  "asset_id": "c73f1db8-05b2-43f6-8ac5-96ef167ebdd3",
-  "project_id": "5e1fe153-4c10-4ade-8c98-e355fcdea791",
-  "url": "/__l5e/assets-v1/c73f1db8-05b2-43f6-8ac5-96ef167ebdd3/BM-TV-Enabler-Setup-1.39.0.exe",
-  "r2_key": "a/v1/5e1fe153-4c10-4ade-8c98-e355fcdea791/c73f1db8-05b2-43f6-8ac5-96ef167ebdd3/BM-TV-Enabler-Setup-1.39.0.exe",
-  "original_filename": "BM-TV-Enabler-Setup-1.39.0.exe",
-  "size": 106001386,
-  "content_type": "application/octet-stream",
-  "created_at": "2026-10-27T18:31:30Z"
-}
+{"version": 1, "asset_id": "c73f1db8-05b2-43f6-8ac5-96ef167ebdd3", "project_id": "5e1fe153-4c10-4ade-8c98-e355fcdea791", "storage_bucket": "app-builds", "storage_path": "tv-enabler/BM-TV-Enabler-Setup-1.40.0.exe", "url": "https://bmsupport.uk/api/public/tv-enabler-windows", "original_filename": "BM-TV-Enabler-Setup-1.40.0.exe", "size": 106123245, "sha256": "c8cb1bc0f4a2dcf103e6420d415c24f830cc05b33f22a152d68e426bad01ef5f", "content_type": "application/octet-stream", "created_at": "2026-10-27T20:35:00Z"}
