@@ -59,7 +59,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     setBusy(true);
     const { error } = await supabase.rpc("reset_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
     if (error) toast.error(error.message); else toast.success("Setup restarted — choose your device to begin again");
-    setRenewal("");
+    setRenewal(""); setReferenceActive(false);
     renewalGate.reset();
     await reload(); setBusy(false);
   };
