@@ -1639,6 +1639,13 @@
       "when": 1793101218022,
       "tag": "0233_enabler_pin_user_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 234,
+      "version": "7",
+      "when": 1793102174742,
+      "tag": "0234_enabler_pin_reuse",
+      "breakpoints": true
     }
   ]
 }
