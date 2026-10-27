@@ -318,6 +318,7 @@ async function report(code, checks, device, post = globalThis.fetch, helperCode 
   if (res.status === 404) throw new Error('That setup code isn\'t valid. Check the code on your ticket or order\'s Remote setup tab and try again.');
   if (res.status === 409) throw new Error('Your ticket or order is set up for the other TV type. Press Change device on its Remote setup tab, or pick the other TV type in this app.');
   if (res.status === 429) throw new Error('Too many tries. Wait 15 minutes, then try again.');
+  if (res.status === 426) throw new Error('Please update BM TV Enabler from bmsupport.uk to get a new code.');
   if (!res.ok) throw new Error(`BM Support couldn't be told (error ${res.status}). Try again.`);
 }
 
@@ -360,6 +361,7 @@ async function requestConfirmCode(checks, device, post = globalThis.fetch, helpe
   try { res = await post('https://bmsupport.uk/api/public/enabler-confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ app: 'windows-tv-enabler-1.6', protocol: 3, device, checks, kind, ...(/^\d{6}$/.test(helperCode || '') ? { helperCode } : {}) }) }); }
   catch { throw new Error('Couldn\'t reach BM Support. Check the internet connection and try again.'); }
   if (res.status === 429) throw new Error('Too many tries. Wait 15 minutes, then try again.');
+  if (res.status === 426) throw new Error('Please update BM TV Enabler from bmsupport.uk to get a new code.');
   const body = res.ok ? await res.json().catch(() => null) : null;
   if (!body || !/^[A-Z0-9]{6}$/.test(body.code || '')) throw new Error(`Couldn't get a code from BM Support (error ${res.status}). Try again.`);
   if (withExpiry && !Number.isFinite(body.expiresAtMs)) throw new Error('BM Support needs updating before a new confirmation code can be issued.');
