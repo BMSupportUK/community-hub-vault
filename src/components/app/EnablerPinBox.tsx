@@ -10,8 +10,8 @@ const fmt = (ms: number) => { const m = Math.max(0, Math.floor(ms / 60000)); ret
  * Customer: get (and re-show) the 24-hour PIN that logs BM TV Enabler in. Staff: see only whether
  * one is active and when it ends. Owners can restore the same PIN after reopening the page.
  */
-export function EnablerPinBox({ scopeKey, staff, create, status }: {
-  scopeKey: string; staff?: boolean;
+export function EnablerPinBox({ scopeKey, staff, create, status, reveal }: {
+  scopeKey: string; staff?: boolean; reveal?: () => Promise<Pin>;
    create?: () => Promise<Pin>; status: () => Promise<{ expires_at: string | null; pin?: string }>;
 }) {
   const key = `enabler-pin:${scopeKey}`;
@@ -19,6 +19,7 @@ export function EnablerPinBox({ scopeKey, staff, create, status }: {
   const [active, setActive] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const [now, setNow] = useState(Date.now());
   const refresh = useCallback(async () => {
     try {
@@ -32,7 +33,7 @@ export function EnablerPinBox({ scopeKey, staff, create, status }: {
     } catch { /* fail closed: don't issue a replacement if status is unknown */ }
   }, [status, key, staff]);
   useEffect(() => {
-    setPin(null); setActive(null); setChecked(false);
+    setPin(null); setActive(null); setChecked(false); setRevealed(false);
     if (!staff) { try { const p = JSON.parse(localStorage.getItem(key) ?? "null") as Pin | null; if (p && new Date(p.expires_at).getTime() > Date.now()) setPin(p); } catch { /* ignore */ } }
     void refresh();
     const t = window.setInterval(() => setNow(Date.now()), 30000);
@@ -45,6 +46,13 @@ export function EnablerPinBox({ scopeKey, staff, create, status }: {
     catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't get a PIN"); }
     setBusy(false);
   };
+  const doReveal = async () => {
+    if (!reveal) return;
+    setBusy(true);
+    try { const p = await reveal(); setPin(p); setActive(p.expires_at); setRevealed(true); toast.success("PIN sent to your notifications"); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't reveal the PIN"); }
+    setBusy(false);
+  };
   const left = active ? new Date(active).getTime() - now : 0;
   const live = left > 0;
   if (staff) return <div className="rounded-xl border border-border bg-card p-3 text-sm text-foreground">
@@ -55,11 +63,16 @@ export function EnablerPinBox({ scopeKey, staff, create, status }: {
   return <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4 text-left text-foreground">
     <h3 className="flex items-center gap-2 font-semibold"><KeyRound className="size-4" />BM TV Enabler PIN</h3>
     <p className="text-sm text-muted-foreground">BM TV Enabler asks for this PIN when it opens. It lasts 24 hours.</p>
-    {shown ? <>
+    {shown && (revealed || !reveal) ? <>
       <p className="text-center font-mono text-3xl font-bold tracking-[0.3em]">{shown.pin}</p>
       <p className={`text-center text-xs ${left < 3600_000 ? "text-destructive" : "text-muted-foreground"}`}>Valid for {fmt(left)}</p>
     </> : <>
-      {live ? <p className="text-xs text-muted-foreground">Your existing PIN is valid for {fmt(left)}. For PINs issued before this update, use the device where you requested it. A new PIN is available after expiry.</p>
+      {live && reveal ? <>
+        <p className="text-center font-mono text-3xl font-bold tracking-[0.3em] text-muted-foreground">••••••</p>
+        <p className="text-center text-xs text-muted-foreground">Valid for {fmt(left)}</p>
+        <Button className="w-full" variant="outline" disabled={busy} onClick={() => void doReveal()}>Reveal PIN</Button>
+        <p className="text-xs text-muted-foreground">Revealing also sends the PIN to your notifications.</p>
+      </> : live ? <p className="text-xs text-muted-foreground">Your existing PIN is valid for {fmt(left)}. For PINs issued before this update, use the device where you requested it. A new PIN is available after expiry.</p>
         : <Button className="w-full" disabled={busy || !checked} onClick={() => void make()}>{checked ? "Get BM TV Enabler PIN" : "Checking PIN…"}</Button>}
     </>}
   </div>;
