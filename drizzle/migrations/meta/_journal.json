@@ -1646,6 +1646,13 @@
       "when": 1793102174742,
       "tag": "0234_enabler_pin_reuse",
       "breakpoints": true
+    },
+    {
+      "idx": 235,
+      "version": "7",
+      "when": 1793105232623,
+      "tag": "0235_auto_claim_ticket_on_first_staff_reply",
+      "breakpoints": true
     }
   ]
 }
