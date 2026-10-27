@@ -7,7 +7,6 @@ import { revealEnablerPin, createTicketEnablerPin, getTicketEnablerPinStatus } f
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
-import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import helpBg from "@/assets/remote-setup-help-bg.jpg";
 import { CheckCircle2, Circle, Loader2, MonitorUp, Smartphone, Tv } from "lucide-react";
 import { toast } from "sonner";
@@ -16,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { getTicketEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
-import { REMOTE_SETUP_STEPS, appChecksPassed, connectionReady, stepDone, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
+import { appChecksPassed, checksFresh, connectionReady, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
 
@@ -187,14 +186,21 @@ function StaffRemoteSetup({ ticketId, row, reload }: { ticketId: string; row: Re
     <h2 className="text-xl font-semibold">Remote access setup</h2>
     <TicketPin ticketId={ticketId} staff />
     {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
-      <RemoteSetupProgress row={row} />
-      <p className="text-sm">Device: <strong>{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</strong> · {row.completed_at ? <span className="font-semibold text-primary">Confirmed by the apps</span> : row.app_checked_at ? "App reported — waiting on the rest" : "Waiting for the app to report"}</p>
-      {!row.completed_at && <>
-        <ol className="space-y-2">{REMOTE_SETUP_STEPS[row.device].map((s, i) => (
-          <li key={i} className="flex items-center gap-2 text-sm">{stepDone(s, row) ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}{s.title}</li>
-        ))}</ol>
-        <p className="text-xs text-muted-foreground">Ticks come only from BM TV Enabler / BM Support app checking the TV, and from BM Remote Helper's live code — the customer can't tick them.</p>
-      </>}
+      {(() => {
+        const linked = !!row.app_checked_at || !!row.completed_at;
+        const tv = checksFresh(row);
+        const ready = connectionReady(row);
+        const steps = [["App linked", linked], ["TV connected", tv], ["Ready to share", ready]] as const;
+        const next = ready ? "Ready — the customer can press Connect my screen, or you can request a screen share."
+          : tv ? "Waiting for the customer to press Allow on their TV."
+          : linked ? "Waiting for the customer to open BM TV Enabler and check their TV again."
+          : "Waiting for the customer to get BM TV Enabler and type its reference.";
+        return <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+          <ol className="flex flex-wrap gap-2">{steps.map(([label, done]) => <li key={label} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${done ? "border-primary bg-primary/20 font-semibold" : "border-border text-muted-foreground"}`}>{done ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4" />}{label}</li>)}</ol>
+          <p className="text-base font-semibold" role="status">{next}</p>
+          <p className="text-sm text-muted-foreground">Device: {row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</p>
+        </div>;
+      })()}
     </>}
   </section>;
 }
