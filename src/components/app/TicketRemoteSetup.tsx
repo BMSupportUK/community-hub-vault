@@ -118,7 +118,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     </div>
     <RemoteSetupSubTabs
       setup={<RemoteSetupWizard row={row} referenceActive={referenceActive}
-        waiting={!canConnect && !ready && !complete && !referenceActive ? <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the Change code tab.</p> : null} />}
+        waiting={!canConnect && !ready && !complete && !referenceActive ? <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the BM TV Enabler Connection Status tab.</p> : null} />}
       code={!closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : <p className="text-sm text-muted-foreground">This ticket is closed.</p>}
       connection={<>
     {canConnect && !closed && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
@@ -131,7 +131,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
       <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
     </div>}
-    {!closed && !canConnect && !(ready || complete || referenceActive) && <p className="text-sm text-muted-foreground">Enter your BM TV Enabler reference in the Change code tab first.</p>}
+    {!closed && !canConnect && !(ready || complete || referenceActive) && <p className="text-sm text-muted-foreground">Enter your BM TV Enabler reference in the BM TV Enabler Connection Status tab first.</p>}
     </>} />
   </section>;
   return <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_260px_260px]">
