@@ -114,7 +114,7 @@ function render() {
   const install = apps === 'new';
   const installDone = installFinished(s, apps);
   const supportDone = s === Step.DONE && !install;
-  reset.hidden = installDone; startAgain.hidden = !(installDone || supportDone);
+  reset.hidden = installDone; startAgain.hidden = askApps;
   const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && !install && device == null && !confirmCode);
   appsPick.hidden = !askApps; appsBack.hidden = !(s === Step.DEBUGGING && apps != null);
   devicePick.hidden = !pick;
@@ -144,7 +144,7 @@ function render() {
       const name = document.createElement('strong'); name.textContent = r.name;
       const state = document.createElement('span');
       state.className = r.status === 'failed' ? 'app-state failed' : 'app-state';
-      state.textContent = r.status === 'installed' ? 'Installed' : r.status === 'already' ? 'Already on your TV' : "Didn't install — press Return to the start to try again";
+      state.textContent = r.status === 'installed' ? 'Installed' : r.status === 'already' ? 'Already on your TV' : "Didn't install — press Return to home to try again";
       row.append(name, state); appsResult.append(row);
     }
   }
@@ -162,7 +162,7 @@ function render() {
       ? `Each app is listed below with what happened.\n\nType the code shown into the Remote setup tab on your ticket or order at bmsupport.uk to confirm the apps are installed. It lasts 24 hours — expires in ${Math.floor(iMinutes / 60)}h ${iMinutes % 60}m.`
       : installCode
       ? 'Each app is listed below with what happened. Your install code has expired — press New code for a fresh one.'
-      : 'Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.';
+      : 'Each app is listed below with what happened. You can close this app, or press Return to home to do something else.';
   } else if (s === Step.DONE) {
     deviceHelp.textContent = 'Which TV is this? Choose the same type as your ticket or order.';
     const minutes = Math.max(0, Math.ceil((confirmExpiresAt - Date.now()) / 60000));
@@ -172,7 +172,7 @@ function render() {
       : 'Your TV is ready. Get your confirmation code, then type it on your ticket or order\'s Remote setup tab.';
     action.firstChild.textContent = confirmCode ? (expired || confirmationUsed ? 'New code ' : 'New code — available after use or expiry ') : 'Get my confirmation code ';
     if (!expired && confirmationUsed) description.textContent += '\n\nThis reference has been used on a ticket or order. New code is now available for another ticket or order; the existing reference stays valid on its original page until expiry.';
-    if (!expired && confirmCode) description.textContent += '\n\nNeed apps installed too? Press Return to the start — this code is kept until it expires.';
+    if (!expired && confirmCode) description.textContent += '\n\nNeed apps installed too? Press Return to home — this code is kept until it expires.';
   } else if (askApps) {
     heading.textContent = 'What do you need?';
     description.textContent = 'Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.';
@@ -241,7 +241,7 @@ async function run(stage, host) {
             localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ code: installCode, expiresAtMs: installExpiresAt, refreshToken: installRefreshToken, host, device: dev, referenceUsed: false }));
           } catch { /* The apps are on the TV either way; the code is extra proof for the ticket or order. */ }
         }
-        say(result.failed.length ? `Done, but ${result.failed.length} app${result.failed.length === 1 ? '' : 's'} didn't install — see the list below. Press Return to the start to try again.` : `✓ All done — ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} on your TV. See the list below.`, result.failed.length > 0);
+        say(result.failed.length ? `Done, but ${result.failed.length} app${result.failed.length === 1 ? '' : 's'} didn't install — see the list below. Press Return to home to try again.` : `✓ All done — ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} on your TV. See the list below.`, result.failed.length > 0);
         return;
       }
       checks = await window.bmTv.check(host);
