@@ -4,7 +4,7 @@
 ## Enabler sharing-reference expiry
 - [x] Update phone and Windows to clear server-expired sharing references, offer New code, and explain expiry on screen-share end; retain install references and PINs.
 - [x] 47 Windows tests and phone wizard tests pass; phone Java compiles. Simulated Windows expiry clears only sharing storage and New code saves a replacement. Physical TV end-to-end check requires customer devices.
-- [ ] Release phone 1.52 and Windows 1.41.0 with sharing-reference expiry changes.
+- [x] Released signed phone 1.52 (code 53) and Windows 1.41.0; 47 Windows tests and phone wizard tests pass, permanent phone certificate verified, packaged Windows source matches, both live downloads checksum-match the new releases. Physical TV checks remain device-dependent.
 
 ## Enabler appearance refresh
 - [x] Release both redesigned apps: signed phone 1.50 and Windows 1.39.0; permanent assets and current download records updated.
