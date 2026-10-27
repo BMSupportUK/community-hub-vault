@@ -242,8 +242,8 @@ function PayPage() {
         ) : undefined}
         appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}
       />);
-      // Customers get Order / Remote setup / Screen share tabs, like support tickets.
-      return usesCustomerOrderRemoteTabs(token, canManage) && !view.order.cancelled ? <OrderRemoteTabs token={token} password={pw}>{template}</OrderRemoteTabs> : template; })()}
+      // Customers raise a ticket for remote installation help; no setup tabs on the order page.
+      return usesCustomerOrderRemoteTabs(token, canManage) && !view.order.cancelled ? <OrderRemoteTabs orderRef={view.order.ref}>{template}</OrderRemoteTabs> : template; })()}
       {canManage && view.order.id && (
         <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
           <DialogContent>
