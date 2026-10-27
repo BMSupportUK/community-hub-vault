@@ -330,7 +330,7 @@ final class Enabler {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-confirm").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
-            String body = "{\"app\":\"tv-enabler-1.17\",\"kind\":\"" + kind + "\"," + (helperCode != null && helperCode.matches("\\d{6}") ? "\"helperCode\":\"" + helperCode + "\"," : "") + "\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
+            String body = "{\"app\":\"tv-enabler-1.17\",\"protocol\":3,\"kind\":\"" + kind + "\"," + (helperCode != null && helperCode.matches("\\d{6}") ? "\"helperCode\":\"" + helperCode + "\"," : "") + "\"device\":\"" + device + "\",\"checks\":{\"adb\":" + c.adb + ",\"helper\":" + c.helper
                     + ",\"control\":" + c.control + ",\"accessibility\":" + c.accessibility + "}}";
             try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
             code = h.getResponseCode();
