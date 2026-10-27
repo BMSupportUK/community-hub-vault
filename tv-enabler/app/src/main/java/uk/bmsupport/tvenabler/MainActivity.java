@@ -258,6 +258,9 @@ public class MainActivity extends Activity {
         SetupWizard.Step s = wizard.step;
         boolean askApps = s == SetupWizard.Step.DEBUGGING && apps == null;
         boolean install = "new".equals(apps);
+        boolean installDone = SetupWizard.installFinished(s, apps);
+        reset.setVisibility(installDone ? View.GONE : View.VISIBLE);
+        startAgain.setVisibility(installDone ? View.VISIBLE : View.GONE);
         appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
         appsBack.setVisibility(s == SetupWizard.Step.DEBUGGING && apps != null ? View.VISIBLE : View.GONE);
         boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
@@ -271,7 +274,7 @@ public class MainActivity extends Activity {
         next.setVisibility(View.GONE);
         turnOn.setVisibility((s == SetupWizard.Step.DEBUGGING && (device == null || apps == null)) || (s == SetupWizard.Step.DONE && install) ? View.GONE : View.VISIBLE);
         find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
-        appsList.setVisibility(s == SetupWizard.Step.DONE && install && !appsResults.isEmpty() ? View.VISIBLE : View.GONE);
+        appsList.setVisibility(installDone && !appsResults.isEmpty() ? View.VISIBLE : View.GONE);
         if (appsList.getVisibility() == View.VISIBLE) {
             appsList.removeAllViews();
             for (Enabler.AppResult r : appsResults) {
@@ -282,7 +285,7 @@ public class MainActivity extends Activity {
                 row.addView(name, np);
                 TextView state = text(r.status == Enabler.AppResult.INSTALLED ? "Installed"
                         : r.status == Enabler.AppResult.ALREADY ? "Already on your TV"
-                        : "Didn't install — press Reset setup to try again", 14,
+                        : "Didn't install — press Return to the start to try again", 14,
                         r.status == Enabler.AppResult.FAILED ? WARN : OK, false);
                 state.setGravity(Gravity.END);
                 row.addView(state);
@@ -320,7 +323,7 @@ public class MainActivity extends Activity {
             case DONE:
                 if (install) {
                     heading.setText("Your apps are installed");
-                    description.setText("Each app is listed below with what happened. You can close this app. To install again, press Reset setup.");
+                    description.setText("Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.");
                     break;
                 }
                 heading.setText("TV setup confirmed");
