@@ -281,7 +281,7 @@ public class MainActivity extends Activity {
         find.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
         tvCodeInput.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         showAgain.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
-        confirmCode.setVisibility(s == SetupWizard.Step.DONE && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
+        confirmCode.setVisibility(s == SetupWizard.Step.DONE && !install && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
         next.setVisibility(View.GONE);
         turnOn.setVisibility((s == SetupWizard.Step.DEBUGGING && (device == null || apps == null)) || (s == SetupWizard.Step.DONE && install) ? View.GONE : View.VISIBLE);
         find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
