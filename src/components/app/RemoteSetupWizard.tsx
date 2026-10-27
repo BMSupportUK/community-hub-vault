@@ -23,14 +23,17 @@ export function RemoteSetupWizard({ row, referenceActive, confirmation, connecti
         <span className="text-muted-foreground">{stepDone(step, row) ? "Confirmed by Enabler" : "Remote setup"}</span>
       </div>
       <progress aria-label="Remote setup progress" value={current + 1} max={steps.length} className="h-2 w-full accent-primary" />
-      <div className="grid grid-cols-4 gap-2" aria-hidden="true">
-        {steps.map((item, index) => <span key={item.proof} className={`h-1 rounded-full ${index <= current ? "bg-primary" : "bg-muted"}`} />)}
+      <div className="flex items-center justify-between gap-2" aria-hidden="true">
+        {steps.map((item, index) => <div key={item.proof} className="flex flex-1 items-center gap-2 last:flex-none">
+          <span className={`flex size-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${index === current ? "border-primary bg-primary text-primary-foreground" : stepDone(item, row) ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>{stepDone(item, row) ? <CheckCircle2 className="size-4" /> : index + 1}</span>
+          {index < steps.length - 1 && <span className={`h-px flex-1 ${index < current ? "bg-primary" : "bg-border"}`} />}
+        </div>)}
       </div>
     </div>
     <section aria-label={`Step ${current + 1}: ${step.title}`} className="min-h-44 space-y-4">
       <h3 className="flex items-start gap-2 text-lg font-semibold">{stepDone(step, row) && <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />}{step.title}</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-      <div className={current === 2 ? "" : "hidden"}>{confirmation}</div>
+      <div className={current >= 2 ? "" : "hidden"}>{confirmation}</div>
       {current === steps.length - 1 && connection}
     </section>
     <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
