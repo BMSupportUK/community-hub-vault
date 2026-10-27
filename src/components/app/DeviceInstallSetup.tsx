@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 import { EnablerPinBox } from "@/components/app/EnablerPinBox";
-import { createTicketEnablerPin, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
+import { createTicketEnablerPin, createAccountEnablerPin, getAccountEnablerPinStatus, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { supabase } from "@/integrations/supabase/client";
@@ -150,11 +150,20 @@ function StaffHelpEnablerPin() {
     return statusFn({ data: { ticketId } });
   }, [statusFn, ticketId]);
   if (ticketId === undefined) return <div className="h-28 animate-pulse rounded-md bg-muted" />;
-  if (!ticketId) return <div className="space-y-2">
+  if (!ticketId) return user ? <AccountEnablerPin userId={user.id} /> : <div className="space-y-2">
     <Button disabled className="w-full whitespace-normal"><KeyRound className="size-4 shrink-0" />Get BM TV Enabler PIN</Button>
-    <p className="text-xs text-muted-foreground">Get your PIN from your order's Remote setup tab, or open a ticket in Help from staff to request one here.</p>
+    <p className="text-xs text-muted-foreground">Sign in to get your BM TV Enabler PIN.</p>
   </div>;
   return <EnablerPinBox scopeKey={`ticket:${ticketId}`} create={create} status={status} />;
+}
+
+/** PIN bound to the signed-in account, for customers without a help ticket. */
+function AccountEnablerPin({ userId }: { userId: string }) {
+  const createFn = useServerFn(createAccountEnablerPin);
+  const statusFn = useServerFn(getAccountEnablerPinStatus);
+  const create = useCallback(() => createFn(), [createFn]);
+  const status = useCallback(() => statusFn(), [statusFn]);
+  return <EnablerPinBox scopeKey={`account:${userId}`} create={create} status={status} />;
 }
 
 /** One-step-at-a-time Enabler setup for a TV. */

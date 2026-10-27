@@ -5,11 +5,11 @@ import { unlock } from "@/lib/checkout.server";
 import { PIN_TTL_MS, makePin, pinHash } from "@/lib/enabler-pin";
 
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
-type Scope = { ticket_id: string } | { order_id: string };
+type Scope = { ticket_id: string } | { order_id: string } | { user_id: string };
 
 async function issue(db: Db, scope: Scope) {
-  const col = "ticket_id" in scope ? "ticket_id" : "order_id";
-  const id = "ticket_id" in scope ? scope.ticket_id : scope.order_id;
+  const col = "ticket_id" in scope ? "ticket_id" : "order_id" in scope ? "order_id" : "user_id";
+  const id = "ticket_id" in scope ? scope.ticket_id : "order_id" in scope ? scope.order_id : scope.user_id;
   await db.from("enabler_login_pins").update({ revoked_at: new Date().toISOString() }).eq(col, id).is("revoked_at", null);
   for (let i = 0; i < 8; i++) {
     const pin = makePin();
@@ -20,7 +20,7 @@ async function issue(db: Db, scope: Scope) {
   throw new Error("Couldn't make a PIN. Try again.");
 }
 
-async function status(db: Db, col: "ticket_id" | "order_id", id: string) {
+async function status(db: Db, col: "ticket_id" | "order_id" | "user_id", id: string) {
   const { data } = await db.from("enabler_login_pins").select("expires_at").eq(col, id).is("revoked_at", null)
     .gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(1).maybeSingle();
   return { expires_at: data?.expires_at ?? null };
@@ -64,4 +64,19 @@ export const getOrderEnablerPinStatus = createServerFn({ method: "POST" })
     const u = await unlock(data.token, data.password);
     if (!u) return { expires_at: null };
     return status(u.supabaseAdmin, "order_id", u.link.order_id as string);
+  });
+
+/** Signed-in customer without a ticket/order (Install Guides self install): a PIN bound to their account. */
+export const createAccountEnablerPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return issue(supabaseAdmin, { user_id: context.userId });
+  });
+
+export const getAccountEnablerPinStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return status(supabaseAdmin, "user_id", context.userId);
   });

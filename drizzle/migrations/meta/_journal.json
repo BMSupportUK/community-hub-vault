@@ -1632,6 +1632,13 @@
       "when": 1793093904141,
       "tag": "0232_app_download_log",
       "breakpoints": true
+    },
+    {
+      "idx": 233,
+      "version": "7",
+      "when": 1793101218022,
+      "tag": "0233_enabler_pin_user_scope",
+      "breakpoints": true
     }
   ]
 }
