@@ -36,6 +36,8 @@ const SetupWizard = (() => {
     if (m[2] !== undefined && (Number(m[2]) < 1 || Number(m[2]) > 65535)) return false;
     return m[1].split('.').every(part => Number(part) <= 255);
   }
-  return { Step, CodeResult, MAX_TRIES, Wizard, newCode, ready, validHost };
+  /** A finished app-install run offers "Return to the start", never "Reset setup". */
+  function installFinished(step, apps) { return step === Step.DONE && apps === 'new'; }
+  return { Step, CodeResult, MAX_TRIES, Wizard, newCode, ready, validHost, installFinished };
 })();
 if (typeof module !== 'undefined') module.exports = SetupWizard;
