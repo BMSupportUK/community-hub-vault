@@ -230,7 +230,7 @@ public class MainActivity extends Activity {
         next.setOnClickListener(v -> newInstallCode()); col.addView(next, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
-        startAgain = button("Return to the start", ACCENT);
+        startAgain = button("Return to home", ACCENT);
         startAgain.setOnClickListener(v -> backToStart()); col.addView(startAgain, lp(dp(20)));
         ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(root); setContentView(sv);
         // A remembered platform/address is a convenience, never proof that a TV is ready.
@@ -327,7 +327,7 @@ public class MainActivity extends Activity {
         boolean installDone = SetupWizard.installFinished(s, apps);
         boolean supportDone = s == SetupWizard.Step.DONE && !install;
         reset.setVisibility(installDone ? View.GONE : View.VISIBLE);
-        startAgain.setVisibility(installDone || supportDone ? View.VISIBLE : View.GONE);
+        startAgain.setVisibility(askApps ? View.GONE : View.VISIBLE);
         appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
         appsBack.setVisibility(s == SetupWizard.Step.DEBUGGING && apps != null ? View.VISIBLE : View.GONE);
         boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
@@ -360,7 +360,7 @@ public class MainActivity extends Activity {
                 row.addView(name, np);
                 TextView state = text(r.status == Enabler.AppResult.INSTALLED ? "Installed"
                         : r.status == Enabler.AppResult.ALREADY ? "Already on your TV"
-                        : "Didn't install — press Return to the start to try again", 14,
+                        : "Didn't install — press Return to home to try again", 14,
                         r.status == Enabler.AppResult.FAILED ? WARN : OK, false);
                 state.setGravity(Gravity.END);
                 row.addView(state);
@@ -403,7 +403,7 @@ public class MainActivity extends Activity {
                             ? "Each app is listed below with what happened.\n\nType the code shown into the Remote setup tab on your ticket or order at bmsupport.uk to confirm the apps are installed. It lasts 24 hours — expires in " + (iMinutes / 60) + "h " + (iMinutes % 60) + "m."
                             : installCodeText.length() > 0
                             ? "Each app is listed below with what happened. Your install code has expired — press New code for a fresh one."
-                            : "Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.");
+                            : "Each app is listed below with what happened. You can close this app, or press Return to home to do something else.");
                     break;
                 }
                 heading.setText("TV setup confirmed");
@@ -419,7 +419,7 @@ public class MainActivity extends Activity {
                 if (linkCode() != null) { description.setText("Your TV is ready and this app is linked to your ticket or order. Press the button to send everything to the website, then press Connect there."); turnOn.setText("Send to the website"); }
                 else turnOn.setText(confirmCode.length() > 0 ? (expired || confirmationUsed ? "New code" : "New code — available after use or expiry") : "Get my confirmation code");
                 if (!expired && confirmationUsed) description.setText(description.getText() + "\n\nThis reference has been used on a ticket or order. New code is now available for another ticket or order; the existing reference stays valid on its original page until expiry.");
-                if (!expired && confirmCode.length() > 0) description.setText(description.getText() + "\n\nNeed apps installed too? Press Return to the start — this code is kept until it expires.");
+                if (!expired && confirmCode.length() > 0) description.setText(description.getText() + "\n\nNeed apps installed too? Press Return to home — this code is kept until it expires.");
                 break;
         }
         setBusy(busy);
@@ -494,7 +494,7 @@ public class MainActivity extends Activity {
                         long failedCount = 0;
                         for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
                         if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
-                        else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Return to the start to try again.", WARN);
+                        else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Return to home to try again.", WARN);
                     } else if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
                         wizard.setupFinished(ready);
