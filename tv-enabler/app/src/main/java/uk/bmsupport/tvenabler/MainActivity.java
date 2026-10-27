@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(20), dp(32), dp(20), dp(24));
         contentBox.setBackgroundColor(BG);
         contentBox.addView(text("BM TV Enabler", 26, FG, true));
-        contentBox.addView(text("TV setup · 1.40", 14, MUTED, false));
+        contentBox.addView(text("TV setup · 1.41", 14, MUTED, false));
         // Welcome on open: logo, message and Get started before the wizard.
         welcomeBox = new LinearLayout(this);
         welcomeBox.setOrientation(LinearLayout.VERTICAL);
@@ -252,6 +252,8 @@ public class MainActivity extends Activity {
         if ("have".equals(a) && restoreConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
         apps = a;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply();
+        // Debugging was already confirmed on this TV: go straight to Connect with the saved address.
+        if (device != null && SetupWizard.validHost(address.getText().toString().trim())) wizard.confirmDebugging();
         render();
     }
 
