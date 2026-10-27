@@ -3,7 +3,7 @@ import { EnablerCodeBox } from "@/components/app/EnablerCodeBox";
 import { EnablerLinkBox } from "@/components/app/EnablerLinkBox";
 import { EnablerPinBox } from "@/components/app/EnablerPinBox";
 import { useServerFn } from "@tanstack/react-start";
-import { createTicketEnablerPin, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
+import { revealEnablerPin, createTicketEnablerPin, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
@@ -167,10 +167,10 @@ function StaffRemoteSetup({ ticketId, row, reload }: { ticketId: string; row: Re
 }
 
 function TicketPin({ ticketId, staff }: { ticketId: string; staff?: boolean }) {
-  const createFn = useServerFn(createTicketEnablerPin), statusFn = useServerFn(getTicketEnablerPinStatus);
+  const createFn = useServerFn(createTicketEnablerPin), statusFn = useServerFn(getTicketEnablerPinStatus), revealFn = useServerFn(revealEnablerPin);
   const create = useCallback(() => createFn({ data: { ticketId } }), [createFn, ticketId]);
   const status = useCallback(() => statusFn({ data: { ticketId } }), [statusFn, ticketId]);
-  return <EnablerPinBox scopeKey={`ticket:${ticketId}`} staff={staff} create={staff ? undefined : create} status={status} />;
+  return <EnablerPinBox scopeKey={`ticket:${ticketId}`} staff={staff} create={staff ? undefined : create} status={status} reveal={staff ? undefined : () => revealFn({ data: { ticketId } })} />;
 }
 
 function EnablerQr() {

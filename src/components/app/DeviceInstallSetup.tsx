@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 import { EnablerPinBox } from "@/components/app/EnablerPinBox";
-import { createTicketEnablerPin, createAccountEnablerPin, getAccountEnablerPinStatus, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
+import { createTicketEnablerPin, revealEnablerPin, createAccountEnablerPin, getAccountEnablerPinStatus, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,6 +145,7 @@ function StaffHelpEnablerPin() {
     if (!ticketId) throw new Error("Open a help ticket first to request your PIN.");
     return createFn({ data: { ticketId } });
   }, [createFn, ticketId]);
+  const revealFn = useServerFn(revealEnablerPin);
   const status = useCallback(() => {
     if (!ticketId) return Promise.resolve({ expires_at: null });
     return statusFn({ data: { ticketId } });
@@ -154,7 +155,7 @@ function StaffHelpEnablerPin() {
     <Button disabled className="w-full whitespace-normal"><KeyRound className="size-4 shrink-0" />Get BM TV Enabler PIN</Button>
     <p className="text-xs text-muted-foreground">Sign in to get your BM TV Enabler PIN.</p>
   </div>;
-  return <EnablerPinBox scopeKey={`ticket:${ticketId}`} create={create} status={status} />;
+  return <EnablerPinBox scopeKey={`ticket:${ticketId}`} create={create} status={status} reveal={() => revealFn({ data: { ticketId } })} />;
 }
 
 /** PIN bound to the signed-in account, for customers without a help ticket. */
@@ -163,7 +164,8 @@ function AccountEnablerPin({ userId }: { userId: string }) {
   const statusFn = useServerFn(getAccountEnablerPinStatus);
   const create = useCallback(() => createFn(), [createFn]);
   const status = useCallback(() => statusFn(), [statusFn]);
-  return <EnablerPinBox scopeKey={`account:${userId}`} create={create} status={status} />;
+  const revealFn = useServerFn(revealEnablerPin);
+  return <EnablerPinBox scopeKey={`account:${userId}`} create={create} status={status} reveal={() => revealFn({ data: {} })} />;
 }
 
 /** One-step-at-a-time Enabler setup for a TV. */
