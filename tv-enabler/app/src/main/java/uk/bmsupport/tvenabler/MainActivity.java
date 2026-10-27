@@ -170,7 +170,7 @@ public class MainActivity extends Activity {
                     String body = in == null ? "{}" : new String(readAll(in), "UTF-8");
                     org.json.JSONObject j = new org.json.JSONObject(body);
                     if (code >= 400 || !j.has("token")) err = j.optString("error", "PIN not recognised.");
-                    else { exp = j.getLong("expiresAtMs"); prefs.edit().putString("pinToken", j.getString("token")).putLong("pinExpires", exp).apply(); pinOkThisRun = true; }
+                    else { exp = j.getLong("expiresAtMs"); Enabler.loginToken = j.getString("token"); prefs.edit().putString("pinToken", j.getString("token")).putLong("pinExpires", exp).apply(); pinOkThisRun = true; }
                 } catch (Exception e) { err = "Couldn't reach bmsupport.uk. Check your internet and try again."; }
                 final String fe = err;
                 runOnUiThread(() -> {

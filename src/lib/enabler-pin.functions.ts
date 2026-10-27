@@ -129,7 +129,16 @@ export const getTicketEnablerLoggedIn = createServerFn({ method: "POST" })
     const { data: pins } = await supabaseAdmin.from("enabler_login_pins").select("id")
       .or(`ticket_id.eq.${t.id},user_id.eq.${t.user_id}`).is("revoked_at", null).gt("expires_at", now);
     const ids = (pins ?? []).map((p) => p.id);
-    if (!ids.length) return { loggedIn: false };
+    if (!ids.length) return { loggedIn: false, tvFound: false };
     const { count } = await supabaseAdmin.from("enabler_device_tokens").select("id", { count: "exact", head: true }).in("pin_id", ids).gt("expires_at", now);
-    return { loggedIn: (count ?? 0) > 0 };
+    // TV found = this customer's signed-in app produced a share check in the last 2 hours that isn't tied to another ticket/order.
+    const { data: codes } = await supabaseAdmin.from("enabler_confirm_codes").select("checks, bound_ticket_id, bound_order_id")
+      .in("pin_id", ids).eq("kind", "share").gt("expires_at", now)
+      .gt("created_at", new Date(Date.now() - 2 * 3600_000).toISOString()).order("created_at", { ascending: false }).limit(5);
+    const tvFound = (codes ?? []).some((c) => {
+      const k = (c.checks ?? {}) as Record<string, boolean>;
+      const free = (!c.bound_ticket_id || c.bound_ticket_id === t.id) && !c.bound_order_id;
+      return free && k.adb && k.helper && k.control && k.accessibility;
+    });
+    return { loggedIn: (count ?? 0) > 0, tvFound };
   });

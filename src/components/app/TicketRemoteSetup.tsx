@@ -8,15 +8,15 @@ import { revealEnablerPin, createTicketEnablerPin, getTicketEnablerPinStatus, ge
 /** Polls whether BM TV Enabler has signed in with this ticket's (or customer's) PIN. */
 function useEnablerLoggedIn(ticketId: string) {
   const fn = useServerFn(getTicketEnablerLoggedIn);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [state, setState] = useState({ loggedIn: false, tvFound: false });
   useEffect(() => {
     let stop = false;
-    const load = () => fn({ data: { ticketId } }).then((r) => { if (!stop) setLoggedIn(r.loggedIn); }).catch(() => {});
+    const load = () => fn({ data: { ticketId } }).then((r) => { if (!stop) setState({ loggedIn: !!r.loggedIn, tvFound: !!("tvFound" in r && r.tvFound) }); }).catch(() => {});
     void load();
     const t = window.setInterval(load, 5000);
     return () => { stop = true; window.clearInterval(t); };
   }, [fn, ticketId]);
-  return loggedIn;
+  return state;
 }
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
@@ -53,7 +53,7 @@ export function useTicketRemoteSetup(ticketId: string) {
 
 export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: { ticketId: string; customer: boolean; closed: boolean; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
-  const appLoggedIn = useEnablerLoggedIn(ticketId);
+  const { loggedIn: appLoggedIn, tvFound } = useEnablerLoggedIn(ticketId);
   const confirmationStatusFn = useServerFn(getTicketEnablerConfirmationStatus);
   const confirmationStatus = useCallback(() => confirmationStatusFn({ data: { ticketId } }), [confirmationStatusFn, ticketId]);
   const [renewal, setRenewal] = useState("");
@@ -127,8 +127,9 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const linked = ready || complete || referenceActive;
   const stage: 1 | 2 | 3 = canConnect ? 3 : linked ? 2 : 1;
   const codeBox = !closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={markReferenceActive} /> : null;
-  const tvConnected = ready || complete;
-  const shareReady = connectionReady(row);
+  // TV connected: the signed-in app has checked the TV. Ready to share: its reference is typed here and the check is fresh.
+  const tvConnected = tvFound || ready || complete;
+  const shareReady = (ready && referenceActive) || connectionReady(row);
   const chips = [["App logged in", appLoggedIn || linked || tvConnected], ["TV connected", tvConnected], ["Ready to share", shareReady]] as const;
   return <div className="relative isolate -m-4 min-h-[calc(100dvh-8rem)] overflow-hidden text-foreground sm:-m-6">
     <img src={helpBg} alt="" aria-hidden="true" loading="lazy" width={1920} height={1088} className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />
@@ -190,7 +191,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
 
 /** Staff view: subscribes itself so ticks and completion appear in real time. */
 function StaffRemoteSetup({ ticketId, row, reload }: { ticketId: string; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
-  const appLoggedIn = useEnablerLoggedIn(ticketId);
+  const { loggedIn: appLoggedIn, tvFound } = useEnablerLoggedIn(ticketId);
   useEffect(() => {
     const channel = supabase.channel(`ticket-remote-setup-staff-${ticketId}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "ticket_remote_setup", filter: `ticket_id=eq.${ticketId}` }, () => { void reload(); })
@@ -204,11 +205,11 @@ function StaffRemoteSetup({ ticketId, row, reload }: { ticketId: string; row: Re
     {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
       {(() => {
         const linked = appLoggedIn || !!row.app_checked_at || !!row.completed_at;
-        const tv = checksFresh(row);
-        const ready = connectionReady(row);
+        const tv = tvFound || checksFresh(row);
+        const ready = checksFresh(row) || connectionReady(row);
         const steps = [["App logged in", linked], ["TV connected", tv], ["Ready to share", ready]] as const;
         const next = ready ? "Ready — the customer can press Connect my screen, or you can request a screen share."
-          : tv ? "Waiting for the customer to press Allow on their TV."
+          : tv ? "TV connected — waiting for the customer to type the BM TV Enabler reference."
           : linked ? "Waiting for the customer to open BM TV Enabler and check their TV again."
           : "Waiting for the customer to get BM TV Enabler and type its reference.";
         return <div className="space-y-3 rounded-xl border border-border bg-card p-4">
