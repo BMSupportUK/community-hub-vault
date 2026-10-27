@@ -22,14 +22,15 @@ let refreshToken = '', refreshHost = '', refreshBusy = false;
 let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshToken = '';
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
 const startButton = document.getElementById('welcome-start'), pinInput = el('pin-input'), pinMsg = el('pin-msg');
-const loggedIn = () => Number(localStorage.getItem('bm-pin-expires') || 0) > Date.now();
-if (loggedIn()) { window.bmTv.setToken && window.bmTv.setToken(localStorage.getItem('bm-pin-token') || ''); el('pin-box').hidden = true; startButton.textContent = 'Get started'; }
+// The PIN is asked every time the app is opened.
+let pinOkThisRun = false;
+const loggedIn = () => pinOkThisRun;
 startButton.addEventListener('click', async () => {
   if (!loggedIn()) {
     startButton.disabled = true; pinMsg.textContent = 'Checking your PIN…';
     try {
       const r = await window.bmTv.login(pinInput.value.trim());
-      localStorage.setItem('bm-pin-token', r.token); localStorage.setItem('bm-pin-expires', String(r.expiresAtMs));
+      localStorage.setItem('bm-pin-token', r.token); localStorage.setItem('bm-pin-expires', String(r.expiresAtMs)); pinOkThisRun = true; el('pin-box').hidden = true; startButton.textContent = 'Get started';
     } catch (e) { pinMsg.textContent = (e && e.message ? e.message : String(e)).replace(/^Error invoking remote method '[^']+': (Error: )?/, ''); startButton.disabled = false; return; }
     startButton.disabled = false;
   }
