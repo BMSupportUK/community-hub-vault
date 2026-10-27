@@ -328,7 +328,7 @@ startAgain.addEventListener('click', backToStart);
 
 reset.addEventListener('click', () => {
   if (busy) return;
-  if (!window.confirm('Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this computer\'s TV authorization are kept.')) return;
+  if (!window.confirm('Reset setup?\n\nThis can\'t be undone. Your saved TV address, device choice and BM TV Enabler reference codes will be cleared, and the new code you create next takes over from the old one. Installed TV apps and this computer\'s TV authorization are kept.\n\nPress OK to confirm the reset.')) return;
   wizard.reset(); checks = null; device = null; apps = null; confirmCode = ''; appsResults = [];
   confirmExpiresAt = 0; refreshToken = ''; refreshHost = '';
   installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = '';
