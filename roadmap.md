@@ -2,8 +2,10 @@
 # Roadmap
 
 ## Enabler new reference after use
-- [ ] Enable New code in both apps after the saved reference is used on a ticket/order; preserve unused references and original scope/expiry.
-- [ ] Test and release updated phone and Windows apps; physical TV testing requires customer devices.
+- [x] Both apps enable New code after capability-verified ticket/order use or expiry; unused references stay locked and original scope/expiry remain unchanged.
+- [x] Signed phone 1.42 and Windows 1.30 built/uploaded; live downloads checksum-match. 43 Bun tests and Java wizard checks pass; simulated Windows flow confirms unlock, issuance and relock. Website build OK.
+- [ ] Publish the reference-use response — awaits the user's publish request; updated apps need it to recognise ticket/order use.
+- [ ] Verify on physical phone/Windows and TV — requires customer devices; simulated interaction does not verify TV consent.
 
 ## Enabler install-complete return to start
 - [x] The finished app-install screen now offers "Return to the start" instead of Reset setup in both Enabler apps; the TV address, device choice and TV authorization are kept, only the install choice and result list clear. Phone and Windows wizard tests pass.
