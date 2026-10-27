@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { confirmationActive, formatConfirmCode, normalizeConfirmCode } from "@/lib/enabler-confirm-code";
 
 /** Customer types the code BM TV Enabler shows after it confirms the TV. */
-export function EnablerCodeBox({ disabled, onSubmit, status }: { disabled?: boolean; onSubmit: (code: string) => Promise<void>; status: () => Promise<{ expires_at: string | null }> }) {
+export function EnablerCodeBox({ disabled, onSubmit, status, onActiveChange }: { disabled?: boolean; onSubmit: (code: string) => Promise<void>; status: () => Promise<{ expires_at: string | null }>; onActiveChange?: (active: boolean) => void }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [expiry, setExpiry] = useState<string | null | undefined>(undefined);
@@ -19,6 +19,7 @@ export function EnablerCodeBox({ disabled, onSubmit, status }: { disabled?: bool
     return () => { stopped = true; window.clearInterval(poll); window.clearInterval(clock); };
   }, [status]);
   const active = confirmationActive(expiry ?? null, now);
+  useEffect(() => { onActiveChange?.(active); }, [active, onActiveChange]);
   const locked = disabled || busy || expiry === undefined || active;
   const minutes = expiry ? Math.max(0, Math.ceil((Date.parse(expiry) - now) / 60000)) : 0;
   return <div aria-disabled={locked} className={`space-y-2 rounded-xl border border-primary/40 bg-card p-4 ${active ? "opacity-50" : ""}`}>
