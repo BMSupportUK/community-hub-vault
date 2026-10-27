@@ -17,8 +17,9 @@ const heading = el('heading'), description = el('description'), devicePick = el(
 let device = null, checks = null, busy = false, confirmCode = '', appsResults = [];
 let confirmExpiresAt = 0;
 let confirmationUsed = false;
+let sharingReferenceExpired = false;
 let refreshToken = '', refreshHost = '', refreshBusy = false;
-// The install section gets its own reference, remembered for its 24-hour validity like the share one.
+// Install and sharing references are independent; sharing can expire early when its session ends.
 let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshToken = '';
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
 const startButton = document.getElementById('welcome-start'), pinInput = el('pin-input'), pinMsg = el('pin-msg');
@@ -137,7 +138,7 @@ function render() {
   const shownExpiry = install ? installExpiresAt : confirmExpiresAt;
   codeBlock.hidden = !(s === Step.DONE && shownCode);
   linkBlock.hidden = !(s === Step.DONE && wizard.ready) || install;
-  const expired = Boolean(confirmCode) && Date.now() >= confirmExpiresAt;
+    const expired = sharingReferenceExpired || (Boolean(confirmCode) && Date.now() >= confirmExpiresAt);
   codeBlock.textContent = shownCode && Date.now() >= shownExpiry ? 'Expired' : shownCode ? `${shownCode.slice(0, 3)}-${shownCode.slice(3)}` : '';
   next.hidden = !(installDone && installCode);
   if (!next.hidden) {
