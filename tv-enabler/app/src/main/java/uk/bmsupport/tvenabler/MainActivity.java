@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
+    private static boolean pinOkThisRun = false;
     private static final int BG = Color.parseColor("#0F1220"), FG = Color.WHITE, MUTED = Color.parseColor("#A9B0C7"),
             ACCENT = Color.parseColor("#E23B4E"), OK = Color.parseColor("#3CCB7F"), WARN = Color.parseColor("#F5C04A");
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -131,18 +132,18 @@ public class MainActivity extends Activity {
         welcomeText.setGravity(Gravity.CENTER);
         welcomeBox.addView(welcomeText, lp(dp(4)));
         // PIN login: customers get a 24-hour PIN on their ticket/order at bmsupport.uk.
-        final boolean loggedIn = prefs.getLong("pinExpires", 0) > System.currentTimeMillis();
+        final boolean loggedIn = pinOkThisRun; // PIN is asked every time the app is opened
         final EditText pinInput = new EditText(this);
-        pinInput.setHint("6-digit PIN from your ticket or order");
+        pinInput.setHint("6-digit BM TV Enabler PIN");
         pinInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         pinInput.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(6) });
         pinInput.setTextColor(FG); pinInput.setHintTextColor(MUTED); pinInput.setGravity(Gravity.CENTER); pinInput.setTextSize(20);
-        final TextView pinMsg = text(loggedIn ? "You're logged in." : "Type your BM TV Enabler PIN to continue. Get it from the Remote setup tab on your ticket or order at bmsupport.uk — it lasts 24 hours.", 14, MUTED, false);
+        final TextView pinMsg = text(loggedIn ? "You're logged in." : "Type your BM TV Enabler PIN to continue. Find it in Settings › BM TV Enabler PIN at bmsupport.uk (or your ticket/order Remote setup tab). It changes every 24 hours.", 14, MUTED, false);
         pinMsg.setGravity(Gravity.CENTER);
         if (!loggedIn) { welcomeBox.addView(pinMsg, lp(dp(14))); welcomeBox.addView(pinInput, lp(dp(6))); }
         Button startBtn = button(loggedIn ? "Get started" : "Log in", ACCENT);
         startBtn.setOnClickListener(v -> {
-            if (prefs.getLong("pinExpires", 0) > System.currentTimeMillis()) { startFresh(); return; }
+            if (pinOkThisRun) { startFresh(); return; }
             final String pin = pinInput.getText().toString().trim();
             if (!pin.matches("\\d{6}")) { pinMsg.setText("Type the 6-digit PIN."); return; }
             startBtn.setEnabled(false); pinMsg.setText("Checking your PIN…");
@@ -158,7 +159,7 @@ public class MainActivity extends Activity {
                     String body = in == null ? "{}" : new String(readAll(in), "UTF-8");
                     org.json.JSONObject j = new org.json.JSONObject(body);
                     if (code >= 400 || !j.has("token")) err = j.optString("error", "PIN not recognised.");
-                    else { exp = j.getLong("expiresAtMs"); prefs.edit().putString("pinToken", j.getString("token")).putLong("pinExpires", exp).apply(); }
+                    else { exp = j.getLong("expiresAtMs"); prefs.edit().putString("pinToken", j.getString("token")).putLong("pinExpires", exp).apply(); pinOkThisRun = true; }
                 } catch (Exception e) { err = "Couldn't reach bmsupport.uk. Check your internet and try again."; }
                 final String fe = err;
                 runOnUiThread(() -> {
