@@ -205,7 +205,7 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
 
 /** Shared phone and Windows columns for TV self-install and staff help. */
 export function EnablerDownloadSidebar() {
-  return <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+  return <div className="grid min-w-0 gap-4 2xl:grid-cols-2">
     <div className="min-w-0 space-y-4 rounded-lg border border-border bg-surface/70 p-4">
       <EnablerQr />
       <StaffHelpEnablerPin />
