@@ -7,7 +7,7 @@ import { CONFIRM_TTL_MS, makeConfirmCode, formatConfirmCode } from "@/lib/enable
  * reusable code the customer types on their ticket/order Remote setup tab. Stores only
  * a hash plus the TV checks and type — no personal data.
  */
-const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type" };
+const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type, x-enabler-token" };
 const json = (d: unknown, status = 200) => Response.json(d, { status, headers: CORS });
 const Body = z.object({
   app: z.string().max(40).optional(),
@@ -48,13 +48,21 @@ export const Route = createFileRoute("/api/public/enabler-confirm")({
             .eq("status", "pending").gt("expires_at", new Date().toISOString()).is("link_id", null).maybeSingle();
           sessionId = s?.id ?? null;
         }
+        // Signed-in apps send their PIN login token so the customer's page can tick "TV connected" before the reference is typed.
+        let pinId: string | null = null;
+        const tok = request.headers.get("x-enabler-token");
+        if (tok && /^[0-9a-f]{20,200}$/i.test(tok)) {
+          const { data: dt } = await db.from("enabler_device_tokens").select("pin_id").eq("token_hash", await sha256Hex(tok))
+            .gt("expires_at", new Date().toISOString()).maybeSingle();
+          pinId = dt?.pin_id ?? null;
+        }
         for (let i = 0; i < 5; i++) {
           const code = makeConfirmCode();
           const expiresAt = new Date(Date.now() + CONFIRM_TTL_MS).toISOString();
           const refreshToken = [...crypto.getRandomValues(new Uint8Array(32))].map(b => b.toString(16).padStart(2, "0")).join("");
           const { error } = await db.from("enabler_confirm_codes").insert({
             code_hash: await sha256Hex(code), device: parsed.data.device, checks: parsed.data.checks, kind,
-            app: parsed.data.app ?? null, session_id: sessionId, expires_at: expiresAt,
+            app: parsed.data.app ?? null, session_id: sessionId, pin_id: pinId, expires_at: expiresAt,
             refresh_token_hash: await sha256Hex(refreshToken), reference_display: formatConfirmCode(code),
           });
           if (!error) return json({ code, helperLinked: !!sessionId, expiresAt, expiresAtMs: Date.parse(expiresAt), refreshToken });
