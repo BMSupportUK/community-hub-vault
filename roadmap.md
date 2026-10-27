@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Install Guides self-install columns
-- [ ] Replace TV setup adverts with separate phone/Windows Enabler columns and the existing ticket-bound PIN request; rename staff-help back action to Return to Self Install.
+- [x] Replace TV setup adverts with separate phone/Windows Enabler columns and existing ticket-bound PIN request; staff-help action reads Return to Self Install. Preview build OK; five PIN tests pass; signed-in return navigation verified. PIN issuance requires an existing customer ticket/order and was not exercised.
 
 ## Remote setup step layout
 - [x] Customer ticket/order instructions use one shared four-step view with progress and Next/Back; existing checks and Connect/renewal gates unchanged. Twenty regressions pass, browser step navigation verified, preview build OK.
