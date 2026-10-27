@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { getTicketEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
-import { appChecksPassed, checksFresh, connectionReady, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
+import { appChecksPassed, connectionReady, staffRemoteSetupReady, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
 
@@ -205,10 +205,11 @@ function StaffRemoteSetup({ ticketId, row, reload }: { ticketId: string; row: Re
     {!row ? <p className="text-sm text-muted-foreground">The customer hasn't chosen their device yet.</p> : <>
       {(() => {
         const linked = appLoggedIn || !!row.app_checked_at || !!row.completed_at;
-        const tv = tvFound || checksFresh(row);
-        const ready = checksFresh(row) || connectionReady(row);
+        const ready = staffRemoteSetupReady(row);
+        const tv = tvFound || ready;
         const steps = [["App logged in", linked], ["TV connected", tv], ["Ready to share", ready]] as const;
-        const next = ready ? "Ready — the customer can press Connect my screen, or you can request a screen share."
+        const next = row.completed_at ? "Screen-share setup completed — the customer has connected their TV."
+          : ready ? "Ready — the customer can press Connect my screen, or you can request a screen share."
           : tv ? "TV connected — waiting for the customer to type the BM TV Enabler reference."
           : linked ? "Waiting for the customer to open BM TV Enabler and check their TV again."
           : "Waiting for the customer to get BM TV Enabler and type its reference.";

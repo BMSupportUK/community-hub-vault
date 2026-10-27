@@ -47,6 +47,12 @@ export function connectionReady(row: (FreshRow & { pending_session_id?: string |
   return !!row?.pending_session_id && row.pending_session_id !== row.verified_session_id && checksFresh(row, now);
 }
 
+/** Staff progress records successful setup even after Connect consumes its check.
+ * Presentation only: never use this to authorize another connection. */
+export function staffRemoteSetupReady(row: (FreshRow & { completed_at: string | null }) | null | undefined, now = Date.now()) {
+  return !!row?.completed_at || checksFresh(row, now);
+}
+
 /** Staff can only request a screen share once the TV app has confirmed setup. */
 export function canRequestTicketScreenShare(setup: { completed_at: string | null } | null | undefined) {
   return !!setup?.completed_at;

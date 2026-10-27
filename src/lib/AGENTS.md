@@ -15,4 +15,5 @@
 - Enabler confirmation status exposes only bound-reference expiry after ticket ownership or order-password verification; consumed TV checks and login PIN expiry never determine confirmation-entry availability.
 - Site-user manual orders use a role-gated atomic RPC that assigns explicit user ownership and payment notification; site identity and email come from a validated user ID, never email matching.
 - Ticket/order Connect atomically consumes only an unlinked, never-requested Enabler-delivered session; reference redemption cannot revive consumed checks, preventing connection reuse and duplicate staff alerts.
+- Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
 - Enabler refresh exposes only a capability-verified reference-use boolean alongside task state, allowing both apps to unlock new references without revealing ticket/order IDs or changing the original scope.
