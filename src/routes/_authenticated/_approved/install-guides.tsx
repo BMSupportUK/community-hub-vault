@@ -645,7 +645,7 @@ function InstallGuidesPage() {
         <div className="min-h-0 min-w-0 flex-1 md:h-full">
         <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 min-w-0 w-full flex-col md:h-full">
           <header className="min-w-0 shrink-0 border-b border-border bg-surface/60 px-3 pb-3 pt-4 backdrop-blur sm:px-8 md:px-6 md:py-3">
-            <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="grid min-w-0 grid-cols-1 gap-3 2xl:grid-cols-[minmax(0,1fr)_auto] 2xl:items-center">
               <div className="min-w-0">
                 {checkoutToken && (
                   <Button asChild variant="outline" size="sm" className="mb-2">
@@ -655,7 +655,7 @@ function InstallGuidesPage() {
                 <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">Install Guides</h1>
                 <p className="mt-1 text-sm text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
-              <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-auto lg:max-w-full lg:flex-nowrap lg:rounded-full">
+              <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-fit lg:max-w-full lg:rounded-full">
                 <TabsTrigger value="welcome" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
                 <TabsTrigger value="setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Set up a device"}</TabsTrigger>
