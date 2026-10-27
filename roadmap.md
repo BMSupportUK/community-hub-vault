@@ -3,6 +3,7 @@
 
 ## Enabler appearance refresh
 - [x] Release both redesigned apps: signed phone 1.50 and Windows 1.39.0; permanent assets and current download records updated.
+- [x] Tick-order release: phone 1.51 (code 52) and Windows 1.40.0 built from the tick-reporting source, signed/permanent-key verified, 4 Java suites + 45 Windows tests pass, uploaded to app-builds and set current; live download endpoints serve the new files. Website tick-order changes are preview-only — publish before customers rely on them.
 - [x] Refresh phone and Windows presentation without changing setup, PIN or connection behavior.
 - [x] Make Windows visibly follow one step at a time, matching the phone wizard; explicit hidden-panel styling prevents inactive controls from appearing.
 - [x] Windows 45 tests and four phone Java suites pass; phone debug APK compiles. Windows simulated choices/debugging/connect/return/pairing inspected, including narrow-window overflow.
