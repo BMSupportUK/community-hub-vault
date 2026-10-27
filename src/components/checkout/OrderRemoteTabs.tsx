@@ -12,7 +12,7 @@ import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { getOrderEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
-import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
+import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { RemoteSetupWizard } from "@/components/app/RemoteSetupWizard";
 import { screenShareInProgress } from "@/lib/tv-remote";
@@ -94,7 +94,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   const ready = appChecksPassed(row.app_checks, row.device);
   const fresh = checksFresh(row);
   const canConnect = connectionReady(row) && !renewalGate.waiting;
-  return <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+  return <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_260px_260px]">
     <section className="min-w-0 space-y-4 text-foreground">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-xl font-semibold">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} setup</h2>
@@ -119,11 +119,9 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
     </section>
     <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4">
       <EnablerQr /><OrderPin token={token} password={password} />
-      <div className="space-y-2 border-t border-border pt-3">
-        <h3 className="font-semibold">No Android phone? Use a Windows PC</h3>
-        <p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, then type the code it shows here — it ticks the steps the same way.</p>
-        <Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup.exe">Download for Windows</a></Button>
-      </div>
+    </aside>
+    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4">
+      <WindowsEnablerDownload />
     </aside>
   </div>;
 }

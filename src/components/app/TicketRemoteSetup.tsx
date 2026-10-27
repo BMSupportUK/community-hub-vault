@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { createTicketEnablerPin, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import QRCode from "qrcode";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
-import { WINDOWS_ENABLER_URL } from "@/components/app/WindowsTvEnablerPanel";
+import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 import { RemoteSetupProgress } from "@/components/app/RemoteSetupProgress";
 import { RemoteSetupWizard } from "@/components/app/RemoteSetupWizard";
 import { CheckCircle2, Circle, Smartphone, Tv } from "lucide-react";
@@ -129,9 +129,10 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     {!canConnect && !ready && !complete && !referenceActive && <p className="text-sm text-muted-foreground" role="status">Waiting for BM TV Enabler to confirm your TV. Enter its reference in the previous step.</p>}
     </>} />
   </section>;
-  return <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+  return <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-[minmax(0,1fr)_260px_260px]">
     {main}
-    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr />{!closed && <TicketPin ticketId={ticketId} />}<div className="space-y-2 border-t border-border pt-3"><h3 className="font-semibold">No Android phone? Use a Windows PC</h3><p className="text-sm text-muted-foreground">Install BM TV Enabler for Windows, then type the code it shows here — it ticks the steps the same way.</p><Button asChild size="sm" className="w-full"><a href={WINDOWS_ENABLER_URL} download="BM-TV-Enabler-Setup.exe">Download for Windows</a></Button><p className="text-xs text-muted-foreground">Windows 10 / 11 · free, unsigned — choose More info › Run anyway if warned.</p></div></aside>
+    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4"><EnablerQr />{!closed && <TicketPin ticketId={ticketId} />}</aside>
+    <aside className="h-fit space-y-3 border-l border-border p-4 text-center text-foreground lg:sticky lg:top-4"><WindowsEnablerDownload /></aside>
   </div>;
 }
 
