@@ -109,7 +109,9 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const linked = ready || complete || referenceActive;
   const stage: 1 | 2 | 3 = canConnect ? 3 : linked ? 2 : 1;
   const codeBox = !closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} /> : null;
-  const chips = [["App linked", linked], ["TV connected", canConnect], ["Ready to share", canConnect]] as const;
+  const tvConnected = ready || complete;
+  const shareReady = connectionReady(row) || complete;
+  const chips = [["App linked", linked || tvConnected], ["TV connected", tvConnected], ["Ready to share", shareReady]] as const;
   return <div className="relative isolate mx-auto max-w-3xl overflow-hidden rounded-2xl border border-border text-foreground">
     <img src={helpBg} alt="" aria-hidden="true" loading="lazy" width={1920} height={1088} className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />
     <div className="pointer-events-none absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
