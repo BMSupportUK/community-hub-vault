@@ -1681,6 +1681,13 @@
       "when": 1793132687717,
       "tag": "0239_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 240,
+      "version": "7",
+      "when": 1793134875301,
+      "tag": "0240_expire_enabler_share_codes_on_session_end",
+      "breakpoints": true
     }
   ]
 }
