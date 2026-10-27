@@ -588,8 +588,8 @@ public class MainActivity extends Activity {
     private void confirmReset() {
         if (busy || refreshBusy) return;
         new AlertDialog.Builder(this).setTitle("Reset setup?")
-                .setMessage("Start again from debugging instructions and clear the saved TV address, device choice and confirmation code? Installed TV apps and this phone's TV authorization are kept.")
-                .setNegativeButton("Cancel", null).setPositiveButton("Reset setup", (d, which) -> {
+                .setMessage("This can't be undone. Your saved TV address, device choice and BM TV Enabler reference codes will be cleared, and the new code you create next takes over from the old one. Installed TV apps and this phone's TV authorization are kept.")
+                .setNegativeButton("Cancel", null).setPositiveButton("Confirm reset", (d, which) -> {
                     wizard.reset(); checks = null; device = null; apps = null; appsResults = new java.util.ArrayList<>();
                     installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false;
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps")
