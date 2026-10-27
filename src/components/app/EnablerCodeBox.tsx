@@ -20,15 +20,21 @@ export function EnablerCodeBox({ disabled, onSubmit, status, onActiveChange }: {
   }, [status]);
   const active = confirmationActive(expiry ?? null, now);
   useEffect(() => { onActiveChange?.(active); }, [active, onActiveChange]);
-  const locked = disabled || busy || expiry === undefined || active;
+  // BM TV Enabler may have made a newer reference (new code / reset): the customer can always type that one in.
+  const [replacing, setReplacing] = useState(false);
+  const greyed = active && !replacing;
+  const locked = disabled || busy || expiry === undefined || greyed;
   const minutes = expiry ? Math.max(0, Math.ceil((Date.parse(expiry) - now) / 60000)) : 0;
-  return <div aria-disabled={locked} className={`space-y-2 rounded-xl border border-primary/40 bg-card p-4 ${active ? "opacity-50" : ""}`}>
-    <h3 className="font-semibold">Type the code from BM TV Enabler</h3>
-    <p className="text-sm text-muted-foreground">{active ? `Your BM TV Enabler reference is active for another ${Math.floor(minutes / 60)}h ${minutes % 60}m. You do not need to enter another code yet.` : expiry === undefined ? "Checking your BM TV Enabler reference…" : "When BM TV Enabler (phone or Windows) has confirmed your TV, type its six-character code here."}</p>
-    <form className="flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (locked || code.length !== 6) return; setBusy(true); try { await onSubmit(code); setCode(""); setExpiry(undefined); setExpiry((await status()).expires_at); } catch { /* caller shows the error */ } setBusy(false); }}>
-      <Input disabled={locked} aria-label="Code from BM TV Enabler" autoCapitalize="characters" value={formatConfirmCode(code)} onChange={(e) => setCode(normalizeConfirmCode(e.target.value))} placeholder="K7P-4QX" className="font-mono text-lg uppercase" />
-      <Button type="submit" disabled={locked || code.length !== 6}>Confirm</Button>
-    </form>
+  return <div className="space-y-2 rounded-xl border border-primary/40 bg-card p-4">
+    <div aria-disabled={locked} className={`space-y-2 ${greyed ? "opacity-50" : ""}`}>
+      <h3 className="font-semibold">Type the code from BM TV Enabler</h3>
+      <p className="text-sm text-muted-foreground">{greyed ? `Your BM TV Enabler reference is active for another ${Math.floor(minutes / 60)}h ${minutes % 60}m. You do not need to enter another code yet.` : expiry === undefined ? "Checking your BM TV Enabler reference…" : replacing ? "Type the code BM TV Enabler shows now. It replaces the old one on this page." : "When BM TV Enabler (phone or Windows) has confirmed your TV, type its six-character code here."}</p>
+      <form className="flex gap-2" onSubmit={async (e) => { e.preventDefault(); if (locked || code.length !== 6) return; setBusy(true); try { await onSubmit(code); setCode(""); setReplacing(false); setExpiry(undefined); setExpiry((await status()).expires_at); } catch { /* caller shows the error */ } setBusy(false); }}>
+        <Input disabled={locked} aria-label="Code from BM TV Enabler" autoCapitalize="characters" value={formatConfirmCode(code)} onChange={(e) => setCode(normalizeConfirmCode(e.target.value))} placeholder="K7P-4QX" className="font-mono text-lg uppercase" />
+        <Button type="submit" disabled={locked || code.length !== 6}>Confirm</Button>
+      </form>
+    </div>
+    {active && !replacing && <Button type="button" variant="outline" size="sm" className="w-full" disabled={disabled || busy} onClick={() => setReplacing(true)}>BM TV Enabler shows a different code? Type it here</Button>}
     <p className="text-xs text-muted-foreground">You can reuse this code on the same ticket or order for 24 hours. After it expires, press New code in BM TV Enabler.</p>
   </div>;
 }
