@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { unlock } from "@/lib/checkout.server";
 import { PIN_TTL_MS, makePin, pinHash } from "@/lib/enabler-pin";
+import { decryptPin, encryptPin } from "@/lib/enabler-pin-crypto.server";
 
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 type Scope = { ticket_id: string } | { order_id: string } | { user_id: string };
@@ -10,23 +11,30 @@ type Scope = { ticket_id: string } | { order_id: string } | { user_id: string };
 async function issue(db: Db, scope: Scope) {
   const col = "ticket_id" in scope ? "ticket_id" : "order_id" in scope ? "order_id" : "user_id";
   const id = "ticket_id" in scope ? scope.ticket_id : "order_id" in scope ? scope.order_id : scope.user_id;
-  await db.from("enabler_login_pins").update({ revoked_at: new Date().toISOString() }).eq(col, id).is("revoked_at", null);
+  const secret = process.env["ENABLER_PIN_ENCRYPTION_KEY"] ?? "";
   for (let i = 0; i < 8; i++) {
     const pin = makePin();
-    const expires_at = new Date(Date.now() + PIN_TTL_MS).toISOString();
-    const { error } = await db.from("enabler_login_pins").insert({ ...scope, pin_hash: await pinHash(pin), expires_at });
-    if (!error) return { pin, expires_at };
+    const { data, error } = await db.rpc("get_or_create_enabler_login_pin", {
+      _scope: col, _id: id, _pin_hash: await pinHash(pin), _pin_encrypted: await encryptPin(pin, secret),
+    });
+    if (error?.code === "23505") continue;
+    if (error) throw new Error("Couldn't get your PIN. Try again.");
+    const row = z.object({ pin_encrypted: z.string().nullable(), expires_at: z.string() }).parse(data);
+    if (!row.pin_encrypted) throw new Error("Your existing PIN is still valid. Use the device where you requested it until it expires.");
+    return { pin: await decryptPin(row.pin_encrypted, secret), expires_at: row.expires_at };
   }
   throw new Error("Couldn't make a PIN. Try again.");
 }
 
-async function status(db: Db, col: "ticket_id" | "order_id" | "user_id", id: string) {
-  const { data } = await db.from("enabler_login_pins").select("expires_at").eq(col, id).is("revoked_at", null)
+async function status(db: Db, col: "ticket_id" | "order_id" | "user_id", id: string, owner = false) {
+  const { data, error } = await db.from("enabler_login_pins").select("expires_at, pin_encrypted").eq(col, id).is("revoked_at", null)
     .gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(1).maybeSingle();
-  return { expires_at: data?.expires_at ?? null };
+  if (error) throw new Error("Couldn't check your PIN. Try again.");
+  const pin = owner && data?.pin_encrypted ? await decryptPin(data.pin_encrypted, process.env["ENABLER_PIN_ENCRYPTION_KEY"] ?? "") : undefined;
+  return { expires_at: data?.expires_at ?? null, ...(pin ? { pin } : {}) };
 }
 
-/** Ticket owner only: makes a new 24-hour PIN (replacing any earlier one). */
+/** Ticket owner only: reuses the active PIN, creating one only after expiry. */
 export const createTicketEnablerPin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ ticketId: z.string().uuid() }).parse(d))
@@ -42,10 +50,10 @@ export const getTicketEnablerPinStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ ticketId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: t } = await context.supabase.from("tickets").select("id").eq("id", data.ticketId).maybeSingle();
+    const { data: t } = await context.supabase.from("tickets").select("id, user_id").eq("id", data.ticketId).maybeSingle();
     if (!t) return { expires_at: null };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    return status(supabaseAdmin, "ticket_id", data.ticketId);
+    return status(supabaseAdmin, "ticket_id", data.ticketId, t.user_id === context.userId);
   });
 
 const Access = z.object({ token: z.string().min(8).max(200), password: z.string().min(1).max(200) });
@@ -63,7 +71,7 @@ export const getOrderEnablerPinStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const u = await unlock(data.token, data.password);
     if (!u) return { expires_at: null };
-    return status(u.supabaseAdmin, "order_id", u.link.order_id as string);
+    return status(u.supabaseAdmin, "order_id", u.link.order_id as string, true);
   });
 
 /** Signed-in customer without a ticket/order (Install Guides self install): a PIN bound to their account. */
@@ -78,5 +86,5 @@ export const getAccountEnablerPinStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    return status(supabaseAdmin, "user_id", context.userId);
+    return status(supabaseAdmin, "user_id", context.userId, true);
   });

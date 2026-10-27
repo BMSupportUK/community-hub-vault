@@ -8,29 +8,38 @@ const fmt = (ms: number) => { const m = Math.max(0, Math.floor(ms / 60000)); ret
 
 /**
  * Customer: get (and re-show) the 24-hour PIN that logs BM TV Enabler in. Staff: see only whether
- * one is active and when it ends. The PIN itself is only kept in this browser after it's made.
+ * one is active and when it ends. Owners can restore the same PIN after reopening the page.
  */
 export function EnablerPinBox({ scopeKey, staff, create, status }: {
   scopeKey: string; staff?: boolean;
-  create?: () => Promise<Pin>; status: () => Promise<{ expires_at: string | null }>;
+   create?: () => Promise<Pin>; status: () => Promise<{ expires_at: string | null; pin?: string }>;
 }) {
   const key = `enabler-pin:${scopeKey}`;
   const [pin, setPin] = useState<Pin | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [checked, setChecked] = useState(false);
   const [now, setNow] = useState(Date.now());
   const refresh = useCallback(async () => {
-    try { const s = await status(); setActive(s.expires_at); if (!s.expires_at) { setPin(null); localStorage.removeItem(key); } } catch { /* keep last */ }
-  }, [status, key]);
+    try {
+      const s = await status(); setActive(s.expires_at);
+      if (!s.expires_at) { setPin(null); localStorage.removeItem(key); }
+      else if (!staff && s.pin) {
+        const p = { pin: s.pin, expires_at: s.expires_at }; setPin(p);
+        localStorage.setItem(key, JSON.stringify(p));
+      }
+      setChecked(true);
+    } catch { /* fail closed: don't issue a replacement if status is unknown */ }
+  }, [status, key, staff]);
   useEffect(() => {
+    setPin(null); setActive(null); setChecked(false);
     if (!staff) { try { const p = JSON.parse(localStorage.getItem(key) ?? "null") as Pin | null; if (p && new Date(p.expires_at).getTime() > Date.now()) setPin(p); } catch { /* ignore */ } }
     void refresh();
     const t = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(t);
   }, [key, staff, refresh]);
   const make = async () => {
-    if (!create) return;
-    if (pin && !window.confirm("Make a new PIN? The old one will stop working, and BM TV Enabler will need the new one.")) return;
+    if (!create || !checked || (active && new Date(active).getTime() > Date.now())) return;
     setBusy(true);
     try { const p = await create(); setPin(p); setActive(p.expires_at); localStorage.setItem(key, JSON.stringify(p)); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't get a PIN"); }
@@ -49,10 +58,9 @@ export function EnablerPinBox({ scopeKey, staff, create, status }: {
     {shown ? <>
       <p className="text-center font-mono text-3xl font-bold tracking-[0.3em]">{shown.pin}</p>
       <p className={`text-center text-xs ${left < 3600_000 ? "text-destructive" : "text-muted-foreground"}`}>Valid for {fmt(left)}</p>
-      <Button size="sm" variant="outline" className="w-full" disabled={busy} onClick={() => void make()}>New PIN</Button>
     </> : <>
-      {live && <p className="text-xs text-muted-foreground">A PIN is active (ends in {fmt(left)}) but isn't saved on this device. Press below for a new one.</p>}
-      <Button className="w-full" disabled={busy} onClick={() => void make()}>Get BM TV Enabler PIN</Button>
+      {live ? <p className="text-xs text-muted-foreground">Your existing PIN is valid for {fmt(left)}. For PINs issued before this update, use the device where you requested it. A new PIN is available after expiry.</p>
+        : <Button className="w-full" disabled={busy || !checked} onClick={() => void make()}>{checked ? "Get BM TV Enabler PIN" : "Checking PIN…"}</Button>}
     </>}
   </div>;
 }
