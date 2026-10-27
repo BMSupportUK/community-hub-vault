@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Download, Headset, Loader2, Tv } from "lucide-react";
@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
+import { EnablerPinBox } from "@/components/app/EnablerPinBox";
+import { createTicketEnablerPin, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,7 +71,10 @@ function RemoteHelpSteps() {
     <p className="text-sm text-muted-foreground">Prefer not to do it yourself? Staff can connect to your TV by screen share and install everything for you while you watch.</p>
     <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
     <p className="text-sm text-muted-foreground">Staff only see your TV while you're connected, and you can end it at any time.</p>
-    <div className="grid gap-6 sm:grid-cols-2 xl:hidden"><EnablerQr /><WindowsEnablerDownload /></div>
+    <div className="grid gap-6 sm:grid-cols-2 xl:hidden">
+      <div className="space-y-3"><EnablerQr /><StaffHelpEnablerPin /></div>
+      <WindowsEnablerDownload />
+    </div>
     {open ? (
       <Button onClick={createTicket} disabled={creating}>
         {creating ? <Loader2 className="size-4 animate-spin" /> : <Headset className="size-4" />}
@@ -120,6 +125,29 @@ function EnablerQr() {
   </div>;
 }
 
+/** The BM TV Enabler PIN button, bound to the customer's most recent staff-help ticket. */
+function StaffHelpEnablerPin() {
+  const { user } = useAuth();
+  const [ticketId, setTicketId] = useState<string | null | undefined>(undefined);
+  const createFn = useServerFn(createTicketEnablerPin);
+  const statusFn = useServerFn(getTicketEnablerPinStatus);
+  useEffect(() => {
+    let stopped = false;
+    (async () => {
+      if (!user) { if (!stopped) setTicketId(null); return; }
+      const { data } = await supabase.from("tickets").select("id").eq("user_id", user.id)
+        .eq("subject", STAFF_HELP_SUBJECT).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (!stopped) setTicketId(data?.id ?? null);
+    })();
+    return () => { stopped = true; };
+  }, [user]);
+  const create = useCallback(() => createFn({ data: { ticketId: ticketId! } }), [createFn, ticketId]);
+  const status = useCallback(() => statusFn({ data: { ticketId: ticketId! } }), [statusFn, ticketId]);
+  if (ticketId === undefined) return <div className="h-28 animate-pulse rounded-md bg-muted" />;
+  if (!ticketId) return <p className="text-xs text-muted-foreground">Your BM TV Enabler PIN appears here once you've opened a help ticket — press <strong className="text-foreground">Open a ticket for help</strong> below.</p>;
+  return <EnablerPinBox scopeKey={`ticket:${ticketId}`} create={create} status={status} />;
+}
+
 /** One-step-at-a-time Enabler setup for a TV. */
 function TvSteps({ device }: { device: "amazon" | "android" }) {
   const [current, setCurrent] = useState(0);
@@ -166,13 +194,16 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
   </div>;
 }
 
-/** Enabler downloads for the sidebar — shown there instead of the advert on the staff-help screen. */
+/** Enabler downloads for the sidebar — phone and Windows each in their own column on the staff-help screen. */
 export function EnablerDownloadSidebar() {
-  return <div className="space-y-5 rounded-lg border border-border bg-surface/70 p-4">
-    <h3 className="font-display text-lg font-bold text-foreground">Get BM TV Enabler</h3>
-    <p className="text-sm text-muted-foreground">Scan with your Android phone, or use a Windows PC on the same Wi-Fi as the TV.</p>
-    <EnablerQr />
-    <WindowsEnablerDownload />
+  return <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-4 rounded-lg border border-border bg-surface/70 p-4">
+      <EnablerQr />
+      <StaffHelpEnablerPin />
+    </div>
+    <div className="rounded-lg border border-border bg-surface/70 p-4">
+      <WindowsEnablerDownload />
+    </div>
   </div>;
 }
 
