@@ -215,6 +215,7 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
     chan.current = channel;
     // TV candidates can arrive while we fetch relay servers; hold them until the offer is applied.
     let pending: RTCIceCandidateInit[] = [];
+    let autoHomeSent = false;
     let ready = false;
     const setupPeer = async (sdp: string) => {
       ready = false;
@@ -236,6 +237,11 @@ export function RemoteSession({ live, onEnd }: { live: Live; onEnd: () => void }
         if (video.current) video.current.srcObject = s;
         setHasVideo(true);
         staffChan.current?.send({ type: "broadcast", event: "host_ready", payload: {} });
+        // The TV only sends a picture when its screen changes: press Home once per session so staff see it straight away.
+        if (!autoHomeSent) {
+          autoHomeSent = true;
+          window.setTimeout(() => { if (!cancelled) channel.send({ type: "broadcast", event: "cmd", payload: { key: "home" } }); }, 1200);
+        }
       };
       peer.onicecandidate = (ev) => {
         if (ev.candidate) channel.send({ type: "broadcast", event: "ice", payload: { from: "staff", candidate: ev.candidate.toJSON() } });
