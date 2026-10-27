@@ -115,10 +115,10 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const tvConnected = ready || complete;
   const shareReady = connectionReady(row) || complete;
   const chips = [["App linked", linked || tvConnected], ["TV connected", tvConnected], ["Ready to share", shareReady]] as const;
-  return <div className="relative isolate mx-auto max-w-3xl overflow-hidden rounded-2xl border border-border text-foreground">
+  return <div className="relative isolate -m-4 min-h-[calc(100dvh-8rem)] overflow-hidden text-foreground sm:-m-6">
     <img src={helpBg} alt="" aria-hidden="true" loading="lazy" width={1920} height={1088} className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />
     <div className="pointer-events-none absolute inset-0 -z-10 bg-background/80" aria-hidden="true" />
-    <section className="space-y-6 p-5 sm:p-8">
+    <section className="mx-auto max-w-3xl space-y-6 p-5 sm:p-8">
       <header className="space-y-3 text-center">
         <h2 className="text-2xl font-bold sm:text-3xl">Share your TV screen with BM Support</h2>
         <p className="text-sm text-muted-foreground">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</p>
