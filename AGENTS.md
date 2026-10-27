@@ -68,7 +68,7 @@
 - Phone TV ADB clients (`tv-enabler` and BM Support's `tvremote`) stay identical: resend keys on later AUTH and keep pending Allow connections open so AOSP prompts survive.
 - TV Enabler confirms a fresh TV check before finishing; website linking optional, stages sync by expiring code; reset keeps RSA authorization. Helper opens once per run; Remote setup has Restart setup.
 - Ticket screen-share requests unlock only after the customer's Remote setup is confirmed by a live BM Remote Helper code (server-verified RPC), so staff never invite before the TV app works.
-- Enabler codes (install/share) bind to their first ticket/order, are refused elsewhere, expire on close (trigger) and unlink on Restart; issuance needs the app protocol marker so old apps must update.
+- Enabler codes (install/share) bind to their first ticket/order, are refused elsewhere, expire on close or when their linked screen share ends (triggers; share kind only) and unlink on Restart; issuance needs the app protocol marker so old apps must update.
 - Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
 - Install Guides: route owns device choice; TV setup and staff help share advert-replacing phone/Windows columns and ticket-bound PIN controls to preserve authorization.
