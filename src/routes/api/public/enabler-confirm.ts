@@ -11,6 +11,8 @@ const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods
 const json = (d: unknown, status = 200) => Response.json(d, { status, headers: CORS });
 const Body = z.object({
   app: z.string().max(40).optional(),
+  // 3 = one reference per ticket/order. Older apps reused references, so they must update.
+  protocol: z.number().int().optional(),
   device: z.enum(["amazon", "android"]),
   // "share" confirms the TV for screen sharing; "install" only confirms the apps are on the TV.
   kind: z.enum(["share", "install"]).optional(),
@@ -29,6 +31,7 @@ export const Route = createFileRoute("/api/public/enabler-confirm")({
       POST: async ({ request }) => {
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return json({ error: "Invalid request" }, 400);
+        if ((parsed.data.protocol ?? 0) < 3) return json({ error: "Please update BM TV Enabler from bmsupport.uk to get a new code." }, 426);
         const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
         const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for") ?? "unknown";
         const ipHash = await sha256Hex(`setup:${ip}`);
