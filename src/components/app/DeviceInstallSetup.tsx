@@ -196,7 +196,7 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
 
 /** Enabler downloads for the sidebar — phone and Windows each in their own column on the staff-help screen. */
 export function EnablerDownloadSidebar() {
-  return <div className="grid gap-4 2xl:grid-cols-2">
+  return <div className="grid grid-cols-2 gap-4">
     <div className="space-y-4 rounded-lg border border-border bg-surface/70 p-4">
       <EnablerQr />
       <StaffHelpEnablerPin />

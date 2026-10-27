@@ -900,7 +900,7 @@ function InstallGuidesPage() {
       </div>
 
       {tab !== "enabler" && (
-        <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6">
+        <aside className={`hidden xl:block w-full xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6 ${tab === "setup" && setupDevice === "remote" ? "xl:w-[560px]" : "xl:w-[300px]"}`}>
           {tab === "setup" && setupDevice === "remote" ? <EnablerDownloadSidebar /> : <AdSenseSlot slot="sidebar" />}
         </aside>
       )}
