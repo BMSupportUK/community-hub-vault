@@ -47,21 +47,41 @@ public class MainActivity extends Activity {
     private final Runnable refreshTick = new Runnable() {
         public void run() {
             if (isFinishing() || isDestroyed()) return;
-            if (!busy && !refreshBusy && hasWindowFocus() && refreshToken != null && refreshToken.length() == 64 && refreshHost != null && System.currentTimeMillis() < confirmExpiresAt) {
-                final String token = refreshToken, host = refreshHost;
-                refreshBusy = true;
-                io.execute(() -> {
-                    try {
-                        boolean done = Enabler.refreshConnection(MainActivity.this, host, token, used -> ui.post(() -> {
-                            if (!token.equals(refreshToken) || !used) return;
-                            confirmationUsed = true;
-                            getSharedPreferences("tv", MODE_PRIVATE).edit().putBoolean("confirmationUsed", true).apply();
-                            render();
-                        }));
-                        if (done) ui.post(() -> say("✓ New TV connection sent. Press Connect on your ticket or order.", OK));
-                    } catch (Exception e) { ui.post(() -> say(Enabler.friendly(e), WARN)); }
-                    finally { ui.post(() -> refreshBusy = false); }
-                });
+            if (!busy && !refreshBusy && hasWindowFocus()) {
+                if (refreshToken != null && refreshToken.length() == 64 && refreshHost != null && System.currentTimeMillis() < confirmExpiresAt) {
+                    final String token = refreshToken, host = refreshHost;
+                    refreshBusy = true;
+                    io.execute(() -> {
+                        try {
+                            boolean done = Enabler.refreshConnection(MainActivity.this, host, token, used -> ui.post(() -> {
+                                if (!token.equals(refreshToken) || !used) return;
+                                confirmationUsed = true;
+                                getSharedPreferences("tv", MODE_PRIVATE).edit().putBoolean("confirmationUsed", true).apply();
+                                render();
+                            }));
+                            if (done) ui.post(() -> say("✓ New TV connection sent. Press Connect on your ticket or order.", OK));
+                        } catch (Exception e) { ui.post(() -> say(Enabler.friendly(e), WARN)); }
+                        finally { ui.post(() -> refreshBusy = false); }
+                    });
+                } else if (installRefreshToken != null && installRefreshToken.length() == 64 && !installUsed && System.currentTimeMillis() < installExpiresAt) {
+                    // The install reference only needs its usage check — renewals never apply to it.
+                    final String token = installRefreshToken, host = address.getText().toString().trim();
+                    if (SetupWizard.validHost(host)) {
+                        refreshBusy = true;
+                        io.execute(() -> {
+                            try {
+                                Enabler.refreshConnection(MainActivity.this, host, token, used -> ui.post(() -> {
+                                    if (!token.equals(installRefreshToken) || !used) return;
+                                    installUsed = true;
+                                    getSharedPreferences("tv", MODE_PRIVATE).edit().putBoolean("confirmationInstallUsed", true).apply();
+                                    say("✓ Install reference used on your ticket or order. New code is now available.", OK);
+                                    render();
+                                }));
+                            } catch (Exception ignored) { /* install usage check is best-effort */ }
+                            finally { ui.post(() -> refreshBusy = false); }
+                        });
+                    }
+                }
             }
             ui.postDelayed(this, 4000);
         }
@@ -263,9 +283,27 @@ public class MainActivity extends Activity {
 
     private boolean confirmationValid() { return confirmCode.length() > 0 && System.currentTimeMillis() < confirmExpiresAt; }
 
+    /** Restore the install reference the same way: it lasts 24 hours from creation. */
+    private boolean restoreInstallConfirmation() {
+        SharedPreferences prefs = getSharedPreferences("tv", MODE_PRIVATE);
+        String code = prefs.getString("confirmationInstall", null);
+        long expiry = prefs.getLong("confirmationInstallExpiry", 0);
+        String host = prefs.getString("confirmationInstallHost", null);
+        if (code == null || host == null || !SetupWizard.validHost(host) || device == null
+                || !wizard.resumeConfirmation(code, expiry, System.currentTimeMillis())) return false;
+        installCodeText = code; installExpiresAt = expiry;
+        installUsed = prefs.getBoolean("confirmationInstallUsed", false);
+        installRefreshToken = prefs.getString("confirmationInstallToken", "");
+        address.setText(host); apps = "new";
+        appsResults = new java.util.ArrayList<>();
+        return true;
+    }
+
     private void pickApps(String a) {
         if (busy || refreshBusy) return;
         if ("have".equals(a) && restoreConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
+        // A remembered install reference skips re-installing: the apps are already on the TV.
+        if ("new".equals(a) && restoreInstallConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
         apps = a;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply();
         // Debugging was already confirmed on this TV: go straight to Connect with the saved address.
