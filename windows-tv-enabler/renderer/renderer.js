@@ -383,20 +383,36 @@ async function runScan(all) {
 scan.addEventListener('click', () => runScan(false));
 window.bmTv.progress(text => say(text));
 render();
-setInterval(() => { if (wizard.step === Step.DONE && confirmCode && !busy) render(); }, 1000);
+setInterval(() => { if (wizard.step === Step.DONE && (confirmCode || installCode) && !busy) render(); }, 1000);
 setInterval(async () => {
-  if (busy || refreshBusy || document.hidden || !refreshToken || Date.now() >= confirmExpiresAt) return;
+  if (busy || refreshBusy || document.hidden) return;
   refreshBusy = true;
   const token = refreshToken;
   try {
-    const result = await window.bmTv.refresh(refreshHost, token);
-    if (token !== refreshToken) return;
-    if (result.referenceUsed === true) {
-      confirmationUsed = true;
-      const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation') || 'null');
-      if (saved && saved.refreshToken === token) localStorage.setItem('bm-tv-confirmation', JSON.stringify({ ...saved, referenceUsed: true }));
+    if (token && Date.now() < confirmExpiresAt) {
+      const result = await window.bmTv.refresh(refreshHost, token);
+      if (token === refreshToken) {
+        if (result.referenceUsed === true) {
+          confirmationUsed = true;
+          const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation') || 'null');
+          if (saved && saved.refreshToken === token) localStorage.setItem('bm-tv-confirmation', JSON.stringify({ ...saved, referenceUsed: true }));
+        }
+        if (result.done) say('✓ New TV connection sent. Press Connect on your ticket or order.');
+      }
     }
-    if (result.done) say('✓ New TV connection sent. Press Connect on your ticket or order.');
   } catch (error) { say(cleanError(error), true); }
+  // The install reference only needs its usage check — renewals never apply to it.
+  try {
+    if (installRefreshToken && !installUsed && Date.now() < installExpiresAt) {
+      const result = await window.bmTv.refresh(address.value.trim(), installRefreshToken);
+      if (result.referenceUsed === true) {
+        installUsed = true;
+        const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation-install') || 'null');
+        if (saved && saved.refreshToken === installRefreshToken) localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ ...saved, referenceUsed: true }));
+        say('✓ Install reference used on your ticket or order. New code is now available.');
+        render();
+      }
+    }
+  } catch { /* install usage check is best-effort */ }
   finally { refreshBusy = false; }
 }, 4000);
