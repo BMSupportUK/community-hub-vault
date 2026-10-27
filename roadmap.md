@@ -1,6 +1,9 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Enabler login PIN reuse
+- [ ] Display and reuse the existing owner-scoped PIN until its original 24-hour expiry; prevent early replacement and verify persistence.
+
 ## Install Guides self-install columns
 - [x] Replace TV setup adverts with separate phone/Windows Enabler columns and existing ticket-bound PIN request; staff-help action reads Return to Self Install. Preview build OK; five PIN tests pass; signed-in return navigation verified. PIN issuance requires an existing customer ticket/order and was not exercised.
 
