@@ -51,7 +51,8 @@ test('existing TV packages skip download, push and install; missing packages sti
   const adb = async (args: string[]) => {
     commands.push(args);
     if (args[0] === 'devices') return '192.168.1.25:5555\tdevice';
-    if (args.includes('pm list packages')) return 'package:uk.bmsupport.player\r\npackage:com.amazon.tv.launcher';
+    if (args.includes('pm list packages -d --user current')) return '';
+    if (args.includes('pm list packages --user current')) return 'package:uk.bmsupport.player\r\npackage:com.amazon.tv.launcher';
     return 'Success';
   };
   const result = await installOurApps('192.168.1.25', adb, () => {}, async () => {}, fetchApps, '/tmp/bm-skip-' + Date.now());

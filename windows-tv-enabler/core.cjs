@@ -179,7 +179,13 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
   const installed = [], failed = [], results = [];
   try {
     progress('Checking which apps are already on your TV…');
-    const packages = new Set((await shell('pm list packages')).split(/\r?\n/).map(line => line.trim()).filter(line => /^package:[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(line)).map(line => line.slice(8)));
+    const parsePackages = out => String(out || '').split(/\r?\n/).map(line => line.trim()).filter(line => /^package:[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(line)).map(line => line.slice(8));
+    // Only apps installed and enabled for the TV's current profile count as "already there";
+    // disabled apps or ones belonging to another profile still get installed.
+    let listed = await shell('pm list packages --user current');
+    if (!/package:/.test(String(listed || ''))) listed = await shell('pm list packages');
+    const disabled = new Set(parsePackages(await shell('pm list packages -d --user current').catch(() => '')));
+    const packages = new Set(parsePackages(listed).filter(p => !disabled.has(p)));
     for (let i = 0; i < apps.length; i++) {
       const app = apps[i]; const name = String(app.name || 'app').slice(0, 80);
       if (typeof app.packageName === 'string' && packages.has(app.packageName)) {
