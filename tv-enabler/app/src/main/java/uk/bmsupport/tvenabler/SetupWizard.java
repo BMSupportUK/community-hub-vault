@@ -26,6 +26,8 @@ final class SetupWizard {
     void paired() { if (step == Step.CHECK) { tvCode = null; tries = 0; step = Step.SETUP; } }
     void setupFinished(boolean isReady) { if (step != Step.SETUP) return; ready = isReady; if (isReady) step = Step.DONE; }
     void reset() { step = Step.DEBUGGING; ready = false; tvCode = null; tries = 0; }
+    /** A finished app-install run offers "Return to the start", never "Reset setup". */
+    static boolean installFinished(Step step, String apps) { return step == Step.DONE && "new".equals(apps); }
     boolean resumeConfirmation(String code, long expiresAt, long now) {
         if (code == null || !code.matches("[A-Z0-9]{6}") || expiresAt <= now) return false;
         step = Step.DONE; ready = true; tvCode = null; tries = 0;

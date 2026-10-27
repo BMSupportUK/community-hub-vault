@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
     private final Runnable expiryTick = new Runnable() {
         public void run() { if (isFinishing() || isDestroyed()) return; if (wizard.step == SetupWizard.Step.DONE && confirmCode.length() > 0 && !busy) render(); ui.postDelayed(this, 1000); }
     };
-    private Button turnOn, find, amazonBtn, androidBtn, next, reset;
+    private Button turnOn, find, amazonBtn, androidBtn, next, reset, startAgain;
     private TextView status, deviceHelp, heading, description;
     private LinearLayout devicePick;
     private String device;
@@ -195,6 +195,8 @@ public class MainActivity extends Activity {
         next.setOnClickListener(v -> { say("", MUTED); render(); }); col.addView(next, lp(dp(8)));
         reset = button("Reset setup", Color.parseColor("#2A3050"));
         reset.setOnClickListener(v -> confirmReset()); col.addView(reset, lp(dp(20)));
+        startAgain = button("Return to the start", ACCENT);
+        startAgain.setOnClickListener(v -> backToStart()); col.addView(startAgain, lp(dp(20)));
         ScrollView sv = new ScrollView(this); sv.setBackgroundColor(BG); sv.setFillViewport(true); sv.addView(root); setContentView(sv);
         // A remembered platform/address is a convenience, never proof that a TV is ready.
         device = prefs.getString("device", null);
