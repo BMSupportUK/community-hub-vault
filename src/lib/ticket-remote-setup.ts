@@ -53,12 +53,15 @@ export function canRequestTicketScreenShare(setup: { completed_at: string | null
 }
 
 /** Latest measured app snapshot, kept separate from the live screen-share code. */
-export function remoteSetupProgress(row: { app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null }, now = Date.now()) {
+export function remoteSetupProgress(row: { app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null }, now = Date.now(), referenceActive = false) {
   const c = row.app_checks;
+  // A valid 24-hour reference already links Enabler here: the next step is a new connection, never retyping the code.
+  if (referenceActive && !checksFresh(row, now))
+    return { stage: 0, title: "Your BM TV Enabler reference is still active", detail: "Press Get new connection and keep BM TV Enabler open on the same Wi-Fi as your TV. It checks your TV and brings the connection here automatically." };
   // An old or already-used check is not current: show it as needing a fresh check, not as done.
   if (row.app_checked_at && c && appChecksPassed(c) && !checksFresh(row, now))
     return { stage: 0, title: "Waiting for a fresh TV check", detail: "Your last check has been used or is over 24 hours old. Run BM TV Enabler again so it can check your TV before this screen share." };
-  if (!row.app_checked_at || !c) return { stage: 0, title: "Waiting for TV Enabler", detail: "Finish setup in BM TV Enabler, then type the code it shows into the box above." };
+  if (!row.app_checked_at || !c || !Object.keys(c).length) return { stage: 0, title: "Waiting for TV Enabler", detail: "Finish setup in BM TV Enabler, then type the code it shows into the box above." };
   if (!c.adb) return { stage: 0, title: "Waiting for the TV connection", detail: "Enabler has reported, but the TV connection is not confirmed." };
   if (!c.helper) return { stage: 1, title: "TV connected — Helper installation next", detail: "Continue the BM Remote Helper installation step in Enabler." };
   if (!c.control) return { stage: 2, title: "BM Remote Helper installed — remote control next", detail: "Continue the remote-control installation step in Enabler." };

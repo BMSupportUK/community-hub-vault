@@ -42,6 +42,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const confirmationStatusFn = useServerFn(getTicketEnablerConfirmationStatus);
   const confirmationStatus = useCallback(() => confirmationStatusFn({ data: { ticketId } }), [confirmationStatusFn, ticketId]);
   const [renewal, setRenewal] = useState("");
+  const [referenceActive, setReferenceActive] = useState(false);
   const renewalGate = useEnablerRenewalGate(`ticket:${ticketId}`, row?.pending_session_id ?? null);
   const save = async (device: SetupDevice) => {
     setBusy(true);
@@ -50,7 +51,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     await reload(); setBusy(false);
   };
   const restart = async () => {
-    if (!window.confirm("Restart the TV setup from the beginning? Your saved progress and codes for this ticket will be cleared.")) return;
+    if (!window.confirm("Restart the TV setup from the beginning? The ticks on this page will be cleared. A BM TV Enabler reference that is still within its 24 hours keeps working — just press Get new connection.")) return;
     setBusy(true);
     const { error } = await supabase.rpc("reset_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
     if (error) toast.error(error.message); else toast.success("Setup restarted — choose your device to begin again");
@@ -117,13 +118,13 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <p className="text-sm">BM TV Enabler has already picked up the code from BM Remote Helper. Press Connect to send your screen-share request to staff.</p>
       <Button size="lg" className="w-full" disabled={busy} onClick={() => void connect()}>Connect</Button>
     </div>}
-    {!closed && (!canConnect) && (ready || complete) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
+    {!closed && (!canConnect) && (ready || complete || referenceActive) && <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/10 p-4">
       <h3 className="font-semibold">Get a new TV connection</h3>
       <p className="text-sm" role="status">{renewal || "Keep BM TV Enabler open on the same Wi-Fi as your TV. Every screen share needs a new TV connection. Your 24-hour confirmation reference stays the same."}</p>
       <Button size="lg" className="w-full" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting ? "Connection requested…" : "Get new connection"}</Button>
     </div>}
-    {!closed && !fresh && <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} />}
-    <RemoteSetupProgress row={row} />
+    {!closed && !fresh && <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={setReferenceActive} />}
+    <RemoteSetupProgress row={row} referenceActive={referenceActive} />
     {!complete && steps.map((s, i) => {
       const done = stepDone(s, row);
       return <article key={i} className={`rounded-xl border p-4 space-y-2 ${done ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}>
