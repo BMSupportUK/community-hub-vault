@@ -49,7 +49,7 @@ function OrderRemoteSetup({ token, password }: { token: string; password: string
   const [busy, setBusy] = useState(false);
   const [renewal, setRenewal] = useState("");
   const [referenceActive, setReferenceActive] = useState(false);
-  const renewalGate = useEnablerRenewalGate(`order:${token}`, row?.pending_session_id ?? null);
+  const renewalGate = useEnablerRenewalGate(`order:${token}`, row ? [row.pending_session_id ?? "", row.app_checked_at ?? "", row.checks_used_at ?? ""].join("|") : null);
   const renewFn = useServerFn(requestOrderEnablerConnection);
   const load = useCallback(async () => { try { setRow((await get({ data: { token, password } })) as Row); } catch { setRow(null); } }, [get, token, password]);
   useEffect(() => { void load(); const t = window.setInterval(load, 4000); return () => window.clearInterval(t); }, [load]);

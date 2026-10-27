@@ -43,7 +43,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const confirmationStatus = useCallback(() => confirmationStatusFn({ data: { ticketId } }), [confirmationStatusFn, ticketId]);
   const [renewal, setRenewal] = useState("");
   const [referenceActive, setReferenceActive] = useState(false);
-  const renewalGate = useEnablerRenewalGate(`ticket:${ticketId}`, row?.pending_session_id ?? null);
+  const renewalGate = useEnablerRenewalGate(`ticket:${ticketId}`, row ? [row.pending_session_id ?? "", row.app_checked_at ?? "", (row as { checks_used_at?: string | null }).checks_used_at ?? ""].join("|") : null);
   const save = async (device: SetupDevice) => {
     setBusy(true);
     const { error } = await supabase.rpc("save_ticket_remote_setup" as never, { _ticket_id: ticketId, _device: device, _steps: [] } as never);
