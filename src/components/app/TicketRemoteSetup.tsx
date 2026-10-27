@@ -123,18 +123,19 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <header className="space-y-3 text-center">
         <h2 className="text-2xl font-bold sm:text-3xl">Share your TV screen with BM Support</h2>
         <p className="text-sm text-muted-foreground">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</p>
-        <ol className="flex flex-wrap justify-center gap-2" aria-label="Progress">
+        <ol className="sticky top-2 z-10 mx-auto flex w-fit flex-wrap justify-center gap-2 rounded-full bg-background/70 p-1.5 backdrop-blur" aria-label="Progress">
           {chips.map(([label, done]) => <li key={label} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${done ? "border-primary bg-primary/20 font-semibold" : "border-border bg-card/70 text-muted-foreground"}`}>{done ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4" />}{label}</li>)}
         </ol>
       </header>
 
-      {closed ? <p className="text-center text-sm">This ticket is closed.</p> : <div className="mx-auto max-w-xl space-y-4 rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur">
+      {closed ? <p className="text-center text-sm">This ticket is closed.</p> : <div className={`mx-auto space-y-4 rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur ${stage === 1 ? "max-w-3xl" : "max-w-xl"}`}>
         {stage === 1 && <>
-          <h3 className="text-lg font-semibold">1. Get BM TV Enabler — on your Android phone or a Windows PC</h3>
-          <div className="grid items-start gap-4 sm:grid-cols-2">
-            <div className="space-y-2 text-center"><EnablerQr compact /></div>
-            <TicketPin ticketId={ticketId} />
+          <h3 className="text-lg font-semibold">1. Get BM TV Enabler — pick your Android phone or your Windows PC</h3>
+          <div className="grid items-stretch gap-4 md:grid-cols-2">
+            <div className="space-y-2 rounded-xl border border-border bg-background/60 p-4 text-center"><p className="font-semibold">Android phone</p><EnablerQr compact /></div>
+            <div className="rounded-xl border border-border bg-background/60 p-4"><p className="mb-2 text-center font-semibold">Windows PC</p><WindowsEnablerDownload /></div>
           </div>
+          <TicketPin ticketId={ticketId} />
           <h3 className="pt-2 text-lg font-semibold">2. Open the app, choose Screen-share support, then type its reference here</h3>
           {codeBox}
         </>}
@@ -166,7 +167,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
         </div>
       </details>}
 
-      {!closed && <aside className="mx-auto max-w-xl rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur">
+      {!closed && stage !== 1 && <aside className="mx-auto max-w-xl rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur">
         <WindowsEnablerDownload />
       </aside>}
     </section>
