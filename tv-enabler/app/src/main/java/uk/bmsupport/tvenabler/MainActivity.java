@@ -338,7 +338,15 @@ public class MainActivity extends Activity {
         tvCodeInput.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         showAgain.setVisibility(s == SetupWizard.Step.TV_CODE ? View.VISIBLE : View.GONE);
         confirmCode.setVisibility(s == SetupWizard.Step.DONE && !install && confirmCode.length() > 0 ? View.VISIBLE : View.GONE);
-        next.setVisibility(View.GONE);
+        installCodeView.setVisibility(installDone && installCodeText.length() > 0 ? View.VISIBLE : View.GONE);
+        if (installCodeView.getVisibility() == View.VISIBLE) installCodeView.setText(System.currentTimeMillis() >= installExpiresAt ? "Expired" : installCodeText.substring(0, 3) + "-" + installCodeText.substring(3));
+        boolean installDoneCode = installDone && installCodeText.length() > 0;
+        next.setVisibility(installDoneCode ? View.VISIBLE : View.GONE);
+        if (installDoneCode) {
+            boolean canNew = SetupWizard.canIssueConfirmation(true, installExpiresAt, installUsed, System.currentTimeMillis()) && !busy;
+            next.setText(installUsed || System.currentTimeMillis() >= installExpiresAt ? "New code" : "New code — available after use or expiry");
+            next.setEnabled(canNew); next.setAlpha(canNew ? 1f : 0.4f);
+        }
         turnOn.setVisibility((s == SetupWizard.Step.DEBUGGING && (device == null || apps == null)) || (s == SetupWizard.Step.DONE && install) ? View.GONE : View.VISIBLE);
         find.setText("android".equals(device) ? "Find my Android TV" : "Find my Fire TV");
         appsList.setVisibility(installDone && !appsResults.isEmpty() ? View.VISIBLE : View.GONE);
@@ -390,7 +398,12 @@ public class MainActivity extends Activity {
             case DONE:
                 if (install) {
                     heading.setText("Your apps are installed");
-                    description.setText("Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.");
+                    long iMinutes = Math.max(0, (installExpiresAt - System.currentTimeMillis() + 59999) / 60000);
+                    description.setText(installCodeText.length() > 0 && System.currentTimeMillis() < installExpiresAt
+                            ? "Each app is listed below with what happened.\n\nType the code shown into the Remote setup tab on your ticket or order at bmsupport.uk to confirm the apps are installed. It lasts 24 hours — expires in " + (iMinutes / 60) + "h " + (iMinutes % 60) + "m."
+                            : installCodeText.length() > 0
+                            ? "Each app is listed below with what happened. Your install code has expired — press New code for a fresh one."
+                            : "Each app is listed below with what happened. You can close this app, or press Return to the start to do something else.");
                     break;
                 }
                 heading.setText("TV setup confirmed");
@@ -443,7 +456,21 @@ public class MainActivity extends Activity {
                 final boolean linkedSent = sentTo != null;
                 final Enabler.Confirmation issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 final boolean installOnly = "new".equals(apps);
-                if (run == SetupWizard.Step.SETUP && installOnly) appsResults = Enabler.installOurApps(this, host, progress);
+                final Enabler.Confirmation[] installIssued = new Enabler.Confirmation[1];
+                if (run == SetupWizard.Step.SETUP && installOnly) {
+                    appsResults = Enabler.installOurApps(this, host, progress);
+                    boolean anyFailed = false;
+                    for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) { anyFailed = true; break; }
+                    if (!anyFailed) {
+                        try {
+                            progress.step(0, "Confirming the installation…");
+                            Enabler.Checks verify = Enabler.checkExisting(this, host, (i, t) -> {});
+                            Enabler.Checks proof = new Enabler.Checks();
+                            proof.adb = true; proof.helper = verify.helper; proof.control = verify.control; proof.accessibility = false;
+                            installIssued[0] = Enabler.requestConfirmCode(proof, verify.type != null ? verify.type : selectedDevice, null, "install");
+                        } catch (Exception ignored) { /* The apps are on the TV either way; the code is extra proof for the ticket or order. */ }
+                    }
+                }
                 else if (run == SetupWizard.Step.SETUP) {
                     checks = Enabler.checkExisting(this, host, progress);
                     if (!SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility)) {
