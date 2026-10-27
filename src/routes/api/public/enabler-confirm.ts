@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { CONFIRM_TTL_MS, makeConfirmCode } from "@/lib/enabler-confirm-code";
+import { CONFIRM_TTL_MS, makeConfirmCode, formatConfirmCode } from "@/lib/enabler-confirm-code";
 
 /**
  * Called by BM TV Enabler (phone/Windows) once it has confirmed the TV. Returns a short
