@@ -475,6 +475,14 @@ public class MainActivity extends Activity {
             case DONE:
                 if (install) {
                     heading.setText("Your apps are installed");
+                    if (helpPlan == 1 && helpTicket != 0) {
+                        description.setText(helpTicket == 1
+                            ? "Each app is listed below with what happened.\n\n✓ We've opened a support ticket for you and set up screen sharing. Our staff have been told and will connect to your TV shortly — keep the TV switched on with BM Remote Helper on screen. You can follow your ticket at bmsupport.uk › Tickets."
+                            : helpTicket == 2
+                            ? "Each app is listed below with what happened.\n\n✓ We've opened a support ticket for you at bmsupport.uk › Tickets. Open its Remote setup tab and press Connect so our staff can see your TV."
+                            : "Each app is listed below with what happened.\n\nWe couldn't open a ticket for staff help: " + helpTicketError + "\n\nPress Return to home and choose Install our apps again, or open a ticket at bmsupport.uk.");
+                        break;
+                    }
                     description.setText(installCodeText.length() > 0 && System.currentTimeMillis() < installExpiresAt && installChoice == 0
                             ? "Each app is listed below with what happened.\n\nDo you need help from our staff with your apps?"
                             : installCodeText.length() > 0 && System.currentTimeMillis() < installExpiresAt && installChoice == 2
