@@ -1,4 +1,5 @@
 # src/lib rules
+- Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.
 - Order staff-help tickets start pending remote setup; their existing ticket layout notifies staff after confirmation, while self-install links retain paid-order guide access.
 - Ticket setup stages are presentation-only, derived from scoped ticket checks and available website codes; code creation advances instructions but never proves redemption or TV readiness.
 

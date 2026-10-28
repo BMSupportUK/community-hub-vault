@@ -3,6 +3,11 @@ export const HANDOFF_TTL_MS = 2 * 60 * 60 * 1000;
 
 export type HandoffRow = { user_id: string; expires_at: string; used_at: string | null };
 
+/** Self-install passes only the website selection, without a support ticket or sharing. */
+export function selfInstallHandoff(device: "amazon" | "android", appPaths: string[]) {
+  return { purpose: "install" as const, device, helpPlan: 2 as const, appPaths, ticketId: null };
+}
+
 /** Ticket consent and TV choice are already answered; this is troubleshooting, not installation. */
 export function ticketSupportHandoff(ticketId: string, device: "amazon" | "android") {
   return { purpose: "support" as const, ticketId, device, helpPlan: 1 as const, appPaths: [] as string[] };

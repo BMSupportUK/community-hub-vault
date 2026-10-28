@@ -1,4 +1,6 @@
 # Roadmap
+- [ ] Simplify website self-install: download/PIN, TV choice, selected apps and website code; staff help opens pending remote-support setup
+- [ ] Verify website self-install code saves only chosen apps without creating a support ticket
 - [x] Confirm staff-help Enabler only installs remote-support apps and connects screen sharing, not viewing apps
 - [x] Separate customer order choices: Install Guides for self-install, ticket remote setup for staff help; tests pass, live order check blocked by locked customer portal
 - [x] Show ticket remote setup one step at a time; website code opens its instructions, ticket checks advance connection stages
