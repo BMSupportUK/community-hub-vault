@@ -157,6 +157,11 @@ final class Enabler {
                     p.step(2, "Installing BM Remote Helper on the TV…");
                     adb.push(apk, "/data/local/tmp/bm-helper.apk");
                     String res = adb.shell("pm install -r -d /data/local/tmp/bm-helper.apk");
+                    if (res.contains("UPDATE_INCOMPATIBLE") || res.contains("signatures do not match")) {
+                        p.step(2, "Replacing an older BM Remote Helper on the TV…");
+                        adb.shell("pm uninstall " + HELPER);
+                        res = adb.shell("pm install -r -d /data/local/tmp/bm-helper.apk");
+                    }
                     adb.shell("rm -f /data/local/tmp/bm-helper.apk");
                     if (!res.contains("Success"))
                         throw new IllegalStateException("The TV couldn't install BM Remote Helper. (" + res.trim() + ")");
@@ -176,6 +181,11 @@ final class Enabler {
                         String dest = "/data/local/tmp/bm-control.apk";
                         adb.push(control, dest);
                         String res = adb.shell("pm install -r -d " + dest);
+                        if (res.contains("UPDATE_INCOMPATIBLE") || res.contains("signatures do not match")) {
+                            p.step(3, "Replacing an older remote control on the TV…");
+                            adb.shell("pm uninstall " + CONTROL);
+                            res = adb.shell("pm install -r -d " + dest);
+                        }
                         adb.shell("rm -f " + dest);
                         if (!res.contains("Success"))
                             throw new IllegalStateException("The TV couldn't install remote control. Press Try again. (" + res.trim() + ")");

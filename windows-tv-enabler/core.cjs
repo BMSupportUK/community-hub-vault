@@ -184,7 +184,12 @@ async function installHelper(host, adb, progress, delay, fetchImpl = globalThis.
       progress('Sending BM Remote Helper to the TV and installing it…');
       await adb(['-s', serial, 'push', apk, '/data/local/tmp/bm-helper.apk']);
       try {
-        const result = await shell('pm install -r -d /data/local/tmp/bm-helper.apk');
+        let result = await shell('pm install -r -d /data/local/tmp/bm-helper.apk');
+        if (/UPDATE_INCOMPATIBLE|signatures do not match/i.test(result)) {
+          progress('Replacing an older BM Remote Helper on the TV…');
+          await shell(`pm uninstall ${HELPER}`).catch(() => {});
+          result = await shell('pm install -r -d /data/local/tmp/bm-helper.apk');
+        }
         if (!result.includes('Success')) throw new Error(`The TV could not install BM Remote Helper: ${result.trim().slice(0, 400)}`);
       } finally { await shell('rm -f /data/local/tmp/bm-helper.apk').catch(() => {}); }
       if (!(await shell(`pm path ${HELPER}`)).includes('package:')) throw new Error('BM Remote Helper did not install on the TV. Try again.');
@@ -332,7 +337,12 @@ async function installControl(host, adb, progress, delay, fetchImpl = globalThis
       const temp = '/data/local/tmp/bm-control.apk';
       await adb(['-s', serial, 'push', controlApk, temp]);
       try {
-        const result = await shell(`pm install -r -d ${temp}`);
+        let result = await shell(`pm install -r -d ${temp}`);
+        if (/UPDATE_INCOMPATIBLE|signatures do not match/i.test(result)) {
+          progress('Replacing an older remote control on the TV…');
+          await shell(`pm uninstall ${CONTROL}`).catch(() => {});
+          result = await shell(`pm install -r -d ${temp}`);
+        }
         if (!result.includes('Success')) throw new Error(`The TV could not install BM Remote Control: ${result.trim().slice(0, 400)}`);
       } finally { await shell(`rm -f ${temp}`).catch(() => {}); }
       if (!(await shell(`pm path ${CONTROL}`)).includes('package:')) throw new Error('BM Remote Control did not install on the TV. Try again.');
