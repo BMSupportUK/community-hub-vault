@@ -343,6 +343,8 @@ function TicketsPage() {
     let q = supabase.from("tickets").select("*").is("archived_at", null).order("updated_at", { ascending: false });
     if (view === "mine") q = q.eq("user_id", user!.id);
     else if (view === "assigned") q = q.eq("assigned_to", user!.id);
+    // Remote-support tickets stay hidden from staff until the customer's TV is connected.
+    q = q.or(`user_id.eq.${user!.id},remote_setup_pending.eq.false`);
     const { data } = await q;
     setTickets((data ?? []) as Ticket[]);
     const ids = new Set<string>();
@@ -854,7 +856,7 @@ function NewTicketForm({
     setUploadProgress(null);
     const { data: t, error } = await supabase
       .from("tickets")
-      .insert({ user_id: user!.id, subject: parsed.data.subject, category_id: parsed.data.category_id, priority: parsed.data.priority })
+      .insert({ user_id: user!.id, subject: parsed.data.subject, category_id: parsed.data.category_id, priority: parsed.data.priority, remote_support: !!remoteSupport, remote_setup_pending: !!remoteSupport })
       .select("id").single();
     if (error || !t) { setSubmitting(false); return toast.error(error?.message ?? "Failed"); }
     const { error: e2 } = await supabase.from("ticket_messages").insert({
@@ -914,19 +916,14 @@ function NewTicketForm({
     }
 
     if (remoteSupport) {
-      await supabase.from("ticket_messages").insert({
-        ticket_id: t.id, sender_id: user!.id, is_internal: false,
-        content: "I'd like remote support. I'm setting up screen sharing with BM TV Enabler from the Remote setup tab.",
-      });
+      // Staff are told about this ticket only once the TV is set up and connected.
+      toast.success("Let's get your TV set up for remote support");
+    } else {
+      toast.success("Ticket opened");
+      void notifyNewTicket({
+        data: { ticketId: t.id, subject: parsed.data.subject, categorySlug: cat?.slug },
+      }).catch((e) => console.error("[ticket] new ticket push failed", e));
     }
-
-    toast.success("Ticket opened");
-    // Fire-and-forget: push (web + FCM) to staff so background/closed
-    // browsers and the Android app see the alert even when the page is
-    // not in focus.
-    void notifyNewTicket({
-      data: { ticketId: t.id, subject: parsed.data.subject, categorySlug: cat?.slug },
-    }).catch((e) => console.error("[ticket] new ticket push failed", e));
     onCreated(t.id, remoteSupport ? "setup" : undefined);
   };
 
@@ -964,7 +961,7 @@ function NewTicketForm({
           </Field>
           <Field label="Do you want remote support?">
             <div className="grid gap-2 sm:grid-cols-2">
-              {([[true, "Yes — connect to my TV", "Staff help you by screen share. We'll take you to Remote setup next."], [false, "No thanks", "Just reply to me in the ticket."]] as const).map(([v, title, note]) => (
+              {([[true, "Yes — connect to my TV", "First we set up your TV for screen sharing. Your ticket goes to staff once it's connected."], [false, "No thanks", "Just reply to me in the ticket."]] as const).map(([v, title, note]) => (
                 <button type="button" key={String(v)} onClick={() => setRemoteSupport(v)}
                   className={cn("rounded-lg border p-3 text-left transition-colors", remoteSupport === v ? "border-white bg-white/25" : "border-white/30 bg-white/10 hover:bg-white/20")}>
                   <div className="text-sm font-medium text-white">{title}</div>
@@ -2067,7 +2064,7 @@ function TicketDetail({
 
 
   return (
-    <TicketScreenShareLayout key={ticket.id} ticketId={ticket.id} ownerId={ticket.user_id} closed={ticket.status === "closed"} tab={shareTab}>
+    <TicketScreenShareLayout key={ticket.id} ticketId={ticket.id} ownerId={ticket.user_id} closed={ticket.status === "closed"} tab={shareTab} remoteSupport={(ticket as { remote_support?: boolean }).remote_support !== false} setupPending={!!(ticket as { remote_setup_pending?: boolean }).remote_setup_pending} subject={ticket.subject}>
     <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="min-h-0 max-h-[35%] shrink-0 overflow-y-auto overscroll-contain lg:max-h-none lg:overflow-visible border-b border-white/20 px-3 sm:px-5 py-2 sm:py-3 space-y-2 sm:space-y-3 bg-white/5 backdrop-blur">
