@@ -446,4 +446,4 @@ async function refreshConnection(host, token, adb, progress, post = globalThis.f
   } catch (error) { await send({ token, requestId: task.requestId }).catch(() => {}); throw error; }
 }
 
-module.exports = { adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
+module.exports = { installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
