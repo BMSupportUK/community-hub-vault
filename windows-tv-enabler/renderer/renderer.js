@@ -339,7 +339,7 @@ async function run(stage, host) {
           } catch { /* The apps are on the TV either way; the code is extra proof for the ticket or order. */
             if (helpPlan === 2) setTimeout(() => selfInstall(true), 0);
           }
-        }
+        } else if (helpPlan === 2) setTimeout(() => selfInstall(true), 0);
         say(result.failed.length ? `Done, but ${result.failed.length} app${result.failed.length === 1 ? '' : 's'} didn't install — see the list below. Press Return to home to try again.` : `✓ All done — ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} on your TV. See the list below.`, result.failed.length > 0);
         return;
       }
