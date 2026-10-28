@@ -219,6 +219,29 @@ async function showCode(host, existing) {
   setBusy(false); render();
 }
 
+/** Tick list of our apps (all ticked; already-installed greyed out). Resolves with the ticked app paths. */
+function chooseApps(list) {
+  const box = document.getElementById('apps-choose'), holder = document.getElementById('apps-choose-list'), go = document.getElementById('apps-choose-go');
+  holder.replaceChildren();
+  const boxes = [];
+  for (const app of list) {
+    const label = document.createElement('label'); const input = document.createElement('input');
+    input.type = 'checkbox'; input.checked = true; input.value = app.path;
+    const name = document.createElement('strong'); name.textContent = app.name;
+    label.append(input, name);
+    if (app.installed) { input.disabled = true; label.className = 'disabled'; const note = document.createElement('small'); note.textContent = 'Already installed'; label.append(note); }
+    else boxes.push(input);
+    holder.append(label);
+  }
+  const sync = () => { const n = boxes.filter(b => b.checked).length; go.disabled = n === 0; go.textContent = n ? `Install ${n} ticked app${n === 1 ? '' : 's'}` : 'Tick at least one app'; };
+  boxes.forEach(b => b.addEventListener('change', sync));
+  if (!boxes.length) { go.disabled = false; go.textContent = 'Continue — everything is already installed'; } else sync();
+  box.hidden = false;
+  return new Promise(resolve => {
+    go.onclick = () => { box.hidden = true; go.onclick = null; resolve(boxes.filter(b => b.checked).map(b => b.value)); };
+  });
+}
+
 async function run(stage, host) {
   setBusy(true);
   say(stage === Step.DONE ? 'Getting your confirmation code…' : 'Checking your TV…');
@@ -240,7 +263,11 @@ async function run(stage, host) {
       }
     } else {
       if (apps === 'new') {
-        const result = await window.bmTv.installApps(host);
+        const list = await window.bmTv.listApps(host);
+        say('Choose which apps to install, then press Install ticked apps.');
+        const only = await chooseApps(list);
+        say('Installing your chosen apps…');
+        const result = await window.bmTv.installApps(host, only);
         appsResults = result.results || [];
         wizard.setupFinished(true);
         if (!result.failed.length) {
