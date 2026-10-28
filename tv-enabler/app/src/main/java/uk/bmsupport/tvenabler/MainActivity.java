@@ -225,7 +225,7 @@ public class MainActivity extends Activity {
             if (busy || refreshBusy) return;
             new android.app.AlertDialog.Builder(this)
                     .setTitle("Do you need help from our staff?")
-                    .setMessage("Choose before we install. Both choices install your apps.\n\nYes: once the apps are on your TV, we set up screen sharing and open a support ticket so our staff can connect and help (office hours only).\n\nNo: you're installing them yourself.")
+                    .setMessage("Yes: we set up screen sharing and open a support ticket. Our staff then connect to your TV and install the apps for you (office hours only).\n\nNo: you choose and install the apps yourself.")
                     .setPositiveButton("Yes — I need staff help", (d, w) -> askStaffHelp())
                     .setNegativeButton("No — I'll install myself", (d, w) -> { helpPlan = 2; getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", 2).apply(); pickApps("new"); })
                     .show();
