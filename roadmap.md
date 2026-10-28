@@ -1,6 +1,11 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Complete Enabler guide refresh
+- [ ] Update all outdated Amazon/Android Enabler and Remote Helper articles and PDFs; correct Windows step ordering and include every current permission, reference and reconnect step.
+- [ ] Replace the three outdated remote-help tutorial videos with complete current narrated walkthroughs, retaining private storage and chapter actions.
+- [ ] Inspect every revised PDF page, verify video outputs and signed-in guide access; leave unrelated installation guides unchanged.
+
 ## Windows written guides and PDFs
 - [x] Create separate Windows installation and screen-sharing written guides with matching branded PDFs, using current app labels and reference lifecycle.
 - [x] Add both to Knowledge Base and Install Guides without changing existing videos; visually check all nine PDF pages (no clipping or overlap) and verify both PDFs and the sharing article open through signed-in UI. Physical Windows/TV execution is not part of this documentation task.
