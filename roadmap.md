@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Confirm staff-help Enabler only installs remote-support apps and connects screen sharing, not viewing apps
 - [ ] Separate customer order choices: Install Guides for self-install, ticket remote setup for staff help
 - [x] Show ticket remote setup one step at a time; website code opens its instructions, ticket checks advance connection stages
 - [ ] Separate ticket troubleshooting handoffs from Install Guides staff installation
