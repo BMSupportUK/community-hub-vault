@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Windows TV names
+- [x] Match phone description lookup and verify named TV selection with its IP; 52 Windows tests pass and simulated name/IP selection checked. Discovery stays read-only; physical Windows/TV scan requires customer hardware.
+- [x] Release Windows 1.42.0; current public installer download checksum matches the tested package.
+
 ## Complete Enabler guide refresh
 - [x] Updated eight edition-2 articles/private PDFs, including new Android Enabler installation guide, current PIN/reference steps, Windows-only pairing, explicit TV consent and safe retry instructions; existing row IDs retained.
 - [x] Completed eight matching narrated videos (8–12 minutes each), reading every current guide step. Replaced the three hidden outdated rows and added five missing video companion rows; private MP4 originals and browser-compatible WebM playback copies uploaded.

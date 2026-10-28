@@ -41,10 +41,14 @@ describe('Windows TV Enabler safety and setup', () => {
     expect(parseDescription('<device><manufacturer>Google</manufacturer><modelName>Chromecast</modelName></device>')).toBeNull();
     expect(parseDescription('<!DOCTYPE x><device><manufacturer>Amazon</manufacturer><modelName>Fire TV</modelName></device>')).toBeNull();
   });
-  test('discovery description requests cannot follow remote or arbitrary addresses', () => {
+  test('discovery accepts advertised HTTP ports only on the same private device, matching the phone', () => {
     expect(safeLocation('192.168.1.25', 'http://192.168.1.25:50000/rootdesc.xml')).toBe(true);
     expect(safeLocation('192.168.1.25', 'http://example.com:8008/dd.xml')).toBe(false);
-    expect(safeLocation('192.168.1.25', 'http://192.168.1.25:80/admin')).toBe(false);
+    expect(safeLocation('192.168.1.25', 'http://192.168.1.25:49152/device.xml')).toBe(true);
+    expect(safeLocation('192.168.1.25', 'http://192.168.1.26:8008/dd.xml')).toBe(false);
+    expect(safeLocation('192.168.1.25', 'http://user:password@192.168.1.25:8008/dd.xml')).toBe(false);
+    expect(safeLocation('192.168.1.25', 'https://192.168.1.25/dd.xml')).toBe(false);
+    expect(safeLocation('8.8.8.8', 'http://8.8.8.8/dd.xml')).toBe(false);
   });
   test('extracts the bundled remote-control app from the Helper package', () => {
     const fs = require('node:fs');

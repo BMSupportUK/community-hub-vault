@@ -1,5 +1,7 @@
 # Windows TV Enabler rules
 
+- Discovery reads same-private-host HTTP device descriptions independently of debugging or SSDP responses, retaining missing names as null until all fallback endpoints are tried; this matches phone name lookup without authenticating or changing the TV.
+
 - Enabler presentation uses shared semantic palette roles on both platforms; Windows explicitly honors hidden panels and derives progress only from the existing wizard state, so styling cannot expose other steps or advance checks.
 
 - APK push/install commands get an extended deadline; uncertain app-install replies are reconciled by exact enabled package identity in the current TV profile, so a lost reply is not reported as failure.
