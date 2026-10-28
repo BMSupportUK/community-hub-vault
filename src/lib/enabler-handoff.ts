@@ -3,9 +3,9 @@ export const HANDOFF_TTL_MS = 2 * 60 * 60 * 1000;
 
 export type HandoffRow = { user_id: string; expires_at: string; used_at: string | null };
 
-/** Ticket consent and TV choice are already answered; staff install the customer's apps. */
+/** Ticket consent and TV choice are already answered; this is troubleshooting, not installation. */
 export function ticketSupportHandoff(ticketId: string, device: "amazon" | "android") {
-  return { ticketId, device, helpPlan: 1 as const, appPaths: [] as string[] };
+  return { purpose: "support" as const, ticketId, device, helpPlan: 1 as const, appPaths: [] as string[] };
 }
 
 /** Random 6-digit code (leading zeros kept). */

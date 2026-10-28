@@ -9,7 +9,7 @@ const row = (o: Partial<{ user_id: string; expires_at: string; used_at: string |
 test("remote-support tickets reuse the answered TV choice without requesting customer app installs", () => {
   for (const device of ["amazon", "android"] as const) {
     expect(ticketSupportHandoff("existing-ticket", device)).toEqual({
-      ticketId: "existing-ticket", device, helpPlan: 1, appPaths: [],
+      purpose: "support", ticketId: "existing-ticket", device, helpPlan: 1, appPaths: [],
     });
   }
 });

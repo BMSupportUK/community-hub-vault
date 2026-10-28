@@ -56,7 +56,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const [busy, setBusy] = useState(false);
   const handoffFn = useServerFn(createEnablerHandoff);
   const [handoff, setHandoff] = useState<{ code: string; expiresAt: string; device: SetupDevice } | null>(null);
-  const handoffKey = `ticket-enabler-handoff:${ticketId}`;
+  const handoffKey = `ticket-support-handoff:${ticketId}`;
   useEffect(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem(handoffKey) ?? "null");
@@ -179,11 +179,11 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
           </div>
           <TicketPin ticketId={ticketId} />
           <h3 className="pt-2 text-lg font-semibold">2. Send your answers to BM TV Enabler</h3>
-          <p className="text-sm">You've chosen remote staff support for your {row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}. Use this website code so the app goes straight to TV setup. Our staff will install your apps.</p>
+          <p className="text-sm">You've chosen screen sharing for your {row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} so staff can investigate your issue. This code sets up the remote connection only — it isn't an app installation request.</p>
           {handoff && handoff.device === row.device && Date.parse(handoff.expiresAt) > Date.now() ? <div className="space-y-3">
             <p className="font-mono text-4xl font-bold text-primary" aria-label="Website setup code">{handoff.code.slice(0, 3)}-{handoff.code.slice(3)}</p>
             <p className="text-sm">Sign in to BM TV Enabler with the PIN above, press <strong>I have a website code</strong>, and enter this code — don't choose Install apps or Screen-share support again.</p>
-            <p className="text-sm">Follow the app to find your TV and allow the connection. It sends the completed setup back to this ticket.</p>
+            <p className="text-sm">Follow the app to find your TV and allow the connection. It sends the completed setup back to this ticket; then press Connect my screen here.</p>
             <p className="text-xs text-muted-foreground">Works once, until {new Date(handoff.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}. If the website-code option is missing, download the latest BM TV Enabler above.</p>
             <Button variant="outline" disabled={busy} onClick={() => void makeHandoff()}>Get a replacement website code</Button>
           </div> : <Button disabled={busy} onClick={() => void makeHandoff()}>{busy && <Loader2 className="mr-2 size-4 animate-spin" />}Get my website code</Button>}
