@@ -488,7 +488,11 @@ public class MainActivity extends Activity {
                 final boolean installOnly = "new".equals(apps);
                 final Enabler.Confirmation[] installIssued = new Enabler.Confirmation[1];
                 if (run == SetupWizard.Step.SETUP && installOnly) {
-                    appsResults = Enabler.installOurApps(this, host, progress);
+                    java.util.List<Enabler.PickItem> pick = Enabler.listOurApps(this, host, progress);
+                    java.util.Set<String> only = chooseApps(pick);
+                    if (only == null) throw new IllegalStateException("Installation cancelled. Press Try again to choose your apps.");
+                    progress.step(0, "Installing your chosen apps…");
+                    appsResults = Enabler.installOurApps(this, host, progress, only);
                     boolean anyFailed = false;
                     for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) { anyFailed = true; break; }
                     if (!anyFailed) {
@@ -774,5 +778,59 @@ public class MainActivity extends Activity {
     private static byte[] readAll(java.io.InputStream in) throws java.io.IOException {
         java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream(); byte[] b = new byte[4096]; int n;
         while ((n = in.read(b)) > 0) o.write(b, 0, n); return o.toByteArray();
+    }
+
+    /** Tick list of our apps (all ticked; already-installed greyed out). Blocks the worker thread; returns ticked paths or null if cancelled. */
+    private java.util.Set<String> chooseApps(java.util.List<Enabler.PickItem> items) throws InterruptedException {
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        final java.util.Set<String>[] result = new java.util.Set[1];
+        ui.post(() -> {
+            if (isFinishing() || isDestroyed()) { latch.countDown(); return; }
+            String[] labels = new String[items.size()];
+            boolean[] ticked = new boolean[items.size()];
+            for (int i = 0; i < items.size(); i++) {
+                Enabler.PickItem it = items.get(i);
+                labels[i] = it.installed ? it.name + "  (Already installed)" : it.name;
+                ticked[i] = true;
+            }
+            android.app.AlertDialog d = new android.app.AlertDialog.Builder(this)
+                    .setTitle("Choose apps to install")
+                    .setMultiChoiceItems(labels, ticked, (dlg, which, on) -> ticked[which] = on)
+                    .setPositiveButton("Install ticked apps", (dlg, w) -> {
+                        java.util.Set<String> s = new java.util.HashSet<>();
+                        for (int i = 0; i < items.size(); i++) if (ticked[i] && !items.get(i).installed) s.add(items.get(i).path);
+                        result[0] = s;
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .create();
+            d.setOnDismissListener(x -> latch.countDown());
+            d.setOnShowListener(x -> {
+                android.widget.ListView lv = d.getListView();
+                // Already-installed apps stay ticked and greyed out; they can't be changed.
+                lv.setOnHierarchyChangeListener(new android.view.ViewGroup.OnHierarchyChangeListener() {
+                    public void onChildViewAdded(android.view.View parent, android.view.View child) {
+                        int pos = lv.getPositionForView(child);
+                        if (pos >= 0 && pos < items.size() && items.get(pos).installed) { child.setEnabled(false); child.setAlpha(0.5f); }
+                    }
+                    public void onChildViewRemoved(android.view.View parent, android.view.View child) {}
+                });
+                android.widget.Button go = d.getButton(android.app.AlertDialog.BUTTON_POSITIVE);
+                Runnable sync = () -> {
+                    int n = 0; boolean any = false;
+                    for (int i = 0; i < items.size(); i++) if (!items.get(i).installed) { any = true; if (ticked[i]) n++; }
+                    go.setEnabled(!any || n > 0);
+                    go.setText(!any ? "Continue" : n == 0 ? "Tick at least one app" : "Install " + n + " ticked app" + (n == 1 ? "" : "s"));
+                };
+                lv.setOnItemClickListener((parent, view, pos, id) -> {
+                    if (items.get(pos).installed) { lv.setItemChecked(pos, true); ticked[pos] = true; }
+                    else ticked[pos] = lv.isItemChecked(pos);
+                    sync.run();
+                });
+                sync.run();
+            });
+            d.show();
+        });
+        latch.await();
+        return result[0];
     }
 }

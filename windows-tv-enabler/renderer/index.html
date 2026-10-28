@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'"><title>BM TV Enabler</title><link rel="stylesheet" href="style.css"></head>
 <body><main>
-<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.43</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
+<header><span class="brand">BM SUPPORT</span><span class="version">WINDOWS · V1.45</span><h1>BM TV Enabler</h1><p>Fire TV / Android TV remote-control setup</p></header>
 <section id="welcome" class="wizard"><img class="welcome-logo" src="logo.png" alt="BM Support"><h2>Welcome to BM TV Enabler</h2><p>Install your TV apps or connect with BM Support. Keep this computer and your TV on the same Wi-Fi.</p><div id="pin-box"><p id="pin-msg">Type your BM TV Enabler PIN to continue. Find it in Settings › BM TV Enabler PIN at bmsupport.uk (or your ticket/order Remote setup tab). It changes every 24 hours.</p><input id="pin-input" inputmode="numeric" maxlength="6" type="password" placeholder="6-digit PIN" autocomplete="off"></div><button id="welcome-start" class="primary" type="button">Log in</button></section>
 <section class="wizard" id="wizard" hidden>
   <div id="step-progress" aria-label="Setup progress"><p id="step-label" class="step-label"></p><div class="step-track" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
@@ -25,6 +25,7 @@
   <div id="tv-code-block" hidden><label for="tv-code">4-digit code on your TV<input id="tv-code" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="1234"></label><button id="show-again" type="button">Show code again on TV</button></div>
   <div id="link-block" hidden><label for="link-code">Link code from your ticket or order (optional — sends everything there, no code to type on the website)<input id="link-code" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="12345678"></label></div>
   <div id="code-block" class="confirm-code" hidden></div>
+  <div id="apps-choose" hidden><p class="hint">Untick any apps you don't want. Apps already on your TV are greyed out.</p><div id="apps-choose-list" role="group" aria-label="Apps to install"></div><button id="apps-choose-go" class="primary" type="button">Install ticked apps</button></div>
   <div id="apps-result" hidden></div>
   <div class="connection" id="connection-notice"><p>When the TV asks <strong>Allow USB debugging?</strong>, tick <strong>Always allow from this computer</strong> and choose <strong>Allow</strong>.</p><p id="progress" role="status" aria-live="polite"></p></div>
   <button id="action" class="primary" type="button">I've switched debugging on — next <span aria-hidden="true">→</span></button>

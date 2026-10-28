@@ -82,3 +82,10 @@ footer { max-width: 680px; margin: 28px auto 0; border-top: 1px solid var(--bord
  .address-row > button { width: 100%; } .navigation { flex-direction: column; } .welcome-logo { width: 96px; height: 96px; }
 }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+
+#apps-choose { margin: 20px 0; }
+#apps-choose-list { display: grid; gap: 10px; margin: 12px 0 16px; }
+#apps-choose-list label { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+#apps-choose-list label.disabled { opacity: .5; cursor: default; }
+#apps-choose-list input { width: 20px; height: 20px; accent-color: var(--accent); }
+#apps-choose-list small { margin-left: auto; }

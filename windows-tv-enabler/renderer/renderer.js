@@ -219,6 +219,29 @@ async function showCode(host, existing) {
   setBusy(false); render();
 }
 
+/** Tick list of our apps (all ticked; already-installed greyed out). Resolves with the ticked app paths. */
+function chooseApps(list) {
+  const box = document.getElementById('apps-choose'), holder = document.getElementById('apps-choose-list'), go = document.getElementById('apps-choose-go');
+  holder.replaceChildren();
+  const boxes = [];
+  for (const app of list) {
+    const label = document.createElement('label'); const input = document.createElement('input');
+    input.type = 'checkbox'; input.checked = true; input.value = app.path;
+    const name = document.createElement('strong'); name.textContent = app.name;
+    label.append(input, name);
+    if (app.installed) { input.disabled = true; label.className = 'disabled'; const note = document.createElement('small'); note.textContent = 'Already installed'; label.append(note); }
+    else boxes.push(input);
+    holder.append(label);
+  }
+  const sync = () => { const n = boxes.filter(b => b.checked).length; go.disabled = n === 0; go.textContent = n ? `Install ${n} ticked app${n === 1 ? '' : 's'}` : 'Tick at least one app'; };
+  boxes.forEach(b => b.addEventListener('change', sync));
+  if (!boxes.length) { go.disabled = false; go.textContent = 'Continue — everything is already installed'; } else sync();
+  box.hidden = false;
+  return new Promise(resolve => {
+    go.onclick = () => { box.hidden = true; go.onclick = null; resolve(boxes.filter(b => b.checked).map(b => b.value)); };
+  });
+}
+
 async function run(stage, host) {
   setBusy(true);
   say(stage === Step.DONE ? 'Getting your confirmation code…' : 'Checking your TV…');
@@ -240,7 +263,11 @@ async function run(stage, host) {
       }
     } else {
       if (apps === 'new') {
-        const result = await window.bmTv.installApps(host);
+        const list = await window.bmTv.listApps(host);
+        say('Choose which apps to install, then press Install ticked apps.');
+        const only = await chooseApps(list);
+        say('Installing your chosen apps…');
+        const result = await window.bmTv.installApps(host, only);
         appsResults = result.results || [];
         wizard.setupFinished(true);
         if (!result.failed.length) {
@@ -332,7 +359,7 @@ next.addEventListener('click', async () => {
 function backToStart() {
   if (busy) return;
   // The saved screen-share reference (code, expiry, refresh token, TV) is kept until it expires.
-  wizard.reset(); apps = null; appsResults = [];
+  wizard.reset(); apps = null; appsResults = []; document.getElementById('apps-choose').hidden = true;
   if (!confirmationValid()) checks = null;
   localStorage.removeItem('bm-tv-apps');
   say(''); render();
@@ -342,7 +369,7 @@ startAgain.addEventListener('click', backToStart);
 reset.addEventListener('click', () => {
   if (busy) return;
   if (!window.confirm('Reset setup?\n\nThis can\'t be undone. Your saved TV address, device choice and BM TV Enabler reference codes will be cleared, and the new code you create next takes over from the old one. Installed TV apps and this computer\'s TV authorization are kept.\n\nPress OK to confirm the reset.')) return;
-  wizard.reset(); checks = null; device = null; apps = null; confirmCode = ''; appsResults = [];
+  wizard.reset(); checks = null; device = null; apps = null; confirmCode = ''; appsResults = []; document.getElementById('apps-choose').hidden = true;
   confirmExpiresAt = 0; refreshToken = ''; refreshHost = '';
   sharingReferenceExpired = false;
   installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = '';
