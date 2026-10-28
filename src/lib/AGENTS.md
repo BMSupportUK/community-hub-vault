@@ -1,4 +1,5 @@
 # src/lib rules
+- Ticket setup stages are presentation-only, derived from scoped ticket checks and available website codes; code creation advances instructions but never proves redemption or TV readiness.
 
 - Sports guides keep publication status; headings prefix events, not channels; document scrolling; channels only beneath Available channels; BM loads through hydration/router pending.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.

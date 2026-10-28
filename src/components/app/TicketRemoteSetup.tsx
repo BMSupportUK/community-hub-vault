@@ -158,7 +158,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const tvConnected = Boolean(row.app_checks?.adb) || complete;
   const shareReady = (ready && referenceActive) || connectionReady(row);
   const websiteCodeReady = Boolean(handoff && handoff.device === row.device && Date.parse(handoff.expiresAt) > Date.now());
-  const stage = ticketSetupStage({ loggedIn: appLoggedIn, handedOff: websiteCodeReady, tvConnected, ready, canConnect, completed: complete, linked });
+  const stage = ticketSetupStage({ loggedIn: appLoggedIn, websiteCodeReady, tvConnected, ready, canConnect, completed: complete, linked });
   const stepTitles = ["Get the app and sign in", "Get your website code", "Send your code and connect your TV", "Confirm remote support on your TV", "Connect your screen", "Setup complete"];
   const chips = [["App logged in", appLoggedIn || linked || tvConnected], ["TV connected", tvConnected], ["Ready to share", shareReady]] as const;
   return <div className="relative isolate -m-4 min-h-[calc(100dvh-8rem)] overflow-hidden text-foreground sm:-m-6">
