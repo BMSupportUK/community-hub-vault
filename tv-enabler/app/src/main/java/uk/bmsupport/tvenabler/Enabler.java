@@ -108,6 +108,18 @@ final class Enabler {
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) { openHelper(adb); }
     }
 
+    /** Installed versionCode of a package on the TV; 0 when not installed or unreadable. */
+    private static int pkgVersion(AdbClient adb, String pkg) {
+        try {
+            String out = adb.shell("dumpsys package " + pkg + " | grep versionCode");
+            for (String part : out.split("\\s+")) {
+                if (part.startsWith("versionCode=")) return Integer.parseInt(part.substring(12).trim());
+            }
+        } catch (Exception ignore) {
+        }
+        return 0;
+    }
+
     private static void openHelper(AdbClient adb) throws Exception {
         String result = adb.shell("monkey -p " + HELPER + " -c android.intent.category.LAUNCHER 1");
         if (!result.contains("Events injected: 1"))
@@ -125,6 +137,19 @@ final class Enabler {
             adb.shell(RESTORE_NAME);
             c.helper = adb.shell("pm path " + HELPER).contains("package:");
             boolean needControl = !adb.shell("pm path " + CONTROL).contains("package:");
+            // Builds before Helper 2.4 (versionCode 15) / Control 1.1 (versionCode 3) were signed
+            // with a retired key. They can't be updated in place and can't share the signature
+            // permission remote control needs, so replace them.
+            if (c.helper && pkgVersion(adb, HELPER) < 15) {
+                p.step(2, "Replacing an older BM Remote Helper on the TV…");
+                adb.shell("pm uninstall " + HELPER);
+                c.helper = adb.shell("pm path " + HELPER).contains("package:");
+            }
+            if (!needControl && pkgVersion(adb, CONTROL) < 3) {
+                p.step(3, "Replacing an older remote control on the TV…");
+                adb.shell("pm uninstall " + CONTROL);
+                needControl = !adb.shell("pm path " + CONTROL).contains("package:");
+            }
             if (!c.helper || (needControl && stopAfter >= 3)) p.step(stopAfter >= 3 && c.helper ? 3 : 2, "Downloading BM Remote Helper and its bundled remote control to this phone…");
             File apk = (!c.helper || (needControl && stopAfter >= 3)) ? downloadHelper(ctx) : null;
             try {
