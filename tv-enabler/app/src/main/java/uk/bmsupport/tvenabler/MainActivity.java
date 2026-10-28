@@ -122,7 +122,9 @@ public class MainActivity extends Activity {
     private boolean busy;
     private String apps;
     private volatile java.util.List<Enabler.AppResult> appsResults = new java.util.ArrayList<>();
-    private Button appsNew, appsHave, appsBack;
+    private Button appsNew, appsHave, appsBack, appsCode;
+    /** Answers loaded from a bmsupport.uk code: chosen app paths (null = ask here) and the website's help ticket. */
+    private java.util.Set<String> handoffApps; private String handoffTicket;
     private LinearLayout appsList;
     private LinearLayout welcomeBox, contentBox;
     private boolean welcomeDone;
@@ -221,6 +223,8 @@ public class MainActivity extends Activity {
         appsNew = button("Install our apps", SURFACE);
         appsHave = button("Screen-share support", SURFACE);
         appsBack = button("Back", SURFACE);
+        appsCode = button("I have a website code", PRIMARY_BTN_COLOR);
+        appsCode.setOnClickListener(v -> askWebsiteCode());
         appsNew.setOnClickListener(v -> {
             if (busy || refreshBusy) return;
             new android.app.AlertDialog.Builder(this)
@@ -232,7 +236,7 @@ public class MainActivity extends Activity {
         });
         appsHave.setOnClickListener(v -> pickApps("have"));
         appsBack.setOnClickListener(v -> { if (!busy) { apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply(); render(); } });
-        col.addView(appsNew, lp(dp(12))); col.addView(appsHave, lp(dp(8))); col.addView(appsBack, lp(dp(8)));
+        col.addView(appsCode, lp(dp(12))); col.addView(appsNew, lp(dp(8))); col.addView(appsHave, lp(dp(8))); col.addView(appsBack, lp(dp(8)));
         amazonBtn.setOnClickListener(v -> pickDevice("amazon"));
         androidBtn.setOnClickListener(v -> pickDevice("android"));
         address = new EditText(this);
@@ -365,11 +369,41 @@ public class MainActivity extends Activity {
         });
     }
 
+    /** Load the answers the customer gave on bmsupport.uk › Install Guides, then go straight to the TV steps. */
+    private void askWebsiteCode() {
+        if (busy || refreshBusy) return;
+        EditText in = new EditText(this);
+        in.setInputType(android.text.InputType.TYPE_CLASS_NUMBER); in.setHint("6-digit code"); in.setTextSize(22);
+        new AlertDialog.Builder(this).setTitle("Code from bmsupport.uk")
+                .setMessage("Type the code shown in Install Guides on the website. It holds your answers, so you won't be asked again here.")
+                .setView(in)
+                .setPositiveButton("Continue", (d, w) -> {
+                    String code = in.getText().toString().replaceAll("\\D", "");
+                    setBusy(true); say("Checking your code…", MUTED);
+                    io.execute(() -> {
+                        try {
+                            Enabler.Handoff h = Enabler.redeemHandoff(code);
+                            ui.post(() -> {
+                                if (isFinishing() || isDestroyed()) return;
+                                setBusy(false); say("✓ Code accepted. " + (h.helpPlan == 1 ? "We'll set up screen sharing for our staff." : "We'll install the apps you ticked."), OK);
+                                pickApps("new");
+                                helpPlan = h.helpPlan; handoffApps = h.helpPlan == 2 ? h.apps : null; handoffTicket = h.ticketId;
+                                getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", h.helpPlan).apply();
+                                pickDevice(h.device);
+                            });
+                        } catch (Exception e) {
+                            ui.post(() -> { if (!isFinishing() && !isDestroyed()) { setBusy(false); say(Enabler.friendly(e), WARN); } });
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null).show();
+    }
+
     private void pickApps(String a) {
         if (busy || refreshBusy) return;
         if ("have".equals(a) && restoreConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
         // Install our apps always runs a fresh install — an old install code never skips it.
-        if ("new".equals(a)) { installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false; installChoice = 0; helpTicket = 0; appsResults = new java.util.ArrayList<>(); }
+        if ("new".equals(a)) { handoffApps = null; handoffTicket = null; installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false; installChoice = 0; helpTicket = 0; appsResults = new java.util.ArrayList<>(); }
         apps = a;
         // The TV type is its own question straight after "What do you need?", asked every time.
         device = null;
@@ -402,7 +436,7 @@ public class MainActivity extends Activity {
         boolean supportDone = s == SetupWizard.Step.DONE && !install;
         reset.setVisibility(installDone ? View.GONE : View.VISIBLE);
         startAgain.setVisibility(askApps ? View.GONE : View.VISIBLE);
-        appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
+        appsCode.setVisibility(askApps ? View.VISIBLE : View.GONE); appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
         appsBack.setVisibility(View.GONE); // Return to home already covers going back to the options.
         boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps && device == null) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
         devicePick.setVisibility(pick ? View.VISIBLE : View.GONE);
@@ -551,8 +585,8 @@ public class MainActivity extends Activity {
                 if (run == SetupWizard.Step.SETUP && installOnly) {
                     // Staff help: our staff install the apps themselves, so skip choosing/installing here.
                     if (helpPlan != 1) {
-                        java.util.List<Enabler.PickItem> pick = Enabler.listOurApps(this, host, progress);
-                        java.util.Set<String> only = chooseApps(pick);
+                        java.util.Set<String> only = handoffApps;
+                        if (only == null) only = chooseApps(Enabler.listOurApps(this, host, progress));
                         if (only == null) throw new IllegalStateException("Installation cancelled. Press Try again to choose your apps.");
                         progress.step(0, "Installing your chosen apps…");
                         appsResults = Enabler.installOurApps(this, host, progress, only);
@@ -575,7 +609,7 @@ public class MainActivity extends Activity {
                             progress.step(0, "Opening a support ticket for our staff…");
                             java.util.List<String> names = new java.util.ArrayList<>();
                             for (Enabler.AppResult r : appsResults) if (r.status != Enabler.AppResult.FAILED) names.add(r.name);
-                            helpResult[0] = Enabler.openStaffTicket(share.refreshToken, type, names) ? 1 : 2;
+                            helpResult[0] = Enabler.openStaffTicket(share.refreshToken, type, names, handoffTicket) ? 1 : 2;
                             shareIssued[0] = share; checks = c;
                         } catch (Exception e) { helpResult[0] = 3; helpError[0] = Enabler.friendly(e); }
                     } else if (!anyFailed) {
@@ -852,7 +886,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, startAgain, showAgain, appsNew, appsHave, appsBack, helpYes, helpNo}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, startAgain, showAgain, appsNew, appsHave, appsBack, appsCode, helpYes, helpNo}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
