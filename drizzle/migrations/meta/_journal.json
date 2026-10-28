@@ -1695,6 +1695,13 @@
       "when": 1793174312772,
       "tag": "0241_reset_ticket_setup_frees_reference",
       "breakpoints": true
+    },
+    {
+      "idx": 242,
+      "version": "7",
+      "when": 1793208207592,
+      "tag": "0242_self_install_download_log",
+      "breakpoints": true
     }
   ]
 }

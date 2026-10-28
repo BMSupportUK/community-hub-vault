@@ -1,0 +1,1 @@
+ALTER TABLE public.app_download_log ADD COLUMN IF NOT EXISTS enabler_reference text, ADD COLUMN IF NOT EXISTS tv_address text;

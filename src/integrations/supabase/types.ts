@@ -321,11 +321,13 @@ export type Database = {
           bytes: number | null
           created_at: string
           device: string | null
+          enabler_reference: string | null
           id: string
           ip: string | null
           order_id: string | null
           source: string
           ticket_id: string | null
+          tv_address: string | null
           user_agent: string | null
           user_id: string | null
           version_name: string | null
@@ -336,11 +338,13 @@ export type Database = {
           bytes?: number | null
           created_at?: string
           device?: string | null
+          enabler_reference?: string | null
           id?: string
           ip?: string | null
           order_id?: string | null
           source: string
           ticket_id?: string | null
+          tv_address?: string | null
           user_agent?: string | null
           user_id?: string | null
           version_name?: string | null
@@ -351,11 +355,13 @@ export type Database = {
           bytes?: number | null
           created_at?: string
           device?: string | null
+          enabler_reference?: string | null
           id?: string
           ip?: string | null
           order_id?: string | null
           source?: string
           ticket_id?: string | null
+          tv_address?: string | null
           user_agent?: string | null
           user_id?: string | null
           version_name?: string | null
