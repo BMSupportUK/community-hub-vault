@@ -11,7 +11,7 @@ export function orderStaffHelpTicket(userId: string, categoryId: string, orderRe
     user_id: userId,
     category_id: categoryId,
     subject: orderRef ? `Remote installation help — order ${orderRef}` : "Remote installation help",
-    priority: "normal",
+    priority: "normal" as const,
     remote_support: true,
     remote_setup_pending: true,
   };
