@@ -438,6 +438,15 @@ async function readHelperCode(host, adb, progress, delay = ms => new Promise(r =
   return null;
 }
 
+/** Customer needs no staff help: log the install code, installed apps and TV address; marks the code used. */
+async function logSelfInstall(token, apps, tvAddress, post = globalThis.fetch) {
+  let res;
+  try { res = await post('https://bmsupport.uk/api/public/enabler-self-install', { method: 'POST', headers: { 'content-type': 'application/json', ...(enablerToken ? { 'x-enabler-token': enablerToken } : {}) }, body: JSON.stringify({ token, apps, tvAddress }) }); }
+  catch { throw new Error("Couldn't reach BM Support. Check the computer's internet and try again."); }
+  if (!res.ok) throw new Error(`Couldn't record your install (error ${res.status}). Try again.`);
+  return true;
+}
+
 async function requestConfirmCode(checks, device, post = globalThis.fetch, helperCode = null, withExpiry = false, kind = 'share') {
   if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV this is first: Amazon Fire TV or Android / Google TV.');
   // Install references only prove the apps reached the TV; share references need the full TV check.
@@ -494,4 +503,4 @@ async function refreshConnection(host, token, adb, progress, post = globalThis.f
   } catch (error) { await send({ token, requestId: task.requestId }).catch(() => {}); throw error; }
 }
 
-module.exports = { installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, listOurApps, pickApps, activate, openCodeApp, enable };
+module.exports = { logSelfInstall, installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, listOurApps, pickApps, activate, openCodeApp, enable };

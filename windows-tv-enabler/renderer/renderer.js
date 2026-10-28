@@ -21,6 +21,10 @@ let sharingReferenceExpired = false;
 let refreshToken = '', refreshHost = '', refreshBusy = false;
 // Install and sharing references are independent; sharing can expire early when its session ends.
 let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshToken = '';
+// After installing: 0 = not asked yet, 1 = needs staff help (show code), 2 = self install (logged).
+let installChoice = 0;
+const helpYes = document.getElementById('help-yes'), helpNo = document.getElementById('help-no');
+function saveInstallState(patch) { try { const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation-install') || 'null'); if (saved) localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ ...saved, ...patch })); } catch { /* ignore */ } }
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
 const startButton = document.getElementById('welcome-start'), pinInput = el('pin-input'), pinMsg = el('pin-msg');
 // The PIN is asked every time the app is opened.
@@ -67,12 +71,12 @@ function restoreConfirmation() {
   } catch { localStorage.removeItem('bm-tv-confirmation'); return false; }
 }
 restoreConfirmation();
-/** Restore the install reference the same way: it lasts 24 hours from creation. */
+/** Restore the install reference: it has no expiry and is replaced once used or logged. */
 function restoreInstallConfirmation() {
   try {
     const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation-install') || 'null');
     if (!saved || !validHost(saved.host || '') || !/^[A-Z0-9]{6}$/.test(saved.code || '') || !Number.isFinite(saved.expiresAtMs) || saved.expiresAtMs <= Date.now()) return false;
-    installCode = saved.code; installExpiresAt = saved.expiresAtMs; installUsed = saved.referenceUsed === true;
+    installCode = saved.code; installExpiresAt = saved.expiresAtMs; installUsed = saved.referenceUsed === true; installChoice = saved.choice === 1 || saved.choice === 2 ? saved.choice : 0;
     installRefreshToken = /^[0-9a-f]{64}$/.test(saved.refreshToken || '') ? saved.refreshToken : '';
     return true;
   } catch { localStorage.removeItem('bm-tv-confirmation-install'); return false; }
@@ -136,13 +140,15 @@ function render() {
   tvCodeBlock.hidden = s !== Step.TV_CODE;
   const shownCode = install ? installCode : confirmCode;
   const shownExpiry = install ? installExpiresAt : confirmExpiresAt;
-  codeBlock.hidden = !(s === Step.DONE && shownCode);
+  const asking = install && installDone && Boolean(installCode) && installChoice === 0;
+  helpYes.hidden = !asking; helpNo.hidden = !asking; helpYes.disabled = busy; helpNo.disabled = busy;
+  codeBlock.hidden = !(s === Step.DONE && shownCode) || (install && installChoice !== 1);
   linkBlock.hidden = !(s === Step.DONE && wizard.ready) || install;
     const expired = sharingReferenceExpired || (Boolean(confirmCode) && Date.now() >= confirmExpiresAt);
   codeBlock.textContent = shownCode && Date.now() >= shownExpiry ? 'Expired' : shownCode ? `${shownCode.slice(0, 3)}-${shownCode.slice(3)}` : '';
-  next.hidden = !(installDone && installCode);
+  next.hidden = !(installDone && installCode) || asking;
   if (!next.hidden) {
-    next.textContent = installUsed || Date.now() >= installExpiresAt ? 'New code' : 'New code — available after use or expiry';
+    next.textContent = installUsed || Date.now() >= installExpiresAt ? 'New code' : 'New code — available once this one is used';
     next.disabled = busy || !canIssueConfirmation(Boolean(installCode), installExpiresAt, installUsed);
   }
   action.hidden = (s === Step.DEBUGGING && (device == null || apps == null)) || (s === Step.DONE && install);
@@ -170,9 +176,13 @@ function render() {
   heading.textContent = titles[s];
   if (s === Step.DONE && install) {
     heading.textContent = 'Your apps are installed';
-    const iMinutes = Math.max(0, Math.ceil((installExpiresAt - Date.now()) / 60000));
-    description.textContent = installCode && Date.now() < installExpiresAt
-      ? `Each app is listed below with what happened.\n\nType the code shown into the Remote setup tab on your ticket or order at bmsupport.uk to confirm the apps are installed. It lasts 24 hours — expires in ${Math.floor(iMinutes / 60)}h ${iMinutes % 60}m.`
+    const live = installCode && Date.now() < installExpiresAt;
+    description.textContent = live && installChoice === 0
+      ? 'Each app is listed below with what happened.\n\nDo you need help from our staff with your apps?'
+      : live && installChoice === 2
+      ? "Each app is listed below with what happened.\n\n✓ Your install has been recorded — no staff help needed. You can close this app. Press New code if you install again."
+      : live
+      ? "Each app is listed below with what happened.\n\nType the code shown into the Remote setup tab on your ticket or order at bmsupport.uk so our staff can help. The code doesn't run out — once it's used, press New code for your next install."
       : installCode
       ? 'Each app is listed below with what happened. Your install code has expired — press New code for a fresh one.'
       : 'Each app is listed below with what happened. You can close this app, or press Return to home to do something else.';
@@ -278,7 +288,8 @@ async function run(stage, host) {
             const issued = await window.bmTv.confirmCode({ adb: true, helper: verify.helper, control: verify.control, accessibility: false }, dev, host, 'install');
             installCode = issued.code; installExpiresAt = issued.expiresAtMs; installUsed = false;
             installRefreshToken = issued.refreshToken || '';
-            localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ code: installCode, expiresAtMs: installExpiresAt, refreshToken: installRefreshToken, host, device: dev, referenceUsed: false }));
+            localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ code: installCode, expiresAtMs: installExpiresAt, refreshToken: installRefreshToken, host, device: dev, referenceUsed: false, choice: 0 }));
+            installChoice = 0;
           } catch { /* The apps are on the TV either way; the code is extra proof for the ticket or order. */ }
         }
         say(result.failed.length ? `Done, but ${result.failed.length} app${result.failed.length === 1 ? '' : 's'} didn't install — see the list below. Press Return to home to try again.` : `✓ All done — ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} on your TV. See the list below.`, result.failed.length > 0);
@@ -349,8 +360,9 @@ next.addEventListener('click', async () => {
     const issued = await window.bmTv.confirmCode({ adb: true, helper: verify.helper, control: verify.control, accessibility: false }, dev, host, 'install');
     installCode = issued.code; installExpiresAt = issued.expiresAtMs; installUsed = false;
     installRefreshToken = issued.refreshToken || '';
-    localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ code: installCode, expiresAtMs: installExpiresAt, refreshToken: installRefreshToken, host, device: dev, referenceUsed: false }));
-    say('✓ New install code ready. Type it on your ticket or order\'s Remote setup tab.');
+    localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ code: installCode, expiresAtMs: installExpiresAt, refreshToken: installRefreshToken, host, device: dev, referenceUsed: false, choice: 0 }));
+    installChoice = 0;
+    say('✓ New install code ready.');
   } catch (error) { say(cleanError(error), true); }
   setBusy(false); render();
 });
@@ -365,6 +377,17 @@ function backToStart() {
   say(''); render();
 }
 startAgain.addEventListener('click', backToStart);
+helpYes.addEventListener('click', () => { if (busy) return; installChoice = 1; saveInstallState({ choice: 1 }); say(''); render(); });
+helpNo.addEventListener('click', async () => {
+  if (busy || !/^[0-9a-f]{64}$/.test(installRefreshToken)) return;
+  setBusy(true); say('Recording your install…');
+  try {
+    await window.bmTv.selfInstall(installRefreshToken, appsResults.filter(r => r.status !== 'failed').map(r => r.name), address.value.trim());
+    installChoice = 2; installUsed = true; saveInstallState({ choice: 2, referenceUsed: true });
+    say('✓ Install recorded. You\'re all set.');
+  } catch (error) { say(cleanError(error), true); }
+  setBusy(false); render();
+});
 
 reset.addEventListener('click', () => {
   if (busy) return;
@@ -372,7 +395,7 @@ reset.addEventListener('click', () => {
   wizard.reset(); checks = null; device = null; apps = null; confirmCode = ''; appsResults = []; document.getElementById('apps-choose').hidden = true;
   confirmExpiresAt = 0; refreshToken = ''; refreshHost = '';
   sharingReferenceExpired = false;
-  installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = '';
+  installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = ''; installChoice = 0;
   localStorage.removeItem('bm-tv-confirmation');
   localStorage.removeItem('bm-tv-confirmation-install');
   localStorage.removeItem('bm-tv-address'); localStorage.removeItem('bm-tv-device'); localStorage.removeItem('bm-tv-apps');
