@@ -101,6 +101,8 @@ function pickDevice(value) {
   if (busy) return;
   device = value;
   localStorage.setItem('bm-tv-device', value);
+  // Debugging was already confirmed on this TV: go straight to Connect with the saved address.
+  if (wizard.step === Step.DEBUGGING && apps && validHost(address.value.trim())) wizard.confirmDebugging();
   render();
 }
 
@@ -132,7 +134,7 @@ function render() {
   el('connection-notice').hidden = s !== Step.CHECK && !progress.textContent;
   el('connection-notice').querySelector('p').hidden = s !== Step.CHECK;
   reset.hidden = installDone; startAgain.hidden = askApps;
-  const pick = (s === Step.DEBUGGING && !askApps) || (s === Step.DONE && !install && device == null && !confirmCode);
+  const pick = (s === Step.DEBUGGING && !askApps && device == null) || (s === Step.DONE && !install && device == null && !confirmCode);
   appsPick.hidden = !askApps; appsBack.hidden = true; // Return to home already covers going back to the options.
   devicePick.hidden = !pick;
   deviceHelp.hidden = !pick;
@@ -200,8 +202,8 @@ function render() {
     heading.textContent = 'What do you need?';
     description.textContent = 'Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.';
   } else if (s === Step.DEBUGGING) {
-    heading.textContent = device ? '1. Enable TV debugging' : 'Which TV are you setting up?';
-    deviceHelp.textContent = device ? 'Wrong TV? Choose the other one.' : 'Choose your TV to see the right steps.';
+    heading.textContent = device ? '1. Enable TV debugging' : 'Which TV is your order or support for?';
+    deviceHelp.textContent = 'Choose Amazon Fire TV or Android / Google TV to see the right steps.';
     description.textContent = device ? DEBUG_HELP[device] : '';
     action.firstChild.textContent = labels[s];
   } else {
@@ -409,8 +411,8 @@ function pickApps(value) {
     localStorage.setItem('bm-tv-apps', value); apps = value; say(''); render(); return;
   }
   apps = value; if (value) localStorage.setItem('bm-tv-apps', value); else localStorage.removeItem('bm-tv-apps');
-  // Debugging was already confirmed on this TV: go straight to Connect with the saved address.
-  if (value && device && validHost(address.value.trim())) wizard.confirmDebugging();
+  // The TV type is its own question straight after "What do you need?", asked every time.
+  if (value) { device = null; localStorage.removeItem('bm-tv-device'); }
   render();
 }
 appsNew.addEventListener('click', () => pickApps('new'));
