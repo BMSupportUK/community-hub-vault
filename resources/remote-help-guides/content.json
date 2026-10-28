@@ -23,7 +23,7 @@
           ],
           [
             "Log in with the account PIN",
-            "Get or reveal your BM TV Enabler PIN in website Settings > BM TV Enabler PIN, or the PIN box in ticket Remote setup. Enter the six-digit PIN in the app and press Log in, then Get started. The same account PIN is used until its original 24-hour expiry and is required on every app launch. It is separate from install/sharing references and TV pairing codes."
+            "Get or reveal your BM TV Enabler PIN in website Settings > BM TV Enabler PIN, or the PIN box in ticket Remote setup. Enter the six-digit PIN in the app and press Log in, then Get started. The same account PIN is used until its original 24-hour expiry and is required on every app launch. It is separate from install/sharing references and TV pairing codes. If no current PIN exists, press Get BM TV Enabler PIN; if a PIN is already allocated, press Reveal PIN and use it."
           ]
         ]
       ],
@@ -82,7 +82,7 @@
           ],
           [
             "Wireless debugging pairing",
-            "The Android phone Enabler does not have a Wireless debugging pairing-code form. If your Android/Google TV requires Pair device with pairing code, use the Windows PC Enabler: expand Android / Google TV with Wireless debugging: pair with code, enter the TV’s six-digit pairing code and pairing port, and use the main Wireless debugging screen’s IP address and connection port in TV address. Pairing and connection ports can differ. Press Pair TV; after successful pairing setup continues. Never type this pairing code into the ticket."
+            "The Android phone Enabler does not have a Wireless debugging pairing-code form. If your Android/Google TV requires Pair device with pairing code, use the Windows PC Enabler: expand Android / Google TV with Wireless debugging: pair with code, enter the TV’s six-digit pairing code and pairing port, and use the main Wireless debugging screen’s IP address and connection port in TV address. Pairing and connection ports can differ. Press Pair with code and set up my TV; after successful pairing setup continues. Never type this pairing code into the ticket."
           ],
           [
             "Retry safely or request help",
@@ -113,7 +113,7 @@
           ],
           [
             "Download and log in",
-            "Use Install Guides > Set up a device or your ticket’s Remote setup to download the official Android phone or Windows Enabler. Follow the matching Enabler installation guide. Reveal your six-digit BM TV Enabler PIN in Settings or ticket Remote setup; log in and press Get started. iPhone/iPad cannot run the Enabler; use a Windows PC instead."
+            "Use Install Guides > Set up a device or your ticket’s Remote setup to download the official Android phone or Windows Enabler. Follow the matching Enabler installation guide. Reveal your six-digit BM TV Enabler PIN in Settings or ticket Remote setup; log in and press Get started. iPhone/iPad cannot run the Enabler; use a Windows PC instead. If no current PIN exists, press Get BM TV Enabler PIN; if a PIN is already allocated, press Reveal PIN and use it."
           ],
           [
             "Choose Screen-share support",
@@ -163,7 +163,7 @@
           ],
           [
             "Keep Helper in front and get a sharing reference",
-            "When BM Remote Helper opens, leave it in front so the TV can show its sharing permission prompt. Wait for the Enabler’s fresh successful TV check, then press Get my confirmation code if no sharing reference is shown. Enter that Enabler reference on your ticket, not the Helper’s six-digit code. Use the matching Use Remote Help guide next."
+            "When BM Remote Helper opens, leave it in front so the TV can show its sharing permission prompt. Wait for the Enabler’s fresh successful TV check, then press Get my confirmation code if no sharing reference is shown. Enter that Enabler reference on your ticket, not the Helper’s six-digit code. Use the matching Use Remote Help guide next. Watch the TV: if Helper asks for Start sharing or recording/casting approval, use the TV remote to approve the help you requested. The Enabler cannot approve sharing consent for you. The reference has six letters/numbers displayed in two groups of three, separated by a hyphen; it is not a six-digit PIN."
           ]
         ]
       ],
@@ -215,7 +215,7 @@
           ],
           [
             "Log in and choose Screen-share support",
-            "Reveal your current account BM TV Enabler PIN in Settings or ticket Remote setup. Enter it in the phone/Windows app, press Log in, Get started, then Screen-share support. Each launch asks for the PIN. Return to home changes sections without clearing valid references."
+            "Reveal your current account BM TV Enabler PIN in Settings or ticket Remote setup. Enter it in the phone/Windows app, press Log in, Get started, then Screen-share support. Each launch asks for the PIN. Return to home changes sections without clearing valid references. If no current PIN exists, press Get BM TV Enabler PIN; if a PIN is already allocated, press Reveal PIN and use it."
           ],
           [
             "Protect private information",
@@ -253,11 +253,11 @@
           ],
           [
             "Get the Enabler sharing reference",
-            "Press Get my confirmation code if no reference is displayed after setup. Use the sharing reference shown by your phone/Windows Enabler, not the account PIN, install reference, Wireless debugging pairing code or Helper’s six-digit TV code. The Helper connection is transferred automatically."
+            "Press Get my confirmation code if no reference is displayed after setup. Use the sharing reference shown by your phone/Windows Enabler, not the account PIN, install reference, Wireless debugging pairing code or Helper’s six-digit TV code. The Helper connection is transferred automatically. Watch the TV: if Helper asks for Start sharing or recording/casting approval, use the TV remote to approve the help you requested. The Enabler cannot approve sharing consent for you. The reference has six letters/numbers displayed in two groups of three, separated by a hyphen; it is not a six-digit PIN."
           ],
           [
             "Enter it on the ticket",
-            "In ticket Remote setup, type the reference in its reference box and confirm. If another ticket/order used it, get New code in the Enabler. If the website shows an older/different reference, press Change reference number and enter the app’s current one. A valid reference does not move another ticket’s session."
+            "In ticket Remote setup, type the reference in its reference box and confirm. If another ticket/order used it, get New code in the Enabler. If the website shows an older/different reference, press Change reference number and enter the app’s current one. A valid reference does not move another ticket’s session. Enter the six-character reference in Type the code from BM TV Enabler, then press Confirm."
           ],
           [
             "Read the three status ticks",
@@ -270,11 +270,11 @@
         [
           [
             "Enter the Enabler reference",
-            "Type the sharing reference shown by BM TV Enabler into your own ticket’s Remote setup reference box and confirm it. Each reference belongs to one ticket/order while valid. If another ticket/order already used it, get New code in the Enabler. If your PC shows a different reference from the website, use Change reference number and enter the current one."
+            "Type the sharing reference shown by BM TV Enabler into your own ticket’s Remote setup reference box and confirm it. Each reference belongs to one ticket/order while valid. If another ticket/order already used it, get New code in the Enabler. If your PC shows a different reference from the website, use Change reference number and enter the current one. Enter the six-character reference in Type the code from BM TV Enabler, then press Confirm."
           ],
           [
             "Connect and approve",
-            "When the website offers Connect my screen, press it and follow the TV’s Allow and recording/casting prompts. If the website needs a fresh TV check, keep the Enabler open and use Send to BM TV Enabler or Ask my TV again as shown. Wait for the new connection to arrive rather than repeatedly pressing the button. A green readiness tick is not a substitute for TV consent."
+            "If the website first needs a fresh TV connection, keep BM TV Enabler open on the same network and press Send to BM TV Enabler or Ask my TV again. When it says Waiting for you to press Allow on your TV, approve the requested TV prompt and wait for the page to advance. When Connect my screen appears, press it. Watch Helper on the TV and approve any requested Allow, Start sharing and system recording/casting prompt using the TV remote. Enabler does not accept these for you. A reference or green readiness tick is not sharing consent; do not repeatedly press Connect while waiting."
           ],
           [
             "Work with staff",
@@ -330,7 +330,7 @@
           ],
           [
             "Download and log in",
-            "Use Install Guides > Set up a device or your ticket’s Remote setup to download the official Android phone or Windows Enabler. Follow the matching Enabler installation guide. Reveal your six-digit BM TV Enabler PIN in Settings or ticket Remote setup; log in and press Get started. iPhone/iPad cannot run the Enabler; use a Windows PC instead."
+            "Use Install Guides > Set up a device or your ticket’s Remote setup to download the official Android phone or Windows Enabler. Follow the matching Enabler installation guide. Reveal your six-digit BM TV Enabler PIN in Settings or ticket Remote setup; log in and press Get started. iPhone/iPad cannot run the Enabler; use a Windows PC instead. If no current PIN exists, press Get BM TV Enabler PIN; if a PIN is already allocated, press Reveal PIN and use it."
           ],
           [
             "Choose Screen-share support",
@@ -355,7 +355,7 @@
           ],
           [
             "If Wireless debugging requires code pairing",
-            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair TV. The pairing port and connection port can differ. Setup continues after successful pairing."
+            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair with code and set up my TV. The pairing port and connection port can differ. Setup continues after successful pairing."
           ],
           [
             "Find and connect",
@@ -384,7 +384,7 @@
           ],
           [
             "Keep Helper in front and get a sharing reference",
-            "When BM Remote Helper opens, leave it in front so the TV can show its sharing permission prompt. Wait for the Enabler’s fresh successful TV check, then press Get my confirmation code if no sharing reference is shown. Enter that Enabler reference on your ticket, not the Helper’s six-digit code. Use the matching Use Remote Help guide next."
+            "When BM Remote Helper opens, leave it in front so the TV can show its sharing permission prompt. Wait for the Enabler’s fresh successful TV check, then press Get my confirmation code if no sharing reference is shown. Enter that Enabler reference on your ticket, not the Helper’s six-digit code. Use the matching Use Remote Help guide next. Watch the TV: if Helper asks for Start sharing or recording/casting approval, use the TV remote to approve the help you requested. The Enabler cannot approve sharing consent for you. The reference has six letters/numbers displayed in two groups of three, separated by a hyphen; it is not a six-digit PIN."
           ]
         ]
       ],
@@ -436,7 +436,7 @@
           ],
           [
             "Log in and choose Screen-share support",
-            "Reveal your current account BM TV Enabler PIN in Settings or ticket Remote setup. Enter it in the phone/Windows app, press Log in, Get started, then Screen-share support. Each launch asks for the PIN. Return to home changes sections without clearing valid references."
+            "Reveal your current account BM TV Enabler PIN in Settings or ticket Remote setup. Enter it in the phone/Windows app, press Log in, Get started, then Screen-share support. Each launch asks for the PIN. Return to home changes sections without clearing valid references. If no current PIN exists, press Get BM TV Enabler PIN; if a PIN is already allocated, press Reveal PIN and use it."
           ],
           [
             "Protect private information",
@@ -457,7 +457,7 @@
           ],
           [
             "If Wireless debugging requires code pairing",
-            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair TV. The pairing port and connection port can differ. Setup continues after successful pairing."
+            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair with code and set up my TV. The pairing port and connection port can differ. Setup continues after successful pairing."
           ],
           [
             "Find and connect",
@@ -478,11 +478,11 @@
           ],
           [
             "Get the Enabler sharing reference",
-            "Press Get my confirmation code if no reference is displayed after setup. Use the sharing reference shown by your phone/Windows Enabler, not the account PIN, install reference, Wireless debugging pairing code or Helper’s six-digit TV code. The Helper connection is transferred automatically."
+            "Press Get my confirmation code if no reference is displayed after setup. Use the sharing reference shown by your phone/Windows Enabler, not the account PIN, install reference, Wireless debugging pairing code or Helper’s six-digit TV code. The Helper connection is transferred automatically. Watch the TV: if Helper asks for Start sharing or recording/casting approval, use the TV remote to approve the help you requested. The Enabler cannot approve sharing consent for you. The reference has six letters/numbers displayed in two groups of three, separated by a hyphen; it is not a six-digit PIN."
           ],
           [
             "Enter it on the ticket",
-            "In ticket Remote setup, type the reference in its reference box and confirm. If another ticket/order used it, get New code in the Enabler. If the website shows an older/different reference, press Change reference number and enter the app’s current one. A valid reference does not move another ticket’s session."
+            "In ticket Remote setup, type the reference in its reference box and confirm. If another ticket/order used it, get New code in the Enabler. If the website shows an older/different reference, press Change reference number and enter the app’s current one. A valid reference does not move another ticket’s session. Enter the six-character reference in Type the code from BM TV Enabler, then press Confirm."
           ],
           [
             "Read the three status ticks",
@@ -495,11 +495,11 @@
         [
           [
             "Enter the Enabler reference",
-            "Type the sharing reference shown by BM TV Enabler into your own ticket’s Remote setup reference box and confirm it. Each reference belongs to one ticket/order while valid. If another ticket/order already used it, get New code in the Enabler. If your PC shows a different reference from the website, use Change reference number and enter the current one."
+            "Type the sharing reference shown by BM TV Enabler into your own ticket’s Remote setup reference box and confirm it. Each reference belongs to one ticket/order while valid. If another ticket/order already used it, get New code in the Enabler. If your PC shows a different reference from the website, use Change reference number and enter the current one. Enter the six-character reference in Type the code from BM TV Enabler, then press Confirm."
           ],
           [
             "Connect and approve",
-            "When the website offers Connect my screen, press it and follow the TV’s Allow and recording/casting prompts. If the website needs a fresh TV check, keep the Enabler open and use Send to BM TV Enabler or Ask my TV again as shown. Wait for the new connection to arrive rather than repeatedly pressing the button. A green readiness tick is not a substitute for TV consent."
+            "If the website first needs a fresh TV connection, keep BM TV Enabler open on the same network and press Send to BM TV Enabler or Ask my TV again. When it says Waiting for you to press Allow on your TV, approve the requested TV prompt and wait for the page to advance. When Connect my screen appears, press it. Watch Helper on the TV and approve any requested Allow, Start sharing and system recording/casting prompt using the TV remote. Enabler does not accept these for you. A reference or green readiness tick is not sharing consent; do not repeatedly press Connect while waiting."
           ],
           [
             "Work with staff",
@@ -563,7 +563,7 @@
           ],
           [
             "Enter your account PIN",
-            "Open Settings > BM TV Enabler PIN on the website, or reveal the PIN in ticket Remote setup. Enter the six-digit PIN in BM TV Enabler, press Log in, then Get started. The app asks for the PIN on every launch; use the current PIN, which changes after 24 hours. This login PIN is not the later Enabler reference or a TV pairing code."
+            "Open Settings > BM TV Enabler PIN on the website, or reveal the PIN in ticket Remote setup. Enter the six-digit PIN in BM TV Enabler, press Log in, then Get started. The app asks for the PIN on every launch; use the current PIN, which changes after 24 hours. This login PIN is not the later Enabler reference or a TV pairing code. If no current PIN exists, press Get BM TV Enabler PIN; if a PIN is already allocated, press Reveal PIN and use it."
           ],
           [
             "Choose Install our apps",
@@ -626,7 +626,7 @@
           ],
           [
             "Wireless debugging pairing",
-            "If Android/Google TV requires pairing, expand Android / Google TV with Wireless debugging: pair with code. On the TV choose Wireless debugging > Pair device with pairing code. Enter that six-digit code and its pairing port in the app. Use the IP address and connection port from the main Wireless debugging screen for TV address; the two ports can differ."
+            "If Android/Google TV requires pairing, expand Android / Google TV with Wireless debugging: pair with code. On the TV choose Wireless debugging > Pair device with pairing code. Enter that six-digit code and its pairing port in the app. Use the IP address and connection port from the main Wireless debugging screen for TV address; the two ports can differ. Press Pair with code and set up my TV; the Enabler pairs and continues setup automatically on success."
           ],
           [
             "Retry safely or request help",
@@ -665,7 +665,7 @@
           ],
           [
             "Enter your account PIN",
-            "Open Settings > BM TV Enabler PIN on the website, or reveal the PIN in ticket Remote setup. Enter the six-digit PIN in BM TV Enabler, press Log in, then Get started. The app asks for the PIN on every launch; use the current PIN, which changes after 24 hours. This login PIN is not the later Enabler reference or a TV pairing code."
+            "Open Settings > BM TV Enabler PIN on the website, or reveal the PIN in ticket Remote setup. Enter the six-digit PIN in BM TV Enabler, press Log in, then Get started. The app asks for the PIN on every launch; use the current PIN, which changes after 24 hours. This login PIN is not the later Enabler reference or a TV pairing code. If no current PIN exists, press Get BM TV Enabler PIN; if a PIN is already allocated, press Reveal PIN and use it."
           ]
         ]
       ],
@@ -698,6 +698,10 @@
             "On the TV open Settings > System > About (some TVs use Device Preferences > About). Highlight Android TV OS build and press Select seven times. Return to System > Developer options and enable Network debugging, or Wireless debugging where offered. Menu names vary by TV. Do not expose debugging ports to the internet."
           ],
           [
+            "Pair Wireless debugging where required",
+            "On Android/Google TV select Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code. Enter the TV’s six-digit pairing code and pairing port. In TV address enter the main Wireless debugging screen’s IP address and connection port; these ports can differ. Press Pair with code and set up my TV. After successful pairing setup continues. Network debugging TVs do not need this extra pairing step."
+          ],
+          [
             "Find and connect",
             "Press I’ve switched debugging on — next. Choose Find my Fire TV or Find my Android TV, select the correct named TV and check its address. If it is missing, enter the address from the TV’s network settings. Press Connect to this TV. On the TV, press Allow for debugging and tick Always allow from this computer if offered. Keep the Enabler open."
           ],
@@ -707,7 +711,7 @@
           ],
           [
             "Get the sharing reference",
-            "Wait for the Enabler’s successful TV check and sharing reference; press Get my confirmation code if one is not displayed. Use that reference, not the login PIN, a Wireless debugging pairing code or the Helper’s six-digit TV code. The Enabler transfers the Helper connection details automatically; you do not type the TV’s Helper code into the website."
+            "Wait for the Enabler’s successful TV check and sharing reference; press Get my confirmation code if one is not displayed. Use that reference, not the login PIN, a Wireless debugging pairing code or the Helper’s six-digit TV code. The Enabler transfers the Helper connection details automatically; you do not type the TV’s Helper code into the website. Watch the TV: if Helper asks for Start sharing or recording/casting approval, use the TV remote to approve the help you requested. The Enabler cannot approve sharing consent for you. The reference has six letters/numbers displayed in two groups of three, separated by a hyphen; it is not a six-digit PIN."
           ]
         ]
       ],
@@ -716,11 +720,11 @@
         [
           [
             "Enter the Enabler reference",
-            "Type the sharing reference shown by BM TV Enabler into your own ticket’s Remote setup reference box and confirm it. Each reference belongs to one ticket/order while valid. If another ticket/order already used it, get New code in the Enabler. If your PC shows a different reference from the website, use Change reference number and enter the current one."
+            "Type the sharing reference shown by BM TV Enabler into your own ticket’s Remote setup reference box and confirm it. Each reference belongs to one ticket/order while valid. If another ticket/order already used it, get New code in the Enabler. If your PC shows a different reference from the website, use Change reference number and enter the current one. Enter the six-character reference in Type the code from BM TV Enabler, then press Confirm."
           ],
           [
             "Connect and approve",
-            "When the website offers Connect my screen, press it and follow the TV’s Allow and recording/casting prompts. If the website needs a fresh TV check, keep the Enabler open and use Send to BM TV Enabler or Ask my TV again as shown. Wait for the new connection to arrive rather than repeatedly pressing the button. A green readiness tick is not a substitute for TV consent."
+            "If the website first needs a fresh TV connection, keep BM TV Enabler open on the same network and press Send to BM TV Enabler or Ask my TV again. When it says Waiting for you to press Allow on your TV, approve the requested TV prompt and wait for the page to advance. When Connect my screen appears, press it. Watch Helper on the TV and approve any requested Allow, Start sharing and system recording/casting prompt using the TV remote. Enabler does not accept these for you. A reference or green readiness tick is not sharing consent; do not repeatedly press Connect while waiting."
           ],
           [
             "Work with staff",
@@ -784,7 +788,7 @@
           ],
           [
             "Log in with the account PIN",
-            "Get or reveal your BM TV Enabler PIN in website Settings > BM TV Enabler PIN, or the PIN box in ticket Remote setup. Enter the six-digit PIN in the app and press Log in, then Get started. The same account PIN is used until its original 24-hour expiry and is required on every app launch. It is separate from install/sharing references and TV pairing codes."
+            "Get or reveal your BM TV Enabler PIN in website Settings > BM TV Enabler PIN, or the PIN box in ticket Remote setup. Enter the six-digit PIN in the app and press Log in, then Get started. The same account PIN is used until its original 24-hour expiry and is required on every app launch. It is separate from install/sharing references and TV pairing codes. If no current PIN exists, press Get BM TV Enabler PIN; if a PIN is already allocated, press Reveal PIN and use it."
           ]
         ]
       ],
@@ -801,7 +805,7 @@
           ],
           [
             "If Wireless debugging requires code pairing",
-            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair TV. The pairing port and connection port can differ. Setup continues after successful pairing."
+            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair with code and set up my TV. The pairing port and connection port can differ. Setup continues after successful pairing."
           ],
           [
             "Find and connect",
@@ -847,7 +851,7 @@
           ],
           [
             "Wireless debugging pairing",
-            "The Android phone Enabler does not have a Wireless debugging pairing-code form. If your Android/Google TV requires Pair device with pairing code, use the Windows PC Enabler: expand Android / Google TV with Wireless debugging: pair with code, enter the TV’s six-digit pairing code and pairing port, and use the main Wireless debugging screen’s IP address and connection port in TV address. Pairing and connection ports can differ. Press Pair TV; after successful pairing setup continues. Never type this pairing code into the ticket."
+            "The Android phone Enabler does not have a Wireless debugging pairing-code form. If your Android/Google TV requires Pair device with pairing code, use the Windows PC Enabler: expand Android / Google TV with Wireless debugging: pair with code, enter the TV’s six-digit pairing code and pairing port, and use the main Wireless debugging screen’s IP address and connection port in TV address. Pairing and connection ports can differ. Press Pair with code and set up my TV; after successful pairing setup continues. Never type this pairing code into the ticket."
           ],
           [
             "Retry safely or request help",
