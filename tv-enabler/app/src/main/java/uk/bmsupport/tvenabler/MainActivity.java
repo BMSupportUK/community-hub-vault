@@ -223,7 +223,7 @@ public class MainActivity extends Activity {
         appsNew = button("Install our apps", SURFACE);
         appsHave = button("Screen-share support", SURFACE);
         appsBack = button("Back", SURFACE);
-        appsCode = button("I have a website code", PRIMARY_BTN_COLOR);
+        appsCode = button("I have a website code", ACCENT);
         appsCode.setOnClickListener(v -> askWebsiteCode());
         appsNew.setOnClickListener(v -> {
             if (busy || refreshBusy) return;
