@@ -1,3 +1,4 @@
+// @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { describe, expect, test } from "bun:test";
 import { INSTALL_NO_EXPIRY_ISO, enablerReferenceUsed } from "./enabler-confirm-code";
 

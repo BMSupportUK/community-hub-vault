@@ -72,3 +72,4 @@
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
 - Install Guides: route owns device choice; only TV setup and staff help reserve phone/Windows download columns with ticket-bound PIN controls, so guide/video browsing retains the full available width.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
+- Install references never expire; after Install our apps both Enablers ask "Do you need staff help?": Yes shows the code for the ticket/order, No posts it to `/api/public/enabler-self-install`, which logs code, apps and TV address in the download log and marks it used so New code unlocks. Phone and Windows change together.
