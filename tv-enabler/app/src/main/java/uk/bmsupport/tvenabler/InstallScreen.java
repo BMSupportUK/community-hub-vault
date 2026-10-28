@@ -6,6 +6,7 @@ import java.util.List;
  *  Must match windows-tv-enabler/core.cjs installScreenCommand exactly. */
 final class InstallScreen {
     static final String PACKAGE = "uk.bmsupport.installscreen";
+    static final int MIN_VERSION = 3;
     static final String APK_PATH = "/api/public/install-screen-apk";
 
     private InstallScreen() {}

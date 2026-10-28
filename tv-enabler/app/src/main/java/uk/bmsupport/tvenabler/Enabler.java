@@ -367,7 +367,13 @@ final class Enabler {
 
     /** Installs the BM Install Screen TV app if missing. Never fatal: returns false when the screen can't be shown. */
     private static boolean ensureInstallScreen(Context ctx, AdbClient adb, java.util.Set<String> installed) {
-        if (InstalledApps.contains(installed, InstallScreen.PACKAGE)) return true;
+        if (InstalledApps.contains(installed, InstallScreen.PACKAGE)) {
+            // Older screens auto-close; update them so the customer gets the Close button.
+            try {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("versionCode=(\\d+)").matcher(adb.shell("dumpsys package " + InstallScreen.PACKAGE + " | grep versionCode"));
+                if (!m.find() || Integer.parseInt(m.group(1)) >= InstallScreen.MIN_VERSION) return true;
+            } catch (Exception e) { return true; }
+        }
         File out = new File(ctx.getCacheDir(), "bm-install-screen.apk");
         try {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk" + InstallScreen.APK_PATH).openConnection();
