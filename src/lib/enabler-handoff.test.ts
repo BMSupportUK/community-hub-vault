@@ -1,3 +1,4 @@
+// @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { expect, test } from "bun:test";
 import { HANDOFF_TTL_MS, handoffUsable, makeHandoffCode, normalizeHandoffCode } from "./enabler-handoff";
 
