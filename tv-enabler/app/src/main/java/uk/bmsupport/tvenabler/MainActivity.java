@@ -661,7 +661,7 @@ public class MainActivity extends Activity {
                     installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false; installChoice = 0; sharingReferenceExpired = false;
                     getSharedPreferences("tv", MODE_PRIVATE).edit().remove("host").remove("device").remove("apps")
                         .remove("confirmation").remove("confirmationExpiry").remove("confirmationToken").remove("confirmationHost")
-                        .remove("confirmationInstall").remove("confirmationInstallExpiry").remove("confirmationInstallToken").remove("confirmationInstallHost").remove("confirmationInstallUsed").commit();
+                        .remove("confirmationInstall").remove("confirmationInstallExpiry").remove("confirmationInstallToken").remove("confirmationInstallHost").remove("confirmationInstallUsed").remove("installChoice").commit();
                     address.setText(""); confirmCode.setText(""); refreshToken = null; refreshHost = null; say("", MUTED); render();
                 }).show();
     }
@@ -768,7 +768,7 @@ public class MainActivity extends Activity {
 
     private void setBusy(boolean b) {
         busy = b;
-        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, startAgain, showAgain, appsNew, appsHave, appsBack}) {
+        for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, startAgain, showAgain, appsNew, appsHave, appsBack, helpYes, helpNo}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
         }
         address.setEnabled(!b); tvCodeInput.setEnabled(!b);
