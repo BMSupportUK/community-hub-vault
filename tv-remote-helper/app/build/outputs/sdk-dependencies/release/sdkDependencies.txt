@@ -1,0 +1,439 @@
+# List of SDK dependencies of this app, this information is also included in an encrypted form in the APK.
+# For more information visit: https://d.android.com/r/tools/dependency-metadata
+
+library {
+  maven_library {
+    groupId: "com.squareup.okhttp3"
+    artifactId: "okhttp"
+    version: "4.12.0"
+  }
+  digests {
+    sha256: "\261\005\000\201\261K\267\243\247\345ZM>\360\033]\317\253\304S\264W:O\300\031vq\221\325\364\340"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "com.squareup.okio"
+    artifactId: "okio"
+    version: "3.6.0"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "com.squareup.okio"
+    artifactId: "okio-jvm"
+    version: "3.6.0"
+  }
+  digests {
+    sha256: "gT?\a6\374B*\351\'\355\016PK\230\274^&\237\332\r5\000W\2237\313q=\242\204\022"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlin"
+    artifactId: "kotlin-stdlib-jdk8"
+    version: "1.9.10"
+  }
+  digests {
+    sha256: "\244\307M\224\326L\341\253\3457`\376\003\211\335\224\037o\305X\320\332\263^G\300\205\241\036\310\017("
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlin"
+    artifactId: "kotlin-stdlib"
+    version: "1.9.10"
+  }
+  digests {
+    sha256: "U\351\211\305\022\270\t\ay\237\205C\t\363\274w\202\305\263\32192D-\003y\325\304rq\025\004"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlin"
+    artifactId: "kotlin-stdlib-common"
+    version: "1.9.10"
+  }
+  digests {
+    sha256: "\315\3434\033\241\212+\242b\260\267\317lU\262\f\220\350\3244\344,\232\023\346\243\367p\333\226Z\210"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains"
+    artifactId: "annotations"
+    version: "13.0"
+  }
+  digests {
+    sha256: "\254\342\241\r\310\342\325\3754\222^\312\300>I\210\262\300\370Qe\f\224\270\316\364\233\241\275\021\024x"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlin"
+    artifactId: "kotlin-stdlib-jdk7"
+    version: "1.9.10"
+  }
+  digests {
+    sha256: "\254ca\277\232\321\3558,!\003\331q,G\315\354\026b2\264\220>\325\226\350\207k\006\201\311\267"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "io.github.webrtc-sdk"
+    artifactId: "android"
+    version: "125.6422.04"
+  }
+  digests {
+    sha256: "\263\265\b\323\365\353pE\002\277\257\344Q\321\220O@\210\001\b/\305\034\037\030\333C\204\251\360?m"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "dev.mobile"
+    artifactId: "dadb"
+    version: "1.2.9"
+  }
+  digests {
+    sha256: "\246\032\027\364\366I\177T\333\3561\271\371\257x\ai\323\227\307U\220\317J\245\326\377\360\000\262\236\020"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.graalvm.buildtools"
+    artifactId: "junit-platform-native"
+    version: "0.9.5"
+  }
+  digests {
+    sha256: "e\024u\204\363_\374g\300~\340xP\211\330^G\3322\211E\323\206\262\324O\232Z\260\033=\001"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit"
+    artifactId: "junit-bom"
+    version: "5.7.2"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.jupiter"
+    artifactId: "junit-jupiter"
+    version: "5.7.2"
+  }
+  digests {
+    sha256: "\317E\375\370\261\375\335^#8\334t,s\273\367\217\240\314\244\327u\344\323\260:\365\213/\205+\220"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.jupiter"
+    artifactId: "junit-jupiter-api"
+    version: "5.7.2"
+  }
+  digests {
+    sha256: "\274\2302n\313\305\001\341\206\n+\311x\n\353\345w{\322\234\360\000Y\370\214*V\364\217\274\234\346"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.apiguardian"
+    artifactId: "apiguardian-api"
+    version: "1.1.0"
+  }
+  digests {
+    sha256: "\251\252\351\377\212\343\341z*\030\367\221u\350+\026&|$o\273\323\312\235\373\273)\v\b\334\375\324"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.opentest4j"
+    artifactId: "opentest4j"
+    version: "1.2.0"
+  }
+  digests {
+    sha256: "X\201-\346\b\230\331v\373\201\357;b\332\005\306`L\030\375J$\237PD($y\374(j\362"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.platform"
+    artifactId: "junit-platform-commons"
+    version: "1.7.2"
+  }
+  digests {
+    sha256: "s\215\r\360!\240a\037\377]\'v4\350\220\314\221\205\217\247\"\'\317\v\3176#*|\257\001L"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.jupiter"
+    artifactId: "junit-jupiter-params"
+    version: "5.7.2"
+  }
+  digests {
+    sha256: "\027V\237}\240\316.\276\253\207Z\250\252y\300\362\304$3\352 \202\221\347?\301\243\311\326\0241\025"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.jupiter"
+    artifactId: "junit-jupiter-engine"
+    version: "5.7.2"
+  }
+  digests {
+    sha256: "\2125\257\262l\325\3509<\267c\377\023\322jR\245\a\243\\[-vP\324 $\247\"k\200\333"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.platform"
+    artifactId: "junit-platform-engine"
+    version: "1.7.2"
+  }
+  digests {
+    sha256: "\253\353\277\244 \372\217\375\305\020\203\300h\a\350i-\331\277\214RE]\315\267$t\253\220BUs"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.platform"
+    artifactId: "junit-platform-console"
+    version: "1.7.2"
+  }
+  digests {
+    sha256: "Q\262ki\251\301}\366\231\316\362,\231\216\275M\'A\355\356\037^j\037\365^\375r\223\215\236\213"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.platform"
+    artifactId: "junit-platform-reporting"
+    version: "1.7.2"
+  }
+  digests {
+    sha256: "\"\352\356\001\356\375;\343\376u\203\366dW\177:[\222\266dX\245\224E\023\223\322\355\3779\026\233"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.junit.platform"
+    artifactId: "junit-platform-launcher"
+    version: "1.7.2"
+  }
+  digests {
+    sha256: "\245\222<\206\034\'\377>\347\233\021\3269h\226\347\026\232v\226x\001\261\213IH\217\233\026H\vN"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library {
+  maven_library {
+    groupId: "org.jetbrains.kotlin"
+    artifactId: "kotlin-bom"
+    version: "1.5.30"
+  }
+  repo_index {
+    value: 1
+  }
+}
+library_dependencies {
+  library_dep_index: 1
+  library_dep_index: 3
+}
+library_dependencies {
+  library_index: 1
+  library_dep_index: 2
+}
+library_dependencies {
+  library_index: 2
+  library_dep_index: 3
+  library_dep_index: 5
+}
+library_dependencies {
+  library_index: 3
+  library_dep_index: 4
+  library_dep_index: 7
+}
+library_dependencies {
+  library_index: 4
+  library_dep_index: 5
+  library_dep_index: 6
+}
+library_dependencies {
+  library_index: 7
+  library_dep_index: 4
+}
+library_dependencies {
+  library_index: 9
+  library_dep_index: 10
+  library_dep_index: 23
+  library_dep_index: 3
+  library_dep_index: 1
+}
+library_dependencies {
+  library_index: 10
+  library_dep_index: 11
+  library_dep_index: 20
+  library_dep_index: 22
+  library_dep_index: 12
+}
+library_dependencies {
+  library_index: 11
+  library_dep_index: 12
+  library_dep_index: 20
+  library_dep_index: 22
+  library_dep_index: 21
+  library_dep_index: 19
+  library_dep_index: 13
+  library_dep_index: 17
+  library_dep_index: 18
+  library_dep_index: 16
+}
+library_dependencies {
+  library_index: 12
+  library_dep_index: 11
+  library_dep_index: 13
+  library_dep_index: 17
+  library_dep_index: 18
+}
+library_dependencies {
+  library_index: 13
+  library_dep_index: 11
+  library_dep_index: 14
+  library_dep_index: 15
+  library_dep_index: 16
+}
+library_dependencies {
+  library_index: 16
+  library_dep_index: 11
+  library_dep_index: 14
+}
+library_dependencies {
+  library_index: 17
+  library_dep_index: 11
+  library_dep_index: 14
+  library_dep_index: 13
+}
+library_dependencies {
+  library_index: 18
+  library_dep_index: 11
+  library_dep_index: 14
+  library_dep_index: 19
+  library_dep_index: 13
+}
+library_dependencies {
+  library_index: 19
+  library_dep_index: 11
+  library_dep_index: 14
+  library_dep_index: 15
+  library_dep_index: 16
+}
+library_dependencies {
+  library_index: 20
+  library_dep_index: 11
+  library_dep_index: 14
+  library_dep_index: 21
+}
+library_dependencies {
+  library_index: 21
+  library_dep_index: 11
+  library_dep_index: 14
+  library_dep_index: 22
+}
+library_dependencies {
+  library_index: 22
+  library_dep_index: 11
+  library_dep_index: 14
+  library_dep_index: 19
+}
+library_dependencies {
+  library_index: 23
+  library_dep_index: 3
+  library_dep_index: 5
+  library_dep_index: 4
+  library_dep_index: 7
+}
+module_dependencies {
+  module_name: "base"
+  dependency_index: 0
+  dependency_index: 8
+  dependency_index: 9
+}
+repositories {
+  maven_repo {
+    url: "https://dl.google.com/dl/android/maven2/"
+  }
+}
+repositories {
+  maven_repo {
+    url: "https://repo.maven.apache.org/maven2/"
+  }
+}
