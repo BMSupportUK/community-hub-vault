@@ -655,6 +655,7 @@ public class MainActivity extends Activity {
                                     .putString("device", checks != null && checks.type != null ? checks.type : selectedDevice).commit();
                             }
                         }
+                        if (installIssued[0] == null && helpPlan == 2) ui.post(this::selfInstall);
                         if (installIssued[0] != null) {
                             installCodeText = installIssued[0].code; installExpiresAt = installIssued[0].expiresAt;
                             installRefreshToken = installIssued[0].refreshToken; installUsed = false;
@@ -740,8 +741,9 @@ public class MainActivity extends Activity {
 
     /** "No — I'm all done": log the code, installed apps and TV address, then New code unlocks. */
     private void selfInstall() {
-        if (busy || installRefreshToken == null || installRefreshToken.length() != 64) return;
-        final String token = installRefreshToken, host = address.getText().toString().trim();
+        final boolean hasToken = installRefreshToken != null && installRefreshToken.length() == 64;
+        if (busy || (!hasToken && helpPlan != 2)) return;
+        final String token = hasToken ? installRefreshToken : null, host = address.getText().toString().trim();
         final java.util.List<String> names = new java.util.ArrayList<>();
         for (Enabler.AppResult r : appsResults) if (r.status != Enabler.AppResult.FAILED) names.add(r.name);
         setBusy(true); say("Recording your install…", MUTED);
