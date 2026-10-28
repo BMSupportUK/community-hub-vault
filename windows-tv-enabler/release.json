@@ -1,5 +1,5 @@
 {
-  "version": "1.49.0",
+  "version": "1.54.0",
   "platform": "win32-x64",
   "electron": "41.0.2",
   "packager": "20.3.0",
@@ -8,8 +8,8 @@
   "platformToolsSource": "https://dl.google.com/android/repository/platform-tools-latest-windows.zip",
   "platformToolsZipSha256": "45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99",
   "adbSha256": "b4a6b455702684652cccf7b46258b29e653538904359a58fd4931cf3ef286b3f",
-  "installerSha256": "b8ae1ce243c778304d353b21a5e2b0d538217abb6cdaf1c7a69f9308268505bd",
-  "installerBytes": 106146373,
+  "installerSha256": "4236b1b7e7787ed2a0d23179b7f6fc040d0965d51c00d630a0770f3a1db0bce4",
+  "installerBytes": 106241674,
   "signed": false,
   "packaging": "@electron/packager --no-asar then NSIS; local executable and DLLs stay outside archives"
 }
