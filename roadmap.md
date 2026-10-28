@@ -2,8 +2,8 @@
 # Roadmap
 
 ## Windows written guides and PDFs
-- [ ] Create separate Windows installation and screen-sharing written guides with matching branded PDFs, using current app labels and reference lifecycle.
-- [ ] Add both to Knowledge Base and Install Guides without changing existing videos; visually check every PDF page and verify signed-in access.
+- [x] Create separate Windows installation and screen-sharing written guides with matching branded PDFs, using current app labels and reference lifecycle.
+- [x] Add both to Knowledge Base and Install Guides without changing existing videos; visually check all nine PDF pages (no clipping or overlap) and verify both PDFs and the sharing article open through signed-in UI. Physical Windows/TV execution is not part of this documentation task.
 
 ## Enabler sharing-reference expiry
 - [x] Update phone and Windows to clear server-expired sharing references, offer New code, and explain expiry on screen-share end; retain install references and PINs.
