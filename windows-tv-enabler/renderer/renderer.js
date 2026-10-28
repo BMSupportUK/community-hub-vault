@@ -23,6 +23,7 @@ let refreshToken = '', refreshHost = '', refreshBusy = false;
 let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshToken = '';
 // After installing: 0 = not asked yet, 1 = needs staff help (show code), 2 = self install (logged).
 let installChoice = 0;
+let helpPlan = Number(localStorage.getItem('bm-tv-help-plan')) || 0; // asked before installing: 1 staff help, 2 self install
 const helpYes = document.getElementById('help-yes'), helpNo = document.getElementById('help-no');
 function saveInstallState(patch) { try { const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation-install') || 'null'); if (saved) localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ ...saved, ...patch })); } catch { /* ignore */ } }
 const welcomeSection = el('welcome'), wizardSection = el('wizard');
@@ -231,14 +232,14 @@ async function showCode(host, existing) {
   setBusy(false); render();
 }
 
-/** Tick list of our apps (all ticked; already-installed greyed out). Resolves with the ticked app paths. */
+/** Tick list of our apps (already-installed unticked and greyed out). Resolves with the ticked app paths. */
 function chooseApps(list) {
   const box = document.getElementById('apps-choose'), holder = document.getElementById('apps-choose-list'), go = document.getElementById('apps-choose-go');
   holder.replaceChildren();
   const boxes = [];
   for (const app of list) {
     const label = document.createElement('label'); const input = document.createElement('input');
-    input.type = 'checkbox'; input.checked = true; input.value = app.path;
+    input.type = 'checkbox'; input.checked = !app.installed; input.value = app.path;
     const name = document.createElement('strong'); name.textContent = app.name;
     label.append(input, name);
     if (app.installed) { input.disabled = true; label.className = 'disabled'; const note = document.createElement('small'); note.textContent = 'Already installed'; label.append(note); }
@@ -291,7 +292,9 @@ async function run(stage, host) {
             installCode = issued.code; installExpiresAt = issued.expiresAtMs; installUsed = false;
             installRefreshToken = issued.refreshToken || '';
             localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ code: installCode, expiresAtMs: installExpiresAt, refreshToken: installRefreshToken, host, device: dev, referenceUsed: false, choice: 0 }));
-            installChoice = 0;
+            installChoice = helpPlan === 1 ? 1 : 0;
+            if (helpPlan === 1) saveInstallState({ choice: 1 });
+            if (helpPlan === 2) setTimeout(() => selfInstall(true), 0);
           } catch { /* The apps are on the TV either way; the code is extra proof for the ticket or order. */ }
         }
         say(result.failed.length ? `Done, but ${result.failed.length} app${result.failed.length === 1 ? '' : 's'} didn't install — see the list below. Press Return to home to try again.` : `✓ All done — ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} on your TV. See the list below.`, result.failed.length > 0);
@@ -380,8 +383,9 @@ function backToStart() {
 }
 startAgain.addEventListener('click', backToStart);
 helpYes.addEventListener('click', () => { if (busy) return; installChoice = 1; saveInstallState({ choice: 1 }); say(''); render(); });
-helpNo.addEventListener('click', async () => {
-  if (busy || !/^[0-9a-f]{64}$/.test(installRefreshToken)) return;
+helpNo.addEventListener('click', () => selfInstall(false));
+async function selfInstall(auto) {
+  if ((busy && !auto) || !/^[0-9a-f]{64}$/.test(installRefreshToken)) return;
   setBusy(true); say('Recording your install…');
   try {
     await window.bmTv.selfInstall(installRefreshToken, appsResults.filter(r => r.status !== 'failed').map(r => r.name), address.value.trim());
@@ -389,7 +393,7 @@ helpNo.addEventListener('click', async () => {
     say('✓ Install recorded. You\'re all set.');
   } catch (error) { say(cleanError(error), true); }
   setBusy(false); render();
-});
+}
 
 reset.addEventListener('click', () => {
   if (busy) return;
@@ -415,7 +419,11 @@ function pickApps(value) {
   if (value) { device = null; localStorage.removeItem('bm-tv-device'); }
   render();
 }
-appsNew.addEventListener('click', () => pickApps('new'));
+appsNew.addEventListener('click', () => { if (!busy) el('help-ask').showModal(); });
+for (const [id, plan] of [['help-ask-yes', 1], ['help-ask-no', 2]]) el(id).addEventListener('click', () => {
+  el('help-ask').close(); helpPlan = plan; localStorage.setItem('bm-tv-help-plan', String(plan)); pickApps('new');
+});
+el('help-ask-cancel').addEventListener('click', () => el('help-ask').close());
 appsHave.addEventListener('click', () => pickApps('have'));
 appsBack.addEventListener('click', () => pickApps(null));
 pickAmazon.addEventListener('click', () => pickDevice('amazon'));
