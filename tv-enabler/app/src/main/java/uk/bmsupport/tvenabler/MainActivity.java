@@ -894,6 +894,7 @@ public class MainActivity extends Activity {
     }
 
     private void setBusy(boolean b) {
+        if (b && !busy) WorkService.start(this); else if (!b && busy) WorkService.stop(this);
         busy = b;
         for (Button button : new Button[]{turnOn, find, amazonBtn, androidBtn, next, reset, startAgain, showAgain, appsNew, appsHave, appsBack, appsCode, helpYes, helpNo}) {
             button.setEnabled(!b); button.setAlpha(b ? .5f : 1f);
