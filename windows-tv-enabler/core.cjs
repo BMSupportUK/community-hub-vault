@@ -447,6 +447,16 @@ async function logSelfInstall(token, apps, tvAddress, post = globalThis.fetch) {
   return true;
 }
 
+/** BM TV Enabler "Yes — I need staff help": office check, then a ticket with the sharing reference attached. */
+async function staffHelp(body, post = globalThis.fetch) {
+  let res, data = {};
+  try { res = await post('https://bmsupport.uk/api/public/enabler-staff-help', { method: 'POST', headers: { 'content-type': 'application/json', ...(enablerToken ? { 'x-enabler-token': enablerToken } : {}) }, body: JSON.stringify(body) }); }
+  catch { throw new Error("Couldn't reach BM Support. Check the computer's internet and try again."); }
+  try { data = await res.json(); } catch { data = {}; }
+  if (!res.ok) throw new Error(data.error || `Couldn't open a ticket for staff help (error ${res.status}). Try again.`);
+  return data;
+}
+
 async function requestConfirmCode(checks, device, post = globalThis.fetch, helperCode = null, withExpiry = false, kind = 'share') {
   if (device !== 'amazon' && device !== 'android') throw new Error('Choose which TV this is first: Amazon Fire TV or Android / Google TV.');
   // Install references only prove the apps reached the TV; share references need the full TV check.
@@ -503,4 +513,4 @@ async function refreshConnection(host, token, adb, progress, post = globalThis.f
   } catch (error) { await send({ token, requestId: task.requestId }).catch(() => {}); throw error; }
 }
 
-module.exports = { logSelfInstall, installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, listOurApps, pickApps, activate, openCodeApp, enable };
+module.exports = { staffHelp, logSelfInstall, installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, listOurApps, pickApps, activate, openCodeApp, enable };
