@@ -1,1 +1,2 @@
 int drawable bm_logo 0x7f010000
+int drawable install_bg 0x7f010001

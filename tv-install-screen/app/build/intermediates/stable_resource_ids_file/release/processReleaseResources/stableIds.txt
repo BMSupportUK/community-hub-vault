@@ -1,1 +1,2 @@
+uk.bmsupport.installscreen:drawable/install_bg = 0x7f010001
 uk.bmsupport.installscreen:drawable/bm_logo = 0x7f010000
