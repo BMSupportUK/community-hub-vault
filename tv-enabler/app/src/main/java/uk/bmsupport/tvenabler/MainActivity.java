@@ -314,7 +314,7 @@ public class MainActivity extends Activity {
 
     private boolean confirmationValid() { return confirmCode.length() > 0 && System.currentTimeMillis() < confirmExpiresAt; }
 
-    /** Restore the install reference the same way: it lasts 24 hours from creation. */
+    /** Restore the install reference: it has no expiry and is replaced once used or logged. */
     private boolean restoreInstallConfirmation() {
         SharedPreferences prefs = getSharedPreferences("tv", MODE_PRIVATE);
         String code = prefs.getString("confirmationInstall", null);
