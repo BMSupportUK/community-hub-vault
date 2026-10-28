@@ -130,6 +130,7 @@ import { Route as ApiPublicEnablerConfirmRouteImport } from './routes/api/public
 import { Route as ApiPublicEnablerLoginRouteImport } from './routes/api/public/enabler-login'
 import { Route as ApiPublicEnablerRefreshRouteImport } from './routes/api/public/enabler-refresh'
 import { Route as ApiPublicEnablerSelfInstallRouteImport } from './routes/api/public/enabler-self-install'
+import { Route as ApiPublicEnablerStaffHelpRouteImport } from './routes/api/public/enabler-staff-help'
 import { Route as ApiPublicInstallScreenApkRouteImport } from './routes/api/public/install-screen-apk'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/public/remote-helper-apk'
@@ -901,6 +902,12 @@ const ApiPublicEnablerSelfInstallRoute =
     path: '/api/public/enabler-self-install',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicEnablerStaffHelpRoute =
+  ApiPublicEnablerStaffHelpRouteImport.update({
+    id: '/api/public/enabler-staff-help',
+    path: '/api/public/enabler-staff-help',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicInstallScreenApkRoute =
   ApiPublicInstallScreenApkRouteImport.update({
     id: '/api/public/install-screen-apk',
@@ -1490,6 +1497,7 @@ export interface FileRoutesByFullPath {
   '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/enabler-refresh': typeof ApiPublicEnablerRefreshRoute
   '/api/public/enabler-self-install': typeof ApiPublicEnablerSelfInstallRoute
+  '/api/public/enabler-staff-help': typeof ApiPublicEnablerStaffHelpRoute
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
@@ -1689,6 +1697,7 @@ export interface FileRoutesByTo {
   '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/enabler-refresh': typeof ApiPublicEnablerRefreshRoute
   '/api/public/enabler-self-install': typeof ApiPublicEnablerSelfInstallRoute
+  '/api/public/enabler-staff-help': typeof ApiPublicEnablerStaffHelpRoute
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
@@ -1894,6 +1903,7 @@ export interface FileRoutesById {
   '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/enabler-refresh': typeof ApiPublicEnablerRefreshRoute
   '/api/public/enabler-self-install': typeof ApiPublicEnablerSelfInstallRoute
+  '/api/public/enabler-staff-help': typeof ApiPublicEnablerStaffHelpRoute
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
@@ -2098,6 +2108,7 @@ export interface FileRouteTypes {
     | '/api/public/enabler-login'
     | '/api/public/enabler-refresh'
     | '/api/public/enabler-self-install'
+    | '/api/public/enabler-staff-help'
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
@@ -2297,6 +2308,7 @@ export interface FileRouteTypes {
     | '/api/public/enabler-login'
     | '/api/public/enabler-refresh'
     | '/api/public/enabler-self-install'
+    | '/api/public/enabler-staff-help'
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
@@ -2501,6 +2513,7 @@ export interface FileRouteTypes {
     | '/api/public/enabler-login'
     | '/api/public/enabler-refresh'
     | '/api/public/enabler-self-install'
+    | '/api/public/enabler-staff-help'
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
     | '/api/public/remote-helper-apk'
@@ -2624,6 +2637,7 @@ export interface RootRouteChildren {
   ApiPublicEnablerLoginRoute: typeof ApiPublicEnablerLoginRoute
   ApiPublicEnablerRefreshRoute: typeof ApiPublicEnablerRefreshRoute
   ApiPublicEnablerSelfInstallRoute: typeof ApiPublicEnablerSelfInstallRoute
+  ApiPublicEnablerStaffHelpRoute: typeof ApiPublicEnablerStaffHelpRoute
   ApiPublicInstallScreenApkRoute: typeof ApiPublicInstallScreenApkRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicRemoteHelperApkRoute: typeof ApiPublicRemoteHelperApkRoute
@@ -3526,6 +3540,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/enabler-self-install'
       fullPath: '/api/public/enabler-self-install'
       preLoaderRoute: typeof ApiPublicEnablerSelfInstallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/enabler-staff-help': {
+      id: '/api/public/enabler-staff-help'
+      path: '/api/public/enabler-staff-help'
+      fullPath: '/api/public/enabler-staff-help'
+      preLoaderRoute: typeof ApiPublicEnablerStaffHelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/install-screen-apk': {
@@ -4527,6 +4548,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicEnablerLoginRoute: ApiPublicEnablerLoginRoute,
   ApiPublicEnablerRefreshRoute: ApiPublicEnablerRefreshRoute,
   ApiPublicEnablerSelfInstallRoute: ApiPublicEnablerSelfInstallRoute,
+  ApiPublicEnablerStaffHelpRoute: ApiPublicEnablerStaffHelpRoute,
   ApiPublicInstallScreenApkRoute: ApiPublicInstallScreenApkRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicRemoteHelperApkRoute: ApiPublicRemoteHelperApkRoute,

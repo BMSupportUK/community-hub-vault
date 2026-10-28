@@ -21,7 +21,7 @@ const Body = z.discriminatedUnion("mode", [
     apps: z.array(z.string().min(1).max(80)).max(40),
   }),
 ]);
-export const STAFF_HELP_TICKET_SUBJECT = "Help installing apps on my TV (BM TV Enabler)";
+const STAFF_HELP_TICKET_SUBJECT = "Help installing apps on my TV (BM TV Enabler)";
 async function hash(value: string) {
   return [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)))].map(b => b.toString(16).padStart(2, "0")).join("");
 }
