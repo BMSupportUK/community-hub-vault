@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Download, Headset, KeyRound, Loader2, Tv } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, Tv } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { supabase } from "@/integrations/supabase/client";
 import { orderStaffHelpTicket } from "@/lib/order-remote-tabs";
-import { selfInstallHandoff } from "@/lib/enabler-handoff";
+import { selfInstallHandoff, sha256Hex } from "@/lib/enabler-handoff";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 
 export type SetupDeviceKey = "amazon" | "android" | "alternative" | "remote";
@@ -123,6 +123,7 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
   const [code, setCode] = useState<{ code: string; expiresAt: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [done, setDone] = useState<{ apps: string[] } | null>(null);
   const { user } = useAuth();
   const handoffFn = useServerFn(createEnablerHandoff);
   const storageKey = `bm-self-install:${user?.id ?? "signed-out"}:${device}`;
@@ -160,7 +161,21 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
     finally { setBusy(false); }
   };
 
-  const steps = ["Get BM TV Enabler and sign in", "Choose your apps", "Your website code"];
+  // Wait for BM TV Enabler to report that this code's install finished.
+  useEffect(() => {
+    if (!code || done) return;
+    let stop = false;
+    const check = async () => {
+      const { data } = await supabase.from("enabler_handoffs").select("completed_at, completed_apps")
+        .eq("code_hash", await sha256Hex(code.code)).maybeSingle();
+      if (!stop && data?.completed_at) { setDone({ apps: data.completed_apps ?? [] }); setCurrent(3); }
+    };
+    void check();
+    const timer = setInterval(() => void check(), 5000);
+    return () => { stop = true; clearInterval(timer); };
+  }, [code, done]);
+
+  const steps = ["Get BM TV Enabler and sign in", "Choose your apps", "Your website code", "All done"];
   return <div className="space-y-5">
     <div className="space-y-3 border-y border-border py-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="font-semibold">Step {current + 1} of {steps.length}</span><span className="text-muted-foreground">Self install</span></div>
@@ -168,6 +183,13 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
     </div>
     <section aria-label={`Step ${current + 1}: ${steps[current]}`} className="min-h-44 space-y-4">
       <h3 className="text-lg font-semibold text-foreground">{steps[current]}</h3>
+      {current === 3 && done && <div className="space-y-4 rounded-lg border border-primary/40 bg-primary/10 p-5 text-center">
+        <CheckCircle2 className="mx-auto size-14 text-primary" />
+        <p className="text-xl font-semibold text-foreground">Your apps are installed</p>
+        <p className="text-sm text-muted-foreground">BM TV Enabler has finished setting up your {device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}. You can close the app and start watching.</p>
+        {done.apps.length > 0 && <ul className="mx-auto max-w-sm space-y-1 text-left text-sm text-foreground">{done.apps.map((a) => <li key={a} className="flex items-center gap-2"><CheckCircle2 className="size-4 text-primary" />{a}</li>)}</ul>}
+        <Button variant="outline" onClick={() => { setDone(null); setCode(null); setCurrent(0); try { sessionStorage.removeItem(storageKey); } catch { /* none */ } }}>Set up another TV</Button>
+      </div>}
       {current === 0 && <>
         <p className="text-sm text-muted-foreground">Install BM TV Enabler on your Android phone or Windows PC, using the same Wi-Fi as your TV. Sign in with the PIN below the phone QR code.</p>
         <div className="xl:hidden"><EnablerDownloadSidebar /></div>
