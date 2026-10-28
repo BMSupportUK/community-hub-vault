@@ -2505,6 +2505,45 @@ export type Database = {
           },
         ]
       }
+      enabler_handoffs: {
+        Row: {
+          app_paths: string[]
+          code_hash: string
+          created_at: string
+          device: string
+          expires_at: string
+          help_plan: number
+          id: string
+          ticket_id: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          app_paths?: string[]
+          code_hash: string
+          created_at?: string
+          device: string
+          expires_at?: string
+          help_plan: number
+          id?: string
+          ticket_id?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          app_paths?: string[]
+          code_hash?: string
+          created_at?: string
+          device?: string
+          expires_at?: string
+          help_plan?: number
+          id?: string
+          ticket_id?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       enabler_login_pins: {
         Row: {
           created_at: string
