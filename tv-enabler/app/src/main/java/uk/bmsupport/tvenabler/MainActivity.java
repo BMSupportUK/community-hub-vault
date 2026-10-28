@@ -52,6 +52,8 @@ public class MainActivity extends Activity {
     private boolean installUsed;
     // After installing: 0 = not asked yet, 1 = needs staff help (show code), 2 = self install (logged).
     private int installChoice;
+    /** Asked before installing: 1 = staff help (show code), 2 = self install (log automatically). */
+    private int helpPlan;
     private Button helpYes, helpNo;
     private final Runnable refreshTick = new Runnable() {
         public void run() {
@@ -216,7 +218,15 @@ public class MainActivity extends Activity {
         appsNew = button("Install our apps", SURFACE);
         appsHave = button("Screen-share support", SURFACE);
         appsBack = button("Back", SURFACE);
-        appsNew.setOnClickListener(v -> pickApps("new"));
+        appsNew.setOnClickListener(v -> {
+            if (busy || refreshBusy) return;
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Do you need help from our staff?")
+                    .setMessage("Choose before we install. Yes gives you a code for your ticket or order. No means you're installing it yourself.")
+                    .setPositiveButton("Yes — I need staff help", (d, w) -> { helpPlan = 1; getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", 1).apply(); pickApps("new"); })
+                    .setNegativeButton("No — I'll install myself", (d, w) -> { helpPlan = 2; getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", 2).apply(); pickApps("new"); })
+                    .show();
+        });
         appsHave.setOnClickListener(v -> pickApps("have"));
         appsBack.setOnClickListener(v -> { if (!busy) { apps = null; getSharedPreferences("tv", MODE_PRIVATE).edit().remove("apps").apply(); render(); } });
         col.addView(appsNew, lp(dp(12))); col.addView(appsHave, lp(dp(8))); col.addView(appsBack, lp(dp(8)));
@@ -325,6 +335,7 @@ public class MainActivity extends Activity {
         installCodeText = code; installExpiresAt = expiry;
         installUsed = prefs.getBoolean("confirmationInstallUsed", false);
         installChoice = prefs.getInt("installChoice", 0);
+        helpPlan = prefs.getInt("helpPlan", 0);
         installRefreshToken = prefs.getString("confirmationInstallToken", "");
         address.setText(host); apps = "new";
         appsResults = new java.util.ArrayList<>();
@@ -539,8 +550,9 @@ public class MainActivity extends Activity {
                             installRefreshToken = installIssued[0].refreshToken; installUsed = false;
                             getSharedPreferences("tv", MODE_PRIVATE).edit().putString("confirmationInstall", installIssued[0].code)
                                 .putLong("confirmationInstallExpiry", installIssued[0].expiresAt).putString("confirmationInstallToken", installIssued[0].refreshToken)
-                                .putBoolean("confirmationInstallUsed", false).putString("confirmationInstallHost", host).putInt("installChoice", 0).commit();
-                            installChoice = 0;
+                                .putBoolean("confirmationInstallUsed", false).putString("confirmationInstallHost", host).putInt("installChoice", helpPlan == 1 ? 1 : 0).commit();
+                            installChoice = helpPlan == 1 ? 1 : 0;
+                            if (helpPlan == 2) ui.post(this::selfInstall);
                         }
                         long failedCount = 0;
                         for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
@@ -826,7 +838,7 @@ public class MainActivity extends Activity {
             for (int i = 0; i < items.size(); i++) {
                 Enabler.PickItem it = items.get(i);
                 labels[i] = it.installed ? it.name + "  (Already installed)" : it.name;
-                ticked[i] = true;
+                ticked[i] = !it.installed;
             }
             android.app.AlertDialog d = new android.app.AlertDialog.Builder(this)
                     .setTitle("Choose apps to install")
@@ -841,7 +853,7 @@ public class MainActivity extends Activity {
             d.setOnDismissListener(x -> latch.countDown());
             d.setOnShowListener(x -> {
                 android.widget.ListView lv = d.getListView();
-                // Already-installed apps stay ticked and greyed out; they can't be changed.
+                // Already-installed apps stay unticked and greyed out; they can't be changed.
                 lv.setOnHierarchyChangeListener(new android.view.ViewGroup.OnHierarchyChangeListener() {
                     public void onChildViewAdded(android.view.View parent, android.view.View child) {
                         int pos = lv.getPositionForView(child);
@@ -857,7 +869,7 @@ public class MainActivity extends Activity {
                     go.setText(!any ? "Continue" : n == 0 ? "Tick at least one app" : "Install " + n + " ticked app" + (n == 1 ? "" : "s"));
                 };
                 lv.setOnItemClickListener((parent, view, pos, id) -> {
-                    if (items.get(pos).installed) { lv.setItemChecked(pos, true); ticked[pos] = true; }
+                    if (items.get(pos).installed) { lv.setItemChecked(pos, false); ticked[pos] = false; }
                     else ticked[pos] = lv.isItemChecked(pos);
                     sync.run();
                 });
