@@ -545,7 +545,26 @@ public class MainActivity extends Activity {
                     appsResults = Enabler.installOurApps(this, host, progress, only);
                     boolean anyFailed = false;
                     for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) { anyFailed = true; break; }
-                    if (!anyFailed) {
+                    if (helpPlan == 1) {
+                        // Staff help: set up screen sharing first, then open the ticket with it attached.
+                        try {
+                            progress.step(0, "Setting up screen sharing so our staff can help…");
+                            Enabler.Checks c = Enabler.checkExisting(this, host, progress);
+                            if (!SetupWizard.ready(c.adb, c.helper, c.control, c.accessibility)) {
+                                Enabler.enableUntil(this, host, 4, progress);
+                                c = Enabler.checkExisting(this, host, progress);
+                            }
+                            if (!SetupWizard.ready(c.adb, c.helper, c.control, c.accessibility))
+                                throw new IllegalStateException("Screen sharing couldn't be switched on for this TV.");
+                            String type = c.type != null ? c.type : selectedDevice;
+                            Enabler.Confirmation share = Enabler.requestConfirmCode(c, type, Enabler.readHelperCode(this, host));
+                            progress.step(0, "Opening a support ticket for our staff…");
+                            java.util.List<String> names = new java.util.ArrayList<>();
+                            for (Enabler.AppResult r : appsResults) if (r.status != Enabler.AppResult.FAILED) names.add(r.name);
+                            helpResult[0] = Enabler.openStaffTicket(share.refreshToken, type, names) ? 1 : 2;
+                            shareIssued[0] = share; checks = c;
+                        } catch (Exception e) { helpResult[0] = 3; helpError[0] = Enabler.friendly(e); }
+                    } else if (!anyFailed) {
                         try {
                             progress.step(0, "Confirming the installation…");
                             Enabler.Checks verify = Enabler.checkExisting(this, host, (i, t) -> {});
