@@ -1,11 +1,14 @@
 // BM TV Enabler confirmation codes: 6 characters, reusable on their bound ticket/order for 24 hours.
 export const CONFIRM_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const CONFIRM_TTL_MS = 24 * 60 * 60 * 1000;
+/** Install references never run out; the customer replaces one once it is used or logged. */
+export const INSTALL_NO_EXPIRY_ISO = "2099-12-31T23:59:59.000Z";
 
 /** Usage is read only after validating the per-reference capability. Never expose scope IDs. */
-// References stay reusable on any ticket/order until expiry, so the apps never unlock New code early.
-export function enablerReferenceUsed(_row: { used_at: string | null; bound_ticket_id: string | null; bound_order_id: string | null }): boolean {
-  return false;
+// Sharing references stay reusable until expiry. Install references have no expiry, so New code
+// unlocks once one is typed on a ticket/order or logged as a self install.
+export function enablerReferenceUsed(row: { kind?: string | null; used_at: string | null; bound_ticket_id: string | null; bound_order_id: string | null }): boolean {
+  return row.kind === "install" && !!row.used_at;
 }
 
 export function confirmationActive(expiresAt: string | null, now = Date.now()): boolean {
