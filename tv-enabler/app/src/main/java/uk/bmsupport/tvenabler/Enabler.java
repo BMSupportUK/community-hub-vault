@@ -359,7 +359,7 @@ final class Enabler {
             if (screen) {
                 boolean failed = false;
                 for (AppResult r : results) if (r.status == AppResult.FAILED) failed = true;
-                showScreen(adb, failed ? InstallScreen.command("error", null, 0, total, null) : InstallScreen.command("complete", null, total, total, done));
+                finishScreen(adb, failed ? InstallScreen.command("error", null, 0, total, null) : InstallScreen.command("complete", null, total, total, done));
             }
         }
         return results;
@@ -388,6 +388,15 @@ final class Enabler {
 
     /** Updates the TV install screen; a TV that refuses to show it never stops the installs. */
     private static void showScreen(AdbClient adb, String cmd) { try { adb.shell(cmd); } catch (Exception ignored) {} }
+
+    /** The last TV screen update must never leave "Installing your apps" showing: retry, then close the screen. */
+    private static void finishScreen(AdbClient adb, String cmd) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try { String r = adb.shell(cmd); if (r == null || !r.contains("Error")) return; } catch (Exception ignored) {}
+            try { Thread.sleep(1000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+        }
+        try { adb.shell("am force-stop " + InstallScreen.PACKAGE); } catch (Exception ignored) {}
+    }
 
     /** Login token from this run's PIN sign-in; sent with confirmations so the website knows which customer's app checked the TV. */
     static volatile String loginToken = "";
