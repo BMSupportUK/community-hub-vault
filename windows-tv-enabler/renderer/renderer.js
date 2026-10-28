@@ -180,14 +180,14 @@ function render() {
   const labels = { [Step.DEBUGGING]: 'I\'ve switched debugging on — next ', [Step.CHECK]: 'Connect to this TV ', [Step.TV_CODE]: 'Confirm code and set up my TV ', [Step.SETUP]: 'Try again ' };
   heading.textContent = titles[s];
   if (s === Step.DONE && install) {
-    heading.textContent = 'Your apps are installed';
+    heading.textContent = helpPlan === 1 && helpTicket ? 'Staff help is on the way' : 'Your apps are installed';
     const live = installCode && Date.now() < installExpiresAt;
     description.textContent = helpPlan === 1 && helpTicket
       ? (helpTicket === 1
-        ? 'Each app is listed below with what happened.\n\n✓ We\'ve opened a support ticket for you and set up screen sharing. Our staff have been told and will connect to your TV shortly — keep the TV switched on with BM Remote Helper on screen. You can follow your ticket at bmsupport.uk › Tickets.'
+        ? '✓ We\'ve opened a support ticket for you and set up screen sharing. Our staff will connect to your TV shortly and install the apps for you — keep the TV switched on with BM Remote Helper on screen. You can follow your ticket at bmsupport.uk › Tickets.'
         : helpTicket === 2
-        ? 'Each app is listed below with what happened.\n\n✓ We\'ve opened a support ticket for you at bmsupport.uk › Tickets. Open its Remote setup tab and press Connect so our staff can see your TV.'
-        : `Each app is listed below with what happened.\n\nWe couldn't open a ticket for staff help: ${helpTicketError}\n\nPress Return to home and choose Install our apps again, or open a ticket at bmsupport.uk.`)
+        ? '✓ We\'ve opened a support ticket for you at bmsupport.uk › Tickets. Open its Remote setup tab and press Connect so our staff can see your TV.'
+        : `We couldn't open a ticket for staff help: ${helpTicketError}\n\nPress Return to home and choose Install our apps again, or open a ticket at bmsupport.uk.`)
       : live && installChoice === 0
       ? 'Each app is listed below with what happened.\n\nDo you need help from our staff with your apps?'
       : live && installChoice === 2
@@ -284,12 +284,15 @@ async function run(stage, host) {
       }
     } else {
       if (apps === 'new') {
-        const list = await window.bmTv.listApps(host);
-        say('Choose which apps to install, then press Install ticked apps.');
-        const only = await chooseApps(list);
-        say('Installing your chosen apps…');
-        const result = await window.bmTv.installApps(host, only);
-        appsResults = result.results || [];
+        if (helpPlan === 1) appsResults = []; // Staff help: our staff install the apps themselves.
+        else {
+          const list = await window.bmTv.listApps(host);
+          say('Choose which apps to install, then press Install ticked apps.');
+          const only = await chooseApps(list);
+          say('Installing your chosen apps…');
+          const result = await window.bmTv.installApps(host, only);
+          appsResults = result.results || [];
+        }
         wizard.setupFinished(true);
         if (helpPlan === 1) {
           // Staff help: set up screen sharing first, then open the ticket with it attached.

@@ -225,7 +225,7 @@ public class MainActivity extends Activity {
             if (busy || refreshBusy) return;
             new android.app.AlertDialog.Builder(this)
                     .setTitle("Do you need help from our staff?")
-                    .setMessage("Choose before we install. Both choices install your apps.\n\nYes: once the apps are on your TV, we set up screen sharing and open a support ticket so our staff can connect and help (office hours only).\n\nNo: you're installing them yourself.")
+                    .setMessage("Yes: we set up screen sharing and open a support ticket. Our staff then connect to your TV and install the apps for you (office hours only).\n\nNo: you choose and install the apps yourself.")
                     .setPositiveButton("Yes — I need staff help", (d, w) -> askStaffHelp())
                     .setNegativeButton("No — I'll install myself", (d, w) -> { helpPlan = 2; getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", 2).apply(); pickApps("new"); })
                     .show();
@@ -474,13 +474,13 @@ public class MainActivity extends Activity {
                 turnOn.setText("Try again"); break;
             case DONE:
                 if (install) {
-                    heading.setText("Your apps are installed");
+                    heading.setText(helpPlan == 1 && helpTicket != 0 ? "Staff help is on the way" : "Your apps are installed");
                     if (helpPlan == 1 && helpTicket != 0) {
                         description.setText(helpTicket == 1
-                            ? "Each app is listed below with what happened.\n\n✓ We've opened a support ticket for you and set up screen sharing. Our staff have been told and will connect to your TV shortly — keep the TV switched on with BM Remote Helper on screen. You can follow your ticket at bmsupport.uk › Tickets."
+                            ? "✓ We've opened a support ticket for you and set up screen sharing. Our staff will connect to your TV shortly and install the apps for you — keep the TV switched on with BM Remote Helper on screen. You can follow your ticket at bmsupport.uk › Tickets."
                             : helpTicket == 2
-                            ? "Each app is listed below with what happened.\n\n✓ We've opened a support ticket for you at bmsupport.uk › Tickets. Open its Remote setup tab and press Connect so our staff can see your TV."
-                            : "Each app is listed below with what happened.\n\nWe couldn't open a ticket for staff help: " + helpTicketError + "\n\nPress Return to home and choose Install our apps again, or open a ticket at bmsupport.uk.");
+                            ? "✓ We've opened a support ticket for you at bmsupport.uk › Tickets. Open its Remote setup tab and press Connect so our staff can see your TV."
+                            : "We couldn't open a ticket for staff help: " + helpTicketError + "\n\nPress Return to home and choose Install our apps again, or open a ticket at bmsupport.uk.");
                         break;
                     }
                     description.setText(installCodeText.length() > 0 && System.currentTimeMillis() < installExpiresAt && installChoice == 0
@@ -549,11 +549,14 @@ public class MainActivity extends Activity {
                 final int[] helpResult = new int[1];
                 final String[] helpError = { "" };
                 if (run == SetupWizard.Step.SETUP && installOnly) {
-                    java.util.List<Enabler.PickItem> pick = Enabler.listOurApps(this, host, progress);
-                    java.util.Set<String> only = chooseApps(pick);
-                    if (only == null) throw new IllegalStateException("Installation cancelled. Press Try again to choose your apps.");
-                    progress.step(0, "Installing your chosen apps…");
-                    appsResults = Enabler.installOurApps(this, host, progress, only);
+                    // Staff help: our staff install the apps themselves, so skip choosing/installing here.
+                    if (helpPlan != 1) {
+                        java.util.List<Enabler.PickItem> pick = Enabler.listOurApps(this, host, progress);
+                        java.util.Set<String> only = chooseApps(pick);
+                        if (only == null) throw new IllegalStateException("Installation cancelled. Press Try again to choose your apps.");
+                        progress.step(0, "Installing your chosen apps…");
+                        appsResults = Enabler.installOurApps(this, host, progress, only);
+                    } else appsResults = new java.util.ArrayList<>();
                     boolean anyFailed = false;
                     for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) { anyFailed = true; break; }
                     if (helpPlan == 1) {
@@ -622,7 +625,7 @@ public class MainActivity extends Activity {
                         }
                         long failedCount = 0;
                         for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
-                        if (helpPlan == 1) say(helpTicket == 1 ? "✓ Apps installed, screen sharing set up and a ticket opened for our staff." : helpTicket == 2 ? "✓ Apps installed and a ticket opened for our staff." : "Apps installed, but we couldn't open the staff ticket: " + helpTicketError, helpTicket == 3 ? WARN : OK);
+                        if (helpPlan == 1) say(helpTicket == 1 ? "✓ Screen sharing set up and a ticket opened. Our staff will install the apps for you." : helpTicket == 2 ? "✓ A ticket was opened for our staff. They will install the apps for you." : "We couldn't open the staff ticket: " + helpTicketError, helpTicket == 3 ? WARN : OK);
                         else if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
                         else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Return to home to try again.", WARN);
                     } else if (run == SetupWizard.Step.SETUP) {
