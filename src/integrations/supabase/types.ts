@@ -7244,6 +7244,8 @@ export type Database = {
           id: string
           order_id: string | null
           priority: Database["public"]["Enums"]["ticket_priority"]
+          remote_setup_pending: boolean
+          remote_support: boolean
           status: Database["public"]["Enums"]["ticket_status"]
           subject: string
           updated_at: string
@@ -7258,6 +7260,8 @@ export type Database = {
           id?: string
           order_id?: string | null
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          remote_setup_pending?: boolean
+          remote_support?: boolean
           status?: Database["public"]["Enums"]["ticket_status"]
           subject: string
           updated_at?: string
@@ -7272,6 +7276,8 @@ export type Database = {
           id?: string
           order_id?: string | null
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          remote_setup_pending?: boolean
+          remote_support?: boolean
           status?: Database["public"]["Enums"]["ticket_status"]
           subject?: string
           updated_at?: string
@@ -8761,6 +8767,10 @@ export type Database = {
       fantasy_score_gameweek: {
         Args: { _gameweek_id: string }
         Returns: undefined
+      }
+      finish_ticket_remote_setup: {
+        Args: { _ticket_id: string }
+        Returns: boolean
       }
       forum_board_allows: {
         Args: { _action: string; _board: string; _user: string }
