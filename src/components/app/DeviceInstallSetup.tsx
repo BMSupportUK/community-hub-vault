@@ -214,6 +214,7 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
           <li>BM TV Enabler installs only your ticked apps, skipping those already installed.</li>
         </ol>
         <p className="text-sm text-muted-foreground">When it finishes, your install is recorded. No screen sharing or support ticket is needed.</p>
+        <Button variant="outline" disabled={busy} onClick={() => { setCode(null); try { sessionStorage.removeItem(storageKey); } catch { /* none */ } void makeCode(); }}>{busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />}Problem? Get a new code</Button>
         <p className="text-xs text-muted-foreground">Use once, before {new Date(code.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (valid for 2 hours).</p>
       </div> : <div className="space-y-3">
         <p className="text-sm text-muted-foreground">Get a code for your {device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} and {picked.size} selected {picked.size === 1 ? "app" : "apps"}.</p>
