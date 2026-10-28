@@ -208,7 +208,14 @@ public final class MainActivity extends Activity {
                         final Throwable fError = error;
                         main.post(() -> {
                             if (fError != null) {
-                                Control.INSTANCE.setInstallMessage("Could not install: " + fError.getMessage());
+                                String msg = String.valueOf(fError.getMessage());
+                                // An old-key BM Remote Control can't be updated in place.
+                                if (msg.contains("UPDATE_INCOMPATIBLE") || msg.contains("INSTALL_FAILED")) {
+                                    msg = "An older BM Remote Control is installed. Open Settings > Apps, uninstall BM Remote Control, then press Install again.";
+                                } else {
+                                    msg = "Could not install: " + msg;
+                                }
+                                Control.INSTANCE.setInstallMessage(msg);
                                 render();
                             }
                         });

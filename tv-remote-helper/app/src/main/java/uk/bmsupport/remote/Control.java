@@ -377,6 +377,9 @@ public final class Control {
         }
         try {
             adb.push(file, "/data/local/tmp/bm-remote-control.apk", 0, 0L);
+            // Builds before Helper 2.4 were signed with a retired key; remove them so the new
+            // signature (which the shared CONTROL permission needs) can install.
+            sh(adb, "pm uninstall uk.bmsupport.remote.control");
             String result = sh(adb, "pm install -r -d /data/local/tmp/bm-remote-control.apk");
             sh(adb, "rm -f /data/local/tmp/bm-remote-control.apk");
             if (result == null || !result.contains("Success")) {
