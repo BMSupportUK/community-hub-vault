@@ -1,4 +1,6 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, powerSaveBlocker } = require('electron');
+// Stops the PC sleeping while the app works with the TV, so installs and the TV's final screen always finish.
+let awakeId = null;
 const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
@@ -64,6 +66,11 @@ else {
     ipcMain.handle('bm:staff-ticket', task(async (shareToken, device, apps, ticketId) => staffHelp({ mode: 'create', shareToken, device, apps: Array.isArray(apps) ? apps.filter(a => typeof a === 'string').slice(0, 40) : [], ...(typeof ticketId === 'string' && ticketId ? { ticketId } : {}) })));
     ipcMain.handle('bm:handoff', task(async (code) => redeemHandoff(code)));
     ipcMain.handle('bm:ticket-support', task((ticketId, token) => require('../core.cjs').ticketSupport(ticketId, token)));
+    ipcMain.handle('bm:keep-awake', (_e, on) => {
+      if (on && awakeId === null) awakeId = powerSaveBlocker.start('prevent-app-suspension');
+      else if (!on && awakeId !== null) { powerSaveBlocker.stop(awakeId); awakeId = null; }
+      return true;
+    });
     ipcMain.handle('bm:self-install', task(async (token, apps, tvAddress) => logSelfInstall(token, apps, tvAddress)));
     ipcMain.handle('bm:confirm-code', task(async (checks, device, address, kind) => requestConfirmCode(checks, device, undefined, kind === 'install' ? null : (address ? await readHelperCode(address, adb, say) : null), true, kind === 'install' ? 'install' : 'share')));
     window.loadFile(page);
