@@ -46,12 +46,15 @@ public final class Realtime {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
                 joined = false;
-                JSONObject config = new JSONObject()
-                        .put("config", new JSONObject()
-                                .put("broadcast", new JSONObject().put("self", false))
-                                .put("presence", new JSONObject().put("key", ""))
-                                .put("private", false));
-                raw(full, "phx_join", config);
+                try {
+                    JSONObject config = new JSONObject()
+                            .put("config", new JSONObject()
+                                    .put("broadcast", new JSONObject().put("self", false))
+                                    .put("presence", new JSONObject().put("key", ""))
+                                    .put("private", false));
+                    raw(full, "phx_join", config);
+                } catch (Throwable ignore) {
+                }
                 main.postDelayed(beat, 25000L);
             }
 
@@ -89,11 +92,14 @@ public final class Realtime {
             pending.add(new Pair<>(event, payload));
             return;
         }
-        JSONObject body = new JSONObject()
-                .put("type", "broadcast")
-                .put("event", event)
-                .put("payload", payload);
-        raw(full, "broadcast", body);
+        try {
+            JSONObject body = new JSONObject()
+                    .put("type", "broadcast")
+                    .put("event", event)
+                    .put("payload", payload);
+            raw(full, "broadcast", body);
+        } catch (Throwable ignore) {
+        }
     }
 
     private void raw(String t, String event, JSONObject payload) {

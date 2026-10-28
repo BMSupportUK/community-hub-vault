@@ -340,7 +340,7 @@ public final class Control {
             for (String host : hosts) {
                 Dadb adb = null;
                 try {
-                    adb = Dadb.Companion.create(host, 5555, keys, 5000, 120000, false);
+                    adb = Dadb.Companion.create(host, 5555, keys, 5000, 120000);
                     adb.supportsFeature("shell_v2");
                     prefs(ctx).edit().putBoolean("adb_ok", true).apply();
                     return adb;
