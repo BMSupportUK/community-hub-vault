@@ -7,6 +7,21 @@ let enablerToken = '';
 function setEnablerToken(token) { enablerToken = /^[0-9a-f]{20,200}$/i.test(String(token || '')) ? String(token) : ''; }
 const downloadInit = () => (enablerToken ? { headers: { 'x-enabler-token': enablerToken } } : undefined);
 
+const INSTALL_SCREEN = 'uk.bmsupport.installscreen';
+const INSTALL_SCREEN_APK_PATH = '/api/public/install-screen-apk';
+/** Keeps only safe characters so app names can never break out of the shell quotes. Matches InstallScreen.java. */
+function installScreenSafe(s) { return String(s == null ? '' : s).replace(/[^A-Za-z0-9 .,()&+\-]/g, '').trim().slice(0, 80); }
+/** Shell command that updates the BM Install Screen TV app. Must match tv-enabler InstallScreen.command exactly. */
+function installScreenCommand(state, app, index, total, apps) {
+  const st = ['installing', 'skipped', 'complete'].includes(state) ? state : 'error';
+  let cmd = `am start -n ${INSTALL_SCREEN}/.MainActivity -f 0x20000000 --es state ${st}`;
+  if (app) cmd += ` --es app '${installScreenSafe(app)}'`;
+  cmd += ` --ei index ${Math.max(0, index | 0)} --ei total ${Math.max(0, total | 0)}`;
+  const list = (apps || []).map(installScreenSafe).filter(Boolean).join('|');
+  if (list) cmd += ` --es apps '${list}'`;
+  return cmd;
+}
+
 /** Wi-Fi APK transfers and installations need longer than ordinary TV commands. */
 function adbTimeout(args) {
   return args.includes('push') || (args.includes('shell') && args.some(arg => /^pm install\b/.test(arg))) ? 180000 : 25000;
@@ -192,6 +207,25 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
     if (!/package:/.test(String(listed || ''))) listed = await shell('pm list packages');
     const disabled = new Set(parsePackages(await shell('pm list packages -d --user current').catch(() => '')));
     const packages = new Set(parsePackages(listed).filter(p => !disabled.has(p)));
+    // TV install screen: never fatal — a TV that can't show it still gets its apps.
+    let screen = packages.has(INSTALL_SCREEN);
+    if (!screen) {
+      const file = path.join(tempDir, 'bm-install-screen.apk');
+      try {
+        const res = await fetchImpl(SITE + INSTALL_SCREEN_APK_PATH, downloadInit());
+        if (res.ok) {
+          const buf = Buffer.from(await res.arrayBuffer());
+          if (buf.length >= 5000) {
+            fs.mkdirSync(tempDir, { recursive: true });
+            fs.writeFileSync(file, buf);
+            await adb(['-s', serial, 'push', file, '/data/local/tmp/bm-install-screen.apk']);
+            screen = String(await shell('pm install -r /data/local/tmp/bm-install-screen.apk')).includes('Success');
+          }
+        }
+      } catch { screen = false; }
+      finally { try { fs.unlinkSync(file); } catch {} await shell('rm -f /data/local/tmp/bm-install-screen.apk').catch(() => {}); }
+    }
+    const showScreen = async cmd => { if (screen) await shell(cmd).catch(() => {}); };
     const verifyInstalled = async packageName => {
       if (typeof packageName !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(packageName)) return false;
       for (let attempt = 0; attempt < 4; attempt++) {
@@ -210,9 +244,11 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
       if (typeof app.packageName === 'string' && packages.has(app.packageName)) {
         progress(`${name} — already on your TV, skipping (${i + 1} of ${apps.length})`);
         installed.push(name); results.push({ name, status: 'already' });
+        await showScreen(installScreenCommand('skipped', name, i + 1, apps.length));
         continue;
       }
       progress(`Installing ${name} (${i + 1} of ${apps.length})…`);
+      await showScreen(installScreenCommand('installing', name, i + 1, apps.length));
       const file = path.join(tempDir, `bm-app-${i}.apk`);
       try {
         const res = await fetchImpl(SITE + app.path, downloadInit());
@@ -230,6 +266,7 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
       } catch { failed.push(name); results.push({ name, status: 'failed' }); }
       finally { try { fs.unlinkSync(file); } catch {} await shell('rm -f /data/local/tmp/bm-app.apk').catch(() => {}); }
     }
+    await showScreen(failed.length ? installScreenCommand('error', null, 0, apps.length) : installScreenCommand('complete', null, apps.length, apps.length, installed));
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
   return { installed, failed, results };
 }
