@@ -43,6 +43,19 @@ export const Route = createFileRoute("/api/public/enabler-self-install")({
         user_agent: ua?.slice(0, 400) ?? null,
         device: deviceFromUserAgent(ua),
       });
+      // Tell the website's Install Guides that this customer's redeemed self-install code finished.
+      const tok = request.headers.get("x-enabler-token");
+      if (tok && /^[0-9a-f]{20,200}$/i.test(tok)) {
+        const { data: dt } = await db.from("enabler_device_tokens").select("pin_id")
+          .eq("token_hash", await hash(tok)).gt("expires_at", new Date().toISOString()).maybeSingle();
+        const { data: pin } = dt?.pin_id ? await db.from("enabler_login_pins").select("user_id").eq("id", dt.pin_id).maybeSingle() : { data: null };
+        if (pin?.user_id) {
+          const since = new Date(Date.now() - 3 * 3600_000).toISOString();
+          const { data: h } = await db.from("enabler_handoffs").select("id").eq("user_id", pin.user_id).eq("purpose", "install")
+            .not("used_at", "is", null).gt("used_at", since).is("completed_at", null).order("used_at", { ascending: false }).limit(1).maybeSingle();
+          if (h) await db.from("enabler_handoffs").update({ completed_at: new Date().toISOString(), completed_apps: body.data.apps }).eq("id", h.id);
+        }
+      }
       return Response.json({ ok: true }, { headers });
     },
   } },

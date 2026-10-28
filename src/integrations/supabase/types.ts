@@ -2509,6 +2509,8 @@ export type Database = {
         Row: {
           app_paths: string[]
           code_hash: string
+          completed_apps: string[] | null
+          completed_at: string | null
           created_at: string
           device: string
           expires_at: string
@@ -2522,6 +2524,8 @@ export type Database = {
         Insert: {
           app_paths?: string[]
           code_hash: string
+          completed_apps?: string[] | null
+          completed_at?: string | null
           created_at?: string
           device: string
           expires_at?: string
@@ -2535,6 +2539,8 @@ export type Database = {
         Update: {
           app_paths?: string[]
           code_hash?: string
+          completed_apps?: string[] | null
+          completed_at?: string | null
           created_at?: string
           device?: string
           expires_at?: string

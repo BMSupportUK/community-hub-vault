@@ -1723,6 +1723,13 @@
       "when": 1793215053042,
       "tag": "0245_enabler_handoff_support_purpose",
       "breakpoints": true
+    },
+    {
+      "idx": 246,
+      "version": "7",
+      "when": 1793223608034,
+      "tag": "0246_enabler_handoff_completed",
+      "breakpoints": true
     }
   ]
 }
