@@ -378,5 +378,220 @@
     "category_id": "09cfaa34-3462-4dfe-8772-2998899d9aae",
     "kb_category_id": "0aeef402-5f79-4857-a56b-09107dad8096",
     "safety": "Only share with BM Support staff through your own support ticket or secure order. Do not post your TV code publicly. Anything visible on the TV may be seen by staff: close banking, payment, password and other private screens first. You can decline a request or end a session."
+  },
+  {
+    "key": "windows-enabler-install",
+    "title": "Windows PC — Install BM TV Enabler and TV Apps",
+    "platform": "Windows PC · Amazon Fire TV / Android / Google TV",
+    "kind": "Installation",
+    "excerpt": "Install the Windows Enabler, sign in with your PIN and put BM Support apps on your TV.",
+    "pages": [
+      [
+        "Install Windows Enabler and log in",
+        [
+          [
+            "Check what you need",
+            "Use a Windows 10 or 11, 64-bit PC and an Amazon Fire TV/Stick or Android/Google TV. The PC and TV must be on the same home network, not isolated guest Wi-Fi. Keep both awake; disconnect a VPN if it prevents local connections. BM TV Enabler runs on the PC, not on the TV, iPhone or iPad."
+          ],
+          [
+            "Download from BM Support",
+            "Sign in at bmsupport.uk, open Install Guides > Set up a device and choose your TV type. In the Windows PC card, download BM TV Enabler. The same Windows download is also shown in ticket Remote setup. Use the official download button for the latest installer."
+          ],
+          [
+            "Install and open",
+            "Open the downloaded BM-TV-Enabler-Setup installer and follow its installation prompts. The Windows installer is unsigned, so Windows may show a publisher warning. Check that it came from BM Support. If your PC blocks it or you are unsure, ask staff; do not disable antivirus or security protection."
+          ],
+          [
+            "Enter your account PIN",
+            "Open Settings > BM TV Enabler PIN on the website, or reveal the PIN in ticket Remote setup. Enter the six-digit PIN in BM TV Enabler, press Log in, then Get started. The app asks for the PIN on every launch; use the current PIN, which changes after 24 hours. This login PIN is not the later Enabler reference or a TV pairing code."
+          ]
+        ]
+      ],
+      [
+        "Prepare debugging and select the TV",
+        [
+          [
+            "Choose your TV type",
+            "Select Amazon Fire TV / Stick or Android / Google TV. Follow only the instructions for the TV you are using. The website cannot discover or connect to your home TV itself: BM TV Enabler does this from your PC."
+          ],
+          [
+            "Amazon Fire TV / Stick",
+            "On the TV open Settings > My Fire TV > About. Highlight the device name and press Select seven times to reveal Developer options. Go Back to My Fire TV > Developer options and turn ADB debugging ON. If Developer options already exists, use it directly. Leave the TV awake."
+          ],
+          [
+            "Android / Google TV",
+            "On the TV open Settings > System > About (some TVs use Device Preferences > About). Highlight Android TV OS build and press Select seven times. Return to System > Developer options and enable Network debugging, or Wireless debugging where offered. Menu names vary by TV. Do not expose debugging ports to the internet."
+          ],
+          [
+            "Find and connect",
+            "Press I’ve switched debugging on — next. Choose Find my Fire TV or Find my Android TV, select the correct named TV and check its address. If it is missing, enter the address from the TV’s network settings. Press Connect to this TV. On the TV, press Allow for debugging and tick Always allow from this computer if offered. Keep the Enabler open."
+          ]
+        ]
+      ],
+      [
+        "Install the TV apps",
+        [
+          [
+            "Choose Install our apps",
+            "After Get started, choose Install our apps, then select and connect to your TV as described above. This mode installs BM Support’s TV apps; it does not start a screen share. For staff remote help, use the separate Windows PC — Use Screen-share Support guide."
+          ],
+          [
+            "Let the installation finish",
+            "Keep the PC and TV connected and wait while the Enabler checks and installs the apps. Apps already enabled in the selected TV’s current profile are skipped. Read each result: Installed, Already on your TV, or a failure. Do not assume every app succeeded if one result reports a failure."
+          ],
+          [
+            "Use the install reference if needed",
+            "After a successful installation check, the app may show an install reference. Enter it in the reference box in your own ticket’s Remote setup when you need to confirm installation. Install and sharing references are separate. An install reference confirms installation, not screen-share readiness or permission for staff to view your TV."
+          ],
+          [
+            "Return home without resetting",
+            "Press Return to home to choose another section. You do not need Reset setup after an ordinary successful install. Installed TV apps remain installed. The Enabler remembers the selected TV and valid references; switching sections does not require a reinstall."
+          ]
+        ]
+      ],
+      [
+        "Saved references and troubleshooting",
+        [
+          [
+            "Understand expiry",
+            "The install reference keeps its original maximum 24-hour expiry; reopening the app does not extend it. It can expire earlier if its linked ticket/order closes. New code becomes available after the reference has been used or expired. Ending a screen share clears the sharing reference, not the separate install reference or login PIN."
+          ],
+          [
+            "If the TV cannot connect",
+            "Check same-network access, correct TV address, TV awake and debugging ON. Guest Wi-Fi or router isolation can block discovery and connection. A TV can be listed while debugging is unreachable. Approve the TV’s Allow prompt. If you refused it or permission remains stuck, ask staff before resetting authorisations or the TV."
+          ],
+          [
+            "Wireless debugging pairing",
+            "If Android/Google TV requires pairing, expand Android / Google TV with Wireless debugging: pair with code. On the TV choose Wireless debugging > Pair device with pairing code. Enter that six-digit code and its pairing port in the app. Use the IP address and connection port from the main Wireless debugging screen for TV address; the two ports can differ."
+          ],
+          [
+            "Retry safely or request help",
+            "For a failed app, read the error, choose Return to home and retry installation. Reset setup asks for confirmation and clears saved TV choices/references; the next reference takes over. It does not uninstall TV apps or remove the PC’s existing TV authorisation. For staff installation help use Install Guides > Help from staff during office hours, or the paid order’s help button to raise a ticket."
+          ]
+        ]
+      ]
+    ],
+    "safety": "Only share with BM Support staff through your own support ticket. Close banking, payment, password and other private screens on the TV first. You can decline a request or end a session. Never publish your PIN or reference.",
+    "sort_order": 31,
+    "category_id": "4bee52e2-efcb-504d-abe8-e20409888adb",
+    "kb_category_id": "16aa8433-2c8f-559c-bde1-974d336d2864"
+  },
+  {
+    "key": "windows-enabler-share",
+    "title": "Windows PC — Use Screen-share Support",
+    "platform": "Windows PC · Amazon Fire TV / Android / Google TV",
+    "kind": "Using remote help",
+    "excerpt": "Connect your TV through Windows BM TV Enabler, enter its sharing reference and approve staff help.",
+    "pages": [
+      [
+        "Install Windows Enabler and log in",
+        [
+          [
+            "Check what you need",
+            "Use a Windows 10 or 11, 64-bit PC and an Amazon Fire TV/Stick or Android/Google TV. The PC and TV must be on the same home network, not isolated guest Wi-Fi. Keep both awake; disconnect a VPN if it prevents local connections. BM TV Enabler runs on the PC, not on the TV, iPhone or iPad."
+          ],
+          [
+            "Download from BM Support",
+            "Sign in at bmsupport.uk, open Install Guides > Set up a device and choose your TV type. In the Windows PC card, download BM TV Enabler. The same Windows download is also shown in ticket Remote setup. Use the official download button for the latest installer."
+          ],
+          [
+            "Install and open",
+            "Open the downloaded BM-TV-Enabler-Setup installer and follow its installation prompts. The Windows installer is unsigned, so Windows may show a publisher warning. Check that it came from BM Support. If your PC blocks it or you are unsure, ask staff; do not disable antivirus or security protection."
+          ],
+          [
+            "Enter your account PIN",
+            "Open Settings > BM TV Enabler PIN on the website, or reveal the PIN in ticket Remote setup. Enter the six-digit PIN in BM TV Enabler, press Log in, then Get started. The app asks for the PIN on every launch; use the current PIN, which changes after 24 hours. This login PIN is not the later Enabler reference or a TV pairing code."
+          ]
+        ]
+      ],
+      [
+        "Connect through the Enabler",
+        [
+          [
+            "Open your support ticket",
+            "Sign in to BM Support and open your own ticket > Remote setup. For remote installation help with a paid order, use its help button to raise a ticket during office hours; continue through that ticket. Do not go to the staff TV Remote page or send staff your login PIN."
+          ],
+          [
+            "Choose Screen-share support",
+            "In BM TV Enabler select Screen-share support and your TV type. Enable debugging using the next page, then find and connect to the correct TV. Approve debugging on the TV. The Enabler installs any missing Helper/control apps and checks that remote control is ready."
+          ],
+          [
+            "Keep the Helper open",
+            "Leave BM TV Enabler open on the PC. When BM Remote Helper opens on the TV, keep it in front for permission prompts. Do not press Home or close the Helper while waiting to approve sharing. If the TV asks to allow the connection or start recording/casting, approve only the help you requested."
+          ],
+          [
+            "Get the sharing reference",
+            "Wait for the Enabler’s successful TV check and displayed sharing reference. Use that reference, not the login PIN, a Wireless debugging pairing code or the Helper’s six-digit TV code. The Enabler transfers the Helper connection details automatically; you do not type the TV’s Helper code into the website."
+          ]
+        ]
+      ],
+      [
+        "Prepare debugging and select the TV",
+        [
+          [
+            "Choose your TV type",
+            "Select Amazon Fire TV / Stick or Android / Google TV. Follow only the instructions for the TV you are using. The website cannot discover or connect to your home TV itself: BM TV Enabler does this from your PC."
+          ],
+          [
+            "Amazon Fire TV / Stick",
+            "On the TV open Settings > My Fire TV > About. Highlight the device name and press Select seven times to reveal Developer options. Go Back to My Fire TV > Developer options and turn ADB debugging ON. If Developer options already exists, use it directly. Leave the TV awake."
+          ],
+          [
+            "Android / Google TV",
+            "On the TV open Settings > System > About (some TVs use Device Preferences > About). Highlight Android TV OS build and press Select seven times. Return to System > Developer options and enable Network debugging, or Wireless debugging where offered. Menu names vary by TV. Do not expose debugging ports to the internet."
+          ],
+          [
+            "Find and connect",
+            "Press I’ve switched debugging on — next. Choose Find my Fire TV or Find my Android TV, select the correct named TV and check its address. If it is missing, enter the address from the TV’s network settings. Press Connect to this TV. On the TV, press Allow for debugging and tick Always allow from this computer if offered. Keep the Enabler open."
+          ]
+        ]
+      ],
+      [
+        "Link the reference, share and finish",
+        [
+          [
+            "Enter the Enabler reference",
+            "Type the sharing reference shown by BM TV Enabler into your own ticket’s Remote setup reference box and confirm it. Each reference belongs to one ticket/order while valid. If another ticket/order already used it, get New code in the Enabler. If your PC shows a different reference from the website, use Change reference number and enter the current one."
+          ],
+          [
+            "Connect and approve",
+            "When the website offers Connect my screen, press it and follow the TV’s Allow and recording/casting prompts. If the website needs a fresh TV check, keep the Enabler open and use Send to BM TV Enabler or Ask my TV again as shown. Wait for the new connection to arrive rather than repeatedly pressing the button. A green readiness tick is not a substitute for TV consent."
+          ],
+          [
+            "Work with staff",
+            "Your ticket’s Screen share opens when connected. Ask staff to confirm they can see the TV. Keep the PC Enabler open, the TV awake and the Helper running while the connection is being established. Use the ticket conversation to speak with staff. Tell staff before opening private screens; enabled remote control allows them to operate the TV during the session."
+          ],
+          [
+            "End and request a fresh reference",
+            "End the session from the sharing controls or ask staff to end it. Once the linked screen share ends, its sharing reference expires and the website setup clears. The Enabler clears the expired reference when it receives the server update; press New code and complete a fresh TV check before sharing again. Closure of the ticket/order also expires it; otherwise its maximum lifetime is 24 hours. Install reference and login PIN are unaffected."
+          ]
+        ]
+      ],
+      [
+        "Reconnect and solve problems",
+        [
+          [
+            "Reopen or switch sections",
+            "Every app launch requires the current account PIN. After login, valid saved references can be resumed without extending expiry. Return to home switches between Install our apps and Screen-share support while retaining TV details and each section’s valid reference. A network error alone does not erase a reference."
+          ],
+          [
+            "Restart website setup",
+            "Restart setup clears the ticket’s setup and releases its still-valid reference so you can type the reference the Enabler currently shows again. It does not make an expired sharing reference valid. After a share ends, ask for New code in the Enabler. Reset setup inside the app is a separate confirmed action which clears local TV details and both references; the next code takes over."
+          ],
+          [
+            "No picture or no permission box",
+            "Keep BM Remote Helper in front on the TV and approve the requested prompts. Check the PC and TV still share the same network. Ask staff to confirm they joined this ticket. If no picture appears, tell staff before ending and retrying with a fresh reference. Do not factory-reset or reinstall the TV as your first troubleshooting step."
+          ],
+          [
+            "Pairing or control problems",
+            "Android Wireless debugging may require the TV’s separate pairing code and pairing port as well as its main connection address/port. If control is unavailable or Accessibility remains blocked, report the Enabler’s error to staff rather than disabling TV security. Follow the TV prompts the app provides; installation alone does not grant permanent staff access."
+          ]
+        ]
+      ]
+    ],
+    "safety": "Only share with BM Support staff through your own support ticket. Close banking, payment, password and other private screens on the TV first. You can decline a request or end a session. Never publish your PIN or reference.",
+    "sort_order": 32,
+    "category_id": "4bee52e2-efcb-504d-abe8-e20409888adb",
+    "kb_category_id": "16aa8433-2c8f-559c-bde1-974d336d2864"
   }
 ]

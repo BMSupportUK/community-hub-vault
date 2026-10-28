@@ -1,6 +1,10 @@
 - [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
+## Windows written guides and PDFs
+- [x] Create separate Windows installation and screen-sharing written guides with matching branded PDFs, using current app labels and reference lifecycle.
+- [x] Add both to Knowledge Base and Install Guides without changing existing videos; visually check all nine PDF pages (no clipping or overlap) and verify both PDFs and the sharing article open through signed-in UI. Physical Windows/TV execution is not part of this documentation task.
+
 ## Enabler sharing-reference expiry
 - [x] Update phone and Windows to clear server-expired sharing references, offer New code, and explain expiry on screen-share end; retain install references and PINs.
 - [x] 47 Windows tests and phone wizard tests pass; phone Java compiles. Simulated Windows expiry clears only sharing storage and New code saves a replacement. Physical TV end-to-end check requires customer devices.
