@@ -160,11 +160,24 @@ async function checkExisting(host, adb, progress, delay) {
 }
 
 /** Wizard step: install BM Remote Helper on the TV and open it. */
+/** Installed versionCode of a package on the TV; 0 when not installed or unreadable. */
+async function pkgVersion(shell, pkg) {
+  const out = await shell(`dumpsys package ${pkg} | grep versionCode`).catch(() => '');
+  const m = String(out).match(/versionCode=(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 async function installHelper(host, adb, progress, delay, fetchImpl = globalThis.fetch, tempDir = require('node:os').tmpdir()) {
   const serial = await connect(host, adb, progress, delay);
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
   try {
     await shell(RESTORE_NAME).catch(() => {});
+    // Builds before Helper 2.4 (versionCode 15) were signed with a retired key and can't be
+    // updated in place or share the signature permission remote control needs — replace them.
+    if ((await shell(`pm path ${HELPER}`)).includes('package:') && (await pkgVersion(shell, HELPER)) < 15) {
+      progress('Replacing an older BM Remote Helper on the TV…');
+      await shell(`pm uninstall ${HELPER}`).catch(() => {});
+    }
     if (!(await shell(`pm path ${HELPER}`)).includes('package:')) {
       progress('Downloading BM Remote Helper…');
       const apk = await ensureHelperApk(tempDir, fetchImpl);
@@ -276,6 +289,11 @@ async function installControl(host, adb, progress, delay, fetchImpl = globalThis
   const serial = await connect(host, adb, progress, delay);
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
   try {
+    // Control builds before 1.1 (versionCode 3) used the retired key — replace them too.
+    if ((await shell(`pm path ${CONTROL}`)).includes('package:') && (await pkgVersion(shell, CONTROL)) < 3) {
+      progress('Replacing an older remote control on the TV…');
+      await shell(`pm uninstall ${CONTROL}`).catch(() => {});
+    }
     if (!(await shell(`pm path ${CONTROL}`)).includes('package:')) {
       progress('Preparing the remote-control app…');
       const apk = await ensureHelperApk(tempDir, fetchImpl);

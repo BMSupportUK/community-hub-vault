@@ -1,0 +1,58 @@
+plugins { id 'com.android.application' }
+
+// BM Remote Helper — the TV app that shows the screen-share pairing code, asks the
+// customer's consent, hosts the WebRTC screen share and forwards remote-control
+// commands to the companion BM Remote Control app (assets/control.apk).
+// Rebuilt in-house from the retired 2.3 build so we own every change.
+// Signed with the permanent BM key (see android/SIGNING.md) — the signature-level
+// uk.bmsupport.remote.permission.CONTROL permission is what lets it talk to the control app.
+def ksPass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+
+android {
+    namespace = "uk.bmsupport.remote"
+    compileSdk = 34
+    defaultConfig {
+        applicationId "uk.bmsupport.remote"
+        minSdkVersion 24
+        targetSdkVersion 34
+        versionCode 15
+        versionName "2.4"
+        buildConfigField "String", "API_URL", '"https://bmsupport.uk/api/public/tv"'
+        buildConfigField "String", "ANON_KEY", '"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6cmJkYXdscXllYWxubHJ0d2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTA5NDIsImV4cCI6MjA5NDI2Njk0Mn0.uZD07rXDfXt-g3mEMlhS-m_784yaID0-cabPobpMIoE"'
+        buildConfigField "String", "REALTIME_URL", '"wss://vzrbdawlqyealnlrtwgj.supabase.co/realtime/v1/websocket"'
+        buildConfigField "long", "CONTROL_VERSION", "3L"
+    }
+    signingConfigs {
+        release {
+            if (ksPass) {
+                storeFile file(System.getenv("ANDROID_KEYSTORE_PATH") ?: "../../android/keystore/bmsupport-release.jks")
+                storePassword ksPass
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "bmsupport"
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: ksPass
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (ksPass) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildFeatures { buildConfig true }
+    packaging {
+        jniLibs { useLegacyPackaging = false }
+        resources {
+            excludes += ["META-INF/LICENSE.md", "META-INF/LICENSE-notice.md", "META-INF/LICENSE", "META-INF/NOTICE", "META-INF/DEPENDENCIES"]
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'io.github.webrtc-sdk:android:125.6422.04'
+    implementation 'dev.mobile:dadb:1.2.9'
+}
