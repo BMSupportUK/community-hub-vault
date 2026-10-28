@@ -95,6 +95,7 @@ function say(text, isError) {
 }
 
 function setBusy(value) {
+  if (value !== busy) window.bmTv.keepAwake(value).catch(() => {});
   busy = value;
   for (const b of [action, next, reset, startAgain, scan, pickAmazon, pickAndroid, showAgain, pairButton, appsNew, appsHave, appsBack, el('apps-code')]) b.disabled = value;
   address.disabled = value; tvCodeInput.disabled = value; linkCode.disabled = value; pairCode.disabled = value; pairPort.disabled = value;
