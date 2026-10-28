@@ -827,7 +827,7 @@ public class MainActivity extends Activity {
         while ((n = in.read(b)) > 0) o.write(b, 0, n); return o.toByteArray();
     }
 
-    /** Tick list of our apps (all ticked; already-installed greyed out). Blocks the worker thread; returns ticked paths or null if cancelled. */
+    /** Tick list of our apps (already-installed unticked and greyed out). Blocks the worker thread; returns ticked paths or null if cancelled. */
     private java.util.Set<String> chooseApps(java.util.List<Enabler.PickItem> items) throws InterruptedException {
         final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
         final java.util.Set<String>[] result = new java.util.Set[1];

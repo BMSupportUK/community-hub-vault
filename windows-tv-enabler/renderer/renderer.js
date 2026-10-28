@@ -230,9 +230,9 @@ async function showCode(host, existing) {
     setBusy(false); wizard.paired(); render(); run(Step.SETUP, host); return;
   } catch (error) { say(cleanError(error), true); }
   setBusy(false); render();
-});
+}
 
-/** Tick list of our apps (all ticked; already-installed greyed out). Resolves with the ticked app paths. */
+/** Tick list of our apps (already-installed unticked and greyed out). Resolves with the ticked app paths. */
 function chooseApps(list) {
   const box = document.getElementById('apps-choose'), holder = document.getElementById('apps-choose-list'), go = document.getElementById('apps-choose-go');
   holder.replaceChildren();
