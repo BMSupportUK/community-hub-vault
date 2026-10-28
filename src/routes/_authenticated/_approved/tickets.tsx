@@ -613,7 +613,7 @@ function TicketsPage() {
                   <NewTicketForm
                     categories={categories}
                     onCancel={() => { setCreating(false); setTab("tickets"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
-                    onCreated={(id) => { setCreating(false); navigate({ to: "/tickets", search: { id, view } }); }}
+                    onCreated={(id, tab) => { setCreating(false); navigate({ to: "/tickets", search: { id, view, tab } }); }}
                     preset={search.new2fa === 1 ? "2fa-reset" : undefined}
                   />
                 </div>
@@ -744,7 +744,7 @@ function TicketsPage() {
                     <NewTicketForm
                       categories={categories}
                       onCancel={() => setCreating(false)}
-                      onCreated={(id) => { setCreating(false); navigate({ to: "/tickets", search: { id, view } }); }}
+                      onCreated={(id, tab) => { setCreating(false); navigate({ to: "/tickets", search: { id, view, tab } }); }}
                       preset={search.new2fa === 1 ? "2fa-reset" : undefined}
                     />
                   ) : selected ? (
@@ -796,7 +796,7 @@ function TicketsPage() {
 
 function NewTicketForm({
   categories: allCategories, onCancel, onCreated, preset,
-}: { categories: Category[]; onCancel: () => void; onCreated: (id: string) => void; preset?: "2fa-reset" }) {
+}: { categories: Category[]; onCancel: () => void; onCreated: (id: string, tab?: "setup") => void; preset?: "2fa-reset" }) {
   const { user, hasAny } = useAuth();
   // Reporting live TV / movie faults is for paying customers and staff only.
   const hideReportCats =
@@ -821,6 +821,7 @@ function NewTicketForm({
       : ""
   );
   const [submitting, setSubmitting] = useState(false);
+  const [remoteSupport, setRemoteSupport] = useState<boolean | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [captchaToken, setCaptchaToken] = useState("");
@@ -834,6 +835,7 @@ function NewTicketForm({
     const parsed = newTicketSchema.safeParse({ subject, category_id: categoryId, priority, message });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     if (!parsed.data.message && files.length === 0) return toast.error("Add a message or attach a file");
+    if (remoteSupport === null) return toast.error("Tell us if you want remote support.");
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setSubmitting(true);
     try {
@@ -911,6 +913,13 @@ function NewTicketForm({
       });
     }
 
+    if (remoteSupport) {
+      await supabase.from("ticket_messages").insert({
+        ticket_id: t.id, sender_id: user!.id, is_internal: false,
+        content: "I'd like remote support. I'm setting up screen sharing with BM TV Enabler from the Remote setup tab.",
+      });
+    }
+
     toast.success("Ticket opened");
     // Fire-and-forget: push (web + FCM) to staff so background/closed
     // browsers and the Android app see the alert even when the page is
@@ -918,7 +927,7 @@ function NewTicketForm({
     void notifyNewTicket({
       data: { ticketId: t.id, subject: parsed.data.subject, categorySlug: cat?.slug },
     }).catch((e) => console.error("[ticket] new ticket push failed", e));
-    onCreated(t.id);
+    onCreated(t.id, remoteSupport ? "setup" : undefined);
   };
 
   return (
@@ -952,6 +961,17 @@ function NewTicketForm({
               }}
               className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none resize-none"
             />
+          </Field>
+          <Field label="Do you want remote support?">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {([[true, "Yes — connect to my TV", "Staff help you by screen share. We'll take you to Remote setup next."], [false, "No thanks", "Just reply to me in the ticket."]] as const).map(([v, title, note]) => (
+                <button type="button" key={String(v)} onClick={() => setRemoteSupport(v)}
+                  className={cn("rounded-lg border p-3 text-left transition-colors", remoteSupport === v ? "border-white bg-white/25" : "border-white/30 bg-white/10 hover:bg-white/20")}>
+                  <div className="text-sm font-medium text-white">{title}</div>
+                  <div className="text-xs text-white/75">{note}</div>
+                </button>
+              ))}
+            </div>
           </Field>
           <Field label="Attachments (optional)">
             <FilePicker files={files} setFiles={setFiles} disabled={submitting} dark />
