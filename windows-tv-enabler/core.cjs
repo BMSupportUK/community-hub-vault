@@ -314,7 +314,14 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
       } catch { failed.push(name); results.push({ name, status: 'failed' }); }
       finally { try { fs.unlinkSync(file); } catch {} await shell('rm -f /data/local/tmp/bm-app.apk').catch(() => {}); }
     }
-    await showScreen(failed.length ? installScreenCommand('error', null, 0, apps.length) : installScreenCommand('complete', null, apps.length, apps.length, installed));
+    const finalCmd = failed.length ? installScreenCommand('error', null, 0, apps.length) : installScreenCommand('complete', null, apps.length, apps.length, installed);
+    // The last TV screen update must never leave "Installing your apps" showing: retry, then close the screen.
+    let shown = !screen;
+    for (let attempt = 0; attempt < 3 && !shown; attempt++) {
+      try { const r = await shell(finalCmd); shown = !String(r || '').includes('Error'); } catch {}
+      if (!shown) await new Promise(r => setTimeout(r, 1000));
+    }
+    if (!shown) await shell(`am force-stop ${INSTALL_SCREEN}`).catch(() => {});
   } finally { await adb(['disconnect', serial]).catch(() => {}); }
   return { installed, failed, results };
 }
