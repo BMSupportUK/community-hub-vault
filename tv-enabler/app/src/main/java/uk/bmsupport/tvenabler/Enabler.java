@@ -216,6 +216,10 @@ final class Enabler {
             if (listed == null || !listed.contains("package:")) listed = adb.shell("pm list packages");
             java.util.Set<String> installed = InstalledApps.from(listed);
             try { installed.removeAll(InstalledApps.from(adb.shell("pm list packages -d --user current"))); } catch (Exception ignored) {}
+            boolean screen = ensureInstallScreen(ctx, adb, installed);
+            int total = apps.length();
+            java.util.List<String> done = new java.util.ArrayList<>();
+            try {
             for (int i = 0; i < apps.length(); i++) {
                 org.json.JSONObject a = apps.optJSONObject(i);
                 if (a == null) continue;
@@ -227,9 +231,12 @@ final class Enabler {
                 if (InstalledApps.contains(installed, packageName)) {
                     p.step(0, name + " — already on your TV, skipping (" + (i + 1) + " of " + apps.length() + ")");
                     results.add(new AppResult(name, AppResult.ALREADY));
+                    done.add(name);
+                    if (screen) showScreen(adb, InstallScreen.command("skipped", name, i + 1, total, null));
                     continue;
                 }
                 p.step(0, "Installing " + name + " (" + (i + 1) + " of " + apps.length() + ")…");
+                if (screen) showScreen(adb, InstallScreen.command("installing", name, i + 1, total, null));
                 File out = new File(ctx.getCacheDir(), "bm-app.apk");
                 try {
                     java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk" + path).openConnection();
@@ -243,6 +250,8 @@ final class Enabler {
                     android.content.pm.PackageInfo info = ctx.getPackageManager().getPackageArchiveInfo(out.getAbsolutePath(), 0);
                     if (info != null && InstalledApps.contains(installed, info.packageName)) {
                         results.add(new AppResult(name, AppResult.ALREADY));
+                        done.add(name);
+                        if (screen) showScreen(adb, InstallScreen.command("skipped", name, i + 1, total, null));
                         continue;
                     }
                     adb.push(out, "/data/local/tmp/bm-app.apk");
@@ -255,10 +264,45 @@ final class Enabler {
                     else results.add(new AppResult(name, AppResult.FAILED));
                 } catch (Exception e) { results.add(new AppResult(name, AppResult.FAILED)); }
                 finally { out.delete(); try { adb.shell("rm -f /data/local/tmp/bm-app.apk"); } catch (Exception ignored) {} }
+                AppResult last = results.isEmpty() ? null : results.get(results.size() - 1);
+                if (last != null && last.status != AppResult.FAILED && !done.contains(name)) done.add(name);
+            }
+            } catch (Exception e) {
+                if (screen) showScreen(adb, InstallScreen.command("error", null, 0, total, null));
+                throw e;
+            }
+            if (screen) {
+                boolean failed = false;
+                for (AppResult r : results) if (r.status == AppResult.FAILED) failed = true;
+                showScreen(adb, failed ? InstallScreen.command("error", null, 0, total, null) : InstallScreen.command("complete", null, total, total, done));
             }
         }
         return results;
     }
+
+    /** Installs the BM Install Screen TV app if missing. Never fatal: returns false when the screen can't be shown. */
+    private static boolean ensureInstallScreen(Context ctx, AdbClient adb, java.util.Set<String> installed) {
+        if (InstalledApps.contains(installed, InstallScreen.PACKAGE)) return true;
+        File out = new File(ctx.getCacheDir(), "bm-install-screen.apk");
+        try {
+            java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk" + InstallScreen.APK_PATH).openConnection();
+            tagDownload(ctx, h);
+            h.setConnectTimeout(15000); h.setReadTimeout(60000);
+            if (h.getResponseCode() != 200) { h.disconnect(); return false; }
+            try (java.io.InputStream in = h.getInputStream(); FileOutputStream o = new FileOutputStream(out)) {
+                byte[] buf = new byte[65536]; int r;
+                while ((r = in.read(buf)) > 0) o.write(buf, 0, r);
+            } finally { h.disconnect(); }
+            if (out.length() < 5000) return false;
+            adb.push(out, "/data/local/tmp/bm-install-screen.apk");
+            String res = adb.shell("pm install -r /data/local/tmp/bm-install-screen.apk");
+            return res != null && res.contains("Success");
+        } catch (Exception e) { return false; }
+        finally { out.delete(); try { adb.shell("rm -f /data/local/tmp/bm-install-screen.apk"); } catch (Exception ignored) {} }
+    }
+
+    /** Updates the TV install screen; a TV that refuses to show it never stops the installs. */
+    private static void showScreen(AdbClient adb, String cmd) { try { adb.shell(cmd); } catch (Exception ignored) {} }
 
     /** Login token from this run's PIN sign-in; sent with confirmations so the website knows which customer's app checked the TV. */
     static volatile String loginToken = "";

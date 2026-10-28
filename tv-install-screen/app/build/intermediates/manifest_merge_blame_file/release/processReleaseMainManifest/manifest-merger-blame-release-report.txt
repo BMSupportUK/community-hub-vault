@@ -1,0 +1,49 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="uk.bmsupport.installscreen"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="22"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-feature
+11-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:3:5-87
+12        android:name="android.software.leanback"
+12-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:3:19-59
+13        android:required="false" />
+13-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:3:60-84
+14    <uses-feature
+14-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:4:5-90
+15        android:name="android.hardware.touchscreen"
+15-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:4:19-62
+16        android:required="false" />
+16-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:4:63-87
+17
+18    <application
+18-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:5:5-12:19
+19        android:allowBackup="false"
+19-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:7:9-36
+20        android:extractNativeLibs="true"
+21        android:label="BM Install Screen"
+21-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:6:9-42
+22        android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen" >
+22-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:8:9-77
+23
+24        <!-- No launcher entry: opened only by BM TV Enabler over ADB (am start). -->
+25        <activity
+25-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:10:9-11:87
+26            android:name="uk.bmsupport.installscreen.MainActivity"
+26-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:10:19-47
+27            android:excludeFromRecents="true"
+27-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:11:51-84
+28            android:exported="true"
+28-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:10:48-71
+29            android:launchMode="singleTop"
+29-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:10:72-102
+30            android:screenOrientation="landscape" />
+30-->/dev-server/tv-install-screen/app/src/main/AndroidManifest.xml:11:13-50
+31    </application>
+32
+33</manifest>

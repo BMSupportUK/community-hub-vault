@@ -56,6 +56,10 @@
             "In Install our apps mode the Enabler checks the TV and installs the BM Support TV apps one by one. Apps already enabled in the current TV profile are skipped. Keep both devices awake until the results appear. This mode does not start screen sharing or install/check the remote-help setup for staff access."
           ],
           [
+            "Watch the install screen on the TV",
+            "When installing starts, the TV shows a BM Support install screen first. It names each app being installed, shows App 1 of 3 and a progress bar, and marks apps already on the TV as Already installed. Do not turn the TV off. At the end the TV shows Installation complete with a green tick and the list of apps; press OK on the TV remote to close it, or it closes by itself after 30 seconds. If it says Something went wrong, follow the steps on your phone or PC. The small BM Install Screen app only shows this screen; it has no permissions or home-screen icon."
+          ],
+          [
             "Let the installation finish",
             "Keep the phone or PC and TV connected and wait while the Enabler checks and installs the apps. Apps already enabled in the selected TV’s current profile are skipped. Read each result: Installed, Already on your TV, or a failure. Do not assume every app succeeded if one result reports a failure."
           ],
@@ -95,7 +99,7 @@
     "category_id": "35577041-0c26-4e7c-a7dd-fa3abf897d94",
     "kb_category_id": "22b99c85-97cf-4546-96c2-a0ad944e3eff",
     "safety": "Only share with BM Support staff through your own support ticket. Close banking, payment, password and other private screens on the TV first. You can decline a request or end a session. Never publish your PIN or reference.",
-    "edition": 2
+    "edition": 3
   },
   {
     "key": "amazon-helper-install",
@@ -600,6 +604,10 @@
             "Install our apps installs the BM Support TV viewing/store apps. Screen-share support is the separate mode which installs/checks Helper and control for staff help. Installation success alone does not mean staff can see or control your screen."
           ],
           [
+            "Watch the install screen on the TV",
+            "When installing starts, the TV shows a BM Support install screen first. It names each app being installed, shows App 1 of 3 and a progress bar, and marks apps already on the TV as Already installed. Do not turn the TV off. At the end the TV shows Installation complete with a green tick and the list of apps; press OK on the TV remote to close it, or it closes by itself after 30 seconds. If it says Something went wrong, follow the steps on your phone or PC. The small BM Install Screen app only shows this screen; it has no permissions or home-screen icon."
+          ],
+          [
             "Let the installation finish",
             "Keep the PC and TV connected and wait while the Enabler checks and installs the apps. Apps already enabled in the selected TV’s current profile are skipped. Read each result: Installed, Already on your TV, or a failure. Do not assume every app succeeded if one result reports a failure."
           ],
@@ -639,7 +647,7 @@
     "sort_order": 31,
     "category_id": "4bee52e2-efcb-504d-abe8-e20409888adb",
     "kb_category_id": "16aa8433-2c8f-559c-bde1-974d336d2864",
-    "edition": 2
+    "edition": 3
   },
   {
     "key": "windows-enabler-share",
@@ -825,6 +833,10 @@
             "In Install our apps mode the Enabler checks the TV and installs the BM Support TV apps one by one. Apps already enabled in the current TV profile are skipped. Keep both devices awake until the results appear. This mode does not start screen sharing or install/check the remote-help setup for staff access."
           ],
           [
+            "Watch the install screen on the TV",
+            "When installing starts, the TV shows a BM Support install screen first. It names each app being installed, shows App 1 of 3 and a progress bar, and marks apps already on the TV as Already installed. Do not turn the TV off. At the end the TV shows Installation complete with a green tick and the list of apps; press OK on the TV remote to close it, or it closes by itself after 30 seconds. If it says Something went wrong, follow the steps on your phone or PC. The small BM Install Screen app only shows this screen; it has no permissions or home-screen icon."
+          ],
+          [
             "Let the installation finish",
             "Keep the phone or PC and TV connected and wait while the Enabler checks and installs the apps. Apps already enabled in the selected TV’s current profile are skipped. Read each result: Installed, Already on your TV, or a failure. Do not assume every app succeeded if one result reports a failure."
           ],
@@ -864,6 +876,6 @@
     "category_id": "09cfaa34-3462-4dfe-8772-2998899d9aae",
     "kb_category_id": "0aeef402-5f79-4857-a56b-09107dad8096",
     "safety": "Only share with BM Support staff through your own support ticket. Close banking, payment, password and other private screens on the TV first. You can decline a request or end a session. Never publish your PIN or reference.",
-    "edition": 2
+    "edition": 3
   }
 ]

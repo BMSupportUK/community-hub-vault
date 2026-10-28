@@ -1,0 +1,8 @@
+uk.bmsupport.installscreen.app-pngs-0 /dev-server/tv-install-screen/app/build/generated/res/pngs/release
+uk.bmsupport.installscreen.app-resValues-1 /dev-server/tv-install-screen/app/build/generated/res/resValues/release
+uk.bmsupport.installscreen.app-updated_navigation_xml-2 /dev-server/tv-install-screen/app/build/generated/updated_navigation_xml/release
+uk.bmsupport.installscreen.app-packageReleaseResources-3 /dev-server/tv-install-screen/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
+uk.bmsupport.installscreen.app-packageReleaseResources-4 /dev-server/tv-install-screen/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
+uk.bmsupport.installscreen.app-release-5 /dev-server/tv-install-screen/app/build/intermediates/merged_res/release/mergeReleaseResources
+uk.bmsupport.installscreen.app-main-6 /dev-server/tv-install-screen/app/src/main/res
+uk.bmsupport.installscreen.app-release-7 /dev-server/tv-install-screen/app/src/release/res
