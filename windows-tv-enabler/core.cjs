@@ -242,7 +242,6 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
   const wait = delay || (ms => new Promise(resolve => setTimeout(resolve, ms)));
   const fs = require('node:fs'); const path = require('node:path');
   let apps = await fetchInstallList(fetchImpl);
-  if (Array.isArray(only) && !only.length) throw new Error('Tick at least one app to install.');
   const serial = await connect(host, adb, progress, delay);
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
   const installed = [], failed = [], results = [];

@@ -359,7 +359,7 @@ next.addEventListener('click', async () => {
 function backToStart() {
   if (busy) return;
   // The saved screen-share reference (code, expiry, refresh token, TV) is kept until it expires.
-  wizard.reset(); apps = null; appsResults = [];
+  wizard.reset(); apps = null; appsResults = []; document.getElementById('apps-choose').hidden = true;
   if (!confirmationValid()) checks = null;
   localStorage.removeItem('bm-tv-apps');
   say(''); render();
@@ -369,7 +369,7 @@ startAgain.addEventListener('click', backToStart);
 reset.addEventListener('click', () => {
   if (busy) return;
   if (!window.confirm('Reset setup?\n\nThis can\'t be undone. Your saved TV address, device choice and BM TV Enabler reference codes will be cleared, and the new code you create next takes over from the old one. Installed TV apps and this computer\'s TV authorization are kept.\n\nPress OK to confirm the reset.')) return;
-  wizard.reset(); checks = null; device = null; apps = null; confirmCode = ''; appsResults = [];
+  wizard.reset(); checks = null; device = null; apps = null; confirmCode = ''; appsResults = []; document.getElementById('apps-choose').hidden = true;
   confirmExpiresAt = 0; refreshToken = ''; refreshHost = '';
   sharingReferenceExpired = false;
   installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = '';
