@@ -1,5 +1,0 @@
-R_DEF: Internal format may change without notice
-local
-drawable bm_logo
-drawable help_bg
-string app_name

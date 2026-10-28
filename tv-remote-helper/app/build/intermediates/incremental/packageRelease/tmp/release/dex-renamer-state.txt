@@ -1,4 +1,0 @@
-#Wed Oct 28 12:47:03 GMT 2026
-base.0=/dev-server/tv-remote-helper/app/build/intermediates/dex/release/mergeDexRelease/classes.dex
-path.0=classes.dex
-renamed.0=classes.dex
