@@ -6,6 +6,7 @@ export const DOWNLOAD_SOURCES = {
   remote_helper: "BM Remote Helper",
   transfer_link: "Secure download link",
   android_apk: "BM Support phone app",
+  self_install: "Self install (no staff help)",
 } as const;
 export type DownloadSource = keyof typeof DOWNLOAD_SOURCES;
 

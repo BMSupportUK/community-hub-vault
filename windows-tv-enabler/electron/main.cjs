@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { execFile } = require('node:child_process');
-const { adbTimeout, refreshConnection, pair, report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, installOurApps, listOurApps, activate, openCodeApp, requestConfirmCode, loginWithPin, setEnablerToken } = require('../core.cjs');
+const { adbTimeout, refreshConnection, pair, report, readHelperCode, showTvCode, checkExisting, installHelper, installControl, installOurApps, listOurApps, activate, openCodeApp, requestConfirmCode, loginWithPin, setEnablerToken, logSelfInstall } = require('../core.cjs');
 const { scan } = require('../discovery.cjs');
 let window; let busy = false;
 const page = path.join(__dirname, '..', 'dist', 'index.html');
@@ -60,6 +60,7 @@ else {
     ipcMain.handle('bm:install-apps', task((address, only) => installOurApps(address, adb, say, undefined, undefined, tempDir(), Array.isArray(only) ? only.filter(p => typeof p === 'string') : null)));
     ipcMain.handle('bm:activate', task(address => activate(address, adb, say)));
     ipcMain.handle('bm:open-code-app', task(address => openCodeApp(address, adb, say)));
+    ipcMain.handle('bm:self-install', task(async (token, apps, tvAddress) => logSelfInstall(token, apps, tvAddress)));
     ipcMain.handle('bm:confirm-code', task(async (checks, device, address, kind) => requestConfirmCode(checks, device, undefined, kind === 'install' ? null : (address ? await readHelperCode(address, adb, say) : null), true, kind === 'install' ? 'install' : 'share')));
     window.loadFile(page);
   });

@@ -471,6 +471,23 @@ final class Enabler {
         return new Confirmation(m.group(1), Long.parseLong(expiry.group(1)), refreshTokenFrom(resp));
     }
 
+    /** Customer needs no staff help: log the install code, installed apps and TV address, marking the code used. */
+    static void logSelfInstall(String token, java.util.List<String> apps, String tvAddress) {
+        int code;
+        try {
+            org.json.JSONObject body = new org.json.JSONObject().put("token", token).put("tvAddress", tvAddress)
+                    .put("apps", new org.json.JSONArray(apps));
+            java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-self-install").openConnection();
+            h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
+            h.setRequestProperty("Content-Type", "application/json");
+            if (loginToken != null && loginToken.matches("[0-9a-fA-F]{20,200}")) h.setRequestProperty("x-enabler-token", loginToken);
+            try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
+            code = h.getResponseCode();
+            h.disconnect();
+        } catch (Exception e) { throw new IllegalStateException("Couldn't reach BM Support. Check the phone's internet and try again."); }
+        if (code != 200) throw new IllegalStateException("Couldn't record your install (error " + code + "). Try again.");
+    }
+
     private static String refreshTokenFrom(String response) {
         try { return new org.json.JSONObject(response).optString("refreshToken", ""); } catch (Exception e) { return ""; }
     }

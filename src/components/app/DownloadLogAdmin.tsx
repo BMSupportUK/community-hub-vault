@@ -24,7 +24,7 @@ export function DownloadLogAdmin() {
   const shown = rows.filter((r) =>
     (source === "all" || r.source === source) &&
     (app === "all" || r.appName === app) &&
-    (!search.trim() || `${r.customer ?? ""} ${r.ip ?? ""} ${r.device ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())),
+    (!search.trim() || `${r.customer ?? ""} ${r.ip ?? ""} ${r.device ?? ""} ${r.reference ?? ""} ${r.tvAddress ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())),
   );
 
   return (
@@ -50,7 +50,7 @@ export function DownloadLogAdmin() {
         </Select>
         <div className="relative min-w-52 flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Search customer, IP or device" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="pl-9" placeholder="Search customer, IP, device, code or TV" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
       {q.isLoading ? (
@@ -66,7 +66,7 @@ export function DownloadLogAdmin() {
               <tr>
                 <th className="px-3 py-2">When</th><th className="px-3 py-2">App</th><th className="px-3 py-2">Route</th>
                 <th className="px-3 py-2">Customer</th><th className="hidden px-3 py-2 md:table-cell">Device</th>
-                <th className="hidden px-3 py-2 md:table-cell">IP</th><th className="hidden px-3 py-2 lg:table-cell">Size</th>
+                <th className="hidden px-3 py-2 md:table-cell">IP</th><th className="px-3 py-2">Code</th><th className="px-3 py-2">TV address</th><th className="hidden px-3 py-2 lg:table-cell">Size</th>
               </tr>
             </thead>
             <tbody>
@@ -78,6 +78,8 @@ export function DownloadLogAdmin() {
                   <td className="px-3 py-2">{r.customer ?? <span className="text-muted-foreground">Not signed in</span>}</td>
                   <td className="hidden px-3 py-2 md:table-cell" title={r.userAgent ?? ""}>{r.device ?? "—"}</td>
                   <td className="hidden px-3 py-2 md:table-cell">{r.ip ?? "—"}</td>
+                  <td className="whitespace-nowrap px-3 py-2 font-mono">{r.reference ?? "—"}</td>
+                  <td className="px-3 py-2">{r.tvAddress ?? "—"}</td>
                   <td className="hidden px-3 py-2 lg:table-cell">{size(r.bytes)}</td>
                 </tr>
               ))}

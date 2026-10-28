@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('bmTv', {
   installApps: (address, only) => ipcRenderer.invoke('bm:install-apps', address, only),
   activate: address => ipcRenderer.invoke('bm:activate', address),
   openCodeApp: address => ipcRenderer.invoke('bm:open-code-app', address),
+  selfInstall: (token, apps, tvAddress) => ipcRenderer.invoke('bm:self-install', token, apps, tvAddress),
   confirmCode: (checks, device, address, kind) => ipcRenderer.invoke('bm:confirm-code', checks, device, address, kind),
   progress: callback => {
     const listener = (_, text) => callback(text);
