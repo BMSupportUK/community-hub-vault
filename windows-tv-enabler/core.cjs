@@ -199,27 +199,58 @@ async function installHelper(host, adb, progress, delay, fetchImpl = globalThis.
 const SITE = 'https://bmsupport.uk';
 /** New-customer setups: installs every app an admin ticked "Install on TV during setup".
  * Existing packages bypass download, transfer and installation. Never fatal. */
-async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis.fetch, tempDir = require('node:os').tmpdir()) {
-  const wait = delay || (ms => new Promise(resolve => setTimeout(resolve, ms)));
-  const fs = require('node:fs'); const path = require('node:path');
+const parsePackages = out => String(out || '').split(/\r?\n/).map(line => line.trim()).filter(line => /^package:[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(line)).map(line => line.slice(8));
+
+async function fetchInstallList(fetchImpl) {
   let apps = [];
   try {
     const res = await fetchImpl(`${SITE}/api/public/tv-install-list`);
     if (res.ok) apps = ((await res.json()).apps || []).filter(a => a && typeof a.path === 'string' && a.path.startsWith('/api/public/tv-install-apk/'));
   } catch {}
   if (!apps.length) throw new Error('No apps are set up to install yet. Please contact BM Support.');
+  return apps;
+}
+
+/** Only apps installed and enabled for the TV's current profile count as "already there";
+ * disabled apps or ones belonging to another profile still get installed. */
+async function tvPackages(shell) {
+  let listed = await shell('pm list packages --user current');
+  if (!/package:/.test(String(listed || ''))) listed = await shell('pm list packages');
+  const disabled = new Set(parsePackages(await shell('pm list packages -d --user current').catch(() => '')));
+  return new Set(parsePackages(listed).filter(p => !disabled.has(p)));
+}
+
+/** Customer's pick: apps they ticked plus apps already on the TV (reported as skipped). `only` null = all. Matches Enabler.pickApps. */
+function pickApps(apps, only, packages) {
+  if (!Array.isArray(only)) return apps;
+  return apps.filter(a => only.includes(a.path) || (typeof a.packageName === 'string' && packages.has(a.packageName)));
+}
+
+/** Install list for the customer's tick list, each marked with whether it's already on the TV. */
+async function listOurApps(host, adb, progress, delay, fetchImpl = globalThis.fetch) {
+  const apps = await fetchInstallList(fetchImpl);
+  const serial = await connect(host, adb, progress, delay);
+  const shell = cmd => adb(['-s', serial, 'shell', cmd]);
+  try {
+    progress('Checking which apps are already on your TV…');
+    const packages = await tvPackages(shell);
+    return apps.map(a => ({ name: String(a.name || 'app').slice(0, 80), path: a.path, installed: typeof a.packageName === 'string' && packages.has(a.packageName) }));
+  } finally { await adb(['disconnect', serial]).catch(() => {}); }
+}
+
+async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis.fetch, tempDir = require('node:os').tmpdir(), only = null) {
+  const wait = delay || (ms => new Promise(resolve => setTimeout(resolve, ms)));
+  const fs = require('node:fs'); const path = require('node:path');
+  let apps = await fetchInstallList(fetchImpl);
+  if (Array.isArray(only) && !only.length) throw new Error('Tick at least one app to install.');
   const serial = await connect(host, adb, progress, delay);
   const shell = cmd => adb(['-s', serial, 'shell', cmd]);
   const installed = [], failed = [], results = [];
   try {
     progress('Checking which apps are already on your TV…');
-    const parsePackages = out => String(out || '').split(/\r?\n/).map(line => line.trim()).filter(line => /^package:[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(line)).map(line => line.slice(8));
-    // Only apps installed and enabled for the TV's current profile count as "already there";
-    // disabled apps or ones belonging to another profile still get installed.
-    let listed = await shell('pm list packages --user current');
-    if (!/package:/.test(String(listed || ''))) listed = await shell('pm list packages');
-    const disabled = new Set(parsePackages(await shell('pm list packages -d --user current').catch(() => '')));
-    const packages = new Set(parsePackages(listed).filter(p => !disabled.has(p)));
+    const packages = await tvPackages(shell);
+    apps = pickApps(apps, only, packages);
+    if (!apps.length) throw new Error('Tick at least one app to install.');
     // TV install screen: never fatal — a TV that can't show it still gets its apps.
     let screen = packages.has(INSTALL_SCREEN);
     if (!screen) {
@@ -464,4 +495,4 @@ async function refreshConnection(host, token, adb, progress, post = globalThis.f
   } catch (error) { await send({ token, requestId: task.requestId }).catch(() => {}); throw error; }
 }
 
-module.exports = { installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, activate, openCodeApp, enable };
+module.exports = { installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, listOurApps, pickApps, activate, openCodeApp, enable };
