@@ -549,11 +549,14 @@ public class MainActivity extends Activity {
                 final int[] helpResult = new int[1];
                 final String[] helpError = { "" };
                 if (run == SetupWizard.Step.SETUP && installOnly) {
-                    java.util.List<Enabler.PickItem> pick = Enabler.listOurApps(this, host, progress);
-                    java.util.Set<String> only = chooseApps(pick);
-                    if (only == null) throw new IllegalStateException("Installation cancelled. Press Try again to choose your apps.");
-                    progress.step(0, "Installing your chosen apps…");
-                    appsResults = Enabler.installOurApps(this, host, progress, only);
+                    // Staff help: our staff install the apps themselves, so skip choosing/installing here.
+                    if (helpPlan != 1) {
+                        java.util.List<Enabler.PickItem> pick = Enabler.listOurApps(this, host, progress);
+                        java.util.Set<String> only = chooseApps(pick);
+                        if (only == null) throw new IllegalStateException("Installation cancelled. Press Try again to choose your apps.");
+                        progress.step(0, "Installing your chosen apps…");
+                        appsResults = Enabler.installOurApps(this, host, progress, only);
+                    } else appsResults = new java.util.ArrayList<>();
                     boolean anyFailed = false;
                     for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) { anyFailed = true; break; }
                     if (helpPlan == 1) {
@@ -622,7 +625,7 @@ public class MainActivity extends Activity {
                         }
                         long failedCount = 0;
                         for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
-                        if (helpPlan == 1) say(helpTicket == 1 ? "✓ Apps installed, screen sharing set up and a ticket opened for our staff." : helpTicket == 2 ? "✓ Apps installed and a ticket opened for our staff." : "Apps installed, but we couldn't open the staff ticket: " + helpTicketError, helpTicket == 3 ? WARN : OK);
+                        if (helpPlan == 1) say(helpTicket == 1 ? "✓ Screen sharing set up and a ticket opened. Our staff will install the apps for you." : helpTicket == 2 ? "✓ A ticket was opened for our staff. They will install the apps for you." : "We couldn't open the staff ticket: " + helpTicketError, helpTicket == 3 ? WARN : OK);
                         else if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
                         else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Return to home to try again.", WARN);
                     } else if (run == SetupWizard.Step.SETUP) {
