@@ -33,25 +33,40 @@ public final class MainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (Build.VERSION.SDK_INT >= 27) setShowWhenLocked(true);
         else getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER);
-        root.setBackgroundColor(NAVY);
-        root.setPadding(dp(80), dp(40), dp(80), dp(40));
+        FrameLayout root = new FrameLayout(this);
+        ImageView bg = new ImageView(this);
+        bg.setImageResource(R.drawable.install_bg);
+        bg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        root.addView(bg, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        View scrim = new View(this);
+        scrim.setBackgroundColor(Color.argb(0xA6, 0x08, 0x14, 0x1b));
+        root.addView(scrim, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setGravity(Gravity.CENTER);
+        GradientDrawable panelBg = new GradientDrawable();
+        panelBg.setColor(Color.argb(0xD9, 0x16, 0x2a, 0x35));
+        panelBg.setCornerRadius(dp(28));
+        panel.setBackground(panelBg);
+        panel.setPadding(dp(80), dp(48), dp(80), dp(48));
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.bm_logo);
         logo.setAdjustViewBounds(true);
-        root.addView(logo, new LinearLayout.LayoutParams(dp(140), dp(140)));
-        badge = text(48, Color.WHITE, true); root.addView(badge);
-        title = text(34, Color.WHITE, true); root.addView(title);
-        detail = text(22, MUTED, false); root.addView(detail);
+        panel.addView(logo, new LinearLayout.LayoutParams(dp(110), dp(110)));
+        badge = text(48, Color.WHITE, true); panel.addView(badge);
+        title = text(34, Color.WHITE, true); panel.addView(title);
+        detail = text(22, MUTED, false); panel.addView(detail);
         bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         bar.setMax(100);
         bar.setProgressTintList(android.content.res.ColorStateList.valueOf(RED));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(560), dp(14));
         lp.topMargin = dp(24);
-        root.addView(bar, lp);
-        count = text(20, MUTED, false); root.addView(count);
+        panel.addView(bar, lp);
+        count = text(20, MUTED, false); panel.addView(count);
+        root.addView(panel, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         setContentView(root);
         render(getIntent());
     }
