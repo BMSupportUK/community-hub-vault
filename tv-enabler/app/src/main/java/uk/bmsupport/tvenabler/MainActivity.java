@@ -655,7 +655,7 @@ public class MainActivity extends Activity {
                                     .putString("device", checks != null && checks.type != null ? checks.type : selectedDevice).commit();
                             }
                         }
-                        if (installIssued[0] == null && helpPlan == 2) ui.post(this::selfInstall);
+                        if (installIssued[0] == null && helpPlan == 2 && !anyFailed) ui.post(this::selfInstall);
                         if (installIssued[0] != null) {
                             installCodeText = installIssued[0].code; installExpiresAt = installIssued[0].expiresAt;
                             installRefreshToken = installIssued[0].refreshToken; installUsed = false;
