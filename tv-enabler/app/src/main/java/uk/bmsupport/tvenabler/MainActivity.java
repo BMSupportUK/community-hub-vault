@@ -124,7 +124,7 @@ public class MainActivity extends Activity {
     private volatile java.util.List<Enabler.AppResult> appsResults = new java.util.ArrayList<>();
     private Button appsNew, appsHave, appsBack, appsCode;
     /** Answers loaded from a bmsupport.uk code: chosen app paths (null = ask here) and the website's help ticket. */
-    private java.util.Set<String> handoffApps; private String handoffTicket;
+    private java.util.Set<String> handoffApps; private String handoffTicket; private String handoffPurpose = "install";
     private LinearLayout appsList;
     private LinearLayout welcomeBox, contentBox;
     private boolean welcomeDone;
@@ -386,7 +386,11 @@ public class MainActivity extends Activity {
                             ui.post(() -> {
                                 if (isFinishing() || isDestroyed()) return;
                                 setBusy(false); say("✓ Code accepted. " + (h.helpPlan == 1 ? "We'll set up screen sharing for our staff." : "We'll install the apps you ticked."), OK);
-                                pickApps("new");
+                                // Apply a fresh handoff without restoring another ticket's reference.
+                                apps = "support".equals(h.purpose) ? "have" : "new";
+                                wizard.reset(); confirmCode.setText(""); refreshToken = null; confirmationUsed = false;
+                                getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", apps).apply();
+                                handoffPurpose = h.purpose;
                                 helpPlan = h.helpPlan; handoffApps = h.helpPlan == 2 ? h.apps : null; handoffTicket = h.ticketId;
                                 getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", h.helpPlan).apply();
                                 pickDevice(h.device);
@@ -577,6 +581,7 @@ public class MainActivity extends Activity {
                 }
                 final boolean linkedSent = sentTo != null;
                 final Enabler.Confirmation issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
+                if (issued != null && "support".equals(handoffPurpose) && handoffTicket != null) Enabler.linkSupportTicket(handoffTicket, issued.refreshToken);
                 final boolean installOnly = "new".equals(apps);
                 final Enabler.Confirmation[] installIssued = new Enabler.Confirmation[1];
                 final Enabler.Confirmation[] shareIssued = new Enabler.Confirmation[1];
