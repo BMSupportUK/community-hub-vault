@@ -54,6 +54,9 @@ public class MainActivity extends Activity {
     private int installChoice;
     /** Asked before installing: 1 = staff help (show code), 2 = self install (log automatically). */
     private int helpPlan;
+    /** Staff-help ticket after installing: 0 none, 1 opened + screen share sent to staff, 2 opened (share not linked), 3 failed. */
+    private int helpTicket;
+    private String helpTicketError = "";
     private Button helpYes, helpNo;
     private final Runnable refreshTick = new Runnable() {
         public void run() {
