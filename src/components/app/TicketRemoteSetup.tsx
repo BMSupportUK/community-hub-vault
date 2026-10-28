@@ -31,6 +31,7 @@ import { getTicketEnablerConfirmationStatus } from "@/lib/enabler-confirm-status
 import { appChecksPassed, connectionReady, staffRemoteSetupReady, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 import { ticketSupportHandoff } from "@/lib/enabler-handoff";
+import { ticketSetupStage } from "@/lib/ticket-setup-stage";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
 
@@ -57,6 +58,19 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const handoffFn = useServerFn(createEnablerHandoff);
   const [handoff, setHandoff] = useState<{ code: string; expiresAt: string; device: SetupDevice } | null>(null);
   const handoffKey = `ticket-support-handoff:${ticketId}`;
+  const [handedOff, setHandedOff] = useState(false);
+  useEffect(() => {
+    if (!customer || closed) return;
+    let stopped = false;
+    const check = async () => {
+      const { data } = await supabase.from("enabler_handoffs").select("used_at,expires_at")
+        .eq("ticket_id", ticketId).eq("purpose", "support").order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (!stopped) setHandedOff(Boolean(data?.used_at && Date.parse(data.expires_at) > Date.now()));
+    };
+    void check();
+    const timer = window.setInterval(check, 5000);
+    return () => { stopped = true; window.clearInterval(timer); };
+  }, [customer, closed, ticketId]);
   useEffect(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem(handoffKey) ?? "null");
@@ -66,6 +80,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   }, [handoffKey]);
   const clearHandoff = () => {
     setHandoff(null);
+    setHandedOff(false);
     try { sessionStorage.removeItem(handoffKey); } catch { /* Storage is optional. */ }
   };
   const makeHandoff = async () => {
@@ -75,6 +90,7 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       const code = await handoffFn({ data: ticketSupportHandoff(ticketId, row.device) });
       const saved = { ...code, device: row.device };
       setHandoff(saved);
+      setHandedOff(false);
       try { sessionStorage.setItem(handoffKey, JSON.stringify(saved)); } catch { /* Storage is optional. */ }
     } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't get your website code. Try again."); }
     finally { setBusy(false); }
@@ -152,11 +168,12 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
   const canConnect = connectionReady(row) && !renewalGate.waiting;
   const complete = Boolean(row.completed_at);
   const linked = ready || complete || referenceActive;
-  const stage: 1 | 2 | 3 = canConnect ? 3 : linked ? 2 : 1;
   const codeBox = !closed ? <EnablerCodeBox disabled={busy} status={confirmationStatus} onSubmit={redeem} onActiveChange={markReferenceActive} /> : null;
   // TV connected: the signed-in app has checked the TV. Ready to share: its reference is typed here and the check is fresh.
   const tvConnected = tvFound || ready || complete;
   const shareReady = (ready && referenceActive) || connectionReady(row);
+  const stage = ticketSetupStage({ loggedIn: appLoggedIn, handedOff, tvConnected, ready, canConnect, completed: complete, linked });
+  const stepTitles = ["Get the app and sign in", "Send your website answers", "Find and connect your TV", "Allow remote support on your TV", "Connect your screen", "Setup complete"];
   const chips = [["App logged in", appLoggedIn || linked || tvConnected], ["TV connected", tvConnected], ["Ready to share", shareReady]] as const;
   return <div className="relative isolate -m-4 min-h-[calc(100dvh-8rem)] overflow-hidden text-foreground sm:-m-6">
     <img src={helpBg} alt="" aria-hidden="true" loading="lazy" width={1920} height={1088} className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />
@@ -165,12 +182,16 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
       <header className="space-y-3 text-center">
         <h2 className="text-2xl font-bold sm:text-3xl">Share your TV screen with BM Support</h2>
         <p className="text-sm text-muted-foreground">{row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</p>
+        <div className="mx-auto max-w-xl space-y-2" aria-live="polite">
+          <p className="text-sm font-semibold">Step {stage} of 6 · {stepTitles[stage - 1]}</p>
+          <progress aria-label="Remote setup progress" value={stage} max={6} className="h-2 w-full accent-primary" />
+        </div>
         <ol className="sticky top-2 z-10 mx-auto flex w-fit flex-wrap justify-center gap-2 rounded-full bg-background/70 p-1.5 backdrop-blur" aria-label="Progress">
           {chips.map(([label, done]) => <li key={label} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${done ? "border-primary bg-primary/20 font-semibold" : "border-border bg-card/70 text-muted-foreground"}`}>{done ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4" />}{label}</li>)}
         </ol>
       </header>
 
-      {closed ? <p className="text-center text-sm">This ticket is closed.</p> : <div className={`mx-auto space-y-4 rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur ${stage === 1 ? "max-w-3xl" : "max-w-xl"}`}>
+      {closed ? <p className="text-center text-sm">This ticket is closed.</p> : <section aria-label="Current setup step" aria-live="polite" className={`mx-auto space-y-4 border-y border-border bg-background/70 p-5 ${stage === 1 ? "max-w-3xl" : "max-w-xl"}`}>
         {stage === 1 && <>
           <h3 className="text-lg font-semibold">1. Get BM TV Enabler — pick your Android phone or your Windows PC</h3>
           <div className="grid items-stretch gap-4 md:grid-cols-2">
@@ -178,6 +199,9 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
             <div className="rounded-xl border border-border bg-background/60 p-4"><p className="mb-2 text-center font-semibold">Windows PC</p><WindowsEnablerDownload /></div>
           </div>
           <TicketPin ticketId={ticketId} />
+          <p className="flex items-center gap-2 text-sm" role="status"><Loader2 className="size-4 animate-spin" />Waiting for you to sign in to BM TV Enabler with your PIN…</p>
+        </>}
+        {stage === 2 && <>
           <h3 className="pt-2 text-lg font-semibold">2. Send your answers to BM TV Enabler</h3>
           <p className="text-sm">You've chosen screen sharing for your {row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} so staff can investigate your issue. This code sets up the remote connection only — it isn't an app installation request.</p>
           {handoff && handoff.device === row.device && Date.parse(handoff.expiresAt) > Date.now() ? <div className="space-y-3">
@@ -187,23 +211,37 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
             <p className="text-xs text-muted-foreground">Works once, until {new Date(handoff.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}. If the website-code option is missing, download the latest BM TV Enabler above.</p>
             <Button variant="outline" disabled={busy} onClick={() => void makeHandoff()}>Get a replacement website code</Button>
           </div> : <Button disabled={busy} onClick={() => void makeHandoff()}>{busy && <Loader2 className="mr-2 size-4 animate-spin" />}Get my website code</Button>}
-          <details className="text-sm"><summary className="cursor-pointer font-semibold">Already have a reference from BM TV Enabler?</summary><div className="pt-3">{codeBox}</div></details>
+          {handoff && <p className="flex items-center gap-2 text-sm" role="status"><Loader2 className="size-4 animate-spin" />Waiting for the app to accept your website code…</p>}
         </>}
-        {stage === 2 && <>
-          <h3 className="text-lg font-semibold">{tvConnected ? "Press Allow on your TV" : "Keep BM TV Enabler open on your phone or PC"}</h3>
+        {stage === 3 && <>
+          <h3 className="text-lg font-semibold">3. Find and connect your TV</h3>
+          <p className="text-sm">Keep BM TV Enabler open on the same Wi-Fi as your TV. Follow its debugging instructions, find your {row.device === "amazon" ? "Fire TV" : "Android / Google TV"}, and select it.</p>
+          <p className="text-sm">If your TV asks to allow debugging, choose Allow and tick Always allow if shown.</p>
+          <p className="flex items-center gap-2 text-sm" role="status"><Loader2 className="size-4 animate-spin" />Waiting for BM TV Enabler to confirm your TV connection…</p>
+        </>}
+        {stage === 4 && <>
+          <h3 className="text-lg font-semibold">4. Allow remote support on your TV</h3>
           <p className="text-sm" role="status">{renewal || (tvConnected ? "Your TV has been checked. Now look at your TV: a box asks to allow debugging. Press Allow (tick \"Always allow\" if shown) and keep BM TV Enabler open. If no box appears, press the button below." : "Keep BM TV Enabler open, on the same Wi-Fi as your TV. Press the button and the app will connect to your TV for you.")}</p>
+          {!linked && <p className="flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" />Waiting for the app to confirm screen sharing is ready…</p>}
+          {linked && <>
           <Button size="lg" className="h-14 w-full text-base" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>
             {renewalGate.waiting ? <><Loader2 className="mr-2 size-5 animate-spin" />Waiting for you to press Allow on your TV…</> : (tvConnected ? "Ask my TV again" : "Send to BM TV Enabler")}
           </Button>
           <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">Only the BM TV Enabler showing the reference below will get this. If your app is showing a <strong>different code</strong> (for example you used your phone instead of your PC), press <strong>Change reference number</strong> and type the code your app shows now — the ticks will update straight away.</p>
-          {codeBox}
+          </>}
         </>}
-        {stage === 3 && <>
-          <h3 className="text-lg font-semibold">Your TV is ready</h3>
+        {stage === 5 && <>
+          <h3 className="text-lg font-semibold">5. Your TV is ready</h3>
           <p className="text-sm">Press the button and a member of staff will join your screen.</p>
           <Button size="lg" className="h-16 w-full text-lg" disabled={busy} onClick={() => void connect()}><MonitorUp className="mr-2 size-6" />Connect my screen</Button>
         </>}
-      </div>}
+        {stage === 6 && <>
+          <h3 className="flex items-center gap-2 text-lg font-semibold"><CheckCircle2 className="size-5 text-primary" />6. Setup complete</h3>
+          <p className="text-sm">Your TV connection has been sent to staff for this ticket. Keep BM Remote Helper open on your TV and approve its screen-sharing prompt when asked.</p>
+          <Button variant="outline" disabled={busy || renewalGate.waiting} onClick={() => void renew()}>{renewalGate.waiting && <Loader2 className="mr-2 size-4 animate-spin" />}Get new connection</Button>
+          {renewal && <p className="text-sm" role="status">{renewal}</p>}
+        </>}
+      </section>}
 
       {!closed && <details className="mx-auto max-w-xl rounded-xl border border-border bg-card/80 p-4 text-sm">
         <summary className="cursor-pointer font-semibold">Having trouble?</summary>
@@ -212,14 +250,12 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
             <Button size="sm" variant="outline" disabled={busy} onClick={() => void save(row.device === "amazon" ? "android" : "amazon")}>Switch to {row.device === "amazon" ? "Android / Google TV" : "Amazon Fire TV"}</Button>
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => void restart()}>Restart setup</Button>
           </div>
-          {stage === 3 && <><p className="font-semibold">Enter a different BM TV Enabler reference</p>{codeBox}</>}
+          <p className="font-semibold">Enter or change your BM TV Enabler reference</p>{codeBox}
+          {stage !== 2 && <Button variant="outline" size="sm" disabled={busy} onClick={() => void makeHandoff()}>Get a replacement website code</Button>}
           {stage !== 1 && <TicketPin ticketId={ticketId} />}
         </div>
       </details>}
 
-      {!closed && stage !== 1 && <aside className="mx-auto max-w-xl rounded-xl border border-border bg-card/90 p-5 shadow-lg backdrop-blur">
-        <WindowsEnablerDownload />
-      </aside>}
     </section>
   </div>;
 }
