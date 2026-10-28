@@ -337,9 +337,9 @@ public class MainActivity extends Activity {
         // A remembered install reference skips re-installing: the apps are already on the TV.
         if ("new".equals(a) && restoreInstallConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
         apps = a;
-        getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply();
-        // Debugging was already confirmed on this TV: go straight to Connect with the saved address.
-        if (device != null && SetupWizard.validHost(address.getText().toString().trim())) wizard.confirmDebugging();
+        // The TV type is its own question straight after "What do you need?", asked every time.
+        device = null;
+        getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).remove("device").apply();
         render();
     }
 
@@ -347,6 +347,8 @@ public class MainActivity extends Activity {
         if (busy || refreshBusy) return;
         device = d;
         getSharedPreferences("tv", MODE_PRIVATE).edit().putString("device", d).apply();
+        // Debugging was already confirmed on this TV: go straight to Connect with the saved address.
+        if (wizard.step == SetupWizard.Step.DEBUGGING && apps != null && SetupWizard.validHost(address.getText().toString().trim())) wizard.confirmDebugging();
         render();
     }
 
@@ -368,7 +370,7 @@ public class MainActivity extends Activity {
         startAgain.setVisibility(askApps ? View.GONE : View.VISIBLE);
         appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
         appsBack.setVisibility(View.GONE); // Return to home already covers going back to the options.
-        boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
+        boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps && device == null) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
         devicePick.setVisibility(pick ? View.VISIBLE : View.GONE);
         deviceHelp.setVisibility(pick ? View.VISIBLE : View.GONE);
         address.setVisibility(s == SetupWizard.Step.CHECK ? View.VISIBLE : View.GONE);
@@ -417,8 +419,8 @@ public class MainActivity extends Activity {
                     description.setText("Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.");
                     break;
                 }
-                heading.setText(device == null ? "Which TV are you setting up?" : "1. Enable TV debugging");
-                deviceHelp.setText(device == null ? "Choose your TV to see the right steps." : "Wrong TV? Choose the other one.");
+                heading.setText(device == null ? "Which TV is your order or support for?" : "1. Enable TV debugging");
+                deviceHelp.setText("Choose Amazon Fire TV or Android / Google TV to see the right steps.");
                 if (device == null) description.setText("");
                 else if ("amazon".equals(device)) description.setText("Put this phone and your Fire TV on the same Wi-Fi.\n\nOn the Fire TV: Settings › My Fire TV › About — press the device name 7 times. Go back to My Fire TV › Developer options and switch ADB debugging ON.");
                 else description.setText("Put this phone and your TV on the same Wi-Fi.\n\nOn the TV: Settings › System › About — press Android TV OS build 7 times. Go back to System › Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.");
