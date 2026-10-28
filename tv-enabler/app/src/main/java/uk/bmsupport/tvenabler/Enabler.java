@@ -488,6 +488,39 @@ final class Enabler {
         if (code != 200) throw new IllegalStateException("Couldn't record your install (error " + code + "). Try again.");
     }
 
+    private static org.json.JSONObject staffHelpPost(org.json.JSONObject body) {
+        int code; String resp;
+        try {
+            java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-staff-help").openConnection();
+            h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(20000);
+            h.setRequestProperty("Content-Type", "application/json");
+            if (loginToken != null && loginToken.matches("[0-9a-fA-F]{20,200}")) h.setRequestProperty("x-enabler-token", loginToken);
+            try (java.io.OutputStream o = h.getOutputStream()) { o.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
+            code = h.getResponseCode();
+            java.io.InputStream in = code < 400 ? h.getInputStream() : h.getErrorStream();
+            resp = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
+            h.disconnect();
+        } catch (Exception e) { throw new IllegalStateException("Couldn't reach BM Support. Check the phone's internet and try again."); }
+        org.json.JSONObject j;
+        try { j = new org.json.JSONObject(resp); } catch (Exception e) { j = new org.json.JSONObject(); }
+        if (code != 200) throw new IllegalStateException(j.optString("error", "Couldn't open a ticket for staff help (error " + code + "). Try again."));
+        return j;
+    }
+    /** Staff help is only offered while the office is open. */
+    static boolean officeOpen() {
+        try { return staffHelpPost(new org.json.JSONObject().put("mode", "check")).optBoolean("open", false); }
+        catch (org.json.JSONException e) { return false; }
+    }
+    /** Opens a ticket for staff with the fresh sharing reference attached; true when the screen-share request reached staff. */
+    static boolean openStaffTicket(String shareToken, String device, java.util.List<String> apps) {
+        try {
+            org.json.JSONObject r = staffHelpPost(new org.json.JSONObject().put("mode", "create").put("shareToken", shareToken)
+                    .put("device", device).put("apps", new org.json.JSONArray(apps)));
+            return r.optBoolean("connected", false);
+        } catch (org.json.JSONException e) { throw new IllegalStateException("Couldn't open a ticket for staff help. Try again."); }
+    }
+
+
     private static String refreshTokenFrom(String response) {
         try { return new org.json.JSONObject(response).optString("refreshToken", ""); } catch (Exception e) { return ""; }
     }

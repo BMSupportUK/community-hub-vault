@@ -23,6 +23,8 @@ let refreshToken = '', refreshHost = '', refreshBusy = false;
 let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshToken = '';
 // After installing: 0 = not asked yet, 1 = needs staff help (show code), 2 = self install (logged).
 let installChoice = 0;
+// Staff-help ticket after installing: 0 none, 1 opened + screen share sent to staff, 2 opened (share not linked), 3 failed.
+let helpTicket = 0, helpTicketError = '';
 let helpPlan = Number(localStorage.getItem('bm-tv-help-plan')) || 0; // asked before installing: 1 staff help, 2 self install
 const helpYes = document.getElementById('help-yes'), helpNo = document.getElementById('help-no');
 function saveInstallState(patch) { try { const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation-install') || 'null'); if (saved) localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ ...saved, ...patch })); } catch { /* ignore */ } }
@@ -180,7 +182,13 @@ function render() {
   if (s === Step.DONE && install) {
     heading.textContent = 'Your apps are installed';
     const live = installCode && Date.now() < installExpiresAt;
-    description.textContent = live && installChoice === 0
+    description.textContent = helpPlan === 1 && helpTicket
+      ? (helpTicket === 1
+        ? 'Each app is listed below with what happened.\n\n✓ We\'ve opened a support ticket for you and set up screen sharing. Our staff have been told and will connect to your TV shortly — keep the TV switched on with BM Remote Helper on screen. You can follow your ticket at bmsupport.uk › Tickets.'
+        : helpTicket === 2
+        ? 'Each app is listed below with what happened.\n\n✓ We\'ve opened a support ticket for you at bmsupport.uk › Tickets. Open its Remote setup tab and press Connect so our staff can see your TV.'
+        : `Each app is listed below with what happened.\n\nWe couldn't open a ticket for staff help: ${helpTicketError}\n\nPress Return to home and choose Install our apps again, or open a ticket at bmsupport.uk.`)
+      : live && installChoice === 0
       ? 'Each app is listed below with what happened.\n\nDo you need help from our staff with your apps?'
       : live && installChoice === 2
       ? "Each app is listed below with what happened.\n\n✓ Your install has been recorded — no staff help needed. You can close this app. Press New code if you install again."
@@ -283,6 +291,31 @@ async function run(stage, host) {
         const result = await window.bmTv.installApps(host, only);
         appsResults = result.results || [];
         wizard.setupFinished(true);
+        if (helpPlan === 1) {
+          // Staff help: set up screen sharing first, then open the ticket with it attached.
+          try {
+            say('Setting up screen sharing so our staff can help…');
+            let c = await window.bmTv.check(host);
+            const ok = () => allReady(c.adb, c.helper, c.control, c.accessibility);
+            if (!ok()) {
+              if (!c.helper) await window.bmTv.installHelper(host);
+              if (!c.control) await window.bmTv.installControl(host);
+              await window.bmTv.activate(host);
+              c = await window.bmTv.check(host);
+            }
+            if (!ok()) throw new Error('Screen sharing couldn\'t be switched on for this TV.');
+            const dev = c.type === 'amazon' || c.type === 'android' ? c.type : device;
+            const share = await window.bmTv.confirmCode(c, dev, host);
+            say('Opening a support ticket for our staff…');
+            const t = await window.bmTv.staffTicket(share.refreshToken || '', dev, appsResults.filter(r => r.status !== 'failed').map(r => r.name));
+            helpTicket = t && t.connected ? 1 : 2; helpTicketError = '';
+            checks = c; confirmCode = share.code; confirmExpiresAt = share.expiresAtMs; confirmationUsed = true; sharingReferenceExpired = false;
+            refreshToken = share.refreshToken || ''; refreshHost = host;
+            localStorage.setItem('bm-tv-confirmation', JSON.stringify({ code: confirmCode, expiresAtMs: confirmExpiresAt, refreshToken, host, device: dev, referenceUsed: true }));
+          } catch (error) { helpTicket = 3; helpTicketError = cleanError(error); }
+          say(helpTicket === 1 ? '✓ Apps installed, screen sharing set up and a ticket opened for our staff.' : helpTicket === 2 ? '✓ Apps installed and a ticket opened for our staff.' : `Apps installed, but we couldn't open the staff ticket: ${helpTicketError}`, helpTicket === 3);
+          return;
+        }
         if (!result.failed.length) {
           say('Confirming the installation…');
           try {
@@ -410,18 +443,26 @@ reset.addEventListener('click', () => {
 function pickApps(value) {
   if (busy) return;
   if (value === 'have' && restoreConfirmation()) { localStorage.setItem('bm-tv-apps', value); say(''); render(); return; }
-  // A remembered install reference skips re-installing: the apps are already on the TV.
-  if (value === 'new' && restoreInstallConfirmation() && device && validHost(address.value.trim()) && wizard.resumeConfirmation(installCode, installExpiresAt)) {
-    localStorage.setItem('bm-tv-apps', value); apps = value; say(''); render(); return;
-  }
+  // Install our apps always runs a fresh install — an old install code never skips it.
+  if (value === 'new') { installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = ''; installChoice = 0; helpTicket = 0; helpTicketError = ''; appsResults = []; }
   apps = value; if (value) localStorage.setItem('bm-tv-apps', value); else localStorage.removeItem('bm-tv-apps');
   // The TV type is its own question straight after "What do you need?", asked every time.
   if (value) { device = null; localStorage.removeItem('bm-tv-device'); }
   render();
 }
 appsNew.addEventListener('click', () => { if (!busy) el('help-ask').showModal(); });
-for (const [id, plan] of [['help-ask-yes', 1], ['help-ask-no', 2]]) el(id).addEventListener('click', () => {
-  el('help-ask').close(); helpPlan = plan; localStorage.setItem('bm-tv-help-plan', String(plan)); pickApps('new');
+function choosePlan(plan) { helpPlan = plan; localStorage.setItem('bm-tv-help-plan', String(plan)); pickApps('new'); }
+el('help-ask-no').addEventListener('click', () => { el('help-ask').close(); choosePlan(2); });
+// Staff help needs the office open: check first, before anything installs.
+el('help-ask-yes').addEventListener('click', async () => {
+  el('help-ask').close();
+  if (busy) return;
+  setBusy(true); say('Checking our office is open…');
+  let open = false;
+  try { open = await window.bmTv.officeOpen(); } catch (error) { setBusy(false); say(cleanError(error), true); return; }
+  setBusy(false); say('');
+  if (open) { choosePlan(1); return; }
+  if (window.confirm('Our office is closed\n\nStaff help is only available during office hours. Press OK to install the apps yourself now, or Cancel to come back when we\'re open.')) choosePlan(2);
 });
 el('help-ask-cancel').addEventListener('click', () => el('help-ask').close());
 appsHave.addEventListener('click', () => pickApps('have'));
