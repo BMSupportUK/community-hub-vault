@@ -1,0 +1,3 @@
+uk.bmsupport.remote:string/app_name = 0x7f020000
+uk.bmsupport.remote:drawable/help_bg = 0x7f010001
+uk.bmsupport.remote:drawable/bm_logo = 0x7f010000

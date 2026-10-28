@@ -1,0 +1,4 @@
+uk.bmsupport.remote
+drawable bm_logo
+drawable help_bg
+string app_name

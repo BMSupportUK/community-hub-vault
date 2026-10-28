@@ -1,0 +1,8 @@
+uk.bmsupport.remote.app-pngs-0 /dev-server/tv-remote-helper/app/build/generated/res/pngs/release
+uk.bmsupport.remote.app-resValues-1 /dev-server/tv-remote-helper/app/build/generated/res/resValues/release
+uk.bmsupport.remote.app-updated_navigation_xml-2 /dev-server/tv-remote-helper/app/build/generated/updated_navigation_xml/release
+uk.bmsupport.remote.app-packageReleaseResources-3 /dev-server/tv-remote-helper/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
+uk.bmsupport.remote.app-packageReleaseResources-4 /dev-server/tv-remote-helper/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
+uk.bmsupport.remote.app-release-5 /dev-server/tv-remote-helper/app/build/intermediates/merged_res/release/mergeReleaseResources
+uk.bmsupport.remote.app-main-6 /dev-server/tv-remote-helper/app/src/main/res
+uk.bmsupport.remote.app-release-7 /dev-server/tv-remote-helper/app/src/release/res
