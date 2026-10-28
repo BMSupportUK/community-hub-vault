@@ -352,6 +352,15 @@ async function run(stage, host) {
       }
       const ok = isReadyNow();
       wizard.setupFinished(ok);
+      if (ok && handoffPurpose === 'support' && handoffTicket) {
+        const issued = await window.bmTv.confirmCode(checks, device, host);
+        confirmCode = issued.code; confirmExpiresAt = issued.expiresAtMs;
+        refreshToken = issued.refreshToken || ''; refreshHost = host; confirmationUsed = false;
+        localStorage.setItem('bm-tv-confirmation', JSON.stringify({ code: confirmCode, expiresAtMs: confirmExpiresAt, refreshToken, host, device, referenceUsed: false }));
+        await window.bmTv.ticketSupport(handoffTicket, refreshToken);
+        say('✓ TV linked to your support ticket. Press Connect my screen on the website.');
+        return;
+      }
       if (checks.type === 'amazon' || checks.type === 'android') { device = checks.type; localStorage.setItem('bm-tv-device', device); }
       say(ok ? '✓ TV setup confirmed: both apps installed and remote control switched on.' : 'The TV is not fully ready yet. Press Try again.', !ok);
     }
@@ -450,6 +459,7 @@ reset.addEventListener('click', () => {
 });
 function pickApps(value) {
   if (busy) return;
+  handoffPurpose = 'install'; handoffTicket = null; handoffApps = null;
   if (value === 'have' && restoreConfirmation()) { localStorage.setItem('bm-tv-apps', value); say(''); render(); return; }
   // Install our apps always runs a fresh install — an old install code never skips it.
   if (value === 'new') { handoffApps = null; handoffTicket = null; installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = ''; installChoice = 0; helpTicket = 0; helpTicketError = ''; appsResults = []; }

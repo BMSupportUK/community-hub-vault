@@ -405,6 +405,7 @@ public class MainActivity extends Activity {
 
     private void pickApps(String a) {
         if (busy || refreshBusy) return;
+        handoffPurpose = "install"; handoffTicket = null; handoffApps = null;
         if ("have".equals(a) && restoreConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
         // Install our apps always runs a fresh install — an old install code never skips it.
         if ("new".equals(a)) { handoffApps = null; handoffTicket = null; installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false; installChoice = 0; helpTicket = 0; appsResults = new java.util.ArrayList<>(); }
@@ -673,7 +674,7 @@ public class MainActivity extends Activity {
                         // The TV tells us its own make, so customers never pick Amazon or Android.
                         if (checks.type != null) { device = checks.type; getSharedPreferences("tv", MODE_PRIVATE).edit().putString("device", device).apply(); }
                         // Linked by the website QR: send straight there, no button or code needed.
-                        if (ready && linkCode() != null && device != null) ui.post(this::start);
+                        if (ready && (linkCode() != null || ("support".equals(handoffPurpose) && handoffTicket != null)) && device != null) ui.post(this::start);
                         say(ready ? "✓ TV setup confirmed: both apps installed and remote control switched on." : "The TV is not fully ready yet. Press Try again.", ready ? OK : WARN);
                     } else {
                         if (linkedSent) say("✓ Sent to your ticket or order. On the website, press Connect.", OK);
