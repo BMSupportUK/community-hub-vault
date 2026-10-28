@@ -51,7 +51,8 @@ summary { cursor: pointer; font-size: 14px; line-height: 1.5; color: var(--foreg
 .device { display: flex; width: 100%; text-align: left; justify-content: space-between; gap: 16px; margin: 10px 0; align-items: center; }
 .device > span { min-width: 0; overflow-wrap: anywhere; }
 .device.selected { border-color: var(--accent); }
-.device small { display: block; color: var(--muted); font-weight: 400; margin-top: 5px; }
+.device > span:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.device small { color: var(--muted); font-weight: 400; white-space: nowrap; }
 .device .state { font-size: 12px; color: var(--accent); text-align: right; max-width: 45%; }
 .device .unreachable { color: var(--danger); }
 #apps-result { margin: 20px 0; }
