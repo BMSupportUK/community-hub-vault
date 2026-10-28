@@ -73,4 +73,3 @@
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
 - Install Guides: route owns device choice; only TV setup and staff help reserve phone/Windows download columns with ticket-bound PIN controls, so guide/video browsing retains the full available width.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
-- BM Remote Helper (tv-remote-helper/) and BM Remote Control (tv-remote-control/) are built in-house and signed with the permanent BM key; pre-2.4 builds used a retired key, so both apps must stay on the BM key together (the signature-level uk.bmsupport.remote.permission.CONTROL permission links them) and Enablers uninstall pre-2.4/pre-1.1 builds before installing.
