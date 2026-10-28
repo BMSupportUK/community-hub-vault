@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { TV_ENABLER_URL } from "@/components/app/TvEnablerPanel";
 import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload";
 import { EnablerPinBox } from "@/components/app/EnablerPinBox";
-import { createTicketEnablerPin, revealEnablerPin, createAccountEnablerPin, getAccountEnablerPinStatus, getTicketEnablerPinStatus } from "@/lib/enabler-pin.functions";
+import { revealEnablerPin, createAccountEnablerPin, getAccountEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { supabase } from "@/integrations/supabase/client";
-import { sendNewTicketPush } from "@/lib/push.functions";
+import { orderStaffHelpTicket } from "@/lib/order-remote-tabs";
+import { selfInstallHandoff } from "@/lib/enabler-handoff";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 
 export type SetupDeviceKey = "amazon" | "android" | "alternative" | "remote";
@@ -33,7 +34,6 @@ function RemoteHelpSteps() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [creating, setCreating] = useState(false);
-  const notifyNewTicket = useServerFn(sendNewTicketPush);
 
   const createTicket = async () => {
     if (!user || creating) return;
@@ -43,7 +43,7 @@ function RemoteHelpSteps() {
       if (!cat) throw new Error("Could not open the ticket. Please try again.");
       const { data: t, error } = await supabase
         .from("tickets")
-        .insert({ user_id: user.id, subject: STAFF_HELP_SUBJECT, category_id: cat.id, priority: "normal" })
+        .insert({ ...orderStaffHelpTicket(user.id, cat.id, null), subject: STAFF_HELP_SUBJECT })
         .select("id")
         .single();
       if (error || !t) throw new Error(error?.message ?? "Could not open the ticket. Please try again.");
@@ -51,31 +51,18 @@ function RemoteHelpSteps() {
         ticket_id: t.id, sender_id: user.id, content: STAFF_HELP_MESSAGE, is_internal: false,
       });
       if (msgErr) throw new Error(msgErr.message);
-      // Fire-and-forget staff push, same as the New ticket form.
-      void notifyNewTicket({ data: { ticketId: t.id, subject: STAFF_HELP_SUBJECT, categorySlug: "general" } })
-        .catch((e) => console.error("[install-guides] new ticket push failed", e));
-      toast.success("Ticket opened");
-      await navigate({ to: "/tickets", search: { id: t.id } });
+      toast.success("Follow the steps to connect your TV");
+      await navigate({ to: "/tickets", search: { id: t.id, tab: "setup" } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not open the ticket. Please try again.");
       setCreating(false);
     }
   };
 
-  const steps = [
-    <>Press <strong className="text-foreground">Open a ticket for help</strong> below — it creates the ticket for you and opens it straight away (only while our office is open).</>,
-    <>In the ticket open the <strong className="text-foreground">Remote setup</strong> tab and follow its steps with BM TV Enabler on your Android phone or Windows PC.</>,
-    <>In the Enabler choose <strong className="text-foreground">Screen-share support</strong>, find your TV and press <strong className="text-foreground">Allow</strong> on the TV.</>,
-    <>Type the Enabler reference into the ticket. A member of staff will then connect, see your TV screen and install the apps with you.</>,
-  ];
   return <div className="space-y-4">
     <p className="text-sm text-muted-foreground">Prefer not to do it yourself? Staff can connect to your TV by screen share and install everything for you while you watch.</p>
-    <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+    <p className="text-sm text-muted-foreground">Open remote setup below. Get your website code there and enter it in BM TV Enabler. Once your TV is ready and connected, your ticket goes to staff.</p>
     <p className="text-sm text-muted-foreground">Staff only see your TV while you're connected, and you can end it at any time.</p>
-    <div className="grid gap-6 sm:grid-cols-2 xl:hidden">
-      <div className="space-y-3"><EnablerQr /><StaffHelpEnablerPin /></div>
-      <WindowsEnablerDownload />
-    </div>
     {open ? (
       <Button onClick={createTicket} disabled={creating}>
         {creating ? <Loader2 className="size-4 animate-spin" /> : <Headset className="size-4" />}
@@ -89,19 +76,6 @@ function RemoteHelpSteps() {
     )}
   </div>;
 }
-
-const DEBUGGING: Record<"amazon" | "android", string[]> = {
-  amazon: [
-    "On the Fire TV open Settings › My Fire TV › About.",
-    "Press the device name 7 times until it says you are a developer.",
-    "Go back to My Fire TV › Developer options and switch ADB debugging ON.",
-  ],
-  android: [
-    "On the TV open Settings › System › About.",
-    "Press Android TV OS build 7 times until it says you are a developer.",
-    "Go back to System › Developer options and switch Network debugging ON (or Wireless debugging if your TV has that instead).",
-  ],
-};
 
 export const INSTALL_SETUP_DEVICE_KEY = "install-guides-device";
 
@@ -126,37 +100,9 @@ function EnablerQr() {
   </div>;
 }
 
-/** The BM TV Enabler PIN button, bound to the customer's most recent staff-help ticket. */
-function StaffHelpEnablerPin() {
+function SelfInstallEnablerPin() {
   const { user } = useAuth();
-  const [ticketId, setTicketId] = useState<string | null | undefined>(undefined);
-  const createFn = useServerFn(createTicketEnablerPin);
-  const statusFn = useServerFn(getTicketEnablerPinStatus);
-  useEffect(() => {
-    let stopped = false;
-    (async () => {
-      if (!user) { if (!stopped) setTicketId(null); return; }
-      const { data } = await supabase.from("tickets").select("id").eq("user_id", user.id)
-        .eq("subject", STAFF_HELP_SUBJECT).order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (!stopped) setTicketId(data?.id ?? null);
-    })();
-    return () => { stopped = true; };
-  }, [user]);
-  const create = useCallback(() => {
-    if (!ticketId) throw new Error("Open a help ticket first to request your PIN.");
-    return createFn({ data: { ticketId } });
-  }, [createFn, ticketId]);
-  const revealFn = useServerFn(revealEnablerPin);
-  const status = useCallback(() => {
-    if (!ticketId) return Promise.resolve({ expires_at: null });
-    return statusFn({ data: { ticketId } });
-  }, [statusFn, ticketId]);
-  if (ticketId === undefined) return <div className="h-28 animate-pulse rounded-md bg-muted" />;
-  if (!ticketId) return user ? <AccountEnablerPin userId={user.id} /> : <div className="space-y-2">
-    <Button disabled className="w-full whitespace-normal"><KeyRound className="size-4 shrink-0" />Get BM TV Enabler PIN</Button>
-    <p className="text-xs text-muted-foreground">Sign in to get your BM TV Enabler PIN.</p>
-  </div>;
-  return <EnablerPinBox scopeKey={`ticket:${ticketId}`} create={create} status={status} reveal={() => revealFn({ data: { ticketId } })} />;
+  return user ? <AccountEnablerPin userId={user.id} /> : <p className="text-sm text-muted-foreground">Sign in to get your BM TV Enabler PIN.</p>;
 }
 
 /** PIN bound to the signed-in account, for customers without a help ticket. */
@@ -169,111 +115,94 @@ function AccountEnablerPin({ userId }: { userId: string }) {
   return <EnablerPinBox scopeKey={`account:${userId}`} create={create} status={status} reveal={() => revealFn({ data: {} })} />;
 }
 
-/** One-step-at-a-time Enabler setup for a TV: questions answered here, then a code hands them to BM TV Enabler. */
-function TvSteps({ device }: { device: "amazon" | "android" }) {
+/** Self-install answers are passed to the app; staff help uses ticket remote setup. */
+function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaffHelp: () => void }) {
   const [current, setCurrent] = useState(0);
-  const [helpPlan, setHelpPlan] = useState<0 | 1 | 2>(0);
   const [apps, setApps] = useState<{ name: string; path: string }[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [code, setCode] = useState<{ code: string; expiresAt: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const open = useBusinessOpen();
+  const [loadError, setLoadError] = useState(false);
   const { user } = useAuth();
   const handoffFn = useServerFn(createEnablerHandoff);
-  const notifyNewTicket = useServerFn(sendNewTicketPush);
-  useEffect(() => { setCurrent(0); setHelpPlan(0); setCode(null); }, [device]);
+  const storageKey = `bm-self-install:${user?.id ?? "signed-out"}:${device}`;
+
   useEffect(() => {
-    if (helpPlan !== 2 || apps) return;
-    fetch("/api/public/tv-install-list").then((r) => r.json()).then((d: { apps?: { name: string; path: string }[] }) => {
-      const list = d.apps ?? []; setApps(list); setPicked(new Set(list.map((a) => a.path)));
-    }).catch(() => setApps([]));
-  }, [helpPlan, apps]);
+    setCurrent(0); setCode(null);
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? "null");
+      if (saved && Date.parse(saved.expiresAt) > Date.now()) {
+        setCode({ code: saved.code, expiresAt: saved.expiresAt }); setCurrent(2);
+      }
+    } catch { /* An unavailable saved code never blocks a fresh setup. */ }
+  }, [storageKey]);
+
+  const loadApps = useCallback(async () => {
+    setLoadError(false); setApps(null);
+    try {
+      const response = await fetch("/api/public/tv-install-list");
+      if (!response.ok) throw new Error("App list unavailable");
+      const data: { apps?: { name: string; path: string }[] } = await response.json();
+      const list = data.apps ?? [];
+      setApps(list); setPicked(new Set(list.map((app) => app.path)));
+    } catch { setLoadError(true); setApps([]); }
+  }, []);
+  useEffect(() => { void loadApps(); }, [loadApps]);
 
   const makeCode = async () => {
-    if (!user || busy) return;
+    if (!user || busy || picked.size === 0) return;
     setBusy(true);
     try {
-      let ticketId: string | null = null;
-      if (helpPlan === 1) {
-        const { data: cat } = await supabase.from("ticket_categories").select("id").eq("slug", "general").maybeSingle();
-        if (!cat) throw new Error("Could not open the ticket. Please try again.");
-        const subject = "Help installing apps on my TV (BM TV Enabler)";
-        const { data: t, error } = await supabase.from("tickets").insert({ user_id: user.id, subject, category_id: cat.id, priority: "normal" }).select("id").single();
-        if (error || !t) throw new Error("Could not open the ticket. Please try again.");
-        await supabase.from("ticket_messages").insert({ ticket_id: t.id, sender_id: user.id, is_internal: false,
-          content: `Hi,\n\nI'd like a member of staff to install the BM apps on my ${device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} by screen share. I'm setting up screen sharing with BM TV Enabler now.\n\nThank you!` });
-        void notifyNewTicket({ data: { ticketId: t.id, subject, categorySlug: "general" } }).catch(() => {});
-        ticketId = t.id;
-      }
-      setCode(await handoffFn({ data: { purpose: "install", device, helpPlan: helpPlan as 1 | 2, appPaths: helpPlan === 2 ? [...picked] : [], ticketId } }));
-      setCurrent(steps.length - 1);
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a code. Try again."); }
+      const result = await handoffFn({ data: selfInstallHandoff(device, [...picked]) });
+      setCode(result);
+      try { sessionStorage.setItem(storageKey, JSON.stringify(result)); } catch { /* Still show the code. */ }
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Couldn't make a code. Try again."); }
     finally { setBusy(false); }
   };
 
-  const choice = (plan: 1 | 2, title: string, text: string, disabled = false) => (
-    <button type="button" disabled={disabled} onClick={() => { setHelpPlan(plan); setCode(null); }}
-      className={`flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition disabled:opacity-50 ${helpPlan === plan ? "border-primary bg-primary/10" : "border-border bg-surface-2 hover:border-primary"}`}>
-      <span className="font-semibold text-foreground">{title}</span><span className="text-xs text-muted-foreground">{text}</span>
-    </button>
-  );
-
-  const steps: { title: string; body: ReactNode; ready?: boolean }[] = [
-    {
-      title: "Get BM TV Enabler",
-      body: <p className="text-sm text-muted-foreground">BM TV Enabler sets up your TV for you. Use it on an Android phone or a Windows PC on the same Wi-Fi as the TV. When it opens, type your BM TV Enabler access PIN.</p>,
-    },
-    {
-      title: "Do you need help from our staff?",
-      ready: helpPlan !== 0,
-      body: <div className="grid gap-3 sm:grid-cols-2">
-        {choice(1, "Yes — I need staff help", open ? "We open a ticket now. BM TV Enabler sets up screen sharing and our staff install the apps for you." : "Only available during office hours.", !open)}
-        {choice(2, "No — I'll install myself", "You choose the apps and BM TV Enabler installs them.")}
-      </div>,
-    },
-    ...(helpPlan === 2 ? [{
-      title: "Choose your apps",
-      ready: picked.size > 0,
-      body: !apps ? <div className="h-24 animate-pulse rounded-md bg-muted" /> : <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">All apps are ticked. Untick any you don't want. Apps already on your TV are skipped automatically.</p>
-        {apps.map((a) => <label key={a.path} className="flex items-center gap-3 rounded-md border border-border bg-surface-2 p-3 text-sm">
-          <input type="checkbox" className="size-4 accent-primary" checked={picked.has(a.path)} onChange={(e) => setPicked((p) => { const n = new Set(p); if (e.target.checked) n.add(a.path); else n.delete(a.path); return n; })} />
-          <span className="text-foreground">{a.name}</span>
-        </label>)}
-      </div>,
-    }] : []),
-    {
-      title: "Your BM TV Enabler code",
-      body: code ? <div className="space-y-3">
-        <p className="font-mono text-4xl font-bold tracking-widest text-primary">{code.code.slice(0, 3)}-{code.code.slice(3)}</p>
-        <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-          <li>In BM TV Enabler press <strong className="text-foreground">I have a website code</strong> and type this code.</li>
-          <li>Follow the app to switch on debugging, find your TV and press <strong className="text-foreground">Allow</strong> on the TV.</li>
-          <li>{helpPlan === 1 ? "The app sets up screen sharing on your ticket. Our staff then connect and install the apps for you." : "The app installs your ticked apps and skips any already on your TV."}</li>
-        </ol>
-        <p className="text-xs text-muted-foreground">Works once, for 2 hours (until {new Date(code.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}).</p>
-      </div> : <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">{helpPlan === 1 ? "We'll open your help ticket and give you a code for BM TV Enabler." : "We'll give you a code that tells BM TV Enabler which apps to install."}</p>
-        <Button onClick={makeCode} disabled={busy || !user || (helpPlan === 1 && !open)}>{busy && <Loader2 className="size-4 animate-spin" />}Get my code</Button>
-      </div>,
-    },
-  ];
-  const step = steps[Math.min(current, steps.length - 1)];
-  if (!step) return null;
-  const idx = Math.min(current, steps.length - 1);
+  const steps = ["Get BM TV Enabler and sign in", "Choose your apps", "Your website code"];
   return <div className="space-y-5">
     <div className="space-y-3 border-y border-border py-4">
-      <div className="flex items-center justify-between text-sm"><span className="font-semibold">Step {idx + 1} of {steps.length}</span><span className="text-muted-foreground">{step.title}</span></div>
-      <progress aria-label="Setup progress" value={idx + 1} max={steps.length} className="h-2 w-full accent-primary" />
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="font-semibold">Step {current + 1} of {steps.length}</span><span className="text-muted-foreground">Self install</span></div>
+      <progress aria-label="Self-install progress" value={current + 1} max={steps.length} className="h-2 w-full accent-primary" />
     </div>
-    <section aria-label={`Step ${idx + 1}: ${step.title}`} className="min-h-44 space-y-4">
-      <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
-      {step.body}
+    <section aria-label={`Step ${current + 1}: ${steps[current]}`} className="min-h-44 space-y-4">
+      <h3 className="text-lg font-semibold text-foreground">{steps[current]}</h3>
+      {current === 0 && <>
+        <p className="text-sm text-muted-foreground">Install BM TV Enabler on your Android phone or Windows PC, using the same Wi-Fi as your TV. Sign in with the PIN below the phone QR code.</p>
+        <div className="xl:hidden"><EnablerDownloadSidebar /></div>
+      </>}
+      {current === 1 && <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">All apps are ticked. Untick any you don't want. BM TV Enabler checks your TV and skips apps already installed.</p>
+        {loadError ? <div className="space-y-2"><p className="text-sm text-destructive">Couldn't load the apps.</p><Button variant="outline" onClick={() => void loadApps()}>Try again</Button></div>
+          : !apps ? <Loader2 aria-label="Loading apps" className="size-6 animate-spin" />
+          : apps.length === 0 ? <p className="text-sm text-muted-foreground">No apps are available to install right now.</p>
+          : apps.map((app) => <label key={app.path} className="flex items-center gap-3 rounded-md border border-border bg-surface-2 p-3 text-sm">
+            <input type="checkbox" className="size-4 accent-primary" checked={picked.has(app.path)} onChange={(event) => {
+              setPicked((previous) => { const next = new Set(previous); if (event.target.checked) next.add(app.path); else next.delete(app.path); return next; });
+              setCode(null); try { sessionStorage.removeItem(storageKey); } catch { /* No saved code. */ }
+            }} /><span className="text-foreground">{app.name}</span>
+          </label>)}
+      </div>}
+      {current === 2 && (code ? <div className="space-y-3">
+        <p className="select-all break-all font-mono text-4xl font-bold text-primary">{code.code.slice(0, 3)}-{code.code.slice(3)}</p>
+        <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+          <li>In BM TV Enabler select <strong className="text-foreground">I have a website code</strong> and enter this code.</li>
+          <li>Follow the TV connection steps and approve the debugging prompt on your TV.</li>
+          <li>BM TV Enabler installs only your ticked apps, skipping those already installed.</li>
+        </ol>
+        <p className="text-sm text-muted-foreground">When it finishes, your install is recorded. No screen sharing or support ticket is needed.</p>
+        <p className="text-xs text-muted-foreground">Use once, before {new Date(code.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (valid for 2 hours).</p>
+      </div> : <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">Get a code for your {device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} and {picked.size} selected {picked.size === 1 ? "app" : "apps"}.</p>
+        <Button onClick={makeCode} disabled={busy || !user || picked.size === 0}>{busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />}Get my website code</Button>
+      </div>)}
     </section>
-    <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-      <Button variant="outline" disabled={idx === 0 || busy} onClick={() => setCurrent(Math.max(0, idx - 1))}><ArrowLeft className="size-4" />Back</Button>
-      {idx < steps.length - 1 && <Button disabled={step.ready === false} onClick={() => setCurrent(idx + 1)}>Next<ArrowRight className="size-4" /></Button>}
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+      <Button variant="outline" disabled={current === 0 || busy} onClick={() => setCurrent(current - 1)}><ArrowLeft className="size-4" />Back</Button>
+      {current < 2 && <Button disabled={busy || (current === 1 && (!apps || loadError || picked.size === 0))} onClick={() => setCurrent(current + 1)}>Next<ArrowRight className="size-4" /></Button>}
     </div>
+    <Button variant="outline" disabled={busy} onClick={onStaffHelp}><Headset className="size-4" />I need staff help</Button>
   </div>;
 }
 
@@ -282,7 +211,7 @@ export function EnablerDownloadSidebar() {
   return <div className="grid min-w-0 gap-4 2xl:grid-cols-2">
     <div className="min-w-0 space-y-4 rounded-lg border border-border bg-surface/70 p-4">
       <EnablerQr />
-      <StaffHelpEnablerPin />
+      <SelfInstallEnablerPin />
     </div>
     <div className="min-w-0 rounded-lg border border-border bg-surface/70 p-4">
       <WindowsEnablerDownload />
@@ -305,11 +234,11 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
         <p className="mt-1 text-sm text-muted-foreground">Pick your device and we'll walk you through it one step at a time.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {DEVICES.map(({ key, label, note, icon: Icon }) => (
-            <button key={key} type="button" onClick={() => onPick(key)} className="flex flex-col items-start gap-2 rounded-lg border border-border bg-surface-2 p-4 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Button key={key} variant="outline" onClick={() => onPick(key)} className="h-auto flex-col items-start gap-2 whitespace-normal p-4 text-left">
               <Icon className="size-6 text-primary" />
               <span className="font-semibold text-foreground">{label}</span>
               <span className="text-xs text-muted-foreground">{note}</span>
-            </button>
+            </Button>
           ))}
         </div>
       </> : <>
@@ -318,7 +247,7 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
           <Button variant="outline" size="sm" onClick={() => onPick(null)}><ArrowLeft className="size-4" />{chosen.key === "remote" ? "Return to Self Install" : "Change device"}</Button>
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
-          ? <div className="space-y-6"><TvSteps device={chosen.key} /><div className="xl:hidden"><EnablerDownloadSidebar /></div></div>
+          ? <TvSteps device={chosen.key} onStaffHelp={() => onPick("remote")} />
           : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
       </>}
     </div>
