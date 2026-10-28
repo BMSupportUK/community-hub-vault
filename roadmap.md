@@ -491,4 +491,4 @@
 - [ ] Verify the wizard on a physical Windows PC + TV.
 
 ## TV install progress screen (install only)
-- [x] Build small BM Install Screen TV app, download route, phone 1.53 + Windows 1.43 install-only integration, tests, releases (guides/PDFs pending wording update)
+- [x] Build small BM Install Screen TV app, download route, phone 1.53 + Windows 1.43 install-only integration, tests, releases and updated install guides/PDFs (videos not re-recorded)
