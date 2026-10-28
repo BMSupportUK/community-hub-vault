@@ -383,7 +383,10 @@ public final class MainActivity extends Activity {
                     final Realtime rt = new Realtime(s.topic, (ev, p) -> {
                     });
                     rt.connect();
-                    rt.send("state", new JSONObject().put("consent", "declined"));
+                    try {
+                        rt.send("state", new JSONObject().put("consent", "declined"));
+                    } catch (Throwable ignore) {
+                    }
                     main.postDelayed(rt::close, 2000L);
                     render();
                 })

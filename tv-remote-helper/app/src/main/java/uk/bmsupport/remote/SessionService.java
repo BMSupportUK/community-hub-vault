@@ -86,7 +86,7 @@ public final class SessionService extends Service {
 
         rt = new Realtime(s.topic, this::onEvent);
         rt.connect();
-        rt.send("state", new JSONObject().put("consent", "allowed"));
+        sendState();
         sendControl();
         FireSetup.INSTANCE.repairIfNeeded(this, this::sendControl);
 
@@ -188,7 +188,7 @@ public final class SessionService extends Service {
                 break;
             }
             case "hello": {
-                if (rt != null) rt.send("state", new JSONObject().put("consent", "allowed"));
+                sendState();
                 sendControl();
                 ScreenShare ss = share;
                 if (ss != null) ss.offer();
@@ -196,6 +196,13 @@ public final class SessionService extends Service {
             }
             default:
                 break;
+        }
+    }
+
+    private void sendState() {
+        try {
+            if (rt != null) rt.send("state", new JSONObject().put("consent", "allowed"));
+        } catch (Throwable ignore) {
         }
     }
 
