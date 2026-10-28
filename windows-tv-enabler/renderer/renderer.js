@@ -25,6 +25,7 @@ let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshT
 let installChoice = 0;
 // Staff-help ticket after installing: 0 none, 1 opened + screen share sent to staff, 2 opened (share not linked), 3 failed.
 let helpTicket = 0, helpTicketError = '';
+let handoffApps = null, handoffTicket = null; // answers loaded from a bmsupport.uk code
 let helpPlan = Number(localStorage.getItem('bm-tv-help-plan')) || 0; // asked before installing: 1 staff help, 2 self install
 const helpYes = document.getElementById('help-yes'), helpNo = document.getElementById('help-no');
 function saveInstallState(patch) { try { const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation-install') || 'null'); if (saved) localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ ...saved, ...patch })); } catch { /* ignore */ } }
@@ -95,7 +96,7 @@ function say(text, isError) {
 
 function setBusy(value) {
   busy = value;
-  for (const b of [action, next, reset, startAgain, scan, pickAmazon, pickAndroid, showAgain, pairButton, appsNew, appsHave, appsBack]) b.disabled = value;
+  for (const b of [action, next, reset, startAgain, scan, pickAmazon, pickAndroid, showAgain, pairButton, appsNew, appsHave, appsBack, el('apps-code')]) b.disabled = value;
   address.disabled = value; tvCodeInput.disabled = value; linkCode.disabled = value; pairCode.disabled = value; pairPort.disabled = value;
   devices.querySelectorAll('button').forEach(b => { b.disabled = value; });
 }
@@ -286,9 +287,8 @@ async function run(stage, host) {
       if (apps === 'new') {
         if (helpPlan === 1) appsResults = []; // Staff help: our staff install the apps themselves.
         else {
-          const list = await window.bmTv.listApps(host);
-          say('Choose which apps to install, then press Install ticked apps.');
-          const only = await chooseApps(list);
+          let only = handoffApps;
+          if (!only) { const list = await window.bmTv.listApps(host); say('Choose which apps to install, then press Install ticked apps.'); only = await chooseApps(list); }
           say('Installing your chosen apps…');
           const result = await window.bmTv.installApps(host, only);
           appsResults = result.results || [];
@@ -310,7 +310,7 @@ async function run(stage, host) {
             const dev = c.type === 'amazon' || c.type === 'android' ? c.type : device;
             const share = await window.bmTv.confirmCode(c, dev, host);
             say('Opening a support ticket for our staff…');
-            const t = await window.bmTv.staffTicket(share.refreshToken || '', dev, appsResults.filter(r => r.status !== 'failed').map(r => r.name));
+            const t = await window.bmTv.staffTicket(share.refreshToken || '', dev, appsResults.filter(r => r.status !== 'failed').map(r => r.name), handoffTicket);
             helpTicket = t && t.connected ? 1 : 2; helpTicketError = '';
             checks = c; confirmCode = share.code; confirmExpiresAt = share.expiresAtMs; confirmationUsed = true; sharingReferenceExpired = false;
             refreshToken = share.refreshToken || ''; refreshHost = host;
@@ -447,7 +447,7 @@ function pickApps(value) {
   if (busy) return;
   if (value === 'have' && restoreConfirmation()) { localStorage.setItem('bm-tv-apps', value); say(''); render(); return; }
   // Install our apps always runs a fresh install — an old install code never skips it.
-  if (value === 'new') { installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = ''; installChoice = 0; helpTicket = 0; helpTicketError = ''; appsResults = []; }
+  if (value === 'new') { handoffApps = null; handoffTicket = null; installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = ''; installChoice = 0; helpTicket = 0; helpTicketError = ''; appsResults = []; }
   apps = value; if (value) localStorage.setItem('bm-tv-apps', value); else localStorage.removeItem('bm-tv-apps');
   // The TV type is its own question straight after "What do you need?", asked every time.
   if (value) { device = null; localStorage.removeItem('bm-tv-device'); }
@@ -466,6 +466,23 @@ el('help-ask-yes').addEventListener('click', async () => {
   setBusy(false); say('');
   if (open) { choosePlan(1); return; }
   if (window.confirm('Our office is closed\n\nStaff help is only available during office hours. Press OK to install the apps yourself now, or Cancel to come back when we\'re open.')) choosePlan(2);
+});
+el('apps-code').addEventListener('click', () => { if (!busy) { el('code-ask-input').value = ''; el('code-ask').showModal(); } });
+el('code-ask-cancel').addEventListener('click', () => el('code-ask').close());
+el('code-ask-ok').addEventListener('click', async () => {
+  const code = el('code-ask-input').value.replace(/\D/g, '');
+  el('code-ask').close();
+  if (busy) return;
+  setBusy(true); say('Checking your code…');
+  try {
+    const h = await window.bmTv.handoff(code);
+    setBusy(false);
+    helpPlan = h.helpPlan; localStorage.setItem('bm-tv-help-plan', String(h.helpPlan));
+    pickApps('new');
+    handoffApps = h.helpPlan === 2 ? h.apps : null; handoffTicket = h.ticketId;
+    pickDevice(h.device);
+    say(`✓ Code accepted. ${h.helpPlan === 1 ? "We'll set up screen sharing for our staff." : "We'll install the apps you ticked."}`);
+  } catch (error) { setBusy(false); say(cleanError(error), true); }
 });
 el('help-ask-cancel').addEventListener('click', () => el('help-ask').close());
 appsHave.addEventListener('click', () => pickApps('have'));

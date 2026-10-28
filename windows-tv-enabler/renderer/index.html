@@ -9,7 +9,7 @@
   <p id="description"></p>
   <div id="device-pick" class="device-pick" role="group" aria-label="TV type" hidden><button id="pick-amazon" type="button">Amazon Fire TV / Stick</button><button id="pick-android" type="button">Android / Google TV</button></div>
   <p id="device-help" class="hint" hidden></p>
-  <div id="apps-pick" class="device-pick" role="group" aria-label="What do you need?" hidden><button id="apps-new" type="button">Install our apps</button><button id="apps-have" type="button">Screen-share support</button></div>
+  <div id="apps-pick" class="device-pick" role="group" aria-label="What do you need?" hidden><button id="apps-code" class="primary" type="button">I have a website code</button><button id="apps-new" type="button">Install our apps</button><button id="apps-have" type="button">Screen-share support</button></div>
   <button id="apps-back" type="button" hidden>Back</button>
   <div id="address-block" hidden>
     <div class="address-row"><label for="address">TV address<input id="address" inputmode="decimal" autocomplete="off" maxlength="15" placeholder="192.168.1.25"></label><button id="scan" type="button">Find my TV</button></div>
@@ -29,6 +29,7 @@
   <div id="apps-result" hidden></div>
   <div class="connection" id="connection-notice"><p>When the TV asks <strong>Allow USB debugging?</strong>, tick <strong>Always allow from this computer</strong> and choose <strong>Allow</strong>.</p><p id="progress" role="status" aria-live="polite"></p></div>
   <button id="action" class="primary" type="button">I've switched debugging on — next <span aria-hidden="true">→</span></button>
+  <dialog id="code-ask"><h3>Code from bmsupport.uk</h3><p class="hint">Type the code shown in Install Guides on the website. It holds your answers, so you won't be asked again here.</p><input id="code-ask-input" inputmode="numeric" maxlength="7" placeholder="6-digit code"> <button id="code-ask-ok" class="primary" type="button">Continue</button> <button id="code-ask-cancel" type="button">Cancel</button></dialog>
   <dialog id="help-ask"><h3>Do you need help from our staff?</h3><p class="hint">Yes: we set up screen sharing and open a support ticket. Our staff then connect to your TV and install the apps for you (office hours only).<br><br>No: you choose and install the apps yourself.</p><button id="help-ask-yes" class="primary" type="button">Yes — I need staff help</button> <button id="help-ask-no" type="button">No — I'll install myself</button> <button id="help-ask-cancel" type="button">Cancel</button></dialog>
   <button id="help-yes" class="primary" type="button" hidden>Yes — I need staff help</button>
   <button id="help-no" type="button" hidden>No — I'm all done</button>
