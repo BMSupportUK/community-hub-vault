@@ -257,7 +257,11 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
     if (!apps.length) throw new Error('Tick at least one app to install.');
     // TV install screen: never fatal — a TV that can't show it still gets its apps.
     let screen = packages.has(INSTALL_SCREEN);
-    if (!screen) {
+    let screenOutdated = false;
+    // Older screens auto-close; update them so the customer gets the Close button.
+    if (screen) { try { const m = /versionCode=(\d+)/.exec(String(await shell(`dumpsys package ${INSTALL_SCREEN} | grep versionCode`))); screenOutdated = !!m && Number(m[1]) < 3; } catch {} }
+    if (!screen || screenOutdated) {
+      const hadScreen = screen;
       const file = path.join(tempDir, 'bm-install-screen.apk');
       try {
         const res = await fetchImpl(SITE + INSTALL_SCREEN_APK_PATH, downloadInit());
@@ -267,10 +271,10 @@ async function installOurApps(host, adb, progress, delay, fetchImpl = globalThis
             fs.mkdirSync(tempDir, { recursive: true });
             fs.writeFileSync(file, buf);
             await adb(['-s', serial, 'push', file, '/data/local/tmp/bm-install-screen.apk']);
-            screen = String(await shell('pm install -r /data/local/tmp/bm-install-screen.apk')).includes('Success');
+            screen = String(await shell('pm install -r /data/local/tmp/bm-install-screen.apk')).includes('Success') || hadScreen;
           }
         }
-      } catch { screen = false; }
+      } catch { screen = hadScreen; }
       finally { try { fs.unlinkSync(file); } catch {} await shell('rm -f /data/local/tmp/bm-install-screen.apk').catch(() => {}); }
     }
     const showScreen = async cmd => { if (screen) await shell(cmd).catch(() => {}); };

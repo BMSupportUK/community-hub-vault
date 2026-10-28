@@ -27,6 +27,7 @@ public final class MainActivity extends Activity {
     private final Runnable close = this::finish;
     private TextView badge, title, detail, count;
     private ProgressBar bar;
+    private android.widget.Button closeBtn;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -65,6 +66,18 @@ public final class MainActivity extends Activity {
         lp.topMargin = dp(24);
         panel.addView(bar, lp);
         count = text(20, MUTED, false); panel.addView(count);
+        closeBtn = new android.widget.Button(this);
+        closeBtn.setText("Close");
+        closeBtn.setTextSize(24); closeBtn.setAllCaps(false); closeBtn.setTextColor(Color.WHITE);
+        GradientDrawable btnBg = new GradientDrawable(); btnBg.setColor(RED); btnBg.setCornerRadius(dp(14));
+        closeBtn.setBackground(btnBg);
+        closeBtn.setPadding(dp(48), dp(14), dp(48), dp(14));
+        closeBtn.setFocusable(true);
+        closeBtn.setOnClickListener(v -> finish());
+        closeBtn.setOnFocusChangeListener((v, f) -> { v.setScaleX(f ? 1.08f : 1f); v.setScaleY(f ? 1.08f : 1f); });
+        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        cp.topMargin = dp(28); cp.gravity = Gravity.CENTER_HORIZONTAL;
+        panel.addView(closeBtn, cp);
         root.addView(panel, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         setContentView(root);
@@ -84,11 +97,13 @@ public final class MainActivity extends Activity {
         count.setText(s.count);
         bar.setVisibility(s.percent >= 0 ? android.view.View.VISIBLE : android.view.View.GONE);
         if (s.percent >= 0) bar.setProgress(s.percent);
-        if (s.kind == InstallState.COMPLETE) handler.postDelayed(close, 30_000);
+        boolean finished = s.kind == InstallState.COMPLETE || s.kind == InstallState.ERROR;
+        closeBtn.setVisibility(finished ? View.VISIBLE : View.GONE);
+        if (finished) { count.setText(""); closeBtn.requestFocus(); }
     }
 
     @Override public boolean onKeyDown(int code, KeyEvent e) {
-        if (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_BACK) { finish(); return true; }
+        if (code == KeyEvent.KEYCODE_BACK) { finish(); return true; }
         return super.onKeyDown(code, e);
     }
 
