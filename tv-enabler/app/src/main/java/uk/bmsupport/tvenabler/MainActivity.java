@@ -488,8 +488,8 @@ public class MainActivity extends Activity {
         switch (s) {
             case DEBUGGING:
                 if (askApps) {
-                    heading.setText("What do you need?");
-                    description.setText("Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.");
+                    heading.setText("Enter your website code");
+                    description.setText("Get your code from bmsupport.uk: your support ticket's Remote setup tab, or your order's install or staff-help option. Press I have a website code and type it in.");
                     break;
                 }
                 heading.setText(device == null ? "Which TV is your order or support for?" : "1. Enable TV debugging");
