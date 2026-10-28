@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { supabase } from "@/integrations/supabase/client";
 import { sendNewTicketPush } from "@/lib/push.functions";
+import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 
 export type SetupDeviceKey = "amazon" | "android" | "alternative" | "remote";
 
@@ -168,48 +169,110 @@ function AccountEnablerPin({ userId }: { userId: string }) {
   return <EnablerPinBox scopeKey={`account:${userId}`} create={create} status={status} reveal={() => revealFn({ data: {} })} />;
 }
 
-/** One-step-at-a-time Enabler setup for a TV. */
+/** One-step-at-a-time Enabler setup for a TV: questions answered here, then a code hands them to BM TV Enabler. */
 function TvSteps({ device }: { device: "amazon" | "android" }) {
   const [current, setCurrent] = useState(0);
-  useEffect(() => setCurrent(0), [device]);
-  const steps: { title: string; body: ReactNode }[] = [
+  const [helpPlan, setHelpPlan] = useState<0 | 1 | 2>(0);
+  const [apps, setApps] = useState<{ name: string; path: string }[] | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [code, setCode] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const open = useBusinessOpen();
+  const { user } = useAuth();
+  const handoffFn = useServerFn(createEnablerHandoff);
+  const notifyNewTicket = useServerFn(sendNewTicketPush);
+  useEffect(() => { setCurrent(0); setHelpPlan(0); setCode(null); }, [device]);
+  useEffect(() => {
+    if (helpPlan !== 2 || apps) return;
+    fetch("/api/public/tv-install-list").then((r) => r.json()).then((d: { apps?: { name: string; path: string }[] }) => {
+      const list = d.apps ?? []; setApps(list); setPicked(new Set(list.map((a) => a.path)));
+    }).catch(() => setApps([]));
+  }, [helpPlan, apps]);
+
+  const makeCode = async () => {
+    if (!user || busy) return;
+    setBusy(true);
+    try {
+      let ticketId: string | null = null;
+      if (helpPlan === 1) {
+        const { data: cat } = await supabase.from("ticket_categories").select("id").eq("slug", "general").maybeSingle();
+        if (!cat) throw new Error("Could not open the ticket. Please try again.");
+        const subject = "Help installing apps on my TV (BM TV Enabler)";
+        const { data: t, error } = await supabase.from("tickets").insert({ user_id: user.id, subject, category_id: cat.id, priority: "normal" }).select("id").single();
+        if (error || !t) throw new Error("Could not open the ticket. Please try again.");
+        await supabase.from("ticket_messages").insert({ ticket_id: t.id, sender_id: user.id, is_internal: false,
+          content: `Hi,\n\nI'd like a member of staff to install the BM apps on my ${device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"} by screen share. I'm setting up screen sharing with BM TV Enabler now.\n\nThank you!` });
+        void notifyNewTicket({ data: { ticketId: t.id, subject, categorySlug: "general" } }).catch(() => {});
+        ticketId = t.id;
+      }
+      setCode(await handoffFn({ data: { device, helpPlan: helpPlan as 1 | 2, appPaths: helpPlan === 2 ? [...picked] : [], ticketId } }));
+      setCurrent(steps.length - 1);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a code. Try again."); }
+    finally { setBusy(false); }
+  };
+
+  const choice = (plan: 1 | 2, title: string, text: string, disabled = false) => (
+    <button type="button" disabled={disabled} onClick={() => { setHelpPlan(plan); setCode(null); }}
+      className={`flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition disabled:opacity-50 ${helpPlan === plan ? "border-primary bg-primary/10" : "border-border bg-surface-2 hover:border-primary"}`}>
+      <span className="font-semibold text-foreground">{title}</span><span className="text-xs text-muted-foreground">{text}</span>
+    </button>
+  );
+
+  const steps: { title: string; body: ReactNode; ready?: boolean }[] = [
     {
       title: "Get BM TV Enabler",
-      body: <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">BM TV Enabler installs the BM apps on your TV for you. Use it on an Android phone or a Windows PC on the same Wi-Fi as the TV. When it opens, type your BM TV Enabler access PIN.</p>
+      body: <p className="text-sm text-muted-foreground">BM TV Enabler sets up your TV for you. Use it on an Android phone or a Windows PC on the same Wi-Fi as the TV. When it opens, type your BM TV Enabler access PIN.</p>,
+    },
+    {
+      title: "Do you need help from our staff?",
+      ready: helpPlan !== 0,
+      body: <div className="grid gap-3 sm:grid-cols-2">
+        {choice(1, "Yes — I need staff help", open ? "We open a ticket now. BM TV Enabler sets up screen sharing and our staff install the apps for you." : "Only available during office hours.", !open)}
+        {choice(2, "No — I'll install myself", "You choose the apps and BM TV Enabler installs them.")}
       </div>,
     },
+    ...(helpPlan === 2 ? [{
+      title: "Choose your apps",
+      ready: picked.size > 0,
+      body: !apps ? <div className="h-24 animate-pulse rounded-md bg-muted" /> : <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">All apps are ticked. Untick any you don't want. Apps already on your TV are skipped automatically.</p>
+        {apps.map((a) => <label key={a.path} className="flex items-center gap-3 rounded-md border border-border bg-surface-2 p-3 text-sm">
+          <input type="checkbox" className="size-4 accent-primary" checked={picked.has(a.path)} onChange={(e) => setPicked((p) => { const n = new Set(p); if (e.target.checked) n.add(a.path); else n.delete(a.path); return n; })} />
+          <span className="text-foreground">{a.name}</span>
+        </label>)}
+      </div>,
+    }] : []),
     {
-      title: "Switch on TV debugging",
-      body: <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">{DEBUGGING[device].map((s) => <li key={s}>{s}</li>)}<li>Keep the TV and your phone or PC on the same home Wi-Fi (not guest Wi-Fi, no VPN).</li></ol>,
-    },
-    {
-      title: "Install the apps",
-      body: <div className="space-y-3">
+      title: "Your BM TV Enabler code",
+      body: code ? <div className="space-y-3">
+        <p className="font-mono text-4xl font-bold tracking-widest text-primary">{code.code.slice(0, 3)}-{code.code.slice(3)}</p>
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-          <li>In BM TV Enabler choose <strong className="text-foreground">Install our apps</strong>.</li>
-          <li>Press <strong className="text-foreground">Find my Fire TV</strong> or <strong className="text-foreground">Find my Android TV</strong> and pick your TV.</li>
-          <li>On the TV tick <strong className="text-foreground">Always allow</strong> and press <strong className="text-foreground">Allow</strong>.</li>
-          <li>The Enabler installs each BM app and skips any already on your TV, then lists what it did.</li>
+          <li>In BM TV Enabler press <strong className="text-foreground">I have a website code</strong> and type this code.</li>
+          <li>Follow the app to switch on debugging, find your TV and press <strong className="text-foreground">Allow</strong> on the TV.</li>
+          <li>{helpPlan === 1 ? "The app sets up screen sharing on your ticket. Our staff then connect and install the apps for you." : "The app installs your ticked apps and skips any already on your TV."}</li>
         </ol>
-        <p className="text-sm text-muted-foreground">Once they're on your TV, the <strong className="text-foreground">Guides</strong> tab shows how to use each app.</p>
+        <p className="text-xs text-muted-foreground">Works once, for 2 hours (until {new Date(code.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}).</p>
+      </div> : <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">{helpPlan === 1 ? "We'll open your help ticket and give you a code for BM TV Enabler." : "We'll give you a code that tells BM TV Enabler which apps to install."}</p>
+        <Button onClick={makeCode} disabled={busy || !user || (helpPlan === 1 && !open)}>{busy && <Loader2 className="size-4 animate-spin" />}Get my code</Button>
       </div>,
     },
   ];
-  const step = steps[current];
+  const step = steps[Math.min(current, steps.length - 1)];
   if (!step) return null;
+  const idx = Math.min(current, steps.length - 1);
   return <div className="space-y-5">
     <div className="space-y-3 border-y border-border py-4">
-      <div className="flex items-center justify-between text-sm"><span className="font-semibold">Step {current + 1} of {steps.length}</span><span className="text-muted-foreground">{step.title}</span></div>
-      <progress aria-label="Setup progress" value={current + 1} max={steps.length} className="h-2 w-full accent-primary" />
+      <div className="flex items-center justify-between text-sm"><span className="font-semibold">Step {idx + 1} of {steps.length}</span><span className="text-muted-foreground">{step.title}</span></div>
+      <progress aria-label="Setup progress" value={idx + 1} max={steps.length} className="h-2 w-full accent-primary" />
     </div>
-    <section aria-label={`Step ${current + 1}: ${step.title}`} className="min-h-44 space-y-4">
+    <section aria-label={`Step ${idx + 1}: ${step.title}`} className="min-h-44 space-y-4">
       <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
       {step.body}
     </section>
     <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-      <Button variant="outline" disabled={current === 0} onClick={() => setCurrent((v) => Math.max(0, v - 1))}><ArrowLeft className="size-4" />Back</Button>
-      {current < steps.length - 1 && <Button onClick={() => setCurrent((v) => v + 1)}>Next<ArrowRight className="size-4" /></Button>}
+      <Button variant="outline" disabled={idx === 0 || busy} onClick={() => setCurrent(Math.max(0, idx - 1))}><ArrowLeft className="size-4" />Back</Button>
+      {idx < steps.length - 1 && <Button disabled={step.ready === false} onClick={() => setCurrent(idx + 1)}>Next<ArrowRight className="size-4" /></Button>}
     </div>
   </div>;
 }

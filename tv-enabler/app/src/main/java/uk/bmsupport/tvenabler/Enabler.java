@@ -498,10 +498,11 @@ final class Enabler {
         if (code != 200) throw new IllegalStateException("Couldn't record your install (error " + code + "). Try again.");
     }
 
-    private static org.json.JSONObject staffHelpPost(org.json.JSONObject body) {
+    private static org.json.JSONObject staffHelpPost(org.json.JSONObject body) { return sitePost("enabler-staff-help", body); }
+    private static org.json.JSONObject sitePost(String route, org.json.JSONObject body) {
         int code; String resp;
         try {
-            java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-staff-help").openConnection();
+            java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/" + route).openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(20000);
             h.setRequestProperty("Content-Type", "application/json");
             if (loginToken != null && loginToken.matches("[0-9a-fA-F]{20,200}")) h.setRequestProperty("x-enabler-token", loginToken);
@@ -513,7 +514,7 @@ final class Enabler {
         } catch (Exception e) { throw new IllegalStateException("Couldn't reach BM Support. Check the phone's internet and try again."); }
         org.json.JSONObject j;
         try { j = new org.json.JSONObject(resp); } catch (Exception e) { j = new org.json.JSONObject(); }
-        if (code != 200) throw new IllegalStateException(j.optString("error", "Couldn't open a ticket for staff help (error " + code + "). Try again."));
+        if (code != 200) throw new IllegalStateException(j.optString("error", "BM Support couldn't answer (error " + code + "). Try again."));
         return j;
     }
     /** Staff help is only offered while the office is open. */
@@ -522,10 +523,26 @@ final class Enabler {
         catch (org.json.JSONException e) { return false; }
     }
     /** Opens a ticket for staff with the fresh sharing reference attached; true when the screen-share request reached staff. */
-    static boolean openStaffTicket(String shareToken, String device, java.util.List<String> apps) {
+    static final class Handoff { int helpPlan; String device; String ticketId; java.util.Set<String> apps = new java.util.HashSet<>(); }
+    /** Answers the customer gave on bmsupport.uk, unlocked by a one-time 6-digit code and this app's PIN login. */
+    static Handoff redeemHandoff(String code) {
         try {
-            org.json.JSONObject r = staffHelpPost(new org.json.JSONObject().put("mode", "create").put("shareToken", shareToken)
-                    .put("device", device).put("apps", new org.json.JSONArray(apps)));
+            org.json.JSONObject r = sitePost("enabler-handoff", new org.json.JSONObject().put("code", code));
+            Handoff h = new Handoff();
+            h.helpPlan = r.optInt("helpPlan", 2); h.device = "amazon".equals(r.optString("device")) ? "amazon" : "android";
+            h.ticketId = r.isNull("ticketId") ? null : r.optString("ticketId", null);
+            org.json.JSONArray a = r.optJSONArray("apps");
+            if (a != null) for (int i = 0; i < a.length(); i++) h.apps.add(a.optString(i));
+            return h;
+        } catch (org.json.JSONException e) { throw new IllegalStateException("Couldn't read your code. Try again."); }
+    }
+    static boolean openStaffTicket(String shareToken, String device, java.util.List<String> apps) { return openStaffTicket(shareToken, device, apps, null); }
+    static boolean openStaffTicket(String shareToken, String device, java.util.List<String> apps, String ticketId) {
+        try {
+            org.json.JSONObject body = new org.json.JSONObject().put("mode", "create").put("shareToken", shareToken)
+                    .put("device", device).put("apps", new org.json.JSONArray(apps));
+            if (ticketId != null && !ticketId.isEmpty()) body.put("ticketId", ticketId);
+            org.json.JSONObject r = staffHelpPost(body);
             return r.optBoolean("connected", false);
         } catch (org.json.JSONException e) { throw new IllegalStateException("Couldn't open a ticket for staff help. Try again."); }
     }
