@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderScreenShareTab, useOrderScreenShares } from "@/components/tv/TvRemote";
 import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
+import { sendNewTicketPush } from "@/lib/push.functions";
 import { canUseTvRemote } from "@/lib/tv-remote";
 import { isTicketScreenShareInvite, ticketScreenShareInvite, ticketShareConnected, ticketShareRequested, isCustomerTestTicket } from "@/lib/ticket-screen-share";
 
@@ -24,7 +25,13 @@ export function TicketScreenShareInvite({ ticketId }: { ticketId: string }) {
     : <div className="space-y-2"><p>Staff have requested your TV screen.</p><Button size="sm" onClick={() => void navigate({ to: "/tickets", search: { id: ticketId, tab: "setup" } })}><MonitorUp className="mr-2 size-4" />Enter TV code</Button></div>;
 }
 
-export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, children }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen" | "setup"; children: ReactNode }) {
+export function TicketScreenShareLayout({ remoteSupport = true, setupPending = false, subject, ...rest }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen" | "setup"; children: ReactNode; remoteSupport?: boolean; setupPending?: boolean; subject?: string }) {
+  // Plain tickets (customer chose no remote support) show only the conversation.
+  if (!remoteSupport) return <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{rest.children}</div>;
+  return <RemoteTicketLayout {...rest} setupPending={setupPending} subject={subject ?? "Support ticket"} />;
+}
+
+function RemoteTicketLayout({ ticketId, ownerId, closed, tab: tabProp, children, setupPending, subject }: { ticketId: string; ownerId: string; closed: boolean; tab?: "screen" | "setup"; children: ReactNode; setupPending: boolean; subject: string }) {
   const { user, roles } = useAuth();
   const staff = canUseTvRemote(roles) && !isCustomerTestTicket(ticketId, user?.id);
   const navigate = useNavigate();
@@ -32,6 +39,23 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
   const [busy, setBusy] = useState(false);
   const setup = useTicketRemoteSetup(ticketId);
   const setupReady = canRequestTicketScreenShare(setup.row);
+  const pushNew = useServerFn(sendNewTicketPush);
+  const [pending, setPending] = useState(setupPending);
+  const ownerPending = pending && user?.id === ownerId;
+  const tab = ownerPending ? "setup" : tabProp;
+  // Once the TV is connected, the ticket is sent to staff.
+  useEffect(() => {
+    if (!ownerPending || !setupReady || !user) return;
+    void (async () => {
+      const { data } = await supabase.rpc("finish_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
+      setPending(false);
+      if (!data) return;
+      await supabase.from("ticket_messages").insert({ ticket_id: ticketId, sender_id: user.id, is_internal: false, content: "My TV is set up and connected for remote support. Please connect when you're ready." });
+      void pushNew({ data: { ticketId, subject: subject.slice(0, 300) } }).catch(() => null);
+      toast.success("TV connected — your support ticket has been sent to staff");
+      void navigate({ to: "/tickets", search: { id: ticketId } });
+    })();
+  }, [ownerPending, setupReady, user, ticketId, pushNew, subject, navigate]);
   const [waiting, setWaiting] = useState(false);
   const [autoAnswer, setAutoAnswer] = useState(false);
   const previousStatus = useRef<string | null | undefined>(undefined);
@@ -66,7 +90,8 @@ export function TicketScreenShareLayout({ ticketId, ownerId, closed, tab, childr
   };
   return <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
 
-    <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card p-2 text-foreground">
+    {ownerPending && <div className="shrink-0 border-b border-border bg-card p-3 text-sm text-foreground">Set up your TV below. Your support ticket is sent to our staff as soon as your TV is connected.</div>}
+    <div className={ownerPending ? "hidden" : "flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card p-2 text-foreground"}>
       <Tabs value={tab ?? "ticket"} onValueChange={(value) => void navigate({ to: "/tickets", search: { id: ticketId, tab: value === "screen" ? "screen" : value === "setup" ? "setup" : undefined } })}>
         <TabsList><TabsTrigger value="ticket"><MessageCircle className="mr-2 size-4" />Ticket</TabsTrigger><TabsTrigger value="setup"><Wrench className="mr-2 size-4" />Remote setup{setupReady && <CheckCircle2 className="ml-1 size-4 text-primary" />}</TabsTrigger><TabsTrigger value="screen"><MonitorUp className="mr-2 size-4" />Screen share</TabsTrigger></TabsList>
       </Tabs>
