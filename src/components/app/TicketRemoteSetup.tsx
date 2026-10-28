@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { EnablerCodeBox } from "@/components/app/EnablerCodeBox";
-import { EnablerLinkBox } from "@/components/app/EnablerLinkBox";
 import { EnablerPinBox } from "@/components/app/EnablerPinBox";
 import { useServerFn } from "@tanstack/react-start";
 import { revealEnablerPin, createTicketEnablerPin, getTicketEnablerPinStatus, getTicketEnablerLoggedIn } from "@/lib/enabler-pin.functions";

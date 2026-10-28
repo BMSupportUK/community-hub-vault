@@ -32,7 +32,6 @@ import installHero from "@/assets/install-guides-bg.jpg";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
-import { TvEnablerPanel } from "@/components/app/TvEnablerPanel";
 import { DeviceInstallSetup, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
 

@@ -64,7 +64,7 @@ function RemoteHelpSteps() {
   const steps = [
     <>Press <strong className="text-foreground">Open a ticket for help</strong> below — it creates the ticket for you and opens it straight away (only while our office is open).</>,
     <>In the ticket open the <strong className="text-foreground">Remote setup</strong> tab and follow its steps with BM TV Enabler on your Android phone or Windows PC.</>,
-    <>In the Enabler choose <strong className="text-foreground">Start a screen share</strong>, find your TV and press <strong className="text-foreground">Allow</strong> on the TV.</>,
+    <>In the Enabler choose <strong className="text-foreground">Screen-share support</strong>, find your TV and press <strong className="text-foreground">Allow</strong> on the TV.</>,
     <>Type the Enabler reference into the ticket. A member of staff will then connect, see your TV screen and install the apps with you.</>,
   ];
   return <div className="space-y-4">
@@ -187,8 +187,8 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
       title: "Install the apps",
       body: <div className="space-y-3">
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
-          <li>In BM TV Enabler choose <strong className="text-foreground">Install apps</strong>.</li>
-          <li>Press <strong className="text-foreground">Find my TV</strong> and pick your TV.</li>
+          <li>In BM TV Enabler choose <strong className="text-foreground">Install our apps</strong>.</li>
+          <li>Press <strong className="text-foreground">Find my Fire TV</strong> or <strong className="text-foreground">Find my Android TV</strong> and pick your TV.</li>
           <li>On the TV tick <strong className="text-foreground">Always allow</strong> and press <strong className="text-foreground">Allow</strong>.</li>
           <li>The Enabler installs each BM app and skips any already on your TV, then lists what it did.</li>
         </ol>
