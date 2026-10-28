@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Separate customer order choices: Install Guides for self-install, ticket remote setup for staff help
 - [x] Show ticket remote setup one step at a time; website code opens its instructions, ticket checks advance connection stages
 - [ ] Separate ticket troubleshooting handoffs from Install Guides staff installation
 - [x] Website asks Enabler questions (Install Guides) and gives a one-time code
