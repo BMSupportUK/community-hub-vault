@@ -1,10 +1,18 @@
 // @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { expect, test } from "bun:test";
-import { HANDOFF_TTL_MS, handoffUsable, makeHandoffCode, normalizeHandoffCode } from "./enabler-handoff";
+import { HANDOFF_TTL_MS, handoffUsable, makeHandoffCode, normalizeHandoffCode, ticketSupportHandoff } from "./enabler-handoff";
 
 const now = Date.parse("2026-10-28T18:00:00Z");
 const row = (o: Partial<{ user_id: string; expires_at: string; used_at: string | null }> = {}) =>
   ({ user_id: "u1", expires_at: new Date(now + HANDOFF_TTL_MS).toISOString(), used_at: null, ...o });
+
+test("remote-support tickets reuse the answered TV choice without requesting customer app installs", () => {
+  for (const device of ["amazon", "android"] as const) {
+    expect(ticketSupportHandoff("existing-ticket", device)).toEqual({
+      ticketId: "existing-ticket", device, helpPlan: 1, appPaths: [],
+    });
+  }
+});
 
 test("code lasts 2 hours", () => {
   expect(HANDOFF_TTL_MS).toBe(7_200_000);

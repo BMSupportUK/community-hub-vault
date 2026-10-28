@@ -29,6 +29,8 @@ import { renewalMessage } from "@/lib/enabler-renewal";
 import { useEnablerRenewalGate } from "@/hooks/use-enabler-renewal-gate";
 import { getTicketEnablerConfirmationStatus } from "@/lib/enabler-confirm-status.functions";
 import { appChecksPassed, connectionReady, staffRemoteSetupReady, type AppChecks, type SetupDevice } from "@/lib/ticket-remote-setup";
+import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
+import { ticketSupportHandoff } from "@/lib/enabler-handoff";
 
 export type RemoteSetupRow = { device: SetupDevice; app_checks: AppChecks | null; app_checked_at: string | null; completed_at: string | null; checks_used_at?: string | null; pending_session_id?: string | null } | null;
 
@@ -52,6 +54,31 @@ export function useTicketRemoteSetup(ticketId: string) {
 
 export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: { ticketId: string; customer: boolean; closed: boolean; row: RemoteSetupRow | undefined; reload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
+  const handoffFn = useServerFn(createEnablerHandoff);
+  const [handoff, setHandoff] = useState<{ code: string; expiresAt: string; device: SetupDevice } | null>(null);
+  const handoffKey = `ticket-enabler-handoff:${ticketId}`;
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(handoffKey) ?? "null");
+      if (saved && /^\d{6}$/.test(saved.code) && Date.parse(saved.expiresAt) > Date.now() && (saved.device === "amazon" || saved.device === "android")) setHandoff(saved);
+      else setHandoff(null);
+    } catch { setHandoff(null); }
+  }, [handoffKey]);
+  const clearHandoff = () => {
+    setHandoff(null);
+    try { sessionStorage.removeItem(handoffKey); } catch { /* Storage is optional. */ }
+  };
+  const makeHandoff = async () => {
+    if (!row || busy || closed) return;
+    setBusy(true);
+    try {
+      const code = await handoffFn({ data: ticketSupportHandoff(ticketId, row.device) });
+      const saved = { ...code, device: row.device };
+      setHandoff(saved);
+      try { sessionStorage.setItem(handoffKey, JSON.stringify(saved)); } catch { /* Storage is optional. */ }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't get your website code. Try again."); }
+    finally { setBusy(false); }
+  };
   const { loggedIn: appLoggedIn, tvFound } = useEnablerLoggedIn(ticketId);
   const confirmationStatusFn = useServerFn(getTicketEnablerConfirmationStatus);
   const confirmationStatus = useCallback(() => confirmationStatusFn({ data: { ticketId } }), [confirmationStatusFn, ticketId]);
@@ -65,13 +92,14 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
     setBusy(true);
     const { error } = await supabase.rpc("save_ticket_remote_setup" as never, { _ticket_id: ticketId, _device: device, _steps: [] } as never);
     if (error) toast.error(error.message);
+    else clearHandoff();
     await reload(); setBusy(false);
   };
   const restart = async () => {
     if (!window.confirm("Restart the TV setup from the beginning? The ticks on this page will be cleared. You will then type the reference your BM TV Enabler app shows now.")) return;
     setBusy(true);
     const { error } = await supabase.rpc("reset_ticket_remote_setup" as never, { _ticket_id: ticketId } as never);
-    if (error) toast.error(error.message); else toast.success("Setup restarted — choose your device to begin again");
+    if (error) toast.error(error.message); else { clearHandoff(); toast.success("Setup restarted — choose your device to begin again"); }
     setRenewal(""); setReferenceActive(false);
     renewalGate.reset();
     await reload(); setBusy(false);
@@ -150,8 +178,16 @@ export function TicketRemoteSetup({ ticketId, customer, closed, row, reload }: {
             <div className="rounded-xl border border-border bg-background/60 p-4"><p className="mb-2 text-center font-semibold">Windows PC</p><WindowsEnablerDownload /></div>
           </div>
           <TicketPin ticketId={ticketId} />
-          <h3 className="pt-2 text-lg font-semibold">2. Open the app, choose Screen-share support, then type its reference here</h3>
-          {codeBox}
+          <h3 className="pt-2 text-lg font-semibold">2. Send your answers to BM TV Enabler</h3>
+          <p className="text-sm">You've chosen remote staff support for your {row.device === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}. Use this website code so the app goes straight to TV setup. Our staff will install your apps.</p>
+          {handoff && handoff.device === row.device && Date.parse(handoff.expiresAt) > Date.now() ? <div className="space-y-3">
+            <p className="font-mono text-4xl font-bold text-primary" aria-label="Website setup code">{handoff.code.slice(0, 3)}-{handoff.code.slice(3)}</p>
+            <p className="text-sm">Sign in to BM TV Enabler with the PIN above, press <strong>I have a website code</strong>, and enter this code — don't choose Install apps or Screen-share support again.</p>
+            <p className="text-sm">Follow the app to find your TV and allow the connection. It sends the completed setup back to this ticket.</p>
+            <p className="text-xs text-muted-foreground">Works once, until {new Date(handoff.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}. If the website-code option is missing, download the latest BM TV Enabler above.</p>
+            <Button variant="outline" disabled={busy} onClick={() => void makeHandoff()}>Get a replacement website code</Button>
+          </div> : <Button disabled={busy} onClick={() => void makeHandoff()}>{busy && <Loader2 className="mr-2 size-4 animate-spin" />}Get my website code</Button>}
+          <details className="text-sm"><summary className="cursor-pointer font-semibold">Already have a reference from BM TV Enabler?</summary><div className="pt-3">{codeBox}</div></details>
         </>}
         {stage === 2 && <>
           <h3 className="text-lg font-semibold">{tvConnected ? "Press Allow on your TV" : "Keep BM TV Enabler open on your phone or PC"}</h3>
