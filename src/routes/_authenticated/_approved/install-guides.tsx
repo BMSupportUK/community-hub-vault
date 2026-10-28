@@ -20,7 +20,6 @@ import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 import { GuideAccessApprovals } from "@/components/app/GuideAccessApprovals";
-import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import downloadIllustration from "@/assets/app-download-illustration.jpg";
 
 import { AppTransfersAdmin } from "@/components/app/AppTransfersAdmin";
@@ -145,8 +144,8 @@ function InstallGuidesPage() {
   useEffect(() => {
     if (tabParam) setTab(legacyTab(tabParam)!);
   }, [tabParam]);
-  // Which device screen the setup tab is showing — the sidebar swaps the advert
-  // for the Enabler downloads on TV self-install and staff-help screens.
+  // Only TV setup screens reserve a column for Enabler downloads.
+  // Guides and videos use the full available width without adverts.
   const [setupDevice, setSetupDevice] = useState<SetupDeviceKey | null>(() => readStoredSetupDevice());
   const showEnablerDownloads = tab === "setup" && (setupDevice === "remote" || setupDevice === "amazon" || setupDevice === "android");
   const pickSetupDevice = (d: SetupDeviceKey | null) => {
@@ -899,9 +898,9 @@ function InstallGuidesPage() {
         </Tabs>
       </div>
 
-      {tab !== "enabler" && (
-        <aside className={`hidden xl:block w-full xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6 ${showEnablerDownloads ? "xl:w-[300px] 2xl:w-[540px]" : "xl:w-[300px]"}`}>
-          {showEnablerDownloads ? <EnablerDownloadSidebar /> : <AdSenseSlot slot="sidebar" />}
+      {showEnablerDownloads && (
+        <aside className="hidden xl:block w-full xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6 xl:w-[300px] 2xl:w-[540px]">
+          <EnablerDownloadSidebar />
         </aside>
       )}
       </div>

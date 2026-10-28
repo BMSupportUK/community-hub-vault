@@ -71,5 +71,5 @@
 - Enabler references bind to one ticket/order, expire on close (share also on session end), unlink on Restart; apps clear server-expired share codes, never on network errors, keeping install/PIN state. Issuance requires the app protocol marker.
 - Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
-- Install Guides: route owns device choice; TV setup and staff help share advert-replacing phone/Windows columns and ticket-bound PIN controls to preserve authorization.
+- Install Guides: route owns device choice; only TV setup and staff help reserve phone/Windows download columns with ticket-bound PIN controls, so guide/video browsing retains the full available width.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
