@@ -2,9 +2,10 @@
 # Roadmap
 
 ## Complete Enabler guide refresh
-- [ ] Update all outdated Amazon/Android Enabler and Remote Helper articles and PDFs; correct Windows step ordering and include every current permission, reference and reconnect step.
-- [ ] Replace the three outdated remote-help tutorial videos with complete current narrated walkthroughs, retaining private storage and chapter actions.
-- [ ] Inspect every revised PDF page, verify video outputs and signed-in guide access; leave unrelated installation guides unchanged.
+- [x] Updated eight edition-2 articles/private PDFs, including new Android Enabler installation guide, current PIN/reference steps, Windows-only pairing, explicit TV consent and safe retry instructions; existing row IDs retained.
+- [ ] BLOCKED: Three replacement video jobs exceeded the production time budget before producing final MP4s. Narration/frames retained under /tmp/rg; unfinished render processes stopped. Three outdated video rows temporarily unpublished (files preserved) so customers use corrected PDFs/articles. A new video production request is needed to finish and validate replacements, then restore these rows plus add Windows video.
+- [x] Inspected all 35 revised PDF pages; no clipping/overlap. Corrected contact-sheet counting artifact. All eight private signed PDF reads succeed; signed-in Windows article/PDF, Amazon PDF and new Android listing verified. Unrelated guides unchanged.
+- [ ] BLOCKED: Verify replacement video playback after successful production/upload. Physical TV/Windows execution remains unverified; no access to customer devices.
 
 ## Windows written guides and PDFs
 - [x] Create separate Windows installation and screen-sharing written guides with matching branded PDFs, using current app labels and reference lifecycle.
