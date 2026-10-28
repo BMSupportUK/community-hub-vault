@@ -244,7 +244,7 @@ function PayPage() {
       />);
       // Customers raise a ticket for remote installation help; no setup tabs on the order page.
       // The help banner only appears once payment is confirmed (paid_at set).
-      return usesCustomerOrderRemoteTabs(token, canManage) && !view.order.cancelled && view.order.paidAt ? <OrderRemoteTabs orderRef={view.order.ref}>{template}</OrderRemoteTabs> : template; })()}
+      return usesCustomerOrderRemoteTabs(token, canManage) && !view.order.cancelled && view.order.paidAt ? <OrderRemoteTabs orderRef={view.order.ref} claimToken={token} manual={view.order.manual}>{template}</OrderRemoteTabs> : template; })()}
       {canManage && view.order.id && (
         <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
           <DialogContent>

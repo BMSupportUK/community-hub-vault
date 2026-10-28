@@ -1,4 +1,5 @@
 # src/lib rules
+- Order staff-help tickets start pending remote setup; their existing ticket layout notifies staff after confirmation, while self-install links retain paid-order guide access.
 - Ticket setup stages are presentation-only, derived from scoped ticket checks and available website codes; code creation advances instructions but never proves redemption or TV readiness.
 
 - Sports guides keep publication status; headings prefix events, not channels; document scrolling; channels only beneath Available channels; BM loads through hydration/router pending.
