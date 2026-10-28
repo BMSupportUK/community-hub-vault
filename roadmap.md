@@ -2,8 +2,8 @@
 # Roadmap
 
 ## Windows TV names
-- [ ] Match phone description lookup and verify named TV selection with its IP; discovery stays read-only.
-- [ ] Release Windows 1.42.0 and verify the current installer download.
+- [x] Match phone description lookup and verify named TV selection with its IP; 52 Windows tests pass and simulated name/IP selection checked. Discovery stays read-only; physical Windows/TV scan requires customer hardware.
+- [x] Release Windows 1.42.0; current public installer download checksum matches the tested package.
 
 ## Complete Enabler guide refresh
 - [x] Updated eight edition-2 articles/private PDFs, including new Android Enabler installation guide, current PIN/reference steps, Windows-only pairing, explicit TV consent and safe retry instructions; existing row IDs retained.
