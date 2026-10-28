@@ -485,8 +485,9 @@ final class Enabler {
     static void logSelfInstall(String token, java.util.List<String> apps, String tvAddress) {
         int code;
         try {
-            org.json.JSONObject body = new org.json.JSONObject().put("token", token).put("tvAddress", tvAddress)
-                    .put("apps", new org.json.JSONArray(apps));
+            org.json.JSONObject body = new org.json.JSONObject().put("apps", new org.json.JSONArray(apps));
+            if (token != null) body.put("token", token);
+            if (tvAddress != null && tvAddress.matches("\\d{1,3}(\\.\\d{1,3}){3}(:\\d{1,5})?")) body.put("tvAddress", tvAddress);
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/enabler-self-install").openConnection();
             h.setRequestMethod("POST"); h.setDoOutput(true); h.setConnectTimeout(15000); h.setReadTimeout(15000);
             h.setRequestProperty("Content-Type", "application/json");
