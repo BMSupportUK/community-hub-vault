@@ -796,7 +796,7 @@ function TicketsPage() {
 
 function NewTicketForm({
   categories: allCategories, onCancel, onCreated, preset,
-}: { categories: Category[]; onCancel: () => void; onCreated: (id: string) => void; preset?: "2fa-reset" }) {
+}: { categories: Category[]; onCancel: () => void; onCreated: (id: string, tab?: "setup") => void; preset?: "2fa-reset" }) {
   const { user, hasAny } = useAuth();
   // Reporting live TV / movie faults is for paying customers and staff only.
   const hideReportCats =
