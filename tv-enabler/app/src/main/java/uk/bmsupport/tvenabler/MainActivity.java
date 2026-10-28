@@ -537,6 +537,9 @@ public class MainActivity extends Activity {
                 final Enabler.Confirmation issued = run == SetupWizard.Step.DONE && !linkedSent ? Enabler.requestConfirmCode(checks, selectedDevice, Enabler.readHelperCode(this, host)) : null;
                 final boolean installOnly = "new".equals(apps);
                 final Enabler.Confirmation[] installIssued = new Enabler.Confirmation[1];
+                final Enabler.Confirmation[] shareIssued = new Enabler.Confirmation[1];
+                final int[] helpResult = new int[1];
+                final String[] helpError = { "" };
                 if (run == SetupWizard.Step.SETUP && installOnly) {
                     java.util.List<Enabler.PickItem> pick = Enabler.listOurApps(this, host, progress);
                     java.util.Set<String> only = chooseApps(pick);
@@ -587,6 +590,19 @@ public class MainActivity extends Activity {
                     setBusy(false);
                     if (run == SetupWizard.Step.SETUP && installOnly) {
                         wizard.setupFinished(true);
+                        if (helpPlan == 1) {
+                            helpTicket = helpResult[0]; helpTicketError = helpError[0];
+                            if (shareIssued[0] != null) {
+                                // Keep the ticket's sharing reference so Helper renewals still reach staff.
+                                refreshToken = shareIssued[0].refreshToken; refreshHost = host; confirmExpiresAt = shareIssued[0].expiresAt;
+                                confirmationUsed = true; sharingReferenceExpired = false;
+                                confirmCode.setText(shareIssued[0].code.substring(0, 3) + "-" + shareIssued[0].code.substring(3));
+                                getSharedPreferences("tv", MODE_PRIVATE).edit().putString("confirmation", shareIssued[0].code)
+                                    .putBoolean("confirmationUsed", true).putLong("confirmationExpiry", shareIssued[0].expiresAt)
+                                    .putString("confirmationToken", shareIssued[0].refreshToken).putString("confirmationHost", host)
+                                    .putString("device", checks != null && checks.type != null ? checks.type : selectedDevice).commit();
+                            }
+                        }
                         if (installIssued[0] != null) {
                             installCodeText = installIssued[0].code; installExpiresAt = installIssued[0].expiresAt;
                             installRefreshToken = installIssued[0].refreshToken; installUsed = false;
@@ -598,7 +614,8 @@ public class MainActivity extends Activity {
                         }
                         long failedCount = 0;
                         for (Enabler.AppResult r : appsResults) if (r.status == Enabler.AppResult.FAILED) failedCount++;
-                        if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
+                        if (helpPlan == 1) say(helpTicket == 1 ? "✓ Apps installed, screen sharing set up and a ticket opened for our staff." : helpTicket == 2 ? "✓ Apps installed and a ticket opened for our staff." : "Apps installed, but we couldn't open the staff ticket: " + helpTicketError, helpTicket == 3 ? WARN : OK);
+                        else if (failedCount == 0) say("✓ All done — " + appsResults.size() + " app" + (appsResults.size() == 1 ? "" : "s") + " on your TV. See the list below.", OK);
                         else say("Done, but " + failedCount + " app" + (failedCount == 1 ? "" : "s") + " didn't install — see the list below. Press Return to home to try again.", WARN);
                     } else if (run == SetupWizard.Step.SETUP) {
                         boolean ready = SetupWizard.ready(checks.adb, checks.helper, checks.control, checks.accessibility);
