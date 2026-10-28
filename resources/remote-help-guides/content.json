@@ -15,7 +15,7 @@
           ],
           [
             "Get the official phone download",
-            "Sign in at bmsupport.uk > Install Guides > Set up a device and choose your TV type, or open Remote setup on your ticket. In the Android phone card scan the QR with your phone, or tap the phone download link. On the download page press Download and save the APK to the Android phone."
+            "Sign in at bmsupport.uk > Install Guides > Set up a device and choose your TV type, or open Remote setup on your ticket. In the Android phone card scan the QR with your phone, or tap the phone download link. On the download page press Download BM TV Enabler and save the APK to the Android phone."
           ],
           [
             "Install and open",
@@ -82,11 +82,11 @@
           ],
           [
             "Wireless debugging pairing",
-            "If Android/Google TV requires pairing, expand Android / Google TV with Wireless debugging: pair with code. On the TV choose Wireless debugging > Pair device with pairing code. Enter that six-digit code and its pairing port in the app. Use the IP address and connection port from the main Wireless debugging screen for TV address; the two ports can differ."
+            "The Android phone Enabler does not have a Wireless debugging pairing-code form. If your Android/Google TV requires Pair device with pairing code, use the Windows PC Enabler: expand Android / Google TV with Wireless debugging: pair with code, enter the TV’s six-digit pairing code and pairing port, and use the main Wireless debugging screen’s IP address and connection port in TV address. Pairing and connection ports can differ. Press Pair TV; after successful pairing setup continues. Never type this pairing code into the ticket."
           ],
           [
             "Retry safely or request help",
-            "For a failed app, read the error, choose Return to home and retry installation. Reset setup asks for confirmation and clears saved TV choices/references; the next reference takes over. It does not uninstall TV apps or remove the phone/PC’s existing TV authorisation. For staff installation help use Install Guides > Help from staff during office hours, or the paid order’s help button to raise a ticket."
+            "If an app fails, read its result and error. Where no saved valid reference is being resumed, Return to home and choose Install our apps to run the install again. If the app only restores an earlier valid reference, or no install reference appeared after success, ask staff before resetting: a saved reference is not a fresh app check. Reset setup is a separate confirmed destructive action for saved TV choices/references; it does not uninstall TV apps or remove debugging authorisation. Request staff installation help from Install Guides > Help from staff during office hours, or the paid order’s help button."
           ]
         ]
       ]
@@ -303,7 +303,7 @@
           ],
           [
             "Pairing or control problems",
-            "Android Wireless debugging may require the TV’s separate pairing code and pairing port as well as its main connection address/port. If control is unavailable or Accessibility remains blocked, report the Enabler’s error to staff rather than disabling TV security. Follow the TV prompts the app provides; installation alone does not grant permanent staff access."
+            "If Android/Google TV requires Wireless debugging code pairing, use the Windows PC Enabler: its pairing form accepts the TV’s six-digit pairing code and pairing port, while TV address uses the main Wireless debugging connection IP:port. The Android phone app has no pairing-code form. If control/Accessibility is unavailable, report the Enabler’s error to staff; do not disable TV security."
           ]
         ]
       ]
@@ -352,6 +352,10 @@
           [
             "Android / Google TV",
             "On the TV open Settings > System > About (some TVs use Device Preferences > About). Highlight Android TV OS build and press Select seven times. Return to System > Developer options and enable Network debugging, or Wireless debugging where offered. Menu names vary by TV. Do not expose debugging ports to the internet."
+          ],
+          [
+            "If Wireless debugging requires code pairing",
+            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair TV. The pairing port and connection port can differ. Setup continues after successful pairing."
           ],
           [
             "Find and connect",
@@ -452,6 +456,10 @@
             "On the TV open Settings > System > About (some TVs use Device Preferences > About). Highlight Android TV OS build and press Select seven times. Return to System > Developer options and enable Network debugging, or Wireless debugging where offered. Menu names vary by TV. Do not expose debugging ports to the internet."
           ],
           [
+            "If Wireless debugging requires code pairing",
+            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair TV. The pairing port and connection port can differ. Setup continues after successful pairing."
+          ],
+          [
             "Find and connect",
             "Press I’ve switched debugging on — next. Press Find my Android TV, select the correct named TV and check its address. If it is missing, enter the address from the TV’s network settings. Press Connect to this TV. On the TV, press Allow for debugging and tick Always allow from this computer if offered. Keep the Enabler open."
           ],
@@ -520,7 +528,7 @@
           ],
           [
             "Pairing or control problems",
-            "Android Wireless debugging may require the TV’s separate pairing code and pairing port as well as its main connection address/port. If control is unavailable or Accessibility remains blocked, report the Enabler’s error to staff rather than disabling TV security. Follow the TV prompts the app provides; installation alone does not grant permanent staff access."
+            "If Android/Google TV requires Wireless debugging code pairing, use the Windows PC Enabler: its pairing form accepts the TV’s six-digit pairing code and pairing port, while TV address uses the main Wireless debugging connection IP:port. The Android phone app has no pairing-code form. If control/Accessibility is unavailable, report the Enabler’s error to staff; do not disable TV security."
           ]
         ]
       ]
@@ -622,7 +630,7 @@
           ],
           [
             "Retry safely or request help",
-            "For a failed app, read the error, choose Return to home and retry installation. Reset setup asks for confirmation and clears saved TV choices/references; the next reference takes over. It does not uninstall TV apps or remove the PC’s existing TV authorisation. For staff installation help use Install Guides > Help from staff during office hours, or the paid order’s help button to raise a ticket."
+            "If an app fails, read its result and error. Where no saved valid reference is being resumed, Return to home and choose Install our apps to run the install again. If the app only restores an earlier valid reference, or no install reference appeared after success, ask staff before resetting: a saved reference is not a fresh app check. Reset setup is a separate confirmed destructive action for saved TV choices/references; it does not uninstall TV apps or remove debugging authorisation. Request staff installation help from Install Guides > Help from staff during office hours, or the paid order’s help button."
           ]
         ]
       ]
@@ -670,15 +678,7 @@
           ],
           [
             "Choose Screen-share support",
-            "In BM TV Enabler select Screen-share support and your TV type. Enable debugging using the device-specific steps on the next page, then find and connect to the correct TV. Approve debugging on the TV. The Enabler installs any missing Helper/control apps and checks that remote control is ready."
-          ],
-          [
-            "Keep the Helper open",
-            "Leave BM TV Enabler open on the PC. When BM Remote Helper opens on the TV, keep it in front for permission prompts. Do not press Home or close the Helper while waiting to approve sharing. If the TV asks to allow the connection or start recording/casting, approve only the help you requested."
-          ],
-          [
-            "Get the sharing reference",
-            "Wait for the Enabler’s successful TV check and sharing reference; press Get my confirmation code if one is not displayed. Use that reference, not the login PIN, a Wireless debugging pairing code or the Helper’s six-digit TV code. The Enabler transfers the Helper connection details automatically; you do not type the TV’s Helper code into the website."
+            "After Get started select Screen-share support and your TV type. The next page enables debugging and connects to your TV; then the Enabler installs/checks Helper and remote control."
           ]
         ]
       ],
@@ -700,6 +700,14 @@
           [
             "Find and connect",
             "Press I’ve switched debugging on — next. Choose Find my Fire TV or Find my Android TV, select the correct named TV and check its address. If it is missing, enter the address from the TV’s network settings. Press Connect to this TV. On the TV, press Allow for debugging and tick Always allow from this computer if offered. Keep the Enabler open."
+          ],
+          [
+            "Keep the Helper open",
+            "Leave BM TV Enabler open on the PC. When BM Remote Helper opens on the TV, keep it in front for permission prompts. Do not press Home or close the Helper while waiting to approve sharing. If the TV asks to allow the connection or start recording/casting, approve only the help you requested."
+          ],
+          [
+            "Get the sharing reference",
+            "Wait for the Enabler’s successful TV check and sharing reference; press Get my confirmation code if one is not displayed. Use that reference, not the login PIN, a Wireless debugging pairing code or the Helper’s six-digit TV code. The Enabler transfers the Helper connection details automatically; you do not type the TV’s Helper code into the website."
           ]
         ]
       ],
@@ -768,7 +776,7 @@
           ],
           [
             "Get the official phone download",
-            "Sign in at bmsupport.uk > Install Guides > Set up a device and choose your TV type, or open Remote setup on your ticket. In the Android phone card scan the QR with your phone, or tap the phone download link. On the download page press Download and save the APK to the Android phone."
+            "Sign in at bmsupport.uk > Install Guides > Set up a device and choose your TV type, or open Remote setup on your ticket. In the Android phone card scan the QR with your phone, or tap the phone download link. On the download page press Download BM TV Enabler and save the APK to the Android phone."
           ],
           [
             "Install and open",
@@ -790,6 +798,10 @@
           [
             "Android / Google TV",
             "On the TV open Settings > System > About (some TVs use Device Preferences > About). Highlight Android TV OS build and press Select seven times. Return to System > Developer options and enable Network debugging, or Wireless debugging where offered. Menu names vary by TV. Do not expose debugging ports to the internet."
+          ],
+          [
+            "If Wireless debugging requires code pairing",
+            "The Android phone app has no pairing-code form. Use the Windows PC Enabler for TVs which require pairing: on the TV open Wireless debugging > Pair device with pairing code. In Windows expand Android / Google TV with Wireless debugging: pair with code, enter its six-digit pairing code and pairing port. In TV address use the main Wireless debugging screen’s IP address and connection port. Press Pair TV. The pairing port and connection port can differ. Setup continues after successful pairing."
           ],
           [
             "Find and connect",
@@ -835,11 +847,11 @@
           ],
           [
             "Wireless debugging pairing",
-            "If Android/Google TV requires pairing, expand Android / Google TV with Wireless debugging: pair with code. On the TV choose Wireless debugging > Pair device with pairing code. Enter that six-digit code and its pairing port in the app. Use the IP address and connection port from the main Wireless debugging screen for TV address; the two ports can differ."
+            "The Android phone Enabler does not have a Wireless debugging pairing-code form. If your Android/Google TV requires Pair device with pairing code, use the Windows PC Enabler: expand Android / Google TV with Wireless debugging: pair with code, enter the TV’s six-digit pairing code and pairing port, and use the main Wireless debugging screen’s IP address and connection port in TV address. Pairing and connection ports can differ. Press Pair TV; after successful pairing setup continues. Never type this pairing code into the ticket."
           ],
           [
             "Retry safely or request help",
-            "For a failed app, read the error, choose Return to home and retry installation. Reset setup asks for confirmation and clears saved TV choices/references; the next reference takes over. It does not uninstall TV apps or remove the phone/PC’s existing TV authorisation. For staff installation help use Install Guides > Help from staff during office hours, or the paid order’s help button to raise a ticket."
+            "If an app fails, read its result and error. Where no saved valid reference is being resumed, Return to home and choose Install our apps to run the install again. If the app only restores an earlier valid reference, or no install reference appeared after success, ask staff before resetting: a saved reference is not a fresh app check. Reset setup is a separate confirmed destructive action for saved TV choices/references; it does not uninstall TV apps or remove debugging authorisation. Request staff installation help from Install Guides > Help from staff during office hours, or the paid order’s help button."
           ]
         ]
       ]
