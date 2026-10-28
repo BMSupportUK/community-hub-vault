@@ -9,7 +9,7 @@ function bases() {
   return [...new Set(Object.values(os.networkInterfaces()).flat().filter(i => i && !i.internal && i.family === 'IPv4' && privateAddress(i.address)).map(i => i.address.substring(0, i.address.lastIndexOf('.') + 1)))];
 }
 function safeLocation(host, location) {
-  try { const u = new URL(location); return u.protocol === 'http:' && u.hostname === host && !u.username && !u.password && [8008, 50000].includes(Number(u.port)); } catch { return false; }
+  try { const u = new URL(location); return privateAddress(host) && u.protocol === 'http:' && u.hostname === host && !u.username && !u.password; } catch { return false; }
 }
 function parseDescription(xml) {
   if (xml.length > 65536 || /<!DOCTYPE|<!ENTITY/i.test(xml)) return null;
@@ -17,7 +17,7 @@ function parseDescription(xml) {
   const maker = field('manufacturer');
   const model = `${field('modelName')} ${field('modelDescription')}`;
   if (!/amazon/i.test(maker) || !/fire\s?tv|\baft[a-z0-9]+\b/i.test(model)) return null;
-  return { name: field('friendlyName') || 'Amazon Fire TV — name unavailable' };
+  return { name: field('friendlyName') || null };
 }
 /** Any device description: name plus whether it is an Amazon device (for filtering Android lists). */
 function parseInfo(xml) {
@@ -66,7 +66,8 @@ async function advertised(networks) {
       if (!privateAddress(info.address) || !info.address.startsWith(base)) return;
       const text = data.toString('utf8');
       const location = text.match(/^location:\s*(.+)$/im)?.[1]?.trim();
-      found.set(info.address, { location: location && safeLocation(info.address, location) ? location : null, hinted: /amazon|\baft[a-z0-9]+\b/i.test(text), dial: /dial-multiscreen|google|android/i.test(text) });
+      const previous = found.get(info.address);
+      found.set(info.address, { location: location && safeLocation(info.address, location) ? location : previous?.location || null, hinted: Boolean(previous?.hinted || /amazon|\baft[a-z0-9]+\b/i.test(text)), dial: Boolean(previous?.dial || /dial-multiscreen|google|android/i.test(text)) });
     });
     socket.bind(0, () => {
       timer = setTimeout(done, 4200);
@@ -79,6 +80,20 @@ async function advertised(networks) {
     });
   })));
   return found;
+}
+/** Read-only discovery, matching the phone: descriptions are independent of debugging. */
+async function discoverHost(host, hint, read = readDescription, probeHost = probe) {
+  const probing = probeHost(host);
+  let desc = hint?.location ? await read(host, hint.location) : null;
+  for (const path of paths) {
+    if (desc?.name) break;
+    const candidate = await read(host, `http://${host}${path}`);
+    if (candidate) desc = { ...candidate, name: candidate.name || desc?.name || null, amazon: Boolean(candidate.amazon || desc?.amazon) };
+  }
+  const p = await probing;
+  if (!p && !hint && !desc) return null;
+  const amazon = Boolean(desc?.amazon || hint?.hinted);
+  return { address: host, name: desc?.name || (amazon ? 'Amazon device — name unavailable' : 'Unknown device'), debugging: p === 2, amazon };
 }
 /** type 'amazon' lists only Fire TVs; type 'android' lists TV-like devices that are not Amazon
  * (Cast/DIAL TVs, or anything with network debugging open), so customers only see their kind. */
@@ -93,12 +108,8 @@ async function scan(type = 'amazon') {
     await Promise.all(Array.from({ length: 48 }, async () => {
       while (next < hosts.length) {
         const host = hosts[next++]; const hint = hints.get(host);
-        const p = await probe(host);
-        if (!p && !hint) continue;
-        let desc = hint?.location ? await readDescription(host, hint.location) : null;
-        for (const path of paths) { if (desc?.name) break; desc = (await readDescription(host, `http://${host}${path}`)) || desc; }
-        const amazon = Boolean(desc?.amazon || hint?.hinted);
-        devices.push({ address: host, name: desc?.name || (amazon ? 'Amazon device — name unavailable' : 'Unknown device'), debugging: p === 2, amazon });
+        const tv = await discoverHost(host, hint);
+        if (tv) devices.push(tv);
       }
     }));
     return devices.sort((a, b) => (b.amazon - a.amazon) || (b.debugging - a.debugging) || a.address.localeCompare(b.address, undefined, { numeric: true }));
@@ -123,4 +134,4 @@ async function scan(type = 'amazon') {
   }));
   return devices.sort((a, b) => a.name.localeCompare(b.name) || a.address.localeCompare(b.address, undefined, { numeric: true }));
 }
-module.exports = { scan, safeLocation, parseDescription, parseInfo };
+module.exports = { scan, safeLocation, parseDescription, parseInfo, discoverHost };
