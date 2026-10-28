@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BM Remote Control</string>
+    <string name="a11y_description">Lets BM Support staff press remote buttons on this TV only while you allow a help session in BM Remote Helper. You can end it at any time.</string>
+</resources>
