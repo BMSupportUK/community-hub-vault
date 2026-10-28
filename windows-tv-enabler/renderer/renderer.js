@@ -230,7 +230,7 @@ async function showCode(host, existing) {
     setBusy(false); wizard.paired(); render(); run(Step.SETUP, host); return;
   } catch (error) { say(cleanError(error), true); }
   setBusy(false); render();
-}
+});
 
 /** Tick list of our apps (all ticked; already-installed greyed out). Resolves with the ticked app paths. */
 function chooseApps(list) {
@@ -370,7 +370,7 @@ next.addEventListener('click', async () => {
     say('✓ New install code ready.');
   } catch (error) { say(cleanError(error), true); }
   setBusy(false); render();
-}
+});
 /** A finished app-install run goes back to "What do you need?" — the saved TV address,
  *  device choice and TV authorization are kept, so nothing restarts from scratch. */
 function backToStart() {
@@ -393,7 +393,7 @@ async function selfInstall(auto) {
     say('✓ Install recorded. You\'re all set.');
   } catch (error) { say(cleanError(error), true); }
   setBusy(false); render();
-});
+}
 
 reset.addEventListener('click', () => {
   if (busy) return;
