@@ -336,7 +336,9 @@ async function run(stage, host) {
             installChoice = helpPlan === 1 ? 1 : 0;
             if (helpPlan === 1) saveInstallState({ choice: 1 });
             if (helpPlan === 2) setTimeout(() => selfInstall(true), 0);
-          } catch { /* The apps are on the TV either way; the code is extra proof for the ticket or order. */ }
+          } catch { /* The apps are on the TV either way; the code is extra proof for the ticket or order. */
+            if (helpPlan === 2) setTimeout(() => selfInstall(true), 0);
+          }
         }
         say(result.failed.length ? `Done, but ${result.failed.length} app${result.failed.length === 1 ? '' : 's'} didn't install — see the list below. Press Return to home to try again.` : `✓ All done — ${result.installed.length} app${result.installed.length === 1 ? '' : 's'} on your TV. See the list below.`, result.failed.length > 0);
         return;
@@ -435,10 +437,11 @@ startAgain.addEventListener('click', backToStart);
 helpYes.addEventListener('click', () => { if (busy) return; installChoice = 1; saveInstallState({ choice: 1 }); say(''); render(); });
 helpNo.addEventListener('click', () => selfInstall(false));
 async function selfInstall(auto) {
-  if ((busy && !auto) || !/^[0-9a-f]{64}$/.test(installRefreshToken)) return;
+  const hasToken = /^[0-9a-f]{64}$/.test(installRefreshToken || '');
+  if ((busy && !auto) || (!hasToken && helpPlan !== 2)) return;
   setBusy(true); say('Recording your install…');
   try {
-    await window.bmTv.selfInstall(installRefreshToken, appsResults.filter(r => r.status !== 'failed').map(r => r.name), address.value.trim());
+    await window.bmTv.selfInstall(hasToken ? installRefreshToken : undefined, appsResults.filter(r => r.status !== 'failed').map(r => r.name), address.value.trim());
     installChoice = 2; installUsed = true; saveInstallState({ choice: 2, referenceUsed: true });
     say('✓ Install recorded. You\'re all set.');
   } catch (error) { say(cleanError(error), true); }

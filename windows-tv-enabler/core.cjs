@@ -451,7 +451,7 @@ async function readHelperCode(host, adb, progress, delay = ms => new Promise(r =
 /** Customer needs no staff help: log the install code, installed apps and TV address; marks the code used. */
 async function logSelfInstall(token, apps, tvAddress, post = globalThis.fetch) {
   let res;
-  try { res = await post('https://bmsupport.uk/api/public/enabler-self-install', { method: 'POST', headers: { 'content-type': 'application/json', ...(enablerToken ? { 'x-enabler-token': enablerToken } : {}) }, body: JSON.stringify({ token, apps, tvAddress }) }); }
+  try { res = await post('https://bmsupport.uk/api/public/enabler-self-install', { method: 'POST', headers: { 'content-type': 'application/json', ...(enablerToken ? { 'x-enabler-token': enablerToken } : {}) }, body: JSON.stringify({ apps, ...(/^[0-9a-f]{64}$/.test(token || '') ? { token } : {}), ...(/^\d{1,3}(\.\d{1,3}){3}(:\d{1,5})?$/.test(tvAddress || '') ? { tvAddress } : {}) }) }); }
   catch { throw new Error("Couldn't reach BM Support. Check the computer's internet and try again."); }
   if (!res.ok) throw new Error(`Couldn't record your install (error ${res.status}). Try again.`);
   return true;
