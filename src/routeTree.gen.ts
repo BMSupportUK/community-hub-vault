@@ -127,6 +127,7 @@ import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicEnablerConfirmRouteImport } from './routes/api/public/enabler-confirm'
+import { Route as ApiPublicEnablerHandoffRouteImport } from './routes/api/public/enabler-handoff'
 import { Route as ApiPublicEnablerLoginRouteImport } from './routes/api/public/enabler-login'
 import { Route as ApiPublicEnablerRefreshRouteImport } from './routes/api/public/enabler-refresh'
 import { Route as ApiPublicEnablerSelfInstallRouteImport } from './routes/api/public/enabler-self-install'
@@ -886,6 +887,11 @@ const ApiPublicEnablerConfirmRoute = ApiPublicEnablerConfirmRouteImport.update({
   path: '/api/public/enabler-confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEnablerHandoffRoute = ApiPublicEnablerHandoffRouteImport.update({
+  id: '/api/public/enabler-handoff',
+  path: '/api/public/enabler-handoff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicEnablerLoginRoute = ApiPublicEnablerLoginRouteImport.update({
   id: '/api/public/enabler-login',
   path: '/api/public/enabler-login',
@@ -1494,6 +1500,7 @@ export interface FileRoutesByFullPath {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
+  '/api/public/enabler-handoff': typeof ApiPublicEnablerHandoffRoute
   '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/enabler-refresh': typeof ApiPublicEnablerRefreshRoute
   '/api/public/enabler-self-install': typeof ApiPublicEnablerSelfInstallRoute
@@ -1694,6 +1701,7 @@ export interface FileRoutesByTo {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
+  '/api/public/enabler-handoff': typeof ApiPublicEnablerHandoffRoute
   '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/enabler-refresh': typeof ApiPublicEnablerRefreshRoute
   '/api/public/enabler-self-install': typeof ApiPublicEnablerSelfInstallRoute
@@ -1900,6 +1908,7 @@ export interface FileRoutesById {
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
+  '/api/public/enabler-handoff': typeof ApiPublicEnablerHandoffRoute
   '/api/public/enabler-login': typeof ApiPublicEnablerLoginRoute
   '/api/public/enabler-refresh': typeof ApiPublicEnablerRefreshRoute
   '/api/public/enabler-self-install': typeof ApiPublicEnablerSelfInstallRoute
@@ -2105,6 +2114,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/enabler-confirm'
+    | '/api/public/enabler-handoff'
     | '/api/public/enabler-login'
     | '/api/public/enabler-refresh'
     | '/api/public/enabler-self-install'
@@ -2305,6 +2315,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/enabler-confirm'
+    | '/api/public/enabler-handoff'
     | '/api/public/enabler-login'
     | '/api/public/enabler-refresh'
     | '/api/public/enabler-self-install'
@@ -2510,6 +2521,7 @@ export interface FileRouteTypes {
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/enabler-confirm'
+    | '/api/public/enabler-handoff'
     | '/api/public/enabler-login'
     | '/api/public/enabler-refresh'
     | '/api/public/enabler-self-install'
@@ -2634,6 +2646,7 @@ export interface RootRouteChildren {
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicEnablerConfirmRoute: typeof ApiPublicEnablerConfirmRoute
+  ApiPublicEnablerHandoffRoute: typeof ApiPublicEnablerHandoffRoute
   ApiPublicEnablerLoginRoute: typeof ApiPublicEnablerLoginRoute
   ApiPublicEnablerRefreshRoute: typeof ApiPublicEnablerRefreshRoute
   ApiPublicEnablerSelfInstallRoute: typeof ApiPublicEnablerSelfInstallRoute
@@ -3519,6 +3532,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/enabler-confirm'
       fullPath: '/api/public/enabler-confirm'
       preLoaderRoute: typeof ApiPublicEnablerConfirmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/enabler-handoff': {
+      id: '/api/public/enabler-handoff'
+      path: '/api/public/enabler-handoff'
+      fullPath: '/api/public/enabler-handoff'
+      preLoaderRoute: typeof ApiPublicEnablerHandoffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/enabler-login': {
@@ -4545,6 +4565,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicEnablerConfirmRoute: ApiPublicEnablerConfirmRoute,
+  ApiPublicEnablerHandoffRoute: ApiPublicEnablerHandoffRoute,
   ApiPublicEnablerLoginRoute: ApiPublicEnablerLoginRoute,
   ApiPublicEnablerRefreshRoute: ApiPublicEnablerRefreshRoute,
   ApiPublicEnablerSelfInstallRoute: ApiPublicEnablerSelfInstallRoute,
