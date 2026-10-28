@@ -152,15 +152,16 @@ public class MainActivity extends Activity {
         welcomeBox.setPadding(dp(24), dp(28), dp(24), dp(24));
         welcomeBox.setBackgroundColor(BG);
         ImageView logo = new ImageView(this);
-        logo.setImageResource(R.drawable.bm_logo);
-        logo.setContentDescription("BM Support");
-        LinearLayout.LayoutParams logoLp = new LinearLayout.LayoutParams(dp(112), dp(112));
+        logo.setImageResource(R.drawable.family_tv);
+        logo.setContentDescription("A family watching TV together");
+        logo.setAdjustViewBounds(true); logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams logoLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         logoLp.gravity = Gravity.CENTER_HORIZONTAL;
         welcomeBox.addView(logo, logoLp);
         TextView welcomeTitle = text("Welcome to BM TV Enabler", 24, FG, true);
         welcomeTitle.setGravity(Gravity.CENTER);
         welcomeBox.addView(welcomeTitle, lp(dp(10)));
-        TextView welcomeText = text("Install your TV apps or connect with BM Support. Keep this phone and your TV on the same Wi-Fi.", 16, MUTED, false);
+        TextView welcomeText = text("Log in with your PIN, then enter the website code from your bmsupport.uk order or support ticket. The app knows what to do next: install your apps or connect your TV for staff help. Keep this phone and your TV on the same Wi-Fi.", 16, MUTED, false);
         welcomeText.setGravity(Gravity.CENTER);
         welcomeBox.addView(welcomeText, lp(dp(4)));
         // PIN login: customers get a 24-hour PIN on their ticket/order at bmsupport.uk.

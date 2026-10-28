@@ -89,3 +89,5 @@ footer { max-width: 680px; margin: 28px auto 0; border-top: 1px solid var(--bord
 #apps-choose-list label.disabled { opacity: .5; cursor: default; }
 #apps-choose-list input { width: 20px; height: 20px; accent-color: var(--accent); }
 #apps-choose-list small { margin-left: auto; }
+
+.welcome-family{display:block;width:100%;max-width:520px;margin:0 auto 16px;border-radius:14px;}
