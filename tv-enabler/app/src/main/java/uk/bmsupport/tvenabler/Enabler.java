@@ -523,12 +523,13 @@ final class Enabler {
         catch (org.json.JSONException e) { return false; }
     }
     /** Opens a ticket for staff with the fresh sharing reference attached; true when the screen-share request reached staff. */
-    static final class Handoff { int helpPlan; String device; String ticketId; java.util.Set<String> apps = new java.util.HashSet<>(); }
+    static final class Handoff { int helpPlan; String purpose; String device; String ticketId; java.util.Set<String> apps = new java.util.HashSet<>(); }
     /** Answers the customer gave on bmsupport.uk, unlocked by a one-time 6-digit code and this app's PIN login. */
     static Handoff redeemHandoff(String code) {
         try {
-            org.json.JSONObject r = sitePost("enabler-handoff", new org.json.JSONObject().put("code", code));
+            org.json.JSONObject r = sitePost("enabler-handoff", new org.json.JSONObject().put("code", code).put("protocol", 2));
             Handoff h = new Handoff();
+            h.purpose = r.optString("purpose", "install");
             h.helpPlan = r.optInt("helpPlan", 2); h.device = "amazon".equals(r.optString("device")) ? "amazon" : "android";
             h.ticketId = r.isNull("ticketId") ? null : r.optString("ticketId", null);
             org.json.JSONArray a = r.optJSONArray("apps");
@@ -537,6 +538,11 @@ final class Enabler {
         } catch (org.json.JSONException e) { throw new IllegalStateException("Couldn't read your code. Try again."); }
     }
     static boolean openStaffTicket(String shareToken, String device, java.util.List<String> apps) { return openStaffTicket(shareToken, device, apps, null); }
+    static void linkSupportTicket(String ticketId, String shareToken) {
+        try {
+            sitePost("enabler-ticket-support", new org.json.JSONObject().put("ticketId", ticketId).put("shareToken", shareToken));
+        } catch (org.json.JSONException e) { throw new IllegalStateException("Couldn't send the TV connection to your ticket."); }
+    }
     static boolean openStaffTicket(String shareToken, String device, java.util.List<String> apps, String ticketId) {
         try {
             org.json.JSONObject body = new org.json.JSONObject().put("mode", "create").put("shareToken", shareToken)

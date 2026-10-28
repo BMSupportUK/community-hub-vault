@@ -2514,6 +2514,7 @@ export type Database = {
           expires_at: string
           help_plan: number
           id: string
+          purpose: string
           ticket_id: string | null
           used_at: string | null
           user_id: string
@@ -2526,6 +2527,7 @@ export type Database = {
           expires_at?: string
           help_plan: number
           id?: string
+          purpose?: string
           ticket_id?: string | null
           used_at?: string | null
           user_id: string
@@ -2538,6 +2540,7 @@ export type Database = {
           expires_at?: string
           help_plan?: number
           id?: string
+          purpose?: string
           ticket_id?: string | null
           used_at?: string | null
           user_id?: string

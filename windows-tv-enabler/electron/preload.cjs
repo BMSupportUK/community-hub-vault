@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('bmTv', {
   officeOpen: () => ipcRenderer.invoke('bm:office-open'),
   staffTicket: (shareToken, device, apps, ticketId) => ipcRenderer.invoke('bm:staff-ticket', shareToken, device, apps, ticketId),
   handoff: (code) => ipcRenderer.invoke('bm:handoff', code),
+  ticketSupport: (ticketId, token) => ipcRenderer.invoke('bm:ticket-support', ticketId, token),
   selfInstall: (token, apps, tvAddress) => ipcRenderer.invoke('bm:self-install', token, apps, tvAddress),
   confirmCode: (checks, device, address, kind) => ipcRenderer.invoke('bm:confirm-code', checks, device, address, kind),
   progress: callback => {

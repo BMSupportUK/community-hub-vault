@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/enabler-handoff")({
   server: { handlers: {
     OPTIONS: async () => new Response(null, { status: 204, headers }),
     POST: async ({ request }) => {
-      const body = z.object({ code: z.string().max(20) }).safeParse(await request.json().catch(() => null));
+      const body = z.object({ code: z.string().max(20), protocol: z.number().int().optional() }).safeParse(await request.json().catch(() => null));
       const code = body.success ? normalizeHandoffCode(body.data.code) : null;
       if (!code) return reply({ error: "Type the 6-digit code from the website." }, 400);
       const tok = request.headers.get("x-enabler-token");
@@ -34,13 +34,14 @@ export const Route = createFileRoute("/api/public/enabler-handoff")({
         const { data: t } = await db.from("tickets").select("user_id").eq("id", pin.ticket_id).maybeSingle();
         userId = t?.user_id ?? null;
       }
-      const { data: row } = await db.from("enabler_handoffs").select("id, user_id, device, help_plan, app_paths, ticket_id, expires_at, used_at")
+      const { data: row } = await db.from("enabler_handoffs").select("id, user_id, device, help_plan, app_paths, ticket_id, expires_at, used_at, purpose")
         .eq("code_hash", await sha256Hex(code)).maybeSingle();
       const verdict = handoffUsable(row, userId);
       if (verdict !== "ok" || !row) return reply({ error: MESSAGES[verdict as keyof typeof MESSAGES] }, verdict === "wrong_user" ? 403 : 404);
+      if (row.purpose === "support" && (!body.success || body.data.protocol !== 2)) return reply({ error: "Update BM TV Enabler from your ticket before using this remote-support code." }, 426);
       const { data: claimed } = await db.from("enabler_handoffs").update({ used_at: new Date().toISOString() }).eq("id", row.id).is("used_at", null).select("id");
       if (!claimed?.length) return reply({ error: MESSAGES.used }, 404);
-      return reply({ device: row.device, helpPlan: row.help_plan, apps: row.app_paths, ticketId: row.ticket_id });
+      return reply({ purpose: row.purpose, device: row.device, helpPlan: row.help_plan, apps: row.app_paths, ticketId: row.ticket_id });
     },
   } },
 });

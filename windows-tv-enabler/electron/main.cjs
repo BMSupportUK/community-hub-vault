@@ -63,6 +63,7 @@ else {
     ipcMain.handle('bm:office-open', task(async () => (await staffHelp({ mode: 'check' })).open === true));
     ipcMain.handle('bm:staff-ticket', task(async (shareToken, device, apps, ticketId) => staffHelp({ mode: 'create', shareToken, device, apps: Array.isArray(apps) ? apps.filter(a => typeof a === 'string').slice(0, 40) : [], ...(typeof ticketId === 'string' && ticketId ? { ticketId } : {}) })));
     ipcMain.handle('bm:handoff', task(async (code) => redeemHandoff(code)));
+    ipcMain.handle('bm:ticket-support', task((ticketId, token) => require('../core.cjs').ticketSupport(ticketId, token)));
     ipcMain.handle('bm:self-install', task(async (token, apps, tvAddress) => logSelfInstall(token, apps, tvAddress)));
     ipcMain.handle('bm:confirm-code', task(async (checks, device, address, kind) => requestConfirmCode(checks, device, undefined, kind === 'install' ? null : (address ? await readHelperCode(address, adb, say) : null), true, kind === 'install' ? 'install' : 'share')));
     window.loadFile(page);

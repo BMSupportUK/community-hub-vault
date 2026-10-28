@@ -25,7 +25,7 @@ let installCode = '', installExpiresAt = 0, installUsed = false, installRefreshT
 let installChoice = 0;
 // Staff-help ticket after installing: 0 none, 1 opened + screen share sent to staff, 2 opened (share not linked), 3 failed.
 let helpTicket = 0, helpTicketError = '';
-let handoffApps = null, handoffTicket = null; // answers loaded from a bmsupport.uk code
+let handoffApps = null, handoffTicket = null, handoffPurpose = 'install'; // answers loaded from a bmsupport.uk code
 let helpPlan = Number(localStorage.getItem('bm-tv-help-plan')) || 0; // asked before installing: 1 staff help, 2 self install
 const helpYes = document.getElementById('help-yes'), helpNo = document.getElementById('help-no');
 function saveInstallState(patch) { try { const saved = JSON.parse(localStorage.getItem('bm-tv-confirmation-install') || 'null'); if (saved) localStorage.setItem('bm-tv-confirmation-install', JSON.stringify({ ...saved, ...patch })); } catch { /* ignore */ } }
@@ -281,6 +281,11 @@ async function run(stage, host) {
         confirmationUsed = false; sharingReferenceExpired = false;
         refreshToken = issued.refreshToken || ''; refreshHost = host;
         localStorage.setItem('bm-tv-confirmation', JSON.stringify({ code: confirmCode, expiresAtMs: confirmExpiresAt, refreshToken, host, device, referenceUsed: false }));
+        if (handoffPurpose === 'support' && handoffTicket) {
+          await window.bmTv.ticketSupport(handoffTicket, refreshToken);
+          say('✓ TV linked to your existing support ticket. Press Connect my screen on the website so staff can investigate your issue.');
+          return;
+        }
         say('✓ Code ready. Type it on your ticket or order\'s Remote setup tab.');
       }
     } else {
@@ -347,6 +352,15 @@ async function run(stage, host) {
       }
       const ok = isReadyNow();
       wizard.setupFinished(ok);
+      if (ok && handoffPurpose === 'support' && handoffTicket) {
+        const issued = await window.bmTv.confirmCode(checks, device, host);
+        confirmCode = issued.code; confirmExpiresAt = issued.expiresAtMs;
+        refreshToken = issued.refreshToken || ''; refreshHost = host; confirmationUsed = false;
+        localStorage.setItem('bm-tv-confirmation', JSON.stringify({ code: confirmCode, expiresAtMs: confirmExpiresAt, refreshToken, host, device, referenceUsed: false }));
+        await window.bmTv.ticketSupport(handoffTicket, refreshToken);
+        say('✓ TV linked to your support ticket. Press Connect my screen on the website.');
+        return;
+      }
       if (checks.type === 'amazon' || checks.type === 'android') { device = checks.type; localStorage.setItem('bm-tv-device', device); }
       say(ok ? '✓ TV setup confirmed: both apps installed and remote control switched on.' : 'The TV is not fully ready yet. Press Try again.', !ok);
     }
@@ -445,6 +459,7 @@ reset.addEventListener('click', () => {
 });
 function pickApps(value) {
   if (busy) return;
+  handoffPurpose = 'install'; handoffTicket = null; handoffApps = null;
   if (value === 'have' && restoreConfirmation()) { localStorage.setItem('bm-tv-apps', value); say(''); render(); return; }
   // Install our apps always runs a fresh install — an old install code never skips it.
   if (value === 'new') { handoffApps = null; handoffTicket = null; installCode = ''; installExpiresAt = 0; installUsed = false; installRefreshToken = ''; installChoice = 0; helpTicket = 0; helpTicketError = ''; appsResults = []; }
@@ -478,10 +493,14 @@ el('code-ask-ok').addEventListener('click', async () => {
     const h = await window.bmTv.handoff(code);
     setBusy(false);
     helpPlan = h.helpPlan; localStorage.setItem('bm-tv-help-plan', String(h.helpPlan));
-    pickApps('new');
+    // A new website handoff must not restore another ticket's old confirmation.
+    apps = h.purpose === 'support' ? 'have' : 'new';
+    wizard.reset(); confirmCode = ''; refreshToken = ''; confirmationUsed = false;
+    localStorage.setItem('bm-tv-apps', apps);
+    handoffPurpose = h.purpose;
     handoffApps = h.helpPlan === 2 ? h.apps : null; handoffTicket = h.ticketId;
     pickDevice(h.device);
-    say(`✓ Code accepted. ${h.helpPlan === 1 ? "We'll set up screen sharing for our staff." : "We'll install the apps you ticked."}`);
+    say(`✓ Code accepted. ${h.purpose === 'support' ? "We'll connect your TV to your existing ticket so staff can solve your issue." : h.helpPlan === 1 ? "We'll set up screen sharing for staff to install your apps." : "We'll install the apps you ticked."}`);
   } catch (error) { setBusy(false); say(cleanError(error), true); }
 });
 el('help-ask-cancel').addEventListener('click', () => el('help-ask').close());

@@ -470,11 +470,18 @@ async function staffHelp(body, post = globalThis.fetch) {
 /** Answers given on bmsupport.uk › Install Guides, unlocked by a one-time 6-digit code and this PIN login. */
 async function redeemHandoff(code, post = globalThis.fetch) {
   let res, data = {};
-  try { res = await post('https://bmsupport.uk/api/public/enabler-handoff', { method: 'POST', headers: { 'content-type': 'application/json', ...(enablerToken ? { 'x-enabler-token': enablerToken } : {}) }, body: JSON.stringify({ code: String(code || '') }) }); }
+  try { res = await post('https://bmsupport.uk/api/public/enabler-handoff', { method: 'POST', headers: { 'content-type': 'application/json', ...(enablerToken ? { 'x-enabler-token': enablerToken } : {}) }, body: JSON.stringify({ code: String(code || ''), protocol: 2 }) }); }
   catch { throw new Error("Couldn't reach BM Support. Check the computer's internet and try again."); }
   try { data = await res.json(); } catch { data = {}; }
   if (!res.ok) throw new Error(data.error || `Couldn't check your code (error ${res.status}). Try again.`);
-  return { helpPlan: data.helpPlan === 1 ? 1 : 2, device: data.device === 'amazon' ? 'amazon' : 'android', ticketId: typeof data.ticketId === 'string' ? data.ticketId : null, apps: Array.isArray(data.apps) ? data.apps.filter(a => typeof a === 'string') : [] };
+  return { purpose: data.purpose === 'support' ? 'support' : 'install', helpPlan: data.helpPlan === 1 ? 1 : 2, device: data.device === 'amazon' ? 'amazon' : 'android', ticketId: typeof data.ticketId === 'string' ? data.ticketId : null, apps: Array.isArray(data.apps) ? data.apps.filter(a => typeof a === 'string') : [] };
+}
+
+async function ticketSupport(ticketId, shareToken, post = globalThis.fetch) {
+  const res = await post('https://bmsupport.uk/api/public/enabler-ticket-support', { method: 'POST', headers: { 'content-type': 'application/json', ...(enablerToken ? { 'x-enabler-token': enablerToken } : {}) }, body: JSON.stringify({ ticketId, shareToken }) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.linked) throw new Error(data.error || 'Could not send the TV connection to your ticket. Try again.');
+  return data;
 }
 
 async function requestConfirmCode(checks, device, post = globalThis.fetch, helperCode = null, withExpiry = false, kind = 'share') {
@@ -533,4 +540,4 @@ async function refreshConnection(host, token, adb, progress, post = globalThis.f
   } catch (error) { await send({ token, requestId: task.requestId }).catch(() => {}); throw error; }
 }
 
-module.exports = { redeemHandoff, staffHelp, logSelfInstall, installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, listOurApps, pickApps, activate, openCodeApp, enable };
+module.exports = { ticketSupport, redeemHandoff, staffHelp, logSelfInstall, installScreenCommand, INSTALL_SCREEN, adbTimeout, setEnablerToken, refreshConnection, loginWithPin, splitAddress, pair, helperCodeFrom, readHelperCode, showTvCode, requestConfirmCode, report, downloadHelper, ensureHelperApk, extractControl, CONTROL, HELPER, SERVICE, privateAddress, accessibilityList, connect, readChecks, checkExisting, installHelper, installControl, installOurApps, listOurApps, pickApps, activate, openCodeApp, enable };

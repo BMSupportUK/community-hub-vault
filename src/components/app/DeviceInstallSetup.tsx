@@ -205,7 +205,7 @@ function TvSteps({ device }: { device: "amazon" | "android" }) {
         void notifyNewTicket({ data: { ticketId: t.id, subject, categorySlug: "general" } }).catch(() => {});
         ticketId = t.id;
       }
-      setCode(await handoffFn({ data: { device, helpPlan: helpPlan as 1 | 2, appPaths: helpPlan === 2 ? [...picked] : [], ticketId } }));
+      setCode(await handoffFn({ data: { purpose: "install", device, helpPlan: helpPlan as 1 | 2, appPaths: helpPlan === 2 ? [...picked] : [], ticketId } }));
       setCurrent(steps.length - 1);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a code. Try again."); }
     finally { setBusy(false); }
