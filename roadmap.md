@@ -3,9 +3,9 @@
 
 ## Complete Enabler guide refresh
 - [x] Updated eight edition-2 articles/private PDFs, including new Android Enabler installation guide, current PIN/reference steps, Windows-only pairing, explicit TV consent and safe retry instructions; existing row IDs retained.
-- [ ] Finish eight matching narrated videos, one per updated guide/PDF, using the corrected source and efficient rendering; replace hidden outdated video rows and add missing companion rows.
+- [x] Completed eight matching narrated videos (8–12 minutes each), reading every current guide step. Replaced the three hidden outdated rows and added five missing video companion rows; private MP4 originals and browser-compatible WebM playback copies uploaded.
 - [x] Inspected all 35 revised PDF pages; no clipping/overlap. Corrected contact-sheet counting artifact. All eight private signed PDF reads succeed; signed-in Windows article/PDF, Amazon PDF and new Android listing verified. Unrelated guides unchanged.
-- [ ] Verify all eight private videos and PDFs and signed-in playback after upload. Physical TV/Windows execution remains unverified without customer devices.
+- [x] All eight PDFs return valid secure files; all eight videos play through signed-in Install Guides across Amazon/Android/Windows. Every slide checked, narration samples transcribed, audio/video duration checked. Preview Chromium lacks H264/AAC, resolved with WebM copies. Physical TV/Windows execution remains unverified without customer devices.
 
 ## Windows written guides and PDFs
 - [x] Create separate Windows installation and screen-sharing written guides with matching branded PDFs, using current app labels and reference lifecycle.
