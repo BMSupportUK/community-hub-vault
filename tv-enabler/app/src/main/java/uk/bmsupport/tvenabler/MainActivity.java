@@ -474,7 +474,7 @@ public class MainActivity extends Activity {
                 turnOn.setText("Try again"); break;
             case DONE:
                 if (install) {
-                    heading.setText("Your apps are installed");
+                    heading.setText(helpPlan == 1 && helpTicket != 0 ? "Staff help is on the way" : "Your apps are installed");
                     if (helpPlan == 1 && helpTicket != 0) {
                         description.setText(helpTicket == 1
                             ? "Each app is listed below with what happened.\n\n✓ We've opened a support ticket for you and set up screen sharing. Our staff have been told and will connect to your TV shortly — keep the TV switched on with BM Remote Helper on screen. You can follow your ticket at bmsupport.uk › Tickets."
