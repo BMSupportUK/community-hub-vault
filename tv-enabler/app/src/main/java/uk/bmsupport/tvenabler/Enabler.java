@@ -223,8 +223,13 @@ final class Enabler {
 
     /** New-customer setups: installs every app an admin ticked "Install on TV during setup".
      * Existing packages bypass downloads and installation. Never fatal; returns one AppResult per app. */
-    static java.util.List<AppResult> installOurApps(Context ctx, String host, Progress p) throws Exception {
-        java.util.List<AppResult> results = new java.util.ArrayList<>();
+    /** One app in the customer's tick list. */
+    static final class PickItem {
+        final String name, path; final boolean installed;
+        PickItem(String name, String path, boolean installed) { this.name = name; this.path = path; this.installed = installed; }
+    }
+
+    private static org.json.JSONArray fetchInstallList() {
         org.json.JSONArray apps;
         try {
             java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL("https://bmsupport.uk/api/public/tv-install-list").openConnection();
@@ -233,14 +238,59 @@ final class Enabler {
             finally { h.disconnect(); }
         } catch (Exception e) { throw new IllegalStateException("Couldn't get the app list. Check the phone's internet and try again."); }
         if (apps == null || apps.length() == 0) throw new IllegalStateException("No apps are set up to install yet. Please contact BM Support.");
+        return apps;
+    }
+
+    /** Only apps installed and enabled for the TV's current profile count as "already there". */
+    private static java.util.Set<String> tvPackages(AdbClient adb) throws Exception {
+        String listed = adb.shell("pm list packages --user current");
+        if (listed == null || !listed.contains("package:")) listed = adb.shell("pm list packages");
+        java.util.Set<String> installed = InstalledApps.from(listed);
+        try { installed.removeAll(InstalledApps.from(adb.shell("pm list packages -d --user current"))); } catch (Exception ignored) {}
+        return installed;
+    }
+
+    /** Customer's pick: ticked apps plus apps already on the TV (reported as skipped). only null = all. Matches Windows pickApps. */
+    static boolean picked(String path, String packageName, java.util.Set<String> only, java.util.Set<String> installed) {
+        return only == null || only.contains(path) || InstalledApps.contains(installed, packageName);
+    }
+
+    /** Install list for the tick list, each marked with whether it's already on the TV. */
+    static java.util.List<PickItem> listOurApps(Context ctx, String host, Progress p) throws Exception {
+        org.json.JSONArray apps = fetchInstallList();
+        java.util.List<PickItem> out = new java.util.ArrayList<>();
         KeyPair kp = keys(ctx);
         try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
             p.step(0, "Checking which apps are already on your TV…");
-            // Only apps installed and enabled for the TV's current profile count as "already there".
-            String listed = adb.shell("pm list packages --user current");
-            if (listed == null || !listed.contains("package:")) listed = adb.shell("pm list packages");
-            java.util.Set<String> installed = InstalledApps.from(listed);
-            try { installed.removeAll(InstalledApps.from(adb.shell("pm list packages -d --user current"))); } catch (Exception ignored) {}
+            java.util.Set<String> installed = tvPackages(adb);
+            for (int i = 0; i < apps.length(); i++) {
+                org.json.JSONObject a = apps.optJSONObject(i);
+                if (a == null) continue;
+                String path = a.optString("path", "");
+                if (!path.startsWith("/api/public/tv-install-apk/")) continue;
+                String name = a.optString("name", "app");
+                if (name.length() > 80) name = name.substring(0, 80);
+                out.add(new PickItem(name, path, InstalledApps.contains(installed, a.optString("packageName", ""))));
+            }
+        }
+        return out;
+    }
+
+    static java.util.List<AppResult> installOurApps(Context ctx, String host, Progress p) throws Exception { return installOurApps(ctx, host, p, null); }
+
+    static java.util.List<AppResult> installOurApps(Context ctx, String host, Progress p, java.util.Set<String> only) throws Exception {
+        java.util.List<AppResult> results = new java.util.ArrayList<>();
+        org.json.JSONArray all = fetchInstallList();
+        KeyPair kp = keys(ctx);
+        try (AdbClient adb = AdbClient.connect(host, 5555, kp, keyLine(kp))) {
+            p.step(0, "Checking which apps are already on your TV…");
+            java.util.Set<String> installed = tvPackages(adb);
+            org.json.JSONArray apps = new org.json.JSONArray();
+            for (int i = 0; i < all.length(); i++) {
+                org.json.JSONObject a = all.optJSONObject(i);
+                if (a != null && picked(a.optString("path", ""), a.optString("packageName", ""), only, installed)) apps.put(a);
+            }
+            if (apps.length() == 0) throw new IllegalStateException("Tick at least one app to install.");
             boolean screen = ensureInstallScreen(ctx, adb, installed);
             int total = apps.length();
             java.util.List<String> done = new java.util.ArrayList<>();
