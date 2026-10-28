@@ -209,8 +209,8 @@ function render() {
     if (!expired && confirmationUsed) description.textContent += '\n\nThis reference has been used on a ticket or order. Press New code for your next ticket or order — each one needs its own code.';
     if (!expired && confirmCode) description.textContent += '\n\nNeed apps installed too? Press Return to home — this code is kept until it expires.';
   } else if (askApps) {
-    heading.textContent = 'What do you need?';
-    description.textContent = 'Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.';
+    heading.textContent = 'Enter your website code';
+    description.textContent = "Get your code from bmsupport.uk: your support ticket's Remote setup tab, or your order's install or staff-help option. Press I have a website code and type it in.";
   } else if (s === Step.DEBUGGING) {
     heading.textContent = device ? '1. Enable TV debugging' : 'Which TV is your order or support for?';
     deviceHelp.textContent = 'Choose Amazon Fire TV or Android / Google TV to see the right steps.';

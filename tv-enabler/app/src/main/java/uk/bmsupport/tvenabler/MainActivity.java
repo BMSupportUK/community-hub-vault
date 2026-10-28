@@ -441,7 +441,7 @@ public class MainActivity extends Activity {
         boolean supportDone = s == SetupWizard.Step.DONE && !install;
         reset.setVisibility(installDone ? View.GONE : View.VISIBLE);
         startAgain.setVisibility(askApps ? View.GONE : View.VISIBLE);
-        appsCode.setVisibility(askApps ? View.VISIBLE : View.GONE); appsNew.setVisibility(askApps ? View.VISIBLE : View.GONE); appsHave.setVisibility(askApps ? View.VISIBLE : View.GONE);
+        appsCode.setVisibility(askApps ? View.VISIBLE : View.GONE); appsNew.setVisibility(View.GONE); appsHave.setVisibility(View.GONE);
         appsBack.setVisibility(View.GONE); // Return to home already covers going back to the options.
         boolean pick = (s == SetupWizard.Step.DEBUGGING && !askApps && device == null) || (!install && s == SetupWizard.Step.DONE && device == null && confirmCode.length() == 0);
         devicePick.setVisibility(pick ? View.VISIBLE : View.GONE);
@@ -488,8 +488,8 @@ public class MainActivity extends Activity {
         switch (s) {
             case DEBUGGING:
                 if (askApps) {
-                    heading.setText("What do you need?");
-                    description.setText("Install our apps: puts all our apps on your TV for you.\n\nScreen-share support: lets our staff see your TV and help you through your ticket or order.");
+                    heading.setText("Enter your website code");
+                    description.setText("Get your code from bmsupport.uk: your support ticket's Remote setup tab, or your order's install or staff-help option. Press I have a website code and type it in.");
                     break;
                 }
                 heading.setText(device == null ? "Which TV is your order or support for?" : "1. Enable TV debugging");
