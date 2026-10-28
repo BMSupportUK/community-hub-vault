@@ -210,7 +210,10 @@ public final class Control {
         entries.sort(Comparator.comparing(e -> e.getValue().toLowerCase(Locale.ROOT)));
         JSONArray out = new JSONArray();
         for (Map.Entry<String, String> e : entries.subList(0, Math.min(80, entries.size()))) {
-            out.put(new JSONObject().put("pkg", e.getKey()).put("label", e.getValue()));
+            try {
+                out.put(new JSONObject().put("pkg", e.getKey()).put("label", e.getValue()));
+            } catch (Throwable ignore) {
+            }
         }
         return out;
     }
@@ -223,18 +226,21 @@ public final class Control {
         boolean listed = listed(ctx);
         boolean on = !needsInstall && (running || listed);
         Long v = installedVersion(ctx);
-        JSONObject out = new JSONObject()
-                .put("fire", fire)
-                .put("installed", !needsInstall)
-                .put("enabled", on)
-                .put("running", running)
-                .put("listed", listed)
-                .put("adb", adbEnabled(ctx))
-                .put("helper", BuildConfig.VERSION_NAME)
-                .put("controlVersion", v == null ? -1L : v)
-                .put("error", lastError(ctx) == null ? JSONObject.NULL : lastError(ctx))
-                .put("fireSetupNeeded", fire && !on);
-        if (on && withApps) out.put("apps", apps(ctx));
+        JSONObject out = new JSONObject();
+        try {
+            out.put("fire", fire)
+                    .put("installed", !needsInstall)
+                    .put("enabled", on)
+                    .put("running", running)
+                    .put("listed", listed)
+                    .put("adb", adbEnabled(ctx))
+                    .put("helper", BuildConfig.VERSION_NAME)
+                    .put("controlVersion", v == null ? -1L : v)
+                    .put("error", lastError(ctx) == null ? JSONObject.NULL : lastError(ctx))
+                    .put("fireSetupNeeded", fire && !on);
+            if (on && withApps) out.put("apps", apps(ctx));
+        } catch (Throwable ignore) {
+        }
         return out;
     }
 
@@ -344,17 +350,14 @@ public final class Control {
                     adb.supportsFeature("shell_v2");
                     prefs(ctx).edit().putBoolean("adb_ok", true).apply();
                     return adb;
-                } catch (SocketTimeoutException e) {
-                    last = e;
-                    if (adb != null) try {
-                        adb.close();
-                    } catch (Throwable ignore) {
-                    }
                 } catch (Exception e) {
                     last = e;
                     if (adb != null) try {
                         adb.close();
                     } catch (Throwable ignore) {
+                    }
+                    if (e instanceof SocketTimeoutException) {
+                        continue; // host not answering: try the next address
                     }
                     break; // auth or protocol problem: retry once with fresh keys
                 }
