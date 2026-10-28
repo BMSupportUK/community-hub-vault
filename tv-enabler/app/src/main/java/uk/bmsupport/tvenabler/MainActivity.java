@@ -222,8 +222,8 @@ public class MainActivity extends Activity {
             if (busy || refreshBusy) return;
             new android.app.AlertDialog.Builder(this)
                     .setTitle("Do you need help from our staff?")
-                    .setMessage("Choose before we install. Yes gives you a code for your ticket or order. No means you're installing it yourself.")
-                    .setPositiveButton("Yes — I need staff help", (d, w) -> { helpPlan = 1; getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", 1).apply(); pickApps("new"); })
+                    .setMessage("Choose before we install. Both choices install your apps.\n\nYes: once the apps are on your TV, we set up screen sharing and open a support ticket so our staff can connect and help (office hours only).\n\nNo: you're installing them yourself.")
+                    .setPositiveButton("Yes — I need staff help", (d, w) -> askStaffHelp())
                     .setNegativeButton("No — I'll install myself", (d, w) -> { helpPlan = 2; getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", 2).apply(); pickApps("new"); })
                     .show();
         });
@@ -342,11 +342,31 @@ public class MainActivity extends Activity {
         return true;
     }
 
+    /** Staff help needs the office open: check first, before anything installs. */
+    private void askStaffHelp() {
+        if (busy || refreshBusy) return;
+        setBusy(true); say("Checking our office is open…", MUTED);
+        io.execute(() -> {
+            boolean open;
+            try { open = Enabler.officeOpen(); } catch (Exception e) { ui.post(() -> { if (!isFinishing() && !isDestroyed()) { setBusy(false); say(Enabler.friendly(e), WARN); } }); return; }
+            final boolean isOpen = open;
+            ui.post(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                setBusy(false); say("", MUTED);
+                if (isOpen) { helpPlan = 1; getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", 1).apply(); pickApps("new"); return; }
+                new AlertDialog.Builder(this).setTitle("Our office is closed")
+                        .setMessage("Staff help is only available during office hours. You can still install the apps yourself now, or come back when we're open.")
+                        .setPositiveButton("Install myself", (d, w) -> { helpPlan = 2; getSharedPreferences("tv", MODE_PRIVATE).edit().putInt("helpPlan", 2).apply(); pickApps("new"); })
+                        .setNegativeButton("Cancel", null).show();
+            });
+        });
+    }
+
     private void pickApps(String a) {
         if (busy || refreshBusy) return;
         if ("have".equals(a) && restoreConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
-        // A remembered install reference skips re-installing: the apps are already on the TV.
-        if ("new".equals(a) && restoreInstallConfirmation()) { getSharedPreferences("tv", MODE_PRIVATE).edit().putString("apps", a).apply(); say("", MUTED); render(); return; }
+        // Install our apps always runs a fresh install — an old install code never skips it.
+        if ("new".equals(a)) { installCodeText = ""; installExpiresAt = 0; installRefreshToken = null; installUsed = false; installChoice = 0; helpTicket = 0; appsResults = new java.util.ArrayList<>(); }
         apps = a;
         // The TV type is its own question straight after "What do you need?", asked every time.
         device = null;
