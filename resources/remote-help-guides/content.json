@@ -472,7 +472,9 @@
       ]
     ],
     "safety": "Only share with BM Support staff through your own support ticket. Close banking, payment, password and other private screens on the TV first. You can decline a request or end a session. Never publish your PIN or reference.",
-    "sort_order": 31
+    "sort_order": 31,
+    "category_id": "4bee52e2-efcb-504d-abe8-e20409888adb",
+    "kb_category_id": "16aa8433-2c8f-559c-bde1-974d336d2864"
   },
   {
     "key": "windows-enabler-share",
@@ -588,6 +590,8 @@
       ]
     ],
     "safety": "Only share with BM Support staff through your own support ticket. Close banking, payment, password and other private screens on the TV first. You can decline a request or end a session. Never publish your PIN or reference.",
-    "sort_order": 32
+    "sort_order": 32,
+    "category_id": "4bee52e2-efcb-504d-abe8-e20409888adb",
+    "kb_category_id": "16aa8433-2c8f-559c-bde1-974d336d2864"
   }
 ]
