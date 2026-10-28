@@ -497,5 +497,5 @@
 - [x] Rebuilt BM Remote Helper from scratch (tv-remote-helper/, versionCode 15, BM key): same pairing/realtime/WebRTC protocol, help illustration behind every screen, checked wording, auto-closes once the code is read and the session starts, and after the session ends.
 - [x] Rebuilt BM Remote Control (tv-remote-control/, versionCode 3, BM key) — old builds used a retired key, so the signature-protected command channel required matching keys.
 - [x] Phone Enabler 1.54 + Windows core 1.44.0 uninstall old-key Helper/Control before installing (versionCode check). Phone 1.54 built, uploaded, registered; Windows tests 54/0 pass.
-- [ ] Build + release the Windows 1.44.0 installer (electron + NSIS) and update release.json — 1.43.0 stays live meanwhile.
+- [x] Windows 1.44.0 installer built, uploaded and registered (1.43.0 demoted).
 - [ ] Real TV test: Helper 2.4 install over 2.3, code read by both Enablers, consent, screen share, remote control, auto-close.
