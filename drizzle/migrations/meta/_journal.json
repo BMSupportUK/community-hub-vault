@@ -1716,6 +1716,13 @@
       "when": 1793213765061,
       "tag": "0244_ticket_remote_support_flags",
       "breakpoints": true
+    },
+    {
+      "idx": 245,
+      "version": "7",
+      "when": 1793215053042,
+      "tag": "0245_enabler_handoff_support_purpose",
+      "breakpoints": true
     }
   ]
 }

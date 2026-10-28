@@ -1,0 +1,2 @@
+ALTER TABLE public.enabler_handoffs ADD COLUMN purpose text NOT NULL DEFAULT 'install' CHECK (purpose IN ('install','support'));
+COMMENT ON COLUMN public.enabler_handoffs.purpose IS 'Separates ticket troubleshooting screen sharing from Install Guides installation requests.';
