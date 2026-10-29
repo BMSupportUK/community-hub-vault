@@ -41,3 +41,17 @@ test("codes are 6 digits", () => {
   expect(normalizeHandoffCode("123-456")).toBe("123456");
   expect(normalizeHandoffCode("12345")).toBeNull();
 });
+
+import { handoffUsable as usable2 } from "@/lib/enabler-handoff";
+describe("admin-issued codes", () => {
+  const future = new Date(Date.now() + 3600_000).toISOString();
+  test("work only with the PIN issued alongside them", () => {
+    const row = { user_id: "admin", expires_at: future, used_at: null, admin_issue_id: "i1" };
+    expect(usable2(row, null, Date.now(), "i1")).toBe("ok");
+    expect(usable2(row, null, Date.now(), "i2")).toBe("wrong_user");
+    expect(usable2(row, "admin", Date.now(), null)).toBe("wrong_user");
+  });
+  test("an admin-issued PIN cannot redeem a customer's code", () => {
+    expect(usable2({ user_id: "u1", expires_at: future, used_at: null }, null, Date.now(), "i1")).toBe("wrong_user");
+  });
+});
