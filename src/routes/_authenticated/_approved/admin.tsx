@@ -689,8 +689,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
           </div>
         </div>
       ) : tab === "customers" && canSeePins ? (
-        <CustomerMemberManagement>{({ toolbar, details, editor, extras, header, rolesRow }) => (
-          <CustomerSubscriptionsAdminCard canReward={isAdminOnly} memberToolbar={toolbar} memberDetails={details} memberEditor={editor} memberExtras={extras} memberHeader={header} memberRoles={rolesRow} />
+        <CustomerMemberManagement>{({ toolbar, details, editor, extras, header, rolesRow, staffList, staffCount }) => (
+          <CustomerSubscriptionsAdminCard canReward={isAdminOnly} memberToolbar={toolbar} memberDetails={details} memberEditor={editor} memberExtras={extras} memberHeader={header} memberRoles={rolesRow} staffList={staffList} staffCount={staffCount} />
         )}</CustomerMemberManagement>
       ) : tab === "customers" && hasRole("staff") ? (
         <CustomerSubscriptionsAdminCard canReward={false} viewCredentials />
