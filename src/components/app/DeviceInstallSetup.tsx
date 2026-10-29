@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, Tv } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, PlayCircle, Tv } from "lucide-react";
+import { SetupStepVideo } from "@/components/app/SetupStepVideo";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,7 @@ function AccountEnablerPin({ userId }: { userId: string }) {
 /** Self-install answers are passed to the app; staff help uses ticket remote setup. */
 function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaffHelp: () => void }) {
   const [current, setCurrent] = useState(0);
+  const [view, setView] = useState<"steps" | "video">("steps");
   const [apps, setApps] = useState<{ name: string; path: string }[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [code, setCode] = useState<{ code: string; expiresAt: string } | null>(null);
@@ -181,7 +183,15 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="font-semibold">Step {current + 1} of {steps.length}</span><span className="text-muted-foreground">Self install</span></div>
       <progress aria-label="Self-install progress" value={current + 1} max={steps.length} className="h-2 w-full accent-primary" />
     </div>
-    <section aria-label={`Step ${current + 1}: ${steps[current]}`} className="min-h-44 space-y-4">
+    <div className="flex gap-2" role="tablist" aria-label="Step view">
+      <Button role="tab" aria-selected={view === "steps"} size="sm" variant={view === "steps" ? "default" : "outline"} onClick={() => setView("steps")}>Steps</Button>
+      <Button role="tab" aria-selected={view === "video"} size="sm" variant={view === "video" ? "default" : "outline"} onClick={() => setView("video")}><PlayCircle className="size-4" />Video tutorial</Button>
+    </div>
+    {view === "video" && <section aria-label={`Video for step ${current + 1}`} className="space-y-3">
+      <h3 className="text-lg font-semibold text-foreground">Watch: {steps[current]}</h3>
+      <SetupStepVideo step={current} device={device} />
+    </section>}
+    <section hidden={view !== "steps"} aria-label={`Step ${current + 1}: ${steps[current]}`} className="min-h-44 space-y-4">
       <h3 className="text-lg font-semibold text-foreground">{steps[current]}</h3>
       {current === 3 && done && <div className="space-y-4 rounded-lg border border-primary/40 bg-primary/10 p-5 text-center">
         <CheckCircle2 className="mx-auto size-14 text-primary" />
