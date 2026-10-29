@@ -24,7 +24,7 @@ export function downloadSourceLabel(source: string): string {
 export function logPeriod(iso: string): { year: string; month: string } {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "numeric" })
     .formatToParts(new Date(iso));
-  return { year: parts.find((p) => p.type === "year")!.value, month: parts.find((p) => p.type === "month")!.value };
+  return { year: parts.find((p) => p.type === "year")!.value, month: String(Number(parts.find((p) => p.type === "month")!.value)) };
 }
 
 export function logYearOptions(rows: { createdAt: string }[]): string[] {
