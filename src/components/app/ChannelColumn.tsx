@@ -457,7 +457,7 @@ export function ChannelColumn({
                               </span>
                             ) : null}
                             {it.badge && it.badge > 0 ? (
-                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", unreadCount === 0 && "ml-auto")}>
+                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", !it.to.startsWith("/home/") && unreadCount === 0 && "ml-auto")}>
                                 {it.badge > 99 ? "99+" : it.badge}
                               </span>
                             ) : null}
@@ -485,7 +485,7 @@ export function ChannelColumn({
                               </span>
                             ) : null}
                             {it.badge && it.badge > 0 ? (
-                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", unreadCount === 0 && "ml-auto")}>
+                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", !it.to.startsWith("/home/") && unreadCount === 0 && "ml-auto")}>
                                 {it.badge > 99 ? "99+" : it.badge}
                               </span>
                             ) : null}
@@ -506,7 +506,7 @@ export function ChannelColumn({
                               });
                             }}
                             title="Channel settings"
-                            className="absolute -right-1 top-1/2 -translate-y-1/2 hidden group-hover/ch:flex items-center justify-center p-1 rounded bg-surface-2 text-muted-foreground hover:text-foreground"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover/ch:flex items-center justify-center p-1 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground"
                           >
                             <Settings className="size-3.5" />
                           </button>
