@@ -107,11 +107,13 @@ function ViewingLine({ userId }: { userId: string }) {
 /** The exact Talk Channel this staff member currently has open. */
 function TalkChannelLine({ userId }: { userId: string }) {
   const page = useUserPage(userId);
-  if (!page?.startsWith("Talk Channel · ")) return null;
+  const label = page?.startsWith("Talk Channel · ") ? page.slice("Talk Channel · ".length) : null;
   return (
-    <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] text-muted-foreground">
+    <div className="mt-0.5 flex h-4 min-w-0 items-center gap-1 text-[10px] text-muted-foreground">
+      {label && <>
       <Hash className="size-2.5 shrink-0" />
-      <span className="truncate">{page.slice("Talk Channel · ".length)}</span>
+      <span className="truncate">{label}</span>
+      </>}
     </div>
   );
 }
@@ -253,17 +255,18 @@ export function StaffOnDutyStrip({
   // drops and re-adds a member within a second, which used to make their name
   // row flicker off/on. Remember who was present in the last few seconds and
   // only drop them once that grace has passed.
-  const lastPresentAtRef = useRef(new Map<string, number>());
   const [stableIds, setStableIds] = useState<Set<string>>(() => new Set());
   useEffect(() => {
-    const now = Date.now();
-    for (const id of presentUserIds) lastPresentAtRef.current.set(id, now);
-    for (const [id, at] of lastPresentAtRef.current) {
-      if (now - at > PRESENCE_STABLE_MS) lastPresentAtRef.current.delete(id);
-    }
-    const next = new Set(presentUserIds);
-    for (const id of lastPresentAtRef.current.keys()) next.add(id);
-    setStableIds((prev) => (prev.size === next.size && Array.from(prev).every((x) => next.has(x)) ? prev : next));
+    setStableIds((prev) => {
+      const next = new Set([...prev, ...presentUserIds]);
+      return prev.size === next.size ? prev : next;
+    });
+    // Start grace when someone disappears, not when they last joined. Expire
+    // it even if no further presence event arrives; cancel on a quick rejoin.
+    const timer = setTimeout(() => setStableIds((prev) =>
+      prev.size === presentUserIds.size && Array.from(prev).every((id) => presentUserIds.has(id))
+        ? prev : new Set(presentUserIds)), PRESENCE_STABLE_MS);
+    return () => clearTimeout(timer);
   }, [presentUserIds]);
   // Authorised change (user request): sidebar Online list + count reflect THIS channel,
   // so staff who move to another channel drop out straight away.
@@ -302,19 +305,23 @@ export function StaffOnDutyStrip({
     return () => clearInterval(t);
   }, []);
 
+  const refreshingRef = useRef(false);
   const refresh = async () => {
-    const [{ data: s }, { data: b }] = await Promise.all([
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    try {
+    const [{ data: s, error: shiftError }, { data: b, error: breakError }] = await Promise.all([
       supabase.from("shifts").select("id,user_id,clock_in").is("clock_out", null),
       supabase.from("breaks").select("id,shift_id,user_id,kind,started_at").is("ended_at", null),
     ]);
+    if (shiftError || breakError) throw shiftError ?? breakError;
     const ss = (s as StaffShift[]) ?? [];
-    setShifts(ss);
-    setBreaks((b as StaffBreak[]) ?? []);
     const workingIds = new Set(ss.map((x) => x.user_id));
     // All staff-role users for the off-duty section
-    const { data: roleRows } = await supabase
+    const { data: roleRows, error: roleError } = await supabase
       .from("user_roles").select("user_id,role")
       .in("role", ["admin", "management", "moderator", "staff"]);
+    if (roleError) throw roleError;
     const bestRole = new Map<string, string>();
     const rank = (r: string) => ROLE_ORDER.indexOf(r as (typeof ROLE_ORDER)[number]);
     for (const r of (roleRows as Array<{ user_id: string; role: string }>) ?? []) {
@@ -324,10 +331,10 @@ export function StaffOnDutyStrip({
     const allIds = Array.from(bestRole.keys());
     const ids = Array.from(new Set([...allIds, ...workingIds]));
     if (ids.length) {
-      const { data: profs } = await supabase
+      const { data: profs, error: profileError } = await supabase
         .from("profiles").select("id,username,display_name,avatar_url,equipped_nameplate_id,last_seen_at").in("id", ids);
+      if (profileError) throw profileError;
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
-      setProfiles(map);
       const isDaneJ = (profile: StaffProfile) => {
         const displayName = profile.display_name?.trim() ?? "";
         const username = profile.username?.trim() ?? "";
@@ -348,11 +355,23 @@ export function StaffOnDutyStrip({
           const bn = b.display_name || b.username || "";
           return an.localeCompare(bn);
         });
+      // Commit a complete roster together: a new shift must not coexist with
+      // the previous off-duty entry during the remaining network requests.
+      setShifts(ss);
+      setBreaks((b as StaffBreak[]) ?? []);
+      setProfiles(map);
       setOffDuty(off);
 
     } else {
+      setShifts(ss);
+      setBreaks((b as StaffBreak[]) ?? []);
       setProfiles({});
       setOffDuty([]);
+    }
+    } catch (error) {
+      console.error("Could not refresh staff cards", error);
+    } finally {
+      refreshingRef.current = false;
     }
   };
 
@@ -668,7 +687,8 @@ export function StaffOnDutyStrip({
               {formatRoleLabel(p.role)}
             </span>
           </Nameplate>
-          <span className="mt-1 block text-[10px] leading-tight text-muted-foreground">
+          <span className="mt-1 flex h-14 min-w-0 flex-col text-[10px] leading-tight text-muted-foreground">
+          <span className="block">
             <TalkStaffStatusLine
               userId={p.id}
               shift={shift}
@@ -684,8 +704,9 @@ export function StaffOnDutyStrip({
               </span>
             </span>
           )}
+          <DndCountdown userId={p.id} compact className="mt-1 max-w-full shrink-0 animate-none py-0.5 leading-tight [&>span:first-child]:w-full [&>span:first-child]:min-w-0 [&>span:first-child>span]:truncate [&>span:first-child>span]:whitespace-nowrap [&_svg]:shrink-0" />
+          </span>
           <TalkChannelLine userId={p.id} />
-          <DndCountdown userId={p.id} compact className="mt-1" />
         </span>
       </div>
     );
@@ -719,16 +740,17 @@ export function StaffOnDutyStrip({
 
   if (isSidebar) {
     const shiftsByUser = new Map(allOrderedShifts.map((shift) => [shift.user_id, shift]));
-    const allStaff = [
+    const allStaff = Array.from(new Map([
       ...allOrderedShifts.map((shift) => ({
         ...(profiles[shift.user_id] ?? { id: shift.user_id, username: null, display_name: null, avatar_url: null, equipped_nameplate_id: null }),
         role: roleFlashMap.get(shift.user_id) ?? "staff",
       })),
       ...allVisibleOffDuty,
-    ].sort((a, b) => {
-      const roleDiff = roleRank(a.id) - roleRank(b.id);
+    ].map((person) => [person.id, person])).values()).sort((a, b) => {
+      const rank = (person: typeof a) => ROLE_ORDER.indexOf((roleFlashMap.get(person.id) ?? person.role) as (typeof ROLE_ORDER)[number]);
+      const roleDiff = rank(a) - rank(b);
       if (roleDiff !== 0) return roleDiff;
-      return (a.display_name || a.username || "Staff").localeCompare(b.display_name || b.username || "Staff");
+      return (a.display_name || a.username || "Staff").localeCompare(b.display_name || b.username || "Staff") || a.id.localeCompare(b.id);
     });
     // Authorised change (user request, 2026-09-28): the Talk channel staff
     // list is online-only — offline staff are not listed here at all.

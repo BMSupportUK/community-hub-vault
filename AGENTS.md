@@ -9,6 +9,7 @@
 - Shared portal headers must wrap the route outlet in a remaining-height flex row; nested page layouts can return sibling columns and must not inherit the header's column direction. A page that renders its own bar must pick the bar of the portal its viewer belongs to, so staff never land on the customer bar.
 - Gmail forwarding confirmations: captured by the email receiver, shown only to admins on Bank Transfer.
 - Talk: all staff per channel.
+- Talk staff cards commit complete refresh snapshots and reserve bounded status/channel space so live updates cannot shift neighbouring rows.
 - Ticket staff scope shares one DB predicate across reads, updates and replies: include Orders support, exclude owner-management and order-linked sales to keep list/thread access aligned.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out removes the shared channel without respawn (no stale online users).
 - Staff Away reads user_dnd_status (current window); triggers store shift-linked history.
