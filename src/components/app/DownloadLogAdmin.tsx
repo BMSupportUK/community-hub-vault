@@ -24,7 +24,10 @@ export function DownloadLogAdmin() {
   const [search, setSearch] = useState("");
   const rows = q.data ?? [];
   const apps = useMemo(() => [...new Set(rows.map((r) => r.appName).filter(Boolean) as string[])].sort(), [rows]);
+  const years = useMemo(() => logYearOptions(rows), [rows]);
+  const months = useMemo(() => (year === "all" ? [] : logMonthOptions(rows, year)), [rows, year]);
   const shown = rows.filter((r) =>
+    isWithinPeriod(r.createdAt, year, month) &&
     (source === "all" || r.source === source) &&
     (app === "all" || r.appName === app) &&
     (!search.trim() || `${r.customer ?? ""} ${r.ip ?? ""} ${r.device ?? ""} ${r.reference ?? ""} ${r.tvAddress ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())),
