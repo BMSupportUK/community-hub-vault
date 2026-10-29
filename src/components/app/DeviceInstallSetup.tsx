@@ -239,9 +239,9 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
       <Button variant="outline" disabled={current === 0 || busy} onClick={() => setCurrent(current - 1)}><ArrowLeft className="size-4" />Back</Button>
       {current < 2 && <Button disabled={busy || (current === 1 && (!apps || loadError || picked.size === 0))} onClick={() => setCurrent(current + 1)}>Next<ArrowRight className="size-4" /></Button>}
     </div>
-    <Button variant="outline" disabled={busy} onClick={onStaffHelp}><Headset className="size-4" />I need staff help</Button>
   </div>;
 }
+
 
 /** Shared phone and Windows columns for TV self-install and staff help. */
 export function EnablerDownloadSidebar() {
