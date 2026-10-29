@@ -23,6 +23,8 @@ export const RAIL_EDITOR_ITEMS = {
     { id: "portal:/moderation", label: "Access Requests" },
     { id: "portal:admin-orders", label: "Shop Orders" },
     { id: "portal:admin-customers", label: "Customers" },
+    { id: "/members", label: "Members" },
+    { id: "/staff", label: "Staff" },
     { id: "/sports-guides", label: "Sports guides" },
     { id: "/jobs", label: "BM Support jobs" },
     { id: "/forum", label: "Boro Fan Zone" },
