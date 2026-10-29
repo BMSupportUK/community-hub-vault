@@ -183,10 +183,14 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="font-semibold">Step {current + 1} of {steps.length}</span><span className="text-muted-foreground">Self install</span></div>
       <progress aria-label="Self-install progress" value={current + 1} max={steps.length} className="h-2 w-full accent-primary" />
     </div>
-    <div className="flex gap-2" role="tablist" aria-label="Step view">
-      <Button role="tab" aria-selected={view === "steps"} size="sm" variant={view === "steps" ? "default" : "outline"} onClick={() => setView("steps")}>Steps</Button>
-      <Button role="tab" aria-selected={view === "video"} size="sm" variant={view === "video" ? "default" : "outline"} onClick={() => setView("video")}><PlayCircle className="size-4" />Video tutorial</Button>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex gap-2" role="tablist" aria-label="Step view">
+        <Button role="tab" aria-selected={view === "steps"} size="sm" variant={view === "steps" ? "default" : "outline"} onClick={() => setView("steps")}>Steps</Button>
+        <Button role="tab" aria-selected={view === "video"} size="sm" variant={view === "video" ? "default" : "outline"} onClick={() => setView("video")}><PlayCircle className="size-4" />Video tutorial</Button>
+      </div>
+      <Button variant="outline" size="sm" disabled={busy} onClick={onStaffHelp}><Headset className="size-4" />I need staff help</Button>
     </div>
+
     {view === "video" && <section aria-label={`Video for step ${current + 1}`} className="space-y-3">
       <h3 className="text-lg font-semibold text-foreground">Watch: {steps[current]}</h3>
       <SetupStepVideo step={current} device={device} />
@@ -235,9 +239,9 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
       <Button variant="outline" disabled={current === 0 || busy} onClick={() => setCurrent(current - 1)}><ArrowLeft className="size-4" />Back</Button>
       {current < 2 && <Button disabled={busy || (current === 1 && (!apps || loadError || picked.size === 0))} onClick={() => setCurrent(current + 1)}>Next<ArrowRight className="size-4" /></Button>}
     </div>
-    <Button variant="outline" disabled={busy} onClick={onStaffHelp}><Headset className="size-4" />I need staff help</Button>
   </div>;
 }
+
 
 /** Shared phone and Windows columns for TV self-install and staff help. */
 export function EnablerDownloadSidebar() {
