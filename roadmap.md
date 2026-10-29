@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Include gate-approved members without subscriptions in the combined admin Customers list
 - [x] Simplify website self-install: download/PIN, TV choice, selected apps and website code; staff help opens pending remote-support setup
 - [x] Verify website self-install code saves only chosen apps without creating a support ticket; signed-in browser check and reload passed
 - [x] Confirm staff-help Enabler only installs remote-support apps and connects screen sharing, not viewing apps

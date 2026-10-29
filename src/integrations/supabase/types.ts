@@ -8560,6 +8560,10 @@ export type Database = {
           token: string
         }[]
       }
+      customer_has_approved_member_role: {
+        Args: { p_roles: Database["public"]["Enums"]["app_role"][] }
+        Returns: boolean
+      }
       customer_nameplate_for_gender: {
         Args: { _gender?: string }
         Returns: string

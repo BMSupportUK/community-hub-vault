@@ -1737,6 +1737,13 @@
       "when": 1793266179501,
       "tag": "0247_allow_self_install_download_log_source",
       "breakpoints": true
+    },
+    {
+      "idx": 248,
+      "version": "7",
+      "when": 1793294428753,
+      "tag": "0248_include_approved_members_in_admin_customers",
+      "breakpoints": true
     }
   ]
 }
