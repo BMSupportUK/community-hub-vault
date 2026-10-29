@@ -9380,6 +9380,7 @@ export type Database = {
         Args: { _nameplate_id: string }
         Returns: boolean
       }
+      staff_notification_started_at: { Args: never; Returns: string }
       staff_order_linked_renewal_account: {
         Args: { p_order_id: string }
         Returns: Json
