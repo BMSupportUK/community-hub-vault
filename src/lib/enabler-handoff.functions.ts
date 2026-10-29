@@ -23,7 +23,7 @@ export const createEnablerHandoff = createServerFn({ method: "POST" })
     } else if (data.appPaths.length === 0) throw new Error("Tick at least one app to install.");
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     // Replace any unused earlier code so only the latest answers count.
-    await db.from("enabler_handoffs").update({ used_at: new Date().toISOString() }).eq("user_id", context.userId).is("used_at", null);
+    await db.from("enabler_handoffs").update({ used_at: new Date().toISOString() }).eq("user_id", context.userId).is("admin_issue_id", null).is("used_at", null);
     for (let i = 0; i < 5; i++) {
       const code = makeHandoffCode();
       const expiresAt = new Date(Date.now() + HANDOFF_TTL_MS).toISOString();
