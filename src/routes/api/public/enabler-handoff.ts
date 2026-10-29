@@ -28,15 +28,15 @@ export const Route = createFileRoute("/api/public/enabler-handoff")({
       const { data: dt } = await db.from("enabler_device_tokens").select("pin_id")
         .eq("token_hash", await sha256Hex(tok)).gt("expires_at", new Date().toISOString()).maybeSingle();
       if (!dt?.pin_id) return reply({ error: "Your BM TV Enabler sign-in has run out. Sign in with your PIN again." }, 401);
-      const { data: pin } = await db.from("enabler_login_pins").select("user_id, ticket_id").eq("id", dt.pin_id).maybeSingle();
+      const { data: pin } = await db.from("enabler_login_pins").select("user_id, ticket_id, admin_issue_id").eq("id", dt.pin_id).maybeSingle();
       let userId: string | null = pin?.user_id ?? null;
       if (!userId && pin?.ticket_id) {
         const { data: t } = await db.from("tickets").select("user_id").eq("id", pin.ticket_id).maybeSingle();
         userId = t?.user_id ?? null;
       }
-      const { data: row } = await db.from("enabler_handoffs").select("id, user_id, device, help_plan, app_paths, ticket_id, expires_at, used_at, purpose")
+      const { data: row } = await db.from("enabler_handoffs").select("id, user_id, device, help_plan, app_paths, ticket_id, expires_at, used_at, purpose, admin_issue_id")
         .eq("code_hash", await sha256Hex(code)).maybeSingle();
-      const verdict = handoffUsable(row, userId);
+      const verdict = handoffUsable(row, userId, Date.now(), pin?.admin_issue_id ?? null);
       if (verdict !== "ok" || !row) return reply({ error: MESSAGES[verdict as keyof typeof MESSAGES] }, verdict === "wrong_user" ? 403 : 404);
       if (row.purpose === "support" && (!body.success || body.data.protocol !== 2)) return reply({ error: "Update BM TV Enabler from your ticket before using this remote-support code." }, 426);
       const { data: claimed } = await db.from("enabler_handoffs").update({ used_at: new Date().toISOString() }).eq("id", row.id).is("used_at", null).select("id");

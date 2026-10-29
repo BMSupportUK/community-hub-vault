@@ -1,7 +1,10 @@
 /** Website → BM TV Enabler handoff rules (shared by the server function, public route and tests). */
 export const HANDOFF_TTL_MS = 2 * 60 * 60 * 1000;
 
-export type HandoffRow = { user_id: string; expires_at: string; used_at: string | null };
+export type HandoffRow = { user_id: string; expires_at: string; used_at: string | null; admin_issue_id?: string | null };
+
+/** Admin-issued codes for people without a website account last as long as their PIN. */
+export const ADMIN_ISSUE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Self-install passes only the website selection, without a support ticket or sharing. */
 export function selfInstallHandoff(device: "amazon" | "android", appPaths: string[]) {
@@ -25,10 +28,12 @@ export function normalizeHandoffCode(input: string): string | null {
 }
 
 /** A code works once, within 2 hours, and only for the PIN login of the customer who made it. */
-export function handoffUsable(row: HandoffRow | null, pinUserId: string | null, now = Date.now()): "ok" | "missing" | "used" | "expired" | "wrong_user" {
+export function handoffUsable(row: HandoffRow | null, pinUserId: string | null, now = Date.now(), pinIssueId: string | null = null): "ok" | "missing" | "used" | "expired" | "wrong_user" {
   if (!row) return "missing";
   if (row.used_at) return "used";
   if (Date.parse(row.expires_at) <= now) return "expired";
+  // An admin-issued code only works with the PIN issued alongside it.
+  if (row.admin_issue_id || pinIssueId) return row.admin_issue_id && row.admin_issue_id === pinIssueId ? "ok" : "wrong_user";
   if (!pinUserId || pinUserId !== row.user_id) return "wrong_user";
   return "ok";
 }
