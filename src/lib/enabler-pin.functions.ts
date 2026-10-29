@@ -27,11 +27,11 @@ async function issue(db: Db, scope: Scope) {
 }
 
 async function status(db: Db, col: "ticket_id" | "order_id" | "user_id", id: string, owner = false) {
-  const { data, error } = await db.from("enabler_login_pins").select("expires_at, pin_encrypted").eq(col, id).is("revoked_at", null)
-    .gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  const { data, error } = await db.rpc("active_enabler_login_pin", { _scope: col, _id: id });
   if (error) throw new Error("Couldn't check your PIN. Try again.");
-  const pin = owner && data?.pin_encrypted ? await decryptPin(data.pin_encrypted, process.env["ENABLER_PIN_ENCRYPTION_KEY"] ?? "") : undefined;
-  return { expires_at: data?.expires_at ?? null, ...(pin ? { pin } : {}) };
+  const row = z.object({ expires_at: z.string().nullable(), pin_encrypted: z.string().nullable() }).parse(data);
+  const pin = owner && row.pin_encrypted ? await decryptPin(row.pin_encrypted, process.env["ENABLER_PIN_ENCRYPTION_KEY"] ?? "") : undefined;
+  return { expires_at: row.expires_at, ...(pin ? { pin } : {}) };
 }
 
 /** Ticket owner only: reuses the active PIN, creating one only after expiry. */
@@ -110,8 +110,7 @@ export const resetAccountEnablerPin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("enabler_login_pins").update({ revoked_at: new Date().toISOString() } as never)
-      .eq("user_id", context.userId).is("revoked_at", null);
+    const { error } = await supabaseAdmin.rpc("revoke_account_enabler_pins", { _user_id: context.userId });
     if (error) throw new Error("Couldn't reset your PIN. Try again.");
     return issue(supabaseAdmin, { user_id: context.userId });
   });

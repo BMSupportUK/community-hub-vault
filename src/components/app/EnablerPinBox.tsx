@@ -37,12 +37,16 @@ export function EnablerPinBox({ scopeKey, staff, create, status, reveal }: {
     if (!staff) { try { const p = JSON.parse(localStorage.getItem(key) ?? "null") as Pin | null; if (p && new Date(p.expires_at).getTime() > Date.now()) setPin(p); } catch { /* ignore */ } }
     void refresh();
     const t = window.setInterval(() => setNow(Date.now()), 30000);
-    return () => window.clearInterval(t);
+    const sync = () => { void refresh(); };
+    window.addEventListener("focus", sync);
+    window.addEventListener("enabler-pin-changed", sync);
+    const poll = window.setInterval(sync, 30000);
+    return () => { window.clearInterval(t); window.clearInterval(poll); window.removeEventListener("focus", sync); window.removeEventListener("enabler-pin-changed", sync); };
   }, [key, staff, refresh]);
   const make = async () => {
     if (!create || !checked || (active && new Date(active).getTime() > Date.now())) return;
     setBusy(true);
-    try { const p = await create(); setPin(p); setActive(p.expires_at); localStorage.setItem(key, JSON.stringify(p)); }
+    try { const p = await create(); setPin(p); setActive(p.expires_at); localStorage.setItem(key, JSON.stringify(p)); window.dispatchEvent(new Event("enabler-pin-changed")); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't get a PIN"); }
     setBusy(false);
   };

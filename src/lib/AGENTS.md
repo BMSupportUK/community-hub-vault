@@ -1,4 +1,5 @@
 # src/lib rules
+- Enabler login PIN issuance/status share verified customer identity across account, ticket and order surfaces; unowned orders remain isolated and account reset revokes legacy scoped PINs too, without changing handoff/reference bindings.
 - Staff display role refreshes retain the last successful map until replacement succeeds; one ref-counted focus listener prevents app-return colour/order flicker.
 - Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.
 - Order staff-help tickets start pending remote setup; their existing ticket layout notifies staff after confirmation, while self-install links retain paid-order guide access.

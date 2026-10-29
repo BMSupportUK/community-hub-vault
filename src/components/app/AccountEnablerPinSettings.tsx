@@ -17,11 +17,18 @@ export function AccountEnablerPinSettings() {
   const [confirm, setConfirm] = useState(false);
   const [now, setNow] = useState(Date.now());
   const load = async () => { try { setPin(await getFn()); setErr(null); } catch (e) { setErr(e instanceof Error ? e.message : "Couldn't load your PIN"); } };
-  useEffect(() => { void load(); const t = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(t); }, []);
+  useEffect(() => {
+    void load();
+    const sync = () => { void load(); };
+    window.addEventListener("focus", sync);
+    window.addEventListener("enabler-pin-changed", sync);
+    const t = window.setInterval(() => { setNow(Date.now()); void load(); }, 30000);
+    return () => { window.clearInterval(t); window.removeEventListener("focus", sync); window.removeEventListener("enabler-pin-changed", sync); };
+  }, []);
   useEffect(() => { if (pin && new Date(pin.expires_at).getTime() <= now) void load(); }, [now, pin]);
   const reset = async () => {
     setBusy(true);
-    try { setPin(await resetFn()); setConfirm(false); toast.success("New BM TV Enabler PIN issued"); }
+    try { setPin(await resetFn()); setConfirm(false); window.dispatchEvent(new Event("enabler-pin-changed")); toast.success("New BM TV Enabler PIN issued"); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't reset your PIN"); }
     setBusy(false);
   };
