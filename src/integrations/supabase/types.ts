@@ -137,6 +137,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_enabler_issues: {
+        Row: {
+          created_at: string
+          device: string
+          expires_at: string
+          id: string
+          issued_by: string
+          name: string
+          purpose: string
+        }
+        Insert: {
+          created_at?: string
+          device: string
+          expires_at: string
+          id?: string
+          issued_by: string
+          name: string
+          purpose: string
+        }
+        Update: {
+          created_at?: string
+          device?: string
+          expires_at?: string
+          id?: string
+          issued_by?: string
+          name?: string
+          purpose?: string
+        }
+        Relationships: []
+      }
       admin_unlock_lockouts: {
         Row: {
           failed_count: number
@@ -2507,6 +2537,7 @@ export type Database = {
       }
       enabler_handoffs: {
         Row: {
+          admin_issue_id: string | null
           app_paths: string[]
           code_hash: string
           completed_apps: string[] | null
@@ -2522,6 +2553,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_issue_id?: string | null
           app_paths?: string[]
           code_hash: string
           completed_apps?: string[] | null
@@ -2537,6 +2569,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_issue_id?: string | null
           app_paths?: string[]
           code_hash?: string
           completed_apps?: string[] | null
@@ -2551,10 +2584,19 @@ export type Database = {
           used_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "enabler_handoffs_admin_issue_id_fkey"
+            columns: ["admin_issue_id"]
+            isOneToOne: false
+            referencedRelation: "admin_enabler_issues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       enabler_login_pins: {
         Row: {
+          admin_issue_id: string | null
           created_at: string
           expires_at: string
           id: string
@@ -2566,6 +2608,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          admin_issue_id?: string | null
           created_at?: string
           expires_at: string
           id?: string
@@ -2577,6 +2620,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          admin_issue_id?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -2587,7 +2631,15 @@ export type Database = {
           ticket_id?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "enabler_login_pins_admin_issue_id_fkey"
+            columns: ["admin_issue_id"]
+            isOneToOne: false
+            referencedRelation: "admin_enabler_issues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fan_zone_appeal_messages: {
         Row: {
