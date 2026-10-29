@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Speed up unread counters with immediate room-targeted refreshes, per-room results and recovery polling; burst tests pass and focus refresh measured at 0.14s versus 0.83s
 - [x] Fix Talk staff flicker on app return; delayed-request reproduction now retains colours, labels and order, and pending/failed refresh regression test passes
 - [x] Show unread counters beside every Talk room using existing read tracking; signed-in room navigation/reload checked (account currently has zero unread)
 - [x] Stabilize Talk staff card heights and refresh snapshots; signed-in channel-label check confirms neighbouring cards no longer move
