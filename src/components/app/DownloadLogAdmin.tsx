@@ -2,10 +2,11 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listDownloadLog } from "@/lib/download-log.functions";
-import { DOWNLOAD_SOURCES, downloadSourceLabel } from "@/lib/download-log";
+import { DOWNLOAD_SOURCES, downloadSourceLabel, isWithinPeriod, logMonthLabel, logMonthOptions, logYearOptions } from "@/lib/download-log";
 
 function size(bytes: number | null) {
   if (!bytes) return "—";
@@ -17,6 +18,8 @@ export function DownloadLogAdmin() {
   const fetchLog = useServerFn(listDownloadLog);
   const q = useQuery({ queryKey: ["download-log"], queryFn: () => fetchLog(), refetchInterval: 30_000 });
   const [source, setSource] = useState("all");
+  const [year, setYear] = useState("all");
+  const [month, setMonth] = useState("all");
   const [app, setApp] = useState("all");
   const [search, setSearch] = useState("");
   const rows = q.data ?? [];
