@@ -201,6 +201,9 @@ function londonNow(at: number | Date = Date.now()) {
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
+/** How long someone stays listed after a momentary presence drop (channel
+ *  switches emit leave+join within a second; without this their row blinks). */
+const PRESENCE_STABLE_MS = 3000;
 
 export function StaffOnDutySidebar({
   channelId,
@@ -246,6 +249,22 @@ export function StaffOnDutyStrip({
   const presentGlobalIds = useTalkChannelPresentUsers();
   const presentChannelIds = useTalkChannelPresentUsersInChannel(channelId);
   const presentUserIds = isSidebar ? presentGlobalIds : channelId ? presentChannelIds : presentGlobalIds;
+  // Keeps people visible through brief presence flaps: switching Talk channels
+  // drops and re-adds a member within a second, which used to make their name
+  // row flicker off/on. Remember who was present in the last few seconds and
+  // only drop them once that grace has passed.
+  const lastPresentAtRef = useRef(new Map<string, number>());
+  const [stableIds, setStableIds] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    const now = Date.now();
+    for (const id of presentUserIds) lastPresentAtRef.current.set(id, now);
+    for (const [id, at] of lastPresentAtRef.current) {
+      if (now - at > PRESENCE_STABLE_MS) lastPresentAtRef.current.delete(id);
+    }
+    const next = new Set(presentUserIds);
+    for (const id of lastPresentAtRef.current.keys()) next.add(id);
+    setStableIds((prev) => (prev.size === next.size && Array.from(prev).every((x) => next.has(x)) ? prev : next));
+  }, [presentUserIds]);
   // Authorised change (user request): sidebar Online list + count reflect THIS channel,
   // so staff who move to another channel drop out straight away.
   const inThisChannelIds = channelId ? presentChannelIds : presentGlobalIds;
@@ -538,7 +557,7 @@ export function StaffOnDutyStrip({
   const renderOffDutyCard = (p: StaffProfile & { role: string }) => {
     const name = p.display_name || p.username || "Staff";
     const dane = daneOverride && isDaneJProfile(p);
-    const inChat = presentUserIds.has(p.id);
+    const inChat = stableIds.has(p.id);
     const mp = miniProfile(p.id, dane || inChat);
     const card = (
       <div
@@ -615,7 +634,7 @@ export function StaffOnDutyStrip({
 
   const renderSidebarRow = (p: StaffProfile & { role: string }, shift?: StaffShift) => {
     const name = p.display_name || p.username || "Staff";
-    const online = presentUserIds.has(p.id);
+    const online = stableIds.has(p.id);
     const br = breakByUser.get(p.id);
     const shiftElapsed = shift ? (now - new Date(shift.clock_in).getTime()) / 1000 : 0;
     const breakElapsed = br ? (now - new Date(br.started_at).getTime()) / 1000 : 0;
@@ -691,7 +710,7 @@ export function StaffOnDutyStrip({
     ? [
         ...allOrderedShifts.map((shift) => shift.user_id),
         ...allVisibleOffDuty.map((person) => person.id),
-      ].filter((id, i, all) => inThisChannelIds.has(id) && all.indexOf(id) === i).length
+      ].filter((id, i, all) => stableIds.has(id) && all.indexOf(id) === i).length
     : 0;
   useEffect(() => {
     if (!isSidebar) return;
@@ -713,7 +732,7 @@ export function StaffOnDutyStrip({
     });
     // Authorised change (user request, 2026-09-28): the Talk channel staff
     // list is online-only — offline staff are not listed here at all.
-    const onlineStaff = allStaff.filter((person) => inThisChannelIds.has(person.id));
+    const onlineStaff = allStaff.filter((person) => stableIds.has(person.id));
 
     return (
       <div className="flex h-full max-h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
