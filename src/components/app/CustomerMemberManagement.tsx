@@ -2,6 +2,7 @@ import { ClientOnly, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CUSTOMER_LIST_CHANGED, subscribeCustomerListRefresh } from "@/lib/customer-list-refresh";
+import { ADMIN_STAFF_GROUPS, adminStaffRole, orderedAdminStaff } from "@/lib/admin-staff-list";
 import {
   ShieldCheck,
   Search,
@@ -78,6 +79,8 @@ const SYSTEM_STYLE: Record<string, string> = {
 const CUSTOM_STYLE = "bg-primary/20 text-primary border-primary/40";
 
 type MemberSlots = {
+  staffCount: number;
+  staffList: (search: string) => ReactNode;
   toolbar: ReactNode;
   details: (userId: string) => ReactNode;
   editor: (userId: string) => ReactNode;
@@ -399,8 +402,24 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     </section>;
   };
   const addRoleRow = rows.find((r) => r.id === addRolesFor);
+  const staffRows = orderedAdminStaff(rows);
+  const staffList = (search: string) => {
+    const q = search.trim().toLowerCase();
+    const matches = staffRows.filter((row) => [row.username, row.display_name].some((name) => name?.toLowerCase().includes(q)));
+    if (loading) return <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin" /></div>;
+    return <div className="space-y-6">{ADMIN_STAFF_GROUPS.map((group) => {
+      const groupRows = matches.filter((row) => adminStaffRole(row.roles) === group.role);
+      return <section key={group.role} aria-label={group.label} className="space-y-3">
+        <h3 className="font-display text-lg font-semibold">{group.label} <span className="text-sm text-muted-foreground">{groupRows.length}</span></h3>
+        {!groupRows.length ? <p className="text-sm text-muted-foreground">No staff found.</p> : <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{groupRows.map((row) => <article key={row.id} className="min-w-0 space-y-3 rounded-lg border border-border bg-card/70 p-4">
+          <header className="flex flex-wrap items-center gap-2"><h4 className="break-words font-semibold">{row.username || (row.display_name?.includes('@') ? null : row.display_name) || 'Staff'}</h4>{memberHeader(row.id)}</header>
+          {memberRoles(row.id)}{memberExtras(row.id)}{memberDetails(row.id)}
+        </article>)}</div>}
+      </section>;
+    })}</div>;
+  };
   return <>
-    {children({ toolbar: <><AddUserButton onCreated={() => window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED))} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras, header: memberHeader, rolesRow: memberRoles })}
+    {children({ staffCount: staffRows.length, staffList, toolbar: <><AddUserButton onCreated={() => window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED))} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras, header: memberHeader, rolesRow: memberRoles })}
     <Dialog open={tab === "roles"} onOpenChange={(open) => { if (!open) setTab("members"); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Manage roles</DialogTitle></DialogHeader><RolesManager defs={roleDefs} onChange={() => void loadAll()} /></DialogContent></Dialog>
     <Dialog open={!!addRoleRow} onOpenChange={(open) => { if (!open) setAddRolesFor(null); }}><DialogContent><DialogHeader><DialogTitle>Add role · {addRoleRow?.username || addRoleRow?.display_name}</DialogTitle></DialogHeader><div className="flex flex-wrap gap-2">{addRoleRow && activeRoles.filter((rd) => !addRoleRow.roles.includes(rd.name)).map((rd) => <Button key={rd.name} variant="outline" size="sm" disabled={saving !== null} onClick={() => void toggleRole(addRoleRow, rd.name)}>{displayRoleLabel(rd.name, rd.label)}</Button>)}</div></DialogContent></Dialog>
     {historyFor && <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />}

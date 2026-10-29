@@ -35,7 +35,9 @@ const localDateTime = (iso: string) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = false, memberToolbar, memberDetails, memberEditor, memberExtras, memberHeader, memberRoles }: {
+export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = false, memberToolbar, memberDetails, memberEditor, memberExtras, memberHeader, memberRoles, staffList, staffCount = 0 }: {
+  staffList?: (search: string) => ReactNode;
+  staffCount?: number;
   canReward: boolean;
   /** Staff: read-only credentials viewing, no editing. */
   viewCredentials?: boolean;
@@ -50,7 +52,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
   const [rows, setRows] = useState<Customer[]>([]);
   const [discountUserIds, setDiscountUserIds] = useState<Set<string>>(new Set());
   const [bankTransferUserIds, setBankTransferUserIds] = useState<Set<string>>(new Set());
-  const [tab, setTab] = useState<CustomerListGroup>("single");
+  const [tab, setTab] = useState<CustomerListGroup | "staff">("single");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<CustomerSortField>("default");
   const [sortDir, setSortDir] = useState<CustomerSortDir>("asc");
@@ -259,15 +261,16 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
         <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">Customers</h2>{memberToolbar}</div>
         <div className="flex flex-wrap items-center gap-2"><select aria-label="Sort customers by" value={sortBy} onChange={(e) => setSortBy(e.target.value as CustomerSortField)} className="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground"><option value="default">Sort: Default order</option><option value="name">Name</option><option value="expires">Subscription expires</option><option value="renewed">Last renewed subscription</option><option value="joined">Year joined</option><option value="years">Years as customer</option><option value="referrer">Referred by</option></select>{sortBy !== "default" && <Button variant="outline" size="icon" aria-label={sortDir === "asc" ? "Sorted oldest to newest, switch to newest first" : "Sorted newest to oldest, switch to oldest first"} title={sortDir === "asc" ? "Oldest to newest" : "Newest to oldest"} onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}>{sortDir === "asc" ? <ArrowDown /> : <ArrowUp />}</Button>}<Input aria-label="Search customers" placeholder="Search customers" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-64" /><Button variant="outline" size="icon" aria-label="Refresh customers" title="Refresh customers" onClick={() => void load()}><RefreshCw /></Button>{canReward && <RestoreCredentialsBackupButton onRestored={() => void load()} />}</div>
       </div>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as CustomerListGroup)} className="mb-4">
-        <TabsList>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as CustomerListGroup | "staff")} className="mb-4">
+        <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="single">Single account <span className="ml-1 text-muted-foreground">{singleCount}</span></TabsTrigger>
           <TabsTrigger value="multi">Multiple accounts <span className="ml-1 text-muted-foreground">{multiCount}</span></TabsTrigger>
           <TabsTrigger value="manual">Manual customers <span className="ml-1 text-muted-foreground">{manualCount}</span></TabsTrigger>
           <TabsTrigger value="setup">Awaiting profile setup <span className="ml-1 text-muted-foreground">{setupCount}</span></TabsTrigger>
+          {staffList && <TabsTrigger value="staff">Staff <span className="ml-1 text-muted-foreground">{staffCount}</span></TabsTrigger>}
         </TabsList>
       </Tabs>
-      {error ? <p role="alert" className="text-destructive">{error}</p> : loading ? <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin" /></div> : !shown.length ? <p className="py-8 text-muted-foreground">No customers found.</p> : (
+      {tab === "staff" && staffList ? staffList(search) : error ? <p role="alert" className="text-destructive">{error}</p> : loading ? <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin" /></div> : !shown.length ? <p className="py-8 text-muted-foreground">No customers found.</p> : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{shown.map((c) => {
           const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
           const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
