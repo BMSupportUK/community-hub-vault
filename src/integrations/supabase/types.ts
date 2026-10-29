@@ -8185,6 +8185,10 @@ export type Database = {
         Args: { _choice: string; _ticket_id: string }
         Returns: string
       }
+      active_enabler_login_pin: {
+        Args: { _id: string; _scope: string }
+        Returns: Json
+      }
       ad_event_stats: {
         Args: { _days?: number }
         Returns: {
@@ -8593,6 +8597,12 @@ export type Database = {
         }[]
       }
       email_is_account_holder: { Args: { _email: string }; Returns: boolean }
+      enabler_pin_owner: {
+        Args: {
+          _pin: Database["public"]["Tables"]["enabler_login_pins"]["Row"]
+        }
+        Returns: string
+      }
       enabler_refresh_task: {
         Args: {
           _checks?: Json
@@ -9219,6 +9229,10 @@ export type Database = {
       restore_app_credentials_from_backup: {
         Args: { p_mode?: string; p_snapshot: Json }
         Returns: Json
+      }
+      revoke_account_enabler_pins: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       revoke_all_expired_subscriber_roles: { Args: never; Returns: number }
       revoke_expired_subscriber_role: {
