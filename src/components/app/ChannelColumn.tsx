@@ -12,6 +12,7 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { unreadRefreshScheduler } from "./unread-refresh";
 
 const CHANNEL_READ_EVENT = "bm-support:channel-read";
 
@@ -122,12 +123,10 @@ export function ChannelColumn({
     const uid = user.id;
     const items = chatChannelItems;
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
     let requestVersion = 0;
     const readAtByChannel = new Map<string, string | null>();
-    const seenMessages = new Set<string>();
 
-    const loadUnread = async () => {
+    const loadUnread = async (dirtyRooms: Set<string> | null) => {
       const version = ++requestVersion;
       const { data: reads, error: readsError } = await supabase
         .from("channel_reads")
@@ -145,8 +144,8 @@ export function ChannelColumn({
       );
       for (const [id, at] of readMap) readAtByChannel.set(id, at);
 
-      const entries = await Promise.all(
-        items.map(async (item) => {
+      await Promise.all(
+        items.filter((item) => !dirtyRooms || dirtyRooms.has(item.id)).map(async (item) => {
           if (item.slug === activeSlug) return [item.slug, 0] as const;
           let query = supabase
             .from("chat_messages")
@@ -170,30 +169,12 @@ export function ChannelColumn({
       // counts if another room's request fails.
     };
 
-    const scheduleLoad = () => {
-      // Leading-edge refresh: ongoing messages/read events cannot keep
-      // postponing the request by resetting a trailing debounce.
-      if (timer) return;
-      void loadUnread();
-      timer = setTimeout(() => { timer = null; void loadUnread(); }, 250);
-    };
+    const scheduler = unreadRefreshScheduler(loadUnread);
+    const scheduleLoad = () => scheduler.request();
 
     const onMessage = (payload: { eventType: string; new: Record<string, unknown> }) => {
-      if (payload.eventType === "INSERT") {
-        const message = payload.new;
-        const id = typeof message.id === "string" ? message.id : null;
-        const item = items.find((room) => room.id === message.channel_id);
-        const since = item ? readAtByChannel.get(item.id) : null;
-        if (id && item && item.slug !== activeSlug && message.sender_id !== uid &&
-          !seenMessages.has(id) && (!since || (typeof message.created_at === "string" && Date.parse(message.created_at) > Date.parse(since)))) {
-          seenMessages.add(id);
-          if (seenMessages.size > 1000) seenMessages.clear();
-          ++requestVersion; // an older count response must not undo this arrival
-          setLocalUnreadCounts((prev) => ({ ...prev, [item.slug]: (prev[item.slug] ?? 0) + 1 }));
-          setLocalUnreadLoaded(true);
-        }
-      }
-      scheduleLoad();
+      const id = typeof payload.new.channel_id === "string" ? payload.new.channel_id : undefined;
+      scheduler.request(id);
     };
 
     const clearReadChannel = (event: Event) => {
@@ -209,10 +190,11 @@ export function ChannelColumn({
         delete next[readSlug];
         return next;
       });
+      scheduler.request(readId);
     };
 
     setLocalUnreadLoaded(false);
-    void loadUnread();
+    scheduleLoad();
     const channel = supabase
       .channel(`channel-column-unread-${uid}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, onMessage)
@@ -236,7 +218,7 @@ export function ChannelColumn({
 
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      scheduler.stop();
       clearInterval(recoveryPoll);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", scheduleLoad);
