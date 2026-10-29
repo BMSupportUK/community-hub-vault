@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { unreadRefreshScheduler } from './unread-refresh';
+import { unreadRefreshScheduler } from '../src/components/app/unread-refresh';
 
 test('new messages refresh immediately and a burst queues one targeted follow-up', async () => {
   const calls: Array<Set<string> | null> = [];
