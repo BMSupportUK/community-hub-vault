@@ -1744,6 +1744,13 @@
       "when": 1793294428753,
       "tag": "0248_include_approved_members_in_admin_customers",
       "breakpoints": true
+    },
+    {
+      "idx": 249,
+      "version": "7",
+      "when": 1793295507898,
+      "tag": "0249_staff_notification_join_cutoff",
+      "breakpoints": true
     }
   ]
 }
