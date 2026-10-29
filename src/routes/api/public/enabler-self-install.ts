@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/enabler-self-install")({
         .eq("code_hash", row.code_hash).is("used_at", null);
       if (upd) return Response.json({ error: "Couldn't log the install. Try again." }, { status: 503, headers });
       const ua = request.headers.get("user-agent");
-      await db.from("app_download_log").insert({
+      const { error: logErr } = await db.from("app_download_log").insert({
         source: "self_install",
         app_name: body.data.apps.length ? body.data.apps.join(", ") : "No apps",
         version_name: row.app,
@@ -43,6 +43,7 @@ export const Route = createFileRoute("/api/public/enabler-self-install")({
         user_agent: ua?.slice(0, 400) ?? null,
         device: deviceFromUserAgent(ua),
       });
+      if (logErr) console.error("self-install download log insert failed:", logErr);
       }
       // Tell the website's Install Guides that this customer's redeemed self-install code finished.
       const tok = request.headers.get("x-enabler-token");

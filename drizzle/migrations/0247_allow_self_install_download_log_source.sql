@@ -1,0 +1,2 @@
+ALTER TABLE public.app_download_log DROP CONSTRAINT app_download_log_source_check;
+ALTER TABLE public.app_download_log ADD CONSTRAINT app_download_log_source_check CHECK (source IN ('enabler_phone','enabler_windows','tv_install','remote_helper','transfer_link','android_apk','self_install'));
