@@ -20,11 +20,28 @@ export function downloadSourceLabel(source: string): string {
   return (DOWNLOAD_SOURCES as Record<string, string>)[source] ?? source;
 }
 
+/** Last Sunday of a month at 01:00 UTC — the UK clock-change moment, as ms since epoch. */
+function ukClockChangeUtcMs(year: number, monthIndex: number): number {
+  const last = new Date(Date.UTC(year, monthIndex + 1, 0, 1, 0, 0));
+  last.setUTCDate(last.getUTCDate() - last.getUTCDay());
+  return last.getTime();
+}
+
+/** UK (Europe/London) offset in minutes for a moment: +1 during British Summer Time. */
+function ukOffsetMinutes(d: Date): number {
+  const y = d.getUTCFullYear();
+  const bstStart = ukClockChangeUtcMs(y, 2); // last Sunday of March
+  const bstEnd = ukClockChangeUtcMs(y, 9); // last Sunday of October
+  return d.getTime() >= bstStart && d.getTime() < bstEnd ? 60 : 0;
+}
+
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 /** UK (Europe/London) year and month for one log entry, so days land in the same tabs admins see. */
 export function logPeriod(iso: string): { year: string; month: string } {
-  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "numeric" })
-    .formatToParts(new Date(iso));
-  return { year: parts.find((p) => p.type === "year")!.value, month: String(Number(parts.find((p) => p.type === "month")!.value)) };
+  const d = new Date(iso);
+  const uk = new Date(d.getTime() + ukOffsetMinutes(d) * 60_000);
+  return { year: String(uk.getUTCFullYear()), month: String(uk.getUTCMonth() + 1) };
 }
 
 export function logYearOptions(rows: { createdAt: string }[]): string[] {
@@ -37,8 +54,7 @@ export function logMonthOptions(rows: { createdAt: string }[], year: string): st
 }
 
 export function logMonthLabel(month: string): string {
-  return new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "Europe/London" })
-    .format(new Date(2026, Number(month) - 1, 1));
+  return MONTH_LABELS[Number(month) - 1] ?? month;
 }
 
 export function isWithinPeriod(iso: string, year: string, month: string): boolean {
