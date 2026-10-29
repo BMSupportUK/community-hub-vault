@@ -42,7 +42,8 @@ test("codes are 6 digits", () => {
   expect(normalizeHandoffCode("12345")).toBeNull();
 });
 
-import { handoffUsable as usable2 } from "@/lib/enabler-handoff";
+import { describe } from "bun:test";
+const usable2 = handoffUsable;
 describe("admin-issued codes", () => {
   const future = new Date(Date.now() + 3600_000).toISOString();
   test("work only with the PIN issued alongside them", () => {
