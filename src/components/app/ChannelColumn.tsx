@@ -30,7 +30,7 @@ export interface ChannelGroup {
     label: string;
     icon?: React.ComponentType<{ className?: string }>;
     badge?: number;
-    /** Unread message count, rendered as a flashing red pill next to the name. */
+    /** Unread message count, rendered next to the room name. */
     unread?: number;
     /** Override the auto path-match active state (useful for query-param views). */
     active?: boolean;
@@ -213,7 +213,9 @@ export function ChannelColumn({
       window.removeEventListener(CHANNEL_READ_EVENT, clearReadChannel);
       supabase.removeChannel(channel);
     };
-  }, [activeSlug, chatChannelItems, chatChannelKey, user?.id]);
+  // Parent layouts recreate their group arrays during live updates. Only
+  // restart unread tracking when the actual room IDs/paths change.
+  }, [activeSlug, chatChannelKey, user?.id]);
 
 
   const unreadFor = (item: ChannelGroup["items"][number]) => {
@@ -445,17 +447,17 @@ export function ChannelColumn({
                           >
                             <Icon className="size-4 shrink-0" />
                             <span className="truncate">{it.label}</span>
-                            {unreadCount > 0 ? (
+                            {it.to.startsWith("/home/") ? (
                               <span
                                 title={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
                                 aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
-                                className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground ring-2 ring-destructive/30 animate-unread-flash"
+                                className={cn("ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums", unreadCount > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground")}
                               >
                                 {unreadCount > 99 ? "99+" : unreadCount}
                               </span>
                             ) : null}
                             {it.badge && it.badge > 0 ? (
-                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", unreadCount === 0 && "ml-auto")}>
+                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", !it.to.startsWith("/home/") && unreadCount === 0 && "ml-auto")}>
                                 {it.badge > 99 ? "99+" : it.badge}
                               </span>
                             ) : null}
@@ -473,17 +475,17 @@ export function ChannelColumn({
                           >
                             <Icon className="size-4 shrink-0" />
                             <span className="truncate">{it.label}</span>
-                            {unreadCount > 0 ? (
+                            {it.to.startsWith("/home/") ? (
                               <span
                                 title={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
                                 aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
-                                className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground ring-2 ring-destructive/30 animate-unread-flash"
+                                className={cn("ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums", unreadCount > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground")}
                               >
                                 {unreadCount > 99 ? "99+" : unreadCount}
                               </span>
                             ) : null}
                             {it.badge && it.badge > 0 ? (
-                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", unreadCount === 0 && "ml-auto")}>
+                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", !it.to.startsWith("/home/") && unreadCount === 0 && "ml-auto")}>
                                 {it.badge > 99 ? "99+" : it.badge}
                               </span>
                             ) : null}
