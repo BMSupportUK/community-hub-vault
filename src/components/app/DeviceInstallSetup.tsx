@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, PlayCircle, Tv } from "lucide-react";
+import { Apple, ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, PlayCircle, Tv } from "lucide-react";
+import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
 import { SetupStepVideo } from "@/components/app/SetupStepVideo";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -17,11 +18,12 @@ import { orderStaffHelpTicket } from "@/lib/order-remote-tabs";
 import { selfInstallHandoff, sha256Hex } from "@/lib/enabler-handoff";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 
-export type SetupDeviceKey = "amazon" | "android" | "alternative" | "remote";
+export type SetupDeviceKey = "amazon" | "android" | "ios" | "alternative" | "remote";
 
 const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof Tv }[] = [
   { key: "amazon", label: "Amazon Fire TV", note: "Fire Stick, Cube or Fire TV", icon: Tv },
   { key: "android", label: "Android / Google TV", note: "Android boxes and Google TV", icon: Tv },
+  { key: "ios", label: "iOS", note: "Purple Player Lite for iPhone and iPad", icon: Apple },
   { key: "alternative", label: "Alternative Install methods", note: "Other ways to get the apps", icon: Download },
   { key: "remote", label: "Help from staff", note: "Let staff install it with you by screen share", icon: Headset },
 ];
@@ -269,7 +271,7 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
       {!chosen ? <>
         <h2 className="font-display text-2xl font-bold text-foreground">What are you setting up?</h2>
         <p className="mt-1 text-sm text-muted-foreground">Pick your device and we'll walk you through it one step at a time.</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {DEVICES.map(({ key, label, note, icon: Icon }) => (
             <Button key={key} variant="outline" onClick={() => onPick(key)} className="h-auto flex-col items-start gap-2 whitespace-normal p-4 text-left">
               <Icon className="size-6 text-primary" />
@@ -285,6 +287,7 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
           ? <TvSteps device={chosen.key} onStaffHelp={() => onPick("remote")} />
+          : chosen.key === "ios" ? <IosPurpleCard />
           : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
       </>}
     </div>
