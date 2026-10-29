@@ -278,8 +278,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, resetSportsGuides: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: false },
     { to: "/new-content", label: "New content", icon: Tv, show: false, badge: unreadNewContent },
-    { to: "/members", label: "Members", icon: Users, show: false },
-    { to: "/staff", label: "Staff", icon: Briefcase, show: false },
+    { to: "/members", label: "Members", icon: Users, show: isStaff },
+    { to: "/staff", label: "Staff", icon: Briefcase, show: isStaff },
     { to: "/jobs", label: "BM Support jobs", icon: ClipboardList, show: true },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
   ];
