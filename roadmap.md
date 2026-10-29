@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Show unread message counters beside every Talk room and verify opening a room clears its count
 - [x] Stabilize Talk staff card heights and refresh snapshots; signed-in channel-label check confirms neighbouring cards no longer move
 - [x] Prevent promoted members receiving historical staff notifications; promotion tests and signed-in notification checks passed
 - [x] Add a Staff tab to admin Customers, ordered Admin, Management, Staff, Moderators
