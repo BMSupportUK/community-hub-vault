@@ -2,10 +2,11 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listDownloadLog } from "@/lib/download-log.functions";
-import { DOWNLOAD_SOURCES, downloadSourceLabel } from "@/lib/download-log";
+import { DOWNLOAD_SOURCES, downloadSourceLabel, isWithinPeriod, logMonthLabel, logMonthOptions, logYearOptions } from "@/lib/download-log";
 
 function size(bytes: number | null) {
   if (!bytes) return "—";
@@ -17,11 +18,16 @@ export function DownloadLogAdmin() {
   const fetchLog = useServerFn(listDownloadLog);
   const q = useQuery({ queryKey: ["download-log"], queryFn: () => fetchLog(), refetchInterval: 30_000 });
   const [source, setSource] = useState("all");
+  const [year, setYear] = useState("all");
+  const [month, setMonth] = useState("all");
   const [app, setApp] = useState("all");
   const [search, setSearch] = useState("");
   const rows = q.data ?? [];
   const apps = useMemo(() => [...new Set(rows.map((r) => r.appName).filter(Boolean) as string[])].sort(), [rows]);
+  const years = useMemo(() => logYearOptions(rows), [rows]);
+  const months = useMemo(() => (year === "all" ? [] : logMonthOptions(rows, year)), [rows, year]);
   const shown = rows.filter((r) =>
+    isWithinPeriod(r.createdAt, year, month) &&
     (source === "all" || r.source === source) &&
     (app === "all" || r.appName === app) &&
     (!search.trim() || `${r.customer ?? ""} ${r.ip ?? ""} ${r.device ?? ""} ${r.reference ?? ""} ${r.tvAddress ?? ""}`.toLowerCase().includes(search.trim().toLowerCase())),
@@ -33,6 +39,24 @@ export function DownloadLogAdmin() {
         <h2 className="font-display text-xl font-semibold text-foreground">Download log</h2>
         <p className="mt-1 text-sm text-muted-foreground">Every app download, newest first. Enabler downloads show a customer once their app sends its Enabler login.</p>
       </div>
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Year">
+        <Button role="tab" aria-selected={year === "all"} size="sm" variant={year === "all" ? "default" : "outline"}
+          onClick={() => { setYear("all"); setMonth("all"); }}>All years</Button>
+        {years.map((y) => (
+          <Button key={y} role="tab" aria-selected={year === y} size="sm" variant={year === y ? "default" : "outline"}
+            onClick={() => { setYear(y); setMonth("all"); }}>{y}</Button>
+        ))}
+      </div>
+      {year !== "all" && (
+        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Month">
+          <Button role="tab" aria-selected={month === "all"} size="sm" variant={month === "all" ? "default" : "outline"}
+            onClick={() => setMonth("all")}>All months</Button>
+          {months.map((m) => (
+            <Button key={m} role="tab" aria-selected={month === m} size="sm" variant={month === m ? "default" : "outline"}
+              onClick={() => setMonth(m)}>{logMonthLabel(m)}</Button>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         <Select value={source} onValueChange={setSource}>
           <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
