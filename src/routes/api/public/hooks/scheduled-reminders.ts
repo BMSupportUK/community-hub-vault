@@ -21,6 +21,7 @@ import { reconcileUnpaidOrders } from "@/lib/order-payment-reconcile.server";
 // Idempotency is enforced by writing to public.scheduled_alert_log keyed by
 // a deterministic alert_key (slot/break id + stage + phase).
 
+const UNANSWERED_END_MS = 5 * 60 * 1000;
 const WARN_MS = 10 * 60 * 1000;
 const BREAK_LIMITS_SEC: Record<string, number> = { break: 15 * 60, lunch: 30 * 60 };
 const BREAK_WARN_SEC = 2 * 60;
@@ -213,15 +214,17 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
         const { data: recentShifts } = assignedUserIds.length
           ? await supabaseAdmin
               .from("shifts")
-              .select("user_id, clock_in, clock_out")
+              .select("id, user_id, clock_in, clock_out, still_working_ack_at")
               .in("user_id", assignedUserIds)
               .gte("clock_in", sinceIso)
-          : { data: [] as { user_id: string; clock_in: string; clock_out: string | null }[] };
+          : { data: [] as { id: string; user_id: string; clock_in: string; clock_out: string | null; still_working_ack_at: string | null }[] };
 
-        type ShiftRow = { clockIn: number; clockOut: number | null };
+        type ShiftRow = { id: string; clockIn: number; clockOut: number | null; stillWorking: boolean };
         const shiftsByUser = new Map<string, ShiftRow[]>();
         for (const sh of recentShifts ?? []) {
           const row: ShiftRow = {
+            id: sh.id,
+            stillWorking: !!sh.still_working_ack_at,
             clockIn: new Date(sh.clock_in).getTime(),
             clockOut: sh.clock_out ? new Date(sh.clock_out).getTime() : null,
           };
@@ -234,6 +237,9 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
         // auto clocked in below.
         const autoClockIns: { slotId: string; userId: string; startsAt: number; endsAt: number }[] = [];
         const demoClockOuts: { userId: string; endsAt: number }[] = [];
+        // Staff who never answered "Still working?" are signed out 5 minutes
+        // after their shift ends, even if the app is closed.
+        const unansweredClockOuts: { shiftId: string; at: number }[] = [];
 
         for (const slot of slots ?? []) {
           const userId = slot.assigned_to as string;
@@ -304,6 +310,10 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             demoClockOuts.push({ userId, endsAt });
             continue;
           }
+          if (isOpenForSlot && openShift && !openShift.stillWorking && toEnd <= -UNANSWERED_END_MS) {
+            unansweredClockOuts.push({ shiftId: openShift.id, at: endsAt + UNANSWERED_END_MS });
+            continue;
+          }
           // END overdue — phone alert at the end of the shift.
           if (isOpenForSlot && toEnd <= 0) {
             jobs.push({
@@ -317,6 +327,14 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           }
         }
 
+        for (const u of unansweredClockOuts) {
+          await supabaseAdmin
+            .from("shifts")
+            .update({ clock_out: new Date(u.at).toISOString(), end_prompt_signed_out_at: new Date(u.at).toISOString() })
+            .eq("id", u.shiftId)
+            .is("clock_out", null)
+            .is("still_working_ack_at", null);
+        }
         for (const d of demoClockOuts) {
           await supabaseAdmin
             .from("shifts")

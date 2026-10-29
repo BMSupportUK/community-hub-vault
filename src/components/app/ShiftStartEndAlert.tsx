@@ -24,7 +24,7 @@ const START_OVERDUE_GRACE = 30 * 60 * 1000; // stop nagging 30 min after shift s
 // Give staff a short window to clock themselves in before we do it for them.
 const AUTO_CLOCK_IN_AFTER = 1 * 60 * 1000; // 1 minute past the shift start
 // How long after the shift end we wait for an answer before clocking them out.
-const AUTO_CLOCK_OUT_AFTER = 1 * 60 * 1000; // 1 minute
+const AUTO_CLOCK_OUT_AFTER = 5 * 60 * 1000; // 5 minutes after the shift ends
 
 interface Slot {
   id: string;
@@ -271,7 +271,7 @@ export function ShiftStartEndAlert() {
       }
     }
     setAskOpen(true);
-    setAutoEndAt(askedAt + AUTO_CLOCK_OUT_AFTER);
+    setAutoEndAt(endsAtMs + AUTO_CLOCK_OUT_AFTER);
   }, [pageVisible, openShift, endsAtMs, now]);
 
 
@@ -302,7 +302,7 @@ export function ShiftStartEndAlert() {
     if (!openShift || autoEndAt === null || endsAtMs === null) return;
     if (now < autoEndAt) return;
     void clockOut(autoEndAt);
-    toast.info("Your shift was automatically clocked out 1 minute after the notice was shown.");
+    toast.info("Your shift was automatically ended 5 minutes after it finished because there was no answer.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [now, autoEndAt, openShift?.id, endsAtMs]);
 
