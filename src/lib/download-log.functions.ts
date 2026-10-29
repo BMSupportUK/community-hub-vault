@@ -33,7 +33,7 @@ export const listDownloadLog = createServerFn({ method: "GET" })
       .from("app_download_log")
       .select("id, created_at, source, app_name, version_name, user_id, ticket_id, order_id, ip, device, user_agent, bytes, enabler_reference, tv_address")
       .order("created_at", { ascending: false })
-      .limit(1000);
+      .limit(5000);
     if (error) throw new Error("Could not load the download log");
     const rows = data ?? [];
     const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean) as string[])];
