@@ -51,6 +51,9 @@ function ApprovedLayout() {
   const key = pageKeyForPath(path);
   const blocked =
     key !== "home" && // never redirect the fallback page onto itself
+    // /home forwards to these portal homes, so blocking them would loop forever.
+    key !== "staff-portal" &&
+    key !== "portal" &&
     !isFanZonePath(path) &&
     !isPageAllowed(key, roles, perms);
   if (blocked) return <Navigate to="/home" replace />;
