@@ -246,6 +246,22 @@ export function StaffOnDutyStrip({
   const presentGlobalIds = useTalkChannelPresentUsers();
   const presentChannelIds = useTalkChannelPresentUsersInChannel(channelId);
   const presentUserIds = isSidebar ? presentGlobalIds : channelId ? presentChannelIds : presentGlobalIds;
+  // Keeps people visible through brief presence flaps: switching Talk channels
+  // drops and re-adds a member within a second, which used to make their name
+  // row flicker off/on. Remember who was present in the last few seconds and
+  // only drop them once that grace has passed.
+  const lastPresentAtRef = useRef(new Map<string, number>());
+  const [stableIds, setStableIds] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    const now = Date.now();
+    for (const id of presentUserIds) lastPresentAtRef.current.set(id, now);
+    for (const [id, at] of lastPresentAtRef.current) {
+      if (now - at > PRESENCE_STABLE_MS) lastPresentAtRef.current.delete(id);
+    }
+    const next = new Set(presentUserIds);
+    for (const id of lastPresentAtRef.current.keys()) next.add(id);
+    setStableIds((prev) => (prev.size === next.size && Array.from(prev).every((x) => next.has(x)) ? prev : next));
+  }, [presentUserIds]);
   // Authorised change (user request): sidebar Online list + count reflect THIS channel,
   // so staff who move to another channel drop out straight away.
   const inThisChannelIds = channelId ? presentChannelIds : presentGlobalIds;
