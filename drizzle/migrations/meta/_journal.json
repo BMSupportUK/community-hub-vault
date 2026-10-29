@@ -1730,6 +1730,13 @@
       "when": 1793223608034,
       "tag": "0246_enabler_handoff_completed",
       "breakpoints": true
+    },
+    {
+      "idx": 247,
+      "version": "7",
+      "when": 1793266179501,
+      "tag": "0247_allow_self_install_download_log_source",
+      "breakpoints": true
     }
   ]
 }
