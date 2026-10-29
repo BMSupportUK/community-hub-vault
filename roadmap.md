@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Prevent promoted members receiving historical staff notifications
+- [x] Prevent promoted members receiving historical staff notifications; promotion tests and signed-in notification checks passed
 - [x] Add a Staff tab to admin Customers, ordered Admin, Management, Staff, Moderators
 - [x] Include gate-approved members without subscriptions in the combined admin Customers list
 - [x] Simplify website self-install: download/PIN, TV choice, selected apps and website code; staff help opens pending remote-support setup
