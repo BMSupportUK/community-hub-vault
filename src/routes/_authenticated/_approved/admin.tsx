@@ -14,6 +14,7 @@ import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/p
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
+import { AdminEnablerCodes } from "@/components/app/AdminEnablerCodes";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 // GoCardless switch (PayByBankProviderCard) hidden until the account is verified.
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
@@ -545,7 +546,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const perms = usePagePermissions();
   const toolsHeading = canSeePins ? "Owner tools" : "Staff tools";
   const { tab: searchTab } = useSearch({ strict: false }) as { tab?: string };
-  const validTabs = ["tools", "order-status", "customers", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "rail-order", "invoice-template", "sign-out-devices", "android-apk", "tv-sessions", "faqs"] as const;
+  const validTabs = ["tools", "order-status", "customers", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "rail-order", "invoice-template", "sign-out-devices", "android-apk", "tv-sessions", "faqs", "enabler-codes"] as const;
   type DashTab = (typeof validTabs)[number];
   const [tab, setTab] = useState<DashTab>(
     (validTabs as readonly string[]).includes(searchTab as string) ? (searchTab as DashTab) : "tools",
@@ -602,6 +603,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop, art: toolArtDesign },
     { tabKey: "rail-order", label: "Side icon rail", desc: "Staff and customer icon orders.", icon: LayoutGrid, art: toolArtDesign, adminOnly: true },
     { tabKey: "tv-sessions", label: "TV Remote sessions", desc: "Live TV sessions and session history.", icon: MonitorPlay, art: toolArtDevices, adminOnly: true },
+    { tabKey: "enabler-codes", label: "Enabler codes", desc: "Issue a BM TV Enabler PIN and website code for someone without a website account, with a log.", icon: KeyRound, art: toolArtDevices, adminOnly: true, managementToo: true },
     { tabKey: "faqs", label: "FAQ boxes", desc: "Add, edit, delete and re-order the boxes on the public FAQ page.", icon: CircleHelp, art: toolArtDocs },
     { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
@@ -667,7 +669,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
               type="button"
               onClick={() => setTab(key as DashTab)}
               className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
-                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "rail-order" || tab === "invoice-template" || tab === "sign-out-devices" || tab === "android-apk" || tab === "tv-sessions" || tab === "faqs"))
+                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "rail-order" || tab === "invoice-template" || tab === "sign-out-devices" || tab === "android-apk" || tab === "tv-sessions" || tab === "faqs" || tab === "enabler-codes"))
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
@@ -724,6 +726,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
         </div>
       ) : tab === "rail-order" && isAdminOnly ? (
         <RailOrderEditor />
+      ) : tab === "enabler-codes" && canSeePins && !isFz ? (
+        <AdminEnablerCodes />
       ) : tab === "tv-sessions" && isAdminOnly && !isFz ? (
         <TvRemoteSessions onBack={() => {
           setTab("tools");
