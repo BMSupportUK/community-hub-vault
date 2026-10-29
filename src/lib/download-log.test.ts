@@ -11,8 +11,12 @@ describe("download log", () => {
 });
 
 describe("download log year and month tabs", () => {
-  test("entries land in the UK year and month they belong to", () =>
-    expect(logPeriod("2025-12-31T23:30:00Z")).toEqual({ year: "2026", month: "1" }));
+  test("entries land in the UK year and month they belong to", () => {
+    // Winter: UK time equals UTC, so this stays on 31 December.
+    expect(logPeriod("2025-12-31T23:30:00Z")).toEqual({ year: "2025", month: "12" });
+    // In summer the UK runs an hour ahead, so 23:30 UTC on 31 August is already September.
+    expect(logPeriod("2026-08-31T23:30:00Z")).toEqual({ year: "2026", month: "9" });
+  });
   test("year tabs list newest first", () =>
     expect(logYearOptions([{ createdAt: "2025-01-01T00:00:00Z" }, { createdAt: "2026-06-01T00:00:00Z" }])).toEqual(["2026", "2025"]));
   test("month tabs only include months that have entries", () =>
