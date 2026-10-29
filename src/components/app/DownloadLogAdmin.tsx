@@ -39,6 +39,24 @@ export function DownloadLogAdmin() {
         <h2 className="font-display text-xl font-semibold text-foreground">Download log</h2>
         <p className="mt-1 text-sm text-muted-foreground">Every app download, newest first. Enabler downloads show a customer once their app sends its Enabler login.</p>
       </div>
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Year">
+        <Button role="tab" aria-selected={year === "all"} size="sm" variant={year === "all" ? "default" : "outline"}
+          onClick={() => { setYear("all"); setMonth("all"); }}>All years</Button>
+        {years.map((y) => (
+          <Button key={y} role="tab" aria-selected={year === y} size="sm" variant={year === y ? "default" : "outline"}
+            onClick={() => { setYear(y); setMonth("all"); }}>{y}</Button>
+        ))}
+      </div>
+      {year !== "all" && (
+        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Month">
+          <Button role="tab" aria-selected={month === "all"} size="sm" variant={month === "all" ? "default" : "outline"}
+            onClick={() => setMonth("all")}>All months</Button>
+          {months.map((m) => (
+            <Button key={m} role="tab" aria-selected={month === m} size="sm" variant={month === m ? "default" : "outline"}
+              onClick={() => setMonth(m)}>{logMonthLabel(m)}</Button>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         <Select value={source} onValueChange={setSource}>
           <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
