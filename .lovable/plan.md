@@ -1,29 +1,32 @@
-# BM TV Enabler for the TV itself (Fire TV / Android TV app)
+# BM TV Enabler for the TV itself (install only)
 
 ## What the customer does
-1. Install the new app straight onto the TV, using Downloader or the Install Guides QR.
+1. Install the new app straight onto the Fire TV or Android TV, using Downloader or the Install Guides QR.
 2. Open it and sign in with their BM TV Enabler login PIN. This is the same PIN shown on the website.
-3. Type in the website code from Install Guides, a ticket or an order.
-4. The app reads what the code is for:
-   - **Install apps**: shows the same install screen with progress and installs only the apps they ticked. Apps already on the TV are skipped. When it's done it reports back, so the website moves to "All done". A red Close button finishes it.
-   - **Screen sharing**: starts BM Remote Helper and links the TV to the ticket or order, so staff can connect.
+3. Type in the website code from the Install Guides self-install steps.
+4. The app follows the same installation steps as the phone and Windows apps:
+   - It shows the install screen with progress.
+   - It installs only the apps that were ticked, and skips apps already on the TV.
+   - It reports what was installed, so the website moves to "All done".
+   - It finishes with "Installation complete" and a red Close button.
 
-## Important limit (no debugging needed on the TV)
-Newer Fire TVs block an app from switching debugging on and using it on the same TV. So this app will not use debugging at all. Instead:
-- Each app install uses Android's normal installer. The customer presses **Install** once for each app, and allows "Install unknown apps" for BM the first time.
-- Screen sharing needs BM Remote Helper's existing permissions: screen capture is approved on screen. Remote control still needs the phone or Windows Enabler once, because only those can switch the control permission on.
+There is no screen sharing in this app. If a customer enters a screen-sharing code, it says to use the phone or Windows Enabler instead.
 
-The phone and Windows Enablers stay as they are. The TV app is an extra option.
+## How installing works on the TV
+Newer Fire TVs block an app from using debugging on the same TV, so this app installs without debugging. Android's normal installer is used instead:
+- The first time, the customer allows "Install unknown apps" for BM.
+- After that, they press **Install** once for each app.
+
+The phone and Windows Enablers stay exactly as they are.
 
 ## Website changes
-- Install Guides gets a third download choice, "Install on the TV itself", with a Downloader code or short link and a QR code.
+- Install Guides gets a third download choice, "Install on the TV itself", with a QR code or short link.
 - A new download link for the TV app, recorded in the Download Log.
-- The same codes, PINs, ticket/order linking and "All done" screen. No new code types.
+- The same codes, PINs and "All done" screen. No new code types.
 
 ## Technical details
 - New in-house Android project `tv-direct-enabler/`, signed with the permanent BM key and set up as a TV (leanback) app.
-- Reuses the existing public endpoints: PIN login, `enabler-handoff` redeem, `enabler-self-install` (progress/finished report), `enabler-ticket-support`, plus the protocol marker header.
-- Installs: downloads the APK to app cache, then a `PackageInstaller` session with `REQUEST_INSTALL_PACKAGES`. Before downloading, it checks which apps are already installed using `PackageManager` with the cached exact package names.
-- Support: installs or updates BM Remote Helper the same way, then launches it with the handoff reference.
+- Reuses the existing public endpoints: PIN login, the redeem endpoint for website codes, and `enabler-self-install` for progress and the finished report, with the protocol marker header. It rejects `support` handoffs.
+- Before downloading, it checks which apps are already installed using `PackageManager` with the cached exact package names. Then it downloads each APK to app cache and installs it with a `PackageInstaller` session (`REQUEST_INSTALL_PACKAGES`).
 - New route `/api/public/tv-direct-enabler-apk`, calling `logDownload`. The build is uploaded to app-builds as v1.0.
-- AGENTS.md rule added for the TV app's no-ADB install path.
+- AGENTS.md gets a rule: the on-TV Enabler is install-only and uses PackageInstaller, never self-ADB.
