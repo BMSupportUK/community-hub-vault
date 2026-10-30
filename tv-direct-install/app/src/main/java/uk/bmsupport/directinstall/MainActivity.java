@@ -60,6 +60,9 @@ public class MainActivity extends Activity {
 
     private SharedPreferences prefs;
     private LinearLayout box;
+    private TextView ver;
+    private final android.os.Handler timer = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static final long SESSION_MS = 3600_000L;
     private final LinkedBlockingQueue<Integer> results = new LinkedBlockingQueue<>();
     private volatile boolean busy; private volatile int lastCode;
     private Set<String> pendingPaths; private boolean waitingPermission;
@@ -93,6 +96,10 @@ public class MainActivity extends Activity {
         sv.addView(box);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dp(720), -2, Gravity.CENTER);
         root.addView(sv, lp);
+        ver = text("v" + appVersion(), 14, MUTED, false);
+        ver.setPadding(dp(16), dp(10), dp(16), dp(10));
+        root.addView(ver, new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+        timer.postDelayed(sessionCheck, 15_000);
         setContentView(root);
         IntentFilter f = new IntentFilter(ACTION);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(receiver, f, Context.RECEIVER_NOT_EXPORTED); else registerReceiver(receiver, f);
@@ -115,7 +122,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             boolean ok = true;
             try {
-                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.4").put("note", restarted ? "restart_after_permission" : "reopen"), false);
+                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.5").put("note", restarted ? "restart_after_permission" : "reopen"), false);
             } catch (Exception e) {
                 if (lastCode == 401) ok = false;
             }
@@ -142,9 +149,34 @@ public class MainActivity extends Activity {
         e.commit();
     }
 
-    private void clearSignIn() { prefs.edit().remove("token").remove("exp").commit(); }
+    private void clearSignIn() { prefs.edit().remove("token").remove("exp").remove("signed_at").commit(); }
 
-    @Override protected void onDestroy() { try { unregisterReceiver(receiver); } catch (Exception ignored) {} super.onDestroy(); }
+    private String appVersion() {
+        try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return "?"; }
+    }
+
+    /** Version sits at the bottom on the sign-in page, top corner once signed in. */
+    private void placeVersion(boolean signedIn) {
+        if (ver == null) return;
+        FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) ver.getLayoutParams();
+        p.gravity = signedIn ? (Gravity.TOP | Gravity.END) : (Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        ver.setLayoutParams(p); ver.bringToFront();
+    }
+
+    /** Automatic sign-out one hour after signing in (waits if an install is running). */
+    private final Runnable sessionCheck = new Runnable() {
+        @Override public void run() {
+            long at = prefs.getLong("signed_at", 0);
+            if (at > 0 && !busy && System.currentTimeMillis() - at >= SESSION_MS) signOut("You were signed out after 1 hour. Type your PIN to sign in again.");
+            timer.postDelayed(this, 15_000);
+        }
+    };
+
+    private void signOut(String msg) {
+        clearSignIn(); setWaiting(false, null); showPin(msg);
+    }
+
+    @Override protected void onDestroy() { timer.removeCallbacksAndMessages(null); try { unregisterReceiver(receiver); } catch (Exception ignored) {} super.onDestroy(); }
 
     @Override protected void onResume() {
         super.onResume();
@@ -160,6 +192,7 @@ public class MainActivity extends Activity {
     // ---------- Screens ----------
     private void header(String title, String body) {
         box.removeAllViews();
+        placeVersion(!"Sign in".equals(title));
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.bm_logo); logo.setAdjustViewBounds(true);
         box.addView(logo, new LinearLayout.LayoutParams(dp(150), dp(80)));
@@ -180,11 +213,11 @@ public class MainActivity extends Activity {
             go.setEnabled(false); msg.setTextColor(MUTED); msg.setText("Checking your PIN…");
             new Thread(() -> {
                 try {
-                    JSONObject body = new JSONObject().put("pin", p).put("app", "direct-1.4");
+                    JSONObject body = new JSONObject().put("pin", p).put("app", "direct-1.5");
                     String saved = prefs.getString("token", "");
                     if (validToken()) body.put("token", saved); // keep this TV's existing device link
                     JSONObject j = post("enabler-login", body, false);
-                    prefs.edit().putString("token", j.getString("token")).putLong("exp", j.optLong("expiresAtMs", System.currentTimeMillis() + 3600_000L)).commit();
+                    prefs.edit().putString("token", j.getString("token")).putLong("exp", Math.min(j.optLong("expiresAtMs", Long.MAX_VALUE), System.currentTimeMillis() + SESSION_MS)).putLong("signed_at", System.currentTimeMillis()).commit();
                     report("signed_in");
                     runOnUiThread(this::afterSignIn);
                 } catch (Exception e) { String m = lastCode == 429 ? "Too many wrong PINs from this connection. Wait 15 minutes, then try again." : e.getMessage(); runOnUiThread(() -> showPin(m)); }
@@ -390,7 +423,7 @@ public class MainActivity extends Activity {
         for (String n : failed) box.addView(text("\u2716  " + n + " — not installed", 19, ACCENT, false), lp(dp(6)));
         if (!failed.isEmpty()) box.addView(text("Make a new code on the website to try the missing apps again.", 16, MUTED, false), lp(dp(10)));
         Button close = button("Close", ACCENT); box.addView(close, btnLp());
-        close.setOnClickListener(v -> finishAndRemoveTask());
+        close.setOnClickListener(v -> { clearSignIn(); setWaiting(false, null); finishAndRemoveTask(); });
         Button again = button("Enter another code", CARD); box.addView(again, btnLp());
         again.setOnClickListener(v -> showCode(null));
         close.requestFocus();
