@@ -24,7 +24,7 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
   const [step, setStep] = useState(0);
   const [manual, setManual] = useState<boolean[]>([false, false, false, false, false]);
   const [progress, setProgress] = useState<Progress>(null);
-  const [tv, setTv] = useState<"amazon" | "android">("amazon");
+  const [tv, setTv] = useState<"amazon" | "android" | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -60,9 +60,12 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
   const shown = link?.url.replace(/^https:\/\//, "");
   const Waiting = ({ text }: { text: string }) => <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" />{text}</p>;
 
-  const TvPicker = () => <div className="inline-flex rounded-md border border-border p-1">
-    {(["amazon", "android"] as const).map((d) => <button key={d} type="button" onClick={() => setTv(d)}
-      className={`rounded px-3 py-1 text-sm ${tv === d ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{d === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</button>)}
+  const TvPicker = ({ required }: { required?: boolean }) => <div className="space-y-2">
+    {required && <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-500">Required — choose your device to continue</p>}
+    <div className="inline-flex rounded-md border border-border p-1">
+      {(["amazon", "android"] as const).map((d) => <button key={d} type="button" onClick={() => { setTv(d); onChooseDevice(d); }}
+        className={`rounded px-3 py-1 text-sm ${tv === d ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{d === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</button>)}
+    </div>
   </div>;
 
   return <div className="space-y-6">
