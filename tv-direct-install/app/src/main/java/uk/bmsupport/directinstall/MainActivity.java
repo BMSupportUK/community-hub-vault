@@ -101,7 +101,9 @@ public class MainActivity extends Activity {
         Set<String> saved = prefs.getStringSet("pending_paths", null);
         pendingPaths = saved == null ? null : new HashSet<>(saved);
         if (b != null && b.getBoolean("waiting", false)) waitingPermission = true;
-        if (validToken()) resumeSignedIn(); else showPin(null);
+        // Always ask for the PIN on a fresh start; only the restart after the
+        // "Install unknown apps" switch may resume without it.
+        if (validToken() && waitingPermission) resumeSignedIn(); else showPin(null);
     }
 
     @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); out.putBoolean("waiting", waitingPermission); }
@@ -113,7 +115,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             boolean ok = true;
             try {
-                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.3").put("note", restarted ? "restart_after_permission" : "reopen"), false);
+                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.4").put("note", restarted ? "restart_after_permission" : "reopen"), false);
             } catch (Exception e) {
                 if (lastCode == 401) ok = false;
             }
@@ -178,7 +180,10 @@ public class MainActivity extends Activity {
             go.setEnabled(false); msg.setTextColor(MUTED); msg.setText("Checking your PIN…");
             new Thread(() -> {
                 try {
-                    JSONObject j = post("enabler-login", new JSONObject().put("pin", p).put("app", "direct-1.3"), false);
+                    JSONObject body = new JSONObject().put("pin", p).put("app", "direct-1.4");
+                    String saved = prefs.getString("token", "");
+                    if (validToken()) body.put("token", saved); // keep this TV's existing device link
+                    JSONObject j = post("enabler-login", body, false);
                     prefs.edit().putString("token", j.getString("token")).putLong("exp", j.optLong("expiresAtMs", System.currentTimeMillis() + 3600_000L)).commit();
                     report("signed_in");
                     runOnUiThread(this::afterSignIn);
