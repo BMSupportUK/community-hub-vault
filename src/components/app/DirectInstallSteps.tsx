@@ -49,7 +49,7 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
     try {
       const l = await linkFn();
       setLink(l); setProgress(null); setManual([false, false, false, false, false]);
-      // Stay on step 1 so the link is shown there; the customer presses Next when ready.
+      setStep(1); // show the link on step 2 — that's what goes into Downloader
     } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a download link."); }
     finally { setBusy(false); }
   };
