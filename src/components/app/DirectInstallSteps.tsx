@@ -89,10 +89,9 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
     {step === 0 && <section className="space-y-3">
       <h3 className="text-lg font-semibold text-foreground">Step 1 · Get your secure download link</h3>
       {link ? <div className="space-y-2">
-        <p className="select-all break-all font-mono text-3xl font-bold text-primary">{shown}</p>
-        <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (30 minutes).</p>
+        <p className="text-sm text-muted-foreground">Your link is on step 2, ready to type into Downloader.</p>
         <Button variant="outline" size="sm" disabled={busy} onClick={make}><RefreshCw className="size-4" />Get a new link</Button>
-        <div className="pt-1"><Button size="sm" onClick={() => setStep(1)}>Next step<ArrowRight className="size-4" /></Button></div>
+        <div className="pt-1"><Button size="sm" onClick={() => setStep(1)}>Go to step 2<ArrowRight className="size-4" /></Button></div>
       </div> : <Button onClick={make} disabled={busy}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}Get my secure download link</Button>}
     </section>}
 
