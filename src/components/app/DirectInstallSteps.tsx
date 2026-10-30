@@ -171,7 +171,7 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
       <p className="text-sm text-muted-foreground">Tick your apps and get your website code. Type it into BM Direct Install, then press <strong className="text-foreground">Install</strong> for each app. This page shows All done when it's finished.</p>
       <TvPicker required />
       {tv ? <><DirectCodePicker device={tv} />
-      <Waiting text={done[5] ? "Code accepted — your TV is installing your apps…" : "Waiting for your website code on the TV…"}</Waiting></>
+      <Waiting text={done[5] ? "Code accepted — your TV is installing your apps…" : "Waiting for your website code on the TV…"} /></>
         : <p className="text-sm text-muted-foreground">Pick your device above to load your apps.</p>}
       <WizardNav onBack={() => setStep(4)} onNext={() => setStep(5)} nextLabel="Waiting for TV" />
     </section>}
