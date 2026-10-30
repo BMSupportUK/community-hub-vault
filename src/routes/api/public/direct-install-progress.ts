@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/direct-install-progress")({
         .gt("created_at", since).order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (link) {
         const now = new Date().toISOString();
-        const patch: Record<string, string> = { [STAGE_COLUMN[body.data.stage]]: now };
+        const patch = { [STAGE_COLUMN[body.data.stage]]: now } as { completed_at: string };
         await db.from("direct_install_links").update(patch).eq("id", link.id);
       }
       return Response.json({ ok: true }, { headers });
