@@ -19,3 +19,5 @@
 - [x] New ticket form asks "Do you want remote support?"; Yes opens the ticket's Remote setup
 - [x] Pass ticket remote-support answers to Enabler without asking again; verified code creation, saved answers and reload on existing customer test ticket
 - [ ] Verify handoff through an actual TV connection (requires customer TV and current Enabler)
+- [x] BM Direct Install TV app (install only, secure 30-min Downloader link, own Install Guides tab)
+- [ ] Try BM Direct Install on a real Fire TV (needs customer TV)

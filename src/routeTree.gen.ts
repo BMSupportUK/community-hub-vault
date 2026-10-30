@@ -40,6 +40,7 @@ import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/g
 import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as CheckoutAccountTokenRouteImport } from './routes/checkout-account.$token'
 import { Route as CheckoutInstallTokenRouteImport } from './routes/checkout-install.$token'
+import { Route as DiCodeRouteImport } from './routes/di.$code'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as FanZoneJobsRouteImport } from './routes/fan-zone.jobs'
@@ -367,6 +368,11 @@ const CheckoutAccountTokenRoute = CheckoutAccountTokenRouteImport.update({
 const CheckoutInstallTokenRoute = CheckoutInstallTokenRouteImport.update({
   id: '/checkout-install/$token',
   path: '/checkout-install/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiCodeRoute = DiCodeRouteImport.update({
+  id: '/di/$code',
+  path: '/di/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FanZoneIndexRoute = FanZoneIndexRouteImport.update({
@@ -1420,6 +1426,7 @@ export interface FileRoutesByFullPath {
   '/a/$token': typeof ATokenRoute
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
+  '/di/$code': typeof DiCodeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
@@ -1624,6 +1631,7 @@ export interface FileRoutesByTo {
   '/a/$token': typeof ATokenRoute
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
+  '/di/$code': typeof DiCodeRoute
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
@@ -1830,6 +1838,7 @@ export interface FileRoutesById {
   '/a/$token': typeof ATokenRoute
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
+  '/di/$code': typeof DiCodeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
@@ -2037,6 +2046,7 @@ export interface FileRouteTypes {
     | '/a/$token'
     | '/checkout-account/$token'
     | '/checkout-install/$token'
+    | '/di/$code'
     | '/fan-zone/$board'
     | '/fan-zone/jobs'
     | '/guides/$id'
@@ -2241,6 +2251,7 @@ export interface FileRouteTypes {
     | '/a/$token'
     | '/checkout-account/$token'
     | '/checkout-install/$token'
+    | '/di/$code'
     | '/fan-zone/jobs'
     | '/guides/$id'
     | '/job-application/$token'
@@ -2446,6 +2457,7 @@ export interface FileRouteTypes {
     | '/a/$token'
     | '/checkout-account/$token'
     | '/checkout-install/$token'
+    | '/di/$code'
     | '/fan-zone/$board'
     | '/fan-zone/jobs'
     | '/guides/$id'
@@ -2650,6 +2662,7 @@ export interface RootRouteChildren {
   ATokenRoute: typeof ATokenRoute
   CheckoutAccountTokenRoute: typeof CheckoutAccountTokenRoute
   CheckoutInstallTokenRoute: typeof CheckoutInstallTokenRoute
+  DiCodeRoute: typeof DiCodeRoute
   GuidesIdRoute: typeof GuidesIdRoute
   JobApplicationTokenRoute: typeof JobApplicationTokenRoute
   PayTokenRoute: typeof PayTokenRoute
@@ -2937,6 +2950,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout-install/$token'
       fullPath: '/checkout-install/$token'
       preLoaderRoute: typeof CheckoutInstallTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/di/$code': {
+      id: '/di/$code'
+      path: '/di/$code'
+      fullPath: '/di/$code'
+      preLoaderRoute: typeof DiCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fan-zone/': {
@@ -4577,6 +4597,7 @@ const rootRouteChildren: RootRouteChildren = {
   ATokenRoute: ATokenRoute,
   CheckoutAccountTokenRoute: CheckoutAccountTokenRoute,
   CheckoutInstallTokenRoute: CheckoutInstallTokenRoute,
+  DiCodeRoute: DiCodeRoute,
   GuidesIdRoute: GuidesIdRoute,
   JobApplicationTokenRoute: JobApplicationTokenRoute,
   PayTokenRoute: PayTokenRoute,

@@ -2067,6 +2067,33 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_install_links: {
+        Row: {
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          used_count: number
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used_count?: number
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       discord_import_queue: {
         Row: {
           created_at: string

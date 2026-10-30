@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/enabler-handoff")({
   server: { handlers: {
     OPTIONS: async () => new Response(null, { status: 204, headers }),
     POST: async ({ request }) => {
-      const body = z.object({ code: z.string().max(20), protocol: z.number().int().optional() }).safeParse(await request.json().catch(() => null));
+      const body = z.object({ code: z.string().max(20), protocol: z.number().int().optional(), installOnly: z.boolean().optional() }).safeParse(await request.json().catch(() => null));
       const code = body.success ? normalizeHandoffCode(body.data.code) : null;
       if (!code) return reply({ error: "Type the 6-digit code from the website." }, 400);
       const tok = request.headers.get("x-enabler-token");
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/api/public/enabler-handoff")({
         .eq("code_hash", await sha256Hex(code)).maybeSingle();
       const verdict = handoffUsable(row, userId, Date.now(), pin?.admin_issue_id ?? null);
       if (verdict !== "ok" || !row) return reply({ error: MESSAGES[verdict as keyof typeof MESSAGES] }, verdict === "wrong_user" ? 403 : 404);
+      if (row.purpose === "support" && body.success && body.data.installOnly) return reply({ error: "This code is for screen sharing. BM Direct Install only installs apps – use BM TV Enabler on your phone or PC for screen sharing." }, 409);
       if (row.purpose === "support" && (!body.success || body.data.protocol !== 2)) return reply({ error: "Update BM TV Enabler from your ticket before using this remote-support code." }, 426);
       const { data: claimed } = await db.from("enabler_handoffs").update({ used_at: new Date().toISOString() }).eq("id", row.id).is("used_at", null).select("id");
       if (!claimed?.length) return reply({ error: MESSAGES.used }, 404);

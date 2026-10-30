@@ -7,6 +7,7 @@ export const DOWNLOAD_SOURCES = {
   transfer_link: "Secure download link",
   android_apk: "BM Support phone app",
   self_install: "Self install (no staff help)",
+  direct_install: "BM Direct Install (TV)",
 } as const;
 export type DownloadSource = keyof typeof DOWNLOAD_SOURCES;
 
