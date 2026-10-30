@@ -75,6 +75,7 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
 
     <ol className="flex flex-wrap items-center gap-x-4 gap-y-2">
       {STEP_TITLES.map((t, i) => {
+        if (answered === "yes" && (i === 1 || i === 2)) return null;
         const complete = done[i] || completed;
         const current = !completed && i === step;
         return <li key={t}><button type="button" onClick={() => setStep(i)} className="flex items-center gap-2">
@@ -142,7 +143,7 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
       <p className="text-sm text-muted-foreground">Open BM Direct Install on your TV and type this PIN. It's the same PIN as BM TV Enabler.</p>
       {pin}
       {!done[3] && <Waiting text="Waiting for BM Direct Install to sign in…" />}
-      <WizardNav onBack={() => setStep(2)} onNext={() => finish(3)} nextLabel="Next step" />
+      <WizardNav onBack={() => setStep(answered === "yes" ? 0 : 2)} onNext={() => finish(3)} nextLabel="Next step" />
     </section>}
 
     {step === 4 && <section className="space-y-3">
