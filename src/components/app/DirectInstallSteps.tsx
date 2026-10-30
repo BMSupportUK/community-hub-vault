@@ -123,14 +123,18 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
 
     {step === 3 && <section className="space-y-3">
       <h3 className="text-lg font-semibold text-foreground">Step 4 · Allow BM Direct Install to install apps</h3>
-      <p className="text-sm text-muted-foreground">Your TV needs your OK once. BM Direct Install shows an <strong className="text-foreground">Open setting</strong> button that takes you straight there.</p>
+      <p className="text-sm text-muted-foreground">Your TV needs your OK once. BM Direct Install shows a <strong className="text-foreground">Take me there</strong> button that takes you straight there.</p>
       <TvPicker />
-      {tv === "amazon" ? <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-        <li>Press <strong className="text-foreground">Open setting</strong> in BM Direct Install.</li>
-        <li>Switch <strong className="text-foreground">BM Direct Install</strong> to ON. If it doesn't open: <strong className="text-foreground">Settings › My Fire TV › Developer options › Install unknown apps › BM Direct Install</strong> › ON.</li>
-        <li>Press <strong className="text-foreground">Back</strong> to return to BM Direct Install.</li>
-      </ol> : <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-        <li>Press <strong className="text-foreground">Open setting</strong> in BM Direct Install.</li>
+      {tv === "amazon" ? <div className="space-y-2 text-sm text-muted-foreground">
+        <p>On the TV press <strong className="text-foreground">Take me there</strong>, press <strong className="text-foreground">OK</strong> to switch it ON, then press <strong className="text-foreground">Back</strong>. BM Direct Install carries on by itself.</p>
+        <details><summary className="cursor-pointer text-foreground">Didn't work?</summary>
+        <ol className="mt-1 list-decimal space-y-1 pl-5">
+        <li>Press <strong className="text-foreground">Take me there</strong> again — each press tries the next setting.</li>
+        <li>Or go to <strong className="text-foreground">Settings › My Fire TV › Developer options › Install unknown apps › BM Direct Install</strong> › ON.</li>
+        <li>No Developer options? <strong className="text-foreground">Settings › My Fire TV › About</strong>, press OK on your device name 7 times, then go back.</li>
+        </ol></details>
+      </div> : <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+        <li>Press <strong className="text-foreground">Take me there</strong> in BM Direct Install.</li>
         <li>Switch <strong className="text-foreground">Allow from this source</strong> ON. If it doesn't open: <strong className="text-foreground">Settings › Apps › Security & restrictions › Unknown sources › BM Direct Install</strong> › ON (on some TVs: <strong className="text-foreground">Settings › Device Preferences › Security & restrictions</strong>).</li>
         <li>Press <strong className="text-foreground">Back</strong> to return to BM Direct Install.</li>
       </ol>}

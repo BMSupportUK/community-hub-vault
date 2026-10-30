@@ -135,7 +135,7 @@ public class MainActivity extends Activity {
             go.setEnabled(false); msg.setTextColor(MUTED); msg.setText("Checking your PIN…");
             new Thread(() -> {
                 try {
-                    JSONObject j = post("enabler-login", new JSONObject().put("pin", p).put("app", "direct-1.1"), false);
+                    JSONObject j = post("enabler-login", new JSONObject().put("pin", p).put("app", "direct-1.2"), false);
                     prefs.edit().putString("token", j.getString("token")).putLong("exp", j.optLong("expiresAtMs", System.currentTimeMillis() + 3600_000L)).apply();
                     report("signed_in");
                     runOnUiThread(this::afterSignIn);
@@ -181,15 +181,71 @@ public class MainActivity extends Activity {
         return Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls();
     }
 
+    private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
+    private int settingTry;
+    private static boolean isAmazon() { return "Amazon".equalsIgnoreCase(Build.MANUFACTURER); }
+
     private void showPermission(Set<String> paths) {
         pendingPaths = paths; waitingPermission = true;
-        header("Allow BM Direct Install to install apps", "Your TV needs your OK once. On the next screen switch BM Direct Install ON, then press Back to return here.");
-        Button go = button("Open setting", ACCENT); box.addView(go, btnLp());
-        go.setOnClickListener(v -> {
-            try { startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))); }
-            catch (Exception e) { try { startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS)); } catch (Exception ignored) {} }
-        });
+        header("Allow BM Direct Install to install apps", "Your TV needs your OK once. Press Take me there, then on the switch:");
+        LinearLayout remote = new LinearLayout(this); remote.setOrientation(LinearLayout.HORIZONTAL); remote.setGravity(Gravity.CENTER);
+        remote.addView(key("OK", "switch ON"), keyLp()); remote.addView(key("\u21A9", "then Back"), keyLp());
+        box.addView(remote, lp(dp(18)));
+        TextView hint = text("", 17, MUTED, false); box.addView(hint, lp(dp(12)));
+        Button go = button("Take me there", ACCENT); box.addView(go, btnLp());
+        settingTry = 0;
+        go.setOnClickListener(v -> openPermissionSetting(hint));
         go.requestFocus();
+    }
+
+    private View key(String label, String caption) {
+        LinearLayout k = new LinearLayout(this); k.setOrientation(LinearLayout.VERTICAL); k.setGravity(Gravity.CENTER_HORIZONTAL);
+        TextView b = text(label, 24, Color.WHITE, true);
+        GradientDrawable d = new GradientDrawable(); d.setShape(GradientDrawable.OVAL); d.setColor(CARD); d.setStroke(dp(4), ACCENT);
+        b.setBackground(d); k.addView(b, new LinearLayout.LayoutParams(dp(84), dp(84)));
+        k.addView(text(caption, 16, FG, false), lp(dp(6)));
+        return k;
+    }
+    private LinearLayout.LayoutParams keyLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2); p.leftMargin = dp(24); p.rightMargin = dp(24); return p; }
+
+    /** Opens the closest setting the TV allows; each later press tries the next fallback. */
+    private void openPermissionSetting(TextView hint) {
+        String[][] steps = isAmazon() ? new String[][]{
+            { Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "pkg", "Switch BM Direct Install ON with OK, then press Back." },
+            { Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS, "", "Choose Install unknown apps (or Apps from Unknown Sources), switch BM Direct Install ON, then press Back." },
+            { Settings.ACTION_DEVICE_INFO_SETTINGS, "", "Press OK on your device name 7 times until it says you're a developer, then press Back and press Take me there again." },
+            { Settings.ACTION_SETTINGS, "", "Go to My Fire TV › Developer options › Install unknown apps › BM Direct Install › ON." },
+        } : new String[][]{
+            { Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "pkg", "Switch Allow from this source ON, then press Back." },
+            { Settings.ACTION_SECURITY_SETTINGS, "", "Open Unknown sources, switch BM Direct Install ON, then press Back." },
+            { Settings.ACTION_SETTINGS, "", "Go to Apps › Security & restrictions › Unknown sources › BM Direct Install › ON." },
+        };
+        while (settingTry < steps.length) {
+            String[] st = steps[settingTry++];
+            try {
+                Intent i = st[1].isEmpty() ? new Intent(st[0]) : new Intent(st[0], Uri.parse("package:" + getPackageName()));
+                startActivity(i);
+                hint.setText(st[2] + (settingTry < steps.length ? "\nDidn't work? Press Take me there again." : ""));
+                watchPermission();
+                return;
+            } catch (Exception ignored) { }
+        }
+        settingTry = 0;
+        hint.setText(steps[steps.length - 1][2]);
+    }
+
+    /** While a setting is open, check every second and come back by ourselves once allowed. */
+    private void watchPermission() {
+        ui.removeCallbacksAndMessages(null);
+        final long until = System.currentTimeMillis() + 10 * 60_000L;
+        ui.postDelayed(new Runnable() { @Override public void run() {
+            if (!waitingPermission) return;
+            if (canInstall()) {
+                startActivity(new Intent(MainActivity.this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+                return;
+            }
+            if (System.currentTimeMillis() < until) ui.postDelayed(this, 1000);
+        } }, 1000);
     }
 
     private TextView progTitle, progDetail, progCount; private ProgressBar bar;
