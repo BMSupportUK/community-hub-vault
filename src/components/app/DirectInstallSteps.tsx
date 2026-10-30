@@ -16,7 +16,7 @@ function reported(p: Progress, link: boolean): boolean[] {
 }
 
 /** BM Direct Install tab: a step-by-step wizard. Steps tick automatically as the TV app reports them. */
-export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; onChooseDevice: (d: "amazon" | "android") => void }) {
+export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
   const linkFn = useServerFn(createDirectInstallLink);
   const progressFn = useServerFn(getDirectInstallProgress);
   const [link, setLink] = useState<{ url: string; expiresAt: string } | null>(null);
