@@ -197,9 +197,9 @@ function DirectCodePicker({ device }: { device: "amazon" | "android" }) {
   </div>;
 }
 
-function WizardNav({ onBack, onNext, nextLabel }: { onBack: () => void; onNext: () => void; nextLabel: string }) {
+function WizardNav({ onBack, onNext, nextLabel, nextDisabled }: { onBack: () => void; onNext: () => void; nextLabel: string; nextDisabled?: boolean }) {
   return <div className="flex flex-wrap gap-2 pt-1">
     <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="size-4" />Back</Button>
-    <Button size="sm" onClick={onNext}>{nextLabel}<ArrowRight className="size-4" /></Button>
+    <Button size="sm" onClick={onNext} disabled={nextDisabled}>{nextLabel}<ArrowRight className="size-4" /></Button>
   </div>;
 }
