@@ -12,11 +12,11 @@
   <div id="apps-pick" class="device-pick" role="group" aria-label="What do you need?" hidden><button id="apps-code" class="primary" type="button">I have a website code</button><button id="apps-new" type="button" hidden>Install our apps</button><button id="apps-have" type="button" hidden>Screen-share support</button></div>
   <button id="apps-back" type="button" hidden>Back</button>
   <div id="address-block" hidden>
-    <div class="address-row"><label for="address">TV address<input id="address" inputmode="decimal" autocomplete="off" maxlength="15" placeholder="192.168.1.25"></label><button id="scan" type="button">Find my TV</button></div>
+    <div class="address-row"><label for="address">Wireless debugging address (IP:port)<input id="address" inputmode="decimal" autocomplete="off" maxlength="21" placeholder="192.168.1.25:41235"></label><button id="scan" type="button">Find my TV</button></div>
     <p id="scan-hint" class="hint"></p>
     <details id="pair-block"><summary>Android / Google TV with Wireless debugging: pair with code</summary>
-      <p class="hint">On the TV: Developer options › Wireless debugging › Pair device with pairing code. Type the code and the port after the colon on that screen. In TV address above, type the IP address &amp; Port from the main Wireless debugging screen, e.g. 192.168.1.25:41235.</p>
-      <div class="address-row"><label for="pair-code">6-digit pairing code<input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="123456"></label><label for="pair-port">Pairing port<input id="pair-port" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="37123"></label></div>
+      <p class="hint">On the TV: Developer options › Wireless debugging › Pair device with pairing code. Type the 6-digit code and the port after the colon on that screen into the two boxes below. In the Wireless debugging address box above, type the IP address &amp; Port from the main Wireless debugging screen, e.g. 192.168.1.25:41235.</p>
+      <div class="address-row"><label for="pair-code">Pairing code (6 digits)<input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="123456"></label><label for="pair-port">Pairing port<input id="pair-port" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="37123"></label></div>
       <button id="pair" type="button">Pair with code and set up my TV</button>
     </details>
     <div id="devices" role="group" aria-label="Discovered TVs"></div>

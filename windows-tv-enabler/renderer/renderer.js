@@ -396,7 +396,7 @@ action.addEventListener('click', () => {
 pairButton.addEventListener('click', async () => {
   if (busy || wizard.step !== Step.CHECK) return;
   const host = address.value.trim();
-  if (!validHost(host) || !host.includes(':')) { say('In TV address, type the IP address & Port from the Wireless debugging screen, e.g. 192.168.1.25:41235.', true); return; }
+  if (!validHost(host) || !host.includes(':')) { say('In the Wireless debugging address box, type the IP address & Port from the Wireless debugging screen, e.g. 192.168.1.25:41235.', true); return; }
   const code = pairCode.value.replace(/\D/g, ''), port = pairPort.value.replace(/\D/g, '');
   if (code.length !== 6 || !port) { say('Type the 6-digit code and the pairing port shown on the TV.', true); return; }
   localStorage.setItem('bm-tv-address', host);
