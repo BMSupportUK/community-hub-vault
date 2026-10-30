@@ -75,6 +75,7 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
 
     <ol className="flex flex-wrap items-center gap-x-4 gap-y-2">
       {STEP_TITLES.map((t, i) => {
+        if (answered === "yes" && (i === 1 || i === 2)) return null;
         const complete = done[i] || completed;
         const current = !completed && i === step;
         return <li key={t}><button type="button" onClick={() => setStep(i)} className="flex items-center gap-2">
