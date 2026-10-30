@@ -43,10 +43,13 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
   const completed = !!progress?.completed_at;
 
   // Jump forward only when the TV itself reports a step finished — never just because a link exists.
+  // Auto-advance as soon as the TV reports the next step (e.g. unknown apps allowed → straight to the code step).
+  const lastReports = useRef("");
   useEffect(() => {
-    const tvOnly = [false, false, ...fromTv.slice(2)];
-    const next = tvOnly.lastIndexOf(true) + 1;
-    if (next > step && tvOnly.slice(0, next).every(Boolean)) setStep(Math.min(next, 5));
+    const key = fromTv.join(",");
+    if (lastReports.current === key) return;
+    lastReports.current = key;
+    setStep(nextDirectStep(fromTv, answered === "yes", step));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromTv.join()]);
 
