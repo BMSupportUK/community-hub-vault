@@ -15,6 +15,7 @@ import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { AdminEnablerCodes } from "@/components/app/AdminEnablerCodes";
+import { AlternativeInstallToggle } from "@/components/app/AlternativeInstallToggle";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 // GoCardless switch (PayByBankProviderCard) hidden until the account is verified.
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
@@ -727,7 +728,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
       ) : tab === "rail-order" && isAdminOnly ? (
         <RailOrderEditor />
       ) : tab === "enabler-codes" && canSeePins && !isFz ? (
-        <AdminEnablerCodes />
+        <div className="space-y-4"><AlternativeInstallToggle />
+        <AdminEnablerCodes /></div>
       ) : tab === "tv-sessions" && isAdminOnly && !isFz ? (
         <TvRemoteSessions onBack={() => {
           setTab("tools");
