@@ -2642,6 +2642,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          kind: string
           order_id: string | null
           pin_encrypted: string | null
           pin_hash: string
@@ -2654,6 +2655,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
+          kind?: string
           order_id?: string | null
           pin_encrypted?: string | null
           pin_hash: string
@@ -2666,6 +2668,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          kind?: string
           order_id?: string | null
           pin_encrypted?: string | null
           pin_hash?: string
