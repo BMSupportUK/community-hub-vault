@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
     private SharedPreferences prefs;
     private LinearLayout box;
     private final LinkedBlockingQueue<Integer> results = new LinkedBlockingQueue<>();
-    private volatile boolean busy;
+    private volatile boolean busy; private volatile int lastCode;
     private Set<String> pendingPaths; private boolean waitingPermission;
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -113,12 +113,11 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             boolean ok = true;
             try {
-                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.3"), false);
+                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.3").put("note", restarted ? "restart_after_permission" : "reopen"), false);
             } catch (Exception e) {
-                if (e.getMessage() != null && e instanceof IllegalStateException && lastCode == 401) ok = false;
+                if (lastCode == 401) ok = false;
             }
             final boolean keep = ok;
-            diag(restarted ? (keep ? "restart_after_permission_kept" : "restart_after_permission_lost") : (keep ? "signin_kept" : "signin_lost"));
             runOnUiThread(() -> {
                 if (!keep) { clearSignIn(); showPin("Your sign-in has ended. Type your PIN again."); return; }
                 continueAfterPermission();
@@ -142,10 +141,6 @@ public class MainActivity extends Activity {
     }
 
     private void clearSignIn() { prefs.edit().remove("token").remove("exp").commit(); }
-
-    private void diag(String step) {
-        new Thread(() -> { try { post("tv-helper-diagnostics", new JSONObject().put("step", step).put("version", "direct-1.3"), false); } catch (Exception ignored) {} }).start();
-    }
 
     @Override protected void onDestroy() { try { unregisterReceiver(receiver); } catch (Exception ignored) {} super.onDestroy(); }
 
@@ -183,11 +178,11 @@ public class MainActivity extends Activity {
             go.setEnabled(false); msg.setTextColor(MUTED); msg.setText("Checking your PIN…");
             new Thread(() -> {
                 try {
-                    JSONObject j = post("enabler-login", new JSONObject().put("pin", p).put("app", "direct-1.2"), false);
-                    prefs.edit().putString("token", j.getString("token")).putLong("exp", j.optLong("expiresAtMs", System.currentTimeMillis() + 3600_000L)).apply();
+                    JSONObject j = post("enabler-login", new JSONObject().put("pin", p).put("app", "direct-1.3"), false);
+                    prefs.edit().putString("token", j.getString("token")).putLong("exp", j.optLong("expiresAtMs", System.currentTimeMillis() + 3600_000L)).commit();
                     report("signed_in");
                     runOnUiThread(this::afterSignIn);
-                } catch (Exception e) { runOnUiThread(() -> showPin(e.getMessage())); }
+                } catch (Exception e) { String m = lastCode == 429 ? "Too many wrong PINs from this connection. Wait 15 minutes, then try again." : e.getMessage(); runOnUiThread(() -> showPin(m)); }
             }).start();
         });
         pin.requestFocus();
@@ -200,7 +195,7 @@ public class MainActivity extends Activity {
         TextView msg = text(error == null ? "" : error, 17, ACCENT, false); box.addView(msg, lp(dp(8)));
         Button go = button("Continue", ACCENT); box.addView(go, btnLp());
         Button out = button("Sign out", CARD); box.addView(out, btnLp());
-        out.setOnClickListener(v -> { prefs.edit().clear().apply(); showPin(null); });
+        out.setOnClickListener(v -> { prefs.edit().clear().commit(); waitingPermission = false; pendingPaths = null; showPin(null); });
         go.setOnClickListener(v -> {
             String c = code.getText().toString().replaceAll("\\D", "");
             if (c.length() != 6) { msg.setText("Type the 6-digit code from the website."); return; }
@@ -214,7 +209,7 @@ public class MainActivity extends Activity {
                     if (a != null) for (int i = 0; i < a.length(); i++) paths.add(a.optString(i));
                     runOnUiThread(() -> startInstall(paths));
                 } catch (AuthException e) {
-                    prefs.edit().clear().apply(); runOnUiThread(() -> showPin(e.getMessage()));
+                    clearSignIn(); runOnUiThread(() -> showPin(e.getMessage()));
                 } catch (Exception e) { runOnUiThread(() -> showCode(e.getMessage())); }
             }).start();
         });
@@ -222,7 +217,7 @@ public class MainActivity extends Activity {
     }
 
     private void afterSignIn() {
-        if (canInstall()) { report("permission"); showCode(null); } else showPermission(null);
+        if (canInstall()) { setWaiting(false, null); report("permission"); showCode(null); } else showPermission(null);
     }
 
     private boolean canInstall() {
@@ -234,7 +229,7 @@ public class MainActivity extends Activity {
     private static boolean isAmazon() { return "Amazon".equalsIgnoreCase(Build.MANUFACTURER); }
 
     private void showPermission(Set<String> paths) {
-        pendingPaths = paths; waitingPermission = true;
+        setWaiting(true, paths);
         header("Allow BM Direct Install to install apps", "Your TV needs your OK once. Press Take me there, then on the switch:");
         LinearLayout remote = new LinearLayout(this); remote.setOrientation(LinearLayout.HORIZONTAL); remote.setGravity(Gravity.CENTER);
         remote.addView(key("OK", "switch ON"), keyLp()); remote.addView(key("\u21A9", "then Back"), keyLp());
@@ -412,7 +407,7 @@ public class MainActivity extends Activity {
         int code; String resp;
         try {
             try (OutputStream o = h.getOutputStream()) { o.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
-            code = h.getResponseCode();
+            code = h.getResponseCode(); lastCode = code;
             InputStream in = code < 400 ? h.getInputStream() : h.getErrorStream();
             resp = in == null ? "" : read(in);
         } catch (Exception e) { throw new IllegalStateException("Couldn't reach bmsupport.uk. Check the TV's internet and try again."); }

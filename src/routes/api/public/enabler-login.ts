@@ -9,7 +9,7 @@ import { PIN_LOCK_MS, PIN_MAX_TRIES, pinHash, pinUsable, sha256Hex } from "@/lib
  */
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type" };
 const json = (d: unknown, status = 200) => Response.json(d, { status, headers: CORS });
-const Body = z.object({ pin: z.string().regex(/^\d{6}$/).optional(), token: z.string().min(20).max(200).optional(), app: z.string().max(40).optional() });
+const Body = z.object({ pin: z.string().regex(/^\d{6}$/).optional(), token: z.string().min(20).max(200).optional(), app: z.string().max(40).optional(), note: z.string().max(40).optional() });
 
 export const Route = createFileRoute("/api/public/enabler-login")({
   server: {
@@ -24,7 +24,9 @@ export const Route = createFileRoute("/api/public/enabler-login")({
           const { data: t } = await db.from("enabler_device_tokens").select("expires_at, enabler_login_pins(revoked_at, expires_at)")
             .eq("token_hash", await sha256Hex(parsed.data.token)).maybeSingle();
           const pin = (t as unknown as { enabler_login_pins: { revoked_at: string | null; expires_at: string } | null } | null)?.enabler_login_pins;
-          if (!t || !pin || !pinUsable(pin) || new Date(t.expires_at).getTime() <= Date.now()) return json({ ok: false }, 401);
+          const valid = !!t && !!pin && pinUsable(pin) && new Date(t.expires_at).getTime() > Date.now();
+          if (parsed.data.note) await db.from("tv_helper_diagnostics").insert({ ip_hash: "token-check", helper_version: parsed.data.app ?? null, step: `direct_${parsed.data.note}`, message: valid ? "sign-in kept" : "sign-in lost" });
+          if (!valid) return json({ ok: false }, 401);
           return json({ ok: true, expiresAt: t.expires_at });
         }
         const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for") ?? "unknown";
