@@ -22,9 +22,9 @@ import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 export type SetupDeviceKey = "amazon" | "android" | "direct" | "ios" | "alternative" | "remote";
 
 const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof Tv }[] = [
-  { key: "amazon", label: "Amazon Fire TV", note: "Fire Stick, Cube or Fire TV", icon: Tv },
-  { key: "android", label: "Android / Google TV", note: "Android boxes and Google TV", icon: Tv },
   { key: "direct", label: "BM Direct Install", note: "Install straight on the TV, no phone or PC", icon: MonitorDown },
+  { key: "amazon", label: "Amazon Fire TV", note: "Fire Stick, Cube or Fire TV — installs using our Phone or Windows app", icon: Tv },
+  { key: "android", label: "Android / Google TV", note: "Android boxes and Google TV — installs using our Phone or Windows app", icon: Tv },
   { key: "ios", label: "iOS", note: "Purple Player Lite for iPhone and iPad", icon: Apple },
   { key: "alternative", label: "Alternative Install methods", note: "Other ways to get the apps", icon: Download },
   { key: "remote", label: "Help from staff", note: "Let staff install it with you by screen share", icon: Headset },
@@ -266,7 +266,8 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
   device: SetupDeviceKey | null;
   onPick: (d: SetupDeviceKey | null) => void;
 }) {
-  const chosen = DEVICES.find((d) => d.key === device);
+  const showAlternative = useAlternativeInstallEnabled();
+  const chosen = DEVICES.find((d) => d.key === device && (d.key !== "alternative" || showAlternative));
 
   return <div className="w-full space-y-6">
     <div className="rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
@@ -274,7 +275,7 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
         <h2 className="font-display text-2xl font-bold text-foreground">What are you setting up?</h2>
         <p className="mt-1 text-sm text-muted-foreground">Pick your device and we'll walk you through it one step at a time.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6">
-          {DEVICES.map(({ key, label, note, icon: Icon }) => (
+          {DEVICES.filter((d) => d.key !== "alternative" || showAlternative).map(({ key, label, note, icon: Icon }) => (
             <Button key={key} variant="outline" onClick={() => onPick(key)} className="h-auto flex-col items-start gap-2 whitespace-normal p-4 text-left">
               <Icon className="size-6 text-primary" />
               <span className="font-semibold text-foreground">{label}</span>
