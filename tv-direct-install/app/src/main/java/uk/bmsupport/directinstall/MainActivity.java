@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             boolean ok = true;
             try {
-                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.3").put("note", restarted ? "restart_after_permission" : "reopen"), false);
+                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.4").put("note", restarted ? "restart_after_permission" : "reopen"), false);
             } catch (Exception e) {
                 if (lastCode == 401) ok = false;
             }
