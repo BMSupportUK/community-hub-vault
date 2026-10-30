@@ -7,12 +7,12 @@ import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 import { selfInstallHandoff } from "@/lib/enabler-handoff";
 import { createDirectInstallLink, getDirectInstallProgress } from "@/lib/direct-install.functions";
 
-const STEP_TITLES = ["Secure download link", "Install with Downloader", "Sign in with your PIN", "Allow unknown apps", "Website code & install"];
+const STEP_TITLES = ["Already installed?", "Secure download link", "Install with Downloader", "Sign in with your PIN", "Allow unknown apps", "Website code & install"];
 type Progress = Awaited<ReturnType<typeof getDirectInstallProgress>>;
 
 /** Steps the TV (or our download link) has confirmed. Index matches STEP_TITLES. */
 function reported(p: Progress, link: boolean): boolean[] {
-  return [link || !!p, !!p?.downloaded_at, !!p?.signed_in_at, !!p?.permission_at, !!p?.code_at];
+  return [false, link || !!p, !!p?.downloaded_at, !!p?.signed_in_at, !!p?.permission_at, !!p?.code_at];
 }
 
 /** BM Direct Install tab: a step-by-step wizard. Steps tick automatically as the TV app reports them. */
@@ -22,7 +22,8 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
   const [link, setLink] = useState<{ url: string; expiresAt: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
-  const [manual, setManual] = useState<boolean[]>([false, false, false, false, false]);
+  const [answered, setAnswered] = useState<"yes" | "no" | null>(null);
+  const [manual, setManual] = useState<boolean[]>([false, false, false, false, false, false]);
   const [progress, setProgress] = useState<Progress>(null);
   const [tv, setTv] = useState<"amazon" | "android" | null>(null);
 
@@ -36,13 +37,14 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
 
   const fromTv = reported(progress, !!link);
   const done = fromTv.map((v, i) => v || manual[i]);
+  if (answered) done[0] = true;
   const completed = !!progress?.completed_at;
 
   // Jump forward only when the TV itself reports a step finished — never just because a link exists.
   useEffect(() => {
-    const tvOnly = [false, ...fromTv.slice(1)];
+    const tvOnly = [false, false, ...fromTv.slice(2)];
     const next = tvOnly.lastIndexOf(true) + 1;
-    if (next > step && tvOnly.slice(0, next).every(Boolean)) setStep(Math.min(next, 4));
+    if (next > step && tvOnly.slice(0, next).every(Boolean)) setStep(Math.min(next, 5));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromTv.join()]);
 
@@ -50,13 +52,13 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
     setBusy(true);
     try {
       const l = await linkFn();
-      setLink(l); setProgress(null); setManual([false, false, false, false, false]);
-      setStep(1); // show the link on step 2 — that's what goes into Downloader
+      setLink(l); setProgress(null); setManual([false, false, false, false, false, false]);
+      setStep(2); // show the link on step 3 — that's what goes into Downloader
     } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a download link."); }
     finally { setBusy(false); }
   };
 
-  const finish = (i: number) => { setManual((d) => d.map((v, j) => (j === i ? true : v))); setStep(Math.min(i + 1, 4)); };
+  const finish = (i: number) => { setManual((d) => d.map((v, j) => (j === i ? true : v))); setStep(Math.min(i + 1, 5)); };
   const shown = link?.url.replace(/^https:\/\//, "");
   const Waiting = ({ text }: { text: string }) => <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" />{text}</p>;
 
@@ -92,16 +94,28 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
     </section> : <>
 
     {step === 0 && <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-foreground">Step 1 · Get your secure download link</h3>
-      {link ? <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">Your link is on step 2, ready to type into Downloader.</p>
-        <Button variant="outline" size="sm" disabled={busy} onClick={make}><RefreshCw className="size-4" />Get a new link</Button>
-        <div className="pt-1"><Button size="sm" onClick={() => setStep(1)}>Go to step 2<ArrowRight className="size-4" /></Button></div>
-      </div> : <Button onClick={make} disabled={busy}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}Get my secure download link</Button>}
+      <h3 className="text-lg font-semibold text-foreground">Step 1 · Is BM Direct Install already on your TV?</h3>
+      <p className="text-sm text-muted-foreground">Tell us where you're starting from and we'll show you only the steps you need.</p>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => { setAnswered("no"); setStep(1); }}><ArrowRight className="size-4" />No — help me install it</Button>
+        <Button onClick={() => { setAnswered("yes"); setStep(3); }}><Check className="size-4" />Yes — it's already installed</Button>
+      </div>
+      {answered === "no" && <p className="text-xs text-muted-foreground">You picked "No" — carry on from step 2 to get your download link.</p>}
+      {answered === "yes" && <p className="text-xs text-muted-foreground">You picked "Yes" — jump to step 3 to sign in with your PIN.</p>}
     </section>}
 
     {step === 1 && <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-foreground">Step 2 · Choose your device and install it with Downloader</h3>
+      <h3 className="text-lg font-semibold text-foreground">Step 2 · Get your secure download link</h3>
+      {link ? <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">Your link is on step 3, ready to type into Downloader.</p>
+        <Button variant="outline" size="sm" disabled={busy} onClick={make}><RefreshCw className="size-4" />Get a new link</Button>
+        <div className="pt-1"><Button size="sm" onClick={() => setStep(2)}>Go to step 3<ArrowRight className="size-4" /></Button></div>
+      </div> : <Button onClick={make} disabled={busy}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}Get my secure download link</Button>}
+      <Button variant="ghost" size="sm" onClick={() => setStep(0)}><ArrowLeft className="size-4" />Back</Button>
+    </section>}
+
+    {step === 2 && <section className="space-y-3">
+      <h3 className="text-lg font-semibold text-foreground">Step 3 · Choose your device and install it with Downloader</h3>
       <TvPicker required />
       {tv ? tv === "amazon" ? <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
         <li>Install <strong className="text-foreground">Downloader</strong> from the Amazon Appstore (search "Downloader").</li>
@@ -119,20 +133,20 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
         <p className="select-all break-all font-mono text-3xl font-bold text-primary">{shown}</p>
         <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (30 minutes).</p>
       </div>}
-      {!done[1] && <Waiting text="Waiting for your TV to download BM Direct Install…" />}
-      <WizardNav onBack={() => setStep(0)} onNext={() => finish(1)} nextLabel="Next step" nextDisabled={!tv} />
-    </section>}
-
-    {step === 2 && <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-foreground">Step 3 · Sign in with your PIN</h3>
-      <p className="text-sm text-muted-foreground">Open BM Direct Install on your TV and type this PIN. It's the same PIN as BM TV Enabler.</p>
-      {pin}
-      {!done[2] && <Waiting text="Waiting for BM Direct Install to sign in…" />}
-      <WizardNav onBack={() => setStep(1)} onNext={() => finish(2)} nextLabel="Next step" />
+      {!done[2] && <Waiting text="Waiting for your TV to download BM Direct Install…" />}
+      <WizardNav onBack={() => setStep(1)} onNext={() => finish(2)} nextLabel="Next step" nextDisabled={!tv} />
     </section>}
 
     {step === 3 && <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-foreground">Step 4 · Allow BM Direct Install to install apps</h3>
+      <h3 className="text-lg font-semibold text-foreground">Step 4 · Sign in with your PIN</h3>
+      <p className="text-sm text-muted-foreground">Open BM Direct Install on your TV and type this PIN. It's the same PIN as BM TV Enabler.</p>
+      {pin}
+      {!done[3] && <Waiting text="Waiting for BM Direct Install to sign in…" />}
+      <WizardNav onBack={() => setStep(2)} onNext={() => finish(3)} nextLabel="Next step" />
+    </section>}
+
+    {step === 4 && <section className="space-y-3">
+      <h3 className="text-lg font-semibold text-foreground">Step 5 · Allow BM Direct Install to install apps</h3>
       <p className="text-sm text-muted-foreground">Your TV needs your OK once. BM Direct Install shows a <strong className="text-foreground">Take me there</strong> button that takes you straight there.</p>
       <TvPicker />
       {tv === "amazon" ? <div className="space-y-2 text-sm text-muted-foreground">
@@ -148,18 +162,18 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
         <li>Switch <strong className="text-foreground">Allow from this source</strong> ON. If it doesn't open: <strong className="text-foreground">Settings › Apps › Security & restrictions › Unknown sources › BM Direct Install</strong> › ON (on some TVs: <strong className="text-foreground">Settings › Device Preferences › Security & restrictions</strong>).</li>
         <li>Press <strong className="text-foreground">Back</strong> to return to BM Direct Install.</li>
       </ol>}
-      {!done[3] && <Waiting text="Waiting for your TV to allow BM Direct Install…" />}
-      <WizardNav onBack={() => setStep(2)} onNext={() => finish(3)} nextLabel="Next step" />
+      {!done[4] && <Waiting text="Waiting for your TV to allow BM Direct Install…" />}
+      <WizardNav onBack={() => setStep(3)} onNext={() => finish(4)} nextLabel="Next step" />
     </section>}
 
-    {step === 4 && <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-foreground">Step 5 · Choose your apps and get your website code</h3>
+    {step === 5 && <section className="space-y-3">
+      <h3 className="text-lg font-semibold text-foreground">Step 6 · Choose your apps and get your website code</h3>
       <p className="text-sm text-muted-foreground">Tick your apps and get your website code. Type it into BM Direct Install, then press <strong className="text-foreground">Install</strong> for each app. This page shows All done when it's finished.</p>
       <TvPicker required />
       {tv ? <><DirectCodePicker device={tv} />
-      <Waiting text={done[4] ? "Code accepted — your TV is installing your apps…" : "Waiting for your website code on the TV…"} /></>
+      <Waiting text={done[5] ? "Code accepted — your TV is installing your apps…" : "Waiting for your website code on the TV…"} /></>
         : <p className="text-sm text-muted-foreground">Pick your device above to load your apps.</p>}
-      <WizardNav onBack={() => setStep(3)} onNext={() => setStep(4)} nextLabel="Waiting for TV" />
+      <WizardNav onBack={() => setStep(4)} onNext={() => setStep(5)} nextLabel="Waiting for TV" />
     </section>}
     </>}
   </div>;
