@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ArrowRight, Check, Link2, Loader2, PartyPopper, RefreshCw, Tv } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Link2, Loader2, KeyRound, PartyPopper, RefreshCw, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
+import { selfInstallHandoff } from "@/lib/enabler-handoff";
 import { createDirectInstallLink, getDirectInstallProgress } from "@/lib/direct-install.functions";
 
 const STEP_TITLES = ["Secure download link", "Install with Downloader", "Sign in with your PIN", "Allow unknown apps", "Website code & install"];
@@ -149,15 +151,44 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
 
     {step === 4 && <section className="space-y-3">
       <h3 className="text-lg font-semibold text-foreground">Step 5 · Choose your apps and get your website code</h3>
-      <p className="text-sm text-muted-foreground">Pick your TV, tick your apps and get your website code. Type it into BM Direct Install, then press <strong className="text-foreground">Install</strong> for each app. This page shows All done when it's finished.</p>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => onChooseDevice("amazon")}><Tv className="size-4" />Amazon Fire TV</Button>
-        <Button variant="outline" onClick={() => onChooseDevice("android")}><Tv className="size-4" />Android / Google TV</Button>
-      </div>
+      <p className="text-sm text-muted-foreground">Tick your apps and get your website code. Type it into BM Direct Install, then press <strong className="text-foreground">Install</strong> for each app. This page shows All done when it's finished.</p>
+      <DirectCodePicker device={tv} />
       <Waiting text={done[4] ? "Code accepted — your TV is installing your apps…" : "Waiting for your website code on the TV…"} />
       <WizardNav onBack={() => setStep(3)} onNext={() => setStep(4)} nextLabel="Waiting for TV" />
     </section>}
     </>}
+  </div>;
+}
+
+/** Tick apps and issue a website code right here — no trip to the phone/Windows setup. */
+function DirectCodePicker({ device }: { device: "amazon" | "android" }) {
+  const handoffFn = useServerFn(createEnablerHandoff);
+  const [apps, setApps] = useState<{ name: string; path: string }[] | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [code, setCode] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    fetch("/api/public/tv-install-list").then((r) => r.json()).then((d: { apps?: { name: string; path: string }[] }) => {
+      const list = d.apps ?? []; setApps(list); setPicked(new Set(list.map((a) => a.path)));
+    }).catch(() => setApps([]));
+  }, []);
+  const make = async () => {
+    setBusy(true);
+    try { setCode(await handoffFn({ data: selfInstallHandoff(device, [...picked]) })); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a code. Try again."); }
+    finally { setBusy(false); }
+  };
+  if (!apps) return <Loader2 aria-label="Loading apps" className="size-6 animate-spin" />;
+  return <div className="space-y-3">
+    {!code && apps.map((app) => <label key={app.path} className="flex items-center gap-3 rounded-md border border-border bg-surface-2 p-3 text-sm">
+      <input type="checkbox" className="size-4 accent-primary" checked={picked.has(app.path)} onChange={(e) => setPicked((prev) => { const n = new Set(prev); if (e.target.checked) n.add(app.path); else n.delete(app.path); return n; })} />
+      <span className="text-foreground">{app.name}</span>
+    </label>)}
+    {code ? <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">Type this into BM Direct Install</p>
+      <p className="select-all font-mono text-4xl font-bold text-primary">{code.code.slice(0, 3)}-{code.code.slice(3)}</p>
+      <Button variant="outline" size="sm" disabled={busy} onClick={make}><RefreshCw className="size-4" />Problem? Get a new code</Button>
+    </div> : <Button onClick={make} disabled={busy || picked.size === 0}>{busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />}Get my website code</Button>}
   </div>;
 }
 
