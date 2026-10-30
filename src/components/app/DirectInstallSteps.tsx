@@ -96,7 +96,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
       <PartyPopper className="mx-auto size-10 text-green-600" />
       <h3 className="text-lg font-semibold text-foreground">All done — your apps are installed</h3>
       <p className="text-sm text-muted-foreground">BM Direct Install has finished on your TV. Press Close on the TV screen.</p>
-      <Button variant="outline" size="sm" onClick={make} disabled={busy}>Start again</Button>
+      <Button variant="outline" size="sm" disabled={busy} onClick={() => { setAnswered(null); void make().then(() => setStep(0)); }}>Start again</Button>
     </section> : <>
 
     {step === 0 && <section className="space-y-3">
