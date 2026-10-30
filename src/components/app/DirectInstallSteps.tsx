@@ -101,9 +101,9 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
     </section>}
 
     {step === 1 && <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-foreground">Step 2 · Install it with Downloader</h3>
-      <TvPicker />
-      {tv === "amazon" ? <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+      <h3 className="text-lg font-semibold text-foreground">Step 2 · Choose your device and install it with Downloader</h3>
+      <TvPicker required />
+      {tv ? tv === "amazon" ? <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
         <li>Install <strong className="text-foreground">Downloader</strong> from the Amazon Appstore (search "Downloader").</li>
         <li>Let Downloader install apps: <strong className="text-foreground">Settings › My Fire TV › Developer options › Install unknown apps</strong>, then switch <strong className="text-foreground">Downloader</strong> to ON. (Older Fire TVs: <strong className="text-foreground">Apps from Unknown Sources</strong> › ON.)</li>
         <li>If you can't see Developer options: <strong className="text-foreground">Settings › My Fire TV › About</strong>, press OK on your device name 7 times, then go back.</li>
@@ -113,14 +113,14 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
         <li>Open Downloader, type your link into the address box and press <strong className="text-foreground">Go</strong>.</li>
         <li>When the TV says it can't install unknown apps, press <strong className="text-foreground">Settings</strong> and switch <strong className="text-foreground">Allow from this source</strong> ON for Downloader, then press Back. (Or: <strong className="text-foreground">Settings › Apps › Security & restrictions › Unknown sources</strong> › Downloader ON.)</li>
         <li>Press <strong className="text-foreground">Install</strong>, then <strong className="text-foreground">Open</strong>.</li>
-      </ol>}
+      </ol> : <p className="text-sm text-muted-foreground">Pick your device above — the steps are different for Amazon Fire TV and Android / Google TV.</p>}
       {link && <div className="space-y-1 rounded-lg border border-primary/40 bg-primary/5 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type this into Downloader</p>
         <p className="select-all break-all font-mono text-3xl font-bold text-primary">{shown}</p>
         <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (30 minutes).</p>
       </div>}
       {!done[1] && <Waiting text="Waiting for your TV to download BM Direct Install…" />}
-      <WizardNav onBack={() => setStep(0)} onNext={() => finish(1)} nextLabel="Next step" />
+      <WizardNav onBack={() => setStep(0)} onNext={() => finish(1)} nextLabel="Next step" nextDisabled={!tv} />
     </section>}
 
     {step === 2 && <section className="space-y-3">
