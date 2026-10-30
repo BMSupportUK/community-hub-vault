@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { useNavigate } from "@tanstack/react-router";
 import { Apple, MonitorDown, ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, PlayCircle, Tv } from "lucide-react";
 import { DirectInstallSteps } from "@/components/app/DirectInstallSteps";
+import { useAlternativeInstallEnabled } from "@/hooks/use-alternative-install";
 import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
 import { SetupStepVideo } from "@/components/app/SetupStepVideo";
 import { useServerFn } from "@tanstack/react-start";
