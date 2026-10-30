@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('bmTv', {
+  version: (process.argv.find(a => a.startsWith('--bm-version=')) || '').slice(13),
   login: pin => ipcRenderer.invoke('bm:login', pin),
   setToken: token => ipcRenderer.invoke('bm:set-token', token),
   refresh: (address, token) => ipcRenderer.invoke('bm:refresh', address, token),

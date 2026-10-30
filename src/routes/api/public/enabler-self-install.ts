@@ -50,14 +50,21 @@ export const Route = createFileRoute("/api/public/enabler-self-install")({
       if (tok && /^[0-9a-f]{20,200}$/i.test(tok)) {
         const { data: dt } = await db.from("enabler_device_tokens").select("pin_id")
           .eq("token_hash", await hash(tok)).gt("expires_at", new Date().toISOString()).maybeSingle();
-        const { data: pin } = dt?.pin_id ? await db.from("enabler_login_pins").select("user_id, admin_issue_id").eq("id", dt.pin_id).maybeSingle() : { data: null };
+        const { data: pin } = dt?.pin_id ? await db.from("enabler_login_pins").select("user_id, ticket_id, admin_issue_id").eq("id", dt.pin_id).maybeSingle() : { data: null };
         if (pin?.admin_issue_id) {
           const { data: h } = await db.from("enabler_handoffs").select("id").eq("admin_issue_id", pin.admin_issue_id).eq("purpose", "install")
             .not("used_at", "is", null).is("completed_at", null).order("used_at", { ascending: false }).limit(1).maybeSingle();
           if (h) await db.from("enabler_handoffs").update({ completed_at: new Date().toISOString(), completed_apps: body.data.apps }).eq("id", h.id);
-        } else if (pin?.user_id) {
+        }
+        // Legacy ticket-scoped PINs (shared across the account) carry no user_id: resolve the ticket's customer.
+        let ownerId: string | null = pin?.user_id ?? null;
+        if (!pin?.admin_issue_id && !ownerId && pin?.ticket_id) {
+          const { data: t } = await db.from("tickets").select("user_id").eq("id", pin.ticket_id).maybeSingle();
+          ownerId = t?.user_id ?? null;
+        }
+        if (!pin?.admin_issue_id && ownerId) {
           const since = new Date(Date.now() - 3 * 3600_000).toISOString();
-          const { data: h } = await db.from("enabler_handoffs").select("id").eq("user_id", pin.user_id).eq("purpose", "install")
+          const { data: h } = await db.from("enabler_handoffs").select("id").eq("user_id", ownerId).eq("purpose", "install")
             .not("used_at", "is", null).gt("used_at", since).is("completed_at", null).order("used_at", { ascending: false }).limit(1).maybeSingle();
           if (h) await db.from("enabler_handoffs").update({ completed_at: new Date().toISOString(), completed_apps: body.data.apps }).eq("id", h.id);
         }
