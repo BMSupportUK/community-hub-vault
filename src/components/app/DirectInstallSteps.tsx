@@ -16,7 +16,7 @@ function reported(p: Progress, link: boolean): boolean[] {
 }
 
 /** BM Direct Install tab: a step-by-step wizard. Steps tick automatically as the TV app reports them. */
-export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; onChooseDevice: (d: "amazon" | "android") => void }) {
+export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
   const linkFn = useServerFn(createDirectInstallLink);
   const progressFn = useServerFn(getDirectInstallProgress);
   const [link, setLink] = useState<{ url: string; expiresAt: string } | null>(null);
@@ -24,7 +24,7 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
   const [step, setStep] = useState(0);
   const [manual, setManual] = useState<boolean[]>([false, false, false, false, false]);
   const [progress, setProgress] = useState<Progress>(null);
-  const [tv, setTv] = useState<"amazon" | "android">("amazon");
+  const [tv, setTv] = useState<"amazon" | "android" | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -60,9 +60,12 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
   const shown = link?.url.replace(/^https:\/\//, "");
   const Waiting = ({ text }: { text: string }) => <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" />{text}</p>;
 
-  const TvPicker = () => <div className="inline-flex rounded-md border border-border p-1">
-    {(["amazon", "android"] as const).map((d) => <button key={d} type="button" onClick={() => setTv(d)}
-      className={`rounded px-3 py-1 text-sm ${tv === d ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{d === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</button>)}
+  const TvPicker = ({ required }: { required?: boolean }) => <div className="space-y-2">
+    {required && <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-500">Required — choose your device to continue</p>}
+    <div className="inline-flex rounded-md border border-border p-1">
+      {(["amazon", "android"] as const).map((d) => <button key={d} type="button" onClick={() => setTv(d)}
+        className={`rounded px-3 py-1 text-sm ${tv === d ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{d === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</button>)}
+    </div>
   </div>;
 
   return <div className="space-y-6">
@@ -98,9 +101,9 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
     </section>}
 
     {step === 1 && <section className="space-y-3">
-      <h3 className="text-lg font-semibold text-foreground">Step 2 · Install it with Downloader</h3>
-      <TvPicker />
-      {tv === "amazon" ? <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+      <h3 className="text-lg font-semibold text-foreground">Step 2 · Choose your device and install it with Downloader</h3>
+      <TvPicker required />
+      {tv ? tv === "amazon" ? <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
         <li>Install <strong className="text-foreground">Downloader</strong> from the Amazon Appstore (search "Downloader").</li>
         <li>Let Downloader install apps: <strong className="text-foreground">Settings › My Fire TV › Developer options › Install unknown apps</strong>, then switch <strong className="text-foreground">Downloader</strong> to ON. (Older Fire TVs: <strong className="text-foreground">Apps from Unknown Sources</strong> › ON.)</li>
         <li>If you can't see Developer options: <strong className="text-foreground">Settings › My Fire TV › About</strong>, press OK on your device name 7 times, then go back.</li>
@@ -110,14 +113,14 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
         <li>Open Downloader, type your link into the address box and press <strong className="text-foreground">Go</strong>.</li>
         <li>When the TV says it can't install unknown apps, press <strong className="text-foreground">Settings</strong> and switch <strong className="text-foreground">Allow from this source</strong> ON for Downloader, then press Back. (Or: <strong className="text-foreground">Settings › Apps › Security & restrictions › Unknown sources</strong> › Downloader ON.)</li>
         <li>Press <strong className="text-foreground">Install</strong>, then <strong className="text-foreground">Open</strong>.</li>
-      </ol>}
+      </ol> : <p className="text-sm text-muted-foreground">Pick your device above — the steps are different for Amazon Fire TV and Android / Google TV.</p>}
       {link && <div className="space-y-1 rounded-lg border border-primary/40 bg-primary/5 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type this into Downloader</p>
         <p className="select-all break-all font-mono text-3xl font-bold text-primary">{shown}</p>
         <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (30 minutes).</p>
       </div>}
       {!done[1] && <Waiting text="Waiting for your TV to download BM Direct Install…" />}
-      <WizardNav onBack={() => setStep(0)} onNext={() => finish(1)} nextLabel="Next step" />
+      <WizardNav onBack={() => setStep(0)} onNext={() => finish(1)} nextLabel="Next step" nextDisabled={!tv} />
     </section>}
 
     {step === 2 && <section className="space-y-3">
@@ -152,8 +155,10 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
     {step === 4 && <section className="space-y-3">
       <h3 className="text-lg font-semibold text-foreground">Step 5 · Choose your apps and get your website code</h3>
       <p className="text-sm text-muted-foreground">Tick your apps and get your website code. Type it into BM Direct Install, then press <strong className="text-foreground">Install</strong> for each app. This page shows All done when it's finished.</p>
-      <DirectCodePicker device={tv} />
-      <Waiting text={done[4] ? "Code accepted — your TV is installing your apps…" : "Waiting for your website code on the TV…"} />
+      <TvPicker required />
+      {tv ? <><DirectCodePicker device={tv} />
+      <Waiting text={done[4] ? "Code accepted — your TV is installing your apps…" : "Waiting for your website code on the TV…"} /></>
+        : <p className="text-sm text-muted-foreground">Pick your device above to load your apps.</p>}
       <WizardNav onBack={() => setStep(3)} onNext={() => setStep(4)} nextLabel="Waiting for TV" />
     </section>}
     </>}
@@ -192,9 +197,9 @@ function DirectCodePicker({ device }: { device: "amazon" | "android" }) {
   </div>;
 }
 
-function WizardNav({ onBack, onNext, nextLabel }: { onBack: () => void; onNext: () => void; nextLabel: string }) {
+function WizardNav({ onBack, onNext, nextLabel, nextDisabled }: { onBack: () => void; onNext: () => void; nextLabel: string; nextDisabled?: boolean }) {
   return <div className="flex flex-wrap gap-2 pt-1">
     <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="size-4" />Back</Button>
-    <Button size="sm" onClick={onNext}>{nextLabel}<ArrowRight className="size-4" /></Button>
+    <Button size="sm" onClick={onNext} disabled={nextDisabled}>{nextLabel}<ArrowRight className="size-4" /></Button>
   </div>;
 }
