@@ -12,9 +12,9 @@
   <div id="apps-pick" class="device-pick" role="group" aria-label="What do you need?" hidden><button id="apps-code" class="primary" type="button">I have a website code</button><button id="apps-new" type="button" hidden>Install our apps</button><button id="apps-have" type="button" hidden>Screen-share support</button></div>
   <button id="apps-back" type="button" hidden>Back</button>
   <div id="address-block" hidden>
-    <div class="address-row"><label for="address">Wireless debugging address (IP:port)<input id="address" inputmode="decimal" autocomplete="off" maxlength="21" placeholder="192.168.1.25:41235"></label><button id="scan" type="button">Find my TV</button></div>
+    <div class="address-row"><label for="address">TV IP address &amp; port (from the TV's debugging screen)<input id="address" inputmode="decimal" autocomplete="off" maxlength="21" placeholder="192.168.1.25:41235"></label><button id="scan" type="button">Find my TV</button></div>
     <p id="scan-hint" class="hint"></p>
-    <details id="pair-block"><summary>Android / Google TV with Wireless debugging: pair with code</summary>
+    <details id="pair-block" hidden><summary>Android / Google TV with Wireless debugging: pair with code</summary>
       <p class="hint">On the TV: Developer options › Wireless debugging › Pair device with pairing code. That screen shows a Wi-Fi pairing code and an IP address &amp; Port, e.g. 192.168.1.25:37123 — type both into the two boxes below, exactly as shown. In the Wireless debugging address box above, type the IP address &amp; Port from the main Wireless debugging screen, e.g. 192.168.1.25:41235.</p>
       <div class="address-row"><label for="pair-code">Wi-Fi pairing code<input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="123456"></label><label for="pair-port">IP address &amp; port<input id="pair-port" inputmode="decimal" autocomplete="off" maxlength="21" placeholder="192.168.1.25:37123"></label></div>
       <button id="pair" type="button">Pair with code and set up my TV</button>

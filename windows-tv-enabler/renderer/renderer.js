@@ -114,7 +114,7 @@ function pickDevice(value) {
 
 const DEBUG_HELP = {
   amazon: 'Put this computer and your Fire TV on the same home network (avoid guest Wi-Fi and disconnect any VPN).\n\nOn the Fire TV: Settings › My Fire TV › About — press the device name 7 times. Go back to My Fire TV › Developer options and switch ADB debugging ON.',
-  android: 'Put this computer and your TV on the same home network (avoid guest Wi-Fi and disconnect any VPN).\n\nOn the TV: Settings › System › About — press Android TV OS build 7 times. Go back to System › Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead.',
+  android: 'Put this computer and your TV on the same home network (avoid guest Wi-Fi and disconnect any VPN).\n\nOn the TV: Settings › System › About — press Android TV OS build 7 times. Go back to System › Developer options and switch Network debugging ON, or Wireless debugging ON if your TV has that instead. That screen shows the TV\'s IP address and port (e.g. 192.168.1.25:41235) — type it all in the address box, no code needed.',
 };
 const DESCRIPTIONS = {
   [Step.DEBUGGING]: '',
@@ -160,7 +160,7 @@ function render() {
     next.disabled = busy || !canIssueConfirmation(Boolean(installCode), installExpiresAt, installUsed);
   }
   action.hidden = (s === Step.DEBUGGING && (device == null || apps == null)) || (s === Step.DONE && install);
-  pairBlock.hidden = device !== 'android';
+  pairBlock.hidden = true;
   scan.textContent = device === 'android' ? 'Find my Android TV' : 'Find my Fire TV';
   scanHint.textContent = device === 'android' ? 'Find my Android TV lists Android / Google TVs on your network (Amazon devices are left out). If yours isn\'t listed, type the address from the TV\'s network settings.' : 'Find my Fire TV lists only Amazon Fire TVs on your network, so you can pick the right one if you have more than one.';
   appsResult.hidden = !(installDone && appsResults.length);
