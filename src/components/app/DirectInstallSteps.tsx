@@ -63,7 +63,7 @@ export function DirectInstallSteps({ pin }: { pin: ReactNode }) {
   const TvPicker = ({ required }: { required?: boolean }) => <div className="space-y-2">
     {required && <p className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-500">Required — choose your device to continue</p>}
     <div className="inline-flex rounded-md border border-border p-1">
-      {(["amazon", "android"] as const).map((d) => <button key={d} type="button" onClick={() => { setTv(d); onChooseDevice(d); }}
+      {(["amazon", "android"] as const).map((d) => <button key={d} type="button" onClick={() => setTv(d)}
         className={`rounded px-3 py-1 text-sm ${tv === d ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{d === "amazon" ? "Amazon Fire TV" : "Android / Google TV"}</button>)}
     </div>
   </div>;
