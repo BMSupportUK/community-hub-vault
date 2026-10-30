@@ -109,7 +109,11 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
         <li>When the TV says it can't install unknown apps, press <strong className="text-foreground">Settings</strong> and switch <strong className="text-foreground">Allow from this source</strong> ON for Downloader, then press Back. (Or: <strong className="text-foreground">Settings › Apps › Security & restrictions › Unknown sources</strong> › Downloader ON.)</li>
         <li>Press <strong className="text-foreground">Install</strong>, then <strong className="text-foreground">Open</strong>.</li>
       </ol>}
-      {link && <p className="select-all break-all font-mono text-xl font-bold text-primary">{shown}</p>}
+      {link && <div className="space-y-1 rounded-lg border border-primary/40 bg-primary/5 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type this into Downloader</p>
+        <p className="select-all break-all font-mono text-3xl font-bold text-primary">{shown}</p>
+        <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (30 minutes).</p>
+      </div>}
       {!done[1] && <Waiting text="Waiting for your TV to download BM Direct Install…" />}
       <WizardNav onBack={() => setStep(0)} onNext={() => finish(1)} nextLabel="Next step" />
     </section>}
