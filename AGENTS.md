@@ -1,5 +1,5 @@
 # Project Architecture Rules
-- Subdirectories have their own `AGENTS.md`; read it before changing files there.
+- Subdirectories (incl. `tv-enabler/`, `tv-direct-install/`) have their own `AGENTS.md`; read it before changing files there.
 - Authorization, account switching and order/Enabler consumption rules live in `src/lib/AGENTS.md`.
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
@@ -63,7 +63,6 @@
 - Order remote installation help goes through tickets: the customer secure order has no setup tabs — a help bar raises a General ticket (office hours only) naming the order reference, and staff connect via the ticket's screen share. `order_remote_setup` stays for legacy/test flows and the shared `/api/public/remote-setup` report; the legacy invitation-gated pairing path remains only for staff test orders, and the standalone customer helper URL redirects home.
 - BM TV Enabler (`tv-enabler/`) is PIN-gated and signed with the permanent BM key. Install Guides' QR opens `/api/public/tv-enabler-apk`, selecting the latest available non-Windows build, with one Download button (`?download=1` streams APK); never show an APK card. Over ADB SYNC, install Helper from `/api/public/remote-helper-apk`, then push its `assets/control.apk` directly from the phone to `/data/local/tmp`; never read the Helper's Android/data export (Fire OS blocks it) or use Downloader. Enable steps mirror `TvRemoteSetupPlugin`.
 - TV installation skips use exact AndroidManifest package identities cached per APK and a read-only inventory of the selected TV; uploads/replacements refresh identity so app labels never drive skip decisions.
-- TV Enabler discovery identifies Fire TVs from local DIAL/UPnP manufacturer/model metadata independently of ADB reachability, holds a multicast lock during scanning, and requires explicit selection; TCP-only reachability never authenticates or enables a TV, so devices with closed debugging remain discoverable without side effects.
 - Phone TV ADB clients (`tv-enabler` and BM Support's `tvremote`) stay identical: resend keys on later AUTH and keep pending Allow connections open so AOSP prompts survive.
 - TV Enabler confirms a fresh TV check before finishing; website linking optional, stages sync by expiring code; reset keeps RSA authorization. Helper opens once per run; Remote setup has Restart setup.
 - Ticket screen-share requests unlock only after the customer's Remote setup is confirmed by a live BM Remote Helper code (server-verified RPC), so staff never invite before the TV app works.
@@ -71,5 +70,4 @@
 - Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
 - Install Guides: route owns device choice; only TV setup and staff help reserve phone/Windows download columns with ticket-bound PIN controls, so guide/video browsing retains the full available width.
-- BM Direct Install (`tv-direct-install/`) runs on the TV and is install-only: Android PackageInstaller (never self-ADB), PIN + install website codes (support codes refused via installOnly), downloaded only through expiring per-customer `/di/$code` links.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
