@@ -30,7 +30,7 @@ export const Route = createFileRoute("/di/$code")({
         if (!signed?.signedUrl) return new Response("App file unavailable", { status: 502 });
         const upstream = await fetch(signed.signedUrl);
         if (!upstream.ok) return new Response("App file unavailable", { status: 502 });
-        await db.from("direct_install_links").update({ used_count: link.used_count + 1 }).eq("id", link.id);
+        await db.from("direct_install_links").update({ used_count: link.used_count + 1, downloaded_at: new Date().toISOString() }).eq("id", link.id);
         await logDownload(request, { source: "direct_install", buildId: row.id, appName: row.app_name, version: row.version_name, userId: link.user_id, bytes: Number(upstream.headers.get("content-length")) || null });
         const headers = new Headers({
           "content-type": "application/vnd.android.package-archive",

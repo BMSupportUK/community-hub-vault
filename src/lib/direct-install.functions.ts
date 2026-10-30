@@ -17,3 +17,13 @@ export const createDirectInstallLink = createServerFn({ method: "POST" })
     }
     throw new Error("Couldn't make a download link. Please try again.");
   });
+
+/** Latest download link's progress, reported by the website and the BM Direct Install TV app. */
+export const getDirectInstallProgress = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase.from("direct_install_links")
+      .select("created_at, downloaded_at, signed_in_at, permission_at, code_at, completed_at")
+      .eq("user_id", context.userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    return data ?? null;
+  });
