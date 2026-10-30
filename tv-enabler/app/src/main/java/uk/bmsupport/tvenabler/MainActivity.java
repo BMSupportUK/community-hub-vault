@@ -244,12 +244,14 @@ public class MainActivity extends Activity {
         address.setHint("TV address, e.g. 192.168.1.23");
         address.setHintTextColor(MUTED); address.setTextColor(FG); address.setTextSize(17); styleInput(address);
         address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        noAutofill(address);
         address.setKeyListener(android.text.method.DigitsKeyListener.getInstance("0123456789."));
         address.setText(prefs.getString("host", "")); col.addView(address, lp(dp(12)));
         tvCodeInput = new EditText(this);
         tvCodeInput.setHint("4-digit code on your TV");
         tvCodeInput.setHintTextColor(MUTED); tvCodeInput.setTextColor(FG); tvCodeInput.setTextSize(28); styleInput(tvCodeInput);
         tvCodeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        noAutofill(tvCodeInput);
         tvCodeInput.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(4) });
         col.addView(tvCodeInput, lp(dp(12)));
         showAgain = button("Show code again on TV", SURFACE);
@@ -374,7 +376,7 @@ public class MainActivity extends Activity {
     private void askWebsiteCode() {
         if (busy || refreshBusy) return;
         EditText in = new EditText(this);
-        in.setInputType(android.text.InputType.TYPE_CLASS_NUMBER); in.setHint("6-digit code"); in.setTextSize(22);
+        in.setInputType(android.text.InputType.TYPE_CLASS_NUMBER); noAutofill(in); in.setHint("6-digit code"); in.setTextSize(22);
         new AlertDialog.Builder(this).setTitle("Code from bmsupport.uk")
                 .setMessage("Type the code shown in Install Guides on the website. It holds your answers, so you won't be asked again here.")
                 .setView(in)
@@ -993,5 +995,10 @@ public class MainActivity extends Activity {
         });
         latch.await();
         return result[0];
+    }
+
+    /** Stops the phone's password manager offering a saved PIN in non-PIN boxes (TV address, codes). */
+    private static void noAutofill(android.view.View v) {
+        if (android.os.Build.VERSION.SDK_INT >= 26) v.setImportantForAutofill(android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
     }
 }
