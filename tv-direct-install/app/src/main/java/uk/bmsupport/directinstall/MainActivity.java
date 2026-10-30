@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             boolean ok = true;
             try {
-                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.5").put("note", restarted ? "restart_after_permission" : "reopen"), false);
+                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.6").put("note", restarted ? "restart_after_permission" : "reopen"), false);
             } catch (Exception e) {
                 if (lastCode == 401) ok = false;
             }
@@ -202,7 +202,7 @@ public class MainActivity extends Activity {
     }
 
     private void showPin(String error) {
-        header("Sign in", "Type your BM TV Enabler PIN. You'll find it on bmsupport.uk › Install Guides › BM Direct Install.");
+        header("Sign in", "Type your BM Direct Install PIN. Generate it on bmsupport.uk › Install Guides › BM Direct Install, step 4. It lasts 30 minutes.");
         EditText pin = input("6-digit PIN", 6);
         box.addView(pin, inputLp());
         TextView msg = text(error == null ? "" : error, 17, ACCENT, false); box.addView(msg, lp(dp(8)));
@@ -213,7 +213,7 @@ public class MainActivity extends Activity {
             go.setEnabled(false); msg.setTextColor(MUTED); msg.setText("Checking your PIN…");
             new Thread(() -> {
                 try {
-                    JSONObject body = new JSONObject().put("pin", p).put("app", "direct-1.5");
+                    JSONObject body = new JSONObject().put("pin", p).put("app", "direct-1.6");
                     String saved = prefs.getString("token", "");
                     if (validToken()) body.put("token", saved); // keep this TV's existing device link
                     JSONObject j = post("enabler-login", body, false);

@@ -291,7 +291,7 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
           ? <TvSteps device={chosen.key} onStaffHelp={() => onPick("remote")} />
-          : chosen.key === "direct" ? <DirectInstallSteps pin={<SelfInstallEnablerPin />} />
+          : chosen.key === "direct" ? <DirectInstallSteps />
           : chosen.key === "ios" ? <IosPurpleCard />
           : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
       </>}

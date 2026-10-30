@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { pinKindForApp } from "@/lib/direct-install";
 import { PIN_LOCK_MS, PIN_MAX_TRIES, pinHash, pinUsable, sha256Hex } from "@/lib/enabler-pin";
 
 /**
@@ -21,10 +22,10 @@ export const Route = createFileRoute("/api/public/enabler-login")({
         const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
         // Token check: lets the app confirm a saved login is still valid.
         if (parsed.data.token) {
-          const { data: t } = await db.from("enabler_device_tokens").select("expires_at, enabler_login_pins(revoked_at, expires_at)")
+          const { data: t } = await db.from("enabler_device_tokens").select("expires_at, enabler_login_pins(revoked_at, expires_at, kind)")
             .eq("token_hash", await sha256Hex(parsed.data.token)).maybeSingle();
-          const pin = (t as unknown as { enabler_login_pins: { revoked_at: string | null; expires_at: string } | null } | null)?.enabler_login_pins;
-          const valid = !!t && !!pin && pinUsable(pin) && new Date(t.expires_at).getTime() > Date.now();
+          const pin = (t as unknown as { enabler_login_pins: { revoked_at: string | null; expires_at: string; kind: string } | null } | null)?.enabler_login_pins;
+          const valid = !!t && !!pin && pin.kind === pinKindForApp(parsed.data.app) && pinUsable(pin) && new Date(t.expires_at).getTime() > Date.now();
           if (parsed.data.note) await db.from("tv_helper_diagnostics").insert({ ip_hash: "token-check", helper_version: parsed.data.app ?? null, step: `direct_${parsed.data.note}`, message: valid ? "sign-in kept" : "sign-in lost" });
           if (!valid) return json({ ok: false }, 401);
           return json({ ok: true, expiresAt: t.expires_at });
@@ -34,10 +35,10 @@ export const Route = createFileRoute("/api/public/enabler-login")({
         const { count } = await db.from("tv_helper_diagnostics").select("id", { count: "exact", head: true })
           .eq("ip_hash", ipHash).eq("step", "enabler_pin_fail").gte("created_at", new Date(Date.now() - PIN_LOCK_MS).toISOString());
         if ((count ?? 0) >= PIN_MAX_TRIES) return json({ error: "Too many wrong PINs. Wait 15 minutes and try again." }, 429);
-        const { data: row } = await db.from("enabler_login_pins").select("id, expires_at, revoked_at").eq("pin_hash", await pinHash(parsed.data.pin!)).maybeSingle();
+        const { data: row } = await db.from("enabler_login_pins").select("id, expires_at, revoked_at").eq("pin_hash", await pinHash(parsed.data.pin!)).eq("kind", pinKindForApp(parsed.data.app)).maybeSingle();
         if (!row || !pinUsable(row)) {
           await db.from("tv_helper_diagnostics").insert({ ip_hash: ipHash, helper_version: parsed.data.app ?? null, step: "enabler_pin_fail", message: "bad pin" });
-          return json({ error: "PIN not recognised. Check the PIN on your ticket or order — it lasts 24 hours." }, 401);
+          return json({ error: pinKindForApp(parsed.data.app) === "direct" ? "PIN not recognised. Generate a BM Direct Install PIN on bmsupport.uk › Install Guides — it lasts 30 minutes." : "PIN not recognised. Check the PIN on your ticket or order — it lasts 24 hours." }, 401);
         }
         const raw = new Uint8Array(32); crypto.getRandomValues(raw);
         const token = [...raw].map((b) => b.toString(16).padStart(2, "0")).join("");
