@@ -36,10 +36,11 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
   const done = fromTv.map((v, i) => v || manual[i]);
   const completed = !!progress?.completed_at;
 
-  // Jump forward when the TV reports a step finished.
+  // Jump forward only when the TV itself reports a step finished — never just because a link exists.
   useEffect(() => {
-    const next = fromTv.lastIndexOf(true) + 1;
-    if (next > step && fromTv.slice(0, next).every(Boolean)) setStep(Math.min(next, 4));
+    const tvOnly = [false, ...fromTv.slice(1)];
+    const next = tvOnly.lastIndexOf(true) + 1;
+    if (next > step && tvOnly.slice(0, next).every(Boolean)) setStep(Math.min(next, 4));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromTv.join()]);
 
@@ -48,7 +49,7 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
     try {
       const l = await linkFn();
       setLink(l); setProgress(null); setManual([false, false, false, false, false]);
-      setStep(1);
+      // Stay on step 1 so the link is shown there; the customer presses Next when ready.
     } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a download link."); }
     finally { setBusy(false); }
   };
