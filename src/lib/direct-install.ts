@@ -1,5 +1,9 @@
 /** BM Direct Install secure download links: short, easy-to-type codes for Downloader on the TV. */
 export const DIRECT_LINK_TTL_MS = 30 * 60 * 1000;
+/** BM Direct Install has its own PIN, valid for 30 minutes (BM TV Enabler PINs last 24 hours). */
+export const DIRECT_PIN_TTL_MS = 30 * 60 * 1000;
+/** Which PIN kind an app may sign in with: BM Direct Install uses only its own PINs. */
+export const pinKindForApp = (app?: string | null) => (app ?? "").startsWith("direct") ? "direct" : "enabler";
 // No 0/o/1/l/i so codes are easy to read and type with a TV remote.
 const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 export const DIRECT_CODE_LENGTH = 6;
