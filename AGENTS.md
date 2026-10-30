@@ -71,4 +71,5 @@
 - Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
 - Install Guides: route owns device choice; only TV setup and staff help reserve phone/Windows download columns with ticket-bound PIN controls, so guide/video browsing retains the full available width.
+- BM Direct Install (`tv-direct-install/`) runs on the TV and is install-only: Android PackageInstaller (never self-ADB), PIN + install website codes (support codes refused via installOnly), downloaded only through expiring per-customer `/di/$code` links.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
