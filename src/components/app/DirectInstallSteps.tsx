@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowRight, Check, Link2, Loader2, KeyRound, PartyPopper, RefreshCw, Tv } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 import { selfInstallHandoff } from "@/lib/enabler-handoff";
 import { createDirectInstallPin, getDirectInstallPin } from "@/lib/direct-install-pin.functions";
 import { createDirectInstallLink, getDirectInstallProgress } from "@/lib/direct-install.functions";
+import { nextDirectStep } from "@/lib/direct-install";
 
 const STEP_TITLES = ["Already installed?", "Secure download link", "Install with Downloader", "Sign in with your PIN", "Allow unknown apps", "Website code & install"];
 type Progress = Awaited<ReturnType<typeof getDirectInstallProgress>>;
@@ -42,10 +43,13 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
   const completed = !!progress?.completed_at;
 
   // Jump forward only when the TV itself reports a step finished — never just because a link exists.
+  // Auto-advance as soon as the TV reports the next step (e.g. unknown apps allowed → straight to the code step).
+  const lastReports = useRef("");
   useEffect(() => {
-    const tvOnly = [false, false, ...fromTv.slice(2)];
-    const next = tvOnly.lastIndexOf(true) + 1;
-    if (next > step && tvOnly.slice(0, next).every(Boolean)) setStep(Math.min(next, 5));
+    const key = fromTv.join(",");
+    if (lastReports.current === key) return;
+    lastReports.current = key;
+    setStep(nextDirectStep(fromTv, answered === "yes", step));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromTv.join()]);
 

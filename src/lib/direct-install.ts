@@ -29,3 +29,14 @@ export function directLinkUsable(row: { expires_at: string; completed_at?: strin
 export function directInstallUrl(code: string, origin = "https://bmsupport.uk"): string {
   return `${origin}/di/${code}`;
 }
+
+/**
+ * Which wizard step BM Direct Install should show next: one past the last step the TV itself
+ * reported, so the website moves on by itself as soon as the TV confirms (e.g. unknown apps allowed).
+ * On the "already installed" path steps 2–3 never happen, so the TV's reports alone drive the jump.
+ */
+export function nextDirectStep(reported: boolean[], answeredYes: boolean, step: number): number {
+  const tvOnly = [false, answeredYes || !!reported[1], answeredYes || !!reported[2], !!reported[3], !!reported[4], !!reported[5]];
+  const next = tvOnly.lastIndexOf(true) + 1;
+  return next > step ? Math.min(next, 5) : step;
+}
