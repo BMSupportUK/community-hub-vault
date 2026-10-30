@@ -15,8 +15,8 @@
     <div class="address-row"><label for="address">Wireless debugging address (IP:port)<input id="address" inputmode="decimal" autocomplete="off" maxlength="21" placeholder="192.168.1.25:41235"></label><button id="scan" type="button">Find my TV</button></div>
     <p id="scan-hint" class="hint"></p>
     <details id="pair-block"><summary>Android / Google TV with Wireless debugging: pair with code</summary>
-      <p class="hint">On the TV: Developer options › Wireless debugging › Pair device with pairing code. Type the 6-digit code and the port after the colon on that screen into the two boxes below. In the Wireless debugging address box above, type the IP address &amp; Port from the main Wireless debugging screen, e.g. 192.168.1.25:41235.</p>
-      <div class="address-row"><label for="pair-code">Pairing code (6 digits)<input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="123456"></label><label for="pair-port">Pairing port<input id="pair-port" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="37123"></label></div>
+      <p class="hint">On the TV: Developer options › Wireless debugging › Pair device with pairing code. That screen shows a Wi-Fi pairing code and an IP address &amp; Port, e.g. 192.168.1.25:37123 — type both into the two boxes below, exactly as shown. In the Wireless debugging address box above, type the IP address &amp; Port from the main Wireless debugging screen, e.g. 192.168.1.25:41235.</p>
+      <div class="address-row"><label for="pair-code">Wi-Fi pairing code<input id="pair-code" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="123456"></label><label for="pair-port">IP address &amp; port<input id="pair-port" inputmode="decimal" autocomplete="off" maxlength="21" placeholder="192.168.1.25:37123"></label></div>
       <button id="pair" type="button">Pair with code and set up my TV</button>
     </details>
     <div id="devices" role="group" aria-label="Discovered TVs"></div>

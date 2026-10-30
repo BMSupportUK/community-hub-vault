@@ -397,8 +397,10 @@ pairButton.addEventListener('click', async () => {
   if (busy || wizard.step !== Step.CHECK) return;
   const host = address.value.trim();
   if (!validHost(host) || !host.includes(':')) { say('In the Wireless debugging address box, type the IP address & Port from the Wireless debugging screen, e.g. 192.168.1.25:41235.', true); return; }
-  const code = pairCode.value.replace(/\D/g, ''), port = pairPort.value.replace(/\D/g, '');
-  if (code.length !== 6 || !port) { say('Type the 6-digit code and the pairing port shown on the TV.', true); return; }
+  const code = pairCode.value.replace(/\D/g, '');
+  const pairAddr = pairPort.value.trim();
+  const port = (pairAddr.includes(':') ? pairAddr.split(':').pop() : pairAddr).replace(/\D/g, '');
+  if (code.length !== 6 || !port) { say('Type the Wi-Fi pairing code and the IP address & port shown on the TV\'s pairing screen, e.g. 192.168.1.25:37123.', true); return; }
   localStorage.setItem('bm-tv-address', host);
   setBusy(true);
   try { await window.bmTv.pair(host.split(':')[0], Number(port), code); }
