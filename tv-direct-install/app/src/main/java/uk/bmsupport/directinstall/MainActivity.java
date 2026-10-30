@@ -62,7 +62,7 @@ public class MainActivity extends Activity {
     private LinearLayout box;
     private final LinkedBlockingQueue<Integer> results = new LinkedBlockingQueue<>();
     private volatile boolean busy;
-    private Set<String> pendingPaths;
+    private Set<String> pendingPaths; private boolean waitingPermission;
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
         setContentView(root);
         IntentFilter f = new IntentFilter(ACTION);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(receiver, f, Context.RECEIVER_NOT_EXPORTED); else registerReceiver(receiver, f);
-        if (validToken()) showCode(null); else showPin(null);
+        if (validToken()) afterSignIn(); else showPin(null);
     }
 
     @Override protected void onDestroy() { try { unregisterReceiver(receiver); } catch (Exception ignored) {} super.onDestroy(); }
@@ -104,7 +104,7 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         // Back from the "Install unknown apps" setting: continue automatically.
-        if (pendingPaths != null && !busy && canInstall()) { Set<String> p = pendingPaths; pendingPaths = null; startInstall(p); }
+        if (waitingPermission && !busy && canInstall()) { waitingPermission = false; report("permission"); Set<String> p = pendingPaths; pendingPaths = null; if (p != null) startInstall(p); else showCode(null); }
     }
 
     private boolean validToken() {
@@ -135,9 +135,10 @@ public class MainActivity extends Activity {
             go.setEnabled(false); msg.setTextColor(MUTED); msg.setText("Checking your PIN…");
             new Thread(() -> {
                 try {
-                    JSONObject j = post("enabler-login", new JSONObject().put("pin", p).put("app", "direct-1.0"), false);
+                    JSONObject j = post("enabler-login", new JSONObject().put("pin", p).put("app", "direct-1.1"), false);
                     prefs.edit().putString("token", j.getString("token")).putLong("exp", j.optLong("expiresAtMs", System.currentTimeMillis() + 3600_000L)).apply();
-                    runOnUiThread(() -> showCode(null));
+                    report("signed_in");
+                    runOnUiThread(this::afterSignIn);
                 } catch (Exception e) { runOnUiThread(() -> showPin(e.getMessage())); }
             }).start();
         });
@@ -159,6 +160,7 @@ public class MainActivity extends Activity {
             new Thread(() -> {
                 try {
                     JSONObject r = post("enabler-handoff", new JSONObject().put("code", c).put("protocol", 2).put("installOnly", true), true);
+                    report("code");
                     Set<String> paths = new HashSet<>();
                     JSONArray a = r.optJSONArray("apps");
                     if (a != null) for (int i = 0; i < a.length(); i++) paths.add(a.optString(i));
@@ -171,12 +173,16 @@ public class MainActivity extends Activity {
         code.requestFocus();
     }
 
+    private void afterSignIn() {
+        if (canInstall()) { report("permission"); showCode(null); } else showPermission(null);
+    }
+
     private boolean canInstall() {
         return Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls();
     }
 
     private void showPermission(Set<String> paths) {
-        pendingPaths = paths;
+        pendingPaths = paths; waitingPermission = true;
         header("Allow BM Direct Install to install apps", "Your TV needs your OK once. On the next screen switch BM Direct Install ON, then press Back to return here.");
         Button go = button("Open setting", ACCENT); box.addView(go, btnLp());
         go.setOnClickListener(v -> {
@@ -237,6 +243,7 @@ public class MainActivity extends Activity {
                 apk.delete();
             }
             try { post("enabler-self-install", new JSONObject().put("apps", new JSONArray(done)), true); } catch (Exception ignored) {}
+            report("completed");
             runOnUiThread(() -> showDone(done, failed));
         } catch (Exception e) {
             String m = e.getMessage() == null ? "Something went wrong." : e.getMessage();
@@ -283,6 +290,11 @@ public class MainActivity extends Activity {
         Button again = button("Enter another code", CARD); box.addView(again, btnLp());
         again.setOnClickListener(v -> showCode(null));
         close.requestFocus();
+    }
+
+    /** Tell the website wizard a step is done (best effort, background). */
+    private void report(String stage) {
+        new Thread(() -> { try { post("direct-install-progress", new JSONObject().put("stage", stage), true); } catch (Exception ignored) {} }).start();
     }
 
     // ---------- Network ----------

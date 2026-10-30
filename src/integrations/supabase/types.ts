@@ -2069,26 +2069,41 @@ export type Database = {
       }
       direct_install_links: {
         Row: {
+          code_at: string | null
           code_hash: string
+          completed_at: string | null
           created_at: string
+          downloaded_at: string | null
           expires_at: string
           id: string
+          permission_at: string | null
+          signed_in_at: string | null
           used_count: number
           user_id: string
         }
         Insert: {
+          code_at?: string | null
           code_hash: string
+          completed_at?: string | null
           created_at?: string
+          downloaded_at?: string | null
           expires_at: string
           id?: string
+          permission_at?: string | null
+          signed_in_at?: string | null
           used_count?: number
           user_id: string
         }
         Update: {
+          code_at?: string | null
           code_hash?: string
+          completed_at?: string | null
           created_at?: string
+          downloaded_at?: string | null
           expires_at?: string
           id?: string
+          permission_at?: string | null
+          signed_in_at?: string | null
           used_count?: number
           user_id?: string
         }
