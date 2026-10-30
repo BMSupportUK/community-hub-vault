@@ -49,7 +49,7 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
     try {
       const l = await linkFn();
       setLink(l); setProgress(null); setManual([false, false, false, false, false]);
-      // Stay on step 1 so the link is shown there; the customer presses Next when ready.
+      setStep(1); // show the link on step 2 — that's what goes into Downloader
     } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a download link."); }
     finally { setBusy(false); }
   };
@@ -89,10 +89,9 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
     {step === 0 && <section className="space-y-3">
       <h3 className="text-lg font-semibold text-foreground">Step 1 · Get your secure download link</h3>
       {link ? <div className="space-y-2">
-        <p className="select-all break-all font-mono text-3xl font-bold text-primary">{shown}</p>
-        <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (30 minutes).</p>
+        <p className="text-sm text-muted-foreground">Your link is on step 2, ready to type into Downloader.</p>
         <Button variant="outline" size="sm" disabled={busy} onClick={make}><RefreshCw className="size-4" />Get a new link</Button>
-        <div className="pt-1"><Button size="sm" onClick={() => setStep(1)}>Next step<ArrowRight className="size-4" /></Button></div>
+        <div className="pt-1"><Button size="sm" onClick={() => setStep(1)}>Go to step 2<ArrowRight className="size-4" /></Button></div>
       </div> : <Button onClick={make} disabled={busy}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}Get my secure download link</Button>}
     </section>}
 
@@ -110,7 +109,11 @@ export function DirectInstallSteps({ pin, onChooseDevice }: { pin: ReactNode; on
         <li>When the TV says it can't install unknown apps, press <strong className="text-foreground">Settings</strong> and switch <strong className="text-foreground">Allow from this source</strong> ON for Downloader, then press Back. (Or: <strong className="text-foreground">Settings › Apps › Security & restrictions › Unknown sources</strong> › Downloader ON.)</li>
         <li>Press <strong className="text-foreground">Install</strong>, then <strong className="text-foreground">Open</strong>.</li>
       </ol>}
-      {link && <p className="select-all break-all font-mono text-xl font-bold text-primary">{shown}</p>}
+      {link && <div className="space-y-1 rounded-lg border border-primary/40 bg-primary/5 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type this into Downloader</p>
+        <p className="select-all break-all font-mono text-3xl font-bold text-primary">{shown}</p>
+        <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (30 minutes).</p>
+      </div>}
       {!done[1] && <Waiting text="Waiting for your TV to download BM Direct Install…" />}
       <WizardNav onBack={() => setStep(0)} onNext={() => finish(1)} nextLabel="Next step" />
     </section>}
