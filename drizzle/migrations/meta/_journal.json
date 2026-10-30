@@ -1765,6 +1765,13 @@
       "when": 1793307483173,
       "tag": "0251_admin_enabler_issues",
       "breakpoints": true
+    },
+    {
+      "idx": 252,
+      "version": "7",
+      "when": 1793396860115,
+      "tag": "0252_direct_install_links",
+      "breakpoints": true
     }
   ]
 }
