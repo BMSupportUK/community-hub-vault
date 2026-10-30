@@ -19,7 +19,7 @@ export const Route = createFileRoute("/di/$code")({
         const code = normalizeDirectCode(params.code);
         if (!code) return expired();
         const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-        const { data: link } = await db.from("direct_install_links").select("id, user_id, expires_at, used_count")
+        const { data: link } = await db.from("direct_install_links").select("id, user_id, expires_at, used_count, completed_at")
           .eq("code_hash", await sha256Hex(code)).maybeSingle();
         if (!link || !directLinkUsable(link, Date.now())) return expired();
         const { data: row } = await db.from("app_builds").select("id, app_name, file_path, version_name")

@@ -18,6 +18,12 @@ describe("BM Direct Install secure links", () => {
     expect(normalizeDirectCode("abc10o")).toBeNull();
     expect(normalizeDirectCode("abcd")).toBeNull();
   });
+  test("successful installation makes the original download link unusable immediately", () => {
+    const now = Date.parse("2026-10-30T23:12:00Z");
+    const row = { expires_at: "2026-10-30T23:40:00Z", completed_at: null };
+    expect(directLinkUsable(row, now)).toBe(true);
+    expect(directLinkUsable({ ...row, completed_at: "2026-10-30T23:11:00Z" }, now)).toBe(false);
+  });
   test("link is a short Downloader address", () => {
     expect(directInstallUrl("abc234")).toBe("https://bmsupport.uk/di/abc234");
   });

@@ -71,3 +71,4 @@
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
 - Install Guides: route owns device choice; only TV setup and staff help reserve phone/Windows download columns with ticket-bound PIN controls, so guide/video browsing retains the full available width.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
+- Direct Install completion atomically retires the download-code hash in a database trigger, preserving progress/history while preventing reuse across deployed app versions.

@@ -1779,6 +1779,13 @@
       "when": 1793398648939,
       "tag": "0253_direct_install_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 254,
+      "version": "7",
+      "when": 1793402008574,
+      "tag": "0254_retire_completed_direct_install_links",
+      "breakpoints": true
     }
   ]
 }

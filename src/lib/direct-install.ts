@@ -17,9 +17,9 @@ export function normalizeDirectCode(raw: string | null | undefined): string | nu
   return c.length === DIRECT_CODE_LENGTH && [...c].every((ch) => ALPHABET.includes(ch)) ? c : null;
 }
 
-/** A link works only before its expiry. */
-export function directLinkUsable(row: { expires_at: string } | null, now: number): boolean {
-  return !!row && Date.parse(row.expires_at) > now;
+/** Completed installs retire their original download link, even before its expiry. */
+export function directLinkUsable(row: { expires_at: string; completed_at?: string | null } | null, now: number): boolean {
+  return !!row && !row.completed_at && Date.parse(row.expires_at) > now;
 }
 
 export function directInstallUrl(code: string, origin = "https://bmsupport.uk"): string {
