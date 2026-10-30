@@ -101,7 +101,9 @@ public class MainActivity extends Activity {
         Set<String> saved = prefs.getStringSet("pending_paths", null);
         pendingPaths = saved == null ? null : new HashSet<>(saved);
         if (b != null && b.getBoolean("waiting", false)) waitingPermission = true;
-        if (validToken()) resumeSignedIn(); else showPin(null);
+        // Always ask for the PIN on a fresh start; only the restart after the
+        // "Install unknown apps" switch may resume without it.
+        if (validToken() && waitingPermission) resumeSignedIn(); else showPin(null);
     }
 
     @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); out.putBoolean("waiting", waitingPermission); }
