@@ -96,7 +96,55 @@ public class MainActivity extends Activity {
         setContentView(root);
         IntentFilter f = new IntentFilter(ACTION);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(receiver, f, Context.RECEIVER_NOT_EXPORTED); else registerReceiver(receiver, f);
-        if (validToken()) afterSignIn(); else showPin(null);
+        // Android restarts the app after "Install unknown apps" changes: restore where we were.
+        waitingPermission = prefs.getBoolean("waiting_permission", false);
+        Set<String> saved = prefs.getStringSet("pending_paths", null);
+        pendingPaths = saved == null ? null : new HashSet<>(saved);
+        if (b != null && b.getBoolean("waiting", false)) waitingPermission = true;
+        if (validToken()) resumeSignedIn(); else showPin(null);
+    }
+
+    @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); out.putBoolean("waiting", waitingPermission); }
+
+    /** Saved sign-in found: ask the website, never wipe it on network trouble. */
+    private void resumeSignedIn() {
+        header("Welcome back", "Checking your sign-in…");
+        final boolean restarted = waitingPermission;
+        new Thread(() -> {
+            boolean ok = true;
+            try {
+                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.3"), false);
+            } catch (Exception e) {
+                if (e.getMessage() != null && e instanceof IllegalStateException && lastCode == 401) ok = false;
+            }
+            final boolean keep = ok;
+            diag(restarted ? (keep ? "restart_after_permission_kept" : "restart_after_permission_lost") : (keep ? "signin_kept" : "signin_lost"));
+            runOnUiThread(() -> {
+                if (!keep) { clearSignIn(); showPin("Your sign-in has ended. Type your PIN again."); return; }
+                continueAfterPermission();
+            });
+        }).start();
+    }
+
+    private void continueAfterPermission() {
+        if (!canInstall()) { showPermission(pendingPaths); return; }
+        if (waitingPermission) report("permission");
+        Set<String> p = pendingPaths;
+        setWaiting(false, null);
+        if (p != null) startInstall(p); else { report("permission"); showCode(null); }
+    }
+
+    private void setWaiting(boolean w, Set<String> paths) {
+        waitingPermission = w; pendingPaths = paths;
+        SharedPreferences.Editor e = prefs.edit().putBoolean("waiting_permission", w);
+        if (paths != null) e.putStringSet("pending_paths", new HashSet<>(paths)); else e.remove("pending_paths");
+        e.commit();
+    }
+
+    private void clearSignIn() { prefs.edit().remove("token").remove("exp").commit(); }
+
+    private void diag(String step) {
+        new Thread(() -> { try { post("tv-helper-diagnostics", new JSONObject().put("step", step).put("version", "direct-1.3"), false); } catch (Exception ignored) {} }).start();
     }
 
     @Override protected void onDestroy() { try { unregisterReceiver(receiver); } catch (Exception ignored) {} super.onDestroy(); }
@@ -104,7 +152,7 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         // Back from the "Install unknown apps" setting: continue automatically.
-        if (waitingPermission && !busy && canInstall()) { waitingPermission = false; report("permission"); Set<String> p = pendingPaths; pendingPaths = null; if (p != null) startInstall(p); else showCode(null); }
+        if (waitingPermission && !busy && canInstall() && validToken()) continueAfterPermission();
     }
 
     private boolean validToken() {
