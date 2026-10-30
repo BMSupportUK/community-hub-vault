@@ -1,0 +1,38 @@
+plugins { id 'com.android.application' }
+
+// BM Direct Install: install-only app that runs on the Fire TV / Android TV itself.
+// Uses Android's PackageInstaller (no ADB). Signed with the permanent BM key (see android/SIGNING.md).
+def ksPass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+
+android {
+    namespace = "uk.bmsupport.directinstall"
+    compileSdk = 36
+    defaultConfig {
+        applicationId "uk.bmsupport.directinstall"
+        minSdkVersion 22
+        targetSdkVersion 36
+        versionCode 1
+        versionName "1.0"
+    }
+    signingConfigs {
+        release {
+            if (ksPass) {
+                storeFile file(System.getenv("ANDROID_KEYSTORE_PATH") ?: "../../android/keystore/bmsupport-release.jks")
+                storePassword ksPass
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "bmsupport"
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: ksPass
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (ksPass) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError false; checkReleaseBuilds false }
+}
