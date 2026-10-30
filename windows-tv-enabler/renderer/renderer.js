@@ -1,3 +1,4 @@
+{ const v = window.bmTv && window.bmTv.version; const el = document.getElementById('app-version'); if (el && v) el.textContent = `WINDOWS · V${v.replace(/\.0$/, '')}`; }
 /* Wizard UI mirroring the phone BM TV Enabler: one step at a time, real TV checks
    before every advance, optional website linking, safe reset. */
 const { Step, CodeResult, Wizard, newCode, ready: allReady, validHost, installFinished, canIssueConfirmation } = SetupWizard;

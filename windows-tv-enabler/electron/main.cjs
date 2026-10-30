@@ -41,7 +41,7 @@ else {
   app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
   app.whenReady().then(() => {
     window = new BrowserWindow({ width: 860, height: 880, minWidth: 620, minHeight: 640, backgroundColor: '#10101a', title: 'BM TV Enabler', autoHideMenuBar: true, icon: path.join(__dirname, '..', 'build.ico'),
-      webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+      webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, additionalArguments: [`--bm-version=${app.getVersion()}`] } });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());
     ipcMain.handle('bm:login', task(async pin => { const r = await loginWithPin(pin); setEnablerToken(r.token); return r; }));
