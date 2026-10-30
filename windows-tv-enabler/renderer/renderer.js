@@ -160,7 +160,7 @@ function render() {
     next.disabled = busy || !canIssueConfirmation(Boolean(installCode), installExpiresAt, installUsed);
   }
   action.hidden = (s === Step.DEBUGGING && (device == null || apps == null)) || (s === Step.DONE && install);
-  pairBlock.hidden = device !== 'android';
+  pairBlock.hidden = true;
   scan.textContent = device === 'android' ? 'Find my Android TV' : 'Find my Fire TV';
   scanHint.textContent = device === 'android' ? 'Find my Android TV lists Android / Google TVs on your network (Amazon devices are left out). If yours isn\'t listed, type the address from the TV\'s network settings.' : 'Find my Fire TV lists only Amazon Fire TVs on your network, so you can pick the right one if you have more than one.';
   appsResult.hidden = !(installDone && appsResults.length);
