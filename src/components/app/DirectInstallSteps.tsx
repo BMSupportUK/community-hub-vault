@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowRight, Check, Link2, Loader2, KeyRound, PartyPopper, RefreshCw, Tv } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 import { selfInstallHandoff } from "@/lib/enabler-handoff";
 import { createDirectInstallPin, getDirectInstallPin } from "@/lib/direct-install-pin.functions";
 import { createDirectInstallLink, getDirectInstallProgress } from "@/lib/direct-install.functions";
+import { nextDirectStep } from "@/lib/direct-install";
 
 const STEP_TITLES = ["Already installed?", "Secure download link", "Install with Downloader", "Sign in with your PIN", "Allow unknown apps", "Website code & install"];
 type Progress = Awaited<ReturnType<typeof getDirectInstallProgress>>;
