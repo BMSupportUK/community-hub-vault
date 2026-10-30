@@ -728,8 +728,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
       ) : tab === "rail-order" && isAdminOnly ? (
         <RailOrderEditor />
       ) : tab === "enabler-codes" && canSeePins && !isFz ? (
-        <AlternativeInstallToggle />
-        <AdminEnablerCodes />
+        <div className="space-y-4"><AlternativeInstallToggle />
+        <AdminEnablerCodes /></div>
       ) : tab === "tv-sessions" && isAdminOnly && !isFz ? (
         <TvRemoteSessions onBack={() => {
           setTab("tools");
