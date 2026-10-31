@@ -1,3 +1,4 @@
+import { AppPickCards } from "@/components/app/AppDemos";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowRight, Check, Link2, Loader2, KeyRound, PartyPopper, PlayCircle, RefreshCw, Tv } from "lucide-react";
@@ -248,10 +249,7 @@ function DirectCodePicker({ device }: { device: "amazon" | "android" }) {
   };
   if (!apps) return <Loader2 aria-label="Loading apps" className="size-6 animate-spin" />;
   return <div className="space-y-3">
-    {!code && apps.map((app) => <label key={app.path} className="flex items-center gap-3 rounded-md border border-border bg-surface-2 p-3 text-sm">
-      <input type="checkbox" className="size-4 accent-primary" checked={picked.has(app.path)} onChange={(e) => setPicked((prev) => { const n = new Set(prev); if (e.target.checked) n.add(app.path); else n.delete(app.path); return n; })} />
-      <span className="text-foreground">{app.name}</span>
-    </label>)}
+    {!code && <AppPickCards apps={apps} picked={picked} onToggle={(path, on) => setPicked((prev) => { const n = new Set(prev); if (on) n.add(path); else n.delete(path); return n; })} />}
     {code ? <div className="space-y-2">
       <p className="text-sm text-muted-foreground">Type this into BM Direct Install</p>
       <p className="select-all font-mono text-4xl font-bold text-primary">{code.code.slice(0, 3)}-{code.code.slice(3)}</p>
