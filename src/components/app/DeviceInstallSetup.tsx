@@ -270,10 +270,18 @@ export function DeviceInstallSetup({ alternative, device, onPick, section = "dir
     (section === "enabler" ? ["amazon", "android", "remote"].includes(d.key) : ["direct", "alternative"].includes(d.key))
     && (d.key !== "alternative" || showAlternative));
   const chosen = devices.find((d) => d.key === device);
+  // The Direct tab goes straight into the wizard — the device choice moved to its own tabs.
+  // The picker only returns when the admin Alternative-methods toggle is switched on.
+  const directBypass = section === "direct" && (!showAlternative || chosen?.key === "direct");
 
   return <div className="w-full space-y-6">
     <div className="rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
-      {!chosen ? <>
+      {directBypass ? <>
+        <div className="mb-4">
+          <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground"><MonitorDown className="size-6 text-primary" />BM Direct Install</h2>
+        </div>
+        <DirectInstallSteps />
+      </> : !chosen ? <>
         <h2 className="font-display text-2xl font-bold text-foreground">What are you setting up?</h2>
         <p className="mt-1 text-sm text-muted-foreground">Pick your device and we'll walk you through it one step at a time.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6">
