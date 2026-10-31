@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ArrowRight, Check, Link2, Loader2, KeyRound, PartyPopper, RefreshCw, Tv } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Link2, Loader2, KeyRound, PartyPopper, PlayCircle, RefreshCw, Tv } from "lucide-react";
+import { DirectInstallVideo } from "@/components/app/DirectInstallVideo";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
@@ -31,6 +32,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
   const [manual, setManual] = useState<boolean[]>([false, false, false, false, false, false]);
   const [progress, setProgress] = useState<Progress>(null);
   const [tv, setTv] = useState<"amazon" | "android" | null>(null);
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -124,6 +126,11 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
         </button></li>;
       })}
     </ol>
+
+    <div className="space-y-3">
+      <Button size="sm" variant={showVideo ? "default" : "outline"} onClick={() => setShowVideo((v) => !v)}><PlayCircle className="size-4" />{showVideo ? "Hide video tutorial" : "Video tutorial"}</Button>
+      {showVideo && <DirectInstallVideo step={step} device={tv} />}
+    </div>
 
     {completed ? <section className="space-y-3 rounded-lg border border-green-600/40 bg-green-600/10 p-5 text-center">
       <PartyPopper className="mx-auto size-10 text-green-600" />
