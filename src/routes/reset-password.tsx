@@ -12,10 +12,10 @@ export const Route = createFileRoute("/reset-password")({
   validateSearch: (s: Record<string, unknown>) => ({ forced: s.forced === "1" || s.forced === 1 ? "1" : undefined }),
   head: () => ({
     meta: [
-      { title: "Set a new password — BM Support" },
-      { name: "description", content: "Choose a new password for your BM Support account." },
-      { property: "og:title", content: "Set a new password — BM Support" },
-      { property: "og:description", content: "Choose a new password for your BM Support account." },
+      { title: "Confirm your password — BM Support" },
+      { name: "description", content: "Confirm your chosen password for your BM Support account." },
+      { property: "og:title", content: "Confirm your password — BM Support" },
+      { property: "og:description", content: "Confirm your chosen password for your BM Support account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -65,7 +65,7 @@ function ResetPasswordPage() {
       return toast.error(error instanceof Error ? error.message : "Couldn't update your password.");
     }
     setBusy(false);
-    toast.success("Password updated. You're signed in.");
+    toast.success("Password confirmed. You're signed in.");
     navigate({ to: "/home" });
   };
 
@@ -88,7 +88,7 @@ function ResetPasswordPage() {
             Forgot your password?
           </h2>
           <p className="text-sm text-muted-foreground mt-2">
-            No worries — choose a new one and you'll be back in the community in seconds.
+            Confirm your chosen password to get back into the community.
           </p>
         </div>
       </aside>
@@ -100,13 +100,13 @@ function ResetPasswordPage() {
             <span className="font-display font-bold text-lg">Support Community</span>
           </Link>
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-soft">
-            <h1 className="font-display text-2xl font-bold">Set a new password</h1>
+            <h1 className="font-display text-2xl font-bold">Confirm your password</h1>
             <p className="text-sm text-muted-foreground mb-6">
               {needsProfile
                 ? "Choose your username, display name and password to finish setting up your account."
                 : forced
-                ? "A password change is required for your account. Choose a different password to continue."
-                : "Enter your new password below."}
+                ? "Confirm your chosen password to continue. You can keep your existing password or choose a new one."
+                : "Enter your chosen password below. You can reuse your existing password."}
             </p>
             <form onSubmit={submit} className="space-y-3">
               {needsProfile && (
@@ -116,10 +116,10 @@ function ResetPasswordPage() {
                 </>
               )}
               {!recovery && <Field label="Current password" type="password" value={currentPassword} onChange={setCurrentPassword} />}
-              <Field label="New password" type="password" value={password} onChange={setPassword} />
+              <Field label="Chosen password" type="password" value={password} onChange={setPassword} />
               <Field label="Confirm password" type="password" value={confirm} onChange={setConfirm} />
               <Button disabled={busy} className="w-full h-11">
-                {busy ? "Updating…" : "Update password"}
+                {busy ? "Confirming…" : "Confirm password"}
               </Button>
             </form>
             <div className="text-sm text-muted-foreground text-center mt-6">
