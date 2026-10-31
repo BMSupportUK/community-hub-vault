@@ -272,7 +272,7 @@ export function DeviceInstallSetup({ alternative, device, onPick, section = "dir
   const chosen = devices.find((d) => d.key === device);
   // The Direct tab goes straight into the wizard — the device choice moved to its own tabs.
   // The picker only returns when the admin Alternative-methods toggle is switched on.
-  const directBypass = section === "direct" && (chosen?.key === "direct" || chosen === undefined);
+  const directBypass = section === "direct" && (!showAlternative || chosen?.key === "direct");
 
   return <div className="w-full space-y-6">
     <div className="rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
