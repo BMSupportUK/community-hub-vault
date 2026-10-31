@@ -1,3 +1,4 @@
+import { AppPickCards } from "@/components/app/AppDemos";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useNavigate } from "@tanstack/react-router";
@@ -216,12 +217,10 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
         {loadError ? <div className="space-y-2"><p className="text-sm text-destructive">Couldn't load the apps.</p><Button variant="outline" onClick={() => void loadApps()}>Try again</Button></div>
           : !apps ? <Loader2 aria-label="Loading apps" className="size-6 animate-spin" />
           : apps.length === 0 ? <p className="text-sm text-muted-foreground">No apps are available to install right now.</p>
-          : apps.map((app) => <label key={app.path} className="flex items-center gap-3 rounded-md border border-border bg-surface-2 p-3 text-sm">
-            <input type="checkbox" className="size-4 accent-primary" checked={picked.has(app.path)} onChange={(event) => {
-              setPicked((previous) => { const next = new Set(previous); if (event.target.checked) next.add(app.path); else next.delete(app.path); return next; });
+          : <AppPickCards apps={apps} picked={picked} onToggle={(path, on) => {
+              setPicked((previous) => { const next = new Set(previous); if (on) next.add(path); else next.delete(path); return next; });
               setCode(null); try { sessionStorage.removeItem(storageKey); } catch { /* No saved code. */ }
-            }} /><span className="text-foreground">{app.name}</span>
-          </label>)}
+            }} />}
       </div>}
       {current === 2 && (code ? <div className="space-y-3">
         <p className="select-all break-all font-mono text-4xl font-bold text-primary">{code.code.slice(0, 3)}-{code.code.slice(3)}</p>
