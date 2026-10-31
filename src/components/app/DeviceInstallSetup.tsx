@@ -26,7 +26,6 @@ const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof 
   { key: "direct", label: "BM Direct Install", note: "Install straight on the TV, no phone or PC", icon: MonitorDown },
   { key: "amazon", label: "Amazon Fire TV", note: "Fire Stick, Cube or Fire TV — installs using our Phone or Windows app", icon: Tv },
   { key: "android", label: "Android / Google TV", note: "Android boxes and Google TV — installs using our Phone or Windows app", icon: Tv },
-  { key: "ios", label: "iOS", note: "Purple Player Lite for iPhone and iPad", icon: Apple },
   { key: "alternative", label: "Alternative Install methods", note: "Other ways to get the apps", icon: Download },
   { key: "remote", label: "Help from staff", note: "Let staff install it with you by screen share", icon: Headset },
 ];
@@ -292,7 +291,6 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
         {chosen.key === "amazon" || chosen.key === "android"
           ? <TvSteps device={chosen.key} onStaffHelp={() => onPick("remote")} />
           : chosen.key === "direct" ? <DirectInstallSteps />
-          : chosen.key === "ios" ? <IosPurpleCard />
           : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
       </>}
     </div>
