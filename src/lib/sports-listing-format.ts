@@ -73,12 +73,13 @@ const DATE_ONLY_RE = new RegExp(
   "i",
 );
 
-// Cymru TV writes each fixture on one channel-first row:
+// Cymru TV writes each fixture on one channel-first row, using either
+// "Cymru 1" or "Cymru Football 1" as the channel:
 // "Cymru Football 1 - Barry Town United - Connah’s Quay Nomads [26th Sep - 2:25pm BST]".
 // The first dash separates the channel, the second separates the two teams,
 // and the bracket owns both the event date and kick-off.
 const CYMRU_CHANNEL_FIXTURE_RE = new RegExp(
-  String.raw`^\s*(Cymru\s+Football\s+\d{1,3})\s+[-–—]\s+(.+?)\s+[-–—]\s+(.+?)\s+\[\s*(\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+(?:\s+\d{2,4})?)\s+[-–—]\s+(${TIME_WITH_ZONE_SOURCE})\s*\]\s*$`,
+  String.raw`^\s*(Cymru\s+(?:Football\s+)?\d{1,3})\s+[-–—]\s+(.+?)\s+[-–—]\s+(.+?)\s+\[\s*(\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+(?:\s+\d{2,4})?)\s+[-–—]\s+(${TIME_WITH_ZONE_SOURCE})\s*\]\s*$`,
   "i",
 );
 
