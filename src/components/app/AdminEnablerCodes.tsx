@@ -96,7 +96,11 @@ export function AdminEnablerCodes() {
   const loadLog = useCallback(async () => {
     try { setLog(await listFn()); } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load the log."); setLog([]); }
   }, [listFn]);
-  useEffect(() => { void loadLog(); }, [loadLog]);
+  useEffect(() => {
+    void loadLog();
+    const t = setInterval(() => void loadLog(), 5000);
+    return () => clearInterval(t);
+  }, [loadLog]);
 
   const issue = async () => {
     if (!name.trim()) return toast.error("Type the person's name.");
@@ -163,7 +167,7 @@ export function AdminEnablerCodes() {
                 <tr key={r.id} className="border-t align-top">
                   <td className="p-2 font-medium">{r.name}</td><td className="p-2">{DEVICE_LABEL[r.device]}<div className="text-xs text-muted-foreground">{INSTALLER_LABEL[r.installer]}</div></td><td className="p-2">{PURPOSE_LABEL[r.purpose]}<div className="text-xs text-muted-foreground">{r.apps.map((path) => apps.find((a) => a.path === path)?.name ?? "App no longer listed").join(", ")}</div></td>
                   <td className="p-2 whitespace-nowrap">{fmt(r.createdAt)}</td><td className="p-2">{r.issuedBy ?? "—"}</td>
-                  <td className="p-2">{status(r)}{r.completedApps.length > 0 && <div className="text-xs text-muted-foreground">{r.completedApps.join(", ")}</div>}</td>
+                  <td className="p-2"><ProgressBar row={r} /><div className="mt-1 text-xs text-muted-foreground">{status(r)}{r.completedApps.length > 0 && ` · ${r.completedApps.join(", ")}`}</div></td>
                 </tr>
               ))}</tbody>
             </table></div>
