@@ -755,7 +755,7 @@ function InstallGuidesPage() {
                   Browse by category, search for what you need, and open PDFs directly in your browser.
                 </p>
                 <Button className="mt-6 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90" onClick={() => setTab("guides")}>Browse guides</Button>
-                <Button variant="outline" className="mt-6 ml-2" onClick={() => setTab("setup")}>Setup Device | Direct</Button>
+                <Button variant="outline" className="mt-6 ml-2" onClick={() => setTab("setup")}>Setup Device | Direct To Device</Button>
               </div>
             </div>
           </TabsContent>
