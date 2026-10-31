@@ -707,6 +707,15 @@ function InstallGuidesPage() {
             />
           </TabsContent>
 
+          <TabsContent value="ios-setup" className="mt-0 min-w-0">
+            <div className="rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground"><Apple className="size-6 text-primary" />iOS</h2>
+              </div>
+              <IosPurpleCard />
+            </div>
+          </TabsContent>
+
           <TabsContent value="welcome" className="mt-0 min-w-0">
             <div className="relative overflow-hidden rounded-lg border border-border shadow-glow min-h-[60vh] lg:min-h-[70vh]">
               <img
