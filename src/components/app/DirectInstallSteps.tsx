@@ -127,16 +127,19 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
       })}
     </ol>
 
-    <div className="space-y-3">
-      <Button size="sm" variant={showVideo ? "default" : "outline"} onClick={() => setShowVideo((v) => !v)}><PlayCircle className="size-4" />{showVideo ? "Hide video tutorial" : "Video tutorial"}</Button>
-      {showVideo && <DirectInstallVideo step={step} device={tv} />}
-    </div>
+    {!completed && <div className="inline-flex rounded-md border border-border p-1" role="tablist">
+      <button type="button" role="tab" aria-selected={!showVideo} onClick={() => setShowVideo(false)} className={`rounded px-3 py-1 text-sm ${!showVideo ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Steps</button>
+      <button type="button" role="tab" aria-selected={showVideo} onClick={() => setShowVideo(true)} className={`flex items-center gap-1 rounded px-3 py-1 text-sm ${showVideo ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}><PlayCircle className="size-4" />Video tutorial</button>
+    </div>}
 
     {completed ? <section className="space-y-3 rounded-lg border border-green-600/40 bg-green-600/10 p-5 text-center">
       <PartyPopper className="mx-auto size-10 text-green-600" />
       <h3 className="text-lg font-semibold text-foreground">All done — your apps are installed</h3>
       <p className="text-sm text-muted-foreground">BM Direct Install has finished on your TV. Press Close on the TV screen.</p>
       <Button variant="outline" size="sm" disabled={busy} onClick={reset}>Start again</Button>
+    </section> : showVideo ? <section className="space-y-2">
+      <h3 className="text-lg font-semibold text-foreground">Step {step + 1} · {STEP_TITLES[step]} — video</h3>
+      <DirectInstallVideo step={step} device={tv} />
     </section> : <>
 
     {step === 0 && <section className="space-y-3">
