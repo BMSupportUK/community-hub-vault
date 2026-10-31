@@ -267,8 +267,10 @@ public class MainActivity extends Activity {
     private static boolean isAmazon() { return "Amazon".equalsIgnoreCase(Build.MANUFACTURER); }
 
     private boolean developerEnabled() {
-        return Settings.Global.getInt(getContentResolver(), Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
-                || Settings.Global.getInt(getContentResolver(), Settings.Global.ADB_ENABLED, 0) == 1;
+        try {
+            return Settings.Global.getInt(getContentResolver(), Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
+                    || Settings.Global.getInt(getContentResolver(), Settings.Global.ADB_ENABLED, 0) == 1;
+        } catch (Exception ignored) { return false; }
     }
 
     private void showPermission(Set<String> paths) {
@@ -299,7 +301,7 @@ public class MainActivity extends Activity {
         String[][] steps = isAmazon() ? new String[][]{
             { Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "pkg", "Switch BM Direct Install ON with OK, then press Back." },
             { Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS, "", "Choose Install unknown apps (or Apps from Unknown Sources), switch BM Direct Install ON, then press Back." },
-            { Settings.ACTION_DEVICE_INFO_SETTINGS, "", "Press OK on your device name 7 times until it says you're a developer, then press Back and press Take me there again." },
+            { Settings.ACTION_DEVICE_INFO_SETTINGS, "", "Already a developer? Press Back — skip activation and open Developer options › Install unknown apps › BM Direct Install › ON. Only if Developer options is missing, press OK on your device name 7 times, then press Back." },
             { Settings.ACTION_SETTINGS, "", "Go to My Fire TV › Developer options › Install unknown apps › BM Direct Install › ON." },
         } : new String[][]{
             { Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "pkg", "Switch Allow from this source ON, then press Back." },
