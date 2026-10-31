@@ -2,6 +2,8 @@
 export const DIRECT_LINK_TTL_MS = 30 * 60 * 1000;
 /** BM Direct Install has its own PIN, valid for 30 minutes (BM TV Enabler PINs last 24 hours). */
 export const DIRECT_PIN_TTL_MS = 30 * 60 * 1000;
+/** TV progress and website reads use the same active-run window. */
+export const DIRECT_PROGRESS_TTL_MS = 6 * 60 * 60 * 1000;
 /** Which PIN kind an app may sign in with: BM Direct Install uses only its own PINs. */
 export const pinKindForApp = (app?: string | null) => (app ?? "").startsWith("direct") ? "direct" : "enabler";
 // No 0/o/1/l/i so codes are easy to read and type with a TV remote.
@@ -36,7 +38,8 @@ export function directInstallUrl(code: string, origin = "https://bmsupport.uk"):
  * On the "already installed" path steps 2–3 never happen, so the TV's reports alone drive the jump.
  */
 export function nextDirectStep(reported: boolean[], answeredYes: boolean, step: number): number {
-  const tvOnly = [false, answeredYes || !!reported[1], answeredYes || !!reported[2], !!reported[3], !!reported[4], !!reported[5]];
+  // A generated link and skipped Downloader steps are not reports from the TV.
+  const tvOnly = [false, false, !answeredYes && !!reported[2], !!reported[3], !!reported[4], !!reported[5]];
   const next = tvOnly.lastIndexOf(true) + 1;
   return next > step ? Math.min(next, 5) : step;
 }

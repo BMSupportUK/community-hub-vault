@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Fix Direct Install already-installed progress isolation and Start again returning to the first question; 17 tests and signed-in TV-report flow pass
 - [x] Skip Amazon developer activation when already enabled; regression tests pass and signed Direct Install 1.7 released (real Fire TV check remains below)
 - [x] Retire the original Direct Install download link on completion while keeping installation progress and logs
 - [x] Reuse the customer's valid TV Enabler PIN across the site and synchronize explicit resets; 11 tests pass, signed-in Install Guides/reload/Settings show the same PIN

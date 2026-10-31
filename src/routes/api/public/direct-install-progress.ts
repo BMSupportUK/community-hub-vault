@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { sha256Hex } from "@/lib/enabler-handoff";
+import { DIRECT_PROGRESS_TTL_MS } from "@/lib/direct-install";
 
 /**
  * BM Direct Install (on the TV) reports each finished step so the website wizard can tick it.
@@ -21,20 +22,24 @@ export const Route = createFileRoute("/api/public/direct-install-progress")({
       const { data: dt } = await db.from("enabler_device_tokens").select("pin_id")
         .eq("token_hash", await sha256Hex(tok)).gt("expires_at", new Date().toISOString()).maybeSingle();
       if (!dt?.pin_id) return Response.json({ error: "Please sign in again." }, { status: 401, headers });
-      const { data: pin } = await db.from("enabler_login_pins").select("user_id, ticket_id").eq("id", dt.pin_id).maybeSingle();
+      const { data: pin } = await db.from("enabler_login_pins").select("user_id, ticket_id, kind, revoked_at").eq("id", dt.pin_id).maybeSingle();
+      if (pin?.kind !== "direct" || pin.revoked_at) return Response.json({ error: "Please sign in again." }, { status: 401, headers });
       let owner: string | null = pin?.user_id ?? null;
       if (!owner && pin?.ticket_id) {
         const { data: t } = await db.from("tickets").select("user_id").eq("id", pin.ticket_id).maybeSingle();
         owner = t?.user_id ?? null;
       }
       if (!owner) return Response.json({ ok: true }, { headers });
-      const since = new Date(Date.now() - 6 * 3600_000).toISOString();
-      const { data: link } = await db.from("direct_install_links").select("id").eq("user_id", owner)
+      const since = new Date(Date.now() - DIRECT_PROGRESS_TTL_MS).toISOString();
+      const { data: link, error: readError } = await db.from("direct_install_links").select("id, completed_at").eq("user_id", owner)
         .gt("created_at", since).order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (link) {
+      if (readError) return Response.json({ error: "Couldn't check setup progress." }, { status: 503, headers });
+      if (!link) return Response.json({ error: "Start Direct Install setup on the website first." }, { status: 409, headers });
+      if (!link.completed_at) {
         const now = new Date().toISOString();
         const patch = { [STAGE_COLUMN[body.data.stage]]: now } as { completed_at: string };
-        await db.from("direct_install_links").update(patch).eq("id", link.id);
+        const { error } = await db.from("direct_install_links").update(patch).eq("id", link.id).is("completed_at", null);
+        if (error) return Response.json({ error: "Couldn't save setup progress." }, { status: 503, headers });
       }
       return Response.json({ ok: true }, { headers });
     },
