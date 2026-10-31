@@ -1,4 +1,5 @@
 # src/lib rules
+- BM Support alerts use the shared SupportNotificationScope/useSupportNotifications boundary, including Fan Zone-origin sports guides; Fan Zone listeners stay independent so dual-role staff do not receive support pop-ups in Fan Zone.
 - Direct Install starts a fresh progress row for either setup path; website reads are scoped to that run, and already-installed runs have no download capability, so history cannot advance a new wizard.
 - Enabler login PIN issuance/status share verified customer identity across account, ticket and order surfaces; unowned orders remain isolated and account reset revokes legacy scoped PINs too, without changing handoff/reference bindings.
 - Staff display role refreshes retain the last successful map until replacement succeeds; one ref-counted focus listener prevents app-return colour/order flicker.

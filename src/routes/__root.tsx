@@ -195,7 +195,7 @@ function RootComponent() {
         <SoundUnlocker />
         <MentionSoundAlert />
         <SupportNotificationScope><TicketReplyAlert /></SupportNotificationScope>
-        <PushSoundBridge />
+        <SupportNotificationScope><PushSoundBridge /></SupportNotificationScope>
         <ToastNotificationBridge />
         <LocalSendReceiverBridge />
         <FanZonePresenceTracker />
