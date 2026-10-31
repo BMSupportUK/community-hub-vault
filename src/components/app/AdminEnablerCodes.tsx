@@ -12,7 +12,7 @@ const PURPOSE_LABEL = { install: "Install apps", support: "Screen sharing" } as 
 const INSTALLER_LABEL = { direct: "BM Direct Install · on the TV", enabler: "BM TV Enabler · Phone / Windows" } as const;
 const fmt = (iso: string) => new Date(iso).toLocaleString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-function Choice<T extends string>({ value, options, onChange }: { value: T; options: Record<T, string>; onChange: (v: T) => void }) {
+function Choice<T extends string>({ value, options, onChange }: { value: T | null; options: Record<T, string>; onChange: (v: T) => void }) {
   return (
     <div className="flex flex-wrap gap-2">
       {(Object.keys(options) as T[]).map((k) => (
@@ -78,7 +78,7 @@ export function AdminEnablerCodes() {
           <label className="block space-y-1.5"><span className="text-sm font-medium">Reference name (required)</span>
             <Input required value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Who is this for?" /></label>
           <div className="space-y-1.5"><span className="text-sm font-medium">Installer app</span><Choice value={installer} options={INSTALLER_LABEL} onChange={(v) => { setInstaller(v); if (v === "direct") setPurpose("install"); }} /></div>
-          <div className="space-y-1.5"><span className="text-sm font-medium">Device (required)</span><Choice value={device ?? ""} options={DEVICE_LABEL} onChange={setDevice} /></div>
+          <div className="space-y-1.5"><span className="text-sm font-medium">Device (required)</span><Choice value={device} options={DEVICE_LABEL} onChange={setDevice} /></div>
           {installer === "enabler" && <div className="space-y-1.5"><span className="text-sm font-medium">What is it for?</span><Choice value={purpose} options={PURPOSE_LABEL} onChange={setPurpose} /></div>}
           {purpose === "install" && (
             <div className="space-y-1.5"><span className="text-sm font-medium">Apps to install (required)</span>
