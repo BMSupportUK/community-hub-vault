@@ -36,9 +36,10 @@ export const Route = createFileRoute("/api/public/direct-install-progress")({
         const { data: h } = await db.from("enabler_handoffs").select("id, completed_at").eq("admin_issue_id", pin.admin_issue_id)
           .order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (h && !h.completed_at) {
-          const patch = body.data.stage === "completed"
-            ? { completed_at: now }
-            : ({ [col]: now } as Record<string, string>);
+          const patch = body.data.stage === "completed" ? { completed_at: now }
+            : body.data.stage === "code" ? { used_at: now }
+            : body.data.stage === "permission" ? { permission_at: now }
+            : { signed_in_at: now };
           await db.from("enabler_handoffs").update(patch).eq("id", h.id).is("completed_at", null);
         }
         return Response.json({ ok: true }, { headers });
