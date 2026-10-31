@@ -22,12 +22,26 @@ export const Route = createFileRoute("/api/public/direct-install-progress")({
       const { data: dt } = await db.from("enabler_device_tokens").select("pin_id")
         .eq("token_hash", await sha256Hex(tok)).gt("expires_at", new Date().toISOString()).maybeSingle();
       if (!dt?.pin_id) return Response.json({ error: "Please sign in again." }, { status: 401, headers });
-      const { data: pin } = await db.from("enabler_login_pins").select("user_id, ticket_id, kind, revoked_at").eq("id", dt.pin_id).maybeSingle();
+      const { data: pin } = await db.from("enabler_login_pins").select("user_id, ticket_id, kind, revoked_at, admin_issue_id").eq("id", dt.pin_id).maybeSingle();
       if (pin?.kind !== "direct" || pin.revoked_at) return Response.json({ error: "Please sign in again." }, { status: 401, headers });
       let owner: string | null = pin?.user_id ?? null;
       if (!owner && pin?.ticket_id) {
         const { data: t } = await db.from("tickets").select("user_id").eq("id", pin.ticket_id).maybeSingle();
         owner = t?.user_id ?? null;
+      }
+      if (!owner && pin?.admin_issue_id) {
+        // Admin-issued code: record the step on its handoff so the admin log status bar ticks.
+        const now = new Date().toISOString();
+        const col = body.data.stage === "code" ? "used_at" : STAGE_COLUMN[body.data.stage];
+        const { data: h } = await db.from("enabler_handoffs").select("id, completed_at").eq("admin_issue_id", pin.admin_issue_id)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (h && !h.completed_at) {
+          const patch = body.data.stage === "completed"
+            ? { completed_at: now }
+            : ({ [col]: now } as Record<string, string>);
+          await db.from("enabler_handoffs").update(patch).eq("id", h.id).is("completed_at", null);
+        }
+        return Response.json({ ok: true }, { headers });
       }
       if (!owner) return Response.json({ ok: true }, { headers });
       const since = new Date(Date.now() - DIRECT_PROGRESS_TTL_MS).toISOString();
