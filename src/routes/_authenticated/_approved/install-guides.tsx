@@ -687,32 +687,38 @@ function InstallGuidesPage() {
 
 
           <TabsContent value="setup" className="mt-0 min-w-0">
-            <DeviceInstallSetup
-              device={setupDevice}
-              onPick={pickSetupDevice}
-              alternative={
-                <IllustratedHero
-                  image={downloadIllustration}
-                  title="Download the BM Support Apps"
-                  text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
-                >
-                  <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
-                </IllustratedHero>
-              }
-            />
+            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
+              <DeviceInstallSetup
+                device={setupDevice}
+                onPick={pickSetupDevice}
+                alternative={
+                  <IllustratedHero
+                    image={downloadIllustration}
+                    title="Download the BM Support Apps"
+                    text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
+                  >
+                    <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
+                  </IllustratedHero>
+                }
+              />
+            </PhotoPanel>
           </TabsContent>
 
           <TabsContent value="phone-windows-setup" className="mt-0 min-w-0">
-            <DeviceInstallSetup section="enabler" device={enablerDevice} onPick={pickEnablerDevice} />
+            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
+              <DeviceInstallSetup section="enabler" device={enablerDevice} onPick={pickEnablerDevice} />
+            </PhotoPanel>
           </TabsContent>
 
           <TabsContent value="ios-setup" className="mt-0 min-w-0">
-            <div className="rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground"><Apple className="size-6 text-primary" />iOS</h2>
+            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
+              <div className="rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground"><Apple className="size-6 text-primary" />iOS</h2>
+                </div>
+                <IosPurpleCard />
               </div>
-              <IosPurpleCard />
-            </div>
+            </PhotoPanel>
           </TabsContent>
 
           <TabsContent value="welcome" className="mt-0 min-w-0">
@@ -1214,6 +1220,19 @@ function SecureGuideVideoSteps({ blog, onEl }: { blog: Blog; onEl?: (el: HTMLVid
     {steps.length > 0 && <div className="flex gap-2 overflow-x-auto px-3 pb-1">{steps.map((step, index) => <Button key={step.id} size="sm" variant={active === index ? "default" : "outline"} onClick={() => setActive(index)}>Step {index + 1}: {step.title}</Button>)}</div>}
     <SecureGuideVideo key={ref} blogId={blog.id} ref_={ref} onEl={onEl} />
   </div>;
+}
+
+/** Photo-backed panel: the install-hero picture fills the tab area behind its content. */
+function PhotoPanel({ children, className = "" }: { children: import("react").ReactNode; className?: string }) {
+  return (
+    <div
+      className={`relative min-w-0 overflow-hidden rounded-2xl border border-border bg-cover bg-center p-4 shadow-glow sm:p-6 ${className}`}
+      style={{ backgroundImage: `url(${installHero})` }}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/70 via-background/50 to-surface/70" />
+      <div className="relative min-w-0">{children}</div>
+    </div>
+  );
 }
 
 /** Framed hero whose own content lives inside it; fills the screen on large displays, scrolls on smaller ones. */
