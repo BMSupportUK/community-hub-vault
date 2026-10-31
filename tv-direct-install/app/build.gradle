@@ -11,8 +11,8 @@ android {
         applicationId "uk.bmsupport.directinstall"
         minSdkVersion 22
         targetSdkVersion 36
-        versionCode 7
-        versionName "1.6"
+        versionCode 8
+        versionName "1.7"
     }
     signingConfigs {
         release {

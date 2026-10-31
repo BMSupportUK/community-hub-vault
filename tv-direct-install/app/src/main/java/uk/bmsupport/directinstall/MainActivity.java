@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             boolean ok = true;
             try {
-                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-1.6").put("note", restarted ? "restart_after_permission" : "reopen"), false);
+                post("enabler-login", new JSONObject().put("token", prefs.getString("token", "")).put("app", "direct-" + appVersion()).put("note", restarted ? "restart_after_permission" : "reopen"), false);
             } catch (Exception e) {
                 if (lastCode == 401) ok = false;
             }
@@ -213,7 +213,7 @@ public class MainActivity extends Activity {
             go.setEnabled(false); msg.setTextColor(MUTED); msg.setText("Checking your PIN…");
             new Thread(() -> {
                 try {
-                    JSONObject body = new JSONObject().put("pin", p).put("app", "direct-1.6");
+                    JSONObject body = new JSONObject().put("pin", p).put("app", "direct-" + appVersion());
                     String saved = prefs.getString("token", "");
                     if (validToken()) body.put("token", saved); // keep this TV's existing device link
                     JSONObject j = post("enabler-login", body, false);
@@ -266,6 +266,13 @@ public class MainActivity extends Activity {
     private int settingTry;
     private static boolean isAmazon() { return "Amazon".equalsIgnoreCase(Build.MANUFACTURER); }
 
+    private boolean developerEnabled() {
+        try {
+            return Settings.Global.getInt(getContentResolver(), Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
+                    || Settings.Global.getInt(getContentResolver(), Settings.Global.ADB_ENABLED, 0) == 1;
+        } catch (Exception ignored) { return false; }
+    }
+
     private void showPermission(Set<String> paths) {
         setWaiting(true, paths);
         header("Allow BM Direct Install to install apps", "Your TV needs your OK once. Press Take me there, then on the switch:");
@@ -294,7 +301,7 @@ public class MainActivity extends Activity {
         String[][] steps = isAmazon() ? new String[][]{
             { Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "pkg", "Switch BM Direct Install ON with OK, then press Back." },
             { Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS, "", "Choose Install unknown apps (or Apps from Unknown Sources), switch BM Direct Install ON, then press Back." },
-            { Settings.ACTION_DEVICE_INFO_SETTINGS, "", "Press OK on your device name 7 times until it says you're a developer, then press Back and press Take me there again." },
+            { Settings.ACTION_DEVICE_INFO_SETTINGS, "", "Already a developer? Press Back — skip activation and open Developer options › Install unknown apps › BM Direct Install › ON. Only if Developer options is missing, press OK on your device name 7 times, then press Back." },
             { Settings.ACTION_SETTINGS, "", "Go to My Fire TV › Developer options › Install unknown apps › BM Direct Install › ON." },
         } : new String[][]{
             { Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "pkg", "Switch Allow from this source ON, then press Back." },
@@ -303,6 +310,8 @@ public class MainActivity extends Activity {
         };
         while (settingTry < steps.length) {
             String[] st = steps[settingTry++];
+            if (Settings.ACTION_DEVICE_INFO_SETTINGS.equals(st[0])
+                    && !DeveloperSetup.needsActivation(developerEnabled(), canInstall())) continue;
             try {
                 Intent i = st[1].isEmpty() ? new Intent(st[0]) : new Intent(st[0], Uri.parse("package:" + getPackageName()));
                 startActivity(i);
