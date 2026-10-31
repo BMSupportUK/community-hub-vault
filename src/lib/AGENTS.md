@@ -23,4 +23,4 @@
 - Ticket/order Connect atomically consumes only an unlinked, never-requested Enabler-delivered session; reference redemption cannot revive consumed checks, preventing connection reuse and duplicate staff alerts.
 - Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
 - Enabler refresh exposes only a capability-verified reference-use boolean alongside task state, allowing both apps to unlock new references without revealing ticket/order IDs or changing the original scope.
-- Admin-issued Enabler codes bind a website code to its own 24-hour PIN via admin_issue_id; those PINs never redeem customer codes and customer PINs never redeem them.
+- Dashboard-issued installer codes verify admin/management server-side and bind a website code to an app-kind-specific PIN via admin_issue_id; these PINs cannot redeem customer codes or cross installer kinds. Validate selected apps against current available TV builds before issuance.

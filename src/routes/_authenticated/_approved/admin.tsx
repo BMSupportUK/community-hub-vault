@@ -604,7 +604,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop, art: toolArtDesign },
     { tabKey: "rail-order", label: "Side icon rail", desc: "Staff and customer icon orders.", icon: LayoutGrid, art: toolArtDesign, adminOnly: true },
     { tabKey: "tv-sessions", label: "TV Remote sessions", desc: "Live TV sessions and session history.", icon: MonitorPlay, art: toolArtDevices, adminOnly: true },
-    { tabKey: "enabler-codes", label: "Enabler codes", desc: "Issue a BM TV Enabler PIN and website code for someone without a website account, with a log.", icon: KeyRound, art: toolArtDevices, adminOnly: true, managementToo: true },
+    { tabKey: "enabler-codes", label: "Installer PIN & website codes", desc: "Reference name, device and selected apps for BM Direct Install or BM TV Enabler.", icon: KeyRound, art: toolArtDevices, adminOnly: true, managementToo: true },
     { tabKey: "faqs", label: "FAQ boxes", desc: "Add, edit, delete and re-order the boxes on the public FAQ page.", icon: CircleHelp, art: toolArtDocs },
     { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
