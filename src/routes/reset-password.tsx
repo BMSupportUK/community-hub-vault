@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Field } from "./login";
 import resetIllustration from "@/assets/reset-password-illustration.webp";
+import { useServerFn } from "@tanstack/react-start";
+import { completeRequiredPasswordChange } from "@/lib/temp-password.functions";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/reset-password")({
   validateSearch: (s: Record<string, unknown>) => ({ forced: s.forced === "1" || s.forced === 1 ? "1" : undefined }),
@@ -23,6 +26,9 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   const navigate = useNavigate();
   const forced = Route.useSearch().forced === "1";
+  const completeChange = useServerFn(completeRequiredPasswordChange);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [recovery, setRecovery] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,6 +36,7 @@ function ResetPasswordPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   useEffect(() => {
+    setRecovery(new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery");
     supabase.auth.getUser().then(({ data }) => setNeedsProfile(!!data.user?.user_metadata?.needs_profile));
   }, []);
 
@@ -51,11 +58,13 @@ function ResetPasswordPage() {
         if (pErr) { setBusy(false); return toast.error(/duplicate|unique/i.test(pErr.message) ? "That username is already taken." : pErr.message); }
       }
     }
-    const { error } = await supabase.auth.updateUser(needsProfile ? { password, data: { needs_profile: false, username: uname, display_name: dname } } : { password });
+    try {
+      await completeChange({ data: { password, currentPassword, recovery, ...(needsProfile ? { profile: { username: uname, displayName: dname } } : {}) } });
+    } catch (error) {
+      setBusy(false);
+      return toast.error(error instanceof Error ? error.message : "Couldn't update your password.");
+    }
     setBusy(false);
-    if (error) { setBusy(false); return toast.error(error.message); }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) await supabase.from("password_change_required").delete().eq("user_id", user.id);
     toast.success("Password updated. You're signed in.");
     navigate({ to: "/home" });
   };
@@ -96,7 +105,7 @@ function ResetPasswordPage() {
               {needsProfile
                 ? "Choose your username, display name and password to finish setting up your account."
                 : forced
-                ? "You signed in with a temporary password from our team. Choose your own new password to continue."
+                ? "A password change is required for your account. Choose a different password to continue."
                 : "Enter your new password below."}
             </p>
             <form onSubmit={submit} className="space-y-3">
@@ -106,11 +115,12 @@ function ResetPasswordPage() {
                   <Field label="Display name" value={displayName} onChange={setDisplayName} />
                 </>
               )}
+              {!recovery && <Field label="Current password" type="password" value={currentPassword} onChange={setCurrentPassword} />}
               <Field label="New password" type="password" value={password} onChange={setPassword} />
               <Field label="Confirm password" type="password" value={confirm} onChange={setConfirm} />
-              <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
+              <Button disabled={busy} className="w-full h-11">
                 {busy ? "Updating…" : "Update password"}
-              </button>
+              </Button>
             </form>
             <div className="text-sm text-muted-foreground text-center mt-6">
               Remembered it?{" "}

@@ -103,12 +103,13 @@ export const Route = createFileRoute("/_authenticated")({
     if (typeof window === "undefined") return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/login", search: { redirect: location.href } as never });
-    // Staff sent this user a temporary password: they must choose their own first.
-    const { data: mustChange } = await supabase
+    // An account password-change request must be completed before continuing.
+    const { data: mustChange, error: resetError } = await supabase
       .from("password_change_required")
       .select("user_id")
       .eq("user_id", session.user.id)
       .maybeSingle();
+    if (resetError) throw new Error("Couldn't verify your account security. Please try again.");
     if (mustChange) throw redirect({ to: "/reset-password", search: { forced: "1" } as never });
   },
   component: AuthLayout,

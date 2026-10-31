@@ -1807,6 +1807,13 @@
       "when": 1793450941755,
       "tag": "0257_split_frees_discarded_source_refs",
       "breakpoints": true
+    },
+    {
+      "idx": 258,
+      "version": "7",
+      "when": 1793472844889,
+      "tag": "0258_protect_password_change_requirement",
+      "breakpoints": true
     }
   ]
 }

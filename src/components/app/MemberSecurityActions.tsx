@@ -3,12 +3,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { KeyRound, ShieldOff, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { resetUserMfa } from "@/lib/mfa.functions";
-import { createUserManually, sendTemporaryPassword } from "@/lib/temp-password.functions";
+import { createUserManually, requestCustomerPasswordReset } from "@/lib/temp-password.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 /** Admin dashboard (Members & Role Management) only: Reset 2FA + Email new password. */
 export function MemberSecurityActions({ userId, name }: { userId: string; name: string }) {
   const resetMfa = useServerFn(resetUserMfa);
-  const sendTempPw = useServerFn(sendTemporaryPassword);
+  const sendReset = useServerFn(requestCustomerPasswordReset);
+  const { hasAny } = useAuth();
   const [open, setOpen] = useState<null | "mfa" | "pw">(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -20,8 +23,8 @@ export function MemberSecurityActions({ userId, name }: { userId: string; name: 
         const res = await resetMfa({ data: { userId, reason: reason.trim() || undefined } });
         toast.success(res.removed > 0 ? `Removed ${res.removed} factor(s)` : "No 2FA factors to remove");
       } else {
-        await sendTempPw({ data: { userId } });
-        toast.success("New password emailed. They'll be asked to change it when they sign in.");
+        await sendReset({ data: { userId } });
+        toast.success("Reset request emailed. They must choose a new password after signing in.");
       }
       setOpen(null);
       setReason("");
@@ -39,21 +42,21 @@ export function MemberSecurityActions({ userId, name }: { userId: string; name: 
         <button onClick={() => setOpen("mfa")} className={`${btn} hover:border-destructive hover:text-destructive`}>
           <ShieldOff className="size-3.5" /> Reset 2FA
         </button>
-        <button onClick={() => setOpen("pw")} className={`${btn} hover:border-primary hover:text-primary`}>
-          <KeyRound className="size-3.5" /> Email new password
-        </button>
+        {hasAny(["admin"]) && <Button variant="outline" size="sm" onClick={() => setOpen("pw")}>
+          <KeyRound className="size-3.5" /> Request password reset
+        </Button>}
       </div>
       {open && (
         <div className="fixed inset-0 z-50 bg-background/80 grid place-items-center p-4">
           <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl bg-surface border border-border p-6 space-y-4">
             <div>
-              <h2 className="font-display font-semibold text-lg">{open === "mfa" ? "Reset 2FA" : "Email a new password"}</h2>
+              <h2 className="font-display font-semibold text-lg">{open === "mfa" ? "Reset 2FA" : "Request a password reset"}</h2>
               <p className="text-xs text-muted-foreground">for {name}</p>
             </div>
             <p className="text-sm text-muted-foreground">
               {open === "mfa"
                 ? "This removes every authenticator factor on the account. They'll be able to sign in with just their password and should re-enable 2FA right away."
-                : "Their current password stops working straight away. They'll get an email with a new temporary password and must choose their own as soon as they sign in."}
+                : "They'll receive a reset email with a secure link. Their current password stays unchanged, but they must choose a different password before continuing after their next sign-in. No password is emailed."}
             </p>
             {open === "mfa" && (
               <textarea
@@ -66,9 +69,9 @@ export function MemberSecurityActions({ userId, name }: { userId: string; name: 
               />
             )}
             <div className="flex gap-2">
-              <button onClick={run} disabled={busy} className={`flex-1 h-11 rounded-lg font-medium disabled:opacity-50 ${open === "mfa" ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"}`}>
-                {busy ? "Working…" : open === "mfa" ? "Reset 2FA" : "Send new password"}
-              </button>
+              <Button onClick={run} disabled={busy} variant={open === "mfa" ? "destructive" : "default"} className="flex-1 h-11">
+                {busy ? "Working…" : open === "mfa" ? "Reset 2FA" : "Send reset request"}
+              </Button>
               <button onClick={() => { setOpen(null); setReason(""); }} disabled={busy} className="px-4 h-11 rounded-lg bg-surface-2 border border-border text-sm">
                 Cancel
               </button>
@@ -99,7 +102,7 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
       if (res.nameOnly) toast.success("Customer added to the list. No account or email — add their details when they buy.");
       else if (res.banned) toast.warning("Account created, but that email is on the blacklist so it's banned.");
       else if (res.sent) toast.success("Account created and login details emailed.");
-      else toast.warning("Account created, but the email couldn't be sent. Use Email new password on their card.");
+      else toast.warning("Account created, but the email couldn't be sent. Ask admin to send a password reset request.");
       setOpen(false); setEmail(""); setName("");
       onCreated?.();
     } catch (err: any) {
