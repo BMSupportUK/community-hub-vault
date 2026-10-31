@@ -941,6 +941,9 @@ function finalized(event: SportsListingEvent): SportsListingEvent | null {
 
 export type ListingSection = { name: string; raw: string };
 
+/** A line holding only kick-off clocks: "9:00am UK / 5:00am ET", "19:30", "8pm UK | 3pm ET". */
+const STANDALONE_SLOT_RE = /^\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s*(?:UK|BST|GMT|ET|EST|EDT|CET|AEST|AEDT)?(?:\s*[/|\\-]\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s*(?:UK|BST|GMT|ET|EST|EDT|CET|AEST|AEDT)?)*$/i;
+
 /**
  * One pasted post can carry several providers, each with its own guide:
  * "**MONOMAX**" rows followed by "**STAN Sport**" rows. Detect those headings
@@ -991,7 +994,13 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
       sections.push(current);
       continue;
     }
-    if (isSectionHeading(line)) {
+    // "`9:00am UK / 5:00am ET`" then "**PDC DARTS: X**": a bold event title
+    // directly under its own time line is that time's event, not a provider
+    // heading — splitting there handed each time to the event above it.
+    let prevIdx = idx - 1;
+    while (prevIdx >= 0 && !lines[prevIdx]!.trim()) prevIdx--;
+    const underOwnTime = prevIdx >= 0 && STANDALONE_SLOT_RE.test(cleanLine(lines[prevIdx]!));
+    if (!underOwnTime && isSectionHeading(line)) {
       current = { name: cleanLine(line), raw: "" };
       sections.push(current);
       continue;
