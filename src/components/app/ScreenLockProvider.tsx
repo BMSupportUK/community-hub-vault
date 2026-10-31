@@ -465,7 +465,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
       <div data-screen-lock-content className={showLock ? "hidden" : "contents"} hidden={showLock} inert={showLock} aria-hidden={showLock ? true : undefined}>
         {(!showLock || keepConnection) && children}
       </div>
-      {showLock && settings && <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />}
+      {showLock && settings && <ScreenLockOverlay onUnlock={() => doUnlock()} />}
       {showLock && <div data-screen-lock-alerts>{!keepConnection && lockedExtras}</div>}
       {resumeChecking && <BmSplash />}
     </ScreenLockKeepAliveContext.Provider>

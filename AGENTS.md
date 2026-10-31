@@ -1,6 +1,6 @@
 # Project Architecture Rules
 - Subdirectories (incl. `tv-enabler/`, `tv-direct-install/`) have their own `AGENTS.md`; read it before changing files there.
-- Authorization, account switching and order/Enabler consumption rules live in `src/lib/AGENTS.md`.
+- Authorization, screen-password unlock, account switching and order/Enabler rules live in `src/lib/AGENTS.md`.
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
 - Portal homes share one layout: hero image fills the left column; sidebar shows "Hey" + nameplate + role badge, welcome text, then Working Status (staff) or subscription box (members). Staff shows the status pills in the Staff Portal header, right side; members keep the pills in their sidebar.
