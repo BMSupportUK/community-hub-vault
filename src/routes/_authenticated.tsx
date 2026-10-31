@@ -25,6 +25,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Capacitor } from "@capacitor/core";
 import { reportNativeInstall } from "@/lib/app-transfer.functions";
 import { ANDROID_RELEASE } from "@/lib/android-release";
+import { SupportNotificationScope } from "@/components/app/SupportNotificationScope";
 
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
@@ -273,10 +274,12 @@ function AuthLayout() {
     <ScreenLockProvider
       lockedExtras={
         <Suspense fallback={null}>
+          <SupportNotificationScope>
           <BreakEndingAlert />
           <ShiftStartEndAlert />
           <EarlyFinishAlert />
           <AutoBreakStartListener />
+          </SupportNotificationScope>
           <NotificationBell notificationsOnly />
           {!isPending && !isBanned && !isRejected && <ApprovedDeferredExtras notificationsOnly />}
         </Suspense>
@@ -317,13 +320,19 @@ function AuthLayout() {
           </DeferUntilIdle>
         )}
         <DeferUntilIdle>
+          <SupportNotificationScope>
           <BreakEndingAlert />
+          </SupportNotificationScope>
         </DeferUntilIdle>
         <DeferUntilIdle>
+          <SupportNotificationScope>
           <ShiftStartEndAlert />
+          </SupportNotificationScope>
         </DeferUntilIdle>
         <DeferUntilIdle>
+          <SupportNotificationScope>
           <EarlyFinishAlert />
+          </SupportNotificationScope>
         </DeferUntilIdle>
         <DeferUntilIdle>
           <GpsCapture />

@@ -26,6 +26,7 @@ import { closeLocalNotifications } from "@/lib/local-notify";
 import { staffOrderNotificationLink } from "@/lib/order-notification-link";
 import { CustomerOrderNoticeActions } from "@/components/checkout/CustomerOrderNoticeActions";
 import { customerOrderNoticeId } from "@/lib/customer-order-notice";
+import { useSupportNotifications } from "@/hooks/use-support-notifications";
 
 type Notif = {
   id: string;
@@ -41,6 +42,7 @@ type Notif = {
 };
 
 export function NotificationBell({ notificationsOnly = false }: { notificationsOnly?: boolean }) {
+  const supportEnabled = useSupportNotifications();
   const { user, isStaff, isMod, isPending, hasAny } = useAuth();
   const navigate = useNavigate();
   const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
@@ -55,7 +57,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
 
   useEffect(() => {
-    if (!user || isPending) return;
+    if (!user || isPending || !supportEnabled) return;
     let active = true;
 
     const load = async () => {
@@ -310,7 +312,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
       supabase.removeChannel(incidentCh);
       supabase.removeChannel(syncCh);
     };
-  }, [user, isStaff, isPending, canManageOrders, canHandleTickets, canApproveSignups, channelInstanceId, navigate]);
+  }, [user, isStaff, isPending, supportEnabled, canManageOrders, canHandleTickets, canApproveSignups, channelInstanceId, navigate]);
 
   // If the popup closes or the header unmounts mid-close (e.g. after
   // pressing "Open", which navigates and collapses the header), the dialog
@@ -328,7 +330,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
     document.body.style.overflow = "";
   }, []);
 
-  if (!user || isPending) return null;
+  if (!user || isPending || !supportEnabled) return null;
 
   const unread = items.filter((i) => !readIds.has(i.id));
 

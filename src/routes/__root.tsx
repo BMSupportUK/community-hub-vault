@@ -26,6 +26,7 @@ import { LocalSendReceiverBridge } from "@/components/app/LocalSendReceiverBridg
 import { BmSplash } from "@/components/app/BmSplash";
 import { BackToTopButton } from "@/components/app/BackToTopButton";
 import { CustomerAccountReturnBanner } from "@/components/app/CustomerAccountSwitch";
+import { SupportNotificationScope } from "@/components/app/SupportNotificationScope";
 
 
 function NotFoundComponent() {
@@ -193,7 +194,7 @@ function RootComponent() {
         <RightClickGuard />
         <SoundUnlocker />
         <MentionSoundAlert />
-        <TicketReplyAlert />
+        <SupportNotificationScope><TicketReplyAlert /></SupportNotificationScope>
         <PushSoundBridge />
         <ToastNotificationBridge />
         <LocalSendReceiverBridge />
