@@ -1,4 +1,5 @@
 # src/lib rules
+- Direct Install starts a fresh progress row for either setup path; website reads are scoped to that run, and already-installed runs have no download capability, so history cannot advance a new wizard.
 - Enabler login PIN issuance/status share verified customer identity across account, ticket and order surfaces; unowned orders remain isolated and account reset revokes legacy scoped PINs too, without changing handoff/reference bindings.
 - Staff display role refreshes retain the last successful map until replacement succeeds; one ref-counted focus listener prevents app-return colour/order flicker.
 - Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.

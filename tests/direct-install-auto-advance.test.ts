@@ -5,6 +5,12 @@ import { nextDirectStep } from "@/lib/direct-install";
 const reports = (n: number) => [false, n > 1, n > 2, n > 3, n > 4, n > 5];
 
 describe("BM Direct Install wizard auto-advance", () => {
+  test("Start again stays on the first question even when a download link exists", () => {
+    expect(nextDirectStep([false, true, false, false, false, false], false, 0)).toBe(0);
+  });
+  test("already installed remains on PIN until the TV reports progress", () => {
+    expect(nextDirectStep([false, false, false, false, false, false], true, 3)).toBe(3);
+  });
   test("allowing unknown apps moves the wizard straight to the website-code step", () => {
     expect(nextDirectStep(reports(5), false, 4)).toBe(5);
   });

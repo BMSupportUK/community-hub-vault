@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 import { selfInstallHandoff } from "@/lib/enabler-handoff";
 import { createDirectInstallPin, getDirectInstallPin } from "@/lib/direct-install-pin.functions";
-import { createDirectInstallLink, getDirectInstallProgress } from "@/lib/direct-install.functions";
+import { createDirectInstallLink, getDirectInstallProgress, startDirectInstallSession } from "@/lib/direct-install.functions";
 import { nextDirectStep } from "@/lib/direct-install";
 
 const STEP_TITLES = ["Already installed?", "Secure download link", "Install with Downloader", "Sign in with your PIN", "Allow unknown apps", "Website code & install"];
@@ -14,13 +14,16 @@ type Progress = Awaited<ReturnType<typeof getDirectInstallProgress>>;
 
 /** Steps the TV (or our download link) has confirmed. Index matches STEP_TITLES. */
 function reported(p: Progress, link: boolean): boolean[] {
-  return [false, link || !!p, !!p?.downloaded_at, !!p?.signed_in_at, !!p?.permission_at, !!p?.code_at];
+  return [false, link, !!p?.downloaded_at, !!p?.signed_in_at, !!p?.permission_at, !!p?.code_at];
 }
 
 /** BM Direct Install tab: a step-by-step wizard. Steps tick automatically as the TV app reports them. */
 export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
   const linkFn = useServerFn(createDirectInstallLink);
+  const sessionFn = useServerFn(startDirectInstallSession);
   const progressFn = useServerFn(getDirectInstallProgress);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const currentSession = useRef<string | null>(null);
   const [link, setLink] = useState<{ url: string; expiresAt: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
@@ -30,12 +33,13 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
   const [tv, setTv] = useState<"amazon" | "android" | null>(null);
 
   useEffect(() => {
+    if (!sessionId) return;
     let live = true;
-    const poll = async () => { try { const p = await progressFn(); if (live) setProgress(p); } catch { /* keep last */ } };
+    const poll = async () => { try { const p = await progressFn({ data: { sessionId } }); if (live && currentSession.current === sessionId) setProgress(p); } catch { /* keep last */ } };
     void poll();
     const t = setInterval(poll, 4000);
     return () => { live = false; clearInterval(t); };
-  }, [progressFn]);
+  }, [progressFn, sessionId]);
 
   const fromTv = reported(progress, !!link);
   const done = fromTv.map((v, i) => v || manual[i]);
@@ -45,11 +49,22 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
   // Jump forward only when the TV itself reports a step finished — never just because a link exists.
   // Auto-advance as soon as the TV reports the next step (e.g. unknown apps allowed → straight to the code step).
   const lastReports = useRef("");
+  const reset = () => {
+    currentSession.current = null;
+    setSessionId(null);
+    setLink(null);
+    setProgress(null);
+    setManual([false, false, false, false, false, false]);
+    lastReports.current = "";
+    setAnswered(null);
+    setTv(null);
+    setStep(0);
+  };
   useEffect(() => {
     const key = fromTv.join(",");
     if (lastReports.current === key) return;
     lastReports.current = key;
-    setStep(nextDirectStep(fromTv, answered === "yes", step));
+    if (answered) setStep((current) => nextDirectStep(fromTv, answered === "yes", current));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromTv.join()]);
 
@@ -57,9 +72,27 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
     setBusy(true);
     try {
       const l = await linkFn();
+      currentSession.current = l.sessionId;
+      setSessionId(l.sessionId);
       setLink(l); setProgress(null); setManual([false, false, false, false, false, false]);
       setStep(2); // show the link on step 3 — that's what goes into Downloader
     } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a download link."); }
+    finally { setBusy(false); }
+  };
+
+  const alreadyInstalled = async () => {
+    setBusy(true);
+    try {
+      const run = await sessionFn();
+      currentSession.current = run.sessionId;
+      setSessionId(run.sessionId);
+      setLink(null);
+      setProgress(null);
+      setManual([false, false, false, false, false, false]);
+      lastReports.current = "";
+      setAnswered("yes");
+      setStep(3);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't start Direct Install."); }
     finally { setBusy(false); }
   };
 
@@ -96,15 +129,15 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
       <PartyPopper className="mx-auto size-10 text-green-600" />
       <h3 className="text-lg font-semibold text-foreground">All done — your apps are installed</h3>
       <p className="text-sm text-muted-foreground">BM Direct Install has finished on your TV. Press Close on the TV screen.</p>
-      <Button variant="outline" size="sm" disabled={busy} onClick={() => { setAnswered(null); void make().then(() => setStep(0)); }}>Start again</Button>
+      <Button variant="outline" size="sm" disabled={busy} onClick={reset}>Start again</Button>
     </section> : <>
 
     {step === 0 && <section className="space-y-3">
       <h3 className="text-lg font-semibold text-foreground">Step 1 · Is BM Direct Install already on your TV?</h3>
       <p className="text-sm text-muted-foreground">Tell us where you're starting from and we'll show you only the steps you need.</p>
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => { setAnswered("no"); setStep(1); }}><ArrowRight className="size-4" />No — help me install it</Button>
-        <Button onClick={() => { setAnswered("yes"); setStep(3); }}><Check className="size-4" />Yes — it's already installed</Button>
+        <Button variant="outline" disabled={busy} onClick={() => { reset(); setAnswered("no"); setStep(1); }}><ArrowRight className="size-4" />No — help me install it</Button>
+        <Button disabled={busy} onClick={alreadyInstalled}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Yes — it's already installed</Button>
       </div>
       {answered === "no" && <p className="text-xs text-muted-foreground">You picked "No" — carry on from step 2 to get your download link.</p>}
       {answered === "yes" && <p className="text-xs text-muted-foreground">You picked "Yes" — jump to step 3 to sign in with your PIN.</p>}
