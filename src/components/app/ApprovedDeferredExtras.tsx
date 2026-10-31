@@ -14,6 +14,7 @@ import { ScreenLockResetAlerts } from "@/components/app/ScreenLockResetAlerts";
 import { StaffGenderPrompt } from "@/components/app/StaffGenderPrompt";
 import { usePushRegister } from "@/hooks/use-push-register";
 import { useLocation } from "@tanstack/react-router";
+import { SupportNotificationScope } from "@/components/app/SupportNotificationScope";
 
 export function ApprovedDeferredExtras({ notificationsOnly = false }: { notificationsOnly?: boolean }) {
   usePushRegister();
@@ -23,16 +24,18 @@ export function ApprovedDeferredExtras({ notificationsOnly = false }: { notifica
   return (
     <>
       {!notificationsOnly && <TwoFactorBanner />}
-      <FriendRequestsListener />
+      <SupportNotificationScope><FriendRequestsListener /></SupportNotificationScope>
       <FanZoneFriendRequestsListener />
 
+      <SupportNotificationScope>
       {!isSoundTestPage && <OutstandingTicketsAlert />}
       <UnclaimedTicketsNotifier />
       <TicketAssignedAlert />
       <PaymentConfirmedAlert />
       <TicketHelpRequestedAlert />
+      </SupportNotificationScope>
       <FanZoneAppealAlert />
-      <ContentReportAlert />
+      <SupportNotificationScope><ContentReportAlert /></SupportNotificationScope>
       {!notificationsOnly && <FanZoneAccessCard />}
       <ScreenLockResetAlerts />
       {!notificationsOnly && <StaffGenderPrompt />}

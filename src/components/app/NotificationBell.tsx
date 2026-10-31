@@ -26,6 +26,7 @@ import { closeLocalNotifications } from "@/lib/local-notify";
 import { staffOrderNotificationLink } from "@/lib/order-notification-link";
 import { CustomerOrderNoticeActions } from "@/components/checkout/CustomerOrderNoticeActions";
 import { customerOrderNoticeId } from "@/lib/customer-order-notice";
+import { useSupportNotifications } from "@/hooks/use-support-notifications";
 
 type Notif = {
   id: string;
@@ -41,6 +42,7 @@ type Notif = {
 };
 
 export function NotificationBell({ notificationsOnly = false }: { notificationsOnly?: boolean }) {
+  const supportEnabled = useSupportNotifications();
   const { user, isStaff, isMod, isPending, hasAny } = useAuth();
   const navigate = useNavigate();
   const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
@@ -55,7 +57,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
 
   useEffect(() => {
-    if (!user || isPending) return;
+    if (!user || isPending || !supportEnabled) return;
     let active = true;
 
     const load = async () => {
@@ -109,6 +111,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
+          if (!active) return;
           const r = payload.new as {
             id: string; kind: string; title: string; body: string | null;
             link_path: string | null; source_id: string | null; created_at: string; read_at: string | null;
@@ -170,6 +173,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
       staffCh = supabase
         .channel(`staff-notifications-${channelInstanceId}`)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "staff_notifications" }, (payload) => {
+          if (!active) return;
           const n = { ...(payload.new as Notif), source: "staff" as const };
           setItems((prev) => [n, ...prev].slice(0, 80));
           console.log("[notif] staff insert", { kind: n.kind, canApproveSignups, canManageOrders, canHandleTickets });
@@ -244,6 +248,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "status_incidents" },
         (payload) => {
+          if (!active) return;
           const row = payload.new as { title?: string; description?: string | null };
           playSound(outageAudio, { label: "outage", gain: 2.2 });
           toast(`🚨 New outage: ${row.title ?? "Incident reported"}`, {
@@ -257,6 +262,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "status_incidents" },
         (payload) => {
+          if (!active) return;
           const newRow = payload.new as { title?: string; status?: string };
           const oldRow = payload.old as { status?: string };
           if (newRow.status === "completed" && oldRow.status !== "completed") {
@@ -310,7 +316,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
       supabase.removeChannel(incidentCh);
       supabase.removeChannel(syncCh);
     };
-  }, [user, isStaff, isPending, canManageOrders, canHandleTickets, canApproveSignups, channelInstanceId, navigate]);
+  }, [user, isStaff, isPending, supportEnabled, canManageOrders, canHandleTickets, canApproveSignups, channelInstanceId, navigate]);
 
   // If the popup closes or the header unmounts mid-close (e.g. after
   // pressing "Open", which navigates and collapses the header), the dialog
@@ -328,7 +334,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
     document.body.style.overflow = "";
   }, []);
 
-  if (!user || isPending) return null;
+  if (!user || isPending || !supportEnabled) return null;
 
   const unread = items.filter((i) => !readIds.has(i.id));
 

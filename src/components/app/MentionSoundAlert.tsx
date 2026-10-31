@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ensureSoundUnlocked, playSound } from "@/lib/sound";
 import { getSound } from "@/lib/notification-sounds";
 import { phoneToneSrc } from "@/lib/phone-alert-sounds";
+import { useSupportNotifications } from "@/hooks/use-support-notifications";
 const mentionAudio = phoneToneSrc("mention")!;
 
 type MentionNotification = {
@@ -17,8 +18,6 @@ type MentionNotification = {
 /** Notification kinds that mean "you are wanted somewhere". */
 const ALERT_KINDS = ["mention", "staff_mention", "ticket_help_requested"] as const;
 
-/** Dane J — gets a bespoke voice clip when BM Support needs him mid Fan Zone. */
-const DANE_USER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
 
 
 
@@ -32,6 +31,7 @@ const announcedMentionIds = new Set<string>();
 
 /** App-wide mention audio, independent of where the notification bell renders. */
 export function MentionSoundAlert() {
+  const supportEnabled = useSupportNotifications();
   const { user } = useAuth();
   const mountedAt = useRef(Date.now());
 
@@ -53,16 +53,7 @@ export function MentionSoundAlert() {
         });
         return;
       }
-      // BM Support wants Dane: bespoke voice clip, only while he is in the
-      // Fan Zone. On the BM Support site he gets the normal mention tone.
-      const inFanZone = typeof window !== "undefined" && window.location.pathname.startsWith("/forum");
-      if (user?.id === DANE_USER_ID && inFanZone) {
-        const needed = getSound("dane-bm-support");
-        if (needed) {
-          void playSound(needed.src, { label: `bm-support-needed-${row.id}`, gain: needed.gain });
-          return;
-        }
-      }
+      if (!supportEnabled) return;
       if (kind !== "mention") return; // other kinds have their own alerts elsewhere
       void playSound(mentionAudio, { label: `mention-${row.id}`, gain: 1.8 });
     };
@@ -110,7 +101,7 @@ export function MentionSoundAlert() {
       document.removeEventListener("visibilitychange", refresh);
       void supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, supportEnabled]);
 
   return null;
 }

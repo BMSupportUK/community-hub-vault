@@ -7,12 +7,18 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { registerDeviceToken } from "@/lib/push.functions";
 import { resyncPushSubscription } from "@/lib/push-client";
+import { useSupportNotifications } from "@/hooks/use-support-notifications";
+import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { useRef } from "react";
 
 /**
  * Registers the native device with FCM and saves the token server-side.
  * No-op on web.
  */
 export function usePushRegister() {
+  const supportEnabled = useSupportNotifications();
+  const supportEnabledRef = useRef(supportEnabled);
+  supportEnabledRef.current = supportEnabled;
   const { user } = useAuth();
   const register = useServerFn(registerDeviceToken);
 
@@ -166,6 +172,8 @@ export function usePushRegister() {
         }
 
         const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
+          const url = notification.data?.url;
+          if (!supportEnabledRef.current && !(typeof url === "string" && isFanZonePath(url))) return;
           const kind = notification.data?.kind;
           const incidentEvent = notification.data?.event;
           const expiresAt = Number(notification.data?.expiresAt);
