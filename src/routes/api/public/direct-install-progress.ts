@@ -32,7 +32,6 @@ export const Route = createFileRoute("/api/public/direct-install-progress")({
       if (!owner && pin?.admin_issue_id) {
         // Admin-issued code: record the step on its handoff so the admin log status bar ticks.
         const now = new Date().toISOString();
-        const col = body.data.stage === "code" ? "used_at" : STAGE_COLUMN[body.data.stage];
         const { data: h } = await db.from("enabler_handoffs").select("id, completed_at").eq("admin_issue_id", pin.admin_issue_id)
           .order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (h && !h.completed_at) {
