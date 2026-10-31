@@ -1299,23 +1299,24 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       }
     }
   }
-  // NHL Center Ice: "NHL | 01 - 7pm ET | 12am UK" then the fixture on the
+  // NHL Center Ice: "NHL | 01 - 7pm ET | 12am UK" or
+  // "NHL 01: 7pm ET | 12am UK" then the fixture on the
   // next line. The ET clock is authoritative because supplied UK clocks can
   // be wrong; conversion to UK time happens after parsing. Channel
   // becomes "NHL 01". The "US | NHL Center Ice" header is not an event.
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(
-      new RegExp(String.raw`^([A-Za-z][A-Za-z+ ]*?)\s*\|\s*(\d{1,3})\s*[-–—]\s*(?:${TIME_SOURCE})\s*(?:ET)?\s*(?:\||\/|\()\s*(${TIME_SOURCE})\s*UK\s*\)?\s*(.*)$`, "i"),
+      new RegExp(String.raw`^([A-Za-z][A-Za-z+ ]*?)\s*(?:\|\s*)?(\d{1,3})\s*[-–—:]\s*(${TIME_SOURCE})\s*(?:ET)?\s*(?:\||\/|\()\s*(${TIME_SOURCE})\s*UK\s*\)?\s*(.*)$`, "i"),
     );
     // The fixture may follow the UK clock on the same row ("3:30am UKLightning at …").
-    const sameRow = m?.[4]?.trim() ?? "";
+    const sameRow = m?.[5]?.trim() ?? "";
     if (m && (sameRow || i + 1 < lines.length)) {
       // Evening ET slots land after midnight UK — tag the UK weekday so the
       // event belongs to the next day instead of being swept as stale.
-      let etClock = lines[i].match(new RegExp(String.raw`[-–—]\s*(${TIME_SOURCE})\s*(?:ET)?\s*(?:\||\/|\()`, "i"))?.[1]?.trim();
+      let etClock = m[3]?.trim();
       // NHL games are afternoon/evening ET: a clock with no am/pm is pm.
       if (etClock && !/[ap]\.?\s*m\.?|an|pn/i.test(etClock)) etClock = `${etClock}pm`;
-      const slot = etClock ? `${etClock} ET` : m[3];
+      const slot = etClock ? `${etClock} ET` : m[4];
       if (sameRow) {
         lines.splice(i, 1, slot, sameRow, `${m[1].trim()} ${m[2]}`);
       } else {
