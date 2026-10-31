@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Set administrator-requested temporary access for truka11; real password sign-in verified and customer session redirects to mandatory password change; credentials delivered privately
 - [x] Diagnose truka11 Android sign-in: account not banned, recovery succeeded but same-password update failed; used reset link subsequently invalid; no credentials changed
 - [x] Replace dashboard temporary-password sending with admin-only managed HTML reset requests and server-cleared change requirements; eight tests and signed-in reset screen checked
 - [ ] Verify reset email delivery and full customer password-change/login flow (needs an approved test customer account; no real customer passwords changed)
