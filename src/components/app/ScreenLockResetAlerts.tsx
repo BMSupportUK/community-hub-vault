@@ -92,7 +92,7 @@ export function ScreenLockResetAlerts() {
     setBusy(true);
     try {
       await approveLockReset({ data: { requestId: current.id } });
-      toast.success(`${current.name} has been emailed a temporary lock code`);
+      toast.success(`${current.name} has been emailed a temporary screen lock PIN`);
       setQueue((q) => q.slice(1));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Reset failed");
@@ -118,12 +118,13 @@ export function ScreenLockResetAlerts() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <Lock className="size-4 text-amber-400" /> Screen lock reset request
+            <Lock className="size-4 text-amber-400" /> Screen lock PIN reset request
           </AlertDialogTitle>
           <AlertDialogDescription>
-            <strong>{current.name}</strong> has forgotten their screen lock code and is asking for a reset.
-            Approving generates a temporary code and emails it to them; they must set a new code before the app
-            unlocks.
+            <strong>{current.name}</strong> has forgotten their <strong>screen lock PIN</strong> and is asking
+            for that PIN to be reset — this is the code that unlocks their screen after inactivity, not their
+            sign-in password. Approving generates a temporary PIN and emails it to them; they must set a new
+            PIN before the app unlocks.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
