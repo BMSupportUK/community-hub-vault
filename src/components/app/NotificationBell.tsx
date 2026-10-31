@@ -111,6 +111,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
+          if (!active) return;
           const r = payload.new as {
             id: string; kind: string; title: string; body: string | null;
             link_path: string | null; source_id: string | null; created_at: string; read_at: string | null;
@@ -172,6 +173,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
       staffCh = supabase
         .channel(`staff-notifications-${channelInstanceId}`)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "staff_notifications" }, (payload) => {
+          if (!active) return;
           const n = { ...(payload.new as Notif), source: "staff" as const };
           setItems((prev) => [n, ...prev].slice(0, 80));
           console.log("[notif] staff insert", { kind: n.kind, canApproveSignups, canManageOrders, canHandleTickets });
@@ -246,6 +248,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "status_incidents" },
         (payload) => {
+          if (!active) return;
           const row = payload.new as { title?: string; description?: string | null };
           playSound(outageAudio, { label: "outage", gain: 2.2 });
           toast(`🚨 New outage: ${row.title ?? "Incident reported"}`, {
@@ -259,6 +262,7 @@ export function NotificationBell({ notificationsOnly = false }: { notificationsO
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "status_incidents" },
         (payload) => {
+          if (!active) return;
           const newRow = payload.new as { title?: string; status?: string };
           const oldRow = payload.old as { status?: string };
           if (newRow.status === "completed" && oldRow.status !== "completed") {

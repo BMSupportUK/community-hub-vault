@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Stop BM Support staff notification pop-ups and sounds appearing within Fan Zone
+- [x] Separate in-page BM Support staff alerts from Fan Zone; three tests pass, signed-in staff channels remain on Staff Portal and are absent in Fan Zone (fresh preview modules needed). Background browser/phone push delivery remains account-scoped and unchanged.
 - [x] Extend dashboard installer codes for admin/management with required reference name, device and selected apps, including Direct Install PINs; 19 tests pass and authenticated isolated form generation/log read-back verified (dashboard PIN unlock and real TV installation not exercised)
 - [x] Fix NHL colon-formatted dual-clock listings; all ten real fixtures pass split/read-back checks and 88 sports tests pass (preview's cached module required a fresh request for UI verification)
 - [x] Fix Direct Install already-installed progress isolation and Start again returning to the first question; 17 tests and signed-in TV-report flow pass
