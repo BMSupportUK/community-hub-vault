@@ -13,3 +13,8 @@ export const TEMP_PASSWORD_ROLES = ["admin", "management"] as const;
 export function canSendTempPassword(roles: string[]): boolean {
   return roles.some((r) => (TEMP_PASSWORD_ROLES as readonly string[]).includes(r));
 }
+
+/** Reset requests are reserved for the account administrator. */
+export function canRequestPasswordReset(roles: string[]): boolean {
+  return roles.includes("admin");
+}
