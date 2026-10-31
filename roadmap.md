@@ -1,5 +1,7 @@
 # Roadmap
-- [ ] Replace dashboard temporary-password sending with an admin-only HTML reset request and mandatory customer password change; verify the flow
+- [x] Diagnose truka11 Android sign-in: account not banned, recovery succeeded but same-password update failed; used reset link subsequently invalid; no credentials changed
+- [x] Replace dashboard temporary-password sending with admin-only managed HTML reset requests and server-cleared change requirements; eight tests and signed-in reset screen checked
+- [ ] Verify reset email delivery and full customer password-change/login flow (needs an approved test customer account; no real customer passwords changed)
 - [x] Separate in-page BM Support staff alerts from Fan Zone; three tests pass, signed-in staff channels remain on Staff Portal and are absent in Fan Zone (fresh preview modules needed). Background browser/phone push delivery remains account-scoped and unchanged.
 - [x] Extend dashboard installer codes for admin/management with required reference name, device and selected apps, including Direct Install PINs; 19 tests pass and authenticated isolated form generation/log read-back verified (dashboard PIN unlock and real TV installation not exercised)
 - [x] Fix NHL colon-formatted dual-clock listings; all ten real fixtures pass split/read-back checks and 88 sports tests pass (preview's cached module required a fresh request for UI verification)

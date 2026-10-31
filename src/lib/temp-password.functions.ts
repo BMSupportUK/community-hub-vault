@@ -1,41 +1,50 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { canSendTempPassword, generateTempPassword } from "@/lib/temp-password";
+import { canRequestPasswordReset, canSendTempPassword, generateTempPassword } from "@/lib/temp-password";
+import { passwordChangeInput } from "@/lib/password-reset";
 
 /**
- * Admin/management only: sets a new temporary password on a user's account,
- * emails it to them, and makes them choose their own password after signing in.
+ * Admin only: emails a recovery request without changing the existing password.
+ * The customer must choose a new password after their next sign-in.
  */
-export const sendTemporaryPassword = createServerFn({ method: "POST" })
+export const requestCustomerPasswordReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId: callerId } = context;
     const { data: roles, error } = await supabase.from("user_roles").select("role").eq("user_id", callerId);
     if (error) throw new Error(error.message);
-    if (!canSendTempPassword((roles ?? []).map((r) => String(r.role)))) throw new Error("Only admin and management can do this.");
+    if (!canRequestPasswordReset((roles ?? []).map((r) => String(r.role)))) throw new Error("Only admin can request a password reset.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: target } = await supabaseAdmin.auth.admin.getUserById(data.userId);
     const email = target?.user?.email;
     if (!email) throw new Error("This account has no email address.");
 
-    const password = generateTempPassword();
-    const { error: upErr } = await supabaseAdmin.auth.admin.updateUserById(data.userId, { password });
-    if (upErr) throw new Error(upErr.message);
-    await supabaseAdmin.from("password_change_required").upsert({ user_id: data.userId, set_by: callerId, created_at: new Date().toISOString() } as never);
-
-    const { data: prof } = await supabaseAdmin.from("profiles").select("display_name, username").eq("id", data.userId).maybeSingle();
-    const displayName = (prof as { display_name?: string; username?: string } | null)?.display_name || (prof as { username?: string } | null)?.username || undefined;
-
-    const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
-    const res = await sendAndLogEmail(supabaseAdmin, "temporary-password", email, {
-      templateData: { displayName, email, password, loginUrl: "https://bmsupport.uk/login" },
-      idempotencyKey: `temporary-password-${data.userId}-${Date.now()}`,
-    });
-    if (!res.sent) throw new Error(`Password changed, but the email couldn't be sent (${res.reason ?? "unknown"}).`);
+    const { error: flagError } = await supabaseAdmin.from("password_change_required").upsert({ user_id: data.userId, set_by: callerId, created_at: new Date().toISOString() });
+    if (flagError) throw new Error("Couldn't require the password change. No email was sent.");
+    const { error: sendError } = await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo: "https://bmsupport.uk/reset-password" });
+    if (sendError) throw new Error(`Password change is required, but the reset email couldn't be sent: ${sendError.message}. Please retry.`);
     return { sent: true };
+  });
+
+/** Only clear the requirement after Auth accepts a different password. */
+export const completeRequiredPasswordChange = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ password: z.string().min(6), currentPassword: z.string(), recovery: z.boolean(), profile: z.object({ username: z.string(), displayName: z.string() }).optional() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: flag, error: flagError } = await context.supabase.from("password_change_required").select("created_at").eq("user_id", context.userId).maybeSingle();
+    if (flagError) throw new Error("Couldn't check your password-change request. Please try again.");
+    const attributes = passwordChangeInput(data.password, data.currentPassword, data.recovery);
+    const { error } = await context.supabase.auth.updateUser({ ...attributes, ...(data.profile ? { data: { needs_profile: false, username: data.profile.username, display_name: data.profile.displayName } } : {}) });
+    if (error) throw new Error(error.code === "same_password" ? "Choose a different password from your current one." : error.message);
+    if (flag) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error: clearError } = await supabaseAdmin.from("password_change_required").delete().eq("user_id", context.userId).eq("created_at", flag.created_at);
+      if (clearError) throw new Error("Password updated, but access couldn't be restored. Please contact support.");
+    }
+    return { updated: true };
   });
 
 /**
