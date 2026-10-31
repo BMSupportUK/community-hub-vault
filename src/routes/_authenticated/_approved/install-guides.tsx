@@ -638,9 +638,9 @@ function InstallGuidesPage() {
               </div>
               <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-fit lg:max-w-full lg:rounded-full">
                 <TabsTrigger value="welcome" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Welcome</TabsTrigger>
-                <TabsTrigger value="setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Set up a device"}</TabsTrigger>
+                <TabsTrigger value="setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Setup Device | Direct"}</TabsTrigger>
                 <TabsTrigger value="phone-windows-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Set up Device | Phone | Windows</TabsTrigger>
-                <TabsTrigger value="ios-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Set up iOS device</TabsTrigger>
+                <TabsTrigger value="ios-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Setup Device | iOS</TabsTrigger>
                 <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
                 {canManageCategories && (
                   <TabsTrigger value="categories" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Categories</TabsTrigger>
@@ -755,7 +755,7 @@ function InstallGuidesPage() {
                   Browse by category, search for what you need, and open PDFs directly in your browser.
                 </p>
                 <Button className="mt-6 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90" onClick={() => setTab("guides")}>Browse guides</Button>
-                <Button variant="outline" className="mt-6 ml-2" onClick={() => setTab("setup")}>Set up a device</Button>
+                <Button variant="outline" className="mt-6 ml-2" onClick={() => setTab("setup")}>Setup Device | Direct</Button>
               </div>
             </div>
           </TabsContent>
