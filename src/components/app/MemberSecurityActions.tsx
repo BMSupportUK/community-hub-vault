@@ -24,7 +24,7 @@ export function MemberSecurityActions({ userId, name }: { userId: string; name: 
         toast.success(res.removed > 0 ? `Removed ${res.removed} factor(s)` : "No 2FA factors to remove");
       } else {
         await sendReset({ data: { userId } });
-        toast.success("Reset request emailed. They must choose a new password after signing in.");
+        toast.success("Reset request emailed. They must confirm their chosen password after signing in.");
       }
       setOpen(null);
       setReason("");
@@ -56,7 +56,7 @@ export function MemberSecurityActions({ userId, name }: { userId: string; name: 
             <p className="text-sm text-muted-foreground">
               {open === "mfa"
                 ? "This removes every authenticator factor on the account. They'll be able to sign in with just their password and should re-enable 2FA right away."
-                : "They'll receive a reset email with a secure link. Their current password stays unchanged, but they must choose a different password before continuing after their next sign-in. No password is emailed."}
+                : "They'll receive a reset email with a secure link. They must confirm their chosen password before continuing after their next sign-in, and can keep their existing password. No password is emailed."}
             </p>
             {open === "mfa" && (
               <textarea

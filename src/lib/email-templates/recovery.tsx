@@ -30,8 +30,8 @@ export const RecoveryEmail = ({
         <Heading style={h1}>Reset your password</Heading>
         <Text style={text}>
           A password reset has been requested for your {siteName} account.
-          Click the button below to sign in securely and choose a new password.
-          Choose a different password from the one you currently use.
+          Click the button below to sign in securely and confirm your chosen password.
+          You can keep your existing password or choose a new one.
         </Text>
         <Button className="dm-btn" style={button} href={confirmationUrl}>
           Reset Password

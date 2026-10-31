@@ -2,11 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { canRequestPasswordReset, canSendTempPassword, generateTempPassword } from "@/lib/temp-password";
-import { passwordChangeInput } from "@/lib/password-reset";
+import { passwordChangeInput, passwordChoiceAccepted } from "@/lib/password-reset";
 
 /**
  * Admin only: emails a recovery request without changing the existing password.
- * The customer must choose a new password after their next sign-in.
+ * The customer must confirm their chosen password after their next sign-in.
  */
 export const requestCustomerPasswordReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -29,7 +29,7 @@ export const requestCustomerPasswordReset = createServerFn({ method: "POST" })
     return { sent: true };
   });
 
-/** Only clear the requirement after Auth accepts a different password. */
+/** Clear the requirement after Auth accepts either a changed or unchanged password. */
 export const completeRequiredPasswordChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ password: z.string().min(6), currentPassword: z.string(), recovery: z.boolean(), profile: z.object({ username: z.string(), displayName: z.string() }).optional() }).parse(input))
@@ -38,7 +38,13 @@ export const completeRequiredPasswordChange = createServerFn({ method: "POST" })
     if (flagError) throw new Error("Couldn't check your password-change request. Please try again.");
     const attributes = passwordChangeInput(data.password, data.currentPassword, data.recovery);
     const { error } = await context.supabase.auth.updateUser({ ...attributes, ...(data.profile ? { data: { needs_profile: false, username: data.profile.username, display_name: data.profile.displayName } } : {}) });
-    if (error) throw new Error(error.code === "same_password" ? "Choose a different password from your current one." : error.message);
+    if (!passwordChoiceAccepted(error)) throw new Error(error?.message ?? "Couldn't confirm your password.");
+    // Auth may reject the whole update when the password is unchanged.
+    // Complete first-login metadata separately before releasing the access gate.
+    if (error?.code === "same_password" && data.profile) {
+      const { error: profileError } = await context.supabase.auth.updateUser({ data: { needs_profile: false, username: data.profile.username, display_name: data.profile.displayName } });
+      if (profileError) throw new Error(profileError.message);
+    }
     if (flag) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { error: clearError } = await supabaseAdmin.from("password_change_required").delete().eq("user_id", context.userId).eq("created_at", flag.created_at);
