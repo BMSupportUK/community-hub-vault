@@ -140,7 +140,7 @@ function InstallGuidesPage() {
   const { tab: tabParam, checkout: checkoutToken } = Route.useSearch();
   // Opening the guides screen always starts on the Welcome tab (deep links
   // with an explicit ?tab= still win); we never restore the last viewed tab.
-  const legacyTab = (t?: string) => (t === "enabler" || t === "get-app" ? "setup" : t);
+  const legacyTab = (t?: string) => (t === "enabler" ? "phone-windows-setup" : t === "get-app" ? "setup" : t);
   const [tab, setTab] = useState<string>(() => legacyTab(tabParam) || "welcome");
   useEffect(() => {
     if (tabParam) setTab(legacyTab(tabParam)!);
@@ -148,7 +148,18 @@ function InstallGuidesPage() {
   // Only TV setup screens reserve a column for Enabler downloads.
   // Guides and videos use the full available width without adverts.
   const [setupDevice, setSetupDevice] = useState<SetupDeviceKey | null>(() => readStoredSetupDevice());
-  const showEnablerDownloads = tab === "setup" && (setupDevice === "remote" || setupDevice === "amazon" || setupDevice === "android");
+  const [enablerDevice, setEnablerDevice] = useState<SetupDeviceKey | null>(() => {
+    const saved = readStoredSetupDevice();
+    return saved === "amazon" || saved === "android" || saved === "remote" ? saved : null;
+  });
+  const showEnablerDownloads = tab === "phone-windows-setup" && (enablerDevice === "remote" || enablerDevice === "amazon" || enablerDevice === "android");
+  const pickEnablerDevice = (d: SetupDeviceKey | null) => {
+    setEnablerDevice(d);
+    try {
+      if (d) sessionStorage.setItem(INSTALL_SETUP_DEVICE_KEY, d);
+      else sessionStorage.removeItem(INSTALL_SETUP_DEVICE_KEY);
+    } catch { /* ignore */ }
+  };
   const pickSetupDevice = (d: SetupDeviceKey | null) => {
     setSetupDevice(d);
     try {
@@ -628,6 +639,7 @@ function InstallGuidesPage() {
               <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-fit lg:max-w-full lg:rounded-full">
                 <TabsTrigger value="welcome" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Set up a device"}</TabsTrigger>
+                <TabsTrigger value="phone-windows-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Set up Device | Phone | Windows</TabsTrigger>
                 <TabsTrigger value="ios-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Set up iOS device</TabsTrigger>
                 <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
                 {canManageCategories && (
@@ -706,6 +718,10 @@ function InstallGuidesPage() {
                 </IllustratedHero>
               }
             />
+          </TabsContent>
+
+          <TabsContent value="phone-windows-setup" className="mt-0 min-w-0">
+            <DeviceInstallSetup section="enabler" device={enablerDevice} onPick={pickEnablerDevice} />
           </TabsContent>
 
           <TabsContent value="ios-setup" className="mt-0 min-w-0">
