@@ -260,13 +260,17 @@ export function EnablerDownloadSidebar() {
 }
 
 /** "What are you setting up?" — device picker that leads into the matching setup. */
-export function DeviceInstallSetup({ alternative, device, onPick }: {
-  alternative: ReactNode;
+export function DeviceInstallSetup({ alternative, device, onPick, section = "direct" }: {
+  alternative?: ReactNode;
   device: SetupDeviceKey | null;
   onPick: (d: SetupDeviceKey | null) => void;
+  section?: "direct" | "enabler";
 }) {
   const showAlternative = useAlternativeInstallEnabled();
-  const chosen = DEVICES.find((d) => d.key === device && (d.key !== "alternative" || showAlternative));
+  const devices = DEVICES.filter((d) =>
+    (section === "enabler" ? ["amazon", "android", "remote"].includes(d.key) : ["direct", "alternative"].includes(d.key))
+    && (d.key !== "alternative" || showAlternative));
+  const chosen = devices.find((d) => d.key === device);
 
   return <div className="w-full space-y-6">
     <div className="rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
@@ -274,7 +278,7 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
         <h2 className="font-display text-2xl font-bold text-foreground">What are you setting up?</h2>
         <p className="mt-1 text-sm text-muted-foreground">Pick your device and we'll walk you through it one step at a time.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6">
-          {DEVICES.filter((d) => d.key !== "alternative" || showAlternative).map(({ key, label, note, icon: Icon }) => (
+          {devices.map(({ key, label, note, icon: Icon }) => (
             <Button key={key} variant="outline" onClick={() => onPick(key)} className="h-auto flex-col items-start gap-2 whitespace-normal p-4 text-left">
               <Icon className="size-6 text-primary" />
               <span className="font-semibold text-foreground">{label}</span>
@@ -290,7 +294,7 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
         {chosen.key === "amazon" || chosen.key === "android"
           ? <TvSteps device={chosen.key} onStaffHelp={() => onPick("remote")} />
           : chosen.key === "direct" ? <DirectInstallSteps />
-          : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
+          : chosen.key === "remote" ? <><RemoteHelpSteps /><div className="mt-5 xl:hidden"><EnablerDownloadSidebar /></div></> : alternative}
       </>}
     </div>
   </div>;
