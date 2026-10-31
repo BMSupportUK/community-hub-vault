@@ -135,7 +135,8 @@ function InstallGuidesPage() {
   const canViewGuides = hasAny(["subscriber", "admin", "management", "staff"]);
   const canManageCategories = canManageGuides;
   const canManageApps = canManageGuides;
-  const canSeeTransfers = hasAny(["admin", "management", "staff"]);
+  // Transfer history moved to the admin dashboard's "App transfers" tool.
+
 
   const { tab: tabParam, checkout: checkoutToken } = Route.useSearch();
   // Opening the guides screen always starts on the Welcome tab (deep links
@@ -214,13 +215,10 @@ function InstallGuidesPage() {
 
   useEffect(() => {
     const isRestrictedAdminTab = tab === "categories" || tab === "app-apk" || tab === "download-log";
-    if (
-            (tab === "transfers" && !canSeeTransfers) ||
-      (isRestrictedAdminTab && !canManageGuides)
-    ) {
+    if (isRestrictedAdminTab && !canManageGuides) {
       setTab("welcome");
     }
-  }, [tab, canSeeAppTab, canManageGuides, canSeeTransfers]);
+  }, [tab, canSeeAppTab, canManageGuides]);
 
   const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
