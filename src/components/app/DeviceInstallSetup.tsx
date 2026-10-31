@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useNavigate } from "@tanstack/react-router";
-import { Apple, MonitorDown, ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, PlayCircle, Tv } from "lucide-react";
+import { MonitorDown, ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, PlayCircle, Tv } from "lucide-react";
 import { DirectInstallSteps } from "@/components/app/DirectInstallSteps";
 import { useAlternativeInstallEnabled } from "@/hooks/use-alternative-install";
-import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
 import { SetupStepVideo } from "@/components/app/SetupStepVideo";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -20,13 +19,12 @@ import { orderStaffHelpTicket } from "@/lib/order-remote-tabs";
 import { selfInstallHandoff, sha256Hex } from "@/lib/enabler-handoff";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 
-export type SetupDeviceKey = "amazon" | "android" | "direct" | "ios" | "alternative" | "remote";
+export type SetupDeviceKey = "amazon" | "android" | "direct" | "alternative" | "remote";
 
 const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof Tv }[] = [
   { key: "direct", label: "BM Direct Install", note: "Install straight on the TV, no phone or PC", icon: MonitorDown },
   { key: "amazon", label: "Amazon Fire TV", note: "Fire Stick, Cube or Fire TV — installs using our Phone or Windows app", icon: Tv },
   { key: "android", label: "Android / Google TV", note: "Android boxes and Google TV — installs using our Phone or Windows app", icon: Tv },
-  { key: "ios", label: "iOS", note: "Purple Player Lite for iPhone and iPad", icon: Apple },
   { key: "alternative", label: "Alternative Install methods", note: "Other ways to get the apps", icon: Download },
   { key: "remote", label: "Help from staff", note: "Let staff install it with you by screen share", icon: Headset },
 ];
@@ -292,7 +290,6 @@ export function DeviceInstallSetup({ alternative, device, onPick }: {
         {chosen.key === "amazon" || chosen.key === "android"
           ? <TvSteps device={chosen.key} onStaffHelp={() => onPick("remote")} />
           : chosen.key === "direct" ? <DirectInstallSteps />
-          : chosen.key === "ios" ? <IosPurpleCard />
           : chosen.key === "remote" ? <RemoteHelpSteps /> : alternative}
       </>}
     </div>
