@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, Play, Film, Copy, Check, Upload, Loader2, ArrowLeft } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, Play, Film, Copy, Check, Upload, Loader2, ArrowLeft, Apple } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { AccessRequestPanel } from "@/components/app/AccessRequestPanel";
@@ -32,6 +32,7 @@ import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
 import { DeviceInstallSetup, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
+import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
 
 
