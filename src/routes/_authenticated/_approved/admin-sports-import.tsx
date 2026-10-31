@@ -35,6 +35,16 @@ import {
 } from "@/lib/discord-import.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-sports-import")({
+  head: () => ({
+    meta: [
+      { title: "Sports Import | BM Support Admin" },
+      { name: "description", content: "Review and import sports listings into BM Support sports guides." },
+      { property: "og:title", content: "Sports Import | BM Support Admin" },
+      { property: "og:description", content: "Review and import sports listings into BM Support sports guides." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: AdminSportsImportPage,
 });
 
