@@ -22,7 +22,6 @@ import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 import { GuideAccessApprovals } from "@/components/app/GuideAccessApprovals";
 import downloadIllustration from "@/assets/app-download-illustration.jpg";
 
-import { AppTransfersAdmin } from "@/components/app/AppTransfersAdmin";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAppTransfer } from "@/lib/app-transfer.functions";
 
@@ -656,7 +655,7 @@ function InstallGuidesPage() {
             </div>
           </header>
 
-        <div className={`relative isolate min-w-0 min-h-0 flex-1 px-2 py-3 sm:px-8 md:overflow-y-auto md:py-6 ${tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
+        <div className="relative isolate min-w-0 min-h-0 flex-1 px-2 py-3 sm:px-8 md:overflow-y-auto md:py-6">
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
               <div className="max-w-5xl space-y-4">
