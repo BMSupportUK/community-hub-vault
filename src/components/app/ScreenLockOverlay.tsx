@@ -1,47 +1,40 @@
-import { useEffect, useState } from "react";
-import { Lock, Loader2, ShieldCheck, KeyRound, LogOut, MailQuestion } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Lock, Loader2, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { hashLockCode } from "@/lib/screen-lock-hash";
-import { requestLockReset } from "@/lib/screen-lock.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { verifyScreenLockPassword } from "@/lib/screen-lock-password.functions";
 import lockBg from "@/assets/screen-lock-bg.jpg";
 import { useRouterState } from "@tanstack/react-router";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 import { BORO_DEFAULT_AVATAR_URL } from "@/lib/boro-default-avatar";
-import type { ScreenLockSettings } from "@/components/app/ScreenLockProvider";
 
 const MAX_ATTEMPTS = 5;
 
 interface Props {
-  settings: ScreenLockSettings;
   onUnlock: () => void;
 }
 
-export function ScreenLockOverlay({ settings, onUnlock }: Props) {
+export function ScreenLockOverlay({ onUnlock }: Props) {
   const { user, signOut } = useAuth();
   const [code, setCode] = useState("");
-  const [newCode, setNewCode] = useState("");
-  const [confirmCode, setConfirmCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [attempts, setAttempts] = useState(0);
-  const [useTotp, setUseTotp] = useState(false);
-  const [hasTotp, setHasTotp] = useState(false);
+  const submitting = useRef(false);
+  const mounted = useRef(true);
+  const verifyPassword = useServerFn(verifyScreenLockPassword);
   const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
-  const [requested, setRequested] = useState(false);
 
-
-  // A hung network call must never leave the form permanently disabled.
   useEffect(() => {
-    if (!busy) return;
-    const t = window.setTimeout(() => setBusy(false), 12_000);
-    return () => window.clearTimeout(t);
-  }, [busy]);
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   const leaveLock = async () => {
     if (user) {
@@ -52,17 +45,6 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
     await signOut();
   };
 
-
-  // Setup mode: no code set yet. Change mode: temp code used, must set new one.
-  const needsSetup = !settings.code_hash;
-  const [forceChange, setForceChange] = useState(false);
-
-  useEffect(() => {
-    void (async () => {
-      const { data } = await supabase.auth.mfa.listFactors();
-      setHasTotp((data?.totp ?? []).some((f) => f.status === "verified"));
-    })();
-  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -83,7 +65,7 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
   const fanInfo = useFanZoneMembership(user?.id ?? null);
   const { forcedAvatar } = useFanAvatarLock();
 
-  const supportName = profile?.display_name || profile?.username || user?.email || "";
+  const supportName = profile?.display_name || profile?.username || "Your account";
   const name = inFanZone
     ? fanInfo?.fanAlias || supportName
     : supportName;
@@ -91,90 +73,33 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
     ? forcedAvatar || fanInfo?.fanAvatarUrl || BORO_DEFAULT_AVATAR_URL
     : profile?.avatar_url || null;
 
-  const saveNewCode = async () => {
-    if (!user) return;
-    if (!/^\d{4,6}$/.test(newCode)) {
-      toast.error("Choose a 4-6 digit code");
-      return;
-    }
-    if (newCode !== confirmCode) {
-      toast.error("Codes do not match");
-      return;
-    }
-    setBusy(true);
-    const hash = await hashLockCode(user.id, newCode);
-    const { error } = await supabase
-      .from("screen_lock_settings")
-      .update({ code_hash: hash, must_change: false })
-      .eq("user_id", user.id);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Lock code saved");
-    onUnlock();
-  };
-
   const tryUnlock = async () => {
-    if (!user) return;
+    if (!user || submitting.current || !code) return;
+    submitting.current = true;
     setBusy(true);
     try {
-      if (useTotp) {
-        const { data } = await supabase.auth.mfa.listFactors();
-        const factor = (data?.totp ?? []).find((f) => f.status === "verified");
-        if (!factor) {
-          toast.error("No authenticator found");
-          return;
-        }
-        const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
-        if (error) {
-          setAttempts((a) => a + 1);
-          toast.error("Incorrect authenticator code");
-          return;
-        }
-        onUnlock();
-        return;
-      }
-
-      const hash = await hashLockCode(user.id, code);
-      if (hash !== settings.code_hash) {
+      const result = await verifyPassword({ data: { password: code } });
+      if (!mounted.current) return;
+      setCode("");
+      if (!result.verified) {
         const next = attempts + 1;
         setAttempts(next);
-        setCode("");
         if (next >= MAX_ATTEMPTS) {
           toast.error("Too many attempts — signing you out");
           await leaveLock();
           return;
         }
-        toast.error(`Incorrect code (${MAX_ATTEMPTS - next} attempts left)`);
-        return;
-      }
-      if (settings.must_change) {
-        setForceChange(true);
-        setCode("");
+        toast.error(`Incorrect account password (${MAX_ATTEMPTS - next} attempts left)`);
         return;
       }
       onUnlock();
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const askForReset = async () => {
-    setBusy(true);
-    try {
-      await requestLockReset();
-      setRequested(true);
-      toast.success("Reset requested — an owner or manager has been alerted");
     } catch {
-      toast.error("Could not send the request. Please contact support.");
+      if (mounted.current) toast.error("Couldn't check your password. Please try again shortly.");
     } finally {
-      setBusy(false);
+      submitting.current = false;
+      if (mounted.current) setBusy(false);
     }
   };
-
-  const settingMode = needsSetup || forceChange;
 
   return (
     <div
@@ -203,97 +128,29 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
             </div>
           </div>
 
-          {settingMode ? (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                {needsSetup
-                  ? "Set a lock code (4-6 digits). You'll use it to unlock your screen."
-                  : "Your temporary code was accepted. Choose a new lock code to continue."}
-              </p>
-              <Input
-                type="password"
-                inputMode="numeric"
-                autoComplete="new-password"
-                maxLength={6}
-                placeholder="New code"
-                value={newCode}
-                enterKeyHint="next"
-                className="pointer-events-auto touch-auto text-base"
-                onChange={(e) => setNewCode(e.target.value.replace(/\D/g, ""))}
-              />
-              <Input
-                type="password"
-                inputMode="numeric"
-                autoComplete="new-password"
-                maxLength={6}
-                placeholder="Confirm code"
-                value={confirmCode}
-                enterKeyHint="done"
-                className="pointer-events-auto touch-auto text-base"
-                onChange={(e) => setConfirmCode(e.target.value.replace(/\D/g, ""))}
-              />
-              <Button className="w-full" onClick={saveNewCode} disabled={busy}>
-                {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Save &amp; unlock
-              </Button>
-            </div>
-          ) : (
-
-            <form
-              className="space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void tryUnlock();
-              }}
-            >
-              <Input
-                type="password"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                autoFocus
-                enterKeyHint="done"
-                placeholder={useTotp ? "6-digit authenticator code" : "Lock code"}
-                value={code}
-                className="pointer-events-auto touch-auto text-base"
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              />
-              <Button type="submit" className="w-full" disabled={busy || code.length < 4}>
-                {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Unlock
-              </Button>
-              {hasTotp && (
-                <button
-                  type="button"
-                  className="w-full text-xs text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
-                  onClick={() => {
-                    setUseTotp((v) => !v);
-                    setCode("");
-                  }}
-                >
-                  <ShieldCheck className="size-3" />
-                  {useTotp ? "Use my lock code instead" : "Use authenticator code instead"}
-                </button>
-              )}
-            </form>
-          )}
-
-
-          <div className="pt-2 border-t border-border flex items-center justify-between gap-2">
-            <button
-              type="button"
-              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 disabled:opacity-50"
-              onClick={askForReset}
-              disabled={busy || requested}
-            >
-              <MailQuestion className="size-3" />
-              {requested ? "Reset requested" : "Forgot code? Request a reset"}
-            </button>
-            <button
-              type="button"
-              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-              onClick={() => void leaveLock()}
-            >
+          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void tryUnlock(); }}>
+            <label htmlFor="screen-lock-password" className="text-sm text-muted-foreground">Account password</label>
+            <Input
+              id="screen-lock-password"
+              type="password"
+              autoComplete="current-password"
+              autoFocus
+              enterKeyHint="done"
+              placeholder="Account password"
+              value={code}
+              disabled={busy}
+              className="pointer-events-auto touch-auto text-base"
+              onChange={(e) => setCode(e.target.value)}
+            />
+            <Button type="submit" className="w-full" disabled={busy || !code}>
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Unlock
+            </Button>
+          </form>
+          <div className="pt-2 border-t border-border space-y-2">
+            <p className="text-xs text-muted-foreground">Forgot your password? Sign out to reset it.</p>
+            <Button type="button" variant="ghost" size="sm" onClick={() => void leaveLock()} disabled={busy}>
               <LogOut className="size-3" /> Sign out
-            </button>
+            </Button>
           </div>
         </div>
       </div>

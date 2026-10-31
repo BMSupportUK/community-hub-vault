@@ -18,8 +18,6 @@ import { ScreenLockKeepAliveContext } from "@/components/app/ScreenLockKeepAlive
 export interface ScreenLockSettings {
   enabled: boolean;
   timeout_minutes: number;
-  code_hash: string | null;
-  must_change: boolean;
 }
 
 export const LOCK_NOW_EVENT = "app:screen-lock-now";
@@ -135,7 +133,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
       for (let attempt = 0; attempt < 3; attempt += 1) {
         const result = await supabase
           .from("screen_lock_settings")
-          .select("enabled, timeout_minutes, code_hash, must_change")
+          .select("enabled, timeout_minutes")
           .eq("user_id", user.id)
           .maybeSingle();
         data = result.data as ScreenLockSettings | null;
@@ -161,7 +159,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
         const { data: created, error: createError } = await supabase
           .from("screen_lock_settings")
           .insert(row)
-          .select("enabled, timeout_minutes, code_hash, must_change")
+          .select("enabled, timeout_minutes")
           .single();
         if (cancelled) return;
         if (createError || !created) {
@@ -232,9 +230,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
           if (
             row &&
             typeof row.enabled === "boolean" &&
-            typeof row.timeout_minutes === "number" &&
-            Object.prototype.hasOwnProperty.call(row, "code_hash") &&
-            typeof row.must_change === "boolean"
+            typeof row.timeout_minutes === "number"
           ) {
             setSettings(row as ScreenLockSettings);
             // Turning the lock off elsewhere must release a currently locked screen.
@@ -465,7 +461,7 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
       <div data-screen-lock-content className={showLock ? "hidden" : "contents"} hidden={showLock} inert={showLock} aria-hidden={showLock ? true : undefined}>
         {(!showLock || keepConnection) && children}
       </div>
-      {showLock && settings && <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />}
+      {showLock && settings && <ScreenLockOverlay onUnlock={() => doUnlock()} />}
       {showLock && <div data-screen-lock-alerts>{!keepConnection && lockedExtras}</div>}
       {resumeChecking && <BmSplash />}
     </ScreenLockKeepAliveContext.Provider>

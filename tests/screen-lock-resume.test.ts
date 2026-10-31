@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { shouldLockScreen } from "../src/lib/screen-lock-hash";
 
 describe("screen lock on app return", () => {
