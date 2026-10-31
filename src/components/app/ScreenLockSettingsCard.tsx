@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Lock, Loader2, KeyRound } from "lucide-react";
+import { Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
   ADMIN_MAX_TIMEOUT_MINUTES,
@@ -13,7 +12,6 @@ import {
   STAFF_MAX_TIMEOUT_MINUTES,
   STAFF_TIMEOUT_OPTIONS,
   USER_TIMEOUT_OPTIONS,
-  hashLockCode,
 } from "@/lib/screen-lock-hash";
 import { lockScreenNow } from "@/components/app/ScreenLockProvider";
 
@@ -27,24 +25,19 @@ export function ScreenLockSettingsCard() {
   const [loading, setLoading] = useState(true);
   const [enabled, setEnabled] = useState(true);
   const [timeout, setTimeoutMins] = useState(DEFAULT_TIMEOUT_MINUTES);
-  const [hasCode, setHasCode] = useState(false);
-  const [newCode, setNewCode] = useState("");
-  const [confirmCode, setConfirmCode] = useState("");
-  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     void (async () => {
       const { data } = await supabase
         .from("screen_lock_settings")
-        .select("enabled, timeout_minutes, code_hash")
+        .select("enabled, timeout_minutes")
         .eq("user_id", user.id)
         .maybeSingle();
-      const row = data as { enabled: boolean; timeout_minutes: number; code_hash: string | null } | null;
+      const row = data as { enabled: boolean; timeout_minutes: number } | null;
       if (row) {
         setEnabled(row.enabled);
         setTimeoutMins(isStaff ? Math.min(row.timeout_minutes, maxMins) : row.timeout_minutes);
-        setHasCode(Boolean(row.code_hash));
       } else {
         setTimeoutMins(isStaff ? maxMins : DEFAULT_TIMEOUT_MINUTES);
       }
@@ -64,33 +57,6 @@ export function ScreenLockSettingsCard() {
     if (error) toast.error(error.message);
   };
 
-  const saveCode = async () => {
-    if (!user) return;
-    if (!/^\d{4,6}$/.test(newCode)) {
-      toast.error("Choose a 4-6 digit code");
-      return;
-    }
-    if (newCode !== confirmCode) {
-      toast.error("Codes do not match");
-      return;
-    }
-    setBusy(true);
-    const hash = await hashLockCode(user.id, newCode);
-    const { error } = await supabase
-      .from("screen_lock_settings")
-      .update({ code_hash: hash, must_change: false, enabled, timeout_minutes: timeout })
-      .eq("user_id", user.id);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setHasCode(true);
-    setNewCode("");
-    setConfirmCode("");
-    toast.success("Lock code saved");
-  };
-
   if (loading) return null;
 
   return (
@@ -103,8 +69,7 @@ export function ScreenLockSettingsCard() {
           <div>
             <h2 className="font-display font-semibold text-lg">Screen lock</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Locks the app when you&apos;re inactive. Unlock with your lock code
-              {" "}or your authenticator code if two-factor is enabled.
+              Locks the app when you&apos;re inactive. Unlock with your account password.
             </p>
           </div>
 
@@ -128,7 +93,8 @@ export function ScreenLockSettingsCard() {
             <div className="text-sm font-medium mb-2">Lock after</div>
             <div className="flex flex-wrap gap-2">
               {options.map((m) => (
-                <button
+                <Button
+                  variant={timeout === m ? "default" : "outline"}
                   key={m}
                   type="button"
                   onClick={() => void save({ timeout_minutes: m, enabled: true })}
@@ -139,39 +105,9 @@ export function ScreenLockSettingsCard() {
                   }`}
                 >
                   {m} min
-                </button>
+                </Button>
               ))}
             </div>
-          </div>
-
-          <div className="pt-2 border-t border-border space-y-2">
-            <div className="text-sm font-medium">{hasCode ? "Change lock code" : "Set lock code"}</div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="New code (4-6 digits)"
-                value={newCode}
-                onChange={(e) => setNewCode(e.target.value.replace(/\D/g, ""))}
-              />
-              <Input
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="Confirm code"
-                value={confirmCode}
-                onChange={(e) => setConfirmCode(e.target.value.replace(/\D/g, ""))}
-              />
-              <Button onClick={saveCode} disabled={busy}>
-                {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Save
-              </Button>
-            </div>
-            {!hasCode && (
-              <p className="text-xs text-amber-300">
-                No code set yet — you&apos;ll be asked to create one the first time your screen locks.
-              </p>
-            )}
           </div>
 
           <Button variant="outline" size="sm" onClick={() => lockScreenNow()}>
