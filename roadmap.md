@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Skip Amazon developer activation when already enabled; verify and release Direct Install update
 - [x] Retire the original Direct Install download link on completion while keeping installation progress and logs
 - [x] Reuse the customer's valid TV Enabler PIN across the site and synchronize explicit resets; 11 tests pass, signed-in Install Guides/reload/Settings show the same PIN
 - [x] Speed up unread counters with immediate room-targeted refreshes, per-room results and recovery polling; burst tests pass and focus refresh measured at 0.14s versus 0.83s
