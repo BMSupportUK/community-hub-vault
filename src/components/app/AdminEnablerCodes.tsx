@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy, KeyRound, Loader2 } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +29,50 @@ function status(r: AdminEnablerIssueRow) {
   return r.pinLoggedIn ? "Signed in, code not used yet" : "Not used yet";
 }
 
+/** Steps for the status bar, in order, with whether each is done. */
+function steps(r: AdminEnablerIssueRow): { label: string; done: boolean }[] {
+  const signedIn = !!r.signedInAt || r.pinLoggedIn;
+  const codeEntered = !!r.usedAt;
+  const done = !!r.completedAt;
+  if (r.installer === "direct") {
+    return [
+      { label: "Signed in", done: signedIn },
+      { label: "Unknown apps allowed", done: !!r.permissionAt || codeEntered || done },
+      { label: "Code entered", done: codeEntered },
+      { label: "Apps installed", done },
+    ];
+  }
+  return [
+    { label: "Signed in", done: signedIn },
+    { label: "Code entered", done: codeEntered },
+    { label: r.purpose === "support" ? "Connected" : "Apps installed", done },
+  ];
+}
+
+/** Live status bar: ticks off each step as the customer's installer reports it. */
+function ProgressBar({ row }: { row: AdminEnablerIssueRow }) {
+  const list = steps(row);
+  const doneCount = list.filter((s) => s.done).length;
+  const pct = Math.round((doneCount / list.length) * 100);
+  return (
+    <div className="min-w-52 space-y-1.5">
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <ol className="space-y-0.5">
+        {list.map((s) => (
+          <li key={s.label} className={`flex items-center gap-1.5 text-xs ${s.done ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+            <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border ${s.done ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
+              {s.done && <Check className="h-2.5 w-2.5" />}
+            </span>
+            {s.label}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 /** Admin/management issue a website code + Enabler PIN for someone without a website account, logged separately. */
 export function AdminEnablerCodes() {
   const issueFn = useServerFn(issueAdminEnablerCode);
@@ -52,7 +96,11 @@ export function AdminEnablerCodes() {
   const loadLog = useCallback(async () => {
     try { setLog(await listFn()); } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't load the log."); setLog([]); }
   }, [listFn]);
-  useEffect(() => { void loadLog(); }, [loadLog]);
+  useEffect(() => {
+    void loadLog();
+    const t = setInterval(() => void loadLog(), 5000);
+    return () => clearInterval(t);
+  }, [loadLog]);
 
   const issue = async () => {
     if (!name.trim()) return toast.error("Type the person's name.");
@@ -119,7 +167,7 @@ export function AdminEnablerCodes() {
                 <tr key={r.id} className="border-t align-top">
                   <td className="p-2 font-medium">{r.name}</td><td className="p-2">{DEVICE_LABEL[r.device]}<div className="text-xs text-muted-foreground">{INSTALLER_LABEL[r.installer]}</div></td><td className="p-2">{PURPOSE_LABEL[r.purpose]}<div className="text-xs text-muted-foreground">{r.apps.map((path) => apps.find((a) => a.path === path)?.name ?? "App no longer listed").join(", ")}</div></td>
                   <td className="p-2 whitespace-nowrap">{fmt(r.createdAt)}</td><td className="p-2">{r.issuedBy ?? "—"}</td>
-                  <td className="p-2">{status(r)}{r.completedApps.length > 0 && <div className="text-xs text-muted-foreground">{r.completedApps.join(", ")}</div>}</td>
+                  <td className="p-2"><ProgressBar row={r} /><div className="mt-1 text-xs text-muted-foreground">{status(r)}{r.completedApps.length > 0 && ` · ${r.completedApps.join(", ")}`}</div></td>
                 </tr>
               ))}</tbody>
             </table></div>

@@ -9,6 +9,7 @@ export type AdminEnablerIssueRow = {
   id: string; name: string; device: "amazon" | "android"; purpose: "install" | "support";
   issuedBy: string | null; createdAt: string; expiresAt: string;
   usedAt: string | null; completedAt: string | null; completedApps: string[]; pinLoggedIn: boolean;
+  signedInAt: string | null; permissionAt: string | null;
   installer: "direct" | "enabler"; apps: string[];
 };
 
@@ -69,7 +70,7 @@ export const listAdminEnablerIssues = createServerFn({ method: "GET" })
     const ids = (issues ?? []).map((r) => r.id);
     if (!ids.length) return [];
     const [{ data: hs }, { data: pins }, { data: profs }] = await Promise.all([
-      db.from("enabler_handoffs").select("admin_issue_id, used_at, completed_at, completed_apps, app_paths").in("admin_issue_id", ids),
+      db.from("enabler_handoffs").select("admin_issue_id, used_at, completed_at, completed_apps, app_paths, signed_in_at, permission_at").in("admin_issue_id", ids),
       db.from("enabler_login_pins").select("id, admin_issue_id, kind").in("admin_issue_id", ids),
       db.from("profiles").select("id, username").in("id", [...new Set((issues ?? []).map((r) => r.issued_by))]),
     ]);
@@ -84,6 +85,7 @@ export const listAdminEnablerIssues = createServerFn({ method: "GET" })
         issuedBy: (profs ?? []).find((x) => x.id === r.issued_by)?.username ?? null,
         createdAt: r.created_at, expiresAt: r.expires_at, usedAt: h?.used_at ?? null,
         completedAt: h?.completed_at ?? null, completedApps: h?.completed_apps ?? [], pinLoggedIn: !!p && loggedPins.has(p.id),
+        signedInAt: h?.signed_in_at ?? null, permissionAt: h?.permission_at ?? null,
         installer: p?.kind === "direct" ? "direct" : "enabler", apps: h?.app_paths ?? [],
       };
     });

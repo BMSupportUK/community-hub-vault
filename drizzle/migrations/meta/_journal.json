@@ -1793,6 +1793,13 @@
       "when": 1793403834249,
       "tag": "0255_direct_install_own_pins",
       "breakpoints": true
+    },
+    {
+      "idx": 256,
+      "version": "7",
+      "when": 1793444915076,
+      "tag": "0256_admin_issue_progress",
+      "breakpoints": true
     }
   ]
 }
