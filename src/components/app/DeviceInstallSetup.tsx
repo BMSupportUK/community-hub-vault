@@ -19,7 +19,7 @@ import { orderStaffHelpTicket } from "@/lib/order-remote-tabs";
 import { selfInstallHandoff, sha256Hex } from "@/lib/enabler-handoff";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 
-export type SetupDeviceKey = "amazon" | "android" | "direct" | "ios" | "alternative" | "remote";
+export type SetupDeviceKey = "amazon" | "android" | "direct" | "alternative" | "remote";
 
 const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof Tv }[] = [
   { key: "direct", label: "BM Direct Install", note: "Install straight on the TV, no phone or PC", icon: MonitorDown },
