@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Extend dashboard installer codes for admin/management with required reference name, device and selected apps, including Direct Install PINs
 - [x] Fix NHL colon-formatted dual-clock listings; all ten real fixtures pass split/read-back checks and 88 sports tests pass (preview's cached module required a fresh request for UI verification)
 - [x] Fix Direct Install already-installed progress isolation and Start again returning to the first question; 17 tests and signed-in TV-report flow pass
 - [x] Skip Amazon developer activation when already enabled; regression tests pass and signed Direct Install 1.7 released (real Fire TV check remains below)
