@@ -126,7 +126,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
       {tv ? tv === "amazon" ? <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
         <li>Install <strong className="text-foreground">Downloader</strong> from the Amazon Appstore (search "Downloader").</li>
         <li>Let Downloader install apps: <strong className="text-foreground">Settings › My Fire TV › Developer options › Install unknown apps</strong>, then switch <strong className="text-foreground">Downloader</strong> to ON. (Older Fire TVs: <strong className="text-foreground">Apps from Unknown Sources</strong> › ON.)</li>
-        <li>If you can't see Developer options: <strong className="text-foreground">Settings › My Fire TV › About</strong>, press OK on your device name 7 times, then go back.</li>
+        <li>If Developer options is already enabled, skip activation. Only if it is missing: <strong className="text-foreground">Settings › My Fire TV › About</strong>, press OK on your device name 7 times, then go back.</li>
         <li>Open Downloader, type your link into the address box and press <strong className="text-foreground">Go</strong>. Then press <strong className="text-foreground">Install</strong> and <strong className="text-foreground">Open</strong>.</li>
       </ol> : <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
         <li>Install <strong className="text-foreground">Downloader</strong> from the Google Play Store (search "Downloader by AFTVnews").</li>
@@ -161,7 +161,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
         <ol className="mt-1 list-decimal space-y-1 pl-5">
         <li>Press <strong className="text-foreground">Take me there</strong> again — each press tries the next setting.</li>
         <li>Or go to <strong className="text-foreground">Settings › My Fire TV › Developer options › Install unknown apps › BM Direct Install</strong> › ON.</li>
-        <li>No Developer options? <strong className="text-foreground">Settings › My Fire TV › About</strong>, press OK on your device name 7 times, then go back.</li>
+        <li>Already a developer? Skip activation — only switch BM Direct Install ON. If Developer options is missing: <strong className="text-foreground">Settings › My Fire TV › About</strong>, press OK on your device name 7 times, then go back.</li>
         </ol></details>
       </div> : <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
         <li>Press <strong className="text-foreground">Take me there</strong> in BM Direct Install.</li>
