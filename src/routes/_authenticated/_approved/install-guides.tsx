@@ -1216,6 +1216,19 @@ function SecureGuideVideoSteps({ blog, onEl }: { blog: Blog; onEl?: (el: HTMLVid
   </div>;
 }
 
+/** Photo-backed panel: the install-hero picture fills the tab area behind its content. */
+function PhotoPanel({ children, className = "" }: { children: import("react").ReactNode; className?: string }) {
+  return (
+    <div
+      className={`relative min-w-0 overflow-hidden rounded-2xl border border-border bg-cover bg-center p-4 shadow-glow sm:p-6 ${className}`}
+      style={{ backgroundImage: `url(${installHero})` }}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/70 via-background/50 to-surface/70" />
+      <div className="relative min-w-0">{children}</div>
+    </div>
+  );
+}
+
 /** Framed hero whose own content lives inside it; fills the screen on large displays, scrolls on smaller ones. */
 function IllustratedHero({ image, title, text, children }: { image: string; title: string; text: string; children: import("react").ReactNode }) {
   return (
