@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Diagnose truka11 Android sign-in failures and verify account/reset state without changing their password
 - [ ] Replace dashboard temporary-password sending with an admin-only HTML reset request and mandatory customer password change; verify the flow
 - [x] Separate in-page BM Support staff alerts from Fan Zone; three tests pass, signed-in staff channels remain on Staff Portal and are absent in Fan Zone (fresh preview modules needed). Background browser/phone push delivery remains account-scoped and unchanged.
 - [x] Extend dashboard installer codes for admin/management with required reference name, device and selected apps, including Direct Install PINs; 19 tests pass and authenticated isolated form generation/log read-back verified (dashboard PIN unlock and real TV installation not exercised)
