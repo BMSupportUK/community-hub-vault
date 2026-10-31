@@ -643,9 +643,6 @@ function InstallGuidesPage() {
                 {canManageCategories && (
                   <TabsTrigger value="categories" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Categories</TabsTrigger>
                 )}
-                {canSeeTransfers && (
-                  <TabsTrigger value="transfers" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Transfers</TabsTrigger>
-                )}
                 {canManageApps && (
                   <TabsTrigger value="app-apk" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">App APK</TabsTrigger>
                 )}
@@ -677,18 +674,6 @@ function InstallGuidesPage() {
           {canManageGuides && (
             <TabsContent value="download-log" className="mt-6">
               <div className="max-w-6xl"><DownloadLogAdmin /></div>
-            </TabsContent>
-          )}
-
-          {canSeeTransfers && (
-            <TabsContent value="transfers" className="mt-0 min-w-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
-              <IllustratedHero
-                image={downloadIllustration}
-                title="App Transfers"
-                text="Send apps straight to customers' devices and keep track of every transfer by week."
-              >
-                <AppTransfersAdmin />
-              </IllustratedHero>
             </TabsContent>
           )}
 
