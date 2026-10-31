@@ -8,6 +8,7 @@ const LOGIN_URL = "https://bmsupport.uk";
 export const requestLockReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    throw new Error("Screen lock now uses your account password. Sign out to reset a forgotten password.");
     const { supabase, userId } = context;
 
     const { data: existing } = await supabase
@@ -30,6 +31,7 @@ export const approveLockReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ requestId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    throw new Error("Screen lock PIN resets are retired. Use the account password reset instead.");
     const { supabase, userId } = context;
 
     const { data: roles, error: rolesError } = await supabase
