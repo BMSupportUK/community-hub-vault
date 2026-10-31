@@ -22,7 +22,6 @@ import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 import { GuideAccessApprovals } from "@/components/app/GuideAccessApprovals";
 import downloadIllustration from "@/assets/app-download-illustration.jpg";
 
-import { AppTransfersAdmin } from "@/components/app/AppTransfersAdmin";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAppTransfer } from "@/lib/app-transfer.functions";
 
@@ -135,7 +134,8 @@ function InstallGuidesPage() {
   const canViewGuides = hasAny(["subscriber", "admin", "management", "staff"]);
   const canManageCategories = canManageGuides;
   const canManageApps = canManageGuides;
-  const canSeeTransfers = hasAny(["admin", "management", "staff"]);
+  // Transfer history moved to the admin dashboard's "App transfers" tool.
+
 
   const { tab: tabParam, checkout: checkoutToken } = Route.useSearch();
   // Opening the guides screen always starts on the Welcome tab (deep links
@@ -214,13 +214,10 @@ function InstallGuidesPage() {
 
   useEffect(() => {
     const isRestrictedAdminTab = tab === "categories" || tab === "app-apk" || tab === "download-log";
-    if (
-            (tab === "transfers" && !canSeeTransfers) ||
-      (isRestrictedAdminTab && !canManageGuides)
-    ) {
+    if (isRestrictedAdminTab && !canManageGuides) {
       setTab("welcome");
     }
-  }, [tab, canSeeAppTab, canManageGuides, canSeeTransfers]);
+  }, [tab, canSeeAppTab, canManageGuides]);
 
   const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -645,9 +642,6 @@ function InstallGuidesPage() {
                 {canManageCategories && (
                   <TabsTrigger value="categories" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Categories</TabsTrigger>
                 )}
-                {canSeeTransfers && (
-                  <TabsTrigger value="transfers" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Transfers</TabsTrigger>
-                )}
                 {canManageApps && (
                   <TabsTrigger value="app-apk" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">App APK</TabsTrigger>
                 )}
@@ -661,7 +655,7 @@ function InstallGuidesPage() {
             </div>
           </header>
 
-        <div className={`relative isolate min-w-0 min-h-0 flex-1 px-2 py-3 sm:px-8 md:overflow-y-auto md:py-6 ${tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
+        <div className="relative isolate min-w-0 min-h-0 flex-1 px-2 py-3 sm:px-8 md:overflow-y-auto md:py-6">
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
               <div className="max-w-5xl space-y-4">
@@ -679,18 +673,6 @@ function InstallGuidesPage() {
           {canManageGuides && (
             <TabsContent value="download-log" className="mt-6">
               <div className="max-w-6xl"><DownloadLogAdmin /></div>
-            </TabsContent>
-          )}
-
-          {canSeeTransfers && (
-            <TabsContent value="transfers" className="mt-0 min-w-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
-              <IllustratedHero
-                image={downloadIllustration}
-                title="App Transfers"
-                text="Send apps straight to customers' devices and keep track of every transfer by week."
-              >
-                <AppTransfersAdmin />
-              </IllustratedHero>
             </TabsContent>
           )}
 
