@@ -1309,6 +1309,8 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       new RegExp(String.raw`^([A-Za-z][A-Za-z+ ]*?)\s*(?:\|\s*)?(\d{1,3})\s*[-–—:]\s*(${TIME_SOURCE})\s*(?:ET)?\s*(?:\||\/|\()\s*(${TIME_SOURCE})\s*UK\s*\)?\s*(.*)$`, "i"),
     );
     // The fixture may follow the UK clock on the same row ("3:30am UKLightning at …").
+    // The colon variant is NHL-only: NFL's own parser must keep its stated UK time.
+    if (m && m[1].trim().toUpperCase() !== "NHL" && !lines[i].match(/^[^|]+\|\s*\d{1,3}\s*[-–—]/)) continue;
     const sameRow = m?.[5]?.trim() ?? "";
     if (m && (sameRow || i + 1 < lines.length)) {
       // Evening ET slots land after midnight UK — tag the UK weekday so the
