@@ -687,23 +687,27 @@ function InstallGuidesPage() {
 
 
           <TabsContent value="setup" className="mt-0 min-w-0">
-            <DeviceInstallSetup
-              device={setupDevice}
-              onPick={pickSetupDevice}
-              alternative={
-                <IllustratedHero
-                  image={downloadIllustration}
-                  title="Download the BM Support Apps"
-                  text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
-                >
-                  <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
-                </IllustratedHero>
-              }
-            />
+            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
+              <DeviceInstallSetup
+                device={setupDevice}
+                onPick={pickSetupDevice}
+                alternative={
+                  <IllustratedHero
+                    image={downloadIllustration}
+                    title="Download the BM Support Apps"
+                    text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
+                  >
+                    <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
+                  </IllustratedHero>
+                }
+              />
+            </PhotoPanel>
           </TabsContent>
 
           <TabsContent value="phone-windows-setup" className="mt-0 min-w-0">
-            <DeviceInstallSetup section="enabler" device={enablerDevice} onPick={pickEnablerDevice} />
+            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
+              <DeviceInstallSetup section="enabler" device={enablerDevice} onPick={pickEnablerDevice} />
+            </PhotoPanel>
           </TabsContent>
 
           <TabsContent value="ios-setup" className="mt-0 min-w-0">
