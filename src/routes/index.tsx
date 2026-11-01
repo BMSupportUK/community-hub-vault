@@ -156,7 +156,7 @@ function Landing() {
 
             <div className="relative w-full md:-ml-2 lg:-ml-4 lg:h-full">
               <div className="landing-hero-glow absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] w-full lg:h-full">
+              <div className="relative min-h-40 rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] w-full lg:h-full">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
