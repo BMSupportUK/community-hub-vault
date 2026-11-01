@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { compressVideoFile } from "@/lib/compress-video";
+import { findAppDemo } from "@/lib/app-demo-match";
 
 const CATEGORIES = [
   { key: "official_server", label: "Official Service App" },
@@ -430,7 +431,6 @@ function PlayerDialog({ demo, onClose }: { demo: Demo | null; onClose: () => voi
     </Dialog>
   );
 }
-const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/\.apk$/, "").replace(/[^a-z0-9]/g, "");
 
 function PickVideo({ demo }: { demo: Demo | undefined }) {
   const src = useSignedUrl(demo?.video_path);
@@ -447,13 +447,9 @@ export function AppPickCards({ apps, picked, onToggle }: { apps: { name: string;
   useEffect(() => {
     void supabase.from("app_demos").select("*").eq("is_active", true).order("sort_order").then(({ data }) => setDemos((data as Demo[]) ?? []));
   }, []);
-  const find = (name: string) => {
-    const n = norm(name);
-    return demos.find((d) => norm(d.app_name) === n) ?? demos.find((d) => n && (norm(d.app_name).includes(n) || n.includes(norm(d.app_name) || "\u0000") || norm(d.title).includes(n)));
-  };
   return <div className="grid gap-3 sm:grid-cols-2">
     {apps.map((app) => <div key={app.path} className={cn("overflow-hidden rounded-xl border bg-surface shadow-soft", picked.has(app.path) ? "border-primary" : "border-border")}>
-      <PickVideo demo={find(app.name)} />
+      <PickVideo demo={findAppDemo(app.name, demos)} />
       <label className="flex cursor-pointer items-center gap-3 p-3 text-sm">
         <input type="checkbox" className="size-4 accent-primary" checked={picked.has(app.path)} onChange={(e) => onToggle(app.path, e.target.checked)} />
         <span className="font-medium text-foreground">{app.name}</span>
