@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Fix duplicate-name sign-up with atomic username suffix retries; live trigger read-back and four isolated database tests pass; real sign-up/email flow not exercised
 - [x] Add right-side hero subscriber/video icon bar; desktop and phone checked; unavailable counts show dashes
 - [ ] Connect live subscriber/video counts (blocked: channel name or link not supplied)
 - [x] Replace screen-lock PIN with bearer-bound account-password verification; PIN setup/reset retired, identity and idle tests pass; signed-in wrong-password rejection checked
