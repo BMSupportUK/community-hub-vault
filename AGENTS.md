@@ -17,6 +17,7 @@
 - Shift sounds deduplicate warning and due phases separately; the shift-over clip plays when the visible still-working question opens, not from a hidden end toast.
 - ShiftStartEndAlert owns lifecycle/audio and publishes countdown presentation to ShiftHeaderNotice inside Clocks before Office Time; do not mount duplicate shift controllers in headers or restore bottom warning toasts.
 - Guide videos use private storage and short-lived signed links; ordered `video_steps` pair each private video with one visible action.
+- Install cards share a demo matcher for renamed service/rebrand labels and app aliases, retaining private Store videos.
 - Remote-help articles and PDFs share source content in `resources/remote-help-guides`; PDF companion rows use private `guide-files` paths beside existing video rows so adding written guides never replaces Watch actions.
 - Install Guides keeps AppTransferPanel's secured APK cards and the Remote Helper guides in the Guides tab, excluding those APKs from general downloads.
 - VPN blocking applies only to direct BM registration; link/typed referrals and Fan Zone bypass it; approved referrals skip access-request alerts.
@@ -51,7 +52,7 @@
 - TV Remote: the native helper app authenticates only by a hashed device token at /api/public/tv; staff join the random per-session broadcast topic returned by claim_tv_pair_code, so commands never reach other channels.
 - Member-card screen sharing lives in the admin dashboard's member-header slot behind its existing access gates, uses the staff-authorized pairing RPC and RemoteSession viewer, and never appears in Members Directory; order/ticket flows remain unchanged.
 - Screen-share navigation resolves linked orders/tickets before mounting generic sessions; scoped pages join the existing host's relay. Overview access is separate from staff help access, preserving staff support while limiting global navigation.
-- TV session lists reuse the existing live/history components inside the admin-only Owner Tools section; TV Remote retains requests and its code sidebar to keep session administration separate from connection setup.
+- TV history stays in admin-only Owner Tools; TV Remote keeps requests and codes for connection setup.
 - Screen-share request-box actions open the secure checkout Screen share tab for orders and the scoped ticket sharing page for tickets; secure checkout synchronizes its selected tab with navigation search state.
 - Active TV screen-share components register a lock keep-alive; the lock conceals and inerts their stable subtree without closing host or viewer peers, while ordinary locked pages still unmount.
 - Checkout screen share controls derive ongoing state from the order-private status read; locally ended staff sessions cannot auto-rejoin stale polled rows, so subsequent requests remain available without refresh.
