@@ -16,10 +16,10 @@ export function HeroChannelStats({ subscribers = null, videos = null }: HeroChan
   return (
     <aside
       aria-label="Channel statistics"
-      className="absolute inset-y-0 right-0 z-10 flex w-24 flex-col justify-center gap-6 border-l border-border bg-background/90 px-2 py-4 text-foreground backdrop-blur-md sm:w-28 sm:gap-8"
+      className="absolute inset-y-0 right-0 z-10 flex w-24 flex-col justify-center gap-2 border-l border-border bg-background/90 px-2 py-2 text-foreground backdrop-blur-md sm:w-28 sm:gap-8 sm:py-4"
     >
       {stats.map(({ label, value, Icon }) => (
-        <div key={label} className="flex min-w-0 flex-col items-center gap-2" title={value === null ? `${label}: not available yet` : label}>
+        <div key={label} className="flex min-w-0 flex-col items-center gap-1 sm:gap-2" title={value === null ? `${label}: not available yet` : label}>
           <div className="flex h-8 w-full items-center justify-center gap-2">
             <Icon className="size-5 shrink-0 text-primary" aria-hidden="true" />
             <span className="min-w-0 text-base font-bold tabular-nums" aria-label={value === null ? `${label} unavailable` : `${countFormatter.format(value)} ${label.toLowerCase()}`}>
