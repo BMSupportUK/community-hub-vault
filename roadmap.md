@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Restore missing Direct Install app demo videos and verify playback
+- [x] Restore Direct Install demos for renamed QD, BM XC and Smart Player labels; four matching tests pass and all three private videos play in signed-in app cards (BM Tivi/Netmirror have no saved demos)
 - [x] Fix duplicate-name sign-up with atomic username suffix retries; live trigger read-back and four isolated database tests pass; real sign-up/email flow not exercised
 - [x] Add right-side hero subscriber/video icon bar; desktop and phone checked; unavailable counts show dashes
 - [ ] Connect live subscriber/video counts (blocked: channel name or link not supplied)
