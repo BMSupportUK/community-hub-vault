@@ -7,6 +7,7 @@ import { MessageSquare, CalendarClock, LifeBuoy, Sparkles } from "lucide-react";
 import { BmSplash } from "@/components/app/BmSplash";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
+import { HeroChannelStats } from "@/components/app/HeroChannelStats";
 
 function pickIcon(title: string) {
   const t = title.toLowerCase();
@@ -164,8 +165,9 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[56vh] object-cover lg:h-full lg:max-h-none [@media(max-height:650px)]:max-h-none"
+                  className="block w-full h-auto max-h-[56vh] object-cover pr-24 sm:pr-28 lg:h-full lg:max-h-none [@media(max-height:650px)]:max-h-none"
                 />
+                <HeroChannelStats />
               </div>
             </div>
           </div>
