@@ -1,5 +1,6 @@
 # Roadmap
-- [ ] Add right-side hero subscriber and video counts from the channel's live source
+- [x] Add right-side hero subscriber/video icon bar; desktop and phone checked; unavailable counts show dashes
+- [ ] Connect live subscriber/video counts (blocked: channel name or link not supplied)
 - [x] Replace screen-lock PIN with bearer-bound account-password verification; PIN setup/reset retired, identity and idle tests pass; signed-in wrong-password rejection checked
 - [ ] Verify successful screen unlock with a known account password (no test password supplied; no customer password changed)
 - [x] Allow customers to confirm their existing password when completing reset requests; seven tests pass, build OK and signed-in reset instructions checked; no real account password changed

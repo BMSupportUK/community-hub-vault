@@ -7,6 +7,7 @@ import { MessageSquare, CalendarClock, LifeBuoy, Sparkles } from "lucide-react";
 import { BmSplash } from "@/components/app/BmSplash";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
+import { HeroChannelStats } from "@/components/app/HeroChannelStats";
 
 function pickIcon(title: string) {
   const t = title.toLowerCase();
@@ -155,7 +156,7 @@ function Landing() {
 
             <div className="relative w-full md:-ml-2 lg:-ml-4 lg:h-full">
               <div className="landing-hero-glow absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] w-full lg:h-full">
+              <div className="relative min-h-40 rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] w-full lg:h-full">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
@@ -164,8 +165,9 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[56vh] object-cover lg:h-full lg:max-h-none [@media(max-height:650px)]:max-h-none"
+                  className="block w-full h-auto max-h-[56vh] object-cover pr-24 sm:pr-28 lg:h-full lg:max-h-none [@media(max-height:650px)]:max-h-none"
                 />
+                <HeroChannelStats />
               </div>
             </div>
           </div>
