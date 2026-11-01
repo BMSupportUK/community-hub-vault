@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Fix duplicate-name sign-up in the profile-creation trigger and verify original access rules
 - [x] Add right-side hero subscriber/video icon bar; desktop and phone checked; unavailable counts show dashes
 - [ ] Connect live subscriber/video counts (blocked: channel name or link not supplied)
 - [x] Replace screen-lock PIN with bearer-bound account-password verification; PIN setup/reset retired, identity and idle tests pass; signed-in wrong-password rejection checked
