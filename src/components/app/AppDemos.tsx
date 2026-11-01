@@ -12,6 +12,7 @@ import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { compressVideoFile } from "@/lib/compress-video";
 import { findAppDemo } from "@/lib/app-demo-match";
+import comingSoonImg from "@/assets/video-coming-soon.jpg";
 
 const CATEGORIES = [
   { key: "official_server", label: "Official Service App" },
@@ -435,7 +436,10 @@ function PlayerDialog({ demo, onClose }: { demo: Demo | null; onClose: () => voi
 function PickVideo({ demo }: { demo: Demo | undefined }) {
   const src = useSignedUrl(demo?.video_path);
   const poster = useSignedUrl(demo?.poster_path);
-  if (!demo) return <div className="aspect-video w-full grid place-items-center bg-muted text-sm text-muted-foreground">Video coming soon</div>;
+  if (!demo) return <div className="relative aspect-video w-full overflow-hidden bg-muted">
+    <img src={comingSoonImg} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-background/85 px-3 py-1 text-xs font-semibold text-foreground shadow-soft">Video coming soon</span>
+  </div>;
   return <video src={src ?? undefined} poster={poster ?? undefined} controls preload="metadata" playsInline
     controlsList="nodownload noremoteplayback" disablePictureInPicture onContextMenu={(e) => e.preventDefault()}
     className="aspect-video w-full bg-black object-contain" />;
