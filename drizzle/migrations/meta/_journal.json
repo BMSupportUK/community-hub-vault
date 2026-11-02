@@ -1821,6 +1821,13 @@
       "when": 1793534627938,
       "tag": "0259_deduplicate_signup_usernames",
       "breakpoints": true
+    },
+    {
+      "idx": 260,
+      "version": "7",
+      "when": 1793645677530,
+      "tag": "0260_bm_player",
+      "breakpoints": true
     }
   ]
 }

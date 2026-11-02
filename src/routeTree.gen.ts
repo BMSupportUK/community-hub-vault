@@ -78,6 +78,7 @@ import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './rout
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminPackagesRouteImport } from './routes/_authenticated/_approved/admin-packages'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
+import { Route as AuthenticatedApprovedAdminPlayerRouteImport } from './routes/_authenticated/_approved/admin-player'
 import { Route as AuthenticatedApprovedAdminPredictionsRouteImport } from './routes/_authenticated/_approved/admin-predictions'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
 import { Route as AuthenticatedApprovedAdminProfitCostsRouteImport } from './routes/_authenticated/_approved/admin-profit-costs'
@@ -113,6 +114,7 @@ import { Route as AuthenticatedApprovedNotificationSettingsRouteImport } from '.
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
 import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
 import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
+import { Route as AuthenticatedApprovedSendToAppRouteImport } from './routes/_authenticated/_approved/send-to-app'
 import { Route as AuthenticatedApprovedShiftHistoryRouteImport } from './routes/_authenticated/_approved/shift-history'
 import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
 import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
@@ -138,6 +140,7 @@ import { Route as ApiPublicEnablerStaffHelpRouteImport } from './routes/api/publ
 import { Route as ApiPublicEnablerTicketSupportRouteImport } from './routes/api/public/enabler-ticket-support'
 import { Route as ApiPublicInstallScreenApkRouteImport } from './routes/api/public/install-screen-apk'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
+import { Route as ApiPublicPlayerRouteImport } from './routes/api/public/player'
 import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/public/remote-helper-apk'
 import { Route as ApiPublicRemoteSetupRouteImport } from './routes/api/public/remote-setup'
 import { Route as ApiPublicTvRouteImport } from './routes/api/public/tv'
@@ -590,6 +593,12 @@ const AuthenticatedApprovedAdminPermissionsRoute =
     path: '/admin-permissions',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminPlayerRoute =
+  AuthenticatedApprovedAdminPlayerRouteImport.update({
+    id: '/admin-player',
+    path: '/admin-player',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminPredictionsRoute =
   AuthenticatedApprovedAdminPredictionsRouteImport.update({
     id: '/admin-predictions',
@@ -804,6 +813,12 @@ const AuthenticatedApprovedReviewsRoute =
       (d) => d.Route,
     ),
   )
+const AuthenticatedApprovedSendToAppRoute =
+  AuthenticatedApprovedSendToAppRouteImport.update({
+    id: '/send-to-app',
+    path: '/send-to-app',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedShiftHistoryRoute =
   AuthenticatedApprovedShiftHistoryRouteImport.update({
     id: '/shift-history',
@@ -950,6 +965,11 @@ const ApiPublicInstallScreenApkRoute =
 const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   id: '/api/public/link-preview',
   path: '/api/public/link-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPlayerRoute = ApiPublicPlayerRouteImport.update({
+  id: '/api/public/player',
+  path: '/api/public/player',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRemoteHelperApkRoute =
@@ -1478,6 +1498,7 @@ export interface FileRoutesByFullPath {
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-player': typeof AuthenticatedApprovedAdminPlayerRoute
   '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
@@ -1513,6 +1534,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
+  '/send-to-app': typeof AuthenticatedApprovedSendToAppRoute
   '/shift-history': typeof AuthenticatedApprovedShiftHistoryRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
@@ -1538,6 +1560,7 @@ export interface FileRoutesByFullPath {
   '/api/public/enabler-ticket-support': typeof ApiPublicEnablerTicketSupportRoute
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/player': typeof ApiPublicPlayerRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
@@ -1684,6 +1707,7 @@ export interface FileRoutesByTo {
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-player': typeof AuthenticatedApprovedAdminPlayerRoute
   '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
@@ -1718,6 +1742,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
+  '/send-to-app': typeof AuthenticatedApprovedSendToAppRoute
   '/shift-history': typeof AuthenticatedApprovedShiftHistoryRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
@@ -1743,6 +1768,7 @@ export interface FileRoutesByTo {
   '/api/public/enabler-ticket-support': typeof ApiPublicEnablerTicketSupportRoute
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/player': typeof ApiPublicPlayerRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
@@ -1894,6 +1920,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/_authenticated/_approved/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/_authenticated/_approved/admin-player': typeof AuthenticatedApprovedAdminPlayerRoute
   '/_authenticated/_approved/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
@@ -1929,6 +1956,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
+  '/_authenticated/_approved/send-to-app': typeof AuthenticatedApprovedSendToAppRoute
   '/_authenticated/_approved/shift-history': typeof AuthenticatedApprovedShiftHistoryRoute
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
@@ -1954,6 +1982,7 @@ export interface FileRoutesById {
   '/api/public/enabler-ticket-support': typeof ApiPublicEnablerTicketSupportRoute
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
+  '/api/public/player': typeof ApiPublicPlayerRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
@@ -2104,6 +2133,7 @@ export interface FileRouteTypes {
     | '/admin-notifications'
     | '/admin-packages'
     | '/admin-permissions'
+    | '/admin-player'
     | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-profit-costs'
@@ -2139,6 +2169,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/responsive-check'
     | '/reviews'
+    | '/send-to-app'
     | '/shift-history'
     | '/shifts'
     | '/shop'
@@ -2164,6 +2195,7 @@ export interface FileRouteTypes {
     | '/api/public/enabler-ticket-support'
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
+    | '/api/public/player'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
     | '/api/public/tv'
@@ -2310,6 +2342,7 @@ export interface FileRouteTypes {
     | '/admin-notifications'
     | '/admin-packages'
     | '/admin-permissions'
+    | '/admin-player'
     | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-profit-costs'
@@ -2344,6 +2377,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/responsive-check'
     | '/reviews'
+    | '/send-to-app'
     | '/shift-history'
     | '/shifts'
     | '/shop'
@@ -2369,6 +2403,7 @@ export interface FileRouteTypes {
     | '/api/public/enabler-ticket-support'
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
+    | '/api/public/player'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
     | '/api/public/tv'
@@ -2519,6 +2554,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-notifications'
     | '/_authenticated/_approved/admin-packages'
     | '/_authenticated/_approved/admin-permissions'
+    | '/_authenticated/_approved/admin-player'
     | '/_authenticated/_approved/admin-predictions'
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-profit-costs'
@@ -2554,6 +2590,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/responsive-check'
     | '/_authenticated/_approved/reviews'
+    | '/_authenticated/_approved/send-to-app'
     | '/_authenticated/_approved/shift-history'
     | '/_authenticated/_approved/shifts'
     | '/_authenticated/_approved/shop'
@@ -2579,6 +2616,7 @@ export interface FileRouteTypes {
     | '/api/public/enabler-ticket-support'
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
+    | '/api/public/player'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
     | '/api/public/tv'
@@ -2707,6 +2745,7 @@ export interface RootRouteChildren {
   ApiPublicEnablerTicketSupportRoute: typeof ApiPublicEnablerTicketSupportRoute
   ApiPublicInstallScreenApkRoute: typeof ApiPublicInstallScreenApkRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
+  ApiPublicPlayerRoute: typeof ApiPublicPlayerRoute
   ApiPublicRemoteHelperApkRoute: typeof ApiPublicRemoteHelperApkRoute
   ApiPublicRemoteSetupRoute: typeof ApiPublicRemoteSetupRoute
   ApiPublicTvRoute: typeof ApiPublicTvRoute
@@ -3245,6 +3284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminPermissionsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-player': {
+      id: '/_authenticated/_approved/admin-player'
+      path: '/admin-player'
+      fullPath: '/admin-player'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminPlayerRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-predictions': {
       id: '/_authenticated/_approved/admin-predictions'
       path: '/admin-predictions'
@@ -3490,6 +3536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedReviewsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/send-to-app': {
+      id: '/_authenticated/_approved/send-to-app'
+      path: '/send-to-app'
+      fullPath: '/send-to-app'
+      preLoaderRoute: typeof AuthenticatedApprovedSendToAppRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/shift-history': {
       id: '/_authenticated/_approved/shift-history'
       path: '/shift-history'
@@ -3663,6 +3716,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/link-preview'
       fullPath: '/api/public/link-preview'
       preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/player': {
+      id: '/api/public/player'
+      path: '/api/public/player'
+      fullPath: '/api/public/player'
+      preLoaderRoute: typeof ApiPublicPlayerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/remote-helper-apk': {
@@ -4336,6 +4396,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
   AuthenticatedApprovedAdminPackagesRoute: typeof AuthenticatedApprovedAdminPackagesRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
+  AuthenticatedApprovedAdminPlayerRoute: typeof AuthenticatedApprovedAdminPlayerRoute
   AuthenticatedApprovedAdminPredictionsRoute: typeof AuthenticatedApprovedAdminPredictionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminProfitCostsRoute: typeof AuthenticatedApprovedAdminProfitCostsRoute
@@ -4371,6 +4432,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedResponsiveCheckRoute: typeof AuthenticatedApprovedResponsiveCheckRoute
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
+  AuthenticatedApprovedSendToAppRoute: typeof AuthenticatedApprovedSendToAppRoute
   AuthenticatedApprovedShiftHistoryRoute: typeof AuthenticatedApprovedShiftHistoryRoute
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
@@ -4455,6 +4517,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminPackagesRoute,
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
+  AuthenticatedApprovedAdminPlayerRoute: AuthenticatedApprovedAdminPlayerRoute,
   AuthenticatedApprovedAdminPredictionsRoute:
     AuthenticatedApprovedAdminPredictionsRoute,
   AuthenticatedApprovedAdminProfanityRoute:
@@ -4511,6 +4574,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedResponsiveCheckRoute:
     AuthenticatedApprovedResponsiveCheckRoute,
   AuthenticatedApprovedReviewsRoute: AuthenticatedApprovedReviewsRoute,
+  AuthenticatedApprovedSendToAppRoute: AuthenticatedApprovedSendToAppRoute,
   AuthenticatedApprovedShiftHistoryRoute:
     AuthenticatedApprovedShiftHistoryRoute,
   AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
@@ -4660,6 +4724,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicEnablerTicketSupportRoute: ApiPublicEnablerTicketSupportRoute,
   ApiPublicInstallScreenApkRoute: ApiPublicInstallScreenApkRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
+  ApiPublicPlayerRoute: ApiPublicPlayerRoute,
   ApiPublicRemoteHelperApkRoute: ApiPublicRemoteHelperApkRoute,
   ApiPublicRemoteSetupRoute: ApiPublicRemoteSetupRoute,
   ApiPublicTvRoute: ApiPublicTvRoute,

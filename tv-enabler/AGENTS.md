@@ -1,2 +1,5 @@
 # tv-enabler rules
 - TV Enabler discovery identifies Fire TVs from local DIAL/UPnP manufacturer/model metadata independently of ADB reachability, holds a multicast lock during scanning, and requires explicit selection; TCP-only reachability never authenticates or enables a TV, so devices with closed debugging remain discoverable without side effects.
+
+- BM TV Enabler (`tv-enabler/`) is PIN-gated and signed with the permanent BM key. Install Guides' QR opens `/api/public/tv-enabler-apk`, selecting the latest available non-Windows build, with one Download button (`?download=1` streams APK); never show an APK card. Over ADB SYNC, install Helper from `/api/public/remote-helper-apk`, then push its `assets/control.apk` directly from the phone to `/data/local/tmp`; never read the Helper's Android/data export (Fire OS blocks it) or use Downloader. Enable steps mirror `TvRemoteSetupPlugin`.
+- Phone TV ADB clients (`tv-enabler` and BM Support's `tvremote`) stay identical: resend keys on later AUTH and keep pending Allow connections open so AOSP prompts survive.
