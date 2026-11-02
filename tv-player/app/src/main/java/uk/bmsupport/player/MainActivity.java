@@ -606,7 +606,8 @@ public class MainActivity extends Activity {
         final java.util.Map<String, List<Item>> byCat = new java.util.HashMap<>();
         final List<Item> all = new ArrayList<>();
         final String[] current = { null };
-        final java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
+        final boolean[] freshTop = { false };
+        java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
             if (pos < 0 || pos >= catRows.size()) return;
             String[] c = catRows.get(pos);
             if (c[0].equals(current[0])) { if (focusItems) items.requestFocus(); return; }
@@ -623,6 +624,7 @@ public class MainActivity extends Activity {
                 } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>(list)) {
                     @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
                 });
+                freshTop[0] = true;
                 items.clearFocus();
                 items.setSelection(0);
                 items.post(() -> {
@@ -686,6 +688,18 @@ public class MainActivity extends Activity {
             } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
         });
 
+        // D-pad focus entering the list picks the row nearest the category, so a fresh category
+        // would land on a lower row; force the first item the first time focus arrives.
+        final View.OnFocusChangeListener oldFocus = items.getOnFocusChangeListener();
+        items.setOnFocusChangeListener((v, has) -> {
+            if (oldFocus != null) oldFocus.onFocusChange(v, has);
+            if (has && freshTop[0]) {
+                freshTop[0] = false;
+                items.setSelection(0);
+                if (items instanceof ListView) ((ListView) items).setSelectionFromTop(0, 0);
+                items.post(() -> items.setSelection(0));
+            }
+        });
         final Runnable[] pendingCat = new Runnable[1];
         cats.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
