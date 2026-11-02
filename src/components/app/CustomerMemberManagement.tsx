@@ -31,6 +31,7 @@ import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
 import { MemberSecurityActions, AddUserButton } from "@/components/app/MemberSecurityActions";
 import { MemberScreenShareButton } from "@/components/app/MemberScreenShareButton";
+import { MemberCredentialsSection } from "@/components/app/MemberCredentialsSection";
 import { RemoteSession, type Live } from "@/components/tv/TvRemote";
 import { deleteMember, listMemberEmails, updateMemberEmail, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
@@ -412,7 +413,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
       return <section key={group.role} aria-label={group.label} className="space-y-3">
         <h3 className="font-display text-lg font-semibold">{group.label} <span className="text-sm text-muted-foreground">{groupRows.length}</span></h3>
         {!groupRows.length ? <p className="text-sm text-muted-foreground">No staff found.</p> : <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{groupRows.map((row) => <article key={row.id} className="min-w-0 space-y-3 rounded-lg border border-border bg-card/70 p-4">
-          <header className="flex flex-wrap items-center gap-2"><h4 className="break-words font-semibold">{row.username || (row.display_name?.includes('@') ? null : row.display_name) || 'Staff'}</h4>{memberHeader(row.id)}</header>
+          <header className="flex flex-wrap items-center gap-2"><h4 className="break-words font-semibold">{row.username || (row.display_name?.includes('@') ? null : row.display_name) || 'Staff'}</h4>{hasAny(["admin"]) && user && <MemberCredentialsSection ownerId={row.id} ownerLabel={row.username || row.display_name || 'Staff'} currentUserId={user.id} />}{memberHeader(row.id)}</header>
           {memberRoles(row.id)}{memberExtras(row.id)}{memberDetails(row.id)}
         </article>)}</div>}
       </section>;
