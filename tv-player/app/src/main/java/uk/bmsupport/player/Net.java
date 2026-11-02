@@ -11,11 +11,16 @@ import java.nio.charset.StandardCharsets;
 final class Net {
     static final String SITE = "https://bmsupport.uk";
 
-    static String get(String url) throws Exception { return send("GET", url, null); }
+    interface Progress { void bytes(long n); }
 
-    static String postJson(String url, String body) throws Exception { return send("POST", url, body); }
+    static String get(String url) throws Exception { return send("GET", url, null, null); }
 
-    private static String send(String method, String url, String body) throws Exception {
+    /** GET that reports bytes downloaded so far (about every 256 KB). */
+    static String get(String url, Progress p) throws Exception { return send("GET", url, null, p); }
+
+    static String postJson(String url, String body) throws Exception { return send("POST", url, body, null); }
+
+    private static String send(String method, String url, String body, Progress p) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setRequestMethod(method);
         c.setConnectTimeout(15000);
@@ -29,7 +34,9 @@ final class Net {
         int code = c.getResponseCode();
         InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
         ByteArrayOutputStream b = new ByteArrayOutputStream();
-        if (in != null) { byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) b.write(buf, 0, n); in.close(); }
+        if (in != null) { byte[] buf = new byte[16384]; int n; long total = 0, next = 262144;
+            while ((n = in.read(buf)) > 0) { b.write(buf, 0, n); total += n; if (p != null && total >= next) { p.bytes(total); next = total + 262144; } }
+            in.close(); }
         String s = b.toString("UTF-8");
         if (code >= 400) throw new Exception("HTTP " + code + ": " + s);
         return s;

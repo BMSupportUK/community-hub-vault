@@ -422,7 +422,6 @@ public class MainActivity extends Activity {
         tiles.addView(tileWithRefresh("Films", "🎬", "film"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         tiles.addView(tileWithRefresh("Series", "🎞", "series"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(tiles);
-        autoDone = true;
 
         LinearLayout small = row();
         small.addView(button("🏆 Sports guide", v -> showSports()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -433,6 +432,7 @@ public class MainActivity extends Activity {
         root.addView(small);
         setContentView(withHomeBackground(root));
         tiles.getChildAt(0).requestFocus();
+        autoUpdatePlaylists();
 
         io.execute(() -> {
             try {
@@ -591,53 +591,96 @@ public class MainActivity extends Activity {
         root.addView(panes, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
 
+        // Whole section is loaded once (from the saved list) and split by category locally,
+        // so "All" shows straight away and every category opens instantly.
         List<String[]> catRows = new ArrayList<>();
-        io.execute(() -> {
+        final java.util.Map<String, List<Item>> byCat = new java.util.HashMap<>();
+        final List<Item> all = new ArrayList<>();
+        final String[] current = { null };
+        final java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
+            if (pos < 0 || pos >= catRows.size()) return;
+            String[] c = catRows.get(pos);
+            if (c[0].equals(current[0])) { if (focusItems) items.requestFocus(); return; }
+            current[0] = c[0];
+            List<Item> got = c[0].equals("*") ? all : byCat.get(c[0]);
+            java.util.function.Consumer<List<Item>> render = list -> {
+                if (!c[0].equals(current[0])) return;
+                if (posters) {
+                    shown.clear(); shown.addAll(list);
+                    applySort[0] = () -> { sortItems(shown, sortKey[0]); ((BaseAdapter) items.getAdapter()).notifyDataSetChanged(); items.setSelection(0); };
+                    sortItems(shown, sortKey[0]);
+                    items.setAdapter(posterAdapter(shown));
+                } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>(list)) {
+                    @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
+                });
+                epg.setText(c[1] + " · " + list.size() + (kind.equals("live") ? " channels" : " titles"));
+                if (focusItems) items.requestFocus();
+            };
+            if (got != null && !got.isEmpty()) { render.accept(got); return; }
+            // List had no category tags for this one – ask the server for just this category.
+            epg.setText("Loading " + c[1] + "…");
+            plIo.execute(() -> {
+                try {
+                    List<Item> list = parseItems(kind, new JSONArray(cachedGet(kind, listAction, "&category_id=" + URLEncoder.encode(c[0], "UTF-8"))), c[1]);
+                    ui.post(() -> render.accept(list));
+                } catch (Exception ex) { ui.post(() -> { if (c[0].equals(current[0])) epg.setText("Couldn't load this category."); }); }
+            });
+        };
+
+        if (!hasFullList(kind)) updatePlaylists(java.util.Collections.singletonList(kind), true);
+        else if (plQueued.contains(kind)) showPlaylistDialog();
+        epg.setText("Loading " + title + "…");
+        plIo.execute(() -> {
             try {
                 JSONArray a = new JSONArray(cachedGet(kind, catAction, ""));
-                List<String> names = new ArrayList<>();
+                java.util.Map<String, String> catName = new java.util.HashMap<>();
+                List<String[]> rows = new ArrayList<>();
+                rows.add(new String[]{"*", "All"});
                 for (int i = 0; i < a.length(); i++) {
                     JSONObject o = a.getJSONObject(i);
-                    if (hideAdult(o.optString("category_name"))) continue;
-                    catRows.add(new String[]{o.optString("category_id"), o.optString("category_name")});
-                    names.add(o.optString("category_name"));
+                    String cid = o.optString("category_id"), cn = o.optString("category_name");
+                    catName.put(cid, cn);
+                    if (hideAdult(cn)) continue;
+                    rows.add(new String[]{cid, cn});
                 }
-                ui.post(() -> { cats.setAdapter(adapter(names)); cats.requestFocus(); });
-            } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load categories. Check your login in Settings.")); }
+                JSONArray full = new JSONArray(cachedGet(kind, listAction, ""));
+                java.util.Map<String, List<Item>> groups = new java.util.HashMap<>();
+                List<Item> everything = new ArrayList<>();
+                for (int i = 0; i < full.length(); i++) {
+                    JSONObject o = full.getJSONObject(i);
+                    String cid = o.optString("category_id");
+                    String cn = catName.containsKey(cid) ? catName.get(cid) : "";
+                    if (hideAdult(cn)) continue;
+                    Item it = itemFrom(kind, o, cn, i);
+                    everything.add(it);
+                    if (!cid.isEmpty()) { List<Item> g = groups.get(cid); if (g == null) groups.put(cid, g = new ArrayList<>()); g.add(it); }
+                }
+                List<String> names = new ArrayList<>();
+                for (String[] r : rows) names.add(r[1]);
+                ui.post(() -> {
+                    catRows.clear(); catRows.addAll(rows);
+                    byCat.clear(); byCat.putAll(groups);
+                    all.clear(); all.addAll(everything);
+                    cats.setAdapter(adapter(names));
+                    cats.requestFocus();
+                    cats.setSelection(0);
+                    showCat.accept(0, false);
+                });
+            } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
         });
 
+        final Runnable[] pendingCat = new Runnable[1];
+        cats.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (pendingCat[0] != null) ui.removeCallbacks(pendingCat[0]);
+                pendingCat[0] = () -> showCat.accept(pos, false);
+                ui.postDelayed(pendingCat[0], 250);
+            }
+            @Override public void onNothingSelected(AdapterView<?> p) {}
+        });
         cats.setOnItemClickListener((p, v, pos, id) -> {
-            String[] c = catRows.get(pos);
-            epg.setText("Loading " + c[1] + "…");
-            io.execute(() -> {
-                try {
-                    JSONArray a = new JSONArray(cachedGet(kind, listAction, "&category_id=" + URLEncoder.encode(c[0], "UTF-8")));
-                    List<Item> list = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) {
-                        JSONObject o = a.getJSONObject(i);
-                        String sid = kind.equals("series") ? o.optString("series_id") : o.optString("stream_id");
-                        Item it = new Item(kind, sid, o.optString("name"), o.optString("container_extension"), c[1]);
-                        it.poster = kind.equals("series") ? o.optString("cover") : o.optString("stream_icon");
-                        it.added = o.optLong(kind.equals("series") ? "last_modified" : "added", 0);
-                        it.rating = o.optDouble(o.has("rating_5based") ? "rating_5based" : "rating", 0);
-                        if (Double.isNaN(it.rating)) it.rating = 0;
-                        it.pos = i;
-                        list.add(it);
-                    }
-                    ui.post(() -> {
-                        if (posters) {
-                            shown.clear(); shown.addAll(list);
-                            applySort[0] = () -> { sortItems(shown, sortKey[0]); ((BaseAdapter) items.getAdapter()).notifyDataSetChanged(); items.setSelection(0); };
-                            sortItems(shown, sortKey[0]);
-                            items.setAdapter(posterAdapter(shown));
-                        } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list) {
-                            @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
-                        });
-                        epg.setText(c[1] + " · " + list.size() + (kind.equals("live") ? " channels" : " titles"));
-                        items.requestFocus();
-                    });
-                } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load this category.")); }
-            });
+            if (pendingCat[0] != null) ui.removeCallbacks(pendingCat[0]);
+            showCat.accept(pos, true);
         });
 
         items.setOnItemClickListener((p, v, pos, id) -> {
@@ -653,6 +696,23 @@ public class MainActivity extends Activity {
             }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
+    }
+
+    private Item itemFrom(String kind, JSONObject o, String category, int pos) {
+        String sid = kind.equals("series") ? o.optString("series_id") : o.optString("stream_id");
+        Item it = new Item(kind, sid, o.optString("name"), o.optString("container_extension"), category);
+        it.poster = kind.equals("series") ? o.optString("cover") : o.optString("stream_icon");
+        it.added = o.optLong(kind.equals("series") ? "last_modified" : "added", 0);
+        it.rating = o.optDouble(o.has("rating_5based") ? "rating_5based" : "rating", 0);
+        if (Double.isNaN(it.rating)) it.rating = 0;
+        it.pos = pos;
+        return it;
+    }
+
+    private List<Item> parseItems(String kind, JSONArray a, String category) throws Exception {
+        List<Item> l = new ArrayList<>();
+        for (int i = 0; i < a.length(); i++) l.add(itemFrom(kind, a.getJSONObject(i), category, i));
+        return l;
     }
 
     private String clock(long epochSec) {
@@ -1087,26 +1147,126 @@ public class MainActivity extends Activity {
         if (kind == null) prefs.edit().remove("refreshed_live").remove("refreshed_film").remove("refreshed_series").apply();
     }
 
-    /** Clears one section and downloads its categories and full list again. */
-    private void refreshSection(String kind, TextView status) {
-        String catAction = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
-        String listAction = kind.equals("live") ? "get_live_streams" : kind.equals("film") ? "get_vod_streams" : "get_series";
-        if (status != null) status.setText("Updating…");
-        clearCache(kind);
-        io.execute(() -> {
-            try {
-                cachedGet(kind, catAction, "");
-                int n = new JSONArray(Net.get(api(listAction))).length();
-                prefs.edit().putLong("refreshed_" + kind, System.currentTimeMillis()).apply();
-                String what = kind.equals("live") ? " channels" : kind.equals("film") ? " films" : " series";
-                ui.post(() -> {
-                    if (status != null) status.setText(n + what + " · updated now");
-                    Toast.makeText(this, (kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series") + " updated – " + n + what, Toast.LENGTH_SHORT).show();
-                });
-            } catch (Exception e) {
-                ui.post(() -> { if (status != null) status.setText("Couldn't update. Try again."); });
-            }
+    private static String catActionFor(String kind) { return kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories"; }
+    private static String listActionFor(String kind) { return kind.equals("live") ? "get_live_streams" : kind.equals("film") ? "get_vod_streams" : "get_series"; }
+    private static String sectionName(String kind) { return kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series"; }
+
+    private void writeCache(String kind, String key, String body) throws Exception {
+        java.io.File f = cacheFile(kind, key), tmp = new java.io.File(f.getPath() + ".tmp");
+        try (java.io.FileOutputStream o = new java.io.FileOutputStream(tmp)) { o.write(body.getBytes("UTF-8")); }
+        if (!tmp.renameTo(f)) { f.delete(); tmp.renameTo(f); }
+    }
+
+    private boolean hasFullList(String kind) {
+        java.io.File f = cacheFile(kind, listActionFor(kind));
+        return f.exists() && f.length() > 0;
+    }
+
+    // ---------- playlist update queue + progress pop-up ----------
+    /** Playlist downloads run one after another here; browse loads queue behind them so they read the fresh cache. */
+    private final ExecutorService plIo = Executors.newSingleThreadExecutor();
+    private final java.util.Map<String, TextView> tileStatus = new java.util.HashMap<>();
+    private final java.util.Set<String> plQueued = new java.util.HashSet<>();
+    private int plDone, plTotal;
+    private String plMsg = "";
+    private AlertDialog plDialog;
+    private TextView plText, plPct;
+    private android.widget.ProgressBar plBar;
+
+    private boolean playlistsUpdating() { return plTotal > 0 && plDone < plTotal; }
+
+    /** Downloads categories + full lists for the given sections; keeps the old lists until the new ones arrive. */
+    private void updatePlaylists(List<String> kinds, boolean popup) {
+        List<String> todo = new ArrayList<>();
+        for (String k : kinds) if (plQueued.add(k)) todo.add(k);
+        if (todo.isEmpty()) { if (popup && playlistsUpdating()) showPlaylistDialog(); return; }
+        if (!playlistsUpdating()) { plDone = 0; plTotal = 0; }
+        plTotal += todo.size() * 2;
+        plMsg = "Getting ready…";
+        if (popup) showPlaylistDialog();
+        renderPlaylistProgress();
+        for (String kind : todo) {
+            ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText("Updating…"); });
+            plIo.execute(() -> {
+                String name = sectionName(kind);
+                int steps = 0;
+                try {
+                    plSet("Downloading " + name + " categories…");
+                    String cats = Net.get(api(catActionFor(kind)));
+                    new JSONArray(cats);
+                    steps++; plStepDone();
+                    final String what = kind.equals("live") ? "channels" : kind.equals("film") ? "films" : "series";
+                    plSet("Downloading " + name + " " + what + "…");
+                    String list = Net.get(api(listActionFor(kind)), bytes -> plSet("Downloading " + name + " " + what + "…  " + String.format(java.util.Locale.UK, "%.1f MB", bytes / 1048576.0)));
+                    int n = new JSONArray(list).length();
+                    clearCache(kind);
+                    writeCache(kind, catActionFor(kind), cats);
+                    writeCache(kind, listActionFor(kind), list);
+                    prefs.edit().putLong("refreshed_" + kind, System.currentTimeMillis()).apply();
+                    steps++; plStepDone();
+                    ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText(n + " " + what + " · updated now"); });
+                } catch (Exception e) {
+                    ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText("Couldn't update. Try again."); });
+                } finally {
+                    while (steps++ < 2) plStepDone();
+                    ui.post(() -> plQueued.remove(kind));
+                }
+            });
+        }
+    }
+
+    private void plSet(String msg) { plMsg = msg; ui.post(this::renderPlaylistProgress); }
+    private void plStepDone() {
+        ui.post(() -> {
+            plDone++;
+            if (plDone >= plTotal) {
+                plMsg = "All playlists are up to date";
+                renderPlaylistProgress();
+                ui.postDelayed(() -> { if (!playlistsUpdating() && plDialog != null) { try { plDialog.dismiss(); } catch (Exception ignored) {} plDialog = null; } }, 900);
+            } else renderPlaylistProgress();
         });
+    }
+
+    private void showPlaylistDialog() {
+        if (plDialog != null && plDialog.isShowing()) return;
+        LinearLayout box = column();
+        box.setPadding(dp(28), dp(24), dp(28), dp(20));
+        box.setBackgroundColor(CARD);
+        box.addView(text("Updating your playlists", 22, TEXT, true));
+        box.addView(text("Your channels, films and series are being downloaded. Lists will open as soon as this finishes.", 15, MUTED, false));
+        plBar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        plBar.setMax(1000);
+        plBar.setProgressTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(14));
+        bl.topMargin = dp(14);
+        box.addView(plBar, bl);
+        LinearLayout r = row();
+        plText = text("", 15, TEXT, false);
+        plPct = text("", 15, ACCENT, true);
+        r.addView(plText, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        r.addView(plPct);
+        box.addView(r);
+        Button hide = button("Hide – keep updating in the background", v -> { if (plDialog != null) plDialog.dismiss(); });
+        box.addView(hide);
+        plDialog = new AlertDialog.Builder(this).setView(box).create();
+        plDialog.setOnDismissListener(d -> plDialog = null);
+        plDialog.show();
+        hide.requestFocus();
+        renderPlaylistProgress();
+    }
+
+    private void renderPlaylistProgress() {
+        if (plBar == null || plDialog == null) return;
+        int pct = plTotal == 0 ? 100 : Math.min(100, plDone * 100 / plTotal);
+        plBar.setProgress(plTotal == 0 ? 1000 : Math.min(1000, plDone * 1000 / plTotal));
+        plText.setText(plMsg);
+        plPct.setText("  " + pct + "%");
+    }
+
+    /** Manual refresh from a tile: one section, with the progress pop-up. */
+    private void refreshSection(String kind, TextView status) {
+        if (status != null) tileStatus.put(kind, status);
+        updatePlaylists(java.util.Collections.singletonList(kind), true);
     }
 
     private String refreshedLabel(String kind) {
@@ -1119,17 +1279,28 @@ public class MainActivity extends Activity {
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         col.addView(tile(label, icon, v -> browse(kind)), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
-        TextView status = text(refreshedLabel(kind), 13, MUTED, false);
+        TextView status = text(plQueued.contains(kind) ? "Updating…" : refreshedLabel(kind), 13, MUTED, false);
         status.setGravity(Gravity.CENTER);
+        tileStatus.put(kind, status);
         Button r = button("⟳  Refresh " + label, v -> refreshSection(kind, status));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = dp(8);
         col.addView(r, lp);
         col.addView(status);
-        String auto = prefs.getString("auto_refresh", "daily");
-        long last = prefs.getLong("refreshed_" + kind, 0);
-        if (!autoDone && (auto.equals("open") || (auto.equals("daily") && System.currentTimeMillis() - last > 86_400_000L))) refreshSection(kind, status);
         return col;
+    }
+
+    /** Front screen start-up: fetch any section that has no list yet, or is due under the Automation setting. */
+    private void autoUpdatePlaylists() {
+        if (autoDone) return;
+        autoDone = true;
+        String auto = prefs.getString("auto_refresh", "daily");
+        List<String> due = new ArrayList<>();
+        for (String k : new String[]{"live", "film", "series"}) {
+            long last = prefs.getLong("refreshed_" + k, 0);
+            if (!hasFullList(k) || auto.equals("open") || (auto.equals("daily") && System.currentTimeMillis() - last > 86_400_000L)) due.add(k);
+        }
+        if (!due.isEmpty()) updatePlaylists(due, true);
     }
     private boolean autoDone;
 
@@ -1755,14 +1926,14 @@ public class MainActivity extends Activity {
     private android.widget.GridView posterGrid() {
         android.widget.GridView g = new android.widget.GridView(this);
         g.setBackgroundColor(CARD);
-        GradientDrawable ring = new GradientDrawable(); ring.setColor(Color.TRANSPARENT); ring.setCornerRadius(dp(8)); ring.setStroke(dp(4), ACCENT);
-        g.setSelector(ring);
+        // Nothing is drawn over the posters: the selected card paints its own ring around the picture.
+        g.setSelector(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
         g.setColumnWidth(dp(130));
         g.setNumColumns(android.widget.GridView.AUTO_FIT);
         g.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
         g.setHorizontalSpacing(dp(8)); g.setVerticalSpacing(dp(10));
         g.setPadding(dp(8), dp(8), dp(8), dp(8));
-        g.setDrawSelectorOnTop(true);
+        g.setDrawSelectorOnTop(false);
         return g;
     }
 
@@ -1779,7 +1950,9 @@ public class MainActivity extends Activity {
             @Override public View getView(int i, View cv, ViewGroup parent) {
                 LinearLayout card; android.widget.ImageView img; TextView t;
                 if (cv == null) {
-                    card = column(); card.setPadding(dp(4), dp(4), dp(4), dp(4));
+                    card = column(); card.setPadding(dp(5), dp(5), dp(5), dp(5));
+                    card.setBackground(posterCardBg());
+                    card.setDuplicateParentStateEnabled(false);
                     img = new android.widget.ImageView(MainActivity.this);
                     img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
                     img.setBackgroundColor(Color.rgb(20, 28, 48));
@@ -1796,30 +1969,77 @@ public class MainActivity extends Activity {
         };
     }
 
+    private StateListDrawable posterCardBg() {
+        GradientDrawable on = new GradientDrawable(); on.setColor(BG); on.setCornerRadius(dp(8)); on.setStroke(dp(4), ACCENT);
+        GradientDrawable off = new GradientDrawable(); off.setColor(BG); off.setCornerRadius(dp(8));
+        StateListDrawable st = new StateListDrawable();
+        st.addState(new int[]{android.R.attr.state_selected}, on);
+        st.addState(new int[]{android.R.attr.state_focused}, on);
+        st.addState(new int[]{android.R.attr.state_pressed}, on);
+        st.addState(new int[]{}, off);
+        return st;
+    }
+
+    /** Waiting picture views per poster address, so one address is only downloaded once at a time. */
+    private final java.util.Map<String, List<android.widget.ImageView>> posterWaiting = new java.util.HashMap<>();
+    private final java.util.Map<String, Long> posterFailed = new java.util.HashMap<>();
+
+    private java.io.File posterFile(String url) {
+        java.io.File d = new java.io.File(getCacheDir(), "posters");
+        d.mkdirs();
+        return new java.io.File(d, Integer.toHexString(url.hashCode()) + "_" + url.length() + ".img");
+    }
+
     private void loadPoster(android.widget.ImageView img, String url) {
+        if (url == null || url.isEmpty() || !url.startsWith("http")) { img.setTag(null); img.setImageDrawable(null); return; }
+        // Same poster already on screen (the grid redraws a card when it is highlighted) – leave it alone.
+        if (url.equals(img.getTag()) && img.getDrawable() != null) return;
         img.setTag(url);
-        img.setImageDrawable(null);
-        if (url == null || url.isEmpty() || !url.startsWith("http")) return;
         android.graphics.Bitmap c = posterCache.get(url);
         if (c != null) { img.setImageBitmap(c); return; }
+        img.setImageDrawable(null);
+        Long failed = posterFailed.get(url);
+        if (failed != null && System.currentTimeMillis() - failed < 60_000) return;
+        List<android.widget.ImageView> waiting = posterWaiting.get(url);
+        if (waiting != null) { if (!waiting.contains(img)) waiting.add(img); return; }
+        waiting = new ArrayList<>(); waiting.add(img);
+        posterWaiting.put(url, waiting);
+        final int target = dp(180);
         posterIo.execute(() -> {
+            android.graphics.Bitmap b = null;
             try {
-                java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
-                h.setConnectTimeout(8000); h.setReadTimeout(10000); h.setInstanceFollowRedirects(true);
-                h.setRequestProperty("User-Agent", "VLC/3.0.20 LibVLC/3.0.20");
-                byte[] data;
-                try (java.io.InputStream in = h.getInputStream(); java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream()) {
-                    byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) bo.write(buf, 0, n); data = bo.toByteArray();
+                java.io.File f = posterFile(url);
+                byte[] data = null;
+                if (f.exists() && f.length() > 0) {
+                    try (java.io.FileInputStream in = new java.io.FileInputStream(f); java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream()) {
+                        byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) bo.write(buf, 0, n); data = bo.toByteArray();
+                    } catch (Exception ignored) { data = null; }
+                }
+                if (data == null) {
+                    java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                    h.setConnectTimeout(8000); h.setReadTimeout(10000); h.setInstanceFollowRedirects(true);
+                    h.setRequestProperty("User-Agent", "VLC/3.0.20 LibVLC/3.0.20");
+                    try (java.io.InputStream in = h.getInputStream(); java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream()) {
+                        byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) bo.write(buf, 0, n); data = bo.toByteArray();
+                    }
                 }
                 android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
                 o.inJustDecodeBounds = true; android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
-                int s = 1; while (o.outHeight / (s * 2) >= dp(180)) s *= 2;
+                int s = 1; while (o.outHeight / (s * 2) >= target) s *= 2;
                 o = new android.graphics.BitmapFactory.Options(); o.inSampleSize = s; o.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
-                android.graphics.Bitmap b = android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
-                if (b == null) return;
-                posterCache.put(url, b);
-                ui.post(() -> { if (url.equals(img.getTag())) img.setImageBitmap(b); });
+                b = android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
+                if (b != null && !(f.exists() && f.length() > 0)) {
+                    try (java.io.FileOutputStream out = new java.io.FileOutputStream(f)) { out.write(data); } catch (Exception ignored) {}
+                }
             } catch (Exception ignored) {}
+            final android.graphics.Bitmap done = b;
+            ui.post(() -> {
+                List<android.widget.ImageView> views = posterWaiting.remove(url);
+                if (done == null) { posterFailed.put(url, System.currentTimeMillis()); return; }
+                posterFailed.remove(url);
+                posterCache.put(url, done);
+                if (views != null) for (android.widget.ImageView v : views) if (url.equals(v.getTag())) v.setImageBitmap(done);
+            });
         });
     }
 
