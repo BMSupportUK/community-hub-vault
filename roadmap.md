@@ -38,3 +38,12 @@
 - [ ] Verify handoff through an actual TV connection (requires customer TV and current Enabler)
 - [x] BM Direct Install TV app (install only, secure 30-min Downloader link, own Install Guides tab)
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
+
+## BM Player (IPTV player apps)
+- [ ] Database + admin DNS panel (one editable DNS, admin only)
+- [ ] Device linking API for apps (`/api/public/player`)
+- [ ] Website: Send to app (TV code) + send from My Logins + linked devices
+- [ ] Website: Report a problem page (opens pre-filled support ticket)
+- [ ] Android app (TV / Fire TV / phone): tile home, Live/Films/Series/EPG/favourites/recent, optional VLC, report QR
+- [ ] Windows app with bundled VLC
+- [ ] Downloads in Install Guides
