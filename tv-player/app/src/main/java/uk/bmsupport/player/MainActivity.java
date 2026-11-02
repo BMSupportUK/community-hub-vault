@@ -1334,9 +1334,9 @@ public class MainActivity extends Activity {
 
     /** Reopen the sports guide at the sport/competition the customer was in. */
     private void showSportsKeep() {
-        String sp = sportsPick, cp = compPick;
+        List<String> keep = new ArrayList<>(sportsPath);
         showSports();
-        sportsPick = sp; compPick = cp;
+        sportsPath.addAll(keep);
         if (sportsData != null) renderSports(sportsData);
     }
 
