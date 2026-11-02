@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Checkbox } from "@/components/ui/checkbox";
-import { selectedPlayerLogin, type SavedPlayerLogin } from "./player-login-selection";
+import { manualPlayerLogin, selectedPlayerLogin, type SavedPlayerLogin } from "./player-login-selection";
 import { usePlayerDevices, type PlayerDevice } from "@/hooks/use-player-devices";
 import { useServerFn } from "@tanstack/react-start";
 import { Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
@@ -39,18 +39,21 @@ export function PlayerDeviceLinkSection() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [target, setTarget] = useState<PlayerDevice | null>(null);
+  const [manual, setManual] = useState({ username: "", password: "" });
+  // Nothing saved on the account: let the subscriber type their login in instead.
+  const typeItIn = !loadingAccounts && !accountsFailed && accounts.length === 0;
+  const login = typeItIn ? manualPlayerLogin(manual.username, manual.password) : selectedPlayerLogin(accounts, selectedId);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
     if (!target && !/^\d{6}$/.test(code)) { setError("Enter the 6-digit code shown on your screen."); return; }
-    const login = selectedPlayerLogin(accounts, selectedId);
-    if (!login) { setError("Tick the app login you want to send."); return; }
+    if (!login) { setError(typeItIn ? "Enter your app login and password." : "Tick the app login you want to send."); return; }
     setBusy(true);
     try {
       if (target) await sendDevice({ data: { deviceId: target.id, ...login } });
       else await sendCode({ data: { code, ...login } });
       toast.success("Sent! Your app will sign in within a few seconds.");
-      setCode(""); setSelection(null); setTarget(null); void reload();
+      setCode(""); setSelection(null); setTarget(null); setManual({ username: "", password: "" }); void reload();
     } catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setBusy(false); }
   }
@@ -75,10 +78,22 @@ export function PlayerDeviceLinkSection() {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} className="font-mono text-lg tracking-[0.4em]" />
           </div>}
           <fieldset className="min-w-0 space-y-3" disabled={busy}>
-            <legend className="mb-2 text-sm font-semibold">Your saved app logins</legend>
+            <legend className="mb-2 text-sm font-semibold">{typeItIn ? "Your app login" : "Your saved app logins"}</legend>
             {loadingAccounts ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading your logins…</p>
               : accountsFailed ? <div role="alert" className="text-sm text-destructive">Your logins could not be loaded. <Button type="button" variant="link" size="sm" onClick={() => void refetch()}>Try again</Button></div>
-              : !accounts.length ? <p className="text-sm text-muted-foreground">No app logins have been saved on your account yet.</p>
+              : typeItIn ? <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">No app logins are saved on your account yet, so type in the login your app uses.</p>
+                <div className="space-y-1.5">
+                  <Label htmlFor="player-manual-login">App login</Label>
+                  <Input id="player-manual-login" autoComplete="off" value={manual.username}
+                    onChange={(e) => setManual((m) => ({ ...m, username: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="player-manual-password">Password</Label>
+                  <Input id="player-manual-password" type="password" autoComplete="off" value={manual.password}
+                    onChange={(e) => setManual((m) => ({ ...m, password: e.target.value }))} />
+                </div>
+              </div>
               : accounts.map((account) => <label key={account.id} className="flex min-w-0 cursor-pointer items-start gap-3 border-b border-border py-3 last:border-b-0">
                 <Checkbox className="mt-1" checked={selectedId === account.id} disabled={!account.app_login_name || !account.password}
                   onCheckedChange={(checked) => { if (ownerId) setSelection(checked === true ? { ownerId, id: account.id } : null); }}
@@ -90,7 +105,7 @@ export function PlayerDeviceLinkSection() {
                 </span>
               </label>)}
           </fieldset>
-          <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !selectedPlayerLogin(accounts, selectedId)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Send to app</Button>
+          <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !login}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Send to app</Button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <p className="text-xs text-muted-foreground">Your login goes straight to the app once and is then deleted from our side.</p>
         </form>
