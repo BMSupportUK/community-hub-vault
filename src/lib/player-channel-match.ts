@@ -24,6 +24,7 @@ export function normChannel(name: string): string {
   s = s.replace(/([a-z])(\d)/g, "$1 $2").replace(/(\d)([a-z])/g, "$1 $2"); // "dazn1" -> "dazn 1"
   s = s.replace(new RegExp(`\\b(?:${COUNTRY}|${NOISE})\\b`, "g"), " ");
   s = s.replace(/\bsports\b/g, "sport").replace(/\b0+(\d)/g, "$1"); // "Sports"="Sport", "01"="1"
+  s = s.replace(/\bcoupang\s+play\b/g, "coupang"); // Same numbered Sports Pass feeds under either provider label.
   return s.replace(/\s+/g, " ").trim();
 }
 

@@ -2,6 +2,17 @@ import { describe, expect, test } from "bun:test";
 import { matchChannel, normChannel } from "../src/lib/player-channel-match";
 
 describe("player channel matching", () => {
+  test("Coupang Play guide matches shortened Coupang playlist feeds", () => {
+    expect(matchChannel("Coupang Play 1", ["Coupang 01 HD", "Coupang 2 HD", "Coupang 10 HD"]))
+      .toEqual(["Coupang 01 HD"]);
+  });
+  test("Coupang short guide matches Play feed with programme details", () => {
+    expect(matchChannel("Coupang 02", ["KR: Coupang Play 2 HD | Boston Celtics v Houston Rockets"]))
+      .toEqual(["KR: Coupang Play 2 HD | Boston Celtics v Houston Rockets"]);
+  });
+  test("Coupang does not select another provider with the same number", () => {
+    expect(matchChannel("Coupang Play 1", ["DAZN 1 HD", "Peacock 1 HD"])).toEqual([]);
+  });
   test("strips country prefix and quality tags", () => {
     expect(normChannel("UK: SKY SPORTS MAIN EVENT FHD")).toBe("sky sport main event");
   });
