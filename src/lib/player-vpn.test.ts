@@ -65,7 +65,8 @@ test("checkDeviceVpn caches per IP so repeated polls ask once", async () => {
     expect(a.vpn_status).toBe("no");
     expect(b.vpn_status).toBe("no");
     expect(a.vpn_provider).toBe("Virgin Media Limited");
-    expect(calls).toBe(1);
+    // One clean answer: proxycheck, then the ipapi.is confirmation — nothing more.
+    expect(calls).toBe(2);
     expect(a.vpn_checked_at).toBeTruthy();
   } finally {
     globalThis.fetch = realFetch;

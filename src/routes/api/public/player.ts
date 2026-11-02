@@ -80,7 +80,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, last_seen_at, connected_since")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, last_seen_at, connected_since, vpn_status, vpn_checked_at")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
 
@@ -149,16 +149,26 @@ export const Route = createFileRoute("/api/public/player")({
 
         // poll: DNS + one-time credential handover
         const { presenceUpdate } = await import("@/lib/player-live");
-        await supabaseAdmin.from("player_devices").update(presenceUpdate({
-          now: Date.now(), lastSeenAt: device.last_seen_at, connectedSince: device.connected_since,
+        const { checkDeviceVpn, needsVpnCheck } = await import("@/lib/player-vpn");
+        const now = Date.now();
+        const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+        const fields = presenceUpdate({
+          now, lastSeenAt: device.last_seen_at, connectedSince: device.connected_since,
           login: body.login, version: body.version, watching: body.watching ?? null,
-          ip: request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+          ip,
           cf: (request as unknown as { cf?: Record<string, unknown> }).cf ?? null,
           headerCountry: request.headers.get("cf-ipcountry"),
-        })).eq("id", device.id);
-        const { data: settings } = await supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message").eq("id", 1).maybeSingle();
-        const { data: pending } = await supabaseAdmin.from("player_pending_credentials")
-          .delete().eq("device_id", device.id).select("username, password, created_at").maybeSingle();
+        });
+        const [{ data: settings }, { data: pending }] = await Promise.all([
+          supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message").eq("id", 1).maybeSingle(),
+          supabaseAdmin.from("player_pending_credentials").delete().eq("device_id", device.id).select("username, password, created_at").maybeSingle(),
+        ]);
+        // A poll that is about to hand the app its login must never wait on an
+        // outside lookup; every later poll can pay for a fresh VPN verdict.
+        if (!pending && needsVpnCheck({ ip, checkedAt: device.vpn_checked_at, status: device.vpn_status, now })) {
+          Object.assign(fields, await checkDeviceVpn(ip as string));
+        }
+        await supabaseAdmin.from("player_devices").update(fields).eq("id", device.id);
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({
           linked: !!device.user_id,
