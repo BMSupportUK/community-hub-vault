@@ -1098,7 +1098,7 @@ export async function autoPublishDiscordQueueItem(queueId: string): Promise<
     subcategory: sub,
     title,
     excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-    body: plainListingToHtml(body),
+    body: withClubChannels(plainListingToHtml(body), `${route.category} ${sub ?? ""} ${title}`),
     image_url: cached?.image_url ?? null,
     published: true,
   } as any);
