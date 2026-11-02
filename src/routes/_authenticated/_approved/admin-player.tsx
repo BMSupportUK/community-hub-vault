@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { savePlayerDns, savePlayerMaintenance, testPlayerDns } from "@/lib/player.functions";
+import { savePlayerChannelAliases, savePlayerDns, savePlayerMaintenance, testPlayerDns } from "@/lib/player.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   component: AdminPlayerPage,
@@ -32,12 +32,16 @@ function AdminPlayerPage() {
   const [result, setResult] = useState<boolean | null>(null);
   const saveMaint = useServerFn(savePlayerMaintenance);
   const [maintOn, setMaintOn] = useState(false), [maintMsg, setMaintMsg] = useState(""), [maintBusy, setMaintBusy] = useState(false);
+  const saveAliases = useServerFn(savePlayerChannelAliases);
+  const [aliasText, setAliasText] = useState(""), [aliasBusy, setAliasBusy] = useState(false);
   const [counts, setCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!isAdmin) return;
-    void supabase.from("player_settings").select("dns, updated_at, maintenance_enabled, maintenance_message").eq("id", 1).maybeSingle().then(({ data }) => {
+    void supabase.from("player_settings").select("dns, updated_at, maintenance_enabled, maintenance_message, channel_aliases").eq("id", 1).maybeSingle().then(({ data }) => {
       setMaintOn(!!data?.maintenance_enabled); setMaintMsg(data?.maintenance_message ?? "");
+      const al = Array.isArray(data?.channel_aliases) ? data.channel_aliases as { from: string; to: string }[] : [];
+      setAliasText(al.map((a) => `${a.from} = ${a.to}`).join("\n"));
       setDns(data?.dns ?? ""); setUpdated(data?.updated_at ?? null);
     });
     void supabase.from("player_devices").select("platform").not("user_id", "is", null).then(({ data }) => {
@@ -91,6 +95,19 @@ function AdminPlayerPage() {
           finally { setMaintBusy(false); }
         }}>{maintBusy ? <Loader2 className="animate-spin" /> : <Save />}Save maintenance</Button>
         <p className="text-xs text-muted-foreground">Open apps switch within about 15 seconds; others when they next open.</p>
+      </section>
+      <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
+        <h2 className="font-display font-semibold">Sports guide channel matching</h2>
+        <p className="text-sm text-muted-foreground">The app's Sports guide links each listed channel to the customer's playlist. If a channel shows "Not in your list", add a line: guide name = playlist name.</p>
+        <Textarea aria-label="Channel matching" rows={5} placeholder={"Viaplay Sports 1 = Premier Sports 1\nSky Sports Racing = Sky Racing"} value={aliasText} onChange={(e) => setAliasText(e.target.value)} />
+        <Button disabled={aliasBusy} onClick={async () => {
+          setAliasBusy(true);
+          try {
+            const aliases = aliasText.split("\n").map((l) => l.split("=")).filter((p) => p.length === 2 && p[0].trim() && p[1].trim()).map(([f, t]) => ({ from: f.trim(), to: t.trim() }));
+            await saveAliases({ data: { aliases } }); toast.success("Channel matching saved");
+          } catch (e) { toast.error(e instanceof Error ? e.message : "Save failed"); }
+          finally { setAliasBusy(false); }
+        }}>{aliasBusy ? <Loader2 className="animate-spin" /> : <Save />}Save channel matching</Button>
       </section>
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>

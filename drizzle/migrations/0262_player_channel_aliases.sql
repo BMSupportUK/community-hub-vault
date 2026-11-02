@@ -1,0 +1,1 @@
+ALTER TABLE public.player_settings ADD COLUMN IF NOT EXISTS channel_aliases jsonb NOT NULL DEFAULT '[]'::jsonb;
