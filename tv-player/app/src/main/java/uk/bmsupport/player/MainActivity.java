@@ -574,15 +574,23 @@ public class MainActivity extends Activity {
             side.addView(pv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200)));
             pv.addOnLayoutChangeListener((v, l, t, r, b2, ol, ot, or, ob) -> {
                 int h = (r - l) * 9 / 16;
+                if (side.getHeight() > 0) h = Math.min(h, side.getHeight() * 2 / 5);
                 if (h > 0 && Math.abs(v.getHeight() - h) > 2) { ViewGroup.LayoutParams lp = v.getLayoutParams(); lp.height = h; v.post(() -> v.setLayoutParams(lp)); }
             });
             pvStatus = text("Highlight a channel to preview it", 14, MUTED, false);
             side.addView(pvStatus);
             pvEpg = text("", 14, TEXT, false);
-            pvEpg.setBackground(focusBg(10));
             pvEpg.setPadding(dp(12), dp(10), dp(12), dp(10));
-            pvEpg.setMinLines(5);
-            side.addView(pvEpg, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            pvEpg.setSingleLine(false);
+            pvEpg.setHorizontallyScrolling(false);
+            android.widget.ScrollView guideScroll = new android.widget.ScrollView(this);
+            guideScroll.setBackground(focusBg(10));
+            guideScroll.setFillViewport(true);
+            guideScroll.setFocusable(true);
+            guideScroll.setContentDescription("Now and Up next programmes");
+            guideScroll.setVerticalScrollBarEnabled(true);
+            guideScroll.addView(pvEpg, new android.widget.ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            side.addView(guideScroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
             side.addView(button("⏰ Set a reminder", v -> pickReminder()));
             panes.addView(side, weight(1.7f, ViewGroup.LayoutParams.MATCH_PARENT));
         }
@@ -737,20 +745,13 @@ public class MainActivity extends Activity {
                     if (st > 0) progs.add(new Object[]{t, st});
                     String times = st > 0 ? clock(st) + (en > 0 ? " – " + clock(en) : "") : e.optString("start", "");
                     if (i == 0) {
-                        head.append("  ·  Now: ").append(t);
                         int pct = st > 0 && en > st ? (int) Math.max(0, Math.min(100, (nowSec - st) * 100 / (en - st))) : -1;
-                        guide.append("NOW  ").append(times).append("\n").append(t);
-                        if (pct >= 0) {
-                            int bars = pct / 10;
-                            StringBuilder bar = new StringBuilder();
-                            for (int b = 0; b < 10; b++) bar.append(b < bars ? "▰" : "▱");
-                            guide.append("\n").append(bar).append("  ").append(pct).append("%");
-                        }
-                        String desc = new String(Base64.decode(e.optString("description"), Base64.DEFAULT), "UTF-8").trim();
-                        if (!desc.isEmpty()) guide.append("\n").append(desc.length() > 140 ? desc.substring(0, 140) + "…" : desc);
+                        guide.append("NOW");
+                        if (pct >= 0) guide.append("  ·  ").append(pct).append("%");
+                        guide.append("\n").append(times).append("\n").append(t);
                         guide.append("\n\nUP NEXT");
                     } else {
-                        guide.append("\n").append(st > 0 ? clock(st) : times).append("   ").append(t);
+                        guide.append("\n\n").append(times).append("\n").append(t);
                     }
                 }
                 String g = guide.length() == 0 ? "No TV guide for this channel." : guide.toString();
