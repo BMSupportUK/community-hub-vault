@@ -1928,10 +1928,10 @@ public class MainActivity extends Activity {
                 Item ch = shownCh.get(r);
                 long now = System.currentTimeMillis() / 1000;
                 if (p == null || p.st <= now) { stopPreview(); play(ch, defaultVlc()); return; }
-                if (MainActivity.this.hasReminder(ch.id, p.st)) { removeReminder(ch.id, p.st); Toast.makeText(MainActivity.this, "Reminder removed", Toast.LENGTH_SHORT).show(); }
-                else { addReminder(ch, p.title, p.st); Toast.makeText(MainActivity.this, "Reminder set – we'll tell you 5 minutes before " + p.title + " starts", Toast.LENGTH_LONG).show(); }
-                grid.invalidate();
-                onHighlight(r, p);
+                Runnable redraw = () -> { grid.invalidate(); onHighlight(r, p); };
+                if (MainActivity.this.hasReminder(ch.id, p.st)) confirmRemoveReminder(ch, p.title, p.st, redraw);
+                else confirmAddReminder(ch, p.title, p.st, redraw);
+
             }
             @Override public boolean hasReminder(int r, long st) { return r >= 0 && r < shownCh.size() && MainActivity.this.hasReminder(shownCh.get(r).id, st); }
         });
