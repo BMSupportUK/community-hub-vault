@@ -1048,7 +1048,15 @@ public class MainActivity extends Activity {
                     String[] names = new String[hits.size()];
                     for (int i = 0; i < names.length; i++) names[i] = hits.get(i).name;
                     new AlertDialog.Builder(this).setTitle(hits.size() + (hits.size() >= 200 ? "+" : "") + " results for \"" + want + "\"")
-                            .setItems(names, (d, i) -> open(hits.get(i)))
+                            .setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, names) {
+                                @Override public View getView(int i, View cv, ViewGroup parent) {
+                                    LinearLayout row = column();
+                                    row.addView(text(names[i], 16, TEXT, false));
+                                    // Films show how much has been watched; series show it per episode on their own page.
+                                    if (kind.equals("film")) row.addView(watchedBar(hits.get(i)));
+                                    return styleRow(row);
+                                }
+                            }, (d, i) -> { Item it = hits.get(i); if (kind.equals("series")) showSeries(it); else open(it); })
                             .setNegativeButton("New search", (d, i) -> showSearch(kind, "")).show();
                 });
             } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't search – try refreshing your playlist", Toast.LENGTH_LONG).show()); }
