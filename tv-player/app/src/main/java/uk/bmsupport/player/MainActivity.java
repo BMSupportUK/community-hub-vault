@@ -211,11 +211,41 @@ public class MainActivity extends Activity {
         for (int i = 0; i < up.size(); i++) labels[i] = clock((long) up.get(i)[1]) + "   " + up.get(i)[0] + (hasReminder(ch.id, (long) up.get(i)[1]) ? "   ⏰ set" : "");
         new AlertDialog.Builder(this).setTitle("Remind me – " + ch.name).setItems(labels, (d, w) -> {
             long st = (long) up.get(w)[1];
-            if (hasReminder(ch.id, st)) { removeReminder(ch.id, st); Toast.makeText(this, "Reminder removed", Toast.LENGTH_SHORT).show(); return; }
-            addReminder(ch, (String) up.get(w)[0], st);
-            Toast.makeText(this, "Reminder set – we'll tell you 5 minutes before " + up.get(w)[0] + " starts", Toast.LENGTH_LONG).show();
+            String title = (String) up.get(w)[0];
+            if (hasReminder(ch.id, st)) confirmRemoveReminder(ch, title, st, null);
+            else confirmAddReminder(ch, title, st, null);
         }).setNegativeButton("Close", null).show();
     }
+
+    /** Ask before booking a reminder so a stray OK never silently sets one. */
+    private void confirmAddReminder(final Item ch, final String title, final long st, final Runnable after) {
+        if (st <= System.currentTimeMillis() / 1000) { Toast.makeText(this, "That programme has already started – reminders are only for programmes that haven't begun", Toast.LENGTH_LONG).show(); if (after != null) after.run(); return; }
+        new AlertDialog.Builder(this).setTitle("Set a reminder?")
+                .setMessage("We'll remind you 5 minutes before " + title + " on " + ch.name + " at " + clock(st) + ".")
+                .setPositiveButton("Set reminder", (d, w) -> {
+                    addReminder(ch, title, st);
+                    Toast.makeText(this, "Reminder set – we'll tell you 5 minutes before " + title + " starts", Toast.LENGTH_LONG).show();
+                    if (after != null) after.run();
+                })
+                .setNegativeButton("Cancel", (d, w) -> { if (after != null) after.run(); })
+                .setOnCancelListener(d -> { if (after != null) after.run(); })
+                .show();
+    }
+
+    /** Ask before cancelling a reminder so it can't be dropped by accident. */
+    private void confirmRemoveReminder(final Item ch, final String title, final long st, final Runnable after) {
+        new AlertDialog.Builder(this).setTitle("Remove reminder?")
+                .setMessage("Stop the reminder for " + title + " on " + ch.name + " at " + clock(st) + "?")
+                .setPositiveButton("Remove reminder", (d, w) -> {
+                    removeReminder(ch.id, st);
+                    Toast.makeText(this, "Reminder removed", Toast.LENGTH_SHORT).show();
+                    if (after != null) after.run();
+                })
+                .setNegativeButton("Keep reminder", (d, w) -> { if (after != null) after.run(); })
+                .setOnCancelListener(d -> { if (after != null) after.run(); })
+                .show();
+    }
+
 
     private JSONArray reminders() { try { return new JSONArray(prefs.getString("reminders", "[]")); } catch (Exception e) { return new JSONArray(); } }
     private boolean hasReminder(String id, long st) {
@@ -1898,10 +1928,10 @@ public class MainActivity extends Activity {
                 Item ch = shownCh.get(r);
                 long now = System.currentTimeMillis() / 1000;
                 if (p == null || p.st <= now) { stopPreview(); play(ch, defaultVlc()); return; }
-                if (MainActivity.this.hasReminder(ch.id, p.st)) { removeReminder(ch.id, p.st); Toast.makeText(MainActivity.this, "Reminder removed", Toast.LENGTH_SHORT).show(); }
-                else { addReminder(ch, p.title, p.st); Toast.makeText(MainActivity.this, "Reminder set – we'll tell you 5 minutes before " + p.title + " starts", Toast.LENGTH_LONG).show(); }
-                grid.invalidate();
-                onHighlight(r, p);
+                Runnable redraw = () -> { grid.invalidate(); onHighlight(r, p); };
+                if (MainActivity.this.hasReminder(ch.id, p.st)) confirmRemoveReminder(ch, p.title, p.st, redraw);
+                else confirmAddReminder(ch, p.title, p.st, redraw);
+
             }
             @Override public boolean hasReminder(int r, long st) { return r >= 0 && r < shownCh.size() && MainActivity.this.hasReminder(shownCh.get(r).id, st); }
         });
