@@ -592,7 +592,6 @@ public class MainActivity extends Activity {
             guideScroll.setVerticalScrollBarEnabled(true);
             guideScroll.addView(pvEpg, new android.widget.ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             side.addView(guideScroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-            side.addView(button("⏰ Set a reminder", v -> pickReminder()));
             panes.addView(side, weight(1.7f, ViewGroup.LayoutParams.MATCH_PARENT));
         }
         final androidx.media3.ui.PlayerView previewView = pv;
@@ -607,6 +606,8 @@ public class MainActivity extends Activity {
         final List<Item> all = new ArrayList<>();
         final String[] current = { null };
         final boolean[] freshTop = { false };
+        final int[] livePos = { -1 };
+        final boolean[] restoring = { false };
         java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
             if (pos < 0 || pos >= catRows.size()) return;
             String[] c = catRows.get(pos);
@@ -625,6 +626,7 @@ public class MainActivity extends Activity {
                     @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
                 });
                 freshTop[0] = true;
+                livePos[0] = -1;
                 items.clearFocus();
                 items.setSelection(0);
                 items.post(() -> {
@@ -693,6 +695,13 @@ public class MainActivity extends Activity {
         final View.OnFocusChangeListener oldFocus = items.getOnFocusChangeListener();
         items.setOnFocusChangeListener((v, has) -> {
             if (oldFocus != null) oldFocus.onFocusChange(v, has);
+            if (has && !freshTop[0] && kind.equals("live") && livePos[0] >= 0) {
+                final int keep = livePos[0];
+                restoring[0] = true;
+                items.setSelection(keep);
+                items.post(() -> items.setSelection(keep));
+                ui.postDelayed(() -> { items.setSelection(keep); livePos[0] = keep; restoring[0] = false; }, 120);
+            }
             if (has && freshTop[0]) {
                 freshTop[0] = false;
                 items.setSelection(0);
@@ -722,6 +731,7 @@ public class MainActivity extends Activity {
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 Item it = (Item) items.getItemAtPosition(pos);
+                if (items.hasFocus() && !restoring[0]) livePos[0] = pos;
                 loadEpg(it, epg, previewEpg);
                 schedulePreview(it, previewView, previewStatus);
             }
@@ -802,8 +812,11 @@ public class MainActivity extends Activity {
             }).show();
             return;
         }
-        String[] opts = {"Play", "Play with VLC", fav, "Report a problem"};
-        new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
+        boolean live = "live".equals(it.kind) && epgItem != null && epgItem.id.equals(it.id);
+        String[] opts = live ? new String[]{"Play", "Play with VLC", "⏰ Set a reminder", fav, "Report a problem"} : new String[]{"Play", "Play with VLC", fav, "Report a problem"};
+        new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w0) -> {
+            int w = w0;
+            if (live) { if (w == 2) { pickReminder(); return; } if (w > 2) w--; }
             if (w == 0) play(it, defaultVlc());
             else if (w == 1) play(it, true);
             else if (w == 2) toggleSaved("fav", it);
