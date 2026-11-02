@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { Checkbox } from "@/components/ui/checkbox";
+import { selectedPlayerLogin, type SavedPlayerLogin } from "./player-login-selection";
 import { usePlayerDevices, type PlayerDevice } from "@/hooks/use-player-devices";
 import { useServerFn } from "@tanstack/react-start";
 import { Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
@@ -15,20 +19,38 @@ export function PlayerDeviceLinkSection() {
   const sendCode = useServerFn(sendLoginWithCode);
   const sendDevice = useServerFn(sendLoginToDevice);
   const { devices, reload } = usePlayerDevices();
-  const [code, setCode] = useState(""), [username, setUsername] = useState(""), [password, setPassword] = useState("");
+  const { user } = useAuth();
+  const ownerId = user?.id;
+  const { data: accounts = [], isPending: loadingAccounts, isError: accountsFailed, refetch } = useQuery({
+    queryKey: ["player-saved-logins", ownerId],
+    enabled: Boolean(ownerId),
+    queryFn: async () => {
+      if (!ownerId) return [];
+      const { data, error } = await supabase.from("app_credentials")
+        .select("id,app_login_name,password,expiry_at,account_type,account_number")
+        .eq("owner_id", ownerId).order("account_number", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as SavedPlayerLogin[];
+    },
+    gcTime: 0,
+  });
+  const [selection, setSelection] = useState<{ ownerId: string; id: string } | null>(null);
+  const selectedId = selection?.ownerId === ownerId ? selection?.id ?? null : null;
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [target, setTarget] = useState<PlayerDevice | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
     if (!target && !/^\d{6}$/.test(code)) { setError("Enter the 6-digit code shown on your screen."); return; }
-    if (!username.trim() || !password) { setError("Enter your username and password."); return; }
+    const login = selectedPlayerLogin(accounts, selectedId);
+    if (!login) { setError("Tick the app login you want to send."); return; }
     setBusy(true);
     try {
-      if (target) await sendDevice({ data: { deviceId: target.id, username, password } });
-      else await sendCode({ data: { code, username, password } });
+      if (target) await sendDevice({ data: { deviceId: target.id, ...login } });
+      else await sendCode({ data: { code, ...login } });
       toast.success("Sent! Your app will sign in within a few seconds.");
-      setCode(""); setPassword(""); setTarget(null); void reload();
+      setCode(""); setSelection(null); setTarget(null); void reload();
     } catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setBusy(false); }
   }
@@ -46,17 +68,29 @@ export function PlayerDeviceLinkSection() {
         <form onSubmit={submit} className="space-y-4 rounded-lg border border-border bg-surface/90 p-5">
           {target ? <div className="flex items-center justify-between rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">
             <span>Sending to <strong>{target.name}</strong></span>
-            <button type="button" className="text-xs text-primary hover:underline" onClick={() => setTarget(null)}>Use a code instead</button>
+            <Button type="button" variant="link" size="sm" onClick={() => setTarget(null)}>Use a code instead</Button>
           </div> : <div className="space-y-1.5">
             <Label htmlFor="player-code">6-digit code on your screen</Label>
             <Input id="player-code" inputMode="numeric" autoComplete="off" maxLength={6} value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} className="font-mono text-lg tracking-[0.4em]" />
           </div>}
-          <div className="space-y-1.5"><Label htmlFor="player-user">Username</Label>
-            <Input id="player-user" autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} /></div>
-          <div className="space-y-1.5"><Label htmlFor="player-pass">Password</Label>
-            <Input id="player-pass" type="password" autoComplete="off" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-          <Button type="submit" className="w-full" disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Send to app</Button>
+          <fieldset className="min-w-0 space-y-3" disabled={busy}>
+            <legend className="mb-2 text-sm font-semibold">Your saved app logins</legend>
+            {loadingAccounts ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading your logins…</p>
+              : accountsFailed ? <div role="alert" className="text-sm text-destructive">Your logins could not be loaded. <Button type="button" variant="link" size="sm" onClick={() => void refetch()}>Try again</Button></div>
+              : !accounts.length ? <p className="text-sm text-muted-foreground">No app logins have been saved on your account yet.</p>
+              : accounts.map((account) => <label key={account.id} className="flex min-w-0 cursor-pointer items-start gap-3 border-b border-border py-3 last:border-b-0">
+                <Checkbox className="mt-1" checked={selectedId === account.id} disabled={!account.app_login_name || !account.password}
+                  onCheckedChange={(checked) => { if (ownerId) setSelection(checked === true ? { ownerId, id: account.id } : null); }}
+                  aria-label={`Send Account ${account.account_number}: ${account.app_login_name}`} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium">Account {account.account_number} · {account.account_type === "multi" ? "Multi-room" : account.account_type === "triple" ? "Triple-room" : "Single account"}</span>
+                  <span className="block break-all font-mono text-sm">{account.app_login_name}</span>
+                  <span className="block text-xs text-muted-foreground">{account.expiry_at ? `Expiry: ${new Date(account.expiry_at).toLocaleDateString("en-GB")}` : "No expiry"}</span>
+                </span>
+              </label>)}
+          </fieldset>
+          <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !selectedPlayerLogin(accounts, selectedId)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Send to app</Button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <p className="text-xs text-muted-foreground">Your login goes straight to the app once and is then deleted from our side.</p>
         </form>
