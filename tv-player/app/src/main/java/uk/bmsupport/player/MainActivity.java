@@ -1289,6 +1289,23 @@ public class MainActivity extends Activity {
         return l;
     }
 
+    /** Front screen backdrop: the family-watching-TV illustration, dimmed so text stays readable. */
+    private FrameLayout withHomeBackground(LinearLayout content) {
+        FrameLayout frame = new FrameLayout(this);
+        frame.setBackgroundColor(BG);
+        ImageView bg = new ImageView(this);
+        bg.setImageResource(R.drawable.home_background);
+        bg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        frame.addView(bg, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        View scrim = new View(this);
+        scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xE60B1220, 0x8C0B1220, 0xE60B1220}));
+        frame.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        content.setBackgroundColor(Color.TRANSPARENT);
+        frame.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        return frame;
+    }
+
     private LinearLayout row() { LinearLayout l = new LinearLayout(this); l.setOrientation(LinearLayout.HORIZONTAL); return l; }
 
     private LinearLayout.LayoutParams weight(float w, int h) {
