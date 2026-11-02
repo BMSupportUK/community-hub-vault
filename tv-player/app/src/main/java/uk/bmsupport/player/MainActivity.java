@@ -96,6 +96,17 @@ public class MainActivity extends Activity {
     private final List<androidx.media3.exoplayer.ExoPlayer> multiPlayers = new ArrayList<>();
     private void stopMulti() { for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) p.release(); multiPlayers.clear(); }
 
+    /** Asks how many screens to open, so one channel can fill the whole screen. */
+    private void chooseMultiScreens(int max) {
+        List<String> opts = new ArrayList<>();
+        opts.add("1 screen – full size");
+        if (max >= 2) opts.add("2 screens – side by side");
+        if (max >= 3) opts.add("3 screens – one big, two small");
+        String[] names = opts.toArray(new String[0]);
+        new AlertDialog.Builder(this).setTitle("Multi-screen – how many?")
+                .setItems(names, (d, w) -> showMultiScreen(w + 1)).setNegativeButton("Cancel", null).show();
+    }
+
     private void showMultiScreen(int screens) {
         stopPreview(); stopMulti();
         screen = "multi";
@@ -129,7 +140,9 @@ public class MainActivity extends Activity {
             });
             f.setOnClickListener(v -> pickMultiChannel(n, labels[n]));
         }
-        if (screens == 2) {
+        if (screens == 1) {
+            root.addView(panes[0], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+        } else if (screens == 2) {
             root.addView(panes[0], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
             root.addView(panes[1], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
         } else {
@@ -442,7 +455,7 @@ public class MainActivity extends Activity {
                 ui.post(() -> {
                     account.setText(l);
                     if (cons >= 2 && small.findViewWithTag("multi") == null) {
-                        Button mb = button("🖥 Multi-screen (" + Math.min(cons, 3) + ")", v -> showMultiScreen(Math.min(cons, 3)));
+                        Button mb = button("🖥 Multi-screen (" + Math.min(cons, 3) + ")", v -> chooseMultiScreens(Math.min(cons, 3)));
                         mb.setTag("multi");
                         small.addView(mb, 1, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
                     }
