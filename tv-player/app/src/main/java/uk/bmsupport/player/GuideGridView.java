@@ -165,6 +165,8 @@ public class GuideGridView extends View {
                 if (selR) drawRing(c, new RectF(ch + 2, y + 2, W - 2, y + rh - 2));
                 continue;
             }
+            float cursor = ch, minBox = 150 * d;
+            c.save(); c.clipRect(ch, y, W, y + rh);
             for (int pi = 0; pi < l.size(); pi++) {
                 Prog p = l.get(pi);
                 long en = p.en > p.st ? p.en : p.st + SLOT;
@@ -173,6 +175,12 @@ public class GuideGridView extends View {
                 if (en <= windowStart || p.st >= windowStart + WINDOW) continue;
                 float x1 = ch + Math.max(0, p.st - windowStart) * pxPerSec;
                 float x2 = ch + Math.min(WINDOW, en - windowStart) * pxPerSec;
+                // Short programmes get a readable minimum width so the name and start time always show;
+                // later boxes shift right just enough to make room.
+                x1 = Math.max(x1, cursor);
+                x2 = Math.max(x2, x1 + minBox);
+                cursor = x2;
+                if (x1 >= W) break;
                 RectF box = new RectF(x1 + 2, y + 2, Math.max(x1 + 4, x2 - 2), y + rh - 2);
                 boolean onNow = p.st <= nowS && nowS < en;
                 fill.setColor(p == sel ? 0xFFE11D48 : onNow ? 0xFF24345A : 0xFF1A2742);
@@ -192,7 +200,7 @@ public class GuideGridView extends View {
                     if (narrow) txt.setTextSize(12 * d);
                     String shown = TextUtils.ellipsize(t, txt, avail, TextUtils.TruncateAt.END).toString();
                     if (shown.length() <= 1 && t.length() > 1) shown = "…";
-                    String times = hhmm(p.st) + " – " + hhmm(en);
+                    String times = box.width() < 170 * d ? hhmm(p.st) : hhmm(p.st) + " – " + hhmm(en);
                     float tw = txt.measureText(times);
                     txt.setTextSize(11 * d); boolean fitsTimes = txt.measureText(times) <= avail;
                     txt.setTextSize(narrow ? 12 * d : 14 * d);
@@ -206,6 +214,7 @@ public class GuideGridView extends View {
                 c.restore();
                 if (p == sel) drawRing(c, box);
             }
+            c.restore();
         }
         // now line
         if (nowS >= windowStart && nowS < windowStart + WINDOW) {
