@@ -852,9 +852,13 @@ public class MainActivity extends Activity {
 
     // ---------- parental control ----------
 
+    private boolean isAdultCategory(String category) {
+        return category != null && category.toLowerCase(java.util.Locale.UK).matches(".*(adult|xxx|18\\+|porn|for adults).*");
+    }
+
     private boolean hideAdult(String category) {
         if (prefs.getString("pin", "").isEmpty() || adultUnlocked) return false;
-        return category.toLowerCase(java.util.Locale.UK).matches(".*(adult|xxx|18\\+|porn|for adults).*");
+        return isAdultCategory(category);
     }
 
     private void askPin(String title, java.util.function.Consumer<String> done) {
