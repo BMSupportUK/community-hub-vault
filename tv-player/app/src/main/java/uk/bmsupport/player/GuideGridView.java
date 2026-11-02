@@ -27,7 +27,7 @@ public class GuideGridView extends View {
         boolean hasReminder(int row, long st);
     }
 
-    private static final long SLOT = 1800, WINDOW = 3600, MARK = 900;
+    private static final long SLOT = 1800, WINDOW = 7200;
     private final List<String> names = new ArrayList<>();
     private final Map<Integer, List<Prog>> progs = new HashMap<>();
     private Listener listener;
@@ -130,6 +130,44 @@ public class GuideGridView extends View {
 
     @Override protected void onSizeChanged(int w, int h, int ow, int oh) { super.onSizeChanged(w, h, ow, oh); post(this::changed); }
 
+    // Shared time axis: every boundary (programme start/end on screen, half-hours) gets a column edge.
+    // Short segments are given a readable minimum width and the rest share the remaining space,
+    // so every row and the header use the same positions and short shows line up with their times.
+    private long[] axT = new long[0]; private float[] axX = new float[0];
+    private void buildAxis(float ch, float gridW) {
+        java.util.TreeSet<Long> b = new java.util.TreeSet<>();
+        long ws = windowStart, we = windowStart + WINDOW;
+        b.add(ws); b.add(we);
+        for (long t = ws; t < we; t += SLOT) b.add(t);
+        int v = visibleRows() + 1;
+        for (int i = 0; i < v && topRow + i < progs.size(); i++) {
+            List<Prog> l = progs.get(topRow + i); if (l == null) continue;
+            for (Prog p : l) {
+                long en = p.en > p.st ? p.en : p.st + SLOT;
+                if (p.st > ws && p.st < we) b.add(p.st);
+                if (en > ws && en < we) b.add(en);
+            }
+        }
+        axT = new long[b.size()]; int k = 0; for (long t : b) axT[k++] = t;
+        int n = axT.length - 1; float[] w = new float[Math.max(n, 0)];
+        float minSeg = 90 * d, fixed = 0; long rest = 0;
+        boolean[] small = new boolean[w.length];
+        float base = gridW / WINDOW;
+        for (int i = 0; i < n; i++) { long dur = axT[i + 1] - axT[i]; if (dur * base < minSeg) { small[i] = true; fixed += minSeg; } else rest += dur; }
+        float left = Math.max(gridW * 0.3f, gridW - fixed);
+        float scaleSmall = fixed > gridW - gridW * 0.3f ? (gridW * 0.7f) / Math.max(1, fixed) : 1f;
+        for (int i = 0; i < n; i++) { long dur = axT[i + 1] - axT[i]; w[i] = small[i] ? minSeg * scaleSmall : (rest > 0 ? left * dur / (float) rest : 0); }
+        axX = new float[axT.length]; axX[0] = ch;
+        for (int i = 0; i < n; i++) axX[i + 1] = axX[i] + w[i];
+    }
+    private float xAt(long t) {
+        if (axT.length < 2) return chW();
+        if (t <= axT[0]) return axX[0];
+        for (int i = 0; i < axT.length - 1; i++)
+            if (t <= axT[i + 1]) return axX[i] + (axX[i + 1] - axX[i]) * (t - axT[i]) / (float) Math.max(1, axT[i + 1] - axT[i]);
+        return axX[axX.length - 1];
+    }
+
     @Override protected void onDraw(Canvas c) {
         float W = getWidth(), H = getHeight(), ch = chW(), hh = headH(), rh = rowH();
         float gridW = W - ch, pxPerSec = gridW / WINDOW;
@@ -140,11 +178,22 @@ public class GuideGridView extends View {
         java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK);
         c.drawText(df.format(new java.util.Date(windowStart * 1000)), 10 * d, hh * 0.68f, txt);
         txt.setFakeBoldText(false);
-        for (long t = windowStart; t < windowStart + WINDOW; t += MARK) {
-            float x = ch + (t - windowStart) * pxPerSec;
-            c.drawText(hhmm(t), x + 6 * d, hh * 0.68f, txt);
-            fill.setColor(0xFF334155); c.drawRect(x, 0, x + 1, H, fill);
+        buildAxis(ch, gridW);
+        // Header marks: half-hours plus every programme start on the highlighted channel,
+        // so a short show's start time sits right above its box.
+        java.util.TreeSet<Long> marks = new java.util.TreeSet<>();
+        for (long t = windowStart; t < windowStart + WINDOW; t += SLOT) marks.add(t);
+        List<Prog> sl = selRow >= 0 && selRow < progs.size() ? progs.get(selRow) : null;
+        if (sl != null) for (Prog p : sl) if (p.st > windowStart && p.st < windowStart + WINDOW) marks.add(p.st);
+        float lastLabel = -1e9f;
+        for (long t : marks) {
+            float x = xAt(t);
+            boolean half = (t - windowStart) % SLOT == 0;
+            fill.setColor(half ? 0xFF334155 : 0xFF475569); c.drawRect(x, half ? 0 : hh * 0.75f, x + 1, half ? H : hh, fill);
+            float w = txt.measureText(hhmm(t));
+            if (x + 4 * d >= lastLabel) { txt.setColor(half ? 0xFFF1F5F9 : 0xFFFDE68A); c.drawText(hhmm(t), x + 4 * d, hh * 0.68f, txt); lastLabel = x + 4 * d + w + 6 * d; }
         }
+        txt.setColor(0xFFF1F5F9);
         int v = visibleRows() + 1;
         for (int i = 0; i < v && topRow + i < names.size(); i++) {
             int r = topRow + i;
@@ -165,7 +214,6 @@ public class GuideGridView extends View {
                 if (selR) drawRing(c, new RectF(ch + 2, y + 2, W - 2, y + rh - 2));
                 continue;
             }
-            float cursor = ch, minBox = 150 * d;
             c.save(); c.clipRect(ch, y, W, y + rh);
             for (int pi = 0; pi < l.size(); pi++) {
                 Prog p = l.get(pi);
@@ -173,10 +221,8 @@ public class GuideGridView extends View {
                 // Never let a box run over the next programme's start (overlapping EPG data).
                 if (pi + 1 < l.size() && l.get(pi + 1).st > p.st && l.get(pi + 1).st < en) en = l.get(pi + 1).st;
                 if (en <= windowStart || p.st >= windowStart + WINDOW) continue;
-                float x1 = ch + Math.max(0, p.st - windowStart) * pxPerSec;
-                float x2 = ch + Math.min(WINDOW, en - windowStart) * pxPerSec;
-                // Short programmes get a readable minimum width so the name and start time always show;
-                // later boxes shift right just enough to make room.
+                float x1 = xAt(Math.max(p.st, windowStart));
+                float x2 = xAt(Math.min(en, windowStart + WINDOW));
                 // True time scale: every box starts exactly under its start time on the header.
                 RectF box = new RectF(x1 + 2, y + 2, Math.max(x1 + 4, x2 - 2), y + rh - 2);
                 boolean onNow = p.st <= nowS && nowS < en;
@@ -215,7 +261,7 @@ public class GuideGridView extends View {
         }
         // now line
         if (nowS >= windowStart && nowS < windowStart + WINDOW) {
-            float x = ch + (nowS - windowStart) * pxPerSec;
+            float x = xAt(nowS);
             fill.setColor(0xFFEF4444); c.drawRect(x - 1.5f * d, hh, x + 1.5f * d, H, fill);
         }
         if (isFocused()) postInvalidateDelayed(30000);
