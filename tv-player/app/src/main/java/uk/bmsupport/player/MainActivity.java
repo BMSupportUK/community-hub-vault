@@ -216,6 +216,7 @@ public class MainActivity extends Activity {
         autoDone = true;
 
         LinearLayout small = row();
+        small.addView(button("🏆 Sports guide", v -> showSports()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("★ Favourites", v -> showSaved("fav", "Favourites")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("⚠ Report a problem", v -> showReport(null)), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -994,6 +995,170 @@ public class MainActivity extends Activity {
     }
 
     // ---------- tiny UI kit ----------
+
+
+    // ---------- sports guide ----------
+
+    private Runnable sportsTask;
+    private String sportsVersion = "";
+
+    /** Mirrors src/lib/player-channel-match.ts normChannel. */
+    static String normChannel(String name) {
+        String s = name.toLowerCase(java.util.Locale.ROOT);
+        s = s.replaceAll("^\\s*(?:\\|?[a-z]{2,3}\\s*[|:\\-]\\s*)+", " ");
+        s = s.replaceAll("[^a-z0-9]+", " ");
+        s = s.replaceAll("\\b(?:fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv)\\b", " ");
+        return s.replaceAll("\\s+", " ").trim();
+    }
+    private static final String[][] BUILT_IN_ALIASES = {
+        {"sky sports pl", "sky sports premier league"}, {"sky sports me", "sky sports main event"},
+        {"sky sports f1", "sky sports formula 1"}, {"bt sport 1", "tnt sports 1"}, {"bt sport 2", "tnt sports 2"},
+        {"bt sport 3", "tnt sports 3"}, {"bt sport 4", "tnt sports 4"} };
+    private static String alias(String n, List<String[]> aliases) {
+        for (String[] a : aliases) if (normChannel(a[0]).equals(n)) return normChannel(a[1]);
+        return n;
+    }
+    private static int quality(String n) {
+        String l = n.toLowerCase(java.util.Locale.ROOT);
+        return l.contains("fhd") || l.contains("1080") ? 3 : l.matches(".*\\bhd\\b.*") ? 2 : l.contains("uhd") || l.contains("4k") ? 1 : 0;
+    }
+    /** Mirrors matchChannel: exact normalised (with aliases), else whole-word partial; best quality first. */
+    static List<Item> matchChannel(String guide, List<Item> playlist, List<String[]> aliases) {
+        String want = alias(normChannel(guide), aliases);
+        List<Item> out = new ArrayList<>();
+        if (want.isEmpty()) return out;
+        for (Item it : playlist) if (alias(normChannel(it.name), aliases).equals(want)) out.add(it);
+        if (out.isEmpty()) for (Item it : playlist) {
+            String n = normChannel(it.name);
+            if (!n.isEmpty() && (" " + n + " ").contains(" " + want + " ")) out.add(it);
+        }
+        java.util.Collections.sort(out, (a, b) -> quality(b.name) != quality(a.name) ? quality(b.name) - quality(a.name) : a.name.length() - b.name.length());
+        return out;
+    }
+
+    private List<Item> liveChannels = null;
+
+    private void showSports() {
+        screen = "sports"; back = () -> { stopSports(); showHome(); };
+        stopPreview();
+        LinearLayout root = column();
+        LinearLayout head = row();
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(text("Sports guide", 26, TEXT, true), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        TextView status = text("Loading…", 14, MUTED, false);
+        head.addView(status);
+        head.addView(button("⟳ Refresh", v -> loadSports(status, true)));
+        root.addView(head);
+        root.addView(text("Pick an event, then a channel to watch it", 15, MUTED, false));
+        ListView lv = list();
+        lv.setTag("sports");
+        root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        setContentView(root);
+        sportsList = lv;
+        sportsVersion = "";
+        String cached = prefs.getString("sports_cache", "");
+        if (!cached.isEmpty()) try { renderSports(new JSONObject(cached)); } catch (Exception ignored) {}
+        loadSports(status, false);
+        stopSports();
+        sportsTask = new Runnable() { @Override public void run() {
+            if (!"sports".equals(screen)) return;
+            loadSports(status, false);
+            ui.postDelayed(this, 60000);
+        } };
+        ui.postDelayed(sportsTask, 60000);
+    }
+    private ListView sportsList;
+    private void stopSports() { if (sportsTask != null) ui.removeCallbacks(sportsTask); sportsTask = null; }
+
+    private void loadSports(TextView status, boolean manual) {
+        io.execute(() -> {
+            try {
+                String raw = Net.postJson(Net.SITE + "/api/public/player",
+                        new JSONObject().put("action", "sports").put("device_token", prefs.getString("token", "")).toString());
+                JSONObject r = new JSONObject(raw);
+                prefs.edit().putString("sports_cache", raw).apply();
+                if (liveChannels == null || manual) {
+                    JSONArray a = new JSONArray(manual ? cachedGetFresh() : cachedGet("live", "get_live_streams", ""));
+                    List<Item> l = new ArrayList<>();
+                    for (int i = 0; i < a.length(); i++) {
+                        JSONObject o = a.getJSONObject(i);
+                        l.add(new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id")));
+                    }
+                    liveChannels = l;
+                }
+                String v = r.optString("version");
+                ui.post(() -> {
+                    if (!"sports".equals(screen)) return;
+                    status.setText("Updated " + clock(System.currentTimeMillis() / 1000) + "  ");
+                    if (manual || !v.equals(sportsVersion)) renderSports(r);
+                });
+            } catch (Exception e) {
+                ui.post(() -> status.setText(manual ? "Couldn't update – check the connection  " : status.getText()));
+            }
+        });
+    }
+    private String cachedGetFresh() throws Exception { clearCache("live"); return cachedGet("live", "get_live_streams", ""); }
+
+    private void renderSports(JSONObject r) {
+        if (sportsList == null) return;
+        sportsVersion = r.optString("version");
+        JSONArray ev = r.optJSONArray("events");
+        List<String[]> aliases = new ArrayList<>();
+        JSONArray al = r.optJSONArray("aliases");
+        if (al != null) for (int i = 0; i < al.length(); i++) { JSONObject o = al.optJSONObject(i); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
+        for (String[] a : BUILT_IN_ALIASES) aliases.add(a);
+        long now = System.currentTimeMillis();
+        List<String> rows = new ArrayList<>();
+        List<JSONObject> rowEv = new ArrayList<>();
+        java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("EEEE d MMMM", java.util.Locale.UK);
+        day.setTimeZone(java.util.TimeZone.getTimeZone("Europe/London"));
+        String lastDay = "", lastSport = "";
+        if (ev != null) for (int i = 0; i < ev.length(); i++) {
+            JSONObject e = ev.optJSONObject(i);
+            if (e == null) continue;
+            long start = e.optLong("start");
+            if (start < now - 3 * 3600_000L) continue; // finished
+            String d = day.format(new java.util.Date(start));
+            if (!d.equals(lastDay)) { rows.add("━━ " + d + " ━━"); rowEv.add(null); lastDay = d; lastSport = ""; }
+            String sp = e.optString("sport");
+            if (!sp.equals(lastSport)) { rows.add("   " + sp.toUpperCase(java.util.Locale.UK)); rowEv.add(null); lastSport = sp; }
+            boolean live = start <= now;
+            JSONArray ch = e.optJSONArray("channels");
+            StringBuilder cs = new StringBuilder();
+            if (ch != null) for (int j = 0; j < ch.length(); j++) cs.append(j == 0 ? "" : " · ").append(ch.optString(j));
+            rows.add((live ? "🔴 LIVE NOW  " : clock(start / 1000) + "  ") + e.optString("title") + (cs.length() > 0 ? "\n      📺 " + cs : ""));
+            rowEv.add(e);
+        }
+        if (rows.isEmpty()) rows.add("No upcoming events in the guide right now");
+        int keep = sportsList.getSelectedItemPosition();
+        sportsList.setAdapter(adapter(rows));
+        if (keep > 0 && keep < rows.size()) sportsList.setSelection(keep);
+        sportsList.setOnItemClickListener((p, v, pos, id) -> {
+            JSONObject e = rowEv.get(pos);
+            if (e != null) pickSportsChannel(e, aliases);
+        });
+    }
+
+    private void pickSportsChannel(JSONObject e, List<String[]> aliases) {
+        JSONArray ch = e.optJSONArray("channels");
+        List<String> labels = new ArrayList<>();
+        List<Item> targets = new ArrayList<>();
+        List<Item> pl = liveChannels == null ? new ArrayList<>() : liveChannels;
+        if (ch != null) for (int j = 0; j < ch.length(); j++) {
+            String g = ch.optString(j);
+            List<Item> m = matchChannel(g, pl, aliases);
+            if (m.isEmpty()) { labels.add(g + "  —  Not in your list"); targets.add(null); }
+            else for (int k = 0; k < Math.min(3, m.size()); k++) { labels.add("▶ " + g + "  (" + m.get(k).name + ")"); targets.add(m.get(k)); }
+        }
+        if (labels.isEmpty()) { Toast.makeText(this, "No channel listed for this event", Toast.LENGTH_SHORT).show(); return; }
+        new AlertDialog.Builder(this).setTitle(e.optString("title"))
+                .setItems(labels.toArray(new String[0]), (d, w) -> {
+                    Item it = targets.get(w);
+                    if (it == null) Toast.makeText(this, "That channel isn't in your playlist", Toast.LENGTH_SHORT).show();
+                    else play(it, defaultVlc());
+                })
+                .setNegativeButton("Close", null).show();
+    }
 
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 
