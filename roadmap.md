@@ -44,6 +44,6 @@
 - [x] Device linking API for apps (`/api/public/player`)
 - [x] Website: Send to app (TV code) + send from My Logins + linked devices
 - [x] Website: Report a problem page (opens pre-filled support ticket)
-- [ ] Android app (TV / Fire TV / phone): tile home, Live/Films/Series/EPG/favourites/recent, optional VLC, report QR
+- [x] Android app 1.0 (TV / Fire TV / phone) built, signed, added to app list (not yet tested on a real TV)
 - [ ] Windows app with bundled VLC
-- [ ] Downloads in Install Guides
+- [x] Downloads in Install Guides (BM Player listed as a TV-installable app)
