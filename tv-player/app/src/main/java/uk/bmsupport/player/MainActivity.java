@@ -582,7 +582,20 @@ public class MainActivity extends Activity {
         root.addView(text(title, 26, TEXT, true));
         JSONArray a = saved(key);
         List<Item> list = new ArrayList<>();
-        for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null) list.add(Item.fromJson(o)); }
+        boolean droppedAdult = false;
+        for (int i = 0; i < a.length(); i++) {
+            JSONObject o = a.optJSONObject(i);
+            if (o == null) continue;
+            Item it = Item.fromJson(o);
+            // Recently watched never shows adult-category items, even ones saved before this rule.
+            if (key.equals("recent") && isAdultCategory(it.category)) { droppedAdult = true; continue; }
+            list.add(it);
+        }
+        if (droppedAdult) {
+            JSONArray clean = new JSONArray();
+            for (Item it : list) clean.put(it.toJson());
+            prefs.edit().putString(key, clean.toString()).apply();
+        }
         if (list.isEmpty()) root.addView(text("Nothing here yet.", 18, MUTED, false));
         ListView lv = list();
         lv.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list) {
