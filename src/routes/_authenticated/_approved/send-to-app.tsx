@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { usePlayerDevices, type PlayerDevice } from "@/hooks/use-player-devices";
 import { useServerFn } from "@tanstack/react-start";
 import { Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,21 +20,6 @@ export const Route = createFileRoute("/_authenticated/_approved/send-to-app")({
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex, nofollow" },
   ] }),
 });
-
-export type PlayerDevice = { id: string; name: string; platform: string; linked_at: string | null; last_seen_at: string };
-
-export function usePlayerDevices() {
-  const { user } = useAuth();
-  const [devices, setDevices] = useState<PlayerDevice[]>([]);
-  const load = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase.from("player_devices").select("id, name, platform, linked_at, last_seen_at")
-      .eq("user_id", user.id).order("linked_at", { ascending: false });
-    setDevices((data ?? []) as PlayerDevice[]);
-  }, [user]);
-  useEffect(() => { void load(); }, [load]);
-  return { devices, reload: load };
-}
 
 const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC" };
 

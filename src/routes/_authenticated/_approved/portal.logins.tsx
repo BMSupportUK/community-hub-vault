@@ -9,7 +9,7 @@ import { ManualCredentialCards } from "@/components/app/ManualCredentialCards";
 import { readPortalCredentials, requestPortalPinReset } from "@/lib/customer-portal.functions";
 import type { ManualCredential } from "@/lib/manual-credentials-schema";
 import { sendLoginToDevice } from "@/lib/player.functions";
-import { usePlayerDevices } from "./send-to-app";
+import { usePlayerDevices } from "@/hooks/use-player-devices";
 import { Link } from "@tanstack/react-router";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
