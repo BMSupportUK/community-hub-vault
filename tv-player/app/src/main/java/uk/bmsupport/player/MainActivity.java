@@ -239,14 +239,51 @@ public class MainActivity extends Activity {
         return prefs.getString("dns", "") + "/player_api.php?username=" + u + "&password=" + p + (action.isEmpty() ? "" : "&action=" + action);
     }
 
-    private String streamUrl(Item it) {
-        String d = prefs.getString("dns", ""), u = prefs.getString("user", ""), p = prefs.getString("pass", "");
+    private String streamUrl(Item it) { return streamUrls(it)[0]; }
+
+    /** Addresses to try in order. Live tries MPEG-TS first (what most panels serve), then HLS. */
+    private String[] streamUrls(Item it) {
+        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = prefs.getString("pass", "");
         switch (it.kind) {
-            case "live": return d + "/live/" + u + "/" + p + "/" + it.id + ".m3u8";
-            case "film": return d + "/movie/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext);
-            default: return d + "/series/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext);
+            case "live": {
+                String base = d + "/live/" + u + "/" + p + "/" + it.id;
+                return new String[]{base + ".ts", base + ".m3u8", d + "/" + u + "/" + p + "/" + it.id};
+            }
+            case "film": return new String[]{d + "/movie/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext)};
+            default: return new String[]{d + "/series/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext)};
         }
     }
+
+    // ---------- live channel preview ----------
+
+    private androidx.media3.exoplayer.ExoPlayer preview;
+    private Runnable previewTask;
+
+    private void stopPreview() {
+        if (previewTask != null) ui.removeCallbacks(previewTask);
+        previewTask = null;
+        if (preview != null) { preview.release(); preview = null; }
+    }
+
+    /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
+    private void schedulePreview(Item it, androidx.media3.ui.PlayerView view, TextView status) {
+        stopPreview();
+        status.setText("Loading preview…");
+        previewTask = () -> {
+            preview = PlayerActivity.build(this);
+            view.setPlayer(preview);
+            preview.addListener(new androidx.media3.common.Player.Listener() {
+                @Override public void onPlaybackStateChanged(int s) {
+                    if (s == androidx.media3.common.Player.STATE_READY) status.setText("Press OK for full screen");
+                }
+            });
+            PlayerActivity.playWithFallback(preview, streamUrls(it),
+                    () -> status.setText("Preview unavailable – try Play with VLC"));
+        };
+        ui.postDelayed(previewTask, 700);
+    }
+
+    @Override protected void onPause() { super.onPause(); stopPreview(); }
 
     private void browse(String kind) {
         screen = "browse"; back = this::showHome;
@@ -258,10 +295,28 @@ public class MainActivity extends Activity {
         root.addView(text(title, 26, TEXT, true));
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
         root.addView(epg);
+        stopPreview();
         LinearLayout panes = row();
         ListView cats = list(), items = list();
         panes.addView(cats, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
-        panes.addView(items, weight(2, ViewGroup.LayoutParams.MATCH_PARENT));
+        panes.addView(items, weight(kind.equals("live") ? 1.3f : 2, ViewGroup.LayoutParams.MATCH_PARENT));
+        androidx.media3.ui.PlayerView pv = null;
+        TextView pvStatus = null;
+        if (kind.equals("live")) {
+            LinearLayout side = column();
+            side.setPadding(16, 0, 0, 0);
+            side.addView(text("Preview", 18, TEXT, true));
+            pv = new androidx.media3.ui.PlayerView(this);
+            pv.setUseController(false);
+            pv.setBackgroundColor(Color.BLACK);
+            pv.setFocusable(false);
+            side.addView(pv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+            pvStatus = text("Highlight a channel to preview it", 14, MUTED, false);
+            side.addView(pvStatus);
+            panes.addView(side, weight(1.7f, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        final androidx.media3.ui.PlayerView previewView = pv;
+        final TextView previewStatus = pvStatus;
         root.addView(panes, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
 
@@ -302,9 +357,17 @@ public class MainActivity extends Activity {
             });
         });
 
-        items.setOnItemClickListener((p, v, pos, id) -> open((Item) items.getItemAtPosition(pos)));
+        items.setOnItemClickListener((p, v, pos, id) -> {
+            Item it = (Item) items.getItemAtPosition(pos);
+            if (previewView != null && platform().equals("phone")) { loadEpg(it, epg); schedulePreview(it, previewView, previewStatus); }
+            open(it);
+        });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { loadEpg((Item) items.getItemAtPosition(pos), epg); }
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                Item it = (Item) items.getItemAtPosition(pos);
+                loadEpg(it, epg);
+                schedulePreview(it, previewView, previewStatus);
+            }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
     }
