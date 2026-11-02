@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -238,7 +239,7 @@ public class MainActivity extends Activity {
         small.addView(button("⚠ Report a problem", v -> showReport(null)), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("⚙ Settings", v -> showSettings()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(small);
-        setContentView(root);
+        setContentView(withHomeBackground(root));
         tiles.getChildAt(0).requestFocus();
 
         io.execute(() -> {
@@ -1286,6 +1287,23 @@ public class MainActivity extends Activity {
         l.setBackgroundColor(BG);
         l.setPadding(dp(32), dp(24), dp(32), dp(24));
         return l;
+    }
+
+    /** Front screen backdrop: the family-watching-TV illustration, dimmed so text stays readable. */
+    private FrameLayout withHomeBackground(LinearLayout content) {
+        FrameLayout frame = new FrameLayout(this);
+        frame.setBackgroundColor(BG);
+        ImageView bg = new ImageView(this);
+        bg.setImageResource(R.drawable.home_background);
+        bg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        frame.addView(bg, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        View scrim = new View(this);
+        scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xE60B1220, 0x8C0B1220, 0xE60B1220}));
+        frame.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        content.setBackgroundColor(Color.TRANSPARENT);
+        frame.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        return frame;
     }
 
     private LinearLayout row() { LinearLayout l = new LinearLayout(this); l.setOrientation(LinearLayout.HORIZONTAL); return l; }
