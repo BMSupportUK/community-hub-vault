@@ -422,7 +422,6 @@ public class MainActivity extends Activity {
         tiles.addView(tileWithRefresh("Films", "🎬", "film"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         tiles.addView(tileWithRefresh("Series", "🎞", "series"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(tiles);
-        autoDone = true;
 
         LinearLayout small = row();
         small.addView(button("🏆 Sports guide", v -> showSports()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -433,6 +432,7 @@ public class MainActivity extends Activity {
         root.addView(small);
         setContentView(withHomeBackground(root));
         tiles.getChildAt(0).requestFocus();
+        autoUpdatePlaylists();
 
         io.execute(() -> {
             try {
@@ -591,53 +591,96 @@ public class MainActivity extends Activity {
         root.addView(panes, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
 
+        // Whole section is loaded once (from the saved list) and split by category locally,
+        // so "All" shows straight away and every category opens instantly.
         List<String[]> catRows = new ArrayList<>();
-        io.execute(() -> {
+        final java.util.Map<String, List<Item>> byCat = new java.util.HashMap<>();
+        final List<Item> all = new ArrayList<>();
+        final String[] current = { null };
+        final java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
+            if (pos < 0 || pos >= catRows.size()) return;
+            String[] c = catRows.get(pos);
+            if (c[0].equals(current[0])) { if (focusItems) items.requestFocus(); return; }
+            current[0] = c[0];
+            List<Item> got = c[0].equals("*") ? all : byCat.get(c[0]);
+            java.util.function.Consumer<List<Item>> render = list -> {
+                if (!c[0].equals(current[0])) return;
+                if (posters) {
+                    shown.clear(); shown.addAll(list);
+                    applySort[0] = () -> { sortItems(shown, sortKey[0]); ((BaseAdapter) items.getAdapter()).notifyDataSetChanged(); items.setSelection(0); };
+                    sortItems(shown, sortKey[0]);
+                    items.setAdapter(posterAdapter(shown));
+                } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>(list)) {
+                    @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
+                });
+                epg.setText(c[1] + " · " + list.size() + (kind.equals("live") ? " channels" : " titles"));
+                if (focusItems) items.requestFocus();
+            };
+            if (got != null && !got.isEmpty()) { render.accept(got); return; }
+            // List had no category tags for this one – ask the server for just this category.
+            epg.setText("Loading " + c[1] + "…");
+            plIo.execute(() -> {
+                try {
+                    List<Item> list = parseItems(kind, new JSONArray(cachedGet(kind, listAction, "&category_id=" + URLEncoder.encode(c[0], "UTF-8"))), c[1]);
+                    ui.post(() -> render.accept(list));
+                } catch (Exception ex) { ui.post(() -> { if (c[0].equals(current[0])) epg.setText("Couldn't load this category."); }); }
+            });
+        };
+
+        if (!hasFullList(kind)) updatePlaylists(java.util.Collections.singletonList(kind), true);
+        else if (plQueued.contains(kind)) showPlaylistDialog();
+        epg.setText("Loading " + title + "…");
+        plIo.execute(() -> {
             try {
                 JSONArray a = new JSONArray(cachedGet(kind, catAction, ""));
-                List<String> names = new ArrayList<>();
+                java.util.Map<String, String> catName = new java.util.HashMap<>();
+                List<String[]> rows = new ArrayList<>();
+                rows.add(new String[]{"*", "All"});
                 for (int i = 0; i < a.length(); i++) {
                     JSONObject o = a.getJSONObject(i);
-                    if (hideAdult(o.optString("category_name"))) continue;
-                    catRows.add(new String[]{o.optString("category_id"), o.optString("category_name")});
-                    names.add(o.optString("category_name"));
+                    String cid = o.optString("category_id"), cn = o.optString("category_name");
+                    catName.put(cid, cn);
+                    if (hideAdult(cn)) continue;
+                    rows.add(new String[]{cid, cn});
                 }
-                ui.post(() -> { cats.setAdapter(adapter(names)); cats.requestFocus(); });
-            } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load categories. Check your login in Settings.")); }
+                JSONArray full = new JSONArray(cachedGet(kind, listAction, ""));
+                java.util.Map<String, List<Item>> groups = new java.util.HashMap<>();
+                List<Item> everything = new ArrayList<>();
+                for (int i = 0; i < full.length(); i++) {
+                    JSONObject o = full.getJSONObject(i);
+                    String cid = o.optString("category_id");
+                    String cn = catName.containsKey(cid) ? catName.get(cid) : "";
+                    if (hideAdult(cn)) continue;
+                    Item it = itemFrom(kind, o, cn, i);
+                    everything.add(it);
+                    if (!cid.isEmpty()) { List<Item> g = groups.get(cid); if (g == null) groups.put(cid, g = new ArrayList<>()); g.add(it); }
+                }
+                List<String> names = new ArrayList<>();
+                for (String[] r : rows) names.add(r[1]);
+                ui.post(() -> {
+                    catRows.clear(); catRows.addAll(rows);
+                    byCat.clear(); byCat.putAll(groups);
+                    all.clear(); all.addAll(everything);
+                    cats.setAdapter(adapter(names));
+                    cats.requestFocus();
+                    cats.setSelection(0);
+                    showCat.accept(0, false);
+                });
+            } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
         });
 
+        final Runnable[] pendingCat = new Runnable[1];
+        cats.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (pendingCat[0] != null) ui.removeCallbacks(pendingCat[0]);
+                pendingCat[0] = () -> showCat.accept(pos, false);
+                ui.postDelayed(pendingCat[0], 250);
+            }
+            @Override public void onNothingSelected(AdapterView<?> p) {}
+        });
         cats.setOnItemClickListener((p, v, pos, id) -> {
-            String[] c = catRows.get(pos);
-            epg.setText("Loading " + c[1] + "…");
-            io.execute(() -> {
-                try {
-                    JSONArray a = new JSONArray(cachedGet(kind, listAction, "&category_id=" + URLEncoder.encode(c[0], "UTF-8")));
-                    List<Item> list = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) {
-                        JSONObject o = a.getJSONObject(i);
-                        String sid = kind.equals("series") ? o.optString("series_id") : o.optString("stream_id");
-                        Item it = new Item(kind, sid, o.optString("name"), o.optString("container_extension"), c[1]);
-                        it.poster = kind.equals("series") ? o.optString("cover") : o.optString("stream_icon");
-                        it.added = o.optLong(kind.equals("series") ? "last_modified" : "added", 0);
-                        it.rating = o.optDouble(o.has("rating_5based") ? "rating_5based" : "rating", 0);
-                        if (Double.isNaN(it.rating)) it.rating = 0;
-                        it.pos = i;
-                        list.add(it);
-                    }
-                    ui.post(() -> {
-                        if (posters) {
-                            shown.clear(); shown.addAll(list);
-                            applySort[0] = () -> { sortItems(shown, sortKey[0]); ((BaseAdapter) items.getAdapter()).notifyDataSetChanged(); items.setSelection(0); };
-                            sortItems(shown, sortKey[0]);
-                            items.setAdapter(posterAdapter(shown));
-                        } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list) {
-                            @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
-                        });
-                        epg.setText(c[1] + " · " + list.size() + (kind.equals("live") ? " channels" : " titles"));
-                        items.requestFocus();
-                    });
-                } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load this category.")); }
-            });
+            if (pendingCat[0] != null) ui.removeCallbacks(pendingCat[0]);
+            showCat.accept(pos, true);
         });
 
         items.setOnItemClickListener((p, v, pos, id) -> {
