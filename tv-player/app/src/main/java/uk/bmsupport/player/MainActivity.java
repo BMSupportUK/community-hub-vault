@@ -607,6 +607,7 @@ public class MainActivity extends Activity {
         final String[] current = { null };
         final boolean[] freshTop = { false };
         final int[] livePos = { -1 };
+        final boolean[] restoring = { false };
         java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
             if (pos < 0 || pos >= catRows.size()) return;
             String[] c = catRows.get(pos);
@@ -696,8 +697,10 @@ public class MainActivity extends Activity {
             if (oldFocus != null) oldFocus.onFocusChange(v, has);
             if (has && !freshTop[0] && kind.equals("live") && livePos[0] >= 0) {
                 final int keep = livePos[0];
+                restoring[0] = true;
                 items.setSelection(keep);
                 items.post(() -> items.setSelection(keep));
+                ui.postDelayed(() -> { items.setSelection(keep); livePos[0] = keep; restoring[0] = false; }, 120);
             }
             if (has && freshTop[0]) {
                 freshTop[0] = false;
@@ -728,7 +731,7 @@ public class MainActivity extends Activity {
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 Item it = (Item) items.getItemAtPosition(pos);
-                if (items.hasFocus()) livePos[0] = pos;
+                if (items.hasFocus() && !restoring[0]) livePos[0] = pos;
                 loadEpg(it, epg, previewEpg);
                 schedulePreview(it, previewView, previewStatus);
             }
