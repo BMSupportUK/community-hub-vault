@@ -15,11 +15,15 @@ export const BUILT_IN_ALIASES: ChannelAlias[] = [
   { from: "bt sport 4", to: "tnt sports 4" },
 ];
 
+const COUNTRY = "uk|gb|usa|us|ire|ie|ireland|au|aus|australia|ca|canada|za|south africa|nz|int";
+const NOISE = "fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv";
+
 export function normChannel(name: string): string {
   let s = name.toLowerCase();
-  s = s.replace(/^\s*(?:\|?[a-z]{2,3}\s*[|:\-]\s*)+/, " "); // "UK: ", "|UK| ", "UK - "
-  s = s.replace(/[^a-z0-9]+/g, " ");
-  s = s.replace(/\b(?:fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv)\b/g, " ");
+  s = s.replace(/[^a-z0-9+]+/g, " ").replace(/\+/g, " plus ");
+  s = s.replace(/([a-z])(\d)/g, "$1 $2").replace(/(\d)([a-z])/g, "$1 $2"); // "dazn1" -> "dazn 1"
+  s = s.replace(new RegExp(`\\b(?:${COUNTRY}|${NOISE})\\b`, "g"), " ");
+  s = s.replace(/\bsports\b/g, "sport").replace(/\b0+(\d)/g, "$1"); // "Sports"="Sport", "01"="1"
   return s.replace(/\s+/g, " ").trim();
 }
 
@@ -36,9 +40,12 @@ export function matchChannel(guideName: string, playlist: string[], aliases: Cha
   const want = applyAlias(normChannel(guideName), all);
   if (!want) return [];
   const exact = playlist.filter((p) => applyAlias(normChannel(p), all) === want);
-  const pool = exact.length ? exact : playlist.filter((p) => {
-    const n = normChannel(p);
-    return n.length > 0 && (` ${n} `.includes(` ${want} `));
-  });
-  return [...pool].sort((a, b) => quality(b) - quality(a) || a.length - b.length);
+  if (exact.length) return [...exact].sort((a, b) => quality(b) - quality(a) || a.length - b.length);
+  // Every word of the guide name appears in the playlist name (any order); fewest extra words first.
+  const words = want.split(" ");
+  const scored = playlist.map((p) => {
+    const t = normChannel(p).split(" ");
+    return { p, extra: words.every((w) => t.includes(w)) ? t.length - words.length : -1 };
+  }).filter((x) => x.extra >= 0);
+  return scored.sort((a, b) => a.extra - b.extra || quality(b.p) - quality(a.p) || a.p.length - b.p.length).map((x) => x.p);
 }

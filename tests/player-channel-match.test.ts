@@ -3,7 +3,7 @@ import { matchChannel, normChannel } from "../src/lib/player-channel-match";
 
 describe("player channel matching", () => {
   test("strips country prefix and quality tags", () => {
-    expect(normChannel("UK: SKY SPORTS MAIN EVENT FHD")).toBe("sky sports main event");
+    expect(normChannel("UK: SKY SPORTS MAIN EVENT FHD")).toBe("sky sport main event");
   });
   test("prefers FHD over SD copies", () => {
     expect(matchChannel("Sky Sports Main Event", ["UK: Sky Sports Main Event SD", "UK: Sky Sports Main Event FHD"])[0])
@@ -21,4 +21,16 @@ describe("player channel matching", () => {
   test("partial match does not cross numbers", () => {
     expect(matchChannel("TNT Sports 1", ["UK: TNT Sports 10", "UK: TNT Sports 1 HD"])).toEqual(["UK: TNT Sports 1 HD"]);
   });
+});
+
+describe("country labels and spacing", () => {
+
+  const list = ["UK: DAZN 1 FHD", "US: ESPN 2 HD", "AU | FOX SPORTS 505", "NHL 1", "|UK| PREMIER SPORTS 1 HD", "UK: SKY SPORTS PREMIER LEAGUE HD", "CA: TSN2"];
+  test("USA: ESPN 2 matches US: ESPN 2", () => expect(matchChannel("USA: ESPN 2", list)).toEqual(["US: ESPN 2 HD"]));
+  test("Australia: Fox Sports 505", () => expect(matchChannel("Australia: Fox Sports 505", list)).toEqual(["AU | FOX SPORTS 505"]));
+  test("Dazn 1 HD", () => expect(matchChannel("Dazn 1 HD", list)).toEqual(["UK: DAZN 1 FHD"]));
+  test("NHL 01 matches NHL 1", () => expect(matchChannel("NHL 01", list)).toEqual(["NHL 1"]));
+  test("UK Premier Sports 1 without colon", () => expect(matchChannel("UK Premier Sports 1", list)).toEqual(["|UK| PREMIER SPORTS 1 HD"]));
+  test("trailing UK", () => expect(matchChannel("Sky Sports Premier League UK", list)).toEqual(["UK: SKY SPORTS PREMIER LEAGUE HD"]));
+  test("Canada: TSN 2 matches TSN2", () => expect(matchChannel("Canada: TSN 2", list)).toEqual(["CA: TSN2"]));
 });
