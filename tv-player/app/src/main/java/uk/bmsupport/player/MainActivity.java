@@ -377,12 +377,40 @@ public class MainActivity extends Activity {
         ui.post(pollTask);
     }
 
+    /** Poll also reports what is on screen so admins see live connections. */
+    private JSONObject pollBody() throws Exception {
+        JSONObject b = new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", ""))
+                .put("login", prefs.getString("user", "")).put("version", appVersion());
+        long since = prefs.getLong("np_since", 0);
+        if (since > 0) b.put("watching", new JSONObject().put("kind", prefs.getString("np_kind", "live"))
+                .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
+                .put("player", prefs.getString("np_player", "BM Player")).put("since", since));
+        return b;
+    }
+
+    private void setNowPlaying(Item it, boolean vlc) {
+        long since = System.currentTimeMillis();
+        prefs.edit().putString("np_kind", it.kind).putString("np_title", it.name == null ? "" : it.name)
+                .putString("np_cat", "").putString("np_player", vlc ? "VLC" : "BM Player").putLong("np_since", since).apply();
+        io.execute(() -> {
+            String cat = ""; try { cat = categoryName(it); } catch (Exception ignored) {}
+            if (prefs.getLong("np_since", 0) == since) prefs.edit().putString("np_cat", cat == null ? "" : cat).apply();
+            pollOnce();
+        });
+    }
+
+    private void clearNowPlaying() {
+        if (prefs.getLong("np_since", 0) == 0) return;
+        prefs.edit().putLong("np_since", 0).apply();
+        io.execute(this::pollOnce);
+    }
+
     private void stopPolling() { if (pollTask != null) ui.removeCallbacks(pollTask); pollTask = null; }
 
     private void pollOnce() {
         try {
             JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
-                    new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", "")).toString()));
+                    pollBody().toString()));
             JSONObject mt = r.optJSONObject("maintenance");
             boolean down = mt != null && mt.optBoolean("enabled");
             boolean wasDown = maintenance;
@@ -978,6 +1006,7 @@ public class MainActivity extends Activity {
         // Adult-category items are never kept in recently watched, for safety.
         if (!isAdultCategory(it.category)) remember("recent", it);
         String url = streamUrl(it);
+        setNowPlaying(it, vlc);
         if (vlc) {
             Intent i = new Intent(Intent.ACTION_VIEW).setPackage("org.videolan.vlc").setDataAndTypeAndNormalize(Uri.parse(url), "video/*");
             i.putExtra("title", it.name);
@@ -2256,6 +2285,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        clearNowPlaying();
         refreshVersionScreens();
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
         if (("sports".equals(screen) || "sports_channels".equals(screen)) && retryEvent != null) {

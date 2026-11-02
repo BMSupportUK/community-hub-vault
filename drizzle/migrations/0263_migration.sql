@@ -1,0 +1,15 @@
+ALTER TABLE public.player_devices
+  ADD COLUMN IF NOT EXISTS iptv_username text,
+  ADD COLUMN IF NOT EXISTS app_version text,
+  ADD COLUMN IF NOT EXISTS watching_kind text,
+  ADD COLUMN IF NOT EXISTS watching_title text,
+  ADD COLUMN IF NOT EXISTS watching_category text,
+  ADD COLUMN IF NOT EXISTS watching_player text,
+  ADD COLUMN IF NOT EXISTS watching_since timestamptz,
+  ADD COLUMN IF NOT EXISTS connected_since timestamptz,
+  ADD COLUMN IF NOT EXISTS last_ip text,
+  ADD COLUMN IF NOT EXISTS geo_city text,
+  ADD COLUMN IF NOT EXISTS geo_region text,
+  ADD COLUMN IF NOT EXISTS geo_country text,
+  ADD COLUMN IF NOT EXISTS geo_lat double precision,
+  ADD COLUMN IF NOT EXISTS geo_lon double precision;

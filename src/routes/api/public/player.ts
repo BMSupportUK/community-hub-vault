@@ -24,7 +24,18 @@ const Body = z.discriminatedUnion("action", [
     name: z.string().trim().min(1).max(60).optional(),
   }),
   z.object({ action: z.literal("code"), device_token: Token }),
-  z.object({ action: z.literal("poll"), device_token: Token }),
+  z.object({
+    action: z.literal("poll"), device_token: Token,
+    login: z.string().trim().max(120).optional(),
+    version: z.string().trim().max(20).optional(),
+    watching: z.object({
+      kind: z.enum(["live", "film", "series"]).catch("live"),
+      title: z.string().trim().max(200),
+      category: z.string().trim().max(120).optional(),
+      player: z.string().trim().max(20).optional(),
+      since: z.number().int().positive(),
+    }).nullish(),
+  }),
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({
@@ -69,7 +80,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, last_seen_at, connected_since")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
 
@@ -137,7 +148,14 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         // poll: DNS + one-time credential handover
-        await supabaseAdmin.from("player_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id);
+        const { presenceUpdate } = await import("@/lib/player-live");
+        await supabaseAdmin.from("player_devices").update(presenceUpdate({
+          now: Date.now(), lastSeenAt: device.last_seen_at, connectedSince: device.connected_since,
+          login: body.login, version: body.version, watching: body.watching ?? null,
+          ip: request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null,
+          cf: (request as unknown as { cf?: Record<string, unknown> }).cf ?? null,
+          headerCountry: request.headers.get("cf-ipcountry"),
+        })).eq("id", device.id);
         const { data: settings } = await supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message").eq("id", 1).maybeSingle();
         const { data: pending } = await supabaseAdmin.from("player_pending_credentials")
           .delete().eq("device_id", device.id).select("username, password, created_at").maybeSingle();

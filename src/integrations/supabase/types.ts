@@ -5575,34 +5575,76 @@ export type Database = {
       }
       player_devices: {
         Row: {
+          app_version: string | null
+          connected_since: string | null
           created_at: string
+          geo_city: string | null
+          geo_country: string | null
+          geo_lat: number | null
+          geo_lon: number | null
+          geo_region: string | null
           id: string
+          iptv_username: string | null
+          last_ip: string | null
           last_seen_at: string
           linked_at: string | null
           name: string
           platform: string
           token_hash: string
           user_id: string | null
+          watching_category: string | null
+          watching_kind: string | null
+          watching_player: string | null
+          watching_since: string | null
+          watching_title: string | null
         }
         Insert: {
+          app_version?: string | null
+          connected_since?: string | null
           created_at?: string
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_lat?: number | null
+          geo_lon?: number | null
+          geo_region?: string | null
           id?: string
+          iptv_username?: string | null
+          last_ip?: string | null
           last_seen_at?: string
           linked_at?: string | null
           name?: string
           platform?: string
           token_hash: string
           user_id?: string | null
+          watching_category?: string | null
+          watching_kind?: string | null
+          watching_player?: string | null
+          watching_since?: string | null
+          watching_title?: string | null
         }
         Update: {
+          app_version?: string | null
+          connected_since?: string | null
           created_at?: string
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_lat?: number | null
+          geo_lon?: number | null
+          geo_region?: string | null
           id?: string
+          iptv_username?: string | null
+          last_ip?: string | null
           last_seen_at?: string
           linked_at?: string | null
           name?: string
           platform?: string
           token_hash?: string
           user_id?: string | null
+          watching_category?: string | null
+          watching_kind?: string | null
+          watching_player?: string | null
+          watching_since?: string | null
+          watching_title?: string | null
         }
         Relationships: []
       }

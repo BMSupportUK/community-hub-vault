@@ -12,3 +12,4 @@
 - Self-update downloads a fresh uncached APK and installs only if its versionCode beats the installed one; release by uploading the file first, then switching the build row.
 - iFollow/Scottish sports fixtures group playlist channels under each team name (teamChannels, title split on "v"), then the guide-listed channels.
 - Sports guide opens with a Search manually / Voice search choice; voice matches every spoken word against event, guide and sport names.
+- Live connections: the poll reports login, version and the playing item (set on playback start, cleared on return to the app); the server stamps presence + Cloudflare geo via src/lib/player-live.ts, admin-only page /admin-player-live.

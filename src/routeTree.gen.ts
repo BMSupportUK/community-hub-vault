@@ -79,6 +79,7 @@ import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './r
 import { Route as AuthenticatedApprovedAdminPackagesRouteImport } from './routes/_authenticated/_approved/admin-packages'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
 import { Route as AuthenticatedApprovedAdminPlayerRouteImport } from './routes/_authenticated/_approved/admin-player'
+import { Route as AuthenticatedApprovedAdminPlayerLiveRouteImport } from './routes/_authenticated/_approved/admin-player-live'
 import { Route as AuthenticatedApprovedAdminPredictionsRouteImport } from './routes/_authenticated/_approved/admin-predictions'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
 import { Route as AuthenticatedApprovedAdminProfitCostsRouteImport } from './routes/_authenticated/_approved/admin-profit-costs'
@@ -598,6 +599,12 @@ const AuthenticatedApprovedAdminPlayerRoute =
   AuthenticatedApprovedAdminPlayerRouteImport.update({
     id: '/admin-player',
     path: '/admin-player',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminPlayerLiveRoute =
+  AuthenticatedApprovedAdminPlayerLiveRouteImport.update({
+    id: '/admin-player-live',
+    path: '/admin-player-live',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminPredictionsRoute =
@@ -1505,6 +1512,7 @@ export interface FileRoutesByFullPath {
   '/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-player': typeof AuthenticatedApprovedAdminPlayerRoute
+  '/admin-player-live': typeof AuthenticatedApprovedAdminPlayerLiveRoute
   '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
@@ -1715,6 +1723,7 @@ export interface FileRoutesByTo {
   '/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-player': typeof AuthenticatedApprovedAdminPlayerRoute
+  '/admin-player-live': typeof AuthenticatedApprovedAdminPlayerLiveRoute
   '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
@@ -1929,6 +1938,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/_authenticated/_approved/admin-player': typeof AuthenticatedApprovedAdminPlayerRoute
+  '/_authenticated/_approved/admin-player-live': typeof AuthenticatedApprovedAdminPlayerLiveRoute
   '/_authenticated/_approved/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-profit-costs': typeof AuthenticatedApprovedAdminProfitCostsRoute
@@ -2143,6 +2153,7 @@ export interface FileRouteTypes {
     | '/admin-packages'
     | '/admin-permissions'
     | '/admin-player'
+    | '/admin-player-live'
     | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-profit-costs'
@@ -2353,6 +2364,7 @@ export interface FileRouteTypes {
     | '/admin-packages'
     | '/admin-permissions'
     | '/admin-player'
+    | '/admin-player-live'
     | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-profit-costs'
@@ -2566,6 +2578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-packages'
     | '/_authenticated/_approved/admin-permissions'
     | '/_authenticated/_approved/admin-player'
+    | '/_authenticated/_approved/admin-player-live'
     | '/_authenticated/_approved/admin-predictions'
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-profit-costs'
@@ -3302,6 +3315,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-player'
       fullPath: '/admin-player'
       preLoaderRoute: typeof AuthenticatedApprovedAdminPlayerRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-player-live': {
+      id: '/_authenticated/_approved/admin-player-live'
+      path: '/admin-player-live'
+      fullPath: '/admin-player-live'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminPlayerLiveRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-predictions': {
@@ -4417,6 +4437,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminPackagesRoute: typeof AuthenticatedApprovedAdminPackagesRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
   AuthenticatedApprovedAdminPlayerRoute: typeof AuthenticatedApprovedAdminPlayerRoute
+  AuthenticatedApprovedAdminPlayerLiveRoute: typeof AuthenticatedApprovedAdminPlayerLiveRoute
   AuthenticatedApprovedAdminPredictionsRoute: typeof AuthenticatedApprovedAdminPredictionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminProfitCostsRoute: typeof AuthenticatedApprovedAdminProfitCostsRoute
@@ -4538,6 +4559,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
   AuthenticatedApprovedAdminPlayerRoute: AuthenticatedApprovedAdminPlayerRoute,
+  AuthenticatedApprovedAdminPlayerLiveRoute:
+    AuthenticatedApprovedAdminPlayerLiveRoute,
   AuthenticatedApprovedAdminPredictionsRoute:
     AuthenticatedApprovedAdminPredictionsRoute,
   AuthenticatedApprovedAdminProfanityRoute:
