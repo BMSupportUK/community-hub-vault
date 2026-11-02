@@ -519,7 +519,8 @@ public class MainActivity extends Activity {
     }
 
     private void play(Item it, boolean vlc) {
-        remember("recent", it);
+        // Adult-category items are never kept in recently watched, for safety.
+        if (!isAdultCategory(it.category)) remember("recent", it);
         String url = streamUrl(it);
         if (vlc) {
             Intent i = new Intent(Intent.ACTION_VIEW).setPackage("org.videolan.vlc").setDataAndTypeAndNormalize(Uri.parse(url), "video/*");
