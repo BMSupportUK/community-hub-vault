@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Film, MapPin, MonitorPlay, Radio, Tv } from "lucide-react";
+import { ArrowLeft, Film, MapPin, MonitorPlay, Radio, ShieldAlert, ShieldCheck, Tv } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { formatElapsed, isLive, LIVE_WINDOW_MS } from "@/lib/player-live";
@@ -21,6 +21,7 @@ type Row = {
   connected_since: string | null; iptv_username: string | null; app_version: string | null;
   watching_kind: string | null; watching_title: string | null; watching_category: string | null; watching_player: string | null; watching_since: string | null;
   last_ip: string | null; geo_city: string | null; geo_region: string | null; geo_country: string | null; geo_lat: number | null; geo_lon: number | null;
+  vpn_status: string | null; vpn_provider: string | null; vpn_checked_at: string | null;
 };
 
 const PLATFORM: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Phone", windows: "Windows" };
@@ -38,7 +39,7 @@ function AdminPlayerLivePage() {
     const load = async () => {
       const since = new Date(Date.now() - LIVE_WINDOW_MS).toISOString();
       const { data } = await supabase.from("player_devices")
-        .select("id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon")
+        .select("id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon, vpn_status, vpn_provider, vpn_checked_at")
         .gte("last_seen_at", since).order("connected_since", { ascending: true });
       if (stop) return;
       const list = (data ?? []) as Row[];
@@ -57,6 +58,7 @@ function AdminPlayerLivePage() {
 
   const live = useMemo(() => (rows ?? []).filter((r) => isLive(r.last_seen_at, now)), [rows, now]);
   const watching = live.filter((r) => r.watching_since).length;
+  const onVpn = live.filter((r) => r.vpn_status === "yes").length;
 
   if (loading) return null;
   if (!isAdmin) return <Navigate to="/admin" />;
@@ -78,7 +80,7 @@ function AdminPlayerLivePage() {
         : <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-              <tr><th className="p-3">Code</th><th className="p-3">Username</th><th className="p-3">Location</th><th className="p-3">Connected to</th><th className="p-3">Watching for</th><th className="p-3 max-sm:hidden">Online for</th></tr>
+              <tr><th className="p-3">Code</th><th className="p-3">Username</th><th className="p-3">Location</th><th className="p-3">VPN</th><th className="p-3">Connected to</th><th className="p-3">Watching for</th><th className="p-3 max-sm:hidden">Online for</th></tr>
             </thead>
             <tbody>
               {live.map((r) => {
