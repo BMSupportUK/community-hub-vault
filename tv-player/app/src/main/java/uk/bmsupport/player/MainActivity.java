@@ -580,11 +580,11 @@ public class MainActivity extends Activity {
             pvStatus = text("Highlight a channel to preview it", 14, MUTED, false);
             side.addView(pvStatus);
             pvEpg = text("", 14, TEXT, false);
-            pvEpg.setBackground(focusBg(10));
             pvEpg.setPadding(dp(12), dp(10), dp(12), dp(10));
             pvEpg.setSingleLine(false);
             pvEpg.setHorizontallyScrolling(false);
             android.widget.ScrollView guideScroll = new android.widget.ScrollView(this);
+            guideScroll.setBackground(focusBg(10));
             guideScroll.setFillViewport(true);
             guideScroll.setFocusable(true);
             guideScroll.setContentDescription("Now and Up next programmes");
