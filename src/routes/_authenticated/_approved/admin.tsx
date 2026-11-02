@@ -565,6 +565,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield, art: toolArtSecurity },
     { to: "/admin-dns", label: "QD DNS codes", desc: "Add and edit shared DNS codes for all members.", icon: Globe, art: toolArtGlobe },
     { to: "/admin-player", label: "BM Player DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe, art: toolArtGlobe, adminOnly: true },
+    { to: "/admin-player-live", label: "BM Player live connections", desc: "Every BM Player app online now: code, username, location, what it's playing and for how long.", icon: MonitorPlay, art: toolArtDevices, adminOnly: true },
     { to: "/moderation", label: "BM Support | Access Requests", desc: "Approve access requests and appeals.", icon: ShieldAlert, art: toolArtSecurity },
     { to: "/shifts", label: "Shifts overview", desc: "Review staff shifts and break history.", icon: Clock, art: toolArtTime },
     { to: "/admin-sports-import", label: "Sports import", desc: "Paste Discord listings — AI splits them into events and routes them to the right category.", icon: Sparkles, art: toolArtDocs },
