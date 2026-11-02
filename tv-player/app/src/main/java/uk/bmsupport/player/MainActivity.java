@@ -1087,6 +1087,10 @@ public class MainActivity extends Activity {
         s = s.replaceAll("\\bsports\\b", "sport").replaceAll("\\b0+(\\d)", "$1");
         return s.replaceAll("\\s+", " ").trim();
     }
+    private static final String[][] BUILT_IN_ALIASES = {
+        {"sky sports pl", "sky sports premier league"}, {"sky sports me", "sky sports main event"},
+        {"sky sports f1", "sky sports formula 1"}, {"bt sport 1", "tnt sports 1"}, {"bt sport 2", "tnt sports 2"},
+        {"bt sport 3", "tnt sports 3"}, {"bt sport 4", "tnt sports 4"} };
     private static String alias(String n, java.util.Map<String, String> aliases) {
         String a = aliases.get(n); return a == null ? n : a;
     }
