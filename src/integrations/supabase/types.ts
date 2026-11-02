@@ -5687,6 +5687,7 @@ export type Database = {
       }
       player_settings: {
         Row: {
+          channel_aliases: Json
           dns: string
           id: number
           maintenance_enabled: boolean
@@ -5695,6 +5696,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          channel_aliases?: Json
           dns?: string
           id?: number
           maintenance_enabled?: boolean
@@ -5703,6 +5705,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          channel_aliases?: Json
           dns?: string
           id?: number
           maintenance_enabled?: boolean

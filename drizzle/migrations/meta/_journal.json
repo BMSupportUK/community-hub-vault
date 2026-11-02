@@ -1835,6 +1835,13 @@
       "when": 1793649236787,
       "tag": "0261_player_maintenance",
       "breakpoints": true
+    },
+    {
+      "idx": 262,
+      "version": "7",
+      "when": 1793649646060,
+      "tag": "0262_player_channel_aliases",
+      "breakpoints": true
     }
   ]
 }
