@@ -124,11 +124,11 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, s
                     <div className="text-[11px] text-muted-foreground">
                       {c.app_login_name} · {ACCOUNT_TYPES.find((t) => t.value === (c.account_type ?? "single"))?.label ?? "Single account"}
                     </div>
-                    {exp && (
+                    {exp ? (
                       <div className={cn("text-xs", expired ? "text-destructive" : soon ? "text-amber-400" : "text-muted-foreground")}>
                         {expired ? "Expired" : "Expires"} {formatCredentialTime(exp)}
                       </div>
-                    )}
+                    ) : <div className="text-xs text-muted-foreground">No expiry</div>}
                   </div>
                   {!readOnly && <div className="flex gap-1">
                     <button onClick={() => setEditor({ row: c })} className="p-1.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground" aria-label={`Edit credential ${c.app_login_name}`}><Pencil className="size-3.5" /></button>
