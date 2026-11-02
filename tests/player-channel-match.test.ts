@@ -22,3 +22,15 @@ describe("player channel matching", () => {
     expect(matchChannel("TNT Sports 1", ["UK: TNT Sports 10", "UK: TNT Sports 1 HD"])).toEqual(["UK: TNT Sports 1 HD"]);
   });
 });
+
+describe("country labels and spacing", () => {
+  const { matchChannel } = require("../src/lib/player-channel-match");
+  const list = ["UK: DAZN 1 FHD", "US: ESPN 2 HD", "AU | FOX SPORTS 505", "NHL 1", "|UK| PREMIER SPORTS 1 HD", "UK: SKY SPORTS PREMIER LEAGUE HD", "CA: TSN2"];
+  test("USA: ESPN 2 matches US: ESPN 2", () => expect(matchChannel("USA: ESPN 2", list)).toEqual(["US: ESPN 2 HD"]));
+  test("Australia: Fox Sports 505", () => expect(matchChannel("Australia: Fox Sports 505", list)).toEqual(["AU | FOX SPORTS 505"]));
+  test("Dazn 1 HD", () => expect(matchChannel("Dazn 1 HD", list)).toEqual(["UK: DAZN 1 FHD"]));
+  test("NHL 01 matches NHL 1", () => expect(matchChannel("NHL 01", list)).toEqual(["NHL 1"]));
+  test("UK Premier Sports 1 without colon", () => expect(matchChannel("UK Premier Sports 1", list)).toEqual(["|UK| PREMIER SPORTS 1 HD"]));
+  test("trailing UK", () => expect(matchChannel("Sky Sports Premier League UK", list)).toEqual(["UK: SKY SPORTS PREMIER LEAGUE HD"]));
+  test("Canada: TSN 2 matches TSN2", () => expect(matchChannel("Canada: TSN 2", list)).toEqual(["CA: TSN2"]));
+});

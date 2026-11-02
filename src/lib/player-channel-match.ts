@@ -16,7 +16,7 @@ export const BUILT_IN_ALIASES: ChannelAlias[] = [
 ];
 
 const COUNTRY = "uk|gb|usa|us|ire|ie|ireland|au|aus|australia|ca|canada|za|south africa|nz|int";
-const NOISE = "fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv|plus";
+const NOISE = "fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv";
 
 export function normChannel(name: string): string {
   let s = name.toLowerCase();
