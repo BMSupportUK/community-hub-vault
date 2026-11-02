@@ -1208,6 +1208,8 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   // between UK and ET clocks. Repair only clock punctuation, not titles.
   raw = raw
     .replace(/(\b\d{1,2}[:.]\d{2}):\s*(am|pm)\b/gi, "$1$2")
+    // "8:00pm UK UK | 3:00pm ET" — a doubled zone label after a clock.
+    .replace(/(\d\s*(?:am|pm)?\s*)\b(UK|BST|GMT|ET|EST|EDT)(?:\s+\2)+\b/gi, "$1$2")
     .replace(/(\bUK(?:\s+(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*)?\s*)\\(?=\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*ET\b)/gi, "$1|");
   raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(insertMissingChannelPipe(joinWrappedSlotDates(raw))))));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
