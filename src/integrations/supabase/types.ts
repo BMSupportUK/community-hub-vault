@@ -5689,18 +5689,24 @@ export type Database = {
         Row: {
           dns: string
           id: number
+          maintenance_enabled: boolean
+          maintenance_message: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           dns?: string
           id?: number
+          maintenance_enabled?: boolean
+          maintenance_message?: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           dns?: string
           id?: number
+          maintenance_enabled?: boolean
+          maintenance_message?: string
           updated_at?: string
           updated_by?: string | null
         }
