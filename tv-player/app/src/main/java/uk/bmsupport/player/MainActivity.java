@@ -698,6 +698,23 @@ public class MainActivity extends Activity {
         });
     }
 
+    private Item itemFrom(String kind, JSONObject o, String category, int pos) {
+        String sid = kind.equals("series") ? o.optString("series_id") : o.optString("stream_id");
+        Item it = new Item(kind, sid, o.optString("name"), o.optString("container_extension"), category);
+        it.poster = kind.equals("series") ? o.optString("cover") : o.optString("stream_icon");
+        it.added = o.optLong(kind.equals("series") ? "last_modified" : "added", 0);
+        it.rating = o.optDouble(o.has("rating_5based") ? "rating_5based" : "rating", 0);
+        if (Double.isNaN(it.rating)) it.rating = 0;
+        it.pos = pos;
+        return it;
+    }
+
+    private List<Item> parseItems(String kind, JSONArray a, String category) throws Exception {
+        List<Item> l = new ArrayList<>();
+        for (int i = 0; i < a.length(); i++) l.add(itemFrom(kind, a.getJSONObject(i), category, i));
+        return l;
+    }
+
     private String clock(long epochSec) {
         long shifted = (epochSec + prefs.getInt("epg_shift", 0) * 3600L) * 1000L;
         String f = "12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm";
@@ -1909,14 +1926,14 @@ public class MainActivity extends Activity {
     private android.widget.GridView posterGrid() {
         android.widget.GridView g = new android.widget.GridView(this);
         g.setBackgroundColor(CARD);
-        GradientDrawable ring = new GradientDrawable(); ring.setColor(Color.TRANSPARENT); ring.setCornerRadius(dp(8)); ring.setStroke(dp(4), ACCENT);
-        g.setSelector(ring);
+        // Nothing is drawn over the posters: the selected card paints its own ring around the picture.
+        g.setSelector(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
         g.setColumnWidth(dp(130));
         g.setNumColumns(android.widget.GridView.AUTO_FIT);
         g.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
         g.setHorizontalSpacing(dp(8)); g.setVerticalSpacing(dp(10));
         g.setPadding(dp(8), dp(8), dp(8), dp(8));
-        g.setDrawSelectorOnTop(true);
+        g.setDrawSelectorOnTop(false);
         return g;
     }
 
@@ -1933,7 +1950,9 @@ public class MainActivity extends Activity {
             @Override public View getView(int i, View cv, ViewGroup parent) {
                 LinearLayout card; android.widget.ImageView img; TextView t;
                 if (cv == null) {
-                    card = column(); card.setPadding(dp(4), dp(4), dp(4), dp(4));
+                    card = column(); card.setPadding(dp(5), dp(5), dp(5), dp(5));
+                    card.setBackground(posterCardBg());
+                    card.setDuplicateParentStateEnabled(false);
                     img = new android.widget.ImageView(MainActivity.this);
                     img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
                     img.setBackgroundColor(Color.rgb(20, 28, 48));
@@ -1950,30 +1969,77 @@ public class MainActivity extends Activity {
         };
     }
 
+    private StateListDrawable posterCardBg() {
+        GradientDrawable on = new GradientDrawable(); on.setColor(BG); on.setCornerRadius(dp(8)); on.setStroke(dp(4), ACCENT);
+        GradientDrawable off = new GradientDrawable(); off.setColor(BG); off.setCornerRadius(dp(8));
+        StateListDrawable st = new StateListDrawable();
+        st.addState(new int[]{android.R.attr.state_selected}, on);
+        st.addState(new int[]{android.R.attr.state_focused}, on);
+        st.addState(new int[]{android.R.attr.state_pressed}, on);
+        st.addState(new int[]{}, off);
+        return st;
+    }
+
+    /** Waiting picture views per poster address, so one address is only downloaded once at a time. */
+    private final java.util.Map<String, List<android.widget.ImageView>> posterWaiting = new java.util.HashMap<>();
+    private final java.util.Map<String, Long> posterFailed = new java.util.HashMap<>();
+
+    private java.io.File posterFile(String url) {
+        java.io.File d = new java.io.File(getCacheDir(), "posters");
+        d.mkdirs();
+        return new java.io.File(d, Integer.toHexString(url.hashCode()) + "_" + url.length() + ".img");
+    }
+
     private void loadPoster(android.widget.ImageView img, String url) {
+        if (url == null || url.isEmpty() || !url.startsWith("http")) { img.setTag(null); img.setImageDrawable(null); return; }
+        // Same poster already on screen (the grid redraws a card when it is highlighted) – leave it alone.
+        if (url.equals(img.getTag()) && img.getDrawable() != null) return;
         img.setTag(url);
-        img.setImageDrawable(null);
-        if (url == null || url.isEmpty() || !url.startsWith("http")) return;
         android.graphics.Bitmap c = posterCache.get(url);
         if (c != null) { img.setImageBitmap(c); return; }
+        img.setImageDrawable(null);
+        Long failed = posterFailed.get(url);
+        if (failed != null && System.currentTimeMillis() - failed < 60_000) return;
+        List<android.widget.ImageView> waiting = posterWaiting.get(url);
+        if (waiting != null) { if (!waiting.contains(img)) waiting.add(img); return; }
+        waiting = new ArrayList<>(); waiting.add(img);
+        posterWaiting.put(url, waiting);
+        final int target = dp(180);
         posterIo.execute(() -> {
+            android.graphics.Bitmap b = null;
             try {
-                java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
-                h.setConnectTimeout(8000); h.setReadTimeout(10000); h.setInstanceFollowRedirects(true);
-                h.setRequestProperty("User-Agent", "VLC/3.0.20 LibVLC/3.0.20");
-                byte[] data;
-                try (java.io.InputStream in = h.getInputStream(); java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream()) {
-                    byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) bo.write(buf, 0, n); data = bo.toByteArray();
+                java.io.File f = posterFile(url);
+                byte[] data = null;
+                if (f.exists() && f.length() > 0) {
+                    try (java.io.FileInputStream in = new java.io.FileInputStream(f); java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream()) {
+                        byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) bo.write(buf, 0, n); data = bo.toByteArray();
+                    } catch (Exception ignored) { data = null; }
+                }
+                if (data == null) {
+                    java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                    h.setConnectTimeout(8000); h.setReadTimeout(10000); h.setInstanceFollowRedirects(true);
+                    h.setRequestProperty("User-Agent", "VLC/3.0.20 LibVLC/3.0.20");
+                    try (java.io.InputStream in = h.getInputStream(); java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream()) {
+                        byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) bo.write(buf, 0, n); data = bo.toByteArray();
+                    }
                 }
                 android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
                 o.inJustDecodeBounds = true; android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
-                int s = 1; while (o.outHeight / (s * 2) >= dp(180)) s *= 2;
+                int s = 1; while (o.outHeight / (s * 2) >= target) s *= 2;
                 o = new android.graphics.BitmapFactory.Options(); o.inSampleSize = s; o.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
-                android.graphics.Bitmap b = android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
-                if (b == null) return;
-                posterCache.put(url, b);
-                ui.post(() -> { if (url.equals(img.getTag())) img.setImageBitmap(b); });
+                b = android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
+                if (b != null && !(f.exists() && f.length() > 0)) {
+                    try (java.io.FileOutputStream out = new java.io.FileOutputStream(f)) { out.write(data); } catch (Exception ignored) {}
+                }
             } catch (Exception ignored) {}
+            final android.graphics.Bitmap done = b;
+            ui.post(() -> {
+                List<android.widget.ImageView> views = posterWaiting.remove(url);
+                if (done == null) { posterFailed.put(url, System.currentTimeMillis()); return; }
+                posterFailed.remove(url);
+                posterCache.put(url, done);
+                if (views != null) for (android.widget.ImageView v : views) if (url.equals(v.getTag())) v.setImageBitmap(done);
+            });
         });
     }
 
