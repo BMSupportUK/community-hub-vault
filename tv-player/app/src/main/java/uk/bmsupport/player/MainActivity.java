@@ -1564,9 +1564,22 @@ public class MainActivity extends Activity {
     // ---------- speed test + account ----------
 
     private void speedTest() {
-        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Speed test").setMessage("Testing your download speed…").setPositiveButton("Close", null).show();
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Speed test").setMessage("Testing ping…").setPositiveButton("Close", null).show();
         io.execute(() -> {
             try {
+                // Ping: best of 5 small round trips
+                long best = Long.MAX_VALUE;
+                for (int i = 0; i < 5; i++) {
+                    java.net.HttpURLConnection p = (java.net.HttpURLConnection) new java.net.URL("https://speed.cloudflare.com/__down?bytes=0&r=" + i + System.nanoTime()).openConnection();
+                    p.setConnectTimeout(5000); p.setReadTimeout(5000); p.setUseCaches(false);
+                    long t = System.nanoTime();
+                    p.getResponseCode(); try (java.io.InputStream in = p.getInputStream()) { while (in.read() >= 0) {} }
+                    long ms = (System.nanoTime() - t) / 1_000_000;
+                    if (i > 0) best = Math.min(best, ms); // first call includes connection setup
+                    p.disconnect();
+                }
+                long ping = best;
+                ui.post(() -> dlg.setMessage("Ping: " + ping + " ms\n\nTesting download…"));
                 java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL("https://speed.cloudflare.com/__down?bytes=50000000").openConnection();
                 c.setConnectTimeout(10000); c.setReadTimeout(15000);
                 long start = System.nanoTime(), bytes = 0;
@@ -1575,8 +1588,25 @@ public class MainActivity extends Activity {
                     while ((n = in.read(buf)) > 0) { bytes += n; if (System.nanoTime() - start > 8_000_000_000L) break; }
                 }
                 double secs = (System.nanoTime() - start) / 1e9, mbps = bytes * 8 / secs / 1e6;
+                ui.post(() -> dlg.setMessage(String.format(java.util.Locale.UK, "Ping: %d ms\nDownload: %.1f Mbps\n\nTesting upload…", ping, mbps)));
+                double up;
+                try {
+                    java.net.HttpURLConnection u = (java.net.HttpURLConnection) new java.net.URL("https://speed.cloudflare.com/__up").openConnection();
+                    u.setConnectTimeout(10000); u.setReadTimeout(20000); u.setDoOutput(true); u.setRequestMethod("POST");
+                    int size = 10_000_000; u.setFixedLengthStreamingMode(size);
+                    u.setRequestProperty("Content-Type", "application/octet-stream");
+                    long us = System.nanoTime();
+                    try (java.io.OutputStream out = u.getOutputStream()) {
+                        byte[] buf = new byte[65536]; int sent = 0;
+                        while (sent < size) { int k = Math.min(buf.length, size - sent); out.write(buf, 0, k); sent += k; }
+                    }
+                    u.getResponseCode();
+                    up = size * 8 / ((System.nanoTime() - us) / 1e9) / 1e6;
+                } catch (Exception ue) { up = -1; }
+                double upMbps = up;
                 String verdict = mbps >= 25 ? "Good for 4K." : mbps >= 10 ? "Good for HD. 4K may buffer." : "Slow – HD may buffer. Try a wired connection.";
-                ui.post(() -> dlg.setMessage(String.format(java.util.Locale.UK, "%.1f Mbps\n\n%s", mbps, verdict)));
+                String upTxt = upMbps < 0 ? "couldn't test" : String.format(java.util.Locale.UK, "%.1f Mbps", upMbps);
+                ui.post(() -> dlg.setMessage(String.format(java.util.Locale.UK, "Ping: %d ms\nDownload: %.1f Mbps\nUpload: %s\n\n%s", ping, mbps, upTxt, verdict)));
             } catch (Exception e) {
                 ui.post(() -> dlg.setMessage("Couldn't run the speed test. Check the internet."));
             }
