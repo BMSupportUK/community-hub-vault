@@ -8,6 +8,7 @@ export const DOWNLOAD_SOURCES = {
   android_apk: "BM Support phone app",
   self_install: "Self install (no staff help)",
   direct_install: "BM Direct Install (TV)",
+  player_update: "BM Player in-app update",
 } as const;
 export type DownloadSource = keyof typeof DOWNLOAD_SOURCES;
 
