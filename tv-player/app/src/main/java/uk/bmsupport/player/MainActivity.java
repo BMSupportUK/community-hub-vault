@@ -439,6 +439,7 @@ public class MainActivity extends Activity {
     // ---------- home ----------
 
     private void showHome() {
+        stopPreview(); stopMulti(); // never keep a channel playing behind the main menu
         screen = "home"; back = null; drawnVersion = appVersion();
         LinearLayout root = column();
         LinearLayout top = row();
