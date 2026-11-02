@@ -464,7 +464,7 @@ public class MainActivity extends Activity {
 
         LinearLayout small = row();
         small.addView(button("📅 TV guide", v -> showTvGuide()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-        small.addView(button("🏆 Sports guide", v -> showSports()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        small.addView(button("🏆 Sports guide", v -> askSportsMode()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("★ Favourites", v -> showSaved("fav", "Favourites")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("⚙ Settings", v -> showSettings()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -1076,7 +1076,10 @@ public class MainActivity extends Activity {
             String kind = voiceKind; voiceKind = null;
             if (res != RESULT_OK || data == null || kind == null) return;
             java.util.ArrayList<String> r = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
-            if (r != null && !r.isEmpty()) showSearch(kind, r.get(0));
+            if (r != null && !r.isEmpty()) {
+                if ("sports".equals(kind)) { if (!"sports".equals(screen)) showSports(); sportsVoice(r.get(0)); }
+                else showSearch(kind, r.get(0));
+            }
             return;
         }
         if (req != VLC_REQUEST || data == null || vlcKey == null) return;
@@ -2054,6 +2057,7 @@ public class MainActivity extends Activity {
         head.addView(text("Sports guide", 26, TEXT, true), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         TextView status = text("Loading…", 14, MUTED, false);
         head.addView(status);
+        head.addView(button("🎤 Voice search", v -> startVoice("sports")));
         head.addView(button("⟳ Refresh", v -> loadSports(status, true)));
         root.addView(head);
         sportsHeading = text("Pick a sport", 15, MUTED, false);
@@ -2076,6 +2080,58 @@ public class MainActivity extends Activity {
         ui.postDelayed(sportsTask, 60000);
     }
     private ListView sportsList;
+    private String pendingSportsQuery;
+
+    /** Entering the sports guide: browse the categories by hand or say an event / team name. */
+    private void askSportsMode() {
+        new AlertDialog.Builder(this).setTitle("Sports guide")
+                .setMessage("How would you like to find an event?")
+                .setPositiveButton("📂 Search manually", (d, w) -> showSports())
+                .setNegativeButton("🎤 Voice search", (d, w) -> { showSports(); startVoice("sports"); })
+                .setNeutralButton("Cancel", null).show();
+    }
+
+    /** Voice result: events whose name, team, guide or sport contains every spoken word. */
+    private void sportsVoice(String spoken) {
+        JSONObject r = sportsData;
+        if (r == null) { pendingSportsQuery = spoken; Toast.makeText(this, "Loading the sports guide…", Toast.LENGTH_SHORT).show(); return; }
+        String want = normChannel(spoken).replaceAll("\\b(?:v|vs|versus|and|the|fc|afc|match|game|on|watch)\\b", " ").replaceAll("\\s+", " ").trim();
+        List<String[]> aliases = new ArrayList<>();
+        JSONArray al = r.optJSONArray("aliases");
+        if (al != null) for (int i = 0; i < al.length(); i++) { JSONObject o = al.optJSONObject(i); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
+        for (String[] x : BUILT_IN_ALIASES) aliases.add(x);
+        List<JSONObject> hits = new ArrayList<>();
+        JSONArray ev = r.optJSONArray("events");
+        if (!want.isEmpty() && ev != null) {
+            String[] words = want.split(" ");
+            for (int i = 0; i < ev.length() && hits.size() < 60; i++) {
+                JSONObject e = ev.optJSONObject(i); if (e == null) continue;
+                String hay = " " + normChannel(e.optString("title") + " " + e.optString("competition") + " " + e.optString("subcategory") + " " + e.optString("sport")) + " ";
+                boolean all = true;
+                for (String w : words) if (!hay.contains(" " + w)) { all = false; break; }
+                if (all) hits.add(e);
+            }
+        }
+        if (hits.isEmpty()) {
+            new AlertDialog.Builder(this).setTitle("Nothing found for \"" + spoken + "\"")
+                    .setMessage("Try saying a team or event name again, or browse the categories.")
+                    .setPositiveButton("🎤 Try again", (d, w) -> startVoice("sports"))
+                    .setNegativeButton("Browse", null).show();
+            return;
+        }
+        java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK);
+        day.setTimeZone(java.util.TimeZone.getTimeZone("Europe/London"));
+        long now = System.currentTimeMillis();
+        String[] labels = new String[hits.size()];
+        for (int i = 0; i < labels.length; i++) {
+            JSONObject e = hits.get(i); long st = e.optLong("start");
+            labels[i] = (st <= now ? "🔴 LIVE NOW  " : day.format(new java.util.Date(st)) + "  " + clock(st / 1000) + "  ") + e.optString("title") + "\n      " + e.optString("competition");
+        }
+        new AlertDialog.Builder(this).setTitle(hits.size() + (hits.size() == 1 ? " event" : " events") + " for \"" + spoken + "\"")
+                .setItems(labels, (d, i) -> pickSportsChannel(hits.get(i), aliases, false))
+                .setPositiveButton("🎤 Search again", (d, w) -> startVoice("sports"))
+                .setNegativeButton("Browse", null).show();
+    }
     private void stopSports() { if (sportsTask != null) ui.removeCallbacks(sportsTask); sportsTask = null; }
 
     private void loadSports(TextView status, boolean manual) {
@@ -2099,6 +2155,7 @@ public class MainActivity extends Activity {
                     if (!"sports".equals(screen)) return;
                     status.setText("Updated " + clock(System.currentTimeMillis() / 1000) + "  ");
                     if (manual || !v.equals(sportsVersion)) renderSports(r);
+                    if (pendingSportsQuery != null) { String q = pendingSportsQuery; pendingSportsQuery = null; sportsVoice(q); }
                 });
             } catch (Exception e) {
                 ui.post(() -> status.setText(manual ? "Couldn't update – check the connection  " : status.getText()));
