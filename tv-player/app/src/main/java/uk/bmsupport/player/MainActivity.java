@@ -22,6 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AbsListView;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -62,7 +64,7 @@ public class MainActivity extends Activity {
     /** A playable or browsable entry. */
     static final class Item {
         String kind, id, name, ext, category;
-        String norm;
+        String norm, poster = ""; long added; double rating; int pos;
         String norm() { if (norm == null) norm = normChannel(name == null ? "" : name); return norm; }
         Item(String kind, String id, String name, String ext, String category) {
             this.kind = kind; this.id = id; this.name = name; this.ext = ext; this.category = category;
@@ -70,11 +72,12 @@ public class MainActivity extends Activity {
         @Override public String toString() { return name; }
         JSONObject toJson() {
             JSONObject o = new JSONObject();
-            try { o.put("kind", kind).put("id", id).put("name", name).put("ext", ext).put("category", category); } catch (Exception ignored) {}
+            try { o.put("kind", kind).put("id", id).put("name", name).put("ext", ext).put("category", category).put("poster", poster); } catch (Exception ignored) {}
             return o;
         }
         static Item fromJson(JSONObject o) {
-            return new Item(o.optString("kind"), o.optString("id"), o.optString("name"), o.optString("ext"), o.optString("category"));
+            Item it = new Item(o.optString("kind"), o.optString("id"), o.optString("name"), o.optString("ext"), o.optString("category"));
+            it.poster = o.optString("poster"); return it;
         }
     }
 
@@ -335,7 +338,29 @@ public class MainActivity extends Activity {
         root.addView(epg);
         stopPreview();
         LinearLayout panes = row();
-        ListView cats = list(), items = list();
+        ListView cats = list();
+        final boolean posters = !kind.equals("live");
+        final AbsListView items = posters ? posterGrid() : list();
+        final List<Item> shown = new ArrayList<>();
+        final String[] sortKey = { prefs.getString("sort_" + kind, "default") };
+        final Runnable[] applySort = new Runnable[1];
+        if (posters) {
+            LinearLayout sortRow = row();
+            sortRow.addView(text("Sort:  ", 16, MUTED, false));
+            String[][] opts = {{"default", "Default"}, {"added", "Recently added"}, {"az", "A–Z"}, {"za", "Z–A"}, {"rating", "Top rated"}};
+            List<Button> btns = new ArrayList<>();
+            for (String[] o : opts) {
+                Button b = button(o[1], v -> {
+                    sortKey[0] = o[0]; prefs.edit().putString("sort_" + kind, o[0]).apply();
+                    for (Button x : btns) x.setAlpha(x.getTag().equals(sortKey[0]) ? 1f : 0.55f);
+                    if (applySort[0] != null) applySort[0].run();
+                });
+                b.setTag(o[0]); b.setAlpha(o[0].equals(sortKey[0]) ? 1f : 0.55f);
+                btns.add(b); sortRow.addView(b);
+            }
+            android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
+            hs.addView(sortRow); root.addView(hs);
+        }
         panes.addView(cats, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
         panes.addView(items, weight(kind.equals("live") ? 1.3f : 2, ViewGroup.LayoutParams.MATCH_PARENT));
         androidx.media3.ui.PlayerView pv = null;
@@ -395,10 +420,21 @@ public class MainActivity extends Activity {
                     for (int i = 0; i < a.length(); i++) {
                         JSONObject o = a.getJSONObject(i);
                         String sid = kind.equals("series") ? o.optString("series_id") : o.optString("stream_id");
-                        list.add(new Item(kind, sid, o.optString("name"), o.optString("container_extension"), c[1]));
+                        Item it = new Item(kind, sid, o.optString("name"), o.optString("container_extension"), c[1]);
+                        it.poster = kind.equals("series") ? o.optString("cover") : o.optString("stream_icon");
+                        it.added = o.optLong(kind.equals("series") ? "last_modified" : "added", 0);
+                        it.rating = o.optDouble(o.has("rating_5based") ? "rating_5based" : "rating", 0);
+                        if (Double.isNaN(it.rating)) it.rating = 0;
+                        it.pos = i;
+                        list.add(it);
                     }
                     ui.post(() -> {
-                        items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list) {
+                        if (posters) {
+                            shown.clear(); shown.addAll(list);
+                            applySort[0] = () -> { sortItems(shown, sortKey[0]); ((BaseAdapter) items.getAdapter()).notifyDataSetChanged(); items.setSelection(0); };
+                            sortItems(shown, sortKey[0]);
+                            items.setAdapter(posterAdapter(shown));
+                        } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list) {
                             @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
                         });
                         epg.setText(c[1] + " · " + list.size() + (kind.equals("live") ? " channels" : " titles"));
@@ -1451,6 +1487,88 @@ public class MainActivity extends Activity {
         l.setDivider(null);
         l.setPadding(dp(6), dp(6), dp(6), dp(6));
         return l;
+    }
+
+    static void sortItems(List<Item> l, String key) {
+        java.util.Comparator<Item> c;
+        switch (key) {
+            case "added": c = (a, b) -> Long.compare(b.added, a.added); break;
+            case "az": c = (a, b) -> a.name.compareToIgnoreCase(b.name); break;
+            case "za": c = (a, b) -> b.name.compareToIgnoreCase(a.name); break;
+            case "rating": c = (a, b) -> Double.compare(b.rating, a.rating); break;
+            default: c = (a, b) -> Integer.compare(a.pos, b.pos);
+        }
+        java.util.Collections.sort(l, c);
+    }
+
+    private android.widget.GridView posterGrid() {
+        android.widget.GridView g = new android.widget.GridView(this);
+        g.setBackgroundColor(CARD);
+        g.setSelector(focusBg(8));
+        g.setColumnWidth(dp(130));
+        g.setNumColumns(android.widget.GridView.AUTO_FIT);
+        g.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
+        g.setHorizontalSpacing(dp(8)); g.setVerticalSpacing(dp(10));
+        g.setPadding(dp(8), dp(8), dp(8), dp(8));
+        g.setDrawSelectorOnTop(true);
+        return g;
+    }
+
+    private final android.util.LruCache<String, android.graphics.Bitmap> posterCache = new android.util.LruCache<String, android.graphics.Bitmap>(24 * 1024 * 1024) {
+        @Override protected int sizeOf(String k, android.graphics.Bitmap b) { return b.getByteCount(); }
+    };
+    private final java.util.concurrent.ExecutorService posterIo = java.util.concurrent.Executors.newFixedThreadPool(4);
+
+    private BaseAdapter posterAdapter(List<Item> l) {
+        return new BaseAdapter() {
+            @Override public int getCount() { return l.size(); }
+            @Override public Object getItem(int i) { return l.get(i); }
+            @Override public long getItemId(int i) { return i; }
+            @Override public View getView(int i, View cv, ViewGroup parent) {
+                LinearLayout card; android.widget.ImageView img; TextView t;
+                if (cv == null) {
+                    card = column(); card.setPadding(dp(4), dp(4), dp(4), dp(4));
+                    img = new android.widget.ImageView(MainActivity.this);
+                    img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                    img.setBackgroundColor(Color.rgb(20, 28, 48));
+                    card.addView(img, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(180)));
+                    t = text("", 13, TEXT, false); t.setMaxLines(2); t.setGravity(Gravity.CENTER);
+                    card.addView(t);
+                    card.setTag(new Object[]{img, t});
+                } else { card = (LinearLayout) cv; Object[] h = (Object[]) card.getTag(); img = (android.widget.ImageView) h[0]; t = (TextView) h[1]; }
+                Item it = l.get(i);
+                t.setText(it.rating > 0 ? it.name + "\n★ " + String.format(java.util.Locale.UK, "%.1f", it.rating) : it.name);
+                loadPoster(img, it.poster);
+                return card;
+            }
+        };
+    }
+
+    private void loadPoster(android.widget.ImageView img, String url) {
+        img.setTag(url);
+        img.setImageDrawable(null);
+        if (url == null || url.isEmpty() || !url.startsWith("http")) return;
+        android.graphics.Bitmap c = posterCache.get(url);
+        if (c != null) { img.setImageBitmap(c); return; }
+        posterIo.execute(() -> {
+            try {
+                java.net.HttpURLConnection h = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                h.setConnectTimeout(8000); h.setReadTimeout(10000); h.setInstanceFollowRedirects(true);
+                h.setRequestProperty("User-Agent", "VLC/3.0.20 LibVLC/3.0.20");
+                byte[] data;
+                try (java.io.InputStream in = h.getInputStream(); java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream()) {
+                    byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) bo.write(buf, 0, n); data = bo.toByteArray();
+                }
+                android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+                o.inJustDecodeBounds = true; android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
+                int s = 1; while (o.outHeight / (s * 2) >= dp(180)) s *= 2;
+                o = new android.graphics.BitmapFactory.Options(); o.inSampleSize = s; o.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;
+                android.graphics.Bitmap b = android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
+                if (b == null) return;
+                posterCache.put(url, b);
+                ui.post(() -> { if (url.equals(img.getTag())) img.setImageBitmap(b); });
+            } catch (Exception ignored) {}
+        });
     }
 
     private View styleRow(View v) {
