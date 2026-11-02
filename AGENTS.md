@@ -76,3 +76,4 @@
 - `tv-enabler/` rules (PIN gate, Helper install path, ADB client parity) live in `tv-enabler/AGENTS.md`.
 - BM Player device-link forms share PlayerDeviceLinkSection between Install Guides and the standalone URL so both keep identical handover controls.
 - BM Player saved-login selection reads the existing credential view filtered to the signed-in owner; selection is bound to that owner and passwords are never displayed.
+- iFollow/Scottish guides save each fixture with its two club names as the channels (clubChannelListingHtml) on manual saves and imports.
