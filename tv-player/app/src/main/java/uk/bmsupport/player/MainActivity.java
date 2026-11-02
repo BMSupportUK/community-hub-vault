@@ -1733,7 +1733,8 @@ public class MainActivity extends Activity {
     private android.widget.GridView posterGrid() {
         android.widget.GridView g = new android.widget.GridView(this);
         g.setBackgroundColor(CARD);
-        g.setSelector(focusBg(8));
+        GradientDrawable ring = new GradientDrawable(); ring.setColor(Color.TRANSPARENT); ring.setCornerRadius(dp(8)); ring.setStroke(dp(4), ACCENT);
+        g.setSelector(ring);
         g.setColumnWidth(dp(130));
         g.setNumColumns(android.widget.GridView.AUTO_FIT);
         g.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
