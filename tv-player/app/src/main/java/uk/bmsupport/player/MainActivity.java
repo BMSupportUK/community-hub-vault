@@ -425,10 +425,10 @@ public class MainActivity extends Activity {
         root.addView(tiles);
 
         LinearLayout small = row();
+        small.addView(button("📅 TV guide", v -> showTvGuide()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("🏆 Sports guide", v -> showSports()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("★ Favourites", v -> showSaved("fav", "Favourites")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-        small.addView(button("⚠ Report a problem", v -> showReport(null)), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         small.addView(button("⚙ Settings", v -> showSettings()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(small);
         setContentView(withHomeBackground(root));
@@ -1699,6 +1699,133 @@ public class MainActivity extends Activity {
     }
 
     private List<Item> liveChannels = null;
+
+    // ---------- full TV guide ----------
+    /** Categories, then channels, then that channel's programmes; picking a programme sets or removes a reminder. */
+    private void showTvGuide() {
+        screen = "tvguide"; back = this::showHome;
+        stopPreview();
+        LinearLayout root = column();
+        root.addView(text("TV guide", 26, TEXT, true));
+        TextView status = text("Loading your channels…", 14, MUTED, false);
+        root.addView(status);
+        LinearLayout panes = row();
+        ListView cats = list(), chans = list(), progs = list();
+        panes.addView(cats, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+        panes.addView(chans, weight(1.3f, ViewGroup.LayoutParams.MATCH_PARENT));
+        panes.addView(progs, weight(2, ViewGroup.LayoutParams.MATCH_PARENT));
+        root.addView(panes, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        setContentView(root);
+        final List<String[]> catRows = new ArrayList<>();
+        final List<Item> shownCh = new ArrayList<>();
+        final List<Object[]> shownProg = new ArrayList<>();
+        final Item[] curCh = { null };
+        final Runnable[] pending = new Runnable[2];
+        io.execute(() -> {
+            try {
+                JSONArray ca = new JSONArray(cachedGet("live", "get_live_categories", ""));
+                if (liveChannels == null) {
+                    JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
+                    List<Item> l = new ArrayList<>();
+                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id"))); }
+                    liveChannels = l;
+                }
+                List<String[]> rows = new ArrayList<>();
+                rows.add(new String[]{"*", "All channels"});
+                for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
+                ui.post(() -> {
+                    if (!"tvguide".equals(screen)) return;
+                    catRows.clear(); catRows.addAll(rows);
+                    List<String> names = new ArrayList<>(); for (String[] r : rows) names.add(r[1]);
+                    cats.setAdapter(rowAdapter(names));
+                    status.setText("Pick a category, then a channel, then a programme to set a reminder");
+                    cats.requestFocus();
+                });
+            } catch (Exception ex) { ui.post(() -> status.setText("Couldn't load your channels – check your login in Settings")); }
+        });
+        java.util.function.IntConsumer showCat = pos -> {
+            if (pos < 0 || pos >= catRows.size() || liveChannels == null) return;
+            String id = catRows.get(pos)[0];
+            shownCh.clear();
+            for (Item it : liveChannels) if (id.equals("*") || id.equals(it.category)) shownCh.add(it);
+            List<String> names = new ArrayList<>(); for (Item it : shownCh) names.add(it.name);
+            chans.setAdapter(rowAdapter(names));
+            chans.setSelection(0);
+        };
+        java.util.function.IntConsumer showCh = pos -> {
+            if (pos < 0 || pos >= shownCh.size()) return;
+            Item it = shownCh.get(pos); curCh[0] = it;
+            shownProg.clear(); progs.setAdapter(rowAdapter(java.util.Collections.singletonList("Loading programmes for " + it.name + "…")));
+            io.execute(() -> {
+                List<Object[]> got = new ArrayList<>();
+                try {
+                    JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings");
+                    if (l != null) for (int i = 0; i < l.length(); i++) {
+                        JSONObject e = l.getJSONObject(i);
+                        String t = new String(Base64.decode(e.optString("title"), Base64.DEFAULT), "UTF-8");
+                        long st = e.optLong("start_timestamp", 0), en = e.optLong("stop_timestamp", 0);
+                        if (st > 0) got.add(new Object[]{t, st, en});
+                    }
+                } catch (Exception ignored) {}
+                ui.post(() -> { if (curCh[0] == it && "tvguide".equals(screen)) { shownProg.clear(); shownProg.addAll(got); drawGuideProgs(progs, it, shownProg); } });
+            });
+        };
+        cats.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (pending[0] != null) ui.removeCallbacks(pending[0]);
+                pending[0] = () -> showCat.accept(pos); ui.postDelayed(pending[0], 250);
+            }
+            @Override public void onNothingSelected(AdapterView<?> p) {}
+        });
+        cats.setOnItemClickListener((p, v, pos, id) -> { showCat.accept(pos); chans.requestFocus(); });
+        chans.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (pending[1] != null) ui.removeCallbacks(pending[1]);
+                pending[1] = () -> showCh.accept(pos); ui.postDelayed(pending[1], 300);
+            }
+            @Override public void onNothingSelected(AdapterView<?> p) {}
+        });
+        chans.setOnItemClickListener((p, v, pos, id) -> {
+            if (pos < 0 || pos >= shownCh.size()) return;
+            if (curCh[0] != shownCh.get(pos)) showCh.accept(pos);
+            progs.requestFocus();
+        });
+        progs.setOnItemClickListener((p, v, pos, id) -> {
+            Item ch = curCh[0];
+            if (ch == null || pos < 0 || pos >= shownProg.size()) return;
+            Object[] pr = shownProg.get(pos);
+            String title = (String) pr[0]; long st = (long) pr[1];
+            long now = System.currentTimeMillis() / 1000;
+            if (st <= now) {
+                new AlertDialog.Builder(this).setTitle(title).setMessage("On now on " + ch.name)
+                        .setPositiveButton("▶ Watch now", (d, w) -> play(ch, defaultVlc())).setNegativeButton("Close", null).show();
+                return;
+            }
+            if (hasReminder(ch.id, st)) { removeReminder(ch.id, st); Toast.makeText(this, "Reminder removed", Toast.LENGTH_SHORT).show(); }
+            else { addReminder(ch, title, st); Toast.makeText(this, "Reminder set – we'll tell you 5 minutes before " + title + " starts", Toast.LENGTH_LONG).show(); }
+            drawGuideProgs(progs, ch, shownProg);
+            progs.setSelection(pos);
+        });
+    }
+
+    private void drawGuideProgs(ListView progs, Item ch, List<Object[]> l) {
+        List<String> rows = new ArrayList<>();
+        long now = System.currentTimeMillis() / 1000;
+        for (Object[] p : l) {
+            long st = (long) p[1], en = (long) p[2];
+            String times = clock(st) + (en > 0 ? " – " + clock(en) : "");
+            boolean on = st <= now && (en == 0 || en > now);
+            rows.add((on ? "🔴 NOW  " : "") + times + (hasReminder(ch.id, st) ? "   ⏰ reminder set" : "") + "\n" + p[0]);
+        }
+        if (rows.isEmpty()) rows.add("No TV guide for " + ch.name);
+        progs.setAdapter(rowAdapter(rows));
+    }
+
+    private ArrayAdapter<String> rowAdapter(List<String> rows) {
+        return new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<>(rows)) {
+            @Override public View getView(int i, View cv, ViewGroup parent) { View v = styleRow(super.getView(i, cv, parent)); if (v instanceof TextView) { ((TextView) v).setSingleLine(false); } return v; }
+        };
+    }
 
     private void showSports() {
         screen = "sports"; sportsPath.clear();
