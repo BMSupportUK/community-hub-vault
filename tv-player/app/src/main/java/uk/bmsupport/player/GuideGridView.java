@@ -27,7 +27,7 @@ public class GuideGridView extends View {
         boolean hasReminder(int row, long st);
     }
 
-    private static final long SLOT = 1800, WINDOW = 7200;
+    private static final long SLOT = 1800, WINDOW = 3600, MARK = 900;
     private final List<String> names = new ArrayList<>();
     private final Map<Integer, List<Prog>> progs = new HashMap<>();
     private Listener listener;
@@ -140,7 +140,7 @@ public class GuideGridView extends View {
         java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK);
         c.drawText(df.format(new java.util.Date(windowStart * 1000)), 10 * d, hh * 0.68f, txt);
         txt.setFakeBoldText(false);
-        for (long t = windowStart; t < windowStart + WINDOW; t += SLOT) {
+        for (long t = windowStart; t < windowStart + WINDOW; t += MARK) {
             float x = ch + (t - windowStart) * pxPerSec;
             c.drawText(hhmm(t), x + 6 * d, hh * 0.68f, txt);
             fill.setColor(0xFF334155); c.drawRect(x, 0, x + 1, H, fill);
@@ -177,10 +177,7 @@ public class GuideGridView extends View {
                 float x2 = ch + Math.min(WINDOW, en - windowStart) * pxPerSec;
                 // Short programmes get a readable minimum width so the name and start time always show;
                 // later boxes shift right just enough to make room.
-                x1 = Math.max(x1, cursor);
-                x2 = Math.max(x2, x1 + minBox);
-                cursor = x2;
-                if (x1 >= W) break;
+                // True time scale: every box starts exactly under its start time on the header.
                 RectF box = new RectF(x1 + 2, y + 2, Math.max(x1 + 4, x2 - 2), y + rh - 2);
                 boolean onNow = p.st <= nowS && nowS < en;
                 fill.setColor(p == sel ? 0xFFE11D48 : onNow ? 0xFF24345A : 0xFF1A2742);
