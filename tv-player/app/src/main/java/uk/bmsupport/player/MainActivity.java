@@ -538,7 +538,7 @@ public class MainActivity extends Activity {
         final boolean posters = !kind.equals("live");
         final AbsListView items = posters ? posterGrid() : list();
         final List<Item> shown = new ArrayList<>();
-        final String[] sortKey = { prefs.getString("sort_" + kind, "default") };
+        final String[] sortKey = { prefs.getString("sort_" + kind, "added") };
         final Runnable[] applySort = new Runnable[1];
         if (posters) {
             LinearLayout sortRow = row();

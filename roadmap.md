@@ -51,3 +51,4 @@
 - [x] Android app 1.0 (TV / Fire TV / phone) built, signed, added to app list (not yet tested on a real TV)
 - [ ] Windows app with bundled VLC
 - [x] Downloads in Install Guides (BM Player listed as a TV-installable app)
+- [x] Films and Series default sort is Recently added (latest uploads first); signed 2.12 uploaded and the app update download verified (TV-side sorting not tested on a real box)
