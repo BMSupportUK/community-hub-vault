@@ -77,6 +77,7 @@ public class MainActivity extends Activity {
         super.onCreate(b);
         prefs = getSharedPreferences("bmplayer", MODE_PRIVATE);
         start();
+        checkForUpdate(false);
     }
 
     @Override protected void onDestroy() { super.onDestroy(); stopPolling(); io.shutdownNow(); }
@@ -247,6 +248,9 @@ public class MainActivity extends Activity {
         switch (it.kind) {
             case "live": {
                 String base = d + "/live/" + u + "/" + p + "/" + it.id;
+                String f = prefs.getString("format", "auto");
+                if (f.equals("ts")) return new String[]{base + ".ts"};
+                if (f.equals("hls")) return new String[]{base + ".m3u8"};
                 return new String[]{base + ".ts", base + ".m3u8", d + "/" + u + "/" + p + "/" + it.id};
             }
             case "film": return new String[]{d + "/movie/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext)};
@@ -393,7 +397,7 @@ public class MainActivity extends Activity {
         String fav = isSaved("fav", it) ? "Remove from favourites" : "Add to favourites";
         String[] opts = {"Play", "Play with VLC", fav, "Report a problem"};
         new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
-            if (w == 0) play(it, false);
+            if (w == 0) play(it, defaultVlc());
             else if (w == 1) play(it, true);
             else if (w == 2) toggleSaved("fav", it);
             else showReport(it);
@@ -442,7 +446,7 @@ public class MainActivity extends Activity {
         eps.setOnItemClickListener((p, v, pos, id) -> {
             Item ep = (Item) eps.getItemAtPosition(pos);
             new AlertDialog.Builder(this).setTitle(ep.name).setItems(new String[]{"Play", "Play with VLC"},
-                    (d, w) -> play(ep, w == 1)).show();
+                    (d, w) -> play(ep, w == 1 || (w == 0 && defaultVlc()))).show();
         });
     }
 
@@ -517,7 +521,7 @@ public class MainActivity extends Activity {
         });
         lv.setOnItemClickListener((p, v, pos, id) -> {
             Item it = list.get(pos);
-            if (it.kind.equals("episode")) play(it, false); else open(it);
+            if (it.kind.equals("episode")) play(it, defaultVlc()); else open(it);
         });
         root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
@@ -557,20 +561,88 @@ public class MainActivity extends Activity {
 
     // ---------- settings ----------
 
+    private boolean defaultVlc() { return "vlc".equals(prefs.getString("player", "internal")); }
+
+    private String appVersion() {
+        try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return "?"; }
+    }
+
+    /** One choice setting: shows the options and saves the picked value. */
+    private void choose(String title, String key, String def, String[] labels, String[] values) {
+        String cur = prefs.getString(key, def);
+        int sel = 0;
+        for (int i = 0; i < values.length; i++) if (values[i].equals(cur)) sel = i;
+        new AlertDialog.Builder(this).setTitle(title).setSingleChoiceItems(labels, sel, (d, w) -> {
+            prefs.edit().putString(key, values[w]).apply();
+            d.dismiss();
+            showSettings();
+        }).setNegativeButton("Cancel", null).show();
+    }
+
+    private String label(String key, String def, String[] labels, String[] values) {
+        String cur = prefs.getString(key, def);
+        for (int i = 0; i < values.length; i++) if (values[i].equals(cur)) return labels[i];
+        return labels[0];
+    }
+
+    private View settingBox(String icon, String title, String value, View.OnClickListener l) {
+        LinearLayout t = column();
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(dp(10), dp(14), dp(10), dp(14));
+        t.setBackground(focusBg(16));
+        t.setFocusable(true); t.setClickable(true);
+        t.setOnClickListener(l);
+        TextView ic = text(icon, 30, TEXT, false); ic.setGravity(Gravity.CENTER);
+        TextView lb = text(title, 17, TEXT, true); lb.setGravity(Gravity.CENTER);
+        TextView vl = text(value, 13, MUTED, false); vl.setGravity(Gravity.CENTER);
+        t.addView(ic); t.addView(lb); t.addView(vl);
+        return t;
+    }
+
     private void showSettings() {
         screen = "settings"; back = this::showHome;
         LinearLayout root = column();
         root.addView(text("Settings", 26, TEXT, true));
-        root.addView(text("Account: " + prefs.getString("user", "") + "\nDevice: " + deviceLabel() + "\nVersion 1.0", 17, MUTED, false));
-        root.addView(button("Use a different login", v -> {
+        root.addView(text("Account: " + prefs.getString("user", "") + "  ·  " + deviceLabel() + "  ·  Version " + appVersion(), 15, MUTED, false));
+
+        String[] playerL = {"BM Player (built-in)", "VLC"}, playerV = {"internal", "vlc"};
+        String[] fmtL = {"Auto", "MPEG-TS (.ts)", "HLS (.m3u8)"}, fmtV = {"auto", "ts", "hls"};
+        String[] bufL = {"Small", "Normal", "Large"}, bufV = {"small", "normal", "large"};
+        String[] decL = {"Hardware", "Software"}, decV = {"hardware", "software"};
+        String[] uaL = {"VLC", "BM Player", "IPTV Smarters"}, uaV = {PlayerActivity.UA, "BMPlayer/" + appVersion(), "IPTVSmartersPlayer"};
+
+        List<View> boxes = new ArrayList<>();
+        boxes.add(settingBox("▶", "Player", label("player", "internal", playerL, playerV),
+                v -> choose("Default player", "player", "internal", playerL, playerV)));
+        boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
+                v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
+        boxes.add(settingBox("⏳", "Buffer size", label("buffer", "normal", bufL, bufV),
+                v -> choose("Buffer size", "buffer", "normal", bufL, bufV)));
+        boxes.add(settingBox("🎞", "Decoder", label("decoder", "hardware", decL, decV),
+                v -> choose("Video decoder", "decoder", "hardware", decL, decV)));
+        boxes.add(settingBox("🌐", "User agent", label("ua", PlayerActivity.UA, uaL, uaV),
+                v -> choose("User agent", "ua", PlayerActivity.UA, uaL, uaV)));
+        boxes.add(settingBox("📺", "4K check", PlayerActivity.device4k(this) ? "4K device" : "Non 4K Device", v ->
+                new AlertDialog.Builder(this).setTitle("4K check")
+                        .setMessage(PlayerActivity.device4k(this)
+                                ? "This TV and streaming device can play 4K."
+                                : "Non 4K Device\n\nThis TV or streaming device can't show 4K. 4K channels and films may not play smoothly.")
+                        .setPositiveButton("OK", null).show()));
+        boxes.add(settingBox("⬆", "Update app", "Version " + appVersion(), v -> checkForUpdate(true)));
+        boxes.add(settingBox("👤", "Change login", prefs.getString("user", ""), v -> {
             prefs.edit().remove("user").remove("pass").apply();
             showLink();
         }));
-        root.addView(button("Clear recently watched", v -> {
+        boxes.add(settingBox("🕘", "Clear history", "Recently watched", v -> {
             prefs.edit().remove("recent").apply();
-            Toast.makeText(this, "Cleared", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Recently watched cleared", Toast.LENGTH_SHORT).show();
         }));
-        root.addView(button("Unlink this device from BM Support", v -> new AlertDialog.Builder(this)
+        boxes.add(settingBox("★", "Clear favourites", "All favourites", v -> new AlertDialog.Builder(this)
+                .setMessage("Remove all favourites from this device?")
+                .setPositiveButton("Clear", (d, w) -> { prefs.edit().remove("fav").apply(); Toast.makeText(this, "Favourites cleared", Toast.LENGTH_SHORT).show(); })
+                .setNegativeButton("Cancel", null).show()));
+        boxes.add(settingBox("⚠", "Report a problem", "Opens a ticket", v -> showReport(null)));
+        boxes.add(settingBox("🔗", "Unlink device", "Remove login", v -> new AlertDialog.Builder(this)
                 .setMessage("This removes the login from this device. You'll need a new code to link it again.")
                 .setPositiveButton("Unlink", (d, w) -> io.execute(() -> {
                     try { Net.postJson(Net.SITE + "/api/public/player",
@@ -578,8 +650,102 @@ public class MainActivity extends Activity {
                     prefs.edit().clear().apply();
                     ui.post(this::start);
                 })).setNegativeButton("Cancel", null).show()));
+
+        int cols = platform().equals("phone") ? 2 : 4;
+        LinearLayout grid = new LinearLayout(this);
+        grid.setOrientation(LinearLayout.VERTICAL);
+        for (int i = 0; i < boxes.size(); i += cols) {
+            LinearLayout r = row();
+            for (int j = i; j < i + cols; j++) {
+                View box = j < boxes.size() ? boxes.get(j) : new View(this);
+                r.addView(box, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+            }
+            grid.addView(r);
+        }
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(grid);
+        root.addView(sc, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
-        root.getChildAt(2).requestFocus();
+        boxes.get(0).requestFocus();
+    }
+
+    // ---------- self update ----------
+
+    private static int[] parts(String v) {
+        String[] s = v.replaceAll("[^0-9.]", "").split("\\.");
+        int[] o = new int[4];
+        for (int i = 0; i < Math.min(4, s.length); i++) try { o[i] = Integer.parseInt(s[i]); } catch (Exception ignored) {}
+        return o;
+    }
+
+    static boolean newer(String latest, String current) {
+        int[] a = parts(latest), b = parts(current);
+        for (int i = 0; i < 4; i++) if (a[i] != b[i]) return a[i] > b[i];
+        return false;
+    }
+
+    /** Checks the website for a newer BM Player; `manual` also reports "up to date". */
+    private void checkForUpdate(boolean manual) {
+        if (manual) Toast.makeText(this, "Checking for updates…", Toast.LENGTH_SHORT).show();
+        io.execute(() -> {
+            try {
+                JSONObject o = new JSONObject(Net.get(Net.SITE + "/api/public/player-apk?info=1"));
+                String latest = o.optString("version");
+                ui.post(() -> {
+                    if (newer(latest, appVersion())) {
+                        new AlertDialog.Builder(this).setTitle("Update available – version " + latest)
+                                .setMessage((o.optString("notes").isEmpty() ? "" : o.optString("notes") + "\n\n") + "You have version " + appVersion() + ".")
+                                .setPositiveButton("Update now", (d, w) -> downloadUpdate())
+                                .setNegativeButton("Later", null).show();
+                    } else if (manual) {
+                        Toast.makeText(this, "You have the latest version (" + appVersion() + ")", Toast.LENGTH_LONG).show();
+                    }
+                });
+            } catch (Exception e) {
+                if (manual) ui.post(() -> Toast.makeText(this, "Couldn't check for updates. Try again later.", Toast.LENGTH_LONG).show());
+            }
+        });
+    }
+
+    private void downloadUpdate() {
+        if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+            new AlertDialog.Builder(this).setTitle("Allow BM Player to update")
+                    .setMessage("Turn on \"Allow from this source\" for BM Player, then press Back and choose Update now again.")
+                    .setPositiveButton("Open settings", (d, w) -> {
+                        try { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))); }
+                        catch (Exception e) { startActivity(new Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS)); }
+                    }).setNegativeButton("Cancel", null).show();
+            return;
+        }
+        AlertDialog progress = new AlertDialog.Builder(this).setTitle("Downloading update…").setMessage("0%").setCancelable(false).show();
+        io.execute(() -> {
+            try {
+                java.io.File dir = new java.io.File(getCacheDir(), "updates");
+                dir.mkdirs();
+                java.io.File apk = new java.io.File(dir, "BM-Player.apk");
+                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(Net.SITE + "/api/public/player-apk").openConnection();
+                c.setConnectTimeout(15000); c.setReadTimeout(60000);
+                if (c.getResponseCode() != 200) throw new Exception("HTTP " + c.getResponseCode());
+                long total = c.getContentLengthLong(), done = 0;
+                try (java.io.InputStream in = c.getInputStream(); java.io.FileOutputStream out = new java.io.FileOutputStream(apk)) {
+                    byte[] buf = new byte[65536]; int n; int last = -1;
+                    while ((n = in.read(buf)) > 0) {
+                        out.write(buf, 0, n); done += n;
+                        int pct = total > 0 ? (int) (done * 100 / total) : 0;
+                        if (pct != last) { last = pct; int p = pct; ui.post(() -> progress.setMessage(p + "%")); }
+                    }
+                }
+                ui.post(() -> {
+                    progress.dismiss();
+                    Uri uri = androidx.core.content.FileProvider.getUriForFile(this, "uk.bmsupport.player.files", apk);
+                    Intent i = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive")
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                });
+            } catch (Exception e) {
+                ui.post(() -> { progress.dismiss(); Toast.makeText(this, "Update download failed. Try again later.", Toast.LENGTH_LONG).show(); });
+            }
+        });
     }
 
     private void showMessage(String msg, Runnable retry) {
