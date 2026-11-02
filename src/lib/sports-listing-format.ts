@@ -1210,7 +1210,13 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     .replace(/(\b\d{1,2}[:.]\d{2}):\s*(am|pm)\b/gi, "$1$2")
     // "8:00pm UK UK | 3:00pm ET" — a doubled zone label after a clock.
     .replace(/(\d\s*(?:am|pm)?\s*)\b(UK|BST|GMT|ET|EST|EDT)(?:\s+\2)+\b/gi, "$1$2")
-    .replace(/(\bUK(?:\s+(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*)?\s*)\\(?=\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*ET\b)/gi, "$1|");
+    .replace(/(\bUK(?:\s+(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*)?\s*)\\(?=\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*ET\b)/gi, "$1|")
+    // "NFL14: Bears @ Seahawks 01:15 03/11" — a trailing dd/mm after the
+    // kick-off becomes a date line above the row (UK day-first order).
+    .replace(/^([^\n]*\d{1,2}[:.]\d{2}\s*(?:am|pm)?)[ \t]+(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?[ \t]*$/gim, (all, row: string, d: string, m: string) => {
+      const month = ["January","February","March","April","May","June","July","August","September","October","November","December"][Number(m) - 1];
+      return month && Number(d) >= 1 && Number(d) <= 31 ? `${Number(d)} ${month}\n${row}` : all;
+    });
   raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(insertMissingChannelPipe(joinWrappedSlotDates(raw))))));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
