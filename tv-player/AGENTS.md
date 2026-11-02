@@ -6,3 +6,4 @@
 - Provider-name equivalents are canonicalized without removing feed numbers, so Sports Pass matches cannot jump to a different numbered channel.
 - Playlists download as whole-section lists on one queue (with the progress pop-up) and browse splits them by category locally, so "All" shows at once; posters never draw an overlay — the selected card paints its own ring.
 - Live preview reserves remaining height for a focusable, wrapping programme-guide scroll pane so upcoming entries never push the reminder control off-screen.
+- Watched positions stay on-device, keyed by hashed provider/login plus media kind/id; only internal on-demand playback writes progress, and series cards reflect the last watched episode.

@@ -60,11 +60,12 @@ public class MainActivity extends Activity {
     private boolean adultUnlocked;
     private String screen = "";
     private Runnable back;
+    private BaseAdapter watchedAdapter;
 
     /** A playable or browsable entry. */
     static final class Item {
         String kind, id, name, ext, category;
-        String norm, poster = ""; long added; double rating; int pos;
+        String norm, poster = "", seriesId = ""; long added; double rating; int pos;
         String norm() { if (norm == null) norm = normChannel(name == null ? "" : name); return norm; }
         Item(String kind, String id, String name, String ext, String category) {
             this.kind = kind; this.id = id; this.name = name; this.ext = ext; this.category = category;
@@ -72,12 +73,12 @@ public class MainActivity extends Activity {
         @Override public String toString() { return name; }
         JSONObject toJson() {
             JSONObject o = new JSONObject();
-            try { o.put("kind", kind).put("id", id).put("name", name).put("ext", ext).put("category", category).put("poster", poster); } catch (Exception ignored) {}
+            try { o.put("kind", kind).put("id", id).put("name", name).put("ext", ext).put("category", category).put("poster", poster).put("seriesId", seriesId); } catch (Exception ignored) {}
             return o;
         }
         static Item fromJson(JSONObject o) {
             Item it = new Item(o.optString("kind"), o.optString("id"), o.optString("name"), o.optString("ext"), o.optString("category"));
-            it.poster = o.optString("poster"); return it;
+            it.poster = o.optString("poster"); it.seriesId = o.optString("seriesId"); return it;
         }
     }
 
@@ -618,11 +619,19 @@ public class MainActivity extends Activity {
                     applySort[0] = () -> { sortItems(shown, sortKey[0]); ((BaseAdapter) items.getAdapter()).notifyDataSetChanged(); items.setSelection(0); };
                     sortItems(shown, sortKey[0]);
                     items.setAdapter(posterAdapter(shown));
+                    watchedAdapter = (BaseAdapter) items.getAdapter();
                 } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>(list)) {
                     @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
                 });
+                items.clearFocus();
+                items.setSelection(0);
+                items.post(() -> {
+                    if (!c[0].equals(current[0])) return;
+                    items.setSelection(0);
+                    if (items instanceof ListView) ((ListView) items).setSelectionFromTop(0, 0);
+                    if (focusItems) items.requestFocus();
+                });
                 epg.setText(c[1] + " · " + list.size() + (kind.equals("live") ? " channels" : " titles"));
-                if (focusItems) items.requestFocus();
             };
             if (got != null && !got.isEmpty()) { render.accept(got); return; }
             // List had no category tags for this one – ask the server for just this category.
@@ -822,6 +831,7 @@ public class MainActivity extends Activity {
                             String t = e.optString("title");
                             String name = "E" + e.optString("episode_num") + "   " + t;
                             Item ep = new Item("episode", e.optString("id"), name, e.optString("container_extension"), show.category);
+                            ep.seriesId = show.id;
                             JSONObject ei = e.optJSONObject("info");
                             if (ei != null) ep.poster = ei.optString("movie_image");
                             l.add(ep);
@@ -844,8 +854,15 @@ public class MainActivity extends Activity {
                             for (Button x : bs) x.setAlpha(x == b ? 1f : 0.55f);
                             List<Item> l = en.getValue();
                             eps.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, l) {
-                                @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
+                                @Override public View getView(int i, View cv, ViewGroup parent) {
+                                    LinearLayout row = column();
+                                    row.addView(text(l.get(i).name, 16, TEXT, false));
+                                    row.addView(watchedBar(l.get(i)));
+                                    return styleRow(row);
+                                }
                             });
+                            watchedAdapter = (BaseAdapter) eps.getAdapter();
+                            eps.setSelectionFromTop(0, 0);
                         });
                         b.setOnFocusChangeListener((v, f) -> { if (f) b.performClick(); });
                         bs.add(b); pills.addView(b);
@@ -859,27 +876,67 @@ public class MainActivity extends Activity {
             Item ep = (Item) eps.getItemAtPosition(pos);
             Item named = new Item(ep.kind, ep.id, show.name + " – " + ep.name, ep.ext, ep.category);
             named.poster = show.poster;
+            named.seriesId = show.id;
             new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play", "Play with VLC"},
                     (d, w) -> play(named, w == 1 || (w == 0 && defaultVlc()))).show();
         });
     }
 
     private void play(Item it, boolean vlc) {
+        String key = watchKey(it.kind, it.id);
+        long position = prefs.getLong(key + ":position", 0), duration = prefs.getLong(key + ":duration", 0);
+        if (WatchProgress.eligible(it.kind) && WatchProgress.resumable(position, duration)) {
+            String time = String.format(java.util.Locale.UK, "%d:%02d", position / 60000, (position / 1000) % 60);
+            new AlertDialog.Builder(this).setTitle(it.name)
+                    .setItems(new String[]{"Resume · " + time, "Play from beginning"},
+                            (d, w) -> startPlayback(it, vlc, w == 0 ? position : 0)).show();
+        } else startPlayback(it, vlc, 0);
+    }
+
+    private void startPlayback(Item it, boolean vlc, long position) {
         // Adult-category items are never kept in recently watched, for safety.
         if (!isAdultCategory(it.category)) remember("recent", it);
         String url = streamUrl(it);
         if (vlc) {
             Intent i = new Intent(Intent.ACTION_VIEW).setPackage("org.videolan.vlc").setDataAndTypeAndNormalize(Uri.parse(url), "video/*");
             i.putExtra("title", it.name);
+            i.putExtra("position", position);
             try { startActivity(i); }
             catch (Exception e) {
                 new AlertDialog.Builder(this).setTitle("VLC isn't installed")
                         .setMessage("Install VLC from your app store (or Downloader) to use it as the player. Playing in BM Player instead.")
-                        .setPositiveButton("OK", (d, w) -> play(it, false)).show();
+                        .setPositiveButton("OK", (d, w) -> startPlayback(it, false, position)).show();
             }
             return;
         }
-        startActivity(new Intent(this, PlayerActivity.class).putExtra("url", url));
+        Intent intent = new Intent(this, PlayerActivity.class).putExtra("url", url);
+        if (WatchProgress.eligible(it.kind)) {
+            intent.putExtra("progress_key", watchKey(it.kind, it.id)).putExtra("resume_ms", position);
+            if (!it.seriesId.isEmpty()) intent.putExtra("series_key", watchKey("series", it.seriesId));
+        }
+        startActivity(intent);
+    }
+
+    private String watchKey(String kind, String id) {
+        try {
+            String scope = prefs.getString("dns", "").replaceAll("/+$", "") + "\n" + prefs.getString("user", "");
+            byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(scope.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return "watch:" + Base64.encodeToString(hash, Base64.NO_WRAP) + ":" + kind + ":" + id;
+        } catch (java.security.NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
+    }
+
+    private LinearLayout watchedBar(Item it) {
+        String key = watchKey(it.kind, it.id);
+        long duration = prefs.getLong(key + ":duration", 0), position = prefs.getLong(key + ":position", 0);
+        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
+        android.widget.ProgressBar bar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        bar.setMax(100); bar.setProgress(WatchProgress.percent(position, duration));
+        bar.setProgressTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+        box.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(6)));
+        String label = duration > 0 ? WatchProgress.percent(position, duration) + "% watched" : "";
+        if ("series".equals(it.kind) && duration > 0) label = "Last episode · " + label;
+        box.addView(text(label, 12, MUTED, false));
+        return box;
     }
 
     // ---------- favourites / recent ----------
@@ -1728,6 +1785,7 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         refreshVersionScreens();
+        if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
         if (("sports".equals(screen) || "sports_channels".equals(screen)) && retryEvent != null) {
             JSONObject e = retryEvent; retryEvent = null;
             ui.postDelayed(() -> pickSportsChannel(e, retryAliases, true), 300);
@@ -1961,9 +2019,14 @@ public class MainActivity extends Activity {
                     card.addView(img, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(180)));
                     t = text("", 13, TEXT, false); t.setMaxLines(2); t.setGravity(Gravity.CENTER);
                     card.addView(t);
-                    card.setTag(new Object[]{img, t});
+                    LinearLayout progress = new LinearLayout(MainActivity.this);
+                    progress.setOrientation(LinearLayout.VERTICAL);
+                    card.addView(progress);
+                    card.setTag(new Object[]{img, t, progress});
                 } else { card = (LinearLayout) cv; Object[] h = (Object[]) card.getTag(); img = (android.widget.ImageView) h[0]; t = (TextView) h[1]; }
                 Item it = l.get(i);
+                LinearLayout progress = (LinearLayout) ((Object[]) card.getTag())[2];
+                progress.removeAllViews(); progress.addView(watchedBar(it));
                 t.setText(it.rating > 0 ? it.name + "\n★ " + String.format(java.util.Locale.UK, "%.1f", it.rating) : it.name);
                 loadPoster(img, it.poster);
                 return card;
