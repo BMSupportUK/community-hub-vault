@@ -357,9 +357,17 @@ public class MainActivity extends Activity {
             });
         });
 
-        items.setOnItemClickListener((p, v, pos, id) -> open((Item) items.getItemAtPosition(pos)));
+        items.setOnItemClickListener((p, v, pos, id) -> {
+            Item it = (Item) items.getItemAtPosition(pos);
+            if (previewView != null && platform().equals("phone")) { loadEpg(it, epg); schedulePreview(it, previewView, previewStatus); }
+            open(it);
+        });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { loadEpg((Item) items.getItemAtPosition(pos), epg); }
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                Item it = (Item) items.getItemAtPosition(pos);
+                loadEpg(it, epg);
+                schedulePreview(it, previewView, previewStatus);
+            }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
     }
