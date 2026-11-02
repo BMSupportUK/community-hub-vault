@@ -519,7 +519,8 @@ public class MainActivity extends Activity {
     }
 
     private void play(Item it, boolean vlc) {
-        remember("recent", it);
+        // Adult-category items are never kept in recently watched, for safety.
+        if (!isAdultCategory(it.category)) remember("recent", it);
         String url = streamUrl(it);
         if (vlc) {
             Intent i = new Intent(Intent.ACTION_VIEW).setPackage("org.videolan.vlc").setDataAndTypeAndNormalize(Uri.parse(url), "video/*");
@@ -581,7 +582,20 @@ public class MainActivity extends Activity {
         root.addView(text(title, 26, TEXT, true));
         JSONArray a = saved(key);
         List<Item> list = new ArrayList<>();
-        for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null) list.add(Item.fromJson(o)); }
+        boolean droppedAdult = false;
+        for (int i = 0; i < a.length(); i++) {
+            JSONObject o = a.optJSONObject(i);
+            if (o == null) continue;
+            Item it = Item.fromJson(o);
+            // Recently watched never shows adult-category items, even ones saved before this rule.
+            if (key.equals("recent") && isAdultCategory(it.category)) { droppedAdult = true; continue; }
+            list.add(it);
+        }
+        if (droppedAdult) {
+            JSONArray clean = new JSONArray();
+            for (Item it : list) clean.put(it.toJson());
+            prefs.edit().putString(key, clean.toString()).apply();
+        }
         if (list.isEmpty()) root.addView(text("Nothing here yet.", 18, MUTED, false));
         ListView lv = list();
         lv.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list) {
@@ -852,9 +866,13 @@ public class MainActivity extends Activity {
 
     // ---------- parental control ----------
 
+    private boolean isAdultCategory(String category) {
+        return category != null && category.toLowerCase(java.util.Locale.UK).matches(".*(adult|xxx|18\\+|porn|for adults).*");
+    }
+
     private boolean hideAdult(String category) {
         if (prefs.getString("pin", "").isEmpty() || adultUnlocked) return false;
-        return category.toLowerCase(java.util.Locale.UK).matches(".*(adult|xxx|18\\+|porn|for adults).*");
+        return isAdultCategory(category);
     }
 
     private void askPin(String title, java.util.function.Consumer<String> done) {
