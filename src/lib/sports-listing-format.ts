@@ -342,7 +342,17 @@ function splitChannelLine(line: string): string[] {
  * parser-produced entries as well as across text on one line.
  */
 function normalizeChannels(channels: string[]): string[] {
-  return channels.length ? splitChannelLine(channels.join(" | ")) : [];
+  return channels.length ? splitChannelLine(channels.join(" | ")).filter((c) => !isBareSportsPassChannel(c)) : [];
+}
+
+/** A sports-pass provider named with no channel number ("Coupang Play",
+ * "Rugby Pass", "DAZN") points at no actual channel, so it is dropped from
+ * the listing. Numbered feeds ("Coupang Play 1", "Rugby Pass 02") stay. */
+const SPORTS_PASS_NAME_RE =
+  /^(?:(?:UK|IRE|US|USA)\s+)?(?:coupang(?:\s+play)?|setanta(?:\s+sports)?|(?:sky|tnt|dazn|peacock|rugby(?:\s+(?:league|union))?|nfl(?:\s+game)?|nba(?:\s+league)?|nhl|mlb|season|sports?)\s+pass|rugby\s*pass|rpass|dazn|espn\s*(?:\+|plus)|peacock|fa\s+player|nfl\s+game\s+pass|nba\s+league\s+pass|flo\s*sports|triller(?:\s+tv)?|stan(?:\s+sport)?|fox\s+sports\s+pass)(?:\s+hd)?$/i;
+export function isBareSportsPassChannel(channel: string): boolean {
+  const c = channel.replace(/\s+/g, " ").trim();
+  return !/\d/.test(c) && SPORTS_PASS_NAME_RE.test(c);
 }
 
 export function normalizeSportsEventTitle(value: string): string {
