@@ -32,6 +32,7 @@ import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
 import { DeviceInstallSetup, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
 import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
+import { PlayerDeviceLinkSection } from "@/components/app/PlayerDeviceLinkSection";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
 
 
@@ -636,6 +637,7 @@ function InstallGuidesPage() {
               <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-fit lg:max-w-full lg:rounded-full">
                 <TabsTrigger value="welcome" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Setup Device | Direct To Device"}</TabsTrigger>
+                <TabsTrigger value="link-device" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Link Device</TabsTrigger>
                 <TabsTrigger value="phone-windows-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Setup Your Device Using | Android Phone | Or Windows</TabsTrigger>
                 <TabsTrigger value="ios-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Apps For | iOS</TabsTrigger>
                 <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
@@ -701,6 +703,12 @@ function InstallGuidesPage() {
                   </IllustratedHero>
                 }
               />
+            </PhotoPanel>
+          </TabsContent>
+
+          <TabsContent value="link-device" className="mt-0 min-w-0">
+            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
+              <PlayerDeviceLinkSection />
             </PhotoPanel>
           </TabsContent>
 
