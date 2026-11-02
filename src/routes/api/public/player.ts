@@ -72,12 +72,16 @@ export const Route = createFileRoute("/api/public/player")({
           const payload = await sportsCache(async () => {
             const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
               supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at").eq("published", true),
-              supabaseAdmin.from("sports_categories").select("id, name"),
+              supabaseAdmin.from("sports_categories").select("id, name, parent_id"),
               supabaseAdmin.from("player_settings").select("channel_aliases").eq("id", 1).maybeSingle(),
             ]);
             const { playerSportsEvents } = await import("@/lib/player-sports");
             const catName = new Map((cats ?? []).map((c) => [c.id, c.name]));
-            const events = playerSportsEvents((blogs ?? []).map((b) => ({ title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null })));
+            const parentOf = new Map((cats ?? []).map((c) => [c.id, c.parent_id]));
+            const events = playerSportsEvents((blogs ?? []).map((b) => {
+              const pid = b.category_id ? parentOf.get(b.category_id) : null;
+              return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null };
+            }));
             const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
             return { version, events, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
           });

@@ -1131,8 +1131,8 @@ public class MainActivity extends Activity {
     private List<Item> liveChannels = null;
 
     private void showSports() {
-        screen = "sports"; sportsPick = null; compPick = null;
-        back = () -> { if (sportsPick != null) { sportsUp(); return; } stopSports(); retryEvent = null; showHome(); };
+        screen = "sports"; sportsPath.clear();
+        back = () -> { if (!sportsPath.isEmpty()) { sportsUp(); return; } stopSports(); retryEvent = null; showHome(); };
         stopPreview();
         LinearLayout root = column();
         LinearLayout head = row();
@@ -1193,7 +1193,13 @@ public class MainActivity extends Activity {
     }
     private String cachedGetFresh() throws Exception { clearCache("live"); return cachedGet("live", "get_live_streams", ""); }
 
-    private JSONObject sportsData; private String sportsPick = null, compPick = null;
+    private JSONObject sportsData; private final List<String> sportsPath = new ArrayList<>();
+    private static List<String> eventPath(JSONObject e) {
+        List<String> p = new ArrayList<>();
+        String sp = e.optString("sport"), sub = e.optString("subcategory", ""), g = e.optString("competition", sp);
+        p.add(sp); if (!sub.isEmpty()) p.add(sub); if (!g.isEmpty()) p.add(g);
+        return p;
+    }
 
     /** Sports guide in three levels: sport → competition → events; an event opens its channel picker. */
     private void renderSports(JSONObject r) {
@@ -1214,21 +1220,18 @@ public class MainActivity extends Activity {
         if (ev != null) for (int i = 0; i < ev.length(); i++) {
             JSONObject e = ev.optJSONObject(i);
             if (e == null || e.optLong("start") < now - 3 * 3600_000L) continue;
-            String sp = e.optString("sport"), comp = e.optString("competition", sp);
-            if (comp.isEmpty()) comp = sp;
-            String key;
-            if (sportsPick == null) key = sp;
-            else if (!sp.equals(sportsPick)) continue;
-            else if (compPick == null) key = comp;
-            else if (!comp.equals(compPick)) continue;
-            else { events.add(e); continue; }
+            List<String> path = eventPath(e);
+            int d = sportsPath.size();
+            if (path.size() < d || !path.subList(0, d).equals(sportsPath)) continue;
+            if (path.size() == d) { events.add(e); continue; }
+            String key = path.get(d);
             groups.put(key, groups.containsKey(key) ? groups.get(key) + 1 : 1);
             if (e.optLong("start") <= now) liveGroups.add(key);
         }
         List<String> rows = new ArrayList<>();
         final List<Object> targets = new ArrayList<>();
-        if (sportsPick != null) { rows.add("◀ Back"); targets.add("<back>"); }
-        if (compPick == null) {
+        if (!sportsPath.isEmpty()) { rows.add("◀ Back"); targets.add("<back>"); }
+        if (events.isEmpty()) {
             for (java.util.Map.Entry<String, Integer> g : groups.entrySet()) {
                 rows.add((liveGroups.contains(g.getKey()) ? "🔴 " : "") + g.getKey() + "   (" + g.getValue() + (g.getValue() == 1 ? " event)" : " events)") + "  ›");
                 targets.add(g.getKey());
@@ -1241,8 +1244,8 @@ public class MainActivity extends Activity {
                     + "\n      📺 " + n + (n == 1 ? " channel" : " channels") + " – press OK to pick one");
             targets.add(e);
         }
-        if (targets.isEmpty() || (targets.size() == 1 && sportsPick != null)) { rows.add("No upcoming events here right now"); targets.add(null); }
-        if (sportsHeading != null) sportsHeading.setText(sportsPick == null ? "Pick a sport" : compPick == null ? sportsPick + " › pick a competition" : sportsPick + " › " + compPick + " › pick an event");
+        if (targets.isEmpty() || (targets.size() == 1 && !sportsPath.isEmpty())) { rows.add("No upcoming events here right now"); targets.add(null); }
+        if (sportsHeading != null) sportsHeading.setText(sportsPath.isEmpty() ? "Pick a sport" : String.join(" › ", sportsPath) + (events.isEmpty() ? (sportsPath.size() == 1 ? " › pick a category" : " › pick a guide") : " › pick an event"));
         int keep = sportsList.getSelectedItemPosition();
         sportsList.setAdapter(adapter(rows));
         if (keep > 0 && keep < rows.size()) sportsList.setSelection(keep);
@@ -1251,13 +1254,13 @@ public class MainActivity extends Activity {
             Object t = targets.get(pos);
             if (t == null) return;
             if ("<back>".equals(t)) { sportsUp(); return; }
-            if (t instanceof String) { if (sportsPick == null) sportsPick = (String) t; else compPick = (String) t; renderSports(sportsData); sportsList.setSelection(0); return; }
+            if (t instanceof String) { sportsPath.add((String) t); renderSports(sportsData); sportsList.setSelection(0); return; }
             pickSportsChannel((JSONObject) t, aliases, false);
         });
     }
     private TextView sportsHeading;
     private void sportsUp() {
-        if (compPick != null) compPick = null; else sportsPick = null;
+        if (!sportsPath.isEmpty()) sportsPath.remove(sportsPath.size() - 1);
         if (sportsData != null) renderSports(sportsData);
     }
 
@@ -1331,9 +1334,9 @@ public class MainActivity extends Activity {
 
     /** Reopen the sports guide at the sport/competition the customer was in. */
     private void showSportsKeep() {
-        String sp = sportsPick, cp = compPick;
+        List<String> keep = new ArrayList<>(sportsPath);
         showSports();
-        sportsPick = sp; compPick = cp;
+        sportsPath.addAll(keep);
         if (sportsData != null) renderSports(sportsData);
     }
 
