@@ -16,6 +16,7 @@ import {
   formatSportsListingBlock,
   formatSportsListingEvents,
   parseSportsListingBlock,
+  clubChannelListingHtml,
   plainListingToHtml,
   sortSportsListingEvents,
 } from "@/lib/sports-listing-format";
@@ -498,6 +499,8 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         payload.body = deduped;
         toast.info("Guide formatted and duplicate listings removed before saving");
       }
+      const clubs = clubChannelListingHtml(payload.body, payload.title);
+      if (clubs !== null) payload.body = clubs;
     }
     if (!editing.id) {
       // Append to the end of the chosen category so the admin-defined order is preserved.
