@@ -53,6 +53,8 @@ public class MainActivity extends Activity {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private SharedPreferences prefs;
     private Runnable pollTask;
+    private volatile boolean maintenance;
+    private boolean adultUnlocked;
     private String screen = "";
     private Runnable back;
 
@@ -127,7 +129,7 @@ public class MainActivity extends Activity {
         pollTask = new Runnable() {
             @Override public void run() {
                 io.execute(MainActivity.this::pollOnce);
-                ui.postDelayed(this, hasLogin() ? 60000 : 5000);
+                ui.postDelayed(this, maintenance ? 15000 : hasLogin() ? 60000 : 5000);
             }
         };
         ui.post(pollTask);
@@ -139,6 +141,12 @@ public class MainActivity extends Activity {
         try {
             JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
                     new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", "")).toString()));
+            JSONObject mt = r.optJSONObject("maintenance");
+            boolean down = mt != null && mt.optBoolean("enabled");
+            boolean wasDown = maintenance;
+            maintenance = down;
+            if (down) { String msg = mt.optString("message"); ui.post(() -> showMaintenance(msg)); return; }
+            if (wasDown) ui.post(() -> { screen = ""; if (hasLogin()) showHome(); else showLink(); });
             boolean had = hasLogin();
             SharedPreferences.Editor ed = prefs.edit().putString("dns", r.optString("dns", ""));
             JSONObject c = r.optJSONObject("credentials");
@@ -201,10 +209,11 @@ public class MainActivity extends Activity {
 
         LinearLayout tiles = row();
         tiles.setPadding(0, dp(20), 0, dp(12));
-        tiles.addView(tile("Live TV", "📺", v -> browse("live")), weight(1, dp(170)));
-        tiles.addView(tile("Films", "🎬", v -> browse("film")), weight(1, dp(170)));
-        tiles.addView(tile("Series", "🎞", v -> browse("series")), weight(1, dp(170)));
+        tiles.addView(tileWithRefresh("Live TV", "📺", "live"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        tiles.addView(tileWithRefresh("Films", "🎬", "film"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        tiles.addView(tileWithRefresh("Series", "🎞", "series"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(tiles);
+        autoDone = true;
 
         LinearLayout small = row();
         small.addView(button("★ Favourites", v -> showSaved("fav", "Favourites")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -305,7 +314,7 @@ public class MainActivity extends Activity {
         panes.addView(cats, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
         panes.addView(items, weight(kind.equals("live") ? 1.3f : 2, ViewGroup.LayoutParams.MATCH_PARENT));
         androidx.media3.ui.PlayerView pv = null;
-        TextView pvStatus = null;
+        TextView pvStatus = null, pvEpg = null;
         if (kind.equals("live")) {
             LinearLayout side = column();
             side.setPadding(16, 0, 0, 0);
@@ -317,20 +326,26 @@ public class MainActivity extends Activity {
             side.addView(pv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
             pvStatus = text("Highlight a channel to preview it", 14, MUTED, false);
             side.addView(pvStatus);
+            pvEpg = text("", 14, TEXT, false);
+            pvEpg.setBackground(focusBg(10));
+            pvEpg.setPadding(dp(12), dp(10), dp(12), dp(10));
+            pvEpg.setMinLines(5);
+            side.addView(pvEpg, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             panes.addView(side, weight(1.7f, ViewGroup.LayoutParams.MATCH_PARENT));
         }
         final androidx.media3.ui.PlayerView previewView = pv;
-        final TextView previewStatus = pvStatus;
+        final TextView previewStatus = pvStatus, previewEpg = pvEpg;
         root.addView(panes, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
 
         List<String[]> catRows = new ArrayList<>();
         io.execute(() -> {
             try {
-                JSONArray a = new JSONArray(Net.get(api(catAction)));
+                JSONArray a = new JSONArray(cachedGet(kind, catAction, ""));
                 List<String> names = new ArrayList<>();
                 for (int i = 0; i < a.length(); i++) {
                     JSONObject o = a.getJSONObject(i);
+                    if (hideAdult(o.optString("category_name"))) continue;
                     catRows.add(new String[]{o.optString("category_id"), o.optString("category_name")});
                     names.add(o.optString("category_name"));
                 }
@@ -343,7 +358,7 @@ public class MainActivity extends Activity {
             epg.setText("Loading " + c[1] + "…");
             io.execute(() -> {
                 try {
-                    JSONArray a = new JSONArray(Net.get(api(listAction) + "&category_id=" + URLEncoder.encode(c[0], "UTF-8")));
+                    JSONArray a = new JSONArray(cachedGet(kind, listAction, "&category_id=" + URLEncoder.encode(c[0], "UTF-8")));
                     List<Item> list = new ArrayList<>();
                     for (int i = 0; i < a.length(); i++) {
                         JSONObject o = a.getJSONObject(i);
@@ -363,32 +378,60 @@ public class MainActivity extends Activity {
 
         items.setOnItemClickListener((p, v, pos, id) -> {
             Item it = (Item) items.getItemAtPosition(pos);
-            if (previewView != null && platform().equals("phone")) { loadEpg(it, epg); schedulePreview(it, previewView, previewStatus); }
+            if (previewView != null && platform().equals("phone")) { loadEpg(it, epg, previewEpg); schedulePreview(it, previewView, previewStatus); }
             open(it);
         });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 Item it = (Item) items.getItemAtPosition(pos);
-                loadEpg(it, epg);
+                loadEpg(it, epg, previewEpg);
                 schedulePreview(it, previewView, previewStatus);
             }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
     }
 
-    private void loadEpg(Item it, TextView out) {
+    private String clock(long epochSec) {
+        long shifted = (epochSec + prefs.getInt("epg_shift", 0) * 3600L) * 1000L;
+        String f = "12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm";
+        return new java.text.SimpleDateFormat(f, java.util.Locale.UK).format(new java.util.Date(shifted));
+    }
+
+    /** Header line gets "Now", the mini guide box gets now (with progress) plus the next programmes. */
+    private void loadEpg(Item it, TextView out, TextView box) {
+        if (box != null) box.setText("TV guide for " + it.name + "…");
         io.execute(() -> {
             try {
-                JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=2")).optJSONArray("epg_listings");
-                StringBuilder sb = new StringBuilder(it.name);
+                JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=6")).optJSONArray("epg_listings");
+                StringBuilder head = new StringBuilder(it.name), guide = new StringBuilder();
+                long nowSec = System.currentTimeMillis() / 1000;
                 if (l != null) for (int i = 0; i < l.length(); i++) {
                     JSONObject e = l.getJSONObject(i);
                     String t = new String(Base64.decode(e.optString("title"), Base64.DEFAULT), "UTF-8");
-                    String s = e.optString("start", "");
-                    sb.append(i == 0 ? "  ·  Now: " : "  ·  Next: ").append(s.length() >= 16 ? s.substring(11, 16) + " " : "").append(t);
+                    long st = e.optLong("start_timestamp", 0), en = e.optLong("stop_timestamp", 0);
+                    String times = st > 0 ? clock(st) + (en > 0 ? " – " + clock(en) : "") : e.optString("start", "");
+                    if (i == 0) {
+                        head.append("  ·  Now: ").append(t);
+                        int pct = st > 0 && en > st ? (int) Math.max(0, Math.min(100, (nowSec - st) * 100 / (en - st))) : -1;
+                        guide.append("NOW  ").append(times).append("\n").append(t);
+                        if (pct >= 0) {
+                            int bars = pct / 10;
+                            StringBuilder bar = new StringBuilder();
+                            for (int b = 0; b < 10; b++) bar.append(b < bars ? "▰" : "▱");
+                            guide.append("\n").append(bar).append("  ").append(pct).append("%");
+                        }
+                        String desc = new String(Base64.decode(e.optString("description"), Base64.DEFAULT), "UTF-8").trim();
+                        if (!desc.isEmpty()) guide.append("\n").append(desc.length() > 140 ? desc.substring(0, 140) + "…" : desc);
+                        guide.append("\n\nUP NEXT");
+                    } else {
+                        guide.append("\n").append(st > 0 ? clock(st) : times).append("   ").append(t);
+                    }
                 }
-                ui.post(() -> out.setText(sb.toString()));
-            } catch (Exception ignored) { ui.post(() -> out.setText(it.name)); }
+                String g = guide.length() == 0 ? "No TV guide for this channel." : guide.toString();
+                ui.post(() -> { out.setText(head.toString()); if (box != null) box.setText(g); });
+            } catch (Exception ignored) {
+                ui.post(() -> { out.setText(it.name); if (box != null) box.setText("No TV guide for this channel."); });
+            }
         });
     }
 
@@ -628,6 +671,27 @@ public class MainActivity extends Activity {
                                 ? "This TV and streaming device can play 4K."
                                 : "Non 4K Device\n\nThis TV or streaming device can't show 4K. 4K channels and films may not play smoothly.")
                         .setPositiveButton("OK", null).show()));
+        String[] timeL = {"24 hour", "12 hour"}, timeV = {"24", "12"};
+        boxes.add(settingBox("🕒", "Time format", label("time_format", "24", timeL, timeV),
+                v -> choose("Time format", "time_format", "24", timeL, timeV)));
+        int shift = prefs.getInt("epg_shift", 0);
+        boxes.add(settingBox("📅", "EPG time shift", (shift > 0 ? "+" : "") + shift + " h", v -> {
+            String[] l = new String[25];
+            for (int i = 0; i < 25; i++) l[i] = (i - 12 > 0 ? "+" : "") + (i - 12) + " hours";
+            new AlertDialog.Builder(this).setTitle("EPG time shift").setSingleChoiceItems(l, prefs.getInt("epg_shift", 0) + 12, (d, w) -> {
+                prefs.edit().putInt("epg_shift", w - 12).apply(); d.dismiss(); showSettings();
+            }).setNegativeButton("Cancel", null).show();
+        }));
+        boxes.add(settingBox("🔒", "Parental control", prefs.getString("pin", "").isEmpty() ? "Off" : adultUnlocked ? "Unlocked" : "On", v -> parentalControl()));
+        String[] autoL = {"Off", "Every time the app opens", "Once a day"}, autoV = {"off", "open", "daily"};
+        boxes.add(settingBox("🔄", "Automation", label("auto_refresh", "daily", autoL, autoV),
+                v -> choose("Update channels, films and series automatically", "auto_refresh", "daily", autoL, autoV)));
+        boxes.add(settingBox("⚡", "Speed test", "Test your internet", v -> speedTest()));
+        boxes.add(settingBox("ℹ", "Account info", "Status and expiry", v -> accountInfo()));
+        boxes.add(settingBox("🧹", "Clear cache", "Reload all lists", v -> {
+            clearCache(null);
+            Toast.makeText(this, "Cache cleared – lists will reload", Toast.LENGTH_SHORT).show();
+        }));
         boxes.add(settingBox("⬆", "Update app", "Version " + appVersion(), v -> checkForUpdate(true)));
         boxes.add(settingBox("👤", "Change login", prefs.getString("user", ""), v -> {
             prefs.edit().remove("user").remove("pass").apply();
@@ -667,6 +731,178 @@ public class MainActivity extends Activity {
         root.addView(sc, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
         boxes.get(0).requestFocus();
+    }
+
+    // ---------- playlist cache + refresh ----------
+
+    private java.io.File cacheFile(String kind, String key) {
+        java.io.File d = new java.io.File(getCacheDir(), "playlist");
+        d.mkdirs();
+        return new java.io.File(d, kind + "_" + Integer.toHexString(key.hashCode()) + ".json");
+    }
+
+    /** Lists come from the cache until the user (or Automation) refreshes them. */
+    private String cachedGet(String kind, String action, String extra) throws Exception {
+        java.io.File f = cacheFile(kind, action + extra);
+        if (f.exists() && f.length() > 0) {
+            try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+                java.io.ByteArrayOutputStream b = new java.io.ByteArrayOutputStream();
+                byte[] buf = new byte[65536]; int n;
+                while ((n = in.read(buf)) > 0) b.write(buf, 0, n);
+                return b.toString("UTF-8");
+            } catch (Exception ignored) {}
+        }
+        String body = Net.get(api(action) + extra);
+        try (java.io.FileOutputStream o = new java.io.FileOutputStream(f)) { o.write(body.getBytes("UTF-8")); }
+        return body;
+    }
+
+    private void clearCache(String kind) {
+        java.io.File[] fs = new java.io.File(getCacheDir(), "playlist").listFiles();
+        if (fs != null) for (java.io.File f : fs) if (kind == null || f.getName().startsWith(kind + "_")) f.delete();
+        if (kind == null) prefs.edit().remove("refreshed_live").remove("refreshed_film").remove("refreshed_series").apply();
+    }
+
+    /** Clears one section and downloads its categories and full list again. */
+    private void refreshSection(String kind, TextView status) {
+        String catAction = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
+        String listAction = kind.equals("live") ? "get_live_streams" : kind.equals("film") ? "get_vod_streams" : "get_series";
+        if (status != null) status.setText("Updating…");
+        clearCache(kind);
+        io.execute(() -> {
+            try {
+                cachedGet(kind, catAction, "");
+                int n = new JSONArray(Net.get(api(listAction))).length();
+                prefs.edit().putLong("refreshed_" + kind, System.currentTimeMillis()).apply();
+                String what = kind.equals("live") ? " channels" : kind.equals("film") ? " films" : " series";
+                ui.post(() -> {
+                    if (status != null) status.setText(n + what + " · updated now");
+                    Toast.makeText(this, (kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series") + " updated – " + n + what, Toast.LENGTH_SHORT).show();
+                });
+            } catch (Exception e) {
+                ui.post(() -> { if (status != null) status.setText("Couldn't update. Try again."); });
+            }
+        });
+    }
+
+    private String refreshedLabel(String kind) {
+        long t = prefs.getLong("refreshed_" + kind, 0);
+        if (t == 0) return "Not updated yet";
+        return "Updated " + new java.text.SimpleDateFormat("d MMM, " + ("12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm"), java.util.Locale.UK).format(new java.util.Date(t));
+    }
+
+    private View tileWithRefresh(String label, String icon, String kind) {
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.addView(tile(label, icon, v -> browse(kind)), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
+        TextView status = text(refreshedLabel(kind), 13, MUTED, false);
+        status.setGravity(Gravity.CENTER);
+        Button r = button("⟳  Refresh " + label, v -> refreshSection(kind, status));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(8);
+        col.addView(r, lp);
+        col.addView(status);
+        String auto = prefs.getString("auto_refresh", "daily");
+        long last = prefs.getLong("refreshed_" + kind, 0);
+        if (!autoDone && (auto.equals("open") || (auto.equals("daily") && System.currentTimeMillis() - last > 86_400_000L))) refreshSection(kind, status);
+        return col;
+    }
+    private boolean autoDone;
+
+    // ---------- maintenance ----------
+
+    private void showMaintenance(String msg) {
+        if ("maintenance".equals(screen)) return;
+        stopPreview();
+        screen = "maintenance"; back = null;
+        LinearLayout root = column();
+        root.setGravity(Gravity.CENTER);
+        root.addView(logo());
+        TextView h = text("Down for maintenance", 30, ACCENT, true); h.setGravity(Gravity.CENTER);
+        TextView m = text(msg, 20, TEXT, false); m.setGravity(Gravity.CENTER);
+        TextView s = text("BM Player will come back on by itself when we're finished.", 15, MUTED, false); s.setGravity(Gravity.CENTER);
+        root.addView(h); root.addView(m); root.addView(s);
+        setContentView(root);
+    }
+
+    // ---------- parental control ----------
+
+    private boolean hideAdult(String category) {
+        if (prefs.getString("pin", "").isEmpty() || adultUnlocked) return false;
+        return category.toLowerCase(java.util.Locale.UK).matches(".*(adult|xxx|18\\+|porn|for adults).*");
+    }
+
+    private void askPin(String title, java.util.function.Consumer<String> done) {
+        android.widget.EditText e = new android.widget.EditText(this);
+        e.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        e.setHint("4 digit PIN");
+        new AlertDialog.Builder(this).setTitle(title).setView(e)
+                .setPositiveButton("OK", (d, w) -> done.accept(e.getText().toString().trim()))
+                .setNegativeButton("Cancel", null).show();
+    }
+
+    private void parentalControl() {
+        String pin = prefs.getString("pin", "");
+        if (pin.isEmpty()) {
+            askPin("Set a parental PIN", p -> {
+                if (!p.matches("\\d{4}")) { Toast.makeText(this, "Use 4 numbers", Toast.LENGTH_SHORT).show(); return; }
+                prefs.edit().putString("pin", p).apply();
+                adultUnlocked = false;
+                Toast.makeText(this, "Parental control on – adult categories are hidden", Toast.LENGTH_LONG).show();
+                showSettings();
+            });
+            return;
+        }
+        String[] opts = {adultUnlocked ? "Lock adult categories again" : "Unlock adult categories (until the app closes)", "Change PIN", "Turn parental control off"};
+        new AlertDialog.Builder(this).setTitle("Parental control").setItems(opts, (d, w) -> {
+            if (w == 0 && adultUnlocked) { adultUnlocked = false; showSettings(); return; }
+            askPin("Enter your PIN", p -> {
+                if (!p.equals(prefs.getString("pin", ""))) { Toast.makeText(this, "Wrong PIN", Toast.LENGTH_SHORT).show(); return; }
+                if (w == 0) adultUnlocked = true;
+                else if (w == 1) { prefs.edit().remove("pin").apply(); parentalControl(); return; }
+                else { prefs.edit().remove("pin").apply(); adultUnlocked = false; }
+                showSettings();
+            });
+        }).show();
+    }
+
+    // ---------- speed test + account ----------
+
+    private void speedTest() {
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Speed test").setMessage("Testing your download speed…").setPositiveButton("Close", null).show();
+        io.execute(() -> {
+            try {
+                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL("https://speed.cloudflare.com/__down?bytes=50000000").openConnection();
+                c.setConnectTimeout(10000); c.setReadTimeout(15000);
+                long start = System.nanoTime(), bytes = 0;
+                try (java.io.InputStream in = c.getInputStream()) {
+                    byte[] buf = new byte[65536]; int n;
+                    while ((n = in.read(buf)) > 0) { bytes += n; if (System.nanoTime() - start > 8_000_000_000L) break; }
+                }
+                double secs = (System.nanoTime() - start) / 1e9, mbps = bytes * 8 / secs / 1e6;
+                String verdict = mbps >= 25 ? "Good for 4K." : mbps >= 10 ? "Good for HD. 4K may buffer." : "Slow – HD may buffer. Try a wired connection.";
+                ui.post(() -> dlg.setMessage(String.format(java.util.Locale.UK, "%.1f Mbps\n\n%s", mbps, verdict)));
+            } catch (Exception e) {
+                ui.post(() -> dlg.setMessage("Couldn't run the speed test. Check the internet."));
+            }
+        });
+    }
+
+    private void accountInfo() {
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Account info").setMessage("Loading…").setPositiveButton("Close", null).show();
+        io.execute(() -> {
+            try {
+                JSONObject info = new JSONObject(Net.get(api(""))).optJSONObject("user_info");
+                if (info == null) throw new Exception();
+                String exp = info.optString("exp_date", "");
+                String ends = exp.isEmpty() || "null".equals(exp) ? "No expiry" :
+                        new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK).format(new java.util.Date(Long.parseLong(exp) * 1000));
+                String msg = "Username: " + info.optString("username") + "\nStatus: " + info.optString("status")
+                        + "\nExpires: " + ends + "\nConnections: " + info.optString("active_cons", "0") + " of " + info.optString("max_connections", "?")
+                        + "\nDevice: " + deviceLabel() + "\nApp version: " + appVersion();
+                ui.post(() -> dlg.setMessage(msg));
+            } catch (Exception e) { ui.post(() -> dlg.setMessage("Couldn't load your account. Check your login.")); }
+        });
     }
 
     // ---------- self update ----------
