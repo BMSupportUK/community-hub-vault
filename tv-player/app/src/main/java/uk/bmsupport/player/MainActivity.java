@@ -812,11 +812,8 @@ public class MainActivity extends Activity {
             }).show();
             return;
         }
-        boolean live = "live".equals(it.kind) && epgItem != null && epgItem.id.equals(it.id);
-        String[] opts = live ? new String[]{"Play", "Play with VLC", "⏰ Set a reminder", fav, "Report a problem"} : new String[]{"Play", "Play with VLC", fav, "Report a problem"};
-        new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w0) -> {
-            int w = w0;
-            if (live) { if (w == 2) { pickReminder(); return; } if (w > 2) w--; }
+        String[] opts = {"Play", "Play with VLC", fav, "Report a problem"};
+        new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
             if (w == 0) play(it, defaultVlc());
             else if (w == 1) play(it, true);
             else if (w == 2) toggleSaved("fav", it);
