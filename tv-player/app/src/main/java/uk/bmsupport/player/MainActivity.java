@@ -1802,7 +1802,16 @@ public class MainActivity extends Activity {
         final List<Object> targets = new ArrayList<>();
         if (!sportsPath.isEmpty()) { rows.add("◀ Back"); targets.add("<back>"); }
         if (events.isEmpty()) {
-            for (java.util.Map.Entry<String, Integer> g : groups.entrySet()) {
+            // Categories follow the website's own order; anything unknown keeps its place after them.
+            final List<String> siteOrder = new ArrayList<>();
+            JSONArray so = r.optJSONArray("order");
+            if (so != null) for (int i = 0; i < so.length(); i++) siteOrder.add(so.optString(i));
+            List<java.util.Map.Entry<String, Integer>> sortedGroups = new ArrayList<>(groups.entrySet());
+            java.util.Collections.sort(sortedGroups, (a, b) -> {
+                int x = siteOrder.indexOf(a.getKey()), y = siteOrder.indexOf(b.getKey());
+                return Integer.compare(x < 0 ? Integer.MAX_VALUE : x, y < 0 ? Integer.MAX_VALUE : y);
+            });
+            for (java.util.Map.Entry<String, Integer> g : sortedGroups) {
                 rows.add((liveGroups.contains(g.getKey()) ? "🔴 " : "") + g.getKey() + "   (" + g.getValue() + (g.getValue() == 1 ? " event)" : " events)") + "  ›");
                 targets.add(g.getKey());
             }
