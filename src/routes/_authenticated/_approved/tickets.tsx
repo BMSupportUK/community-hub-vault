@@ -824,6 +824,7 @@ function NewTicketForm({
     preset === "2fa-reset" && resetCat ? resetCat.id : reportCat?.id ?? categories[0]?.id ?? ""
   );
   const [priority, setPriority] = useState<Priority>(preset === "2fa-reset" ? "high" : "normal");
+  useEffect(() => { if (reportCat) setCategoryId(reportCat.id); }, [reportCat?.id]);
   const [message, setMessage] = useState(
     preset === "2fa-reset"
       ? "I've lost access to my authenticator app and need 2FA reset on my account.\n\nPlease verify my identity and reset 2FA so I can sign in again."
