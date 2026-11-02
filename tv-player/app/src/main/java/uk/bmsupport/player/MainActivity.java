@@ -788,6 +788,20 @@ public class MainActivity extends Activity {
     private void open(Item it) {
         if (it.kind.equals("series")) { showSeries(it); return; }
         String fav = isSaved("fav", it) ? "Remove from favourites" : "Add to favourites";
+        String key = watchKey(it.kind, it.id);
+        long pos = prefs.getLong(key + ":position", 0), dur = prefs.getLong(key + ":duration", 0);
+        if (WatchProgress.eligible(it.kind) && WatchProgress.resumable(pos, dur)) {
+            String time = String.format(java.util.Locale.UK, "%d:%02d", pos / 60000, (pos / 1000) % 60);
+            String[] o2 = {"▶ Continue watching · " + time + " (" + WatchProgress.percent(pos, dur) + "%)", "Play from beginning", "Play with VLC", fav, "Report a problem"};
+            new AlertDialog.Builder(this).setTitle(it.name).setItems(o2, (d, w) -> {
+                if (w == 0) startPlayback(it, defaultVlc(), pos);
+                else if (w == 1) startPlayback(it, defaultVlc(), 0);
+                else if (w == 2) play(it, true);
+                else if (w == 3) toggleSaved("fav", it);
+                else showReport(it);
+            }).show();
+            return;
+        }
         String[] opts = {"Play", "Play with VLC", fav, "Report a problem"};
         new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
             if (w == 0) play(it, defaultVlc());
@@ -915,7 +929,10 @@ public class MainActivity extends Activity {
             Intent i = new Intent(Intent.ACTION_VIEW).setPackage("org.videolan.vlc").setDataAndTypeAndNormalize(Uri.parse(url), "video/*");
             i.putExtra("title", it.name);
             i.putExtra("position", position);
-            try { startActivity(i); }
+            i.putExtra("from_start", position <= 0);
+            vlcKey = WatchProgress.eligible(it.kind) ? watchKey(it.kind, it.id) : null;
+            vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
+            try { startActivityForResult(i, VLC_REQUEST); }
             catch (Exception e) {
                 new AlertDialog.Builder(this).setTitle("VLC isn't installed")
                         .setMessage("Install VLC from your app store (or Downloader) to use it as the player. Playing in BM Player instead.")
@@ -931,6 +948,23 @@ public class MainActivity extends Activity {
         startActivity(intent);
     }
 
+    private static final int VLC_REQUEST = 4242;
+    private String vlcKey, vlcSeriesKey;
+
+    /** VLC reports where the customer stopped, so VLC playback also keeps watched progress. */
+    @Override protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != VLC_REQUEST || data == null || vlcKey == null) return;
+        long position = data.getLongExtra("extra_position", -1), duration = data.getLongExtra("extra_duration", -1);
+        if (position < 0 || duration <= 0) return;
+        if (position >= duration - 15000) position = duration;
+        SharedPreferences.Editor e = prefs.edit().putLong(vlcKey + ":position", position).putLong(vlcKey + ":duration", duration);
+        if (vlcSeriesKey != null) e.putLong(vlcSeriesKey + ":position", position).putLong(vlcSeriesKey + ":duration", duration);
+        e.apply();
+        vlcKey = null; vlcSeriesKey = null;
+        if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
+    }
+
     private String watchKey(String kind, String id) {
         try {
             String scope = prefs.getString("dns", "").replaceAll("/+$", "") + "\n" + prefs.getString("user", "");
@@ -944,6 +978,7 @@ public class MainActivity extends Activity {
         long duration = prefs.getLong(key + ":duration", 0), position = prefs.getLong(key + ":position", 0);
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
         android.widget.ProgressBar bar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        if (duration <= 0) { box.setVisibility(View.GONE); return box; }
         bar.setMax(100); bar.setProgress(WatchProgress.percent(position, duration));
         bar.setProgressTintList(android.content.res.ColorStateList.valueOf(ACCENT));
         box.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(6)));
@@ -2040,7 +2075,9 @@ public class MainActivity extends Activity {
                 } else { card = (LinearLayout) cv; Object[] h = (Object[]) card.getTag(); img = (android.widget.ImageView) h[0]; t = (TextView) h[1]; }
                 Item it = l.get(i);
                 LinearLayout progress = (LinearLayout) ((Object[]) card.getTag())[2];
-                progress.removeAllViews(); progress.addView(watchedBar(it));
+                progress.removeAllViews();
+                // Series progress belongs on each episode, not the show's poster.
+                if (!"series".equals(it.kind)) progress.addView(watchedBar(it));
                 t.setText(it.rating > 0 ? it.name + "\n★ " + String.format(java.util.Locale.UK, "%.1f", it.rating) : it.name);
                 loadPoster(img, it.poster);
                 return card;
