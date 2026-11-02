@@ -8,6 +8,9 @@ import { PortalTabs } from "@/components/app/PortalTabs";
 import { ManualCredentialCards } from "@/components/app/ManualCredentialCards";
 import { readPortalCredentials, requestPortalPinReset } from "@/lib/customer-portal.functions";
 import type { ManualCredential } from "@/lib/manual-credentials-schema";
+import { sendLoginToDevice } from "@/lib/player.functions";
+import { usePlayerDevices } from "./send-to-app";
+import { Link } from "@tanstack/react-router";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
 type QdCode = { id: string; label: string; code: string; notes: string | null };
@@ -36,6 +39,30 @@ function AppInformationPanel({ codes }: { codes: QdCode[] }) {
       {q.notes && <p className="mt-1 text-xs text-muted-foreground">{q.notes}</p>}
     </div>) : <p className="mt-2 text-xs text-muted-foreground">No app information has been added yet.</p>}
   </aside>;
+}
+
+function SendToPlayerPanel({ accounts }: { accounts: ManualCredential[] }) {
+  const { devices } = usePlayerDevices();
+  const send = useServerFn(sendLoginToDevice);
+  const usable = accounts.filter((a) => a.login && a.password);
+  const [acc, setAcc] = useState(usable[0]?.id ?? ""), [dev, setDev] = useState(""), [busy, setBusy] = useState(false);
+  useEffect(() => { if (!dev && devices[0]) setDev(devices[0].id); }, [devices, dev]);
+  if (!usable.length) return null;
+  return <section className="mt-6 rounded-lg border border-border bg-surface/80 p-4">
+    <h2 className="font-display text-sm font-semibold">Send a login to BM Player</h2>
+    {devices.length ? <div className="mt-3 flex flex-wrap items-center gap-2">
+      <select aria-label="Login" value={acc} onChange={(e) => setAcc(e.target.value)} className="rounded-md border border-border bg-surface-2 px-3 py-2 text-sm">
+        {usable.map((a) => <option key={a.id} value={a.id}>{a.name || a.login}</option>)}</select>
+      <select aria-label="Device" value={dev} onChange={(e) => setDev(e.target.value)} className="rounded-md border border-border bg-surface-2 px-3 py-2 text-sm">
+        {devices.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
+      <Button size="sm" disabled={busy || !dev} onClick={async () => {
+        const a = usable.find((x) => x.id === acc); if (!a) return;
+        setBusy(true);
+        try { await send({ data: { deviceId: dev, username: a.login!, password: a.password! } }); toast.success("Sent! Your app will sign in within a few seconds."); }
+        catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); } finally { setBusy(false); }
+      }}>{busy ? <Loader2 className="animate-spin" /> : null}Send to my device</Button>
+    </div> : <p className="mt-2 text-xs text-muted-foreground">No linked devices yet. <Link to="/send-to-app" className="text-primary hover:underline">Link one with the code on your screen</Link>.</p>}
+  </section>;
 }
 
 function PortalLoginsPage() {
@@ -98,6 +125,7 @@ function PortalLoginsPage() {
           <p className="text-sm text-muted-foreground">No app logins have been saved on your account yet.</p>
           <AppInformationPanel codes={qdCodes} />
         </div>}
+        <SendToPlayerPanel accounts={accounts} />
       </>}
       {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
     </div></main>
