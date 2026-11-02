@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { selectedPlayerLogin, type SavedPlayerLogin } from "./player-login-selection";
+import { selectedPlayerLogin, type SavedPlayerLogin } from "../src/components/app/player-login-selection";
 
 const accounts: SavedPlayerLogin[] = [
   { id: "one", app_login_name: "first-login", password: "first-password", expiry_at: null, account_type: "single", account_number: 1 },
