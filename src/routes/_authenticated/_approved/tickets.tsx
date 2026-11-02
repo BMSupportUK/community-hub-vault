@@ -827,7 +827,7 @@ function NewTicketForm({
   const [message, setMessage] = useState(
     preset === "2fa-reset"
       ? "I've lost access to my authenticator app and need 2FA reset on my account.\n\nPlease verify my identity and reset 2FA so I can sign in again."
-      : ""
+      : reportText?.message ?? ""
   );
   const [submitting, setSubmitting] = useState(false);
   const [remoteSupport, setRemoteSupport] = useState<boolean | null>(null);
