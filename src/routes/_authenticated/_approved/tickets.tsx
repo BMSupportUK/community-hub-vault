@@ -57,12 +57,14 @@ import {
 } from "@/lib/order-fulfilment.functions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { parseReportSearch, reportTicketText, REPORT_KINDS, type ReportKind, type ReportPrefill } from "@/lib/player-link";
 import { TicketScreenShareLayout, TicketScreenShareInvite } from "@/components/app/TicketScreenShare";
 import { isTicketScreenShareInvite } from "@/lib/ticket-screen-share";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
-  validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1; tab?: "screen" | "setup" } => ({
+  validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1; tab?: "screen" | "setup"; report?: ReportKind; title?: string; cat?: string; device?: string } => ({
+    ...(() => { const r = parseReportSearch(s); return r ? { report: r.kind, title: r.title, cat: r.category, device: r.device } : {}; })(),
     tab: s.tab === "screen" ? "screen" : s.tab === "setup" ? "setup" : undefined,
     id: typeof s.id === "string" ? s.id : undefined,
     view: (s.view === "mine" || s.view === "all" || s.view === "assigned") ? s.view : undefined,
@@ -465,11 +467,12 @@ function TicketsPage() {
 
   // Deep-link from /mfa-challenge: open the new-ticket form prefilled for a 2FA reset
   useEffect(() => {
-    if (search.new2fa === 1 && !creating && !search.id) {
+    if ((search.new2fa === 1 || search.report) && !creating && !search.id) {
       setCreating(true);
       setTab("open");
     }
-  }, [search.new2fa, creating, search.id]);
+  }, [search.new2fa, search.report, creating, search.id]);
+  const reportPrefill: ReportPrefill | undefined = search.report ? { kind: search.report, title: search.title, category: search.cat, device: search.device } : undefined;
 
   const isChatting = selected && tab === "tickets";
 
@@ -617,6 +620,7 @@ function TicketsPage() {
                     onCancel={() => { setCreating(false); setTab("tickets"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
                     onCreated={(id, tab) => { setCreating(false); navigate({ to: "/tickets", search: { id, view, tab } }); }}
                     preset={search.new2fa === 1 ? "2fa-reset" : undefined}
+                    report={reportPrefill}
                   />
                 </div>
               </div>
@@ -748,6 +752,7 @@ function TicketsPage() {
                       onCancel={() => setCreating(false)}
                       onCreated={(id, tab) => { setCreating(false); navigate({ to: "/tickets", search: { id, view, tab } }); }}
                       preset={search.new2fa === 1 ? "2fa-reset" : undefined}
+                    report={reportPrefill}
                     />
                   ) : selected ? (
                     <TicketDetail
@@ -797,8 +802,8 @@ function TicketsPage() {
 }
 
 function NewTicketForm({
-  categories: allCategories, onCancel, onCreated, preset,
-}: { categories: Category[]; onCancel: () => void; onCreated: (id: string, tab?: "setup") => void; preset?: "2fa-reset" }) {
+  categories: allCategories, onCancel, onCreated, preset, report,
+}: { categories: Category[]; onCancel: () => void; onCreated: (id: string, tab?: "setup") => void; preset?: "2fa-reset"; report?: ReportPrefill }) {
   const { user, hasAny } = useAuth();
   // Reporting live TV / movie faults is for paying customers and staff only.
   const hideReportCats =
@@ -812,9 +817,11 @@ function NewTicketForm({
     [allCategories, hideReportCats],
   );
   const resetCat = categories.find((c) => c.slug === "account-2fa-reset");
-  const [subject, setSubject] = useState(preset === "2fa-reset" ? "2FA reset request" : "");
+  const reportCat = report ? categories.find((c) => c.slug === REPORT_KINDS[report.kind].categorySlug) : undefined;
+  const reportText = report ? reportTicketText(report) : null;
+  const [subject, setSubject] = useState(preset === "2fa-reset" ? "2FA reset request" : reportText?.subject ?? "");
   const [categoryId, setCategoryId] = useState(
-    preset === "2fa-reset" && resetCat ? resetCat.id : categories[0]?.id ?? ""
+    preset === "2fa-reset" && resetCat ? resetCat.id : reportCat?.id ?? categories[0]?.id ?? ""
   );
   const [priority, setPriority] = useState<Priority>(preset === "2fa-reset" ? "high" : "normal");
   const [message, setMessage] = useState(
