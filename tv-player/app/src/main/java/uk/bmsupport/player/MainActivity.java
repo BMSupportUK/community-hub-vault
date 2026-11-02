@@ -1794,8 +1794,8 @@ public class MainActivity extends Activity {
 
     // ---------- full TV guide (Sky-style grid) ----------
     private final java.util.concurrent.ExecutorService guideIo = java.util.concurrent.Executors.newFixedThreadPool(3);
-    private final Map<String, List<GuideGridView.Prog>> guideCache = new java.util.LinkedHashMap<String, List<GuideGridView.Prog>>(64, 0.75f, true) {
-        @Override protected boolean removeEldestEntry(Map.Entry<String, List<GuideGridView.Prog>> e) { return size() > 400; }
+    private final java.util.Map<String, List<GuideGridView.Prog>> guideCache = new java.util.LinkedHashMap<String, List<GuideGridView.Prog>>(64, 0.75f, true) {
+        @Override protected boolean removeEldestEntry(java.util.Map.Entry<String, List<GuideGridView.Prog>> e) { return size() > 400; }
     };
 
     /** Channels down the left, time across the top; OK on a programme on now watches it, on a future one sets/removes a reminder. */
