@@ -380,7 +380,7 @@ public class MainActivity extends Activity {
     /** Poll also reports what is on screen so admins see live connections. */
     private JSONObject pollBody() throws Exception {
         JSONObject b = new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", ""))
-                .put("login", prefs.getString("user", "")).put("version", BuildConfig.VERSION_NAME);
+                .put("login", prefs.getString("user", "")).put("version", appVersion());
         long since = prefs.getLong("np_since", 0);
         if (since > 0) b.put("watching", new JSONObject().put("kind", prefs.getString("np_kind", "live"))
                 .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
