@@ -1131,7 +1131,9 @@ public class MainActivity extends Activity {
             String kind = it.kind.equals("live") ? "live" : it.kind.equals("film") ? "film" : "series";
             java.io.File f = cacheFile(kind, action);
             if (f.exists()) {
-                JSONArray a = new JSONArray(new String(java.nio.file.Files.readAllBytes(f.toPath()), "UTF-8"));
+                java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                try (java.io.FileInputStream in = new java.io.FileInputStream(f)) { byte[] buf = new byte[65536]; int n; while ((n = in.read(buf)) > 0) bo.write(buf, 0, n); }
+                JSONArray a = new JSONArray(bo.toString("UTF-8"));
                 for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null && c.equals(o.optString("category_id"))) return o.optString("category_name"); }
             }
         } catch (Exception ignored) {}
