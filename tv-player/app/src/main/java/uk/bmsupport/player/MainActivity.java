@@ -455,7 +455,7 @@ public class MainActivity extends Activity {
                 ui.post(() -> {
                     account.setText(l);
                     if (cons >= 2 && small.findViewWithTag("multi") == null) {
-                        Button mb = button("🖥 Multi-screen (" + Math.min(cons, 3) + ")", v -> showMultiScreen(Math.min(cons, 3)));
+                        Button mb = button("🖥 Multi-screen (" + Math.min(cons, 3) + ")", v -> chooseMultiScreens(Math.min(cons, 3)));
                         mb.setTag("multi");
                         small.addView(mb, 1, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
                     }
