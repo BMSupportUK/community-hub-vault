@@ -141,6 +141,7 @@ import { Route as ApiPublicEnablerTicketSupportRouteImport } from './routes/api/
 import { Route as ApiPublicInstallScreenApkRouteImport } from './routes/api/public/install-screen-apk'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as ApiPublicPlayerRouteImport } from './routes/api/public/player'
+import { Route as ApiPublicPlayerApkRouteImport } from './routes/api/public/player-apk'
 import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/public/remote-helper-apk'
 import { Route as ApiPublicRemoteSetupRouteImport } from './routes/api/public/remote-setup'
 import { Route as ApiPublicTvRouteImport } from './routes/api/public/tv'
@@ -972,6 +973,11 @@ const ApiPublicPlayerRoute = ApiPublicPlayerRouteImport.update({
   path: '/api/public/player',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPlayerApkRoute = ApiPublicPlayerApkRouteImport.update({
+  id: '/api/public/player-apk',
+  path: '/api/public/player-apk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRemoteHelperApkRoute =
   ApiPublicRemoteHelperApkRouteImport.update({
     id: '/api/public/remote-helper-apk',
@@ -1561,6 +1567,7 @@ export interface FileRoutesByFullPath {
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/player': typeof ApiPublicPlayerRoute
+  '/api/public/player-apk': typeof ApiPublicPlayerApkRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
@@ -1769,6 +1776,7 @@ export interface FileRoutesByTo {
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/player': typeof ApiPublicPlayerRoute
+  '/api/public/player-apk': typeof ApiPublicPlayerApkRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
@@ -1983,6 +1991,7 @@ export interface FileRoutesById {
   '/api/public/install-screen-apk': typeof ApiPublicInstallScreenApkRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/player': typeof ApiPublicPlayerRoute
+  '/api/public/player-apk': typeof ApiPublicPlayerApkRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
   '/api/public/remote-setup': typeof ApiPublicRemoteSetupRoute
   '/api/public/tv': typeof ApiPublicTvRoute
@@ -2196,6 +2205,7 @@ export interface FileRouteTypes {
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
     | '/api/public/player'
+    | '/api/public/player-apk'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
     | '/api/public/tv'
@@ -2404,6 +2414,7 @@ export interface FileRouteTypes {
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
     | '/api/public/player'
+    | '/api/public/player-apk'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
     | '/api/public/tv'
@@ -2617,6 +2628,7 @@ export interface FileRouteTypes {
     | '/api/public/install-screen-apk'
     | '/api/public/link-preview'
     | '/api/public/player'
+    | '/api/public/player-apk'
     | '/api/public/remote-helper-apk'
     | '/api/public/remote-setup'
     | '/api/public/tv'
@@ -2746,6 +2758,7 @@ export interface RootRouteChildren {
   ApiPublicInstallScreenApkRoute: typeof ApiPublicInstallScreenApkRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicPlayerRoute: typeof ApiPublicPlayerRoute
+  ApiPublicPlayerApkRoute: typeof ApiPublicPlayerApkRoute
   ApiPublicRemoteHelperApkRoute: typeof ApiPublicRemoteHelperApkRoute
   ApiPublicRemoteSetupRoute: typeof ApiPublicRemoteSetupRoute
   ApiPublicTvRoute: typeof ApiPublicTvRoute
@@ -3723,6 +3736,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/player'
       fullPath: '/api/public/player'
       preLoaderRoute: typeof ApiPublicPlayerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/player-apk': {
+      id: '/api/public/player-apk'
+      path: '/api/public/player-apk'
+      fullPath: '/api/public/player-apk'
+      preLoaderRoute: typeof ApiPublicPlayerApkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/remote-helper-apk': {
@@ -4725,6 +4745,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicInstallScreenApkRoute: ApiPublicInstallScreenApkRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicPlayerRoute: ApiPublicPlayerRoute,
+  ApiPublicPlayerApkRoute: ApiPublicPlayerApkRoute,
   ApiPublicRemoteHelperApkRoute: ApiPublicRemoteHelperApkRoute,
   ApiPublicRemoteSetupRoute: ApiPublicRemoteSetupRoute,
   ApiPublicTvRoute: ApiPublicTvRoute,
