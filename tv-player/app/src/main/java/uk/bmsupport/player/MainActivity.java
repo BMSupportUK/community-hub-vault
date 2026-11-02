@@ -2230,6 +2230,17 @@ public class MainActivity extends Activity {
             List<Item> targets = new ArrayList<>();
             try {
                 java.util.Set<String> seen = new java.util.HashSet<>();
+                String where = (e.optString("sport") + " " + e.optString("subcategory") + " " + e.optString("competition")).toLowerCase(java.util.Locale.ROOT);
+                if (where.contains("ifollow") || where.contains("scot")) {
+                    for (String team : e.optString("title").split("\\s+(?:v|vs|vs\\.|v\\.)\\s+|\\s+-\\s+")) {
+                        List<Item> m = teamChannels(team, pl);
+                        if (team.trim().isEmpty()) continue;
+                        labels.add("━━  " + team.trim() + "  ━━"); targets.add(null);
+                        if (m.isEmpty()) { labels.add("      ✕ No " + team.trim() + " channel in your list"); targets.add(null); }
+                        for (Item it : m) { labels.add("      ▶ Watch " + it.name); targets.add(it); seen.add(it.id); }
+                    }
+                    if (ch != null && ch.length() > 0) { labels.add("━━  Other channels  ━━"); targets.add(null); }
+                }
                 if (ch != null) for (int j = 0; j < ch.length(); j++) {
                     String g = ch.optString(j);
                     List<Item> m = matchChannel(g, pl, aliases);
@@ -2240,6 +2251,26 @@ public class MainActivity extends Activity {
             ui.post(() -> { try { showSportsChannels(e, aliases, retry, ch, labels, targets); }
                 catch (Exception ex) { Toast.makeText(this, "Couldn't open the channel list", Toast.LENGTH_LONG).show(); } });
         });
+    }
+
+    /** Club channels for one team (iFollow / Scottish club feeds): every word of the team name, iFollow-style first. */
+    static List<Item> teamChannels(String team, List<Item> playlist) {
+        String want = normChannel(team).replaceAll("\\b(?:fc|afc|the)\\b", " ").replaceAll("\\s+", " ").trim();
+        List<Item> out = new ArrayList<>();
+        if (want.length() < 3) return out;
+        String[] words = want.split(" ");
+        for (Item it : playlist) {
+            java.util.List<String> t = java.util.Arrays.asList(it.norm().split(" "));
+            boolean all = true;
+            for (String w : words) if (!t.contains(w)) { all = false; break; }
+            if (all) out.add(it);
+            if (out.size() >= 15) break;
+        }
+        java.util.Collections.sort(out, (x, y) -> {
+            int a = x.name.toLowerCase().contains("follow") ? 0 : 1, b = y.name.toLowerCase().contains("follow") ? 0 : 1;
+            return a != b ? a - b : x.name.length() - y.name.length();
+        });
+        return out;
     }
 
     private void showSportsChannels(JSONObject e, List<String[]> aliases, boolean retry, JSONArray ch, List<String> labels, List<Item> targets) {
@@ -2256,6 +2287,7 @@ public class MainActivity extends Activity {
         lv.setOnItemClickListener((p, v, w, id) -> {
             if (w == searchRow) { searchChannels(e, aliases, ch != null && ch.length() > 0 ? normChannel(ch.optString(0)) : ""); return; }
             Item it = targets.get(w);
+            if (it == null && labels.get(w).startsWith("━━")) return;
             if (it == null) Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show();
             else { retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
         });
