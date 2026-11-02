@@ -12,10 +12,12 @@
 4. **Two ways to send a login to the app**
    - **Code on screen:** the app shows a 6-digit code; on the website the member enters that code with their username and password and taps Send.
    - **From My Logins:** a signed-in member picks a saved login and sends it to a TV or PC they have already linked.
+5. **Report a problem** in every app: a button on the home screen, and on each channel, film or episode (e.g. while it is playing or in its menu). It shows a QR code and short link that opens a new support ticket on the website, already filled in with the type (Live TV / Film / Series), the channel or title name, the category and the device. The customer signs in, adds a note and sends it — staff see it in tickets like any other.
+
 
 ## Build order
 1. DNS panel + database (DNS setting, app devices, short-lived link codes, sent logins).
-2. Website pages: "Send to app" (code entry) and "Send to my device" on My Logins; linked-device list with remove.
+2. Website pages: "Send to app" (code entry) and "Send to my device" on My Logins; linked-device list with remove; "Report a problem" page that opens a pre-filled support ticket.
 3. Android app (TV, Fire TV, phone) with optional VLC playback.
 4. Windows app with VLC bundled as the player.
 5. Downloads added to Install Guides; tests for the rules: code expires after 10 minutes and works once; only admin can change DNS; members can only send to their own devices.
