@@ -6,5 +6,5 @@
 - Provider-name equivalents are canonicalized without removing feed numbers, so Sports Pass matches cannot jump to a different numbered channel.
 - Playlists download as whole-section lists on one queue (with the progress pop-up) and browse splits them by category locally, so "All" shows at once; posters never draw an overlay — the selected card paints its own ring.
 - Films and Series default to "Recently added" (latest uploads first) when no sort was saved; a customer-chosen sort is still remembered per kind.
-- Live preview reserves remaining height for a focusable, wrapping programme-guide scroll pane so upcoming entries never push the reminder control off-screen.
+- Live preview reserves remaining height for a focusable, wrapping programme-guide pane with no reminder control; reminders are set only from the full TV guide screen (categories › channels › programmes).
 - Watched positions stay on-device, keyed by hashed provider/login plus media kind/id; built-in playback and VLC results (extra_position/extra_duration) write progress; bars sit on films and episodes, never the series poster.
