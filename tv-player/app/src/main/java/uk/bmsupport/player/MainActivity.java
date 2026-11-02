@@ -567,7 +567,12 @@ public class MainActivity extends Activity {
         String listAction = kind.equals("live") ? "get_live_streams" : kind.equals("film") ? "get_vod_streams" : "get_series";
 
         LinearLayout root = column();
-        root.addView(text(title, 26, TEXT, true));
+        LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(text(title, 26, TEXT, true));
+        head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        head.addView(button("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
+        head.addView(button("🎤 Voice search", v -> startVoice(kind)));
+        root.addView(head);
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
         root.addView(epg);
         stopPreview();
