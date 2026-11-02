@@ -222,6 +222,7 @@ public class MainActivity extends Activity {
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.addView(logo());
         top.addView(text("  BM Player", 28, TEXT, true));
+        top.addView(text("   v" + appVersion(), 16, MUTED, false));
         root.addView(top);
         TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
         root.addView(account);
