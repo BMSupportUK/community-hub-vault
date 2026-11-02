@@ -1838,7 +1838,7 @@ public class MainActivity extends Activity {
         final List<Item> shownCh = new ArrayList<>();
         final java.util.Set<String> requested = new java.util.HashSet<>();
         final int[] gen = { 0 };
-        final Runnable[] previewPending = { null };
+        final String[] previewPending = { null };
         java.util.function.Consumer<String[]> applyCat = cat -> {
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
@@ -1887,7 +1887,7 @@ public class MainActivity extends Activity {
                     boolean on = p.st <= now;
                     progTitle.setText(p.title);
                     progTime.setText(ch.name + "  ·  " + clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : "")
-                            + (on ? "   ·  On now – OK to watch" : hasReminder(ch.id, p.st) ? "   ·  ⏰ Reminder set – OK to remove" : "   ·  OK to set a reminder"));
+                            + (on ? "   ·  On now – OK to watch" : MainActivity.this.hasReminder(ch.id, p.st) ? "   ·  ⏰ Reminder set – OK to remove" : "   ·  OK to set a reminder"));
                 }
                 if (previewPending[0] != null && previewPending[0].equals(ch.id)) return;
                 previewPending[0] = ch.id;
@@ -1898,7 +1898,7 @@ public class MainActivity extends Activity {
                 Item ch = shownCh.get(r);
                 long now = System.currentTimeMillis() / 1000;
                 if (p == null || p.st <= now) { stopPreview(); play(ch, defaultVlc()); return; }
-                if (hasReminder(ch.id, p.st)) { removeReminder(ch.id, p.st); Toast.makeText(MainActivity.this, "Reminder removed", Toast.LENGTH_SHORT).show(); }
+                if (MainActivity.this.hasReminder(ch.id, p.st)) { removeReminder(ch.id, p.st); Toast.makeText(MainActivity.this, "Reminder removed", Toast.LENGTH_SHORT).show(); }
                 else { addReminder(ch, p.title, p.st); Toast.makeText(MainActivity.this, "Reminder set – we'll tell you 5 minutes before " + p.title + " starts", Toast.LENGTH_LONG).show(); }
                 grid.invalidate();
                 onHighlight(r, p);
