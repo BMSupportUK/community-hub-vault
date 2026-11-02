@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/public/player")({
 
         // poll: DNS + one-time credential handover
         await supabaseAdmin.from("player_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id);
-        const { data: settings } = await supabaseAdmin.from("player_settings").select("dns").eq("id", 1).maybeSingle();
+        const { data: settings } = await supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message").eq("id", 1).maybeSingle();
         const { data: pending } = await supabaseAdmin.from("player_pending_credentials")
           .delete().eq("device_id", device.id).select("username, password, created_at").maybeSingle();
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
@@ -86,6 +86,10 @@ export const Route = createFileRoute("/api/public/player")({
           dns: settings?.dns ?? "",
           credentials: fresh ? { username: pending.username, password: pending.password } : null,
           report_url: "https://bmsupport.uk/tickets",
+          maintenance: {
+            enabled: !!settings?.maintenance_enabled,
+            message: settings?.maintenance_message || "BM Player is down for maintenance. Please try again soon.",
+          },
         });
       },
     },

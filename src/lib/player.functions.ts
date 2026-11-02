@@ -72,6 +72,20 @@ export const savePlayerDns = createServerFn({ method: "POST" })
     return { dns };
   });
 
+/** Admin only: take every BM Player app offline with a message, or bring them back. */
+export const savePlayerMaintenance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ enabled: z.boolean(), message: z.string().max(500) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only the admin can change maintenance mode.");
+    const { error } = await context.supabase.from("player_settings")
+      .update({ maintenance_enabled: data.enabled, maintenance_message: data.message.trim(), updated_at: new Date().toISOString(), updated_by: context.userId })
+      .eq("id", 1);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 /** Admin test: ask the DNS whether it answers like an Xtream panel. */
 export const testPlayerDns = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -8,7 +8,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { savePlayerDns, testPlayerDns } from "@/lib/player.functions";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { savePlayerDns, savePlayerMaintenance, testPlayerDns } from "@/lib/player.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   component: AdminPlayerPage,
@@ -28,11 +30,14 @@ function AdminPlayerPage() {
   const [dns, setDns] = useState(""), [updated, setUpdated] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "test" | null>(null);
   const [result, setResult] = useState<boolean | null>(null);
+  const saveMaint = useServerFn(savePlayerMaintenance);
+  const [maintOn, setMaintOn] = useState(false), [maintMsg, setMaintMsg] = useState(""), [maintBusy, setMaintBusy] = useState(false);
   const [counts, setCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!isAdmin) return;
-    void supabase.from("player_settings").select("dns, updated_at").eq("id", 1).maybeSingle().then(({ data }) => {
+    void supabase.from("player_settings").select("dns, updated_at, maintenance_enabled, maintenance_message").eq("id", 1).maybeSingle().then(({ data }) => {
+      setMaintOn(!!data?.maintenance_enabled); setMaintMsg(data?.maintenance_message ?? "");
       setDns(data?.dns ?? ""); setUpdated(data?.updated_at ?? null);
     });
     void supabase.from("player_devices").select("platform").not("user_id", "is", null).then(({ data }) => {
@@ -68,6 +73,24 @@ function AdminPlayerPage() {
           {result ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}{result ? "The DNS answered" : "The DNS didn't answer"}</p>}
         {updated && <p className="text-xs text-muted-foreground">Last changed {new Date(updated).toLocaleString("en-GB")}</p>}
         <p className="text-xs text-muted-foreground">Linked apps pick up a new DNS the next time they open.</p>
+      </section>
+      <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display font-semibold">Maintenance</h2>
+            <p className="text-sm text-muted-foreground">Takes every BM Player app offline and shows your message instead.</p>
+          </div>
+          <Switch aria-label="Maintenance mode" checked={maintOn} onCheckedChange={setMaintOn} />
+        </div>
+        <Label htmlFor="maint-msg">Message shown in the app</Label>
+        <Textarea id="maint-msg" rows={3} maxLength={500} placeholder="BM Player is down for maintenance. Please try again soon." value={maintMsg} onChange={(e) => setMaintMsg(e.target.value)} />
+        <Button disabled={maintBusy} onClick={async () => {
+          setMaintBusy(true);
+          try { await saveMaint({ data: { enabled: maintOn, message: maintMsg } }); toast.success(maintOn ? "BM Player is now offline for maintenance" : "BM Player is back online"); }
+          catch (e) { toast.error(e instanceof Error ? e.message : "Save failed"); }
+          finally { setMaintBusy(false); }
+        }}>{maintBusy ? <Loader2 className="animate-spin" /> : <Save />}Save maintenance</Button>
+        <p className="text-xs text-muted-foreground">Open apps switch within about 15 seconds; others when they next open.</p>
       </section>
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>
