@@ -24,7 +24,7 @@ describe("player channel matching", () => {
 });
 
 describe("country labels and spacing", () => {
-  const { matchChannel } = require("../src/lib/player-channel-match");
+
   const list = ["UK: DAZN 1 FHD", "US: ESPN 2 HD", "AU | FOX SPORTS 505", "NHL 1", "|UK| PREMIER SPORTS 1 HD", "UK: SKY SPORTS PREMIER LEAGUE HD", "CA: TSN2"];
   test("USA: ESPN 2 matches US: ESPN 2", () => expect(matchChannel("USA: ESPN 2", list)).toEqual(["US: ESPN 2 HD"]));
   test("Australia: Fox Sports 505", () => expect(matchChannel("Australia: Fox Sports 505", list)).toEqual(["AU | FOX SPORTS 505"]));
