@@ -1081,15 +1081,12 @@ public class MainActivity extends Activity {
     /** Mirrors src/lib/player-channel-match.ts normChannel. */
     static String normChannel(String name) {
         String s = name.toLowerCase(java.util.Locale.ROOT);
-        s = s.replaceAll("^\\s*(?:\\|?[a-z]{2,3}\\s*[|:\\-]\\s*)+", " ");
-        s = s.replaceAll("[^a-z0-9]+", " ");
-        s = s.replaceAll("\\b(?:fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv)\\b", " ");
+        s = s.replaceAll("[^a-z0-9+]+", " ").replace("+", " plus ");
+        s = s.replaceAll("([a-z])(\\d)", "$1 $2").replaceAll("(\\d)([a-z])", "$1 $2");
+        s = s.replaceAll("\\b(?:uk|gb|usa|us|ire|ie|ireland|au|aus|australia|ca|canada|za|south africa|nz|int|fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv)\\b", " ");
+        s = s.replaceAll("\\bsports\\b", "sport").replaceAll("\\b0+(\\d)", "$1");
         return s.replaceAll("\\s+", " ").trim();
     }
-    private static final String[][] BUILT_IN_ALIASES = {
-        {"sky sports pl", "sky sports premier league"}, {"sky sports me", "sky sports main event"},
-        {"sky sports f1", "sky sports formula 1"}, {"bt sport 1", "tnt sports 1"}, {"bt sport 2", "tnt sports 2"},
-        {"bt sport 3", "tnt sports 3"}, {"bt sport 4", "tnt sports 4"} };
     private static String alias(String n, java.util.Map<String, String> aliases) {
         String a = aliases.get(n); return a == null ? n : a;
     }
@@ -1109,11 +1106,21 @@ public class MainActivity extends Activity {
         List<Item> out = new ArrayList<>();
         if (want.isEmpty()) return out;
         for (Item it : playlist) if (alias(it.norm(), am).equals(want)) out.add(it);
-        if (out.isEmpty()) for (Item it : playlist) {
-            String n = it.norm();
-            if (!n.isEmpty() && (" " + n + " ").contains(" " + want + " ")) out.add(it);
+        if (!out.isEmpty()) {
+            java.util.Collections.sort(out, (x, y) -> quality(y.name) != quality(x.name) ? quality(y.name) - quality(x.name) : x.name.length() - y.name.length());
+            return out;
         }
-        java.util.Collections.sort(out, (a, b) -> quality(b.name) != quality(a.name) ? quality(b.name) - quality(a.name) : a.name.length() - b.name.length());
+        // Every word of the guide name appears in the playlist name; fewest extra words first.
+        String[] words = want.split(" ");
+        final java.util.Map<Item, Integer> extra = new java.util.HashMap<>();
+        for (Item it : playlist) {
+            java.util.List<String> t = java.util.Arrays.asList(it.norm().split(" "));
+            boolean all = true;
+            for (String w : words) if (!t.contains(w)) { all = false; break; }
+            if (all) { out.add(it); extra.put(it, t.size() - words.length); }
+        }
+        java.util.Collections.sort(out, (x, y) -> !extra.get(x).equals(extra.get(y)) ? extra.get(x) - extra.get(y)
+                : quality(y.name) != quality(x.name) ? quality(y.name) - quality(x.name) : x.name.length() - y.name.length());
         return out;
     }
 

@@ -3,7 +3,7 @@ import { matchChannel, normChannel } from "../src/lib/player-channel-match";
 
 describe("player channel matching", () => {
   test("strips country prefix and quality tags", () => {
-    expect(normChannel("UK: SKY SPORTS MAIN EVENT FHD")).toBe("sky sports main event");
+    expect(normChannel("UK: SKY SPORTS MAIN EVENT FHD")).toBe("sky sport main event");
   });
   test("prefers FHD over SD copies", () => {
     expect(matchChannel("Sky Sports Main Event", ["UK: Sky Sports Main Event SD", "UK: Sky Sports Main Event FHD"])[0])
