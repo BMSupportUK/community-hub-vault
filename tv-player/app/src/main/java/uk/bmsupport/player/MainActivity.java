@@ -92,6 +92,96 @@ public class MainActivity extends Activity {
         handleReminderIntent(getIntent());
     }
 
+    // ---------- multi-screen (Multi Room = 2, Triple Room = 3) ----------
+    private final List<androidx.media3.exoplayer.ExoPlayer> multiPlayers = new ArrayList<>();
+    private void stopMulti() { for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) p.release(); multiPlayers.clear(); }
+
+    private void showMultiScreen(int screens) {
+        stopPreview(); stopMulti();
+        screen = "multi";
+        back = () -> { stopMulti(); showHome(); };
+        FrameLayout[] panes = new FrameLayout[screens];
+        TextView[] labels = new TextView[screens];
+        LinearLayout root = row();
+        root.setBackgroundColor(Color.BLACK);
+        for (int i = 0; i < screens; i++) {
+            final int n = i;
+            FrameLayout f = new FrameLayout(this);
+            f.setFocusable(true);
+            f.setBackground(focusBg(4));
+            f.setPadding(dp(3), dp(3), dp(3), dp(3));
+            androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
+            pv.setUseController(false); pv.setFocusable(false);
+            pv.setShutterBackgroundColor(Color.BLACK);
+            androidx.media3.exoplayer.ExoPlayer pl = PlayerActivity.build(this);
+            pl.setVolume(i == 0 ? 1f : 0f);
+            pv.setPlayer(pl);
+            multiPlayers.add(pl);
+            f.addView(pv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            TextView t = text("Screen " + (i + 1) + "\nPress OK to pick a channel", 16, TEXT, true);
+            t.setGravity(Gravity.CENTER);
+            t.setShadowLayer(4, 0, 0, Color.BLACK);
+            f.addView(t, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            labels[i] = t; panes[i] = f;
+            f.setOnFocusChangeListener((v, has) -> {
+                if (!has) return;
+                for (int k = 0; k < multiPlayers.size(); k++) multiPlayers.get(k).setVolume(k == n ? 1f : 0f);
+            });
+            f.setOnClickListener(v -> pickMultiChannel(n, labels[n]));
+        }
+        if (screens == 2) {
+            root.addView(panes[0], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+            root.addView(panes[1], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+        } else {
+            root.addView(panes[0], weight(2, ViewGroup.LayoutParams.MATCH_PARENT));
+            LinearLayout right = column(); right.setPadding(0, 0, 0, 0);
+            right.addView(panes[1], new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+            right.addView(panes[2], new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+            root.addView(right, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        setContentView(root);
+        panes[0].requestFocus();
+        Toast.makeText(this, "Sound plays from the highlighted screen. Press OK on a screen to change its channel.", Toast.LENGTH_LONG).show();
+    }
+
+    private void pickMultiChannel(int n, TextView label) {
+        if (liveChannels == null) {
+            Toast.makeText(this, "Loading your channels…", Toast.LENGTH_SHORT).show();
+            io.execute(() -> {
+                try {
+                    JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
+                    List<Item> l = new ArrayList<>();
+                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id"))); }
+                    liveChannels = l;
+                    ui.post(() -> pickMultiChannel(n, label));
+                } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't load your channels", Toast.LENGTH_LONG).show()); }
+            });
+            return;
+        }
+        android.widget.EditText q = new android.widget.EditText(this);
+        q.setSingleLine(true); q.setHint("Type part of a channel name");
+        new AlertDialog.Builder(this).setTitle("Screen " + (n + 1) + " – find a channel").setView(q)
+                .setPositiveButton("Search", (d, w) -> {
+                    String want = normChannel(q.getText().toString());
+                    List<Item> hits = new ArrayList<>();
+                    for (Item it : liveChannels) {
+                        if (hideAdult(it.category)) continue;
+                        if (want.isEmpty() || it.norm().contains(want)) hits.add(it);
+                        if (hits.size() >= 80) break;
+                    }
+                    if (hits.isEmpty()) { Toast.makeText(this, "No channels found", Toast.LENGTH_SHORT).show(); return; }
+                    String[] names = new String[hits.size()];
+                    for (int i = 0; i < names.length; i++) names[i] = hits.get(i).name;
+                    new AlertDialog.Builder(this).setTitle("Pick a channel").setItems(names, (d2, w2) -> {
+                        Item it = hits.get(w2);
+                        if (n >= multiPlayers.size()) return;
+                        label.setText("");
+                        PlayerActivity.playWithFallback(multiPlayers.get(n), streamUrls(it),
+                                () -> ui.post(() -> label.setText(it.name + "\nCouldn't play – press OK to pick another")));
+                    }).show();
+                }).setNegativeButton("Cancel", null).show();
+    }
+
     // ---------- programme reminders ----------
     private Item epgItem; private List<Object[]> epgProgs = new ArrayList<>();
     private Runnable reminderTask; private boolean reminderShowing;
@@ -347,7 +437,16 @@ public class MainActivity extends Activity {
                 java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK);
                 line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
                 String l = line;
-                ui.post(() -> account.setText(l));
+                int cons = info.optInt("max_connections", 1);
+                prefs.edit().putInt("max_cons", cons).apply();
+                ui.post(() -> {
+                    account.setText(l);
+                    if (cons >= 2 && small.findViewWithTag("multi") == null) {
+                        Button mb = button("🖥 Multi-screen (" + Math.min(cons, 3) + ")", v -> showMultiScreen(Math.min(cons, 3)));
+                        mb.setTag("multi");
+                        small.addView(mb, 1, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+                    }
+                });
             } catch (Exception ignored) {}
         });
     }
@@ -407,7 +506,7 @@ public class MainActivity extends Activity {
         ui.postDelayed(previewTask, 700);
     }
 
-    @Override protected void onPause() { super.onPause(); stopPreview(); }
+    @Override protected void onPause() { super.onPause(); stopPreview(); if ("multi".equals(screen)) { stopMulti(); showHome(); } }
 
     private void browse(String kind) {
         screen = "browse"; back = this::showHome;
