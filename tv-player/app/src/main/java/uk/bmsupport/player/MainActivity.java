@@ -248,11 +248,15 @@ public class MainActivity extends Activity {
                 if (info == null) return;
                 String exp = info.optString("exp_date", "");
                 String status = info.optString("status", "");
-                String line = "Signed in as " + prefs.getString("user", "") + (status.isEmpty() ? "" : " · " + status);
-                if (!exp.isEmpty() && !"null".equals(exp)) {
-                    java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK);
-                    line += " · ends " + f.format(new java.util.Date(Long.parseLong(exp) * 1000));
+                boolean hasExp = !exp.isEmpty() && !"null".equals(exp);
+                long expMs = 0;
+                try { if (hasExp) expMs = Long.parseLong(exp) * 1000; } catch (Exception ignored) { hasExp = false; }
+                if ("expired".equalsIgnoreCase(status) || (hasExp && expMs < System.currentTimeMillis())) {
+                    ui.post(this::showExpired); return;
                 }
+                String line = "Signed in as " + prefs.getString("user", "") + (status.isEmpty() ? "" : " · " + status);
+                java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK);
+                line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
                 String l = line;
                 ui.post(() -> account.setText(l));
             } catch (Exception ignored) {}
@@ -849,6 +853,33 @@ public class MainActivity extends Activity {
     private boolean autoDone;
 
     // ---------- maintenance ----------
+
+    private void showExpired() {
+        if ("expired".equals(screen)) return;
+        stopPreview();
+        screen = "expired"; back = null;
+        LinearLayout root = column();
+        root.setGravity(Gravity.CENTER);
+        android.widget.ImageView art = new android.widget.ImageView(this);
+        art.setImageResource(R.drawable.expired_art);
+        art.setAdjustViewBounds(true);
+        art.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        root.addView(art, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        TextView h = text("Your subscription has expired", 30, ACCENT, true); h.setGravity(Gravity.CENTER);
+        TextView m = text("Please visit BM Support at bmsupport.uk to renew. Once renewed, open BM Player and link it again with a new code.", 18, TEXT, false); m.setGravity(Gravity.CENTER);
+        root.addView(h); root.addView(m);
+        Button close = button("Close", v -> {
+            io.execute(() -> {
+                try { Net.postJson(Net.SITE + "/api/public/player",
+                        new JSONObject().put("action", "unlink").put("device_token", prefs.getString("token", "")).toString()); } catch (Exception ignored) {}
+                prefs.edit().clear().apply();
+                ui.post(this::finishAffinity);
+            });
+        });
+        root.addView(close);
+        setContentView(root);
+        close.requestFocus();
+    }
 
     private void showMaintenance(String msg) {
         if ("maintenance".equals(screen)) return;
