@@ -165,12 +165,15 @@ public class GuideGridView extends View {
                 if (selR) drawRing(c, new RectF(ch + 2, y + 2, W - 2, y + rh - 2));
                 continue;
             }
-            for (Prog p : l) {
+            for (int pi = 0; pi < l.size(); pi++) {
+                Prog p = l.get(pi);
                 long en = p.en > p.st ? p.en : p.st + SLOT;
+                // Never let a box run over the next programme's start (overlapping EPG data).
+                if (pi + 1 < l.size() && l.get(pi + 1).st > p.st && l.get(pi + 1).st < en) en = l.get(pi + 1).st;
                 if (en <= windowStart || p.st >= windowStart + WINDOW) continue;
                 float x1 = ch + Math.max(0, p.st - windowStart) * pxPerSec;
                 float x2 = ch + Math.min(WINDOW, en - windowStart) * pxPerSec;
-                RectF box = new RectF(x1 + 2, y + 2, x2 - 2, y + rh - 2);
+                RectF box = new RectF(x1 + 2, y + 2, Math.max(x1 + 4, x2 - 2), y + rh - 2);
                 boolean onNow = p.st <= nowS && nowS < en;
                 fill.setColor(p == sel ? 0xFFE11D48 : onNow ? 0xFF24345A : 0xFF1A2742);
                 c.drawRoundRect(box, 6 * d, 6 * d, fill);
@@ -181,12 +184,26 @@ public class GuideGridView extends View {
                 txt.setColor(0xFFF1F5F9); txt.setTextSize(14 * d); txt.setFakeBoldText(p == sel);
                 boolean rem = listener != null && listener.hasReminder(r, p.st);
                 String t = (rem ? "⏰ " : "") + p.title;
-                float avail = box.width() - 12 * d;
-                if (avail > 10 * d) {
-                    c.drawText(TextUtils.ellipsize(t, txt, avail, TextUtils.TruncateAt.END).toString(), box.left + 6 * d, y + rh / 2, txt);
-                    txt.setTextSize(11 * d); txt.setFakeBoldText(false); txt.setColor(0xFFCBD5E1);
-                    c.drawText(TextUtils.ellipsize(hhmm(p.st) + " – " + hhmm(en), txt, avail, TextUtils.TruncateAt.END).toString(), box.left + 6 * d, y + rh / 2 + 16 * d, txt);
+                float pad = box.width() < 60 * d ? 3 * d : 6 * d;
+                float avail = box.width() - 2 * pad;
+                c.save(); c.clipRect(box);
+                if (avail >= 14 * d) {
+                    boolean narrow = box.width() < 90 * d;
+                    if (narrow) txt.setTextSize(12 * d);
+                    String shown = TextUtils.ellipsize(t, txt, avail, TextUtils.TruncateAt.END).toString();
+                    if (shown.length() <= 1 && t.length() > 1) shown = "…";
+                    String times = hhmm(p.st) + " – " + hhmm(en);
+                    float tw = txt.measureText(times);
+                    txt.setTextSize(11 * d); boolean fitsTimes = txt.measureText(times) <= avail;
+                    txt.setTextSize(narrow ? 12 * d : 14 * d);
+                    float ty = fitsTimes ? y + rh / 2 : y + rh / 2 + 5 * d;
+                    c.drawText(shown, box.left + pad, ty, txt);
+                    if (fitsTimes) {
+                        txt.setTextSize(11 * d); txt.setFakeBoldText(false); txt.setColor(0xFFCBD5E1);
+                        c.drawText(times, box.left + pad, y + rh / 2 + 16 * d, txt);
+                    }
                 }
+                c.restore();
                 if (p == sel) drawRing(c, box);
             }
         }
