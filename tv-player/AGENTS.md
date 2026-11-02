@@ -13,3 +13,4 @@
 - iFollow/Scottish sports fixtures group playlist channels under each team name (teamChannels, title split on "v"), then the guide-listed channels.
 - Sports guide opens with a Search manually / Voice search choice; voice matches every spoken word against event, guide and sport names.
 - Live connections: the poll reports login, version and the playing item (set on playback start, cleared on return to the app); the server stamps presence + Cloudflare geo via src/lib/player-live.ts, admin-only page /admin-player-live.
+- The same check-in IP is judged for VPN/proxy use by src/lib/player-vpn.ts (proxycheck.io then ipapi.is, answers cached per IP) and shown in that page's VPN column; the poll that hands the app its login never waits on that lookup.
