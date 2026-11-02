@@ -88,7 +88,90 @@ public class MainActivity extends Activity {
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         start();
         checkForUpdate(false);
+        startReminderCheck();
+        handleReminderIntent(getIntent());
     }
+
+    // ---------- programme reminders ----------
+    private Item epgItem; private List<Object[]> epgProgs = new ArrayList<>();
+    private Runnable reminderTask; private boolean reminderShowing;
+
+    /** Upcoming programmes on the highlighted channel; picking one sets a reminder 5 minutes before it starts. */
+    private void pickReminder() {
+        Item ch = epgItem;
+        long nowSec = System.currentTimeMillis() / 1000;
+        List<Object[]> up = new ArrayList<>();
+        if (ch != null) for (Object[] p : epgProgs) if ((long) p[1] > nowSec) up.add(p);
+        if (ch == null || up.isEmpty()) { Toast.makeText(this, "Highlight a channel with upcoming programmes in its TV guide first", Toast.LENGTH_LONG).show(); return; }
+        String[] labels = new String[up.size()];
+        for (int i = 0; i < up.size(); i++) labels[i] = clock((long) up.get(i)[1]) + "   " + up.get(i)[0] + (hasReminder(ch.id, (long) up.get(i)[1]) ? "   ⏰ set" : "");
+        new AlertDialog.Builder(this).setTitle("Remind me – " + ch.name).setItems(labels, (d, w) -> {
+            long st = (long) up.get(w)[1];
+            if (hasReminder(ch.id, st)) { removeReminder(ch.id, st); Toast.makeText(this, "Reminder removed", Toast.LENGTH_SHORT).show(); return; }
+            addReminder(ch, (String) up.get(w)[0], st);
+            Toast.makeText(this, "Reminder set – we'll tell you 5 minutes before " + up.get(w)[0] + " starts", Toast.LENGTH_LONG).show();
+        }).setNegativeButton("Close", null).show();
+    }
+
+    private JSONArray reminders() { try { return new JSONArray(prefs.getString("reminders", "[]")); } catch (Exception e) { return new JSONArray(); } }
+    private boolean hasReminder(String id, long st) {
+        JSONArray a = reminders();
+        for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null && id.equals(o.optString("id")) && o.optLong("start") == st) return true; }
+        return false;
+    }
+    private void removeReminder(String id, long st) {
+        JSONArray a = reminders(), out = new JSONArray();
+        for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null && !(id.equals(o.optString("id")) && o.optLong("start") == st)) out.put(o); }
+        prefs.edit().putString("reminders", out.toString()).apply();
+        ReminderReceiver.cancel(this, id, st);
+    }
+    private void addReminder(Item ch, String title, long st) {
+        JSONArray a = reminders();
+        try { a.put(new JSONObject().put("id", ch.id).put("name", ch.name).put("category", ch.category).put("title", title).put("start", st)); } catch (Exception ignored) {}
+        prefs.edit().putString("reminders", a.toString()).apply();
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 7);
+        ReminderReceiver.schedule(this, ch.id, ch.name, title, st);
+    }
+
+    /** While the app is open, a due reminder pops up in the app with a button to jump to the channel. */
+    private void startReminderCheck() {
+        reminderTask = new Runnable() { @Override public void run() { checkReminders(); ui.postDelayed(this, 20000); } };
+        ui.postDelayed(reminderTask, 3000);
+    }
+    private void checkReminders() {
+        if (reminderShowing || isFinishing()) return;
+        long nowSec = System.currentTimeMillis() / 1000;
+        JSONArray a = reminders(), keep = new JSONArray();
+        JSONObject due = null;
+        for (int i = 0; i < a.length(); i++) {
+            JSONObject o = a.optJSONObject(i); if (o == null) continue;
+            long st = o.optLong("start");
+            if (st + 1800 < nowSec) continue; // long gone
+            if (due == null && st - 300 <= nowSec) { due = o; continue; }
+            keep.put(o);
+        }
+        if (a.length() != keep.length()) prefs.edit().putString("reminders", keep.toString()).apply();
+        if (due != null) showReminder(due.optString("id"), due.optString("name"), due.optString("category"), due.optString("title"), due.optLong("start"));
+    }
+    private void showReminder(String id, String name, String category, String title, long st) {
+        reminderShowing = true;
+        ReminderReceiver.cancel(this, id, st);
+        long mins = Math.max(0, (st - System.currentTimeMillis() / 1000 + 59) / 60);
+        new AlertDialog.Builder(this).setTitle("⏰ " + title)
+                .setMessage((mins > 0 ? "Starts in " + mins + (mins == 1 ? " minute" : " minutes") : "Starting now") + " at " + clock(st) + " on " + name + ".")
+                .setPositiveButton("▶ Watch on " + name, (d, w) -> open(new Item("live", id, name, "ts", category)))
+                .setNegativeButton("Dismiss", null)
+                .setOnDismissListener(d -> reminderShowing = false).show();
+    }
+    private void handleReminderIntent(Intent i) {
+        if (i == null || !i.hasExtra("reminder_id")) return;
+        String id = i.getStringExtra("reminder_id"), name = i.getStringExtra("reminder_name");
+        i.removeExtra("reminder_id");
+        removeReminder(id, i.getLongExtra("reminder_start", 0));
+        ui.postDelayed(() -> open(new Item("live", id, name, "ts", "")), 800);
+    }
+    @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); }
 
     @Override protected void onDestroy() { super.onDestroy(); stopPolling(); io.shutdownNow(); }
 
@@ -388,6 +471,7 @@ public class MainActivity extends Activity {
             pvEpg.setPadding(dp(12), dp(10), dp(12), dp(10));
             pvEpg.setMinLines(5);
             side.addView(pvEpg, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            side.addView(button("⏰ Set a reminder", v -> pickReminder()));
             panes.addView(side, weight(1.7f, ViewGroup.LayoutParams.MATCH_PARENT));
         }
         final androidx.media3.ui.PlayerView previewView = pv;
@@ -472,11 +556,13 @@ public class MainActivity extends Activity {
             try {
                 JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=6")).optJSONArray("epg_listings");
                 StringBuilder head = new StringBuilder(it.name), guide = new StringBuilder();
+                List<Object[]> progs = new ArrayList<>();
                 long nowSec = System.currentTimeMillis() / 1000;
                 if (l != null) for (int i = 0; i < l.length(); i++) {
                     JSONObject e = l.getJSONObject(i);
                     String t = new String(Base64.decode(e.optString("title"), Base64.DEFAULT), "UTF-8");
                     long st = e.optLong("start_timestamp", 0), en = e.optLong("stop_timestamp", 0);
+                    if (st > 0) progs.add(new Object[]{t, st});
                     String times = st > 0 ? clock(st) + (en > 0 ? " – " + clock(en) : "") : e.optString("start", "");
                     if (i == 0) {
                         head.append("  ·  Now: ").append(t);
@@ -496,7 +582,7 @@ public class MainActivity extends Activity {
                     }
                 }
                 String g = guide.length() == 0 ? "No TV guide for this channel." : guide.toString();
-                ui.post(() -> { out.setText(head.toString()); if (box != null) box.setText(g); });
+                ui.post(() -> { out.setText(head.toString()); if (box != null) box.setText(g); epgItem = it; epgProgs = progs; });
             } catch (Exception ignored) {
                 ui.post(() -> { out.setText(it.name); if (box != null) box.setText("No TV guide for this channel."); });
             }
