@@ -17,3 +17,14 @@ describe("saved BM Player login selection", () => {
     expect(selectedPlayerLogin(accounts, "someone-else")).toBeNull();
   });
 });
+
+describe("typed-in BM Player login", () => {
+  test("sends a login typed in by hand", () => {
+    expect(manualPlayerLogin("  typed-login ", "typed-password")).toEqual({ username: "typed-login", password: "typed-password" });
+  });
+  test("needs both a login and a password", () => {
+    expect(manualPlayerLogin("", "typed-password")).toBeNull();
+    expect(manualPlayerLogin("   ", "typed-password")).toBeNull();
+    expect(manualPlayerLogin("typed-login", "")).toBeNull();
+  });
+});
