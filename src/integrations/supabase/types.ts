@@ -5573,6 +5573,139 @@ export type Database = {
         }
         Relationships: []
       }
+      player_devices: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string
+          linked_at: string | null
+          name: string
+          platform: string
+          token_hash: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          linked_at?: string | null
+          name?: string
+          platform?: string
+          token_hash: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          linked_at?: string | null
+          name?: string
+          platform?: string
+          token_hash?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      player_link_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
+      player_link_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          device_id: string
+          expires_at: string
+          used_at: string | null
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          device_id: string
+          expires_at: string
+          used_at?: string | null
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          device_id?: string
+          expires_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_link_codes_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "player_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_pending_credentials: {
+        Row: {
+          created_at: string
+          device_id: string
+          password: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          password: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          password?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_pending_credentials_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "player_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_settings: {
+        Row: {
+          dns: string
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          dns?: string
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          dns?: string
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       prediction_winners: {
         Row: {
           competition: string
