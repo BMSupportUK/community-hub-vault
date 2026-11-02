@@ -71,6 +71,7 @@ function AdminPlayerLivePage() {
         <div className="flex gap-2 text-sm">
           <span className="rounded-full border border-border bg-surface px-3 py-1"><Radio className="mr-1 inline size-3.5 text-primary" />{live.length} online</span>
           <span className="rounded-full border border-border bg-surface px-3 py-1"><MonitorPlay className="mr-1 inline size-3.5 text-primary" />{watching} watching</span>
+          {onVpn > 0 && <span className="rounded-full border border-warning/40 bg-warning/10 px-3 py-1 font-medium text-warning"><ShieldAlert className="mr-1 inline size-3.5" />{onVpn} on VPN</span>}
         </div>
       </div>
       <p className="text-xs text-muted-foreground">Updates every few seconds. Apps check in about once a minute; older apps (before 2.35) show as online but can't report what they're playing.</p>
@@ -93,6 +94,11 @@ function AdminPlayerLivePage() {
                   <td className="p-3">{map
                     ? <a href={map} target="_blank" rel="noreferrer" title={`${place || "Location"}${r.last_ip ? ` · IP ${r.last_ip}` : ""}`} className="inline-flex items-center gap-1 text-primary hover:underline"><MapPin className="size-4" /><span className="text-xs">{place || "Map"}</span></a>
                     : <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={r.last_ip ?? ""}><MapPin className="size-4" />Unknown</span>}</td>
+                  <td className="p-3">{r.vpn_status === "yes"
+                    ? <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning" title={`${r.vpn_provider ? `Via ${r.vpn_provider}` : "VPN or proxy"}${r.last_ip ? ` · IP ${r.last_ip}` : ""}`}><ShieldAlert className="size-3.5" />VPN</span>
+                    : r.vpn_status === "no"
+                      ? <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={`No VPN or proxy found${r.last_ip ? ` on IP ${r.last_ip}` : ""}`}><ShieldCheck className="size-3.5" />None</span>
+                      : <span className="text-xs text-muted-foreground" title="VPN not checked yet">—</span>}</td>
                   <td className="p-3">{r.watching_title
                     ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Film" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div></div></div>
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>
