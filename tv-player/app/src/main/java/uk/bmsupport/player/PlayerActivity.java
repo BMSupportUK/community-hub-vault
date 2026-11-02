@@ -43,6 +43,23 @@ public class PlayerActivity extends Activity {
     static final String UA = "VLC/3.0.20 LibVLC/3.0.20";
     private ExoPlayer player;
     private final Handler ui = new Handler(Looper.getMainLooper());
+    private String progressKey, seriesKey;
+    private boolean playbackReady;
+    private long resumePosition;
+    private final Runnable saveTick = new Runnable() {
+        @Override public void run() { saveProgress(false); ui.postDelayed(this, 5000); }
+    };
+
+    private void saveProgress(boolean ended) {
+        if (player == null || progressKey == null || !playbackReady) return;
+        long duration = player.getDuration();
+        if (duration <= 0) return;
+        long position = ended ? duration : Math.max(0, player.getCurrentPosition());
+        SharedPreferences.Editor edit = prefs(this).edit()
+                .putLong(progressKey + ":position", position).putLong(progressKey + ":duration", duration);
+        if (seriesKey != null) edit.putLong(seriesKey + ":position", position).putLong(seriesKey + ":duration", duration);
+        edit.apply();
+    }
 
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences("bmplayer", MODE_PRIVATE); }
 
@@ -140,9 +157,21 @@ public class PlayerActivity extends Activity {
         setContentView(root);
 
         player = build(this);
+        progressKey = getIntent().getStringExtra("progress_key");
+        seriesKey = getIntent().getStringExtra("series_key");
+        resumePosition = getIntent().getLongExtra("resume_ms", 0);
         view.setPlayer(player);
         final boolean is4kDevice = device4k(this);
         player.addListener(new Player.Listener() {
+            @Override public void onPlaybackStateChanged(int state) {
+                if (state == Player.STATE_READY) {
+                    playbackReady = true;
+                    if (resumePosition > 0) {
+                        long at = resumePosition; resumePosition = 0;
+                        player.seekTo(player.getDuration() > 0 ? Math.min(at, player.getDuration() - 1) : at);
+                    }
+                } else if (state == Player.STATE_ENDED) saveProgress(true);
+            }
             @Override public void onVideoSizeChanged(VideoSize s) {
                 if (Math.max(s.width, s.height) >= 3840 && !is4kDevice) {
                     banner.setText("Non 4K Device – this is a 4K stream. Your TV or streaming device can't show 4K, so it may not play smoothly.");
@@ -155,6 +184,7 @@ public class PlayerActivity extends Activity {
         if (urls == null) urls = new String[]{getIntent().getStringExtra("url")};
         playWithFallback(player, urls, () -> Toast.makeText(this,
                 "This stream won't play here. Try \"Play with VLC\" or report a problem.", Toast.LENGTH_LONG).show());
+        ui.postDelayed(saveTick, 5000);
     }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -165,7 +195,7 @@ public class PlayerActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override protected void onStop() { super.onStop(); if (player != null) player.pause(); }
+    @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
-    @Override protected void onDestroy() { super.onDestroy(); if (player != null) { player.release(); player = null; } }
+    @Override protected void onDestroy() { saveProgress(false); ui.removeCallbacks(saveTick); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
