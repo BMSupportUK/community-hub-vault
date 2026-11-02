@@ -1087,26 +1087,126 @@ public class MainActivity extends Activity {
         if (kind == null) prefs.edit().remove("refreshed_live").remove("refreshed_film").remove("refreshed_series").apply();
     }
 
-    /** Clears one section and downloads its categories and full list again. */
-    private void refreshSection(String kind, TextView status) {
-        String catAction = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
-        String listAction = kind.equals("live") ? "get_live_streams" : kind.equals("film") ? "get_vod_streams" : "get_series";
-        if (status != null) status.setText("Updating…");
-        clearCache(kind);
-        io.execute(() -> {
-            try {
-                cachedGet(kind, catAction, "");
-                int n = new JSONArray(Net.get(api(listAction))).length();
-                prefs.edit().putLong("refreshed_" + kind, System.currentTimeMillis()).apply();
-                String what = kind.equals("live") ? " channels" : kind.equals("film") ? " films" : " series";
-                ui.post(() -> {
-                    if (status != null) status.setText(n + what + " · updated now");
-                    Toast.makeText(this, (kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series") + " updated – " + n + what, Toast.LENGTH_SHORT).show();
-                });
-            } catch (Exception e) {
-                ui.post(() -> { if (status != null) status.setText("Couldn't update. Try again."); });
-            }
+    private static String catActionFor(String kind) { return kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories"; }
+    private static String listActionFor(String kind) { return kind.equals("live") ? "get_live_streams" : kind.equals("film") ? "get_vod_streams" : "get_series"; }
+    private static String sectionName(String kind) { return kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series"; }
+
+    private void writeCache(String kind, String key, String body) throws Exception {
+        java.io.File f = cacheFile(kind, key), tmp = new java.io.File(f.getPath() + ".tmp");
+        try (java.io.FileOutputStream o = new java.io.FileOutputStream(tmp)) { o.write(body.getBytes("UTF-8")); }
+        if (!tmp.renameTo(f)) { f.delete(); tmp.renameTo(f); }
+    }
+
+    private boolean hasFullList(String kind) {
+        java.io.File f = cacheFile(kind, listActionFor(kind));
+        return f.exists() && f.length() > 0;
+    }
+
+    // ---------- playlist update queue + progress pop-up ----------
+    /** Playlist downloads run one after another here; browse loads queue behind them so they read the fresh cache. */
+    private final ExecutorService plIo = Executors.newSingleThreadExecutor();
+    private final java.util.Map<String, TextView> tileStatus = new java.util.HashMap<>();
+    private final java.util.Set<String> plQueued = new java.util.HashSet<>();
+    private int plDone, plTotal;
+    private String plMsg = "";
+    private AlertDialog plDialog;
+    private TextView plText, plPct;
+    private android.widget.ProgressBar plBar;
+
+    private boolean playlistsUpdating() { return plTotal > 0 && plDone < plTotal; }
+
+    /** Downloads categories + full lists for the given sections; keeps the old lists until the new ones arrive. */
+    private void updatePlaylists(List<String> kinds, boolean popup) {
+        List<String> todo = new ArrayList<>();
+        for (String k : kinds) if (plQueued.add(k)) todo.add(k);
+        if (todo.isEmpty()) { if (popup && playlistsUpdating()) showPlaylistDialog(); return; }
+        if (!playlistsUpdating()) { plDone = 0; plTotal = 0; }
+        plTotal += todo.size() * 2;
+        plMsg = "Getting ready…";
+        if (popup) showPlaylistDialog();
+        renderPlaylistProgress();
+        for (String kind : todo) {
+            ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText("Updating…"); });
+            plIo.execute(() -> {
+                String name = sectionName(kind);
+                int steps = 0;
+                try {
+                    plSet("Downloading " + name + " categories…");
+                    String cats = Net.get(api(catActionFor(kind)));
+                    new JSONArray(cats);
+                    steps++; plStepDone();
+                    final String what = kind.equals("live") ? "channels" : kind.equals("film") ? "films" : "series";
+                    plSet("Downloading " + name + " " + what + "…");
+                    String list = Net.get(api(listActionFor(kind)), bytes -> plSet("Downloading " + name + " " + what + "…  " + String.format(java.util.Locale.UK, "%.1f MB", bytes / 1048576.0)));
+                    int n = new JSONArray(list).length();
+                    clearCache(kind);
+                    writeCache(kind, catActionFor(kind), cats);
+                    writeCache(kind, listActionFor(kind), list);
+                    prefs.edit().putLong("refreshed_" + kind, System.currentTimeMillis()).apply();
+                    steps++; plStepDone();
+                    ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText(n + " " + what + " · updated now"); });
+                } catch (Exception e) {
+                    ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText("Couldn't update. Try again."); });
+                } finally {
+                    while (steps++ < 2) plStepDone();
+                    ui.post(() -> plQueued.remove(kind));
+                }
+            });
+        }
+    }
+
+    private void plSet(String msg) { plMsg = msg; ui.post(this::renderPlaylistProgress); }
+    private void plStepDone() {
+        ui.post(() -> {
+            plDone++;
+            if (plDone >= plTotal) {
+                plMsg = "All playlists are up to date";
+                renderPlaylistProgress();
+                ui.postDelayed(() -> { if (!playlistsUpdating() && plDialog != null) { try { plDialog.dismiss(); } catch (Exception ignored) {} plDialog = null; } }, 900);
+            } else renderPlaylistProgress();
         });
+    }
+
+    private void showPlaylistDialog() {
+        if (plDialog != null && plDialog.isShowing()) return;
+        LinearLayout box = column();
+        box.setPadding(dp(28), dp(24), dp(28), dp(20));
+        box.setBackgroundColor(CARD);
+        box.addView(text("Updating your playlists", 22, TEXT, true));
+        box.addView(text("Your channels, films and series are being downloaded. Lists will open as soon as this finishes.", 15, MUTED, false));
+        plBar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        plBar.setMax(1000);
+        plBar.setProgressTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(14));
+        bl.topMargin = dp(14);
+        box.addView(plBar, bl);
+        LinearLayout r = row();
+        plText = text("", 15, TEXT, false);
+        plPct = text("", 15, ACCENT, true);
+        r.addView(plText, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        r.addView(plPct);
+        box.addView(r);
+        Button hide = button("Hide – keep updating in the background", v -> { if (plDialog != null) plDialog.dismiss(); });
+        box.addView(hide);
+        plDialog = new AlertDialog.Builder(this).setView(box).create();
+        plDialog.setOnDismissListener(d -> plDialog = null);
+        plDialog.show();
+        hide.requestFocus();
+        renderPlaylistProgress();
+    }
+
+    private void renderPlaylistProgress() {
+        if (plBar == null || plDialog == null) return;
+        int pct = plTotal == 0 ? 100 : Math.min(100, plDone * 100 / plTotal);
+        plBar.setProgress(plTotal == 0 ? 1000 : Math.min(1000, plDone * 1000 / plTotal));
+        plText.setText(plMsg);
+        plPct.setText("  " + pct + "%");
+    }
+
+    /** Manual refresh from a tile: one section, with the progress pop-up. */
+    private void refreshSection(String kind, TextView status) {
+        if (status != null) tileStatus.put(kind, status);
+        updatePlaylists(java.util.Collections.singletonList(kind), true);
     }
 
     private String refreshedLabel(String kind) {
@@ -1119,17 +1219,28 @@ public class MainActivity extends Activity {
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         col.addView(tile(label, icon, v -> browse(kind)), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
-        TextView status = text(refreshedLabel(kind), 13, MUTED, false);
+        TextView status = text(plQueued.contains(kind) ? "Updating…" : refreshedLabel(kind), 13, MUTED, false);
         status.setGravity(Gravity.CENTER);
+        tileStatus.put(kind, status);
         Button r = button("⟳  Refresh " + label, v -> refreshSection(kind, status));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = dp(8);
         col.addView(r, lp);
         col.addView(status);
-        String auto = prefs.getString("auto_refresh", "daily");
-        long last = prefs.getLong("refreshed_" + kind, 0);
-        if (!autoDone && (auto.equals("open") || (auto.equals("daily") && System.currentTimeMillis() - last > 86_400_000L))) refreshSection(kind, status);
         return col;
+    }
+
+    /** Front screen start-up: fetch any section that has no list yet, or is due under the Automation setting. */
+    private void autoUpdatePlaylists() {
+        if (autoDone) return;
+        autoDone = true;
+        String auto = prefs.getString("auto_refresh", "daily");
+        List<String> due = new ArrayList<>();
+        for (String k : new String[]{"live", "film", "series"}) {
+            long last = prefs.getLong("refreshed_" + k, 0);
+            if (!hasFullList(k) || auto.equals("open") || (auto.equals("daily") && System.currentTimeMillis() - last > 86_400_000L)) due.add(k);
+        }
+        if (!due.isEmpty()) updatePlaylists(due, true);
     }
     private boolean autoDone;
 
