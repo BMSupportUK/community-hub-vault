@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
+import { createSharedCache } from "@/lib/player-sports-cache";
+
+// One sports-guide build per minute per server instance, however many apps ask.
+const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
 
 /**
  * Endpoint for the BM Player apps (TV, phone, Windows). Apps have no website
@@ -65,16 +69,19 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         if (body.action === "sports") {
-          const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
-            supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at").eq("published", true),
-            supabaseAdmin.from("sports_categories").select("id, name"),
-            supabaseAdmin.from("player_settings").select("channel_aliases").eq("id", 1).maybeSingle(),
-          ]);
-          const { playerSportsEvents } = await import("@/lib/player-sports");
-          const catName = new Map((cats ?? []).map((c) => [c.id, c.name]));
-          const events = playerSportsEvents((blogs ?? []).map((b) => ({ title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null })));
-          const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
-          return json({ version, events, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] });
+          const payload = await sportsCache(async () => {
+            const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
+              supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at").eq("published", true),
+              supabaseAdmin.from("sports_categories").select("id, name"),
+              supabaseAdmin.from("player_settings").select("channel_aliases").eq("id", 1).maybeSingle(),
+            ]);
+            const { playerSportsEvents } = await import("@/lib/player-sports");
+            const catName = new Map((cats ?? []).map((c) => [c.id, c.name]));
+            const events = playerSportsEvents((blogs ?? []).map((b) => ({ title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null })));
+            const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
+            return { version, events, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
+          });
+          return json(payload);
         }
 
         if (body.action === "code") {
