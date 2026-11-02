@@ -2206,3 +2206,26 @@ export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean
 export function cardRawForEplEvent(e: { date?: string | null; time?: string | null; title: string; channels: string[] }): string {
   return [e.date, e.time, e.title, ...e.channels].filter(Boolean).join("\n");
 }
+
+/** iFollow and Scottish guides list each fixture under its own club channels. */
+export function isClubChannelGuide(guideTitle: string | null | undefined): boolean {
+  return /i\s*follow|scot/i.test(guideTitle ?? "");
+}
+
+/** "Dundee United v Rangers" → ["Dundee United", "Rangers"]. */
+export function fixtureTeams(title: string): string[] {
+  return title.split(/\s+(?:v|vs|vs\.|v\.|versus|@)\s+|\s+[-–—]\s+/i).map((t) => t.trim()).filter(Boolean).slice(0, 2);
+}
+
+/** Rename each fixture's channels to its club names for club-channel guides; null when unchanged. */
+export function clubChannelListingHtml(html: string | null | undefined, guideTitle: string | null | undefined): string | null {
+  if (!html || !isClubChannelGuide(guideTitle) || /data-link-preview|<img|<iframe|<video|<table/i.test(html)) return null;
+  const events = parseSportsListingBlock(html);
+  if (!events.length) return null;
+  const renamed = events.map((e) => {
+    const teams = fixtureTeams(e.title);
+    return teams.length === 2 ? { ...e, channels: teams } : e;
+  });
+  const out = plainListingToHtml(formatSportsListingEvents(sortSportsListingEvents(renamed), { channels: [] }));
+  return out === html ? null : out;
+}

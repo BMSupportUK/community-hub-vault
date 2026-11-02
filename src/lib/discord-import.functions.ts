@@ -17,7 +17,10 @@ import {
   headlineListingDate,
   listingBlockHasDate,
   normalizeSportsListingText,
+  clubChannelListingHtml,
 } from "./sports-listing-format";
+
+const withClubChannels = (html: string, title: string | null | undefined) => clubChannelListingHtml(html, title) ?? html;
 import { safePublicEventTitle } from "./public-guide-safety";
 
 const STAFF_ROLES = ["admin", "management", "staff", "moderator"] as const;
@@ -360,7 +363,7 @@ export const importParsedEvents = createServerFn({ method: "POST" })
           subcategory: e.subcategory ?? null,
           title: e.title,
           excerpt: e.time ? `${e.date ? e.date + " · " : ""}${e.time}` : (e.date ?? null),
-          body: plainListingToHtml(buildBody(e, null, e.title)),
+          body: withClubChannels(plainListingToHtml(buildBody(e, null, e.title)), e.title),
           image_url: coverMap.get(coverKey) ?? null,
           published: true,
           created_by: userId,
@@ -782,7 +785,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           subcategory: sub,
           title,
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-          body: plainListingToHtml(buildBody(ev, data.sourceZone ?? null, title)),
+          body: withClubChannels(plainListingToHtml(buildBody(ev, data.sourceZone ?? null, title)), title),
           image_url: await ensureSportCover((cat as any).id, data.category!, sub),
           published: true,
           created_by: userId,
@@ -852,7 +855,7 @@ export const approveAllSuggested = createServerFn({ method: "POST" })
           subcategory: sub,
           title: ev.title ?? "Untitled",
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-          body: plainListingToHtml(buildBody(ev, null, ev.title)),
+          body: withClubChannels(plainListingToHtml(buildBody(ev, null, ev.title)), ev.title),
           image_url: coverUrl,
           published: true,
           created_by: userId,
@@ -1095,7 +1098,7 @@ export async function autoPublishDiscordQueueItem(queueId: string): Promise<
     subcategory: sub,
     title,
     excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-    body: plainListingToHtml(body),
+    body: withClubChannels(plainListingToHtml(body), `${route.category} ${sub ?? ""} ${title}`),
     image_url: cached?.image_url ?? null,
     published: true,
   } as any);
