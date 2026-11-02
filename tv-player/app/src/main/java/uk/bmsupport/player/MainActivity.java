@@ -78,6 +78,8 @@ public class MainActivity extends Activity {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         prefs = getSharedPreferences("bmplayer", MODE_PRIVATE);
+        if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         start();
         checkForUpdate(false);
     }
@@ -85,8 +87,22 @@ public class MainActivity extends Activity {
     @Override protected void onDestroy() { super.onDestroy(); stopPolling(); io.shutdownNow(); }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && back != null) { Runnable r = back; r.run(); return true; }
+        if (keyCode == KeyEvent.KEYCODE_BACK) { goBack(); return true; }
         return super.onKeyDown(keyCode, e);
+    }
+    @SuppressWarnings("deprecation")
+    @Override public void onBackPressed() { goBack(); }
+
+    /** Back steps up one screen; only the front screen asks before closing the app. */
+    private void goBack() {
+        if (back != null) { Runnable r = back; r.run(); return; }
+        if ("home".equals(screen)) {
+            new AlertDialog.Builder(this).setTitle("Exit BM Player?")
+                    .setPositiveButton("Exit", (d, w) -> finish())
+                    .setNegativeButton("Stay", null).show();
+            return;
+        }
+        finish();
     }
 
     // ---------- device + linking ----------
@@ -324,7 +340,14 @@ public class MainActivity extends Activity {
             pv.setUseController(false);
             pv.setBackgroundColor(Color.BLACK);
             pv.setFocusable(false);
-            side.addView(pv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+            pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
+            pv.setShutterBackgroundColor(Color.BLACK);
+            final androidx.media3.ui.PlayerView box = pv;
+            side.addView(pv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200)));
+            pv.addOnLayoutChangeListener((v, l, t, r, b2, ol, ot, or, ob) -> {
+                int h = (r - l) * 9 / 16;
+                if (h > 0 && Math.abs(v.getHeight() - h) > 2) { ViewGroup.LayoutParams lp = v.getLayoutParams(); lp.height = h; v.post(() -> v.setLayoutParams(lp)); }
+            });
             pvStatus = text("Highlight a channel to preview it", 14, MUTED, false);
             side.addView(pvStatus);
             pvEpg = text("", 14, TEXT, false);
@@ -1039,7 +1062,8 @@ public class MainActivity extends Activity {
     private List<Item> liveChannels = null;
 
     private void showSports() {
-        screen = "sports"; back = () -> { stopSports(); retryEvent = null; showHome(); };
+        screen = "sports"; sportsPick = null; compPick = null;
+        back = () -> { if (sportsPick != null) { sportsUp(); return; } stopSports(); retryEvent = null; showHome(); };
         stopPreview();
         LinearLayout root = column();
         LinearLayout head = row();
@@ -1049,7 +1073,8 @@ public class MainActivity extends Activity {
         head.addView(status);
         head.addView(button("⟳ Refresh", v -> loadSports(status, true)));
         root.addView(head);
-        root.addView(text("Pick an event, then a channel to watch it", 15, MUTED, false));
+        sportsHeading = text("Pick a sport", 15, MUTED, false);
+        root.addView(sportsHeading);
         ListView lv = list();
         lv.setTag("sports");
         root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
@@ -1099,51 +1124,79 @@ public class MainActivity extends Activity {
     }
     private String cachedGetFresh() throws Exception { clearCache("live"); return cachedGet("live", "get_live_streams", ""); }
 
+    private JSONObject sportsData; private String sportsPick = null, compPick = null;
+
+    /** Sports guide in three levels: sport → competition → events; an event opens its channel picker. */
     private void renderSports(JSONObject r) {
         if (sportsList == null) return;
+        sportsData = r;
         sportsVersion = r.optString("version");
         JSONArray ev = r.optJSONArray("events");
         List<String[]> aliases = new ArrayList<>();
         JSONArray al = r.optJSONArray("aliases");
         if (al != null) for (int i = 0; i < al.length(); i++) { JSONObject o = al.optJSONObject(i); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
-        for (String[] a : BUILT_IN_ALIASES) aliases.add(a);
+        for (String[] x : BUILT_IN_ALIASES) aliases.add(x);
         long now = System.currentTimeMillis();
-        List<String> rows = new ArrayList<>();
-        List<JSONObject> rowEv = new ArrayList<>();
-        java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("EEEE d MMMM", java.util.Locale.UK);
+        java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK);
         day.setTimeZone(java.util.TimeZone.getTimeZone("Europe/London"));
-        String lastDay = "", lastSport = "";
+        java.util.LinkedHashMap<String, Integer> groups = new java.util.LinkedHashMap<>();
+        java.util.Set<String> liveGroups = new java.util.HashSet<>();
+        List<JSONObject> events = new ArrayList<>();
         if (ev != null) for (int i = 0; i < ev.length(); i++) {
             JSONObject e = ev.optJSONObject(i);
-            if (e == null) continue;
-            long start = e.optLong("start");
-            if (start < now - 3 * 3600_000L) continue; // finished
-            String d = day.format(new java.util.Date(start));
-            if (!d.equals(lastDay)) { rows.add("━━ " + d + " ━━"); rowEv.add(null); lastDay = d; lastSport = ""; }
-            String sp = e.optString("sport");
-            if (!sp.equals(lastSport)) { rows.add("   " + sp.toUpperCase(java.util.Locale.UK)); rowEv.add(null); lastSport = sp; }
-            boolean live = start <= now;
-            JSONArray ch = e.optJSONArray("channels");
-            StringBuilder cs = new StringBuilder();
-            if (ch != null) for (int j = 0; j < ch.length(); j++) cs.append(j == 0 ? "" : " · ").append(ch.optString(j));
-            rows.add((live ? "🔴 LIVE NOW  " : clock(start / 1000) + "  ") + e.optString("title") + (cs.length() > 0 ? "\n      📺 " + cs : ""));
-            rowEv.add(e);
+            if (e == null || e.optLong("start") < now - 3 * 3600_000L) continue;
+            String sp = e.optString("sport"), comp = e.optString("competition", sp);
+            if (comp.isEmpty()) comp = sp;
+            String key;
+            if (sportsPick == null) key = sp;
+            else if (!sp.equals(sportsPick)) continue;
+            else if (compPick == null) key = comp;
+            else if (!comp.equals(compPick)) continue;
+            else { events.add(e); continue; }
+            groups.put(key, groups.containsKey(key) ? groups.get(key) + 1 : 1);
+            if (e.optLong("start") <= now) liveGroups.add(key);
         }
-        if (rows.isEmpty()) rows.add("No upcoming events in the guide right now");
+        List<String> rows = new ArrayList<>();
+        final List<Object> targets = new ArrayList<>();
+        if (sportsPick != null) { rows.add("◀ Back"); targets.add("<back>"); }
+        if (compPick == null) {
+            for (java.util.Map.Entry<String, Integer> g : groups.entrySet()) {
+                rows.add((liveGroups.contains(g.getKey()) ? "🔴 " : "") + g.getKey() + "   (" + g.getValue() + (g.getValue() == 1 ? " event)" : " events)") + "  ›");
+                targets.add(g.getKey());
+            }
+        } else for (JSONObject e : events) {
+            long start = e.optLong("start");
+            JSONArray ch = e.optJSONArray("channels");
+            int n = ch == null ? 0 : ch.length();
+            rows.add((start <= now ? "🔴 LIVE NOW  " : day.format(new java.util.Date(start)) + "  " + clock(start / 1000) + "  ") + e.optString("title")
+                    + "\n      📺 " + n + (n == 1 ? " channel" : " channels") + " – press OK to pick one");
+            targets.add(e);
+        }
+        if (targets.isEmpty() || (targets.size() == 1 && sportsPick != null)) { rows.add("No upcoming events here right now"); targets.add(null); }
+        if (sportsHeading != null) sportsHeading.setText(sportsPick == null ? "Pick a sport" : compPick == null ? sportsPick + " › pick a competition" : sportsPick + " › " + compPick + " › pick an event");
         int keep = sportsList.getSelectedItemPosition();
         sportsList.setAdapter(adapter(rows));
         if (keep > 0 && keep < rows.size()) sportsList.setSelection(keep);
+        sportsList.requestFocus();
         sportsList.setOnItemClickListener((p, v, pos, id) -> {
-            JSONObject e = rowEv.get(pos);
-            if (e != null) pickSportsChannel(e, aliases, false);
+            Object t = targets.get(pos);
+            if (t == null) return;
+            if ("<back>".equals(t)) { sportsUp(); return; }
+            if (t instanceof String) { if (sportsPick == null) sportsPick = (String) t; else compPick = (String) t; renderSports(sportsData); sportsList.setSelection(0); return; }
+            pickSportsChannel((JSONObject) t, aliases, false);
         });
+    }
+    private TextView sportsHeading;
+    private void sportsUp() {
+        if (compPick != null) compPick = null; else sportsPick = null;
+        if (sportsData != null) renderSports(sportsData);
     }
 
     private JSONObject retryEvent; private List<String[]> retryAliases;
 
     @Override protected void onResume() {
         super.onResume();
-        if ("sports".equals(screen) && retryEvent != null) {
+        if (("sports".equals(screen) || "sports_channels".equals(screen)) && retryEvent != null) {
             JSONObject e = retryEvent; retryEvent = null;
             ui.postDelayed(() -> pickSportsChannel(e, retryAliases, true), 300);
         }
@@ -1151,28 +1204,57 @@ public class MainActivity extends Activity {
 
     /** Every playlist channel the event could be on: all guide matches, best first, then a search. */
     private void pickSportsChannel(JSONObject e, List<String[]> aliases, boolean retry) {
+        if (liveChannels == null) {
+            Toast.makeText(this, "Loading your channels…", Toast.LENGTH_SHORT).show();
+            io.execute(() -> {
+                try {
+                    JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
+                    List<Item> l = new ArrayList<>();
+                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id"))); }
+                    liveChannels = l;
+                    ui.post(() -> pickSportsChannel(e, aliases, retry));
+                } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't load your channels – check your login in Settings", Toast.LENGTH_LONG).show()); }
+            });
+            return;
+        }
         JSONArray ch = e.optJSONArray("channels");
         List<String> labels = new ArrayList<>();
         List<Item> targets = new ArrayList<>();
         java.util.Set<String> seen = new java.util.HashSet<>();
-        List<Item> pl = liveChannels == null ? new ArrayList<>() : liveChannels;
         if (ch != null) for (int j = 0; j < ch.length(); j++) {
             String g = ch.optString(j);
-            List<Item> m = matchChannel(g, pl, aliases);
-            if (m.isEmpty()) { labels.add(g + "  —  Not in your list"); targets.add(null); }
-            for (Item it : m) if (seen.add(it.id)) { labels.add("▶ " + it.name + "   (" + g + ")"); targets.add(it); }
+            List<Item> m = matchChannel(g, liveChannels, aliases);
+            if (m.isEmpty()) { labels.add("✕ " + g + "  —  not in your list"); targets.add(null); }
+            for (Item it : m) if (seen.add(it.id)) { labels.add("▶ Watch " + it.name + "   (" + g + ")"); targets.add(it); }
         }
         labels.add("🔍 Search all channels…"); targets.add(null);
         int searchRow = labels.size() - 1;
-        new AlertDialog.Builder(this)
-                .setTitle(retry ? "Not showing it? Try another channel" : e.optString("title"))
-                .setItems(labels.toArray(new String[0]), (d, w) -> {
-                    if (w == searchRow) { searchChannels(e, aliases, ch != null && ch.length() > 0 ? normChannel(ch.optString(0)) : ""); return; }
-                    Item it = targets.get(w);
-                    if (it == null) { Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show(); pickSportsChannel(e, aliases, retry); }
-                    else { retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
-                })
-                .setNegativeButton("Close", null).show();
+        Runnable prevBack = back; String prevScreen = screen;
+        screen = "sports_channels";
+        back = () -> { screen = prevScreen; back = prevBack; showSportsKeep(); };
+        LinearLayout root = column();
+        root.addView(text(e.optString("title"), 26, TEXT, true));
+        root.addView(text(retry ? "Not showing it? Pick another channel" : "Pick a channel to watch this event", 15, MUTED, false));
+        ListView lv = list();
+        lv.setAdapter(adapter(labels));
+        lv.setOnItemClickListener((p, v, w, id) -> {
+            if (w == searchRow) { searchChannels(e, aliases, ch != null && ch.length() > 0 ? normChannel(ch.optString(0)) : ""); return; }
+            Item it = targets.get(w);
+            if (it == null) Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show();
+            else { retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
+        });
+        root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        root.addView(button("◀ Back to sports guide", v -> back.run()));
+        setContentView(root);
+        lv.requestFocus();
+    }
+
+    /** Reopen the sports guide at the sport/competition the customer was in. */
+    private void showSportsKeep() {
+        String sp = sportsPick, cp = compPick;
+        showSports();
+        sportsPick = sp; compPick = cp;
+        if (sportsData != null) renderSports(sportsData);
     }
 
     private void searchChannels(JSONObject e, List<String[]> aliases, String start) {

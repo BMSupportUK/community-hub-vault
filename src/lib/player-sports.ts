@@ -2,7 +2,7 @@ import { parseSportsListingBlock } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
 
-export type PlayerSportsEvent = { sport: string; title: string; date: string | null; time: string; start: number; channels: string[] };
+export type PlayerSportsEvent = { sport: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[] };
 
 const WINDOW_BACK = 6 * 3600_000, WINDOW_AHEAD = 7 * 86400_000;
 
@@ -21,7 +21,7 @@ export function playerSportsEvents(
       const key = `${start}|${e.title.toLowerCase()}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({ sport: g.category || g.title, title: e.title, date: e.date, time: e.time, start,
+      out.push({ sport: g.category || g.title, competition: g.title, title: e.title, date: e.date, time: e.time, start,
         channels: e.channels.map((c) => c.trim()).filter(Boolean).slice(0, 12) });
     }
   }
