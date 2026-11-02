@@ -915,8 +915,8 @@ public class MainActivity extends Activity {
             Item named = new Item(ep.kind, ep.id, show.name + " – " + ep.name, ep.ext, ep.category);
             named.poster = show.poster;
             named.seriesId = show.id;
-            new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play", "Play with VLC"},
-                    (d, w) -> play(named, w == 1 || (w == 0 && defaultVlc()))).show();
+            new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play", "Play with VLC", "⚠ Report a problem"},
+                    (d, w) -> { if (w == 2) showReport(show, ep.name); else play(named, w == 1 || (w == 0 && defaultVlc())); }).show();
         });
     }
 
@@ -1074,24 +1074,68 @@ public class MainActivity extends Activity {
 
     // ---------- report a problem ----------
 
-    private void showReport(Item it) {
-        String kind = it == null ? "live" : it.kind.equals("live") ? "live" : it.kind.equals("film") ? "film" : "series";
-        StringBuilder q = new StringBuilder(Net.SITE + "/tickets?report=" + kind);
-        try {
-            if (it != null) q.append("&title=").append(URLEncoder.encode(it.name, "UTF-8"));
-            if (it != null && it.category != null && !it.category.isEmpty()) q.append("&cat=").append(URLEncoder.encode(it.category, "UTF-8"));
-            q.append("&device=").append(URLEncoder.encode(deviceLabel(), "UTF-8"));
-        } catch (Exception ignored) {}
-        String url = q.toString();
+    private void showReport(Item it) { showReport(it, null); }
+
+    /** Report from inside a channel, film or episode: the app sends the names and category with the customer's words, and the website opens a ticket. */
+    private void showReport(Item it, String episode) {
+        if (it == null) return;
+        String kind = it.kind.equals("live") ? "live" : it.kind.equals("film") ? "film" : "series";
+        String cat = categoryName(it);
         LinearLayout box = column();
-        box.setGravity(Gravity.CENTER_HORIZONTAL);
-        ImageView qr = new ImageView(this);
-        qr.setImageBitmap(qr(url, dp(260)));
-        box.addView(qr);
-        box.addView(text("Scan with your phone to open a support ticket" + (it == null ? "" : " about " + it.name) + ".\nOr go to bmsupport.uk/tickets", 16, TEXT, false));
-        AlertDialog.Builder d = new AlertDialog.Builder(this).setTitle("Report a problem").setView(box).setNegativeButton("Close", null);
-        if (platform().equals("phone")) d.setPositiveButton("Open on this phone", (x, w) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))));
-        d.show();
+        box.setPadding(dp(20), dp(10), dp(20), 0);
+        box.addView(text((kind.equals("live") ? "Channel: " : kind.equals("film") ? "Film: " : "Series: ") + it.name
+                + (episode != null ? "\nEpisode: " + episode : "") + (cat.isEmpty() ? "" : "\nCategory: " + cat), 15, TEXT, false));
+        android.widget.EditText issue = new android.widget.EditText(this);
+        issue.setHint("Briefly tell us what's wrong (e.g. buffering, no sound, won't play)");
+        issue.setMinLines(3); issue.setMaxLines(5);
+        issue.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(1000) });
+        issue.setTextColor(TEXT); issue.setHintTextColor(MUTED);
+        box.addView(issue);
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Report a problem").setView(box)
+                .setNegativeButton("Cancel", null).setPositiveButton("Send to BM Support", null).create();
+        dlg.setOnShowListener(x -> dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String msg = issue.getText().toString().trim();
+            if (msg.length() < 3) { issue.setError("Please type a short description"); return; }
+            v.setEnabled(false);
+            io.execute(() -> {
+                String err = null;
+                try {
+                    JSONObject b = new JSONObject().put("action", "report").put("device_token", prefs.getString("token", ""))
+                            .put("kind", kind).put("title", it.name).put("issue", msg)
+                            .put("device", deviceLabel()).put("version", appVersion());
+                    if (!cat.isEmpty()) b.put("category", cat);
+                    if (episode != null) b.put("episode", episode);
+                    Net.postJson(Net.SITE + "/api/public/player", b.toString());
+                } catch (Exception e) {
+                    String m = String.valueOf(e.getMessage());
+                    int i = m.indexOf("\"error\":\"");
+                    err = i >= 0 ? m.substring(i + 9, Math.max(i + 9, m.indexOf('"', i + 9))) : "Couldn't send your report. Check your internet and try again.";
+                }
+                final String fe = err;
+                ui.post(() -> {
+                    if (fe != null) { v.setEnabled(true); Toast.makeText(this, fe, Toast.LENGTH_LONG).show(); return; }
+                    dlg.dismiss();
+                    Toast.makeText(this, "Thanks – a support ticket has been opened. You'll find replies at bmsupport.uk/tickets", Toast.LENGTH_LONG).show();
+                });
+            });
+        }));
+        dlg.show();
+    }
+
+    /** Items hold a category id or name; turn ids into the name from the saved category list. */
+    private String categoryName(Item it) {
+        String c = it.category == null ? "" : it.category;
+        if (!c.matches("\\d+")) return c;
+        try {
+            String action = it.kind.equals("live") ? "get_live_categories" : it.kind.equals("film") ? "get_vod_categories" : "get_series_categories";
+            String kind = it.kind.equals("live") ? "live" : it.kind.equals("film") ? "film" : "series";
+            java.io.File f = cacheFile(kind, action);
+            if (f.exists()) {
+                JSONArray a = new JSONArray(new String(java.nio.file.Files.readAllBytes(f.toPath()), "UTF-8"));
+                for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null && c.equals(o.optString("category_id"))) return o.optString("category_name"); }
+            }
+        } catch (Exception ignored) {}
+        return "";
     }
 
     private Bitmap qr(String text, int size) {
@@ -1206,7 +1250,6 @@ public class MainActivity extends Activity {
                 .setMessage("Remove all favourites from this device?")
                 .setPositiveButton("Clear", (d, w) -> { prefs.edit().remove("fav").apply(); Toast.makeText(this, "Favourites cleared", Toast.LENGTH_SHORT).show(); })
                 .setNegativeButton("Cancel", null).show()));
-        boxes.add(settingBox("⚠", "Report a problem", "Opens a ticket", v -> showReport(null)));
         boxes.add(settingBox("🔗", "Unlink device", "Remove login", v -> new AlertDialog.Builder(this)
                 .setMessage("This removes the login from this device. You'll need a new code to link it again.")
                 .setPositiveButton("Unlink", (d, w) -> io.execute(() -> {
