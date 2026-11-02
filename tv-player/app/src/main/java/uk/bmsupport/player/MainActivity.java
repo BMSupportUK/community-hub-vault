@@ -516,48 +516,92 @@ public class MainActivity extends Activity {
     }
 
     private void showSeries(Item show) {
-        Runnable prev = back;
         back = () -> browse("series");
         LinearLayout root = column();
-        root.addView(text(show.name, 26, TEXT, true));
+        LinearLayout top = row();
+        android.widget.ImageView poster = new android.widget.ImageView(this);
+        poster.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        poster.setBackgroundColor(Color.rgb(20, 28, 48));
+        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(dp(150), dp(220)); plp.rightMargin = dp(16);
+        top.addView(poster, plp);
+        loadPoster(poster, show.poster);
+        LinearLayout head = column();
+        head.addView(text(show.name, 26, TEXT, true));
         TextView info = text("Loading episodes…", 15, MUTED, false);
-        root.addView(info);
+        head.addView(info);
+        TextView plot = text("", 14, TEXT, false); plot.setMaxLines(5);
+        head.addView(plot);
         LinearLayout btns = row();
         btns.addView(button(isSaved("fav", show) ? "★ Remove favourite" : "☆ Add favourite", v -> toggleSaved("fav", show)));
         btns.addView(button("⚠ Report a problem", v -> showReport(show)));
-        root.addView(btns);
+        head.addView(btns);
+        top.addView(head, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        root.addView(top);
+        LinearLayout pills = row();
+        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
+        hs.addView(pills);
+        root.addView(hs);
         ListView eps = list();
         root.addView(eps, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
         io.execute(() -> {
             try {
-                JSONObject all = new JSONObject(Net.get(api("get_series_info") + "&series_id=" + show.id)).optJSONObject("episodes");
-                List<Item> list = new ArrayList<>();
+                JSONObject r = new JSONObject(Net.get(api("get_series_info") + "&series_id=" + show.id));
+                JSONObject meta = r.optJSONObject("info");
+                JSONObject all = r.optJSONObject("episodes");
+                java.util.TreeMap<Integer, List<Item>> bySeason = new java.util.TreeMap<>();
                 if (all != null) {
                     java.util.Iterator<String> seasons = all.keys();
                     while (seasons.hasNext()) {
-                        String s = seasons.next();
-                        JSONArray a = all.getJSONArray(s);
+                        String sn = seasons.next();
+                        JSONArray a = all.optJSONArray(sn);
+                        if (a == null) continue;
+                        int num; try { num = Integer.parseInt(sn.trim()); } catch (Exception e) { num = 999; }
+                        List<Item> l = new ArrayList<>();
                         for (int i = 0; i < a.length(); i++) {
                             JSONObject e = a.getJSONObject(i);
-                            String name = show.name + " – S" + s + " E" + e.optString("episode_num") + "  " + e.optString("title");
-                            list.add(new Item("episode", e.optString("id"), name, e.optString("container_extension"), show.category));
+                            String t = e.optString("title");
+                            String name = "E" + e.optString("episode_num") + "   " + t;
+                            Item ep = new Item("episode", e.optString("id"), name, e.optString("container_extension"), show.category);
+                            JSONObject ei = e.optJSONObject("info");
+                            if (ei != null) ep.poster = ei.optString("movie_image");
+                            l.add(ep);
                         }
+                        bySeason.put(num, l);
                     }
                 }
+                String cover = meta == null ? "" : meta.optString("cover");
+                String story = meta == null ? "" : meta.optString("plot");
                 ui.post(() -> {
-                    eps.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list) {
-                        @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
-                    });
-                    info.setText(list.size() + " episodes");
-                    eps.requestFocus();
+                    if ((show.poster == null || show.poster.isEmpty()) && !cover.isEmpty()) loadPoster(poster, cover);
+                    plot.setText(story);
+                    int total = 0; for (List<Item> l : bySeason.values()) total += l.size();
+                    info.setText(bySeason.size() + (bySeason.size() == 1 ? " season · " : " seasons · ") + total + " episodes");
+                    List<Button> bs = new ArrayList<>();
+                    for (java.util.Map.Entry<Integer, List<Item>> en : bySeason.entrySet()) {
+                        String label = en.getKey() == 999 ? "Extras" : "Season " + en.getKey();
+                        Button b = button(label, null);
+                        b.setOnClickListener(v -> {
+                            for (Button x : bs) x.setAlpha(x == b ? 1f : 0.55f);
+                            List<Item> l = en.getValue();
+                            eps.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, l) {
+                                @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
+                            });
+                        });
+                        b.setOnFocusChangeListener((v, f) -> { if (f) b.performClick(); });
+                        bs.add(b); pills.addView(b);
+                    }
+                    if (!bs.isEmpty()) { bs.get(0).performClick(); bs.get(0).requestFocus(); }
+                    else info.setText("No episodes for this series.");
                 });
             } catch (Exception ex) { ui.post(() -> info.setText("Couldn't load episodes.")); }
         });
         eps.setOnItemClickListener((p, v, pos, id) -> {
             Item ep = (Item) eps.getItemAtPosition(pos);
-            new AlertDialog.Builder(this).setTitle(ep.name).setItems(new String[]{"Play", "Play with VLC"},
-                    (d, w) -> play(ep, w == 1 || (w == 0 && defaultVlc()))).show();
+            Item named = new Item(ep.kind, ep.id, show.name + " – " + ep.name, ep.ext, ep.category);
+            named.poster = show.poster;
+            new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play", "Play with VLC"},
+                    (d, w) -> play(named, w == 1 || (w == 0 && defaultVlc()))).show();
         });
     }
 
