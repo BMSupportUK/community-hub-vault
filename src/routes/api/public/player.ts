@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
+import { createSharedCache } from "@/lib/player-sports-cache";
+
+// One sports-guide build per minute per server instance, however many apps ask.
+const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
 
 /**
  * Endpoint for the BM Player apps (TV, phone, Windows). Apps have no website
