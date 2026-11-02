@@ -1849,6 +1849,13 @@
       "when": 1793663529124,
       "tag": "0263_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 264,
+      "version": "7",
+      "when": 1793663848054,
+      "tag": "0264_player_device_vpn",
+      "breakpoints": true
     }
   ]
 }
