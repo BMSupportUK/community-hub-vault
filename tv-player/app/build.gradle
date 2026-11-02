@@ -11,8 +11,8 @@ android {
         applicationId "uk.bmsupport.player"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        versionName "1.2"
     }
     signingConfigs {
         release {
@@ -38,8 +38,15 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.media3:media3-exoplayer:1.4.1'
-    implementation 'androidx.media3:media3-exoplayer-hls:1.4.1'
-    implementation 'androidx.media3:media3-ui:1.4.1'
+    def m3 = '1.5.1'
+    implementation "androidx.media3:media3-exoplayer:$m3"
+    implementation "androidx.media3:media3-exoplayer-hls:$m3"
+    implementation "androidx.media3:media3-exoplayer-dash:$m3"
+    implementation "androidx.media3:media3-exoplayer-smoothstreaming:$m3"
+    implementation "androidx.media3:media3-exoplayer-rtsp:$m3"
+    implementation "androidx.media3:media3-ui:$m3"
+    // FFmpeg audio (AC-3, E-AC-3, DTS, TrueHD, etc.) for streams the TV can't decode itself.
+    implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.5.0+1'
+    implementation 'androidx.core:core:1.13.1'
     implementation 'com.google.zxing:core:3.5.3'
 }
