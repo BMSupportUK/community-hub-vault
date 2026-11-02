@@ -230,6 +230,7 @@ public class MainActivity extends Activity {
         ReminderReceiver.cancel(this, id, st);
     }
     private void addReminder(Item ch, String title, long st) {
+        if (st <= System.currentTimeMillis() / 1000) { Toast.makeText(this, "That programme has already started – reminders are only for programmes that haven't begun", Toast.LENGTH_LONG).show(); return; }
         JSONArray a = reminders();
         try { a.put(new JSONObject().put("id", ch.id).put("name", ch.name).put("category", ch.category).put("title", title).put("start", st)); } catch (Exception ignored) {}
         prefs.edit().putString("reminders", a.toString()).apply();
@@ -251,7 +252,7 @@ public class MainActivity extends Activity {
         for (int i = 0; i < a.length(); i++) {
             JSONObject o = a.optJSONObject(i); if (o == null) continue;
             long st = o.optLong("start");
-            if (st + 1800 < nowSec) continue; // long gone
+            if (st + 60 < nowSec) continue; // already started – reminders are only for programmes yet to begin
             if (due == null && st - 300 <= nowSec) { due = o; continue; }
             keep.put(o);
         }
@@ -262,18 +263,20 @@ public class MainActivity extends Activity {
         reminderShowing = true;
         ReminderReceiver.cancel(this, id, st);
         long mins = Math.max(0, (st - System.currentTimeMillis() / 1000 + 59) / 60);
-        new AlertDialog.Builder(this).setTitle("⏰ " + title)
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("⏰ " + title)
                 .setMessage((mins > 0 ? "Starts in " + mins + (mins == 1 ? " minute" : " minutes") : "Starting now") + " at " + clock(st) + " on " + name + ".")
-                .setPositiveButton("▶ Watch on " + name, (d, w) -> open(new Item("live", id, name, "ts", category)))
+                .setPositiveButton("▶ Go to " + name, (d, w) -> play(new Item("live", id, name, "ts", category), defaultVlc()))
                 .setNegativeButton("Dismiss", null)
-                .setOnDismissListener(d -> reminderShowing = false).show();
+                .setOnDismissListener(d -> reminderShowing = false).create();
+        dlg.setOnShowListener(x -> { android.widget.Button go = dlg.getButton(AlertDialog.BUTTON_POSITIVE); go.setFocusable(true); go.requestFocus(); });
+        dlg.show();
     }
     private void handleReminderIntent(Intent i) {
         if (i == null || !i.hasExtra("reminder_id")) return;
         String id = i.getStringExtra("reminder_id"), name = i.getStringExtra("reminder_name");
         i.removeExtra("reminder_id");
         removeReminder(id, i.getLongExtra("reminder_start", 0));
-        ui.postDelayed(() -> open(new Item("live", id, name, "ts", "")), 800);
+        ui.postDelayed(() -> play(new Item("live", id, name, "ts", ""), defaultVlc()), 800);
     }
     @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); refreshVersionScreens(); }
 
@@ -1844,7 +1847,7 @@ public class MainActivity extends Activity {
                 return;
             }
             if (hasReminder(ch.id, st)) { removeReminder(ch.id, st); Toast.makeText(this, "Reminder removed", Toast.LENGTH_SHORT).show(); }
-            else { addReminder(ch, title, st); Toast.makeText(this, "Reminder set – we'll tell you 5 minutes before " + title + " starts", Toast.LENGTH_LONG).show(); }
+            else if (st > System.currentTimeMillis() / 1000) { addReminder(ch, title, st); Toast.makeText(this, "Reminder set – we'll tell you 5 minutes before " + title + " starts", Toast.LENGTH_LONG).show(); }
             drawGuideProgs(progs, ch, shownProg);
             progs.setSelection(pos);
         });
