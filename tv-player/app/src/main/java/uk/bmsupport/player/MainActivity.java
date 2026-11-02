@@ -62,6 +62,8 @@ public class MainActivity extends Activity {
     /** A playable or browsable entry. */
     static final class Item {
         String kind, id, name, ext, category;
+        String norm;
+        String norm() { if (norm == null) norm = normChannel(name == null ? "" : name); return norm; }
         Item(String kind, String id, String name, String ext, String category) {
             this.kind = kind; this.id = id; this.name = name; this.ext = ext; this.category = category;
         }
@@ -220,6 +222,7 @@ public class MainActivity extends Activity {
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.addView(logo());
         top.addView(text("  BM Player", 28, TEXT, true));
+        top.addView(text("   v" + appVersion(), 16, MUTED, false));
         root.addView(top);
         TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
         root.addView(account);
@@ -1087,9 +1090,13 @@ public class MainActivity extends Activity {
         {"sky sports pl", "sky sports premier league"}, {"sky sports me", "sky sports main event"},
         {"sky sports f1", "sky sports formula 1"}, {"bt sport 1", "tnt sports 1"}, {"bt sport 2", "tnt sports 2"},
         {"bt sport 3", "tnt sports 3"}, {"bt sport 4", "tnt sports 4"} };
-    private static String alias(String n, List<String[]> aliases) {
-        for (String[] a : aliases) if (normChannel(a[0]).equals(n)) return normChannel(a[1]);
-        return n;
+    private static String alias(String n, java.util.Map<String, String> aliases) {
+        String a = aliases.get(n); return a == null ? n : a;
+    }
+    private static java.util.Map<String, String> aliasMap(List<String[]> aliases) {
+        java.util.Map<String, String> m = new java.util.HashMap<>();
+        for (String[] a : aliases) { String k = normChannel(a[0]); if (!m.containsKey(k)) m.put(k, normChannel(a[1])); }
+        return m;
     }
     private static int quality(String n) {
         String l = n.toLowerCase(java.util.Locale.ROOT);
@@ -1097,12 +1104,13 @@ public class MainActivity extends Activity {
     }
     /** Mirrors matchChannel: exact normalised (with aliases), else whole-word partial; best quality first. */
     static List<Item> matchChannel(String guide, List<Item> playlist, List<String[]> aliases) {
-        String want = alias(normChannel(guide), aliases);
+        java.util.Map<String, String> am = aliasMap(aliases);
+        String want = alias(normChannel(guide == null ? "" : guide), am);
         List<Item> out = new ArrayList<>();
         if (want.isEmpty()) return out;
-        for (Item it : playlist) if (alias(normChannel(it.name), aliases).equals(want)) out.add(it);
+        for (Item it : playlist) if (alias(it.norm(), am).equals(want)) out.add(it);
         if (out.isEmpty()) for (Item it : playlist) {
-            String n = normChannel(it.name);
+            String n = it.norm();
             if (!n.isEmpty() && (" " + n + " ").contains(" " + want + " ")) out.add(it);
         }
         java.util.Collections.sort(out, (a, b) -> quality(b.name) != quality(a.name) ? quality(b.name) - quality(a.name) : a.name.length() - b.name.length());
@@ -1268,15 +1276,26 @@ public class MainActivity extends Activity {
             return;
         }
         JSONArray ch = e.optJSONArray("channels");
-        List<String> labels = new ArrayList<>();
-        List<Item> targets = new ArrayList<>();
-        java.util.Set<String> seen = new java.util.HashSet<>();
-        if (ch != null) for (int j = 0; j < ch.length(); j++) {
-            String g = ch.optString(j);
-            List<Item> m = matchChannel(g, liveChannels, aliases);
-            if (m.isEmpty()) { labels.add("✕ " + g + "  —  not in your list"); targets.add(null); }
-            for (Item it : m) if (seen.add(it.id)) { labels.add("▶ Watch " + it.name + "   (" + g + ")"); targets.add(it); }
-        }
+        Toast.makeText(this, "Finding channels…", Toast.LENGTH_SHORT).show();
+        List<Item> pl = liveChannels;
+        io.execute(() -> {
+            List<String> labels = new ArrayList<>();
+            List<Item> targets = new ArrayList<>();
+            try {
+                java.util.Set<String> seen = new java.util.HashSet<>();
+                if (ch != null) for (int j = 0; j < ch.length(); j++) {
+                    String g = ch.optString(j);
+                    List<Item> m = matchChannel(g, pl, aliases);
+                    if (m.isEmpty()) { labels.add("✕ " + g + "  —  not in your list"); targets.add(null); }
+                    for (Item it : m) if (seen.add(it.id)) { labels.add("▶ Watch " + it.name + "   (" + g + ")"); targets.add(it); }
+                }
+            } catch (Exception ex) { labels.clear(); targets.clear(); }
+            ui.post(() -> { try { showSportsChannels(e, aliases, retry, ch, labels, targets); }
+                catch (Exception ex) { Toast.makeText(this, "Couldn't open the channel list", Toast.LENGTH_LONG).show(); } });
+        });
+    }
+
+    private void showSportsChannels(JSONObject e, List<String[]> aliases, boolean retry, JSONArray ch, List<String> labels, List<Item> targets) {
         labels.add("🔍 Search all channels…"); targets.add(null);
         int searchRow = labels.size() - 1;
         Runnable prevBack = back; String prevScreen = screen;
@@ -1315,7 +1334,7 @@ public class MainActivity extends Activity {
                     String want = normChannel(q.getText().toString());
                     List<Item> hits = new ArrayList<>();
                     if (!want.isEmpty() && liveChannels != null) for (Item it : liveChannels) {
-                        if (normChannel(it.name).contains(want)) hits.add(it);
+                        if (it.norm().contains(want)) hits.add(it);
                         if (hits.size() >= 60) break;
                     }
                     if (hits.isEmpty()) { Toast.makeText(this, "No channels found", Toast.LENGTH_SHORT).show(); searchChannels(e, aliases, q.getText().toString()); return; }
