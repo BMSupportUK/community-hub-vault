@@ -447,6 +447,10 @@ public class MainActivity extends Activity {
         top.addView(logo());
         top.addView(text("  BM Player", 28, TEXT, true));
         top.addView(text("   v" + appVersion(), 16, MUTED, false));
+        top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        top.addView(button("🔍 Search TV", v -> showSearch("live", "")));
+        top.addView(button("🔍 Search Movies", v -> showSearch("film", "")));
+        top.addView(button("🔍 Search Series", v -> showSearch("series", "")));
         root.addView(top);
         TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
         root.addView(account);
@@ -993,11 +997,75 @@ public class MainActivity extends Activity {
     }
 
     private static final int VLC_REQUEST = 4242;
+
+    // ---------- search (TV / Movies / Series, typed or by voice) ----------
+    private static final int VOICE_REQUEST = 4343;
+    private String voiceKind;
+
+    private void startVoice(String kind) {
+        Intent i = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-GB");
+        i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Say what you're looking for");
+        voiceKind = kind;
+        try { startActivityForResult(i, VOICE_REQUEST); }
+        catch (Exception ex) { voiceKind = null; Toast.makeText(this, "Voice search isn't available on this device – please type instead", Toast.LENGTH_LONG).show(); }
+    }
+
+    private void showSearch(String kind, String start) {
+        String label = kind.equals("live") ? "TV channels" : kind.equals("film") ? "Movies" : "Series";
+        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16), dp(8), dp(16), 0);
+        android.widget.EditText q = new android.widget.EditText(this);
+        q.setSingleLine(true); q.setHint("Type at least 3 letters"); q.setText(start);
+        q.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+        box.addView(q);
+        AlertDialog[] dlg = new AlertDialog[1];
+        box.addView(button("🎤 Search by voice", v -> { if (dlg[0] != null) dlg[0].dismiss(); startVoice(kind); }));
+        Runnable go = () -> {
+            String want = q.getText().toString().trim();
+            if (want.length() < 3) { Toast.makeText(this, "Please enter at least 3 letters", Toast.LENGTH_SHORT).show(); return; }
+            if (dlg[0] != null) dlg[0].dismiss();
+            runSearch(kind, want);
+        };
+        q.setOnEditorActionListener((tv, a, ev) -> { go.run(); return true; });
+        dlg[0] = new AlertDialog.Builder(this).setTitle("Search " + label).setView(box)
+                .setPositiveButton("Search", null).setNegativeButton("Cancel", null).create();
+        dlg[0].setOnShowListener(d -> dlg[0].getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> go.run()));
+        dlg[0].show();
+        if (start.trim().length() >= 3) { go.run(); }
+    }
+
+    private void runSearch(String kind, String want) {
+        Toast.makeText(this, "Searching…", Toast.LENGTH_SHORT).show();
+        io.execute(() -> {
+            try {
+                List<Item> all = parseItems(kind, new JSONArray(cachedGet(kind, listActionFor(kind), "")), null);
+                String w = want.toLowerCase(java.util.Locale.UK);
+                List<Item> hits = new ArrayList<>();
+                for (Item it : all) { if (it.name != null && it.name.toLowerCase(java.util.Locale.UK).contains(w)) hits.add(it); if (hits.size() >= 200) break; }
+                ui.post(() -> {
+                    if (hits.isEmpty()) { Toast.makeText(this, "Nothing found for \"" + want + "\"", Toast.LENGTH_LONG).show(); showSearch(kind, ""); return; }
+                    String[] names = new String[hits.size()];
+                    for (int i = 0; i < names.length; i++) names[i] = hits.get(i).name;
+                    new AlertDialog.Builder(this).setTitle(hits.size() + (hits.size() >= 200 ? "+" : "") + " results for \"" + want + "\"")
+                            .setItems(names, (d, i) -> open(hits.get(i)))
+                            .setNegativeButton("New search", (d, i) -> showSearch(kind, "")).show();
+                });
+            } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't search – try refreshing your playlist", Toast.LENGTH_LONG).show()); }
+        });
+    }
     private String vlcKey, vlcSeriesKey;
 
     /** VLC reports where the customer stopped, so VLC playback also keeps watched progress. */
     @Override protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+        if (req == VOICE_REQUEST) {
+            String kind = voiceKind; voiceKind = null;
+            if (res != RESULT_OK || data == null || kind == null) return;
+            java.util.ArrayList<String> r = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+            if (r != null && !r.isEmpty()) showSearch(kind, r.get(0));
+            return;
+        }
         if (req != VLC_REQUEST || data == null || vlcKey == null) return;
         long position = data.getLongExtra("extra_position", -1), duration = data.getLongExtra("extra_duration", -1);
         if (position < 0 || duration <= 0) return;
