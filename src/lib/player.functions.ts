@@ -86,6 +86,18 @@ export const savePlayerMaintenance = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const savePlayerChannelAliases = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ aliases: z.array(z.object({ from: z.string().trim().min(1).max(80), to: z.string().trim().min(1).max(80) })).max(200) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only the admin can change channel matching.");
+    const { error } = await context.supabase.from("player_settings")
+      .update({ channel_aliases: data.aliases, updated_at: new Date().toISOString(), updated_by: context.userId }).eq("id", 1);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 /** Admin test: ask the DNS whether it answers like an Xtream panel. */
 export const testPlayerDns = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

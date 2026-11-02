@@ -22,6 +22,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("code"), device_token: Token }),
   z.object({ action: z.literal("poll"), device_token: Token }),
   z.object({ action: z.literal("unlink"), device_token: Token }),
+  z.object({ action: z.literal("sports"), device_token: Token }),
 ]);
 
 async function sha256Hex(s: string) {
@@ -61,6 +62,19 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "unlink") {
           await supabaseAdmin.from("player_devices").delete().eq("id", device.id);
           return json({ ok: true });
+        }
+
+        if (body.action === "sports") {
+          const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
+            supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at").eq("published", true),
+            supabaseAdmin.from("sports_categories").select("id, name"),
+            supabaseAdmin.from("player_settings").select("channel_aliases").eq("id", 1).maybeSingle(),
+          ]);
+          const { playerSportsEvents } = await import("@/lib/player-sports");
+          const catName = new Map((cats ?? []).map((c) => [c.id, c.name]));
+          const events = playerSportsEvents((blogs ?? []).map((b) => ({ title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null })));
+          const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
+          return json({ version, events, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] });
         }
 
         if (body.action === "code") {
