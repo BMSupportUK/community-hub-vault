@@ -1243,10 +1243,14 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "Cache cleared – lists will reload", Toast.LENGTH_SHORT).show();
         }));
         boxes.add(settingBox("⬆", "Update app", "Version " + appVersion(), v -> checkForUpdate(true)));
-        boxes.add(settingBox("👤", "Change login", prefs.getString("user", ""), v -> {
-            prefs.edit().remove("user").remove("pass").apply();
-            showLink();
-        }));
+        boxes.add(settingBox("👤", "Change login", prefs.getString("user", ""), v -> new AlertDialog.Builder(this)
+                .setTitle("Change login?")
+                .setMessage("Selecting this logs you out and takes you back to the login screen. You'll need to sign in again to use the app.")
+                .setPositiveButton("Log out", (d, w) -> {
+                    prefs.edit().remove("user").remove("pass").apply();
+                    showLink();
+                })
+                .setNegativeButton("Cancel", null).show()));
         boxes.add(settingBox("🕘", "Clear history", "Recently watched", v -> {
             prefs.edit().remove("recent").apply();
             Toast.makeText(this, "Recently watched cleared", Toast.LENGTH_SHORT).show();
