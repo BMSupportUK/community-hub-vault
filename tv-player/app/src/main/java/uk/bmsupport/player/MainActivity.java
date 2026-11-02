@@ -1039,7 +1039,7 @@ public class MainActivity extends Activity {
     private List<Item> liveChannels = null;
 
     private void showSports() {
-        screen = "sports"; back = () -> { stopSports(); showHome(); };
+        screen = "sports"; back = () -> { stopSports(); retryEvent = null; showHome(); };
         stopPreview();
         LinearLayout root = column();
         LinearLayout head = row();
@@ -1135,29 +1135,65 @@ public class MainActivity extends Activity {
         if (keep > 0 && keep < rows.size()) sportsList.setSelection(keep);
         sportsList.setOnItemClickListener((p, v, pos, id) -> {
             JSONObject e = rowEv.get(pos);
-            if (e != null) pickSportsChannel(e, aliases);
+            if (e != null) pickSportsChannel(e, aliases, false);
         });
     }
 
-    private void pickSportsChannel(JSONObject e, List<String[]> aliases) {
+    private JSONObject retryEvent; private List<String[]> retryAliases;
+
+    @Override protected void onResume() {
+        super.onResume();
+        if ("sports".equals(screen) && retryEvent != null) {
+            JSONObject e = retryEvent; retryEvent = null;
+            ui.postDelayed(() -> pickSportsChannel(e, retryAliases, true), 300);
+        }
+    }
+
+    /** Every playlist channel the event could be on: all guide matches, best first, then a search. */
+    private void pickSportsChannel(JSONObject e, List<String[]> aliases, boolean retry) {
         JSONArray ch = e.optJSONArray("channels");
         List<String> labels = new ArrayList<>();
         List<Item> targets = new ArrayList<>();
+        java.util.Set<String> seen = new java.util.HashSet<>();
         List<Item> pl = liveChannels == null ? new ArrayList<>() : liveChannels;
         if (ch != null) for (int j = 0; j < ch.length(); j++) {
             String g = ch.optString(j);
             List<Item> m = matchChannel(g, pl, aliases);
             if (m.isEmpty()) { labels.add(g + "  —  Not in your list"); targets.add(null); }
-            else for (int k = 0; k < Math.min(3, m.size()); k++) { labels.add("▶ " + g + "  (" + m.get(k).name + ")"); targets.add(m.get(k)); }
+            for (Item it : m) if (seen.add(it.id)) { labels.add("▶ " + it.name + "   (" + g + ")"); targets.add(it); }
         }
-        if (labels.isEmpty()) { Toast.makeText(this, "No channel listed for this event", Toast.LENGTH_SHORT).show(); return; }
-        new AlertDialog.Builder(this).setTitle(e.optString("title"))
+        labels.add("🔍 Search all channels…"); targets.add(null);
+        int searchRow = labels.size() - 1;
+        new AlertDialog.Builder(this)
+                .setTitle(retry ? "Not showing it? Try another channel" : e.optString("title"))
                 .setItems(labels.toArray(new String[0]), (d, w) -> {
+                    if (w == searchRow) { searchChannels(e, aliases, ch != null && ch.length() > 0 ? normChannel(ch.optString(0)) : ""); return; }
                     Item it = targets.get(w);
-                    if (it == null) Toast.makeText(this, "That channel isn't in your playlist", Toast.LENGTH_SHORT).show();
-                    else play(it, defaultVlc());
+                    if (it == null) { Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show(); pickSportsChannel(e, aliases, retry); }
+                    else { retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
                 })
                 .setNegativeButton("Close", null).show();
+    }
+
+    private void searchChannels(JSONObject e, List<String[]> aliases, String start) {
+        android.widget.EditText q = new android.widget.EditText(this);
+        q.setSingleLine(true); q.setText(start); q.setSelectAllOnFocus(true);
+        new AlertDialog.Builder(this).setTitle("Search channels").setView(q)
+                .setPositiveButton("Search", (d, w) -> {
+                    String want = normChannel(q.getText().toString());
+                    List<Item> hits = new ArrayList<>();
+                    if (!want.isEmpty() && liveChannels != null) for (Item it : liveChannels) {
+                        if (normChannel(it.name).contains(want)) hits.add(it);
+                        if (hits.size() >= 60) break;
+                    }
+                    if (hits.isEmpty()) { Toast.makeText(this, "No channels found", Toast.LENGTH_SHORT).show(); searchChannels(e, aliases, q.getText().toString()); return; }
+                    String[] names = new String[hits.size()];
+                    for (int i = 0; i < names.length; i++) names[i] = "▶ " + hits.get(i).name;
+                    new AlertDialog.Builder(this).setTitle(hits.size() + " channels")
+                            .setItems(names, (d2, i) -> { retryEvent = e; retryAliases = aliases; play(hits.get(i), defaultVlc()); })
+                            .setNegativeButton("Back", (d2, i) -> pickSportsChannel(e, aliases, false)).show();
+                })
+                .setNegativeButton("Back", (d, w) -> pickSportsChannel(e, aliases, false)).show();
     }
 
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
