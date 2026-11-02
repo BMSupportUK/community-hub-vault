@@ -45,7 +45,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, CHANNEL) : new Notification.Builder(c);
         b.setSmallIcon(R.mipmap.ic_launcher).setContentTitle("⏰ " + title + " starts in 5 minutes")
                 .setContentText("On " + name + " – press to watch").setContentIntent(pi).setAutoCancel(true)
-                .addAction(new Notification.Action.Builder(null, "▶ Watch now", pi).build());
+                .addAction(new Notification.Action.Builder(null, "▶ Go to channel", pi).build());
         try { nm.notify(code(id, st), b.build()); } catch (SecurityException ignored) {}
     }
 }
