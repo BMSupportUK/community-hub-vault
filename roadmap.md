@@ -40,6 +40,7 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
+- [x] Correct Coupang Play/Coupang numbered feed matching; 16 tests and native normalization pass, signed 2.9 update download verified (actual customer TV playlist not available for playback verification)
 - [x] Database + admin DNS panel (one editable DNS, admin only)
 - [x] Device linking API for apps (`/api/public/player`)
 - [x] Website: Send to app (TV code) + send from My Logins + linked devices

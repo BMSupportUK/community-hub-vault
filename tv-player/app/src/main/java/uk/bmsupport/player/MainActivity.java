@@ -1534,6 +1534,7 @@ public class MainActivity extends Activity {
         s = s.replaceAll("([a-z])(\\d)", "$1 $2").replaceAll("(\\d)([a-z])", "$1 $2");
         s = s.replaceAll("\\b(?:uk|gb|usa|us|ire|ie|ireland|au|aus|australia|ca|canada|za|south africa|nz|int|fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv)\\b", " ");
         s = s.replaceAll("\\bsports\\b", "sport").replaceAll("\\b0+(\\d)", "$1");
+        s = s.replaceAll("\\bcoupang\\s+play\\b", "coupang");
         return s.replaceAll("\\s+", " ").trim();
     }
     private static final String[][] BUILT_IN_ALIASES = {
