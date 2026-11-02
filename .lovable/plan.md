@@ -1,6 +1,7 @@
 # BM Player — IPTV player apps with DNS panel and website login sending
 
 ## What you get
+0. **Same front screen on every app** (TV, Fire TV, phone, Windows): three big tiles — Live TV, Films, Series — with a row of smaller buttons underneath (TV Guide, Favourites, Recently watched, Settings), plus the clock and subscription end date. Our own BM Player look in navy, teal and blue.
 1. **BM Player app** for Android TV / Google TV, Fire TV and Android phones (one app, adapts to TV remote or touch).
    - Live TV with categories, Films, Series (seasons/episodes), TV guide (EPG), Favourites and Recently watched.
    - Plays any Xtream-style service: the app uses the DNS from our panel plus the member's username and password.
