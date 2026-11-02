@@ -9,3 +9,4 @@
 - Live preview reserves remaining height for a focusable, wrapping programme-guide pane with no reminder control; reminders are set only from the full TV guide screen (categories › channels › programmes).
 - Watched positions stay on-device, keyed by hashed provider/login plus media kind/id; built-in playback and VLC results (extra_position/extra_duration) write progress; bars sit on films and episodes, never the series poster.
 - "Report a problem" exists only inside channel/film/episode menus; the app posts the `report` action (names, category, episode, device, version, customer text) and the website opens a Live TV or Movie/Series ticket for the linked owner.
+- Self-update downloads a fresh uncached APK and installs only if its versionCode beats the installed one; release by uploading the file first, then switching the build row.

@@ -1653,8 +1653,12 @@ public class MainActivity extends Activity {
             try {
                 java.io.File dir = new java.io.File(getCacheDir(), "updates");
                 dir.mkdirs();
-                java.io.File apk = new java.io.File(dir, "BM-Player.apk");
-                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(Net.SITE + "/api/public/player-apk").openConnection();
+                java.io.File[] old = dir.listFiles();
+                if (old != null) for (java.io.File f : old) f.delete();
+                java.io.File apk = new java.io.File(dir, "BM-Player-" + System.currentTimeMillis() + ".apk");
+                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(Net.SITE + "/api/public/player-apk?t=" + System.currentTimeMillis()).openConnection();
+                c.setUseCaches(false);
+                c.setRequestProperty("Cache-Control", "no-cache");
                 c.setConnectTimeout(15000); c.setReadTimeout(60000);
                 if (c.getResponseCode() != 200) throw new Exception("HTTP " + c.getResponseCode());
                 long total = c.getContentLengthLong(), done = 0;
@@ -1665,6 +1669,15 @@ public class MainActivity extends Activity {
                         int pct = total > 0 ? (int) (done * 100 / total) : 0;
                         if (pct != last) { last = pct; int p = pct; ui.post(() -> progress.setMessage(p + "%")); }
                     }
+                }
+                if (total > 0 && done != total) throw new Exception("incomplete");
+                android.content.pm.PackageInfo got = getPackageManager().getPackageArchiveInfo(apk.getAbsolutePath(), 0);
+                long gotCode = got == null ? -1 : (Build.VERSION.SDK_INT >= 28 ? got.getLongVersionCode() : got.versionCode);
+                long mine = Build.VERSION.SDK_INT >= 28 ? getPackageManager().getPackageInfo(getPackageName(), 0).getLongVersionCode() : getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+                if (gotCode <= mine) {
+                    apk.delete();
+                    ui.post(() -> { progress.dismiss(); Toast.makeText(this, "The new version isn't ready on the website yet. Try again in a few minutes.", Toast.LENGTH_LONG).show(); });
+                    return;
                 }
                 ui.post(() -> {
                     progress.dismiss();
