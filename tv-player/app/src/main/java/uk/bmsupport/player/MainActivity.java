@@ -274,7 +274,7 @@ public class MainActivity extends Activity {
         removeReminder(id, i.getLongExtra("reminder_start", 0));
         ui.postDelayed(() -> open(new Item("live", id, name, "ts", "")), 800);
     }
-    @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); }
+    @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); refreshVersionScreens(); }
 
     @Override protected void onDestroy() { super.onDestroy(); stopPolling(); io.shutdownNow(); }
 
@@ -405,7 +405,7 @@ public class MainActivity extends Activity {
     // ---------- home ----------
 
     private void showHome() {
-        screen = "home"; back = null;
+        screen = "home"; back = null; drawnVersion = appVersion();
         LinearLayout root = column();
         LinearLayout top = row();
         top.setGravity(Gravity.CENTER_VERTICAL);
@@ -967,7 +967,7 @@ public class MainActivity extends Activity {
     }
 
     private void showSettings() {
-        screen = "settings"; back = this::showHome;
+        screen = "settings"; back = this::showHome; drawnVersion = appVersion();
         LinearLayout root = column();
         root.addView(text("Settings", 26, TEXT, true));
         root.addView(text("Account: " + prefs.getString("user", "") + "  ·  " + deviceLabel() + "  ·  Version " + appVersion(), 15, MUTED, false));
@@ -1544,8 +1544,17 @@ public class MainActivity extends Activity {
 
     private JSONObject retryEvent; private List<String[]> retryAliases;
 
+    private String drawnVersion;
+
+    /** Redraws Home/Settings when the installed version differs from what is on screen (e.g. after an update). */
+    private void refreshVersionScreens() {
+        if (drawnVersion == null || drawnVersion.equals(appVersion())) return;
+        if ("home".equals(screen)) showHome(); else if ("settings".equals(screen)) showSettings();
+    }
+
     @Override protected void onResume() {
         super.onResume();
+        refreshVersionScreens();
         if (("sports".equals(screen) || "sports_channels".equals(screen)) && retryEvent != null) {
             JSONObject e = retryEvent; retryEvent = null;
             ui.postDelayed(() -> pickSportsChannel(e, retryAliases, true), 300);
