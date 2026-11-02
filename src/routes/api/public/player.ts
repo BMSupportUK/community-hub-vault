@@ -148,7 +148,6 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         // poll: DNS + one-time credential handover
-        const nowIso = new Date().toISOString();
         const { presenceUpdate } = await import("@/lib/player-live");
         await supabaseAdmin.from("player_devices").update(presenceUpdate({
           now: Date.now(), lastSeenAt: device.last_seen_at, connectedSince: device.connected_since,
@@ -157,7 +156,6 @@ export const Route = createFileRoute("/api/public/player")({
           cf: (request as unknown as { cf?: Record<string, unknown> }).cf ?? null,
           headerCountry: request.headers.get("cf-ipcountry"),
         })).eq("id", device.id);
-        void nowIso;
         const { data: settings } = await supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message").eq("id", 1).maybeSingle();
         const { data: pending } = await supabaseAdmin.from("player_pending_credentials")
           .delete().eq("device_id", device.id).select("username, password, created_at").maybeSingle();
