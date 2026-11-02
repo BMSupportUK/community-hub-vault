@@ -1,0 +1,45 @@
+plugins { id 'com.android.application' }
+
+// BM Player: one app for Android TV, Fire TV and Android phones.
+// Logins arrive from the website (bmsupport.uk/send-to-app); DNS comes from the admin panel.
+def ksPass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+
+android {
+    namespace = "uk.bmsupport.player"
+    compileSdk = 36
+    defaultConfig {
+        applicationId "uk.bmsupport.player"
+        minSdkVersion 23
+        targetSdkVersion 36
+        versionCode 1
+        versionName "1.0"
+    }
+    signingConfigs {
+        release {
+            if (ksPass) {
+                storeFile file(System.getenv("ANDROID_KEYSTORE_PATH") ?: "../../android/keystore/bmsupport-release.jks")
+                storePassword ksPass
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "bmsupport"
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: ksPass
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (ksPass) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError false; checkReleaseBuilds false }
+}
+
+dependencies {
+    implementation 'androidx.media3:media3-exoplayer:1.4.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.4.1'
+    implementation 'androidx.media3:media3-ui:1.4.1'
+    implementation 'com.google.zxing:core:3.5.3'
+}
