@@ -70,3 +70,4 @@
 - [x] Downloads in Install Guides (BM Player listed as a TV-installable app)
 - [x] Films and Series default sort is Recently added (latest uploads first); signed 2.12 uploaded and the app update download verified (TV-side sorting not tested on a real box)
 - [x] Make the Install Guides iOS card compact like the BM Player | Windows card; pop-up QR and App Information still open
+- [x] Keep every BM Player home-screen name on one line (single-line text that shrinks, row shared out by label width); 3 layout tests and 17 app checks pass, signed 2.63 download verified byte-for-byte. Real TV/Fire TV eyeball check remains blocked: no attached device.

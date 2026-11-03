@@ -594,11 +594,11 @@ public class MainActivity extends Activity {
         root.addView(tiles);
 
         LinearLayout small = row();
-        small.addView(button("📅 TV guide", v -> showTvGuide()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-        small.addView(button("🏆 Sports guide", v -> askSportsMode()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-        small.addView(button("★ Favourites", v -> showSaved("fav", "Favourites")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-        small.addView(button("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-        small.addView(button("⚙ Settings", v -> showSettings()), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        small.addView(smallButton("📅 TV guide", v -> showTvGuide()), smallWeight("📅 TV guide"));
+        small.addView(smallButton("🏆 Sports guide", v -> askSportsMode()), smallWeight("🏆 Sports guide"));
+        small.addView(smallButton("★ Favourites", v -> showSaved("fav", "Favourites")), smallWeight("★ Favourites"));
+        small.addView(smallButton("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), smallWeight("⟲ Recently watched"));
+        small.addView(smallButton("⚙ Settings", v -> showSettings()), smallWeight("⚙ Settings"));
         root.addView(small);
         setContentView(withHomeBackground(root));
         tiles.getChildAt(0).requestFocus();
@@ -625,9 +625,10 @@ public class MainActivity extends Activity {
                 ui.post(() -> {
                     account.setText(l);
                     if (cons >= 2 && small.findViewWithTag("multi") == null) {
-                        Button mb = button("🖥 Multi-screen (" + Math.min(cons, 3) + ")", v -> chooseMultiScreens(Math.min(cons, 3)));
+                        String ml = "🖥 Multi-screen (" + Math.min(cons, 3) + ")";
+                        Button mb = smallButton(ml, v -> chooseMultiScreens(Math.min(cons, 3)));
                         mb.setTag("multi");
-                        small.addView(mb, 1, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+                        small.addView(mb, 1, smallWeight(ml));
                     }
                 });
             } catch (Exception ignored) {}
@@ -2844,6 +2845,33 @@ public class MainActivity extends Activity {
         b.setFocusable(true);
         b.setOnClickListener(l);
         return b;
+    }
+
+    /**
+     * Home-row button: the label always stays on one line. Tighter side padding plus text that
+     * shrinks (16sp down to 10sp) means a long name like "Recently watched" never wraps onto a
+     * second line while its neighbours sit on one.
+     */
+    private Button smallButton(String label, View.OnClickListener l) {
+        Button b = button(label, l);
+        b.setPadding(dp(8), dp(12), dp(8), dp(12));
+        b.setSingleLine(true);
+        b.setEllipsize(null);
+        androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(b,
+                dp(10), dp(16), dp(1), android.util.TypedValue.COMPLEX_UNIT_PX);
+        return b;
+    }
+
+    /**
+     * Width share for a home-row button: each one gets room in proportion to how wide its label
+     * actually is, so the long ones are not squeezed into the same box as "Settings".
+     */
+    private LinearLayout.LayoutParams smallWeight(String label) {
+        android.graphics.Paint p = new android.graphics.Paint();
+        p.setTextSize(16 * getResources().getDisplayMetrics().scaledDensity);
+        LinearLayout.LayoutParams lp = weight(Math.max(1f, p.measureText(label)), ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dp(4), dp(6), dp(4), dp(6));
+        return lp;
     }
 
     private View tile(String label, String icon, View.OnClickListener l) {
