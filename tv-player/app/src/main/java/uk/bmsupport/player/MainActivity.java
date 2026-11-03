@@ -101,6 +101,7 @@ public class MainActivity extends Activity {
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         start();
         checkForUpdate(false);
+        sendLastCrash();
         startReminderCheck();
         handleReminderIntent(getIntent());
     }
@@ -1721,6 +1722,21 @@ public class MainActivity extends Activity {
     private boolean autoDone;
 
     // ---------- maintenance ----------
+
+    /** Sends the previous session's crash details to BM Support once, as a ticket. */
+    private void sendLastCrash() {
+        String crash = prefs.getString("last_crash", "");
+        if (crash.isEmpty() || prefs.getString("token", "").isEmpty()) return;
+        prefs.edit().remove("last_crash").apply();
+        String issue = crash.length() > 990 ? crash.substring(0, 990) : crash;
+        io.execute(() -> {
+            try {
+                Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "report").put("device_token", prefs.getString("token", ""))
+                        .put("kind", "live").put("title", "App crash report (automatic)").put("issue", issue)
+                        .put("category", "Catch up / crash").put("device", deviceLabel()).put("version", appVersion()).toString());
+            } catch (Exception ignored) {}
+        });
+    }
 
     private void showExpired() {
         if ("expired".equals(screen)) return;

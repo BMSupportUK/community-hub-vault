@@ -141,6 +141,7 @@ public class PlayerActivity extends Activity {
     }
 
     private void catchupResume() {
+        if (player == null || isFinishing()) return;
         long reached = cuSegStart + Math.max(0, player.getCurrentPosition()) / 1000;
         if (reached >= cuEnd - 30 || ++cuRetries > 8) {
             if (cuRetries > 8) Toast.makeText(this, "The catch up recording stopped and couldn't reconnect. Try again or use VLC.", Toast.LENGTH_LONG).show();
