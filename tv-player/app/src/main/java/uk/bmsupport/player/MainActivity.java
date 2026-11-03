@@ -2849,7 +2849,7 @@ public class MainActivity extends Activity {
 
     /**
      * Home-row button: the label always stays on one line. Tighter side padding plus text that
-     * shrinks (16sp down to 11sp) means a long name like "Recently watched" never wraps onto a
+     * shrinks (16sp down to 10sp) means a long name like "Recently watched" never wraps onto a
      * second line while its neighbours sit on one.
      */
     private Button smallButton(String label, View.OnClickListener l) {
@@ -2858,7 +2858,7 @@ public class MainActivity extends Activity {
         b.setSingleLine(true);
         b.setEllipsize(null);
         androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(b,
-                dp(11), dp(16), dp(1), android.util.TypedValue.COMPLEX_UNIT_PX);
+                dp(10), dp(16), dp(1), android.util.TypedValue.COMPLEX_UNIT_PX);
         return b;
     }
 
