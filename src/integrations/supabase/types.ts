@@ -1841,6 +1841,24 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_numbers: {
+        Row: {
+          created_at: string
+          number: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          number: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          number?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       customer_package_allocations: {
         Row: {
           allocated_at: string
@@ -5638,6 +5656,8 @@ export type Database = {
           name: string
           platform: string
           token_hash: string
+          unlock_failures: number
+          unlock_locked_until: string | null
           user_id: string | null
           vpn_checked_at: string | null
           vpn_provider: string | null
@@ -5665,6 +5685,8 @@ export type Database = {
           name?: string
           platform?: string
           token_hash: string
+          unlock_failures?: number
+          unlock_locked_until?: string | null
           user_id?: string | null
           vpn_checked_at?: string | null
           vpn_provider?: string | null
@@ -5692,6 +5714,8 @@ export type Database = {
           name?: string
           platform?: string
           token_hash?: string
+          unlock_failures?: number
+          unlock_locked_until?: string | null
           user_id?: string | null
           vpn_checked_at?: string | null
           vpn_provider?: string | null
@@ -8826,6 +8850,7 @@ export type Database = {
         Returns: string
       }
       archive_old_closed_tickets: { Args: never; Returns: number }
+      assign_customer_number: { Args: { _user_id: string }; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
       bm_inbox_action: {
         Args: { _action: string; _body?: string; _target: string }
@@ -9191,6 +9216,7 @@ export type Database = {
           recipient_email: string
         }[]
       }
+      get_customer_number: { Args: { p_user_id: string }; Returns: number }
       get_fan_zone_profile: {
         Args: { _user_id: string }
         Returns: {
