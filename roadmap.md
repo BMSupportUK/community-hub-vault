@@ -41,7 +41,8 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
-- [ ] Verify announcement audience limiting and Android bar/cross/Back dismissal; confirm the current APK download.
+- [x] Verify announcement audience limiting (3 desktop checks) and Android bar/cross/Back dismissal plus no replay across screens (4 native tests); live signed 2.82 APK matches the release byte-for-byte.
+- [ ] Check announcement delivery and close on a real Android phone/TV (blocked: no attached device).
 - [x] Android catch up: VLC software decoding for recordings + automatic BM Player fallback when VLC fails (2.75 released, download verified). Windows 0.3.4 (Catch up button on Live TV preview + channel menu) released, download verified. Real Android box test blocked: no device.
 - [x] Add shared 1–5 star film/series voting and poster averages; Android 2.73, Windows 0.3.3 and Mac 0.1.8 uploaded and activated. Real API film vote/change and series vote read through UI pass; 23 JS tests and Android tests/build pass. Native device checks unavailable.
 - [ ] Publish website voting endpoint for released BM Players if the published endpoint remains on the previous API (requires user publish instruction).
