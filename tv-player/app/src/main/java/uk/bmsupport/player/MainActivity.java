@@ -1173,6 +1173,17 @@ public class MainActivity extends Activity {
         voiceDictation(kind);
     }
 
+    private void hideKeyboard(View v) {
+        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        if (getWindow() != null) getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+    private void openKbNow(View v) {
+        v.requestFocus();
+        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) imm.showSoftInput(v, 0);
+    }
+
     /** Fire TV has no speech service for sideloaded apps, but its keyboard takes dictation from the remote's mic button. */
     private void voiceDictation(String kind) {
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16), dp(8), dp(16), 0);
@@ -1185,6 +1196,7 @@ public class MainActivity extends Activity {
         Runnable go = () -> {
             String want = q.getText().toString().trim();
             if (want.length() < 2) { Toast.makeText(this, "Hold the mic button and speak, or type", Toast.LENGTH_SHORT).show(); return; }
+            hideKeyboard(q);
             if (dlg[0] != null) dlg[0].dismiss();
             if ("sports".equals(kind)) { if (!"sports".equals(screen)) showSports(); sportsVoice(want); }
             else showSearch(kind, want);
@@ -1200,15 +1212,14 @@ public class MainActivity extends Activity {
             Runnable openKb = () -> {
                 q.requestFocus();
                 android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                if (imm != null) {
-                    imm.showSoftInput(q, android.view.inputmethod.InputMethodManager.SHOW_FORCED);
-                    if (!imm.isActive(q)) imm.toggleSoftInput(android.view.inputmethod.InputMethodManager.SHOW_FORCED, 0);
-                }
+                if (imm != null && dlg[0].isShowing()) imm.showSoftInput(q, 0);
             };
             q.postDelayed(openKb, 300);
-            q.postDelayed(openKb, 900);
         });
-        if (dlg[0].getWindow() != null) dlg[0].getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        if (dlg[0].getWindow() != null) dlg[0].getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        // Close the keyboard whenever the voice box goes, so it never stays stuck on screen.
+        dlg[0].setOnDismissListener(d -> hideKeyboard(q));
+        q.setOnClickListener(v -> openKbNow(q));
         dlg[0].show();
     }
 
