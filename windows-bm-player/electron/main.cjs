@@ -38,7 +38,7 @@ async function poll(){
   maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
   let changed=false;
-  if(r.credentials){store.user=r.credentials.username;store.pass=r.credentials.password;changed=true;cache.clear();}
+  if(r.credentials){store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
   if(changed){save();if(store.user)await refresh();}
   send({type:'state',state:publicState()});
@@ -86,7 +86,7 @@ function persistProgress(session){
  store.progress=store.progress||{};store.progress[key(session.item)]={position:session.position||0,duration:session.duration};save();
 }
 async function stopAll(){
- for(const s of sessions){persistProgress(s);s.closing=true;try{await vlcRequest(s,'command=pl_stop');}catch{}s.child.kill();}
+ for(const s of sessions){persistProgress(s);s.closing=true;try{await vlcRequest(s,'command=pl_stop');}catch{}s.child.kill();if(s.config)try{fs.unlinkSync(s.config);}catch{}}
  sessions=[];
  if(awake!==null){powerSaveBlocker.stop(awake);awake=null;}
  send({type:'state',state:publicState()});
@@ -101,21 +101,23 @@ async function play({item,resume=false,screens=1}){
  const urls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto');
  const port=await freePort(),password=crypto.randomBytes(24).toString('hex');
  const executable=path.join(__dirname,'../tools/vlc-3.0.21/vlc.exe');
- const args=['--no-one-instance','--no-video-title-show','--extraintf=http','--http-host=127.0.0.1','--http-port='+port,'--http-password='+password,'--network-caching='+Number(store.settings?.buffer||3000),'--http-user-agent=VLC/3.0.21','--video-title=BM Player — '+item.name,'--play-and-exit'];
+ const config=path.join(app.getPath('userData'),'vlc-'+crypto.randomBytes(12).toString('hex')+'.conf');
+ fs.writeFileSync(config,'[core]\nhttp-password='+password+'\n',{mode:0o600});
+ const args=['--config='+config,'--no-one-instance','--no-video-title-show','--extraintf=http','--http-host=127.0.0.1','--http-port='+port,'--network-caching='+Number(store.settings?.buffer||3000),'--http-user-agent=VLC/3.0.21','--video-title=BM Player — '+item.name];
  if(screens===1)args.push('--fullscreen');
  else{const display=require('electron').screen.getPrimaryDisplay().workAreaSize;args.push('--no-fullscreen','--width='+Math.floor(display.width/screens),'--height='+Math.floor(display.height*.7),'--video-x='+Math.floor(sessions.length*display.width/screens),'--video-y=60');if(sessions.length)args.push('--volume=0');}
  const watched=store.progress?.[key(item)];if(resume&&watched&&core.resume(watched.position,watched.duration))args.push('--start-time='+Math.floor(watched.position));
- args.push(urls[0]);
  const child=spawn(executable,args,{windowsHide:false,stdio:'ignore'});
- const session={child,item,port,password,position:0,duration:0,since:Date.now(),closing:false,urls,urlIndex:0};sessions.push(session);
+ const session={child,item,port,password,config,position:0,duration:0,since:Date.now(),closing:false,urls,urlIndex:0,started:false};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  child.on('error',()=>send({type:'notice',message:'The bundled Windows VLC could not start. Extract the whole ZIP before opening BM Player.'}));
- child.on('exit',()=>{persistProgress(session);sessions=sessions.filter(s=>s!==session);if(!sessions.length&&awake!==null){powerSaveBlocker.stop(awake);awake=null;}send({type:'state',state:publicState()});poll();});
+ child.on('exit',()=>{persistProgress(session);try{fs.unlinkSync(config);}catch{}sessions=sessions.filter(s=>s!==session);if(!sessions.length&&awake!==null){powerSaveBlocker.stop(awake);awake=null;}send({type:'state',state:publicState()});poll();});
  if(!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
  lastInput=Date.now();promptedAt=0;poll();send({type:'state',state:publicState()});return true;
 }
 async function updatePlayback(){for(const session of [...sessions]){try{const s=await vlcRequest(session);session.position=s.time||0;session.duration=s.length||0;
- if(s.state==='stopped'&&Date.now()-session.since>10000&&session.urlIndex+1<session.urls.length){session.urlIndex++;await vlcRequest(session,'command=in_play&input='+encodeURIComponent(session.urls[session.urlIndex]));}
+ if(!session.started){await vlcRequest(session,'command=in_play&input='+encodeURIComponent(session.urls[0]));session.started=true;session.since=Date.now();}
+ else if(s.state==='stopped'&&Date.now()-session.since>15000&&session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();await vlcRequest(session,'command=in_play&input='+encodeURIComponent(session.urls[session.urlIndex]));}
  persistProgress(session);send({type:'playback',item:session.item,position:session.position,duration:session.duration});}catch{}}}
 async function connectionCheck(){
  if(checkBusy||!store.user)return;checkBusy=true;
@@ -136,6 +138,7 @@ function systemInput(){
 }
 async function timers(){
  const now=Date.now();
+ if(!store.user||maintenance||publicState().expired){lastInput=now;promptedAt=0;return;}
  if(!promptedAt&&now-lastInput>=core.IDLE_MS){promptedAt=now;await foreground();send({type:'inactive',seconds:60});}
  if(promptedAt){if(now-promptedAt>=core.RESPONSE_MS){await stopAll();app.quit();return;}send({type:'inactive',seconds:Math.ceil((core.RESPONSE_MS-(now-promptedAt))/1000)});}
  for(const reminder of store.reminders||[]){if(!reminder.notified&&reminder.start-300000<=now&&reminder.start>now){reminder.notified=true;save();await foreground();send({type:'reminder',reminder});}}
@@ -153,10 +156,10 @@ else{
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('sports',()=>site({action:'sports'}));
-  register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:r.info||{},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
+  register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
   register('play',play);register('stop',stopAll);
   register('settings',async value=>{
-   if(value?.logout){await stopAll();store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
+   if(value?.logout){await stopAll();await site({action:'unlink'});store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
    else if(value?.clear){store.recent=[];store.progress={};save();}
    else if(value){store.settings={...store.settings,...value};save();}
    return publicState();
@@ -172,5 +175,5 @@ else{
   setInterval(poll,store.user?60000:5000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
  });
  app.on('window-all-closed',async()=>{await stopAll();app.quit();});
- app.on('before-quit',()=>{for(const session of sessions){persistProgress(session);session.child.kill();}});
+ app.on('before-quit',()=>{for(const session of sessions){persistProgress(session);session.child.kill();if(session.config)try{fs.unlinkSync(session.config);}catch{}}});
 }
