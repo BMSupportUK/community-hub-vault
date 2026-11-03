@@ -318,6 +318,8 @@ public class PlayerActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
+    @Override public boolean dispatchKeyEvent(android.view.KeyEvent e) { return PlayerApplication.closeAnnouncementOnBack(this, e) || super.dispatchKeyEvent(e); }
+
     @Override public void onUserInteraction() {
         super.onUserInteraction();
         lastPressAt = android.os.SystemClock.elapsedRealtime();

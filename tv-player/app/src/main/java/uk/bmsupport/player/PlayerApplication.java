@@ -119,15 +119,37 @@ public final class PlayerApplication extends Application implements Application.
         });
         x.setFocusableInTouchMode(false);
         bar.addView(x, new android.widget.LinearLayout.LayoutParams((int) (56 * d), (int) (48 * d)));
-        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+        // Tapping anywhere on the bar closes it too, so a phone never needs to hit the small cross.
+        bar.setClickable(true); bar.setOnClickListener(v -> close.run());
+        final android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.BOTTOM);
-        lp.setMargins((int) (24 * d), 0, (int) (24 * d), (int) (16 * d));
+        final int side = (int) (24 * d), bottom = (int) (16 * d);
+        lp.setMargins(side, 0, side, bottom);
+        // The decor reaches under the phone's navigation bar (on the right when sideways), so keep the bar clear of it.
+        bar.setOnApplyWindowInsetsListener((v, in) -> {
+            lp.setMargins(side + in.getSystemWindowInsetLeft(), 0, side + in.getSystemWindowInsetRight(), bottom + in.getSystemWindowInsetBottom());
+            v.setLayoutParams(lp);
+            return in;
+        });
+        android.view.WindowInsets now = a.getWindow().getDecorView().getRootWindowInsets();
+        if (now != null) lp.setMargins(side + now.getSystemWindowInsetLeft(), 0, side + now.getSystemWindowInsetRight(), bottom + now.getSystemWindowInsetBottom());
         bar.setTag(annId + annMsg);
         // The window's decor survives setContentView, so the bar stays put while screens change underneath.
         ((android.view.ViewGroup) a.getWindow().getDecorView()).addView(bar, lp);
         banner = bar;
         // TV remotes can't always reach a bar added over the screen, so put focus on the cross straight away.
         if (!a.getPackageManager().hasSystemFeature("android.hardware.touchscreen")) x.post(x::requestFocus);
+    }
+    /** Back closes an open announcement first, wherever focus is, before the screen's own Back runs. */
+    static boolean closeAnnouncementOnBack(Activity activity, android.view.KeyEvent e) {
+        if (e.getKeyCode() != android.view.KeyEvent.KEYCODE_BACK) return false;
+        PlayerApplication app = (PlayerApplication) activity.getApplication();
+        if (app.banner == null || app.banner.getContext() != activity || app.annId == null) return false;
+        if (e.getAction() == android.view.KeyEvent.ACTION_UP) {
+            app.getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putString("ann_closed", app.annId).apply();
+            app.annId = null; app.showAnnouncement();
+        }
+        return true;
     }
     private void exitToHome() {
         exiting = true;
