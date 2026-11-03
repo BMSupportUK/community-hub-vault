@@ -6,6 +6,7 @@ class EmbeddedVlc {
   if(!koffi&&process.platform!=='win32')throw new Error('Embedded playback requires Windows.');
   this.win=win;this.k=koffi||require('../vendor/koffi');this.surfaces=new Map();
   root=root||path.join(__dirname,'../tools/vlc-3.0.21');
+  process.env.VLC_PLUGIN_PATH=path.join(root,'plugins');
   const kernel=this.k.load('kernel32.dll');
   kernel.func('__stdcall','SetDllDirectoryW','bool',['str16'])(root);
   this.user=this.k.load('user32.dll');
@@ -17,7 +18,7 @@ class EmbeddedVlc {
   this.dll=this.k.load(path.join(root,'libvlc.dll'));
   const api={new:['void *',['int','const char **']],release:['void',['void *']],media_new_location:['void *',['void *','str']],media_add_option:['void',['void *','str']],media_release:['void',['void *']],media_player_new:['void *',['void *']],media_player_release:['void',['void *']],media_player_set_media:['void',['void *','void *']],media_player_set_hwnd:['void',['void *','void *']],media_player_play:['int',['void *']],media_player_stop:['void',['void *']],media_player_set_pause:['void',['void *','int']],media_player_get_state:['int',['void *']],media_player_get_time:['int64',['void *']],media_player_get_length:['int64',['void *']],media_player_set_time:['void',['void *','int64']],media_player_is_seekable:['int',['void *']],audio_set_volume:['int',['void *','int']],video_set_mouse_input:['void',['void *','uint']],video_set_key_input:['void',['void *','uint']]};
   this.api=Object.fromEntries(Object.entries(api).map(([name,[ret,args]])=>[name,this.dll.func('libvlc_'+name,ret,args)]));
-  const args=['--ignore-config','--no-video-title-show','--no-osd','--no-stats','--quiet','--plugin-path='+path.join(root,'plugins')];
+  const args=['--ignore-config','--no-video-title-show','--no-osd','--no-stats','--quiet'];
   this.instance=this.api.new(args.length,args);
   if(!this.instance)throw new Error('The included playback engine could not initialise.');
   const buffer=win.getNativeWindowHandle();this.parent=buffer.length===8?buffer.readBigUInt64LE():BigInt(buffer.readUInt32LE());
