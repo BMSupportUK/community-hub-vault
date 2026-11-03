@@ -89,13 +89,13 @@ function randomHex(bytes: number) {
 function randomCode() {
   return String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
 }
-let announcementCache: { at: number; value: { id: string; message: string } | null } | null = null;
+let announcementCache: { at: number; value: { id: string; message: string; sent_at: number } | null } | null = null;
 async function currentAnnouncement(admin: { from: (t: "player_announcements") => any }) {
   if (announcementCache && Date.now() - announcementCache.at < 10_000) return announcementCache.value;
-  const { data, error } = await admin.from("player_announcements").select("id, message").eq("active", true)
+  const { data, error } = await admin.from("player_announcements").select("id, message, created_at").eq("active", true)
     .order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (error) return announcementCache?.value ?? null;
-  announcementCache = { at: Date.now(), value: data ? { id: data.id, message: data.message } : null };
+  announcementCache = { at: Date.now(), value: data ? { id: data.id, message: data.message, sent_at: Date.parse(data.created_at) } : null };
   return announcementCache.value;
 }
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: CORS });
@@ -124,7 +124,10 @@ export const Route = createFileRoute("/api/public/player")({
 
         if (body.action === "announcement") {
           // Apps ask every few seconds; one shared read per 10s keeps this cheap for any number of players.
-          return json({ announcement: await currentAnnouncement(supabaseAdmin) });
+          // age_ms lets apps compare against their own start time without trusting the device clock;
+          // announcements only reach apps that were already open when it was sent.
+          const a = await currentAnnouncement(supabaseAdmin);
+          return json({ announcement: a ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
         }
 
         if (body.action === "ratings" || body.action === "vote") {

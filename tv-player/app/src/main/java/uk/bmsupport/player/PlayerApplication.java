@@ -25,6 +25,7 @@ public final class PlayerApplication extends Application implements Application.
     private android.view.View banner;
     private int annTicks = 14;
     private boolean annBusy;
+    private final long startedAt = SystemClock.elapsedRealtime();
     static void interaction(Activity activity) {
         PlayerApplication app = (PlayerApplication) activity.getApplication();
         if (app.prompt == null) app.lastInput = SystemClock.elapsedRealtime();
@@ -75,6 +76,8 @@ public final class PlayerApplication extends Application implements Application.
                 org.json.JSONObject r = new org.json.JSONObject(Net.postJson(Net.SITE + "/api/public/player",
                         new org.json.JSONObject().put("action", "announcement").put("device_token", token).toString()));
                 org.json.JSONObject a = r.optJSONObject("announcement");
+                // Only apps already open when it was sent show it; anyone opening later never sees it.
+                if (a != null && SystemClock.elapsedRealtime() - a.optLong("age_ms", 0) < startedAt) a = null;
                 id = a == null ? null : a.optString("id", null); msg = a == null ? null : a.optString("message", "");
                 ok = true;
             } catch (Throwable ignored) {}
@@ -106,7 +109,15 @@ public final class PlayerApplication extends Application implements Application.
         x.setText("✕"); x.setTextSize(18); x.setContentDescription("Close announcement");
         x.setFocusable(true);
         final String id = annId;
-        x.setOnClickListener(v -> { getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putString("ann_closed", id).apply(); showAnnouncement(); });
+        Runnable close = () -> { getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putString("ann_closed", id).apply(); annId = null; showAnnouncement(); };
+        x.setOnClickListener(v -> close.run());
+        // Remotes: OK or Back on the cross closes it.
+        x.setOnKeyListener((v, code, e) -> {
+            if (e.getAction() != android.view.KeyEvent.ACTION_UP) return code == android.view.KeyEvent.KEYCODE_BACK;
+            if (code == android.view.KeyEvent.KEYCODE_BACK || code == android.view.KeyEvent.KEYCODE_DPAD_CENTER || code == android.view.KeyEvent.KEYCODE_ENTER) { close.run(); return true; }
+            return false;
+        });
+        x.setFocusableInTouchMode(false);
         bar.addView(x, new android.widget.LinearLayout.LayoutParams((int) (56 * d), (int) (48 * d)));
         android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.BOTTOM);
@@ -115,6 +126,8 @@ public final class PlayerApplication extends Application implements Application.
         // The window's decor survives setContentView, so the bar stays put while screens change underneath.
         ((android.view.ViewGroup) a.getWindow().getDecorView()).addView(bar, lp);
         banner = bar;
+        // TV remotes can't always reach a bar added over the screen, so put focus on the cross straight away.
+        if (!a.getPackageManager().hasSystemFeature("android.hardware.touchscreen")) x.post(x::requestFocus);
     }
     private void exitToHome() {
         exiting = true;
