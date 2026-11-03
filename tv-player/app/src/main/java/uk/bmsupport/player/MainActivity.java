@@ -324,7 +324,7 @@ public class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); refreshVersionScreens(); }
 
     @Override public void onUserInteraction() { super.onUserInteraction(); PlayerApplication.interaction(this); }
-    @Override protected void onDestroy() { stopPreview(); stopMulti(); super.onDestroy(); stopPolling(); io.shutdownNow(); connectionIo.shutdownNow(); }
+    @Override protected void onDestroy() { stopPreview(); stopMulti(); stopPolling(); ui.removeCallbacksAndMessages(null); super.onDestroy(); io.shutdownNow(); connectionIo.shutdownNow(); }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
         if (keyCode == KeyEvent.KEYCODE_BACK) { goBack(); return true; }
@@ -376,6 +376,12 @@ public class MainActivity extends Activity {
         if (hasLogin()) showHome(); else showLink();
     }
 
+    /** Never crash when a delayed task fires after the screen closed and its queue shut down. */
+    private boolean safeRun(ExecutorService ex, Runnable r) {
+        if (ex.isShutdown() || isDestroyed()) return false;
+        try { ex.execute(r); return true; } catch (java.util.concurrent.RejectedExecutionException e) { return false; }
+    }
+
     private boolean hasLogin() {
         return !prefs.getString("user", "").isEmpty() && !prefs.getString("dns", "").isEmpty();
     }
@@ -384,16 +390,16 @@ public class MainActivity extends Activity {
         stopPolling();
         pollTask = new Runnable() {
             @Override public void run() {
-                io.execute(MainActivity.this::pollOnce);
+                if (!safeRun(io, MainActivity.this::pollOnce)) return;
                 ui.postDelayed(this, maintenance ? 15000 : hasLogin() ? 60000 : 5000);
             }
         };
         ui.post(pollTask);
         connectionTask = new Runnable() {
             @Override public void run() {
-                connectionIo.execute(() -> {
+                safeRun(connectionIo, () -> {
                     checkConnectionLimit();
-                    ui.postDelayed(this, 30_000);
+                    if (!isFinishing() && !isDestroyed()) ui.postDelayed(this, 30_000);
                 });
             }
         };
