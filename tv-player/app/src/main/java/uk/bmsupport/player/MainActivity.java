@@ -928,6 +928,25 @@ public class MainActivity extends Activity {
             } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
         });
 
+        // Left from the preview or its guide always goes back to the channel being watched,
+        // never to whichever row happens to sit beside it on screen.
+        if (kind.equals("live")) {
+            View.OnKeyListener backToChannel = (v, code, ev) -> {
+                if (code != KeyEvent.KEYCODE_DPAD_LEFT) return false;
+                if (ev.getAction() == KeyEvent.ACTION_DOWN) {
+                    final int keep = livePos[0] >= 0 ? livePos[0] : Math.max(0, items.getSelectedItemPosition());
+                    restoring[0] = true;
+                    items.requestFocus();
+                    items.setSelection(keep);
+                    items.post(() -> items.setSelection(keep));
+                    ui.postDelayed(() -> { items.setSelection(keep); livePos[0] = keep; restoring[0] = false; }, 120);
+                }
+                return true;
+            };
+            if (previewView != null) previewView.setOnKeyListener(backToChannel);
+            if (previewEpg != null && previewEpg.getParent() instanceof View) ((View) previewEpg.getParent()).setOnKeyListener(backToChannel);
+        }
+
         // D-pad focus entering the list picks the row nearest the category, so a fresh category
         // would land on a lower row; force the first item the first time focus arrives.
         final View.OnFocusChangeListener oldFocus = items.getOnFocusChangeListener();
