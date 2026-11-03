@@ -214,6 +214,12 @@ public class PlayerActivity extends Activity {
         setContentView(root);
 
         player = build(this);
+        int subs = getIntent().getIntExtra("subtitles", -1);
+        if (subs >= 0) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, subs == 0)
+                .setPreferredTextLanguage(subs == 1 ? java.util.Locale.getDefault().getLanguage() : null)
+                .setSelectUndeterminedTextLanguage(subs == 1)
+                .setIgnoredTextSelectionFlags(subs == 1 ? 0 : androidx.media3.common.C.SELECTION_FLAG_FORCED).build());
         progressKey = getIntent().getStringExtra("progress_key");
         seriesKey = getIntent().getStringExtra("series_key");
         resumePosition = getIntent().getLongExtra("resume_ms", 0);
