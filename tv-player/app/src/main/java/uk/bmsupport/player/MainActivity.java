@@ -796,6 +796,21 @@ public class MainActivity extends Activity {
         final boolean[] freshTop = { false };
         final int[] livePos = { -1 };
         final boolean[] restoring = { false };
+        // Live TV's inline search box filters the channel list as the customer types.
+        applyFilter[0] = () -> {
+            String q = liveFilter[0].trim().toLowerCase();
+            List<Item> out = new ArrayList<>();
+            for (Item it : currentList) if (q.isEmpty() || it.name.toLowerCase().contains(q)) out.add(it);
+            items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, out) {
+                @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
+            });
+            freshTop[0] = true;
+            livePos[0] = -1;
+            items.setSelection(0);
+            items.post(() -> items.setSelection(0));
+            epg.setText(catLabel[0] + " · " + out.size() + (q.isEmpty() ? " channels" : " of " + currentList.size() + " channels"));
+        };
+
         java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
             if (pos < 0 || pos >= catRows.size()) return;
             String[] c = catRows.get(pos);
