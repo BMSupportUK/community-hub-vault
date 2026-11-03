@@ -73,6 +73,7 @@ public class SeriesSelectionTest {
                 View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY));
         root.layout(0, 0, 1920, 1080);
         assertEquals("Up moves one episode", 0, episodes.getSelectedItemPosition());
+        second.setFocusableInTouchMode(true);
         episodes.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_UP));
         assertTrue("Up from first episode returns to selected season", second.hasFocus());
     }
