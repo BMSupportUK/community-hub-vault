@@ -27,7 +27,7 @@ import { getMyAppTransfer } from "@/lib/app-transfer.functions";
 
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
-import { INSTALL_TABS, INSTALL_TAB_ORDER_KEY, resolveInstallTabOrder } from "@/lib/install-guide-tab-order";
+import { INSTALL_TAB_LABELS_KEY, INSTALL_TAB_ORDER_KEY, installTabLabel, resolveInstallTabLabels, resolveInstallTabOrder } from "@/lib/install-guide-tab-order";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
@@ -302,6 +302,15 @@ function InstallGuidesPage() {
     staleTime: 5 * 60 * 1000,
   });
   const tabOrder = tabOrderQuery.data ?? resolveInstallTabOrder(null);
+  const tabLabelsQuery = useQuery({
+    queryKey: ["install-guides-tab-labels"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", INSTALL_TAB_LABELS_KEY).maybeSingle();
+      return resolveInstallTabLabels(data?.value);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const tabLabels = tabLabelsQuery.data ?? {};
 
   const categories = dataQuery.data?.categories ?? [];
   const blogs = dataQuery.data?.blogs ?? [];
@@ -649,7 +658,7 @@ function InstallGuidesPage() {
               </div>
               <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-fit lg:max-w-full lg:rounded-full">
                 {tabOrder.map((k) => (
-                  <TabsTrigger key={k} value={k} className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{k === "setup" && hasLiveTransfer ? "View Your Download URL" : INSTALL_TABS.find((t) => t.key === k)?.label}</TabsTrigger>
+                  <TabsTrigger key={k} value={k} className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{k === "setup" && hasLiveTransfer ? "View Your Download URL" : installTabLabel(k, tabLabels)}</TabsTrigger>
                 ))}
                 {canManageCategories && (
                   <TabsTrigger value="categories" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Categories</TabsTrigger>
