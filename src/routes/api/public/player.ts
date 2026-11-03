@@ -164,7 +164,7 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "sports") {
           const payload = await sportsCache(async () => {
             const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
-              supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at").eq("published", true),
+              supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at, sort_order, created_at").eq("published", true).order("sort_order").order("created_at", { ascending: false }),
               supabaseAdmin.from("sports_categories").select("id, name, parent_id, sort_order").order("sort_order"),
               supabaseAdmin.from("player_settings").select("channel_aliases").eq("id", 1).maybeSingle(),
             ]);
@@ -176,7 +176,8 @@ export const Route = createFileRoute("/api/public/player")({
               return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null };
             }));
             const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
-            const order = Array.from(new Set((cats ?? []).map((c) => c.name)));
+            // Guides follow the website order too (sort_order, newest first), after the category names.
+            const order = Array.from(new Set([...(cats ?? []).map((c) => c.name), ...(blogs ?? []).map((b) => b.title)]));
             return { version, events, order, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
           });
           return json(payload);
