@@ -3225,6 +3225,13 @@ public class MainActivity extends Activity {
     private AlertDialog resultList(String title, int count, java.util.function.IntFunction<View> row, java.util.function.IntConsumer pick,
                                    String posLabel, Runnable pos, String negLabel, Runnable neg) {
         ListView lv = list();
+        GradientDrawable ring = new GradientDrawable(); ring.setColor(Color.TRANSPARENT); ring.setCornerRadius(dp(8)); ring.setStroke(dp(3), ACCENT);
+        StateListDrawable sel = new StateListDrawable();
+        sel.addState(new int[]{android.R.attr.state_focused}, ring);
+        sel.addState(new int[]{android.R.attr.state_pressed}, ring);
+        sel.addState(new int[]{android.R.attr.state_selected}, ring);
+        sel.addState(new int[]{}, new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        lv.setSelector(sel);
         lv.setDrawSelectorOnTop(true);
         lv.setItemsCanFocus(false);
         lv.setFocusable(true);
