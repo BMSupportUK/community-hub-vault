@@ -41,6 +41,7 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
+- [ ] Add shared 1–5 star film/series voting and poster averages to Android, Windows and Mac; secure one vote per customer/title and verify updates.
 - [x] Release Windows 0.3.2 favourites fix: direct preview/playback and parent-series controls; saved tabs render the correct media kind. Renderer add/remove/reload checks and 18 regressions pass; live EXE matches built installer byte-for-byte. Native Windows encrypted storage remains unverified.
 - [x] Fix Android season/episode remote selection and release 2.72; six tests pass, signature and live APK byte match verified. Real remote/playback verification needs an attached device.
 - [x] Publish the account-number endpoint and activate Android 2.40; live endpoint recognizes unlock and current APK download checked.
