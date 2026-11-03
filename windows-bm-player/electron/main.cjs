@@ -80,6 +80,7 @@ async function refreshInner(){
  for(const kind of kinds){send({type:'progress',message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*100)});cache.delete(kind);await catalogue(kind);step++;}
  send({type:'progress',message:'Playlists updated',percent:100});send({type:'catalogues'});return true;
 }
+async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||String(channel.id).length>80)throw new Error('Catch up isn\'t available on this channel.');const r=await provider('get_simple_data_table',{stream_id:String(channel.id)});return core.catchupProgrammes(r.epg_listings,Math.min(30,Number(channel.archive)));}
 async function epg(id){const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return core.programmes(r.epg_listings);}
 function persistProgress(session){
  if(!['film','episode'].includes(session.item.kind)||!(session.duration>0))return;
@@ -92,7 +93,8 @@ async function stopAll(){
  send({type:'state',state:publicState()});
 }
 async function play({item,resume=false,screens=1}){
- if(!item||!['live','film','episode'].includes(item.kind)||String(item.id).length>80)throw new Error('Choose a playable item.');
+ if(item?.kind==='catchup'&&!(Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start&&item.end<=Date.now()))throw new Error('Choose a programme that has finished.');
+ if(!item||!['live','film','episode','catchup'].includes(item.kind)||String(item.id).length>80)throw new Error('Choose a playable item.');
  if(maintenance)throw new Error(maintenance);
  if(publicState().expired)throw new Error('Your subscription has expired. Visit BM Support to renew.');
  const allowed=Math.min(3,Number(store.account?.max_connections)||1);
@@ -105,7 +107,7 @@ async function play({item,resume=false,screens=1}){
  catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}
  const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
- if(!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
+ if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
  lastInput=Date.now();promptedAt=0;poll();send({type:'state',state:publicState()});return true;
 }
 async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
@@ -149,7 +151,7 @@ else{
   win.once('ready-to-show',()=>{win.maximize();win.show();});
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
-  register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('sports',()=>site({action:'sports'}));
+  register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('catchup',catchup);register('sports',()=>site({action:'sports'}));
   register('unlock',async number=>{await gate.unlock(number,site);send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
   register('play',play);register('stop',stopAll);
