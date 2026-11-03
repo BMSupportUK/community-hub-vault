@@ -675,8 +675,10 @@ public class MainActivity extends Activity {
     }
 
     /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
+    private Item previewItem;
     private void schedulePreview(Item it, androidx.media3.ui.PlayerView view, TextView status) {
         stopPreview();
+        previewItem = it;
         status.setText("Loading preview…");
         previewTask = () -> {
             preview = PlayerActivity.build(this);
@@ -757,6 +759,15 @@ public class MainActivity extends Activity {
             });
             pvStatus = text("Highlight a channel to preview it", 14, MUTED, false);
             side.addView(pvStatus);
+            Button full = smallButton("⛶ Full screen", v -> {
+                Item cur = previewItem;
+                if (cur == null) { toast("Highlight a channel first"); return; }
+                stopPreview(); play(cur, defaultVlc());
+            });
+            full.setContentDescription("Watch the preview channel full screen");
+            side.addView(full, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            pv.setClickable(true);
+            pv.setOnClickListener(v -> full.performClick());
             pvEpg = text("", 14, TEXT, false);
             pvEpg.setPadding(dp(12), dp(10), dp(12), dp(10));
             pvEpg.setSingleLine(false);
