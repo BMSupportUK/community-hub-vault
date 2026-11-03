@@ -35,6 +35,7 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     lint { abortOnError false; checkReleaseBuilds false }
+    testOptions { unitTests { includeAndroidResources = true } }
     sourceSets.main.res.srcDir(layout.buildDirectory.dir('generated/intro-res'))
 }
 
@@ -59,4 +60,6 @@ dependencies {
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.5.0+1'
     implementation 'androidx.core:core:1.13.1'
     implementation 'com.google.zxing:core:3.5.3'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.14.1'
 }
