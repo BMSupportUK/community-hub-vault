@@ -137,7 +137,7 @@ public class MainActivity extends Activity {
                 } catch (Exception ex) {
                     String m = String.valueOf(ex.getMessage());
                     final boolean already = m.contains("already voted");
-                    ui.post(() -> { Toast.makeText(this, already ? "You've already voted on this. Votes can't be changed." : "Couldn't save your vote. Try again.", Toast.LENGTH_LONG).show(); if (already) loadRatingsFor(it); });
+                    ui.post(() -> { Toast.makeText(this, already ? "You've already voted on this. Votes can't be changed." : "Couldn't save your vote. Try again.", Toast.LENGTH_LONG).show(); if (already) { bmRatingTimes.remove(ratingKey(it)); requestRating(it); } });
                 }
             });
         }, null, null, "Cancel", null);
