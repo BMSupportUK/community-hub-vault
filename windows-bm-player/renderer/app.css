@@ -3,3 +3,4 @@
 
 .catchup-clock{flex:0 0 auto;padding:0 .5rem;font-size:1.1rem;background:transparent;border:0}
 .catchup{display:grid;grid-template-columns:minmax(10rem,16rem) 1fr;gap:1rem}
+.guide-chan-cell{display:flex;align-items:stretch;background:var(--surface)}.guide-chan-cell .guide-channel{flex:1;min-width:0;overflow:hidden}
