@@ -613,7 +613,7 @@ public class MainActivity extends Activity {
                 try {
                     Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "unlock")
                             .put("device_token", prefs.getString("token", "")).put("account_number", n).toString());
-                    ui.post(() -> { unlocked = true; showHome(); });
+                    ui.post(() -> { unlocked = true; showHome(); syncFavourites(null); });
                 } catch (Exception ex) {
                     String m = String.valueOf(ex.getMessage()), msg = "Couldn't check. Check the internet and try again.";
                     int i = m.indexOf('{');
@@ -1561,7 +1561,38 @@ public class MainActivity extends Activity {
         prefs.edit().putString(key, out.toString()).apply();
     }
 
+    /** Favourites live on the website per account and login so every BM Player shows the same list. */
+    private void syncFavourites(Runnable changed) {
+        String token = prefs.getString("token", ""), login = prefs.getString("user", "");
+        if (token.isEmpty() || login.isEmpty()) return;
+        ratingIo.execute(() -> {
+            try {
+                JSONObject r = new JSONObject(Net.postJson("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "favourites").put("device_token", token).put("login", login).toString()));
+                if (!r.has("items")) return;
+                if (!r.optBoolean("stored")) { if (saved("fav").length() > 0) pushFavourites(); return; }
+                String remote = r.getJSONArray("items").toString();
+                ui.post(() -> {
+                    if (remote.equals(prefs.getString("fav", "[]"))) return;
+                    prefs.edit().putString("fav", remote).apply();
+                    if (changed != null) changed.run();
+                });
+            } catch (Exception ignored) {}
+        });
+    }
+    private void pushFavourites() {
+        String token = prefs.getString("token", ""), login = prefs.getString("user", ""), items = prefs.getString("fav", "[]");
+        if (token.isEmpty() || login.isEmpty()) return;
+        ratingIo.execute(() -> {
+            try { Net.postJson("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "favourites_set").put("device_token", token).put("login", login).put("items", new JSONArray(items)).toString()); }
+            catch (Exception ignored) {}
+        });
+    }
+
     private void toggleSaved(String key, Item it) {
+        if ("fav".equals(key)) { toggleSavedLocal(key, it); pushFavourites(); return; }
+        toggleSavedLocal(key, it);
+    }
+    private void toggleSavedLocal(String key, Item it) {
         if (isSaved(key, it)) {
             JSONArray a = saved(key), out = new JSONArray();
             for (int i = 0; i < a.length(); i++) {
@@ -1577,6 +1608,7 @@ public class MainActivity extends Activity {
     }
 
     private void showSaved(String key, String title) {
+        if ("fav".equals(key) && !"fav".equals(screen)) syncFavourites(() -> { if ("fav".equals(screen)) showSaved(key, title); });
         screen = key; back = this::showHome;
         LinearLayout root = column();
         root.addView(text(title, 26, TEXT, true));
@@ -1814,8 +1846,8 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "Recently watched cleared", Toast.LENGTH_SHORT).show();
         }));
         boxes.add(settingBox("★", "Clear favourites", "All favourites", v -> new AlertDialog.Builder(this)
-                .setMessage("Remove all favourites from this device?")
-                .setPositiveButton("Clear", (d, w) -> { prefs.edit().remove("fav").apply(); Toast.makeText(this, "Favourites cleared", Toast.LENGTH_SHORT).show(); })
+                .setMessage("Remove all favourites from all your BM Players?")
+                .setPositiveButton("Clear", (d, w) -> { prefs.edit().remove("fav").apply(); pushFavourites(); Toast.makeText(this, "Favourites cleared", Toast.LENGTH_SHORT).show(); })
                 .setNegativeButton("Cancel", null).show()));
         boxes.add(settingBox("🔗", "Unlink device", "Remove login", v -> new AlertDialog.Builder(this)
                 .setMessage("This removes the login from this device. You'll need a new code to link it again.")
@@ -2466,7 +2498,7 @@ public class MainActivity extends Activity {
                     c.url = catchupUrl(ch, t[0], t[1]);
                     c.catchupId = ch.id; c.catchupStart = t[0]; c.catchupEnd = t[1] > t[0] ? t[1] : t[0] + 3600;
                     // Catch up recordings play through VLC automatically; BM Player's own player is the fallback when VLC is missing.
-                    play(c, true);
+                    play(c, CatchupFallback.useVlc(Build.MANUFACTURER));
                 });
                 pickDay.accept(0);
                 days.requestFocus();

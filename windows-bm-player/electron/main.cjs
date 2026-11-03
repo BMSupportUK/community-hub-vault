@@ -45,6 +45,7 @@ async function poll(){
   if(r.credentials){gate.lock();await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
   if(changed){save();if(store.user&&gate.unlocked)await refresh();}
+  if(store.user&&gate.unlocked)syncFavourites().catch(()=>{});
   send({type:'state',state:publicState()});
  }catch(error){send({type:'notice',message:error.message});}finally{pollBusy=false;}
 }
@@ -141,6 +142,12 @@ async function timers(){
  for(const reminder of store.reminders||[]){if(!reminder.notified&&reminder.start-300000<=now&&reminder.start>now){reminder.notified=true;save();await foreground();send({type:'reminder',reminder});}}
 }
 function trusted(event){return event.sender===win?.webContents&&event.senderFrame?.url===pathToFileURL(page).href;}
+/** Favourites live on the website per account and provider login, so every BM Player shows the same list. */
+function favouriteItems(){return (store.favourites||[]).filter(i=>i&&i.id!=null&&i.kind&&JSON.stringify(i).length<=4000).slice(0,500).map(i=>({...i,id:String(i.id)}));}
+function pushFavourites(){if(!store.user||!store.token)return;site({action:'favourites_set',login:store.user,items:favouriteItems()}).catch(()=>{});}
+async function syncFavourites(){if(!store.user||!store.token||!gate.unlocked)return;const r=await site({action:'favourites',login:store.user});if(!r||!Array.isArray(r.items))return;
+ if(!r.stored){if((store.favourites||[]).length)pushFavourites();return;}
+ if(JSON.stringify(r.items)!==JSON.stringify(store.favourites||[])){store.favourites=r.items;save();send({type:'state',state:publicState()});}}
 function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop'].includes(name))gate.require();if(!promptedAt)lastInput=Date.now();return fn(value);});}
 if(!app.requestSingleInstanceLock())app.quit();
 else{
@@ -154,7 +161,7 @@ else{
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('catchup',catchup);register('sports',()=>site({action:'sports'}));
-  register('unlock',async number=>{await gate.unlock(number,site);send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
+  register('unlock',async number=>{await gate.unlock(number,site);syncFavourites().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
   electronSession.defaultSession.setPermissionRequestHandler((wc,perm,cb,details)=>cb(perm==='media'&&wc===win?.webContents&&(details?.mediaTypes||['audio']).every(t=>t==='audio')));
   electronSession.defaultSession.setPermissionCheckHandler((wc,perm)=>perm==='media'&&wc===win?.webContents);
@@ -181,7 +188,7 @@ else{
    else if(value){store.settings={...store.settings,...value};save();}
    return publicState();
   });
-  register('favourite',item=>{store.favourites=store.favourites||[];const at=store.favourites.findIndex(i=>i.id===item.id&&i.kind===item.kind);if(at<0)store.favourites.push(item);else store.favourites.splice(at,1);save();return publicState();});
+  register('favourite',item=>{store.favourites=store.favourites||[];const at=store.favourites.findIndex(i=>i.id===item.id&&i.kind===item.kind);if(at<0)store.favourites.push(item);else store.favourites.splice(at,1);save();pushFavourites();return publicState();});
   register('report',v=>site({action:'report',kind:v.item.kind==='episode'?'series':v.item.kind,title:v.item.name,category:v.item.categoryName,episode:v.item.kind==='episode'?v.item.name:undefined,issue:String(v.issue||'').slice(0,1000),device:PLATFORM.device,version:app.getVersion()}));
   register('reminder',value=>{store.reminders=store.reminders||[];if(value.remove)store.reminders=store.reminders.filter(r=>r.id!==value.id);else{if(value.start<=Date.now())throw new Error('Reminders are only for programmes that have not started.');store.reminders.push({...value,id:String(value.item.id)+':'+value.start,notified:false});}save();return publicState();});
   register('continue',()=>{lastInput=Date.now();promptedAt=0;send({type:'inactive',seconds:0});return true;});register('exit',async()=>{await stopAll();app.quit();});
