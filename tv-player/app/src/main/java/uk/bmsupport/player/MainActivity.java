@@ -810,9 +810,11 @@ public class MainActivity extends Activity {
                     sortItems(shown, sortKey[0]);
                     items.setAdapter(posterAdapter(shown));
                     watchedAdapter = (BaseAdapter) items.getAdapter();
-                } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>(list)) {
-                    @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
-                });
+                } else {
+                    catLabel[0] = c[1];
+                    currentList.clear(); currentList.addAll(list);
+                    if (applyFilter[0] != null) applyFilter[0].run();
+                }
                 freshTop[0] = true;
                 livePos[0] = -1;
                 items.clearFocus();
@@ -823,7 +825,8 @@ public class MainActivity extends Activity {
                     if (items instanceof ListView) ((ListView) items).setSelectionFromTop(0, 0);
                     if (focusItems) items.requestFocus();
                 });
-                epg.setText(c[1] + " · " + list.size() + (kind.equals("live") ? " channels" : " titles"));
+                if (!kind.equals("live")) epg.setText(c[1] + " · " + list.size() + " titles");
+
             };
             if (got != null && !got.isEmpty()) { render.accept(got); return; }
             // List had no category tags for this one – ask the server for just this category.
