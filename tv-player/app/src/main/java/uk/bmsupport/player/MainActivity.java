@@ -56,6 +56,11 @@ public class MainActivity extends Activity {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private SharedPreferences prefs;
     private Runnable pollTask;
+    private Runnable connectionTask;
+    private final ExecutorService connectionIo = Executors.newSingleThreadExecutor();
+    private long excessSince, excessElapsed;
+    private String checkedLogin = "";
+    private boolean excessReported;
     private volatile boolean maintenance;
     private boolean adultUnlocked;
     private String screen = "";
@@ -310,7 +315,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); refreshVersionScreens(); }
 
-    @Override protected void onDestroy() { super.onDestroy(); stopPolling(); io.shutdownNow(); }
+    @Override protected void onDestroy() { super.onDestroy(); stopPolling(); io.shutdownNow(); connectionIo.shutdownNow(); }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
         if (keyCode == KeyEvent.KEYCODE_BACK) { goBack(); return true; }
@@ -375,6 +380,15 @@ public class MainActivity extends Activity {
             }
         };
         ui.post(pollTask);
+        connectionTask = new Runnable() {
+            @Override public void run() {
+                connectionIo.execute(() -> {
+                    checkConnectionLimit();
+                    ui.postDelayed(this, 30_000);
+                });
+            }
+        };
+        ui.post(connectionTask);
     }
 
     /** Poll also reports what is on screen so admins see live connections. */
@@ -405,7 +419,37 @@ public class MainActivity extends Activity {
         io.execute(this::pollOnce);
     }
 
-    private void stopPolling() { if (pollTask != null) ui.removeCallbacks(pollTask); pollTask = null; }
+    private void stopPolling() {
+        if (pollTask != null) ui.removeCallbacks(pollTask); pollTask = null;
+        if (connectionTask != null) ui.removeCallbacks(connectionTask); connectionTask = null;
+    }
+
+    /** Ask the provider for actual account connections, including other apps/devices. */
+    private void checkConnectionLimit() {
+        try {
+            String login = prefs.getString("dns", "") + "|" + prefs.getString("user", "");
+            if (!login.equals(checkedLogin)) { checkedLogin = login; excessSince = 0; excessReported = false; }
+            if (!hasLogin() || maintenance) { excessSince = 0; excessReported = false; return; }
+            JSONObject info = new JSONObject(Net.get(api(""))).optJSONObject("user_info");
+            if (info == null || !info.has("active_cons") || !info.has("max_connections")) { excessSince = 0; excessReported = false; return; }
+            int active = Integer.parseInt(info.getString("active_cons"));
+            int max = Integer.parseInt(info.getString("max_connections"));
+            if (!ConnectionLimit.over(active, max)) { excessSince = 0; excessReported = false; return; }
+            long now = System.currentTimeMillis(), elapsed = android.os.SystemClock.elapsedRealtime();
+            if (excessSince == 0) { excessSince = now; excessElapsed = elapsed; }
+            if (excessReported || !ConnectionLimit.sustained(excessElapsed, elapsed)) return;
+            JSONObject report = new JSONObject().put("action", "connection_alert")
+                    .put("device_token", prefs.getString("token", "")).put("active", active).put("max", max)
+                    .put("exceeded_since", excessSince).put("login", prefs.getString("user", "")).put("version", appVersion());
+            JSONObject result = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", report.toString()));
+            if (!result.optBoolean("reported")) return;
+            excessReported = true;
+            ui.post(() -> startActivity(new Intent(this, ConnectionWarningActivity.class).putExtra("active", active).putExtra("max", max)));
+        } catch (Exception ignored) {
+            // Unknown connection counts never prove continuous excess; reset rather than falsely report.
+            excessSince = 0; excessReported = false;
+        }
+    }
 
     private void pollOnce() {
         try {
