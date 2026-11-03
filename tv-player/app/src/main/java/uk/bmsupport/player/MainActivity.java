@@ -2087,9 +2087,21 @@ public class MainActivity extends Activity {
                 for (Integer i : idx) byDay.computeIfAbsent(df.format(new java.util.Date(all.get(i)[0] * 1000)), k -> new ArrayList<>()).add(i);
                 List<String> dayNames = new ArrayList<>(byDay.keySet());
                 status.setText("Pick a day, then a programme to watch it from the start");
-                days.setAdapter(rowAdapter(dayNames));
+                int[] chosen = {0};
+                ArrayAdapter<String> dayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<>(dayNames)) {
+                    @Override public View getView(int i, View cv, ViewGroup parent) {
+                        View v = styleRow(super.getView(i, cv, parent));
+                        if (i == chosen[0]) {
+                            GradientDrawable box = new GradientDrawable(); box.setColor(CARD); box.setCornerRadius(dp(6)); box.setStroke(dp(3), ACCENT);
+                            v.setBackground(box);
+                        }
+                        return v;
+                    }
+                };
+                days.setAdapter(dayAdapter);
                 List<Integer> shown = new ArrayList<>();
                 java.util.function.IntConsumer pickDay = w -> {
+                    chosen[0] = w; dayAdapter.notifyDataSetChanged();
                     shown.clear(); shown.addAll(byDay.get(dayNames.get(w)));
                     List<String> rows = new ArrayList<>();
                     for (Integer i : shown) { long[] t = all.get(i); rows.add(clock(t[0]) + (t[1] > 0 ? " – " + clock(t[1]) : "") + "   " + titles.get(i)); }
