@@ -1,6 +1,6 @@
 const {app,BrowserWindow,ipcMain,safeStorage,shell,dialog,powerSaveBlocker,powerMonitor,protocol}=require('electron');
 const MAC=process.platform==='darwin';
-const PLATFORM=MAC?{id:'mac',name:'Mac',device:'Mac BM Player'}:{id:'windows',name:'Windows',device:PLATFORM.device};
+const PLATFORM=MAC?{id:'mac',name:'Mac',device:'Mac BM Player'}:{id:'windows',name:'Windows',device:'Windows BM Player'};
 if(MAC)require('./mac-engine.cjs').registerScheme(protocol);
 const fs=require('node:fs');
 const path=require('node:path');
