@@ -156,7 +156,7 @@ function AdminPlayerLivePage() {
   const [reports, setReports] = useState<ConnectionReport[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [now, setNow] = useState(() => Date.now());
-  const [details, setDetails] = useState<Row | null>(null);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -234,7 +234,7 @@ function AdminPlayerLivePage() {
                   <td className="p-3 font-mono tabular-nums">{r.watching_since ? formatElapsed(r.watching_since, now) : "—"}</td>
                   <td className="p-3 font-mono tabular-nums max-sm:hidden">{formatElapsed(r.connected_since ?? r.last_seen_at, now)}</td>
                   <td className="p-3">
-                    <Button size="sm" variant="outline" onClick={() => setDetails(r)} className="gap-1.5 whitespace-nowrap">
+                    <Button size="sm" variant="outline" onClick={() => setDetailsId(r.id)} className="gap-1.5 whitespace-nowrap">
                       <Info className="size-3.5" />Details
                     </Button>
                   </td>
@@ -259,6 +259,11 @@ function AdminPlayerLivePage() {
         </div>}
       </section>
     </div>
-    <ConnectionDetailsDialog row={details} names={names} now={now} onOpenChange={(open) => !open && setDetails(null)} />
+    <ConnectionDetailsDialog
+      row={detailsId ? (rows ?? []).find((r) => r.id === detailsId) ?? null : null}
+      names={names}
+      now={now}
+      onOpenChange={(open) => !open && setDetailsId(null)}
+    />
   </main>;
 }
