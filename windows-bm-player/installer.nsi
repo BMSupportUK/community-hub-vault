@@ -17,6 +17,12 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
 Section "BM Player"
+  ; A running BM Player (or a leftover background process) locks its DLLs,
+  ; which makes every file fail with "Error opening file for writing".
+  DetailPrint "Closing BM Player if it is running..."
+  nsExec::Exec 'taskkill /F /T /IM "BM Player.exe"'
+  Pop $0
+  Sleep 1500
   SetOutPath "$INSTDIR"
   File /r "${APPDIR}\*.*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
