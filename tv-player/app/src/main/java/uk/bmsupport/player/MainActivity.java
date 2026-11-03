@@ -1021,8 +1021,9 @@ public class MainActivity extends Activity {
                         if (pct >= 0) guide.append("  ·  ").append(pct).append("%");
                         guide.append("\n").append(times).append("\n").append(t);
                         guide.append("\n\nUP NEXT");
-                    } else {
-                        guide.append("\n\n").append(times).append("\n").append(t);
+                    } else if (i == 1) {
+                        // Live TV preview shows only Now and Up next.
+                        guide.append("\n").append(times).append("\n").append(t);
                     }
                 }
                 String g = guide.length() == 0 ? "No TV guide for this channel." : guide.toString();
