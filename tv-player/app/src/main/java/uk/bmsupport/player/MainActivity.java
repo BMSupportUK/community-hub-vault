@@ -73,6 +73,67 @@ public class MainActivity extends Activity {
     private String screen = "";
     private Runnable back;
     private BaseAdapter watchedAdapter;
+    private BaseAdapter ratingAdapter;
+    private final java.util.Map<String, JSONObject> bmRatings = new java.util.HashMap<>();
+    private final java.util.Map<String, Long> bmRatingTimes = new java.util.HashMap<>();
+    private final java.util.Map<String, Item> ratingQueue = new java.util.LinkedHashMap<>();
+    private final ExecutorService ratingIo = Executors.newSingleThreadExecutor();
+    private boolean ratingLoading;
+    private TextView seriesRatingLabel;
+    private Item seriesRatingItem;
+    private String ratingKey(Item it) { return it.kind + ":" + it.name; }
+    private String ratingText(Item it) {
+        JSONObject r = bmRatings.get(ratingKey(it));
+        if (r == null) return "BM ☆ —";
+        int n = r.optInt("count");
+        return n == 0 ? "BM ☆ Not rated" : String.format(java.util.Locale.UK, "BM ★ %.1f/5 · %d vote%s", r.optDouble("average"), n, n == 1 ? "" : "s");
+    }
+    private void receiveRatings(JSONObject response) {
+        JSONArray rows = response.optJSONArray("ratings");
+        if (rows != null) for (int i = 0; i < rows.length(); i++) {
+            JSONObject r = rows.optJSONObject(i); if (r == null) continue;
+            String key = r.optString("kind") + ":" + r.optString("title");
+            bmRatings.put(key, r); bmRatingTimes.put(key, System.currentTimeMillis());
+        }
+        if (ratingAdapter != null) ratingAdapter.notifyDataSetChanged();
+        if (seriesRatingLabel != null && seriesRatingItem != null) seriesRatingLabel.setText(ratingText(seriesRatingItem));
+    }
+    private final Runnable flushRatings = () -> {
+        if (ratingLoading || ratingQueue.isEmpty() || isFinishing() || isDestroyed()) return;
+        List<Item> batch = new ArrayList<>(ratingQueue.values()); ratingQueue.clear(); ratingLoading = true;
+        ratingIo.execute(() -> {
+            try {
+                JSONArray items = new JSONArray();
+                for (Item it : batch) items.put(new JSONObject().put("kind", it.kind).put("title", it.name));
+                JSONObject response = new JSONObject(Net.post("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "ratings").put("device_token", prefs.getString("token", "")).put("items", items).toString()));
+                ui.post(() -> receiveRatings(response));
+            } catch (Exception ignored) {} finally { ui.post(() -> { ratingLoading = false; if (!ratingQueue.isEmpty()) ui.postDelayed(this::flushRatingQueue, 200); }); }
+        });
+    };
+    private void flushRatingQueue() { flushRatings.run(); }
+    private void requestRating(Item it) {
+        if (!("film".equals(it.kind) || "series".equals(it.kind))) return;
+        Long at = bmRatingTimes.get(ratingKey(it));
+        if (at != null && System.currentTimeMillis() - at < 60000) return;
+        bmRatingTimes.put(ratingKey(it), System.currentTimeMillis());
+        ratingQueue.put(ratingKey(it), it); ui.removeCallbacks(flushRatings); ui.postDelayed(flushRatings, 200);
+        if (ratingQueue.size() >= 200) flushRatings.run();
+    }
+    private void showVote(Item it) {
+        if (!unlocked || !("film".equals(it.kind) || "series".equals(it.kind))) return;
+        JSONObject mine = bmRatings.get(ratingKey(it));
+        String[] stars = {"★ · 1/5", "★★ · 2/5", "★★★ · 3/5", "★★★★ · 4/5", "★★★★★ · 5/5"};
+        resultList("Rate " + it.name + (mine != null && mine.optInt("mine") > 0 ? " · Your vote " + mine.optInt("mine") + "/5" : ""), java.util.Arrays.asList(stars), x -> x, index -> {
+            Toast.makeText(this, "Saving your vote…", Toast.LENGTH_SHORT).show();
+            ratingIo.execute(() -> {
+                try {
+                    JSONObject response = new JSONObject(Net.post("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "vote").put("device_token", prefs.getString("token", "")).put("kind", it.kind).put("title", it.name).put("stars", index + 1).toString()));
+                    ui.post(() -> { receiveRatings(response); Toast.makeText(this, "Your " + (index + 1) + "-star vote is saved.", Toast.LENGTH_SHORT).show(); });
+                } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't save your vote. Try again.", Toast.LENGTH_LONG).show()); }
+            });
+        }, "Cancel");
+    }
+
 
     /** A playable or browsable entry. */
     static final class Item {
@@ -1063,21 +1124,25 @@ public class MainActivity extends Activity {
         if (WatchProgress.eligible(it.kind) && WatchProgress.resumable(pos, dur)) {
             String time = String.format(java.util.Locale.UK, "%d:%02d", pos / 60000, (pos / 1000) % 60);
             String[] o2 = {"▶ Continue watching · " + time + " (" + WatchProgress.percent(pos, dur) + "%)", "Play from beginning", "Play with VLC", fav, "Report a problem"};
+            if ("film".equals(it.kind)) o2 = java.util.Arrays.copyOf(o2, o2.length + 1);
+            if ("film".equals(it.kind)) o2[o2.length - 1] = "☆ Vote";
             new AlertDialog.Builder(this).setTitle(it.name).setItems(o2, (d, w) -> {
                 if (w == 0) startPlayback(it, defaultVlc(), pos);
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
                 else if (w == 2) play(it, true);
                 else if (w == 3) toggleSaved("fav", it);
-                else showReport(it);
+                else if (w == 4) showReport(it);
+                else showVote(it);
             }).show();
             return;
         }
-        String[] opts = {"Play", "Play with VLC", fav, "Report a problem"};
+        String[] opts = "film".equals(it.kind) ? new String[]{"Play", "Play with VLC", fav, "Report a problem", "☆ Vote"} : new String[]{"Play", "Play with VLC", fav, "Report a problem"};
         new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
             if (w == 0) play(it, defaultVlc());
             else if (w == 1) play(it, true);
             else if (w == 2) toggleSaved("fav", it);
-            else showReport(it);
+            else if (w == 3) showReport(it);
+            else showVote(it);
         }).show();
     }
 
@@ -1093,12 +1158,14 @@ public class MainActivity extends Activity {
         loadPoster(poster, show.poster);
         LinearLayout head = column();
         head.addView(text(show.name, 26, TEXT, true));
+        seriesRatingItem = show; seriesRatingLabel = text(ratingText(show), 14, MUTED, false); head.addView(seriesRatingLabel); requestRating(show);
         TextView info = text("Loading episodes…", 15, MUTED, false);
         head.addView(info);
         TextView plot = text("", 14, TEXT, false); plot.setMaxLines(5);
         head.addView(plot);
         LinearLayout btns = row();
         btns.addView(button(isSaved("fav", show) ? "★ Remove favourite" : "☆ Add favourite", v -> toggleSaved("fav", show)));
+        btns.addView(button("☆ Vote", v -> showVote(show)));
         btns.addView(button("⚠ Report a problem", v -> showReport(show)));
         head.addView(btns);
         top.addView(head, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -3168,7 +3235,7 @@ public class MainActivity extends Activity {
     private final java.util.concurrent.ExecutorService posterIo = java.util.concurrent.Executors.newFixedThreadPool(4);
 
     private BaseAdapter posterAdapter(List<Item> l) {
-        return new BaseAdapter() {
+        ratingAdapter = new BaseAdapter() {
             @Override public int getCount() { return l.size(); }
             @Override public Object getItem(int i) { return l.get(i); }
             @Override public long getItemId(int i) { return i; }
@@ -3194,11 +3261,13 @@ public class MainActivity extends Activity {
                 progress.removeAllViews();
                 // Series progress belongs on each episode, not the show's poster.
                 if (!"series".equals(it.kind)) progress.addView(watchedBar(it));
-                t.setText(it.rating > 0 ? it.name + "\n★ " + String.format(java.util.Locale.UK, "%.1f", it.rating) : it.name);
+                t.setMaxLines(2); t.setText(it.name);
+                progress.addView(text(ratingText(it), 12, MUTED, false)); requestRating(it);
                 loadPoster(img, it.poster);
                 return card;
             }
         };
+        return ratingAdapter;
     }
 
     private StateListDrawable posterCardBg() {
