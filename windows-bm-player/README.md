@@ -1,0 +1,16 @@
+# BM Player Windows pre-launch test
+
+Windows 10/11 x64 portable ZIP. Extract the whole archive and run `BM Player Test.exe`; the included VLC runtime must remain beside the application resources. No app-build row, website download card, automatic update or public release is created.
+
+## Included
+Device-code linking through BM Support, same Live TV/Films/Series home tiles and artwork, section preload/refresh, local category filtering, latest-added sort, posters, series seasons and episodes, film/episode resume and watched bars, favourites and adult-filtered history, two-hour programme grid, future-only confirmation reminders, sports category hierarchy/channel matching, report-a-problem details, multi-screen up to the provider connection allowance, account expiry and maintenance, speed test, change-login confirmation, connection investigation reporting and timed inactivity exit.
+
+Credentials/device token are protected by Electron safeStorage and never sent to the renderer. VLC HTTP control listens only on loopback with a random password. Provider URLs are derived from the locally stored login, and every website call uses the existing player device-token endpoint. Official VLC 3.0.21 Windows x64 archive SHA-256: `a0b7ec02b50adf6417eed014fb8df50af39690505a4225b85b3dc2ed17d14843`.
+
+## Test limitations
+The Windows executable and actual stream/4K playback cannot be run in this Linux sandbox. Renderer interactions were checked with sample catalogue data, not a real provider login. Playback opens the bundled VLC window; the channel preview is not embedded. Voice search and the complete Android settings set are not included yet. The guide preloads the first 15 channels and other rows load on request. The website's new connection-report action requires the website changes to be published. Input sampling while VLC has focus depends on Windows PowerShell, and needs a real Windows check. This is not full Android feature parity and is not launch-ready.
+
+Inactivity uses three hours without Windows input, then an explicit Continue viewing prompt with a one-minute deadline. If unanswered, BM Player stops its VLC sessions and closes to the desktop. Android/Fire TV inactivity applies to BM Player's own activities, not external VLC.
+
+## Build
+Run `bun windows-bm-player/build.cjs` from the project root. This stages the renderer/shell in `/tmp/windows-player-build/app`. Extract the checksum-verified official VLC archive into its `tools` directory, then package with `@electron/packager@20.3.0`, Electron 41.0.2, target `win32 x64`, `--no-asar`. Archive the output with all Electron and VLC notices. Tests: `bun test windows-bm-player/tests/core.test.cjs`.

@@ -41,8 +41,10 @@
 
 ## BM Player (IPTV player apps)
 - [x] First add inactivity Continue viewing / timed exit to Android, Fire TV and phone; signed 2.37 released, four timer checks pass (external VLC not monitored)
-- [ ] Mirror inactivity in Windows and verify TV prompt/exit on a real device (TV verification blocked: no attached device)
-- [ ] Build Windows BM Player with bundled VLC and deliver a test-only Windows download; do not launch publicly
+- [x] Mirror inactivity in Windows; three-hour timer and one-minute response tests pass
+- [ ] Verify native inactivity exit and Windows playback/input on real devices (blocked: no attached TV or Windows runtime)
+- [ ] Complete Windows embedded preview, voice search and full settings parity before launch (not included in test build)
+- [x] Build Windows BM Player with bundled VLC and deliver a test-only portable Windows ZIP; no public launch or app-list entry
 - [x] Add three-minute sustained connection-limit warning and admin-only investigation reports; native tests and website report read-back pass, signed 2.36 released
 - [ ] Verify the connection warning during real TV playback (blocked: no attached TV; website changes need publishing)
 - [x] Add film/episode watched bars and Resume in built-in playback; reset category/season selection to top; 9 native checks and 32 regression tests pass; signed 2.11 live download verified
