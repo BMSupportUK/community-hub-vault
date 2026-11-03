@@ -2139,7 +2139,11 @@ public class MainActivity extends Activity {
                     Item c = new Item("catchup", ch.id + "@" + t[0], ch.name + " · " + titles.get(i), "ts", ch.category);
                     c.url = catchupUrl(ch, t[0], t[1]);
                     c.catchupId = ch.id; c.catchupStart = t[0]; c.catchupEnd = t[1] > t[0] ? t[1] : t[0] + 3600;
-                    play(c, defaultVlc());
+                    // Same player choice as films, series and live channels.
+                    new AlertDialog.Builder(this).setTitle(c.name)
+                            .setItems(new String[]{"Play", "Play with VLC"},
+                                    (d, k) -> play(c, k == 1 || (k == 0 && defaultVlc())))
+                            .show();
                 });
                 pickDay.accept(0);
                 days.requestFocus();
