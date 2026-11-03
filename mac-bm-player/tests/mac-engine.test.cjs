@@ -44,8 +44,19 @@ test('engine sends only proxy addresses to the window and reports status', () =>
   expect(sent[0].src).not.toContain('dns.example');
   expect(sent[0].resume).toBe(30);
   e.report({ index: 0, position: 12, duration: 100, state: 3, seekable: true });
-  expect(e.status(0)).toEqual({ position: 12, duration: 100, state: 3, seekable: true });
+  expect(e.status(0)).toEqual({ position: 12, duration: 100, state: 3, seekable: true, subs: 0 });
   e.stop(0);
   expect(e.status(0)).toBe(null);
   expect(sent.at(-1).action).toBe('stop');
+});
+
+test('subtitle track count comes from the window report and on/off goes back to it', () => {
+  const sent = [];
+  const e = new MacEngine({ isDestroyed: () => false, webContents: { send: (_c, d) => sent.push(d) } });
+  e.play(0, 'http://dns.example/movie/u/p/1.mkv', {});
+  expect(e.subtitleTracks(0)).toBe(0);
+  e.report({ index: 0, position: 1, duration: 100, state: 3, seekable: true, subs: 2 });
+  expect(e.subtitleTracks(0)).toBe(2);
+  e.setSubtitles(0, false);
+  expect(sent.at(-1)).toEqual({ type: 'video', action: 'subtitles', index: 0, on: false });
 });
