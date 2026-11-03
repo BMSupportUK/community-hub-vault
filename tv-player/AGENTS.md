@@ -3,6 +3,7 @@
 - BM Player (Android TV/Fire TV/phone) talks to the website only through `/api/public/player` with its device token; logins arrive once via poll and live only in app storage.
 - Signed with the permanent BM key; bump versionCode/versionName and upload a new `bm-player/` build row so installs upgrade in place.
 - Same tile front screen on every device; "Play with VLC" hands off to org.videolan.vlc and falls back to the built-in Media3 player.
+- Built-in player controls never sit on the picture: PlayerActivity runs a once-a-second hideControls watch (InactivityPolicy.hideControls, 3.5s after the last press) because Media3's own timer never fires on live/buffering streams.
 - Home-row buttons never fold a name onto a second line: smallButton() forces a single line with text that shrinks (16sp to 10sp), and smallWeight() shares the row out in proportion to each label's measured width so "Recently watched" gets more room than "Settings".
 - Header search pills go through headerPill(), which gives each one side gaps so the three pills never sit flush against each other.
 - Sports guide comes from published website guides via the device-token `sports` action; channel matching rules live in src/lib/player-channel-match.ts and are mirrored in MainActivity (keep in step).
