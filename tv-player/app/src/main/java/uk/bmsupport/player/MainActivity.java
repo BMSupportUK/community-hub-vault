@@ -25,6 +25,9 @@ import android.widget.ArrayAdapter;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.text.InputType;
+import android.text.InputFilter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -62,6 +65,8 @@ public class MainActivity extends Activity {
     private String checkedLogin = "";
     private boolean excessReported;
     private volatile boolean maintenance;
+    // Account number must be entered on every cold open of the app.
+    private boolean unlocked;
     private boolean adultUnlocked;
     private String screen = "";
     private Runnable back;
@@ -511,8 +516,51 @@ public class MainActivity extends Activity {
 
     // ---------- home ----------
 
+    private void showUnlock() {
+        stopPreview(); stopMulti();
+        screen = "unlock"; back = null;
+        LinearLayout root = column();
+        root.setGravity(Gravity.CENTER);
+        root.addView(logo());
+        root.addView(text("Enter your account number", 30, TEXT, true));
+        root.addView(text("Your 6-digit account number is in the subscription box on bmsupport.uk.", 18, MUTED, false));
+        EditText in = new EditText(this);
+        in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(6) });
+        in.setTextSize(36); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
+        in.setLetterSpacing(0.3f); in.setHint("••••••"); in.setHintTextColor(MUTED);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(320), ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER_HORIZONTAL; in.setLayoutParams(lp);
+        root.addView(in);
+        TextView status = text("", 16, MUTED, false);
+        Button go = button("Unlock", v -> {
+            String n = in.getText().toString().trim();
+            if (!n.matches("\\d{6}")) { status.setText("Enter all 6 digits."); return; }
+            status.setText("Checking…");
+            io.execute(() -> {
+                try {
+                    Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "unlock")
+                            .put("device_token", prefs.getString("token", "")).put("account_number", n).toString());
+                    ui.post(() -> { unlocked = true; showHome(); });
+                } catch (Exception ex) {
+                    String m = String.valueOf(ex.getMessage()), msg = "Couldn't check. Check the internet and try again.";
+                    int i = m.indexOf('{');
+                    if (i >= 0) try { msg = new JSONObject(m.substring(i)).optString("error", msg); } catch (Exception ignored) {}
+                    final String shown = msg;
+                    ui.post(() -> { status.setText(shown); in.setText(""); });
+                }
+            });
+        });
+        in.setOnEditorActionListener((v, a, e) -> { go.performClick(); return true; });
+        root.addView(go);
+        root.addView(status);
+        setContentView(root);
+        in.requestFocus();
+    }
+
     private void showHome() {
         stopPreview(); stopMulti(); // never keep a channel playing behind the main menu
+        if (!unlocked) { showUnlock(); return; }
         screen = "home"; back = null; drawnVersion = appVersion();
         LinearLayout root = column();
         LinearLayout top = row();
