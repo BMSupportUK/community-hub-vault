@@ -113,21 +113,25 @@ public class GuideGridView extends View {
 
     @Override public boolean onKeyDown(int k, KeyEvent e) {
         switch (k) {
-            case KeyEvent.KEYCODE_DPAD_UP: if (selRow == 0) return false; moveRow(-1); return true;
-            case KeyEvent.KEYCODE_DPAD_DOWN: moveRow(1); return true;
+            case KeyEvent.KEYCODE_DPAD_UP: if (selRow == 0) return false; moveRow(-1); if (onClock && !hasCatchup(selRow)) onClock = false; return true;
+            case KeyEvent.KEYCODE_DPAD_DOWN: moveRow(1); if (onClock && !hasCatchup(selRow)) onClock = false; return true;
             case KeyEvent.KEYCODE_PAGE_UP: case KeyEvent.KEYCODE_CHANNEL_UP: moveRow(-visibleRows()); return true;
             case KeyEvent.KEYCODE_PAGE_DOWN: case KeyEvent.KEYCODE_CHANNEL_DOWN: moveRow(visibleRows()); return true;
-            case KeyEvent.KEYCODE_DPAD_RIGHT: moveTime(true); return true;
+            case KeyEvent.KEYCODE_DPAD_RIGHT: if (onClock) { onClock = false; invalidate(); return true; } moveTime(true); return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:
-                // Already at "now": the next press left lands on the channel's catch up clock.
-                if (selTime <= now() + 1 && windowStart <= minStart() && hasCatchup(selRow) && listener != null) { listener.onCatchup(selRow); return true; }
+                // Already at "now": the next press left only highlights the catch up clock; OK opens it.
+                if (onClock) return true;
+                if (selTime <= now() + 1 && windowStart <= minStart() && hasCatchup(selRow)) { onClock = true; invalidate(); return true; }
                 moveTime(false); return true;
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_NUMPAD_ENTER:
+                if (e.getRepeatCount() > 0) return true;
+                if (onClock && hasCatchup(selRow)) { if (listener != null) listener.onCatchup(selRow); return true; }
                 if (listener != null && !names.isEmpty()) listener.onPick(selRow, selected()); return true;
         }
         return super.onKeyDown(k, e);
     }
 
+    private boolean onClock;
     private boolean hasCatchup(int r) { return r >= 0 && r < catchup.size() && catchup.get(r); }
 
     @Override public boolean onTouchEvent(android.view.MotionEvent e) {
@@ -226,6 +230,7 @@ public class GuideGridView extends View {
             String label = (r + 1) + "  " + names.get(r);
             float clockW = hasCatchup(r) ? 26 * d : 0;
             c.drawText(TextUtils.ellipsize(label, txt, ch - 16 * d - clockW, TextUtils.TruncateAt.END).toString(), 8 * d, y + rh / 2 + 5 * d, txt);
+            if (clockW > 0 && selR && onClock) drawRing(c, new RectF(ch - clockW - 6 * d, y + 4 * d, ch - 2 * d, y + rh - 4 * d));
             if (clockW > 0) { txt.setTextSize(17 * d); c.drawText("🕘", ch - clockW - 2 * d, y + rh / 2 + 6 * d, txt); txt.setTextSize(15 * d); }
             txt.setFakeBoldText(false);
             List<Prog> l = progs.get(r);
