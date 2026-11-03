@@ -2446,10 +2446,12 @@ public class MainActivity extends Activity {
             String[] words = want.split(" ");
             for (int i = 0; i < ev.length() && hits.size() < 60; i++) {
                 JSONObject e = ev.optJSONObject(i); if (e == null) continue;
-                String hay = " " + normChannel(e.optString("title") + " " + e.optString("competition") + " " + e.optString("subcategory") + " " + e.optString("sport")) + " ";
-                boolean all = true;
-                for (String w : words) if (!hay.contains(" " + w)) { all = false; break; }
-                if (all) hits.add(e);
+                String hay = " " + normChannel(e.optString("title") + " " + e.optString("competition") + " " + e.optString("subcategory") + " " + e.optString("sport") + " " + sportsChannelText(e)) + " ";
+                hay = hay + expandTeamNicknames(hay);
+                int found = 0;
+                for (String w : words) if (hay.contains(" " + w)) found++;
+                // Every word for short searches; longer spoken searches may miss one word ("the Chelsea game tonight").
+                if (found == words.length || (words.length >= 3 && found >= words.length - 1)) hits.add(e);
             }
         }
         if (hits.isEmpty()) {
@@ -2465,12 +2467,32 @@ public class MainActivity extends Activity {
         String[] labels = new String[hits.size()];
         for (int i = 0; i < labels.length; i++) {
             JSONObject e = hits.get(i); long st = e.optLong("start");
-            labels[i] = (st <= now ? "🔴 LIVE NOW  " : day.format(new java.util.Date(st)) + "  " + clock(st / 1000) + "  ") + e.optString("title") + "\n      " + e.optString("competition");
+            labels[i] = (st <= now ? "🔴 LIVE NOW  " : day.format(new java.util.Date(st)) + "  " + clock(st / 1000) + "  ") + e.optString("title") + "\n      " + e.optString("competition")
+                    + (sportsChannelText(e).isEmpty() ? "" : "\n      📺 " + sportsChannelText(e).trim().replace("  ", ", "));
         }
         new AlertDialog.Builder(this).setTitle(hits.size() + (hits.size() == 1 ? " event" : " events") + " for \"" + spoken + "\"")
                 .setItems(labels, (d, i) -> pickSportsChannel(hits.get(i), aliases, false))
                 .setPositiveButton("🎤 Search again", (d, w) -> startVoice("sports"))
                 .setNegativeButton("Browse", null).show();
+    }
+    /** The event's TV channels, two spaces apart (shown in search results and searched too). */
+    private static String sportsChannelText(JSONObject e) {
+        JSONArray ch = e.optJSONArray("channels"); if (ch == null) return "";
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < ch.length(); i++) { String c = ch.optString(i, "").trim(); if (!c.isEmpty()) b.append(b.length() > 0 ? "  " : "").append(c); }
+        return b.toString();
+    }
+    /** Short names people say for clubs, so "man utd" or "spurs" still finds the fixture. */
+    private static final String[][] TEAM_NICKNAMES = {
+            {"manchester united", "man utd united man u"}, {"manchester city", "man city city"}, {"tottenham", "spurs"},
+            {"wolverhampton", "wolves"}, {"newcastle", "toon magpies"}, {"middlesbrough", "boro"}, {"arsenal", "gunners"},
+            {"west ham", "hammers"}, {"nottingham forest", "forest"}, {"brighton", "seagulls"}, {"sheffield wednesday", "wednesday owls"},
+            {"sheffield united", "blades"}, {"queens park rangers", "qpr"}, {"west bromwich", "west brom baggies"}, {"paris saint germain", "psg"},
+            {"bayern", "bayern munich"}, {"inter milan", "inter"}, {"internazionale", "inter"}, {"atletico", "atleti"}};
+    private static String expandTeamNicknames(String hay) {
+        StringBuilder b = new StringBuilder(" ");
+        for (String[] n : TEAM_NICKNAMES) if (hay.contains(" " + n[0])) b.append(n[1]).append(' ');
+        return b.toString();
     }
     private void stopSports() { if (sportsTask != null) ui.removeCallbacks(sportsTask); sportsTask = null; }
 
