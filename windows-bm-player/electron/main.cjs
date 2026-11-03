@@ -1,4 +1,7 @@
-const {app,BrowserWindow,ipcMain,safeStorage,shell,dialog,powerSaveBlocker}=require('electron');
+const {app,BrowserWindow,ipcMain,safeStorage,shell,dialog,powerSaveBlocker,powerMonitor,protocol}=require('electron');
+const MAC=process.platform==='darwin';
+const PLATFORM=MAC?{id:'mac',name:'Mac',device:'Mac BM Player'}:{id:'windows',name:'Windows',device:PLATFORM.device};
+if(MAC)require('./mac-engine.cjs').registerScheme(protocol);
 const fs=require('node:fs');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
@@ -6,20 +9,20 @@ const {execFile}=require('node:child_process');
 const core=require('../core.cjs');
 const gate=require('../account-gate.cjs').createAccountGate();
 const {surfaceRows}=require('../playback-core.cjs');
-const {EmbeddedVlc}=require('./embedded-vlc.cjs');
+function createEngine(w){if(MAC){const {MacEngine}=require('./mac-engine.cjs');return new MacEngine(w,()=>store.settings?.userAgent);}const {EmbeddedVlc}=require('./embedded-vlc.cjs');return new EmbeddedVlc(w);}
 const SITE='https://bmsupport.uk';
 let win,store={},file,lastInput=Date.now(),promptedAt=0,excessSince=0,excessReported=false,linkCode='',maintenance=null;
 let sessions=[],awake=null,pollBusy=false,checkBusy=false,engine=null;
 let lastSystemIdle=0,refreshPromise=null;
 const page=path.join(__dirname,'../dist/index.html');
 const cache=new Map(),pending=new Map();
-function save(){ if(!safeStorage.isEncryptionAvailable())throw new Error('Windows credential protection unavailable.'); fs.writeFileSync(file,safeStorage.encryptString(JSON.stringify(store))); }
+function save(){ if(!safeStorage.isEncryptionAvailable())throw new Error(PLATFORM.name+' credential protection unavailable.'); fs.writeFileSync(file,safeStorage.encryptString(JSON.stringify(store))); }
 function send(data){ if(win&&!win.isDestroyed())win.webContents.send('player:event',data); }
 function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,item.id);}
 function publicState(){
  const a=store.account||{};
  const expiry=Number(a.exp_date)*1000;
- return {version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,
+ return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,
   expired:String(a.status||'').toLowerCase()==='expired'||(expiry>0&&expiry<Date.now()),expiry:expiry>0?expiry:null,status:a.status||'',
   maxConnections:Number(a.max_connections)||1,settings:gate.unlocked?store.settings||{}:{},favourites:gate.unlocked?store.favourites||[]:[],recent:gate.unlocked?store.recent||[]:[],
   progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
@@ -30,7 +33,7 @@ async function site(body){
  if(!response.ok){if(response.status===401&&body.action!=='unlock'){gate.lock();store.token=null;store.user=null;store.pass=null;save();}throw new Error(data.error||'BM Support request failed.');}
  return data;
 }
-async function getCode(){if(!store.token){const r=await site({action:'register',platform:'windows',name:'BM Player Windows'});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
+async function getCode(){if(!store.token){const r=await site({action:'register',platform:PLATFORM.id,name:'BM Player '+PLATFORM.name});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
 async function poll(){
  if(pollBusy||!store.token)return;pollBusy=true;
  try{
@@ -96,10 +99,10 @@ async function play({item,resume=false,screens=1}){
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
  if(screens===1||sessions.length>=screens)await stopAll();
  const urls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto');
- if(!engine)engine=new EmbeddedVlc(win);
+ if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
  try{engine.play(index,urls[0],{buffer:store.settings?.buffer,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
- catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the Windows installer and try again.');}
+ catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}
  const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
@@ -121,6 +124,7 @@ async function connectionCheck(){
 async function foreground(){if(!win||win.isDestroyed())return;if(win.isMinimized())win.restore();win.show();win.focus();}
 // Includes input while VLC has focus; avoids treating active remote/keyboard use as inactivity.
 function systemInput(){
+ if(MAC){const idle=powerMonitor.getSystemIdleTime()*1000;if(idle<lastSystemIdle||idle<30000)lastInput=Date.now()-idle;lastSystemIdle=idle;return;}
  if(process.platform!=='win32'||promptedAt)return;
  const code='Add-Type -TypeDefinition \'using System; using System.Runtime.InteropServices; public static class BMIdle { [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint cbSize; public uint dwTime; } [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO x); public static uint Milliseconds() { LASTINPUTINFO x = new LASTINPUTINFO(); x.cbSize = (uint)Marshal.SizeOf(x); return GetLastInputInfo(ref x) ? unchecked((uint)Environment.TickCount - x.dwTime) : uint.MaxValue; }}\'; [BMIdle]::Milliseconds()';
  execFile('powershell.exe',['-NoProfile','-NonInteractive','-Command',code],{windowsHide:true,timeout:10000},(err,out)=>{const idle=Number(out.trim());if(!err&&Number.isFinite(idle)){if(idle<lastSystemIdle||idle<30000)lastInput=Date.now()-idle;lastSystemIdle=idle;}});
@@ -141,7 +145,7 @@ else{
   file=path.join(app.getPath('userData'),'player-encrypted.bin');
   if(fs.existsSync(file)){try{store=JSON.parse(safeStorage.decryptString(fs.readFileSync(file)));}catch{store={};}}
   store.recent=(store.recent||[]).filter(i=>!core.adult(i.categoryName));
-  win=new BrowserWindow({title:'BM Player · Windows',show:false,width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,icon:path.join(__dirname,'../build.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
+  win=new BrowserWindow({title:'BM Player · '+PLATFORM.name,show:false,width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,...(MAC?{}:{icon:path.join(__dirname,'../build.ico')}),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
   win.once('ready-to-show',()=>{win.maximize();win.show();});
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
@@ -149,6 +153,8 @@ else{
   register('unlock',async number=>{await gate.unlock(number,site);send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
   register('play',play);register('stop',stopAll);
+  if(MAC)require('./mac-engine.cjs').handleProtocol(protocol);
+  ipcMain.handle('player:videoStatus',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.report?.(value);return true;});
   ipcMain.handle('player:surface',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.layout(surfaceRows(value));return true;});
   register('control',value=>{
    const index=Number(value?.index),session=sessions.find(s=>s.index===index);if(!session||!engine)return false;
@@ -165,7 +171,7 @@ else{
    return publicState();
   });
   register('favourite',item=>{store.favourites=store.favourites||[];const at=store.favourites.findIndex(i=>i.id===item.id&&i.kind===item.kind);if(at<0)store.favourites.push(item);else store.favourites.splice(at,1);save();return publicState();});
-  register('report',v=>site({action:'report',kind:v.item.kind==='episode'?'series':v.item.kind,title:v.item.name,category:v.item.categoryName,episode:v.item.kind==='episode'?v.item.name:undefined,issue:String(v.issue||'').slice(0,1000),device:'Windows BM Player',version:app.getVersion()}));
+  register('report',v=>site({action:'report',kind:v.item.kind==='episode'?'series':v.item.kind,title:v.item.name,category:v.item.categoryName,episode:v.item.kind==='episode'?v.item.name:undefined,issue:String(v.issue||'').slice(0,1000),device:PLATFORM.device,version:app.getVersion()}));
   register('reminder',value=>{store.reminders=store.reminders||[];if(value.remove)store.reminders=store.reminders.filter(r=>r.id!==value.id);else{if(value.start<=Date.now())throw new Error('Reminders are only for programmes that have not started.');store.reminders.push({...value,id:String(value.item.id)+':'+value.start,notified:false});}save();return publicState();});
   register('continue',()=>{lastInput=Date.now();promptedAt=0;send({type:'inactive',seconds:0});return true;});register('exit',async()=>{await stopAll();app.quit();});
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));
@@ -174,6 +180,7 @@ else{
   if(!store.user)getCode().catch(e=>send({type:'notice',message:e.message}));else{poll();}
   setInterval(poll,store.user?60000:5000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
  });
+ app.on('activate',foreground);
  app.on('window-all-closed',async()=>{await stopAll();app.quit();});
  app.on('before-quit',()=>{for(const session of sessions){const status=engine?.status(session.index);if(status)Object.assign(session,status);persistProgress(session);}engine?.close();engine=null;});
 }

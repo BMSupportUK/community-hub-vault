@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
 
-const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC" };
+const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC", mac: "Mac" };
 
 export function PlayerDeviceLinkSection() {
   const sendCode = useServerFn(sendLoginWithCode);
@@ -121,7 +121,7 @@ export function PlayerDeviceLinkSection() {
             </span> : null}
           </div>
           {devices.length ? <ul className="mt-3 space-y-3">{devices.map((d) => <li key={d.id} className="flex items-center gap-3 rounded-md border border-border p-3">
-            {d.platform === "windows" ? <Laptop className="size-5 text-primary" /> : <Tv className="size-5 text-primary" />}
+            {d.platform === "windows" || d.platform === "mac" ? <Laptop className="size-5 text-primary" /> : <Tv className="size-5 text-primary" />}
             <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{d.name}</div>
               <div className="text-xs text-muted-foreground">{platformLabel[d.platform] ?? d.platform}</div></div>
             <Button size="sm" onClick={() => setTarget(d)}>Send</Button>
