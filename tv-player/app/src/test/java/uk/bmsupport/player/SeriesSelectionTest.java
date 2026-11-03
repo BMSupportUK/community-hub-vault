@@ -49,11 +49,17 @@ public class SeriesSelectionTest {
         assertFalse(pills.getChildAt(0).isSelected());
         second.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_DOWN));
         assertTrue("Down enters episodes", episodes.hasFocus());
-        episodes.setSelection(1);
+        root.measure(View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY));
         root.layout(0, 0, 1920, 1080);
+        android.widget.ListAdapter adapter = episodes.getAdapter();
         second.requestFocus(); second.performClick();
-        assertEquals("Same season keeps selected episode", 1, episodes.getSelectedItemPosition());
-        episodes.requestFocus();
+        assertSame("Same season must not reload its episodes", adapter, episodes.getAdapter());
+        episodes.requestFocus(); episodes.setSelection(1);
+        root.measure(View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY));
+        root.layout(0, 0, 1920, 1080);
+        assertEquals(1, episodes.getSelectedItemPosition());
         final String[] played = {null};
         episodes.setOnItemClickListener((p, v, pos, id) -> played[0] = ((MainActivity.Item) episodes.getItemAtPosition(pos)).id);
         episodes.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER));
