@@ -92,7 +92,7 @@ async function stopAll(){
  if(awake!==null){powerSaveBlocker.stop(awake);awake=null;}
  send({type:'state',state:publicState()});
 }
-async function play({item,resume=false,screens=1}){
+async function play({item,resume=false,screens=1,subtitles=null}){
  if(item?.kind==='catchup'&&!(Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start&&item.end<=Date.now()))throw new Error('Choose a programme that has finished.');
  if(!item||!['live','film','episode','catchup'].includes(item.kind)||String(item.id).length>80)throw new Error('Choose a playable item.');
  if(maintenance)throw new Error(maintenance);
@@ -103,7 +103,7 @@ async function play({item,resume=false,screens=1}){
  const urls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto');
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
- try{engine.play(index,urls[0],{buffer:store.settings?.buffer,live:item.kind!=='catchup',resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
+ try{engine.play(index,urls[0],{buffer:store.settings?.buffer,live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles===true:null,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
  catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}
  const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');

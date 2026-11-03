@@ -1107,6 +1107,16 @@ public class MainActivity extends Activity {
     }
 
     private void startPlayback(Item it, boolean vlc, long position) {
+        if (WatchProgress.eligible(it.kind)) {
+            // Films and episodes always ask about subtitles before playback starts.
+            new AlertDialog.Builder(this).setTitle("Subtitles?").setMessage(it.name + "\n\nDo you want subtitles on?")
+                    .setPositiveButton("Subtitles off", (d, w) -> beginPlayback(it, vlc, position, false))
+                    .setNegativeButton("Subtitles on", (d, w) -> beginPlayback(it, vlc, position, true))
+                    .setNeutralButton("Cancel", null).show();
+        } else beginPlayback(it, vlc, position, false);
+    }
+
+    private void beginPlayback(Item it, boolean vlc, long position, boolean subtitles) {
         // Adult-category items are never kept in recently watched, for safety.
         if (!isAdultCategory(it.category) && !"catchup".equals(it.kind)) remember("recent", it);
         String url = streamUrl(it);
@@ -1116,13 +1126,14 @@ public class MainActivity extends Activity {
             i.putExtra("title", it.name);
             i.putExtra("position", position);
             i.putExtra("from_start", position <= 0);
+            if (WatchProgress.eligible(it.kind)) i.putExtra("subtitles_enabled", subtitles);
             vlcKey = WatchProgress.eligible(it.kind) ? watchKey(it.kind, it.id) : null;
             vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
             try { startActivityForResult(i, VLC_REQUEST); }
             catch (Exception e) {
                 new AlertDialog.Builder(this).setTitle("VLC isn't installed")
                         .setMessage("Install VLC from your app store (or Downloader) to use it as the player. Playing in BM Player instead.")
-                        .setPositiveButton("OK", (d, w) -> startPlayback(it, false, position)).show();
+                        .setPositiveButton("OK", (d, w) -> beginPlayback(it, false, position, subtitles)).show();
             }
             return;
         }
@@ -1134,6 +1145,7 @@ public class MainActivity extends Activity {
                     .putExtra("catchup_tz", prefs.getString("server_tz", "Europe/London"));
         }
         if (WatchProgress.eligible(it.kind)) {
+            intent.putExtra("subtitles", subtitles ? 1 : 0);
             intent.putExtra("progress_key", watchKey(it.kind, it.id)).putExtra("resume_ms", position);
             if (!it.seriesId.isEmpty()) intent.putExtra("series_key", watchKey("series", it.seriesId));
         }

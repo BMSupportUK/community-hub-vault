@@ -24,6 +24,10 @@ function start(index) {
   if (cmd.kind === 'hls' && Hls.isSupported()) {
     const hls = new Hls({ enableWorker: false, maxBufferLength: Math.max(10, seconds * 3) });
     hls.on(Hls.Events.ERROR, (_e, d) => { if (d.fatal) fail(); });
+    if (cmd.subtitles != null) {
+      hls.subtitleDisplay = cmd.subtitles === true;
+      hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, () => { hls.subtitleTrack = cmd.subtitles && hls.subtitleTracks.length ? 0 : -1; });
+    }
     hls.loadSource(cmd.src); hls.attachMedia(video); players.set(index, hls);
   } else if (cmd.kind === 'ts' && mpegts.isSupported()) {
     // Catch up recordings are finite: play them as files so the length and seek bar work.
@@ -33,6 +37,11 @@ function start(index) {
     p.attachMediaElement(video); p.load(); players.set(index, p);
   } else {
     video.src = cmd.src;
+  }
+  if (cmd.subtitles != null) {
+    // Subtitles on shows the first text track; off hides every track.
+    const setText = () => { const t = [...video.textTracks]; t.forEach((x, i) => { x.mode = cmd.subtitles && i === 0 ? 'showing' : 'disabled'; }); };
+    video.textTracks.addEventListener?.('addtrack', setText); video.addEventListener('loadedmetadata', setText, { once: true });
   }
   if (cmd.resume > 0) video.addEventListener('loadedmetadata', () => { try { video.currentTime = cmd.resume; } catch {} }, { once: true });
   video.play().catch(() => {});

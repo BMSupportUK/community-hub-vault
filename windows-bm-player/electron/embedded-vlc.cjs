@@ -33,13 +33,15 @@ class EmbeddedVlc {
   this.api.video_set_mouse_input(player,0);this.api.video_set_key_input(player,0);
   const s={hwnd,player};this.surfaces.set(index,s);return s;
  }
- play(index,url,{buffer=3000,resume=0}={}){
+ play(index,url,{buffer=3000,resume=0,subtitles=null}={}){
   const s=this.surface(index);this.api.media_player_stop(s.player);
   const media=this.api.media_new_location(this.instance,url);
   if(!media)throw new Error('This stream could not be opened.');
   try{
    this.api.media_add_option(media,':network-caching='+Math.max(500,Math.min(15000,Number(buffer)||3000)));
    this.api.media_add_option(media,':http-user-agent=VLC/3.0.21 LibVLC/3.0.21');
+   if(subtitles===false)this.api.media_add_option(media,':no-spu');
+   if(subtitles===true)this.api.media_add_option(media,':sub-track=0');
    if(resume>0)this.api.media_add_option(media,':start-time='+Math.floor(resume));
    this.api.media_player_set_media(s.player,media);
   }finally{this.api.media_release(media);}
