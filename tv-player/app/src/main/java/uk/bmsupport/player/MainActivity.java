@@ -1101,7 +1101,7 @@ public class MainActivity extends Activity {
 
     private void startPlayback(Item it, boolean vlc, long position) {
         // Adult-category items are never kept in recently watched, for safety.
-        if (!isAdultCategory(it.category)) remember("recent", it);
+        if (!isAdultCategory(it.category) && !"catchup".equals(it.kind)) remember("recent", it);
         String url = streamUrl(it);
         setNowPlaying(it, vlc);
         if (vlc) {
