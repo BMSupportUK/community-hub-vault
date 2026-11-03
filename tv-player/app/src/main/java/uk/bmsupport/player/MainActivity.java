@@ -757,17 +757,12 @@ public class MainActivity extends Activity {
                 if (side.getHeight() > 0) h = Math.min(h, side.getHeight() * 2 / 5);
                 if (h > 0 && Math.abs(v.getHeight() - h) > 2) { ViewGroup.LayoutParams lp = v.getLayoutParams(); lp.height = h; v.post(() -> v.setLayoutParams(lp)); }
             });
-            pvStatus = text("Highlight a channel to preview it", 14, MUTED, false);
+            pvStatus = text("Highlight a channel to preview it · press OK twice for full screen", 14, MUTED, false);
             side.addView(pvStatus);
-            Button full = smallButton("⛶ Full screen", v -> {
-                Item cur = previewItem;
-                if (cur == null) { Toast.makeText(this, "Highlight a channel first", Toast.LENGTH_SHORT).show(); return; }
-                stopPreview(); play(cur, defaultVlc());
-            });
-            full.setContentDescription("Watch the preview channel full screen");
-            side.addView(full, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             pv.setClickable(true);
-            pv.setOnClickListener(v -> full.performClick());
+            pv.setContentDescription("Channel preview · press OK twice to open full screen");
+            pv.setOnClickListener(v -> previewDoubleTap());
+
             pvEpg = text("", 14, TEXT, false);
             pvEpg.setPadding(dp(12), dp(10), dp(12), dp(10));
             pvEpg.setSingleLine(false);
