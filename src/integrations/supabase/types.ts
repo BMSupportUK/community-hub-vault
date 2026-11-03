@@ -1859,6 +1859,21 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_numbers_retired: {
+        Row: {
+          number: number
+          retired_at: string
+        }
+        Insert: {
+          number: number
+          retired_at?: string
+        }
+        Update: {
+          number?: number
+          retired_at?: string
+        }
+        Relationships: []
+      }
       customer_package_allocations: {
         Row: {
           allocated_at: string
@@ -8944,6 +8959,7 @@ export type Database = {
         Args: { _nameplate_id: string }
         Returns: boolean
       }
+      customer_number_is_weak: { Args: { n: number }; Returns: boolean }
       decide_cover_request: {
         Args: { _approve: boolean; _id: string }
         Returns: string
