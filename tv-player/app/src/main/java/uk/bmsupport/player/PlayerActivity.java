@@ -57,7 +57,7 @@ public class PlayerActivity extends Activity {
      */
     private final Runnable hideControls = new Runnable() {
         @Override public void run() {
-            if (view != null && view.isControllerVisible()
+            if (view != null && view.isControllerFullyVisible()
                     && InactivityPolicy.hideControls(lastPressAt, android.os.SystemClock.elapsedRealtime())) {
                 view.hideController();
             }
@@ -217,7 +217,6 @@ public class PlayerActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         view = new PlayerView(this);
         view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
-        view.setControllerAutoHide(true);
         root.addView(view);
         TextView banner = new TextView(this);
         banner.setText("Non 4K Device");
