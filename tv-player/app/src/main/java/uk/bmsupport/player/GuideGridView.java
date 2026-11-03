@@ -131,7 +131,9 @@ public class GuideGridView extends View {
     private boolean hasCatchup(int r) { return r >= 0 && r < catchup.size() && catchup.get(r); }
 
     @Override public boolean onTouchEvent(android.view.MotionEvent e) {
-        if (e.getAction() == android.view.MotionEvent.ACTION_UP && e.getX() < chW() && e.getY() > headH()) {
+        // Claim the press on the channel column; without this Android never delivers the lift (ACTION_UP).
+        if (e.getActionMasked() == android.view.MotionEvent.ACTION_DOWN && e.getX() < chW() && e.getY() > headH()) return true;
+        if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP && e.getX() < chW() && e.getY() > headH()) {
             int r = topRow + (int) ((e.getY() - headH()) / rowH());
             if (r < names.size()) {
                 selRow = r; invalidate(); changed();
