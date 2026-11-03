@@ -3014,6 +3014,11 @@ public class MainActivity extends Activity {
         b.setPadding(dp(16), dp(12), dp(16), dp(12));
         b.setFocusable(true);
         b.setOnClickListener(l);
+        // Every button keeps a gap around it, so pills in a row never sit flush together.
+        LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        gap.setMargins(dp(6), dp(4), dp(6), dp(4));
+        b.setLayoutParams(gap);
         return b;
     }
 
