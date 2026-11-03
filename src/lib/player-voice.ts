@@ -10,7 +10,7 @@ export function voiceAllowed(deviceId: string, now = Date.now()) {
   return true;
 }
 
-export async function transcribeVoice(bytes: Uint8Array, mime: string, apiKey: string) {
+export async function transcribeVoice(bytes: Uint8Array<ArrayBuffer>, mime: string, apiKey: string) {
   const form = new FormData();
   form.append("model", "openai/gpt-transcribe");
   form.append("file", new File([bytes], mime.includes("wav") ? "voice.wav" : "voice.webm", { type: mime }));
