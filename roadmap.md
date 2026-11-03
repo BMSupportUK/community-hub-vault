@@ -66,3 +66,4 @@
 - [x] Windows test app with bundled VLC (full device parity and real Windows checks remain above)
 - [x] Downloads in Install Guides (BM Player listed as a TV-installable app)
 - [x] Films and Series default sort is Recently added (latest uploads first); signed 2.12 uploaded and the app update download verified (TV-side sorting not tested on a real box)
+- [x] Make the Install Guides iOS card compact like the BM Player | Windows card; pop-up QR and App Information still open
