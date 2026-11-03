@@ -75,3 +75,8 @@
 - [x] Move the TV guide category list into a panel that slides in from the left edge (sideDrawer + show/hidePanel, Back and scrim close it); 5 layout tests pass, signed 2.65 released and download verified byte-for-byte. Real TV eyeball check remains blocked: no attached device.
 - [x] Stop the built-in player's on-screen controls sitting on the picture (PlayerActivity once-a-second hideControls watch, 3.5s after the last press; Media3's own timer never fires on live/buffering streams); 6 policy checks and 5 layout tests pass, signed 2.66 released and download verified byte-for-byte. Real Fire TV eyeball check remains blocked: no attached device.
 - [x] Make the Windows installer close BM Player before copying files (nsExec taskkill in installer.nsi, so a running/background BM Player no longer locks its DLLs and every file fails with "Error opening file for writing"); installer 0.2.7 built, uploaded, registered and download verified byte-for-byte against the local build. Real Windows install/run check remains blocked: no Windows runtime here.
+- [ ] Windows installer must close a running BM Player reliably (user reported it didn't)
+- [ ] Windows/Mac: computer-mic voice search for Live TV, Movies, Series and Sports guide
+- [ ] Windows/Mac: show last playlist refresh date/time under Refresh
+- [ ] Windows/Mac: subtitles work like Android (play first, ask to keep/turn off only when the film has them)
+- [ ] Mac: release Full screen-from-preview build

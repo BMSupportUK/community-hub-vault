@@ -40,6 +40,11 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({
+    action: z.literal("voice"), device_token: Token,
+    mime: z.enum(["audio/wav", "audio/webm"]),
+    audio: z.string().min(100).max(1_700_000).regex(/^[A-Za-z0-9+/=]+$/),
+  }),
+  z.object({
     action: z.literal("connection_alert"), device_token: Token,
     active: z.number().int().min(0).max(100),
     max: z.number().int().min(1).max(100),
@@ -117,6 +122,20 @@ export const Route = createFileRoute("/api/public/player")({
             unlock_locked_until: locked ? new Date(Date.now() + 15 * 60_000).toISOString() : null,
           }).eq("id", device.id);
           return json({ error: locked ? "Too many wrong tries. Please wait 15 minutes and try again." : "That account number isn't right. You can find it in your subscription box on bmsupport.uk." }, locked ? 429 : 401);
+        }
+
+        if (body.action === "voice") {
+          if (!device.user_id && !device.offsite_customer_id) return json({ error: "Link this app to your BM Support account first." }, 403);
+          const { voiceAllowed, transcribeVoice, VOICE_MAX_BYTES } = await import("@/lib/player-voice");
+          if (!voiceAllowed(device.id)) return json({ error: "Too many voice searches. Wait a moment and try again." }, 429);
+          const bytes = Uint8Array.from(atob(body.audio), (c) => c.charCodeAt(0));
+          if (bytes.length < 2048 || bytes.length > VOICE_MAX_BYTES) return json({ error: "That recording was too short or too long. Try again." }, 400);
+          const key = process.env.LOVABLE_API_KEY;
+          if (!key) return json({ error: "Voice search isn't set up yet." }, 503);
+          const r = await transcribeVoice(bytes, body.mime, key);
+          if (!r.ok) return json({ error: r.status === 429 ? "Voice search is busy. Try again in a moment." : "Voice search isn't available right now." }, r.status === 429 ? 429 : 503);
+          if (!r.text) return json({ error: "Didn't catch that. Try again and speak clearly." }, 422);
+          return json({ text: r.text });
         }
 
         if (body.action === "report") {
