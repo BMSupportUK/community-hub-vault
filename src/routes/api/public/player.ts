@@ -37,6 +37,7 @@ const Body = z.discriminatedUnion("action", [
     }).nullish(),
   }),
   z.object({ action: z.literal("unlink"), device_token: Token }),
+  z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({
     action: z.literal("connection_alert"), device_token: Token,
@@ -95,6 +96,25 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "unlink") {
           await supabaseAdmin.from("player_devices").delete().eq("id", device.id);
           return json({ ok: true });
+        }
+
+        if (body.action === "unlock") {
+          if (!device.user_id) return json({ error: "Link this app to your BM Support account first." }, 403);
+          const { data: lock } = await supabaseAdmin.from("player_devices").select("unlock_failures, unlock_locked_until").eq("id", device.id).single();
+          if (lock?.unlock_locked_until && new Date(lock.unlock_locked_until).getTime() > Date.now())
+            return json({ error: "Too many wrong tries. Please wait 15 minutes and try again." }, 429);
+          const { data: cn } = await supabaseAdmin.from("customer_numbers").select("number").eq("user_id", device.user_id).maybeSingle();
+          if (cn && String(cn.number) === body.account_number) {
+            await supabaseAdmin.from("player_devices").update({ unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
+            return json({ ok: true });
+          }
+          const fails = (lock?.unlock_failures ?? 0) + 1;
+          const locked = fails >= 5;
+          await supabaseAdmin.from("player_devices").update({
+            unlock_failures: locked ? 0 : fails,
+            unlock_locked_until: locked ? new Date(Date.now() + 15 * 60_000).toISOString() : null,
+          }).eq("id", device.id);
+          return json({ error: locked ? "Too many wrong tries. Please wait 15 minutes and try again." : "That account number isn't right. You can find it in your subscription box on bmsupport.uk." }, locked ? 429 : 401);
         }
 
         if (body.action === "report") {
