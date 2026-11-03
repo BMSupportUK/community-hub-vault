@@ -1327,19 +1327,42 @@ public class MainActivity extends Activity {
             for (Item it : list) clean.put(it.toJson());
             prefs.edit().putString(key, clean.toString()).apply();
         }
-        if (list.isEmpty()) root.addView(text("Nothing here yet.", 18, MUTED, false));
+        // Tabs split the saved list into Live TV, Movies and Series (episodes count as Series).
+        final String tab = savedTab.containsKey(key) ? savedTab.get(key) : "live";
+        LinearLayout tabs = new LinearLayout(this);
+        tabs.setOrientation(LinearLayout.HORIZONTAL);
+        String[][] tabDefs = {{"live", "📺 Live TV"}, {"film", "🎬 Movies"}, {"series", "🎞 Series"}};
+        Button activeTab = null;
+        for (String[] t : tabDefs) {
+            int count = 0;
+            for (Item it : list) if (savedKind(it).equals(t[0])) count++;
+            final String id = t[0];
+            Button b = button((id.equals(tab) ? "● " : "") + t[1] + " (" + count + ")", v -> { savedTab.put(key, id); showSaved(key, title); });
+            if (id.equals(tab)) activeTab = b;
+            tabs.addView(b, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+        root.addView(tabs);
+        List<Item> all = list;
+        list = new ArrayList<>();
+        for (Item it : all) if (savedKind(it).equals(tab)) list.add(it);
+        final List<Item> shown = list;
+        if (shown.isEmpty()) root.addView(text("Nothing here yet.", 18, MUTED, false));
         ListView lv = list();
-        lv.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list) {
+        lv.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, shown) {
             @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
         });
         lv.setOnItemClickListener((p, v, pos, id) -> {
-            Item it = list.get(pos);
+            Item it = shown.get(pos);
             if (it.kind.equals("episode")) play(it, defaultVlc()); else open(it);
         });
         root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
-        lv.requestFocus();
+        if (shown.isEmpty() && activeTab != null) activeTab.requestFocus(); else lv.requestFocus();
     }
+
+    private final java.util.Map<String, String> savedTab = new java.util.HashMap<>();
+
+    private static String savedKind(Item it) { return it.kind.equals("live") ? "live" : it.kind.equals("film") ? "film" : "series"; }
 
     // ---------- report a problem ----------
 
@@ -2488,7 +2511,7 @@ public class MainActivity extends Activity {
             JSONArray ch = e.optJSONArray("channels");
             int n = ch == null ? 0 : ch.length();
             rows.add((start <= now ? "🔴 LIVE NOW  " : day.format(new java.util.Date(start)) + "  " + clock(start / 1000) + "  ") + e.optString("title")
-                    + "\n      📺 " + n + (n == 1 ? " channel" : " channels") + " – press OK to pick one");
+                    + "\n      📺 " + n + (n == 1 ? " channel" : " channels") + " – press OK to pick one" + "\n");
             targets.add(e);
         }
         if (targets.isEmpty() || (targets.size() == 1 && !sportsPath.isEmpty())) { rows.add("No upcoming events here right now"); targets.add(null); }
