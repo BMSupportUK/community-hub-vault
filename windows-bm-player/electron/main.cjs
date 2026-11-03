@@ -2,13 +2,14 @@ const {app,BrowserWindow,ipcMain,safeStorage,shell,dialog,powerSaveBlocker}=requ
 const fs=require('node:fs');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
-const {spawn}=require('node:child_process');
+const {spawn,execFile}=require('node:child_process');
 const crypto=require('node:crypto');
 const net=require('node:net');
 const core=require('../core.cjs');
 const SITE='https://bmsupport.uk';
 let win,store={},file,lastInput=Date.now(),promptedAt=0,excessSince=0,excessReported=false,linkCode='',maintenance=null;
 let sessions=[],awake=null,pollBusy=false,checkBusy=false;
+let lastSystemIdle=0,refreshPromise=null;
 const page=path.join(__dirname,'../dist/index.html');
 const cache=new Map(),pending=new Map();
 function save(){ if(!safeStorage.isEncryptionAvailable())throw new Error('Windows credential protection unavailable.'); fs.writeFileSync(file,safeStorage.encryptString(JSON.stringify(store))); }
@@ -66,6 +67,10 @@ async function catalogue(kind){
  })();pending.set(kind,task);try{return await task;}finally{pending.delete(kind);}
 }
 async function refresh(){
+ if(refreshPromise)return refreshPromise;
+ refreshPromise=refreshInner();try{return await refreshPromise;}finally{refreshPromise=null;}
+}
+async function refreshInner(){
  const kinds=['live','film','series'];let step=0;
  for(const kind of kinds){send({type:'progress',message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*100)});cache.delete(kind);await catalogue(kind);step++;}
  send({type:'progress',message:'Playlists updated',percent:100});send({type:'catalogues'});return true;
@@ -102,14 +107,16 @@ async function play({item,resume=false,screens=1}){
  const watched=store.progress?.[key(item)];if(resume&&watched&&core.resume(watched.position,watched.duration))args.push('--start-time='+Math.floor(watched.position));
  args.push(urls[0]);
  const child=spawn(executable,args,{windowsHide:false,stdio:'ignore'});
- const session={child,item,port,password,position:0,duration:0,since:Date.now(),closing:false};sessions.push(session);
+ const session={child,item,port,password,position:0,duration:0,since:Date.now(),closing:false,urls,urlIndex:0};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  child.on('error',()=>send({type:'notice',message:'The bundled Windows VLC could not start. Extract the whole ZIP before opening BM Player.'}));
  child.on('exit',()=>{persistProgress(session);sessions=sessions.filter(s=>s!==session);if(!sessions.length&&awake!==null){powerSaveBlocker.stop(awake);awake=null;}send({type:'state',state:publicState()});poll();});
  if(!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
  lastInput=Date.now();promptedAt=0;poll();send({type:'state',state:publicState()});return true;
 }
-async function updatePlayback(){for(const session of [...sessions]){try{const s=await vlcRequest(session);session.position=s.time||0;session.duration=s.length||0;persistProgress(session);send({type:'playback',item:session.item,position:session.position,duration:session.duration});}catch{}}}
+async function updatePlayback(){for(const session of [...sessions]){try{const s=await vlcRequest(session);session.position=s.time||0;session.duration=s.length||0;
+ if(s.state==='stopped'&&Date.now()-session.since>10000&&session.urlIndex+1<session.urls.length){session.urlIndex++;await vlcRequest(session,'command=in_play&input='+encodeURIComponent(session.urls[session.urlIndex]));}
+ persistProgress(session);send({type:'playback',item:session.item,position:session.position,duration:session.duration});}catch{}}}
 async function connectionCheck(){
  if(checkBusy||!store.user)return;checkBusy=true;
  try{
@@ -121,6 +128,12 @@ async function connectionCheck(){
  }catch{excessSince=0;excessReported=false;}finally{checkBusy=false;}
 }
 async function foreground(){if(!win||win.isDestroyed())return;if(win.isMinimized())win.restore();win.show();win.focus();}
+// Includes input while VLC has focus; avoids treating active remote/keyboard use as inactivity.
+function systemInput(){
+ if(process.platform!=='win32'||promptedAt)return;
+ const code='Add-Type -TypeDefinition \'using System; using System.Runtime.InteropServices; public static class BMIdle { [StructLayout(LayoutKind.Sequential)] struct LASTINPUTINFO { public uint cbSize; public uint dwTime; } [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LASTINPUTINFO x); public static uint Milliseconds() { LASTINPUTINFO x = new LASTINPUTINFO(); x.cbSize = (uint)Marshal.SizeOf(x); return GetLastInputInfo(ref x) ? unchecked((uint)Environment.TickCount - x.dwTime) : uint.MaxValue; }}\'; [BMIdle]::Milliseconds()';
+ execFile('powershell.exe',['-NoProfile','-NonInteractive','-Command',code],{windowsHide:true,timeout:10000},(err,out)=>{const idle=Number(out.trim());if(!err&&Number.isFinite(idle)){if(idle<lastSystemIdle||idle<30000)lastInput=Date.now()-idle;lastSystemIdle=idle;}});
+}
 async function timers(){
  const now=Date.now();
  if(!promptedAt&&now-lastInput>=core.IDLE_MS){promptedAt=now;await foreground();send({type:'inactive',seconds:60});}
@@ -156,7 +169,7 @@ else{
   register('speed',async()=>{const start=Date.now();await fetch('https://speed.cloudflare.com/__down?bytes=100',{signal:AbortSignal.timeout(10000)});const ping=Date.now()-start;const down=Date.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{signal:AbortSignal.timeout(20000)});const bytes=(await r.arrayBuffer()).byteLength;const download=bytes*8/(Date.now()-down)/1000;const up=Date.now();await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Uint8Array(3000000),signal:AbortSignal.timeout(20000)});return{ping,download,upload:3000000*8/(Date.now()-up)/1000};});
   await win.loadFile(page);
   if(!store.user)getCode().catch(e=>send({type:'notice',message:e.message}));else{poll();refresh().catch(e=>send({type:'notice',message:e.message}));}
-  setInterval(poll,store.user?60000:5000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);connectionCheck();
+  setInterval(poll,store.user?60000:5000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
  });
  app.on('window-all-closed',async()=>{await stopAll();app.quit();});
  app.on('before-quit',()=>{for(const session of sessions){persistProgress(session);session.child.kill();}});

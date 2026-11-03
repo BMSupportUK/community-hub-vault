@@ -26,7 +26,7 @@ public final class PlayerApplication extends Application implements Application.
     @Override public void onCreate() {
         super.onCreate(); registerActivityLifecycleCallbacks(this);
         ui.post(new Runnable() {
-            @Override public void run() { tick(); if (!exiting) ui.postDelayed(this, 1000); }
+            @Override public void run() { if (!exiting) tick(); ui.postDelayed(this, 1000); }
         });
     }
     private void tick() {
@@ -56,7 +56,7 @@ public final class PlayerApplication extends Application implements Application.
         try { startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
         catch (Exception ignored) {}
     }
-    @Override public void onActivityCreated(Activity a, Bundle b) { activities.add(a); }
+    @Override public void onActivityCreated(Activity a, Bundle b) { if (exiting) { exiting = false; lastInput = SystemClock.elapsedRealtime(); } activities.add(a); }
     @Override public void onActivityResumed(Activity a) { foreground = a; }
     @Override public void onActivityPaused(Activity a) { if (foreground == a) foreground = null; }
     @Override public void onActivityDestroyed(Activity a) {
