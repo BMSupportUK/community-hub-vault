@@ -40,7 +40,7 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
-- [x] First add inactivity Continue viewing / timed exit to Android, Fire TV and phone; signed 2.37 released, four timer checks pass (external VLC not monitored)
+- [x] First add inactivity Continue viewing / timed exit to Android, Fire TV and phone; signed 2.38 released, four timer checks pass (external VLC not monitored)
 - [x] Mirror inactivity in Windows; three-hour timer and one-minute response tests pass
 - [ ] Verify native inactivity exit and Windows playback/input on real devices (blocked: no attached TV or Windows runtime)
 - [ ] Complete Windows embedded preview, voice search and full settings parity before launch (not included in test build)
@@ -56,6 +56,6 @@
 - [x] Website: Send to app (TV code) + send from My Logins + linked devices
 - [x] Website: Report a problem page (opens pre-filled support ticket)
 - [x] Android app 1.0 (TV / Fire TV / phone) built, signed, added to app list (not yet tested on a real TV)
-- [ ] Windows app with bundled VLC
+- [x] Windows test app with bundled VLC (full device parity and real Windows checks remain above)
 - [x] Downloads in Install Guides (BM Player listed as a TV-installable app)
 - [x] Films and Series default sort is Recently added (latest uploads first); signed 2.12 uploaded and the app update download verified (TV-side sorting not tested on a real box)
