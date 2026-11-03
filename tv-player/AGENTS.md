@@ -22,7 +22,7 @@
 - BM Player saved-login selection reads the existing credential view filtered to the signed-in owner; selection is bound to that owner and passwords are never displayed.
 - Every activity is sensorLandscape so phones show the same TV-shaped layout sideways instead of squashing it portrait.
 - Phones (shortest side under 500dp) shrink screen density via PhoneScale in attachBaseContext so the TV layout fits sideways; front/link/unlock screens also scroll.
-- Catch up: channels with provider `tv_archive` show a clock in the TV guide channel column (Left at "now", or tap); it opens a day → programme list from `get_simple_data_table` and plays Xtream `/timeshift/` URLs (UK time) through VLC automatically, falling back to the built-in player when VLC is missing; catch-up plays never go into Recently watched.
+- Catch up: channels with provider `tv_archive` show a clock in the TV guide channel column (Left at "now" only highlights the clock and OK opens it; tap on phones); it opens a day → programme list from `get_simple_data_table` and plays Xtream `/timeshift/` URLs (UK time) through VLC automatically, falling back to the built-in player when VLC is missing; catch-up plays never go into Recently watched.
 - Manual EPG time shift stores the device UTC offset; a clock change resets it to 0 so the guide is never an hour out.
 - Films and episodes ask "Subtitles?" (off/on) before playback on Android, Windows and Mac; Android passes the choice to the built-in player and VLC.
 - Favourites and Recently watched open on Live TV / Movies / Series tabs (episodes count as Series) on Android, Windows and Mac; sports guide event rows keep a blank line between events.
