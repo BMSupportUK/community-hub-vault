@@ -12,6 +12,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -140,12 +141,17 @@ public class HomeRowTest {
         Method showPanel = MainActivity.class.getDeclaredMethod("showPanel");
         showPanel.setAccessible(true);
         showPanel.invoke(activity);
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(400));
         assertEquals("Panel shows when opened", View.VISIBLE, panel.getVisibility());
+        assertTrue("Panel slides in flush with the edge", panel.getTranslationX() > -1f);
         assertTrue("Panel counts as open", (Boolean) panelOpen.invoke(activity));
 
         Method hidePanel = MainActivity.class.getDeclaredMethod("hidePanel");
         hidePanel.setAccessible(true);
         hidePanel.invoke(activity);
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(400));
+        assertEquals("Panel slides back out of sight", View.INVISIBLE, panel.getVisibility());
+        assertTrue("Panel sits off the left edge again", panel.getTranslationX() < 0);
         assertFalse("Panel closes again", (Boolean) panelOpen.invoke(activity));
     }
 }
