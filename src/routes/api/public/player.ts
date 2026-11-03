@@ -46,6 +46,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
+  z.object({ action: z.literal("announcement"), device_token: Token }),
   z.object({ action: z.literal("ratings"), device_token: Token, items: z.array(RatingTitle).min(1).max(200) }),
   RatingVote.extend({ action: z.literal("vote"), device_token: Token }),
   z.object({ action: z.literal("favourites"), device_token: Token, login: z.string().trim().min(1).max(120) }),
@@ -88,6 +89,15 @@ function randomHex(bytes: number) {
 function randomCode() {
   return String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
 }
+let announcementCache: { at: number; value: { id: string; message: string } | null } | null = null;
+async function currentAnnouncement(admin: { from: (t: "player_announcements") => any }) {
+  if (announcementCache && Date.now() - announcementCache.at < 10_000) return announcementCache.value;
+  const { data, error } = await admin.from("player_announcements").select("id, message").eq("active", true)
+    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (error) return announcementCache?.value ?? null;
+  announcementCache = { at: Date.now(), value: data ? { id: data.id, message: data.message } : null };
+  return announcementCache.value;
+}
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: CORS });
 
 export const Route = createFileRoute("/api/public/player")({
@@ -111,6 +121,11 @@ export const Route = createFileRoute("/api/public/player")({
         const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
+
+        if (body.action === "announcement") {
+          // Apps ask every few seconds; one shared read per 10s keeps this cheap for any number of players.
+          return json({ announcement: await currentAnnouncement(supabaseAdmin) });
+        }
 
         if (body.action === "ratings" || body.action === "vote") {
           const voter = ratingVoter(device);

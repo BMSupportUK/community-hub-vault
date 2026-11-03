@@ -1926,6 +1926,13 @@
       "when": 1793743638057,
       "tag": "0274_player_vote_once",
       "breakpoints": true
+    },
+    {
+      "idx": 275,
+      "version": "7",
+      "when": 1793743927789,
+      "tag": "0275_player_announcements",
+      "breakpoints": true
     }
   ]
 }

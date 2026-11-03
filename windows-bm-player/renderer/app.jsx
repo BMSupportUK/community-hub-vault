@@ -101,4 +101,11 @@ function App(){
  {notice&&<div role="status" className="toast">{notice}</div>}
  </div>;
 }
-createRoot(document.getElementById('root')).render(<App/>);
+function Announcement(){
+ const [a,setA]=useState(null);
+ useEffect(()=>{bm.state().then(s=>setA(s.announcement||null));return bm.subscribe(e=>{if(e.type==='state')setA(e.state.announcement||null);});},[]);
+ useEffect(()=>{document.body.classList.toggle('has-ann',!!a);},[a]);
+ if(!a)return null;
+ return <div className="announcement" role="status"><span>📢 {a.message}</span><button aria-label="Close announcement" onClick={()=>bm.closeAnnouncement(a.id).then(s=>setA(s.announcement||null))}>✕</button></div>;
+}
+createRoot(document.getElementById('root')).render(<><App/><Announcement/></>);
