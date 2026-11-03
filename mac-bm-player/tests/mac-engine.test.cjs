@@ -52,7 +52,7 @@ test('engine sends only proxy addresses to the window and reports status', () =>
 
 test('subtitle track count comes from the window report and on/off goes back to it', () => {
   const sent = [];
-  const e = new MacEngine({ isDestroyed: () => false, webContents: { send: (_c, d) => sent.push(d) } });
+  const e = new eng.MacEngine({ isDestroyed: () => false, webContents: { send: (_c, d) => sent.push(d) } });
   e.play(0, 'http://dns.example/movie/u/p/1.mkv', {});
   expect(e.subtitleTracks(0)).toBe(0);
   e.report({ index: 0, position: 1, duration: 100, state: 3, seekable: true, subs: 2 });
