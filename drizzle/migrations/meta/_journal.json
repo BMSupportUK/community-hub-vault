@@ -1905,6 +1905,13 @@
       "when": 1793704664931,
       "tag": "0271_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 272,
+      "version": "7",
+      "when": 1793739286086,
+      "tag": "0272_player_shared_star_ratings",
+      "breakpoints": true
     }
   ]
 }

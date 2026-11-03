@@ -5866,6 +5866,45 @@ export type Database = {
           },
         ]
       }
+      player_rating_totals: {
+        Row: {
+          media_key: string
+          star_sum: number
+          vote_count: number
+        }
+        Insert: {
+          media_key: string
+          star_sum?: number
+          vote_count?: number
+        }
+        Update: {
+          media_key?: string
+          star_sum?: number
+          vote_count?: number
+        }
+        Relationships: []
+      }
+      player_ratings: {
+        Row: {
+          media_key: string
+          stars: number
+          updated_at: string
+          voter_key: string
+        }
+        Insert: {
+          media_key: string
+          stars: number
+          updated_at?: string
+          voter_key: string
+        }
+        Update: {
+          media_key?: string
+          stars?: number
+          updated_at?: string
+          voter_key?: string
+        }
+        Relationships: []
+      }
       player_settings: {
         Row: {
           channel_aliases: Json
@@ -9565,6 +9604,10 @@ export type Database = {
         Returns: number
       }
       package_item_months: { Args: { p_name: string }; Returns: number }
+      player_cast_rating: {
+        Args: { p_key: string; p_stars: number; p_voter: string }
+        Returns: undefined
+      }
       portal_credentials_for_user: {
         Args: { p_user_id: string }
         Returns: Json

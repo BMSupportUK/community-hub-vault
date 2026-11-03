@@ -1,4 +1,5 @@
 # Windows BM Player rules
+- Film/series community votes use the unlock-gated main-process bridge; batch poster rating reads and keep shared BM averages separate from provider sort metadata.
 - The opening film is bundled offline and rendered before the main screen; the main window is maximised before being shown to avoid a small-window flash.
 - This standalone Electron shell uses an isolated React renderer and a narrow, sender-verified IPC bridge; credentials and device tokens stay encrypted in the main process, never in renderer storage.
 - Website calls use only the existing device-token `/api/public/player` endpoint; provider requests are built from stored DNS/login, never arbitrary renderer URLs.
