@@ -2,13 +2,13 @@ const {app,BrowserWindow,ipcMain,safeStorage,shell,dialog,powerSaveBlocker}=requ
 const fs=require('node:fs');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
-const {spawn,execFile}=require('node:child_process');
-const crypto=require('node:crypto');
-const net=require('node:net');
+const {execFile}=require('node:child_process');
 const core=require('../core.cjs');
+const {surfaceRows}=require('../playback-core.cjs');
+const {EmbeddedVlc}=require('./embedded-vlc.cjs');
 const SITE='https://bmsupport.uk';
 let win,store={},file,lastInput=Date.now(),promptedAt=0,excessSince=0,excessReported=false,linkCode='',maintenance=null;
-let sessions=[],awake=null,pollBusy=false,checkBusy=false;
+let sessions=[],awake=null,pollBusy=false,checkBusy=false,engine=null;
 let lastSystemIdle=0,refreshPromise=null;
 const page=path.join(__dirname,'../dist/index.html');
 const cache=new Map(),pending=new Map();
@@ -21,7 +21,7 @@ function publicState(){
  return {version:app.getVersion(),linked:!!store.user,user:store.user||'',code:linkCode,maintenance,
   expired:String(a.status||'').toLowerCase()==='expired'||(expiry>0&&expiry<Date.now()),expiry:expiry>0?expiry:null,status:a.status||'',
   maxConnections:Number(a.max_connections)||1,settings:store.settings||{},favourites:store.favourites||[],recent:store.recent||[],
-  progress:store.progress||{},reminders:store.reminders||[],playing:sessions.map(s=>({item:s.item,position:s.position||0,duration:s.duration||0}))};
+  progress:store.progress||{},reminders:store.reminders||[],playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
 }
 async function site(body){
  const response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});
@@ -76,17 +76,12 @@ async function refreshInner(){
  send({type:'progress',message:'Playlists updated',percent:100});send({type:'catalogues'});return true;
 }
 async function epg(id){const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return core.programmes(r.epg_listings);}
-async function freePort(){return new Promise((resolve,reject)=>{const server=net.createServer();server.listen(0,'127.0.0.1',()=>{const port=server.address().port;server.close(()=>resolve(port));});server.on('error',reject);});}
-async function vlcRequest(session,query=''){
- const r=await fetch(`http://127.0.0.1:${session.port}/requests/status.json${query?'?'+query:''}`,{headers:{Authorization:'Basic '+Buffer.from(':'+session.password).toString('base64')},signal:AbortSignal.timeout(2000)});
- return r.json();
-}
 function persistProgress(session){
  if(!['film','episode'].includes(session.item.kind)||!(session.duration>0))return;
  store.progress=store.progress||{};store.progress[key(session.item)]={position:session.position||0,duration:session.duration};save();
 }
 async function stopAll(){
- for(const s of sessions){persistProgress(s);s.closing=true;try{await vlcRequest(s,'command=pl_stop');}catch{}s.child.kill();if(s.config)try{fs.unlinkSync(s.config);}catch{}}
+ for(const s of sessions){const status=engine?.status(s.index);if(status)Object.assign(s,status);persistProgress(s);engine?.stop(s.index);}
  sessions=[];
  if(awake!==null){powerSaveBlocker.stop(awake);awake=null;}
  send({type:'state',state:publicState()});
@@ -99,26 +94,18 @@ async function play({item,resume=false,screens=1}){
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
  if(screens===1||sessions.length>=screens)await stopAll();
  const urls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto');
- const port=await freePort(),password=crypto.randomBytes(24).toString('hex');
- const executable=path.join(__dirname,'../tools/vlc-3.0.21/vlc.exe');
- const config=path.join(app.getPath('userData'),'vlc-'+crypto.randomBytes(12).toString('hex')+'.conf');
- fs.writeFileSync(config,'[core]\nhttp-password='+password+'\n',{mode:0o600});
- const args=['--config='+config,'--no-one-instance','--no-video-title-show','--extraintf=http','--http-host=127.0.0.1','--http-port='+port,'--network-caching='+Number(store.settings?.buffer||3000),'--http-user-agent=VLC/3.0.21','--video-title=BM Player — '+item.name];
- if(screens===1)args.push('--fullscreen');
- else{const display=require('electron').screen.getPrimaryDisplay().workAreaSize;args.push('--no-fullscreen','--width='+Math.floor(display.width/screens),'--height='+Math.floor(display.height*.7),'--video-x='+Math.floor(sessions.length*display.width/screens),'--video-y=60');if(sessions.length)args.push('--volume=0');}
- const watched=store.progress?.[key(item)];if(resume&&watched&&core.resume(watched.position,watched.duration))args.push('--start-time='+Math.floor(watched.position));
- const child=spawn(executable,args,{windowsHide:false,stdio:'ignore'});
- const session={child,item,port,password,config,position:0,duration:0,since:Date.now(),closing:false,urls,urlIndex:0,started:false};sessions.push(session);
+ if(!engine)engine=new EmbeddedVlc(win);
+ const index=sessions.length,watched=store.progress?.[key(item)];
+ try{engine.play(index,urls[0],{buffer:store.settings?.buffer,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
+ catch{engine.stop(index);throw new Error('In-app playback could not start. Extract the complete Windows ZIP and try again.');}
+ const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
- child.on('error',()=>send({type:'notice',message:'The bundled Windows VLC could not start. Extract the whole ZIP before opening BM Player.'}));
- child.on('exit',()=>{persistProgress(session);try{fs.unlinkSync(config);}catch{}sessions=sessions.filter(s=>s!==session);if(!sessions.length&&awake!==null){powerSaveBlocker.stop(awake);awake=null;}send({type:'state',state:publicState()});poll();});
  if(!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
  lastInput=Date.now();promptedAt=0;poll();send({type:'state',state:publicState()});return true;
 }
-async function updatePlayback(){for(const session of [...sessions]){try{const s=await vlcRequest(session);session.position=s.time||0;session.duration=s.length||0;
- if(!session.started){await vlcRequest(session,'command=in_play&input='+encodeURIComponent(session.urls[0]));session.started=true;session.since=Date.now();}
- else if(s.state==='stopped'&&Date.now()-session.since>15000&&session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();await vlcRequest(session,'command=in_play&input='+encodeURIComponent(session.urls[session.urlIndex]));}
- persistProgress(session);send({type:'playback',item:session.item,position:session.position,duration:session.duration});}catch{}}}
+async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
+ if((s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:store.settings?.buffer});}else if(!session.failed){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
+ persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable});}catch{}}}
 async function connectionCheck(){
  if(checkBusy||!store.user)return;checkBusy=true;
  try{
@@ -159,6 +146,15 @@ else{
   register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('sports',()=>site({action:'sports'}));
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
   register('play',play);register('stop',stopAll);
+  ipcMain.handle('player:surface',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.layout(surfaceRows(value));return true;});
+  register('control',value=>{
+   const index=Number(value?.index),session=sessions.find(s=>s.index===index);if(!session||!engine)return false;
+   if(value.action==='pause'){session.paused=!session.paused;engine.pause(index,session.paused);}
+   else if(value.action==='seek'&&Number.isFinite(value.seconds))engine.seek(index,Math.max(0,Math.min(session.duration,value.seconds)));
+   else if(value.action==='volume'&&Number.isFinite(value.volume))engine.volume(index,Math.max(0,Math.min(100,Math.round(value.volume))));
+   else if(value.action==='audio')for(const s of sessions)engine.volume(s.index,s.index===index?100:0);
+   send({type:'state',state:publicState()});return true;
+  });
   register('settings',async value=>{
    if(value?.logout){await stopAll();await site({action:'unlink'});store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
    else if(value?.clear){store.recent=[];store.progress={};save();}
@@ -176,5 +172,5 @@ else{
   setInterval(poll,store.user?60000:5000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
  });
  app.on('window-all-closed',async()=>{await stopAll();app.quit();});
- app.on('before-quit',()=>{for(const session of sessions){persistProgress(session);session.child.kill();if(session.config)try{fs.unlinkSync(session.config);}catch{}}});
+ app.on('before-quit',()=>{for(const session of sessions){const status=engine?.status(session.index);if(status)Object.assign(session,status);persistProgress(session);}engine?.close();engine=null;});
 }
