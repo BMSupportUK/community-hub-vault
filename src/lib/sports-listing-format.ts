@@ -2222,7 +2222,7 @@ export function cardRawForEplEvent(e: { date?: string | null; time?: string | nu
  * Whole words only, so Scotland internationals, the Scottish Cup or Royal Ascot keep their real broadcasters.
  */
 export function isClubChannelGuide(guideTitle: string | null | undefined): boolean {
-  return /\bi\s*-?\s*follow\b|\bspfl\b|\bscottish\s+(?:premiership|championship|league)\b/i.test(guideTitle ?? "");
+  return /\bi\s*-?\s*follow\b|\bspfl\b|\bscot(?:land|tish)\s+(?:premier\w*|championship|league)\b/i.test(guideTitle ?? "");
 }
 
 /** "Dundee United v Rangers" → ["Dundee United", "Rangers"]. */
