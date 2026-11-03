@@ -18,6 +18,12 @@ const CORS = {
   "Access-Control-Allow-Headers": "content-type",
 };
 const Token = z.string().regex(/^[0-9a-f]{64}$/);
+/** A saved favourite as the apps store it; extra display fields pass through but each item stays small. */
+const FavouriteItem = z.object({
+  kind: z.string().trim().min(1).max(20),
+  id: z.string().trim().min(1).max(200),
+  name: z.string().trim().max(300).optional(),
+}).passthrough().refine(item => JSON.stringify(item).length <= 4000);
 const Body = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("register"),
@@ -42,6 +48,11 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("ratings"), device_token: Token, items: z.array(RatingTitle).min(1).max(200) }),
   RatingVote.extend({ action: z.literal("vote"), device_token: Token }),
+  z.object({ action: z.literal("favourites"), device_token: Token, login: z.string().trim().min(1).max(120) }),
+  z.object({
+    action: z.literal("favourites_set"), device_token: Token, login: z.string().trim().min(1).max(120),
+    items: z.array(FavouriteItem).max(500),
+  }),
   z.object({
     action: z.literal("voice"), device_token: Token,
     mime: z.enum(["audio/wav", "audio/webm"]),
@@ -121,6 +132,24 @@ export const Route = createFileRoute("/api/public/player")({
             const count = Number(total?.vote_count || 0);
             return { kind: item.kind, title: item.title, count, average: count ? Math.round(Number(total?.star_sum || 0) / count * 10) / 10 : null, mine: mine?.find(row => row.media_key === item.key)?.stars ?? null };
           }) });
+        }
+
+        if (body.action === "favourites" || body.action === "favourites_set") {
+          // Favourites follow the account owner across every linked device, kept per provider login
+          // because channel/film ids only mean something within one login.
+          const owner = ratingVoter(device);
+          if (!owner) return json({ error: "Link this app to your BM Support account first." }, 403);
+          const scope = await sha256Hex(body.login.toLowerCase());
+          if (body.action === "favourites_set") {
+            const { error } = await supabaseAdmin.from("player_favourites")
+              .upsert({ owner_key: owner, scope_key: scope, items: body.items, updated_at: new Date().toISOString() });
+            if (error) return json({ error: "Couldn't save favourites." }, 503);
+            return json({ ok: true, items: body.items, stored: true });
+          }
+          const { data, error } = await supabaseAdmin.from("player_favourites").select("items")
+            .eq("owner_key", owner).eq("scope_key", scope).maybeSingle();
+          if (error) return json({ error: "Favourites aren't available right now." }, 503);
+          return json({ items: data?.items ?? [], stored: !!data });
         }
 
         if (body.action === "unlink") {
