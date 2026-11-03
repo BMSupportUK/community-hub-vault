@@ -1,4 +1,5 @@
 # tv-player rules
+- Film/whole-series votes use a separate device-token background queue; poster BM averages and counts are separate from provider ratings, with bounded batched reads and no progress bar moved to series posters.
 - IntroActivity is the launcher and plays the bundled CDN-sourced opening film once per cold launch; MainActivity remains the direct destination for playback/reminders so the intro never delays them.
 - BM Player (Android TV/Fire TV/phone) talks to the website only through `/api/public/player` with its device token; logins arrive once via poll and live only in app storage.
 - Signed with the permanent BM key; bump versionCode/versionName and upload a new `bm-player/` build row so installs upgrade in place.
