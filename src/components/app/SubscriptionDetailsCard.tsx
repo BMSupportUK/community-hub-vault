@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCustomerNumber } from "@/components/app/CustomerNumber";
 import { Nameplate } from "@/components/app/Nameplate";
 import { customerJoinedYear, customerYearsFromYear } from "@/lib/customer-joined-year";
 
@@ -35,6 +36,7 @@ export function SubscriptionDetailsCard({
   const [joinedYear, setJoinedYear] = useState<number | null>(null);
   const [joinedRecorded, setJoinedRecorded] = useState<boolean | null>(null);
   const [viewIndex, setViewIndex] = useState(0);
+  const customerNumber = useCustomerNumber(user?.id);
 
   useEffect(() => {
     if (!user) {
@@ -175,6 +177,11 @@ export function SubscriptionDetailsCard({
                 <span className="truncate font-display text-sm font-semibold text-white drop-shadow">{customerName}</span>
               </div>
             </div>
+          )}
+          {customerNumber && (
+            <p className={cn("mt-1 rounded-full border border-white/30 bg-background/20 px-2.5 py-0.5 font-mono font-semibold text-white", fill ? "text-[11px] md:text-base" : "text-[11px]")}>
+              Account no. {customerNumber}
+            </p>
           )}
           <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px] mt-0.5" : "text-xs mt-0.5")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
