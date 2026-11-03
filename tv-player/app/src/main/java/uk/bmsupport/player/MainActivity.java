@@ -615,7 +615,7 @@ public class MainActivity extends Activity {
                 try {
                     Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "unlock")
                             .put("device_token", prefs.getString("token", "")).put("account_number", n).toString());
-                    ui.post(() -> { unlocked = true; showHome(); syncFavourites(null); });
+                    ui.post(() -> { unlocked = true; hideKeyboard(in); getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN); showHome(); syncFavourites(null); });
                 } catch (Exception ex) {
                     String m = String.valueOf(ex.getMessage()), msg = "Couldn't check. Check the internet and try again.";
                     int i = m.indexOf('{');
