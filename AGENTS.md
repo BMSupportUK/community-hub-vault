@@ -39,7 +39,6 @@
 <!-- LOVABLE:END -->
 - playSound resolves uploaded overrides for all web callers; closed-app Android tones require an APK rebuild.
 - Tests use `bun test` (no Vitest APIs); restore swapped globals.
-- Enabler palette/control helpers own appearance; progress reads wizard state, versions use BuildConfig.
 - Customer payment notifications contain no passwords; copy actions fetch through an authenticated owner-only read RPC without changing payment methods.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 - Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts. Pay by bank provider is a server-resolved app setting, GoCardless only when its secrets exist (switch without rebuild).
@@ -62,11 +61,7 @@
 - Nav badge realtime channels use a fresh name per mount (drawer and rail coexist; cleanup is async).
 - Ticket screen sharing keeps the original thread mounted as the default tab; the layout owns a single customer TV-code dialog reopened from public request messages, successful pairing/connection opens the share tab, and its pop-out only shows public replies so internal notes stay private.
 - Order remote installation help goes through tickets: the customer secure order has no setup tabs — a help bar raises a General ticket (office hours only) naming the order reference, and staff connect via the ticket's screen share. `order_remote_setup` stays for legacy/test flows and the shared `/api/public/remote-setup` report; the legacy invitation-gated pairing path remains only for staff test orders, and the standalone customer helper URL redirects home.
-- TV installation skips use exact AndroidManifest package identities cached per APK and a read-only inventory of the selected TV; uploads/replacements refresh identity so app labels never drive skip decisions.
-- TV Enabler confirms a fresh TV check before finishing; website linking optional, stages sync by expiring code; reset keeps RSA authorization. Helper opens once per run; Remote setup has Restart setup.
 - Ticket screen-share requests unlock only after the customer's Remote setup is confirmed by a live BM Remote Helper code (server-verified RPC), so staff never invite before the TV app works.
-- Enabler references bind to one ticket/order, expire on close (share also on session end), unlink on Restart; apps clear server-expired share codes, never on network errors, keeping install/PIN state. Issuance requires the app protocol marker.
-- Renewal is customer-requested and capability-bound to one confirmation; foreground Enabler claims each task once, cold-starts only non-active Helper, then atomically replaces scoped pending-session pointers without extending expiry or approving consent.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
 - Install Guides: route owns separate Direct Install and Enabler device choices; DeviceInstallSetup filters choices by section, and only Enabler setup/staff help reserve phone/Windows download columns so guide/video browsing retains full width.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
