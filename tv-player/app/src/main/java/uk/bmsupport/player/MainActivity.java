@@ -486,6 +486,7 @@ public class MainActivity extends Activity {
     }
 
     private void showLink() {
+        unlocked = false;
         screen = "link"; back = null;
         LinearLayout root = column();
         root.setGravity(Gravity.CENTER);
