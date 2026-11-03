@@ -25,6 +25,16 @@ public final class PlayerApplication extends Application implements Application.
     }
     @Override public void onCreate() {
         super.onCreate(); registerActivityLifecycleCallbacks(this);
+        // Keep the last crash so the next open can send it to BM Support as a ticket.
+        final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            try {
+                java.io.StringWriter w = new java.io.StringWriter(); e.printStackTrace(new java.io.PrintWriter(w));
+                String screen = foreground == null ? "?" : foreground.getClass().getSimpleName();
+                getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putString("last_crash", "App closed unexpectedly on " + screen + " (thread " + t.getName() + "): " + w).commit();
+            } catch (Throwable ignored) {}
+            if (prev != null) prev.uncaughtException(t, e);
+        });
         ui.post(new Runnable() {
             @Override public void run() { if (!exiting) tick(); ui.postDelayed(this, 1000); }
         });
