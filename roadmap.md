@@ -40,7 +40,8 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
-- [ ] First add inactivity Continue viewing / timed exit to Android, Fire TV and phone, then mirror it in Windows
+- [x] First add inactivity Continue viewing / timed exit to Android, Fire TV and phone; signed 2.37 released, four timer checks pass (external VLC not monitored)
+- [ ] Mirror inactivity in Windows and verify TV prompt/exit on a real device (TV verification blocked: no attached device)
 - [ ] Build Windows BM Player with bundled VLC and deliver a test-only Windows download; do not launch publicly
 - [x] Add three-minute sustained connection-limit warning and admin-only investigation reports; native tests and website report read-back pass, signed 2.36 released
 - [ ] Verify the connection warning during real TV playback (blocked: no attached TV; website changes need publishing)
