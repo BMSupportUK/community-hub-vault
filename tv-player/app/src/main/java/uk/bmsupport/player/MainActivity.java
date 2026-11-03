@@ -2094,7 +2094,7 @@ public class MainActivity extends Activity {
                         if (i == chosen[0]) {
                             GradientDrawable box = new GradientDrawable(); box.setColor(CARD); box.setCornerRadius(dp(6)); box.setStroke(dp(3), ACCENT);
                             v.setBackground(box);
-                        }
+                        } else v.setBackground(null);
                         return v;
                     }
                 };
