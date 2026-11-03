@@ -1,5 +1,6 @@
 package uk.bmsupport.player;
 
+import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -11,9 +12,12 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.Shadows.shadowOf;
 
 /**
  * The home row must never fold a name onto a second line: "Recently watched" sits on one line
@@ -118,5 +122,36 @@ public class HomeRowTest {
         float density = activity.getResources().getDisplayMetrics().density;
         assertTrue("Gap before the pill", lp.leftMargin >= (int) (density * 8));
         assertTrue("Gap after the pill", lp.rightMargin >= (int) (density * 8));
+    }
+
+    /** The category list is a side panel: hidden off the left edge until it is opened. */
+    @Test
+    public void categoryPanelPopsOutFromTheSide() throws Exception {
+        MainActivity activity = Robolectric.buildActivity(MainActivity.class).get();
+        LinearLayout panel = new LinearLayout(activity);
+        Method sideDrawer = MainActivity.class.getDeclaredMethod("sideDrawer", LinearLayout.class, LinearLayout.class);
+        sideDrawer.setAccessible(true);
+        sideDrawer.invoke(activity, new LinearLayout(activity), panel);
+        Method panelOpen = MainActivity.class.getDeclaredMethod("panelOpen");
+        panelOpen.setAccessible(true);
+        assertFalse("Panel starts hidden", (Boolean) panelOpen.invoke(activity));
+        assertTrue("Panel starts off the left edge", panel.getTranslationX() < 0);
+        assertEquals("Panel is invisible until opened", View.INVISIBLE, panel.getVisibility());
+
+        Method showPanel = MainActivity.class.getDeclaredMethod("showPanel");
+        showPanel.setAccessible(true);
+        showPanel.invoke(activity);
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(400));
+        assertEquals("Panel shows when opened", View.VISIBLE, panel.getVisibility());
+        assertTrue("Panel slides in flush with the edge", panel.getTranslationX() > -1f);
+        assertTrue("Panel counts as open", (Boolean) panelOpen.invoke(activity));
+
+        Method hidePanel = MainActivity.class.getDeclaredMethod("hidePanel");
+        hidePanel.setAccessible(true);
+        hidePanel.invoke(activity);
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(400));
+        assertEquals("Panel slides back out of sight", View.INVISIBLE, panel.getVisibility());
+        assertTrue("Panel sits off the left edge again", panel.getTranslationX() < 0);
+        assertFalse("Panel closes again", (Boolean) panelOpen.invoke(activity));
     }
 }
