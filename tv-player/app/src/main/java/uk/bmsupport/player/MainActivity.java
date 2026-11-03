@@ -1470,7 +1470,7 @@ public class MainActivity extends Activity {
             String[] l = new String[25];
             for (int i = 0; i < 25; i++) l[i] = (i - 12 > 0 ? "+" : "") + (i - 12) + " hours";
             new AlertDialog.Builder(this).setTitle("EPG time shift").setSingleChoiceItems(l, prefs.getInt("epg_shift", 0) + 12, (d, w) -> {
-                prefs.edit().putInt("epg_shift", w - 12).apply(); d.dismiss(); showSettings();
+                prefs.edit().putInt("epg_shift", w - 12).putInt("epg_shift_offset", deviceOffsetMins()).apply(); d.dismiss(); showSettings();
             }).setNegativeButton("Cancel", null).show();
         }));
         boxes.add(settingBox("🔒", "Parental control", prefs.getString("pin", "").isEmpty() ? "Off" : adultUnlocked ? "Unlocked" : "On", v -> parentalControl()));
@@ -2467,7 +2467,24 @@ public class MainActivity extends Activity {
         if ("home".equals(screen)) showHome(); else if ("settings".equals(screen)) showSettings();
     }
 
+    private static int deviceOffsetMins() {
+        return java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60000;
+    }
+
+    /** Clock change: a manual guide shift was set for the old summer/winter time, so clear it. */
+    private void resetShiftAfterClockChange() {
+        int shift = prefs.getInt("epg_shift", 0);
+        if (shift == 0) return;
+        int now = deviceOffsetMins();
+        if (!prefs.contains("epg_shift_offset")) { prefs.edit().putInt("epg_shift_offset", now).apply(); return; }
+        if (prefs.getInt("epg_shift_offset", now) != now) {
+            prefs.edit().putInt("epg_shift", 0).putInt("epg_shift_offset", now).apply();
+            Toast.makeText(this, "The clocks changed, so the TV guide time shift was reset to 0", Toast.LENGTH_LONG).show();
+        }
+    }
+
     @Override protected void onResume() {
+        resetShiftAfterClockChange();
         super.onResume();
         clearNowPlaying();
         refreshVersionScreens();
