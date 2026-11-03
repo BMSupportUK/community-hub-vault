@@ -1,6 +1,6 @@
 # BM Player for Windows
 
-Windows 10/11 x64 executable installer. Run `BM-Player-Windows-Test-0.2.2.exe` to install BM Player with its included playback runtime, Start menu/desktop shortcuts and uninstaller. The approved Windows release has its own Install Guides pill and logged download endpoint, separate from Android updates. The installer is unsigned and remains a private test download only.
+Windows 10/11 x64 executable installer. Run `BM-Player-Windows-0.2.2.exe` to install BM Player with its included playback runtime, Start menu/desktop shortcuts and uninstaller. The approved Windows release has its own Install Guides pill and logged download endpoint, separate from Android updates. The installer is unsigned and remains a private test download only.
 
 Every fresh opening requires the linked customer's six-digit account number, verified by BM Support before content or playback is available. Neither the entered number nor the successful unlock is persisted. Wrong-number attempts preserve the device link and use the website's shared attempt limit.
 
