@@ -1164,8 +1164,44 @@ public class MainActivity extends Activity {
         i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-GB");
         i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Say what you're looking for");
         voiceKind = kind;
-        try { startActivityForResult(i, VOICE_REQUEST); }
-        catch (Exception ex) { voiceKind = null; Toast.makeText(this, "Voice search isn't available on this device – please type instead", Toast.LENGTH_LONG).show(); }
+        boolean has = false;
+        try { has = i.resolveActivity(getPackageManager()) != null; } catch (Exception ignored) {}
+        if (has) {
+            try { startActivityForResult(i, VOICE_REQUEST); return; } catch (Exception ignored) {}
+        }
+        voiceKind = null;
+        voiceDictation(kind);
+    }
+
+    /** Fire TV has no speech service for sideloaded apps, but its keyboard takes dictation from the remote's mic button. */
+    private void voiceDictation(String kind) {
+        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16), dp(8), dp(16), 0);
+        box.addView(text("🎤 Press and hold the microphone button on your remote, say what you're looking for, then let go.", 16, TEXT, false));
+        android.widget.EditText q = new android.widget.EditText(this);
+        q.setSingleLine(true); q.setHint("Your words appear here");
+        q.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+        box.addView(q);
+        AlertDialog[] dlg = new AlertDialog[1];
+        Runnable go = () -> {
+            String want = q.getText().toString().trim();
+            if (want.length() < 2) { Toast.makeText(this, "Hold the mic button and speak, or type", Toast.LENGTH_SHORT).show(); return; }
+            if (dlg[0] != null) dlg[0].dismiss();
+            if ("sports".equals(kind)) { if (!"sports".equals(screen)) showSports(); sportsVoice(want); }
+            else showSearch(kind, want);
+        };
+        q.setOnEditorActionListener((tv, a, ev) -> { go.run(); return true; });
+        dlg[0] = new AlertDialog.Builder(this).setTitle("Voice search").setView(box)
+                .setPositiveButton("Search", null).setNegativeButton("Cancel", null).create();
+        dlg[0].setOnShowListener(d -> {
+            dlg[0].getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> go.run());
+            q.requestFocus();
+            q.postDelayed(() -> {
+                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                if (imm != null) imm.showSoftInput(q, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }, 250);
+        });
+        if (dlg[0].getWindow() != null) dlg[0].getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        dlg[0].show();
     }
 
     private void showSearch(String kind, String start) {
