@@ -18,3 +18,5 @@
 - Provider account connection counts are sampled on a separate single-flight queue; sustained excess reports use the device-token API and only an acknowledged report opens the warning activity, including during playback.
 - PlayerApplication owns one foreground inactivity timer across native activities; only explicit Continue viewing dismisses the timed prompt, and exit releases all playback before opening the device home screen. External VLC is outside the app's interaction monitoring.
 - Every cold open (and every new link) asks for the owner's permanent 6-digit account number, checked by the device-token `unlock` action (5 wrong tries = 15-minute lock); showHome() refuses to draw until unlocked.
+- BM Player apps authenticate only by hashed device token at `/api/public/player`; website sends logins via one-time 10-min codes or owner-checked devices, credentials are deleted on first app poll, and DNS is a single admin-only `player_settings` row.
+- BM Player saved-login selection reads the existing credential view filtered to the signed-in owner; selection is bound to that owner and passwords are never displayed.

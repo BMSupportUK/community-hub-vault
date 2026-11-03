@@ -71,10 +71,8 @@
 - Install Guides: route owns separate Direct Install and Enabler device choices; DeviceInstallSetup filters choices by section, and only Enabler setup/staff help reserve phone/Windows download columns so guide/video browsing retains full width.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
 - Direct Install completion retires download hashes atomically, preserving history. Progress targets explicit runs (monitoring-only for installed TVs); Start again clears the run, never issues a download, avoiding stale progress.
-- BM Player apps authenticate only by hashed device token at `/api/public/player`; website sends logins via one-time 10-min codes or owner-checked devices, credentials are deleted on first app poll, and DNS is a single admin-only `player_settings` row.
 
 - `tv-enabler/` rules (PIN gate, Helper install path, ADB client parity) live in `tv-enabler/AGENTS.md`.
 - PlayerDeviceLinkSection serves both link pages; Windows EXE releases have their own logged endpoint.
-- BM Player saved-login selection reads the existing credential view filtered to the signed-in owner; selection is bound to that owner and passwords are never displayed.
 - iFollow/Scottish guide saves/imports use the two club names as fixture channels.
 - Account numbers: `customer_numbers` rows are assigned on profile creation and can never be updated or deleted, so a 6-digit number is never reissued; read only through `get_customer_number` (self or staff roles).
