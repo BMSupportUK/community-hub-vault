@@ -40,6 +40,7 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
+- [ ] Build Windows BM Player with bundled VLC and deliver a test-only Windows download; do not launch publicly
 - [x] Add three-minute sustained connection-limit warning and admin-only investigation reports; native tests and website report read-back pass, signed 2.36 released
 - [ ] Verify the connection warning during real TV playback (blocked: no attached TV; website changes need publishing)
 - [x] Add film/episode watched bars and Resume in built-in playback; reset category/season selection to top; 9 native checks and 32 regression tests pass; signed 2.11 live download verified
