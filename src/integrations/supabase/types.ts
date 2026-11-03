@@ -5669,6 +5669,7 @@ export type Database = {
           last_seen_at: string
           linked_at: string | null
           name: string
+          offsite_customer_id: string | null
           platform: string
           token_hash: string
           unlock_failures: number
@@ -5698,6 +5699,7 @@ export type Database = {
           last_seen_at?: string
           linked_at?: string | null
           name?: string
+          offsite_customer_id?: string | null
           platform?: string
           token_hash: string
           unlock_failures?: number
@@ -5727,6 +5729,7 @@ export type Database = {
           last_seen_at?: string
           linked_at?: string | null
           name?: string
+          offsite_customer_id?: string | null
           platform?: string
           token_hash?: string
           unlock_failures?: number
@@ -5741,7 +5744,15 @@ export type Database = {
           watching_since?: string | null
           watching_title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "player_devices_offsite_customer_id_fkey"
+            columns: ["offsite_customer_id"]
+            isOneToOne: false
+            referencedRelation: "player_offsite_customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       player_link_attempts: {
         Row: {
@@ -5792,6 +5803,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_offsite_customers: {
+        Row: {
+          created_at: string
+          created_by: string
+          customer_name: string
+          email: string
+          expires_at: string | null
+          id: string
+          iptv_username: string
+          number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          customer_name: string
+          email: string
+          expires_at?: string | null
+          id?: string
+          iptv_username: string
+          number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          customer_name?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          iptv_username?: string
+          number?: number
+        }
+        Relationships: []
       }
       player_pending_credentials: {
         Row: {
@@ -9390,6 +9434,19 @@ export type Database = {
       }
       is_sales_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
+      issue_offsite_player_customer: {
+        Args: {
+          _admin: string
+          _email: string
+          _expires: string
+          _name: string
+          _username: string
+        }
+        Returns: {
+          id: string
+          number: number
+        }[]
+      }
       issue_ticket_setup_code: { Args: { _ticket_id: string }; Returns: string }
       job_application_id_for: {
         Args: { _password: string; _token: string }
@@ -9502,6 +9559,7 @@ export type Database = {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
         Returns: string
       }
+      next_free_customer_number: { Args: never; Returns: number }
       order_subscription_months: {
         Args: { p_order_id: string }
         Returns: number
