@@ -17,3 +17,4 @@
 - The same check-in IP is judged for VPN/proxy use by src/lib/player-vpn.ts (proxycheck.io then ipapi.is, answers cached per IP) and shown in that page's VPN column; the poll that hands the app its login never waits on that lookup.
 - Provider account connection counts are sampled on a separate single-flight queue; sustained excess reports use the device-token API and only an acknowledged report opens the warning activity, including during playback.
 - PlayerApplication owns one foreground inactivity timer across native activities; only explicit Continue viewing dismisses the timed prompt, and exit releases all playback before opening the device home screen. External VLC is outside the app's interaction monitoring.
+- Every cold open (and every new link) asks for the owner's permanent 6-digit account number, checked by the device-token `unlock` action (5 wrong tries = 15-minute lock); showHome() refuses to draw until unlocked.
