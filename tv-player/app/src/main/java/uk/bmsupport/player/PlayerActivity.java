@@ -46,6 +46,7 @@ public class PlayerActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private String progressKey, seriesKey;
     private boolean playbackReady;
+    private boolean subsChecked;
     private long resumePosition;
     private final Runnable saveTick = new Runnable() {
         @Override public void run() { saveProgress(false); ui.postDelayed(this, 5000); }
