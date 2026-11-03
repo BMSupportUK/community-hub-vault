@@ -1,5 +1,5 @@
 # src/lib rules
-- BM Player votes derive the voter from the verified linked device owner; film/series title keys normalize case, Unicode and whitespace while retaining years, with atomic per-owner upserts and separate totals that never expose voter lists.
+- BM Player votes derive the voter from the verified linked device owner and are final once cast (one per owner per title, across devices); film/series title keys normalize case, Unicode and whitespace while retaining years, with atomic per-owner upserts and separate totals that never expose voter lists.
 - BM Player connection investigation reports are device-token submissions of provider-observed counts, admin-readable only; never treat those client observations as verified enforcement or automatic account suspension.
 - Screen unlock verifies the bearer-bound account password through an isolated non-persistent Auth client and retires only its verification session, so the app session and MFA state remain unchanged; legacy PIN reset endpoints are retired.
 - Dashboard password reset requests verify admin server-side and use managed HTML recovery emails without replacing credentials; reset requirements clear only server-side after Auth accepts the chosen password (including same_password), completing any first-login metadata first and matching the original request timestamp to preserve newer requests.

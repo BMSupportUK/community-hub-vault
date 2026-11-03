@@ -119,6 +119,7 @@ export const Route = createFileRoute("/api/public/player")({
           const keyed = await Promise.all(items.map(async item => ({ ...item, key: await sha256Hex(ratingIdentity(item.kind, item.title)) })));
           if (body.action === "vote") {
             const { error } = await supabaseAdmin.rpc("player_cast_rating", { p_voter: voter, p_key: keyed[0].key, p_stars: body.stars });
+            if (error?.message.includes("Already voted")) return json({ error: "You've already voted on this. Votes can't be changed." }, 409);
             if (error) return json({ error: error.message.includes("Rate limit") ? "Too many votes. Wait a minute and try again." : "Couldn't save your vote. Try again." }, error.message.includes("Rate limit") ? 429 : 503);
           }
           const keys = keyed.map(item => item.key);
