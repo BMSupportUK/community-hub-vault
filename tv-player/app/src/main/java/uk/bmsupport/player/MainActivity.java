@@ -702,7 +702,12 @@ public class MainActivity extends Activity {
         String catAction = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
         String listAction = kind.equals("live") ? "get_live_streams" : kind.equals("film") ? "get_vod_streams" : "get_series";
 
+        final String[] liveFilter = { "" };
+        final String[] catLabel = { "" };
+        final List<Item> currentList = new ArrayList<>();
+        final Runnable[] applyFilter = new Runnable[1];
         LinearLayout root = column();
+
         LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
         head.addView(text(title, 26, TEXT, true));
         head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
