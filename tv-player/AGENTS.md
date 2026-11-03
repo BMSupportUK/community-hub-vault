@@ -15,3 +15,4 @@
 - Live connections: the poll reports login, version and the playing item (set on playback start, cleared on return to the app); the server stamps presence + Cloudflare geo via src/lib/player-live.ts, admin-only page /admin-player-live.
 - The same check-in IP is judged for VPN/proxy use by src/lib/player-vpn.ts (proxycheck.io then ipapi.is, answers cached per IP) and shown in that page's VPN column; the poll that hands the app its login never waits on that lookup.
 - Provider account connection counts are sampled on a separate single-flight queue; sustained excess reports use the device-token API and only an acknowledged report opens the warning activity, including during playback.
+- PlayerApplication owns one foreground inactivity timer across native activities; only explicit Continue viewing dismisses the timed prompt, and exit releases all playback before opening the device home screen. External VLC is outside the app's interaction monitoring.

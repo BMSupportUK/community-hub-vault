@@ -315,7 +315,8 @@ public class MainActivity extends Activity {
     }
     @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); refreshVersionScreens(); }
 
-    @Override protected void onDestroy() { super.onDestroy(); stopPolling(); io.shutdownNow(); connectionIo.shutdownNow(); }
+    @Override public void onUserInteraction() { super.onUserInteraction(); PlayerApplication.interaction(this); }
+    @Override protected void onDestroy() { stopPreview(); stopMulti(); super.onDestroy(); stopPolling(); io.shutdownNow(); connectionIo.shutdownNow(); }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
         if (keyCode == KeyEvent.KEYCODE_BACK) { goBack(); return true; }

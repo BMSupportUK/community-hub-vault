@@ -195,6 +195,8 @@ public class PlayerActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
+    @Override public void onUserInteraction() { super.onUserInteraction(); PlayerApplication.interaction(this); }
+
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
     @Override protected void onDestroy() { saveProgress(false); ui.removeCallbacks(saveTick); super.onDestroy(); if (player != null) { player.release(); player = null; } }
