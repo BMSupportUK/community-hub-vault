@@ -40,7 +40,7 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
-- [ ] Package Windows as an executable installer and expose a compact download card in its own BM Player | Windows pill
+- [x] Package Windows 0.2.1 as an unsigned executable installer; own compact BM Player | Windows pill, authenticated desktop/mobile card and EXE range download/log checked; actual Windows installation/playback remains unverified below
 - [x] Replace external Windows VLC with embedded playback, preview and in-app controls; private 0.2.0 packaged, 13 tests pass and renderer controls checked
 - [x] Align Windows Live TV layout and channel ordering with Android; provider order preserved and checked with differing upload dates
 - [ ] Verify embedded Windows DLL loading, native video/DPI and real stream playback (blocked: no Windows runtime or real provider test session)
