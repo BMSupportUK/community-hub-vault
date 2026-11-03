@@ -1144,29 +1144,8 @@ public class MainActivity extends Activity {
                     plot.setText(story);
                     int total = 0; for (List<Item> l : bySeason.values()) total += l.size();
                     info.setText(bySeason.size() + (bySeason.size() == 1 ? " season · " : " seasons · ") + total + " episodes");
-                    List<Button> bs = new ArrayList<>();
-                    for (java.util.Map.Entry<Integer, List<Item>> en : bySeason.entrySet()) {
-                        String label = en.getKey() == 999 ? "Extras" : "Season " + en.getKey();
-                        Button b = button(label, null);
-                        b.setOnClickListener(v -> {
-                            for (Button x : bs) x.setAlpha(x == b ? 1f : 0.55f);
-                            List<Item> l = en.getValue();
-                            eps.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, l) {
-                                @Override public View getView(int i, View cv, ViewGroup parent) {
-                                    LinearLayout row = column();
-                                    row.addView(text(l.get(i).name, 16, TEXT, false));
-                                    row.addView(watchedBar(l.get(i)));
-                                    return styleRow(row);
-                                }
-                            });
-                            watchedAdapter = (BaseAdapter) eps.getAdapter();
-                            eps.setSelectionFromTop(0, 0);
-                        });
-                        b.setOnFocusChangeListener((v, f) -> { if (f) b.performClick(); });
-                        bs.add(b); pills.addView(b);
-                    }
-                    if (!bs.isEmpty()) { bs.get(0).performClick(); bs.get(0).requestFocus(); }
-                    else info.setText("No episodes for this series.");
+                    bindSeriesSeasons(pills, eps, bySeason);
+                    if (bySeason.isEmpty()) info.setText("No episodes for this series.");
                 });
             } catch (Exception ex) { ui.post(() -> info.setText("Couldn't load episodes.")); }
         });
@@ -1178,6 +1157,76 @@ public class MainActivity extends Activity {
             new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play", "Play with VLC", "⚠ Report a problem"},
                     (d, w) -> { if (w == 2) showReport(show, ep.name); else play(named, w == 1 || (w == 0 && defaultVlc())); }).show();
         });
+    }
+
+    /** Keep the season selection separate from remote focus, and hand Down/Up between panes. */
+    private void bindSeriesSeasons(LinearLayout pills, ListView eps,
+                                  java.util.SortedMap<Integer, List<Item>> bySeason) {
+        List<Button> buttons = new ArrayList<>();
+        Button[] active = new Button[1];
+        GradientDrawable ring = new GradientDrawable();
+        ring.setColor(Color.TRANSPARENT); ring.setCornerRadius(dp(8)); ring.setStroke(dp(3), ACCENT);
+        eps.setSelector(ring);
+        eps.setDrawSelectorOnTop(true);
+        eps.setItemsCanFocus(false);
+        eps.setFocusable(true);
+        eps.setOnKeyListener((v, key, event) -> {
+            int selected = eps.getSelectedItemPosition();
+            if (key == KeyEvent.KEYCODE_DPAD_UP && selected <= 0 && active[0] != null) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) active[0].requestFocus();
+                return true;
+            }
+            if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER
+                    || key == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+                if (event.getAction() == KeyEvent.ACTION_UP && selected >= 0 && selected < eps.getCount())
+                    eps.performItemClick(eps.getSelectedView(), selected, eps.getItemIdAtPosition(selected));
+                return true;
+            }
+            return false;
+        });
+        for (java.util.Map.Entry<Integer, List<Item>> entry : bySeason.entrySet()) {
+            Button b = button(entry.getKey() == 999 ? "Extras" : "Season " + entry.getKey(), null);
+            GradientDrawable chosen = new GradientDrawable();
+            chosen.setColor(CARD); chosen.setCornerRadius(dp(12)); chosen.setStroke(dp(3), ACCENT);
+            StateListDrawable background = new StateListDrawable();
+            background.addState(new int[]{android.R.attr.state_selected}, chosen);
+            background.addState(new int[]{}, focusBg(12));
+            b.setBackground(background);
+            b.setOnClickListener(v -> {
+                if (active[0] == b) return;
+                active[0] = b;
+                for (Button other : buttons) other.setSelected(other == b);
+                List<Item> episodes = entry.getValue();
+                eps.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, episodes) {
+                    @Override public View getView(int i, View recycled, ViewGroup parent) {
+                        LinearLayout episode = column();
+                        episode.addView(text(episodes.get(i).name, 16, TEXT, false));
+                        episode.addView(watchedBar(episodes.get(i)));
+                        episode.setFocusable(false); episode.setClickable(false);
+                        episode.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+                        return episode;
+                    }
+                });
+                watchedAdapter = (BaseAdapter) eps.getAdapter();
+                eps.setSelectionFromTop(0, 0);
+            });
+            b.setOnKeyListener((v, key, event) -> {
+                if (key != KeyEvent.KEYCODE_DPAD_DOWN) return false;
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    b.performClick();
+                    if (eps.getCount() > 0) {
+                        eps.requestFocus();
+                        if (eps.getSelectedItemPosition() < 0) eps.setSelection(0);
+                    }
+                }
+                return true;
+            });
+            buttons.add(b); pills.addView(b);
+        }
+        if (!buttons.isEmpty()) {
+            buttons.get(0).performClick();
+            buttons.get(0).requestFocus();
+        }
     }
 
     private void play(Item it, boolean vlc) {
