@@ -25,7 +25,7 @@ Section "BM Player"
   CreateShortcut "$SMPROGRAMS\BM Player\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   CreateShortcut "$DESKTOP\BM Player.lnk" "$INSTDIR\BM Player.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayName" "BM Player"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayVersion" "0.2.2"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayVersion" "0.2.6"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "Publisher" "BM Support"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "UninstallString" '"$INSTDIR\Uninstall.exe"'
 SectionEnd
