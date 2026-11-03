@@ -1859,6 +1859,21 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_numbers_retired: {
+        Row: {
+          number: number
+          retired_at: string
+        }
+        Insert: {
+          number: number
+          retired_at?: string
+        }
+        Update: {
+          number?: number
+          retired_at?: string
+        }
+        Relationships: []
+      }
       customer_package_allocations: {
         Row: {
           allocated_at: string

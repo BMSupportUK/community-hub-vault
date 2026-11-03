@@ -1884,6 +1884,13 @@
       "when": 1793668082265,
       "tag": "0268_customer_numbers_hard_to_guess",
       "breakpoints": true
+    },
+    {
+      "idx": 269,
+      "version": "7",
+      "when": 1793668114509,
+      "tag": "0269_replace_simple_customer_numbers",
+      "breakpoints": true
     }
   ]
 }
