@@ -5754,6 +5754,27 @@ export type Database = {
           },
         ]
       }
+      player_favourites: {
+        Row: {
+          items: Json
+          owner_key: string
+          scope_key: string
+          updated_at: string
+        }
+        Insert: {
+          items?: Json
+          owner_key: string
+          scope_key: string
+          updated_at?: string
+        }
+        Update: {
+          items?: Json
+          owner_key?: string
+          scope_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_link_attempts: {
         Row: {
           created_at: string

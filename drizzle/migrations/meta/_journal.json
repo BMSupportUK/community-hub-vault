@@ -1912,6 +1912,13 @@
       "when": 1793739286086,
       "tag": "0272_player_shared_star_ratings",
       "breakpoints": true
+    },
+    {
+      "idx": 273,
+      "version": "7",
+      "when": 1793742132977,
+      "tag": "0273_player_shared_favourites",
+      "breakpoints": true
     }
   ]
 }
