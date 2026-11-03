@@ -2376,6 +2376,9 @@ public class MainActivity extends Activity {
         root.addView(text("🕘 Catch up · " + ch.name, 26, TEXT, true));
         TextView status = text("Loading programmes from the last " + ch.archiveDays + (ch.archiveDays == 1 ? " day…" : " days…"), 15, MUTED, false);
         root.addView(status);
+        Button retry = button("↻ Try again", v -> showCatchup(ch, backTo));
+        retry.setVisibility(View.GONE);
+        root.addView(retry);
         LinearLayout cols = row();
         ListView days = list(), progs = list();
         cols.addView(days, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -2384,21 +2387,34 @@ public class MainActivity extends Activity {
         setContentView(root);
         io.execute(() -> {
             List<long[]> all = new ArrayList<>(); List<String> titles = new ArrayList<>();
+            boolean failed = false;
             try {
-                JSONArray l = new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + ch.id)).optJSONArray("epg_listings");
+                JSONObject response = new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + ch.id));
+                JSONArray l = response.optJSONArray("epg_listings");
+                if (l == null) throw new IllegalStateException("No programme list returned");
                 long now = System.currentTimeMillis() / 1000, from = now - ch.archiveDays * 86400L;
                 if (l != null) for (int i = 0; i < l.length(); i++) {
-                    JSONObject e = l.getJSONObject(i);
-                    long st = e.optLong("start_timestamp", 0), en = e.optLong("stop_timestamp", 0);
-                    if (st <= 0 || st < from || (en > 0 ? en : st) > now) continue;
-                    if (e.has("has_archive") && e.optInt("has_archive", 1) == 0) continue;
+                    JSONObject e = l.optJSONObject(i);
+                    if (e == null) continue;
+                    String zone = prefs.getString("server_tz", "Europe/London");
+                    long st = CatchupListings.time(e, false, zone), en = CatchupListings.time(e, true, zone);
+                    if (!CatchupListings.available(e, st, en, now, ch.archiveDays)) continue;
+                    String title = e.optString("title", "Programme");
+                    try { title = new String(Base64.decode(title, Base64.DEFAULT), "UTF-8"); }
+                    catch (Exception ignored) {}
                     all.add(new long[]{st, en});
-                    titles.add(new String(Base64.decode(e.optString("title"), Base64.DEFAULT), "UTF-8"));
+                    titles.add(title);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) { failed = true; }
+            final boolean loadFailed = failed;
             ui.post(() -> {
                 if (!"catchup".equals(screen)) return;
-                if (all.isEmpty()) { status.setText("No catch up programmes are available for this channel right now."); return; }
+                if (loadFailed || all.isEmpty()) {
+                    status.setText(loadFailed ? "Couldn't load catch up programmes. Check your connection and try again."
+                            : "No catch up programmes are available for this channel right now.");
+                    retry.setVisibility(View.VISIBLE);
+                    return;
+                }
                 Integer[] idx = new Integer[all.size()]; for (int i = 0; i < idx.length; i++) idx[i] = i;
                 java.util.Arrays.sort(idx, (a, b) -> Long.compare(all.get(b)[0], all.get(a)[0]));
                 java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK);
