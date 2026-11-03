@@ -676,6 +676,24 @@ public class MainActivity extends Activity {
 
     /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
     private Item previewItem;
+    private long previewLastTap;
+
+    /** Two presses on the preview (remote OK, or a tap on a phone) open that channel full screen. */
+    private void previewDoubleTap() {
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - previewLastTap > 600) {
+            previewLastTap = now;
+            Toast.makeText(this, "Press OK again for full screen", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        previewLastTap = 0;
+        Item cur = previewItem;
+        if (cur == null) { Toast.makeText(this, "Highlight a channel first", Toast.LENGTH_SHORT).show(); return; }
+        stopPreview();
+        play(cur, defaultVlc());
+    }
+
+
     private void schedulePreview(Item it, androidx.media3.ui.PlayerView view, TextView status) {
         stopPreview();
         previewItem = it;
