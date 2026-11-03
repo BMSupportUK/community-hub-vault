@@ -3,6 +3,8 @@ package uk.bmsupport.player;
 /** Decides when a catch-up recording that VLC couldn't play should be retried in BM Player's own player. */
 final class CatchupFallback {
     private CatchupFallback() {}
+    /** Amazon Fire TV plays catch up through VLC; every other Android device uses BM Player's own player. */
+    static boolean useVlc(String manufacturer) { return "Amazon".equalsIgnoreCase(manufacturer); }
     /** VLC's official result codes: connection failed, playback error, video track lost. */
     static boolean vlcError(int res) { return res >= 2 && res <= 4; }
     /** Error result, or VLC came straight back (under 10s) without reaching any picture. */
