@@ -6,6 +6,8 @@ const clock=value=>new Date(value).toLocaleTimeString('en-GB',{hour:'2-digit',mi
 const percent=p=>p?.duration?Math.min(100,Math.round(p.position/p.duration*100)):0;
 const resumable=p=>p?.position>0&&p?.duration>0&&p.position<p.duration*.95;
 function App(){
+ const [intro,setIntro]=useState(true);
+ useEffect(()=>{const timer=setTimeout(()=>setIntro(false),8000);return()=>clearTimeout(timer);},[]);
  const [state,setState]=useState(null),[view,setView]=useState('home'),[notice,setNotice]=useState(''),[modal,setModal]=useState(null),[progress,setProgress]=useState(null),[inactive,setInactive]=useState(0);
  const [kind,setKind]=useState('live'),[data,setData]=useState({categories:[],items:[]}),[category,setCategory]=useState('all'),[query,setQuery]=useState(''),[sort,setSort]=useState('added');
  const [selected,setSelected]=useState(null),[programmes,setProgrammes]=useState([]),[series,setSeries]=useState(null),[season,setSeason]=useState('1');
@@ -34,6 +36,7 @@ function App(){
  async function openGuide(){setView('guide');setLoading(true);const d=await act(()=>bm.catalog('live'));if(d){setData(d);const first=d.items.slice(0,15);for(let at=0;at<first.length;at+=3){await Promise.all(first.slice(at,at+3).map(async c=>{const p=await act(()=>bm.epg(c.id));if(p)setGuide(g=>({...g,[c.id]:p}));}));}}setLoading(false);}
  async function reminder(item,p){const old=state.reminders.find(r=>r.id===`${item.id}:${p.start}`);setModal({type:'reminder-confirm',item,p,old});}
  async function changeReminder(m){if(m.old){const s=await act(()=>bm.reminder({remove:true,id:m.old.id}));if(s)setState(s);}else{const s=await act(()=>bm.reminder({...m.p,item:m.item}));if(s)setState(s);}setModal(null);}
+ if(intro)return <main className="opening"><video src="player-intro.mp4" autoPlay playsInline onEnded={()=>setIntro(false)} onError={()=>setIntro(false)} aria-label="BM Player family opening intro"/></main>;
  if(!state)return <main className="link-screen"><img src="logo.png" width="90"/><h1>BM Player</h1><p>Connecting…</p></main>;
  const now=Date.now();
  const header=<header className="bar"><img src="logo.png" alt="BM Support"/><span className="brand">BM Player</span><span className="version">v{state.version}</span><span className="testing">Windows test</span><div className="spacer"/>{view!=='home'&&<button onClick={()=>{setView('home');setModal(null);}}>⌂ Home</button>}<button onClick={()=>{setView('settings');}}>⚙ Settings</button><button aria-label="Close app" title="Close app" onClick={()=>setModal({type:'exit'})}>×</button></header>;
