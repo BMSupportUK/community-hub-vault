@@ -1608,6 +1608,7 @@ public class MainActivity extends Activity {
     }
 
     private void showSaved(String key, String title) {
+        if ("fav".equals(key) && !"fav".equals(screen)) syncFavourites(() -> { if ("fav".equals(screen)) showSaved(key, title); });
         screen = key; back = this::showHome;
         LinearLayout root = column();
         root.addView(text(title, 26, TEXT, true));

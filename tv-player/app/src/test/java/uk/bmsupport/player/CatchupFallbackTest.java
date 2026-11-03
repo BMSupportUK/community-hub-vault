@@ -9,4 +9,6 @@ public class CatchupFallbackTest {
     @Test public void vlcReturningStraightAwayWithNoPictureFallsBack() { assertTrue(CatchupFallback.vlcFailed(-1, 3000, -1)); }
     @Test public void watchedThenBackStaysInApp() { assertFalse(CatchupFallback.vlcFailed(-1, 600000, 300000)); }
     @Test public void quickBackAfterPictureStaysInApp() { assertFalse(CatchupFallback.vlcFailed(-1, 6000, 4000)); }
+    @Test public void amazonCatchupKeepsVlc() { assertTrue(CatchupFallback.useVlc("Amazon")); }
+    @Test public void androidCatchupUsesBmPlayer() { assertFalse(CatchupFallback.useVlc("Google")); assertFalse(CatchupFallback.useVlc("Xiaomi")); }
 }
