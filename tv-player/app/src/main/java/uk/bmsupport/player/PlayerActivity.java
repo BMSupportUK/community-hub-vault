@@ -138,7 +138,24 @@ public class PlayerActivity extends Activity {
         player.setMediaItem(item(getIntent().getStringExtra("url")));
         player.setPlayWhenReady(true);
         player.prepare();
+        ui.postDelayed(freezeWatch, 4000);
     }
+
+    // Timeshift recordings can jump in their timestamps; the sound carries on but the picture
+    // freezes. If no new video frame is drawn for 4s while playing, reopen at the point reached.
+    private int lastFrames = -1, frozenTicks;
+    private final Runnable freezeWatch = new Runnable() {
+        @Override public void run() {
+            if (player == null) return;
+            androidx.media3.exoplayer.DecoderCounters c = player.getVideoDecoderCounters();
+            int frames = c == null ? -1 : c.renderedOutputBufferCount;
+            boolean playing = player.isPlaying() && player.getPlaybackState() == Player.STATE_READY;
+            if (playing && frames >= 0 && frames == lastFrames) frozenTicks++; else frozenTicks = 0;
+            lastFrames = frames;
+            if (frozenTicks >= 4) { frozenTicks = 0; lastFrames = -1; catchupResume(); }
+            ui.postDelayed(this, 1000);
+        }
+    };
 
     private void catchupResume() {
         if (player == null || isFinishing()) return;
@@ -149,6 +166,7 @@ public class PlayerActivity extends Activity {
         }
         // Timeshift addresses are minute-precise; restart at the minute reached (a few seconds may repeat).
         cuSegStart = reached - (reached % 60);
+        if (cuSegStart <= getIntent().getLongExtra("catchup_start", 0) && player.getCurrentPosition() > 60000) cuSegStart = reached;
         String url = timeshiftUrl(getIntent().getStringExtra("catchup_prefix"), getIntent().getStringExtra("catchup_id"), cuSegStart, cuEnd, getIntent().getStringExtra("catchup_tz"));
         ui.postDelayed(() -> { if (player == null) return; player.setMediaItem(item(url)); player.setPlayWhenReady(true); player.prepare(); }, cuRetries > 1 ? 2000 : 300);
     }
@@ -239,5 +257,5 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
-    @Override protected void onDestroy() { saveProgress(false); ui.removeCallbacks(saveTick); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); saveProgress(false); ui.removeCallbacks(saveTick); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
