@@ -37,6 +37,7 @@ import { RailOrderEditor } from "@/components/app/RailOrderEditor";
 import { TvRemoteSessions } from "@/components/app/TvRemoteSessions";
 import { FaqsAdmin } from "@/components/app/FaqsAdmin";
 import { InstallGuideTabOrderCard } from "@/components/app/InstallGuideTabOrderCard";
+import { PlayerAnnouncementsCard } from "@/components/app/PlayerAnnouncementsCard";
 import {
   Dialog,
   DialogContent,
@@ -548,7 +549,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const perms = usePagePermissions();
   const toolsHeading = canSeePins ? "Owner tools" : "Staff tools";
   const { tab: searchTab } = useSearch({ strict: false }) as { tab?: string };
-  const validTabs = ["tools", "order-status", "customers", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "rail-order", "invoice-template", "sign-out-devices", "android-apk", "tv-sessions", "faqs", "enabler-codes", "install-pills"] as const;
+  const validTabs = ["tools", "order-status", "customers", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "rail-order", "invoice-template", "sign-out-devices", "android-apk", "tv-sessions", "faqs", "enabler-codes", "install-pills", "player-announcements"] as const;
   type DashTab = (typeof validTabs)[number];
   const [tab, setTab] = useState<DashTab>(
     (validTabs as readonly string[]).includes(searchTab as string) ? (searchTab as DashTab) : "tools",
@@ -610,6 +611,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { tabKey: "enabler-codes", label: "Installer PIN & website codes", desc: "Reference name, device and selected apps for BM Direct Install or BM TV Enabler.", icon: KeyRound, art: toolArtDevices, adminOnly: true, managementToo: true },
     { to: "/admin-app-transfers", label: "App transfers", desc: "Send apps straight to customers' devices and keep track of every transfer by week.", icon: Smartphone, art: toolArtDevices },
     { tabKey: "faqs", label: "FAQ boxes", desc: "Add, edit, delete and re-order the boxes on the public FAQ page.", icon: CircleHelp, art: toolArtDocs },
+    { tabKey: "player-announcements", label: "BM Player announcements", desc: "Send a message that appears along the bottom of every BM Player straight away.", icon: Megaphone, art: toolArtAlerts, adminOnly: true, managementToo: true },
     { tabKey: "install-pills", label: "Install Guides pills", desc: "Change the order of the pills on Install Guides with up and down arrows.", icon: LayoutGrid, art: toolArtDesign, adminOnly: true },
     { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
@@ -742,6 +744,11 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
         }} />
       ) : tab === "faqs" && canSeePins && !isFz ? (
         <FaqsAdmin onBack={() => {
+          setTab("tools");
+          void navigate({ to: "/admin", search: { tab: "tools" } });
+        }} />
+      ) : tab === "player-announcements" && canSeePins && !isFz ? (
+        <PlayerAnnouncementsCard onBack={() => {
           setTab("tools");
           void navigate({ to: "/admin", search: { tab: "tools" } });
         }} />
