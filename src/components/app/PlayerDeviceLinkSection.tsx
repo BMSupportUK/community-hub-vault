@@ -6,7 +6,7 @@ import { manualPlayerLogin, selectedPlayerLogin, type SavedPlayerLogin } from ".
 import { usePlayerDevices, type PlayerDevice } from "@/hooks/use-player-devices";
 import { useCustomerNumber } from "@/components/app/CustomerNumber";
 import { useServerFn } from "@tanstack/react-start";
-import { Hash, Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
+import { Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
