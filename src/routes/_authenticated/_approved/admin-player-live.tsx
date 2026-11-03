@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowLeft, Copy, Film, Info, MapPin, MonitorPlay, Radio, ShieldAlert,
   ShieldCheck, Tv,
@@ -40,11 +40,11 @@ type ConnectionReport = { id: string; device_id: string; iptv_username: string |
 
 const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString("en-GB") : "—");
 
-function Field({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="min-w-0 border-b border-border py-2 last:border-0">
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={mono ? "break-all font-mono text-sm" : "break-words text-sm"}>{value ?? "—"}</div>
+      <div className="break-words text-sm">{value ?? "—"}</div>
     </div>
   );
 }
