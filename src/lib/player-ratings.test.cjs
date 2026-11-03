@@ -1,5 +1,5 @@
-import { test, expect } from "bun:test";
-import { RatingVote, ratingIdentity, ratingVoter } from "./player-ratings";
+const { test, expect } = require("bun:test");
+const { RatingVote, ratingIdentity, ratingVoter } = require("./player-ratings.ts");
 
 test("votes allow all five whole-star scores", () => {
   for (const stars of [1, 2, 3, 4, 5]) expect(RatingVote.parse({ kind: "film", title: "Film", stars }).stars).toBe(stars);

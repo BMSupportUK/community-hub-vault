@@ -105,7 +105,7 @@ public class MainActivity extends Activity {
             try {
                 JSONArray items = new JSONArray();
                 for (Item it : batch) items.put(new JSONObject().put("kind", it.kind).put("title", it.name));
-                JSONObject response = new JSONObject(Net.post("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "ratings").put("device_token", prefs.getString("token", "")).put("items", items).toString()));
+                JSONObject response = new JSONObject(Net.postJson("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "ratings").put("device_token", prefs.getString("token", "")).put("items", items).toString()));
                 ui.post(() -> receiveRatings(response));
             } catch (Exception ignored) {} finally { ui.post(() -> { ratingLoading = false; if (!ratingQueue.isEmpty()) ui.postDelayed(this::flushRatingQueue, 200); }); }
         });
@@ -127,7 +127,7 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "Saving your vote…", Toast.LENGTH_SHORT).show();
             ratingIo.execute(() -> {
                 try {
-                    JSONObject response = new JSONObject(Net.post("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "vote").put("device_token", prefs.getString("token", "")).put("kind", it.kind).put("title", it.name).put("stars", index + 1).toString()));
+                    JSONObject response = new JSONObject(Net.postJson("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "vote").put("device_token", prefs.getString("token", "")).put("kind", it.kind).put("title", it.name).put("stars", index + 1).toString()));
                     ui.post(() -> { receiveRatings(response); Toast.makeText(this, "Your " + (index + 1) + "-star vote is saved.", Toast.LENGTH_SHORT).show(); });
                 } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't save your vote. Try again.", Toast.LENGTH_LONG).show()); }
             });
