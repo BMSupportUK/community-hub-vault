@@ -281,19 +281,24 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
           const name = c.username || c.displayName || "Not recorded";
           return (
           <article key={c.userId} className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-card/70 p-4">
-            <header className="flex flex-wrap items-center gap-2">
-              <h3 className="break-words font-semibold">{name}</h3>
-              {c.hasSiteAccount && <CustomerNumberBadge userId={c.userId} />}
-              {bankTransferUserIds.has(c.userId) && <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-[10px] font-bold leading-none text-primary" title="Bank transfer set up" aria-label="Bank transfer set up">£</span>}
-              {discountUserIds.has(c.userId) && <span className="inline-flex shrink-0" title="Discount code added" aria-label="Discount code added"><BadgeCheck className="size-4 text-success" aria-hidden="true" /></span>}
-              <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
-              {c.manualSetupPending && <span className="text-xs text-muted-foreground">Awaiting profile setup</span>}
-              {(canReward || viewCredentials) && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} showPinReset={c.hasSiteAccount} readOnly={!canReward} />}
-              {c.hasSiteAccount && memberHeader?.(c.userId)}
-              {c.hasSiteAccount && <CustomerAccountSwitchButton customerId={c.userId} name={name} />}
-              {c.hasSiteAccount && <CustomerPortalLinkButtons customerId={c.userId} name={name} />}
-              {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
-              {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
+            <header className="flex min-w-0 flex-col gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <h3 className="break-words font-semibold">{name}</h3>
+                {c.hasSiteAccount && <CustomerNumberBadge userId={c.userId} />}
+                {bankTransferUserIds.has(c.userId) && <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-[10px] font-bold leading-none text-primary" title="Bank transfer set up" aria-label="Bank transfer set up">£</span>}
+                {discountUserIds.has(c.userId) && <span className="inline-flex shrink-0" title="Discount code added" aria-label="Discount code added"><BadgeCheck className="size-4 text-success" aria-hidden="true" /></span>}
+                <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
+                {c.manualSetupPending && <span className="text-xs text-muted-foreground">Awaiting profile setup</span>}
+              </div>
+              {/* All card actions sit on one line; the row scrolls sideways instead of wrapping. */}
+              <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {(canReward || viewCredentials) && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} showPinReset={c.hasSiteAccount} readOnly={!canReward} />}
+                {c.hasSiteAccount && memberHeader?.(c.userId)}
+                {c.hasSiteAccount && <CustomerAccountSwitchButton customerId={c.userId} name={name} />}
+                {c.hasSiteAccount && <CustomerPortalLinkButtons customerId={c.userId} name={name} />}
+                {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
+                {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
+              </div>
             </header>
             {c.hasSiteAccount && memberRoles?.(c.userId)}
             {lines.map((a, i) => {
