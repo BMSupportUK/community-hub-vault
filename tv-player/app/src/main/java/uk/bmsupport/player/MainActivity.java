@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
     /** A playable or browsable entry. */
     static final class Item {
         String kind, id, name, ext, category;
-        String norm, poster = "", seriesId = "", url = ""; long added; double rating; int pos; int archiveDays;
+        String norm, poster = "", seriesId = "", url = ""; long added; double rating; int pos; int archiveDays; String catchupId = ""; long catchupStart, catchupEnd;
         String norm() { if (norm == null) norm = normChannel(name == null ? "" : name); return norm; }
         Item(String kind, String id, String name, String ext, String category) {
             this.kind = kind; this.id = id; this.name = name; this.ext = ext; this.category = category;
@@ -1120,6 +1120,12 @@ public class MainActivity extends Activity {
             return;
         }
         Intent intent = new Intent(this, PlayerActivity.class).putExtra("url", url);
+        if ("catchup".equals(it.kind) && it.catchupEnd > it.catchupStart) {
+            // Providers often close timeshift streams early; the player reconnects from where it stopped.
+            intent.putExtra("catchup_prefix", prefs.getString("dns", "").replaceAll("/+$", "") + "/timeshift/" + prefs.getString("user", "") + "/" + prefs.getString("pass", "") + "/")
+                    .putExtra("catchup_id", it.catchupId).putExtra("catchup_start", it.catchupStart).putExtra("catchup_end", it.catchupEnd)
+                    .putExtra("catchup_tz", prefs.getString("server_tz", "Europe/London"));
+        }
         if (WatchProgress.eligible(it.kind)) {
             intent.putExtra("progress_key", watchKey(it.kind, it.id)).putExtra("resume_ms", position);
             if (!it.seriesId.isEmpty()) intent.putExtra("series_key", watchKey("series", it.seriesId));
@@ -2116,6 +2122,7 @@ public class MainActivity extends Activity {
                     int i = shown.get(w); long[] t = all.get(i);
                     Item c = new Item("catchup", ch.id + "@" + t[0], ch.name + " · " + titles.get(i), "ts", ch.category);
                     c.url = catchupUrl(ch, t[0], t[1]);
+                    c.catchupId = ch.id; c.catchupStart = t[0]; c.catchupEnd = t[1] > t[0] ? t[1] : t[0] + 3600;
                     play(c, defaultVlc());
                 });
                 pickDay.accept(0);
