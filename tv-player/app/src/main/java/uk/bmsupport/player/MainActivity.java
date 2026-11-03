@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
     /** A playable or browsable entry. */
     static final class Item {
         String kind, id, name, ext, category;
-        String norm, poster = "", seriesId = ""; long added; double rating; int pos;
+        String norm, poster = "", seriesId = "", url = ""; long added; double rating; int pos; int archiveDays;
         String norm() { if (norm == null) norm = normChannel(name == null ? "" : name); return norm; }
         Item(String kind, String id, String name, String ext, String category) {
             this.kind = kind; this.id = id; this.name = name; this.ext = ext; this.category = category;
@@ -177,7 +177,7 @@ public class MainActivity extends Activity {
                 try {
                     JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
                     List<Item> l = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id"))); }
+                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
                     liveChannels = l;
                     ui.post(() -> pickMultiChannel(n, label));
                 } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't load your channels", Toast.LENGTH_LONG).show()); }
@@ -639,6 +639,7 @@ public class MainActivity extends Activity {
 
     /** Addresses to try in order. Live tries MPEG-TS first (what most panels serve), then HLS. */
     private String[] streamUrls(Item it) {
+        if (it.url != null && !it.url.isEmpty()) return new String[]{it.url};
         String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = prefs.getString("pass", "");
         switch (it.kind) {
             case "live": {
@@ -2032,6 +2033,85 @@ public class MainActivity extends Activity {
 
     private List<Item> liveChannels = null;
 
+    /** A live channel from the provider list; tv_archive marks channels with catch up. */
+    private static Item liveItem(JSONObject o) {
+        Item it = new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id"));
+        if (o.optInt("tv_archive", 0) == 1) it.archiveDays = Math.max(1, o.optInt("tv_archive_duration", 1));
+        return it;
+    }
+
+    /** Xtream timeshift address: /timeshift/user/pass/minutes/YYYY-MM-DD:HH-MM/stream.ts (provider time). */
+    private String catchupUrl(Item ch, long st, long en) {
+        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = prefs.getString("pass", "");
+        long mins = Math.max(1, ((en > st ? en : st + 3600) - st + 59) / 60);
+        java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd:HH-mm", java.util.Locale.UK);
+        f.setTimeZone(java.util.TimeZone.getTimeZone(prefs.getString("server_tz", "Europe/London")));
+        return d + "/timeshift/" + u + "/" + p + "/" + mins + "/" + f.format(new java.util.Date(st * 1000)) + "/" + ch.id + ".ts";
+    }
+
+    /** Catch up: past programmes for one channel, newest first, grouped by day; OK plays it from the start. */
+    private void showCatchup(Item ch, Runnable backTo) {
+        screen = "catchup"; back = backTo;
+        stopPreview();
+        LinearLayout root = column();
+        root.addView(text("🕘 Catch up · " + ch.name, 26, TEXT, true));
+        TextView status = text("Loading programmes from the last " + ch.archiveDays + (ch.archiveDays == 1 ? " day…" : " days…"), 15, MUTED, false);
+        root.addView(status);
+        LinearLayout cols = row();
+        ListView days = list(), progs = list();
+        cols.addView(days, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+        cols.addView(progs, weight(2.4f, ViewGroup.LayoutParams.MATCH_PARENT));
+        root.addView(cols, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        setContentView(root);
+        io.execute(() -> {
+            List<long[]> all = new ArrayList<>(); List<String> titles = new ArrayList<>();
+            try {
+                JSONArray l = new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + ch.id)).optJSONArray("epg_listings");
+                long now = System.currentTimeMillis() / 1000, from = now - ch.archiveDays * 86400L;
+                if (l != null) for (int i = 0; i < l.length(); i++) {
+                    JSONObject e = l.getJSONObject(i);
+                    long st = e.optLong("start_timestamp", 0), en = e.optLong("stop_timestamp", 0);
+                    if (st <= 0 || st < from || (en > 0 ? en : st) > now) continue;
+                    if (e.has("has_archive") && e.optInt("has_archive", 1) == 0) continue;
+                    all.add(new long[]{st, en});
+                    titles.add(new String(Base64.decode(e.optString("title"), Base64.DEFAULT), "UTF-8"));
+                }
+            } catch (Exception ignored) {}
+            ui.post(() -> {
+                if (!"catchup".equals(screen)) return;
+                if (all.isEmpty()) { status.setText("No catch up programmes are available for this channel right now."); return; }
+                Integer[] idx = new Integer[all.size()]; for (int i = 0; i < idx.length; i++) idx[i] = i;
+                java.util.Arrays.sort(idx, (a, b) -> Long.compare(all.get(b)[0], all.get(a)[0]));
+                java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK);
+                java.util.LinkedHashMap<String, List<Integer>> byDay = new java.util.LinkedHashMap<>();
+                for (Integer i : idx) byDay.computeIfAbsent(df.format(new java.util.Date(all.get(i)[0] * 1000)), k -> new ArrayList<>()).add(i);
+                List<String> dayNames = new ArrayList<>(byDay.keySet());
+                status.setText("Pick a day, then a programme to watch it from the start");
+                days.setAdapter(rowAdapter(dayNames));
+                List<Integer> shown = new ArrayList<>();
+                java.util.function.IntConsumer pickDay = w -> {
+                    shown.clear(); shown.addAll(byDay.get(dayNames.get(w)));
+                    List<String> rows = new ArrayList<>();
+                    for (Integer i : shown) { long[] t = all.get(i); rows.add(clock(t[0]) + (t[1] > 0 ? " – " + clock(t[1]) : "") + "   " + titles.get(i)); }
+                    progs.setAdapter(rowAdapter(rows));
+                };
+                days.setOnItemClickListener((a, v, w, id) -> { pickDay.accept(w); progs.requestFocus(); });
+                days.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+                    @Override public void onItemSelected(android.widget.AdapterView<?> a, View v, int w, long id) { pickDay.accept(w); }
+                    @Override public void onNothingSelected(android.widget.AdapterView<?> a) {}
+                });
+                progs.setOnItemClickListener((a, v, w, id) -> {
+                    int i = shown.get(w); long[] t = all.get(i);
+                    Item c = new Item("catchup", ch.id + "@" + t[0], ch.name + " · " + titles.get(i), "ts", ch.category);
+                    c.url = catchupUrl(ch, t[0], t[1]);
+                    play(c, defaultVlc());
+                });
+                pickDay.accept(0);
+                days.requestFocus();
+            });
+        });
+    }
+
     // ---------- full TV guide (Sky-style grid) ----------
     private final java.util.concurrent.ExecutorService guideIo = java.util.concurrent.Executors.newFixedThreadPool(3);
     private final java.util.Map<String, List<GuideGridView.Prog>> guideCache = new java.util.LinkedHashMap<String, List<GuideGridView.Prog>>(64, 0.75f, true) {
@@ -2083,8 +2163,9 @@ public class MainActivity extends Activity {
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
             catBtn.setText("Category: " + cat[1]);
-            List<String> names = new ArrayList<>(); for (Item it : shownCh) names.add(it.name);
-            grid.setChannels(names);
+            List<String> names = new ArrayList<>(); List<Boolean> cu = new ArrayList<>();
+            for (Item it : shownCh) { names.add(it.name); cu.add(it.archiveDays > 0); }
+            grid.setChannels(names, cu);
             if (shownCh.isEmpty()) { progTitle.setText("No channels in " + cat[1]); progTime.setText(""); }
             grid.requestFocus();
         };
@@ -2127,6 +2208,7 @@ public class MainActivity extends Activity {
                     boolean on = p.st <= now;
                     progTitle.setText(p.title);
                     progTime.setText(ch.name + "  ·  " + clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : "")
+                            + (ch.archiveDays > 0 && on ? "   ·  🕘 ◀ for Catch up" : "")
                             + (on ? "   ·  On now – OK to watch" : MainActivity.this.hasReminder(ch.id, p.st) ? "   ·  ⏰ Reminder set – OK to remove" : "   ·  OK to set a reminder"));
                 }
                 if (previewPending[0] != null && previewPending[0].equals(ch.id)) return;
@@ -2144,6 +2226,12 @@ public class MainActivity extends Activity {
 
             }
             @Override public boolean hasReminder(int r, long st) { return r >= 0 && r < shownCh.size() && MainActivity.this.hasReminder(shownCh.get(r).id, st); }
+            @Override public void onCatchup(int r) {
+                if (r < 0 || r >= shownCh.size()) return;
+                Item ch = shownCh.get(r);
+                if (ch.archiveDays <= 0) { Toast.makeText(MainActivity.this, "Catch up isn't available on this channel", Toast.LENGTH_SHORT).show(); return; }
+                showCatchup(ch, MainActivity.this::showTvGuide);
+            }
         });
         io.execute(() -> {
             try {
@@ -2151,7 +2239,7 @@ public class MainActivity extends Activity {
                 if (liveChannels == null) {
                     JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
                     List<Item> l = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id"))); }
+                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
                     liveChannels = l;
                 }
                 List<String[]> rows = new ArrayList<>();
@@ -2271,7 +2359,7 @@ public class MainActivity extends Activity {
                     List<Item> l = new ArrayList<>();
                     for (int i = 0; i < a.length(); i++) {
                         JSONObject o = a.getJSONObject(i);
-                        l.add(new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id")));
+                        l.add(liveItem(o));
                     }
                     liveChannels = l;
                 }
@@ -2398,7 +2486,7 @@ public class MainActivity extends Activity {
                 try {
                     JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
                     List<Item> l = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id"))); }
+                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
                     liveChannels = l;
                     ui.post(() -> pickSportsChannel(e, aliases, retry));
                 } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't load your channels – check your login in Settings", Toast.LENGTH_LONG).show()); }
