@@ -19,4 +19,5 @@ test("voter is linked customer, not device; unlinked device cannot vote", () => 
   expect(ratingVoter({ user_id: "customer", offsite_customer_id: null })).toBe("user:customer");
   expect(ratingVoter({ user_id: null, offsite_customer_id: "customer" })).toBe("offsite:customer");
   expect(ratingVoter({ user_id: null, offsite_customer_id: null })).toBeNull();
+  expect(ratingVoter({ user_id: "customer", offsite_customer_id: "customer" })).toBeNull();
 });
