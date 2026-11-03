@@ -1,9 +1,9 @@
 {
-  "name": "bm-player-windows-test",
-  "productName": "BM Player Test",
-  "version": "0.2.0",
+  "name": "bm-player-windows",
+  "productName": "BM Player",
+  "version": "0.2.1",
   "private": true,
-  "description": "BM Player Windows pre-launch test",
+  "description": "BM Player for Windows",
   "author": "BM Support",
   "main": "electron/main.cjs"
 }
