@@ -4,6 +4,7 @@ const path=require('node:path');
 const {pathToFileURL}=require('node:url');
 const {execFile}=require('node:child_process');
 const core=require('../core.cjs');
+const gate=require('../account-gate.cjs').createAccountGate();
 const {surfaceRows}=require('../playback-core.cjs');
 const {EmbeddedVlc}=require('./embedded-vlc.cjs');
 const SITE='https://bmsupport.uk';
@@ -18,15 +19,15 @@ function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,i
 function publicState(){
  const a=store.account||{};
  const expiry=Number(a.exp_date)*1000;
- return {version:app.getVersion(),linked:!!store.user,user:store.user||'',code:linkCode,maintenance,
+ return {version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,
   expired:String(a.status||'').toLowerCase()==='expired'||(expiry>0&&expiry<Date.now()),expiry:expiry>0?expiry:null,status:a.status||'',
-  maxConnections:Number(a.max_connections)||1,settings:store.settings||{},favourites:store.favourites||[],recent:store.recent||[],
-  progress:store.progress||{},reminders:store.reminders||[],playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
+  maxConnections:Number(a.max_connections)||1,settings:gate.unlocked?store.settings||{}:{},favourites:gate.unlocked?store.favourites||[]:[],recent:gate.unlocked?store.recent||[]:[],
+  progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
 }
 async function site(body){
  const response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});
  let data;try{data=await response.json();}catch{throw new Error('BM Support is unavailable. Try again shortly.');}
- if(!response.ok){if(response.status===401){store.token=null;store.user=null;store.pass=null;save();}throw new Error(data.error||'BM Support request failed.');}
+ if(!response.ok){if(response.status===401&&body.action!=='unlock'){gate.lock();store.token=null;store.user=null;store.pass=null;save();}throw new Error(data.error||'BM Support request failed.');}
  return data;
 }
 async function getCode(){if(!store.token){const r=await site({action:'register',platform:'windows',name:'BM Player Windows'});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
@@ -38,13 +39,14 @@ async function poll(){
   maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
   let changed=false;
-  if(r.credentials){store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
+  if(r.credentials){gate.lock();await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
-  if(changed){save();if(store.user)await refresh();}
+  if(changed){save();if(store.user&&gate.unlocked)await refresh();}
   send({type:'state',state:publicState()});
  }catch(error){send({type:'notice',message:error.message});}finally{pollBusy=false;}
 }
 async function provider(action='',extra={}){
+ gate.require();
  if(!store.user||!store.dns)throw new Error('Link the app to your account first.');
  const url=new URL('/player_api.php',store.dns);url.searchParams.set('username',store.user);url.searchParams.set('password',store.pass);
  if(action)url.searchParams.set('action',action);
@@ -107,7 +109,7 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  if((s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:store.settings?.buffer});}else if(!session.failed){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
  persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable});}catch{}}}
 async function connectionCheck(){
- if(checkBusy||!store.user)return;checkBusy=true;
+ if(checkBusy||!store.user||!gate.unlocked)return;checkBusy=true;
  try{
   const data=await provider();const info=data.user_info;if(!info)throw new Error('Unknown account');store.account=info;save();
   const active=Number(info.active_cons),max=Number(info.max_connections);
@@ -125,13 +127,13 @@ function systemInput(){
 }
 async function timers(){
  const now=Date.now();
- if(!store.user||maintenance||publicState().expired){lastInput=now;promptedAt=0;return;}
+ if(!store.user||!gate.unlocked||maintenance||publicState().expired){lastInput=now;promptedAt=0;return;}
  if(!promptedAt&&now-lastInput>=core.IDLE_MS){promptedAt=now;await foreground();send({type:'inactive',seconds:60});}
  if(promptedAt){if(now-promptedAt>=core.RESPONSE_MS){await stopAll();app.quit();return;}send({type:'inactive',seconds:Math.ceil((core.RESPONSE_MS-(now-promptedAt))/1000)});}
  for(const reminder of store.reminders||[]){if(!reminder.notified&&reminder.start-300000<=now&&reminder.start>now){reminder.notified=true;save();await foreground();send({type:'reminder',reminder});}}
 }
 function trusted(event){return event.sender===win?.webContents&&event.senderFrame?.url===pathToFileURL(page).href;}
-function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!promptedAt)lastInput=Date.now();return fn(value);});}
+function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop'].includes(name))gate.require();if(!promptedAt)lastInput=Date.now();return fn(value);});}
 if(!app.requestSingleInstanceLock())app.quit();
 else{
  app.on('second-instance',foreground);
@@ -144,6 +146,7 @@ else{
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('sports',()=>site({action:'sports'}));
+  register('unlock',async number=>{await gate.unlock(number,site);send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
   register('play',play);register('stop',stopAll);
   ipcMain.handle('player:surface',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.layout(surfaceRows(value));return true;});
@@ -156,7 +159,7 @@ else{
    send({type:'state',state:publicState()});return true;
   });
   register('settings',async value=>{
-   if(value?.logout){await stopAll();await site({action:'unlink'});store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
+   if(value?.logout){await stopAll();await site({action:'unlink'});gate.lock();store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
    else if(value?.clear){store.recent=[];store.progress={};save();}
    else if(value){store.settings={...store.settings,...value};save();}
    return publicState();
@@ -168,7 +171,7 @@ else{
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));
   register('speed',async()=>{const start=Date.now();await fetch('https://speed.cloudflare.com/__down?bytes=100',{signal:AbortSignal.timeout(10000)});const ping=Date.now()-start;const down=Date.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{signal:AbortSignal.timeout(20000)});const bytes=(await r.arrayBuffer()).byteLength;const download=bytes*8/(Date.now()-down)/1000;const up=Date.now();await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Uint8Array(3000000),signal:AbortSignal.timeout(20000)});return{ping,download,upload:3000000*8/(Date.now()-up)/1000};});
   await win.loadFile(page);
-  if(!store.user)getCode().catch(e=>send({type:'notice',message:e.message}));else{poll();refresh().catch(e=>send({type:'notice',message:e.message}));}
+  if(!store.user)getCode().catch(e=>send({type:'notice',message:e.message}));else{poll();}
   setInterval(poll,store.user?60000:5000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
  });
  app.on('window-all-closed',async()=>{await stopAll();app.quit();});
