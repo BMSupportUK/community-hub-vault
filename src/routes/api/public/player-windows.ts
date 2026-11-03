@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/public/player-windows")({
         const version = (row.version_name || "latest").replace(/[^\w.-]/g, "");
         const headers = new Headers({
           "content-type": "application/octet-stream",
-          "content-disposition": `attachment; filename="BM-Player-Windows-Test-${version}.exe"`,
+          "content-disposition": `attachment; filename="BM-Player-Windows-${version}.exe"`,
           "cache-control": "no-store",
         });
         for (const key of ["content-length", "content-range", "accept-ranges"]) {
