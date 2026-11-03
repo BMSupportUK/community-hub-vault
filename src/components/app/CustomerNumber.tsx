@@ -22,10 +22,10 @@ export function CustomerNumberBadge({ userId, className }: { userId: string; cla
   if (!number) return null;
   return (
     <span
-      className={cn("inline-flex w-fit items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary", className)}
+      className={cn("inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 font-mono text-sm font-semibold tracking-wider text-primary", className)}
       title="BM Player account number"
     >
-      <Hash className="size-3" aria-hidden="true" />Account no. {number}
+      <Hash className="size-4" aria-hidden="true" />Account no. {number}
     </span>
   );
 }

@@ -179,7 +179,7 @@ export function SubscriptionDetailsCard({
             </div>
           )}
           {customerNumber && (
-            <p className={cn("mt-1 rounded-full border border-white/30 bg-background/20 px-2.5 py-0.5 font-mono font-semibold text-white", fill ? "text-[11px] md:text-base" : "text-[11px]")}>
+            <p className={cn("mt-1 rounded-full border border-white/30 bg-background/20 px-3 py-1 font-mono font-semibold tracking-wider text-white", fill ? "text-sm md:text-lg" : "text-sm")}>
               Account no. {customerNumber}
             </p>
           )}
