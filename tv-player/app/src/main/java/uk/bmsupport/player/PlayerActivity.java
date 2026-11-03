@@ -216,7 +216,7 @@ public class PlayerActivity extends Activity {
 
         player = build(this);
         final int subs = getIntent().getIntExtra("subtitles", -1);
-        if (subs >= 0) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
+        if (subs == 0 || subs == 1) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, subs == 0)
                 .setPreferredTextLanguage(subs == 1 ? java.util.Locale.getDefault().getLanguage() : null)
                 .setSelectUndeterminedTextLanguage(subs == 1)
@@ -230,7 +230,7 @@ public class PlayerActivity extends Activity {
             @Override public void onPlaybackStateChanged(int state) {
                 if (state == Player.STATE_READY) {
                     playbackReady = true;
-                    if (subs == 1 && !subsChecked) onTracksChanged(player.getCurrentTracks());
+                    if (subs >= 1 && !subsChecked) onTracksChanged(player.getCurrentTracks());
                     if (resumePosition > 0) {
                         long at = resumePosition; resumePosition = 0;
                         player.seekTo(player.getDuration() > 0 ? Math.min(at, player.getDuration() - 1) : at);
@@ -238,7 +238,7 @@ public class PlayerActivity extends Activity {
                 } else if (state == Player.STATE_ENDED) saveProgress(true);
             }
             @Override public void onTracksChanged(androidx.media3.common.Tracks tracks) {
-                if (subs != 1 || subsChecked) return;
+                if (subs < 1 || subsChecked) return;
                 // "Subtitles on": if no subtitle track got picked (e.g. a language other than the device's,
                 // or not marked default), pick one ourselves — English first, else the first available.
                 androidx.media3.common.TrackGroup pick = null; boolean anySelected = false; boolean any = false;
@@ -253,10 +253,24 @@ public class PlayerActivity extends Activity {
                 }
                 if (!playbackReady && !any) return; // tracks can arrive in stages; wait until playback is ready
                 subsChecked = true;
-                if (!any) { android.widget.Toast.makeText(PlayerActivity.this, "This film or episode has no subtitles from your provider", android.widget.Toast.LENGTH_LONG).show(); return; }
+                if (!any) { if (subs == 1) android.widget.Toast.makeText(PlayerActivity.this, "This film or episode has no subtitles from your provider", android.widget.Toast.LENGTH_LONG).show(); return; }
                 if (!anySelected && pick != null) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                         .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, false)
                         .setOverrideForType(new androidx.media3.common.TrackSelectionOverride(pick, 0)).build());
+                if (subs == 2) {
+                    // Subtitles exist and are on: only now ask whether to turn them off.
+                    player.pause();
+                    new android.app.AlertDialog.Builder(PlayerActivity.this).setTitle("Subtitles")
+                            .setMessage("This has subtitles and they're on. Do you want to keep them?")
+                            .setPositiveButton("Keep subtitles on", (d, w) -> player.play())
+                            .setNegativeButton("Turn subtitles off", (d, w) -> {
+                                player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
+                                        .clearOverridesOfType(androidx.media3.common.C.TRACK_TYPE_TEXT)
+                                        .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, true).build());
+                                player.play();
+                            })
+                            .setOnCancelListener(d -> player.play()).show();
+                }
             }
             @Override public void onVideoSizeChanged(VideoSize s) {
                 if (Math.max(s.width, s.height) >= 3840 && !is4kDevice) {
