@@ -164,9 +164,8 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="absolute inset-0 block w-full h-full object-cover pr-24 sm:pr-28"
+                  className="absolute inset-0 block w-full h-full object-cover"
                 />
-                <HeroChannelStats />
               </div>
             </div>
           </div>
