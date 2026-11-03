@@ -115,6 +115,43 @@ public class PlayerActivity extends Activity {
         p.prepare();
     }
 
+    // ---------- catch up: reconnect when the provider closes the recording early ----------
+    private long cuSegStart, cuEnd; private int cuRetries;
+
+    static String timeshiftUrl(String prefix, String id, long start, long end, String tz) {
+        long mins = Math.max(1, (end - start + 59) / 60);
+        java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd:HH-mm", java.util.Locale.UK);
+        f.setTimeZone(java.util.TimeZone.getTimeZone(tz));
+        return prefix + mins + "/" + f.format(new java.util.Date(start * 1000)) + "/" + id + ".ts";
+    }
+
+    private void startCatchup() {
+        cuSegStart = getIntent().getLongExtra("catchup_start", 0);
+        cuEnd = getIntent().getLongExtra("catchup_end", 0);
+        player.addListener(new Player.Listener() {
+            @Override public void onPlaybackStateChanged(int s) {
+                if (s == Player.STATE_READY) cuRetries = 0;
+                if (s == Player.STATE_ENDED) catchupResume();
+            }
+            @Override public void onPlayerError(PlaybackException e) { catchupResume(); }
+        });
+        player.setMediaItem(item(getIntent().getStringExtra("url")));
+        player.setPlayWhenReady(true);
+        player.prepare();
+    }
+
+    private void catchupResume() {
+        long reached = cuSegStart + Math.max(0, player.getCurrentPosition()) / 1000;
+        if (reached >= cuEnd - 30 || ++cuRetries > 8) {
+            if (cuRetries > 8) Toast.makeText(this, "The catch up recording stopped and couldn't reconnect. Try again or use VLC.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        // Timeshift addresses are minute-precise; restart at the minute reached (a few seconds may repeat).
+        cuSegStart = reached - (reached % 60);
+        String url = timeshiftUrl(getIntent().getStringExtra("catchup_prefix"), getIntent().getStringExtra("catchup_id"), cuSegStart, cuEnd, getIntent().getStringExtra("catchup_tz"));
+        ui.postDelayed(() -> { if (player == null) return; player.setMediaItem(item(url)); player.setPlayWhenReady(true); player.prepare(); }, cuRetries > 1 ? 2000 : 300);
+    }
+
     /** True when both the screen (TV/HDMI output) and a video decoder can show 2160p. */
     static boolean device4k(Activity a) {
         boolean screen = false;
@@ -181,6 +218,7 @@ public class PlayerActivity extends Activity {
                 }
             }
         });
+        if (getIntent().hasExtra("catchup_prefix")) { startCatchup(); ui.postDelayed(saveTick, 5000); return; }
         String[] urls = getIntent().getStringArrayExtra("urls");
         if (urls == null) urls = new String[]{getIntent().getStringExtra("url")};
         playWithFallback(player, urls, () -> Toast.makeText(this,
