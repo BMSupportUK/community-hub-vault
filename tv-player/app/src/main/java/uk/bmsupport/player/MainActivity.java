@@ -714,6 +714,8 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() { super.onPause(); stopPreview(); if ("multi".equals(screen)) { stopMulti(); showHome(); } }
 
+    private String liveCatId = "*";
+
     private void browse(String kind) {
         screen = "browse"; back = this::showHome;
         String title = kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series";
@@ -729,10 +731,9 @@ public class MainActivity extends Activity {
         LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
         head.addView(text(title, 26, TEXT, true));
         head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
-        head.addView(button("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
-        // Clear gap between the Search and Voice search buttons.
-        head.addView(new View(this), new LinearLayout.LayoutParams(dp(16), 1));
-        head.addView(button("🎤 Voice search", v -> startVoice(kind)));
+        if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
+        head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
+        head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
 
         root.addView(head);
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
@@ -848,6 +849,7 @@ public class MainActivity extends Activity {
             String[] c = catRows.get(pos);
             if (c[0].equals(current[0])) { if (focusItems) items.requestFocus(); return; }
             current[0] = c[0];
+            if (kind.equals("live")) liveCatId = c[0];
             List<Item> got = c[0].equals("*") ? all : byCat.get(c[0]);
             java.util.function.Consumer<List<Item>> render = list -> {
                 if (!c[0].equals(current[0])) return;
@@ -2329,8 +2331,11 @@ public class MainActivity extends Activity {
     };
 
     /** Channels down the left, time across the top; OK on a programme on now watches it, on a future one sets/removes a reminder. */
-    private void showTvGuide() {
-        screen = "tvguide"; back = this::showHome;
+    private void showTvGuide() { showTvGuide(null); }
+
+    /** TV guide opened on one category (Live TV's EPG button); Back returns to Live TV. */
+    private void showTvGuide(String startCat) {
+        screen = "tvguide"; back = startCat == null ? this::showHome : () -> browse("live");
         stopPreview();
         LinearLayout root = column();
         LinearLayout top = row();
@@ -2478,7 +2483,9 @@ public class MainActivity extends Activity {
                 ui.post(() -> {
                     if (!"tvguide".equals(screen)) return;
                     catRows.clear(); catRows.addAll(rows);
-                    applyCat.accept(rows.get(0));
+                    String[] start = rows.get(0);
+                    if (startCat != null) for (String[] r : rows) if (r[0].equals(startCat)) { start = r; break; }
+                    applyCat.accept(start);
                 });
             } catch (Exception ex) { ui.post(() -> progTitle.setText("Couldn't load your channels – check your login in Settings")); }
         });
@@ -3007,6 +3014,11 @@ public class MainActivity extends Activity {
         b.setPadding(dp(16), dp(12), dp(16), dp(12));
         b.setFocusable(true);
         b.setOnClickListener(l);
+        // Every button keeps a gap around it, so pills in a row never sit flush together.
+        LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        gap.setMargins(dp(6), dp(4), dp(6), dp(4));
+        b.setLayoutParams(gap);
         return b;
     }
 
