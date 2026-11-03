@@ -685,7 +685,7 @@ public class MainActivity extends Activity {
             view.setPlayer(preview);
             preview.addListener(new androidx.media3.common.Player.Listener() {
                 @Override public void onPlaybackStateChanged(int s) {
-                    if (s == androidx.media3.common.Player.STATE_READY) status.setText("Press OK for full screen");
+                    if (s == androidx.media3.common.Player.STATE_READY) status.setText("Press OK twice for full screen");
                 }
             });
             PlayerActivity.playWithFallback(preview, streamUrls(it),
