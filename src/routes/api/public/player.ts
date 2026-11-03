@@ -89,7 +89,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, last_seen_at, connected_since, vpn_status, vpn_checked_at")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
 
@@ -99,11 +99,13 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         if (body.action === "unlock") {
-          if (!device.user_id) return json({ error: "Link this app to your BM Support account first." }, 403);
+          if (!device.user_id && !device.offsite_customer_id) return json({ error: "Link this app to your BM Support account first." }, 403);
           const { data: lock } = await supabaseAdmin.from("player_devices").select("unlock_failures, unlock_locked_until").eq("id", device.id).single();
           if (lock?.unlock_locked_until && new Date(lock.unlock_locked_until).getTime() > Date.now())
             return json({ error: "Too many wrong tries. Please wait 15 minutes and try again." }, 429);
-          const { data: cn } = await supabaseAdmin.from("customer_numbers").select("number").eq("user_id", device.user_id).maybeSingle();
+          const { data: cn } = device.user_id
+            ? await supabaseAdmin.from("customer_numbers").select("number").eq("user_id", device.user_id).maybeSingle()
+            : await supabaseAdmin.from("player_offsite_customers").select("number").eq("id", device.offsite_customer_id as string).maybeSingle();
           if (cn && String(cn.number) === body.account_number) {
             await supabaseAdmin.from("player_devices").update({ unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
             return json({ ok: true });
@@ -216,7 +218,7 @@ export const Route = createFileRoute("/api/public/player")({
         await supabaseAdmin.from("player_devices").update(fields).eq("id", device.id);
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({
-          linked: !!device.user_id,
+          linked: !!(device.user_id || device.offsite_customer_id),
           dns: settings?.dns ?? "",
           credentials: fresh ? { username: pending.username, password: pending.password } : null,
           report_url: "https://bmsupport.uk/tickets",
