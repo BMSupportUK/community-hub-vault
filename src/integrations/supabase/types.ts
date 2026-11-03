@@ -8944,6 +8944,7 @@ export type Database = {
         Args: { _nameplate_id: string }
         Returns: boolean
       }
+      customer_number_is_weak: { Args: { n: number }; Returns: boolean }
       decide_cover_request: {
         Args: { _approve: boolean; _id: string }
         Returns: string
