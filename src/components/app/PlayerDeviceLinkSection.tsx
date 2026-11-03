@@ -113,12 +113,11 @@ export function PlayerDeviceLinkSection() {
         </form>
         <aside className="rounded-lg border border-border bg-surface/90 p-5">
           {/* Account number sits opposite the heading so it is readable at a glance. */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-display font-semibold">My linked devices</h2>
-            {customerNumber ? <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-primary" title="BM Player account number">
-              <Hash className="size-4 shrink-0" aria-hidden="true" />
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Account no.</span>
-              <span className="font-mono text-lg font-bold leading-none tracking-[0.12em]">{customerNumber}</span>
+          <div className="flex flex-nowrap items-center justify-between gap-2">
+            <h2 className="min-w-0 truncate font-display font-semibold">My linked devices</h2>
+            {customerNumber ? <span className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap rounded-full border border-primary/50 bg-primary/25 px-2.5 py-1 text-primary-foreground" title="BM Player account number">
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-primary-foreground/70">Account no.</span>
+              <span className="font-mono text-base font-bold leading-none tracking-[0.1em]">{customerNumber}</span>
             </span> : null}
           </div>
           {devices.length ? <ul className="mt-3 space-y-3">{devices.map((d) => <li key={d.id} className="flex items-center gap-3 rounded-md border border-border p-3">
