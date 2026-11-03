@@ -46,6 +46,7 @@ public class PlayerActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private String progressKey, seriesKey;
     private boolean playbackReady;
+    private boolean subsChecked;
     private long resumePosition;
     private final Runnable saveTick = new Runnable() {
         @Override public void run() { saveProgress(false); ui.postDelayed(this, 5000); }
@@ -214,7 +215,7 @@ public class PlayerActivity extends Activity {
         setContentView(root);
 
         player = build(this);
-        int subs = getIntent().getIntExtra("subtitles", -1);
+        final int subs = getIntent().getIntExtra("subtitles", -1);
         if (subs >= 0) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, subs == 0)
                 .setPreferredTextLanguage(subs == 1 ? java.util.Locale.getDefault().getLanguage() : null)
@@ -229,11 +230,33 @@ public class PlayerActivity extends Activity {
             @Override public void onPlaybackStateChanged(int state) {
                 if (state == Player.STATE_READY) {
                     playbackReady = true;
+                    if (subs == 1 && !subsChecked) onTracksChanged(player.getCurrentTracks());
                     if (resumePosition > 0) {
                         long at = resumePosition; resumePosition = 0;
                         player.seekTo(player.getDuration() > 0 ? Math.min(at, player.getDuration() - 1) : at);
                     }
                 } else if (state == Player.STATE_ENDED) saveProgress(true);
+            }
+            @Override public void onTracksChanged(androidx.media3.common.Tracks tracks) {
+                if (subs != 1 || subsChecked) return;
+                // "Subtitles on": if no subtitle track got picked (e.g. a language other than the device's,
+                // or not marked default), pick one ourselves — English first, else the first available.
+                androidx.media3.common.TrackGroup pick = null; boolean anySelected = false; boolean any = false;
+                for (androidx.media3.common.Tracks.Group g : tracks.getGroups()) {
+                    if (g.getType() != androidx.media3.common.C.TRACK_TYPE_TEXT) continue;
+                    any = true;
+                    if (g.isSelected()) anySelected = true;
+                    String lang = g.getMediaTrackGroup().getFormat(0).language;
+                    boolean en = lang != null && lang.toLowerCase(java.util.Locale.ROOT).startsWith("en");
+                    if (pick == null || en) { if (pick == null || en) pick = g.getMediaTrackGroup(); }
+                    if (en) break;
+                }
+                if (!playbackReady && !any) return; // tracks can arrive in stages; wait until playback is ready
+                subsChecked = true;
+                if (!any) { android.widget.Toast.makeText(PlayerActivity.this, "This film or episode has no subtitles from your provider", android.widget.Toast.LENGTH_LONG).show(); return; }
+                if (!anySelected && pick != null) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
+                        .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, false)
+                        .setOverrideForType(new androidx.media3.common.TrackSelectionOverride(pick, 0)).build());
             }
             @Override public void onVideoSizeChanged(VideoSize s) {
                 if (Math.max(s.width, s.height) >= 3840 && !is4kDevice) {
