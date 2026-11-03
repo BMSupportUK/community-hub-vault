@@ -11,5 +11,6 @@ export function VideoSurface({index,visible=true}){
   window.addEventListener('resize',update);window.addEventListener('scroll',update,true);update();
   return()=>{observer.disconnect();cancelAnimationFrame(frame);window.removeEventListener('resize',update);window.removeEventListener('scroll',update,true);window.bm.surface([]).catch(()=>{});};
  },[index,visible]);
- return <div className="video-surface" ref={ref} data-video-index={index} data-video-visible={visible} aria-label="In-app video"/>;
+ const MacVideo=typeof window!=='undefined'?window.__bmMacVideo:null;
+ return <div className="video-surface" ref={ref} data-video-index={index} data-video-visible={visible} aria-label="In-app video">{MacVideo&&<MacVideo index={index}/>}</div>;
 }
