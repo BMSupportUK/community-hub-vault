@@ -41,7 +41,7 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
-- [ ] Diagnose Android catch-up playback and expose Windows catch up in Live TV; test fixes and release corrected Android/Windows builds, preserving working Amazon VLC playback.
+- [x] Android catch up: VLC software decoding for recordings + automatic BM Player fallback when VLC fails (2.75 released, download verified). Windows catch-up access still to confirm with user. Real Android box test blocked: no device.
 - [x] Add shared 1–5 star film/series voting and poster averages; Android 2.73, Windows 0.3.3 and Mac 0.1.8 uploaded and activated. Real API film vote/change and series vote read through UI pass; 23 JS tests and Android tests/build pass. Native device checks unavailable.
 - [ ] Publish website voting endpoint for released BM Players if the published endpoint remains on the previous API (requires user publish instruction).
 - [x] Release Windows 0.3.2 favourites fix: direct preview/playback and parent-series controls; saved tabs render the correct media kind. Renderer add/remove/reload checks and 18 regressions pass; live EXE matches built installer byte-for-byte. Native Windows encrypted storage remains unverified.
