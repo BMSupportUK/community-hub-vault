@@ -70,4 +70,4 @@
 - `tv-enabler/` rules (PIN gate, Helper install path, ADB client parity) live in `tv-enabler/AGENTS.md`.
 - PlayerDeviceLinkSection serves both link pages; Windows EXE releases have their own logged endpoint.
 - iFollow/Scottish guide saves/imports use the two club names as fixture channels.
-- Account numbers: `customer_numbers` rows are assigned on profile creation and can never be updated or deleted, so a 6-digit number is never reissued; read only through `get_customer_number` (self or staff roles).
+- Account numbers: `customer_numbers` rows are assigned on profile creation and can never be updated or deleted, so a 6-digit number is never reissued (withdrawn ones stay in `customer_numbers_retired`; `customer_number_is_weak` rejects simple patterns); read only through `get_customer_number` (self or staff roles).
