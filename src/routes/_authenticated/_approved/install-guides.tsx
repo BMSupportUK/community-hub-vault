@@ -34,6 +34,7 @@ import { DeviceInstallSetup, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, r
 import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
 import { PlayerDeviceLinkSection } from "@/components/app/PlayerDeviceLinkSection";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
+import { WindowsPlayerDownload } from "@/components/app/WindowsPlayerDownload";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
@@ -640,6 +641,7 @@ function InstallGuidesPage() {
                 <TabsTrigger value="link-device" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Link Device</TabsTrigger>
                 <TabsTrigger value="phone-windows-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Setup Your Device Using | Android Phone | Or Windows</TabsTrigger>
                 <TabsTrigger value="ios-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Apps For | iOS</TabsTrigger>
+                <TabsTrigger value="player-windows" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">BM Player | Windows</TabsTrigger>
                 <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
                 {canManageCategories && (
                   <TabsTrigger value="categories" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Categories</TabsTrigger>
@@ -727,6 +729,14 @@ function InstallGuidesPage() {
                 <IosPurpleCard />
               </div>
             </PhotoPanel>
+          </TabsContent>
+
+          <TabsContent value="player-windows" className="mt-0 min-w-0">
+            <div className="relative isolate min-h-full py-2">
+              <img src={installHero} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+              <div className="absolute inset-0 -z-10 bg-background/65" />
+              <div className="p-3 sm:p-5"><WindowsPlayerDownload /></div>
+            </div>
           </TabsContent>
 
           <TabsContent value="welcome" className="mt-0 min-w-0">

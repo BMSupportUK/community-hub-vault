@@ -4,5 +4,5 @@
 - Website calls use only the existing device-token `/api/public/player` endpoint; provider requests are built from stored DNS/login, never arbitrary renderer URLs.
 - Bundled libVLC runs in-process through the pinned Windows x64 Koffi bridge and renders to BM-owned child HWNDs; never spawn external VLC or expose provider URLs/native handles to the renderer. Validated normalised surface rectangles keep previews, playback controls and dialogs separate.
 - Live TV preserves provider category/channel order, like Android; only films and series apply the remembered sort.
-- Windows test packages are standalone downloads, never registered as available app builds or added to website downloads until launch is explicitly requested.
+- Approved Windows releases are packaged with @electron/packager and the NSIS script as per-user installers; upload the executable before registering its separate Windows app-build identity, and serve it through the logged Windows download endpoint, never the Android updater.
 - Sports matching bundles the website's shared channel matcher rather than copying its normalization rules.
