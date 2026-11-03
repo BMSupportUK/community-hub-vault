@@ -599,6 +599,8 @@ public class MainActivity extends Activity {
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(6) });
+        // Landscape phones otherwise swap the whole screen for the keyboard's own full-screen text box.
+        in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
         in.setTextSize(36); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
         in.setLetterSpacing(0.3f); in.setHint("••••••"); in.setHintTextColor(MUTED);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(320), ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -626,6 +628,7 @@ public class MainActivity extends Activity {
         in.setOnEditorActionListener((v, a, e) -> { go.performClick(); return true; });
         root.addView(go);
         root.addView(status);
+        getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
         setContentView(scrollable(root));
         in.requestFocus();
     }
