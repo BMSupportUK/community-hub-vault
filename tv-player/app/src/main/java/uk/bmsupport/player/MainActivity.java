@@ -1338,17 +1338,14 @@ public class MainActivity extends Activity {
                     if (hits.isEmpty()) { Toast.makeText(this, "Nothing found for \"" + want + "\"", Toast.LENGTH_LONG).show(); showSearch(kind, ""); return; }
                     String[] names = new String[hits.size()];
                     for (int i = 0; i < names.length; i++) names[i] = hits.get(i).name;
-                    new AlertDialog.Builder(this).setTitle(hits.size() + (hits.size() >= 200 ? "+" : "") + " results for \"" + want + "\"")
-                            .setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, names) {
-                                @Override public View getView(int i, View cv, ViewGroup parent) {
-                                    LinearLayout row = column();
-                                    row.addView(text(names[i], 16, TEXT, false));
-                                    // Films show how much has been watched; series show it per episode on their own page.
-                                    if (kind.equals("film")) row.addView(watchedBar(hits.get(i)));
-                                    return styleRow(row);
-                                }
-                            }, (d, i) -> { Item it = hits.get(i); if (kind.equals("series")) showSeries(it); else open(it); })
-                            .setNegativeButton("New search", (d, i) -> showSearch(kind, "")).show();
+                    resultList(hits.size() + (hits.size() >= 200 ? "+" : "") + " results for \"" + want + "\"", hits.size(), i -> {
+                                LinearLayout row = column();
+                                row.addView(text(names[i], 16, TEXT, false));
+                                // Films show how much has been watched; series show it per episode on their own page.
+                                if (kind.equals("film")) row.addView(watchedBar(hits.get(i)));
+                                return row;
+                            }, i -> { Item it = hits.get(i); if (kind.equals("series")) showSeries(it); else open(it); },
+                            null, null, "New search", () -> showSearch(kind, ""));
                 });
             } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't search – try refreshing your playlist", Toast.LENGTH_LONG).show()); }
         });
@@ -2580,10 +2577,9 @@ public class MainActivity extends Activity {
             labels[i] = (st <= now ? "🔴 LIVE NOW  " : day.format(new java.util.Date(st)) + "  " + clock(st / 1000) + "  ") + e.optString("title") + "\n      " + e.optString("competition")
                     + (sportsChannelText(e).isEmpty() ? "" : "\n      📺 " + sportsChannelText(e).trim().replace("  ", ", "));
         }
-        new AlertDialog.Builder(this).setTitle(hits.size() + (hits.size() == 1 ? " event" : " events") + " for \"" + spoken + "\"")
-                .setItems(labels, (d, i) -> pickSportsChannel(hits.get(i), aliases, false))
-                .setPositiveButton("🎤 Search again", (d, w) -> startVoice("sports"))
-                .setNegativeButton("Browse", null).show();
+        resultList(hits.size() + (hits.size() == 1 ? " event" : " events") + " for \"" + spoken + "\"", hits.size(),
+                i -> text(labels[i], 16, TEXT, false), i -> pickSportsChannel(hits.get(i), aliases, false),
+                "🎤 Search again", () -> startVoice("sports"), "Browse", null);
     }
     /** The event's TV channels, two spaces apart (shown in search results and searched too). */
     private static String sportsChannelText(JSONObject e) {
@@ -3220,6 +3216,45 @@ public class MainActivity extends Activity {
                 if (views != null) for (android.widget.ImageView v : views) if (url.equals(v.getTag())) v.setImageBitmap(done);
             });
         });
+    }
+
+    /**
+     * Search/voice results: a real list that moves one row per remote press, draws a border on the
+     * highlighted row and opens it with OK (or a tap).
+     */
+    private AlertDialog resultList(String title, int count, java.util.function.IntFunction<View> row, java.util.function.IntConsumer pick,
+                                   String posLabel, Runnable pos, String negLabel, Runnable neg) {
+        ListView lv = list();
+        GradientDrawable ring = new GradientDrawable(); ring.setColor(Color.TRANSPARENT); ring.setCornerRadius(dp(8)); ring.setStroke(dp(3), ACCENT);
+        StateListDrawable sel = new StateListDrawable();
+        sel.addState(new int[]{android.R.attr.state_focused}, ring);
+        sel.addState(new int[]{android.R.attr.state_pressed}, ring);
+        sel.addState(new int[]{android.R.attr.state_selected}, ring);
+        sel.addState(new int[]{}, new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        lv.setSelector(sel);
+        lv.setDrawSelectorOnTop(true);
+        lv.setItemsCanFocus(false);
+        lv.setFocusable(true);
+        lv.setDividerHeight(0);
+        lv.setAdapter(new BaseAdapter() {
+            @Override public int getCount() { return count; }
+            @Override public Object getItem(int i) { return i; }
+            @Override public long getItemId(int i) { return i; }
+            @Override public View getView(int i, View cv, ViewGroup parent) {
+                View v = row.apply(i);
+                v.setPadding(dp(14), dp(12), dp(14), dp(12));
+                v.setFocusable(false); v.setClickable(false);
+                return v;
+            }
+        });
+        AlertDialog.Builder b = new AlertDialog.Builder(this).setTitle(title).setView(lv);
+        if (posLabel != null) b.setPositiveButton(posLabel, (d, w) -> { if (pos != null) pos.run(); });
+        if (negLabel != null) b.setNegativeButton(negLabel, (d, w) -> { if (neg != null) neg.run(); });
+        AlertDialog dlg = b.create();
+        lv.setOnItemClickListener((p, v, i, id) -> { dlg.dismiss(); pick.accept(i); });
+        dlg.setOnShowListener(d -> { lv.requestFocus(); lv.setSelection(0); });
+        dlg.show();
+        return dlg;
     }
 
     private View styleRow(View v) {

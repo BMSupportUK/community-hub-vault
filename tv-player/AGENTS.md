@@ -30,3 +30,4 @@
 - Manual EPG time shift stores the device UTC offset; a clock change resets it to 0 so the guide is never an hour out.
 - Android films/episodes ask nothing up front: the built-in player turns on existing subtitles and only then asks whether to turn them off (VLC is not asked). Windows and Mac do the same: engines report subtitle track counts and the main process pauses to ask only when tracks exist.
 - Favourites and Recently watched open on Live TV / Movies / Series tabs (episodes count as Series) on Android, Windows and Mac; sports guide event rows keep a blank line between events.
+- Search and voice results use resultList(): a ListView dialog with a border-only selector, one row per D-pad press, OK opens the row.
