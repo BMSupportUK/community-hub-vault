@@ -1,5 +1,6 @@
 package uk.bmsupport.player;
 
+import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -15,6 +16,7 @@ import java.lang.reflect.Method;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.Shadows.shadowOf;
 
 /**
  * The home row must never fold a name onto a second line: "Recently watched" sits on one line

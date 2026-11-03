@@ -2842,8 +2842,11 @@ public class MainActivity extends Activity {
                 .withEndAction(() -> drawerPanel.setVisibility(View.INVISIBLE)).start();
     }
 
-    /** True only while the panel is actually on the current screen. */
-    private boolean panelOpen() { return drawerShown && drawerPanel != null && drawerPanel.isShown(); }
+    /** True only while the panel is on the current screen (a replaced screen detaches it). */
+    private boolean panelOpen() {
+        return drawerShown && drawerPanel != null && drawerPanel.getParent() != null
+                && drawerPanel.getVisibility() == View.VISIBLE;
+    }
 
     private LinearLayout column() {
         LinearLayout l = new LinearLayout(this);
