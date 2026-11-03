@@ -116,7 +116,7 @@ public class PlayerActivity extends Activity {
     }
 
     // ---------- catch up: reconnect when the provider closes the recording early ----------
-    private long cuSegStart, cuEnd; private int cuRetries;
+    private long cuSegStart, cuEnd; private int cuRetries; private boolean skipAhead;
 
     static String timeshiftUrl(String prefix, String id, long start, long end, String tz) {
         long mins = Math.max(1, (end - start + 59) / 60);
@@ -152,7 +152,7 @@ public class PlayerActivity extends Activity {
             boolean playing = player.isPlaying() && player.getPlaybackState() == Player.STATE_READY;
             if (playing && frames >= 0 && frames == lastFrames) frozenTicks++; else frozenTicks = 0;
             lastFrames = frames;
-            if (frozenTicks >= 4) { frozenTicks = 0; lastFrames = -1; catchupResume(); }
+            if (frozenTicks >= 4) { frozenTicks = 0; lastFrames = -1; skipAhead = true; catchupResume(); }
             ui.postDelayed(this, 1000);
         }
     };
@@ -166,7 +166,7 @@ public class PlayerActivity extends Activity {
         }
         // Timeshift addresses are minute-precise; restart at the minute reached (a few seconds may repeat).
         cuSegStart = reached - (reached % 60);
-        if (cuSegStart <= getIntent().getLongExtra("catchup_start", 0) && player.getCurrentPosition() > 60000) cuSegStart = reached;
+        if (skipAhead) { cuSegStart += 60; skipAhead = false; }
         String url = timeshiftUrl(getIntent().getStringExtra("catchup_prefix"), getIntent().getStringExtra("catchup_id"), cuSegStart, cuEnd, getIntent().getStringExtra("catchup_tz"));
         ui.postDelayed(() -> { if (player == null) return; player.setMediaItem(item(url)); player.setPlayWhenReady(true); player.prepare(); }, cuRetries > 1 ? 2000 : 300);
     }
