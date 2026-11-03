@@ -335,6 +335,7 @@ public class MainActivity extends Activity {
 
     /** Back steps up one screen; only the front screen asks before closing the app. */
     private void goBack() {
+        if (panelOpen()) { hidePanel(); return; }
         if (back != null) { Runnable r = back; r.run(); return; }
         if ("home".equals(screen)) {
             new AlertDialog.Builder(this).setTitle("Exit BM Player?")
@@ -2277,7 +2278,19 @@ public class MainActivity extends Activity {
         root.addView(top);
         GuideGridView grid = new GuideGridView(this);
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        setContentView(root);
+        // The category list pops out from the left edge instead of a pop-up at the top.
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setBackgroundColor(CARD);
+        panel.setPadding(dp(18), dp(24), dp(18), dp(16));
+        panel.addView(text("Categories", 22, TEXT, true));
+        android.widget.ListView catList = new android.widget.ListView(this);
+        catList.setDivider(new android.graphics.drawable.ColorDrawable(0x1FFFFFFF));
+        catList.setDividerHeight(1);
+        catList.setFocusable(true);
+        panel.addView(catList, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        panel.addView(button("Close", v -> hidePanel()));
+        setContentView(sideDrawer(root, panel));
         btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });
         btns.getChildAt(2).setOnClickListener(v -> grid.shiftDay(-1));
         btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));
@@ -2291,6 +2304,9 @@ public class MainActivity extends Activity {
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
             catBtn.setText("Category: " + cat[1]);
+            List<String> panelNames = new ArrayList<>();
+            for (String[] c : catRows) panelNames.add((c[0].equals(cat[0]) ? "\u2713 " : "") + c[1]);
+            catList.setAdapter(adapter(panelNames));
             List<String> names = new ArrayList<>(); List<Boolean> cu = new ArrayList<>();
             for (Item it : shownCh) { names.add(it.name); cu.add(it.archiveDays > 0); }
             grid.setChannels(names, cu);
@@ -2298,9 +2314,14 @@ public class MainActivity extends Activity {
             grid.requestFocus();
         };
         catBtn.setOnClickListener(v -> {
-            if (catRows.isEmpty()) return;
-            String[] names = new String[catRows.size()]; for (int i = 0; i < names.length; i++) names[i] = catRows.get(i)[1];
-            new AlertDialog.Builder(this).setTitle("Choose a category").setItems(names, (d, w) -> applyCat.accept(catRows.get(w))).show();
+            if (panelOpen()) { hidePanel(); return; }
+            showPanel();
+            catList.requestFocus();
+        });
+        catList.setOnItemClickListener((d, w, pos, id) -> {
+            if (pos >= catRows.size()) return;
+            hidePanel();
+            applyCat.accept(catRows.get(pos));
         });
         grid.setListener(new GuideGridView.Listener() {
             @Override public void needEpg(int r) {
@@ -2765,6 +2786,64 @@ public class MainActivity extends Activity {
     }
 
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
+
+    // ---------- side panel: pops out from the left edge of the screen ----------
+    private FrameLayout drawerWrap;
+    private View drawerScrim;
+    private LinearLayout drawerPanel;
+    private boolean drawerShown;
+
+    /** Puts a screen in a frame with a panel that slides in from the left edge, hidden to start. */
+    private FrameLayout sideDrawer(LinearLayout content, LinearLayout panel) {
+        int w = dp(300);
+        FrameLayout frame = new FrameLayout(this);
+        frame.setBackgroundColor(BG);
+        drawerWrap = new FrameLayout(this);
+        drawerWrap.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        frame.addView(drawerWrap, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        drawerScrim = new View(this);
+        drawerScrim.setBackgroundColor(0x99000000);
+        drawerScrim.setClickable(true);
+        drawerScrim.setOnClickListener(v -> hidePanel());
+        drawerScrim.setVisibility(View.INVISIBLE);
+        frame.addView(drawerScrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        drawerPanel = panel;
+        panel.setVisibility(View.INVISIBLE);
+        panel.setTranslationX(-w);
+        frame.addView(panel, new FrameLayout.LayoutParams(w, ViewGroup.LayoutParams.MATCH_PARENT));
+        drawerShown = false;
+        return frame;
+    }
+
+    /** Slides the panel in from the left and stops the screen behind it taking focus. */
+    private void showPanel() {
+        if (drawerPanel == null || drawerShown) return;
+        drawerShown = true;
+        drawerPanel.setVisibility(View.VISIBLE);
+        drawerPanel.setTranslationX(-dp(300));
+        drawerPanel.animate().translationX(0f).setDuration(220).start();
+        if (drawerScrim != null) {
+            drawerScrim.setVisibility(View.VISIBLE);
+            drawerScrim.setAlpha(0f);
+            drawerScrim.animate().alpha(1f).setDuration(200).start();
+        }
+        if (drawerWrap != null) drawerWrap.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+    }
+
+    /** Slides the panel back out to the left and gives focus back to the screen behind it. */
+    private void hidePanel() {
+        if (drawerPanel == null || !drawerShown) return;
+        drawerShown = false;
+        int w = dp(300);
+        if (drawerScrim != null) drawerScrim.animate().alpha(0f).setDuration(180)
+                .withEndAction(() -> drawerScrim.setVisibility(View.INVISIBLE)).start();
+        if (drawerWrap != null) drawerWrap.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+        drawerPanel.animate().translationX(-w).setDuration(180)
+                .withEndAction(() -> drawerPanel.setVisibility(View.INVISIBLE)).start();
+    }
+
+    /** True only while the panel is actually on the current screen. */
+    private boolean panelOpen() { return drawerShown && drawerPanel != null && drawerPanel.isShown(); }
 
     private LinearLayout column() {
         LinearLayout l = new LinearLayout(this);
