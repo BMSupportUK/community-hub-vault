@@ -152,7 +152,8 @@ else{
   file=path.join(app.getPath('userData'),'player-encrypted.bin');
   if(fs.existsSync(file)){try{store=JSON.parse(safeStorage.decryptString(fs.readFileSync(file)));}catch{store={};}}
   store.recent=(store.recent||[]).filter(i=>!core.adult(i.categoryName));
-  win=new BrowserWindow({title:'BM Player · Windows Test',width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,icon:path.join(__dirname,'../build.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
+  win=new BrowserWindow({title:'BM Player · Windows Test',show:false,width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,icon:path.join(__dirname,'../build.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
+  win.once('ready-to-show',()=>{win.maximize();win.show();});
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('sports',()=>site({action:'sports'}));

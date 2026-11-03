@@ -11,8 +11,8 @@ android {
         applicationId "uk.bmsupport.player"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 49
-        versionName "2.38"
+        versionCode 50
+        versionName "2.39"
     }
     signingConfigs {
         release {
@@ -35,7 +35,17 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     lint { abortOnError false; checkReleaseBuilds false }
+    sourceSets.main.res.srcDir(layout.buildDirectory.dir('generated/intro-res'))
 }
+
+tasks.register('prepareIntro', Exec) {
+    def output = layout.buildDirectory.file('generated/intro-res/raw/player_intro.mp4')
+    inputs.file('../../src/assets/player-family-intro.mp4.asset.json')
+    outputs.file(output)
+    doFirst { output.get().asFile.parentFile.mkdirs() }
+    commandLine 'lovable-assets', 'get', '--overwrite', '--file', file('../../src/assets/player-family-intro.mp4.asset.json').absolutePath, '-o', output.get().asFile.absolutePath
+}
+tasks.named('preBuild').configure { dependsOn('prepareIntro') }
 
 dependencies {
     def m3 = '1.5.1'

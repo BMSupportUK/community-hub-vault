@@ -40,6 +40,8 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
+- [ ] Add five-second family/music opening intro to the device apps and Windows test; package and check assets
+- [ ] Make Windows test open maximised and deliver refreshed private package
 - [x] First add inactivity Continue viewing / timed exit to Android, Fire TV and phone; signed 2.38 released, four timer checks pass (external VLC not monitored)
 - [x] Mirror inactivity in Windows; three-hour timer and one-minute response tests pass
 - [ ] Verify native inactivity exit and Windows playback/input on real devices (blocked: no attached TV or Windows runtime)
