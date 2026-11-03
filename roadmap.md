@@ -72,4 +72,4 @@
 - [x] Make the Install Guides iOS card compact like the BM Player | Windows card; pop-up QR and App Information still open
 - [x] Keep every BM Player home-screen name on one line (single-line text that shrinks, row shared out by label width); 3 layout tests and 17 app checks pass, signed 2.63 download verified byte-for-byte. Real TV/Fire TV eyeball check remains blocked: no attached device.
 - [x] Put clear gaps between the three home-screen search pills (headerPill side margins); 4 layout tests pass, signed 2.64 download verified byte-for-byte. Real TV/Fire TV eyeball check remains blocked: no attached device.
-- [x] Move the TV guide category list into a panel that slides in from the left edge (sideDrawer + show/hidePanel, Back and scrim close it); 5 layout tests pass, signed 2.65 built. Upload/release switch remains below.
+- [x] Move the TV guide category list into a panel that slides in from the left edge (sideDrawer + show/hidePanel, Back and scrim close it); 5 layout tests pass, signed 2.65 released and download verified byte-for-byte. Real TV eyeball check remains blocked: no attached device.
