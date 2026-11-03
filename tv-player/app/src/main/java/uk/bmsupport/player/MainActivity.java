@@ -2847,6 +2847,33 @@ public class MainActivity extends Activity {
         return b;
     }
 
+    /**
+     * Home-row button: the label always stays on one line. Tighter side padding plus text that
+     * shrinks (16sp down to 11sp) means a long name like "Recently watched" never wraps onto a
+     * second line while its neighbours sit on one.
+     */
+    private Button smallButton(String label, View.OnClickListener l) {
+        Button b = button(label, l);
+        b.setPadding(dp(8), dp(12), dp(8), dp(12));
+        b.setSingleLine(true);
+        b.setEllipsize(null);
+        androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(b,
+                dp(11), dp(16), dp(1), android.util.TypedValue.COMPLEX_UNIT_PX);
+        return b;
+    }
+
+    /**
+     * Width share for a home-row button: each one gets room in proportion to how wide its label
+     * actually is, so the long ones are not squeezed into the same box as "Settings".
+     */
+    private LinearLayout.LayoutParams smallWeight(String label) {
+        android.graphics.Paint p = new android.graphics.Paint();
+        p.setTextSize(16 * getResources().getDisplayMetrics().scaledDensity);
+        LinearLayout.LayoutParams lp = weight(Math.max(1f, p.measureText(label)), ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dp(4), dp(6), dp(4), dp(6));
+        return lp;
+    }
+
     private View tile(String label, String icon, View.OnClickListener l) {
         LinearLayout t = column();
         t.setGravity(Gravity.CENTER);
