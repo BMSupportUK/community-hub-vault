@@ -41,7 +41,7 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
-- [ ] Fix Android season/episode remote selection, test it and release 2.72; real remote/playback verification needs an attached device.
+- [x] Fix Android season/episode remote selection and release 2.72; six tests pass, signature and live APK byte match verified. Real remote/playback verification needs an attached device.
 - [x] Publish the account-number endpoint and activate Android 2.40; live endpoint recognizes unlock and current APK download checked.
 - [x] Add Windows account-number unlock on every reopen; 16 tests and renderer wrong-number/retry flow pass; executable 0.2.2 uploaded and live range download checked. Native Windows verification remains blocked below.
 - [x] Package Windows 0.2.1 as an unsigned executable installer; own compact BM Player | Windows pill, authenticated desktop/mobile card and EXE range download/log checked; actual Windows installation/playback remains unverified below
