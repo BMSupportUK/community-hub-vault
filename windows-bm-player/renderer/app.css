@@ -5,3 +5,4 @@
 .catchup{display:grid;grid-template-columns:minmax(10rem,16rem) 1fr;gap:1rem}.catchup .categories .selected{border:3px solid var(--accent);background:var(--raised);font-weight:700}
 .guide-chan-cell{display:flex;align-items:stretch;background:var(--surface)}.guide-chan-cell .guide-channel{flex:1;min-width:0;overflow:hidden}
 .refreshed{display:block;color:var(--muted);font-size:12px;padding:6px 0 10px;text-align:center}.toolbar .voice{white-space:nowrap}
+.refreshed{display:block;color:var(--muted);font-size:12px;padding:6px 0 10px;text-align:center}.toolbar .voice{white-space:nowrap}
