@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Stabilize public homepage picture dimensions during loading on smaller screens; verify image loading and delayed content.
+- [x] Stabilize public homepage picture dimensions during loading; unchanged image size verified at 390×844, 950×477, 1100×650 and 1280×800 after delayed content loads.
 - [x] Restore Direct Install demos for renamed QD, BM XC and Smart Player labels; four matching tests pass and all three private videos play in signed-in app cards (BM Tivi/Netmirror have no saved demos)
 - [x] Fix duplicate-name sign-up with atomic username suffix retries; live trigger read-back and four isolated database tests pass; real sign-up/email flow not exercised
 - [x] Add right-side hero subscriber/video icon bar; desktop and phone checked; unavailable counts show dashes
