@@ -1,7 +1,7 @@
 {
   "name": "bm-player-windows",
   "productName": "BM Player",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "private": true,
   "description": "BM Player for Windows",
   "author": "BM Support",
