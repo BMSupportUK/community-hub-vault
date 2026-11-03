@@ -41,6 +41,7 @@
 
 ## BM Player (IPTV player apps)
 - [ ] Replace external Windows VLC with embedded playback, preview and in-app controls; package a private test
+- [ ] Align Windows Live TV layout and channel ordering with Android
 - [x] Add five-second family/music opening intro to the device apps and Windows test; signed 2.39, verified soundtrack and Windows renderer transition
 - [x] Make Windows test open maximised and deliver refreshed private 0.1.1 package
 - [ ] Verify opening intro and maximised launch on real TV/Windows (blocked: no attached TV or Windows runtime)
