@@ -25,10 +25,12 @@ public class GuideGridView extends View {
         void onHighlight(int row, Prog p);
         void onPick(int row, Prog p);
         boolean hasReminder(int row, long st);
+        void onCatchup(int row);
     }
 
     private static final long SLOT = 1800, WINDOW = 7200;
     private final List<String> names = new ArrayList<>();
+    private final List<Boolean> catchup = new ArrayList<>();
     private final Map<Integer, List<Prog>> progs = new HashMap<>();
     private Listener listener;
     private int selRow = 0, topRow = 0, lastRow = -1;
@@ -50,8 +52,8 @@ public class GuideGridView extends View {
     private void resetTime() { windowStart = minStart(); selTime = now(); }
 
     public void setListener(Listener l) { listener = l; }
-    public void setChannels(List<String> n) {
-        names.clear(); names.addAll(n); progs.clear();
+    public void setChannels(List<String> n, List<Boolean> cu) {
+        names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu); progs.clear();
         selRow = 0; topRow = 0; lastRow = -1; lastProg = null; resetTime();
         invalidate(); post(this::changed);
     }
@@ -116,11 +118,28 @@ public class GuideGridView extends View {
             case KeyEvent.KEYCODE_PAGE_UP: case KeyEvent.KEYCODE_CHANNEL_UP: moveRow(-visibleRows()); return true;
             case KeyEvent.KEYCODE_PAGE_DOWN: case KeyEvent.KEYCODE_CHANNEL_DOWN: moveRow(visibleRows()); return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT: moveTime(true); return true;
-            case KeyEvent.KEYCODE_DPAD_LEFT: moveTime(false); return true;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                // Already at "now": the next press left lands on the channel's catch up clock.
+                if (selTime <= now() + 1 && windowStart <= minStart() && hasCatchup(selRow) && listener != null) { listener.onCatchup(selRow); return true; }
+                moveTime(false); return true;
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_NUMPAD_ENTER:
                 if (listener != null && !names.isEmpty()) listener.onPick(selRow, selected()); return true;
         }
         return super.onKeyDown(k, e);
+    }
+
+    private boolean hasCatchup(int r) { return r >= 0 && r < catchup.size() && catchup.get(r); }
+
+    @Override public boolean onTouchEvent(android.view.MotionEvent e) {
+        if (e.getAction() == android.view.MotionEvent.ACTION_UP && e.getX() < chW() && e.getY() > headH()) {
+            int r = topRow + (int) ((e.getY() - headH()) / rowH());
+            if (r < names.size()) {
+                selRow = r; invalidate(); changed();
+                if (hasCatchup(r) && listener != null) listener.onCatchup(r);
+                return true;
+            }
+        }
+        return super.onTouchEvent(e);
     }
 
     private String hhmm(long s) {
@@ -203,7 +222,9 @@ public class GuideGridView extends View {
             c.drawRect(0, y + 1, ch - 2, y + rh - 1, fill);
             txt.setColor(0xFFF1F5F9); txt.setTextSize(15 * d); txt.setFakeBoldText(selR);
             String label = (r + 1) + "  " + names.get(r);
-            c.drawText(TextUtils.ellipsize(label, txt, ch - 16 * d, TextUtils.TruncateAt.END).toString(), 8 * d, y + rh / 2 + 5 * d, txt);
+            float clockW = hasCatchup(r) ? 26 * d : 0;
+            c.drawText(TextUtils.ellipsize(label, txt, ch - 16 * d - clockW, TextUtils.TruncateAt.END).toString(), 8 * d, y + rh / 2 + 5 * d, txt);
+            if (clockW > 0) { txt.setTextSize(17 * d); c.drawText("🕘", ch - clockW - 2 * d, y + rh / 2 + 6 * d, txt); txt.setTextSize(15 * d); }
             txt.setFakeBoldText(false);
             List<Prog> l = progs.get(r);
             Prog sel = selR ? selected() : null;
