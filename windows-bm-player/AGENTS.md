@@ -6,3 +6,4 @@
 - Live TV preserves provider category/channel order, like Android; only films and series apply the remembered sort.
 - Approved Windows releases are packaged with @electron/packager and the NSIS script as per-user installers; upload the executable before registering its separate Windows app-build identity, and serve it through the logged Windows download endpoint, never the Android updater.
 - Sports matching bundles the website's shared channel matcher rather than copying its normalization rules.
+- Every fresh process gates playback and private actions through a main-process, website-verified account-number unlock; never persist the number or successful unlock, and wrong-number responses must retain the device link so retries work.
