@@ -48,6 +48,22 @@ public class PlayerActivity extends Activity {
     private boolean playbackReady;
     private boolean subsChecked;
     private long resumePosition;
+    private PlayerView view;
+    private long lastPressAt;
+    /**
+     * The player's own hide timer can't be trusted on live TV (a stream that is buffering or has
+     * no known length never counts as "playing", so it never hides the controls). This checks once
+     * a second and takes the controls away shortly after the last press, whatever the player thinks.
+     */
+    private final Runnable hideControls = new Runnable() {
+        @Override public void run() {
+            if (view != null && view.isControllerFullyVisible()
+                    && InactivityPolicy.hideControls(lastPressAt, android.os.SystemClock.elapsedRealtime())) {
+                view.hideController();
+            }
+            ui.postDelayed(this, 1000);
+        }
+    };
     private final Runnable saveTick = new Runnable() {
         @Override public void run() { saveProgress(false); ui.postDelayed(this, 5000); }
     };
@@ -199,7 +215,8 @@ public class PlayerActivity extends Activity {
         super.onCreate(b);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
-        PlayerView view = new PlayerView(this);
+        view = new PlayerView(this);
+        view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
         root.addView(view);
         TextView banner = new TextView(this);
         banner.setText("Non 4K Device");
@@ -213,6 +230,8 @@ public class PlayerActivity extends Activity {
         lp.topMargin = 60;
         root.addView(banner, lp);
         setContentView(root);
+        lastPressAt = android.os.SystemClock.elapsedRealtime();
+        ui.postDelayed(hideControls, 1000);
 
         player = build(this);
         final int subs = getIntent().getIntExtra("subtitles", -1);
@@ -296,9 +315,13 @@ public class PlayerActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override public void onUserInteraction() { super.onUserInteraction(); PlayerApplication.interaction(this); }
+    @Override public void onUserInteraction() {
+        super.onUserInteraction();
+        lastPressAt = android.os.SystemClock.elapsedRealtime();
+        PlayerApplication.interaction(this);
+    }
 
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
-    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); saveProgress(false); ui.removeCallbacks(saveTick); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); saveProgress(false); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
