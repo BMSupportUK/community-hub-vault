@@ -10,6 +10,7 @@ export const DOWNLOAD_SOURCES = {
   direct_install: "BM Direct Install (TV)",
   player_update: "BM Player in-app update",
   player_windows: "BM Player (Windows)",
+  player_mac: "BM Player (Mac)",
 } as const;
 export type DownloadSource = keyof typeof DOWNLOAD_SOURCES;
 
