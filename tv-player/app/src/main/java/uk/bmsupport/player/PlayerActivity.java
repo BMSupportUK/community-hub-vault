@@ -81,7 +81,8 @@ public class PlayerActivity extends Activity {
 
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences("bmplayer", MODE_PRIVATE); }
 
-    static ExoPlayer build(Context c) {
+    static ExoPlayer build(Context c) { return build(c, false); }
+    static ExoPlayer build(Context c, boolean catchup) {
         SharedPreferences p = prefs(c);
         DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
                 .setUserAgent(p.getString("ua", UA))
@@ -90,8 +91,10 @@ public class PlayerActivity extends Activity {
                 .setReadTimeoutMs(20000);
         DefaultExtractorsFactory ex = new DefaultExtractorsFactory()
                 .setConstantBitrateSeekingEnabled(true)
-                .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
-                        | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
+                // Catch up recordings start mid-picture; waiting for a full keyframe avoids the blocky
+                // smeared picture phones showed when decoding began from a partial frame.
+                .setTsExtractorFlags(catchup ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+                        : DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
         boolean sw = "software".equals(p.getString("decoder", "hardware"));
         DefaultRenderersFactory renderers = new DefaultRenderersFactory(c)
                 .setEnableDecoderFallback(true)
@@ -233,7 +236,7 @@ public class PlayerActivity extends Activity {
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
 
-        player = build(this);
+        player = build(this, getIntent().hasExtra("catchup_prefix"));
         final int subs = getIntent().getIntExtra("subtitles", -1);
         if (subs == 0 || subs == 1) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, subs == 0)
