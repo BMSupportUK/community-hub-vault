@@ -106,8 +106,11 @@ class MacEngine {
     s.duration = num(value.duration);
     s.state = [1, 3, 4, 5, 6, 7].includes(Number(value.state)) ? Number(value.state) : s.state;
     s.seekable = !!value.seekable;
+    s.subs = Math.max(0, Math.min(50, Number(value.subs) || 0));
   }
   status(index) { const s = this.sessions.get(index); return s ? { ...s } : null; }
+  subtitleTracks(index) { return this.sessions.get(index)?.subs || 0; }
+  setSubtitles(index, on) { if (this.sessions.has(index)) this.send({ action: 'subtitles', index, on: !!on }); }
   layout() {}
   pause(index, paused) { if (this.sessions.has(index)) this.send({ action: 'pause', index, paused: !!paused }); }
   seek(index, seconds) { if (this.sessions.has(index)) this.send({ action: 'seek', index, seconds }); }

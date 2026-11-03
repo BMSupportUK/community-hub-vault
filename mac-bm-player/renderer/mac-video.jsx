@@ -56,6 +56,11 @@ function apply(data) {
   else if (!video) return;
   else if (data.action === 'pause') data.paused ? video.pause() : video.play().catch(() => {});
   else if (data.action === 'seek') { try { video.currentTime = data.seconds; } catch {} }
+  else if (data.action === 'subtitles') {
+    const p = players.get(index);
+    if (p instanceof Hls) { p.subtitleDisplay = data.on; p.subtitleTrack = data.on && p.subtitleTracks.length ? 0 : -1; }
+    [...video.textTracks].forEach((x, i) => { x.mode = data.on && i === 0 ? 'showing' : 'disabled'; });
+  }
   else if (data.action === 'volume') video.volume = Math.max(0, Math.min(1, data.volume / 100));
 }
 
@@ -66,7 +71,8 @@ if (window.bm?.platform === 'mac') {
       if (!commands.has(index)) continue;
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
       const state = video.dataset.failed || video.error ? 7 : video.ended ? 6 : video.paused ? 4 : 3;
-      window.bm.videoStatus({ index, position: video.currentTime || 0, duration, state, seekable: duration > 0 }).catch(() => {});
+      const p = players.get(index), subs = p instanceof Hls ? p.subtitleTracks.length : video.textTracks.length;
+      window.bm.videoStatus({ index, position: video.currentTime || 0, duration, state, seekable: duration > 0, subs }).catch(() => {});
     }
   }, 1000);
 }
