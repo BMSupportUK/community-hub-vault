@@ -4,6 +4,7 @@
 - Signed with the permanent BM key; bump versionCode/versionName and upload a new `bm-player/` build row so installs upgrade in place.
 - Same tile front screen on every device; "Play with VLC" hands off to org.videolan.vlc and falls back to the built-in Media3 player.
 - Home-row buttons never fold a name onto a second line: smallButton() forces a single line with text that shrinks (16sp to 10sp), and smallWeight() shares the row out in proportion to each label's measured width so "Recently watched" gets more room than "Settings".
+- Header search pills go through headerPill(), which gives each one side gaps so the three pills never sit flush against each other.
 - Sports guide comes from published website guides via the device-token `sports` action; channel matching rules live in src/lib/player-channel-match.ts and are mirrored in MainActivity (keep in step).
 - Provider-name equivalents are canonicalized without removing feed numbers, so Sports Pass matches cannot jump to a different numbered channel.
 - Playlists download as whole-section lists on one queue (with the progress pop-up) and browse splits them by category locally, so "All" shows at once; posters never draw an overlay — the selected card paints its own ring.
