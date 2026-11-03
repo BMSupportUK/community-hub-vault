@@ -1176,6 +1176,14 @@ public class MainActivity extends Activity {
                 if (event.getAction() == KeyEvent.ACTION_DOWN) active[0].requestFocus();
                 return true;
             }
+            if (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && eps.getCount() > 0) {
+                    int next = Math.max(0, Math.min(eps.getCount() - 1,
+                            selected + (key == KeyEvent.KEYCODE_DPAD_DOWN ? 1 : -1)));
+                    eps.setSelectionFromTop(next, 0);
+                }
+                return true;
+            }
             if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER
                     || key == KeyEvent.KEYCODE_NUMPAD_ENTER) {
                 if (event.getAction() == KeyEvent.ACTION_UP && selected >= 0 && selected < eps.getCount())
