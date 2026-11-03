@@ -40,7 +40,8 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
-- [ ] Add three-minute sustained connection-limit warning, investigation reports and signed player release
+- [x] Add three-minute sustained connection-limit warning and admin-only investigation reports; native tests and website report read-back pass, signed 2.36 released
+- [ ] Verify the connection warning during real TV playback (blocked: no attached TV; website changes need publishing)
 - [x] Add film/episode watched bars and Resume in built-in playback; reset category/season selection to top; 9 native checks and 32 regression tests pass; signed 2.11 live download verified
 - [ ] Verify watched bars, resume and category scroll on a real TV (blocked: no attached Android device)
 - [x] Compact Now/Up next guide with start/end times and current percentage, no descriptions, wrapping/remote-scrollable entries; signed 2.10 build and download verified (visual TV check unavailable: no attached device)
