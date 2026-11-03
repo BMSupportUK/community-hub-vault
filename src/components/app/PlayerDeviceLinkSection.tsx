@@ -4,8 +4,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { Checkbox } from "@/components/ui/checkbox";
 import { manualPlayerLogin, selectedPlayerLogin, type SavedPlayerLogin } from "./player-login-selection";
 import { usePlayerDevices, type PlayerDevice } from "@/hooks/use-player-devices";
+import { useCustomerNumber } from "@/components/app/CustomerNumber";
 import { useServerFn } from "@tanstack/react-start";
-import { Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
+import { Hash, Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export function PlayerDeviceLinkSection() {
   const { devices, reload } = usePlayerDevices();
   const { user } = useAuth();
   const ownerId = user?.id;
+  const customerNumber = useCustomerNumber(ownerId);
   const { data: accounts = [], isPending: loadingAccounts, isError: accountsFailed, refetch } = useQuery({
     queryKey: ["player-saved-logins", ownerId],
     enabled: Boolean(ownerId),
@@ -110,7 +112,15 @@ export function PlayerDeviceLinkSection() {
           <p className="text-xs text-muted-foreground">Your login goes straight to the app once and is then deleted from our side.</p>
         </form>
         <aside className="rounded-lg border border-border bg-surface/90 p-5">
-          <h2 className="font-display font-semibold">My linked devices</h2>
+          {/* Account number sits opposite the heading so it is readable at a glance. */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display font-semibold">My linked devices</h2>
+            {customerNumber ? <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-primary" title="BM Player account number">
+              <Hash className="size-4 shrink-0" aria-hidden="true" />
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Account no.</span>
+              <span className="font-mono text-lg font-bold leading-none tracking-[0.12em]">{customerNumber}</span>
+            </span> : null}
+          </div>
           {devices.length ? <ul className="mt-3 space-y-3">{devices.map((d) => <li key={d.id} className="flex items-center gap-3 rounded-md border border-border p-3">
             {d.platform === "windows" ? <Laptop className="size-5 text-primary" /> : <Tv className="size-5 text-primary" />}
             <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{d.name}</div>
