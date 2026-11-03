@@ -1333,6 +1333,9 @@ public class MainActivity extends Activity {
             if (WatchProgress.eligible(it.kind)) i.putExtra("subtitles_enabled", subtitles);
             vlcKey = WatchProgress.eligible(it.kind) ? watchKey(it.kind, it.id) : null;
             vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
+            // Some Android boxes can't hardware-decode provider recordings; VLC's software decoder plays them.
+            if ("catchup".equals(it.kind)) i.putExtra("disable_hardware", true);
+            vlcCatchup = "catchup".equals(it.kind) ? it : null; vlcStarted = android.os.SystemClock.elapsedRealtime();
             try { startActivityForResult(i, VLC_REQUEST); }
             catch (Exception e) {
                 new AlertDialog.Builder(this).setTitle("VLC isn't installed")
@@ -1357,6 +1360,7 @@ public class MainActivity extends Activity {
     }
 
     private static final int VLC_REQUEST = 4242;
+    private Item vlcCatchup; private long vlcStarted;
 
     // ---------- search (TV / Movies / Series, typed or by voice) ----------
     private static final int VOICE_REQUEST = 4343;
@@ -1486,6 +1490,15 @@ public class MainActivity extends Activity {
             if (r != null && !r.isEmpty()) {
                 if ("sports".equals(kind)) { if (!"sports".equals(screen)) showSports(); sportsVoice(r.get(0)); }
                 else showSearch(kind, r.get(0));
+            }
+            return;
+        }
+        if (req == VLC_REQUEST && vlcCatchup != null) {
+            Item cu = vlcCatchup; vlcCatchup = null;
+            long pos = data == null ? -1 : data.getLongExtra("extra_position", -1);
+            if (CatchupFallback.vlcFailed(res, android.os.SystemClock.elapsedRealtime() - vlcStarted, pos)) {
+                Toast.makeText(this, "VLC couldn't play this recording, playing it in BM Player instead", Toast.LENGTH_LONG).show();
+                beginPlayback(cu, false, 0, false);
             }
             return;
         }
