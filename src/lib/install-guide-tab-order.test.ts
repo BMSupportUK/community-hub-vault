@@ -14,3 +14,11 @@ test("up/down arrows swap neighbours and stop at the ends", () => {
   expect(moveTab(o, 0, -1)).toBe(o);
   expect(moveTab(o, 7, 1)).toBe(o);
 });
+
+import { installTabLabel, resolveInstallTabLabels } from "./install-guide-tab-order";
+test("custom pill name replaces default; blank falls back", () => {
+  const l = resolveInstallTabLabels({ welcome: " Start here ", guides: "  ", bogus: "x" });
+  expect(installTabLabel("welcome", l)).toBe("Start here");
+  expect(installTabLabel("guides", l)).toBe("Guides");
+  expect("bogus" in l).toBe(false);
+});

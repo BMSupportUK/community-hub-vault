@@ -28,3 +28,21 @@ export function moveTab(order: InstallTabKey[], index: number, dir: -1 | 1): Ins
   [next[index], next[j]] = [next[j], next[index]];
   return next;
 }
+
+export const INSTALL_TAB_LABELS_KEY = "install_guides_tab_labels";
+export type InstallTabLabels = Partial<Record<InstallTabKey, string>>;
+
+/** Saved custom pill names; blank or unknown entries fall back to the default name. */
+export function resolveInstallTabLabels(saved: unknown): InstallTabLabels {
+  const out: InstallTabLabels = {};
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) return out;
+  for (const t of INSTALL_TABS) {
+    const v = (saved as Record<string, unknown>)[t.key];
+    if (typeof v === "string" && v.trim()) out[t.key] = v.trim().slice(0, 80);
+  }
+  return out;
+}
+
+export function installTabLabel(key: InstallTabKey, labels: InstallTabLabels): string {
+  return labels[key] ?? INSTALL_TABS.find((t) => t.key === key)?.label ?? key;
+}
