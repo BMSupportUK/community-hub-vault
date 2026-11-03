@@ -20,7 +20,7 @@ const Token = z.string().regex(/^[0-9a-f]{64}$/);
 const Body = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("register"),
-    platform: z.enum(["android", "firetv", "phone", "windows"]),
+    platform: z.enum(["android", "firetv", "phone", "windows", "mac"]),
     name: z.string().trim().min(1).max(60).optional(),
   }),
   z.object({ action: z.literal("code"), device_token: Token }),

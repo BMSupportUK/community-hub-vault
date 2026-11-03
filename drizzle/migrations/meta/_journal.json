@@ -1898,6 +1898,13 @@
       "when": 1793693751687,
       "tag": "0270_player_offsite_customers",
       "breakpoints": true
+    },
+    {
+      "idx": 271,
+      "version": "7",
+      "when": 1793704664931,
+      "tag": "0271_migration",
+      "breakpoints": true
     }
   ]
 }

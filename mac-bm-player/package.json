@@ -1,0 +1,9 @@
+{
+  "name": "bm-player-mac",
+  "productName": "BM Player",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BM Player for Mac",
+  "author": "BM Support",
+  "main": "electron/main.cjs"
+}
