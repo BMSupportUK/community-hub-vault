@@ -1,0 +1,19 @@
+/** Stage the Mac app (run with bun from the project root). Shares the Windows player's main process, renderer and logic. */
+const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = __dirname, shared = path.join(root, '../windows-bm-player');
+const stage = '/tmp/mac-player-build/app';
+fs.rmSync(stage, { recursive: true, force: true });
+fs.mkdirSync(path.join(stage, 'dist'), { recursive: true });
+fs.mkdirSync(path.join(stage, 'electron'), { recursive: true });
+execFileSync('lovable-assets', ['get', '--overwrite', '--file', path.join(root, '../src/assets/player-family-intro.mp4.asset.json'), '-o', path.join(stage, 'dist/player-intro.mp4')], { stdio: 'inherit' });
+execFileSync('bun', ['build', path.join(root, 'renderer/entry.jsx'), '--target=browser', '--minify', '--outfile=' + path.join(stage, 'dist/app.js')], { stdio: 'inherit' });
+fs.copyFileSync(path.join(root, 'package.json'), path.join(stage, 'package.json'));
+for (const file of ['core.cjs', 'playback-core.cjs', 'account-gate.cjs']) fs.copyFileSync(path.join(shared, file), path.join(stage, file));
+for (const file of ['main.cjs', 'preload.cjs']) fs.copyFileSync(path.join(shared, 'electron', file), path.join(stage, 'electron', file));
+fs.copyFileSync(path.join(root, 'electron/mac-engine.cjs'), path.join(stage, 'electron/mac-engine.cjs'));
+fs.copyFileSync(path.join(root, 'renderer/index.html'), path.join(stage, 'dist/index.html'));
+fs.copyFileSync(path.join(shared, 'renderer/app.css'), path.join(stage, 'dist/app.css'));
+for (const [src, dest] of [['home_background.jpg', 'home.jpg'], ['expired_art.jpg', 'expired.jpg'], ['bm_logo.png', 'logo.png']]) fs.copyFileSync(path.join(root, '../tv-player/app/src/main/res/drawable-nodpi', src), path.join(stage, 'dist', dest));
+console.log('Staged Mac app at ' + stage + '. Package with @electron/packager --platform=darwin, then ad-hoc sign with rcodesign and zip.');
