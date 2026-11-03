@@ -747,7 +747,18 @@ public class MainActivity extends Activity {
             pv = new androidx.media3.ui.PlayerView(this);
             pv.setUseController(false);
             pv.setBackgroundColor(Color.BLACK);
-            pv.setFocusable(false);
+            pv.setFocusable(true);
+            pv.setFocusableInTouchMode(true);
+            pv.setOnFocusChangeListener((v, has) -> {
+                if (has) {
+                    GradientDrawable ring = new GradientDrawable();
+                    ring.setColor(Color.TRANSPARENT);
+                    ring.setCornerRadius(dp(10));
+                    ring.setStroke(dp(3), ACCENT);
+                    v.setForeground(ring);
+                } else v.setForeground(null);
+            });
+
             pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
             pv.setShutterBackgroundColor(Color.BLACK);
             final androidx.media3.ui.PlayerView box = pv;
