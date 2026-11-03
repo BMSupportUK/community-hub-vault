@@ -1176,7 +1176,7 @@ public class MainActivity extends Activity {
     /** Fire TV has no speech service for sideloaded apps, but its keyboard takes dictation from the remote's mic button. */
     private void voiceDictation(String kind) {
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16), dp(8), dp(16), 0);
-        box.addView(text("🎤 Press and hold the microphone button on your remote, say what you're looking for, then let go.", 16, TEXT, false));
+        box.addView(text("🎤 Wait for the on-screen keyboard to open, then press and hold the microphone button on your remote, say what you're looking for, and let go. If the keyboard closes, press OK on the box below to open it again.", 16, TEXT, false));
         android.widget.EditText q = new android.widget.EditText(this);
         q.setSingleLine(true); q.setHint("Your words appear here");
         q.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
@@ -1194,11 +1194,19 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Search", null).setNegativeButton("Cancel", null).create();
         dlg[0].setOnShowListener(d -> {
             dlg[0].getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> go.run());
-            q.requestFocus();
-            q.postDelayed(() -> {
+            // Fire TV only routes the mic to dictation while its own keyboard is open on a focused box,
+            // otherwise Alexa takes the press and searches the whole device. Force the keyboard open.
+            q.setFocusable(true); q.setFocusableInTouchMode(true);
+            Runnable openKb = () -> {
+                q.requestFocus();
                 android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                if (imm != null) imm.showSoftInput(q, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-            }, 250);
+                if (imm != null) {
+                    imm.showSoftInput(q, android.view.inputmethod.InputMethodManager.SHOW_FORCED);
+                    if (!imm.isActive(q)) imm.toggleSoftInput(android.view.inputmethod.InputMethodManager.SHOW_FORCED, 0);
+                }
+            };
+            q.postDelayed(openKb, 300);
+            q.postDelayed(openKb, 900);
         });
         if (dlg[0].getWindow() != null) dlg[0].getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         dlg[0].show();
