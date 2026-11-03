@@ -5606,6 +5606,33 @@ export type Database = {
         }
         Relationships: []
       }
+      player_announcements: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          ended_at: string | null
+          id: string
+          message: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          id?: string
+          message: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
       player_connection_reports: {
         Row: {
           active_connections: number
