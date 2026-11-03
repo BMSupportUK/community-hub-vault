@@ -53,6 +53,7 @@ import java.util.concurrent.Executors;
  * (Live TV, Films, Series) and a row of smaller buttons.
  */
 public class MainActivity extends Activity {
+    @Override protected void attachBaseContext(android.content.Context b) { super.attachBaseContext(PhoneScale.wrap(b)); }
     private static final int BG = 0xFF0B1220, CARD = 0xFF16213A, ACCENT = 0xFFE11D48, TEXT = 0xFFF1F5F9, MUTED = 0xFF94A3B8;
 
     private final Handler ui = new Handler(Looper.getMainLooper());

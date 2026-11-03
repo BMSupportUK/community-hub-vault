@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 /** Separate dialog activity so the warning also appears over built-in playback. */
 public final class ConnectionWarningActivity extends Activity {
+    @Override protected void attachBaseContext(android.content.Context b) { super.attachBaseContext(PhoneScale.wrap(b)); }
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         int active = getIntent().getIntExtra("active", 0), max = getIntent().getIntExtra("max", 0);
