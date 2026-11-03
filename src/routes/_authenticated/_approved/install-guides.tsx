@@ -27,6 +27,7 @@ import { getMyAppTransfer } from "@/lib/app-transfer.functions";
 
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
+import { INSTALL_TABS, INSTALL_TAB_ORDER_KEY, resolveInstallTabOrder } from "@/lib/install-guide-tab-order";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
@@ -291,6 +292,16 @@ function InstallGuidesPage() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+
+  const tabOrderQuery = useQuery({
+    queryKey: ["install-guides-tab-order"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", INSTALL_TAB_ORDER_KEY).maybeSingle();
+      return resolveInstallTabOrder(data?.value);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const tabOrder = tabOrderQuery.data ?? resolveInstallTabOrder(null);
 
   const categories = dataQuery.data?.categories ?? [];
   const blogs = dataQuery.data?.blogs ?? [];
@@ -637,14 +648,9 @@ function InstallGuidesPage() {
                 <p className="mt-1 text-sm text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
               <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-fit lg:max-w-full lg:rounded-full">
-                <TabsTrigger value="welcome" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Welcome</TabsTrigger>
-                <TabsTrigger value="setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Setup Device | Direct To Device"}</TabsTrigger>
-                <TabsTrigger value="link-device" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Link Device</TabsTrigger>
-                <TabsTrigger value="phone-windows-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Setup Your Device Using | Android Phone | Or Windows</TabsTrigger>
-                <TabsTrigger value="ios-setup" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Apps For | iOS</TabsTrigger>
-                <TabsTrigger value="player-windows" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">BM Player | Windows</TabsTrigger>
-                <TabsTrigger value="player-mac" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">BM Player | Mac</TabsTrigger>
-                <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
+                {tabOrder.map((k) => (
+                  <TabsTrigger key={k} value={k} className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{k === "setup" && hasLiveTransfer ? "View Your Download URL" : INSTALL_TABS.find((t) => t.key === k)?.label}</TabsTrigger>
+                ))}
                 {canManageCategories && (
                   <TabsTrigger value="categories" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Categories</TabsTrigger>
                 )}
