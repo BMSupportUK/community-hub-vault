@@ -53,6 +53,7 @@ import java.util.concurrent.Executors;
  * (Live TV, Films, Series) and a row of smaller buttons.
  */
 public class MainActivity extends Activity {
+    @Override protected void attachBaseContext(android.content.Context b) { super.attachBaseContext(PhoneScale.wrap(b)); }
     private static final int BG = 0xFF0B1220, CARD = 0xFF16213A, ACCENT = 0xFFE11D48, TEXT = 0xFFF1F5F9, MUTED = 0xFF94A3B8;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -500,7 +501,7 @@ public class MainActivity extends Activity {
         root.addView(status);
         Button again = button("New code", v -> showLink());
         root.addView(again);
-        setContentView(root);
+        setContentView(scrollable(root));
         io.execute(() -> {
             try {
                 JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
@@ -555,7 +556,7 @@ public class MainActivity extends Activity {
         in.setOnEditorActionListener((v, a, e) -> { go.performClick(); return true; });
         root.addView(go);
         root.addView(status);
-        setContentView(root);
+        setContentView(scrollable(root));
         in.requestFocus();
     }
 
@@ -2530,8 +2531,20 @@ public class MainActivity extends Activity {
                 new int[]{0xE60B1220, 0x8C0B1220, 0xE60B1220}));
         frame.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         content.setBackgroundColor(Color.TRANSPARENT);
-        frame.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.setFillViewport(true);
+        sc.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        frame.addView(sc, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         return frame;
+    }
+
+    /** Fixed-content screens scroll when a short phone screen can't fit them. */
+    private android.widget.ScrollView scrollable(LinearLayout content) {
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.setFillViewport(true);
+        sc.setBackgroundColor(BG);
+        sc.addView(content, new android.widget.ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return sc;
     }
 
     private LinearLayout row() { LinearLayout l = new LinearLayout(this); l.setOrientation(LinearLayout.HORIZONTAL); return l; }

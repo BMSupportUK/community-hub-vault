@@ -39,6 +39,7 @@ import androidx.media3.ui.PlayerView;
  * (AC-3, E-AC-3, DTS, TrueHD...). Tries each stream address in turn.
  */
 public class PlayerActivity extends Activity {
+    @Override protected void attachBaseContext(android.content.Context b) { super.attachBaseContext(PhoneScale.wrap(b)); }
     /** IPTV panels often block unknown players, so identify as VLC like most IPTV apps. */
     static final String UA = "VLC/3.0.20 LibVLC/3.0.20";
     private ExoPlayer player;
