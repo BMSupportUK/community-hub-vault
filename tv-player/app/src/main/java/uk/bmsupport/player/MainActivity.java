@@ -676,6 +676,24 @@ public class MainActivity extends Activity {
 
     /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
     private Item previewItem;
+    private long previewLastTap;
+
+    /** Two presses on the preview (remote OK, or a tap on a phone) open that channel full screen. */
+    private void previewDoubleTap() {
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - previewLastTap > 600) {
+            previewLastTap = now;
+            Toast.makeText(this, "Press OK again for full screen", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        previewLastTap = 0;
+        Item cur = previewItem;
+        if (cur == null) { Toast.makeText(this, "Highlight a channel first", Toast.LENGTH_SHORT).show(); return; }
+        stopPreview();
+        play(cur, defaultVlc());
+    }
+
+
     private void schedulePreview(Item it, androidx.media3.ui.PlayerView view, TextView status) {
         stopPreview();
         previewItem = it;
@@ -685,7 +703,7 @@ public class MainActivity extends Activity {
             view.setPlayer(preview);
             preview.addListener(new androidx.media3.common.Player.Listener() {
                 @Override public void onPlaybackStateChanged(int s) {
-                    if (s == androidx.media3.common.Player.STATE_READY) status.setText("Press OK for full screen");
+                    if (s == androidx.media3.common.Player.STATE_READY) status.setText("Press OK twice for full screen");
                 }
             });
             PlayerActivity.playWithFallback(preview, streamUrls(it),
@@ -702,12 +720,40 @@ public class MainActivity extends Activity {
         String catAction = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
         String listAction = kind.equals("live") ? "get_live_streams" : kind.equals("film") ? "get_vod_streams" : "get_series";
 
+        final String[] liveFilter = { "" };
+        final String[] catLabel = { "" };
+        final List<Item> currentList = new ArrayList<>();
+        final Runnable[] applyFilter = new Runnable[1];
         LinearLayout root = column();
+
         LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
         head.addView(text(title, 26, TEXT, true));
         head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         head.addView(button("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
+        if (kind.equals("live")) {
+            // Inline channel filter, sitting between the Search TV and Voice search buttons.
+            EditText channelSearch = new EditText(this);
+            channelSearch.setHint("Search channels");
+            channelSearch.setSingleLine(true);
+            channelSearch.setTextSize(16);
+            channelSearch.setMinWidth(dp(150));
+            channelSearch.setPadding(dp(12), dp(8), dp(12), dp(8));
+            channelSearch.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+            channelSearch.setContentDescription("Search live channels");
+            channelSearch.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+                @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
+                @Override public void afterTextChanged(android.text.Editable s) {
+                    liveFilter[0] = s.toString();
+                    if (applyFilter[0] != null) applyFilter[0].run();
+                }
+            });
+            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            slp.setMargins(dp(10), 0, dp(10), 0);
+            head.addView(channelSearch, slp);
+        }
         head.addView(button("🎤 Voice search", v -> startVoice(kind)));
+
         root.addView(head);
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
         root.addView(epg);
@@ -747,7 +793,18 @@ public class MainActivity extends Activity {
             pv = new androidx.media3.ui.PlayerView(this);
             pv.setUseController(false);
             pv.setBackgroundColor(Color.BLACK);
-            pv.setFocusable(false);
+            pv.setFocusable(true);
+            pv.setFocusableInTouchMode(true);
+            pv.setOnFocusChangeListener((v, has) -> {
+                if (has) {
+                    GradientDrawable ring = new GradientDrawable();
+                    ring.setColor(Color.TRANSPARENT);
+                    ring.setCornerRadius(dp(10));
+                    ring.setStroke(dp(3), ACCENT);
+                    v.setForeground(ring);
+                } else v.setForeground(null);
+            });
+
             pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
             pv.setShutterBackgroundColor(Color.BLACK);
             final androidx.media3.ui.PlayerView box = pv;
@@ -757,17 +814,12 @@ public class MainActivity extends Activity {
                 if (side.getHeight() > 0) h = Math.min(h, side.getHeight() * 2 / 5);
                 if (h > 0 && Math.abs(v.getHeight() - h) > 2) { ViewGroup.LayoutParams lp = v.getLayoutParams(); lp.height = h; v.post(() -> v.setLayoutParams(lp)); }
             });
-            pvStatus = text("Highlight a channel to preview it", 14, MUTED, false);
+            pvStatus = text("Highlight a channel to preview it · press OK twice for full screen", 14, MUTED, false);
             side.addView(pvStatus);
-            Button full = smallButton("⛶ Full screen", v -> {
-                Item cur = previewItem;
-                if (cur == null) { Toast.makeText(this, "Highlight a channel first", Toast.LENGTH_SHORT).show(); return; }
-                stopPreview(); play(cur, defaultVlc());
-            });
-            full.setContentDescription("Watch the preview channel full screen");
-            side.addView(full, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             pv.setClickable(true);
-            pv.setOnClickListener(v -> full.performClick());
+            pv.setContentDescription("Channel preview · press OK twice to open full screen");
+            pv.setOnClickListener(v -> previewDoubleTap());
+
             pvEpg = text("", 14, TEXT, false);
             pvEpg.setPadding(dp(12), dp(10), dp(12), dp(10));
             pvEpg.setSingleLine(false);
@@ -796,6 +848,21 @@ public class MainActivity extends Activity {
         final boolean[] freshTop = { false };
         final int[] livePos = { -1 };
         final boolean[] restoring = { false };
+        // Live TV's inline search box filters the channel list as the customer types.
+        applyFilter[0] = () -> {
+            String q = liveFilter[0].trim().toLowerCase();
+            List<Item> out = new ArrayList<>();
+            for (Item it : currentList) if (q.isEmpty() || it.name.toLowerCase().contains(q)) out.add(it);
+            items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, out) {
+                @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
+            });
+            freshTop[0] = true;
+            livePos[0] = -1;
+            items.setSelection(0);
+            items.post(() -> items.setSelection(0));
+            epg.setText(catLabel[0] + " · " + out.size() + (q.isEmpty() ? " channels" : " of " + currentList.size() + " channels"));
+        };
+
         java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
             if (pos < 0 || pos >= catRows.size()) return;
             String[] c = catRows.get(pos);
@@ -810,9 +877,11 @@ public class MainActivity extends Activity {
                     sortItems(shown, sortKey[0]);
                     items.setAdapter(posterAdapter(shown));
                     watchedAdapter = (BaseAdapter) items.getAdapter();
-                } else items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>(list)) {
-                    @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
-                });
+                } else {
+                    catLabel[0] = c[1];
+                    currentList.clear(); currentList.addAll(list);
+                    if (applyFilter[0] != null) applyFilter[0].run();
+                }
                 freshTop[0] = true;
                 livePos[0] = -1;
                 items.clearFocus();
@@ -823,7 +892,8 @@ public class MainActivity extends Activity {
                     if (items instanceof ListView) ((ListView) items).setSelectionFromTop(0, 0);
                     if (focusItems) items.requestFocus();
                 });
-                epg.setText(c[1] + " · " + list.size() + (kind.equals("live") ? " channels" : " titles"));
+                if (!kind.equals("live")) epg.setText(c[1] + " · " + list.size() + " titles");
+
             };
             if (got != null && !got.isEmpty()) { render.accept(got); return; }
             // List had no category tags for this one – ask the server for just this category.
