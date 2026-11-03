@@ -40,15 +40,16 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
-- [ ] Replace external Windows VLC with embedded playback, preview and in-app controls; package a private test
-- [ ] Align Windows Live TV layout and channel ordering with Android
+- [x] Replace external Windows VLC with embedded playback, preview and in-app controls; private 0.2.0 packaged, 13 tests pass and renderer controls checked
+- [x] Align Windows Live TV layout and channel ordering with Android; provider order preserved and checked with differing upload dates
+- [ ] Verify embedded Windows DLL loading, native video/DPI and real stream playback (blocked: no Windows runtime or real provider test session)
 - [x] Add five-second family/music opening intro to the device apps and Windows test; signed 2.39, verified soundtrack and Windows renderer transition
 - [x] Make Windows test open maximised and deliver refreshed private 0.1.1 package
 - [ ] Verify opening intro and maximised launch on real TV/Windows (blocked: no attached TV or Windows runtime)
 - [x] First add inactivity Continue viewing / timed exit to Android, Fire TV and phone; signed 2.38 released, four timer checks pass (external VLC not monitored)
 - [x] Mirror inactivity in Windows; three-hour timer and one-minute response tests pass
 - [ ] Verify native inactivity exit and Windows playback/input on real devices (blocked: no attached TV or Windows runtime)
-- [ ] Complete Windows embedded preview, voice search and full settings parity before launch (not included in test build)
+- [ ] Complete Windows voice search and full settings parity before launch (not included in test build)
 - [x] Build Windows BM Player with bundled VLC and deliver a test-only portable Windows ZIP; no public launch or app-list entry
 - [x] Add three-minute sustained connection-limit warning and admin-only investigation reports; native tests and website report read-back pass, signed 2.36 released
 - [ ] Verify the connection warning during real TV playback (blocked: no attached TV; website changes need publishing)
