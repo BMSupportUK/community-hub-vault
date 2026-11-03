@@ -122,6 +122,11 @@ public class MainActivity extends Activity {
     private void showVote(Item it) {
         if (!unlocked || !("film".equals(it.kind) || "series".equals(it.kind))) return;
         JSONObject mine = bmRatings.get(ratingKey(it));
+        if (mine != null && mine.optInt("mine") > 0) {
+            new AlertDialog.Builder(this).setTitle("Already voted").setMessage("You gave " + it.name + " " + mine.optInt("mine") + "/5. Votes can't be changed.")
+                    .setPositiveButton("OK", null).show();
+            return;
+        }
         String[] stars = {"★ · 1/5", "★★ · 2/5", "★★★ · 3/5", "★★★★ · 4/5", "★★★★★ · 5/5"};
         resultList("Rate " + it.name + (mine != null && mine.optInt("mine") > 0 ? " · Your vote " + mine.optInt("mine") + "/5" : ""), stars.length, index -> text(stars[index], 18, TEXT, false), index -> {
             Toast.makeText(this, "Saving your vote…", Toast.LENGTH_SHORT).show();
@@ -129,7 +134,11 @@ public class MainActivity extends Activity {
                 try {
                     JSONObject response = new JSONObject(Net.postJson("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "vote").put("device_token", prefs.getString("token", "")).put("kind", it.kind).put("title", it.name).put("stars", index + 1).toString()));
                     ui.post(() -> { receiveRatings(response); Toast.makeText(this, "Your " + (index + 1) + "-star vote is saved.", Toast.LENGTH_SHORT).show(); });
-                } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't save your vote. Try again.", Toast.LENGTH_LONG).show()); }
+                } catch (Exception ex) {
+                    String m = String.valueOf(ex.getMessage());
+                    final boolean already = m.contains("already voted");
+                    ui.post(() -> { Toast.makeText(this, already ? "You've already voted on this. Votes can't be changed." : "Couldn't save your vote. Try again.", Toast.LENGTH_LONG).show(); if (already) { bmRatingTimes.remove(ratingKey(it)); requestRating(it); } });
+                }
             });
         }, null, null, "Cancel", null);
     }
@@ -1572,8 +1581,20 @@ public class MainActivity extends Activity {
             try {
                 JSONObject r = new JSONObject(Net.postJson("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "favourites").put("device_token", token).put("login", login).toString()));
                 if (!r.has("items")) return;
-                if (!r.optBoolean("stored")) { if (saved("fav").length() > 0) pushFavourites(); return; }
-                String remote = r.getJSONArray("items").toString();
+                if (!r.optBoolean("stored")) { if (saved("fav").length() > 0) pushFavourites(); prefs.edit().putBoolean("fav_synced", true).apply(); return; }
+                JSONArray items = r.getJSONArray("items");
+                if (!prefs.getBoolean("fav_synced", false)) {
+                    // First sync on this device: keep its own favourites as well as the account's, then share the lot.
+                    JSONArray local = saved("fav"); java.util.Set<String> seen = new java.util.HashSet<>();
+                    for (int i = 0; i < items.length(); i++) { JSONObject o = items.optJSONObject(i); if (o != null) seen.add(o.optString("kind") + "|" + o.optString("id")); }
+                    boolean added = false;
+                    for (int i = 0; i < local.length(); i++) { JSONObject o = local.optJSONObject(i); if (o != null && seen.add(o.optString("kind") + "|" + o.optString("id"))) { items.put(o); added = true; } }
+                    final boolean push = added;
+                    final String merged = items.toString();
+                    ui.post(() -> { prefs.edit().putString("fav", merged).putBoolean("fav_synced", true).apply(); if (push) pushFavourites(); if (changed != null) changed.run(); });
+                    return;
+                }
+                String remote = items.toString();
                 ui.post(() -> {
                     if (remote.equals(prefs.getString("fav", "[]"))) return;
                     prefs.edit().putString("fav", remote).apply();

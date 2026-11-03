@@ -148,7 +148,8 @@ function trusted(event){return event.sender===win?.webContents&&event.senderFram
 function favouriteItems(){return (store.favourites||[]).filter(i=>i&&i.id!=null&&i.kind&&JSON.stringify(i).length<=4000).slice(0,500).map(i=>({...i,id:String(i.id)}));}
 function pushFavourites(){if(!store.user||!store.token)return;site({action:'favourites_set',login:store.user,items:favouriteItems()}).catch(()=>{});}
 async function syncFavourites(){if(!store.user||!store.token||!gate.unlocked)return;const r=await site({action:'favourites',login:store.user});if(!r||!Array.isArray(r.items))return;
- if(!r.stored){if((store.favourites||[]).length)pushFavourites();return;}
+ if(!r.stored){if((store.favourites||[]).length)pushFavourites();store.favSynced=true;save();return;}
+ if(!store.favSynced){const seen=new Set(r.items.map(i=>i.kind+'|'+i.id));const extra=(store.favourites||[]).filter(i=>!seen.has(i.kind+'|'+String(i.id)));store.favourites=[...r.items,...extra];store.favSynced=true;save();if(extra.length)pushFavourites();send({type:'state',state:publicState()});return;}
  if(JSON.stringify(r.items)!==JSON.stringify(store.favourites||[])){store.favourites=r.items;save();send({type:'state',state:publicState()});}}
 function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement'].includes(name))gate.require();if(!promptedAt)lastInput=Date.now();return fn(value);});}
 if(!app.requestSingleInstanceLock())app.quit();
