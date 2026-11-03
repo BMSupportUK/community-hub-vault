@@ -707,7 +707,30 @@ public class MainActivity extends Activity {
         head.addView(text(title, 26, TEXT, true));
         head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         head.addView(button("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
+        if (kind.equals("live")) {
+            // Inline channel filter, sitting between the Search TV and Voice search buttons.
+            EditText channelSearch = new EditText(this);
+            channelSearch.setHint("Search channels");
+            channelSearch.setSingleLine(true);
+            channelSearch.setTextSize(16);
+            channelSearch.setMinWidth(dp(150));
+            channelSearch.setPadding(dp(12), dp(8), dp(12), dp(8));
+            channelSearch.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+            channelSearch.setContentDescription("Search live channels");
+            channelSearch.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+                @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
+                @Override public void afterTextChanged(android.text.Editable s) {
+                    liveFilter[0] = s.toString();
+                    if (applyFilter[0] != null) applyFilter[0].run();
+                }
+            });
+            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            slp.setMargins(dp(10), 0, dp(10), 0);
+            head.addView(channelSearch, slp);
+        }
         head.addView(button("🎤 Voice search", v -> startVoice(kind)));
+
         root.addView(head);
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
         root.addView(epg);
