@@ -103,7 +103,7 @@ async function play({item,resume=false,screens=1}){
  const urls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto');
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
- try{engine.play(index,urls[0],{buffer:store.settings?.buffer,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
+ try{engine.play(index,urls[0],{buffer:store.settings?.buffer,live:item.kind!=='catchup',resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
  catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}
  const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');

@@ -26,7 +26,9 @@ function start(index) {
     hls.on(Hls.Events.ERROR, (_e, d) => { if (d.fatal) fail(); });
     hls.loadSource(cmd.src); hls.attachMedia(video); players.set(index, hls);
   } else if (cmd.kind === 'ts' && mpegts.isSupported()) {
-    const p = mpegts.createPlayer({ type: 'mpegts', isLive: true, url: cmd.src }, { enableWorker: false, liveBufferLatencyChasing: true, stashInitialSize: 384 * 1024 });
+    // Catch up recordings are finite: play them as files so the length and seek bar work.
+    const live = cmd.live !== false;
+    const p = mpegts.createPlayer({ type: 'mpegts', isLive: live, url: cmd.src }, { enableWorker: false, liveBufferLatencyChasing: live, stashInitialSize: 384 * 1024 });
     p.on(mpegts.Events.ERROR, fail);
     p.attachMediaElement(video); p.load(); players.set(index, p);
   } else {

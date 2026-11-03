@@ -25,6 +25,17 @@ test('stream kinds pick the right player', () => {
   expect(eng.streamKind('http://a/movie/u/p/1.mp4')).toBe('file');
 });
 
+test('catch up recordings are sent as finite streams, live channels as live', () => {
+  const sent = [];
+  const win = { isDestroyed: () => false, webContents: { send: (_c, d) => sent.push(d) } };
+  const e = new eng.MacEngine(win, () => 'UA');
+  e.play(0, 'http://dns.example:8080/timeshift/u/p/60/2026-11-03:10-00/123.ts', { live: false });
+  expect(sent[0].live).toBe(false);
+  expect(sent[0].kind).toBe('ts');
+  e.play(1, 'http://dns.example:8080/live/u/p/123.ts', {});
+  expect(sent[1].live).toBe(true);
+});
+
 test('engine sends only proxy addresses to the window and reports status', () => {
   const sent = [];
   const win = { isDestroyed: () => false, webContents: { send: (_c, d) => sent.push(d) } };
