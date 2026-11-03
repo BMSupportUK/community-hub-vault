@@ -1107,13 +1107,8 @@ public class MainActivity extends Activity {
     }
 
     private void startPlayback(Item it, boolean vlc, long position) {
-        if (WatchProgress.eligible(it.kind)) {
-            // Films and episodes always ask about subtitles before playback starts.
-            new AlertDialog.Builder(this).setTitle("Subtitles?").setMessage(it.name + "\n\nDo you want subtitles on?")
-                    .setPositiveButton("Subtitles off", (d, w) -> beginPlayback(it, vlc, position, false))
-                    .setNegativeButton("Subtitles on", (d, w) -> beginPlayback(it, vlc, position, true))
-                    .setNeutralButton("Cancel", null).show();
-        } else beginPlayback(it, vlc, position, false);
+        // No question up front: the built-in player asks only when the film or episode really has subtitles.
+        beginPlayback(it, vlc, position, false);
     }
 
     private void beginPlayback(Item it, boolean vlc, long position, boolean subtitles) {
@@ -1145,7 +1140,7 @@ public class MainActivity extends Activity {
                     .putExtra("catchup_tz", prefs.getString("server_tz", "Europe/London"));
         }
         if (WatchProgress.eligible(it.kind)) {
-            intent.putExtra("subtitles", subtitles ? 1 : 0);
+            intent.putExtra("subtitles", 2);
             intent.putExtra("progress_key", watchKey(it.kind, it.id)).putExtra("resume_ms", position);
             if (!it.seriesId.isEmpty()) intent.putExtra("series_key", watchKey("series", it.seriesId));
         }
