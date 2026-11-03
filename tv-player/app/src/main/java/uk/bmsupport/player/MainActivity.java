@@ -761,7 +761,7 @@ public class MainActivity extends Activity {
             side.addView(pvStatus);
             Button full = smallButton("⛶ Full screen", v -> {
                 Item cur = previewItem;
-                if (cur == null) { toast("Highlight a channel first"); return; }
+                if (cur == null) { Toast.makeText(this, "Highlight a channel first", Toast.LENGTH_SHORT).show(); return; }
                 stopPreview(); play(cur, defaultVlc());
             });
             full.setContentDescription("Watch the preview channel full screen");
