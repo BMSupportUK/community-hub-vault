@@ -142,7 +142,7 @@ export const Route = createFileRoute("/api/public/player")({
           const scope = await sha256Hex(body.login.toLowerCase());
           if (body.action === "favourites_set") {
             const { error } = await supabaseAdmin.from("player_favourites")
-              .upsert({ owner_key: owner, scope_key: scope, items: body.items, updated_at: new Date().toISOString() });
+              .upsert({ owner_key: owner, scope_key: scope, items: body.items as unknown as import("@/integrations/supabase/types").Json, updated_at: new Date().toISOString() });
             if (error) return json({ error: "Couldn't save favourites." }, 503);
             return json({ ok: true, items: body.items, stored: true });
           }
