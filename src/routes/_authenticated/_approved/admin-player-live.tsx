@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Film, MapPin, MonitorPlay, Radio, Tv } from "lucide-react";
+import { ArrowLeft, Film, MapPin, MonitorPlay, Radio, ShieldAlert, ShieldCheck, Tv } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { formatElapsed, isLive, LIVE_WINDOW_MS } from "@/lib/player-live";
@@ -21,6 +21,7 @@ type Row = {
   connected_since: string | null; iptv_username: string | null; app_version: string | null;
   watching_kind: string | null; watching_title: string | null; watching_category: string | null; watching_player: string | null; watching_since: string | null;
   last_ip: string | null; geo_city: string | null; geo_region: string | null; geo_country: string | null; geo_lat: number | null; geo_lon: number | null;
+  vpn_status: string | null; vpn_provider: string | null; vpn_checked_at: string | null;
 };
 
 const PLATFORM: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Phone", windows: "Windows" };
@@ -38,7 +39,7 @@ function AdminPlayerLivePage() {
     const load = async () => {
       const since = new Date(Date.now() - LIVE_WINDOW_MS).toISOString();
       const { data } = await supabase.from("player_devices")
-        .select("id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon")
+        .select("id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon, vpn_status, vpn_provider, vpn_checked_at")
         .gte("last_seen_at", since).order("connected_since", { ascending: true });
       if (stop) return;
       const list = (data ?? []) as Row[];
@@ -57,6 +58,7 @@ function AdminPlayerLivePage() {
 
   const live = useMemo(() => (rows ?? []).filter((r) => isLive(r.last_seen_at, now)), [rows, now]);
   const watching = live.filter((r) => r.watching_since).length;
+  const onVpn = live.filter((r) => r.vpn_status === "yes").length;
 
   if (loading) return null;
   if (!isAdmin) return <Navigate to="/admin" />;
@@ -69,6 +71,7 @@ function AdminPlayerLivePage() {
         <div className="flex gap-2 text-sm">
           <span className="rounded-full border border-border bg-surface px-3 py-1"><Radio className="mr-1 inline size-3.5 text-primary" />{live.length} online</span>
           <span className="rounded-full border border-border bg-surface px-3 py-1"><MonitorPlay className="mr-1 inline size-3.5 text-primary" />{watching} watching</span>
+          {onVpn > 0 && <span className="rounded-full border border-warning/40 bg-warning/10 px-3 py-1 font-medium text-warning"><ShieldAlert className="mr-1 inline size-3.5" />{onVpn} on VPN</span>}
         </div>
       </div>
       <p className="text-xs text-muted-foreground">Updates every few seconds. Apps check in about once a minute; older apps (before 2.35) show as online but can't report what they're playing.</p>
@@ -78,7 +81,7 @@ function AdminPlayerLivePage() {
         : <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-              <tr><th className="p-3">Code</th><th className="p-3">Username</th><th className="p-3">Location</th><th className="p-3">Connected to</th><th className="p-3">Watching for</th><th className="p-3 max-sm:hidden">Online for</th></tr>
+              <tr><th className="p-3">Code</th><th className="p-3">Username</th><th className="p-3">Location</th><th className="p-3">VPN</th><th className="p-3">Connected to</th><th className="p-3">Watching for</th><th className="p-3 max-sm:hidden">Online for</th></tr>
             </thead>
             <tbody>
               {live.map((r) => {
@@ -91,6 +94,11 @@ function AdminPlayerLivePage() {
                   <td className="p-3">{map
                     ? <a href={map} target="_blank" rel="noreferrer" title={`${place || "Location"}${r.last_ip ? ` · IP ${r.last_ip}` : ""}`} className="inline-flex items-center gap-1 text-primary hover:underline"><MapPin className="size-4" /><span className="text-xs">{place || "Map"}</span></a>
                     : <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={r.last_ip ?? ""}><MapPin className="size-4" />Unknown</span>}</td>
+                  <td className="p-3">{r.vpn_status === "yes"
+                    ? <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning" title={`${r.vpn_provider ? `Via ${r.vpn_provider}` : "VPN or proxy"}${r.last_ip ? ` · IP ${r.last_ip}` : ""}`}><ShieldAlert className="size-3.5" />VPN</span>
+                    : r.vpn_status === "no"
+                      ? <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={`No VPN or proxy found${r.last_ip ? ` on IP ${r.last_ip}` : ""}`}><ShieldCheck className="size-3.5" />None</span>
+                      : <span className="text-xs text-muted-foreground" title="VPN not checked yet">—</span>}</td>
                   <td className="p-3">{r.watching_title
                     ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Film" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div></div></div>
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>

@@ -5592,6 +5592,9 @@ export type Database = {
           platform: string
           token_hash: string
           user_id: string | null
+          vpn_checked_at: string | null
+          vpn_provider: string | null
+          vpn_status: string | null
           watching_category: string | null
           watching_kind: string | null
           watching_player: string | null
@@ -5616,6 +5619,9 @@ export type Database = {
           platform?: string
           token_hash: string
           user_id?: string | null
+          vpn_checked_at?: string | null
+          vpn_provider?: string | null
+          vpn_status?: string | null
           watching_category?: string | null
           watching_kind?: string | null
           watching_player?: string | null
@@ -5640,6 +5646,9 @@ export type Database = {
           platform?: string
           token_hash?: string
           user_id?: string | null
+          vpn_checked_at?: string | null
+          vpn_provider?: string | null
+          vpn_status?: string | null
           watching_category?: string | null
           watching_kind?: string | null
           watching_player?: string | null
