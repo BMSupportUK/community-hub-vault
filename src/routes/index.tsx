@@ -7,7 +7,6 @@ import { MessageSquare, CalendarClock, LifeBuoy, Sparkles } from "lucide-react";
 import { BmSplash } from "@/components/app/BmSplash";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
-import { HeroChannelStats } from "@/components/app/HeroChannelStats";
 
 function pickIcon(title: string) {
   const t = title.toLowerCase();
