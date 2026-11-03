@@ -1,4 +1,4 @@
-const {app,BrowserWindow,ipcMain,safeStorage,shell,dialog,powerSaveBlocker,powerMonitor,protocol}=require('electron');
+const {app,BrowserWindow,ipcMain,safeStorage,shell,dialog,powerSaveBlocker,powerMonitor,protocol,session:electronSession,systemPreferences}=require('electron');
 const MAC=process.platform==='darwin';
 const PLATFORM=MAC?{id:'mac',name:'Mac',device:'Mac BM Player'}:{id:'windows',name:'Windows',device:'Windows BM Player'};
 if(MAC)require('./mac-engine.cjs').registerScheme(protocol);
@@ -25,7 +25,7 @@ function publicState(){
  return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,
   expired:String(a.status||'').toLowerCase()==='expired'||(expiry>0&&expiry<Date.now()),expiry:expiry>0?expiry:null,status:a.status||'',
   maxConnections:Number(a.max_connections)||1,settings:gate.unlocked?store.settings||{}:{},favourites:gate.unlocked?store.favourites||[]:[],recent:gate.unlocked?store.recent||[]:[],
-  progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
+  progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],refreshed:gate.unlocked?store.refreshed||{}:{},playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
 }
 async function site(body){
  const response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});
@@ -68,7 +68,7 @@ async function catalogue(kind){
  const rows=await provider(kind==='series'?'get_series':'get_'+prefix+'_streams');
  const cats=(Array.isArray(categories)?categories:[]).map(c=>({id:String(c.category_id),name:c.category_name}));
  const items=(Array.isArray(rows)?rows:[]).map(r=>core.itemFromProvider(kind,r)).map(i=>({...i,categoryName:cats.find(c=>c.id===i.category)?.name||''}));
- const result={categories:cats,items};cache.set(kind,result);return result;
+ const result={categories:cats,items};cache.set(kind,result);store.refreshed={...(store.refreshed||{}),[kind]:Date.now()};save();send({type:'state',state:publicState()});return result;
  })();pending.set(kind,task);try{return await task;}finally{pending.delete(kind);}
 }
 async function refresh(){
@@ -103,15 +103,17 @@ async function play({item,resume=false,screens=1,subtitles=null}){
  const urls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto');
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
- try{engine.play(index,urls[0],{buffer:store.settings?.buffer,live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles===true:null,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
+ try{engine.play(index,urls[0],{buffer:store.settings?.buffer,live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
  catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}
- const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false};sessions.push(session);
+ const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,subCheck:['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
  lastInput=Date.now();promptedAt=0;poll();send({type:'state',state:publicState()});return true;
 }
 async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
  if((s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:store.settings?.buffer});}else if(!session.failed){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
+ // Like Android: subtitles start on; only ask (paused) when the film actually has some.
+ if(session.subCheck&&s.state===3){const n=Number(engine.subtitleTracks?.(session.index))||0;if(n>0){session.subCheck=false;engine.pause(session.index,true);session.paused=true;send({type:'subtitles-found',index:session.index,item:session.item});}else if(Date.now()-session.since>25000)session.subCheck=false;}
  persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable});}catch{}}}
 async function connectionCheck(){
  if(checkBusy||!store.user||!gate.unlocked)return;checkBusy=true;
@@ -154,6 +156,10 @@ else{
   register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('catchup',catchup);register('sports',()=>site({action:'sports'}));
   register('unlock',async number=>{await gate.unlock(number,site);send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
+  electronSession.defaultSession.setPermissionRequestHandler((wc,perm,cb,details)=>cb(perm==='media'&&wc===win?.webContents&&(details?.mediaTypes||['audio']).every(t=>t==='audio')));
+  electronSession.defaultSession.setPermissionCheckHandler((wc,perm)=>perm==='media'&&wc===win?.webContents);
+  register('micAccess',async()=>{if(MAC&&systemPreferences.getMediaAccessStatus('microphone')!=='granted')return systemPreferences.askForMediaAccess('microphone');return true;});
+  register('voice',async v=>{const audio=String(v?.audio||'');if(!['audio/wav','audio/webm'].includes(v?.mime)||audio.length<100||audio.length>1700000||!/^[A-Za-z0-9+/=]+$/.test(audio))throw new Error('That recording could not be used. Try again.');const r=await site({action:'voice',audio,mime:v.mime});return String(r.text||'');});
   register('play',play);register('stop',stopAll);
   if(MAC)require('./mac-engine.cjs').handleProtocol(protocol);
   ipcMain.handle('player:videoStatus',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.report?.(value);return true;});
@@ -163,6 +169,7 @@ else{
    if(value.action==='pause'){session.paused=!session.paused;engine.pause(index,session.paused);}
    else if(value.action==='seek'&&Number.isFinite(value.seconds))engine.seek(index,Math.max(0,Math.min(session.duration,value.seconds)));
    else if(value.action==='volume'&&Number.isFinite(value.volume))engine.volume(index,Math.max(0,Math.min(100,Math.round(value.volume))));
+   else if(value.action==='subtitles'){engine.setSubtitles?.(index,value.on===true);session.paused=false;engine.pause(index,false);}
    else if(value.action==='audio')for(const s of sessions)engine.volume(s.index,s.index===index?100:0);
    send({type:'state',state:publicState()});return true;
   });

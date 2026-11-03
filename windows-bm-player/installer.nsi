@@ -20,9 +20,30 @@ Section "BM Player"
   ; A running BM Player (or a leftover background process) locks its DLLs,
   ; which makes every file fail with "Error opening file for writing".
   DetailPrint "Closing BM Player if it is running..."
-  nsExec::Exec 'taskkill /F /T /IM "BM Player.exe"'
-  Pop $0
-  Sleep 1500
+  StrCpy $1 0
+  close_loop:
+    ; Full path: a 32-bit installer cannot always find taskkill on PATH.
+    nsExec::Exec '"$SYSDIR\taskkill.exe" /F /T /IM "BM Player.exe"'
+    Pop $0
+    nsExec::Exec 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-Process | Where-Object { $$_.Path -like \"$INSTDIR\*\" } | Stop-Process -Force"'
+    Pop $0
+    Sleep 1500
+    IfFileExists "$INSTDIR\libEGL.dll" 0 files_free
+    ClearErrors
+    FileOpen $2 "$INSTDIR\libEGL.dll" a
+    IfErrors still_locked
+    FileClose $2
+    Goto files_free
+  still_locked:
+    IntOp $1 $1 + 1
+    IntCmp $1 5 ask_user close_loop ask_user
+  ask_user:
+    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "BM Player is still open.$\r$\n$\r$\nClose BM Player (or restart the computer), then click Retry." IDRETRY close_retry
+    Abort
+  close_retry:
+    StrCpy $1 0
+    Goto close_loop
+  files_free:
   SetOutPath "$INSTDIR"
   File /r "${APPDIR}\*.*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -31,7 +52,7 @@ Section "BM Player"
   CreateShortcut "$SMPROGRAMS\BM Player\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   CreateShortcut "$DESKTOP\BM Player.lnk" "$INSTDIR\BM Player.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayName" "BM Player"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayVersion" "0.2.9"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayVersion" "0.3.0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "Publisher" "BM Support"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "UninstallString" '"$INSTDIR\Uninstall.exe"'
 SectionEnd
