@@ -39,6 +39,14 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({
+    action: z.literal("connection_alert"), device_token: Token,
+    active: z.number().int().min(0).max(100),
+    max: z.number().int().min(1).max(100),
+    exceeded_since: z.number().int().positive(),
+    login: z.string().trim().max(120).optional(),
+    version: z.string().trim().max(20).optional(),
+  }),
+  z.object({
     action: z.literal("report"), device_token: Token,
     kind: z.enum(["live", "film", "series"]),
     title: z.string().trim().min(1).max(200),
@@ -112,6 +120,23 @@ export const Route = createFileRoute("/api/public/player")({
           ].filter((l) => l !== null).join("\n");
           await supabaseAdmin.from("ticket_messages").insert({ ticket_id: t.id, sender_id: device.user_id, is_internal: false, content: lines });
           return json({ ok: true, ticket_id: t.id });
+        }
+
+        if (body.action === "connection_alert") {
+          const { CONNECTION_REPORT_COOLDOWN_MS, isSustainedConnectionExcess } = await import("@/lib/player-connection-limit");
+          if (!isSustainedConnectionExcess({ active: body.active, max: body.max, exceededSince: body.exceeded_since, now: Date.now() }))
+            return json({ error: "Connection limit has not been exceeded long enough" }, 400);
+          const { data: recent } = await supabaseAdmin.from("player_connection_reports").select("id")
+            .eq("device_id", device.id).gte("created_at", new Date(Date.now() - CONNECTION_REPORT_COOLDOWN_MS).toISOString()).limit(1).maybeSingle();
+          if (recent) return json({ ok: true, reported: true, duplicate: true });
+          const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+          const { error } = await supabaseAdmin.from("player_connection_reports").insert({
+            device_id: device.id, user_id: device.user_id, iptv_username: body.login || null,
+            active_connections: body.active, max_connections: body.max,
+            exceeded_since: new Date(body.exceeded_since).toISOString(), ip, app_version: body.version || null,
+          });
+          if (error) return json({ error: "Could not report" }, 503);
+          return json({ ok: true, reported: true });
         }
 
         if (body.action === "sports") {

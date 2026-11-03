@@ -5573,6 +5573,53 @@ export type Database = {
         }
         Relationships: []
       }
+      player_connection_reports: {
+        Row: {
+          active_connections: number
+          app_version: string | null
+          created_at: string
+          device_id: string
+          exceeded_since: string
+          id: string
+          ip: string | null
+          iptv_username: string | null
+          max_connections: number
+          user_id: string | null
+        }
+        Insert: {
+          active_connections: number
+          app_version?: string | null
+          created_at?: string
+          device_id: string
+          exceeded_since: string
+          id?: string
+          ip?: string | null
+          iptv_username?: string | null
+          max_connections: number
+          user_id?: string | null
+        }
+        Update: {
+          active_connections?: number
+          app_version?: string | null
+          created_at?: string
+          device_id?: string
+          exceeded_since?: string
+          id?: string
+          ip?: string | null
+          iptv_username?: string | null
+          max_connections?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_connection_reports_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "player_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_devices: {
         Row: {
           app_version: string | null

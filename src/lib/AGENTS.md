@@ -1,4 +1,5 @@
 # src/lib rules
+- BM Player connection investigation reports are device-token submissions of provider-observed counts, admin-readable only; never treat those client observations as verified enforcement or automatic account suspension.
 - Screen unlock verifies the bearer-bound account password through an isolated non-persistent Auth client and retires only its verification session, so the app session and MFA state remain unchanged; legacy PIN reset endpoints are retired.
 - Dashboard password reset requests verify admin server-side and use managed HTML recovery emails without replacing credentials; reset requirements clear only server-side after Auth accepts the chosen password (including same_password), completing any first-login metadata first and matching the original request timestamp to preserve newer requests.
 - BM Support alerts use the shared SupportNotificationScope/useSupportNotifications boundary, including Fan Zone-origin sports guides; Fan Zone listeners stay independent so dual-role staff do not receive support pop-ups in Fan Zone.
