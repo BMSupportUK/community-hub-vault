@@ -66,8 +66,9 @@ public class MainActivity extends Activity {
     private String checkedLogin = "";
     private boolean excessReported;
     private volatile boolean maintenance;
-    // Account number must be entered on every cold open of the app.
-    private boolean unlocked;
+    // Account number must be entered on every cold open of the app. Static so a phone
+    // lock screen (which can recreate the activity) does not ask again while the process lives.
+    private static boolean unlocked;
     private boolean adultUnlocked;
     private String screen = "";
     private Runnable back;
