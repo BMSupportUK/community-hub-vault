@@ -156,16 +156,16 @@ function Landing() {
 
             <div className="relative w-full md:-ml-2 lg:-ml-4 lg:h-full">
               <div className="landing-hero-glow absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative min-h-40 rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] w-full lg:h-full">
+              <div className="relative aspect-[1200/670] max-h-[56dvh] [@media(max-height:650px)]:max-h-[40dvh] rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] w-full">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
-                  width={1040}
-                  height={780}
+                  width={1200}
+                  height={670}
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[56vh] object-cover pr-24 sm:pr-28 lg:h-full lg:max-h-none [@media(max-height:650px)]:max-h-none"
+                  className="absolute inset-0 block w-full h-full object-cover pr-24 sm:pr-28"
                 />
                 <HeroChannelStats />
               </div>
