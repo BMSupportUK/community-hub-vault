@@ -2217,9 +2217,12 @@ export function cardRawForEplEvent(e: { date?: string | null; time?: string | nu
   return [e.date, e.time, e.title, ...e.channels].filter(Boolean).join("\n");
 }
 
-/** iFollow and Scottish guides list each fixture under its own club channels. */
+/**
+ * iFollow and Scottish league (SPFL) guides list each fixture under its own club channels.
+ * Whole words only, so Scotland internationals, the Scottish Cup or Royal Ascot keep their real broadcasters.
+ */
 export function isClubChannelGuide(guideTitle: string | null | undefined): boolean {
-  return /i\s*follow|scot/i.test(guideTitle ?? "");
+  return /\bi\s*-?\s*follow\b|\bspfl\b|\bscottish\s+(?:premiership|championship|league)\b/i.test(guideTitle ?? "");
 }
 
 /** "Dundee United v Rangers" → ["Dundee United", "Rangers"]. */
