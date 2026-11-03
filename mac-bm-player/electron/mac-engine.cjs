@@ -92,10 +92,10 @@ class MacEngine {
     if (typeof ua === 'function') userAgent = ua;
   }
   send(data) { if (this.win && !this.win.isDestroyed()) this.win.webContents.send('player:event', { type: 'video', ...data }); }
-  play(index, url, { buffer = 3000, resume = 0 } = {}) {
+  play(index, url, { buffer = 3000, resume = 0, live = true } = {}) {
     const src = toProxy(url);
     this.sessions.set(index, { position: 0, duration: 0, state: 1, seekable: false });
-    this.send({ action: 'play', index, src, kind: streamKind(url), buffer: Number(buffer) || 3000, resume: Number(resume) || 0 });
+    this.send({ action: 'play', index, src, kind: streamKind(url), buffer: Number(buffer) || 3000, resume: Number(resume) || 0, live: live !== false });
   }
   report(value) {
     const index = Number(value?.index);
