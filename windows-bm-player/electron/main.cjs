@@ -29,7 +29,7 @@ async function site(body){
  if(!response.ok){if(response.status===401){store.token=null;store.user=null;store.pass=null;save();}throw new Error(data.error||'BM Support request failed.');}
  return data;
 }
-async function getCode(){if(!store.token){const r=await site({action:'register',platform:'windows',name:'BM Player Windows test'});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
+async function getCode(){if(!store.token){const r=await site({action:'register',platform:'windows',name:'BM Player Windows'});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
 async function poll(){
  if(pollBusy||!store.token)return;pollBusy=true;
  try{
@@ -97,7 +97,7 @@ async function play({item,resume=false,screens=1}){
  if(!engine)engine=new EmbeddedVlc(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
  try{engine.play(index,urls[0],{buffer:store.settings?.buffer,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
- catch{engine.stop(index);throw new Error('In-app playback could not start. Extract the complete Windows ZIP and try again.');}
+ catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the Windows installer and try again.');}
  const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false};sessions.push(session);
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
@@ -139,7 +139,7 @@ else{
   file=path.join(app.getPath('userData'),'player-encrypted.bin');
   if(fs.existsSync(file)){try{store=JSON.parse(safeStorage.decryptString(fs.readFileSync(file)));}catch{store={};}}
   store.recent=(store.recent||[]).filter(i=>!core.adult(i.categoryName));
-  win=new BrowserWindow({title:'BM Player · Windows Test',show:false,width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,icon:path.join(__dirname,'../build.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
+  win=new BrowserWindow({title:'BM Player · Windows',show:false,width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,icon:path.join(__dirname,'../build.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
   win.once('ready-to-show',()=>{win.maximize();win.show();});
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
@@ -162,7 +162,7 @@ else{
    return publicState();
   });
   register('favourite',item=>{store.favourites=store.favourites||[];const at=store.favourites.findIndex(i=>i.id===item.id&&i.kind===item.kind);if(at<0)store.favourites.push(item);else store.favourites.splice(at,1);save();return publicState();});
-  register('report',v=>site({action:'report',kind:v.item.kind==='episode'?'series':v.item.kind,title:v.item.name,category:v.item.categoryName,episode:v.item.kind==='episode'?v.item.name:undefined,issue:String(v.issue||'').slice(0,1000),device:'Windows BM Player test',version:app.getVersion()}));
+  register('report',v=>site({action:'report',kind:v.item.kind==='episode'?'series':v.item.kind,title:v.item.name,category:v.item.categoryName,episode:v.item.kind==='episode'?v.item.name:undefined,issue:String(v.issue||'').slice(0,1000),device:'Windows BM Player',version:app.getVersion()}));
   register('reminder',value=>{store.reminders=store.reminders||[];if(value.remove)store.reminders=store.reminders.filter(r=>r.id!==value.id);else{if(value.start<=Date.now())throw new Error('Reminders are only for programmes that have not started.');store.reminders.push({...value,id:String(value.item.id)+':'+value.start,notified:false});}save();return publicState();});
   register('continue',()=>{lastInput=Date.now();promptedAt=0;send({type:'inactive',seconds:0});return true;});register('exit',async()=>{await stopAll();app.quit();});
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));
