@@ -106,4 +106,17 @@ public class HomeRowTest {
         assertTrue("Short name keeps a smaller box",
                 boxOf(row, longLabel) > boxOf(row, "\u2699 Settings"));
     }
+
+    /** The header search pills must not sit flush against each other. */
+    @Test
+    public void searchPillsAreSpacedApart() throws Exception {
+        MainActivity activity = Robolectric.buildActivity(MainActivity.class).get();
+        Method headerPill = MainActivity.class.getDeclaredMethod("headerPill", String.class, View.OnClickListener.class);
+        headerPill.setAccessible(true);
+        Button pill = (Button) headerPill.invoke(activity, "\uD83D\uDD0D Search TV", (View.OnClickListener) v -> {});
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) pill.getLayoutParams();
+        float density = activity.getResources().getDisplayMetrics().density;
+        assertTrue("Gap before the pill", lp.leftMargin >= (int) (density * 8));
+        assertTrue("Gap after the pill", lp.rightMargin >= (int) (density * 8));
+    }
 }

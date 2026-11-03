@@ -579,9 +579,9 @@ public class MainActivity extends Activity {
         top.addView(text("  BM Player", 28, TEXT, true));
         top.addView(text("   v" + appVersion(), 16, MUTED, false));
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
-        top.addView(button("🔍 Search TV", v -> showSearch("live", "")));
-        top.addView(button("🔍 Search Movies", v -> showSearch("film", "")));
-        top.addView(button("🔍 Search Series", v -> showSearch("series", "")));
+        top.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
+        top.addView(headerPill("🔍 Search Movies", v -> showSearch("film", "")));
+        top.addView(headerPill("🔍 Search Series", v -> showSearch("series", "")));
         root.addView(top);
         TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
         root.addView(account);
@@ -2844,6 +2844,19 @@ public class MainActivity extends Activity {
         b.setPadding(dp(16), dp(12), dp(16), dp(12));
         b.setFocusable(true);
         b.setOnClickListener(l);
+        return b;
+    }
+
+    /**
+     * Header search pill: wrap-sized with a clear gap on each side, so the three search pills
+     * never sit flush against one another.
+     */
+    private Button headerPill(String label, View.OnClickListener l) {
+        Button b = button(label, l);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dp(12), 0, dp(12), 0);
+        b.setLayoutParams(lp);
         return b;
     }
 
