@@ -123,7 +123,7 @@ public class MainActivity extends Activity {
         if (!unlocked || !("film".equals(it.kind) || "series".equals(it.kind))) return;
         JSONObject mine = bmRatings.get(ratingKey(it));
         String[] stars = {"★ · 1/5", "★★ · 2/5", "★★★ · 3/5", "★★★★ · 4/5", "★★★★★ · 5/5"};
-        resultList("Rate " + it.name + (mine != null && mine.optInt("mine") > 0 ? " · Your vote " + mine.optInt("mine") + "/5" : ""), java.util.Arrays.asList(stars), x -> x, index -> {
+        resultList("Rate " + it.name + (mine != null && mine.optInt("mine") > 0 ? " · Your vote " + mine.optInt("mine") + "/5" : ""), stars.length, index -> text(stars[index], 18, TEXT, false), index -> {
             Toast.makeText(this, "Saving your vote…", Toast.LENGTH_SHORT).show();
             ratingIo.execute(() -> {
                 try {
@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
                     ui.post(() -> { receiveRatings(response); Toast.makeText(this, "Your " + (index + 1) + "-star vote is saved.", Toast.LENGTH_SHORT).show(); });
                 } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't save your vote. Try again.", Toast.LENGTH_LONG).show()); }
             });
-        }, "Cancel");
+        }, null, null, "Cancel", null);
     }
 
 
