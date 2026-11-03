@@ -1891,6 +1891,13 @@
       "when": 1793668114509,
       "tag": "0269_replace_simple_customer_numbers",
       "breakpoints": true
+    },
+    {
+      "idx": 270,
+      "version": "7",
+      "when": 1793693751687,
+      "tag": "0270_player_offsite_customers",
+      "breakpoints": true
     }
   ]
 }

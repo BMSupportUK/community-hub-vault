@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { OffsitePlayerLogins } from "@/components/app/OffsitePlayerLogins";
 import { savePlayerChannelAliases, savePlayerDns, savePlayerMaintenance, testPlayerDns } from "@/lib/player.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
@@ -109,6 +110,7 @@ function AdminPlayerPage() {
           finally { setAliasBusy(false); }
         }}>{aliasBusy ? <Loader2 className="animate-spin" /> : <Save />}Save channel matching</Button>
       </section>
+      <OffsitePlayerLogins />
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>
         <ul className="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">

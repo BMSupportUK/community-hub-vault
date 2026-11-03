@@ -115,3 +115,36 @@ export const testPlayerDns = createServerFn({ method: "POST" })
       return { reachable: false, status: 0 };
     }
   });
+
+/** Admin issues a BM Player login to someone with no website account; they get their own account number. */
+export const issueOffsitePlayerLogin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    customerName: z.string().trim().min(1, "Customer name is required").max(120),
+    email: z.string().trim().email("A valid email is required").max(200),
+    code: z.string().regex(/^\s*\d{3}\s*\d{3}\s*$/, "Enter the 6-digit code shown on the app"),
+    expiresAt: z.string().datetime().nullable(),
+    ...Creds,
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only admin can issue app logins.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const hash = await sha256Hex(normaliseLinkCode(data.code));
+    const { data: row } = await supabaseAdmin.from("player_link_codes").select("device_id, expires_at, used_at").eq("code_hash", hash).maybeSingle();
+    if (!linkCodeUsable(row)) throw new Error("That code is wrong or has expired. Ask the customer for the code on their screen.");
+    const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id").eq("id", row!.device_id).maybeSingle();
+    if (!device) throw new Error("That device is no longer linked. Ask for a new code.");
+    if (device.user_id || device.offsite_customer_id) throw new Error("This device is already linked to another account.");
+    const { data: claimed } = await supabaseAdmin.from("player_link_codes").update({ used_at: new Date().toISOString() })
+      .eq("code_hash", hash).is("used_at", null).select("device_id").maybeSingle();
+    if (!claimed) throw new Error("That code has already been used. Ask for a new code.");
+    const { data: issued, error } = await supabaseAdmin.rpc("issue_offsite_player_customer", {
+      _name: data.customerName, _email: data.email, _username: data.username, _expires: data.expiresAt as string, _admin: context.userId,
+    });
+    const cust = Array.isArray(issued) ? issued[0] : issued;
+    if (error || !cust) throw new Error("Could not create the account number. Try again.");
+    await supabaseAdmin.from("player_devices").update({ offsite_customer_id: cust.id, linked_at: new Date().toISOString() }).eq("id", device.id);
+    await supabaseAdmin.from("player_pending_credentials").upsert({ device_id: device.id, username: data.username, password: data.password, created_at: new Date().toISOString() });
+    return { number: cust.number as number };
+  });
