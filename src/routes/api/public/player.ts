@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
 import { createSharedCache } from "@/lib/player-sports-cache";
+import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
 
 // One sports-guide build per minute per server instance, however many apps ask.
 const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
@@ -39,6 +40,8 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
+  z.object({ action: z.literal("ratings"), device_token: Token, items: z.array(RatingTitle).min(1).max(200) }),
+  RatingVote.extend({ action: z.literal("vote"), device_token: Token }),
   z.object({
     action: z.literal("voice"), device_token: Token,
     mime: z.enum(["audio/wav", "audio/webm"]),
@@ -97,6 +100,28 @@ export const Route = createFileRoute("/api/public/player")({
         const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
+
+        if (body.action === "ratings" || body.action === "vote") {
+          const voter = ratingVoter(device);
+          if (!voter) return json({ error: "Link this app to your BM Support account first." }, 403);
+          const items = body.action === "vote" ? [{ kind: body.kind, title: body.title }] : body.items;
+          const keyed = await Promise.all(items.map(async item => ({ ...item, key: await sha256Hex(ratingIdentity(item.kind, item.title)) })));
+          if (body.action === "vote") {
+            const { error } = await supabaseAdmin.rpc("player_cast_rating", { p_voter: voter, p_key: keyed[0].key, p_stars: body.stars });
+            if (error) return json({ error: error.message.includes("Rate limit") ? "Too many votes. Wait a minute and try again." : "Couldn't save your vote. Try again." }, error.message.includes("Rate limit") ? 429 : 503);
+          }
+          const keys = keyed.map(item => item.key);
+          const [{ data: totals, error: totalsError }, { data: mine, error: mineError }] = await Promise.all([
+            supabaseAdmin.from("player_rating_totals").select("media_key, star_sum, vote_count").in("media_key", keys),
+            supabaseAdmin.from("player_ratings").select("media_key, stars").eq("voter_key", voter).in("media_key", keys),
+          ]);
+          if (totalsError || mineError) return json({ error: "Ratings aren't available right now." }, 503);
+          return json({ ratings: keyed.map(item => {
+            const total = totals?.find(row => row.media_key === item.key);
+            const count = Number(total?.vote_count || 0);
+            return { kind: item.kind, title: item.title, count, average: count ? Math.round(Number(total?.star_sum || 0) / count * 10) / 10 : null, mine: mine?.find(row => row.media_key === item.key)?.stars ?? null };
+          }) });
+        }
 
         if (body.action === "unlink") {
           await supabaseAdmin.from("player_devices").delete().eq("id", device.id);
