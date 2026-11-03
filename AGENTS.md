@@ -74,6 +74,6 @@
 - BM Player apps authenticate only by hashed device token at `/api/public/player`; website sends logins via one-time 10-min codes or owner-checked devices, credentials are deleted on first app poll, and DNS is a single admin-only `player_settings` row.
 
 - `tv-enabler/` rules (PIN gate, Helper install path, ADB client parity) live in `tv-enabler/AGENTS.md`.
-- BM Player device-link forms share PlayerDeviceLinkSection (Install Guides + standalone URL).
+- PlayerDeviceLinkSection serves both link pages; Windows EXE releases have their own logged endpoint.
 - BM Player saved-login selection reads the existing credential view filtered to the signed-in owner; selection is bound to that owner and passwords are never displayed.
 - iFollow/Scottish guide saves/imports use the two club names as fixture channels.
