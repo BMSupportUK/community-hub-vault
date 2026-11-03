@@ -29,7 +29,9 @@ public class SeriesSelectionTest {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         LinearLayout pills = new LinearLayout(activity);
-        ListView episodes = new ListView(activity);
+        ListView episodes = new ListView(activity) {
+            @Override public boolean isInTouchMode() { return false; }
+        };
         root.addView(pills); root.addView(episodes);
         activity.setContentView(root);
         SortedMap<Integer, List<MainActivity.Item>> seasons = new TreeMap<>();
