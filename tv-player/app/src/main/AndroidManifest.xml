@@ -9,6 +9,7 @@
         <package android:name="org.videolan.vlc" />
     </queries>
     <application
+        android:name=".PlayerApplication"
         android:label="BM Player"
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/bm_logo"

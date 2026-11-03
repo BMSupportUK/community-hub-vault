@@ -1,0 +1,10 @@
+const {test,expect}=require('bun:test');
+const c=require('../core.cjs');
+test('latest uploaded is default',()=>expect(c.sortItems([{name:'A',added:1},{name:'Z',added:2}])[0].name).toBe('Z'));
+test('adult entries stay out of recently watched',()=>expect(c.adult('18+ Adult')).toBe(true));
+test('part watched offers resume',()=>expect(c.resume(120,600)).toBe(true));
+test('finished items do not resume',()=>expect(c.resume(600,600)).toBe(false));
+test('watch bar calculates percentage',()=>expect(c.progress(120,600)).toBe(20));
+test('three inactive hours prompts',()=>expect(c.inactive(0,0,10800000)).toBe('prompt'));
+test('one minute unanswered exits',()=>expect(c.inactive(0,10800000,10860000)).toBe('exit'));
+test('single room live URL encodes credentials',()=>expect(c.streamUrls('https://test.invalid','a b','p&',{kind:'live',id:7})[0]).toBe('https://test.invalid/live/a%20b/p%26/7.ts'));
