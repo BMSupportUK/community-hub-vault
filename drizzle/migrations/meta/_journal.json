@@ -1919,6 +1919,13 @@
       "when": 1793742132977,
       "tag": "0273_player_shared_favourites",
       "breakpoints": true
+    },
+    {
+      "idx": 274,
+      "version": "7",
+      "when": 1793743638057,
+      "tag": "0274_player_vote_once",
+      "breakpoints": true
     }
   ]
 }
