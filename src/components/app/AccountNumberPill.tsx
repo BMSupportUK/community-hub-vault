@@ -24,7 +24,7 @@ export function AccountNumberPill({ className }: { className?: string }) {
     >
       <Hash className="size-3.5 shrink-0" aria-hidden="true" />
       <span className="flex flex-col items-start leading-none">
-        <span className="text-[9px] font-bold uppercase tracking-wide text-foreground/70">
+        <span className="text-[10px] font-bold tracking-wide text-foreground/70">
           {accountNumberPillLabel(roles)}
         </span>
         <span className="mt-0.5 font-mono text-sm font-bold leading-none tracking-[0.12em] tabular-nums">
