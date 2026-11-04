@@ -645,7 +645,9 @@ public class MainActivity extends Activity {
         root.addView(go);
         root.addView(status);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-        setContentView(scrollable(root));
+        android.widget.ScrollView sc = scrollable(root);
+        setContentView(sc);
+        fitScreenAboveKeypad(sc, in);
         in.requestFocus();
     }
 
@@ -1421,12 +1423,43 @@ public class MainActivity extends Activity {
                 | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
         android.view.Window w = dlg == null ? null : dlg.getWindow();
         if (w == null) return;
-        w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        // Pan, not resize: a resized pop-up on a sideways phone is cut off at the keypad's top edge and
+        // hides the box, whereas pan always slides the pop-up up until the box itself is above the keys.
+        w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
                 | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
         android.view.WindowManager.LayoutParams lp = w.getAttributes();
         lp.gravity = Gravity.TOP;
         lp.y = dp(16);
         w.setAttributes(lp);
+    }
+
+    /** How far a screen must be lifted so the keypad no longer covers it (keypad, else the phone's nav bar). */
+    static int keypadLift(int imeBottom, int navBottom) {
+        return Math.max(0, Math.max(imeBottom, navBottom));
+    }
+
+    /**
+     * Android 15+ draws apps edge-to-edge and ignores "resize for the keypad", so full screens (the
+     * account number screen) lift themselves by the keypad's height and scroll the box into view.
+     */
+    private void fitScreenAboveKeypad(View screen, View field) {
+        if (Build.VERSION.SDK_INT < 30) return; // older Android still resizes the window itself
+        final int base = screen.getPaddingBottom();
+        screen.setOnApplyWindowInsetsListener((v, ins) -> {
+            int ime = ins.getInsets(android.view.WindowInsets.Type.ime()).bottom;
+            int nav = Build.VERSION.SDK_INT >= 35 ? ins.getInsets(android.view.WindowInsets.Type.systemBars()).bottom : 0;
+            // Below 35 the window was already resized above the keypad, so only lift when edge-to-edge.
+            int lift = Build.VERSION.SDK_INT >= 35 ? keypadLift(ime, nav) : 0;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), base + lift);
+            if (ime > 0 && field != null) v.post(() -> {
+                android.graphics.Rect r = new android.graphics.Rect();
+                field.getDrawingRect(r);
+                r.bottom += dp(72); // keep the Unlock button in view too
+                field.requestRectangleOnScreen(r, true);
+            });
+            return ins;
+        });
+        screen.requestApplyInsets();
     }
 
 
