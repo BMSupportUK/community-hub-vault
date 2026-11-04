@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertMemberDetailsAccess } from "./member-details-access";
 
 export const deleteMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -25,6 +25,7 @@ export const deleteMember = createServerFn({ method: "POST" })
     }
 
     // Block deleting another admin unless caller is admin
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: targetRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -71,6 +72,13 @@ export const updateMemberUsername = createServerFn({ method: "POST" })
 
     const username = data.username.trim();
 
+    await assertMemberDetailsAccess(callerRoles, async () => {
+      const { data: targetRoles, error } = await supabase.from("user_roles").select("role").eq("user_id", data.userId);
+      if (error) throw new Error(error.message);
+      return (targetRoles ?? []).map((row) => String(row.role));
+    });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { data: existing } = await supabaseAdmin
       .from("profiles")
       .select("id")
@@ -111,6 +119,12 @@ export const updateMemberEmail = createServerFn({ method: "POST" })
       throw new Error("Forbidden: admin or management only");
     }
 
+    await assertMemberDetailsAccess(callerRoles, async () => {
+      const { data: targetRoles, error } = await supabase.from("user_roles").select("role").eq("user_id", data.userId);
+      if (error) throw new Error(error.message);
+      return (targetRoles ?? []).map((row) => String(row.role));
+    });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       email: data.email,
       email_confirm: true,
@@ -135,6 +149,7 @@ export const listMemberEmails = createServerFn({ method: "POST" })
       throw new Error("Forbidden: admin or management only");
     }
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const emails: Record<string, string> = {};
     let page = 1;
     // paginate through auth users

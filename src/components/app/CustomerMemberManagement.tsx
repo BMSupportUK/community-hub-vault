@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CUSTOMER_LIST_CHANGED, subscribeCustomerListRefresh } from "@/lib/customer-list-refresh";
 import { ADMIN_STAFF_GROUPS, adminStaffRole, orderedAdminStaff } from "@/lib/admin-staff-list";
+import { canEditMemberDetails } from "@/lib/member-details-access";
 import {
   ShieldCheck,
   Search,
@@ -92,7 +93,7 @@ type MemberSlots = {
 };
 
 export function CustomerMemberManagement({ children }: { children: (slots: MemberSlots) => ReactNode }) {
-  const { hasAny, user } = useAuth();
+  const { hasAny, user, roles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const [rolesUnlocked, setRolesUnlocked] = useState(false);
   useEffect(() => {
@@ -115,6 +116,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   const [editingEmailFor, setEditingEmailFor] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
+  const [staffEditingId, setStaffEditingId] = useState<string | null>(null);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [addRolesFor, setAddRolesFor] = useState<string | null>(null);
@@ -271,6 +273,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   const styleFor = (role: string) => SYSTEM_STYLE[role] ?? CUSTOM_STYLE;
 
   const saveUsername = async (row: Row) => {
+    if (!canEditMemberDetails(roles, row.roles)) return;
     const next = usernameDraft.trim();
     if (!next || next === row.username) {
       setEditingUsernameFor(null);
@@ -291,6 +294,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   };
 
   const saveEmail = async (row: Row) => {
+    if (!canEditMemberDetails(roles, row.roles)) return;
     const next = emailDraft.trim().toLowerCase();
     if (!next || next === row.email) {
       setEditingEmailFor(null);
@@ -395,7 +399,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   };
   const memberEditor = (userId: string) => {
     const row = rows.find((r) => r.id === userId);
-    if (!row || !isAdmin) return null;
+    if (!row || !canEditMemberDetails(roles, row.roles)) return null;
     return <section className="space-y-2 border-b border-border pb-4">
       <label className="block space-y-1 text-sm">Site username<Input aria-label="Site username" value={editingUsernameFor === row.id ? usernameDraft : row.username ?? ""} onChange={(e) => { setEditingUsernameFor(row.id); setUsernameDraft(e.target.value); }} /></label>
       <Button size="sm" disabled={savingUsername || editingUsernameFor !== row.id || !usernameDraft.trim()} onClick={() => void saveUsername(row)}>Save username</Button>
@@ -404,6 +408,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     </section>;
   };
   const addRoleRow = rows.find((r) => r.id === addRolesFor);
+  const staffEditingRow = rows.find((r) => r.id === staffEditingId);
   const staffRows = orderedAdminStaff(rows);
   const staffList = (search: string) => {
     const q = search.trim().toLowerCase();
@@ -415,6 +420,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
         <h3 className="font-display text-lg font-semibold">{group.label} <span className="text-sm text-muted-foreground">{groupRows.length}</span></h3>
         {!groupRows.length ? <p className="text-sm text-muted-foreground">No staff found.</p> : <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{groupRows.map((row) => <article key={row.id} className="min-w-0 space-y-3 rounded-lg border border-border bg-card/70 p-4">
           <header className="flex min-w-0 flex-col gap-2"><div className="flex min-w-0 flex-wrap items-center gap-2"><h4 className="break-words font-semibold">{row.username || (row.display_name?.includes('@') ? null : row.display_name) || 'Staff'}</h4><CustomerNumberBadge userId={row.id} /></div>{/* All card actions sit on one line; the row scrolls sideways instead of wrapping. */}<div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{hasAny(["admin"]) && user && <MemberCredentialsSection ownerId={row.id} ownerLabel={row.username || row.display_name || 'Staff'} currentUserId={user.id} />}{memberHeader(row.id)}</div></header>
+          {hasAny(["admin"]) && <Button variant="outline" size="sm" aria-label={`Edit staff details for ${row.username || "Staff"}`} onClick={() => { setEditingUsernameFor(null); setEditingEmailFor(null); setStaffEditingId(row.id); }}><Pencil className="size-4" />Edit details</Button>}
           {memberRoles(row.id)}{memberExtras(row.id)}{memberDetails(row.id)}
         </article>)}</div>}
       </section>;
@@ -422,6 +428,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   };
   return <>
     {children({ staffCount: staffRows.length, staffList, toolbar: <><AddUserButton onCreated={() => window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED))} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras, header: memberHeader, rolesRow: memberRoles })}
+    <Dialog open={!!staffEditingRow && hasAny(["admin"])} onOpenChange={(open) => { if (!open) setStaffEditingId(null); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto"><DialogHeader><DialogTitle>Edit staff details · {staffEditingRow?.username || "Staff"}</DialogTitle></DialogHeader>{staffEditingRow && memberEditor(staffEditingRow.id)}</DialogContent></Dialog>
     <Dialog open={tab === "roles"} onOpenChange={(open) => { if (!open) setTab("members"); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Manage roles</DialogTitle></DialogHeader><RolesManager defs={roleDefs} onChange={() => void loadAll()} /></DialogContent></Dialog>
     <Dialog open={!!addRoleRow} onOpenChange={(open) => { if (!open) setAddRolesFor(null); }}><DialogContent><DialogHeader><DialogTitle>Add role · {addRoleRow?.username || addRoleRow?.display_name}</DialogTitle></DialogHeader><div className="flex flex-wrap gap-2">{addRoleRow && activeRoles.filter((rd) => !addRoleRow.roles.includes(rd.name)).map((rd) => <Button key={rd.name} variant="outline" size="sm" disabled={saving !== null} onClick={() => void toggleRole(addRoleRow, rd.name)}>{displayRoleLabel(rd.name, rd.label)}</Button>)}</div></DialogContent></Dialog>
     {historyFor && <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />}
