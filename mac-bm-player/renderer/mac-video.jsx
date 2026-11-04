@@ -19,7 +19,6 @@ function setLoudness(index, video, volume) {
   if (b && b.video === video) { b.gain.gain.value = Math.max(1, v); b.ctx.resume?.().catch(() => {}); }
 }
 function destroy(index) {
-  const b = boosters.get(index); if (b) { boosters.delete(index); b.ctx.close?.().catch(() => {}); }
   const p = players.get(index);
   if (p) { try { p.destroy(); } catch {} players.delete(index); }
   const video = elements.get(index);
