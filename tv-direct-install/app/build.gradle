@@ -11,8 +11,8 @@ android {
         applicationId "uk.bmsupport.directinstall"
         minSdkVersion 22
         targetSdkVersion 36
-        versionCode 8
-        versionName "1.7"
+        versionCode 9
+        versionName "1.8"
     }
     signingConfigs {
         release {
@@ -35,4 +35,8 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     lint { abortOnError false; checkReleaseBuilds false }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
 }
