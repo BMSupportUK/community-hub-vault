@@ -26,7 +26,7 @@ function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,i
 function publicState(){
  const a=store.account||{};
  const expiry=Number(a.exp_date)*1000;
- return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,announcement:announcement&&announcement.id!==store.annClosed?announcement:null,major:gate.unlocked||!store.user?major:[],majorSeen:store.majorSeen||[],
+ return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,announcement:announcement&&announcement.id!==store.annClosed?announcement:null,major:gate.unlocked?major:[],majorSeen:store.majorSeen||[],
   expired:String(a.status||'').toLowerCase()==='expired'||(expiry>0&&expiry<Date.now()),expiry:expiry>0?expiry:null,status:a.status||'',
   maxConnections:Number(a.max_connections)||1,settings:gate.unlocked?store.settings||{}:{},favourites:gate.unlocked?store.favourites||[]:[],recent:gate.unlocked?store.recent||[]:[],
   progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],refreshed:gate.unlocked?store.refreshed||{}:{},playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
