@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Build, sign and release Android 2.94, Windows 0.4.4 and universal Mac 0.1.18 with the clean family/remote preview picture; verify live downloads.
+- [x] Build, sign and release Android 2.94, Windows 0.4.4 and universal Mac 0.1.18 with the clean family/remote preview picture; 37 Android and 38 desktop tests pass, all live downloads match byte-for-byte. Real-device playback remains unverified (no attached devices).
 - [x] Check charmainea login failure: saved .com address confirmed, successful password login at 09:57 followed by invalid-credentials attempts; no account or password changed.
 - [x] Make staff email validation readable and prevent saving malformed addresses; exact screenshot input rejected beside the field, corrected .com address enabled, five validation/access tests pass and build OK.
 - [x] Allow admin-only staff username/email editing from the Customers Staff tab; authenticated dialog and unchanged-username save/readback verified, 21 access tests pass. Presentation unlock caches restored for inspection; real password/PIN unlock not exercised.
