@@ -89,3 +89,4 @@
 - [x] Mac: release Full screen-from-preview build
 - [x] Catch up: Android uses BM Player's own player, Amazon keeps VLC (2.76 released)
 - [x] Favourites sync across all BM Player devices (Android 2.76, Windows 0.3.5, Mac 0.1.9 released; website publish needed)
+- [x] Keep every BM Player typing box clear of the on-screen keypad (dialog windows top-anchored + ADJUST_RESIZE through keepEntryVisible, unlock screen anchored to the top); 3 keypad tests and 24 app tests pass, signed 2.85 download verified byte-for-byte. Real TV-box eyeball check remains blocked: no attached device.

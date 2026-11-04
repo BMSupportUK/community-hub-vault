@@ -257,7 +257,7 @@ public class MainActivity extends Activity {
         }
         android.widget.EditText q = new android.widget.EditText(this);
         q.setSingleLine(true); q.setHint("Type part of a channel name");
-        new AlertDialog.Builder(this).setTitle("Screen " + (n + 1) + " – find a channel").setView(q)
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Screen " + (n + 1) + " – find a channel").setView(q)
                 .setPositiveButton("Search", (d, w) -> {
                     String want = normChannel(q.getText().toString());
                     List<Item> hits = new ArrayList<>();
@@ -276,7 +276,10 @@ public class MainActivity extends Activity {
                         PlayerActivity.playWithFallback(multiPlayers.get(n), streamUrls(it),
                                 () -> ui.post(() -> label.setText(it.name + "\nCouldn't play – press OK to pick another")));
                     }).show();
-                }).setNegativeButton("Cancel", null).show();
+                }).setNegativeButton("Cancel", null).create();
+        keepEntryVisible(dlg, q);
+        dlg.show();
+
     }
 
     // ---------- programme reminders ----------
@@ -602,9 +605,12 @@ public class MainActivity extends Activity {
         stopPreview(); stopMulti();
         screen = "unlock"; back = null;
         LinearLayout root = column();
-        root.setGravity(Gravity.CENTER);
+        // Held near the top so the on-screen keypad can never sit on top of the number you're typing.
+        root.setGravity(Gravity.TOP);
+        root.setPadding(dp(32), dp(16), dp(32), dp(16));
         root.addView(logo());
         root.addView(text("Enter your account number", 30, TEXT, true));
+
         root.addView(text("Your 6-digit account number is in the subscription box on bmsupport.uk.", 18, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
@@ -1405,6 +1411,25 @@ public class MainActivity extends Activity {
         if (imm != null) imm.showSoftInput(v, 0);
     }
 
+    /**
+     * Keeps the on-screen keypad from sitting on top of what you're typing: the box is held in the
+     * top part of the screen, clear of the keypad, on TV boxes, Fire TVs and phones alike.
+     */
+    private void keepEntryVisible(android.app.Dialog dlg, EditText in) {
+        if (in != null) in.setImeOptions(in.getImeOptions()
+                | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI
+                | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
+        android.view.Window w = dlg == null ? null : dlg.getWindow();
+        if (w == null) return;
+        w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+                | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        android.view.WindowManager.LayoutParams lp = w.getAttributes();
+        lp.gravity = Gravity.TOP;
+        lp.y = dp(16);
+        w.setAttributes(lp);
+    }
+
+
     /** Fire TV has no speech service for sideloaded apps, but its keyboard takes dictation from the remote's mic button. */
     private void voiceDictation(String kind) {
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16), dp(8), dp(16), 0);
@@ -1441,7 +1466,9 @@ public class MainActivity extends Activity {
         // Close the keyboard whenever the voice box goes, so it never stays stuck on screen.
         dlg[0].setOnDismissListener(d -> hideKeyboard(q));
         q.setOnClickListener(v -> openKbNow(q));
+        keepEntryVisible(dlg[0], q);
         dlg[0].show();
+
     }
 
     private void showSearch(String kind, String start) {
@@ -1463,7 +1490,9 @@ public class MainActivity extends Activity {
         dlg[0] = new AlertDialog.Builder(this).setTitle("Search " + label).setView(box)
                 .setPositiveButton("Search", null).setNegativeButton("Cancel", null).create();
         dlg[0].setOnShowListener(d -> dlg[0].getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> go.run()));
+        keepEntryVisible(dlg[0], q);
         dlg[0].show();
+
         if (start.trim().length() >= 3) { go.run(); }
     }
 
@@ -1737,7 +1766,9 @@ public class MainActivity extends Activity {
                 });
             });
         }));
+        keepEntryVisible(dlg, issue);
         dlg.show();
+
     }
 
     /** Items hold a category id or name; turn ids into the name from the saved category list. */
@@ -2161,9 +2192,12 @@ public class MainActivity extends Activity {
         android.widget.EditText e = new android.widget.EditText(this);
         e.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         e.setHint("4 digit PIN");
-        new AlertDialog.Builder(this).setTitle(title).setView(e)
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle(title).setView(e)
                 .setPositiveButton("OK", (d, w) -> done.accept(e.getText().toString().trim()))
-                .setNegativeButton("Cancel", null).show();
+                .setNegativeButton("Cancel", null).create();
+        keepEntryVisible(dlg, e);
+        dlg.show();
+
     }
 
     private void parentalControl() {
@@ -3061,7 +3095,7 @@ public class MainActivity extends Activity {
     private void searchChannels(JSONObject e, List<String[]> aliases, String start) {
         android.widget.EditText q = new android.widget.EditText(this);
         q.setSingleLine(true); q.setText(start); q.setSelectAllOnFocus(true);
-        new AlertDialog.Builder(this).setTitle("Search channels").setView(q)
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Search channels").setView(q)
                 .setPositiveButton("Search", (d, w) -> {
                     String want = normChannel(q.getText().toString());
                     List<Item> hits = new ArrayList<>();
@@ -3076,7 +3110,10 @@ public class MainActivity extends Activity {
                             .setItems(names, (d2, i) -> { retryEvent = e; retryAliases = aliases; play(hits.get(i), defaultVlc()); })
                             .setNegativeButton("Back", (d2, i) -> pickSportsChannel(e, aliases, false)).show();
                 })
-                .setNegativeButton("Back", (d, w) -> pickSportsChannel(e, aliases, false)).show();
+                .setNegativeButton("Back", (d, w) -> pickSportsChannel(e, aliases, false)).create();
+        keepEntryVisible(dlg, q);
+        dlg.show();
+
     }
 
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
