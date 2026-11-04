@@ -89,9 +89,13 @@ function AdminPlayerPageInner() {
         {[...visible.map((x) => ({ key: x.key as string, label: x.label, desc: x.desc, icon: x.icon, live: false })),
           ...(isAdmin ? [{ key: "live", label: "Live connections", desc: "Every BM Player app online now.", icon: MonitorPlay, live: true }] : [])]
           .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }))
-          .map((x) => <Link key={x.key} to={x.live ? "/admin-player-live" : "/admin-player"} search={x.live ? undefined : { section: x.key as Section }} className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2">
-          <x.icon className="size-9 text-primary" /><span className="font-display font-semibold">{x.label}</span><span className="text-xs text-muted-foreground">{x.desc}</span>
-        </Link>)}
+          .map((x) => {
+            const cls = "flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2";
+            const body = <><x.icon className="size-9 text-primary" /><span className="font-display font-semibold">{x.label}</span><span className="text-xs text-muted-foreground">{x.desc}</span></>;
+            return x.live
+              ? <Link key={x.key} to="/admin-player-live" className={cls}>{body}</Link>
+              : <Link key={x.key} to="/admin-player" search={{ section: x.key as Section }} className={cls}>{body}</Link>;
+          })}
       </div>
     </div>
   </main>;
