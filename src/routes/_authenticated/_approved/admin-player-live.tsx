@@ -1,3 +1,4 @@
+import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -149,7 +150,7 @@ function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row |
   );
 }
 
-function AdminPlayerLivePage() {
+function AdminPlayerLivePageInner() {
   const { hasAny, loading } = useAuth();
   const isAdmin = hasAny(["admin"]);
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -266,4 +267,8 @@ function AdminPlayerLivePage() {
       onOpenChange={(open) => !open && setDetailsId(null)}
     />
   </main>;
+}
+
+function AdminPlayerLivePage() {
+  return <PlayerAdminGate><AdminPlayerLivePageInner /></PlayerAdminGate>;
 }

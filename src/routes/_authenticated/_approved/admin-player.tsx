@@ -1,3 +1,4 @@
+import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -41,7 +42,7 @@ const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe;
   { key: "major-announcements", label: "Major announcements", desc: "Longer announcements under the top-right icon.", icon: Megaphone, managementToo: true },
 ];
 
-function AdminPlayerPage() {
+function AdminPlayerPageInner() {
   const { hasAny, loading } = useAuth();
   const isAdmin = hasAny(["admin"]);
   const isManagement = hasAny(["management"]);
@@ -163,4 +164,8 @@ function AdminPlayerPage() {
       </section>}
     </div>
   </main>;
+}
+
+function AdminPlayerPage() {
+  return <PlayerAdminGate><AdminPlayerPageInner /></PlayerAdminGate>;
 }
