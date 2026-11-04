@@ -89,13 +89,20 @@ function randomHex(bytes: number) {
 function randomCode() {
   return String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
 }
+const ANNOUNCEMENT_WINDOW_MS = 3 * 60_000;
 let announcementCache: { at: number; value: { id: string; message: string; sent_at: number } | null } | null = null;
 async function currentAnnouncement(admin: { from: (t: "player_announcements") => any }) {
   if (announcementCache && Date.now() - announcementCache.at < 10_000) return announcementCache.value;
   const { data, error } = await admin.from("player_announcements").select("id, message, created_at").eq("active", true)
     .order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (error) return announcementCache?.value ?? null;
-  announcementCache = { at: Date.now(), value: data ? { id: data.id, message: data.message, sent_at: Date.parse(data.created_at) } : null };
+  let row = data;
+  // One-off: delivered to players open in the first few minutes, then ended so it is never sent again.
+  if (row && Date.now() - Date.parse(row.created_at) > ANNOUNCEMENT_WINDOW_MS) {
+    await admin.from("player_announcements").update({ active: false, ended_at: new Date().toISOString() }).eq("id", row.id);
+    row = null;
+  }
+  announcementCache = { at: Date.now(), value: row ? { id: row.id, message: row.message, sent_at: Date.parse(row.created_at) } : null };
   return announcementCache.value;
 }
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: CORS });
