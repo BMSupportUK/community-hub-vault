@@ -4,6 +4,7 @@ import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
 import { createSharedCache } from "@/lib/player-sports-cache";
 import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
 import { announcementMatchesUser } from "@/lib/player-announcement-audience";
+import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, eventTime, shouldAlert } from "@/lib/player-buffering";
 
 // One sports-guide build per minute per server instance, however many apps ask.
 const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
@@ -69,6 +70,7 @@ const Body = z.discriminatedUnion("action", [
     login: z.string().trim().max(120).optional(),
     version: z.string().trim().max(20).optional(),
   }),
+  z.object({ action: z.literal("buffering"), device_token: Token, version: z.string().trim().max(20).optional(), events: BufferBatch }),
   z.object({
     action: z.literal("report"), device_token: Token,
     kind: z.enum(["live", "film", "series"]),
@@ -256,6 +258,34 @@ export const Route = createFileRoute("/api/public/player")({
           ].filter((l) => l !== null).join("\n");
           await supabaseAdmin.from("ticket_messages").insert({ ticket_id: t.id, sender_id: device.user_id, is_internal: false, content: lines });
           return json({ ok: true, ticket_id: t.id });
+        }
+
+        if (body.action === "buffering") {
+          const now = Date.now();
+          const { data: dev } = await supabaseAdmin.from("player_devices").select("platform, app_version").eq("id", device.id).maybeSingle();
+          const rows = body.events.map((e) => ({
+            device_id: device.id, user_id: device.user_id, platform: dev?.platform ?? null, app_version: body.version ?? dev?.app_version ?? null,
+            kind: e.kind, content_id: e.content_id, content_name: e.name, stall_ms: e.stall_ms, reconnected: e.reconnected,
+            occurred_at: new Date(eventTime(e.at, now)).toISOString(),
+          }));
+          const { error } = await supabaseAdmin.from("player_buffer_events").insert(rows);
+          if (error) return json({ error: "Could not record" }, 503);
+          // A channel stalling for many different viewers at once points at the provider, not one home's internet.
+          for (const name of [...new Set(rows.filter((r) => r.kind === "live" && r.content_name).map((r) => r.content_name))]) {
+            const { data: recent } = await supabaseAdmin.from("player_buffer_events").select("device_id")
+              .eq("kind", "live").eq("content_name", name).gte("occurred_at", new Date(now - ALERT_WINDOW_MS).toISOString()).limit(500);
+            if (!shouldAlert(new Set((recent ?? []).map((r) => r.device_id)).size)) continue;
+            const title = `Channel buffering for many viewers: ${name}`.slice(0, 200);
+            const { data: sent } = await supabaseAdmin.from("staff_notifications").select("id").eq("kind", "player_buffering")
+              .eq("title", title).gte("created_at", new Date(now - ALERT_COOLDOWN_MS).toISOString()).limit(1);
+            if (sent?.length) continue;
+            await supabaseAdmin.from("staff_notifications").insert({
+              kind: "player_buffering", title,
+              body: `${new Set((recent ?? []).map((r) => r.device_id)).size} BM Player devices stalled on ${name} in the last 10 minutes – likely a provider problem.`,
+              link_path: "/admin-player-live",
+            });
+          }
+          return json({ ok: true, recorded: rows.length });
         }
 
         if (body.action === "connection_alert") {
