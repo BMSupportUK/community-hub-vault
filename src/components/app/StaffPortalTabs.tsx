@@ -8,6 +8,7 @@ import { BmInboxBell } from "@/components/app/BmInboxBell";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { Clocks } from "@/components/app/Clocks";
+import { AccountNumberPill } from "@/components/app/AccountNumberPill";
 import { LockNowPill } from "@/components/app/ScreenLockProvider";
 import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 import { adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";

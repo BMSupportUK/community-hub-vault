@@ -12,6 +12,7 @@ import { NotificationBell } from "./NotificationBell";
 import { ModerationPendingBadge } from "./ModerationPendingBadge";
 import { PendingOrdersBadge } from "./PendingOrdersBadge";
 import { Clocks } from "./Clocks";
+import { AccountNumberPill } from "./AccountNumberPill";
 import { LockNowPill } from "./ScreenLockProvider";
 import { TwoFactorPill, VpnPill } from "./TwoFactorBanner";
 
