@@ -900,7 +900,7 @@ public class MainActivity extends Activity {
             posterText.setShadowLayer(6, 0, 2, Color.BLACK);
             poster.addView(posterText, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.TOP));
             pvFrame.addView(poster, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            previewPoster = poster;
+            previewPoster = poster; previewItem = null;
             side.addView(pvFrame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200)));
             pvFrame.addOnLayoutChangeListener((v, l, t, r, b2, ol, ot, or, ob) -> {
                 int h = (r - l) * 9 / 16;
