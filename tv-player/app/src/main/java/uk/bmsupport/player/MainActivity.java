@@ -604,24 +604,25 @@ public class MainActivity extends Activity {
     private void showUnlock() {
         stopPreview(); stopMulti();
         screen = "unlock"; back = null;
+        // Two columns: words + box on the left, BM's own number pad on the right. The phone's keyboard
+        // is never opened here, so nothing can ever cover the box (see NumberPad).
         LinearLayout root = column();
-        // Held near the top so the on-screen keypad can never sit on top of the number you're typing.
         root.setGravity(Gravity.TOP);
         root.setPadding(dp(32), dp(16), dp(32), dp(16));
-        root.addView(logo());
-        root.addView(text("Enter your account number", 30, TEXT, true));
-
-        root.addView(text("Your 6-digit account number is in the subscription box on bmsupport.uk.", 18, MUTED, false));
+        LinearLayout cols = row();
+        cols.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
+        left.addView(logo());
+        left.addView(text("Enter your account number", 26, TEXT, true));
+        left.addView(text("Your 6-digit account number is in the subscription box on bmsupport.uk.", 16, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(6) });
-        // Landscape phones otherwise swap the whole screen for the keyboard's own full-screen text box.
-        in.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
         in.setTextSize(36); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
         in.setLetterSpacing(0.3f); in.setHint("••••••"); in.setHintTextColor(MUTED);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(320), ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.gravity = Gravity.CENTER_HORIZONTAL; in.setLayoutParams(lp);
-        root.addView(in);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(300), ViewGroup.LayoutParams.WRAP_CONTENT);
+        in.setLayoutParams(lp);
+        left.addView(in);
         TextView status = text("", 16, MUTED, false);
         Button go = button("Unlock", v -> {
             String n = in.getText().toString().trim();
