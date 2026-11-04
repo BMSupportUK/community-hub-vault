@@ -289,7 +289,7 @@ public class MainActivity extends Activity {
 
     private void showCode(String error) {
         header("Enter your website code", "On bmsupport.uk › Install Guides, choose your TV, tick your apps and press Get my website code.");
-        EditText code = input("6-digit website code", 6);
+        EditText code = input("6-digit code", 6);
         LinearLayout left = entryColumn();
         left.addView(code, inputLp());
         TextView msg = text(error == null ? "" : error, 17, ACCENT, false); left.addView(msg, lp(dp(8)));
