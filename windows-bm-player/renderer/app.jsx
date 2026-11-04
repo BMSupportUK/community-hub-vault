@@ -108,4 +108,19 @@ function Announcement(){
  if(!a)return null;
  return <div className="announcement" role="status"><span>📢 {a.message}</span><button aria-label="Close announcement" onClick={()=>bm.closeAnnouncement(a.id).then(s=>setA(s.announcement||null))}>✕</button></div>;
 }
-createRoot(document.getElementById('root')).render(<><App/><Announcement/></>);
+function MajorAnnouncements(){
+ const [st,setSt]=useState({major:[],majorSeen:[]});const [open,setOpen]=useState(false);const [item,setItem]=useState(null);
+ useEffect(()=>{bm.state().then(s=>setSt(s));return bm.subscribe(e=>{if(e.type==='state')setSt(e.state);});},[]);
+ const list=st.major||[],seen=new Set(st.majorSeen||[]);const unread=list.filter(i=>!seen.has(i.id)).length;
+ if(st.locked||!st.linked)return null;
+ const view=i=>{setItem(i);if(!seen.has(i.id))bm.majorSeen(i.id).then(setSt);};
+ const when=d=>{const t=new Date(d);return isNaN(t)?'':t.toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});};
+ return <>
+  <button className={'major-icon'+(unread?' has-new':'')} aria-label={unread?unread+' new announcements':'Announcements'} onClick={()=>{setItem(null);setOpen(true);}}>📣{unread>0&&<span className="major-count">{unread}</span>}</button>
+  {open&&<div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}><div className="modal major-modal">
+   {item?<><h2>{item.title}</h2><p className="major-date">{when(item.created_at)}</p><div className="major-body">{item.body}</div><div className="modal-actions"><button className="primary" autoFocus onClick={()=>setItem(null)}>Back to list</button><button onClick={()=>setOpen(false)}>Close</button></div></>
+   :<><h2>Announcements</h2>{list.length===0?<p>There are no announcements right now.</p>:<ul className="major-list">{list.map((i,n)=><li key={i.id}><button autoFocus={n===0} onClick={()=>view(i)}>{!seen.has(i.id)&&<span className="major-dot"/>}<strong>{i.title}</strong><small>{when(i.created_at)}</small></button></li>)}</ul>}<div className="modal-actions"><button onClick={()=>setOpen(false)}>Close</button></div></>}
+  </div></div>}
+ </>;
+}
+createRoot(document.getElementById('root')).render(<><App/><Announcement/><MajorAnnouncements/></>);

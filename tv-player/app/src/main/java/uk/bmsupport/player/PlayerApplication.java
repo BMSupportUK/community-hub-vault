@@ -26,6 +26,11 @@ public final class PlayerApplication extends Application implements Application.
     private int annTicks = 14;
     private boolean annBusy;
     private final long startedAt = SystemClock.elapsedRealtime();
+    // Longer "major" announcements behind a top-right icon with an unread counter, refreshed every 60s.
+    private org.json.JSONArray majorItems = new org.json.JSONArray();
+    private int majorTicks = 55;
+    private boolean majorBusy;
+    private android.widget.TextView majorIcon;
     static void interaction(Activity activity) {
         PlayerApplication app = (PlayerApplication) activity.getApplication();
         if (app.prompt == null) app.lastInput = SystemClock.elapsedRealtime();
@@ -43,7 +48,7 @@ public final class PlayerApplication extends Application implements Application.
             if (prev != null) prev.uncaughtException(t, e);
         });
         ui.post(new Runnable() {
-            @Override public void run() { if (!exiting) { tick(); if (++annTicks >= 15) { annTicks = 0; fetchAnnouncement(); } } ui.postDelayed(this, 1000); }
+            @Override public void run() { if (!exiting) { tick(); if (++annTicks >= 15) { annTicks = 0; fetchAnnouncement(); } if (++majorTicks >= 60) { majorTicks = 0; fetchMajor(); } } ui.postDelayed(this, 1000); }
         });
     }
     private void tick() {
@@ -84,6 +89,100 @@ public final class PlayerApplication extends Application implements Application.
             final boolean got = ok; final String fid = id, fmsg = msg;
             ui.post(() -> { annBusy = false; if (got) { annId = fid; annMsg = fmsg; showAnnouncement(); } });
         });
+    }
+    private void fetchMajor() {
+        if (majorBusy) return;
+        final String token = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("token", "");
+        if (token.isEmpty()) return;
+        majorBusy = true;
+        annIo.execute(() -> {
+            org.json.JSONArray items = null;
+            try {
+                org.json.JSONObject r = new org.json.JSONObject(Net.postJson(Net.SITE + "/api/public/player",
+                        new org.json.JSONObject().put("action", "major_announcements").put("device_token", token).toString()));
+                items = r.optJSONArray("items");
+            } catch (Throwable ignored) {}
+            final org.json.JSONArray got = items;
+            ui.post(() -> { majorBusy = false; if (got != null) majorItems = got; showMajorIcon(); });
+        });
+    }
+    private java.util.Set<String> majorSeen() {
+        return new java.util.HashSet<>(getSharedPreferences("bmplayer", MODE_PRIVATE).getStringSet("major_seen", new java.util.HashSet<>()));
+    }
+    private int majorUnread() {
+        java.util.Set<String> seen = majorSeen(); int n = 0;
+        for (int i = 0; i < majorItems.length(); i++) if (!seen.contains(majorItems.optJSONObject(i).optString("id"))) n++;
+        return n;
+    }
+    /** Top-right announcement icon on the app's own screens (never over full-screen video). */
+    private void showMajorIcon() {
+        Activity a = foreground;
+        boolean want = a instanceof MainActivity && !a.isFinishing();
+        if (majorIcon != null && (!want || majorIcon.getContext() != a)) {
+            if (majorIcon.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) majorIcon.getParent()).removeView(majorIcon);
+            majorIcon = null;
+        }
+        if (!want) return;
+        int n = majorUnread();
+        if (majorIcon == null) {
+            float d = a.getResources().getDisplayMetrics().density;
+            android.widget.TextView b = new android.widget.TextView(a);
+            b.setTextColor(0xFFFFFFFF); b.setTextSize(16); b.setGravity(android.view.Gravity.CENTER);
+            b.setPadding((int) (14 * d), (int) (8 * d), (int) (14 * d), (int) (8 * d));
+            b.setContentDescription("Announcements");
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(0xF0151A24); bg.setStroke((int) (2 * d), 0xFF3A4150); bg.setCornerRadius(22 * d);
+            android.graphics.drawable.GradientDrawable fb = new android.graphics.drawable.GradientDrawable();
+            fb.setColor(0xF0151A24); fb.setStroke((int) (3 * d), 0xFFE50914); fb.setCornerRadius(22 * d);
+            android.graphics.drawable.StateListDrawable sl = new android.graphics.drawable.StateListDrawable();
+            sl.addState(new int[]{android.R.attr.state_focused}, fb); sl.addState(new int[]{}, bg);
+            b.setBackground(sl); b.setElevation(20 * d);
+            b.setFocusable(true); b.setClickable(true);
+            b.setOnClickListener(v -> openMajorList());
+            final android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.TOP | android.view.Gravity.END);
+            final int m = (int) (14 * d);
+            android.view.WindowInsets in = a.getWindow().getDecorView().getRootWindowInsets();
+            lp.setMargins(0, m + (in == null ? 0 : in.getSystemWindowInsetTop()), m + (in == null ? 0 : in.getSystemWindowInsetRight()), 0);
+            ((android.view.ViewGroup) a.getWindow().getDecorView()).addView(b, lp);
+            majorIcon = b;
+        }
+        majorIcon.setText(n > 0 ? "📣  " + n : "📣");
+        majorIcon.setTextColor(n > 0 ? 0xFFFFFFFF : 0xFFB8BEC9);
+    }
+    private void openMajorList() {
+        final Activity a = foreground;
+        if (a == null) return;
+        if (majorItems.length() == 0) {
+            new AlertDialog.Builder(a).setTitle("Announcements").setMessage("There are no announcements right now.").setPositiveButton("Close", null).show();
+            return;
+        }
+        java.util.Set<String> seen = majorSeen();
+        String[] rows = new String[majorItems.length()];
+        for (int i = 0; i < rows.length; i++) {
+            org.json.JSONObject o = majorItems.optJSONObject(i);
+            rows[i] = (seen.contains(o.optString("id")) ? "" : "● ") + o.optString("title") + "\n" + o.optString("created_at", "").replace('T', ' ').substring(0, Math.min(16, o.optString("created_at", "").length()));
+        }
+        new AlertDialog.Builder(a).setTitle("Announcements")
+                .setItems(rows, (d, w) -> openMajor(w))
+                .setNegativeButton("Close", null).show();
+    }
+    private void openMajor(int i) {
+        final Activity a = foreground;
+        org.json.JSONObject o = majorItems.optJSONObject(i);
+        if (a == null || o == null) return;
+        java.util.Set<String> seen = majorSeen(); seen.add(o.optString("id"));
+        getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putStringSet("major_seen", seen).apply();
+        showMajorIcon();
+        android.widget.ScrollView sv = new android.widget.ScrollView(a);
+        android.widget.TextView t = new android.widget.TextView(a);
+        float d = a.getResources().getDisplayMetrics().density;
+        t.setPadding((int) (24 * d), (int) (12 * d), (int) (24 * d), (int) (12 * d));
+        t.setTextSize(17); t.setText(o.optString("body")); t.setFocusable(true);
+        sv.addView(t);
+        new AlertDialog.Builder(a).setTitle(o.optString("title")).setView(sv)
+                .setPositiveButton("Back to list", (dd, w) -> openMajorList())
+                .setNegativeButton("Close", null).show();
     }
     private void showAnnouncement() {
         Activity a = foreground;
@@ -160,7 +259,7 @@ public final class PlayerApplication extends Application implements Application.
         catch (Exception ignored) {}
     }
     @Override public void onActivityCreated(Activity a, Bundle b) { if (exiting) { exiting = false; lastInput = SystemClock.elapsedRealtime(); } activities.add(a); }
-    @Override public void onActivityResumed(Activity a) { foreground = a; showAnnouncement(); }
+    @Override public void onActivityResumed(Activity a) { foreground = a; showAnnouncement(); showMajorIcon(); }
     @Override public void onActivityPaused(Activity a) { if (foreground == a) foreground = null; }
     @Override public void onActivityDestroyed(Activity a) {
         activities.remove(a);

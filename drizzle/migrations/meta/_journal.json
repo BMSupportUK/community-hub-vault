@@ -1933,6 +1933,13 @@
       "when": 1793743927789,
       "tag": "0275_player_announcements",
       "breakpoints": true
+    },
+    {
+      "idx": 276,
+      "version": "7",
+      "when": 1793778768473,
+      "tag": "0276_player_major_announcements",
+      "breakpoints": true
     }
   ]
 }
