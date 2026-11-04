@@ -1,3 +1,4 @@
+// @ts-nocheck — tests run with bun test.
 import { expect, test } from "bun:test";
 import { PLAYER_ADMIN_UNLOCK_MS, isStillUnlocked } from "./player-admin-unlock";
 
