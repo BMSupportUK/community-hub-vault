@@ -23,6 +23,15 @@ export function WindowsPlayerDownload() {
     <p className="mb-4 text-sm text-muted-foreground">Live TV, films and series with playback inside BM Player.</p>
     {release.data && <p className="mb-3 text-xs text-muted-foreground">Version {release.data.version} · {Math.round(release.data.bytes / 1_000_000)} MB</p>}
     {isDemo ? <Button disabled size="sm"><Download className="size-4" />Demo — download unavailable</Button> : release.data ? <Button asChild size="sm"><a href="/api/public/player-windows" download><Download className="size-4" />Download for Windows</a></Button> : <Button disabled size="sm"><Download className="size-4" />{release.isError ? "Download unavailable" : "Loading download…"}</Button>}
-    <p className="mt-3 text-xs text-muted-foreground">Unsigned installer. Windows may show a security warning.</p>
+    <div className="mt-4 rounded-md border border-border bg-background/80 p-3">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Your PC needs</p>
+      <ul className="mt-1.5 space-y-1 text-xs text-foreground">
+        <li>Windows 10 or Windows 11, 64-bit</li>
+        <li>4 GB of memory — 8 GB if you use multi-screen</li>
+        <li>About 400 MB of free space once installed</li>
+        <li>Broadband: 15 Mbps for HD, 25 Mbps for 4K</li>
+      </ul>
+    </div>
+    <p className="mt-3 text-xs text-muted-foreground">Unsigned installer. Windows may show a security warning — choose More info, then Run anyway.</p>
   </article>;
 }
