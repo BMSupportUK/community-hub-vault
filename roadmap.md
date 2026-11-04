@@ -1,6 +1,6 @@
 # Roadmap
 - [x] Check charmainea login failure: saved .com address confirmed, successful password login at 09:57 followed by invalid-credentials attempts; no account or password changed.
-- [ ] Make staff email validation readable and prevent saving malformed addresses; screenshot shows extra text after .com.
+- [x] Make staff email validation readable and prevent saving malformed addresses; exact screenshot input rejected beside the field, corrected .com address enabled, five validation/access tests pass and build OK.
 - [x] Allow admin-only staff username/email editing from the Customers Staff tab; authenticated dialog and unchanged-username save/readback verified, 21 access tests pass. Presentation unlock caches restored for inspection; real password/PIN unlock not exercised.
 - [x] Fix authenticated password-reset updates losing their session; 11 tests pass, original SDK failure reproduced and corrected live bearer request reaches password validation without changing a password. Publish required; full customer reset remains unverified.
 - [x] Stabilize public homepage picture dimensions during loading; unchanged image size verified at 390×844, 950×477, 1100×650 and 1280×800 after delayed content loads.

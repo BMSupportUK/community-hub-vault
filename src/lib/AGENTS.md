@@ -1,5 +1,6 @@
 # src/lib rules
 - Customers staff-detail forms reuse member username/email updates; handlers read target roles and require admin for staff targets while preserving management edits for non-staff customers.
+- Member email editors validate the full address before sending and show inline errors; never silently strip extra words into a different address.
 - BM Player votes derive the voter from the verified linked device owner and are final once cast (one per owner per title, across devices); film/series title keys normalize case, Unicode and whitespace while retaining years, with atomic per-owner upserts and separate totals that never expose voter lists.
 - BM Player connection investigation reports are device-token submissions of provider-observed counts, admin-readable only; never treat those client observations as verified enforcement or automatic account suspension.
 - Screen unlock verifies the bearer-bound account password through an isolated non-persistent Auth client and retires only its verification session, so the app session and MFA state remain unchanged; legacy PIN reset endpoints are retired.
