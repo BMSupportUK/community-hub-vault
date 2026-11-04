@@ -1947,6 +1947,13 @@
       "when": 1793780174009,
       "tag": "0277_player_announcement_user_target",
       "breakpoints": true
+    },
+    {
+      "idx": 278,
+      "version": "7",
+      "when": 1793815622367,
+      "tag": "0278_player_buffer_events",
+      "breakpoints": true
     }
   ]
 }
