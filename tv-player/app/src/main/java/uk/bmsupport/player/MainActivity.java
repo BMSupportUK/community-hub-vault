@@ -1431,6 +1431,26 @@ public class MainActivity extends Activity {
         lp.gravity = Gravity.TOP;
         lp.y = dp(16);
         w.setAttributes(lp);
+        // Fullscreen/edge-to-edge windows on modern phones ignore pan and resize, so measure the keypad
+        // ourselves and shrink the pop-up to exactly the space above it, then scroll the box into view.
+        if (Build.VERSION.SDK_INT >= 30) {
+            View decor = w.getDecorView();
+            decor.setOnApplyWindowInsetsListener((v, ins) -> {
+                int ime = ins.getInsets(android.view.WindowInsets.Type.ime()).bottom;
+                int screenH = getResources().getDisplayMetrics().heightPixels;
+                int room = screenH - ime - dp(24);
+                android.view.WindowManager.LayoutParams a = w.getAttributes();
+                int want = ime > 0 && room > dp(80) ? room : android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+                if (a.height != want) w.setLayout(a.width, want);
+                if (ime > 0 && in != null) v.post(() -> {
+                    android.graphics.Rect r = new android.graphics.Rect();
+                    in.getDrawingRect(r);
+                    in.requestRectangleOnScreen(r, true);
+                });
+                return v.onApplyWindowInsets(ins);
+            });
+            decor.requestApplyInsets();
+        }
     }
 
     /** How far a screen must be lifted so the keypad no longer covers it (keypad, else the phone's nav bar). */
@@ -1449,7 +1469,8 @@ public class MainActivity extends Activity {
             int ime = ins.getInsets(android.view.WindowInsets.Type.ime()).bottom;
             int nav = Build.VERSION.SDK_INT >= 35 ? ins.getInsets(android.view.WindowInsets.Type.systemBars()).bottom : 0;
             // Below 35 the window was already resized above the keypad, so only lift when edge-to-edge.
-            int lift = Build.VERSION.SDK_INT >= 35 ? keypadLift(ime, nav) : 0;
+            // Fullscreen windows are never resized for the keypad on any version, so always lift.
+            int lift = keypadLift(ime, nav);
             v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), base + lift);
             if (ime > 0 && field != null) v.post(() -> {
                 android.graphics.Rect r = new android.graphics.Rect();
