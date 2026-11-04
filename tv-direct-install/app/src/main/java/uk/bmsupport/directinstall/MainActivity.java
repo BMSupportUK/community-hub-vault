@@ -231,9 +231,11 @@ public class MainActivity extends Activity {
     private void showPin(String error) {
         header("Sign in", "Type your BM Direct Install PIN. Generate it on bmsupport.uk › Install Guides › BM Direct Install, step 4. It lasts 30 minutes.");
         EditText pin = input("6-digit PIN", 6);
-        box.addView(pin, inputLp());
-        TextView msg = text(error == null ? "" : error, 17, ACCENT, false); box.addView(msg, lp(dp(8)));
-        Button go = button("Sign in", ACCENT); box.addView(go, btnLp());
+        LinearLayout left = entryColumn();
+        left.addView(pin, inputLp());
+        TextView msg = text(error == null ? "" : error, 17, ACCENT, false); left.addView(msg, lp(dp(8)));
+        Button go = button("Sign in", ACCENT); left.addView(go, btnLp());
+        addWithPad(left, pin, 6, go);
         go.setOnClickListener(v -> {
             String p = pin.getText().toString().trim();
             if (!p.matches("\\d{6}")) { msg.setText("Type the 6-digit PIN."); return; }
@@ -251,16 +253,46 @@ public class MainActivity extends Activity {
             }).start();
         });
         keypadField = pin;
-        pin.requestFocus();
+    }
+
+    /** Left-hand column of a number screen: the box, its message and buttons. */
+    private LinearLayout entryColumn() {
+        LinearLayout l = new LinearLayout(this);
+        l.setOrientation(LinearLayout.VERTICAL);
+        l.setGravity(Gravity.CENTER_HORIZONTAL);
+        return l;
+    }
+
+    /**
+     * Puts BM's own number pad beside the box. The phone/TV keyboard is never opened on these
+     * screens, so it can never cover what's being typed (sideways phones leave no room above it).
+     */
+    private void addWithPad(LinearLayout left, EditText field, int max, Button go) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout pad = NumberPad.build(this, field, max, CARD, ACCENT, FG, go::performClick);
+        row.addView(left, new LinearLayout.LayoutParams(0, -2, 1.1f));
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, -2, 1f);
+        p.leftMargin = dp(20);
+        row.addView(pad, p);
+        box.addView(row, lp(dp(16)));
+        getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
+                | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null && box.getWindowToken() != null) imm.hideSoftInputFromWindow(box.getWindowToken(), 0);
+        NumberPad.firstKey(pad).requestFocus();
     }
 
     private void showCode(String error) {
         header("Enter your website code", "On bmsupport.uk › Install Guides, choose your TV, tick your apps and press Get my website code.");
-        EditText code = input("6-digit website code", 7);
-        box.addView(code, inputLp());
-        TextView msg = text(error == null ? "" : error, 17, ACCENT, false); box.addView(msg, lp(dp(8)));
-        Button go = button("Continue", ACCENT); box.addView(go, btnLp());
-        Button out = button("Sign out", CARD); box.addView(out, btnLp());
+        EditText code = input("6-digit website code", 6);
+        LinearLayout left = entryColumn();
+        left.addView(code, inputLp());
+        TextView msg = text(error == null ? "" : error, 17, ACCENT, false); left.addView(msg, lp(dp(8)));
+        Button go = button("Continue", ACCENT); left.addView(go, btnLp());
+        Button out = button("Sign out", CARD); left.addView(out, btnLp());
+        addWithPad(left, code, 6, go);
         out.setOnClickListener(v -> { prefs.edit().clear().commit(); waitingPermission = false; pendingPaths = null; showPin(null); });
         go.setOnClickListener(v -> {
             String c = code.getText().toString().replaceAll("\\D", "");
@@ -280,7 +312,6 @@ public class MainActivity extends Activity {
             }).start();
         });
         keypadField = code;
-        code.requestFocus();
     }
 
     private void afterSignIn() {
@@ -526,8 +557,8 @@ public class MainActivity extends Activity {
     // ---------- Views ----------
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
     private LinearLayout.LayoutParams lp(int top) { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = top; return p; }
-    private LinearLayout.LayoutParams inputLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dp(360), -2); p.topMargin = dp(22); return p; }
-    private LinearLayout.LayoutParams btnLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dp(300), -2); p.topMargin = dp(14); return p; }
+    private LinearLayout.LayoutParams inputLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = dp(8); return p; }
+    private LinearLayout.LayoutParams btnLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = dp(10); return p; }
 
     private TextView text(String s, int sp, int color, boolean bold) {
         TextView t = new TextView(this); t.setText(s); t.setTextSize(sp); t.setTextColor(color); t.setGravity(Gravity.CENTER);
