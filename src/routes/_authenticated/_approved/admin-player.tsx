@@ -1,7 +1,8 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, CheckCircle2, Globe, KeyRound, Link2, Loader2, Megaphone, MonitorPlay, Save, Smartphone, Wifi, Wrench, XCircle } from "lucide-react";
+import { Activity, ArrowLeft, CheckCircle2, Globe, KeyRound, Link2, Loader2, Megaphone, MonitorPlay, Save, Smartphone, Wifi, Wrench, XCircle } from "lucide-react";
+import { BufferingSection } from "@/components/app/PlayerBufferingSection";
 import { PlayerAnnouncementsCard } from "@/components/app/PlayerAnnouncementsCard";
 import { PlayerMajorAnnouncementsCard } from "@/components/app/PlayerMajorAnnouncementsCard";
 import { toast } from "sonner";
@@ -28,13 +29,14 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   ] }),
 });
 
-type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "announcements" | "major-announcements";
+type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "buffering" | "announcements" | "major-announcements";
 const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe; managementToo?: boolean }[] = [
   { key: "dns", label: "DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe },
   { key: "maintenance", label: "Maintenance", desc: "Take every BM Player app offline with a message.", icon: Wrench },
   { key: "channels", label: "Sports guide channel matching", desc: "Link guide channel names to playlist names.", icon: Link2 },
   { key: "logins", label: "Off-site app logins", desc: "Issue app logins to people without a site account.", icon: KeyRound },
   { key: "devices", label: "Linked devices", desc: "How many apps are linked on each device type.", icon: Smartphone },
+  { key: "buffering", label: "Buffering", desc: "Channels and titles that stalled or froze most.", icon: Activity },
   { key: "announcements", label: "Announcements", desc: "Short message along the bottom of every BM Player.", icon: Megaphone, managementToo: true },
   { key: "major-announcements", label: "Major announcements", desc: "Longer announcements under the top-right icon.", icon: Megaphone, managementToo: true },
 ];
@@ -85,7 +87,7 @@ function AdminPlayerPage() {
           <x.icon className="size-9 text-primary" /><span className="font-display font-semibold">{x.label}</span><span className="text-xs text-muted-foreground">{x.desc}</span>
         </Link>)}
         {isAdmin && <Link to="/admin-player-live" className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2">
-          <MonitorPlay className="size-9 text-primary" /><span className="font-display font-semibold">Live connections & buffering</span><span className="text-xs text-muted-foreground">Every app online now, plus stalls and freezes.</span>
+          <MonitorPlay className="size-9 text-primary" /><span className="font-display font-semibold">Live connections</span><span className="text-xs text-muted-foreground">Every BM Player app online now.</span>
         </Link>}
       </div>
     </div>
@@ -150,6 +152,7 @@ function AdminPlayerPage() {
           finally { setAliasBusy(false); }
         }}>{aliasBusy ? <Loader2 className="animate-spin" /> : <Save />}Save channel matching</Button>
       </section>}
+      {section === "buffering" && <BufferingSection />}
       {section === "logins" && <OffsitePlayerLogins />}
       {section === "devices" && <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>
