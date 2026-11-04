@@ -893,12 +893,6 @@ public class MainActivity extends Activity {
             posterImg.setImageResource(R.drawable.preview_family);
             posterImg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
             poster.addView(posterImg, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            TextView posterText = text("Click a channel to preview in the preview box", 18, Color.WHITE, true);
-            posterText.setGravity(android.view.Gravity.CENTER);
-            posterText.setPadding(dp(12), dp(10), dp(12), dp(10));
-            posterText.setBackgroundColor(Color.argb(150, 0, 0, 0));
-            posterText.setShadowLayer(6, 0, 2, Color.BLACK);
-            poster.addView(posterText, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.TOP));
             pvFrame.addView(poster, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             previewPoster = poster; previewItem = null;
             side.addView(pvFrame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200)));
