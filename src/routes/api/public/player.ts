@@ -3,6 +3,7 @@ import { z } from "zod";
 import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
 import { createSharedCache } from "@/lib/player-sports-cache";
 import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
+import { announcementMatchesUser } from "@/lib/player-announcement-audience";
 
 // One sports-guide build per minute per server instance, however many apps ask.
 const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
@@ -91,10 +92,10 @@ function randomCode() {
   return String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
 }
 const ANNOUNCEMENT_WINDOW_MS = 3 * 60_000;
-let announcementCache: { at: number; value: { id: string; message: string; sent_at: number } | null } | null = null;
+let announcementCache: { at: number; value: { id: string; message: string; sent_at: number; target_user_id: string | null } | null } | null = null;
 async function currentAnnouncement(admin: { from: (t: "player_announcements") => any }) {
   if (announcementCache && Date.now() - announcementCache.at < 10_000) return announcementCache.value;
-  const { data, error } = await admin.from("player_announcements").select("id, message, created_at").eq("active", true)
+  const { data, error } = await admin.from("player_announcements").select("id, message, created_at, target_user_id").eq("active", true)
     .order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (error) return announcementCache?.value ?? null;
   let row = data;
@@ -103,7 +104,7 @@ async function currentAnnouncement(admin: { from: (t: "player_announcements") =>
     await admin.from("player_announcements").update({ active: false, ended_at: new Date().toISOString() }).eq("id", row.id);
     row = null;
   }
-  announcementCache = { at: Date.now(), value: row ? { id: row.id, message: row.message, sent_at: Date.parse(row.created_at) } : null };
+  announcementCache = { at: Date.now(), value: row ? { id: row.id, message: row.message, sent_at: Date.parse(row.created_at), target_user_id: row.target_user_id } : null };
   return announcementCache.value;
 }
 let majorCache: { at: number; items: { id: string; title: string; body: string; created_at: string }[] } | null = null;
@@ -136,7 +137,8 @@ export const Route = createFileRoute("/api/public/player")({
           // age_ms lets apps compare against their own start time without trusting the device clock;
           // announcements only reach apps that were already open when it was sent.
           const a = await currentAnnouncement(supabaseAdmin);
-          return json({ announcement: a ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
+          const visible = a && announcementMatchesUser(a.target_user_id, device);
+          return json({ announcement: visible ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
         }
 
         if (body.action === "major_announcements") {
