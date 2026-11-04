@@ -37,4 +37,22 @@ public class StreamRecoveryTest {
         assertFalse(StreamRecovery.isHdName("BBC One"));
         assertFalse(StreamRecovery.isHdName("Shadow TV"));
     }
+
+    @Test public void freezeAfterFourStillSeconds() {
+        assertFalse(StreamRecovery.frozen(3));
+        assertTrue(StreamRecovery.frozen(4));
+    }
+
+    @Test public void liveDriftOver30sJumpsBack() {
+        assertFalse(StreamRecovery.drifted(20000));
+        assertTrue(StreamRecovery.drifted(31000));
+    }
+
+    @Test public void rememberedFormatGoesFirst() {
+        String[] u = {"a.ts", "a.m3u8", "a"};
+        assertArrayEquals(new String[]{"a.m3u8", "a.ts", "a"}, StreamRecovery.preferFormat(u, "m3u8"));
+        assertArrayEquals(u, StreamRecovery.preferFormat(u, null));
+        assertEquals("m3u8", StreamRecovery.otherFormat("x.ts"));
+        assertEquals("ts", StreamRecovery.otherFormat("x.m3u8"));
+    }
 }
