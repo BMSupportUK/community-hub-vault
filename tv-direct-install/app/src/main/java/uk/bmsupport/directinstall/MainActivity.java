@@ -272,7 +272,7 @@ public class MainActivity extends Activity {
                 JSONObject j;
                 try (Get g = get(SITE + "direct-install-apk?info=1", false)) { j = new JSONObject(g.text()); }
                 String latest = j.optString("version");
-                if (newer(latest, appVersion())) {
+                if (VersionCompare.newer(latest, appVersion())) {
                     runOnUiThread(() -> downloadUpdate(status, latest));
                 } else {
                     runOnUiThread(() -> { busy = false; status.setText("You have the latest version (" + appVersion() + ")."); });
