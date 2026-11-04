@@ -10,6 +10,7 @@ import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/li
 import { BmInboxBell } from "@/components/app/BmInboxBell";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { AccountNumberPill } from "@/components/app/AccountNumberPill";
 
 type Tab = "home" | "shop" | "orders" | "tickets" | "logins" | "guides" | "referrals" | "knowledge" | "settings";
 
@@ -37,6 +38,7 @@ export function PortalTabs({ active }: { active?: Tab }) {
         <Link to="/portal/settings" className={cn(item, current === "settings" ? on : off)}><Settings className="size-4" />Settings</Link>
       )}
       {!isStaff && !unlocked && <PortalUnlockButton />}
+      <AccountNumberPill />
       <PortalCountdown />
     </nav>
   );

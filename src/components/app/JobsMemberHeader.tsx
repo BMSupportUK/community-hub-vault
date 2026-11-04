@@ -12,6 +12,7 @@ import { NotificationBell } from "./NotificationBell";
 import { ModerationPendingBadge } from "./ModerationPendingBadge";
 import { PendingOrdersBadge } from "./PendingOrdersBadge";
 import { Clocks } from "./Clocks";
+import { AccountNumberPill } from "./AccountNumberPill";
 import { LockNowPill } from "./ScreenLockProvider";
 import { TwoFactorPill, VpnPill } from "./TwoFactorBanner";
 
@@ -47,6 +48,7 @@ export function JobsMemberHeader() {
       </div>
       <div className="hidden xl:flex flex-1 min-w-0 px-3" />
       <div className="hidden lg:contents"><Clocks /></div>
+      <div className="hidden lg:flex"><AccountNumberPill /></div>
       <LockNowPill />
       <TwoFactorPill />
       <VpnPill />
