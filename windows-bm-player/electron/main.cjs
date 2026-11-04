@@ -10,6 +10,7 @@ const core=require('../core.cjs');
 const gate=require('../account-gate.cjs').createAccountGate();
 const {surfaceRows}=require('../playback-core.cjs');
 const boost=require('../sound-boost.cjs');
+const recovery=require('../stream-recovery.cjs');
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
 function createEngine(w){if(MAC){const {MacEngine}=require('./mac-engine.cjs');return new MacEngine(w,()=>store.settings?.userAgent);}const {EmbeddedVlc}=require('./embedded-vlc.cjs');return new EmbeddedVlc(w);}
