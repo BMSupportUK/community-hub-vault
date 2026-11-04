@@ -6,7 +6,7 @@ const root=__dirname,stage='/tmp/windows-player-build/app';
 fs.mkdirSync(path.join(stage,'dist'),{recursive:true});fs.mkdirSync(path.join(stage,'electron'),{recursive:true});
 execFileSync('lovable-assets',['get','--overwrite','--file',path.join(root,'../src/assets/player-family-intro.mp4.asset.json'),'-o',path.join(stage,'dist/player-intro.mp4')],{stdio:'inherit'});
 execFileSync('bun',['build',path.join(root,'renderer/app.jsx'),'--target=browser','--minify','--outfile='+path.join(stage,'dist/app.js')],{stdio:'inherit'});
-for(const file of ['package.json','core.cjs','playback-core.cjs','account-gate.cjs'])fs.copyFileSync(path.join(root,file),path.join(stage,file));
+for(const file of ['package.json','core.cjs','playback-core.cjs','account-gate.cjs','sound-boost.cjs'])fs.copyFileSync(path.join(root,file),path.join(stage,file));
 for(const file of ['main.cjs','preload.cjs','embedded-vlc.cjs'])fs.copyFileSync(path.join(root,'electron',file),path.join(stage,'electron',file));
 const vendor=path.join(stage,'vendor');fs.mkdirSync(path.join(vendor,'@koromix/koffi-win32-x64'),{recursive:true});
 for(const [name,url]of [['koffi','https://registry.npmjs.org/koffi/-/koffi-3.3.6.tgz'],['@koromix/koffi-win32-x64','https://registry.npmjs.org/@koromix/koffi-win32-x64/-/koffi-win32-x64-3.3.6.tgz']]){

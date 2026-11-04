@@ -1363,6 +1363,7 @@ public class MainActivity extends Activity {
             vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
             // Some Android boxes can't hardware-decode provider recordings; VLC's software decoder plays them.
             if ("catchup".equals(it.kind)) i.putExtra("disable_hardware", true);
+            if (!"off".equals(SoundBoost.current(this))) Toast.makeText(this, "Sound booster doesn't work in VLC – use VLC's own volume.", Toast.LENGTH_LONG).show();
             vlcCatchup = "catchup".equals(it.kind) ? it : null; vlcStarted = android.os.SystemClock.elapsedRealtime();
             try { startActivityForResult(i, VLC_REQUEST); }
             catch (Exception e) {
@@ -1943,6 +1944,14 @@ public class MainActivity extends Activity {
         String[] autoL = {"Off", "Every time the app opens", "Once a day"}, autoV = {"off", "open", "daily"};
         boxes.add(settingBox("🔄", "Automation", label("auto_refresh", "daily", autoL, autoV),
                 v -> choose("Update channels, films and series automatically", "auto_refresh", "daily", autoL, autoV)));
+        boxes.add(settingBox("🔊", "Sound booster", SoundBoost.label(this), v ->
+                new AlertDialog.Builder(this).setTitle("Sound booster")
+                        .setSingleChoiceItems(SoundBoost.LABELS, SoundBoost.index(SoundBoost.current(this)), (d, w) -> {
+                            SoundBoost.set(this, SoundBoost.IDS[w]); d.dismiss();
+                            if (w == SoundBoost.IDS.length - 1) Toast.makeText(this, SoundBoost.HIGH_NOTE, Toast.LENGTH_LONG).show();
+                            showSettings();
+                        })
+                        .setMessage(null).setNegativeButton("Cancel", null).show()));
         boxes.add(settingBox("⚡", "Speed test", "Test your internet", v -> speedTest()));
         boxes.add(settingBox("ℹ", "Account info", "Status and expiry", v -> accountInfo()));
         boxes.add(settingBox("🧹", "Clear cache", "Reload all lists", v -> {

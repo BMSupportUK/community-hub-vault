@@ -7,6 +7,17 @@ const commands = new Map();
 const elements = new Map();
 const players = new Map();
 
+// Sound booster: volumes above 100 go through a Web Audio gain node (a <video> stops at 1.0).
+const boosters = new Map();
+function setLoudness(index, video, volume) {
+  const v = Math.max(0, Math.min(250, Number(volume) || 0)) / 100;
+  video.volume = Math.min(1, v);
+  let b = boosters.get(index);
+  if (v > 1 && (!b || b.video !== video)) {
+    try { const ctx = new AudioContext(); const gain = ctx.createGain(); ctx.createMediaElementSource(video).connect(gain).connect(ctx.destination); b = { ctx, gain, video }; boosters.set(index, b); } catch { b = null; }
+  }
+  if (b && b.video === video) { b.gain.gain.value = Math.max(1, v); b.ctx.resume?.().catch(() => {}); }
+}
 function destroy(index) {
   const p = players.get(index);
   if (p) { try { p.destroy(); } catch {} players.delete(index); }
@@ -61,7 +72,7 @@ function apply(data) {
     if (p instanceof Hls) { p.subtitleDisplay = data.on; p.subtitleTrack = data.on && p.subtitleTracks.length ? 0 : -1; }
     [...video.textTracks].forEach((x, i) => { x.mode = data.on && i === 0 ? 'showing' : 'disabled'; });
   }
-  else if (data.action === 'volume') video.volume = Math.max(0, Math.min(1, data.volume / 100));
+  else if (data.action === 'volume') setLoudness(index, video, data.volume);
 }
 
 if (window.bm?.platform === 'mac') {
