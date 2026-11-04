@@ -92,6 +92,11 @@ public final class PlayerApplication extends Application implements Application.
     }
     private void fetchMajor() {
         if (majorBusy) return;
+        // Major announcements are for signed-in viewers only: a logged-out app keeps no list and shows no icon.
+        if (getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty()) {
+            if (majorItems.length() > 0) { majorItems = new org.json.JSONArray(); showMajorIcon(); }
+            return;
+        }
         final String token = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("token", "");
         if (token.isEmpty()) return;
         majorBusy = true;
@@ -117,7 +122,8 @@ public final class PlayerApplication extends Application implements Application.
     /** Top-right announcement icon on the app's own screens (never over full-screen video). */
     private void showMajorIcon() {
         Activity a = foreground;
-        boolean want = a instanceof MainActivity && !a.isFinishing();
+        boolean want = a instanceof MainActivity && !a.isFinishing()
+                && !getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty();
         if (majorIcon != null && (!want || majorIcon.getContext() != a)) {
             if (majorIcon.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) majorIcon.getParent()).removeView(majorIcon);
             majorIcon = null;
