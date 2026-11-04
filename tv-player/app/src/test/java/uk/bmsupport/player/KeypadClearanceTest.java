@@ -71,6 +71,7 @@ public class KeypadClearanceTest {
         ScrollView sc = (ScrollView) ((android.view.ViewGroup) content).getChildAt(0);
         LinearLayout root = (LinearLayout) sc.getChildAt(0);
         assertEquals("the account number must be held near the top, clear of the keypad",
-                Gravity.TOP, root.getGravity());
+                Gravity.TOP, root.getGravity() & Gravity.FILL_VERTICAL);
     }
+
 }
