@@ -148,9 +148,7 @@ public final class PlayerApplication extends Application implements Application.
             majorIcon = b;
         }
         majorIcon.setText(n > 0 ? "📣  " + n : "📣");
-        android.graphics.drawable.Drawable bg = majorIcon.getBackground();
         majorIcon.setTextColor(n > 0 ? 0xFFFFFFFF : 0xFFB8BEC9);
-        if (n > 0) majorIcon.setText("📣  " + n + " new");
     }
     private void openMajorList() {
         final Activity a = foreground;
