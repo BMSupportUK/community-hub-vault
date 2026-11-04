@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, ChevronsUpDown, Loader2, Megaphone, X } from "lucide-react";
+import { ArrowLeft, Loader2, Megaphone, Users, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { LIVE_WINDOW_MS } from "@/lib/player-live";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 type Row = { id: string; message: string; active: boolean; created_at: string; ended_at: string | null; target_user_id: string | null };
@@ -20,6 +22,27 @@ export function PlayerAnnouncementsCard({ onBack }: { onBack: () => void }) {
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [online, setOnline] = useState<(Recipient & { devices: number })[] | null>(null);
+  const [pending, setPending] = useState<Recipient | null>(null);
+  useEffect(() => {
+    if (!pickerOpen) return;
+    let stop = false;
+    const loadOnline = async () => {
+      const since = new Date(Date.now() - LIVE_WINDOW_MS).toISOString();
+      const { data } = await supabase.from("player_devices").select("user_id").gte("last_seen_at", since);
+      if (stop) return;
+      const counts = new Map<string, number>();
+      for (const d of data ?? []) if (d.user_id) counts.set(d.user_id, (counts.get(d.user_id) ?? 0) + 1);
+      const ids = [...counts.keys()];
+      const { data: p } = ids.length ? await supabase.from("profiles").select("id, username, display_name").in("id", ids) : { data: [] };
+      if (stop) return;
+      setOnline((p ?? []).map(x => ({ ...x, devices: counts.get(x.id) ?? 1 }))
+        .sort((a, b) => (a.username || a.display_name || "").localeCompare(b.username || b.display_name || "")));
+    };
+    void loadOnline();
+    const t = setInterval(loadOnline, 10_000);
+    return () => { stop = true; clearInterval(t); };
+  }, [pickerOpen]);
   const recipientName = (id: string | null) => id === null ? "Everyone" : recipients.find(r => r.id === id)?.username || recipients.find(r => r.id === id)?.display_name || "Selected user";
 
   const load = async () => {
@@ -82,29 +105,45 @@ export function PlayerAnnouncementsCard({ onBack }: { onBack: () => void }) {
         </p>
         <div className="space-y-2">
           <p id="announcement-recipient-label" className="text-sm font-medium">Send to</p>
-          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={pickerOpen} aria-labelledby="announcement-recipient-label" disabled={busy || loadingUsers} className="w-full justify-between">
-                <span className="truncate">{loadingUsers ? "Loading users…" : recipientName(targetUserId)}</span>
-                <ChevronsUpDown className="size-4 shrink-0" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search users…" />
-                <CommandList>
-                  <CommandEmpty>No users found.</CommandEmpty>
-                  <CommandItem value="Everyone all BM Players" onSelect={() => { setTargetUserId(null); setPickerOpen(false); }}>
-                    {targetUserId === null && <Check className="size-4" />} Everyone
-                  </CommandItem>
-                  {recipients.map(r => <CommandItem key={r.id} value={`${r.username ?? ""} ${r.display_name ?? ""} ${r.id}`} onSelect={() => { setTargetUserId(r.id); setPickerOpen(false); }}>
-                    {targetUserId === r.id && <Check className="size-4" />}
+          <div className="flex flex-wrap gap-2">
+            <Button variant={targetUserId === null ? "default" : "outline"} disabled={busy} onClick={() => setTargetUserId(null)}>Everyone</Button>
+            <Button variant={targetUserId ? "default" : "outline"} disabled={busy || loadingUsers} onClick={() => setPickerOpen(true)} aria-labelledby="announcement-recipient-label">
+              <Users className="size-4" /> {targetUserId ? recipientName(targetUserId) : "Choose an online user…"}
+            </Button>
+          </div>
+          <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+            <DialogContent className="max-h-[85dvh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Online BM Player users</DialogTitle>
+                <DialogDescription>Only users with a BM Player open right now are listed.</DialogDescription>
+              </DialogHeader>
+              <Command className="min-h-0 flex-1">
+                <CommandInput placeholder="Search online users…" />
+                <CommandList className="max-h-[50dvh]">
+                  <CommandEmpty>{online === null ? "Loading…" : "No users online right now."}</CommandEmpty>
+                  {(online ?? []).map(r => <CommandItem key={r.id} value={`${r.username ?? ""} ${r.display_name ?? ""} ${r.id}`} onSelect={() => setPending(r)}>
+                    <span className="size-2 rounded-full bg-primary shrink-0" />
                     <span className="min-w-0 break-words">{r.username || r.display_name || "Unnamed user"}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{r.devices} device{r.devices === 1 ? "" : "s"}</span>
                   </CommandItem>)}
                 </CommandList>
               </Command>
-            </PopoverContent>
-          </Popover>
+            </DialogContent>
+          </Dialog>
+          <AlertDialog open={!!pending} onOpenChange={(o) => { if (!o) setPending(null); }}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Send to this user?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Is <strong>{pending?.username || pending?.display_name || "this user"}</strong> the user you want to send the announcement to?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>No, go back</AlertDialogCancel>
+                <AlertDialogAction onClick={() => { if (pending) { setTargetUserId(pending.id); setPickerOpen(false); } setPending(null); }}>Yes, that's them</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
         <Textarea value={text} maxLength={MAX} rows={3} placeholder="e.g. Some channels are down tonight — we're working on it."
           onChange={(e) => setText(e.target.value)} />
