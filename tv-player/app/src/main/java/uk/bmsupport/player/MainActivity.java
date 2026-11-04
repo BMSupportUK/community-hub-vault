@@ -642,14 +642,20 @@ public class MainActivity extends Activity {
                 }
             });
         });
-        in.setOnEditorActionListener((v, a, e) -> { go.performClick(); return true; });
-        root.addView(go);
-        root.addView(status);
-        getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        left.addView(go);
+        left.addView(status);
+        LinearLayout pad = NumberPad.build(this, in, 6, CARD, ACCENT, TEXT, go::performClick);
+        cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
+        LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        padLp.leftMargin = dp(24);
+        cols.addView(pad, padLp);
+        root.addView(cols);
+        // No system keyboard on this screen, ever.
+        getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        hideKeyboard(in);
         android.widget.ScrollView sc = scrollable(root);
         setContentView(sc);
-        fitScreenAboveKeypad(sc, in);
-        in.requestFocus();
+        NumberPad.firstKey(pad).requestFocus();
     }
 
     private void showHome() {

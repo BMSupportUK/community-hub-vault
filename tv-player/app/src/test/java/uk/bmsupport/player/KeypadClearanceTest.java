@@ -75,6 +75,39 @@ public class KeypadClearanceTest {
                 Gravity.TOP, root.getGravity() & Gravity.FILL_VERTICAL);
     }
 
+    private static EditText findBox(android.view.View v) {
+        if (v instanceof EditText) return (EditText) v;
+        if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) { EditText e = findBox(g.getChildAt(i)); if (e != null) return e; }
+        }
+        return null;
+    }
+
+    @Test public void accountNumberScreenNeverOpensThePhoneKeyboard() throws Exception {
+        MainActivity a = open();
+        Method m = MainActivity.class.getDeclaredMethod("showUnlock");
+        m.setAccessible(true);
+        m.invoke(a);
+        EditText box = findBox(a.getWindow().getDecorView());
+        assertNotNull(box);
+        assertFalse("the phone keyboard must never open for the account number", box.getShowSoftInputOnFocus());
+        assertFalse("the box is display-only; BM's own pad types into it", box.isFocusable());
+        assertEquals(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN,
+                a.getWindow().getAttributes().softInputMode & WindowManager.LayoutParams.SOFT_INPUT_MASK_STATE);
+    }
+
+    @Test public void numberPadTypesDeletesAndStopsAtSixDigits() throws Exception {
+        MainActivity a = open();
+        EditText e = new EditText(a);
+        for (String k : new String[]{"1", "2", "3", "4", "5", "6", "7"}) NumberPad.press(e, k, 6);
+        assertEquals("123456", e.getText().toString());
+        NumberPad.press(e, "del", 6);
+        assertEquals("12345", e.getText().toString());
+        assertEquals("7", NumberPad.keyFor(android.view.KeyEvent.KEYCODE_7));
+        assertEquals("del", NumberPad.keyFor(android.view.KeyEvent.KEYCODE_DEL));
+    }
+
     @Test public void edgeToEdgeScreensLiftByTheKeypadHeight() {
         assertEquals("a 700px keypad lifts the screen 700px", 700, MainActivity.keypadLift(700, 48));
         assertEquals("with the keypad closed only the nav bar is cleared", 48, MainActivity.keypadLift(0, 48));
