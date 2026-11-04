@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Settings, Tv, LayoutDashboard, ShoppingCart, Wrench } from "lucide-react";
+import { Home, Settings, Tv, TvMinimalPlay, LayoutDashboard, ShoppingCart, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { isPageAllowed, usePagePermissions } from "@/lib/page-access";
@@ -52,6 +52,13 @@ export function StaffPortalTabs() {
             <Link to="/admin" aria-label={adminPanelLabel(roles)}><LayoutDashboard className="size-4" /></Link>
           </Button>
         </TooltipTrigger><TooltipContent>{adminPanelLabel(roles)}</TooltipContent></Tooltip>
+      )}
+      {(roles.includes("admin") || roles.includes("management")) && (
+        <Tooltip><TooltipTrigger asChild>
+          <Button asChild variant={p.startsWith("/admin-player") ? "default" : "ghost"} size="icon">
+            <Link to="/admin-player" aria-label="BM Player Admin Dashboard"><TvMinimalPlay className="size-4" /></Link>
+          </Button>
+        </TooltipTrigger><TooltipContent>BM Player Admin Dashboard</TooltipContent></Tooltip>
       )}
       {canOpenTvRemoteOverview(roles) && (
         <Tooltip><TooltipTrigger asChild>
