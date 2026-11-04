@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { revealPlayerDnsWithPassword } from "@/lib/staff-pin.functions";
 import { OffsitePlayerLogins } from "@/components/app/OffsitePlayerLogins";
 import { savePlayerChannelAliases, savePlayerDns, savePlayerMaintenance, testPlayerDns } from "@/lib/player.functions";
 
@@ -55,6 +56,8 @@ function AdminPlayerPageInner() {
   const [dns, setDns] = useState(""), [updated, setUpdated] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "test" | null>(null);
   const [result, setResult] = useState<boolean | null>(null);
+  const reveal = useServerFn(revealPlayerDnsWithPassword);
+  const [dnsShown, setDnsShown] = useState(false), [pw, setPw] = useState(""), [pwBusy, setPwBusy] = useState(false), [pwError, setPwError] = useState("");
   const saveMaint = useServerFn(savePlayerMaintenance);
   const [maintOn, setMaintOn] = useState(false), [maintMsg, setMaintMsg] = useState(""), [maintBusy, setMaintBusy] = useState(false);
   const saveAliases = useServerFn(savePlayerChannelAliases);
@@ -63,11 +66,11 @@ function AdminPlayerPageInner() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    void supabase.from("player_settings").select("dns, updated_at, maintenance_enabled, maintenance_message, channel_aliases").eq("id", 1).maybeSingle().then(({ data }) => {
+    void supabase.from("player_settings").select("updated_at, maintenance_enabled, maintenance_message, channel_aliases").eq("id", 1).maybeSingle().then(({ data }) => {
       setMaintOn(!!data?.maintenance_enabled); setMaintMsg(data?.maintenance_message ?? "");
       const al = Array.isArray(data?.channel_aliases) ? data.channel_aliases as { from: string; to: string }[] : [];
       setAliasText(al.map((a) => `${a.from} = ${a.to}`).join("\n"));
-      setDns(data?.dns ?? ""); setUpdated(data?.updated_at ?? null);
+      setUpdated(data?.updated_at ?? null);
     });
     void supabase.from("player_devices").select("platform").not("user_id", "is", null).then(({ data }) => {
       const c: Record<string, number> = {};
@@ -107,7 +110,18 @@ function AdminPlayerPageInner() {
     <div className="mx-auto max-w-3xl space-y-4">
       <Link to="/admin-player" search={{}} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> BM Player Admin Dashboard</Link>
       <h1 className="font-display text-2xl font-bold">BM Player – {current.label}</h1>
-      {section === "dns" && <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
+      {section === "dns" && !dnsShown && <form className="space-y-3 rounded-xl border border-border bg-surface p-5" onSubmit={async (e) => {
+        e.preventDefault(); setPwBusy(true); setPwError("");
+        try { const r = await reveal({ data: { password: pw } }); if (r.ok) { setDns(r.dns); setDnsShown(true); setPw(""); } else setPwError(r.error); }
+        catch { setPwError("Couldn't check your password. Try again."); } finally { setPwBusy(false); }
+      }}>
+        <p className="text-sm text-muted-foreground">The DNS address is hidden. Enter your account password to show it.</p>
+        <Label htmlFor="dns-pw">Account password</Label>
+        <Input id="dns-pw" type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} aria-invalid={!!pwError} />
+        {pwError && <p className="text-sm text-destructive">{pwError}</p>}
+        <Button type="submit" disabled={pwBusy || !pw}>{pwBusy ? <Loader2 className="animate-spin" /> : null}Show DNS</Button>
+      </form>}
+      {section === "dns" && dnsShown && <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
         <Label htmlFor="dns">DNS address</Label>
         <Input id="dns" placeholder="http://example.com:8080" value={dns} onChange={(e) => { setDns(e.target.value); setResult(null); }} />
         <div className="flex flex-wrap gap-2">

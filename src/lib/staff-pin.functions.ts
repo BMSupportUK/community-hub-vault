@@ -186,3 +186,16 @@ export const unlockPlayerAdminWithPin = createServerFn({ method: "POST" })
     const { data: ok } = await supabaseAdmin.rpc("staff_pin_check" as any, { p_user: context.userId, p_pin: data.pin.trim() });
     return ok ? { ok: true } : { ok: false, error: "Incorrect staff PIN" };
   });
+
+/** BM Player DNS is only shown to an admin after re-entering their account password. */
+export const revealPlayerDnsWithPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ password: z.string().min(1).max(200) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    if (!(rows ?? []).some((r: any) => r.role === "admin")) return { ok: false as const, error: "Not allowed" };
+    const email = await emailFor(context.userId, context.claims);
+    if (!email || !(await checkPassword(email, data.password))) return { ok: false as const, error: "Incorrect password" };
+    const { data: row } = await context.supabase.from("player_settings").select("dns").eq("id", 1).maybeSingle();
+    return { ok: true as const, dns: row?.dns ?? "" };
+  });
