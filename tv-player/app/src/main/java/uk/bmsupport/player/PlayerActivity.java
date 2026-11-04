@@ -100,6 +100,16 @@ public class PlayerActivity extends Activity {
                 .setEnableDecoderFallback(true)
                 .setExtensionRendererMode(sw ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
                         : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
+        // Catch up on phones: hardware decoders smear timeshift recordings into blocks, so prefer the
+        // phone's software (backup) decoder, falling back to hardware if none exists.
+        if (catchup) renderers.setMediaCodecSelector((mime, secure, tunneling) -> {
+            java.util.List<androidx.media3.exoplayer.mediacodec.MediaCodecInfo> all =
+                    androidx.media3.exoplayer.mediacodec.MediaCodecSelector.DEFAULT.getDecoderInfos(mime, secure, tunneling);
+            java.util.List<androidx.media3.exoplayer.mediacodec.MediaCodecInfo> out = new java.util.ArrayList<>();
+            for (androidx.media3.exoplayer.mediacodec.MediaCodecInfo i : all) if (i.softwareOnly) out.add(i);
+            for (androidx.media3.exoplayer.mediacodec.MediaCodecInfo i : all) if (!i.softwareOnly) out.add(i);
+            return out;
+        });
         int buf = "large".equals(p.getString("buffer", "normal")) ? 60000 : "small".equals(p.getString("buffer", "normal")) ? 15000 : 30000;
         DefaultLoadControl load = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(Math.min(15000, buf), buf, 2000, 4000).build();
