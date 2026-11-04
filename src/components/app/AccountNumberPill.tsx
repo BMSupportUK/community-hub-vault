@@ -21,8 +21,8 @@ export function AccountNumberPill({ className }: { className?: string }) {
       )}
       title="Your BM Player account number"
     >
-      <Hash className="size-3.5 shrink-0 opacity-70" aria-hidden="true" />
-      <span className="text-[9px] font-semibold uppercase tracking-wide opacity-75">
+      <Hash className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+      <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
         {accountNumberPillLabel(roles)}
       </span>
       <span className="font-mono text-sm font-bold leading-none tracking-[0.12em] tabular-nums">
