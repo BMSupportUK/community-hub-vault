@@ -131,6 +131,7 @@ import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenti
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
+import { Route as ApiPublicDirectInstallApkRouteImport } from './routes/api/public/direct-install-apk'
 import { Route as ApiPublicDirectInstallProgressRouteImport } from './routes/api/public/direct-install-progress'
 import { Route as ApiPublicEnablerConfirmRouteImport } from './routes/api/public/enabler-confirm'
 import { Route as ApiPublicEnablerHandoffRouteImport } from './routes/api/public/enabler-handoff'
@@ -922,6 +923,12 @@ const ApiPublicBoroMatchDetailRoute =
     path: '/api/public/boro-match-detail',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDirectInstallApkRoute =
+  ApiPublicDirectInstallApkRouteImport.update({
+    id: '/api/public/direct-install-apk',
+    path: '/api/public/direct-install-apk',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicDirectInstallProgressRoute =
   ApiPublicDirectInstallProgressRouteImport.update({
     id: '/api/public/direct-install-progress',
@@ -1576,6 +1583,7 @@ export interface FileRoutesByFullPath {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
+  '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
   '/api/public/direct-install-progress': typeof ApiPublicDirectInstallProgressRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
   '/api/public/enabler-handoff': typeof ApiPublicEnablerHandoffRoute
@@ -1788,6 +1796,7 @@ export interface FileRoutesByTo {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
+  '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
   '/api/public/direct-install-progress': typeof ApiPublicDirectInstallProgressRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
   '/api/public/enabler-handoff': typeof ApiPublicEnablerHandoffRoute
@@ -2006,6 +2015,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
+  '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
   '/api/public/direct-install-progress': typeof ApiPublicDirectInstallProgressRoute
   '/api/public/enabler-confirm': typeof ApiPublicEnablerConfirmRoute
   '/api/public/enabler-handoff': typeof ApiPublicEnablerHandoffRoute
@@ -2223,6 +2233,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
+    | '/api/public/direct-install-apk'
     | '/api/public/direct-install-progress'
     | '/api/public/enabler-confirm'
     | '/api/public/enabler-handoff'
@@ -2435,6 +2446,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
+    | '/api/public/direct-install-apk'
     | '/api/public/direct-install-progress'
     | '/api/public/enabler-confirm'
     | '/api/public/enabler-handoff'
@@ -2652,6 +2664,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/what-to-watch'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
+    | '/api/public/direct-install-apk'
     | '/api/public/direct-install-progress'
     | '/api/public/enabler-confirm'
     | '/api/public/enabler-handoff'
@@ -2784,6 +2797,7 @@ export interface RootRouteChildren {
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
+  ApiPublicDirectInstallApkRoute: typeof ApiPublicDirectInstallApkRoute
   ApiPublicDirectInstallProgressRoute: typeof ApiPublicDirectInstallProgressRoute
   ApiPublicEnablerConfirmRoute: typeof ApiPublicEnablerConfirmRoute
   ApiPublicEnablerHandoffRoute: typeof ApiPublicEnablerHandoffRoute
@@ -3705,6 +3719,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/boro-match-detail'
       fullPath: '/api/public/boro-match-detail'
       preLoaderRoute: typeof ApiPublicBoroMatchDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/direct-install-apk': {
+      id: '/api/public/direct-install-apk'
+      path: '/api/public/direct-install-apk'
+      fullPath: '/api/public/direct-install-apk'
+      preLoaderRoute: typeof ApiPublicDirectInstallApkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/direct-install-progress': {
@@ -4797,6 +4818,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
+  ApiPublicDirectInstallApkRoute: ApiPublicDirectInstallApkRoute,
   ApiPublicDirectInstallProgressRoute: ApiPublicDirectInstallProgressRoute,
   ApiPublicEnablerConfirmRoute: ApiPublicEnablerConfirmRoute,
   ApiPublicEnablerHandoffRoute: ApiPublicEnablerHandoffRoute,

@@ -8,6 +8,7 @@ export const DOWNLOAD_SOURCES = {
   android_apk: "BM Support phone app",
   self_install: "Self install (no staff help)",
   direct_install: "BM Direct Install (TV)",
+  direct_install_update: "BM Direct Install in-app update",
   player_update: "BM Player in-app update",
   player_windows: "BM Player (Windows)",
   player_mac: "BM Player (Mac)",
