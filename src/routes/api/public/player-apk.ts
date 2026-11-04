@@ -16,6 +16,8 @@ export const Route = createFileRoute("/api/public/player-apk")({
           .eq("package_name", "uk.bmsupport.player")
           .eq("is_available", true)
           .not("file_path", "is", null)
+          // The build an admin marked current wins; a shared timestamp must never hand out an older APK.
+          .order("is_current", { ascending: false })
           .order("updated_at", { ascending: false })
           .limit(1)
           .maybeSingle();
