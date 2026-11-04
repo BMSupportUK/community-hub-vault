@@ -20,6 +20,7 @@ import android.text.InputFilter;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowInsets;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -61,6 +62,7 @@ public class MainActivity extends Activity {
     private SharedPreferences prefs;
     private LinearLayout box;
     private TextView ver;
+    private View keypadField;
     private final android.os.Handler timer = new android.os.Handler(android.os.Looper.getMainLooper());
     private static final long SESSION_MS = 3600_000L;
     private final LinkedBlockingQueue<Integer> results = new LinkedBlockingQueue<>();
