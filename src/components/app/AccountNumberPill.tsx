@@ -1,17 +1,8 @@
 import { Hash } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { isStaffPortalUser } from "@/lib/portal-home";
+import { accountNumberPillLabel } from "@/lib/account-number-label";
 import { useCustomerNumber } from "@/components/app/CustomerNumber";
 import { cn } from "@/lib/utils";
-
-/**
- * Header label for the account number: staff see "Staff", everyone else sees
- * "Customer Account". The number itself is the same permanent 6-digit BM
- * account number the BM Player asks for on every open.
- */
-export function accountNumberPillLabel(roles: readonly string[]) {
-  return isStaffPortalUser(roles) ? "Staff" : "Customer Account";
-}
 
 /**
  * Plain pill (no click action) showing the signed-in user's own BM Player
