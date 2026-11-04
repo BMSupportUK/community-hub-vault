@@ -1,0 +1,3 @@
+ALTER TABLE public.player_announcements ADD COLUMN target_user_id uuid REFERENCES public.profiles(id);
+COMMENT ON COLUMN public.player_announcements.target_user_id IS 'NULL sends to everyone; otherwise only devices owned by this site user receive the bottom-screen announcement.';
+CREATE INDEX player_announcements_target_user_idx ON public.player_announcements(target_user_id) WHERE target_user_id IS NOT NULL;
