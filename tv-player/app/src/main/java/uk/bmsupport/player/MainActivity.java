@@ -3074,6 +3074,7 @@ public class MainActivity extends Activity {
         resetShiftAfterClockChange();
         super.onResume();
         clearNowPlaying();
+        if (hasLogin()) io.execute(() -> safeRun(io, this::pollOnce));
         refreshVersionScreens();
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
         if (("sports".equals(screen) || "sports_channels".equals(screen)) && retryEvent != null) {
