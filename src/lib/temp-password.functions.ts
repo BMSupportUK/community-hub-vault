@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { canRequestPasswordReset, canSendTempPassword, generateTempPassword } from "@/lib/temp-password";
 import { passwordChangeInput, passwordChoiceAccepted } from "@/lib/password-reset";
+import { updatePasswordAuthUser } from "@/lib/password-auth-update";
 
 /**
  * Admin only: emails a recovery request without changing the existing password.
@@ -37,12 +39,19 @@ export const completeRequiredPasswordChange = createServerFn({ method: "POST" })
     const { data: flag, error: flagError } = await context.supabase.from("password_change_required").select("created_at").eq("user_id", context.userId).maybeSingle();
     if (flagError) throw new Error("Couldn't check your password-change request. Please try again.");
     const attributes = passwordChangeInput(data.password, data.currentPassword, data.recovery);
-    const { error } = await context.supabase.auth.updateUser({ ...attributes, ...(data.profile ? { data: { needs_profile: false, username: data.profile.username, display_name: data.profile.displayName } } : {}) });
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+    const authorization = getRequestHeader("authorization") ?? "";
+    if (!url || !key) throw new Error("Password changes are temporarily unavailable. Please try again.");
+    // Keep the middleware-verified user's bearer: updateUser() on that stateless
+    // SDK client fails locally before it sends any password update to Auth.
+    const updateAuth = (input: Parameters<typeof updatePasswordAuthUser>[3]) => updatePasswordAuthUser(url, key, authorization, input);
+    const { error } = await updateAuth({ ...attributes, ...(data.profile ? { data: { needs_profile: false, username: data.profile.username, display_name: data.profile.displayName } } : {}) });
     if (!passwordChoiceAccepted(error)) throw new Error(error?.message ?? "Couldn't confirm your password.");
     // Auth may reject the whole update when the password is unchanged.
     // Complete first-login metadata separately before releasing the access gate.
     if (error?.code === "same_password" && data.profile) {
-      const { error: profileError } = await context.supabase.auth.updateUser({ data: { needs_profile: false, username: data.profile.username, display_name: data.profile.displayName } });
+      const { error: profileError } = await updateAuth({ data: { needs_profile: false, username: data.profile.username, display_name: data.profile.displayName } });
       if (profileError) throw new Error(profileError.message);
     }
     if (flag) {
