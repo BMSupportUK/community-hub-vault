@@ -103,6 +103,7 @@ public class MainActivity extends Activity {
         root.addView(ver, new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
         timer.postDelayed(sessionCheck, 15_000);
         setContentView(root);
+        fitScreenAboveKeypad(sv);
         IntentFilter f = new IntentFilter(ACTION);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(receiver, f, Context.RECEIVER_NOT_EXPORTED); else registerReceiver(receiver, f);
         // Android restarts the app after "Install unknown apps" changes: restore where we were.
@@ -116,6 +117,34 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); out.putBoolean("waiting", waitingPermission); }
+
+    static int keypadLift(int imeBottom, int navBottom) {
+        return Math.max(0, Math.max(imeBottom, navBottom));
+    }
+
+    /**
+     * Android 15+ draws apps edge-to-edge and ignores "resize for the keypad", so the PIN and
+     * website-code screens lift themselves by the keypad's height and scroll the box into view.
+     */
+    private void fitScreenAboveKeypad(final ScrollView screen) {
+        if (Build.VERSION.SDK_INT < 30) return; // older Android still resizes the window itself
+        screen.setOnApplyWindowInsetsListener((v, ins) -> {
+            int ime = ins.getInsets(WindowInsets.Type.ime()).bottom;
+            int nav = Build.VERSION.SDK_INT >= 35 ? ins.getInsets(WindowInsets.Type.systemBars()).bottom : 0;
+            // Below 35 the window was already resized above the keypad, so only lift when edge-to-edge.
+            int lift = Build.VERSION.SDK_INT >= 35 ? keypadLift(ime, nav) : 0;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), lift);
+            final View f = keypadField;
+            if (ime > 0 && f != null) v.post(() -> {
+                android.graphics.Rect r = new android.graphics.Rect();
+                f.getDrawingRect(r);
+                r.bottom += dp(90); // keep the button under the box in view too
+                f.requestRectangleOnScreen(r, true);
+            });
+            return ins;
+        });
+        screen.requestApplyInsets();
+    }
 
     /** Saved sign-in found: ask the website, never wipe it on network trouble. */
     private void resumeSignedIn() {
