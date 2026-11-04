@@ -2,7 +2,7 @@
 - Film/whole-series votes use a separate device-token background queue; poster BM averages and counts are separate from provider ratings, with bounded batched reads and no progress bar moved to series posters.
 - IntroActivity is the launcher and plays the bundled CDN-sourced opening film once per cold launch; MainActivity remains the direct destination for playback/reminders so the intro never delays them.
 - BM Player (Android TV/Fire TV/phone) talks to the website only through `/api/public/player` with its device token; logins arrive once via poll and live only in app storage.
-- Signed with the permanent BM key; bump versionCode/versionName and upload a new `bm-player/` build row so installs upgrade in place.
+- Signed with the permanent BM key; bump versionCode/versionName and upload a new `bm-player/` build row with package_name `uk.bmsupport.player` (the update endpoint filters on it) so installs upgrade in place.
 - Same tile front screen on every device; "Play with VLC" hands off to org.videolan.vlc and falls back to the built-in Media3 player.
 - Built-in player controls never sit on the picture: PlayerActivity runs a once-a-second hideControls watch (InactivityPolicy.hideControls, 3.5s after the last press) because Media3's own timer never fires on live/buffering streams.
 - Home-row buttons never fold a name onto a second line: smallButton() forces a single line with text that shrinks (16sp to 10sp), and smallWeight() shares the row out in proportion to each label's measured width so "Recently watched" gets more room than "Settings".
