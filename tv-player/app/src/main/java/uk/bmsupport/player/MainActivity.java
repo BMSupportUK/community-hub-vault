@@ -465,7 +465,12 @@ public class MainActivity extends Activity {
         stopPolling();
         pollTask = new Runnable() {
             @Override public void run() {
-                if (!safeRun(io, MainActivity.this::pollOnce)) return;
+                // A backgrounded app (Home pressed, not closed) stops checking in so it drops off Live connections,
+                // except while external VLC is playing something it handed off.
+                boolean vlcPlaying = prefs.getLong("np_since", 0) > 0 && "VLC".equals(prefs.getString("np_player", ""));
+                if (PlayerApplication.onScreen() || vlcPlaying || !hasLogin()) {
+                    if (!safeRun(io, MainActivity.this::pollOnce)) return;
+                }
                 ui.postDelayed(this, maintenance ? 15000 : hasLogin() ? 60000 : 5000);
             }
         };
@@ -3069,6 +3074,7 @@ public class MainActivity extends Activity {
         resetShiftAfterClockChange();
         super.onResume();
         clearNowPlaying();
+        if (hasLogin()) io.execute(() -> safeRun(io, this::pollOnce));
         refreshVersionScreens();
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
         if (("sports".equals(screen) || "sports_channels".equals(screen)) && retryEvent != null) {
