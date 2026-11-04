@@ -173,3 +173,16 @@ export const revokeStaffPin = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not revoke staff PIN");
     return { ok: true };
   });
+
+/** BM Player Admin Dashboard login: admin/management enter their own Staff PIN. */
+export const unlockPlayerAdminWithPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ pin: z.string().min(1).max(20) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const roles = (rows ?? []).map((r: any) => String(r.role));
+    if (!roles.includes("admin") && !roles.includes("management")) return { ok: false, error: "Not allowed" };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ok } = await supabaseAdmin.rpc("staff_pin_check" as any, { p_user: context.userId, p_pin: data.pin.trim() });
+    return ok ? { ok: true } : { ok: false, error: "Incorrect staff PIN" };
+  });
