@@ -51,7 +51,7 @@ final class StreamRecovery {
     /** After repeated stalls on one format, try the other one next time. */
     static String otherFormat(String url) {
         String l = url == null ? "" : url.toLowerCase(java.util.Locale.ROOT);
-        return l.endsWith(".m3u8") ? "ts" : l.endsWith(".ts") ? "hls".equals("") ? null : "m3u8" : null;
+        return l.endsWith(".m3u8") ? "ts" : l.endsWith(".ts") ? "m3u8" : null;
     }
 
     /** Wait before reconnect attempt n (1-based): 1s, 2s, 4s, 8s, then 10s. */

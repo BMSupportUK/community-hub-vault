@@ -376,6 +376,36 @@ public class PlayerActivity extends Activity {
         });
         open(0);
         ui.postDelayed(qualityRaise, StreamRecovery.STABLE_RAISE_MS);
+        ui.postDelayed(antiFreeze, 1000);
+    }
+
+    // Anti-freeze: picture stuck while "playing" (sound carries on) or live drifting far behind now.
+    private int afLastFrames = -1, afTicks;
+    private final Runnable antiFreeze = new Runnable() {
+        @Override public void run() {
+            if (player == null) return;
+            boolean playing = player.isPlaying() && player.getPlaybackState() == Player.STATE_READY;
+            androidx.media3.exoplayer.DecoderCounters c = player.getVideoDecoderCounters();
+            int frames = c == null ? -1 : c.renderedOutputBufferCount;
+            if (playing && frames >= 0 && frames == afLastFrames) afTicks++; else afTicks = 0;
+            afLastFrames = frames;
+            if (StreamRecovery.frozen(afTicks)) {
+                afTicks = 0; afLastFrames = -1;
+                BufferReporter.record(PlayerActivity.this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), StreamRecovery.FREEZE_TICKS * 1000L, true, true);
+                if ("live".equals(kind())) { player.seekToDefaultPosition(); player.prepare(); player.play(); } else reconnect();
+            } else if (playing && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset())) {
+                player.seekToDefaultPosition();
+            }
+            ui.postDelayed(this, 1000);
+        }
+    };
+
+    /** Remember the other stream format for this channel after repeated stalls, so next time starts with it. */
+    private void rememberBetterFormat() {
+        String id = getIntent().getStringExtra("content_id");
+        if (!"live".equals(kind()) || id == null || liveUrls.length < 2) return;
+        String other = StreamRecovery.otherFormat(liveUrls[urlAt]);
+        if (other != null) prefs(this).edit().putString("fmt_pref:" + id, other).apply();
     }
 
     private void open(long at) {
@@ -410,7 +440,7 @@ public class PlayerActivity extends Activity {
         long now = android.os.SystemClock.elapsedRealtime();
         stallTimes[stallCount % stallTimes.length] = now; stallCount++;
         int recent = StreamRecovery.recentStalls(stallTimes, Math.min(stallCount, stallTimes.length), now);
-        if (recent >= StreamRecovery.STALLS_TO_LOWER) lowerQuality();
+        if (recent >= StreamRecovery.STALLS_TO_LOWER) { lowerQuality(); rememberBetterFormat(); }
         if (recent >= StreamRecovery.STALLS_TO_OFFER_SD) offerSd();
     }
 
@@ -469,5 +499,5 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
-    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); BufferReporter.flush(this); saveProgress(false); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
