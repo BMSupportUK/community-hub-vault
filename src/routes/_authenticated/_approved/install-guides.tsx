@@ -749,7 +749,7 @@ function InstallGuidesPage() {
             <div className="relative isolate min-h-full py-2">
               <img src={installHero} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
               <div className="absolute inset-0 -z-10 bg-background/65" />
-              <div className="grid gap-4 p-3 sm:p-5 md:grid-cols-2"><WindowsPlayerDownload /><MacPlayerDownload /></div>
+              <div className="grid gap-4 p-3 sm:p-5"><WindowsPlayerDownload /><MacPlayerDownload /></div>
             </div>
           </TabsContent>
 
@@ -757,7 +757,7 @@ function InstallGuidesPage() {
             <div className="relative isolate min-h-full py-2">
               <img src={installHero} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
               <div className="absolute inset-0 -z-10 bg-background/65" />
-              <div className="grid gap-4 p-3 sm:p-5 md:grid-cols-2"><WindowsPlayerDownload /><MacPlayerDownload /></div>
+              <div className="grid gap-4 p-3 sm:p-5"><WindowsPlayerDownload /><MacPlayerDownload /></div>
             </div>
           </TabsContent>
 
