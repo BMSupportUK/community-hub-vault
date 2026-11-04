@@ -47,6 +47,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("announcement"), device_token: Token }),
+  z.object({ action: z.literal("major_announcements"), device_token: Token }),
   z.object({ action: z.literal("ratings"), device_token: Token, items: z.array(RatingTitle).min(1).max(200) }),
   RatingVote.extend({ action: z.literal("vote"), device_token: Token }),
   z.object({ action: z.literal("favourites"), device_token: Token, login: z.string().trim().min(1).max(120) }),
@@ -105,6 +106,7 @@ async function currentAnnouncement(admin: { from: (t: "player_announcements") =>
   announcementCache = { at: Date.now(), value: row ? { id: row.id, message: row.message, sent_at: Date.parse(row.created_at) } : null };
   return announcementCache.value;
 }
+let majorCache: { at: number; items: { id: string; title: string; body: string; created_at: string }[] } | null = null;
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: CORS });
 
 export const Route = createFileRoute("/api/public/player")({
@@ -135,6 +137,17 @@ export const Route = createFileRoute("/api/public/player")({
           // announcements only reach apps that were already open when it was sent.
           const a = await currentAnnouncement(supabaseAdmin);
           return json({ announcement: a ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
+        }
+
+        if (body.action === "major_announcements") {
+          // Longer announcements for the top-right icon; one shared read per 30s for any number of players.
+          const now = Date.now();
+          if (!majorCache || now - majorCache.at > 30_000) {
+            const { data } = await supabaseAdmin.from("player_major_announcements").select("id, title, body, created_at")
+              .eq("active", true).order("created_at", { ascending: false }).limit(30);
+            majorCache = { at: now, items: data ?? [] };
+          }
+          return json({ items: majorCache.items });
         }
 
         if (body.action === "ratings" || body.action === "vote") {
