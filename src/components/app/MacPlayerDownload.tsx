@@ -15,7 +15,7 @@ export function MacPlayerDownload() {
     enabled: !isDemo,
     staleTime: 60_000,
   });
-  return <article className="w-full max-w-sm rounded-lg border border-border bg-surface/90 p-5 shadow-sm backdrop-blur">
+  return <article className="w-full rounded-lg border border-border bg-surface/90 p-5 shadow-sm backdrop-blur">
     <div className="mb-4 flex items-center gap-3">
       <Apple className="size-9 shrink-0 text-primary" />
       <div><h2 className="font-display text-xl font-bold">BM Player</h2><p className="text-sm text-muted-foreground">macOS 12 or newer · Apple Silicon &amp; Intel</p></div>
