@@ -22,7 +22,7 @@ function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,i
 function publicState(){
  const a=store.account||{};
  const expiry=Number(a.exp_date)*1000;
- return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,announcement:announcement&&announcement.id!==store.annClosed?announcement:null,
+ return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,announcement:announcement&&announcement.id!==store.annClosed?announcement:null,major:gate.unlocked||!store.user?major:[],majorSeen:store.majorSeen||[],
   expired:String(a.status||'').toLowerCase()==='expired'||(expiry>0&&expiry<Date.now()),expiry:expiry>0?expiry:null,status:a.status||'',
   maxConnections:Number(a.max_connections)||1,settings:gate.unlocked?store.settings||{}:{},favourites:gate.unlocked?store.favourites||[]:[],recent:gate.unlocked?store.recent||[]:[],
   progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],refreshed:gate.unlocked?store.refreshed||{}:{},playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
@@ -34,6 +34,8 @@ async function site(body){
  return data;
 }
 async function getCode(){if(!store.token){const r=await site({action:'register',platform:PLATFORM.id,name:'BM Player '+PLATFORM.name});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
+let major=[],majorBusy=false;
+async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||'')}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
 let announcement=null,annBusy=false;const STARTED_AT=Date.now();
 async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}}catch{}finally{annBusy=false;}}
 async function poll(){
@@ -151,7 +153,7 @@ async function syncFavourites(){if(!store.user||!store.token||!gate.unlocked)ret
  if(!r.stored){if((store.favourites||[]).length)pushFavourites();store.favSynced=true;save();return;}
  if(!store.favSynced){const seen=new Set(r.items.map(i=>i.kind+'|'+i.id));const extra=(store.favourites||[]).filter(i=>!seen.has(i.kind+'|'+String(i.id)));store.favourites=[...r.items,...extra];store.favSynced=true;save();if(extra.length)pushFavourites();send({type:'state',state:publicState()});return;}
  if(JSON.stringify(r.items)!==JSON.stringify(store.favourites||[])){store.favourites=r.items;save();send({type:'state',state:publicState()});}}
-function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement'].includes(name))gate.require();if(!promptedAt)lastInput=Date.now();return fn(value);});}
+function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement','majorSeen'].includes(name))gate.require();if(!promptedAt)lastInput=Date.now();return fn(value);});}
 if(!app.requestSingleInstanceLock())app.quit();
 else{
  app.on('second-instance',foreground);
@@ -191,6 +193,7 @@ else{
    else if(value){store.settings={...store.settings,...value};save();}
    return publicState();
   });
+  register('majorSeen',id=>{const seen=new Set(store.majorSeen||[]);seen.add(String(id||''));store.majorSeen=[...seen].slice(-200);save();return publicState();});
   register('closeAnnouncement',id=>{store.annClosed=String(id||'');save();return publicState();});
   register('favourite',item=>{store.favourites=store.favourites||[];const at=store.favourites.findIndex(i=>i.id===item.id&&i.kind===item.kind);if(at<0)store.favourites.push(item);else store.favourites.splice(at,1);save();pushFavourites();return publicState();});
   register('report',v=>site({action:'report',kind:v.item.kind==='episode'?'series':v.item.kind,title:v.item.name,category:v.item.categoryName,episode:v.item.kind==='episode'?v.item.name:undefined,issue:String(v.issue||'').slice(0,1000),device:PLATFORM.device,version:app.getVersion()}));
@@ -200,7 +203,7 @@ else{
   register('speed',async()=>{const start=Date.now();await fetch('https://speed.cloudflare.com/__down?bytes=100',{signal:AbortSignal.timeout(10000)});const ping=Date.now()-start;const down=Date.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{signal:AbortSignal.timeout(20000)});const bytes=(await r.arrayBuffer()).byteLength;const download=bytes*8/(Date.now()-down)/1000;const up=Date.now();await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Uint8Array(3000000),signal:AbortSignal.timeout(20000)});return{ping,download,upload:3000000*8/(Date.now()-up)/1000};});
   await win.loadFile(page);
   if(!store.user)getCode().catch(e=>send({type:'notice',message:e.message}));else{poll();}
-  setInterval(poll,store.user?60000:5000);fetchAnnouncement();setInterval(fetchAnnouncement,15000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
+  setInterval(poll,store.user?60000:5000);fetchAnnouncement();setInterval(fetchAnnouncement,15000);fetchMajor();setInterval(fetchMajor,60000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
  });
  app.on('activate',foreground);
  app.on('window-all-closed',async()=>{await stopAll();app.quit();});
