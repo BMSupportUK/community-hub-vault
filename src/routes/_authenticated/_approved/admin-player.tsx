@@ -1,7 +1,9 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, Save, Wifi, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Globe, KeyRound, Link2, Loader2, Megaphone, MonitorPlay, Save, Smartphone, Wifi, Wrench, XCircle } from "lucide-react";
+import { PlayerAnnouncementsCard } from "@/components/app/PlayerAnnouncementsCard";
+import { PlayerMajorAnnouncementsCard } from "@/components/app/PlayerMajorAnnouncementsCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,18 +17,35 @@ import { savePlayerChannelAliases, savePlayerDns, savePlayerMaintenance, testPla
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   component: AdminPlayerPage,
+  validateSearch: (s: Record<string, unknown>): { section?: Section } =>
+    SECTIONS.some((x) => x.key === s.section) ? { section: s.section as Section } : {},
   head: () => ({ meta: [
-    { title: "BM Player DNS | Admin" },
-    { name: "description", content: "Set the DNS address every BM Player app uses." },
-    { property: "og:title", content: "BM Player DNS | Admin" },
-    { property: "og:description", content: "Set the DNS address every BM Player app uses." },
+    { title: "BM Player Admin Dashboard | BM Support" },
+    { name: "description", content: "Every BM Player admin section: DNS, maintenance, announcements, logins, devices and live connections." },
+    { property: "og:title", content: "BM Player Admin Dashboard | BM Support" },
+    { property: "og:description", content: "Every BM Player admin section in one dashboard." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex, nofollow" },
   ] }),
 });
 
+type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "announcements" | "major-announcements";
+const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe; managementToo?: boolean }[] = [
+  { key: "dns", label: "DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe },
+  { key: "maintenance", label: "Maintenance", desc: "Take every BM Player app offline with a message.", icon: Wrench },
+  { key: "channels", label: "Sports guide channel matching", desc: "Link guide channel names to playlist names.", icon: Link2 },
+  { key: "logins", label: "Off-site app logins", desc: "Issue app logins to people without a site account.", icon: KeyRound },
+  { key: "devices", label: "Linked devices", desc: "How many apps are linked on each device type.", icon: Smartphone },
+  { key: "announcements", label: "Announcements", desc: "Short message along the bottom of every BM Player.", icon: Megaphone, managementToo: true },
+  { key: "major-announcements", label: "Major announcements", desc: "Longer announcements under the top-right icon.", icon: Megaphone, managementToo: true },
+];
+
 function AdminPlayerPage() {
   const { hasAny, loading } = useAuth();
   const isAdmin = hasAny(["admin"]);
+  const isManagement = hasAny(["management"]);
+  const { section } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const back = () => void navigate({ search: {} });
   const save = useServerFn(savePlayerDns), test = useServerFn(testPlayerDns);
   const [dns, setDns] = useState(""), [updated, setUpdated] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "test" | null>(null);
@@ -53,12 +72,33 @@ function AdminPlayerPage() {
   }, [isAdmin]);
 
   if (loading) return null;
-  if (!isAdmin) return <Navigate to="/admin" />;
+  if (!isAdmin && !isManagement) return <Navigate to="/admin" />;
+  const visible = SECTIONS.filter((x) => isAdmin || x.managementToo);
+  const current = visible.find((x) => x.key === section);
+
+  if (!current) return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">
+    <div className="mx-auto max-w-5xl space-y-5">
+      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Admin dashboard</Link>
+      <h1 className="font-display text-2xl font-bold">BM Player Admin Dashboard</h1>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {visible.map((x) => <Link key={x.key} to="/admin-player" search={{ section: x.key }} className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2">
+          <x.icon className="size-9 text-primary" /><span className="font-display font-semibold">{x.label}</span><span className="text-xs text-muted-foreground">{x.desc}</span>
+        </Link>)}
+        {isAdmin && <Link to="/admin-player-live" className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2">
+          <MonitorPlay className="size-9 text-primary" /><span className="font-display font-semibold">Live connections & buffering</span><span className="text-xs text-muted-foreground">Every app online now, plus stalls and freezes.</span>
+        </Link>}
+      </div>
+    </div>
+  </main>;
+
+  if (section === "announcements") return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8"><PlayerAnnouncementsCard onBack={back} /></main>;
+  if (section === "major-announcements") return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8"><PlayerMajorAnnouncementsCard onBack={back} /></main>;
 
   return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">
     <div className="mx-auto max-w-3xl space-y-4">
-      <h1 className="font-display text-2xl font-bold">BM Player – DNS</h1>
-      <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
+      <Link to="/admin-player" search={{}} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> BM Player Admin Dashboard</Link>
+      <h1 className="font-display text-2xl font-bold">BM Player – {current.label}</h1>
+      {section === "dns" && <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
         <Label htmlFor="dns">DNS address</Label>
         <Input id="dns" placeholder="http://example.com:8080" value={dns} onChange={(e) => { setDns(e.target.value); setResult(null); }} />
         <div className="flex flex-wrap gap-2">
@@ -78,8 +118,8 @@ function AdminPlayerPage() {
           {result ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}{result ? "The DNS answered" : "The DNS didn't answer"}</p>}
         {updated && <p className="text-xs text-muted-foreground">Last changed {new Date(updated).toLocaleString("en-GB")}</p>}
         <p className="text-xs text-muted-foreground">Linked apps pick up a new DNS the next time they open.</p>
-      </section>
-      <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
+      </section>}
+      {section === "maintenance" && <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="font-display font-semibold">Maintenance</h2>
@@ -96,8 +136,8 @@ function AdminPlayerPage() {
           finally { setMaintBusy(false); }
         }}>{maintBusy ? <Loader2 className="animate-spin" /> : <Save />}Save maintenance</Button>
         <p className="text-xs text-muted-foreground">Open apps switch within about 15 seconds; others when they next open.</p>
-      </section>
-      <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
+      </section>}
+      {section === "channels" && <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Sports guide channel matching</h2>
         <p className="text-sm text-muted-foreground">The app's Sports guide links each listed channel to the customer's playlist. If a channel shows "Not in your list", add a line: guide name = playlist name.</p>
         <Textarea aria-label="Channel matching" rows={5} placeholder={"Viaplay Sports 1 = Premier Sports 1\nSky Sports Racing = Sky Racing"} value={aliasText} onChange={(e) => setAliasText(e.target.value)} />
@@ -109,15 +149,15 @@ function AdminPlayerPage() {
           } catch (e) { toast.error(e instanceof Error ? e.message : "Save failed"); }
           finally { setAliasBusy(false); }
         }}>{aliasBusy ? <Loader2 className="animate-spin" /> : <Save />}Save channel matching</Button>
-      </section>
-      <OffsitePlayerLogins />
-      <section className="rounded-xl border border-border bg-surface p-5">
+      </section>}
+      {section === "logins" && <OffsitePlayerLogins />}
+      {section === "devices" && <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>
         <ul className="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
           {[["android", "Android TV"], ["firetv", "Fire TV"], ["phone", "Phone"], ["windows", "Windows"]].map(([k, l]) =>
             <li key={k} className="rounded-md border border-border p-3"><div className="text-muted-foreground">{l}</div><div className="text-lg font-semibold">{counts[k] ?? 0}</div></li>)}
         </ul>
-      </section>
+      </section>}
     </div>
   </main>;
 }
