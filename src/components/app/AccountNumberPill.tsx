@@ -16,7 +16,7 @@ export function AccountNumberPill({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-primary/50 bg-primary/30 px-2.5 py-1 text-primary-foreground",
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-primary/50 bg-primary/25 px-2.5 py-1 text-foreground",
         className,
       )}
       title="Your BM Player account number"
