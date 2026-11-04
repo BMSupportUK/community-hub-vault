@@ -92,3 +92,4 @@
 - [x] Favourites sync across all BM Player devices (Android 2.76, Windows 0.3.5, Mac 0.1.9 released; website publish needed)
 - [x] Keep every BM Player typing box clear of the on-screen keypad (dialog windows top-anchored + ADJUST_RESIZE through keepEntryVisible, unlock screen anchored to the top); 3 keypad tests and 24 app tests pass, signed 2.85 download verified byte-for-byte. Real TV-box eyeball check remains blocked: no attached device.
 - [x] Show required Mac specs on the BM Player | Mac install card ("Your Mac needs": macOS 12, Apple Silicon or Intel, 4/8 GB, ~500 MB, 15/25 Mbps); card checked signed-in in the preview, build OK
+- [x] Direct Install Update app button (2.0 released): PIN screen button checks the website and updates in place; new public direct-install-apk endpoint, 3 app tests pass, signed APK verified and marked current
