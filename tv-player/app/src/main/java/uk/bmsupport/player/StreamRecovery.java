@@ -30,6 +30,30 @@ final class StreamRecovery {
         }
     }
 
+    /** Picture unchanged this many 1-second checks while playing = frozen. */
+    static final int FREEZE_TICKS = 4;
+    /** Live this far behind "now" jumps back to the live point. */
+    static final long LIVE_DRIFT_MS = 30000;
+
+    static boolean frozen(int frozenTicks) { return frozenTicks >= FREEZE_TICKS; }
+    static boolean drifted(long liveOffsetMs) { return liveOffsetMs > LIVE_DRIFT_MS; }
+
+    /** Puts the remembered working format (ts or hls) first; other addresses keep their order. */
+    static String[] preferFormat(String[] urls, String pref) {
+        if (pref == null || urls == null || urls.length < 2) return urls;
+        String ext = "." + pref;
+        java.util.List<String> first = new java.util.ArrayList<>(), rest = new java.util.ArrayList<>();
+        for (String u : urls) (u.toLowerCase(java.util.Locale.ROOT).endsWith(ext) ? first : rest).add(u);
+        first.addAll(rest);
+        return first.toArray(new String[0]);
+    }
+
+    /** After repeated stalls on one format, try the other one next time. */
+    static String otherFormat(String url) {
+        String l = url == null ? "" : url.toLowerCase(java.util.Locale.ROOT);
+        return l.endsWith(".m3u8") ? "ts" : l.endsWith(".ts") ? "hls".equals("") ? null : "m3u8" : null;
+    }
+
     /** Wait before reconnect attempt n (1-based): 1s, 2s, 4s, 8s, then 10s. */
     static long backoffMs(int attempt) {
         if (attempt <= 1) return 1000;
