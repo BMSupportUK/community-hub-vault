@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  Activity, ArrowLeft, Copy, Film, Info, MapPin, MonitorPlay, Radio, ShieldAlert,
+  ArrowLeft, Copy, Film, Info, MapPin, MonitorPlay, Radio, ShieldAlert,
   ShieldCheck, Tv,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
