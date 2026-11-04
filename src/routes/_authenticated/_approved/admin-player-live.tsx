@@ -234,7 +234,7 @@ function AdminPlayerLivePage() {
 
   return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">
     <div className="mx-auto max-w-6xl space-y-4">
-      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Owner tools</Link>
+      <Link to="/admin-player" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> BM Player Admin Dashboard</Link>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">BM Player – Live connections</h1>
         <div className="flex gap-2 text-sm">

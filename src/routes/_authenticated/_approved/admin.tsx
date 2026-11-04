@@ -567,8 +567,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const allTools: { to?: string; search?: Record<string, string>; tabKey?: DashTab; label: string; desc: string; icon: any; art: string; adminOnly?: boolean; managementToo?: boolean }[] = [
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield, art: toolArtSecurity },
     { to: "/admin-dns", label: "QD DNS codes", desc: "Add and edit shared DNS codes for all members.", icon: Globe, art: toolArtGlobe },
-    { to: "/admin-player", label: "BM Player DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe, art: toolArtGlobe, adminOnly: true },
-    { to: "/admin-player-live", label: "BM Player live connections", desc: "Every BM Player app online now: code, username, location, what it's playing and for how long.", icon: MonitorPlay, art: toolArtDevices, adminOnly: true },
+    { to: "/admin-player", label: "BM Player Admin Dashboard", desc: "Every BM Player section: DNS, maintenance, announcements, logins, devices and live connections.", icon: MonitorPlay, art: toolArtDevices, adminOnly: true, managementToo: true },
     { to: "/moderation", label: "BM Support | Access Requests", desc: "Approve access requests and appeals.", icon: ShieldAlert, art: toolArtSecurity },
     { to: "/shifts", label: "Shifts overview", desc: "Review staff shifts and break history.", icon: Clock, art: toolArtTime },
     { to: "/admin-sports-import", label: "Sports import", desc: "Paste Discord listings — AI splits them into events and routes them to the right category.", icon: Sparkles, art: toolArtDocs },
@@ -612,8 +611,6 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { tabKey: "enabler-codes", label: "Installer PIN & website codes", desc: "Reference name, device and selected apps for BM Direct Install or BM TV Enabler.", icon: KeyRound, art: toolArtDevices, adminOnly: true, managementToo: true },
     { to: "/admin-app-transfers", label: "App transfers", desc: "Send apps straight to customers' devices and keep track of every transfer by week.", icon: Smartphone, art: toolArtDevices },
     { tabKey: "faqs", label: "FAQ boxes", desc: "Add, edit, delete and re-order the boxes on the public FAQ page.", icon: CircleHelp, art: toolArtDocs },
-    { tabKey: "player-announcements", label: "BM Player announcements", desc: "Send a message that appears along the bottom of every BM Player straight away.", icon: Megaphone, art: toolArtAlerts, adminOnly: true, managementToo: true },
-    { tabKey: "player-major-announcements", label: "BM Player major announcements", desc: "Longer announcements customers open from the announcement icon at the top right of every BM Player.", icon: Megaphone, art: toolArtAlerts, adminOnly: true, managementToo: true },
     { tabKey: "install-pills", label: "Install Guides pills", desc: "Change the order of the pills on Install Guides with up and down arrows.", icon: LayoutGrid, art: toolArtDesign, adminOnly: true },
     { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
