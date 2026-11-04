@@ -5852,6 +5852,36 @@ export type Database = {
           },
         ]
       }
+      player_major_announcements: {
+        Row: {
+          active: boolean
+          body: string
+          created_at: string
+          created_by: string | null
+          ended_at: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       player_offsite_customers: {
         Row: {
           created_at: string
