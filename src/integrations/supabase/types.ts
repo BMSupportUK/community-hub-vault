@@ -5614,6 +5614,7 @@ export type Database = {
           ended_at: string | null
           id: string
           message: string
+          target_user_id: string | null
         }
         Insert: {
           active?: boolean
@@ -5622,6 +5623,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           message: string
+          target_user_id?: string | null
         }
         Update: {
           active?: boolean
@@ -5630,8 +5632,17 @@ export type Database = {
           ended_at?: string | null
           id?: string
           message?: string
+          target_user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "player_announcements_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       player_connection_reports: {
         Row: {
