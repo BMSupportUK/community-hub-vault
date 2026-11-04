@@ -1363,6 +1363,7 @@ public class MainActivity extends Activity {
             vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
             // Some Android boxes can't hardware-decode provider recordings; VLC's software decoder plays them.
             if ("catchup".equals(it.kind)) i.putExtra("disable_hardware", true);
+            if (!"off".equals(SoundBoost.current(this))) Toast.makeText(this, "Sound booster doesn't work in VLC – use VLC's own volume.", Toast.LENGTH_LONG).show();
             vlcCatchup = "catchup".equals(it.kind) ? it : null; vlcStarted = android.os.SystemClock.elapsedRealtime();
             try { startActivityForResult(i, VLC_REQUEST); }
             catch (Exception e) {
