@@ -263,19 +263,6 @@ public class MainActivity extends Activity {
 
     // ---------- Self update ----------
 
-    private static int[] parts(String v) {
-        String[] s = v.replaceAll("[^0-9.]", "").split("\\.");
-        int[] o = new int[4];
-        for (int i = 0; i < Math.min(4, s.length); i++) try { o[i] = Integer.parseInt(s[i]); } catch (Exception ignored) {}
-        return o;
-    }
-
-    static boolean newer(String latest, String current) {
-        int[] a = parts(latest), b = parts(current);
-        for (int i = 0; i < 4; i++) if (a[i] != b[i]) return a[i] > b[i];
-        return false;
-    }
-
     private void checkForUpdate(TextView status) {
         if (busy) return;
         busy = true;
