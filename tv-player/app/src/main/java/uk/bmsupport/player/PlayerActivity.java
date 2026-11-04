@@ -110,9 +110,10 @@ public class PlayerActivity extends Activity {
             for (androidx.media3.exoplayer.mediacodec.MediaCodecInfo i : all) if (!i.softwareOnly) out.add(i);
             return out;
         });
-        int buf = "large".equals(p.getString("buffer", "normal")) ? 60000 : "small".equals(p.getString("buffer", "normal")) ? 15000 : 30000;
+        int[] buf = StreamRecovery.bufferMs(p.getString("buffer", StreamRecovery.DEFAULT_BUFFER));
         DefaultLoadControl load = new DefaultLoadControl.Builder()
-                .setBufferDurationsMs(Math.min(15000, buf), buf, 2000, 4000).build();
+                .setBufferDurationsMs(buf[0], buf[1], buf[2], buf[3])
+                .setPrioritizeTimeOverSizeThresholds(true).build();
         ExoPlayer x = new ExoPlayer.Builder(c, renderers)
                 .setMediaSourceFactory(new DefaultMediaSourceFactory(c, ex).setDataSourceFactory(http))
                 .setLoadControl(load)
@@ -330,9 +331,124 @@ public class PlayerActivity extends Activity {
         if (getIntent().hasExtra("catchup_prefix")) { startCatchup(); ui.postDelayed(saveTick, 5000); return; }
         String[] urls = getIntent().getStringArrayExtra("urls");
         if (urls == null) urls = new String[]{getIntent().getStringExtra("url")};
-        playWithFallback(player, urls, () -> Toast.makeText(this,
-                "This stream won't play here. Try \"Play with VLC\" or report a problem.", Toast.LENGTH_LONG).show());
+        reconnectNote = new TextView(this);
+        reconnectNote.setText("Reconnecting…");
+        reconnectNote.setTextSize(18);
+        reconnectNote.setTextColor(0xFFFFFFFF);
+        reconnectNote.setBackgroundColor(0xB3000000);
+        reconnectNote.setPadding(28, 12, 28, 12);
+        reconnectNote.setVisibility(TextView.GONE);
+        FrameLayout.LayoutParams rlp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
+        rlp.leftMargin = 32; rlp.bottomMargin = 32;
+        root.addView(reconnectNote, rlp);
+        startWithRecovery(urls);
         ui.postDelayed(saveTick, 5000);
+    }
+
+    // ---------- anti-buffering: stall tracking, silent reconnect, quality drop, SD offer ----------
+    private String[] liveUrls;
+    private int urlAt, reconnects;
+    private long stallStartedAt, lastStableAt, lastPosition;
+    private final long[] stallTimes = new long[16]; private int stallCount;
+    private boolean everReady, capped, sdOffered;
+    private TextView reconnectNote;
+
+    private void startWithRecovery(String[] urls) {
+        liveUrls = urls;
+        player.addListener(new Player.Listener() {
+            @Override public void onPlaybackStateChanged(int s) {
+                long now = android.os.SystemClock.elapsedRealtime();
+                if (s == Player.STATE_BUFFERING && everReady && stallStartedAt == 0) {
+                    stallStartedAt = now;
+                    ui.postDelayed(stallWatch, StreamRecovery.STALL_RECONNECT_MS);
+                } else if (s == Player.STATE_READY) {
+                    if (stallStartedAt > 0) onStallEnded(now - stallStartedAt, reconnects > 0);
+                    everReady = true; stallStartedAt = 0; reconnects = 0; lastStableAt = now;
+                    ui.removeCallbacks(stallWatch);
+                    if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+                }
+            }
+            @Override public void onPlayerError(PlaybackException e) {
+                if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { player.seekToDefaultPosition(); player.prepare(); return; }
+                if (!everReady && urlAt + 1 < liveUrls.length) { urlAt++; open(0); return; }
+                reconnect();
+            }
+        });
+        open(0);
+        ui.postDelayed(qualityRaise, StreamRecovery.STABLE_RAISE_MS);
+    }
+
+    private void open(long at) {
+        player.setMediaItem(item(liveUrls[urlAt]));
+        player.setPlayWhenReady(true);
+        player.prepare();
+        if (at > 0) player.seekTo(at);
+    }
+
+    private final Runnable stallWatch = () -> { if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING) reconnect(); };
+
+    private void reconnect() {
+        if (player == null || isFinishing()) return;
+        if (player.getDuration() > 0) lastPosition = Math.max(lastPosition, player.getCurrentPosition());
+        reconnects++;
+        if (StreamRecovery.giveUp(reconnects)) {
+            if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+            BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), StreamRecovery.STALL_RECONNECT_MS, true);
+            Toast.makeText(this, "This stream keeps dropping and couldn't reconnect. Try again, try \"Play with VLC\" or report a problem.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (reconnectNote != null) reconnectNote.setVisibility(TextView.VISIBLE);
+        final long at = player.getDuration() > 0 ? lastPosition : 0;
+        ui.postDelayed(() -> { if (player != null) open(at); }, StreamRecovery.backoffMs(reconnects));
+    }
+
+    private String kind() { String k = getIntent().getStringExtra("content_kind"); return k == null ? "live" : k; }
+
+    private void onStallEnded(long ms, boolean reconnected) {
+        BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected);
+        if (ms < StreamRecovery.MIN_REPORT_MS) return;
+        long now = android.os.SystemClock.elapsedRealtime();
+        stallTimes[stallCount % stallTimes.length] = now; stallCount++;
+        int recent = StreamRecovery.recentStalls(stallTimes, Math.min(stallCount, stallTimes.length), now);
+        if (recent >= StreamRecovery.STALLS_TO_LOWER) lowerQuality();
+        if (recent >= StreamRecovery.STALLS_TO_OFFER_SD) offerSd();
+    }
+
+    /** Adaptive (HLS/DASH) streams step down; single-quality streams are unaffected. */
+    private void lowerQuality() {
+        if (player == null) return;
+        androidx.media3.common.Format f = player.getVideoFormat();
+        int cap = StreamRecovery.lowerCap(f == null ? 0 : f.bitrate);
+        player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon().setMaxVideoBitrate(cap).build());
+        capped = true;
+    }
+
+    private final Runnable qualityRaise = new Runnable() {
+        @Override public void run() {
+            if (player == null) return;
+            long now = android.os.SystemClock.elapsedRealtime();
+            if (capped && stallStartedAt == 0 && now - lastStableAt >= StreamRecovery.STABLE_RAISE_MS
+                    && StreamRecovery.recentStalls(stallTimes, Math.min(stallCount, stallTimes.length), now) == 0) {
+                player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon().setMaxVideoBitrate(Integer.MAX_VALUE).build());
+                capped = false;
+            }
+            ui.postDelayed(this, 60000);
+        }
+    };
+
+    private void offerSd() {
+        String[] sd = getIntent().getStringArrayExtra("sd_urls");
+        if (sdOffered || sd == null || sd.length == 0 || isFinishing()) return;
+        sdOffered = true;
+        String name = getIntent().getStringExtra("sd_name");
+        new android.app.AlertDialog.Builder(this).setTitle("Keeps buffering")
+                .setMessage("This HD channel keeps stopping on your connection. Switch to the SD version" + (name == null ? "" : " (" + name + ")") + "?")
+                .setPositiveButton("Switch to SD version", (d, w) -> {
+                    liveUrls = sd; urlAt = 0; everReady = false; reconnects = 0; stallCount = 0;
+                    getIntent().putExtra("content_name", name);
+                    open(0);
+                })
+                .setNegativeButton("Stay on HD", null).show();
     }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -353,5 +469,5 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
-    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); saveProgress(false); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); BufferReporter.flush(this); saveProgress(false); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
