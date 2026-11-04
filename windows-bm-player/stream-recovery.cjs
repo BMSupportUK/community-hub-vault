@@ -1,0 +1,58 @@
+'use strict';
+/** Anti-buffering rules shared by Windows and Mac (same numbers as Android's StreamRecovery). */
+const DEFAULT_BUFFER_MS = 8000;
+const MAX_TRIES = 8;
+const STALL_RECONNECT_MS = 12000;
+const MIN_REPORT_MS = 1000;
+const STALL_WINDOW_MS = 120000;
+const STALLS_TO_LOWER = 2;
+const STALLS_TO_OFFER_SD = 3;
+const BATCH = 20;
+
+function bufferMs(setting) {
+  const n = Number(setting);
+  return Number.isFinite(n) && n >= 500 ? Math.min(15000, n) : DEFAULT_BUFFER_MS;
+}
+function backoffMs(attempt) { return attempt <= 1 ? 1000 : Math.min(10000, 1000 * 2 ** Math.min(attempt - 1, 4)); }
+function giveUp(attempt) { return attempt > MAX_TRIES; }
+function recentStalls(times, now) { return times.filter(t => now - t <= STALL_WINDOW_MS).length; }
+function isHdName(name) { return /\b(hd|fhd|uhd|4k|1080p?|720p?)\b/i.test(String(name || '')); }
+
+/**
+ * One tick of the stall tracker for a playing session. `state` uses libVLC numbers
+ * (1 opening, 2 buffering, 3 playing, 4 paused, 5 stopped, 6 ended, 7 error).
+ * Returns what to do: {event, reconnect, lower, offerSd, failed}.
+ */
+function tick(session, state, now, live) {
+  const out = {};
+  if (state === 3) {
+    if (session.stallAt) {
+      const ms = now - session.stallAt;
+      if (ms >= MIN_REPORT_MS) {
+        out.event = { ms, reconnected: (session.reconnects || 0) > 0 };
+        session.stallTimes = [...(session.stallTimes || []), now].filter(t => now - t <= STALL_WINDOW_MS);
+        const n = session.stallTimes.length;
+        if (n >= STALLS_TO_LOWER && !session.lowered) { session.lowered = true; out.lower = true; }
+        if (n >= STALLS_TO_OFFER_SD && live && !session.sdOffered && isHdName(session.item?.name)) { session.sdOffered = true; out.offerSd = true; }
+      }
+    }
+    session.ready = true; session.stallAt = 0; session.reconnects = 0; session.retryAt = 0;
+    return out;
+  }
+  if (!session.ready || state === 4) return out;
+  const broken = state === 7 || state === 5 || (live && state === 6);
+  if ((state === 1 || state === 2 || broken) && !session.stallAt) session.stallAt = now;
+  if (session.retryAt && now < session.retryAt) return out;
+  if (broken || (session.stallAt && now - session.stallAt >= STALL_RECONNECT_MS && (!session.retryAt || now >= session.retryAt))) {
+    session.reconnects = (session.reconnects || 0) + 1;
+    if (giveUp(session.reconnects)) {
+      if (!session.failed) { session.failed = true; out.failed = true; out.event = { ms: now - session.stallAt, reconnected: true }; }
+      return out;
+    }
+    session.retryAt = now + backoffMs(session.reconnects) + STALL_RECONNECT_MS;
+    out.reconnect = backoffMs(session.reconnects);
+  }
+  return out;
+}
+
+module.exports = { DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };

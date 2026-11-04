@@ -5644,6 +5644,51 @@ export type Database = {
           },
         ]
       }
+      player_buffer_events: {
+        Row: {
+          app_version: string | null
+          content_id: string
+          content_name: string
+          created_at: string
+          device_id: string
+          id: string
+          kind: string
+          occurred_at: string
+          platform: string | null
+          reconnected: boolean
+          stall_ms: number
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          content_id?: string
+          content_name?: string
+          created_at?: string
+          device_id: string
+          id?: string
+          kind?: string
+          occurred_at?: string
+          platform?: string | null
+          reconnected?: boolean
+          stall_ms?: number
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          content_id?: string
+          content_name?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+          kind?: string
+          occurred_at?: string
+          platform?: string | null
+          reconnected?: boolean
+          stall_ms?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       player_connection_reports: {
         Row: {
           active_connections: number
@@ -9693,6 +9738,18 @@ export type Database = {
         Returns: number
       }
       package_item_months: { Args: { p_name: string }; Returns: number }
+      player_buffer_summary: {
+        Args: { _hours: number }
+        Returns: {
+          content_name: string
+          devices: number
+          kind: string
+          last_at: string
+          reconnects: number
+          stalls: number
+          total_stall_seconds: number
+        }[]
+      }
       player_cast_rating: {
         Args: { p_key: string; p_stars: number; p_voter: string }
         Returns: undefined

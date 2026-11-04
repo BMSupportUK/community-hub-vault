@@ -1373,7 +1373,15 @@ public class MainActivity extends Activity {
             }
             return;
         }
-        Intent intent = new Intent(this, PlayerActivity.class).putExtra("url", url);
+        Intent intent = new Intent(this, PlayerActivity.class).putExtra("url", url)
+                .putExtra("content_kind", it.kind).putExtra("content_id", it.id).putExtra("content_name", it.name);
+        if ("live".equals(it.kind) && liveChannels != null && StreamRecovery.isHdName(it.name)) {
+            for (Item o : liveChannels) {
+                if (o != it && !o.id.equals(it.id) && o.norm().equals(it.norm()) && !StreamRecovery.isHdName(o.name)) {
+                    intent.putExtra("sd_urls", streamUrls(o)).putExtra("sd_name", o.name); break;
+                }
+            }
+        }
         if ("catchup".equals(it.kind) && it.catchupEnd > it.catchupStart) {
             // Providers often close timeshift streams early; the player reconnects from where it stopped.
             intent.putExtra("catchup_prefix", prefs.getString("dns", "").replaceAll("/+$", "") + "/timeshift/" + prefs.getString("user", "") + "/" + prefs.getString("pass", "") + "/")
@@ -1908,7 +1916,7 @@ public class MainActivity extends Activity {
 
         String[] playerL = {"BM Player (built-in)", "VLC"}, playerV = {"internal", "vlc"};
         String[] fmtL = {"Auto", "MPEG-TS (.ts)", "HLS (.m3u8)"}, fmtV = {"auto", "ts", "hls"};
-        String[] bufL = {"Small", "Normal", "Large"}, bufV = {"small", "normal", "large"};
+        String[] bufL = StreamRecovery.BUFFER_LABELS, bufV = StreamRecovery.BUFFER_IDS;
         String[] decL = {"Hardware", "Software"}, decV = {"hardware", "software"};
         String[] uaL = {"VLC", "BM Player", "IPTV Smarters"}, uaV = {PlayerActivity.UA, "BMPlayer/" + appVersion(), "IPTVSmartersPlayer"};
 
@@ -1917,8 +1925,8 @@ public class MainActivity extends Activity {
                 v -> choose("Default player", "player", "internal", playerL, playerV)));
         boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
-        boxes.add(settingBox("⏳", "Buffer size", label("buffer", "normal", bufL, bufV),
-                v -> choose("Buffer size", "buffer", "normal", bufL, bufV)));
+        boxes.add(settingBox("⏳", "Buffer size", label("buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV),
+                v -> choose("Buffer size", "buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV)));
         boxes.add(settingBox("🎞", "Decoder", label("decoder", "hardware", decL, decV),
                 v -> choose("Video decoder", "decoder", "hardware", decL, decV)));
         boxes.add(settingBox("🌐", "User agent", label("ua", PlayerActivity.UA, uaL, uaV),

@@ -81,7 +81,7 @@ if (window.bm?.platform === 'mac') {
     for (const [index, video] of elements) {
       if (!commands.has(index)) continue;
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
-      const state = video.dataset.failed || video.error ? 7 : video.ended ? 6 : video.paused ? 4 : 3;
+      const state = video.dataset.failed || video.error ? 7 : video.ended ? 6 : video.paused ? 4 : video.readyState < 3 ? 2 : 3;
       const p = players.get(index), subs = p instanceof Hls ? p.subtitleTracks.length : video.textTracks.length;
       window.bm.videoStatus({ index, position: video.currentTime || 0, duration, state, seekable: duration > 0, subs }).catch(() => {});
     }
