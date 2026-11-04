@@ -257,7 +257,7 @@ public class MainActivity extends Activity {
         }
         android.widget.EditText q = new android.widget.EditText(this);
         q.setSingleLine(true); q.setHint("Type part of a channel name");
-        new AlertDialog.Builder(this).setTitle("Screen " + (n + 1) + " – find a channel").setView(q)
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Screen " + (n + 1) + " – find a channel").setView(q)
                 .setPositiveButton("Search", (d, w) -> {
                     String want = normChannel(q.getText().toString());
                     List<Item> hits = new ArrayList<>();
@@ -276,7 +276,10 @@ public class MainActivity extends Activity {
                         PlayerActivity.playWithFallback(multiPlayers.get(n), streamUrls(it),
                                 () -> ui.post(() -> label.setText(it.name + "\nCouldn't play – press OK to pick another")));
                     }).show();
-                }).setNegativeButton("Cancel", null).show();
+                }).setNegativeButton("Cancel", null).create();
+        keepEntryVisible(dlg, q);
+        dlg.show();
+
     }
 
     // ---------- programme reminders ----------
@@ -602,9 +605,12 @@ public class MainActivity extends Activity {
         stopPreview(); stopMulti();
         screen = "unlock"; back = null;
         LinearLayout root = column();
-        root.setGravity(Gravity.CENTER);
+        // Held near the top so the on-screen keypad can never sit on top of the number you're typing.
+        root.setGravity(Gravity.TOP);
+        root.setPadding(dp(32), dp(16), dp(32), dp(16));
         root.addView(logo());
         root.addView(text("Enter your account number", 30, TEXT, true));
+
         root.addView(text("Your 6-digit account number is in the subscription box on bmsupport.uk.", 18, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
