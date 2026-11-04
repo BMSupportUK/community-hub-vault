@@ -267,7 +267,10 @@ public final class PlayerApplication extends Application implements Application.
         if (foreground == a) foreground = null;
         if (prompt != null && prompt.getContext() == a) { prompt.dismiss(); prompt = null; }
     }
-    @Override public void onActivityStarted(Activity a) {}
-    @Override public void onActivityStopped(Activity a) {}
+    private static int startedCount;
+    /** True while any BM Player screen is on the display (not just alive in the background). */
+    static boolean onScreen() { return startedCount > 0; }
+    @Override public void onActivityStarted(Activity a) { startedCount++; }
+    @Override public void onActivityStopped(Activity a) { if (startedCount > 0) startedCount--; }
     @Override public void onActivitySaveInstanceState(Activity a, Bundle b) {}
 }
