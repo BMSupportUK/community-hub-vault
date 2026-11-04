@@ -42,8 +42,9 @@ public class KeypadClearanceTest {
         keepVisible(a, d, e);
         WindowManager.LayoutParams lp = d.getWindow().getAttributes();
         assertEquals("the box must sit at the top of the screen, clear of the keypad", Gravity.TOP, lp.gravity);
-        assertTrue("the window must shrink to the space above the keypad",
-                (lp.softInputMode & WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE) != 0);
+        assertEquals("the pop-up must slide up until the box is above the keypad, never be cut off",
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN,
+                lp.softInputMode & WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST);
         assertTrue("the keypad must be open while the box is up",
                 (lp.softInputMode & WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE) != 0);
     }
@@ -74,4 +75,9 @@ public class KeypadClearanceTest {
                 Gravity.TOP, root.getGravity() & Gravity.FILL_VERTICAL);
     }
 
+    @Test public void edgeToEdgeScreensLiftByTheKeypadHeight() {
+        assertEquals("a 700px keypad lifts the screen 700px", 700, MainActivity.keypadLift(700, 48));
+        assertEquals("with the keypad closed only the nav bar is cleared", 48, MainActivity.keypadLift(0, 48));
+        assertEquals(0, MainActivity.keypadLift(0, 0));
+    }
 }
