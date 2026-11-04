@@ -2,7 +2,8 @@ import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Activity, ArrowLeft, CheckCircle2, Globe, KeyRound, Link2, Loader2, Megaphone, MonitorPlay, Save, Smartphone, Wifi, Wrench, XCircle } from "lucide-react";
+import { Activity, ArrowLeft, ShieldAlert, CheckCircle2, Globe, KeyRound, Link2, Loader2, Megaphone, MonitorPlay, Save, Smartphone, Wifi, Wrench, XCircle } from "lucide-react";
+import { ConnectionLimitSection } from "@/components/app/PlayerConnectionLimitSection";
 import { BufferingSection } from "@/components/app/PlayerBufferingSection";
 import { PlayerAnnouncementsCard } from "@/components/app/PlayerAnnouncementsCard";
 import { PlayerMajorAnnouncementsCard } from "@/components/app/PlayerMajorAnnouncementsCard";
@@ -30,13 +31,14 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   ] }),
 });
 
-type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "buffering" | "announcements" | "major-announcements";
+type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "buffering" | "connection-limits" | "announcements" | "major-announcements";
 const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe; managementToo?: boolean }[] = [
   { key: "dns", label: "DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe },
   { key: "maintenance", label: "Maintenance", desc: "Take every BM Player app offline with a message.", icon: Wrench },
   { key: "channels", label: "Sports guide channel matching", desc: "Link guide channel names to playlist names.", icon: Link2 },
   { key: "logins", label: "Off-site app logins", desc: "Issue app logins to people without a site account.", icon: KeyRound },
   { key: "devices", label: "Linked devices", desc: "How many apps are linked on each device type.", icon: Smartphone },
+  { key: "connection-limits", label: "Connection limit investigations", desc: "Logins seen over their connection limit.", icon: ShieldAlert },
   { key: "buffering", label: "Buffering", desc: "Channels and titles that stalled or froze most.", icon: Activity },
   { key: "announcements", label: "Announcements", desc: "Short message along the bottom of every BM Player.", icon: Megaphone, managementToo: true },
   { key: "major-announcements", label: "Major announcements", desc: "Longer announcements under the top-right icon.", icon: Megaphone, managementToo: true },
@@ -84,12 +86,16 @@ function AdminPlayerPageInner() {
       <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Admin dashboard</Link>
       <h1 className="font-display text-2xl font-bold">BM Player Admin Dashboard</h1>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {visible.map((x) => <Link key={x.key} to="/admin-player" search={{ section: x.key }} className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2">
-          <x.icon className="size-9 text-primary" /><span className="font-display font-semibold">{x.label}</span><span className="text-xs text-muted-foreground">{x.desc}</span>
-        </Link>)}
-        {isAdmin && <Link to="/admin-player-live" className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2">
-          <MonitorPlay className="size-9 text-primary" /><span className="font-display font-semibold">Live connections</span><span className="text-xs text-muted-foreground">Every BM Player app online now.</span>
-        </Link>}
+        {[...visible.map((x) => ({ key: x.key as string, label: x.label, desc: x.desc, icon: x.icon, live: false })),
+          ...(isAdmin ? [{ key: "live", label: "Live connections", desc: "Every BM Player app online now.", icon: MonitorPlay, live: true }] : [])]
+          .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }))
+          .map((x) => {
+            const cls = "flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2";
+            const body = <><x.icon className="size-9 text-primary" /><span className="font-display font-semibold">{x.label}</span><span className="text-xs text-muted-foreground">{x.desc}</span></>;
+            return x.live
+              ? <Link key={x.key} to="/admin-player-live" className={cls}>{body}</Link>
+              : <Link key={x.key} to="/admin-player" search={{ section: x.key as Section }} className={cls}>{body}</Link>;
+          })}
       </div>
     </div>
   </main>;
@@ -154,6 +160,7 @@ function AdminPlayerPageInner() {
         }}>{aliasBusy ? <Loader2 className="animate-spin" /> : <Save />}Save channel matching</Button>
       </section>}
       {section === "buffering" && <BufferingSection />}
+      {section === "connection-limits" && <ConnectionLimitSection />}
       {section === "logins" && <OffsitePlayerLogins />}
       {section === "devices" && <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>
