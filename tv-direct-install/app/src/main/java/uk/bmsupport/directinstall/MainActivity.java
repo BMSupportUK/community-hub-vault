@@ -234,7 +234,7 @@ public class MainActivity extends Activity {
         LinearLayout left = entryColumn();
         left.addView(pin, inputLp());
         TextView msg = text(error == null ? "" : error, 17, ACCENT, false); left.addView(msg, lp(dp(8)));
-        Button go = button("Sign in", ACCENT); left.addView(go, btnLp());
+        Button go = button("Sign in", ACCENT); left.addView(go, padBtnLp());
         addWithPad(left, pin, 6, go);
         go.setOnClickListener(v -> {
             String p = pin.getText().toString().trim();
@@ -290,8 +290,8 @@ public class MainActivity extends Activity {
         LinearLayout left = entryColumn();
         left.addView(code, inputLp());
         TextView msg = text(error == null ? "" : error, 17, ACCENT, false); left.addView(msg, lp(dp(8)));
-        Button go = button("Continue", ACCENT); left.addView(go, btnLp());
-        Button out = button("Sign out", CARD); left.addView(out, btnLp());
+        Button go = button("Continue", ACCENT); left.addView(go, padBtnLp());
+        Button out = button("Sign out", CARD); left.addView(out, padBtnLp());
         addWithPad(left, code, 6, go);
         out.setOnClickListener(v -> { prefs.edit().clear().commit(); waitingPermission = false; pendingPaths = null; showPin(null); });
         go.setOnClickListener(v -> {
@@ -558,7 +558,8 @@ public class MainActivity extends Activity {
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
     private LinearLayout.LayoutParams lp(int top) { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = top; return p; }
     private LinearLayout.LayoutParams inputLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = dp(8); return p; }
-    private LinearLayout.LayoutParams btnLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = dp(10); return p; }
+    private LinearLayout.LayoutParams btnLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dp(300), -2); p.topMargin = dp(14); return p; }
+    private LinearLayout.LayoutParams padBtnLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = dp(10); return p; }
 
     private TextView text(String s, int sp, int color, boolean bold) {
         TextView t = new TextView(this); t.setText(s); t.setTextSize(sp); t.setTextColor(color); t.setGravity(Gravity.CENTER);
