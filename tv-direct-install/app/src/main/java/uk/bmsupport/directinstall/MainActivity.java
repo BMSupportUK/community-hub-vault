@@ -254,6 +254,7 @@ public class MainActivity extends Activity {
                 } catch (Exception e) { String m = lastCode == 429 ? "Too many wrong PINs from this connection. Wait 15 minutes, then try again." : e.getMessage(); runOnUiThread(() -> showPin(m)); }
             }).start();
         });
+        keypadField = pin;
         pin.requestFocus();
     }
 
@@ -282,6 +283,7 @@ public class MainActivity extends Activity {
                 } catch (Exception e) { runOnUiThread(() -> showCode(e.getMessage())); }
             }).start();
         });
+        keypadField = code;
         code.requestFocus();
     }
 
