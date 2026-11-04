@@ -66,8 +66,8 @@ public class KeypadClearanceTest {
         Method m = MainActivity.class.getDeclaredMethod("showUnlock");
         m.setAccessible(true);
         m.invoke(a);
-        android.view.ViewHolder holder = null;
         android.view.View content = a.getWindow().getDecorView().findViewById(android.R.id.content);
+
         ScrollView sc = (ScrollView) ((android.view.ViewGroup) content).getChildAt(0);
         LinearLayout root = (LinearLayout) sc.getChildAt(0);
         assertEquals("the account number must be held near the top, clear of the keypad",
