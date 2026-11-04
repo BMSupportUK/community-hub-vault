@@ -8,6 +8,23 @@ const STALL_WINDOW_MS = 120000;
 const STALLS_TO_LOWER = 2;
 const STALLS_TO_OFFER_SD = 3;
 const BATCH = 20;
+const FREEZE_MS = 4000;
+
+/** Play position not moving for 4s while "playing" means the picture froze. */
+function frozen(session, state, position, now) {
+  if (state !== 3) { session.stillSince = 0; session.lastPos = position; return false; }
+  if (session.lastPos === undefined || Math.abs(position - session.lastPos) > 0.05) { session.lastPos = position; session.stillSince = now; return false; }
+  if (!session.stillSince) session.stillSince = now;
+  if (now - session.stillSince >= FREEZE_MS) { session.stillSince = now; return true; }
+  return false;
+}
+/** Remembered working format (ts/m3u8) goes first. */
+function preferFormat(urls, pref) {
+  if (!pref || !Array.isArray(urls) || urls.length < 2) return urls;
+  const ext = '.' + pref;
+  return [...urls.filter(u => u.toLowerCase().endsWith(ext)), ...urls.filter(u => !u.toLowerCase().endsWith(ext))];
+}
+function otherFormat(url) { const l = String(url || '').toLowerCase(); return l.endsWith('.m3u8') ? 'ts' : l.endsWith('.ts') ? 'm3u8' : null; }
 
 function bufferMs(setting) {
   const n = Number(setting);
@@ -55,4 +72,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { FREEZE_MS, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };

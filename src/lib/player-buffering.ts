@@ -7,6 +7,7 @@ export const BufferEvent = z.object({
   name: z.string().trim().max(200).catch(""),
   stall_ms: z.number().int().min(0).max(3_600_000),
   reconnected: z.boolean().catch(false),
+  freeze: z.boolean().optional().catch(false),
   at: z.number().int().positive(),
 });
 export const BufferBatch = z.array(BufferEvent).min(1).max(20);

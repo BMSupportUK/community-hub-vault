@@ -265,7 +265,7 @@ export const Route = createFileRoute("/api/public/player")({
           const { data: dev } = await supabaseAdmin.from("player_devices").select("platform, app_version").eq("id", device.id).maybeSingle();
           const rows = body.events.map((e) => ({
             device_id: device.id, user_id: device.user_id, platform: dev?.platform ?? null, app_version: body.version ?? dev?.app_version ?? null,
-            kind: e.kind, content_id: e.content_id, content_name: e.name, stall_ms: e.stall_ms, reconnected: e.reconnected,
+            kind: e.kind, content_id: e.content_id, content_name: e.name, stall_ms: e.stall_ms, reconnected: e.reconnected, is_freeze: e.freeze ?? false,
             occurred_at: new Date(eventTime(e.at, now)).toISOString(),
           }));
           const { error } = await supabaseAdmin.from("player_buffer_events").insert(rows);
