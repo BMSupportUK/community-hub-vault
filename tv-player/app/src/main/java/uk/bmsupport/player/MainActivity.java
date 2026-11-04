@@ -771,6 +771,7 @@ public class MainActivity extends Activity {
 
     /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
     private Item previewItem;
+    private View previewPoster;
     private long previewLastTap;
 
     /** Two presses on the preview (remote OK, or a tap on a phone) open that channel full screen. */
@@ -792,6 +793,7 @@ public class MainActivity extends Activity {
     private void schedulePreview(Item it, androidx.media3.ui.PlayerView view, TextView status) {
         stopPreview();
         previewItem = it;
+        if (previewPoster != null) previewPoster.setVisibility(View.GONE);
         status.setText("Loading preview…");
         previewTask = () -> {
             preview = PlayerActivity.build(this);
@@ -884,13 +886,28 @@ public class MainActivity extends Activity {
             pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
             pv.setShutterBackgroundColor(Color.BLACK);
             final androidx.media3.ui.PlayerView box = pv;
-            side.addView(pv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200)));
-            pv.addOnLayoutChangeListener((v, l, t, r, b2, ol, ot, or, ob) -> {
+            android.widget.FrameLayout pvFrame = new android.widget.FrameLayout(this);
+            pvFrame.addView(pv, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            android.widget.FrameLayout poster = new android.widget.FrameLayout(this);
+            android.widget.ImageView posterImg = new android.widget.ImageView(this);
+            posterImg.setImageResource(R.drawable.preview_family);
+            posterImg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            poster.addView(posterImg, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            TextView posterText = text("Click a channel to preview in the preview box", 18, Color.WHITE, true);
+            posterText.setGravity(android.view.Gravity.CENTER);
+            posterText.setPadding(dp(12), dp(10), dp(12), dp(10));
+            posterText.setBackgroundColor(Color.argb(150, 0, 0, 0));
+            posterText.setShadowLayer(6, 0, 2, Color.BLACK);
+            poster.addView(posterText, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.TOP));
+            pvFrame.addView(poster, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            previewPoster = poster; previewItem = null;
+            side.addView(pvFrame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(200)));
+            pvFrame.addOnLayoutChangeListener((v, l, t, r, b2, ol, ot, or, ob) -> {
                 int h = (r - l) * 9 / 16;
                 if (side.getHeight() > 0) h = Math.min(h, side.getHeight() * 2 / 5);
                 if (h > 0 && Math.abs(v.getHeight() - h) > 2) { ViewGroup.LayoutParams lp = v.getLayoutParams(); lp.height = h; v.post(() -> v.setLayoutParams(lp)); }
             });
-            pvStatus = text("Highlight a channel to preview it · press OK twice for full screen", 14, MUTED, false);
+            pvStatus = text("Press OK on a channel to preview it · press OK twice on the preview for full screen", 14, MUTED, false);
             side.addView(pvStatus);
             pv.setClickable(true);
             pv.setContentDescription("Channel preview · press OK twice to open full screen");
@@ -1079,7 +1096,10 @@ public class MainActivity extends Activity {
 
         items.setOnItemClickListener((p, v, pos, id) -> {
             Item it = (Item) items.getItemAtPosition(pos);
-            if (previewView != null && platform().equals("phone")) { loadEpg(it, epg, previewEpg); schedulePreview(it, previewView, previewStatus); }
+            // Live TV: the first OK/tap on a channel previews it; OK again on the previewing channel opens its menu.
+            if (previewView != null && (previewItem == null || !it.id.equals(previewItem.id))) {
+                loadEpg(it, epg, previewEpg); schedulePreview(it, previewView, previewStatus); return;
+            }
             open(it);
         });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1087,7 +1107,6 @@ public class MainActivity extends Activity {
                 Item it = (Item) items.getItemAtPosition(pos);
                 if (items.hasFocus() && !restoring[0]) livePos[0] = pos;
                 loadEpg(it, epg, previewEpg);
-                schedulePreview(it, previewView, previewStatus);
             }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
