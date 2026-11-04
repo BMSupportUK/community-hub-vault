@@ -5652,6 +5652,7 @@ export type Database = {
           created_at: string
           device_id: string
           id: string
+          is_freeze: boolean
           kind: string
           occurred_at: string
           platform: string | null
@@ -5666,6 +5667,7 @@ export type Database = {
           created_at?: string
           device_id: string
           id?: string
+          is_freeze?: boolean
           kind?: string
           occurred_at?: string
           platform?: string | null
@@ -5680,6 +5682,7 @@ export type Database = {
           created_at?: string
           device_id?: string
           id?: string
+          is_freeze?: boolean
           kind?: string
           occurred_at?: string
           platform?: string | null
