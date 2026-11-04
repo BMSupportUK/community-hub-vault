@@ -48,6 +48,7 @@ export function JobsMemberHeader() {
       </div>
       <div className="hidden xl:flex flex-1 min-w-0 px-3" />
       <div className="hidden lg:contents"><Clocks /></div>
+      <div className="hidden lg:flex"><AccountNumberPill /></div>
       <LockNowPill />
       <TwoFactorPill />
       <VpnPill />

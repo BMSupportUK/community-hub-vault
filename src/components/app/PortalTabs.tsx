@@ -38,6 +38,7 @@ export function PortalTabs({ active }: { active?: Tab }) {
         <Link to="/portal/settings" className={cn(item, current === "settings" ? on : off)}><Settings className="size-4" />Settings</Link>
       )}
       {!isStaff && !unlocked && <PortalUnlockButton />}
+      <AccountNumberPill />
       <PortalCountdown />
     </nav>
   );

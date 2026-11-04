@@ -76,6 +76,7 @@ export function StaffPortalTabs() {
       <Link to="/portal/settings" className={cls("/portal/settings")}><Settings className="size-4" />Settings</Link>
       <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1.5 shadow-lg backdrop-blur [&_span.hidden]:!inline">
         <Clocks />
+        <AccountNumberPill />
         <LockNowPill />
         <TwoFactorPill />
         <VpnPill />
