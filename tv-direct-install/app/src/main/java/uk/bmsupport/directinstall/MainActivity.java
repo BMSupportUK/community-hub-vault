@@ -219,13 +219,16 @@ public class MainActivity extends Activity {
     // ---------- Screens ----------
     private void header(String title, String body) {
         box.removeAllViews();
-        placeVersion(!"Sign in".equals(title));
+        // Sideways phones are short: shrink the top so the box and number pad fit on one screen.
+        boolean shortScreen = getResources().getConfiguration().screenHeightDp < 520;
+        placeVersion(shortScreen || !"Sign in".equals(title));
+        box.setPadding(dp(48), dp(shortScreen ? 10 : 36), dp(48), dp(shortScreen ? 10 : 36));
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.bm_logo); logo.setAdjustViewBounds(true);
-        box.addView(logo, new LinearLayout.LayoutParams(dp(150), dp(80)));
-        box.addView(text("BM Direct Install", 15, MUTED, false), lp(dp(4)));
-        box.addView(text(title, 30, FG, true), lp(dp(14)));
-        if (body != null) box.addView(text(body, 18, MUTED, false), lp(dp(10)));
+        box.addView(logo, new LinearLayout.LayoutParams(dp(shortScreen ? 90 : 150), dp(shortScreen ? 44 : 80)));
+        if (!shortScreen) box.addView(text("BM Direct Install", 15, MUTED, false), lp(dp(4)));
+        box.addView(text(title, shortScreen ? 22 : 30, FG, true), lp(dp(shortScreen ? 4 : 14)));
+        if (body != null) box.addView(text(body, shortScreen ? 14 : 18, MUTED, false), lp(dp(shortScreen ? 4 : 10)));
     }
 
     private void showPin(String error) {
