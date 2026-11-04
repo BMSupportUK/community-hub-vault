@@ -5,6 +5,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } 
 import { CUSTOMER_LIST_CHANGED, subscribeCustomerListRefresh } from "@/lib/customer-list-refresh";
 import { ADMIN_STAFF_GROUPS, adminStaffRole, orderedAdminStaff } from "@/lib/admin-staff-list";
 import { canEditMemberDetails } from "@/lib/member-details-access";
+import { memberEmailError } from "@/lib/member-email-validation";
 import {
   ShieldCheck,
   Search,
@@ -296,6 +297,8 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
   const saveEmail = async (row: Row) => {
     if (!canEditMemberDetails(roles, row.roles)) return;
     const next = emailDraft.trim().toLowerCase();
+    const validationError = memberEmailError(next);
+    if (validationError) return toast.error(validationError);
     if (!next || next === row.email) {
       setEditingEmailFor(null);
       return;
@@ -403,8 +406,9 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     return <section className="space-y-2 border-b border-border pb-4">
       <label className="block space-y-1 text-sm">Site username<Input aria-label="Site username" value={editingUsernameFor === row.id ? usernameDraft : row.username ?? ""} onChange={(e) => { setEditingUsernameFor(row.id); setUsernameDraft(e.target.value); }} /></label>
       <Button size="sm" disabled={savingUsername || editingUsernameFor !== row.id || !usernameDraft.trim()} onClick={() => void saveUsername(row)}>Save username</Button>
-      <label className="block space-y-1 text-sm">Email<Input type="email" aria-label="Email" value={editingEmailFor === row.id ? emailDraft : row.email ?? ""} onChange={(e) => { setEditingEmailFor(row.id); setEmailDraft(e.target.value); }} /></label>
-      <Button size="sm" disabled={savingEmail || editingEmailFor !== row.id || !emailDraft.trim()} onClick={() => void saveEmail(row)}>Save email</Button>
+      <label className="block space-y-1 text-sm">Email<Input type="email" aria-label="Email" aria-invalid={editingEmailFor === row.id && !!memberEmailError(emailDraft)} aria-describedby={editingEmailFor === row.id && memberEmailError(emailDraft) ? `email-error-${row.id}` : undefined} value={editingEmailFor === row.id ? emailDraft : row.email ?? ""} onChange={(e) => { setEditingEmailFor(row.id); setEmailDraft(e.target.value); }} /></label>
+      {editingEmailFor === row.id && memberEmailError(emailDraft) && <p id={`email-error-${row.id}`} role="alert" className="text-sm text-destructive">{memberEmailError(emailDraft)}</p>}
+      <Button size="sm" disabled={savingEmail || editingEmailFor !== row.id || !!memberEmailError(emailDraft)} onClick={() => void saveEmail(row)}>Save email</Button>
     </section>;
   };
   const addRoleRow = rows.find((r) => r.id === addRolesFor);
