@@ -2,14 +2,14 @@
 import { expect, test } from "bun:test";
 import { accountNumberPillLabel } from "./account-number-label";
 
-test("header pill says Staff for staff roles", () => {
-  expect(accountNumberPillLabel(["staff"])).toBe("Staff");
-  expect(accountNumberPillLabel(["admin"])).toBe("Staff");
-  expect(accountNumberPillLabel(["management"])).toBe("Staff");
-  expect(accountNumberPillLabel(["moderator"])).toBe("Staff");
+test("caption above the number says the account for staff roles", () => {
+  expect(accountNumberPillLabel(["staff"])).toBe("Your staff account");
+  expect(accountNumberPillLabel(["admin"])).toBe("Your staff account");
+  expect(accountNumberPillLabel(["management"])).toBe("Your staff account");
+  expect(accountNumberPillLabel(["moderator"])).toBe("Your staff account");
 });
 
-test("header pill says Customer Account for members", () => {
-  expect(accountNumberPillLabel(["member"])).toBe("Customer Account");
-  expect(accountNumberPillLabel([])).toBe("Customer Account");
+test("caption above the number says the account for members", () => {
+  expect(accountNumberPillLabel(["member"])).toBe("Your account");
+  expect(accountNumberPillLabel([])).toBe("Your account");
 });
