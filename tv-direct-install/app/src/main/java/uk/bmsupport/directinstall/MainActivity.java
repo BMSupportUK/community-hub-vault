@@ -256,6 +256,81 @@ public class MainActivity extends Activity {
             }).start();
         });
         keypadField = pin;
+        // People who already have the app can update it here without needing a fresh PIN.
+        Button upd = button("Update app", CARD); left.addView(upd, padBtnLp());
+        upd.setOnClickListener(v -> checkForUpdate(msg));
+    }
+
+    // ---------- Self update ----------
+
+    private static int[] parts(String v) {
+        String[] s = v.replaceAll("[^0-9.]", "").split("\\.");
+        int[] o = new int[4];
+        for (int i = 0; i < Math.min(4, s.length); i++) try { o[i] = Integer.parseInt(s[i]); } catch (Exception ignored) {}
+        return o;
+    }
+
+    static boolean newer(String latest, String current) {
+        int[] a = parts(latest), b = parts(current);
+        for (int i = 0; i < 4; i++) if (a[i] != b[i]) return a[i] > b[i];
+        return false;
+    }
+
+    private void checkForUpdate(TextView status) {
+        if (busy) return;
+        busy = true;
+        status.setTextColor(MUTED); status.setText("Checking for updates…");
+        new Thread(() -> {
+            try {
+                JSONObject j;
+                try (Get g = get(SITE + "direct-install-apk?info=1", false)) { j = new JSONObject(g.text()); }
+                String latest = j.optString("version");
+                if (newer(latest, appVersion())) {
+                    runOnUiThread(() -> downloadUpdate(status, latest));
+                } else {
+                    runOnUiThread(() -> { busy = false; status.setText("You have the latest version (" + appVersion() + ")."); });
+                }
+            } catch (Exception e) {
+                runOnUiThread(() -> { busy = false; status.setTextColor(ACCENT); status.setText("Couldn't check for updates. Try again later."); });
+            }
+        }).start();
+    }
+
+    private void downloadUpdate(TextView status, String latest) {
+        status.setTextColor(MUTED); status.setText("Downloading version " + latest + "…");
+        new Thread(() -> {
+            try {
+                File dir = new File(getCacheDir(), "updates"); dir.mkdirs();
+                File[] old = dir.listFiles(); if (old != null) for (File f : old) f.delete();
+                File apk = new File(dir, "BM-Direct-Install-" + System.currentTimeMillis() + ".apk");
+                long total;
+                try (Get g = get(SITE + "direct-install-apk?t=" + System.currentTimeMillis(), false);
+                     FileOutputStream out = new FileOutputStream(apk)) {
+                    total = g.h.getContentLengthLong();
+                    long done = 0;
+                    byte[] buf = new byte[65536]; int n; int lastPct = -1;
+                    while ((n = g.in.read(buf)) > 0) {
+                        out.write(buf, 0, n); done += n;
+                        int pct = total > 0 ? (int) (done * 100 / total) : 0;
+                        if (pct != lastPct) { lastPct = pct; int p = pct; runOnUiThread(() -> status.setText("Downloading version " + latest + "… " + p + "%")); }
+                    }
+                    if (total > 0 && done != total) throw new Exception("incomplete");
+                }
+                android.content.pm.PackageInfo got = getPackageManager().getPackageArchiveInfo(apk.getAbsolutePath(), 0);
+                long gotCode = got == null ? -1 : (Build.VERSION.SDK_INT >= 28 ? got.getLongVersionCode() : got.versionCode);
+                long mine = Build.VERSION.SDK_INT >= 28 ? getPackageManager().getPackageInfo(getPackageName(), 0).getLongVersionCode() : getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+                if (gotCode <= mine) {
+                    apk.delete();
+                    runOnUiThread(() -> { busy = false; status.setText("The new version isn't ready on the website yet. Try again in a few minutes."); });
+                    return;
+                }
+                runOnUiThread(() -> status.setText("Press Install when Android asks."));
+                boolean ok = install(apk); // blocks until the customer presses Install or cancels
+                runOnUiThread(() -> { busy = false; if (!ok) { status.setTextColor(ACCENT); status.setText("Update wasn't installed. Try again."); } });
+            } catch (Exception e) {
+                runOnUiThread(() -> { busy = false; status.setTextColor(ACCENT); status.setText("Update download failed. Try again later."); });
+            }
+        }).start();
     }
 
     /** Left-hand column of a number screen: the box, its message and buttons. */
