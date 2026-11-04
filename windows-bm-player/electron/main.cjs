@@ -9,6 +9,9 @@ const {execFile}=require('node:child_process');
 const core=require('../core.cjs');
 const gate=require('../account-gate.cjs').createAccountGate();
 const {surfaceRows}=require('../playback-core.cjs');
+const boost=require('../sound-boost.cjs');
+let userVolume=100,audible=0;
+function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
 function createEngine(w){if(MAC){const {MacEngine}=require('./mac-engine.cjs');return new MacEngine(w,()=>store.settings?.userAgent);}const {EmbeddedVlc}=require('./embedded-vlc.cjs');return new EmbeddedVlc(w);}
 const SITE='https://bmsupport.uk';
 let win,store={},file,lastInput=Date.now(),promptedAt=0,excessSince=0,excessReported=false,linkCode='',maintenance=null;
@@ -111,6 +114,7 @@ async function play({item,resume=false,screens=1,subtitles=null}){
  try{engine.play(index,urls[0],{buffer:store.settings?.buffer,live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
  catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}
  const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,subCheck:['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
+ if(index===0)audible=0;applyAudio();
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
  lastInput=Date.now();promptedAt=0;poll();send({type:'state',state:publicState()});return true;
@@ -182,15 +186,16 @@ else{
    const index=Number(value?.index),session=sessions.find(s=>s.index===index);if(!session||!engine)return false;
    if(value.action==='pause'){session.paused=!session.paused;engine.pause(index,session.paused);}
    else if(value.action==='seek'&&Number.isFinite(value.seconds))engine.seek(index,Math.max(0,Math.min(session.duration,value.seconds)));
-   else if(value.action==='volume'&&Number.isFinite(value.volume))engine.volume(index,Math.max(0,Math.min(100,Math.round(value.volume))));
+   else if(value.action==='volume'&&Number.isFinite(value.volume)){userVolume=Math.max(0,Math.min(100,Math.round(value.volume)));audible=index;applyAudio();}
+   else if(value.action==='boost'){store.settings={...store.settings,boost:boost.level(value.level).id};save();applyAudio();}
    else if(value.action==='subtitles'){engine.setSubtitles?.(index,value.on===true);session.paused=false;engine.pause(index,false);}
-   else if(value.action==='audio')for(const s of sessions)engine.volume(s.index,s.index===index?100:0);
+   else if(value.action==='audio'){audible=index;applyAudio();}
    send({type:'state',state:publicState()});return true;
   });
   register('settings',async value=>{
    if(value?.logout){await stopAll();await site({action:'unlink'});gate.lock();store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
    else if(value?.clear){store.recent=[];store.progress={};save();}
-   else if(value){store.settings={...store.settings,...value};save();}
+   else if(value){store.settings={...store.settings,...value};save();if('boost' in value)applyAudio();}
    return publicState();
   });
   register('majorSeen',id=>{const seen=new Set(store.majorSeen||[]);seen.add(String(id||''));store.majorSeen=[...seen].slice(-200);save();return publicState();});
