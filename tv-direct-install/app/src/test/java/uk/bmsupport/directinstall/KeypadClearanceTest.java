@@ -8,8 +8,8 @@ import org.junit.Test;
 public class KeypadClearanceTest {
     @Test
     public void edgeToEdgeScreensLiftByTheKeypadHeight() {
-        assertEquals("a 700px keypad lifts the screen 700px", 700, MainActivity.keypadLift(700, 48));
-        assertEquals("with the keypad closed only the nav bar is cleared", 48, MainActivity.keypadLift(0, 48));
-        assertEquals(0, MainActivity.keypadLift(0, 0));
+        assertEquals("a 700px keypad lifts the screen 700px", 700, KeypadLift.lift(700, 48));
+        assertEquals("with the keypad closed only the nav bar is cleared", 48, KeypadLift.lift(0, 48));
+        assertEquals(0, KeypadLift.lift(0, 0));
     }
 }
