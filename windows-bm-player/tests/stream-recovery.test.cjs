@@ -1,4 +1,4 @@
-const test=require('node:test');const assert=require('node:assert');
+const {test,expect}=require('bun:test');const assert={equal:(a,b)=>expect(a).toBe(b),deepEqual:(a,b)=>expect(a).toEqual(b),ok:(v)=>expect(!!v).toBe(true)};
 const r=require('../stream-recovery.cjs');
 test('default buffer is the smooth 8 seconds',()=>{assert.equal(r.bufferMs(undefined),8000);assert.equal(r.bufferMs('3000'),3000);assert.equal(r.bufferMs(99999),15000);});
 test('backoff doubles and gives up after 8 tries',()=>{assert.deepEqual([1,2,3,7].map(r.backoffMs),[1000,2000,4000,10000]);assert.equal(r.giveUp(8),false);assert.equal(r.giveUp(9),true);});
