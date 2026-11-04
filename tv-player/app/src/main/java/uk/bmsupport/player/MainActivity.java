@@ -1943,6 +1943,14 @@ public class MainActivity extends Activity {
         String[] autoL = {"Off", "Every time the app opens", "Once a day"}, autoV = {"off", "open", "daily"};
         boxes.add(settingBox("🔄", "Automation", label("auto_refresh", "daily", autoL, autoV),
                 v -> choose("Update channels, films and series automatically", "auto_refresh", "daily", autoL, autoV)));
+        boxes.add(settingBox("🔊", "Sound booster", SoundBoost.label(this), v ->
+                new AlertDialog.Builder(this).setTitle("Sound booster")
+                        .setSingleChoiceItems(SoundBoost.LABELS, SoundBoost.index(SoundBoost.current(this)), (d, w) -> {
+                            SoundBoost.set(this, SoundBoost.IDS[w]); d.dismiss();
+                            if (w == SoundBoost.IDS.length - 1) Toast.makeText(this, SoundBoost.HIGH_NOTE, Toast.LENGTH_LONG).show();
+                            showSettings();
+                        })
+                        .setMessage(null).setNegativeButton("Cancel", null).show()));
         boxes.add(settingBox("⚡", "Speed test", "Test your internet", v -> speedTest()));
         boxes.add(settingBox("ℹ", "Account info", "Status and expiry", v -> accountInfo()));
         boxes.add(settingBox("🧹", "Clear cache", "Reload all lists", v -> {

@@ -113,10 +113,12 @@ public class PlayerActivity extends Activity {
         int buf = "large".equals(p.getString("buffer", "normal")) ? 60000 : "small".equals(p.getString("buffer", "normal")) ? 15000 : 30000;
         DefaultLoadControl load = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(Math.min(15000, buf), buf, 2000, 4000).build();
-        return new ExoPlayer.Builder(c, renderers)
+        ExoPlayer x = new ExoPlayer.Builder(c, renderers)
                 .setMediaSourceFactory(new DefaultMediaSourceFactory(c, ex).setDataSourceFactory(http))
                 .setLoadControl(load)
                 .build();
+        SoundBoost.attach(c, x);
+        return x;
     }
 
     static MediaItem item(String url) {
@@ -242,6 +244,19 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         lp.topMargin = 60;
         root.addView(banner, lp);
+        final android.widget.Button boostBtn = new android.widget.Button(this);
+        boostBtn.setAllCaps(false);
+        boostBtn.setText("🔊 Sound booster: " + SoundBoost.label(this));
+        boostBtn.setOnClickListener(v -> {
+            String id = SoundBoost.next(SoundBoost.current(this));
+            SoundBoost.set(this, id);
+            boostBtn.setText("🔊 Sound booster: " + SoundBoost.label(this));
+            android.widget.Toast.makeText(this, "Sound booster: " + SoundBoost.label(this) + ("high".equals(id) ? "\n" + SoundBoost.HIGH_NOTE : ""), android.widget.Toast.LENGTH_SHORT).show();
+        });
+        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+        blp.topMargin = 24; blp.rightMargin = 24;
+        root.addView(boostBtn, blp);
+        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> boostBtn.setVisibility(vis));
         setContentView(root);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
