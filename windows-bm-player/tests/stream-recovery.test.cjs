@@ -15,3 +15,9 @@ test('two stalls lower quality, three on an HD channel offer SD',()=>{
  assert.ok(!run(1000).lower);assert.ok(run(10000).lower);assert.ok(run(20000).offerSd);
 });
 test('before first play no reconnect happens',()=>{const s={item:{}};assert.deepEqual(r.tick(s,7,50000,true),{});});
+test('position stuck 4s while playing is a freeze; paused or moving is not',()=>{
+ const T=1e12,s={};r.frozen(s,3,10,T);assert.equal(r.frozen(s,3,10,T+3000),false);assert.equal(r.frozen(s,3,10,T+4100),true);
+ const p={};r.frozen(p,4,10,0);assert.equal(r.frozen(p,4,10,9000),false);
+ const m={};r.frozen(m,3,1,0);assert.equal(r.frozen(m,3,5,5000),false);
+});
+test('remembered format goes first',()=>{assert.deepEqual(r.preferFormat(['a.ts','a.m3u8','a'],'m3u8'),['a.m3u8','a.ts','a']);assert.equal(r.otherFormat('x.ts'),'m3u8');});

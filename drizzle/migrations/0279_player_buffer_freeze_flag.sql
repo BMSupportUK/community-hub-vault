@@ -1,0 +1,1 @@
+ALTER TABLE public.player_buffer_events ADD COLUMN IF NOT EXISTS is_freeze boolean NOT NULL DEFAULT false;

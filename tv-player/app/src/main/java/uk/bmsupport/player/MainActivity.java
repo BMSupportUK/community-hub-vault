@@ -745,7 +745,8 @@ public class MainActivity extends Activity {
                 String f = prefs.getString("format", "auto");
                 if (f.equals("ts")) return new String[]{base + ".ts"};
                 if (f.equals("hls")) return new String[]{base + ".m3u8"};
-                return new String[]{base + ".ts", base + ".m3u8", d + "/" + u + "/" + p + "/" + it.id};
+                String pf = prefs.getString("fmt_pref:" + it.id, null);
+                return StreamRecovery.preferFormat(new String[]{base + ".ts", base + ".m3u8", d + "/" + u + "/" + p + "/" + it.id}, pf);
             }
             case "film": return new String[]{d + "/movie/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext)};
             default: return new String[]{d + "/series/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext)};
@@ -1925,6 +1926,10 @@ public class MainActivity extends Activity {
                 v -> choose("Default player", "player", "internal", playerL, playerV)));
         boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
+        boxes.add(settingBox("🛡", "Anti-Freeze: On", "Always on: unfreezes stuck pictures, reconnects drops, keeps live TV at now",
+                v -> new AlertDialog.Builder(this).setTitle("Anti-Freeze: On")
+                        .setMessage("BM Player watches every channel, film and episode while you watch. If the picture freezes, the stream drops or live TV falls behind, it quietly fixes it. It can't fix a slow internet connection or a problem at the provider.")
+                        .setPositiveButton("OK", null).show()));
         boxes.add(settingBox("⏳", "Buffer size", label("buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV),
                 v -> choose("Buffer size", "buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV)));
         boxes.add(settingBox("🎞", "Decoder", label("decoder", "hardware", decL, decV),

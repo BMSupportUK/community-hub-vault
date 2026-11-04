@@ -109,7 +109,7 @@ async function play({item,resume=false,screens=1,subtitles=null}){
  const allowed=Math.min(3,Number(store.account?.max_connections)||1);
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
  if(screens===1||sessions.length>=screens)await stopAll();
- const urls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto');
+ const baseUrls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto'),urls=item.kind==='live'?recovery.preferFormat(baseUrls,store.formatPref?.[item.id]):baseUrls;
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
  try{engine.play(index,urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
@@ -123,7 +123,8 @@ async function play({item,resume=false,screens=1,subtitles=null}){
 async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
  const rec=recovery.tick(session,s.state,Date.now(),session.item.kind==='live');
  if(rec.event)queueBuffer(session.item,rec.event);
- if(rec.lower)session.maxHeight=720;
+ if(rec.lower){session.maxHeight=720;const other=session.item.kind==='live'&&session.urls.length>1?recovery.otherFormat(session.urls[session.urlIndex]):null;if(other){store.formatPref={...(store.formatPref||{}),[session.item.id]:other};save();}}
+ if(session.ready&&recovery.frozen(session,s.state,s.position,Date.now())){queueBuffer(session.item,{ms:recovery.FREEZE_MS,reconnected:true,freeze:true});const at=session.item.kind==='live'?0:session.position;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}}
  if(rec.reconnect){const at=session.item.kind==='live'?0:session.position;send({type:'notice',message:'Reconnecting…'});setTimeout(()=>{if(!sessions.includes(session)||!engine)return;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}},rec.reconnect);}
  if(rec.offerSd)send({type:'notice',message:'This HD channel keeps buffering on your connection. Try the SD version of the channel for smoother playback.'});
  if(rec.failed)send({type:'notice',message:'This stream keeps dropping and couldn\'t reconnect. Try again or report the issue.'});
@@ -132,7 +133,7 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  if(session.subCheck&&s.state===3){const n=Number(engine.subtitleTracks?.(session.index))||0;if(n>0){session.subCheck=false;engine.pause(session.index,true);session.paused=true;send({type:'subtitles-found',index:session.index,item:session.item});}else if(Date.now()-session.since>25000)session.subCheck=false;}
  persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable});}catch{}}}
 let bufferQueue=[],bufferBusy=false;
-function queueBuffer(item,ev){bufferQueue.push({kind:item.kind==='episode'?'series':item.kind,content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:Math.max(0,Math.min(3600000,Math.round(ev.ms))),reconnected:!!ev.reconnected,at:Date.now()});if(bufferQueue.length>100)bufferQueue=bufferQueue.slice(-100);if(bufferQueue.length>=10)flushBuffer();}
+function queueBuffer(item,ev){bufferQueue.push({kind:item.kind==='episode'?'series':item.kind,content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:Math.max(0,Math.min(3600000,Math.round(ev.ms))),reconnected:!!ev.reconnected,freeze:!!ev.freeze,at:Date.now()});if(bufferQueue.length>100)bufferQueue=bufferQueue.slice(-100);if(bufferQueue.length>=10)flushBuffer();}
 async function flushBuffer(){if(bufferBusy||!store.token||!bufferQueue.length)return;bufferBusy=true;const events=bufferQueue.splice(0,recovery.BATCH);try{await site({action:'buffering',version:app.getVersion(),events});}catch{}finally{bufferBusy=false;}}
 setInterval(()=>{flushBuffer();},60000);
 async function connectionCheck(){
