@@ -2731,13 +2731,16 @@ public class MainActivity extends Activity {
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
         final boolean phoneLive = live && "phone".equals(platform());
         TextView selectedCategory = text("Category: All", 15, MUTED, false);
-        // Phones: "Preview channel" loads the selected channel into the preview box; double-tapping the box opens its play menu.
+        // Phones: "Preview channel" loads the selected channel into the preview box; once it kicks in,
+        // the box and the button both bring up that channel's play menu.
         final Runnable[] previewSelected = { null };
         if (phoneLive) {
             info.addView(selectedCategory);
-            info.addView(button("▶ Preview channel", v -> {
-                if (previewSelected[0] != null) previewSelected[0].run();
-            }));
+            previewMenuButton = button("▶ Preview channel", v -> {
+                if (previewPlaying && previewItem != null) open(previewItem);
+                else if (previewSelected[0] != null) previewSelected[0].run();
+            });
+            info.addView(previewMenuButton);
         }
         LinearLayout btns = row();
         Button catBtn = button(live ? "☰ Categories: All" : "Category: All", v -> {});
@@ -2770,15 +2773,16 @@ public class MainActivity extends Activity {
             pvStatus.setMaxWidth(dp(400));
             if (phoneLive) {
                 pvStatus.setVisibility(View.GONE); // phones: no instruction text under the picture
-                android.view.GestureDetector dbl = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
+                android.view.GestureDetector tap = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
                     @Override public boolean onDown(android.view.MotionEvent e) { return true; }
-                    @Override public boolean onDoubleTap(android.view.MotionEvent e) {
+                    @Override public boolean onSingleTapUp(android.view.MotionEvent e) {
+                        // Once a preview is on the box, tapping it brings up that channel's play menu.
                         if (previewItem != null) open(previewItem);
                         else Toast.makeText(MainActivity.this, "Preview a channel first", Toast.LENGTH_SHORT).show();
                         return true;
                     }
                 });
-                pvFrame.setOnTouchListener((v, e) -> dbl.onTouchEvent(e));
+                pvFrame.setOnTouchListener((v, e) -> tap.onTouchEvent(e));
             }
         } else side.addView(pv, new LinearLayout.LayoutParams(dp(288), dp(162)));
         side.addView(pvStatus);
