@@ -5,7 +5,8 @@ import { ArrowLeft, ChartPie, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { latestWatchActivity, viewingDuration, viewingSegments, WATCH_ACTIVITY_LIMIT, WATCH_KINDS } from "@/lib/player-watch-activity";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { viewingDuration, viewingSegments, watchActivityByDay, WATCH_ACTIVITY_DAYS, WATCH_KINDS } from "@/lib/player-watch-activity";
 
 type Member = { user_id: string; username: string; seconds: number; last_watched_at: string | null };
 const date = (value: string) => new Date(value).toLocaleString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -22,11 +23,11 @@ export function PlayerMemberViewing() {
     if (!member) return { breakdown: [], activity: [] };
     const [breakdown, activity] = await Promise.all([
       supabase.rpc("player_watch_member_breakdown", { _user: member.user_id }),
-      supabase.from("player_watch_activity").select("id,kind,title,category,platform,started_at,last_watched_at,seconds").eq("user_id", member.user_id).order("last_watched_at", { ascending: false }).limit(WATCH_ACTIVITY_LIMIT),
+      supabase.from("player_watch_activity").select("id,kind,title,category,platform,started_at,last_watched_at,seconds").eq("user_id", member.user_id).gte("last_watched_at", new Date(Date.now() - (WATCH_ACTIVITY_DAYS + 1) * 86400000).toISOString()).order("last_watched_at", { ascending: false }).limit(1000),
     ]);
     if (breakdown.error) throw breakdown.error;
     if (activity.error) throw activity.error;
-    return { breakdown: breakdown.data ?? [], activity: latestWatchActivity(activity.data ?? []) };
+    return { breakdown: breakdown.data ?? [], activity: watchActivityByDay(activity.data ?? []) };
   } });
   const segments = viewingSegments(details.data?.breakdown ?? []);
   const total = segments.reduce((sum, row) => sum + row.seconds, 0);
@@ -49,8 +50,11 @@ export function PlayerMemberViewing() {
           <div className="flex flex-wrap justify-between gap-2"><h3 className="font-semibold">What they watched</h3><strong className="tabular-nums">{viewingDuration(total)}</strong></div>
           {total > 0 ? <div className="flex flex-col items-center gap-6 sm:flex-row"><div className="size-64 shrink-0" role="img" aria-label={segments.map(s => `${s.label} ${s.percent.toFixed(1)}%`).join(", ")}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={segments.filter(s => s.seconds > 0)} dataKey="seconds" nameKey="label" outerRadius="95%" stroke="var(--background)" strokeWidth={2} isAnimationActive={false}>{segments.filter(s => s.seconds > 0).map(s => <Cell key={s.key} fill={s.color} />)}</Pie></PieChart></ResponsiveContainer></div><dl className="w-full flex-1 space-y-3">{segments.map(s => <div key={s.key} className="flex items-center justify-between gap-3 text-sm"><dt className="flex items-center gap-2"><span className={`size-3 shrink-0 rounded-full ${s.swatch}`} />{s.label}</dt><dd className="text-right tabular-nums"><strong>{s.percent.toFixed(1)}%</strong><span className="ml-3 text-muted-foreground">{viewingDuration(s.seconds)}</span></dd></div>)}</dl></div> : <p className="text-sm text-muted-foreground">No viewing time recorded for this member yet.</p>}
         </section>
-        <section aria-label="Last 10 watched activities" className="space-y-3 border-t border-border pt-4"><h3 className="font-semibold">Last 10 watched activities</h3>
-          {details.data?.activity.length ? <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="py-3 pr-3">Last watched · UK</th><th className="p-3">Watched</th><th className="p-3">Time viewed</th><th className="p-3 max-sm:hidden">Device</th></tr></thead><tbody>{details.data.activity.map(row => <tr key={row.id} className="border-b border-border"><td className="py-3 pr-3 align-top text-xs">{date(row.last_watched_at)}</td><td className="min-w-36 p-3 align-top"><span className="block break-words font-medium">{row.title}</span><span className="text-xs text-muted-foreground">{WATCH_KINDS.find(k => k.key === row.kind)?.label ?? row.kind}{row.category ? ` · ${row.category}` : ""}</span></td><td className="p-3 align-top tabular-nums">{viewingDuration(row.seconds)}</td><td className="p-3 align-top text-muted-foreground max-sm:hidden">{row.platform ?? "—"}</td></tr>)}</tbody></table></div> : <p className="text-sm text-muted-foreground">No watched activities recorded yet. Title history starts from 5 November 2026.</p>}
+        <section aria-label="Last 7 days of activity" className="space-y-3 border-t border-border pt-4"><h3 className="font-semibold">Last 7 days of activity</h3>
+          {details.data?.activity.length ? <Tabs defaultValue={details.data.activity[0].day}>
+            <TabsList className="h-auto flex-wrap justify-start">{details.data.activity.map(d => <TabsTrigger key={d.day} value={d.day}>{new Date(d.day + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} ({d.rows.length})</TabsTrigger>)}</TabsList>
+            {details.data.activity.map(d => <TabsContent key={d.day} value={d.day}>{d.rows.length ? <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="py-3 pr-3">Last watched · UK</th><th className="p-3">Watched</th><th className="p-3">Time viewed</th><th className="p-3 max-sm:hidden">Device</th></tr></thead><tbody>{d.rows.map(row => <tr key={row.id} className="border-b border-border"><td className="py-3 pr-3 align-top text-xs">{date(row.last_watched_at)}</td><td className="min-w-36 p-3 align-top"><span className="block break-words font-medium">{row.title}</span><span className="text-xs text-muted-foreground">{WATCH_KINDS.find(k => k.key === row.kind)?.label ?? row.kind}{row.category ? ` · ${row.category}` : ""}</span></td><td className="p-3 align-top tabular-nums">{viewingDuration(row.seconds)}</td><td className="p-3 align-top text-muted-foreground max-sm:hidden">{row.platform ?? "—"}</td></tr>)}</tbody></table></div> : <p className="py-3 text-sm text-muted-foreground">Nothing watched on this day.</p>}</TabsContent>)}
+          </Tabs> : null}
         </section>
       </>}
     </div></div>}
