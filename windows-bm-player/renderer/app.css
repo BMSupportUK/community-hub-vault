@@ -17,3 +17,37 @@
 .preview-placeholder{position:absolute;inset:0}
 .preview-placeholder img{width:100%;height:100%;object-fit:cover;display:block}
 .preview-hint{margin:0 0 10px;font-size:13px}
+
+/* Live TV like Android/Amazon: preview + info, slim date row, guide grid. */
+.live-guide-view{height:calc(100vh - 72px);display:flex;flex-direction:column;padding:12px 20px 8px}
+.lg{display:flex;flex-direction:column;flex:1;min-height:0}
+.lg-top{display:flex;gap:18px;align-items:flex-start}
+.lg-preview{position:relative;overflow:hidden;width:min(30vw,calc(32vh*16/9));aspect-ratio:16/9;flex:0 0 auto;background:#000;border-radius:8px;cursor:pointer}
+.lg-preview .video-surface{position:absolute;inset:0}
+.lg-info{flex:1;min-width:0;display:flex;flex-direction:column}
+.lg-pills{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-bottom:14px;padding-right:96px}
+.lg-pills input{flex:0 1 260px}
+.lg-title{margin:0;font-size:24px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lg-time{color:var(--muted);font-size:15px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lg-bar{width:160px;height:4px;background:var(--track);border-radius:2px;margin:5px 0 4px}.lg-bar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.lg-desc{margin:4px 0 0;color:var(--muted);font-size:15px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.lg-next{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:15px;white-space:nowrap}.lg-next>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lg-star{background:transparent;border:0;font-size:20px;padding:0 6px;min-height:0}.lg-cat{color:var(--muted);font-size:14px;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.lg-dates{display:flex;align-items:center;gap:8px;padding:8px 0 6px}.lg-dates strong{font-size:15px;margin-right:6px}
+.lg-dates .mini{padding:4px 10px;font-size:13px;min-height:0;border-radius:12px}.lg-step{margin-left:auto;display:flex;gap:6px}
+.lg-grid{flex:1;min-height:0;overflow-y:auto;border:1px solid var(--border);border-radius:8px}
+.lg-row{display:flex;height:56px;border-bottom:1px solid var(--border)}
+.lg-head{position:sticky;top:0;z-index:2;height:36px;background:var(--raised)}
+.lg-ch{flex:0 0 240px;display:flex;align-items:stretch;background:var(--surface);border-right:1px solid var(--border)}
+.lg-ch>button:first-child{flex:1;min-width:0;text-align:left;background:transparent;border:0;border-radius:0;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.lg-ch b{color:var(--muted);margin-right:6px}.lg-ch.on{box-shadow:inset 4px 0 0 var(--accent)}
+.lg-head .lg-ch{align-items:center;padding:0 12px;font-weight:700}
+.lg-times{flex:1;display:grid;grid-template-columns:repeat(4,1fr);align-items:center}.lg-times span{padding-left:8px;font-weight:600}
+.lg-line{flex:1;position:relative;overflow:hidden}
+.lg-prog{position:absolute;top:3px;bottom:3px;margin:0;padding:4px 8px;text-align:left;border-radius:6px;background:var(--surface);border:1px solid var(--border);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:14px;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.lg-prog small{color:var(--muted);font-size:12px}.lg-prog:hover,.lg-prog:focus{border:3px solid var(--accent);outline:none}.lg-prog.on{background:var(--accent);color:var(--accent-foreground)}.lg-prog.on small{color:var(--accent-foreground)}
+.lg-now{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:1;pointer-events:none}
+.lg-empty{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px}
+.lg-scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:center;justify-content:center}
+.lg-cats{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;width:min(420px,90vw);max-height:80vh;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.lg-cats h3{margin:0}.lg-cat-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px}.lg-cat-list button{text-align:left}.lg-cat-list .selected{border:3px solid var(--accent);font-weight:700}
