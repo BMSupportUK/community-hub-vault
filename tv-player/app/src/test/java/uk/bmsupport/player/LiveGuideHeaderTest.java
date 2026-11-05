@@ -141,4 +141,26 @@ public class LiveGuideHeaderTest {
         assertTrue("voice search must stay in the header: " + labels, labels.contains("🎤 Voice search"));
         assertTrue("the View EPG control must join them: " + labels, labels.contains("View EPG"));
     }
+
+    @Test public void playChannelIsReachableOnAShortLandscapePhone() throws Exception {
+        MainActivity a = open();
+        openLiveGuide(a);
+        View screen = (View) rootOf(a).getParent().getParent().getParent();
+        float density = a.getResources().getDisplayMetrics().density;
+        int width = Math.round(800 * density), height = Math.round(360 * density);
+        screen.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        screen.layout(0, 0, width, height);
+        List<View> buttons = new ArrayList<>();
+        collect(screen, Button.class, buttons);
+        View play = null;
+        for (View b : buttons) if (text(b).equals("▶ Play channel")) play = b;
+        assertNotNull(play);
+        android.graphics.Rect bounds = new android.graphics.Rect(0, 0, play.getWidth(), play.getHeight());
+        ((ViewGroup) screen).offsetDescendantRectToMyCoords(play, bounds);
+        assertTrue("Play channel must fit above the phone's bottom edge: " + bounds,
+                bounds.bottom <= height && bounds.top >= 0 && bounds.height() > 0);
+        play.performClick();
+        assertEquals("Tap a channel to preview it first", org.robolectric.shadows.ShadowToast.getTextOfLatestToast());
+    }
 }
