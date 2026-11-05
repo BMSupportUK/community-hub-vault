@@ -73,4 +73,4 @@
 - iFollow/Scottish guide saves/imports use the two club names as fixture channels.
 - Account numbers: `customer_numbers` rows are assigned on profile creation and can never be updated or deleted, so a 6-digit number is never reissued (withdrawn ones stay in `customer_numbers_retired`; `customer_number_is_weak` rejects simple patterns); read only through `get_customer_number` (self or staff roles).
 - Bottom-screen player announcement targets are nullable profile IDs; filter after the shared cache against verified device ownership, never client-supplied identity, keeping existing app payloads unchanged.
-- Public homepage and Portal Home pictures reserve their actual aspect ratio in a viewport-capped frame; never size them from sibling columns, so delayed content can't resize them.
+- Public homepage and Portal Home pictures are sized from the viewport only (aspect ratio on small screens, viewport-height frame on large screens); never size them from sibling columns, so delayed content can't resize them.
