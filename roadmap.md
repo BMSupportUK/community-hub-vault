@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Move the phone Live TV "Bigger guide" control into the header and remove the Now/Day row; 48 Android tests pass. Not released (3.05 is the live build); real-phone check pending.
 - [x] Keep Android phone EPG scrolling clear of system swipe areas; 45 Android tests pass, including safe-edge padding, cancelled swipes and TV remote navigation. Not released; real-phone gesture verification blocked by no attached device.
 - [x] Build and release Windows 0.4.5 and universal Mac 0.1.19 with pending shared changes; 38 desktop tests pass and both live download endpoints match the packaged files byte-for-byte. Mac merged 15 universal binaries and ad-hoc signed; Apple signature validation and real Windows/Mac installation/playback remain unavailable in this Linux sandbox.
 - [x] Build, sign and release Android 2.94, Windows 0.4.4 and universal Mac 0.1.18 with the clean family/remote preview picture; 37 Android and 38 desktop tests pass, all live downloads match byte-for-byte. Real-device playback remains unverified (no attached devices).
