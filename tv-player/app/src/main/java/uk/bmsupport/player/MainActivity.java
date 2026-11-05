@@ -1234,7 +1234,7 @@ public class MainActivity extends Activity {
             if (pending != null) ui.removeCallbacks(pending);
             JSONObject cached = heroInfo.get(key);
             if (cached != null) { fill(it, cached); return; }
-            pending = () -> io.execute(() -> {
+            pending = () -> posterIo.execute(() -> {
                 try {
                     String url = it.kind.equals("series") ? api("get_series_info") + "&series_id=" + it.id : api("get_vod_info") + "&vod_id=" + it.id;
                     JSONObject info = new JSONObject(Net.get(url)).optJSONObject("info");
