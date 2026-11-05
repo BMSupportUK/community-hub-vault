@@ -178,7 +178,21 @@ public class MainActivity extends Activity {
 
     // ---------- multi-screen (Multi Room = 2, Triple Room = 3) ----------
     private final List<androidx.media3.exoplayer.ExoPlayer> multiPlayers = new ArrayList<>();
-    private void stopMulti() { for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) p.release(); multiPlayers.clear(); }
+    private void stopMulti() {
+        for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) p.release();
+        multiPlayers.clear();
+        updateKeepScreenOn();
+    }
+
+    /** Something playing in this screen (preview box or a multi-screen pane) keeps the phone screen awake. */
+    void updateKeepScreenOn() {
+        boolean playing = preview != null && previewPlaying;
+        for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) {
+            if (p.getPlaybackState() == androidx.media3.common.Player.STATE_READY && p.getPlayWhenReady()) { playing = true; break; }
+        }
+        if (playing) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 
     /** Asks how many screens to open, so one channel can fill the whole screen. */
     private void chooseMultiScreens(int max) {
