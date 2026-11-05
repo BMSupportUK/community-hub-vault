@@ -261,9 +261,9 @@ public class PlayerActivity extends Activity {
         reportBtn.setAllCaps(false);
         reportBtn.setText("⚠ Report a problem");
         reportBtn.setOnClickListener(v -> showReport());
-        FrameLayout.LayoutParams rlp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
-        rlp.topMargin = 24; rlp.leftMargin = 24;
-        root.addView(reportBtn, rlp);
+        FrameLayout.LayoutParams reportLp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
+        reportLp.topMargin = 24; reportLp.leftMargin = 24;
+        root.addView(reportBtn, reportLp);
         view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(vis); });
         setContentView(root);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
