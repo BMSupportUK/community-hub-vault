@@ -1228,8 +1228,12 @@ public class MainActivity extends Activity {
             String[] o2 = {"▶ Continue watching · " + time + " (" + WatchProgress.percent(pos, dur) + "%)", "Play from beginning", "Play with VLC", fav, "Report a problem"};
             if ("film".equals(it.kind)) o2 = java.util.Arrays.copyOf(o2, o2.length + 1);
             if ("film".equals(it.kind)) o2[o2.length - 1] = "☆ Vote";
+            final boolean cast2 = platform().equals("phone");
+            if (cast2) { o2 = java.util.Arrays.copyOf(o2, o2.length + 1); o2[o2.length - 1] = "📺 Cast to TV"; }
+            final int cast2At = o2.length - 1;
             new AlertDialog.Builder(this).setTitle(it.name).setItems(o2, (d, w) -> {
-                if (w == 0) startPlayback(it, defaultVlc(), pos);
+                if (cast2 && w == cast2At) castToTv(it);
+                else if (w == 0) startPlayback(it, defaultVlc(), pos);
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
                 else if (w == 2) play(it, true);
                 else if (w == 3) toggleSaved("fav", it);
@@ -1239,13 +1243,64 @@ public class MainActivity extends Activity {
             return;
         }
         String[] opts = "film".equals(it.kind) ? new String[]{"Play", "Play with VLC", fav, "Report a problem", "☆ Vote"} : new String[]{"Play", "Play with VLC", fav, "Report a problem"};
+        final boolean cast = platform().equals("phone");
+        if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
+        final int castAt = opts.length - 1;
         new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
-            if (w == 0) play(it, defaultVlc());
+            if (cast && w == castAt) castToTv(it);
+            else if (w == 0) play(it, defaultVlc());
             else if (w == 1) play(it, true);
             else if (w == 2) toggleSaved("fav", it);
             else if (w == 3) showReport(it);
             else showVote(it);
         }).show();
+    }
+
+    /** Phone: find DLNA smart TVs on the same Wi-Fi and send this item's stream to the chosen one. */
+    void castToTv(Item it) {
+        AlertDialog wait = new AlertDialog.Builder(this).setTitle("Cast to TV")
+                .setMessage("Looking for TVs on your Wi-Fi…").setNegativeButton("Cancel", null).show();
+        new Thread(() -> {
+            android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+            android.net.wifi.WifiManager.MulticastLock lock = wm == null ? null : wm.createMulticastLock("bm-cast");
+            if (lock != null) { lock.setReferenceCounted(false); lock.acquire(); }
+            List<DlnaCast.Tv> tvs;
+            try { tvs = DlnaCast.discover(); } finally { if (lock != null) lock.release(); }
+            final List<DlnaCast.Tv> found = tvs;
+            ui.post(() -> {
+                if (!wait.isShowing()) return;
+                wait.dismiss();
+                if (found.isEmpty()) {
+                    new AlertDialog.Builder(this).setTitle("Cast to TV")
+                            .setMessage("No TVs found. Make sure the TV is switched on, on the same Wi-Fi, and has screen sharing / DLNA turned on.")
+                            .setPositiveButton("Try again", (d, w) -> castToTv(it)).setNegativeButton("Close", null).show();
+                    return;
+                }
+                String[] names = new String[found.size()];
+                for (int i = 0; i < names.length; i++) names[i] = found.get(i).name;
+                new AlertDialog.Builder(this).setTitle("Pick a TV").setItems(names, (d, w) -> sendToTv(found.get(w), it))
+                        .setNegativeButton("Cancel", null).show();
+            });
+        }).start();
+    }
+
+    private void sendToTv(DlnaCast.Tv tv, Item it) {
+        if (previewPlaying) stopPreview();
+        Toast.makeText(this, "Sending to " + tv.name + "…", Toast.LENGTH_SHORT).show();
+        String url = streamUrl(it);
+        new Thread(() -> {
+            try {
+                DlnaCast.cast(tv, url, it.name);
+                ui.post(() -> new AlertDialog.Builder(this).setTitle("Casting to " + tv.name)
+                        .setMessage(it.name + " is playing on your TV.")
+                        .setPositiveButton("Stop casting", (d, w) -> new Thread(() -> { try { DlnaCast.stop(tv); } catch (Exception ignored) {} }).start())
+                        .setNegativeButton("Close", null).show());
+            } catch (Exception e) {
+                ui.post(() -> new AlertDialog.Builder(this).setTitle("Cast to TV")
+                        .setMessage(tv.name + " couldn't play this. Some TVs don't support this kind of stream.")
+                        .setPositiveButton("OK", null).show());
+            }
+        }).start();
     }
 
     private void showSeries(Item show) {
