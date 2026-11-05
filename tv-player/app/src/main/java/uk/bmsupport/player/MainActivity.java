@@ -2093,11 +2093,9 @@ public class MainActivity extends Activity {
         String[] fmtL = {"Auto", "MPEG-TS (.ts)", "HLS (.m3u8)"}, fmtV = {"auto", "ts", "hls"};
         String[] bufL = StreamRecovery.BUFFER_LABELS, bufV = StreamRecovery.BUFFER_IDS;
         String[] decL = {"Hardware", "Software"}, decV = {"hardware", "software"};
-        String[] uaL = {"VLC", "BM Player", "IPTV Smarters"}, uaV = {PlayerActivity.UA, "BMPlayer/" + appVersion(), "IPTVSmartersPlayer"};
+        String[] uaL = {"Standard", "BM Player", "IPTV Smarters"}, uaV = {PlayerActivity.UA, "BMPlayer/" + appVersion(), "IPTVSmartersPlayer"};
 
         List<View> boxes = new ArrayList<>();
-        boxes.add(settingBox("▶", "Player", label("player", "internal", playerL, playerV),
-                v -> choose("Default player", "player", "internal", playerL, playerV)));
         boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
         boxes.add(settingBox("🛡", "Anti-Freeze: On", "Always on: unfreezes stuck pictures, reconnects drops, keeps live TV at now",
