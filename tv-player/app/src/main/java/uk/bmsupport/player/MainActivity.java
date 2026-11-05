@@ -912,8 +912,8 @@ public class MainActivity extends Activity {
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
         root.addView(epg);
         // Films/Series details panel: the highlighted title's backdrop, rating · year · length · genre, cast, director and plot.
-        final MediaHero hero = kind.equals("live") ? null : new MediaHero();
-        if (hero != null) root.addView(hero.view, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        // Films/Series: posters fill the screen; pressing one opens its details (review, cast, plot) with the play options.
+        final MediaHero hero = null;
         stopPreview();
         LinearLayout panes = row();
         ListView cats = list();
@@ -1186,8 +1186,8 @@ public class MainActivity extends Activity {
             }
             open(it);
         });
-        if (hero != null) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { hero.show((Item) items.getItemAtPosition(pos)); if (items.isInTouchMode()) return; android.widget.GridView g = (android.widget.GridView) items; int cols = Math.max(1, g.getNumColumns()); int first = g.getFirstVisiblePosition(), last = g.getLastVisiblePosition(); if (pos < first + cols || pos > last - cols) g.smoothScrollToPositionFromTop(pos - (pos % cols), dp(8), 180); }
+        if (posters) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { if (items.isInTouchMode()) return; android.widget.GridView g = (android.widget.GridView) items; int cols = Math.max(1, g.getNumColumns()); int first = g.getFirstVisiblePosition(), last = g.getLastVisiblePosition(); if (pos < first + cols || pos > last - cols) g.smoothScrollToPositionFromTop(pos - (pos % cols), dp(8), 180); }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1218,12 +1218,12 @@ public class MainActivity extends Activity {
             LinearLayout col = column(); col.setPadding(dp(4), dp(4), dp(4), dp(4));
             title.setSingleLine(true); title.setEllipsize(android.text.TextUtils.TruncateAt.END);
             meta.setSingleLine(true); people.setMaxLines(2); people.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            plot.setMaxLines(isPhone() ? 3 : 4); plot.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            plot.setMaxLines(isPhone() ? 4 : 6); plot.setEllipsize(android.text.TextUtils.TruncateAt.END);
             col.addView(title); col.addView(meta); col.addView(people); col.addView(plot);
             meta.setEllipsize(android.text.TextUtils.TruncateAt.END);
             col.setPadding(dp(10), dp(8), dp(10), dp(10));
             view.setMinimumHeight(dp(isPhone() ? 110 : 150));
-            view.addView(col, new android.widget.FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().widthPixels * (isPhone() ? 0.9f : 0.7f)), ViewGroup.LayoutParams.WRAP_CONTENT));
+            view.addView(col, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
         void show(Item it) {
             if (it == null) { title.setText(""); meta.setText(""); people.setText(""); plot.setText(""); backdrop.setImageDrawable(null); showing = ""; return; }
@@ -1332,7 +1332,7 @@ public class MainActivity extends Activity {
             final boolean cast2 = platform().equals("phone");
             if (cast2) { o2 = java.util.Arrays.copyOf(o2, o2.length + 1); o2[o2.length - 1] = "📺 Cast to TV"; }
             final int cast2At = o2.length - 1;
-            new AlertDialog.Builder(this).setTitle(it.name).setItems(o2, (d, w) -> {
+            new AlertDialog.Builder(this).setCustomTitle(filmDetails(it)).setItems(o2, (d, w) -> {
                 if (cast2 && w == cast2At) castToTv(it);
                 else if (w == 0) startPlayback(it, defaultVlc(), pos);
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
@@ -1345,12 +1345,19 @@ public class MainActivity extends Activity {
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
-        new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
+        new AlertDialog.Builder(this).setCustomTitle(filmDetails(it)).setItems(opts, (d, w) -> {
             if (cast && w == castAt) castToTv(it);
             else if (w == 0) play(it, defaultVlc());
             else if (w == 1) toggleSaved("fav", it);
             else showVote(it);
         }).show();
+    }
+
+    /** Film details shown above the play options: backdrop, rating · year · length · genre, cast, director, plot. */
+    private View filmDetails(Item it) {
+        MediaHero h = new MediaHero(); h.show(it);
+        h.view.setPadding(dp(8), dp(8), dp(8), dp(4));
+        return h.view;
     }
 
     /** Phone: find DLNA smart TVs on the same Wi-Fi and send this item's stream to the chosen one. */
