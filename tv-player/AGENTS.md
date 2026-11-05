@@ -3,7 +3,7 @@
 - IntroActivity is the launcher and plays the bundled CDN-sourced opening film once per cold launch; MainActivity remains the direct destination for playback/reminders so the intro never delays them.
 - BM Player (Android TV/Fire TV/phone) talks to the website only through `/api/public/player` with its device token; logins arrive once via poll and live only in app storage.
 - Signed with the permanent BM key; bump versionCode/versionName and upload a new `bm-player/` build row with package_name `uk.bmsupport.player` (the update endpoint filters on it) so installs upgrade in place.
-- Same tile front screen on every device; "Play with VLC" hands off to org.videolan.vlc and falls back to the built-in Media3 player.
+- Same tile front screen on every device; external VLC is removed from the app (no menu option, setting or catch-up handoff) — the built-in player and its in-app backup engine play everything.
 - Built-in player controls never sit on the picture: PlayerActivity runs a once-a-second hideControls watch (InactivityPolicy.hideControls, 3.5s after the last press) because Media3's own timer never fires on live/buffering streams.
 - Home-row buttons never fold a name onto a second line: smallButton() forces a single line with text that shrinks (16sp to 10sp), and smallWeight() shares the row out in proportion to each label's measured width so "Recently watched" gets more room than "Settings".
 - Header pills go through headerPill() and every button() carries default margins, so pills in any row never sit flush; Live TV header order is EPG (opens the TV guide on the current category), Search TV, Voice search.
