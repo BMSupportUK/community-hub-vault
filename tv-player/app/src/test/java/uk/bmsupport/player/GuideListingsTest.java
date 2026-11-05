@@ -9,11 +9,13 @@ import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import java.util.Arrays;
 import java.util.List;
 
 @RunWith(RobolectricTestRunner.class)
+@Config(sdk = 34)
 public class GuideListingsTest {
     private static JSONObject p(String t, long st, long en) throws Exception {
         return new JSONObject().put("title", Base64.encodeToString(t.getBytes("UTF-8"), Base64.NO_WRAP))
