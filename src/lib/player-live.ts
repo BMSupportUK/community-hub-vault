@@ -7,7 +7,7 @@ export function isLive(lastSeenAt: string | null | undefined, now = Date.now()):
   return !!lastSeenAt && now - new Date(lastSeenAt).getTime() <= LIVE_WINDOW_MS;
 }
 
-type Watching = { kind: string; title: string; category?: string; player?: string; since: number } | null;
+type Watching = { kind: string; title: string; category?: string; player?: string; since: number; preview?: boolean } | null;
 
 export function presenceUpdate(input: {
   now: number;
@@ -40,6 +40,8 @@ export function presenceUpdate(input: {
     watching_category: w?.category || null,
     watching_player: w?.player || null,
     watching_since: since,
+    // Previews show on Live connections but never count toward viewing hours.
+    watching_preview: !!w?.preview,
     ...(input.ip ? { last_ip: input.ip.slice(0, 64) } : {}),
     ...(input.cf || input.headerCountry
       ? {
