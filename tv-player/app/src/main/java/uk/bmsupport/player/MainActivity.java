@@ -468,6 +468,9 @@ public class MainActivity extends Activity {
                 // A backgrounded app (Home pressed, not closed) stops checking in so it drops off Live connections,
                 // except while external VLC is playing something it handed off.
                 boolean vlcPlaying = prefs.getLong("np_since", 0) > 0 && "VLC".equals(prefs.getString("np_player", ""));
+                // Self-heal: a preview that is playing must always report itself, even if a resume cleared it.
+                if (preview != null && previewItem != null && preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY
+                        && prefs.getLong("np_since", 0) == 0) { previewCounted = true; setNowPlaying(previewItem, false); }
                 if (PlayerApplication.onScreen() || vlcPlaying || !hasLogin()) {
                     if (!safeRun(io, MainActivity.this::pollOnce)) return;
                 }
@@ -3196,7 +3199,8 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         resetShiftAfterClockChange();
         super.onResume();
-        clearNowPlaying();
+        // Only clear when nothing in this screen is still playing (a running preview keeps counting).
+        if (preview == null) clearNowPlaying();
         if (hasLogin()) io.execute(() -> safeRun(io, this::pollOnce));
         refreshVersionScreens();
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
