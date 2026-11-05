@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, platform")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
 
