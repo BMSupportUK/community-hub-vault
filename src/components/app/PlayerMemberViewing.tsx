@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { ArrowLeft, ChartPie, Search } from "lucide-react";
@@ -46,7 +46,7 @@ export function PlayerMemberViewing() {
       const has = groups.some(g => g.letter === l);
       return <Button key={l} type="button" size="sm" variant={l === letter ? "default" : "outline"} disabled={!has} aria-pressed={l === letter} className="h-8 min-w-8 rounded-full px-3" onClick={() => setPickedLetter(l)}>{l}</Button>;
     })}</div>}
-    {members.isPending ? <p className="text-sm text-muted-foreground">Loading members…</p> : members.isError ? <p role="alert" className="text-sm text-destructive">Couldn’t load members. <Button variant="link" onClick={() => void members.refetch()}>Retry</Button></p> : shown.length === 0 ? <p className="text-sm text-muted-foreground">{search ? "No matching members." : "No members have linked a BM Player yet."}</p> : <div className="overflow-x-auto"><table className="w-full text-sm">
+    {members.isPending ? <p className="text-sm text-muted-foreground">Loading members…</p> : members.isError ? <p role="alert" className="text-sm text-destructive">Couldn’t load members. <Button variant="link" onClick={() => void members.refetch()}>Retry</Button></p> : shown.length === 0 ? <p className="text-sm text-muted-foreground">{search ? `No matching members under ${letter}.` : "No members have linked a BM Player yet."}</p> : <div className="overflow-x-auto"><table className="w-full text-sm">
       <thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="py-3 pr-3">Member</th><th className="p-3">Total viewed</th><th className="p-3 max-sm:hidden">Last watched · UK</th><th className="py-3 pl-3"><span className="sr-only">Viewing details</span></th></tr></thead>
       <tbody>{shown.map(row => <tr key={row.user_id} className="border-b border-border"><td className="py-3 pr-3"><Button variant="link" className="h-auto max-w-56 whitespace-normal break-words p-0 text-left" onClick={() => setMember(row)}>{row.username}</Button></td><td className="p-3 tabular-nums">{viewingDuration(row.seconds)}</td><td className="p-3 text-muted-foreground max-sm:hidden">{row.last_watched_at ? date(row.last_watched_at) : "—"}</td><td className="py-3 pl-3"><Button variant="ghost" size="icon" title={`Viewing details for ${row.username}`} aria-label={`Viewing details for ${row.username}`} onClick={() => setMember(row)}><ChartPie className="size-4" /></Button></td></tr>)}</tbody>
     </table></div>}
