@@ -103,9 +103,9 @@ public final class BackupPlayerActivity extends Activity {
                 case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
                     if (mp.isPlaying()) mp.pause(); else mp.play(); return true;
                 case KeyEvent.KEYCODE_DPAD_RIGHT: case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
-                    if (!isLive() && mp.getLength() > 0) { mp.setTime(Math.min(mp.getLength(), mp.getTime() + 10000)); return true; } break;
+                    if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind")) && mp.getLength() > 0) { mp.setTime(Math.min(mp.getLength(), mp.getTime() + 10000)); return true; } break;
                 case KeyEvent.KEYCODE_DPAD_LEFT: case KeyEvent.KEYCODE_MEDIA_REWIND:
-                    if (!isLive() && mp.getLength() > 0) { mp.setTime(Math.max(0, mp.getTime() - 10000)); return true; } break;
+                    if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind")) && mp.getLength() > 0) { mp.setTime(Math.max(0, mp.getTime() - 10000)); return true; } break;
                 default: break;
             }
         }

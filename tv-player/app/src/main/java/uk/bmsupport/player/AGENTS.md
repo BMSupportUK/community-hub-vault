@@ -23,3 +23,4 @@
 - Phone play menus (open()) add "📺 Cast to TV": DlnaCast does SSDP AVTransport discovery under a Wi-Fi multicast lock, then SetAVTransportURI + Play on the chosen smart TV; TVs and Android TV boxes do not show the option.
 - Report a problem lives on the built-in player screen (top-left button shown with the controls, ADJUST_PAN pop-up, no keepEntryVisible resizing which flickered phones); play menus never carry it — the series page keeps its own button.
 - Built-in playback hands over to BackupPlayerActivity (in-app libVLC, ARM-only native libs) when every address fails before a picture or reconnects give up; catch-up keeps its own recovery.
+- Player controls per kind live in PlayerControls: fast forward/rewind only on films and episodes (not live or catch up); no Report a problem on catch up.
