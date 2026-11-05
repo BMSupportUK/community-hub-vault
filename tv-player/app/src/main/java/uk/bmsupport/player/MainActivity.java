@@ -876,8 +876,9 @@ public class MainActivity extends Activity {
     private String liveCatId = "*";
 
     private void browse(String kind) {
-        // Live TV is the Sky-style guide itself: preview on top, guide below, categories slide out.
-        if (kind.equals("live")) { showTvGuide(liveCatId, true); return; }
+        // Phones: Live TV is the guide screen (preview, View EPG pop-up). TV boxes keep the original
+        // categories | channels | preview + Now/Up next layout, with the 📅 EPG pill for the full guide.
+        if (kind.equals("live") && getResources().getConfiguration().smallestScreenWidthDp < 600) { showTvGuide(liveCatId, true); return; }
         screen = "browse"; back = this::showHome;
         String title = kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series";
         String catAction = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
