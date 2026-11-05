@@ -260,6 +260,21 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         blp.topMargin = 24; blp.rightMargin = 24;
         root.addView(boostBtn, blp);
+        // Picture size, remembered on this device: wide films show bars on Fit, Zoom fills the screen.
+        final android.content.SharedPreferences pp = getSharedPreferences("bm", MODE_PRIVATE);
+        final android.widget.Button picBtn = new android.widget.Button(this);
+        picBtn.setAllCaps(false);
+        final Runnable applyPic = () -> {
+            String id = pp.getString("picture", "fit");
+            view.setResizeMode("zoom".equals(id) ? androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    : "stretch".equals(id) ? androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL : androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT);
+            picBtn.setText("⛶ Picture: " + PlayerControls.pictureLabel(id));
+        };
+        applyPic.run();
+        picBtn.setOnClickListener(v -> { pp.edit().putString("picture", PlayerControls.nextPicture(pp.getString("picture", "fit"))).apply(); applyPic.run(); });
+        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+        plp.topMargin = 24 + (int) (64 * getResources().getDisplayMetrics().density); plp.rightMargin = 24;
+        root.addView(picBtn, plp);
         final android.widget.Button reportBtn = new android.widget.Button(this);
         reportBtn.setAllCaps(false);
         reportBtn.setText("⚠ Report a problem");
@@ -270,7 +285,7 @@ public class PlayerActivity extends Activity {
         // Catch up problems can't be fixed by us, so there is no report button on catch up.
         final boolean canReport = PlayerControls.canReport(kind());
         if (!canReport) reportBtn.setVisibility(android.view.View.GONE);
-        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(canReport ? vis : android.view.View.GONE); });
+        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); picBtn.setVisibility(vis); reportBtn.setVisibility(canReport ? vis : android.view.View.GONE); });
         setContentView(root);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
