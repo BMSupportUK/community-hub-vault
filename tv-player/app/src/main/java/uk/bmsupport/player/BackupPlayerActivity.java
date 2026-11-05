@@ -58,6 +58,8 @@ public final class BackupPlayerActivity extends Activity {
         vlc = new LibVLC(this, opts);
         mp = new MediaPlayer(vlc);
         mp.attachViews(layout, null, false, false);
+        // Films and series fill the screen (zoom, like the main player); live TV and catch up keep their shape.
+        if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind"))) mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
         mp.setEventListener(ev -> {
             switch (ev.type) {
                 case MediaPlayer.Event.Playing:
