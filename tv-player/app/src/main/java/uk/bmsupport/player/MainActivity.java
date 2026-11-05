@@ -2678,6 +2678,8 @@ public class MainActivity extends Activity {
     private final java.util.Map<String, List<GuideGridView.Prog>> guideCache = new java.util.LinkedHashMap<String, List<GuideGridView.Prog>>(64, 0.75f, true) {
         @Override protected boolean removeEldestEntry(java.util.Map.Entry<String, List<GuideGridView.Prog>> e) { return size() > 400; }
     };
+    private final java.util.Map<String, Long> guideFetchedAt = new java.util.HashMap<>();
+    private long guideWindowSecs() { return getResources().getConfiguration().smallestScreenWidthDp < 600 ? 10800 : 7200; }
 
     /** Channels down the left, time across the top; OK on a programme on now watches it, on a future one sets/removes a reminder. */
     private void showTvGuide() { showTvGuide(null); }
@@ -2848,23 +2850,34 @@ public class MainActivity extends Activity {
                 if (r < 0 || r >= shownCh.size()) return;
                 Item it = shownCh.get(r);
                 List<GuideGridView.Prog> c = guideCache.get(it.id);
-                if (c != null) { if (!grid.loaded(r)) grid.setProgs(r, c); return; }
+                long nowS = System.currentTimeMillis() / 1000, win = guideWindowSecs();
+                Long at = guideFetchedAt.get(it.id);
+                boolean fresh = c != null && at != null && !GuideListings.stale(at, c, nowS, win);
+                if (c != null) { if (!grid.loaded(r)) grid.setProgs(r, c); if (fresh) return; }
                 if (!requested.add(it.id)) return;
                 final int g = gen[0];
                 guideIo.execute(() -> {
+                    long now = System.currentTimeMillis() / 1000;
                     List<GuideGridView.Prog> got = new ArrayList<>();
+                    boolean ok = false;
                     try {
-                        JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings");
-                        if (l != null) for (int i = 0; i < l.length(); i++) {
-                            JSONObject e = l.getJSONObject(i);
-                            String t = new String(Base64.decode(e.optString("title"), Base64.DEFAULT), "UTF-8");
-                            long st = e.optLong("start_timestamp", 0), en = e.optLong("stop_timestamp", 0);
-                            if (st > 0) got.add(new GuideGridView.Prog(t, st, en));
-                        }
-                    } catch (Exception ignored) { requested.remove(it.id); }
+                        got = GuideListings.parse(new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings"), now);
+                        ok = true;
+                    } catch (Exception ignored) {}
+                    // Some providers only send "now" in the short list; the full day's table has the rest.
+                    if (GuideListings.tooShort(got, now, win)) try {
+                        List<GuideGridView.Prog> full = GuideListings.parse(new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + it.id)).optJSONArray("epg_listings"), now);
+                        if (full.size() > got.size()) got = full;
+                        ok = true;
+                    } catch (Exception ignored) {}
+                    final List<GuideGridView.Prog> res = got; final boolean fetched = ok;
                     ui.post(() -> {
-                        guideCache.put(it.id, got);
-                        if (g == gen[0] && "tvguide".equals(screen)) grid.setProgs(r, got);
+                        requested.remove(it.id);
+                        if (!fetched) return;
+                        List<GuideGridView.Prog> got2 = res;
+                        guideFetchedAt.put(it.id, System.currentTimeMillis() / 1000);
+                        guideCache.put(it.id, got2);
+                        if (g == gen[0] && "tvguide".equals(screen)) grid.setProgs(r, got2);
                     });
                 });
             }
