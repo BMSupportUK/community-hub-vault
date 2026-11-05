@@ -285,6 +285,8 @@ public final class PlayerApplication extends Application implements Application.
         getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putLong("np_since", 0).apply();
         try { startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
         catch (Exception ignored) {}
+        // Make sure the app really closes even if a screen refused to finish: end the process shortly after.
+        ui.postDelayed(() -> android.os.Process.killProcess(android.os.Process.myPid()), 1500);
     }
     @Override public void onActivityCreated(Activity a, Bundle b) { if (exiting) { exiting = false; lastInput = SystemClock.elapsedRealtime(); } activities.add(a); }
     @Override public void onActivityResumed(Activity a) { foreground = a; showAnnouncement(); showMajorIcon(); }
