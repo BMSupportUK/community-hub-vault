@@ -2810,7 +2810,9 @@ public class MainActivity extends Activity {
             content.addView(rail, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
             content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
         }
-        setContentView(sideDrawer(content, panel));
+        FrameLayout guideScreen = sideDrawer(content, panel);
+        if ("phone".equals(platform())) GuideSafeArea.apply(guideScreen);
+        setContentView(guideScreen);
         btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });
         btns.getChildAt(2).setOnClickListener(v -> grid.shiftDay(-1));
         btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));

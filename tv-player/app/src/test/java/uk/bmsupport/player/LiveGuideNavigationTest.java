@@ -90,6 +90,52 @@ public class LiveGuideNavigationTest {
         assertEquals("Show 0", grid.selected().title);
     }
 
+    @Test public void phoneGuideReservesAndroidGestureEdgesWithoutAccumulatingPadding() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        android.widget.FrameLayout screen = new android.widget.FrameLayout(activity);
+        screen.setPadding(3, 4, 5, 6);
+        GuideSafeArea.apply(screen);
+        activity.setContentView(screen);
+        androidx.core.view.WindowInsetsCompat insets = new androidx.core.view.WindowInsetsCompat.Builder()
+                .setInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.of(0, 24, 0, 20))
+                .setInsets(androidx.core.view.WindowInsetsCompat.Type.systemGestures(), androidx.core.graphics.Insets.of(28, 0, 28, 32))
+                .setInsets(androidx.core.view.WindowInsetsCompat.Type.mandatorySystemGestures(), androidx.core.graphics.Insets.of(0, 0, 0, 32))
+                .setInsets(androidx.core.view.WindowInsetsCompat.Type.displayCutout(), androidx.core.graphics.Insets.of(40, 0, 0, 0))
+                .build();
+        for (int i = 0; i < 2; i++) {
+            androidx.core.view.ViewCompat.dispatchApplyWindowInsets(screen, insets);
+            assertEquals(43, screen.getPaddingLeft());
+            assertEquals(28, screen.getPaddingTop());
+            assertEquals(33, screen.getPaddingRight());
+            assertEquals(38, screen.getPaddingBottom());
+        }
+    }
+
+    @Test public void cancelledPhoneSwipeCannotPlayAChannelAndNextTapStillWorks() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        GuideGridView grid = grid(activity);
+        final int[] picks = {0};
+        grid.setListener(new GuideGridView.Listener() {
+            public void needEpg(int row) {}
+            public void onHighlight(int row, GuideGridView.Prog p) {}
+            public void onPick(int row, GuideGridView.Prog p) { picks[0]++; }
+            public boolean hasReminder(int row, long start) { return false; }
+            public void onCatchup(int row) { fail("Cancelled swipe must not open catch up"); }
+        });
+        touch(grid, MotionEvent.ACTION_DOWN, 500, 240);
+        touch(grid, MotionEvent.ACTION_MOVE, 510, 48);
+        int rowAfterScroll = grid.selectedRow();
+        assertTrue(rowAfterScroll > 0);
+        touch(grid, MotionEvent.ACTION_CANCEL, 510, 48);
+        touch(grid, MotionEvent.ACTION_MOVE, 800, 90);
+        touch(grid, MotionEvent.ACTION_UP, 800, 90);
+        assertEquals(rowAfterScroll, grid.selectedRow());
+        assertEquals(0, picks[0]);
+        touch(grid, MotionEvent.ACTION_DOWN, 500, 90);
+        touch(grid, MotionEvent.ACTION_UP, 500, 90);
+        assertEquals(1, picks[0]);
+    }
+
     private GuideGridView grid(Activity activity) {
         GuideGridView grid = new GuideGridView(activity);
         ArrayList<String> names = new ArrayList<>();
