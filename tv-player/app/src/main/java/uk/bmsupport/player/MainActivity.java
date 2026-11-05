@@ -766,7 +766,10 @@ public class MainActivity extends Activity {
         if (previewTask != null) ui.removeCallbacks(previewTask);
         previewTask = null;
         if (preview != null) { preview.release(); preview = null; }
+        // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
+        if (previewCounted) { previewCounted = false; clearNowPlaying(); }
     }
+    private boolean previewCounted;
 
     /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
     private Item previewItem;
@@ -799,7 +802,10 @@ public class MainActivity extends Activity {
             view.setPlayer(preview);
             preview.addListener(new androidx.media3.common.Player.Listener() {
                 @Override public void onPlaybackStateChanged(int s) {
-                    if (s == androidx.media3.common.Player.STATE_READY) status.setText("Press OK twice for full screen");
+                    if (s == androidx.media3.common.Player.STATE_READY) {
+                        status.setText("Press OK twice for full screen");
+                        if (!previewCounted) { previewCounted = true; setNowPlaying(it, false); }
+                    }
                 }
             });
             PlayerActivity.playWithFallback(preview, streamUrls(it),
