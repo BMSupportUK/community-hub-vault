@@ -2746,10 +2746,10 @@ public class MainActivity extends Activity {
         LinearLayout content = root;
         if (live) {
             content = row();
-            Button side = button("☰\nChannels", v -> catBtn.performClick());
-            side.setSingleLine(false);
-            side.setTextSize(14);
-            content.addView(side, new LinearLayout.LayoutParams(dp(96), ViewGroup.LayoutParams.MATCH_PARENT));
+            Button chBtn = button("☰\nChannels", v -> catBtn.performClick());
+            chBtn.setSingleLine(false);
+            chBtn.setTextSize(14);
+            content.addView(chBtn, new LinearLayout.LayoutParams(dp(96), ViewGroup.LayoutParams.MATCH_PARENT));
             content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
         }
         setContentView(sideDrawer(content, panel));
