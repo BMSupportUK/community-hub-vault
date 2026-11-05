@@ -1,6 +1,6 @@
 // @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { describe, expect, test } from "bun:test";
-import { latestWatchActivity, viewingSegments, watchActivityCredit, type WatchActivity } from "./player-watch-activity";
+import { latestWatchActivity, membersByLetter, viewingSegments, watchActivityCredit, type WatchActivity } from "./player-watch-activity";
 
 describe("member viewing activity", () => {
   test("only the last 10 watched activities are returned newest first", () => {
