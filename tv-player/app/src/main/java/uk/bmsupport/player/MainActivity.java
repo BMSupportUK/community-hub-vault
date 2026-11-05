@@ -3020,7 +3020,7 @@ public class MainActivity extends Activity {
                 @Override protected void onMeasure(int w, int h) { super.onMeasure(h, w); setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth()); }
                 @Override protected void onDraw(android.graphics.Canvas c) { c.save(); c.translate(0, getHeight()); c.rotate(-90); c.translate(getCompoundPaddingLeft(), getExtendedPaddingTop()); getLayout().draw(c); c.restore(); }
             };
-            vlabel.setText("Channels"); vlabel.setTextColor(TEXT); vlabel.setTextSize(15);
+            vlabel.setText("Categories"); vlabel.setTextColor(TEXT); vlabel.setTextSize(15);
             vlabel.setTypeface(Typeface.DEFAULT_BOLD); vlabel.setSingleLine(true);
             LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             vlp.topMargin = dp(8);
