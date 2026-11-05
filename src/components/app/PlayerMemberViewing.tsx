@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { ChartPie, Search } from "lucide-react";
+import { ArrowLeft, ChartPie, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { latestWatchActivity, viewingDuration, viewingSegments, WATCH_ACTIVITY_LIMIT, WATCH_KINDS } from "@/lib/player-watch-activity";
 
 type Member = { user_id: string; username: string; seconds: number; last_watched_at: string | null };
@@ -42,17 +41,18 @@ export function PlayerMemberViewing() {
       <thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="py-3 pr-3">Member</th><th className="p-3">Total viewed</th><th className="p-3 max-sm:hidden">Last watched · UK</th><th className="py-3 pl-3"><span className="sr-only">Viewing details</span></th></tr></thead>
       <tbody>{shown.map(row => <tr key={row.user_id} className="border-b border-border"><td className="py-3 pr-3"><Button variant="link" className="h-auto max-w-56 whitespace-normal break-words p-0 text-left" onClick={() => setMember(row)}>{row.username}</Button></td><td className="p-3 tabular-nums">{viewingDuration(row.seconds)}</td><td className="p-3 text-muted-foreground max-sm:hidden">{row.last_watched_at ? date(row.last_watched_at) : "—"}</td><td className="py-3 pl-3"><Button variant="ghost" size="icon" title={`Viewing details for ${row.username}`} aria-label={`Viewing details for ${row.username}`} onClick={() => setMember(row)}><ChartPie className="size-4" /></Button></td></tr>)}</tbody>
     </table></div>}
-    <Dialog open={!!member} onOpenChange={open => { if (!open) setMember(null); }}><DialogContent className="max-w-3xl">
-      <DialogHeader><DialogTitle className="pr-6 break-words">{member?.username} · Viewing activity</DialogTitle><DialogDescription>All recorded viewing · UK dates and times</DialogDescription></DialogHeader>
+    {member && <div role="dialog" aria-modal="true" aria-label={`${member.username} viewing activity`} className="fixed inset-0 z-50 overflow-y-auto bg-background"><div className="mx-auto w-full max-w-5xl space-y-5 p-4 sm:p-8">
+      <Button variant="outline" onClick={() => setMember(null)}><ArrowLeft className="size-4" />Back to members</Button>
+      <div><h2 className="font-display text-2xl font-bold break-words">{member.username} · Viewing activity</h2><p className="text-sm text-muted-foreground">All recorded viewing · UK dates and times</p></div>
       {details.isPending ? <p className="text-sm text-muted-foreground">Loading viewing activity…</p> : details.isError ? <p role="alert" className="text-sm text-destructive">Couldn’t load viewing activity. <Button variant="link" onClick={() => void details.refetch()}>Retry</Button></p> : <>
         <section aria-label="Viewing breakdown" className="space-y-3">
           <div className="flex flex-wrap justify-between gap-2"><h3 className="font-semibold">What they watched</h3><strong className="tabular-nums">{viewingDuration(total)}</strong></div>
-          {total > 0 ? <div className="flex flex-col items-center gap-6 sm:flex-row"><div className="size-48 shrink-0" role="img" aria-label={segments.map(s => `${s.label} ${s.percent.toFixed(1)}%`).join(", ")}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={segments.filter(s => s.seconds > 0)} dataKey="seconds" nameKey="label" outerRadius="95%" stroke="var(--background)" strokeWidth={2} isAnimationActive={false}>{segments.filter(s => s.seconds > 0).map(s => <Cell key={s.key} fill={s.color} />)}</Pie></PieChart></ResponsiveContainer></div><dl className="w-full flex-1 space-y-3">{segments.map(s => <div key={s.key} className="flex items-center justify-between gap-3 text-sm"><dt className="flex items-center gap-2"><span className={`size-3 shrink-0 rounded-full ${s.swatch}`} />{s.label}</dt><dd className="text-right tabular-nums"><strong>{s.percent.toFixed(1)}%</strong><span className="ml-3 text-muted-foreground">{viewingDuration(s.seconds)}</span></dd></div>)}</dl></div> : <p className="text-sm text-muted-foreground">No viewing time recorded for this member yet.</p>}
+          {total > 0 ? <div className="flex flex-col items-center gap-6 sm:flex-row"><div className="size-64 shrink-0" role="img" aria-label={segments.map(s => `${s.label} ${s.percent.toFixed(1)}%`).join(", ")}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={segments.filter(s => s.seconds > 0)} dataKey="seconds" nameKey="label" outerRadius="95%" stroke="var(--background)" strokeWidth={2} isAnimationActive={false}>{segments.filter(s => s.seconds > 0).map(s => <Cell key={s.key} fill={s.color} />)}</Pie></PieChart></ResponsiveContainer></div><dl className="w-full flex-1 space-y-3">{segments.map(s => <div key={s.key} className="flex items-center justify-between gap-3 text-sm"><dt className="flex items-center gap-2"><span className={`size-3 shrink-0 rounded-full ${s.swatch}`} />{s.label}</dt><dd className="text-right tabular-nums"><strong>{s.percent.toFixed(1)}%</strong><span className="ml-3 text-muted-foreground">{viewingDuration(s.seconds)}</span></dd></div>)}</dl></div> : <p className="text-sm text-muted-foreground">No viewing time recorded for this member yet.</p>}
         </section>
         <section aria-label="Last 10 watched activities" className="space-y-3 border-t border-border pt-4"><h3 className="font-semibold">Last 10 watched activities</h3>
           {details.data?.activity.length ? <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="py-3 pr-3">Last watched · UK</th><th className="p-3">Watched</th><th className="p-3">Time viewed</th><th className="p-3 max-sm:hidden">Device</th></tr></thead><tbody>{details.data.activity.map(row => <tr key={row.id} className="border-b border-border"><td className="py-3 pr-3 align-top text-xs">{date(row.last_watched_at)}</td><td className="min-w-36 p-3 align-top"><span className="block break-words font-medium">{row.title}</span><span className="text-xs text-muted-foreground">{WATCH_KINDS.find(k => k.key === row.kind)?.label ?? row.kind}{row.category ? ` · ${row.category}` : ""}</span></td><td className="p-3 align-top tabular-nums">{viewingDuration(row.seconds)}</td><td className="p-3 align-top text-muted-foreground max-sm:hidden">{row.platform ?? "—"}</td></tr>)}</tbody></table></div> : <p className="text-sm text-muted-foreground">No watched activities recorded yet. Title history starts from 5 November 2026.</p>}
         </section>
       </>}
-    </DialogContent></Dialog>
+    </div></div>}
   </section>;
 }
