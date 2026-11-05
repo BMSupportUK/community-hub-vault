@@ -55,20 +55,46 @@ public class LiveGuideHeaderTest {
         return (LinearLayout) grids.get(0).getParent();
     }
 
-    @Test public void biggerGuideSitsInTheHeaderRowNotAtTheBottom() throws Exception {
+    @Test public void viewEpgSitsInTheHeaderRowBeforeSearchTv() throws Exception {
         MainActivity a = open();
         openLiveGuide(a);
         LinearLayout root = rootOf(a);
         List<View> pills = new ArrayList<>();
         collect(a.getWindow().getDecorView(), Button.class, pills);
         boolean found = false;
-        for (View p : pills) if (text(p).equals("⤢ Bigger guide")) {
+        for (View p : pills) if (text(p).equals("View EPG")) {
             assertFalse("the control must not be a lone button at the foot of the screen",
                     p.getParent() == root);
             assertSame("the control must sit in the screen's header row", root.getChildAt(0), p.getParent());
             found = true;
         }
-        assertTrue("Live TV on a phone must offer the bigger-guide control", found);
+        assertTrue("Live TV on a phone must offer the View EPG control", found);
+        View head = root.getChildAt(0);
+        int epg = -1, search = -1;
+        for (int i = 0; i < ((ViewGroup) head).getChildCount(); i++) {
+            View c = ((ViewGroup) head).getChildAt(i);
+            if (!(c instanceof Button)) continue;
+            String t = text(c);
+            if (t.equals("View EPG")) epg = i;
+            if (t.equals("🔍 Search TV")) search = i;
+        }
+        assertTrue("View EPG must come before Search TV in the header", epg >= 0 && search >= 0 && epg < search);
+    }
+
+    @Test public void theGridStaysHiddenUnderThePreviewUntilViewEpgOpensIt() throws Exception {
+        MainActivity a = open();
+        openLiveGuide(a);
+        List<View> grids = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), GuideGridView.class, grids);
+        assertEquals(1, grids.size());
+        View grid = grids.get(0);
+        assertEquals("the phone guide must not sit under the preview", View.GONE, grid.getVisibility());
+        List<View> pills = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), Button.class, pills);
+        for (View p : pills) if (text(p).equals("View EPG")) { p.performClick(); break; }
+        assertEquals("View EPG must open the guide full screen", View.VISIBLE, grid.getVisibility());
+        for (View p : pills) if (text(p).equals("✕ Close")) { p.performClick(); break; }
+        assertEquals("Close must put the guide away again", View.GONE, grid.getVisibility());
     }
 
     @Test public void theNowAndDayControlsLiveInsideTheBiggerGuidePopup() throws Exception {
@@ -113,6 +139,6 @@ public class LiveGuideHeaderTest {
         for (View b : inHead) labels.add(text(b));
         assertTrue("search must stay in the header: " + labels, labels.contains("🔍 Search TV"));
         assertTrue("voice search must stay in the header: " + labels, labels.contains("🎤 Voice search"));
-        assertTrue("the bigger-guide control must join them: " + labels, labels.contains("⤢ Bigger guide"));
+        assertTrue("the View EPG control must join them: " + labels, labels.contains("View EPG"));
     }
 }

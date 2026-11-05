@@ -2751,14 +2751,16 @@ public class MainActivity extends Activity {
         bigBar.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         bigBar.setVisibility(View.GONE);
         root.addView(bigBar);
-        Runnable closeBig = () -> { bigBar.setVisibility(View.GONE); top.setVisibility(View.VISIBLE); head.setVisibility(View.VISIBLE); back = this::showHome; };
+        Runnable closeBig = () -> { bigBar.setVisibility(View.GONE); grid.setVisibility(View.GONE); top.setVisibility(View.VISIBLE); head.setVisibility(View.VISIBLE); back = this::showHome; };
         bigBar.addView(headerPill("✕ Close", v -> closeBig.run()));
         if (phoneLive) {
-            // Header, not the bottom of the screen: it goes in first so it is never the pill that runs off the edge.
-            head.addView(headerPill("⤢ Bigger guide", v -> {
+            // Phones: no guide grid under the preview — "View EPG" (before Search TV) opens it full screen.
+            head.addView(headerPill("View EPG", v -> {
                 top.setVisibility(View.GONE); head.setVisibility(View.GONE); bigBar.setVisibility(View.VISIBLE);
+                grid.setVisibility(View.VISIBLE);
                 back = closeBig; grid.requestFocus();
             }), 2);
+            grid.setVisibility(View.GONE);
         }
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         // The category list pops out from the left edge instead of a pop-up at the top.
