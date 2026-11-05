@@ -811,6 +811,7 @@ public class MainActivity extends Activity {
     }
     private boolean previewCounted;
 
+    private Button boxCatPill; // TV box Live TV: category pill after the day jumps
     private Button previewMenuButton; // phone Live TV: the button under the selected category
     private boolean previewPlaying;
 
@@ -2939,6 +2940,9 @@ public class MainActivity extends Activity {
             dr.addView(miniPill("📅 ◀ 24h", "Back 24 hours", () -> { if (dayBack[0] != null) dayBack[0].run(); }));
             dr.addView(miniPill("Now", "Back to now", () -> { if (dayNow[0] != null) dayNow[0].run(); }));
             dr.addView(miniPill("24h ▶", "Forward 24 hours", () -> { if (dayFwd[0] != null) dayFwd[0].run(); }));
+            // Category pill straight after the day jumps: opens the category list; picking one loads its guide.
+            boxCatPill = miniPill("☰ Category: All", "Choose a category", () -> catBtn.performClick());
+            dr.addView(boxCatPill);
             root.addView(dr);
         }
         GuideGridView grid = new GuideGridView(this);
@@ -3055,6 +3059,7 @@ public class MainActivity extends Activity {
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
+            if (boxLive && boxCatPill != null) boxCatPill.setText("☰ Category: " + cat[1]);
             selectedCategory.setText("Category: " + cat[1]);
             if (live) liveCatId = cat[0];
             List<String> panelNames = new ArrayList<>();
