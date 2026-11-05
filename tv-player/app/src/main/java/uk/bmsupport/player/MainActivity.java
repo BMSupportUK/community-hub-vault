@@ -20,6 +20,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AbsListView;
@@ -178,7 +179,21 @@ public class MainActivity extends Activity {
 
     // ---------- multi-screen (Multi Room = 2, Triple Room = 3) ----------
     private final List<androidx.media3.exoplayer.ExoPlayer> multiPlayers = new ArrayList<>();
-    private void stopMulti() { for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) p.release(); multiPlayers.clear(); }
+    private void stopMulti() {
+        for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) p.release();
+        multiPlayers.clear();
+        updateKeepScreenOn();
+    }
+
+    /** Something playing in this screen (preview box or a multi-screen pane) keeps the phone screen awake. */
+    void updateKeepScreenOn() {
+        boolean playing = previewPlaying;
+        for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) {
+            if (p.getPlaybackState() == androidx.media3.common.Player.STATE_READY && p.getPlayWhenReady()) { playing = true; break; }
+        }
+        if (playing) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 
     /** Asks how many screens to open, so one channel can fill the whole screen. */
     private void chooseMultiScreens(int max) {
@@ -212,6 +227,9 @@ public class MainActivity extends Activity {
             pl.setVolume(i == 0 ? 1f : 0f);
             pv.setPlayer(pl);
             multiPlayers.add(pl);
+            pl.addListener(new androidx.media3.common.Player.Listener() {
+                @Override public void onPlaybackStateChanged(int s) { updateKeepScreenOn(); }
+            });
             f.addView(pv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             TextView t = text("Screen " + (i + 1) + "\nPress OK to pick a channel", 16, TEXT, true);
             t.setGravity(Gravity.CENTER);
@@ -790,11 +808,13 @@ public class MainActivity extends Activity {
      */
     void previewStarted() {
         previewPlaying = true;
+        updateKeepScreenOn();
         if (previewMenuButton != null) previewMenuButton.setText("▶ Play menu");
     }
 
     void previewStopped() {
         previewPlaying = false;
+        updateKeepScreenOn();
         if (previewMenuButton != null) previewMenuButton.setText("▶ Preview channel");
     }
 
