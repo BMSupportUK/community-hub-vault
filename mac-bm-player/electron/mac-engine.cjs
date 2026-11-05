@@ -26,8 +26,8 @@ const backups = new Map(); // token -> { url, ss, live, proc, duration }
 function ffmpegPath() { return path.join(__dirname, '../tools/ffmpeg', process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg'); }
 function backupReady() { try { return fs.statSync(ffmpegPath()).isFile(); } catch { return false; } }
 function backupArgs(url, { ss = 0, ua = '' } = {}) {
-  const net = /^https?:/i.test(url) ? ['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_on_network_error', '1', '-reconnect_delay_max', '5'] : [];
-  return ['-hide_banner', '-nostdin', '-loglevel', 'info', '-user_agent', ua || 'VLC/3.0.21 LibVLC/3.0.21', ...net,
+  const net = /^https?:/i.test(url) ? ['-user_agent', ua || 'VLC/3.0.21 LibVLC/3.0.21', '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_on_network_error', '1', '-reconnect_delay_max', '5'] : [];
+  return ['-hide_banner', '-nostdin', '-loglevel', 'info', ...net,
     ...(ss > 0 ? ['-ss', String(Math.floor(ss))] : []), '-fflags', '+genpts+discardcorrupt', '-i', url,
     '-map', '0:v:0?', '-map', '0:a:0?', '-sn', '-dn',
     '-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'zerolatency', '-crf', '22', '-pix_fmt', 'yuv420p',
