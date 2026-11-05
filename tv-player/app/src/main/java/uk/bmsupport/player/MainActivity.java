@@ -540,6 +540,11 @@ public class MainActivity extends Activity {
         io.execute(this::pollOnce);
     }
 
+    /** stopPreview only clears the now-playing note while that note still belongs to the preview. */
+    static boolean previewStopClearsNowPlaying(boolean previewCounted, boolean nowPlayingIsPreview) {
+        return previewCounted && nowPlayingIsPreview;
+    }
+
     private void stopPolling() {
         if (pollTask != null) ui.removeCallbacks(pollTask); pollTask = null;
         if (connectionTask != null) ui.removeCallbacks(connectionTask); connectionTask = null;
