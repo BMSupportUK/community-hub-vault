@@ -46,6 +46,7 @@
 - [ ] Try BM Direct Install on a real Fire TV (needs customer TV)
 
 ## BM Player (IPTV player apps)
+- [ ] Add Android/Amazon categories → sliding channels and touch scrolling in Live TV EPG; verify native interaction tests.
 - [x] Add selected-site-user or everyone targeting to bottom-screen announcements; audience tests pass and authenticated isolated selector checked. Dashboard password/PIN and real player delivery not exercised; website publish required.
 - [x] Verify announcement audience limiting (3 desktop checks) and Android bar/cross/Back dismissal plus no replay across screens (4 native tests); live signed 2.82 APK matches the release byte-for-byte.
 - [ ] Check announcement delivery and close on a real Android phone/TV (blocked: no attached device).

@@ -60,6 +60,13 @@ public class GuideGridView extends View {
     public void setProgs(int row, List<Prog> l) { progs.put(row, l); invalidate(); if (row == selRow) changed(); }
     public boolean loaded(int row) { return progs.containsKey(row); }
     public int selectedRow() { return selRow; }
+    public void selectChannel(int row) {
+        if (row < 0 || row >= names.size()) return;
+        onClock = false;
+        resetTime();
+        moveRow(row - selRow);
+        requestFocus();
+    }
     public void jumpNow() { resetTime(); invalidate(); changed(); }
     public void shiftDay(int days) {
         windowStart = Math.max(minStart(), windowStart + days * 86400L);
@@ -134,19 +141,60 @@ public class GuideGridView extends View {
     private boolean onClock;
     private boolean hasCatchup(int r) { return r >= 0 && r < catchup.size() && catchup.get(r); }
 
+    private float touchX, touchY, scrollY;
+    private int touchTop;
+    private boolean dragging;
+
     @Override public boolean onTouchEvent(android.view.MotionEvent e) {
-        // Claim the press on the channel column; without this Android never delivers the lift (ACTION_UP).
-        if (e.getActionMasked() == android.view.MotionEvent.ACTION_DOWN && e.getX() < chW() && e.getY() > headH()) return true;
-        if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP && e.getX() < chW() && e.getY() > headH()) {
-            int r = topRow + (int) ((e.getY() - headH()) / rowH());
-            if (r < names.size()) {
-                selRow = r; invalidate(); changed();
-                if (hasCatchup(r) && listener != null) listener.onCatchup(r);
+        switch (e.getActionMasked()) {
+            case android.view.MotionEvent.ACTION_DOWN:
+                touchX = e.getX(); touchY = scrollY = e.getY(); touchTop = topRow; dragging = false;
+                requestFocus();
                 return true;
-            }
+            case android.view.MotionEvent.ACTION_MOVE:
+                if (!dragging && Math.abs(e.getY() - touchY) > android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop()) {
+                    dragging = true;
+                    if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
+                }
+                if (dragging && !names.isEmpty()) {
+                    scrollY = e.getY();
+                    topRow = Math.max(0, Math.min(Math.max(0, names.size() - visibleRows()),
+                            touchTop + Math.round((touchY - scrollY) / rowH())));
+                    selRow = Math.max(topRow, Math.min(selRow, Math.min(names.size() - 1, topRow + visibleRows() - 1)));
+                    onClock = false;
+                    invalidate(); changed();
+                }
+                return true;
+            case android.view.MotionEvent.ACTION_UP:
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
+                if (dragging || Math.abs(e.getX() - touchX) > android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop()) return true;
+                if (e.getY() <= headH()) return true;
+                int r = topRow + (int) ((e.getY() - headH()) / rowH());
+                if (r < 0 || r >= names.size()) return true;
+                selRow = r; onClock = false;
+                if (e.getX() >= chW()) {
+                    buildAxis(chW(), getWidth() - chW());
+                    for (int i = 0; i + 1 < axX.length; i++) if (e.getX() >= axX[i] && e.getX() <= axX[i + 1]) {
+                        selTime = axT[i] + (long) ((axT[i + 1] - axT[i]) * (e.getX() - axX[i]) / Math.max(1f, axX[i + 1] - axX[i]));
+                        break;
+                    }
+                }
+                invalidate(); changed();
+                if (listener != null) {
+                    if (hasCatchup(r) && e.getX() >= chW() - 32 * d && e.getX() < chW()) listener.onCatchup(r);
+                    else listener.onPick(r, selected());
+                }
+                performClick();
+                return true;
+            case android.view.MotionEvent.ACTION_CANCEL:
+                dragging = false;
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
+                return true;
         }
-        return super.onTouchEvent(e);
+        return true;
     }
+
+    @Override public boolean performClick() { super.performClick(); return true; }
 
     private String hhmm(long s) {
         java.util.Calendar c = java.util.Calendar.getInstance(); c.setTimeInMillis(s * 1000);

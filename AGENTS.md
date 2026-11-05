@@ -1,5 +1,6 @@
 # Project Architecture Rules
 - Subdirectories (incl. `tv-enabler/`, `tv-direct-install/`, `tv-player/`, `windows-bm-player/`, `mac-bm-player/`) have their own `AGENTS.md`; read it before changing files there.
+- Android Live TV drawer and touch-guide navigation stay in native player classes; keep their interaction tests beside existing Android tests so TV remote and phone behaviour are checked together.
 - Authorization, screen-password unlock, account switching and order/Enabler rules live in `src/lib/AGENTS.md`.
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
