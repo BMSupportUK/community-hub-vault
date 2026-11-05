@@ -1507,12 +1507,18 @@ public class MainActivity extends Activity {
             if ("catchup".equals(it.kind)) i.putExtra("disable_hardware", true);
             if (!"off".equals(SoundBoost.current(this))) Toast.makeText(this, "Sound booster doesn't work in VLC – use VLC's own volume.", Toast.LENGTH_LONG).show();
             vlcCatchup = "catchup".equals(it.kind) ? it : null; vlcStarted = android.os.SystemClock.elapsedRealtime();
-            try { startActivityForResult(i, VLC_REQUEST); }
-            catch (Exception e) {
-                new AlertDialog.Builder(this).setTitle("VLC isn't installed")
-                        .setMessage("Install VLC from your app store (or Downloader) to use it as the player. Playing in BM Player instead.")
-                        .setPositiveButton("OK", (d, w) -> beginPlayback(it, false, position, subtitles)).show();
-            }
+            // Close the preview's provider connection first and give the panel a moment to drop it:
+            // with a 1-connection login, VLC opening while the preview still holds the stream gets refused.
+            boolean hadPreview = preview != null;
+            stopPreview(); stopMulti();
+            ui.postDelayed(() -> {
+                try { startActivityForResult(i, VLC_REQUEST); }
+                catch (Exception e) {
+                    new AlertDialog.Builder(this).setTitle("VLC isn't installed")
+                            .setMessage("Install VLC from your app store (or Downloader) to use it as the player. Playing in BM Player instead.")
+                            .setPositiveButton("OK", (d, w) -> beginPlayback(it, false, position, subtitles)).show();
+                }
+            }, hadPreview ? 1500 : 0);
             return;
         }
         Intent intent = new Intent(this, PlayerActivity.class).putExtra("url", url)
