@@ -62,6 +62,33 @@ public class LiveGuideNavigationTest {
         assertEquals(1, picks[0]);
     }
 
+    @Test public void swipeAcrossTheGuideMovesToALaterTime() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        GuideGridView grid = grid(activity);
+        long now = System.currentTimeMillis() / 1000;
+        final int[] picks = {0};
+        grid.setListener(new GuideGridView.Listener() {
+            public void needEpg(int row) {}
+            public void onHighlight(int row, GuideGridView.Prog p) {}
+            public void onPick(int row, GuideGridView.Prog p) { picks[0]++; }
+            public boolean hasReminder(int row, long start) { return false; }
+            public void onCatchup(int row) {}
+        });
+        java.util.List<GuideGridView.Prog> l = new ArrayList<>();
+        for (int i = 0; i < 12; i++) l.add(new GuideGridView.Prog("Show " + i, now - 600 + i * 3600L, now - 600 + (i + 1) * 3600L));
+        grid.setProgs(0, l);
+        touch(grid, MotionEvent.ACTION_DOWN, 900, 90);
+        touch(grid, MotionEvent.ACTION_MOVE, 300, 92);
+        touch(grid, MotionEvent.ACTION_UP, 300, 92);
+        assertEquals(0, picks[0]);
+        assertTrue(grid.selected().st > now);
+        touch(grid, MotionEvent.ACTION_DOWN, 100, 90);
+        touch(grid, MotionEvent.ACTION_MOVE, 950, 92);
+        touch(grid, MotionEvent.ACTION_MOVE, 950, 92);
+        touch(grid, MotionEvent.ACTION_UP, 950, 92);
+        assertEquals("Show 0", grid.selected().title);
+    }
+
     private GuideGridView grid(Activity activity) {
         GuideGridView grid = new GuideGridView(activity);
         ArrayList<String> names = new ArrayList<>();
