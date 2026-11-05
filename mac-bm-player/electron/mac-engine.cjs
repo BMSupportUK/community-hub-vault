@@ -23,7 +23,8 @@ let userAgent = () => '';
  * renderer's <video> always plays. Same idea as Android's built-in backup engine.
  */
 const backups = new Map(); // token -> { url, ss, live, proc, duration }
-function ffmpegPath() { return path.join(__dirname, '../tools/ffmpeg', process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg'); }
+// Packed (asar) apps keep the converter beside the archive in app.asar.unpacked, where it can be run.
+function ffmpegPath() { return path.join(__dirname, '../tools/ffmpeg', process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg').replace(/app\.asar(?=[\\/])/, 'app.asar.unpacked'); }
 function backupReady() { try { return fs.statSync(ffmpegPath()).isFile(); } catch { return false; } }
 function backupArgs(url, { ss = 0, ua = '' } = {}) {
   const net = /^https?:/i.test(url) ? ['-user_agent', ua || 'VLC/3.0.21 LibVLC/3.0.21', '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_on_network_error', '1', '-reconnect_delay_max', '5'] : [];
