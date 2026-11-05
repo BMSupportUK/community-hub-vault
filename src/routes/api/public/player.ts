@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
 
@@ -361,6 +361,10 @@ export const Route = createFileRoute("/api/public/player")({
           Object.assign(fields, await checkDeviceVpn(ip as string));
         }
         await supabaseAdmin.from("player_devices").update(fields).eq("id", device.id);
+        // Weekly viewing hours: credit the gap since the last check-in to what was playing then.
+        const { watchCredit } = await import("@/lib/player-live");
+        const credit = watchCredit({ now, lastSeenAt: device.last_seen_at, watchingKind: device.watching_kind });
+        if (credit) await supabaseAdmin.rpc("add_player_watch_seconds", { _device: device.id, _kind: credit.kind, _seconds: credit.seconds });
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({
           linked: !!(device.user_id || device.offsite_customer_id),

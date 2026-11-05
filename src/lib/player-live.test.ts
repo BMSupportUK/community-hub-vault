@@ -29,3 +29,14 @@ test("elapsed time format", () => {
   expect(formatElapsed("2026-11-02T10:55:51Z", now)).toBe("1h 04m 09s");
   expect(formatElapsed("2026-11-02T11:58:55Z", now)).toBe("1m 05s");
 });
+
+import { watchCredit as wc } from "./player-live";
+test("watch credit counts the minute since the last check-in while playing", () => {
+  const now = Date.parse("2026-11-05T08:00:00Z");
+  expect(wc({ now, lastSeenAt: "2026-11-05T07:59:00Z", watchingKind: "live" })).toEqual({ kind: "live", seconds: 60 });
+});
+test("watch credit is nothing when nothing was playing or the app went offline", () => {
+  const now = Date.parse("2026-11-05T08:00:00Z");
+  expect(wc({ now, lastSeenAt: "2026-11-05T07:59:00Z", watchingKind: null })).toBeNull();
+  expect(wc({ now, lastSeenAt: "2026-11-05T07:50:00Z", watchingKind: "film" })).toBeNull();
+});

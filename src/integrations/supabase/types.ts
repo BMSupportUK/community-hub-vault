@@ -6072,6 +6072,27 @@ export type Database = {
         }
         Relationships: []
       }
+      player_watch_daily: {
+        Row: {
+          day: string
+          device_id: string
+          kind: string
+          seconds: number
+        }
+        Insert: {
+          day: string
+          device_id: string
+          kind: string
+          seconds?: number
+        }
+        Update: {
+          day?: string
+          device_id?: string
+          kind?: string
+          seconds?: number
+        }
+        Relationships: []
+      }
       prediction_winners: {
         Row: {
           competition: string
@@ -8802,6 +8823,10 @@ export type Database = {
           slot_key: string
         }[]
       }
+      add_player_watch_seconds: {
+        Args: { _device: string; _kind: string; _seconds: number }
+        Returns: undefined
+      }
       admin_allocate_customer_account_package: {
         Args: {
           p_account_id: string
@@ -9756,6 +9781,15 @@ export type Database = {
       player_cast_rating: {
         Args: { p_key: string; p_stars: number; p_voter: string }
         Returns: undefined
+      }
+      player_watch_weekly: {
+        Args: { _weeks: number }
+        Returns: {
+          devices: number
+          hours: number
+          kind: string
+          week_start: string
+        }[]
       }
       portal_credentials_for_user: {
         Args: { p_user_id: string }
