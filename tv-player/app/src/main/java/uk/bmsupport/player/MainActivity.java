@@ -2811,7 +2811,8 @@ public class MainActivity extends Activity {
         stopPreview();
         LinearLayout root = column();
         LinearLayout head = row();
-        final boolean boxLive = live && !"phone".equals(platform());
+        // Phones now use the same Live TV layout as TV boxes (preview, info beside it, guide below, Category pill).
+        final boolean boxLive = live;
         if (live && !boxLive) { head.setGravity(Gravity.CENTER_VERTICAL);
             head.addView(text("Live TV", 26, TEXT, true));
             head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
@@ -2827,7 +2828,7 @@ public class MainActivity extends Activity {
         TextView progTime = text("", 15, MUTED, false);
         TextView pvStatus = text("", 13, MUTED, false);
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
-        final boolean phoneLive = live && "phone".equals(platform());
+        final boolean phoneLive = false; // phone-only Live TV extras retired: phones share the box layout
         TextView selectedCategory = text("Category: All", 15, MUTED, false);
         // Phones: "Preview channel" loads the selected channel into the preview box; once it kicks in,
         // the box and the button both bring up that channel's play menu.
