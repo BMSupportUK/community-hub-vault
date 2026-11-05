@@ -9,16 +9,17 @@ function portable(localKey) { const rest = String(localKey || '').split(':').sli
 function toRemote(localKey, entry) {
   const key = portable(localKey);
   if (!key || !entry) return null;
-  return { key, position_ms: Math.max(0, Math.round((entry.position || 0) * 1000)), duration_ms: Math.max(0, Math.round((entry.duration || 0) * 1000)), updated_at: Math.round(entry.at || 1) };
+  return { key, position_ms: Math.max(0, Math.round((entry.position || 0) * 1000)), duration_ms: Math.max(0, Math.round((entry.duration || 0) * 1000)), updated_at: Math.round(entry.at || 1), age_ms: Math.max(0, Date.now() - Math.round(entry.at || 1)) };
 }
 /** Merge pulled rows into local progress; returns the number of titles that changed. */
-function mergeRemote(progress, prefix, items) {
+function mergeRemote(progress, prefix, items, skew = 0) {
   let changed = 0;
   for (const r of items || []) {
     if (!r || !PORTABLE.test(r.key)) continue;
     const k = prefix + ':' + r.key, local = progress[k];
-    if (local && (local.at || 0) >= r.updated_at) continue;
-    progress[k] = { position: r.position_ms / 1000, duration: r.duration_ms / 1000, at: r.updated_at };
+    const at = r.updated_at + skew;
+    if (local && (local.at || 0) >= at) continue;
+    progress[k] = { position: r.position_ms / 1000, duration: r.duration_ms / 1000, at };
     changed++;
   }
   return changed;

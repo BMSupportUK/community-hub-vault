@@ -120,7 +120,7 @@ async function syncProgress(force=true){
  if(!store.user||!store.token||!gate.unlocked)return;if(!force&&Date.now()-lastProgressPull<30000)return;lastProgressPull=Date.now();const pre=progressPrefix();store.progress=store.progress||{};
  if(store.progressSeeded!==pre){store.progressDirty=[...new Set([...(store.progressDirty||[]),...Object.keys(store.progress).filter(k=>k.startsWith(pre+':')&&psync.portable(k))])];store.progressSeeded=pre;save();}
  const r=await site({action:'progress',login:store.user});
- if(Array.isArray(r?.items)&&psync.mergeRemote(store.progress,pre,r.items)){save();send({type:'state',state:publicState()});}
+ if(Array.isArray(r?.items)&&psync.mergeRemote(store.progress,pre,r.items,Number.isFinite(r?.now)?Date.now()-r.now:0)){save();send({type:'state',state:publicState()});}
  await pushProgress(true);
 }
 async function stopAll(){

@@ -71,7 +71,8 @@ final class ProgressSync {
                     if (pk == null || !k.startsWith(pre)) { sent.add(k); continue; }
                     if (items.length() >= 50) break;
                     items.put(new JSONObject().put("key", pk).put("position_ms", Math.max(0, p.getLong(k + ":position", 0)))
-                            .put("duration_ms", Math.max(0, p.getLong(k + ":duration", 0))).put("updated_at", p.getLong(k + ":at", System.currentTimeMillis())));
+                            .put("duration_ms", Math.max(0, p.getLong(k + ":duration", 0))).put("updated_at", p.getLong(k + ":at", 1))
+                            .put("age_ms", Math.max(0, System.currentTimeMillis() - p.getLong(k + ":at", 1))));
                     sent.add(k);
                 }
                 if (items.length() > 0) {
@@ -111,13 +112,15 @@ final class ProgressSync {
                 JSONObject r = new JSONObject(Net.postJson(API, new JSONObject().put("action", "progress").put("device_token", token).put("login", login).toString()));
                 JSONArray items = r.optJSONArray("items");
                 boolean any = false;
+                // Translate server times onto this device's clock so the most recently watched device always wins.
+                long skew = r.has("now") ? System.currentTimeMillis() - r.optLong("now") : 0;
                 if (items != null) {
                     SharedPreferences.Editor ed = p.edit();
                     for (int i = 0; i < items.length(); i++) {
                         JSONObject o = items.optJSONObject(i); if (o == null) continue;
                         String k = pre + o.optString("key");
                         if (portable(k) == null) continue;
-                        long at = o.optLong("updated_at");
+                        long at = o.optLong("updated_at") + skew;
                         if (!remoteWins(p.getLong(k + ":at", 0), at)) continue;
                         ed.putLong(k + ":position", o.optLong("position_ms")).putLong(k + ":duration", o.optLong("duration_ms")).putLong(k + ":at", at);
                         any = true;
