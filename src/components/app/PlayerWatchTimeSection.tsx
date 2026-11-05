@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlayerMemberViewing } from "@/components/app/PlayerMemberViewing";
 
 type Row = { week_start: string; kind: string; hours: number; devices: number };
-const KINDS: [string, string][] = [["live", "Live TV"], ["film", "Films"], ["series", "Series"], ["catchup", "Catch up"]];
+const KINDS: [string, string][] = [["live", "Live TV"], ["film", "Movies"], ["series", "Series"], ["catchup", "Catch up"]];
 
 /** Weekly playback hours (Mon–Sun, UK time) counted from each player's minute check-ins. */
 export function WatchTimeSection() {
