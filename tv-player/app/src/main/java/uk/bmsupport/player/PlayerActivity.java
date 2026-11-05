@@ -378,6 +378,8 @@ public class PlayerActivity extends Activity {
             @Override public void onPlayerError(PlaybackException e) {
                 if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { player.seekToDefaultPosition(); player.prepare(); return; }
                 if (!everReady && urlAt + 1 < liveUrls.length) { urlAt++; open(0); return; }
+                // Every address failed before any picture (format the main player cannot open): backup engine takes over.
+                if (!everReady && !"catchup".equals(kind())) { handToBackup(); return; }
                 reconnect();
             }
         });
@@ -415,6 +417,20 @@ public class PlayerActivity extends Activity {
         if (other != null) prefs(this).edit().putString("fmt_pref:" + id, other).apply();
     }
 
+    private boolean handedOver;
+    /** Restart this stream in the built-in backup engine (BackupPlayerActivity) with the same addresses and position. */
+    private void handToBackup() {
+        if (handedOver || isFinishing()) return;
+        handedOver = true;
+        long pos = player != null && player.getDuration() > 0 ? Math.max(lastPosition, player.getCurrentPosition()) : resumePosition;
+        if (player != null) { player.release(); player = null; }
+        Toast.makeText(this, "Switching to BM Player's backup engine…", Toast.LENGTH_SHORT).show();
+        android.content.Intent i = new android.content.Intent(getIntent()).setClass(this, BackupPlayerActivity.class)
+                .putExtra("urls", liveUrls).putExtra("resume_ms", pos);
+        startActivity(i);
+        finish();
+    }
+
     private void open(long at) {
         player.setMediaItem(item(liveUrls[urlAt]));
         player.setPlayWhenReady(true);
@@ -431,7 +447,7 @@ public class PlayerActivity extends Activity {
         if (StreamRecovery.giveUp(reconnects)) {
             if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
             BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), StreamRecovery.STALL_RECONNECT_MS, true);
-            Toast.makeText(this, "This stream keeps dropping and couldn't reconnect. Try again, try \"Play with VLC\" or report a problem.", Toast.LENGTH_LONG).show();
+            handToBackup();
             return;
         }
         if (reconnectNote != null) reconnectNote.setVisibility(TextView.VISIBLE);

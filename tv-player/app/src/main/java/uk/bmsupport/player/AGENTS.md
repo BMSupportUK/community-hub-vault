@@ -22,3 +22,4 @@
 - Guide line-ups go through GuideListings: short EPG first, the full day table when it only reaches "now"; cached per channel for 15 minutes or until it runs out, and the grid re-asks every minute so programmes move on without reopening Live TV.
 - Phone play menus (open()) add "📺 Cast to TV": DlnaCast does SSDP AVTransport discovery under a Wi-Fi multicast lock, then SetAVTransportURI + Play on the chosen smart TV; TVs and Android TV boxes do not show the option.
 - Report a problem lives on the built-in player screen (top-left button shown with the controls, ADJUST_PAN pop-up, no keepEntryVisible resizing which flickered phones); play menus never carry it — the series page keeps its own button.
+- Built-in playback hands over to BackupPlayerActivity (in-app libVLC, ARM-only native libs) when every address fails before a picture or reconnects give up; catch-up keeps its own recovery.
