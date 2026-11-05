@@ -143,20 +143,33 @@ public class GuideGridView extends View {
 
     private float touchX, touchY, scrollY;
     private int touchTop;
-    private boolean dragging;
+    private boolean dragging, dragX;
+    private long touchWin;
 
     @Override public boolean onTouchEvent(android.view.MotionEvent e) {
         switch (e.getActionMasked()) {
             case android.view.MotionEvent.ACTION_DOWN:
-                touchX = e.getX(); touchY = scrollY = e.getY(); touchTop = topRow; dragging = false;
+                touchX = e.getX(); touchY = scrollY = e.getY(); touchTop = topRow; touchWin = windowStart; dragging = false; dragX = false;
                 requestFocus();
                 return true;
             case android.view.MotionEvent.ACTION_MOVE:
-                if (!dragging && Math.abs(e.getY() - touchY) > android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop()) {
+                int slop = android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();
+                if (!dragging && (Math.abs(e.getY() - touchY) > slop || Math.abs(e.getX() - touchX) > slop)) {
                     dragging = true;
+                    dragX = Math.abs(e.getX() - touchX) > Math.abs(e.getY() - touchY);
                     if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
                 }
-                if (dragging && !names.isEmpty()) {
+                if (dragging && dragX) {
+                    float pps = Math.max(1f, getWidth() - chW()) / WINDOW;
+                    long shift = (long) ((touchX - e.getX()) / pps) / SLOT * SLOT;
+                    long ws = Math.max(minStart(), touchWin + shift);
+                    if (ws != windowStart) {
+                        windowStart = ws;
+                        selTime = Math.max(now(), windowStart + 60);
+                        if (selTime >= windowStart + WINDOW) selTime = windowStart + 60;
+                        onClock = false; invalidate(); changed();
+                    }
+                } else if (dragging && !names.isEmpty()) {
                     scrollY = e.getY();
                     topRow = Math.max(0, Math.min(Math.max(0, names.size() - visibleRows()),
                             touchTop + Math.round((touchY - scrollY) / rowH())));
