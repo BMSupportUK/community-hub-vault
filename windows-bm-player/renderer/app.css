@@ -72,3 +72,5 @@ button.primary{background:var(--accent);color:#fff}
 .categories button.selected{border-color:var(--accent);background:var(--raised)}
 .poster{background:var(--surface);border-radius:12px}
 .modal{background:var(--surface);border-radius:14px}
+.home .tile .refresh{background:var(--surface);border-radius:12px}
+.bar .pill{margin-left:8px}
