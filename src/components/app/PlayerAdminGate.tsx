@@ -28,7 +28,7 @@ export function PlayerAdminGate({ children }: { children: ReactNode }) {
   }
 
   return <main className="flex min-h-0 flex-1 items-center justify-center bg-background px-4 py-10">
-    <form className="w-full max-w-2xl space-y-4 rounded-2xl border border-border bg-surface p-6" onSubmit={async (e) => {
+    <form className="w-full max-w-xl space-y-4 rounded-2xl border border-border bg-surface p-6" onSubmit={async (e) => {
       e.preventDefault(); setBusy(true); setError("");
       try {
         const r = await unlock({ data: { pin } });
@@ -37,7 +37,7 @@ export function PlayerAdminGate({ children }: { children: ReactNode }) {
     }}>
       <div className="flex items-baseline gap-x-3">
         <div className="flex shrink-0 items-center gap-2"><KeyRound className="size-5 shrink-0 text-primary" /><h1 className="font-display text-xl font-bold">BM Player Admin login</h1></div>
-        <p className="text-sm text-muted-foreground">Enter your Staff PIN. You'll stay signed in here for 15 minutes.</p>
+        <p className="text-sm text-muted-foreground">Enter your Staff PIN — 15 minutes of access.</p>
       </div>
       <Input type="password" inputMode="numeric" autoComplete="off" autoFocus aria-label="Staff PIN" placeholder="Staff PIN" value={pin} onChange={(e) => setPin(e.target.value)} aria-invalid={!!error} />
       {error && <p className="text-sm text-destructive">{error}</p>}
