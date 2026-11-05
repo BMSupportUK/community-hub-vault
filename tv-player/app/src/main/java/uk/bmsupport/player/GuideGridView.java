@@ -90,6 +90,19 @@ public class GuideGridView extends View {
     private float rowH() { return (phone ? 50 : 64) * d; }
     private float headH() { return 36 * d; }
     private float chW() { return phone ? Math.min(150 * d, getWidth() * 0.22f) : Math.min(220 * d, getWidth() * 0.26f); }
+    /** Every minute while on screen: move the "now" line and re-ask for any channel line-up that has gone stale. */
+    private final Runnable tick = new Runnable() {
+        @Override public void run() {
+            if (!isAttachedToWindow()) return;
+            long now = System.currentTimeMillis() / 1000;
+            if (now >= windowStart + SLOT && windowStart + SLOT <= (now / SLOT) * SLOT) { windowStart = (now / SLOT) * SLOT; if (selTime < now) selTime = now; }
+            invalidate(); changed();
+            postDelayed(this, 60_000);
+        }
+    };
+    @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); removeCallbacks(tick); postDelayed(tick, 60_000); }
+    @Override protected void onDetachedFromWindow() { removeCallbacks(tick); super.onDetachedFromWindow(); }
+
     private int visibleRows() { return Math.max(1, (int) ((getHeight() - headH()) / rowH())); }
 
     private void changed() {
