@@ -446,32 +446,16 @@ public class PlayerActivity extends Activity {
         String rk = getIntent().getStringExtra("report_kind");
         final String kind = rk != null ? rk : "live".equals(kind()) ? "live" : "film".equals(kind()) ? "film" : "series";
         final String cat = getIntent().getStringExtra("report_category");
-        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
-        box.setOrientation(android.widget.LinearLayout.VERTICAL);
-        int pad = (int) (20 * getResources().getDisplayMetrics().density);
-        box.setPadding(pad, pad / 2, pad, 0);
-        TextView info = new TextView(this);
-        info.setText((kind.equals("live") ? "Channel: " : kind.equals("film") ? "Film: " : "Series: ") + title + (cat == null || cat.isEmpty() ? "" : "\nCategory: " + cat));
-        // Sideways phones leave only a strip above the keypad, so Send and Cancel sit at the top, above the box.
-        android.widget.LinearLayout actions = new android.widget.LinearLayout(this);
-        actions.setGravity(Gravity.END);
-        final android.widget.Button cancelBtn = new android.widget.Button(this); cancelBtn.setAllCaps(false); cancelBtn.setText("Cancel");
-        final android.widget.Button sendBtn = new android.widget.Button(this); sendBtn.setAllCaps(false); sendBtn.setText("Send to BM Support");
-        actions.addView(cancelBtn); actions.addView(sendBtn);
-        box.addView(actions);
-        box.addView(info);
-        final android.widget.EditText issue = new android.widget.EditText(this);
-        issue.setHint("Briefly tell us what's wrong (e.g. buffering, no sound, won't play)");
-        issue.setMinLines(1); issue.setMaxLines(3);
-        issue.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
-        issue.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(1000) });
-        issue.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        box.addView(issue);
+        ReportBox rb = buildReportBox(this, title, kind, cat);
+        final android.widget.LinearLayout box = rb.box;
+        final android.widget.Button cancelBtn = rb.cancel;
+        final android.widget.Button sendBtn = rb.send;
+        final android.widget.EditText issue = rb.issue;
         final String fTitle = title;
         final android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this).setView(box).create();
         cancelBtn.setOnClickListener(v -> dlg.dismiss());
         issue.setOnEditorActionListener((tv, a, e) -> { if (a == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) { sendBtn.performClick(); return true; } return false; });
-        if (dlg.getWindow() != null) dlg.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        if (dlg.getWindow() != null) dlg.getWindow().setSoftInputMode(reportInputMode());
         sendBtn.setOnClickListener(v -> {
             String msg = issue.getText().toString().trim();
             if (msg.length() < 3) { issue.setError("Please type a short description"); return; }
@@ -501,6 +485,47 @@ public class PlayerActivity extends Activity {
             }).start();
         });
         dlg.show();
+    }
+
+    /** The pop-up pans above the keypad instead of resizing itself around it (resizing made phones flicker). */
+    static int reportInputMode() {
+        return WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
+    }
+
+    /** The report pop-up's contents, built in one place so the layout can be checked: Send/Cancel above the typing box. */
+    static final class ReportBox {
+        final android.widget.LinearLayout box;
+        final android.widget.Button send;
+        final android.widget.Button cancel;
+        final android.widget.EditText issue;
+        ReportBox(android.widget.LinearLayout box, android.widget.Button send, android.widget.Button cancel, android.widget.EditText issue) {
+            this.box = box; this.send = send; this.cancel = cancel; this.issue = issue;
+        }
+    }
+
+    static ReportBox buildReportBox(android.content.Context ctx, String title, String kind, String cat) {
+        android.widget.LinearLayout box = new android.widget.LinearLayout(ctx);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad = (int) (20 * ctx.getResources().getDisplayMetrics().density);
+        box.setPadding(pad, pad / 2, pad, 0);
+        TextView info = new TextView(ctx);
+        info.setText((kind.equals("live") ? "Channel: " : kind.equals("film") ? "Film: " : "Series: ") + title + (cat == null || cat.isEmpty() ? "" : "\nCategory: " + cat));
+        // Sideways phones leave only a strip above the keypad, so Send and Cancel sit at the top, above the box.
+        android.widget.LinearLayout actions = new android.widget.LinearLayout(ctx);
+        actions.setGravity(Gravity.END);
+        android.widget.Button cancelBtn = new android.widget.Button(ctx); cancelBtn.setAllCaps(false); cancelBtn.setText("Cancel");
+        android.widget.Button sendBtn = new android.widget.Button(ctx); sendBtn.setAllCaps(false); sendBtn.setText("Send to BM Support");
+        actions.addView(cancelBtn); actions.addView(sendBtn);
+        box.addView(actions);
+        box.addView(info);
+        android.widget.EditText issue = new android.widget.EditText(ctx);
+        issue.setHint("Briefly tell us what's wrong (e.g. buffering, no sound, won't play)");
+        issue.setMinLines(1); issue.setMaxLines(3);
+        issue.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
+        issue.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(1000) });
+        issue.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        box.addView(issue);
+        return new ReportBox(box, sendBtn, cancelBtn, issue);
     }
 
     private String kind() { String k = getIntent().getStringExtra("content_kind"); return k == null ? "live" : k; }

@@ -12,7 +12,7 @@
 - Playlists download as whole-section lists on one queue (with the progress pop-up) and browse splits them by category locally, so "All" shows at once; posters never draw an overlay — the selected card paints its own ring.
 - Films and Series default to "Recently added" (latest uploads first) when no sort was saved; a customer-chosen sort is still remembered per kind.
 - Watched positions stay on-device, keyed by hashed provider/login plus media kind/id; built-in playback and VLC results (extra_position/extra_duration) write progress; bars sit on films and episodes, never the series poster.
-- "Report a problem" exists only inside channel/film/episode menus; the app posts the `report` action (names, category, episode, device, version, customer text) and the website opens a Live TV or Movie/Series ticket for the linked owner.
+- "Report a problem" lives on the built-in player screen (a button shown with the controls), never in play menus; the app posts the `report` action (names, category, episode, device, version, customer text) and the website opens a Live TV or Movie/Series ticket for the linked owner.
 - Self-update downloads a fresh uncached APK and installs only if its versionCode beats the installed one; release by uploading the file first, then switching the build row.
 - iFollow/Scottish sports fixtures group playlist channels under each team name (teamChannels, title split on "v"), then the guide-listed channels.
 - Sports guide opens with a Search manually / Voice search choice; voice matches every spoken word against event, guide and sport names. Voice buttons use the device speech service when one resolves, otherwise (Fire TV) a focused dictation box for the remote mic.
