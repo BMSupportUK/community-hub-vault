@@ -1061,7 +1061,8 @@ public class MainActivity extends Activity {
                     if (!c[0].equals(current[0])) return;
                     items.setSelection(0);
                     if (items instanceof ListView) ((ListView) items).setSelectionFromTop(0, 0);
-                    if (focusItems) items.requestFocus();
+                    if (posters && catPill != null) catPill.requestFocus(); // Films/Series open on the Category pill
+                    else if (focusItems) items.requestFocus();
                 });
                 if (!kind.equals("live")) {
                     epg.setText(c[1] + " · " + list.size() + " titles");
@@ -1187,7 +1188,7 @@ public class MainActivity extends Activity {
             open(it);
         });
         if (posters) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { if (items.isInTouchMode()) return; android.widget.GridView g = (android.widget.GridView) items; int cols = Math.max(1, g.getNumColumns()); int first = g.getFirstVisiblePosition(), last = g.getLastVisiblePosition(); if (pos < first + cols || pos > last - cols) g.smoothScrollToPositionFromTop(pos - (pos % cols), dp(8), 180); }
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { if (items.isInTouchMode()) return; android.widget.GridView g = (android.widget.GridView) items; int cols = Math.max(1, g.getNumColumns()); int first = g.getFirstVisiblePosition(), last = g.getLastVisiblePosition(); int rowStart = pos - (pos % cols); Integer lastRow = (Integer) g.getTag(); if (lastRow != null && lastRow == rowStart) return; g.setTag(rowStart); if (pos < first + cols || pos > last - cols) g.post(() -> g.smoothScrollToPositionFromTop(rowStart, dp(16), 150)); }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -3973,7 +3974,7 @@ public class MainActivity extends Activity {
         g.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
         // Same gap across and down so every row sits an even distance below the one above.
         g.setHorizontalSpacing(dp(12)); g.setVerticalSpacing(dp(12));
-        g.setPadding(dp(8), dp(8), dp(8), dp(8));
+        g.setPadding(dp(10), dp(14), dp(10), dp(14)); g.setClipToPadding(false);
         g.setDrawSelectorOnTop(false);
         return g;
     }
