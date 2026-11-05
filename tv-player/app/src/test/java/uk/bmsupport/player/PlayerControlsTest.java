@@ -17,4 +17,10 @@ public class PlayerControlsTest {
         assertTrue(PlayerControls.canReport("film"));
         assertTrue(PlayerControls.canReport("episode"));
     }
+    @Test public void pictureCyclesFitZoomStretch() {
+        assertEquals("zoom", PlayerControls.nextPicture("fit"));
+        assertEquals("stretch", PlayerControls.nextPicture("zoom"));
+        assertEquals("fit", PlayerControls.nextPicture("stretch"));
+        assertEquals("Fit", PlayerControls.pictureLabel(null));
+    }
 }
