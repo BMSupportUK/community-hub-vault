@@ -263,16 +263,19 @@ public class PlayerActivity extends Activity {
         final int ctrlBottom = (int) (84 * getResources().getDisplayMetrics().density);
         FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
         blp.bottomMargin = ctrlBottom; blp.leftMargin = 24;
-        root.addView(boostBtn, blp);
+        final android.widget.LinearLayout ctrlRow = new android.widget.LinearLayout(this);
+        ctrlRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        ctrlRow.addView(boostBtn);
+        root.addView(ctrlRow, blp);
         // Films and series always fill the screen (Zoom); live TV and catch up keep their own shape.
         if (PlayerControls.canSkip(kind())) view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
         final android.widget.Button reportBtn = new android.widget.Button(this);
         reportBtn.setAllCaps(false);
         reportBtn.setText("⚠ Report a problem");
         reportBtn.setOnClickListener(v -> showReport());
-        FrameLayout.LayoutParams reportLp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
-        reportLp.bottomMargin = ctrlBottom; reportLp.leftMargin = 24 + (int) (230 * getResources().getDisplayMetrics().density);
-        root.addView(reportBtn, reportLp);
+        android.widget.LinearLayout.LayoutParams reportLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        reportLp.leftMargin = (int) (12 * getResources().getDisplayMetrics().density);
+        ctrlRow.addView(reportBtn, reportLp);
         // Catch up problems can't be fixed by us, so there is no report button on catch up.
         final boolean canReport = PlayerControls.canReport(kind());
         if (!canReport) reportBtn.setVisibility(android.view.View.GONE);
