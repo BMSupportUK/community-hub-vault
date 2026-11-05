@@ -6072,6 +6072,45 @@ export type Database = {
         }
         Relationships: []
       }
+      player_watch_activity: {
+        Row: {
+          category: string | null
+          device_id: string
+          id: string
+          kind: string
+          last_watched_at: string
+          platform: string | null
+          seconds: number
+          started_at: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          device_id: string
+          id?: string
+          kind: string
+          last_watched_at: string
+          platform?: string | null
+          seconds?: number
+          started_at: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          device_id?: string
+          id?: string
+          kind?: string
+          last_watched_at?: string
+          platform?: string | null
+          seconds?: number
+          started_at?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_watch_daily: {
         Row: {
           day: string
@@ -9782,6 +9821,22 @@ export type Database = {
         Args: { p_key: string; p_stars: number; p_voter: string }
         Returns: undefined
       }
+      player_watch_member_breakdown: {
+        Args: { _user: string }
+        Returns: {
+          kind: string
+          seconds: number
+        }[]
+      }
+      player_watch_members: {
+        Args: never
+        Returns: {
+          last_watched_at: string
+          seconds: number
+          user_id: string
+          username: string
+        }[]
+      }
       player_watch_weekly: {
         Args: { _weeks: number }
         Returns: {
@@ -9838,6 +9893,20 @@ export type Database = {
         Returns: undefined
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
+      record_player_watch_activity: {
+        Args: {
+          _category: string
+          _device: string
+          _ended: string
+          _kind: string
+          _platform: string
+          _seconds: number
+          _started: string
+          _title: string
+          _user: string
+        }
+        Returns: undefined
+      }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
       redeem_order_enabler_code: {
         Args: { _code_hash: string; _order_id: string }
