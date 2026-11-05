@@ -165,7 +165,7 @@ class MacEngine {
   status(index) {
     const s = this.sessions.get(index);
     if (!s) return null;
-    if (!s.backup) return { position: s.position, duration: s.duration, state: s.state, seekable: s.seekable };
+    if (!s.backup) return { position: s.position, duration: s.duration, state: s.state, seekable: s.seekable, subs: s.subs || 0 };
     const duration = s.backup.live ? 0 : backups.get(s.backup.token)?.duration || 0;
     return { position: s.position + s.backup.offset, duration, state: s.state, seekable: duration > 0, backup: true };
   }
