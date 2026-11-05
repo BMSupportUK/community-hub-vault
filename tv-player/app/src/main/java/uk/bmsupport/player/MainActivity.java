@@ -814,6 +814,8 @@ public class MainActivity extends Activity {
     private String liveCatId = "*";
 
     private void browse(String kind) {
+        // Live TV is the Sky-style guide itself: preview on top, guide below, categories slide out.
+        if (kind.equals("live")) { showTvGuide(liveCatId, true); return; }
         screen = "browse"; back = this::showHome;
         String title = kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series";
         String catAction = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
@@ -2676,19 +2678,29 @@ public class MainActivity extends Activity {
     private void showTvGuide() { showTvGuide(null); }
 
     /** TV guide opened on one category (Live TV's EPG button); Back returns to Live TV. */
-    private void showTvGuide(String startCat) {
-        screen = "tvguide"; back = startCat == null ? this::showHome : () -> browse("live");
+    private void showTvGuide(String startCat) { showTvGuide(startCat, false); }
+
+    private void showTvGuide(String startCat, boolean live) {
+        screen = "tvguide"; back = this::showHome;
         stopPreview();
         LinearLayout root = column();
+        if (live) {
+            LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
+            head.addView(text("Live TV", 26, TEXT, true));
+            head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+            head.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
+            head.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
+            root.addView(head);
+        }
         LinearLayout top = row();
         LinearLayout info = column();
-        TextView heading = text("TV guide", 26, TEXT, true);
+        TextView heading = text(live ? "Pick a programme" : "TV guide", live ? 16 : 26, live ? MUTED : TEXT, !live);
         TextView progTitle = text("Loading your channels…", 20, TEXT, true);
         TextView progTime = text("", 15, MUTED, false);
         TextView pvStatus = text("", 13, MUTED, false);
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
         LinearLayout btns = row();
-        Button catBtn = button("Category: All", v -> {});
+        Button catBtn = button(live ? "☰ Categories: All" : "Category: All", v -> {});
         btns.addView(catBtn);
         btns.addView(button("Now", v -> {}));
         btns.addView(button("◀ Day", v -> {}));
@@ -2700,7 +2712,19 @@ public class MainActivity extends Activity {
         pv.setUseController(false); pv.setBackgroundColor(Color.BLACK); pv.setFocusable(false);
         pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
         pv.setShutterBackgroundColor(Color.BLACK);
-        side.addView(pv, new LinearLayout.LayoutParams(dp(288), dp(162)));
+        if (live) {
+            // Preview box sits above the guide and shows the family picture until a channel is OK'd.
+            android.widget.FrameLayout pvFrame = new android.widget.FrameLayout(this);
+            pvFrame.addView(pv, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            android.widget.ImageView posterImg = new android.widget.ImageView(this);
+            posterImg.setImageResource(R.drawable.preview_family);
+            posterImg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            pvFrame.addView(posterImg, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            previewPoster = posterImg; previewItem = null;
+            side.addView(pvFrame, new LinearLayout.LayoutParams(dp(400), dp(225)));
+            pvStatus.setText("OK on a programme that's on now to preview it · OK again for the channel menu");
+            pvStatus.setMaxWidth(dp(400));
+        } else side.addView(pv, new LinearLayout.LayoutParams(dp(288), dp(162)));
         side.addView(pvStatus);
         top.addView(side, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(top);
@@ -2731,7 +2755,8 @@ public class MainActivity extends Activity {
         java.util.function.Consumer<String[]> applyCat = cat -> {
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
-            catBtn.setText("Category: " + cat[1]);
+            catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
+            if (live) liveCatId = cat[0];
             List<String> panelNames = new ArrayList<>();
             for (String[] c : catRows) panelNames.add((c[0].equals(cat[0]) ? "\u2713 " : "") + c[1]);
             catList.setAdapter(adapter(panelNames));
@@ -2788,6 +2813,7 @@ public class MainActivity extends Activity {
                             + (ch.archiveDays > 0 && on ? "   ·  🕘 ◀ for Catch up" : "")
                             + (on ? "   ·  On now – OK to watch" : MainActivity.this.hasReminder(ch.id, p.st) ? "   ·  ⏰ Reminder set – OK to remove" : "   ·  OK to set a reminder"));
                 }
+                if (live) return; // Live TV never starts a preview on highlight.
                 if (previewPending[0] != null && previewPending[0].equals(ch.id)) return;
                 previewPending[0] = ch.id;
                 schedulePreview(ch, pv, pvStatus);
@@ -2796,6 +2822,10 @@ public class MainActivity extends Activity {
                 if (r < 0 || r >= shownCh.size()) return;
                 Item ch = shownCh.get(r);
                 long now = System.currentTimeMillis() / 1000;
+                if (live && (p == null || p.st <= now)) {
+                    if (previewItem == null || !ch.id.equals(previewItem.id)) { schedulePreview(ch, pv, pvStatus); return; }
+                    open(ch); return;
+                }
                 if (p == null || p.st <= now) { stopPreview(); play(ch, defaultVlc()); return; }
                 Runnable redraw = () -> { grid.invalidate(); onHighlight(r, p); };
                 if (MainActivity.this.hasReminder(ch.id, p.st)) confirmRemoveReminder(ch, p.title, p.st, redraw);
@@ -2807,7 +2837,7 @@ public class MainActivity extends Activity {
                 if (r < 0 || r >= shownCh.size()) return;
                 Item ch = shownCh.get(r);
                 if (ch.archiveDays <= 0) { Toast.makeText(MainActivity.this, "Catch up isn't available on this channel", Toast.LENGTH_SHORT).show(); return; }
-                showCatchup(ch, MainActivity.this::showTvGuide);
+                showCatchup(ch, live ? () -> browse("live") : MainActivity.this::showTvGuide);
             }
         });
         io.execute(() -> {
