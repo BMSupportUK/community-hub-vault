@@ -58,6 +58,7 @@ function start(index) {
     video.textTracks.addEventListener?.('addtrack', setText); video.addEventListener('loadedmetadata', setText, { once: true });
   }
   if (cmd.resume > 0) video.addEventListener('loadedmetadata', () => { try { video.currentTime = cmd.resume; } catch {} }, { once: true });
+  video.style.objectFit = cmd.fill ? 'cover' : 'contain';
   video.play().catch(() => {});
 }
 
