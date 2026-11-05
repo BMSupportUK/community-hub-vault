@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Build and release Windows 0.4.5 and universal Mac 0.1.19 with the pending desktop changes; verify both existing download endpoints.
 - [x] Build, sign and release Android 2.94, Windows 0.4.4 and universal Mac 0.1.18 with the clean family/remote preview picture; 37 Android and 38 desktop tests pass, all live downloads match byte-for-byte. Real-device playback remains unverified (no attached devices).
 - [x] Check charmainea login failure: saved .com address confirmed, successful password login at 09:57 followed by invalid-credentials attempts; no account or password changed.
 - [x] Make staff email validation readable and prevent saving malformed addresses; exact screenshot input rejected beside the field, corrected .com address enabled, five validation/access tests pass and build OK.
