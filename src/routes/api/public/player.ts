@@ -57,6 +57,15 @@ const Body = z.discriminatedUnion("action", [
     action: z.literal("favourites_set"), device_token: Token, login: z.string().trim().min(1).max(120),
     items: z.array(FavouriteItem).max(500),
   }),
+  z.object({ action: z.literal("progress"), device_token: Token, login: z.string().trim().min(1).max(120) }),
+  z.object({
+    action: z.literal("progress_set"), device_token: Token, login: z.string().trim().min(1).max(120),
+    items: z.array(z.object({
+      key: z.string().regex(/^(film|episode|series):[A-Za-z0-9._-]{1,80}$/),
+      position_ms: z.number().int().min(0).max(1e9), duration_ms: z.number().int().min(0).max(1e9),
+      updated_at: z.number().int().min(0),
+    })).min(1).max(50),
+  }),
   z.object({
     action: z.literal("voice"), device_token: Token,
     mime: z.enum(["audio/wav", "audio/webm"]),
@@ -194,6 +203,34 @@ export const Route = createFileRoute("/api/public/player")({
             .eq("owner_key", owner).eq("scope_key", scope).maybeSingle();
           if (error) return json({ error: "Favourites aren't available right now." }, 503);
           return json({ items: data?.items ?? [], stored: !!data });
+        }
+
+        if (body.action === "progress" || body.action === "progress_set") {
+          // Film/series positions follow the account owner across devices, per provider login; newest update wins.
+          const owner = ratingVoter(device);
+          if (!owner) return json({ error: "Link this app to your BM Support account first." }, 403);
+          const scope = await sha256Hex(body.login.toLowerCase());
+          if (body.action === "progress_set") {
+            const { newerThanStored } = await import("@/lib/player-progress");
+            const now = Date.now();
+            const items = body.items.map(i => ({ ...i, updated_at: Math.min(i.updated_at, now) }));
+            const { data: stored, error: readErr } = await supabaseAdmin.from("player_watch_progress").select("item_key, updated_at")
+              .eq("owner_key", owner).eq("scope_key", scope).in("item_key", items.map(i => i.key));
+            if (readErr) return json({ error: "Couldn't save progress." }, 503);
+            const fresh = newerThanStored(items, stored ?? []);
+            if (fresh.length) {
+              const { error } = await supabaseAdmin.from("player_watch_progress").upsert(fresh.map(i => ({
+                owner_key: owner, scope_key: scope, item_key: i.key, position_ms: i.position_ms, duration_ms: i.duration_ms,
+                updated_at: new Date(i.updated_at).toISOString(),
+              })));
+              if (error) return json({ error: "Couldn't save progress." }, 503);
+            }
+            return json({ ok: true, saved: fresh.length });
+          }
+          const { data, error } = await supabaseAdmin.from("player_watch_progress").select("item_key, position_ms, duration_ms, updated_at")
+            .eq("owner_key", owner).eq("scope_key", scope).order("updated_at", { ascending: false }).limit(2000);
+          if (error) return json({ error: "Progress isn't available right now." }, 503);
+          return json({ items: (data ?? []).map(r => ({ key: r.item_key, position_ms: Number(r.position_ms), duration_ms: Number(r.duration_ms), updated_at: new Date(r.updated_at).getTime() })) });
         }
 
         if (body.action === "unlink") {
