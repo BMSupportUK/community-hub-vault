@@ -2711,6 +2711,15 @@ public class MainActivity extends Activity {
         TextView pvStatus = text("", 13, MUTED, false);
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
         final boolean phoneLive = live && "phone".equals(platform());
+        TextView selectedCategory = text("Category: All", 15, MUTED, false);
+        if (phoneLive) {
+            info.addView(selectedCategory);
+            info.addView(button("▶ Play channel", v -> {
+                Item cur = previewItem;
+                if (cur == null) { Toast.makeText(this, "Tap a channel to preview it first", Toast.LENGTH_SHORT).show(); return; }
+                stopPreview(); play(cur, defaultVlc());
+            }));
+        }
         LinearLayout btns = row();
         Button catBtn = button(live ? "☰ Categories: All" : "Category: All", v -> {});
         btns.addView(catBtn);
@@ -2742,14 +2751,6 @@ public class MainActivity extends Activity {
             pvStatus.setMaxWidth(dp(400));
         } else side.addView(pv, new LinearLayout.LayoutParams(dp(288), dp(162)));
         side.addView(pvStatus);
-        if (live && "phone".equals(platform())) {
-            // Phones: a Play channel button under the instruction line opens the previewed channel full screen.
-            side.addView(button("▶ Play channel", v -> {
-                Item cur = previewItem;
-                if (cur == null) { Toast.makeText(this, "Tap a channel to preview it first", Toast.LENGTH_SHORT).show(); return; }
-                stopPreview(); play(cur, defaultVlc());
-            }));
-        }
         top.addView(side, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(top);
         GuideGridView grid = new GuideGridView(this);
@@ -2856,6 +2857,7 @@ public class MainActivity extends Activity {
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
+            selectedCategory.setText("Category: " + cat[1]);
             if (live) liveCatId = cat[0];
             List<String> panelNames = new ArrayList<>();
             for (String[] c : catRows) panelNames.add((c[0].equals(cat[0]) ? "\u2713 " : "") + c[1]);
