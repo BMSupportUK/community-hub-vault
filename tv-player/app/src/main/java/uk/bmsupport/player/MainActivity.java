@@ -2678,6 +2678,8 @@ public class MainActivity extends Activity {
     private final java.util.Map<String, List<GuideGridView.Prog>> guideCache = new java.util.LinkedHashMap<String, List<GuideGridView.Prog>>(64, 0.75f, true) {
         @Override protected boolean removeEldestEntry(java.util.Map.Entry<String, List<GuideGridView.Prog>> e) { return size() > 400; }
     };
+    private final java.util.Map<String, Long> guideFetchedAt = new java.util.HashMap<>();
+    private long guideWindowSecs() { return getResources().getConfiguration().smallestScreenWidthDp < 600 ? 10800 : 7200; }
 
     /** Channels down the left, time across the top; OK on a programme on now watches it, on a future one sets/removes a reminder. */
     private void showTvGuide() { showTvGuide(null); }
@@ -2876,13 +2878,6 @@ public class MainActivity extends Activity {
                         guideFetchedAt.put(it.id, System.currentTimeMillis() / 1000);
                         guideCache.put(it.id, got2);
                         if (g == gen[0] && "tvguide".equals(screen)) grid.setProgs(r, got2);
-                    });
-                });
-            }
-            private void unusedOld(int r, Item it, int g, List<GuideGridView.Prog> got) {
-                    ui.post(() -> {
-                        guideCache.put(it.id, got);
-                        if (g == gen[0] && "tvguide".equals(screen)) grid.setProgs(r, got);
                     });
                 });
             }
