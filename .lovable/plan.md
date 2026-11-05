@@ -1,30 +1,28 @@
-# Fix the Live TV layout on boxes and the 📣 announcements icon
+# Fix the big gaps in the TV box Live TV info panel (right of the preview)
 
-## Problems in the photo
-- **Spacing:** the top half of the screen is mostly empty. The title, times, description and Next line are spread far apart, and the preview is too big, so only one guide row fits.
-- **Duplicated date:** the date appears twice, once in red above the guide and again in the guide's own corner.
-- **Announcements icon:** it sits on top of the Voice search button, and does the same over the buttons on the home screen.
+## What's wrong
+Your photo shows the title, then a big empty space, the time, another big empty space, then the description. The "5 min left" text and the progress bar are missing too, even though BBC News at Six is on now.
 
-## What changes
-1. **Compact top area** (about a third of the screen, like your photo):
-   - Shrink the preview so the guide gets the room. The family picture still fills the box.
-   - Stack the programme details tightly from the top: title, then time + progress bar + minutes left, then the description (up to 3 lines), then "Next: … ☆ category".
-   - Remove the red date line. The guide's own corner already shows the day, and that will now include the time ("Thu 5 Nov, 18:17").
-2. **Guide gets the rest of the screen:** with the smaller top area, about 7–8 channels show, as in your photo.
-3. **Announcements icon gets its own spot:**
-   - On every screen, the top-right corner is kept free for the 📣 icon, so it never covers Search TV, Voice search or any home-screen button.
-   - Restyle it to match the app's other buttons: same height and colours, a round button, and a small red number bubble for unread announcements instead of "📣 2" text.
-4. Build and release Android 3.16.
+The cause is the time line. It holds three things side by side: the time, the progress bar and "5 min left". The "min left" text gets squeezed to almost no width. It then wraps one letter per line into a tall, invisible column. That makes the whole time line very tall, and the time sits in the middle of it. That's where both gaps come from.
 
-Your message cut off at "and the homescree". I've taken that to mean the icon also covers buttons on the home screen. If you meant something else about the home screen, tell me and I'll add it.
+## The fix (TV boxes only, phones untouched)
+- The panel on the right becomes a tight stack with no gaps, in this order:
+  1. Search TV / Voice search pills (top right, as now)
+  2. Programme title (bold, up to 2 lines)
+  3. One line: `18:00 – 18:30  ·  5 min left`
+  4. A thin progress bar right under it (only while the programme is on now)
+  5. Description (up to 3 lines)
+  6. `Next: 18:30 BBC London News` with the ☆ and category on the same line
+- Every line in the panel is single-line or has a fixed line limit, so no line can stretch tall again.
+- Each line keeps only a small gap (about 2–4dp) above and below.
+- The preview size, the date row (◀ 24h / Now / 24h ▶), the guide grid, the Categories side tab and the 📣 icon stay as they are.
+
+## Release
+- Build Android 3.18, sign it with the BM key, upload it, set it as current and check the download matches.
 
 ## Technical details
-- `showTvGuide` box path:
-  - Set the top row and info column to `setBaselineAligned(false)` with top gravity; baseline alignment is what scattered the text.
-  - Zero the vertical padding on the info texts.
-  - Preview becomes about 30% of the screen width at 16:9, capped to 32% of the screen height.
-  - Drop `dateLbl`, and give the date and time to the grid's corner label through a new `GuideGridView.setCornerText()`.
-- Announcements icon (`PlayerApplication.showMajorIcon`):
-  - A fixed 44dp circle using the app's CARD/ACCENT colours, with a separate red count badge.
-  - Expose its reserved width as `MAJOR_ICON_SLOT` (about 64dp). MainActivity's header rows (`showHome`, `browse`, the guide pills row, search screens) add that much end padding while the app is unlocked.
-- Update the matching rules in the player AGENTS.md, then run the Android checks. Sign 3.16 with the BM key, upload it, set it as current and verify the download.
+- `MainActivity.showTvGuide` (boxLive branch): remove the `tr` row and the separate `boxLeft` TextView. Put "min left" or the duration into the `progTime` text.
+- Add `boxBar` straight to `boxInfo` with fixed `LayoutParams(dp(160), dp(4))` and small top/bottom margins.
+- Give `progTitle`, `progTime`, `boxDesc` and the `br` row explicit `WRAP_CONTENT` LayoutParams. Use `setIncludeFontPadding(false)`, 2–4dp vertical padding, and `setSingleLine` on `progTime`, `boxNext`, `boxStar` and `boxCat`.
+- Update `onHighlight` to match: build the time string with the minutes-left suffix, and show or hide `boxBar`.
+- Bump to versionCode 129 / versionName 3.18. Run the existing BM Player checks, then do the normal signed upload and set the build row as current.
