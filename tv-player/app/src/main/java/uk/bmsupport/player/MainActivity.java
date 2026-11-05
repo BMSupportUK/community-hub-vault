@@ -187,7 +187,7 @@ public class MainActivity extends Activity {
 
     /** Something playing in this screen (preview box or a multi-screen pane) keeps the phone screen awake. */
     void updateKeepScreenOn() {
-        boolean playing = preview != null && previewPlaying;
+        boolean playing = previewPlaying;
         for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) {
             if (p.getPlaybackState() == androidx.media3.common.Player.STATE_READY && p.getPlayWhenReady()) { playing = true; break; }
         }
