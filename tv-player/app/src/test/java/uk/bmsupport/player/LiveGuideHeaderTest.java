@@ -163,4 +163,21 @@ public class LiveGuideHeaderTest {
         play.performClick();
         assertNotNull(org.robolectric.shadows.ShadowToast.getTextOfLatestToast());
     }
+
+    /** Once the preview is actually on, the button's job changes to bringing up the channel's play menu. */
+    @Test public void theButtonBecomesThePlayMenuOnceThePreviewKicksIn() throws Exception {
+        MainActivity a = open();
+        openLiveGuide(a);
+        List<View> buttons = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), Button.class, buttons);
+        Button preview = null;
+        for (View b : buttons) if (text(b).equals("▶ Preview channel")) preview = (Button) b;
+        assertNotNull("the phone must offer previewing before anything plays", preview);
+        a.previewStarted();
+        assertEquals("once the preview kicks in the button must bring up the play menu",
+                "▶ Play menu", preview.getText().toString());
+        a.previewStopped();
+        assertEquals("stopping the preview must offer previewing again",
+                "▶ Preview channel", preview.getText().toString());
+    }
 }
