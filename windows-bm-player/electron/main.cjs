@@ -102,7 +102,24 @@ async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||Strin
 async function epg(id){const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return core.programmes(r.epg_listings);}
 function persistProgress(session){
  if(!['film','episode'].includes(session.item.kind)||!(session.duration>0))return;
- store.progress=store.progress||{};store.progress[key(session.item)]={position:session.position||0,duration:session.duration};save();
+ store.progress=store.progress||{};const k=key(session.item);store.progress[k]={position:session.position||0,duration:session.duration,at:Date.now()};
+ store.progressDirty=[...new Set([...(store.progressDirty||[]),k])].slice(-500);save();pushProgress(false);
+}
+// Watch progress follows the account across devices (see progress-sync.cjs).
+const psync=require('../progress-sync.cjs');let lastProgressPush=0;
+function progressPrefix(){return key({kind:'x',id:'y'}).slice(0,-4);}
+async function pushProgress(force){
+ if(!store.user||!store.token||!gate.unlocked)return;if(!force&&Date.now()-lastProgressPush<30000)return;lastProgressPush=Date.now();
+ const pre=progressPrefix(),dirty=(store.progressDirty||[]).filter(k=>k.startsWith(pre+':')),items=dirty.map(k=>psync.toRemote(k,store.progress?.[k])).filter(Boolean).slice(0,50);
+ if(items.length){try{const r=await site({action:'progress_set',login:store.user,items});if(!r?.ok)return;}catch{return;}}
+ const sent=new Set(dirty.slice(0,Math.max(items.length,dirty.length<=50?dirty.length:50)));store.progressDirty=(store.progressDirty||[]).filter(k=>!sent.has(k)&&k.startsWith(pre+':'));save();
+}
+async function syncProgress(){
+ if(!store.user||!store.token||!gate.unlocked)return;const pre=progressPrefix();store.progress=store.progress||{};
+ if(store.progressSeeded!==pre){store.progressDirty=[...new Set([...(store.progressDirty||[]),...Object.keys(store.progress).filter(k=>k.startsWith(pre+':')&&psync.portable(k))])];store.progressSeeded=pre;save();}
+ const r=await site({action:'progress',login:store.user});
+ if(Array.isArray(r?.items)&&psync.mergeRemote(store.progress,pre,r.items)){save();send({type:'state',state:publicState()});}
+ await pushProgress(true);
 }
 async function stopAll(){
  for(const s of sessions){const status=engine?.status(s.index);if(status)Object.assign(s,status);persistProgress(s);engine?.stop(s.index);}
@@ -193,7 +210,7 @@ else{
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',catalogue);register('epg',epg);register('catchup',catchup);register('sports',()=>site({action:'sports'}));
-  register('unlock',async number=>{await gate.unlock(number,site);syncFavourites().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
+  register('unlock',async number=>{await gate.unlock(number,site);syncFavourites().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season}))]))};});
   electronSession.defaultSession.setPermissionRequestHandler((wc,perm,cb,details)=>cb(perm==='media'&&wc===win?.webContents&&(details?.mediaTypes||['audio']).every(t=>t==='audio')));
   electronSession.defaultSession.setPermissionCheckHandler((wc,perm)=>perm==='media'&&wc===win?.webContents);
