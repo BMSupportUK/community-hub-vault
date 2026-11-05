@@ -76,7 +76,9 @@ public class PlayerActivity extends Activity {
         SharedPreferences.Editor edit = prefs(this).edit()
                 .putLong(progressKey + ":position", position).putLong(progressKey + ":duration", duration);
         if (seriesKey != null) edit.putLong(seriesKey + ":position", position).putLong(seriesKey + ":duration", duration);
+        ProgressSync.touch(prefs(this), edit, progressKey, seriesKey);
         edit.apply();
+        ProgressSync.push(this, ended);
     }
 
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences("bmplayer", MODE_PRIVATE); }
