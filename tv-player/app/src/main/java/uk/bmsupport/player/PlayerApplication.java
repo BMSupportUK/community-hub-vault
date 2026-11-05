@@ -168,7 +168,8 @@ public final class PlayerApplication extends Application implements Application.
                     (int) (52 * d), (int) (52 * d), android.view.Gravity.TOP | android.view.Gravity.END);
             final int m = (int) (10 * d);
             android.view.WindowInsets in = a.getWindow().getDecorView().getRootWindowInsets();
-            lp.setMargins(0, m + (in == null ? 0 : in.getSystemWindowInsetTop()), m + (in == null ? 0 : in.getSystemWindowInsetRight()), 0);
+            // Top 18dp puts the 44dp button's centre at 48dp: the middle of the 48dp header pills under the 24dp screen padding.
+            lp.setMargins(0, (int) (18 * d) + (in == null ? 0 : in.getSystemWindowInsetTop()), m + (in == null ? 0 : in.getSystemWindowInsetRight()), 0);
             ((android.view.ViewGroup) a.getWindow().getDecorView()).addView(box, lp);
             majorIcon = b;
             majorBox = box;

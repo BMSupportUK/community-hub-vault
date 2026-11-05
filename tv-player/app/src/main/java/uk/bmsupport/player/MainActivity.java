@@ -2867,7 +2867,10 @@ public class MainActivity extends Activity {
             pills.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             pills.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
             pills.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
-            boxInfo.addView(pills);
+            // A clear space between the pills and the programme title beneath them.
+            LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            plp.bottomMargin = dp(14);
+            boxInfo.addView(pills, plp);
             // Tight stack: every line wraps its own content (single line or a fixed limit), so nothing can stretch tall.
             final int wrap = ViewGroup.LayoutParams.WRAP_CONTENT, fill = ViewGroup.LayoutParams.MATCH_PARENT;
             progTitle.setTextSize(24); progTitle.setMaxLines(2); progTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
