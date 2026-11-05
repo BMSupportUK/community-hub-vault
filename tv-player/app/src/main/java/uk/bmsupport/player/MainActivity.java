@@ -898,6 +898,9 @@ public class MainActivity extends Activity {
         head.addView(text(title, 26, TEXT, true));
         head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
+        // Films/Series: the Category pill sits at the top beside the searches (no category column).
+        final Button catPill = kind.equals("live") ? null : headerPill("☰ Category: All", v -> {});
+        if (catPill != null) head.addView(catPill);
         head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
         head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
         head.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
@@ -905,6 +908,9 @@ public class MainActivity extends Activity {
         root.addView(head);
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
         root.addView(epg);
+        // Films/Series details panel: the highlighted title's backdrop, rating · year · length · genre, cast, director and plot.
+        final MediaHero hero = kind.equals("live") ? null : new MediaHero();
+        if (hero != null) root.addView(hero.view, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(isPhone() ? 120 : 170)));
         stopPreview();
         LinearLayout panes = row();
         ListView cats = list();
@@ -930,8 +936,17 @@ public class MainActivity extends Activity {
             android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
             hs.addView(sortRow); root.addView(hs);
         }
-        panes.addView(cats, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
-        panes.addView(items, weight(kind.equals("live") ? 1.3f : 2, ViewGroup.LayoutParams.MATCH_PARENT));
+        final TextView gridTitle = text("", 17, TEXT, true);
+        if (posters) {
+            // Poster grid runs the full width under its category name; categories come from the top pill.
+            LinearLayout gcol = column();
+            gcol.addView(gridTitle);
+            gcol.addView(items, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+            panes.addView(gcol, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+        } else {
+            panes.addView(cats, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+            panes.addView(items, weight(1.3f, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
         androidx.media3.ui.PlayerView pv = null;
         TextView pvStatus = null, pvEpg = null;
         if (kind.equals("live")) {
@@ -1050,7 +1065,12 @@ public class MainActivity extends Activity {
                     if (items instanceof ListView) ((ListView) items).setSelectionFromTop(0, 0);
                     if (focusItems) items.requestFocus();
                 });
-                if (!kind.equals("live")) epg.setText(c[1] + " · " + list.size() + " titles");
+                if (!kind.equals("live")) {
+                    epg.setText(c[1] + " · " + list.size() + " titles");
+                    gridTitle.setText(c[1].equals("All") ? (kind.equals("film") ? "All movies" : "All series") : c[1]);
+                    if (catPill != null) catPill.setText("☰ Category: " + c[1]);
+                    if (hero != null) hero.show(shown.isEmpty() ? null : shown.get(0));
+                }
 
             };
             if (got != null && !got.isEmpty()) { render.accept(got); return; }
@@ -1099,9 +1119,11 @@ public class MainActivity extends Activity {
                     byCat.clear(); byCat.putAll(groups);
                     all.clear(); all.addAll(everything);
                     cats.setAdapter(adapter(names));
-                    cats.requestFocus();
                     cats.setSelection(0);
-                    showCat.accept(0, false);
+                    showCat.accept(0, posters);
+                    if (!posters) cats.requestFocus();
+                    if (catPill != null) catPill.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle("Category")
+                            .setItems(names.toArray(new String[0]), (d, w) -> showCat.accept(w, true)).show());
                 });
             } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
         });
@@ -1166,6 +1188,10 @@ public class MainActivity extends Activity {
             }
             open(it);
         });
+        if (hero != null) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { hero.show((Item) items.getItemAtPosition(pos)); }
+            @Override public void onNothingSelected(AdapterView<?> p) {}
+        });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 Item it = (Item) items.getItemAtPosition(pos);
@@ -1174,6 +1200,65 @@ public class MainActivity extends Activity {
             }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
+    }
+
+    private boolean isPhone() { return getResources().getConfiguration().smallestScreenWidthDp < 600; }
+
+    private final java.util.Map<String, JSONObject> heroInfo = new java.util.HashMap<>();
+
+    /** Films/Series top panel: backdrop on the right, details on the left; details load once per title (cached). */
+    private final class MediaHero {
+        final android.widget.FrameLayout view = new android.widget.FrameLayout(MainActivity.this);
+        final android.widget.ImageView backdrop = new android.widget.ImageView(MainActivity.this);
+        final TextView title = text("", 22, TEXT, true), meta = text("", 14, MUTED, false), people = text("", 14, TEXT, false), plot = text("", 14, TEXT, false);
+        String showing = "";
+        Runnable pending;
+        MediaHero() {
+            backdrop.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP); backdrop.setAlpha(0.35f);
+            android.widget.FrameLayout.LayoutParams blp = new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            view.addView(backdrop, blp);
+            LinearLayout col = column(); col.setPadding(dp(4), dp(4), dp(4), dp(4));
+            title.setSingleLine(true); title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            meta.setSingleLine(true); people.setMaxLines(2); people.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            plot.setMaxLines(isPhone() ? 2 : 3); plot.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            col.addView(title); col.addView(meta); col.addView(people); col.addView(plot);
+            view.addView(col, new android.widget.FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().widthPixels * 0.62f), ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        void show(Item it) {
+            if (it == null) { title.setText(""); meta.setText(""); people.setText(""); plot.setText(""); backdrop.setImageDrawable(null); showing = ""; return; }
+            String key = it.kind + ":" + it.id;
+            if (key.equals(showing)) return;
+            showing = key;
+            title.setText(it.name); meta.setText(ratingText(it)); people.setText(""); plot.setText("");
+            loadPoster(backdrop, it.poster);
+            if (pending != null) ui.removeCallbacks(pending);
+            JSONObject cached = heroInfo.get(key);
+            if (cached != null) { fill(it, cached); return; }
+            pending = () -> posterIo.execute(() -> {
+                try {
+                    String url = it.kind.equals("series") ? api("get_series_info") + "&series_id=" + it.id : api("get_vod_info") + "&vod_id=" + it.id;
+                    JSONObject info = new JSONObject(Net.get(url)).optJSONObject("info");
+                    if (info == null) return;
+                    heroInfo.put(key, info);
+                    ui.post(() -> { if (key.equals(showing)) fill(it, info); });
+                } catch (Exception ignored) {}
+            });
+            ui.postDelayed(pending, 300);
+        }
+        void fill(Item it, JSONObject i) {
+            List<String> m = new ArrayList<>();
+            String rating = i.optString("rating", ""); if (!rating.isEmpty() && !rating.equals("0")) m.add("★ " + rating);
+            String date = i.optString("releasedate", i.optString("releaseDate", "")); if (date.length() >= 4) m.add(date.substring(0, 4));
+            String dur = i.optString("duration", ""); if (!dur.isEmpty() && !dur.startsWith("00:00")) m.add(dur.replaceFirst("^0?(\\d+):(\\d+):\\d+$", "$1h $2m"));
+            String genre = i.optString("genre", ""); if (!genre.isEmpty()) m.add(genre);
+            m.add(ratingText(it));
+            meta.setText(android.text.TextUtils.join("  ·  ", m));
+            String cast = i.optString("cast", i.optString("actors", "")), dir = i.optString("director", "");
+            people.setText((cast.isEmpty() ? "" : "Cast: " + cast) + (dir.isEmpty() ? "" : (cast.isEmpty() ? "" : "\n") + "Director: " + dir));
+            plot.setText(i.optString("plot", i.optString("description", "")));
+            JSONArray bd = i.optJSONArray("backdrop_path");
+            if (bd != null && bd.length() > 0 && !bd.optString(0).isEmpty()) loadPoster(backdrop, bd.optString(0));
+        }
     }
 
     private Item itemFrom(String kind, JSONObject o, String category, int pos) {
