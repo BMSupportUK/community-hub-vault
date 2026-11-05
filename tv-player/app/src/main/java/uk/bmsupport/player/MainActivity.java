@@ -903,6 +903,9 @@ public class MainActivity extends Activity {
         if (catPill != null) head.addView(catPill);
         head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
         head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
+        // Films/Series: Sort is an icon pill straight after Voice search (no sort row).
+        final Runnable[] openSort = new Runnable[1];
+        if (!kind.equals("live")) { Button sp = headerPill("⇅", v -> { if (openSort[0] != null) openSort[0].run(); }); sp.setContentDescription("Sort"); head.addView(sp); }
         head.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
 
         root.addView(head);
@@ -910,7 +913,7 @@ public class MainActivity extends Activity {
         root.addView(epg);
         // Films/Series details panel: the highlighted title's backdrop, rating · year · length · genre, cast, director and plot.
         final MediaHero hero = kind.equals("live") ? null : new MediaHero();
-        if (hero != null) root.addView(hero.view, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(isPhone() ? 120 : 170)));
+        if (hero != null) root.addView(hero.view, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         stopPreview();
         LinearLayout panes = row();
         ListView cats = list();
@@ -920,21 +923,16 @@ public class MainActivity extends Activity {
         final String[] sortKey = { prefs.getString("sort_" + kind, "added") };
         final Runnable[] applySort = new Runnable[1];
         if (posters) {
-            LinearLayout sortRow = row();
-            sortRow.addView(text("Sort:  ", 16, MUTED, false));
             String[][] opts = {{"default", "Default"}, {"added", "Recently added"}, {"az", "A–Z"}, {"za", "Z–A"}, {"rating", "Top rated"}};
-            List<Button> btns = new ArrayList<>();
-            for (String[] o : opts) {
-                Button b = button(o[1], v -> {
-                    sortKey[0] = o[0]; prefs.edit().putString("sort_" + kind, o[0]).apply();
-                    for (Button x : btns) x.setAlpha(x.getTag().equals(sortKey[0]) ? 1f : 0.55f);
+            openSort[0] = () -> {
+                String[] labels = new String[opts.length]; int sel = 0;
+                for (int i = 0; i < opts.length; i++) { labels[i] = opts[i][1]; if (opts[i][0].equals(sortKey[0])) sel = i; }
+                new android.app.AlertDialog.Builder(this).setTitle("Sort by").setSingleChoiceItems(labels, sel, (d, w) -> {
+                    sortKey[0] = opts[w][0]; prefs.edit().putString("sort_" + kind, opts[w][0]).apply();
                     if (applySort[0] != null) applySort[0].run();
-                });
-                b.setTag(o[0]); b.setAlpha(o[0].equals(sortKey[0]) ? 1f : 0.55f);
-                btns.add(b); sortRow.addView(b);
-            }
-            android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
-            hs.addView(sortRow); root.addView(hs);
+                    d.dismiss();
+                }).show();
+            };
         }
         final TextView gridTitle = text("", 17, TEXT, true);
         if (posters) {
@@ -1189,7 +1187,7 @@ public class MainActivity extends Activity {
             open(it);
         });
         if (hero != null) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { hero.show((Item) items.getItemAtPosition(pos)); }
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { hero.show((Item) items.getItemAtPosition(pos)); if (items.isInTouchMode()) return; android.widget.GridView g = (android.widget.GridView) items; int cols = Math.max(1, g.getNumColumns()); int first = g.getFirstVisiblePosition(), last = g.getLastVisiblePosition(); if (pos < first + cols || pos > last - cols) g.smoothScrollToPositionFromTop(pos - (pos % cols), dp(8), 180); }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -1220,9 +1218,12 @@ public class MainActivity extends Activity {
             LinearLayout col = column(); col.setPadding(dp(4), dp(4), dp(4), dp(4));
             title.setSingleLine(true); title.setEllipsize(android.text.TextUtils.TruncateAt.END);
             meta.setSingleLine(true); people.setMaxLines(2); people.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            plot.setMaxLines(isPhone() ? 2 : 3); plot.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            plot.setMaxLines(isPhone() ? 3 : 4); plot.setEllipsize(android.text.TextUtils.TruncateAt.END);
             col.addView(title); col.addView(meta); col.addView(people); col.addView(plot);
-            view.addView(col, new android.widget.FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().widthPixels * 0.62f), ViewGroup.LayoutParams.MATCH_PARENT));
+            meta.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            col.setPadding(dp(10), dp(8), dp(10), dp(10));
+            view.setMinimumHeight(dp(isPhone() ? 110 : 150));
+            view.addView(col, new android.widget.FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().widthPixels * (isPhone() ? 0.9f : 0.7f)), ViewGroup.LayoutParams.WRAP_CONTENT));
         }
         void show(Item it) {
             if (it == null) { title.setText(""); meta.setText(""); people.setText(""); plot.setText(""); backdrop.setImageDrawable(null); showing = ""; return; }
