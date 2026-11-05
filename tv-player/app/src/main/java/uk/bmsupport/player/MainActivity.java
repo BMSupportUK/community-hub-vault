@@ -689,7 +689,6 @@ public class MainActivity extends Activity {
         root.addView(tiles);
 
         LinearLayout small = row();
-        small.addView(smallButton("📅 TV guide", v -> showTvGuide()), smallWeight("📅 TV guide"));
         small.addView(smallButton("🏆 Sports guide", v -> askSportsMode()), smallWeight("🏆 Sports guide"));
         small.addView(smallButton("★ Favourites", v -> showSaved("fav", "Favourites")), smallWeight("★ Favourites"));
         small.addView(smallButton("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), smallWeight("⟲ Recently watched"));
@@ -2702,6 +2701,8 @@ public class MainActivity extends Activity {
         LinearLayout btns = row();
         Button catBtn = button(live ? "☰ Categories: All" : "Category: All", v -> {});
         btns.addView(catBtn);
+        // Live TV: categories open from the side Channels button, not from the Now/Day row.
+        if (live) catBtn.setVisibility(View.GONE);
         btns.addView(button("Now", v -> {}));
         btns.addView(button("◀ Day", v -> {}));
         btns.addView(button("Day ▶", v -> {}));
@@ -2742,7 +2743,16 @@ public class MainActivity extends Activity {
         catList.setFocusable(true);
         panel.addView(catList, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         panel.addView(button("Close", v -> hidePanel()));
-        setContentView(sideDrawer(root, panel));
+        LinearLayout content = root;
+        if (live) {
+            content = row();
+            Button side = button("☰\nChannels", v -> catBtn.performClick());
+            side.setSingleLine(false);
+            side.setTextSize(14);
+            content.addView(side, new LinearLayout.LayoutParams(dp(96), ViewGroup.LayoutParams.MATCH_PARENT));
+            content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+        }
+        setContentView(sideDrawer(content, panel));
         btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });
         btns.getChildAt(2).setOnClickListener(v -> grid.shiftDay(-1));
         btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));
