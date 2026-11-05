@@ -3075,7 +3075,8 @@ public class MainActivity extends Activity {
         catList.setOnItemClickListener((d, w, pos, id) -> {
             if (pos >= catRows.size()) return;
             applyCat.accept(catRows.get(pos));
-            if (channelDrawer != null) {
+            // TV boxes: picking a category loads that category's channels into the guide and closes the panel.
+            if (channelDrawer != null && !boxLive) {
                 List<String> channelNames = new ArrayList<>();
                 for (Item ch : shownCh) channelNames.add(ch.name);
                 channelDrawer.showChannels(channelNames);
