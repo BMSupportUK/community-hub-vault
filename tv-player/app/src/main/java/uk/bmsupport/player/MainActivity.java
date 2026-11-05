@@ -772,8 +772,26 @@ public class MainActivity extends Activity {
         if (previewPoster != null) previewPoster.setVisibility(View.VISIBLE);
         // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
         if (previewCounted) { previewCounted = false; clearNowPlaying(); }
+        previewStopped();
     }
     private boolean previewCounted;
+
+    private Button previewMenuButton; // phone Live TV: the button under the selected category
+    private boolean previewPlaying;
+
+    /**
+     * Phone Live TV: once a preview kicks in, the preview box and the button beneath the category
+     * details both bring up that channel's play menu instead of previewing again.
+     */
+    void previewStarted() {
+        previewPlaying = true;
+        if (previewMenuButton != null) previewMenuButton.setText("▶ Play menu");
+    }
+
+    void previewStopped() {
+        previewPlaying = false;
+        if (previewMenuButton != null) previewMenuButton.setText("▶ Preview channel");
+    }
 
     /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
     private Item previewItem;
@@ -809,6 +827,7 @@ public class MainActivity extends Activity {
                     if (s == androidx.media3.common.Player.STATE_READY) {
                         status.setText("Press OK twice for full screen");
                         if (!previewCounted) { previewCounted = true; setNowPlaying(it, false); }
+                        previewStarted();
                     }
                 }
             });
