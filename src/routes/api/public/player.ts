@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, platform")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
 
@@ -365,6 +365,9 @@ export const Route = createFileRoute("/api/public/player")({
         const { watchCredit } = await import("@/lib/player-live");
         const credit = watchCredit({ now, lastSeenAt: device.last_seen_at, watchingKind: device.watching_kind });
         if (credit) await supabaseAdmin.rpc("add_player_watch_seconds", { _device: device.id, _kind: credit.kind, _seconds: credit.seconds });
+        const { watchActivityCredit } = await import("@/lib/player-watch-activity");
+        const activity = watchActivityCredit(device, credit, now);
+        if (activity) await supabaseAdmin.rpc("record_player_watch_activity", activity);
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({
           linked: !!(device.user_id || device.offsite_customer_id),
