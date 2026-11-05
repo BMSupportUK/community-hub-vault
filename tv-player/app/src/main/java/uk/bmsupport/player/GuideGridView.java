@@ -161,16 +161,19 @@ public class GuideGridView extends View {
 
     private float touchX, touchY, scrollY;
     private int touchTop;
-    private boolean dragging, dragX;
+    private boolean dragging, dragX, touchActive;
     private long touchWin;
 
     @Override public boolean onTouchEvent(android.view.MotionEvent e) {
         switch (e.getActionMasked()) {
             case android.view.MotionEvent.ACTION_DOWN:
+                touchActive = true;
                 touchX = e.getX(); touchY = scrollY = e.getY(); touchTop = topRow; touchWin = windowStart; dragging = false; dragX = false;
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
                 requestFocus();
                 return true;
             case android.view.MotionEvent.ACTION_MOVE:
+                if (!touchActive) return true;
                 int slop = android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();
                 if (!dragging && (Math.abs(e.getY() - touchY) > slop || Math.abs(e.getX() - touchX) > slop)) {
                     dragging = true;
@@ -198,6 +201,8 @@ public class GuideGridView extends View {
                 return true;
             case android.view.MotionEvent.ACTION_UP:
                 if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
+                if (!touchActive) return true;
+                touchActive = false;
                 if (dragging || Math.abs(e.getX() - touchX) > android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop()) return true;
                 if (e.getY() <= headH()) return true;
                 int r = topRow + (int) ((e.getY() - headH()) / rowH());
@@ -218,6 +223,7 @@ public class GuideGridView extends View {
                 performClick();
                 return true;
             case android.view.MotionEvent.ACTION_CANCEL:
+                touchActive = false;
                 dragging = false;
                 if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
                 return true;
