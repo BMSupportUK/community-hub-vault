@@ -38,7 +38,7 @@
 .lg-grid{flex:1;min-height:0;overflow-y:auto;border:1px solid var(--border);border-radius:8px}
 .lg-row{display:flex;height:56px;border-bottom:1px solid var(--border)}
 .lg-head{position:sticky;top:0;z-index:2;height:36px;background:var(--raised)}
-.lg-ch{flex:0 0 240px;display:flex;align-items:stretch;background:var(--surface);border-right:1px solid var(--border)}
+.lg-ch{flex:0 0 240px;width:240px;min-width:0;overflow:hidden;display:flex;align-items:stretch;background:var(--surface);border-right:1px solid var(--border)}
 .lg-ch>button:first-child{flex:1;min-width:0;text-align:left;background:transparent;border:0;border-radius:0;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .lg-ch b{color:var(--muted);margin-right:6px}.lg-ch.on{box-shadow:inset 4px 0 0 var(--accent)}
 .lg-head .lg-ch{align-items:center;padding:0 12px;font-weight:700}
