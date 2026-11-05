@@ -180,4 +180,18 @@ public class LiveGuideHeaderTest {
         assertEquals("stopping the preview must offer previewing again",
                 "▶ Preview channel", preview.getText().toString());
     }
+
+    /** Watching through the preview box is real watching: the phone screen must not lock while it plays. */
+    @Test public void theScreenStaysAwakeWhileThePreviewPlaysAndCanSleepAfter() throws Exception {
+        MainActivity a = open();
+        int flag = android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+        assertFalse("the screen must be allowed to sleep before anything plays",
+                (a.getWindow().getAttributes().flags & flag) != 0);
+        a.previewStarted();
+        assertTrue("the screen must stay awake while the preview box is playing",
+                (a.getWindow().getAttributes().flags & flag) != 0);
+        a.previewStopped();
+        assertFalse("the screen must be allowed to sleep once the preview stops",
+                (a.getWindow().getAttributes().flags & flag) != 0);
+    }
 }
