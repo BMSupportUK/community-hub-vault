@@ -134,6 +134,7 @@ public final class BackupPlayerActivity extends Activity {
 
     @Override protected void onDestroy() {
         ui.removeCallbacksAndMessages(null);
+        ProgressSync.push(this, true);
         if (mp != null) { mp.stop(); mp.detachViews(); mp.release(); mp = null; }
         if (vlc != null) { vlc.release(); vlc = null; }
         super.onDestroy();

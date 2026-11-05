@@ -3503,6 +3503,8 @@ public class MainActivity extends Activity {
         // Only clear when nothing in this screen is still playing (a running preview keeps counting).
         if (preview == null) clearNowPlaying();
         if (hasLogin()) io.execute(() -> safeRun(io, this::pollOnce));
+        // Positions watched on another device show here too (throttled to every 30s).
+        if (unlocked && hasLogin()) ProgressSync.pull(this, false, () -> { if ("home".equals(screen)) showHome(); });
         refreshVersionScreens();
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
         if (("sports".equals(screen) || "sports_channels".equals(screen)) && retryEvent != null) {
