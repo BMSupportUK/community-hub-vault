@@ -807,11 +807,13 @@ public class MainActivity extends Activity {
      */
     void previewStarted() {
         previewPlaying = true;
+        updateKeepScreenOn();
         if (previewMenuButton != null) previewMenuButton.setText("▶ Play menu");
     }
 
     void previewStopped() {
         previewPlaying = false;
+        updateKeepScreenOn();
         if (previewMenuButton != null) previewMenuButton.setText("▶ Preview channel");
     }
 
