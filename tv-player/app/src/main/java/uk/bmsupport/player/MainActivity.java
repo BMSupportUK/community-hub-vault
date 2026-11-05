@@ -1418,40 +1418,46 @@ public class MainActivity extends Activity {
 
     private void showSeries(Item show) {
         back = () -> browse("series");
-        LinearLayout root = column();
-        LinearLayout top = row();
-        android.widget.ImageView poster = new android.widget.ImageView(this);
-        poster.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
-        poster.setBackgroundColor(Color.rgb(20, 28, 48));
-        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(dp(150), dp(220)); plp.rightMargin = dp(16);
-        top.addView(poster, plp);
-        loadPoster(poster, show.poster);
-        LinearLayout head = column();
-        // Series review: same details as films (rating · year · genre, cast, director, plot), then seasons and episodes.
-        MediaHero sh = new MediaHero(); sh.show(show); sh.backdrop.setVisibility(View.GONE);
-        head.addView(sh.view);
-        seriesRatingItem = show; seriesRatingLabel = text(ratingText(show), 14, MUTED, false); head.addView(seriesRatingLabel); requestRating(show);
-        TextView info = text("Loading episodes…", 15, MUTED, false);
-        head.addView(info);
-        TextView plot = text("", 14, TEXT, false); plot.setMaxLines(5);
+        // Layout: full-screen backdrop, details top-left (title, rating · year · seasons · genre, cast, plot),
+        // then one row per season ("Season N" + a sideways row of episode picture cards with a "1 / 12" counter).
+        android.widget.FrameLayout frame = new android.widget.FrameLayout(this);
+        frame.setBackgroundColor(BG);
+        android.widget.ImageView backdrop = new android.widget.ImageView(this);
+        backdrop.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP); backdrop.setAlpha(0.45f);
+        frame.addView(backdrop, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        loadPoster(backdrop, show.poster);
+        View shade = new View(this);
+        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{BG, Color.argb(170, Color.red(BG), Color.green(BG), Color.blue(BG)), Color.TRANSPARENT}));
+        frame.addView(shade, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout root = column(); root.setPadding(dp(28), dp(18), dp(28), dp(18));
+        scroll.addView(root);
+        frame.addView(scroll, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        int w = (int) (getResources().getDisplayMetrics().widthPixels * 0.55f);
+        TextView title = text(show.name, 30, TEXT, true); title.setSingleLine(true); title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        root.addView(title, new LinearLayout.LayoutParams(w, -2));
+        TextView meta = text("", 15, TEXT, false); root.addView(meta, new LinearLayout.LayoutParams(w, -2));
+        seriesRatingItem = show; seriesRatingLabel = text(ratingText(show), 13, MUTED, false); root.addView(seriesRatingLabel); requestRating(show);
+        TextView cast = text("", 14, TEXT, false); cast.setMaxLines(1); cast.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        root.addView(cast, new LinearLayout.LayoutParams(w, -2));
+        TextView plot = text("", 14, TEXT, false); plot.setMaxLines(3); plot.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        root.addView(plot, new LinearLayout.LayoutParams(w, -2));
         LinearLayout btns = row();
         btns.addView(button(isSaved("fav", show) ? "★ Remove favourite" : "☆ Add favourite", v -> toggleSaved("fav", show)));
         btns.addView(button("☆ Vote", v -> showVote(show)));
         btns.addView(button("⚠ Report a problem", v -> showReport(show)));
-        head.addView(btns);
-        top.addView(head, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-        root.addView(top);
-        LinearLayout pills = row();
-        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
-        hs.addView(pills);
-        root.addView(hs);
-        ListView eps = list();
-        root.addView(eps, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        setContentView(root);
+        root.addView(btns);
+        TextView info = text("Loading episodes…", 15, MUTED, false);
+        root.addView(info);
+        LinearLayout seasonsBox = column();
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-1, -2); slp.topMargin = dp(10);
+        root.addView(seasonsBox, slp);
+        setContentView(frame);
         io.execute(() -> {
             try {
                 JSONObject r = new JSONObject(Net.get(api("get_series_info") + "&series_id=" + show.id));
-                JSONObject meta = r.optJSONObject("info");
+                JSONObject m = r.optJSONObject("info");
                 JSONObject all = r.optJSONObject("episodes");
                 java.util.TreeMap<Integer, List<Item>> bySeason = new java.util.TreeMap<>();
                 if (all != null) {
@@ -1464,8 +1470,7 @@ public class MainActivity extends Activity {
                         List<Item> l = new ArrayList<>();
                         for (int i = 0; i < a.length(); i++) {
                             JSONObject e = a.getJSONObject(i);
-                            String t = e.optString("title");
-                            String name = "E" + e.optString("episode_num") + "   " + t;
+                            String name = "E" + e.optString("episode_num") + ". " + e.optString("title");
                             Item ep = new Item("episode", e.optString("id"), name, e.optString("container_extension"), show.category);
                             ep.seriesId = show.id;
                             JSONObject ei = e.optJSONObject("info");
@@ -1475,26 +1480,84 @@ public class MainActivity extends Activity {
                         bySeason.put(num, l);
                     }
                 }
-                String cover = meta == null ? "" : meta.optString("cover");
-                String story = meta == null ? "" : meta.optString("plot");
+                String cover = m == null ? "" : m.optString("cover");
+                JSONArray bd = m == null ? null : m.optJSONArray("backdrop_path");
+                String back2 = bd != null && bd.length() > 0 ? bd.optString(0) : "";
+                List<String> parts = new ArrayList<>();
+                if (m != null) {
+                    String rt = m.optString("rating", ""); if (!rt.isEmpty() && !rt.equals("0")) parts.add("★ " + rt);
+                    String d = m.optString("releaseDate", m.optString("releasedate", "")); if (d.length() >= 4) parts.add(d.substring(0, 4));
+                }
+                parts.add(bySeason.size() + (bySeason.size() == 1 ? " season" : " seasons"));
+                if (m != null && !m.optString("genre").isEmpty()) parts.add(m.optString("genre"));
+                String castTxt = m == null ? "" : m.optString("cast", "");
+                String story = m == null ? "" : m.optString("plot");
                 ui.post(() -> {
-                    if ((show.poster == null || show.poster.isEmpty()) && !cover.isEmpty()) loadPoster(poster, cover);
+                    if (!back2.isEmpty()) loadPoster(backdrop, back2);
+                    else if ((show.poster == null || show.poster.isEmpty()) && !cover.isEmpty()) loadPoster(backdrop, cover);
+                    meta.setText(android.text.TextUtils.join("  •  ", parts));
+                    cast.setText(castTxt.isEmpty() ? "" : "Cast: " + castTxt);
                     plot.setText(story);
-                    int total = 0; for (List<Item> l : bySeason.values()) total += l.size();
-                    info.setText(bySeason.size() + (bySeason.size() == 1 ? " season · " : " seasons · ") + total + " episodes");
-                    bindSeriesSeasons(pills, eps, bySeason);
+                    info.setVisibility(bySeason.isEmpty() ? View.VISIBLE : View.GONE);
                     if (bySeason.isEmpty()) info.setText("No episodes for this series.");
+                    boolean first = true;
+                    for (java.util.Map.Entry<Integer, List<Item>> en : bySeason.entrySet()) {
+                        seasonsBox.addView(seasonRow(show, en.getKey(), en.getValue(), first));
+                        first = false;
+                    }
                 });
             } catch (Exception ex) { ui.post(() -> info.setText("Couldn't load episodes.")); }
         });
-        eps.setOnItemClickListener((p, v, pos, id) -> {
-            Item ep = (Item) eps.getItemAtPosition(pos);
-            Item named = new Item(ep.kind, ep.id, show.name + " – " + ep.name, ep.ext, ep.category);
-            named.poster = show.poster;
-            named.seriesId = show.id;
-            new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play"},
-                    (d, w) -> play(named, false)).show();
-        });
+    }
+
+    /** One season: heading, "n / total" counter, sideways row of episode picture cards (OK plays). */
+    private View seasonRow(Item show, int season, List<Item> eps, boolean focusFirst) {
+        LinearLayout box = column();
+        LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(text("Season " + season, 19, TEXT, true));
+        head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        TextView count = text("1 / " + eps.size(), 14, TEXT, false);
+        head.addView(count);
+        box.addView(head);
+        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
+        hs.setHorizontalScrollBarEnabled(false); hs.setClipToPadding(false);
+        LinearLayout strip = row(); strip.setPadding(dp(4), dp(6), dp(4), dp(10));
+        hs.addView(strip);
+        int cw = dp(200), ch = dp(112);
+        for (int i = 0; i < eps.size(); i++) {
+            Item ep = eps.get(i); final int idx = i;
+            LinearLayout card = column(); card.setPadding(dp(4), dp(4), dp(4), dp(4));
+            card.setBackground(posterCardBg()); card.setFocusable(true); card.setClickable(true);
+            android.widget.ImageView img = new android.widget.ImageView(this);
+            img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP); img.setBackgroundColor(Color.rgb(20, 28, 48));
+            card.addView(img, new LinearLayout.LayoutParams(-1, ch));
+            loadPoster(img, ep.poster == null || ep.poster.isEmpty() ? show.poster : ep.poster);
+            TextView t = text(ep.name, 13, TEXT, false); t.setSingleLine(true); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            t.setPadding(dp(4), dp(4), dp(4), 0);
+            card.addView(t);
+            LinearLayout wb = watchedBar(ep);
+            if (wb != null) card.addView(wb);
+            card.setOnFocusChangeListener((v, has) -> {
+                if (!has) return;
+                count.setText((idx + 1) + " / " + eps.size());
+                int[] pos = new int[2]; v.getLocationOnScreen(pos);
+                int sh = getResources().getDisplayMetrics().heightPixels;
+                // Keep the whole season row (heading included) on screen while moving up/down.
+                View sc = box; while (sc != null && !(sc instanceof android.widget.ScrollView)) sc = (View) sc.getParent();
+                if (sc != null) { android.widget.ScrollView s2 = (android.widget.ScrollView) sc; int y = box.getTop() + ((View) box.getParent()).getTop() - dp(12);
+                    if (pos[1] + v.getHeight() > sh - dp(12) || pos[1] < dp(12)) s2.smoothScrollTo(0, Math.max(0, y)); }
+            });
+            card.setOnClickListener(v -> {
+                Item named = new Item(ep.kind, ep.id, show.name + " – " + ep.name, ep.ext, ep.category);
+                named.poster = show.poster; named.seriesId = show.id;
+                play(named, false);
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(cw, -2); lp.rightMargin = dp(12);
+            strip.addView(card, lp);
+            if (focusFirst && i == 0) card.post(card::requestFocus);
+        }
+        box.addView(hs);
+        return box;
     }
 
     /** Keep the season selection separate from remote focus, and hand Down/Up between panes. */
