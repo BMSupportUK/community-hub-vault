@@ -164,6 +164,53 @@ export function AutoBreakStartListener() {
   );
 }
 
+type BreakPlanItem = ReturnType<typeof planItems>[number];
+
+/** The Break 1 / Main break / Break 2 pill rows, shared by the inline list and the pop-up box. */
+export function BreakPlanList({ items, heading = true }: { items: BreakPlanItem[]; heading?: boolean }) {
+  const next = items.find((i) => !i.done && !i.missed && i.start !== null);
+  return (
+    <div className="grid gap-1.5 text-xs">
+      {heading && <span className="text-muted-foreground font-medium">Allocated breaks (UK office)</span>}
+      {items.map((it) => {
+        const Icon = it.done ? CheckCircle2 : breakIcon(it.kind);
+        return (
+          <div key={it.label} className={cn("flex items-center justify-between rounded-full px-3 py-1 ring-1",
+            it.done ? "bg-muted/20 ring-border text-muted-foreground line-through" : it.missed ? "bg-muted/10 ring-border text-muted-foreground/60" : it === next ? "bg-warning/15 ring-warning/40 text-warning" : "bg-white/[0.05] ring-white/15")}>
+            <span className="inline-flex items-center gap-1.5 font-medium"><Icon className="size-3.5" />{it.label}</span>
+            <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Allocated breaks in their own pop-up box, opened from the Working Status
+ * "Breaks" tab so the break rows no longer stack up inside Today's shift.
+ */
+export function BreakPlanDialog({ open, onOpenChange, userId, usedKinds }: { open: boolean; onOpenChange: (open: boolean) => void; userId: string; usedKinds: readonly string[] }) {
+  const { plan, nowMin } = useBreakPlan(userId);
+  const items = useMemo(() => planItems(plan, usedKinds, nowMin), [plan, usedKinds, nowMin]);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {/* z-[400] keeps the pop-up above the screen-lock overlay (z-[300]). */}
+      <DialogContent className="z-[400] w-[calc(100vw-2rem)] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />Allocated breaks</DialogTitle>
+          <DialogDescription>UK office times. Breaks start at their allocated time and end on their own.</DialogDescription>
+        </DialogHeader>
+        {plan ? (
+          <BreakPlanList items={items} heading={false} />
+        ) : (
+          <p className="text-xs text-muted-foreground">No break plan for today yet.</p>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function BreakPlanRows({ userId, usedKinds, onStartBreak, listHidden }: { userId: string; usedKinds: readonly string[]; onStartBreak?: (kind: "break" | "lunch") => void; listHidden?: boolean }) {
   const { plan, nowMin } = useBreakPlan(userId);
   const [autoStart, setAutoStart] = useState(false);
@@ -239,50 +286,43 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak, listHidden }: {
       </DialogContent>
     </Dialog>
   );
-  if (listHidden) return autoStart ? autoDialog : null;
-  const next = items.find((i) => !i.done && !i.missed && i.start !== null);
+  // The allocated-time start pop-up is built here so it survives the list being
+  // hidden: hiding the break list must never hide the only way a break can begin.
+  const startDialog = (
+    <Dialog open={!autoStart && !!activeKey && !!onStartBreak && ticketCount !== null} onOpenChange={() => {}}>
+      <DialogContent
+        className="z-[400] w-[calc(100vw-2rem)] max-w-md overflow-x-hidden [&>button]:hidden"
+        onEscapeKeyDown={(e) => { if (dueKey) e.preventDefault(); }}
+        onInteractOutside={(e) => { if (dueKey) e.preventDefault(); }}
+      >
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />{activeItem?.label} time</DialogTitle>
+          <DialogDescription>
+            {onTicket
+              ? `You're dealing with ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}. Pass ${ticketCount === 1 ? "it" : "them"} over, then start your ${activeItem?.label.toLowerCase()}.`
+              : `Start your ${activeItem?.label.toLowerCase()}. It ends on its own.`}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2">
+          {onTicket && (
+            <Button variant="outline" className="w-full" disabled={working} onClick={() => void passOver()}>
+              Pass ticket{ticketCount === 1 ? "" : "s"} over
+            </Button>
+          )}
+          <Button className="w-full" disabled={onTicket || working} onClick={startActive}>
+            Start {activeItem?.label.toLowerCase()}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (listHidden) return <>{autoDialog}{startDialog}</>;
   return (
     <>
       {autoDialog}
-      <div className="grid gap-1.5 text-xs">
-        <span className="text-muted-foreground font-medium">Allocated breaks (UK office)</span>
-        {items.map((it) => {
-          const Icon = it.done ? CheckCircle2 : breakIcon(it.kind);
-          return (
-            <div key={it.label} className={cn("flex items-center justify-between rounded-full px-3 py-1 ring-1",
-              it.done ? "bg-muted/20 ring-border text-muted-foreground line-through" : it.missed ? "bg-muted/10 ring-border text-muted-foreground/60" : it === next ? "bg-warning/15 ring-warning/40 text-warning" : "bg-white/[0.05] ring-white/15")}>
-              <span className="inline-flex items-center gap-1.5 font-medium"><Icon className="size-3.5" />{it.label}</span>
-              <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
-            </div>
-          );
-        })}
-      </div>
-      <Dialog open={!autoStart && !!activeKey && !!onStartBreak && ticketCount !== null} onOpenChange={() => {}}>
-        <DialogContent
-          className="z-[400] w-[calc(100vw-2rem)] max-w-md overflow-x-hidden [&>button]:hidden"
-          onEscapeKeyDown={(e) => { if (dueKey) e.preventDefault(); }}
-          onInteractOutside={(e) => { if (dueKey) e.preventDefault(); }}
-        >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />{activeItem?.label} time</DialogTitle>
-            <DialogDescription>
-              {onTicket
-                ? `You're dealing with ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}. Pass ${ticketCount === 1 ? "it" : "them"} over, then start your ${activeItem?.label.toLowerCase()}.`
-                : `Start your ${activeItem?.label.toLowerCase()}. It ends on its own.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2">
-            {onTicket && (
-              <Button variant="outline" className="w-full" disabled={working} onClick={() => void passOver()}>
-                Pass ticket{ticketCount === 1 ? "" : "s"} over
-              </Button>
-            )}
-            <Button className="w-full" disabled={onTicket || working} onClick={startActive}>
-              Start {activeItem?.label.toLowerCase()}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <BreakPlanList items={items} />
+      {startDialog}
     </>
   );
 }
