@@ -2763,7 +2763,7 @@ public class MainActivity extends Activity {
             LinearLayout tab = new LinearLayout(this);
             tab.setOrientation(LinearLayout.VERTICAL);
             tab.setGravity(Gravity.CENTER_HORIZONTAL);
-            tab.setPadding(dp(10), dp(16), dp(10), dp(16));
+            tab.setPadding(dp(14), dp(28), dp(14), dp(28));
             tab.setFocusable(true);
             tab.setClickable(true);
             GradientDrawable tabOn = new GradientDrawable(); tabOn.setColor(ACCENT);
@@ -2788,7 +2788,13 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             vlp.topMargin = dp(8);
             tab.addView(vlabel, vlp);
-            tab.setOnClickListener(v -> catBtn.performClick());
+            // Open as soon as a finger lands (no wait for lift/tap-slop) and let the whole edge strip act as the button.
+            final long[] lastOpen = { 0 };
+            Runnable openTab = () -> { long t = android.os.SystemClock.uptimeMillis(); if (t - lastOpen[0] < 400) return; lastOpen[0] = t; catBtn.performClick(); };
+            tab.setOnClickListener(v -> openTab.run());
+            View.OnTouchListener instant = (v, e) -> { if (e.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) { tab.setPressed(true); openTab.run(); } else if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP || e.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL) tab.setPressed(false); return true; };
+            tab.setOnTouchListener(instant);
+            rail.setOnTouchListener(instant);
             rail.addView(tab, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             content.addView(rail, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
             content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
