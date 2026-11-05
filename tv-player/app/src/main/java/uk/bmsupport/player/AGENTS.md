@@ -24,3 +24,4 @@
 - Report a problem lives on the built-in player screen (top-left button shown with the controls, ADJUST_PAN pop-up, no keepEntryVisible resizing which flickered phones); play menus never carry it — the series page keeps its own button.
 - Built-in playback hands over to BackupPlayerActivity (in-app libVLC, ARM-only native libs) when every address fails before a picture or reconnects give up; catch-up keeps its own recovery.
 - Player controls per kind live in PlayerControls: fast forward/rewind only on films and episodes (not live or catch up); no Report a problem on catch up.
+- Films/Series on every BM Player (Android MediaHero, desktop MediaHero in app.jsx): details panel on top (backdrop, rating · year · length · genre, cast, director, plot from get_vod_info/get_series_info, cached), Category pill beside Search/Voice at the top (no category column), Sort row, then a full-width poster grid under the category name.
