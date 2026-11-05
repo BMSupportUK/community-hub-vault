@@ -261,7 +261,7 @@ public class PlayerActivity extends Activity {
         blp.topMargin = 24; blp.rightMargin = 24;
         root.addView(boostBtn, blp);
         // Picture size, remembered on this device: wide films show bars on Fit, Zoom fills the screen.
-        final android.content.SharedPreferences pp = getSharedPreferences("bm", MODE_PRIVATE);
+        final android.content.SharedPreferences pp = prefs(this);
         final android.widget.Button picBtn = new android.widget.Button(this);
         picBtn.setAllCaps(false);
         final Runnable applyPic = () -> {
