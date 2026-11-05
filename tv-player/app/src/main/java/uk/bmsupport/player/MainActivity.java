@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
         JSONObject r = bmRatings.get(ratingKey(it));
         if (r == null) return "BM ☆ —";
         int n = r.optInt("count");
-        return n == 0 ? "BM ☆ Not rated" : String.format(java.util.Locale.UK, "BM ★ %.1f/5 · %d vote%s", r.optDouble("average"), n, n == 1 ? "" : "s");
+        return n == 0 ? "BM ☆ Not rated" : String.format(java.util.Locale.UK, "BM ★ %.1f · %d vote%s", r.optDouble("average"), n, n == 1 ? "" : "s");
     }
     private void receiveRatings(JSONObject response) {
         JSONArray rows = response.optJSONArray("ratings");
@@ -3926,7 +3926,9 @@ public class MainActivity extends Activity {
                 }
                 progress.addView(wb);
                 t.setLines(2); t.setText(it.name);
-                progress.addView(text(ratingText(it), 12, MUTED, false)); requestRating(it);
+                // Rating always sits on its own single line under any watched bar, so the score and vote count are never cut off.
+                TextView rt = text(ratingText(it), 12, MUTED, false); rt.setSingleLine(true); rt.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                progress.addView(rt); requestRating(it);
                 loadPoster(img, it.poster);
                 return card;
             }
