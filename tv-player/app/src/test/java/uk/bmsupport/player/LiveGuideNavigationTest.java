@@ -39,6 +39,7 @@ public class LiveGuideNavigationTest {
         assertEquals(View.GONE, channelPage.getVisibility());
     }
 
+    @org.robolectric.annotation.Config(qualifiers = "sw720dp-land")
     @Test public void swipeDownTheGuideScrollsWithoutPlayingAChannel() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         GuideGridView grid = grid(activity);

@@ -28,7 +28,10 @@ public class GuideGridView extends View {
         void onCatchup(int row);
     }
 
-    private static final long SLOT = 1800, WINDOW = 7200;
+    private static final long SLOT = 1800;
+    // Phones show a 3-hour window and slimmer rows so more of the guide fits; TVs keep 2 hours.
+    private long WINDOW = 7200;
+    private boolean phone;
     private final List<String> names = new ArrayList<>();
     private final List<Boolean> catchup = new ArrayList<>();
     private final Map<Integer, List<Prog>> progs = new HashMap<>();
@@ -43,6 +46,8 @@ public class GuideGridView extends View {
     public GuideGridView(Context c) {
         super(c);
         d = c.getResources().getDisplayMetrics().density;
+        phone = c.getResources().getConfiguration().smallestScreenWidthDp < 600;
+        if (phone) WINDOW = 10800;
         setFocusable(true); setFocusableInTouchMode(true);
         resetTime();
     }
@@ -82,9 +87,9 @@ public class GuideGridView extends View {
     }
     public Prog selected() { return progAt(selRow, selTime); }
 
-    private float rowH() { return 64 * d; }
+    private float rowH() { return (phone ? 50 : 64) * d; }
     private float headH() { return 36 * d; }
-    private float chW() { return Math.min(220 * d, getWidth() * 0.26f); }
+    private float chW() { return phone ? Math.min(150 * d, getWidth() * 0.22f) : Math.min(220 * d, getWidth() * 0.26f); }
     private int visibleRows() { return Math.max(1, (int) ((getHeight() - headH()) / rowH())); }
 
     private void changed() {
@@ -226,7 +231,7 @@ public class GuideGridView extends View {
         b.add(ws); b.add(we);
         for (long t = ws; t < we; t += SLOT) b.add(t);
         int v = visibleRows() + 1;
-        for (int i = 0; i < v && topRow + i < progs.size(); i++) {
+        for (int i = 0; i < v && topRow + i < names.size(); i++) {
             List<Prog> l = progs.get(topRow + i); if (l == null) continue;
             for (Prog p : l) {
                 long en = p.en > p.st ? p.en : p.st + SLOT;
@@ -236,7 +241,7 @@ public class GuideGridView extends View {
         }
         axT = new long[b.size()]; int k = 0; for (long t : b) axT[k++] = t;
         int n = axT.length - 1; float[] w = new float[Math.max(n, 0)];
-        float minSeg = 90 * d, fixed = 0; long rest = 0;
+        float minSeg = (phone ? 60 : 90) * d, fixed = 0; long rest = 0;
         boolean[] small = new boolean[w.length];
         float base = gridW / WINDOW;
         for (int i = 0; i < n; i++) { long dur = axT[i + 1] - axT[i]; if (dur * base < minSeg) { small[i] = true; fixed += minSeg; } else rest += dur; }
