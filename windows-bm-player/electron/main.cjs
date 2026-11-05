@@ -158,7 +158,7 @@ async function timers(){
  const now=Date.now();
  if(!store.user||!gate.unlocked||maintenance||publicState().expired){lastInput=now;promptedAt=0;return;}
  if(!promptedAt&&now-lastInput>=core.IDLE_MS){promptedAt=now;await foreground();send({type:'inactive',seconds:120});}
- if(promptedAt){if(now-promptedAt>=core.RESPONSE_MS){await stopAll();app.quit();return;}send({type:'inactive',seconds:Math.ceil((core.RESPONSE_MS-(now-promptedAt))/1000)});}
+ if(promptedAt){if(now-promptedAt>=core.RESPONSE_MS){promptedAt=0;setTimeout(()=>app.exit(0),5000);try{await Promise.race([stopAll(),new Promise(r=>setTimeout(r,3000))]);}catch{}app.quit();return;}send({type:'inactive',seconds:Math.ceil((core.RESPONSE_MS-(now-promptedAt))/1000)});}
  for(const reminder of store.reminders||[]){if(!reminder.notified&&reminder.start-300000<=now&&reminder.start>now){reminder.notified=true;save();await foreground();send({type:'reminder',reminder});}}
 }
 function trusted(event){return event.sender===win?.webContents&&event.senderFrame?.url===pathToFileURL(page).href;}
