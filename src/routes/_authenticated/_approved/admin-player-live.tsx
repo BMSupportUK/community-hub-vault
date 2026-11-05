@@ -188,7 +188,7 @@ function AdminPlayerLivePageInner() {
   if (!isAdmin) return <Navigate to="/admin" />;
 
   return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">
-    <div className="mx-auto max-w-6xl space-y-4">
+    <div className="w-full space-y-4">
       <Link to="/admin-player" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> BM Player Admin Dashboard</Link>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">BM Player – Live connections</h1>

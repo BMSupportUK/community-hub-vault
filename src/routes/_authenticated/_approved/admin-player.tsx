@@ -87,7 +87,7 @@ function AdminPlayerPageInner() {
   const current = visible.find((x) => x.key === section);
 
   if (!current) return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="w-full space-y-5">
       <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Admin dashboard</Link>
       <h1 className="font-display text-2xl font-bold">BM Player Admin Dashboard</h1>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -109,7 +109,7 @@ function AdminPlayerPageInner() {
   if (section === "major-announcements") return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8"><PlayerMajorAnnouncementsCard onBack={back} /></main>;
 
   return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">
-    <div className="mx-auto max-w-3xl space-y-4">
+    <div className="w-full space-y-4">
       <Link to="/admin-player" search={{}} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> BM Player Admin Dashboard</Link>
       <h1 className="font-display text-2xl font-bold">BM Player – {current.label}</h1>
       {section === "dns" && !dnsShown && <form className="space-y-3 rounded-xl border border-border bg-surface p-5" onSubmit={async (e) => {

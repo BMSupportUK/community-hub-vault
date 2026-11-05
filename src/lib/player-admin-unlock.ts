@@ -1,5 +1,5 @@
-/** BM Player Admin Dashboard stays unlocked for 15 minutes after a correct Staff PIN. */
-export const PLAYER_ADMIN_UNLOCK_MS = 15 * 60_000;
+/** BM Player Admin Dashboard stays unlocked until 10 minutes without activity. */
+export const PLAYER_ADMIN_UNLOCK_MS = 10 * 60_000;
 const KEY = "bm-player-admin-unlocked-until";
 
 export function unlockedUntil(): number {
