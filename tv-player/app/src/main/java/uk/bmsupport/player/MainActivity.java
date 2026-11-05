@@ -2718,7 +2718,7 @@ public class MainActivity extends Activity {
         btns.addView(button("Now", v -> {}));
         btns.addView(button("◀ Day", v -> {}));
         btns.addView(button("Day ▶", v -> {}));
-        // Phones: the Now/Day row is gone so the guide gets the room; the bigger-guide control sits in the header.
+        // Phones: the Now/Day controls move into the bigger-guide pop-up bar so the normal guide keeps the room.
         if (!phoneLive) info.addView(btns);
         top.addView(info, weight(1.6f, ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout side = column();
@@ -2746,6 +2746,8 @@ public class MainActivity extends Activity {
         // Phones: "Bigger guide" hides the preview and header so the guide fills the screen.
         LinearLayout bigBar = row(); bigBar.setGravity(Gravity.CENTER_VERTICAL);
         bigBar.addView(text("TV guide", 20, TEXT, true));
+        // Phones: jump-to-now and day shifting live inside the bigger-guide pop-up.
+        if (phoneLive) bigBar.addView(btns);
         bigBar.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         bigBar.setVisibility(View.GONE);
         root.addView(bigBar);
@@ -2830,11 +2832,9 @@ public class MainActivity extends Activity {
         FrameLayout guideScreen = sideDrawer(content, panel);
         if ("phone".equals(platform())) GuideSafeArea.apply(guideScreen);
         setContentView(guideScreen);
-        if (!phoneLive) {
-            btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });
-            btns.getChildAt(2).setOnClickListener(v -> grid.shiftDay(-1));
-            btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));
-        }
+        btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });
+        btns.getChildAt(2).setOnClickListener(v -> grid.shiftDay(-1));
+        btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));
 
         final List<String[]> catRows = new ArrayList<>();
         final java.util.Set<String> requested = new java.util.HashSet<>();
