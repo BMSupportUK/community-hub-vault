@@ -2737,11 +2737,20 @@ public class MainActivity extends Activity {
         panel.setBackgroundColor(CARD);
         panel.setPadding(dp(18), dp(24), dp(18), dp(16));
         panel.addView(text("Categories", 22, TEXT, true));
+        final List<Item> shownCh = new ArrayList<>();
         android.widget.ListView catList = new android.widget.ListView(this);
         catList.setDivider(new android.graphics.drawable.ColorDrawable(0x1FFFFFFF));
         catList.setDividerHeight(1);
         catList.setFocusable(true);
-        panel.addView(catList, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        LiveChannelDrawer channelDrawer = live ? new LiveChannelDrawer(this, catList, pos -> {
+            if (pos < 0 || pos >= shownCh.size()) return;
+            Item ch = shownCh.get(pos);
+            hidePanel();
+            grid.selectChannel(pos);
+            schedulePreview(ch, pv, pvStatus);
+        }) : null;
+        panel.addView(channelDrawer != null ? channelDrawer : catList,
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         panel.addView(button("Close", v -> hidePanel()));
         LinearLayout content = root;
         if (live) {
@@ -2790,7 +2799,6 @@ public class MainActivity extends Activity {
         btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));
 
         final List<String[]> catRows = new ArrayList<>();
-        final List<Item> shownCh = new ArrayList<>();
         final java.util.Set<String> requested = new java.util.HashSet<>();
         final int[] gen = { 0 };
         final String[] previewPending = { null };
@@ -2810,13 +2818,18 @@ public class MainActivity extends Activity {
         };
         catBtn.setOnClickListener(v -> {
             if (panelOpen()) { hidePanel(); return; }
+            if (channelDrawer != null) channelDrawer.showCategories();
             showPanel();
             catList.requestFocus();
         });
         catList.setOnItemClickListener((d, w, pos, id) -> {
             if (pos >= catRows.size()) return;
-            hidePanel();
             applyCat.accept(catRows.get(pos));
+            if (channelDrawer != null) {
+                List<String> channelNames = new ArrayList<>();
+                for (Item ch : shownCh) channelNames.add(ch.name);
+                channelDrawer.showChannels(channelNames);
+            } else hidePanel();
         });
         grid.setListener(new GuideGridView.Listener() {
             @Override public void needEpg(int r) {
