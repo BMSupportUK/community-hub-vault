@@ -13,3 +13,4 @@
 - The installer closes BM Player (taskkill + path-matched Stop-Process) and confirms the DLLs are writable before copying, asking Retry/Cancel if still locked.
 - Sound booster levels live in sound-boost.cjs (shared with Mac); main.cjs applies boosted libVLC volume only to the audible pane, Mac's <video> engine uses a Web Audio gain node above 100.
 - Live TV (non-saved lists) renders renderer/live-guide.jsx, mirroring the Android/Amazon box layout: preview + programme info, 24h/Now/Category pills, lazily loaded guide grid; 1st channel click previews, 2nd opens the play menu.
+- Every desktop screen mirrors the Android/Amazon app: same navy palette and accent focus ring, home header search pills, tile + separate Refresh button, Sports/Multi-screen/Favourites/Recently watched/Settings row, and Films/Series Sort pill row; change Android and desktop together.
