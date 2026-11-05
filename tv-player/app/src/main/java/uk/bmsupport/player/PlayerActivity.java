@@ -8,6 +8,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.net.Uri;
 import android.os.Build;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -229,11 +230,30 @@ public class PlayerActivity extends Activity {
         return screen && decoder;
     }
 
+    private float barShare = 1f; private int barSame = 0; private float barSeen = 1f;
+    /** Every 2s: if the picture has black bars baked in top and bottom, scale it up until they are off screen (like a TV's zoom). */
+    private final Runnable barWatch = new Runnable() { @Override public void run() {
+        try {
+            android.view.View sv = view == null ? null : view.getVideoSurfaceView();
+            if (sv instanceof android.view.TextureView && player != null && player.isPlaying()) {
+                Bitmap bm = ((android.view.TextureView) sv).getBitmap(96, 54);
+                if (bm != null) {
+                    float share = LetterboxCrop.contentShare(bm); bm.recycle();
+                    if (Math.abs(share - barSeen) < 0.03f) barSame++; else { barSame = 0; barSeen = share; }
+                    // Only change after the same reading 3 times running, and only zoom further in, so dark scenes never make it jump.
+                    if (barSame >= 2 && share < barShare - 0.02f) { barShare = share; float sc = 1f / share; sv.setScaleX(sc); sv.setScaleY(sc); }
+                }
+            }
+        } catch (Exception ignored) {}
+        ui.postDelayed(this, 2000);
+    } };
+
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
-        view = new PlayerView(this);
+        // Films and episodes draw to a TextureView so baked-in black bars can be measured and zoomed past.
+        view = PlayerControls.canSkip(kind()) ? (PlayerView) getLayoutInflater().inflate(R.layout.bm_player_texture, root, false) : new PlayerView(this);
         view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
         // Fast forward/rewind only where they work: films and series episodes, never live TV or catch up.
         view.setShowFastForwardButton(PlayerControls.canSkip(kind()));
@@ -268,7 +288,7 @@ public class PlayerActivity extends Activity {
         ctrlRow.addView(boostBtn);
         root.addView(ctrlRow, blp);
         // Films and series always fill the screen (Zoom); live TV and catch up keep their own shape.
-        if (PlayerControls.canSkip(kind())) view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
+        if (PlayerControls.canSkip(kind())) { view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM); ui.postDelayed(barWatch, 3000); }
         final android.widget.Button reportBtn = new android.widget.Button(this);
         reportBtn.setAllCaps(false);
         reportBtn.setText("⚠ Report a problem");
@@ -629,5 +649,5 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
-    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
