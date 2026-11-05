@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Build, sign and release Android 3.09 (versionCode 120) with the phone Preview channel button and double-tap play menu; 50 Android tests pass, the download link and in-app update info both report 3.09 and the served file matches the build byte-for-byte. Real-phone check pending (no attached device).
 - [x] Add the selected category beneath Current programme on Android phones and place Play channel directly beneath the category details, not the preview; all 50 Android checks pass, including short-screen button reachability. Not released; real-phone playback unverified (no attached device).
 - [x] Build, sign and release Android 3.06 (versionCode 117) with the bigger-guide control in the header and the phone Now/Day row removed; 48 Android tests pass, the live download and in-app update info both report 3.06 and the served file matches the build byte-for-byte. Real-phone check pending (no attached device).
 - [x] Keep Android phone EPG scrolling clear of system swipe areas; 45 Android tests pass, including safe-edge padding, cancelled swipes and TV remote navigation. Not released; real-phone gesture verification blocked by no attached device.
