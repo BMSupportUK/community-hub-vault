@@ -1,0 +1,1 @@
+ALTER TABLE public.player_devices ADD COLUMN watching_preview boolean NOT NULL DEFAULT false;
