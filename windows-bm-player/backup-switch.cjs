@@ -25,6 +25,8 @@ class BackupSwitch {
     this.b.playBackup(i, url, o);
     return true;
   }
+  /** Black-bar check runs on the main player only; the backup <video> checks itself in the window. */
+  checkBars(i, decode) { if (!this.usingBackup(i)) this.p?.checkBars?.(i, decode); }
   status(i) { return this.eng(i)?.status(i) || null; }
   pause(i, v) { this.eng(i)?.pause(i, v); }
   seek(i, v) { this.eng(i)?.seek(i, v); }

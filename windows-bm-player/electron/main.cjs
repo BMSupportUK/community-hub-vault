@@ -168,6 +168,8 @@ let bufferQueue=[],bufferBusy=false;
 function queueBuffer(item,ev){bufferQueue.push({kind:item.kind==='episode'?'series':item.kind,content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:Math.max(0,Math.min(3600000,Math.round(ev.ms))),reconnected:!!ev.reconnected,freeze:!!ev.freeze,at:Date.now()});if(bufferQueue.length>100)bufferQueue=bufferQueue.slice(-100);if(bufferQueue.length>=10)flushBuffer();}
 async function flushBuffer(){if(bufferBusy||!store.token||!bufferQueue.length)return;bufferBusy=true;const events=bufferQueue.splice(0,recovery.BATCH);try{await site({action:'buffering',version:app.getVersion(),events});}catch{}finally{bufferBusy=false;}}
 setInterval(()=>{flushBuffer();},60000);
+// Films/episodes: zoom past black bars baked into the picture (Windows libVLC; Mac and backup check in the window).
+setInterval(()=>{if(!engine?.checkBars)return;const {nativeImage}=require('electron');const decode=f=>{const im=nativeImage.createFromPath(f);if(im.isEmpty())return null;const sz=im.getSize();return{data:im.toBitmap(),width:sz.width,height:sz.height};};for(const s of sessions)if(['film','episode'].includes(s.item.kind)&&!s.backup)engine.checkBars(s.index,decode);},2000);
 async function connectionCheck(){
  if(checkBusy||!store.user||!gate.unlocked)return;checkBusy=true;
  try{

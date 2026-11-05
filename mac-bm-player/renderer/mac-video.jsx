@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 import mpegts from 'mpegts.js';
+import { contentShare, BarTracker } from '../../windows-bm-player/letterbox.cjs';
 
 // Windows plays through its own libVLC surfaces; this <video> only shows when the backup engine takes over.
 const HIDE_IDLE = typeof window !== 'undefined' && window.bm?.platform === 'windows';
@@ -59,6 +60,7 @@ function start(index) {
   }
   if (cmd.resume > 0) video.addEventListener('loadedmetadata', () => { try { video.currentTime = cmd.resume; } catch {} }, { once: true });
   video.style.objectFit = cmd.fill ? 'cover' : 'contain';
+  video.style.transform = ''; video._bars = cmd.fill ? new BarTracker() : null;
   video.play().catch(() => {});
 }
 
@@ -78,6 +80,20 @@ function apply(data) {
   }
   else if (data.action === 'volume') setLoudness(index, video, data.volume);
 }
+
+// Films/episodes: every 2s sample a tiny frame and scale past black bars baked into the picture.
+const barCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+if (barCanvas) { barCanvas.width = 96; barCanvas.height = 54; }
+if (typeof window !== 'undefined') setInterval(() => {
+  for (const video of elements.values()) {
+    if (!video?._bars || video.paused || video.readyState < 2) continue;
+    try {
+      const ctx = barCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(video, 0, 0, 96, 54);
+      if (video._bars.push(contentShare(ctx.getImageData(0, 0, 96, 54).data, 96, 54))) video.style.transform = `scale(${1 / video._bars.share})`;
+    } catch {}
+  }
+}, 2000);
 
 if (window.bm) {
   window.bm.subscribe(apply);
