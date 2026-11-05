@@ -61,3 +61,10 @@ export function formatElapsed(fromIso: string | null | undefined, now = Date.now
   const pad = (n: number) => String(n).padStart(2, "0");
   return h ? `${h}h ${pad(m)}m ${pad(s)}s` : `${m}m ${pad(s)}s`;
 }
+
+/** Seconds of playback to credit on a check-in: the gap since the last one, only if something was playing and the app stayed live. */
+export function watchCredit(input: { now: number; lastSeenAt: string | null | undefined; watchingKind: string | null | undefined }): { kind: string; seconds: number } | null {
+  if (!input.watchingKind || !isLive(input.lastSeenAt, input.now)) return null;
+  const seconds = Math.round((input.now - new Date(input.lastSeenAt as string).getTime()) / 1000);
+  return seconds > 0 ? { kind: input.watchingKind, seconds: Math.min(seconds, LIVE_WINDOW_MS / 1000) } : null;
+}
