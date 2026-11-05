@@ -233,6 +233,9 @@ public class PlayerActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         view = new PlayerView(this);
         view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
+        // Fast forward/rewind only where they work: films and series episodes, never live TV or catch up.
+        view.setShowFastForwardButton(PlayerControls.canSkip(kind()));
+        view.setShowRewindButton(PlayerControls.canSkip(kind()));
         root.addView(view);
         TextView banner = new TextView(this);
         banner.setText("Non 4K Device");
@@ -264,7 +267,10 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams reportLp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
         reportLp.topMargin = 24; reportLp.leftMargin = 24;
         root.addView(reportBtn, reportLp);
-        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(vis); });
+        // Catch up problems can't be fixed by us, so there is no report button on catch up.
+        final boolean canReport = PlayerControls.canReport(kind());
+        if (!canReport) reportBtn.setVisibility(android.view.View.GONE);
+        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(canReport ? vis : android.view.View.GONE); });
         setContentView(root);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
@@ -601,7 +607,10 @@ public class PlayerActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override public boolean dispatchKeyEvent(android.view.KeyEvent e) { return PlayerApplication.closeAnnouncementOnBack(this, e) || super.dispatchKeyEvent(e); }
+    @Override public boolean dispatchKeyEvent(android.view.KeyEvent e) {
+        int k = e.getKeyCode();
+        if (!PlayerControls.canSkip(kind()) && (k == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD || k == KeyEvent.KEYCODE_MEDIA_REWIND)) return true;
+        return PlayerApplication.closeAnnouncementOnBack(this, e) || super.dispatchKeyEvent(e); }
 
     @Override public void onUserInteraction() {
         super.onUserInteraction();
