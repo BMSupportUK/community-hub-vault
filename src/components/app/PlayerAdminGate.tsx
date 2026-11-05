@@ -19,7 +19,7 @@ export function PlayerAdminGate({ children }: { children: ReactNode }) {
   if (open) {
     const left = Math.max(0, Math.ceil((until - now) / 1000));
     return <>
-      <div className="flex items-center justify-end gap-2 px-4 pt-3 text-xs text-muted-foreground sm:px-8">
+      <div className="flex items-center justify-start gap-2 px-4 pt-3 text-xs text-muted-foreground sm:px-8">
         <Lock className="size-3.5" />Locks in {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
         <Button size="sm" variant="outline" onClick={() => { clearUnlock(); setUntil(0); }}>Lock now</Button>
       </div>
