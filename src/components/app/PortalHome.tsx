@@ -70,7 +70,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
   return (
     <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-visible md:overflow-y-auto">
       {/* Hero */}
-      <div className="grid min-h-dvh w-full min-w-0 grid-rows-[1fr_auto] overflow-x-hidden overflow-y-visible md:h-full md:min-h-0">
+      <div className="grid min-h-dvh w-full min-w-0 grid-rows-[1fr_auto] overflow-x-hidden overflow-y-visible">
       <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
         <div className="grid min-h-0 min-w-0 w-full grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
