@@ -186,7 +186,7 @@ function AdminPlayerLivePageInner() {
     return () => { stop = true; clearInterval(poll); clearInterval(tick); if (pending) clearTimeout(pending); void supabase.removeChannel(channel); };
   }, [isAdmin]);
 
-  const live = useMemo(() => (rows ?? []).filter((r) => isLive(r.last_seen_at, now)), [rows, now]);
+  const live = useMemo(() => (rows ?? []).filter((r) => isLive(r.last_seen_at, now) && !!r.watching_since), [rows, now]);
   const watching = live.filter((r) => r.watching_since).length;
   const onVpn = live.filter((r) => r.vpn_status === "yes").length;
 
@@ -199,12 +199,11 @@ function AdminPlayerLivePageInner() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">BM Player – Live connections</h1>
         <div className="flex gap-2 text-sm">
-          <span className="rounded-full border border-border bg-surface px-3 py-1"><Radio className="mr-1 inline size-3.5 text-primary" />{live.length} online</span>
-          <span className="rounded-full border border-border bg-surface px-3 py-1"><MonitorPlay className="mr-1 inline size-3.5 text-primary" />{watching} watching</span>
+          <span className="rounded-full border border-border bg-surface px-3 py-1"><Radio className="mr-1 inline size-3.5 text-primary" />{live.length} watching</span>
           {onVpn > 0 && <span className="rounded-full border border-warning/40 bg-warning/10 px-3 py-1 font-medium text-warning"><ShieldAlert className="mr-1 inline size-3.5" />{onVpn} on VPN</span>}
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Updates every few seconds. Apps check in about once a minute; older apps (before 2.35) show as online but can't report what they're playing. Press Details on any row for its full IP and connection record.</p>
+      <p className="text-xs text-muted-foreground">Updates every few seconds. Apps check in about once a minute; only players watching Live TV, Movies, Series or Catch up are listed; idle apps are left out. Press Details on any row for its full IP and connection record.</p>
 
       {rows === null ? <p className="text-sm text-muted-foreground">Loading…</p> : live.length === 0
         ? <p className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted-foreground">No BM Player apps are connected right now.</p>
