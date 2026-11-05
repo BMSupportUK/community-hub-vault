@@ -31,6 +31,9 @@ public final class PlayerApplication extends Application implements Application.
     private int majorTicks = 55;
     private boolean majorBusy;
     private android.widget.TextView majorIcon;
+    private android.widget.FrameLayout majorBox;
+    /** Width every header keeps free on its right for the 📣 icon. */
+    static final int MAJOR_ICON_SLOT_DP = 64;
     static void interaction(Activity activity) {
         PlayerApplication app = (PlayerApplication) activity.getApplication();
         if (app.prompt == null) app.lastInput = SystemClock.elapsedRealtime();
@@ -127,36 +130,52 @@ public final class PlayerApplication extends Application implements Application.
         boolean want = a instanceof MainActivity && !a.isFinishing() && MainActivity.isUnlocked()
                 && !getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty();
         if (majorIcon != null && (!want || majorIcon.getContext() != a)) {
-            if (majorIcon.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) majorIcon.getParent()).removeView(majorIcon);
-            majorIcon = null;
+            if (majorBox != null && majorBox.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) majorBox.getParent()).removeView(majorBox);
+            majorIcon = null; majorBox = null;
         }
         if (!want) return;
         int n = majorUnread();
         if (majorIcon == null) {
             float d = a.getResources().getDisplayMetrics().density;
+            // Round 44dp button in the app's card/accent colours with a small red count bubble;
+            // every header leaves MAJOR_ICON_SLOT_DP free on the right so it never covers a button.
+            android.widget.FrameLayout box = new android.widget.FrameLayout(a);
             android.widget.TextView b = new android.widget.TextView(a);
-            b.setTextColor(0xFFFFFFFF); b.setTextSize(16); b.setGravity(android.view.Gravity.CENTER);
-            b.setPadding((int) (14 * d), (int) (8 * d), (int) (14 * d), (int) (8 * d));
+            b.setText("📣"); b.setTextSize(18); b.setGravity(android.view.Gravity.CENTER);
             b.setContentDescription("Announcements");
             android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-            bg.setColor(0xF0151A24); bg.setStroke((int) (2 * d), 0xFF3A4150); bg.setCornerRadius(22 * d);
+            bg.setShape(android.graphics.drawable.GradientDrawable.OVAL); bg.setColor(0xFF16213A);
             android.graphics.drawable.GradientDrawable fb = new android.graphics.drawable.GradientDrawable();
-            fb.setColor(0xF0151A24); fb.setStroke((int) (3 * d), 0xFFE50914); fb.setCornerRadius(22 * d);
+            fb.setShape(android.graphics.drawable.GradientDrawable.OVAL); fb.setColor(0xFF16213A); fb.setStroke((int) (3 * d), 0xFFE11D48);
             android.graphics.drawable.StateListDrawable sl = new android.graphics.drawable.StateListDrawable();
             sl.addState(new int[]{android.R.attr.state_focused}, fb); sl.addState(new int[]{}, bg);
-            b.setBackground(sl); b.setElevation(20 * d);
+            b.setBackground(sl);
             b.setFocusable(true); b.setClickable(true);
             b.setOnClickListener(v -> openMajorList());
+            int size = (int) (44 * d);
+            box.addView(b, new android.widget.FrameLayout.LayoutParams(size, size, android.view.Gravity.BOTTOM | android.view.Gravity.START));
+            android.widget.TextView badge = new android.widget.TextView(a);
+            badge.setTextColor(0xFFFFFFFF); badge.setTextSize(11); badge.setGravity(android.view.Gravity.CENTER);
+            badge.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            android.graphics.drawable.GradientDrawable rb = new android.graphics.drawable.GradientDrawable();
+            rb.setShape(android.graphics.drawable.GradientDrawable.OVAL); rb.setColor(0xFFE11D48);
+            badge.setBackground(rb);
+            int bs = (int) (20 * d);
+            box.addView(badge, new android.widget.FrameLayout.LayoutParams(bs, bs, android.view.Gravity.TOP | android.view.Gravity.END));
+            box.setElevation(20 * d);
+            box.setTag(badge);
             final android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.TOP | android.view.Gravity.END);
-            final int m = (int) (14 * d);
+                    (int) (52 * d), (int) (52 * d), android.view.Gravity.TOP | android.view.Gravity.END);
+            final int m = (int) (10 * d);
             android.view.WindowInsets in = a.getWindow().getDecorView().getRootWindowInsets();
             lp.setMargins(0, m + (in == null ? 0 : in.getSystemWindowInsetTop()), m + (in == null ? 0 : in.getSystemWindowInsetRight()), 0);
-            ((android.view.ViewGroup) a.getWindow().getDecorView()).addView(b, lp);
+            ((android.view.ViewGroup) a.getWindow().getDecorView()).addView(box, lp);
             majorIcon = b;
+            majorBox = box;
         }
-        majorIcon.setText(n > 0 ? "📣  " + n : "📣");
-        majorIcon.setTextColor(n > 0 ? 0xFFFFFFFF : 0xFFB8BEC9);
+        android.widget.TextView badge = (android.widget.TextView) majorBox.getTag();
+        badge.setText(n > 9 ? "9+" : String.valueOf(n));
+        badge.setVisibility(n > 0 ? android.view.View.VISIBLE : android.view.View.GONE);
     }
     private void openMajorList() {
         final Activity a = foreground;

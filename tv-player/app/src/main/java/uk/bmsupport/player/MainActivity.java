@@ -710,6 +710,7 @@ public class MainActivity extends Activity {
         top.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
         top.addView(headerPill("🔍 Search Movies", v -> showSearch("film", "")));
         top.addView(headerPill("🔍 Search Series", v -> showSearch("series", "")));
+        top.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0); // the 📣 icon has its own corner
         root.addView(top);
         TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
         root.addView(account);
@@ -898,6 +899,7 @@ public class MainActivity extends Activity {
         if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
         head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
         head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
+        head.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
 
         root.addView(head);
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
@@ -2814,6 +2816,7 @@ public class MainActivity extends Activity {
             head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             head.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
             head.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
+            head.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
             root.addView(head);
         }
         LinearLayout top = row();
@@ -2855,13 +2858,18 @@ public class MainActivity extends Activity {
         if (boxLive) {
             info.removeView(progTitle); info.removeView(progTime);
             boxInfo.setPadding(dp(18), 0, dp(8), 0);
+            boxInfo.setGravity(Gravity.TOP);
+            top.setBaselineAligned(false); top.setGravity(Gravity.TOP);
+            for (TextView t : new TextView[]{progTitle, progTime, boxDesc, boxNext, boxCat, boxStar, boxLeft}) t.setPadding(t.getPaddingLeft(), dp(2), t.getPaddingRight(), dp(2));
             LinearLayout pills = row(); pills.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+            pills.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
             pills.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             pills.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
             pills.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
             boxInfo.addView(pills);
             progTitle.setTextSize(24); boxInfo.addView(progTitle);
-            LinearLayout tr = row(); tr.setGravity(Gravity.CENTER_VERTICAL);
+            progTitle.setMaxLines(2);
+            LinearLayout tr = row(); tr.setGravity(Gravity.CENTER_VERTICAL); tr.setBaselineAligned(false);
             tr.addView(progTime);
             boxBar.setMax(100); boxBar.setVisibility(View.GONE);
             LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(90), dp(6)); bp.setMargins(dp(14), 0, dp(10), 0);
@@ -2870,7 +2878,7 @@ public class MainActivity extends Activity {
             boxDesc.setMaxLines(3); boxDesc.setEllipsize(android.text.TextUtils.TruncateAt.END);
             boxInfo.addView(boxDesc);
             boxNext.setSingleLine(true); boxNext.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            LinearLayout br = row(); br.setGravity(Gravity.CENTER_VERTICAL);
+            LinearLayout br = row(); br.setGravity(Gravity.CENTER_VERTICAL); br.setBaselineAligned(false);
             br.addView(boxNext, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
             boxStar.setPadding(dp(10), 0, dp(10), 0);
             br.addView(boxStar); br.addView(boxCat);
@@ -2890,7 +2898,12 @@ public class MainActivity extends Activity {
             pvFrame.addView(posterImg, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             previewPoster = posterImg; previewItem = null;
             posterImg.setVisibility(View.VISIBLE); posterImg.bringToFront();
-            side.addView(pvFrame, new LinearLayout.LayoutParams(dp(400), dp(225)));
+            if (boxLive) {
+                android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+                int w = (int) (dm.widthPixels * 0.30f), h = w * 9 / 16, cap = (int) (dm.heightPixels * 0.32f);
+                if (h > cap) { h = cap; w = h * 16 / 9; }
+                side.addView(pvFrame, new LinearLayout.LayoutParams(w, h));
+            } else side.addView(pvFrame, new LinearLayout.LayoutParams(dp(400), dp(225)));
             pvStatus.setText("OK on a programme that's on now to preview it · OK again for the channel menu");
             pvStatus.setMaxWidth(dp(400));
             if (phoneLive) {
@@ -2912,9 +2925,17 @@ public class MainActivity extends Activity {
         top.addView(side, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         if (boxLive) top.addView(boxInfo, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         root.addView(top);
+        final Runnable[] dayBack = { null }, dayNow = { null }, dayFwd = { null };
         if (boxLive) {
             dateLbl.setText(new java.text.SimpleDateFormat("EEE, d MMM, " + ("12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm"), java.util.Locale.UK).format(new java.util.Date()));
-            root.addView(dateLbl);
+            dateLbl.setTextSize(15); dateLbl.setTextColor(TEXT); dateLbl.setPadding(0, 0, dp(10), 0);
+            LinearLayout dr = row(); dr.setGravity(Gravity.CENTER_VERTICAL); dr.setBaselineAligned(false);
+            dr.setPadding(0, dp(6), 0, dp(4));
+            dr.addView(dateLbl);
+            dr.addView(miniPill("📅 ◀ 24h", "Back 24 hours", () -> { if (dayBack[0] != null) dayBack[0].run(); }));
+            dr.addView(miniPill("Now", "Back to now", () -> { if (dayNow[0] != null) dayNow[0].run(); }));
+            dr.addView(miniPill("24h ▶", "Forward 24 hours", () -> { if (dayFwd[0] != null) dayFwd[0].run(); }));
+            root.addView(dr);
         }
         GuideGridView grid = new GuideGridView(this);
         // Phones: "Bigger guide" hides the preview and header so the guide fills the screen.
@@ -2939,6 +2960,9 @@ public class MainActivity extends Activity {
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         // TV boxes: Left on the remote at "now" slides the categories out.
         if (boxLive) grid.setOnLeftEdge(() -> catBtn.performClick());
+        dayBack[0] = () -> grid.shiftDay(-1);
+        dayFwd[0] = () -> grid.shiftDay(1);
+        dayNow[0] = () -> { grid.jumpNow(); grid.requestFocus(); };
         // The category list pops out from the left edge instead of a pop-up at the top.
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -3710,6 +3734,18 @@ public class MainActivity extends Activity {
      * Header search pill: wrap-sized with a clear gap on each side, so the three search pills
      * never sit flush against one another.
      */
+    /** Small guide control: compact text, tight padding, so the day buttons never crowd the screen. */
+    private Button miniPill(String label, String desc, Runnable r) {
+        Button b = button(label, v -> r.run());
+        b.setTextSize(13); b.setMinHeight(0); b.setMinimumHeight(0); b.setMinWidth(0); b.setMinimumWidth(0);
+        b.setPadding(dp(10), dp(4), dp(10), dp(4));
+        b.setContentDescription(desc);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dp(4), 0, dp(4), 0);
+        b.setLayoutParams(lp);
+        return b;
+    }
+
     private Button headerPill(String label, View.OnClickListener l) {
         Button b = button(label, l);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
