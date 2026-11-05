@@ -1188,7 +1188,15 @@ public class MainActivity extends Activity {
             open(it);
         });
         if (posters) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { if (items.isInTouchMode()) return; android.widget.GridView g = (android.widget.GridView) items; int cols = Math.max(1, g.getNumColumns()); int first = g.getFirstVisiblePosition(), last = g.getLastVisiblePosition(); int rowStart = pos - (pos % cols); Integer lastRow = (Integer) g.getTag(); if (lastRow != null && lastRow == rowStart) return; g.setTag(rowStart); if (pos < first + cols || pos > last - cols) g.post(() -> g.smoothScrollToPositionFromTop(rowStart, dp(16), 150)); }
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (items.isInTouchMode() || v == null) return;
+                // Keep the whole highlighted card (ring included) on screen: scroll by exactly what is hidden.
+                items.post(() -> {
+                    int pad = dp(8), top = v.getTop() - pad, bottom = v.getBottom() + pad, h = items.getHeight();
+                    if (bottom > h) items.smoothScrollBy(bottom - h, 160);
+                    else if (top < 0) items.smoothScrollBy(top, 160);
+                });
+            }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -3974,7 +3982,7 @@ public class MainActivity extends Activity {
         g.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
         // Same gap across and down so every row sits an even distance below the one above.
         g.setHorizontalSpacing(dp(12)); g.setVerticalSpacing(dp(12));
-        g.setPadding(dp(10), dp(14), dp(10), dp(14)); g.setClipToPadding(false);
+        g.setPadding(dp(10), dp(10), dp(10), dp(10));
         g.setDrawSelectorOnTop(false);
         return g;
     }
@@ -3998,7 +4006,7 @@ public class MainActivity extends Activity {
                     img = new android.widget.ImageView(MainActivity.this);
                     img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
                     img.setBackgroundColor(Color.rgb(20, 28, 48));
-                    card.addView(img, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(180)));
+                    card.addView(img, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(150)));
                     t = text("", 13, TEXT, false); t.setLines(2); t.setEllipsize(android.text.TextUtils.TruncateAt.END); t.setGravity(Gravity.CENTER);
                     card.addView(t);
                     LinearLayout progress = new LinearLayout(MainActivity.this);
