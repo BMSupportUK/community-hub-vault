@@ -64,6 +64,8 @@ const Body = z.discriminatedUnion("action", [
       key: z.string().regex(/^(film|episode|series):[A-Za-z0-9._-]{1,80}$/),
       position_ms: z.number().int().min(0).max(1e9), duration_ms: z.number().int().min(0).max(1e9),
       updated_at: z.number().int().min(0),
+      // How long ago (on the device's own clock) it was watched; makes "last device wins" immune to wrong device clocks.
+      age_ms: z.number().int().min(0).max(1e11).optional(),
     })).min(1).max(50),
   }),
   z.object({
@@ -213,7 +215,7 @@ export const Route = createFileRoute("/api/public/player")({
           if (body.action === "progress_set") {
             const { newerThanStored } = await import("@/lib/player-progress");
             const now = Date.now();
-            const items = body.items.map(i => ({ ...i, updated_at: Math.min(i.updated_at, now) }));
+            const items = body.items.map(i => ({ ...i, updated_at: i.age_ms !== undefined ? now - i.age_ms : Math.min(i.updated_at, now) }));
             const { data: stored, error: readErr } = await supabaseAdmin.from("player_watch_progress").select("item_key, updated_at")
               .eq("owner_key", owner).eq("scope_key", scope).in("item_key", items.map(i => i.key));
             if (readErr) return json({ error: "Couldn't save progress." }, 503);
@@ -230,7 +232,7 @@ export const Route = createFileRoute("/api/public/player")({
           const { data, error } = await supabaseAdmin.from("player_watch_progress").select("item_key, position_ms, duration_ms, updated_at")
             .eq("owner_key", owner).eq("scope_key", scope).order("updated_at", { ascending: false }).limit(2000);
           if (error) return json({ error: "Progress isn't available right now." }, 503);
-          return json({ items: (data ?? []).map(r => ({ key: r.item_key, position_ms: Number(r.position_ms), duration_ms: Number(r.duration_ms), updated_at: new Date(r.updated_at).getTime() })) });
+          return json({ now: Date.now(), items: (data ?? []).map(r => ({ key: r.item_key, position_ms: Number(r.position_ms), duration_ms: Number(r.duration_ms), updated_at: new Date(r.updated_at).getTime() })) });
         }
 
         if (body.action === "unlink") {
