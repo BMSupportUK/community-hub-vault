@@ -26,3 +26,14 @@ test('backup converts to H.264/AAC and starts films at their place',()=>{
  expect(backupArgs('http://x/live/1.ts')).not.toContain('-ss');
  expect(parseDuration('  Duration: 01:02:03.50, start')).toBe(3723.5);
 });
+
+test('films and episodes ask both players to fill the screen', () => {
+  const { BackupSwitch } = require('../backup-switch.cjs');
+  const seen = [];
+  const p = { play: (i, u, o) => seen.push(['main', o.fill]), stop() {} };
+  const b = { playBackup: (i, u, o) => seen.push(['backup', o.fill]), stop() {}, backupReady: () => true };
+  const s = new BackupSwitch(p, b);
+  s.setFill(0, true); s.play(0, 'x'); s.useBackup(0, 'x');
+  s.stop(0); s.play(0, 'x');
+  expect(seen).toEqual([['main', true], ['backup', true], ['main', false]]);
+});
