@@ -772,8 +772,26 @@ public class MainActivity extends Activity {
         if (previewPoster != null) previewPoster.setVisibility(View.VISIBLE);
         // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
         if (previewCounted) { previewCounted = false; clearNowPlaying(); }
+        previewStopped();
     }
     private boolean previewCounted;
+
+    private Button previewMenuButton; // phone Live TV: the button under the selected category
+    private boolean previewPlaying;
+
+    /**
+     * Phone Live TV: once a preview kicks in, the preview box and the button beneath the category
+     * details both bring up that channel's play menu instead of previewing again.
+     */
+    void previewStarted() {
+        previewPlaying = true;
+        if (previewMenuButton != null) previewMenuButton.setText("▶ Play menu");
+    }
+
+    void previewStopped() {
+        previewPlaying = false;
+        if (previewMenuButton != null) previewMenuButton.setText("▶ Preview channel");
+    }
 
     /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
     private Item previewItem;
@@ -809,6 +827,7 @@ public class MainActivity extends Activity {
                     if (s == androidx.media3.common.Player.STATE_READY) {
                         status.setText("Press OK twice for full screen");
                         if (!previewCounted) { previewCounted = true; setNowPlaying(it, false); }
+                        previewStarted();
                     }
                 }
             });
@@ -2712,13 +2731,16 @@ public class MainActivity extends Activity {
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
         final boolean phoneLive = live && "phone".equals(platform());
         TextView selectedCategory = text("Category: All", 15, MUTED, false);
-        // Phones: "Preview channel" loads the selected channel into the preview box; double-tapping the box opens its play menu.
+        // Phones: "Preview channel" loads the selected channel into the preview box; once it kicks in,
+        // the box and the button both bring up that channel's play menu.
         final Runnable[] previewSelected = { null };
         if (phoneLive) {
             info.addView(selectedCategory);
-            info.addView(button("▶ Preview channel", v -> {
-                if (previewSelected[0] != null) previewSelected[0].run();
-            }));
+            previewMenuButton = button("▶ Preview channel", v -> {
+                if (previewPlaying && previewItem != null) open(previewItem);
+                else if (previewSelected[0] != null) previewSelected[0].run();
+            });
+            info.addView(previewMenuButton);
         }
         LinearLayout btns = row();
         Button catBtn = button(live ? "☰ Categories: All" : "Category: All", v -> {});
@@ -2751,15 +2773,16 @@ public class MainActivity extends Activity {
             pvStatus.setMaxWidth(dp(400));
             if (phoneLive) {
                 pvStatus.setVisibility(View.GONE); // phones: no instruction text under the picture
-                android.view.GestureDetector dbl = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
+                android.view.GestureDetector tap = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
                     @Override public boolean onDown(android.view.MotionEvent e) { return true; }
-                    @Override public boolean onDoubleTap(android.view.MotionEvent e) {
+                    @Override public boolean onSingleTapUp(android.view.MotionEvent e) {
+                        // Once a preview is on the box, tapping it brings up that channel's play menu.
                         if (previewItem != null) open(previewItem);
                         else Toast.makeText(MainActivity.this, "Preview a channel first", Toast.LENGTH_SHORT).show();
                         return true;
                     }
                 });
-                pvFrame.setOnTouchListener((v, e) -> dbl.onTouchEvent(e));
+                pvFrame.setOnTouchListener((v, e) -> tap.onTouchEvent(e));
             }
         } else side.addView(pv, new LinearLayout.LayoutParams(dp(288), dp(162)));
         side.addView(pvStatus);
