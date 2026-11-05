@@ -1234,7 +1234,7 @@ public class MainActivity extends Activity {
         long pos = prefs.getLong(key + ":position", 0), dur = prefs.getLong(key + ":duration", 0);
         if (WatchProgress.eligible(it.kind) && WatchProgress.resumable(pos, dur)) {
             String time = String.format(java.util.Locale.UK, "%d:%02d", pos / 60000, (pos / 1000) % 60);
-            String[] o2 = {"▶ Continue watching · " + time + " (" + WatchProgress.percent(pos, dur) + "%)", "Play from beginning", "Play with VLC", fav, "Report a problem"};
+            String[] o2 = {"▶ Continue watching · " + time + " (" + WatchProgress.percent(pos, dur) + "%)", "Play from beginning", "Play with VLC", fav};
             if ("film".equals(it.kind)) o2 = java.util.Arrays.copyOf(o2, o2.length + 1);
             if ("film".equals(it.kind)) o2[o2.length - 1] = "☆ Vote";
             final boolean cast2 = platform().equals("phone");
@@ -1246,12 +1246,11 @@ public class MainActivity extends Activity {
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
                 else if (w == 2) play(it, true);
                 else if (w == 3) toggleSaved("fav", it);
-                else if (w == 4) showReport(it);
                 else showVote(it);
             }).show();
             return;
         }
-        String[] opts = "film".equals(it.kind) ? new String[]{"Play", "Play with VLC", fav, "Report a problem", "☆ Vote"} : new String[]{"Play", "Play with VLC", fav, "Report a problem"};
+        String[] opts = "film".equals(it.kind) ? new String[]{"Play", "Play with VLC", fav, "☆ Vote"} : new String[]{"Play", "Play with VLC", fav};
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
@@ -1260,7 +1259,6 @@ public class MainActivity extends Activity {
             else if (w == 0) play(it, defaultVlc());
             else if (w == 1) play(it, true);
             else if (w == 2) toggleSaved("fav", it);
-            else if (w == 3) showReport(it);
             else showVote(it);
         }).show();
     }
@@ -1387,8 +1385,8 @@ public class MainActivity extends Activity {
             Item named = new Item(ep.kind, ep.id, show.name + " – " + ep.name, ep.ext, ep.category);
             named.poster = show.poster;
             named.seriesId = show.id;
-            new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play", "Play with VLC", "⚠ Report a problem"},
-                    (d, w) -> { if (w == 2) showReport(show, ep.name); else play(named, w == 1 || (w == 0 && defaultVlc())); }).show();
+            new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play", "Play with VLC"},
+                    (d, w) -> { play(named, w == 1 || (w == 0 && defaultVlc())); }).show();
         });
     }
 
@@ -1512,7 +1510,9 @@ public class MainActivity extends Activity {
             return;
         }
         Intent intent = new Intent(this, PlayerActivity.class).putExtra("url", url)
-                .putExtra("content_kind", it.kind).putExtra("content_id", it.id).putExtra("content_name", it.name);
+                .putExtra("content_kind", it.kind).putExtra("content_id", it.id).putExtra("content_name", it.name)
+                .putExtra("report_kind", savedKind(it)).putExtra("report_category", categoryName(it))
+                .putExtra("report_device", deviceLabel()).putExtra("report_version", appVersion());
         if ("live".equals(it.kind) && liveChannels != null && StreamRecovery.isHdName(it.name)) {
             for (Item o : liveChannels) {
                 if (o != it && !o.id.equals(it.id) && o.norm().equals(it.norm()) && !StreamRecovery.isHdName(o.name)) {

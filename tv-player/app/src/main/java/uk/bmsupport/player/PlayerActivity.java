@@ -257,7 +257,14 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         blp.topMargin = 24; blp.rightMargin = 24;
         root.addView(boostBtn, blp);
-        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> boostBtn.setVisibility(vis));
+        final android.widget.Button reportBtn = new android.widget.Button(this);
+        reportBtn.setAllCaps(false);
+        reportBtn.setText("⚠ Report a problem");
+        reportBtn.setOnClickListener(v -> showReport());
+        FrameLayout.LayoutParams rlp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
+        rlp.topMargin = 24; rlp.leftMargin = 24;
+        root.addView(reportBtn, rlp);
+        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(vis); });
         setContentView(root);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
@@ -430,6 +437,61 @@ public class PlayerActivity extends Activity {
         if (reconnectNote != null) reconnectNote.setVisibility(TextView.VISIBLE);
         final long at = player.getDuration() > 0 ? lastPosition : 0;
         ui.postDelayed(() -> { if (player != null) open(at); }, StreamRecovery.backoffMs(reconnects));
+    }
+
+    /** Report from inside the player: one plain pop-up that pans above the keypad (no resizing, which made phones flicker). */
+    private void showReport() {
+        String title = getIntent().getStringExtra("content_name");
+        if (title == null) title = "";
+        String rk = getIntent().getStringExtra("report_kind");
+        final String kind = rk != null ? rk : "live".equals(kind()) ? "live" : "film".equals(kind()) ? "film" : "series";
+        final String cat = getIntent().getStringExtra("report_category");
+        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        box.setPadding(pad, pad / 2, pad, 0);
+        TextView info = new TextView(this);
+        info.setText((kind.equals("live") ? "Channel: " : kind.equals("film") ? "Film: " : "Series: ") + title + (cat == null || cat.isEmpty() ? "" : "\nCategory: " + cat));
+        box.addView(info);
+        final android.widget.EditText issue = new android.widget.EditText(this);
+        issue.setHint("Briefly tell us what's wrong (e.g. buffering, no sound, won't play)");
+        issue.setMinLines(3); issue.setMaxLines(5);
+        issue.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
+        issue.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(1000) });
+        box.addView(issue);
+        final String fTitle = title;
+        final android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this).setTitle("Report a problem").setView(box)
+                .setNegativeButton("Cancel", null).setPositiveButton("Send to BM Support", null).create();
+        if (dlg.getWindow() != null) dlg.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        dlg.setOnShowListener(x -> dlg.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String msg = issue.getText().toString().trim();
+            if (msg.length() < 3) { issue.setError("Please type a short description"); return; }
+            v.setEnabled(false);
+            final String token = getSharedPreferences("bm", MODE_PRIVATE).getString("token", "");
+            new Thread(() -> {
+                String err = null;
+                try {
+                    org.json.JSONObject b = new org.json.JSONObject().put("action", "report").put("device_token", token)
+                            .put("kind", kind).put("title", fTitle).put("issue", msg)
+                            .put("device", String.valueOf(getIntent().getStringExtra("report_device")))
+                            .put("version", String.valueOf(getIntent().getStringExtra("report_version")));
+                    if (cat != null && !cat.isEmpty()) b.put("category", cat);
+                    Net.postJson(Net.SITE + "/api/public/player", b.toString());
+                } catch (Exception e) {
+                    String m = String.valueOf(e.getMessage());
+                    int i = m.indexOf("\"error\":\"");
+                    err = i >= 0 ? m.substring(i + 9, Math.max(i + 9, m.indexOf('"', i + 9))) : "Couldn't send your report. Check your internet and try again.";
+                }
+                final String fe = err;
+                ui.post(() -> {
+                    if (isFinishing()) return;
+                    if (fe != null) { v.setEnabled(true); Toast.makeText(this, fe, Toast.LENGTH_LONG).show(); return; }
+                    dlg.dismiss();
+                    Toast.makeText(this, "Thanks – a support ticket has been opened. You'll find replies at bmsupport.uk/tickets", Toast.LENGTH_LONG).show();
+                });
+            }).start();
+        }));
+        dlg.show();
     }
 
     private String kind() { String k = getIntent().getStringExtra("content_kind"); return k == null ? "live" : k; }
