@@ -710,6 +710,7 @@ public class MainActivity extends Activity {
         top.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
         top.addView(headerPill("🔍 Search Movies", v -> showSearch("film", "")));
         top.addView(headerPill("🔍 Search Series", v -> showSearch("series", "")));
+        top.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0); // the 📣 icon has its own corner
         root.addView(top);
         TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
         root.addView(account);
@@ -898,6 +899,7 @@ public class MainActivity extends Activity {
         if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
         head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
         head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
+        head.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
 
         root.addView(head);
         TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
@@ -2814,6 +2816,7 @@ public class MainActivity extends Activity {
             head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             head.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
             head.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
+            head.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
             root.addView(head);
         }
         LinearLayout top = row();
@@ -2925,7 +2928,7 @@ public class MainActivity extends Activity {
         final Runnable[] dayBack = { null }, dayNow = { null }, dayFwd = { null };
         if (boxLive) {
             dateLbl.setText(new java.text.SimpleDateFormat("EEE, d MMM, " + ("12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm"), java.util.Locale.UK).format(new java.util.Date()));
-            dateLbl.setTextSize(15); dateLbl.setPadding(0, 0, dp(10), 0);
+            dateLbl.setTextSize(15); dateLbl.setTextColor(TEXT); dateLbl.setPadding(0, 0, dp(10), 0);
             LinearLayout dr = row(); dr.setGravity(Gravity.CENTER_VERTICAL); dr.setBaselineAligned(false);
             dr.setPadding(0, dp(6), 0, dp(4));
             dr.addView(dateLbl);
