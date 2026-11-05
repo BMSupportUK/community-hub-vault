@@ -1,43 +1,30 @@
-# Live TV on TV boxes: guide layout from the photo
+# Fix the Live TV layout on boxes and the 📣 announcements icon
 
-This applies to Amazon Fire TV, Android TV and Google TV boxes. Phones stay exactly as they are.
+## Problems in the photo
+- **Spacing:** the top half of the screen is mostly empty. The title, times, description and Next line are spread far apart, and the preview is too big, so only one guide row fits.
+- **Duplicated date:** the date appears twice, once in red above the guide and again in the guide's own corner.
+- **Announcements icon:** it sits on top of the Voice search button, and does the same over the buttons on the home screen.
 
-## What the screen looks like
-```text
-+---------------------------+----------------------------------------+
-|                           |  [Search TV] [Voice search]     (top right)
-|   PREVIEW BOX             |  Programme title                       |
-|   (family picture until   |  18:00 - 19:00  ======----  50 min left |
-|    a channel is chosen)   |  Description (up to 3 lines)           |
-|                           |  Next: 19:00 Sports Centre   ☆  Category|
-+---------------------------+----------------------------------------+
-| Thu, 5 Nov, 18:10   18:00      18:30      19:00      19:30   20:00  |
-| 1 [logo] Sky Sports News   | The Premier League Show | Sports Centre|
-| 2 [logo] ...               | ...                                     |
-| (Sky-style grid; a blue line marks the time now)                    |
-+---------------------------------------------------------------------+
- [☰ Channels] tab on the left edge slides out categories, then channels
-```
+## What changes
+1. **Compact top area** (about a third of the screen, like your photo):
+   - Shrink the preview so the guide gets the room. The family picture still fills the box.
+   - Stack the programme details tightly from the top: title, then time + progress bar + minutes left, then the description (up to 3 lines), then "Next: … ☆ category".
+   - Remove the red date line. The guide's own corner already shows the day, and that will now include the time ("Thu 5 Nov, 18:17").
+2. **Guide gets the rest of the screen:** with the smaller top area, about 7–8 channels show, as in your photo.
+3. **Announcements icon gets its own spot:**
+   - On every screen, the top-right corner is kept free for the 📣 icon, so it never covers Search TV, Voice search or any home-screen button.
+   - Restyle it to match the app's other buttons: same height and colours, a round button, and a small red number bubble for unread announcements instead of "📣 2" text.
+4. Build and release Android 3.16.
 
-- **Preview (top left):** shows our family-on-the-sofa picture until you press OK on a channel. Highlighting a channel never starts a preview on its own.
-- **Programme info (top right):** follows the highlighted programme. It shows the title, start and end time, a progress bar with the minutes left, the description, then a "Next:" line with the next programme's time and title. The channel's category and a favourite star sit on the right.
-- **Guide grid (bottom):** today's date and time, time markers across the top, numbered channels with their logos, and programme blocks with a line marking the time now. You can move up, down, left and right through it with the remote. The catch-up clock still shows on channels that have catch up.
-- **Slide-out categories:** the left-edge "☰ Channels" tab opens the categories panel, which slides across to that category's channels, the same as on phones. Back closes it.
-- **Search buttons:** Search TV and Voice search sit as two small pills in the top-right corner, above the programme info. That space is empty in the photo, so they never cover the preview or the guide. The separate EPG button goes, because the guide is now always on screen.
-- **Remote:**
-  - OK on a programme that's on now previews it, and OK again opens the play menu.
-  - Press Up from the top row of the guide to reach the search pills.
-  - Back closes the categories panel if it's open, otherwise it goes Home.
-
-## What gets removed
-- The two Smarters-style screens from 3.14 (category tiles, then the channel list), which this layout replaces.
-
-## Release
-- Build and release Android 3.15.
+Your message cut off at "and the homescree". I've taken that to mean the icon also covers buttons on the home screen. If you meant something else about the home screen, tell me and I'll add it.
 
 ## Technical details
-- In `MainActivity.browse("live")`, boxes route to `showTvGuide(cat, true)`, the same screen phones use. On boxes, keep the `GuideGridView` visible below the preview. The phone-only "View EPG" pop-up and the hidden-grid behaviour stay phone-only (`smallestScreenWidthDp < 600`).
-- Top row on boxes: the preview frame (16:9, about 40% width) beside a new info panel bound to the grid's focus listener. `LiveNowNext.pick` supplies the "Next:" line. A thin `ProgressBar` shows elapsed time, with minutes left as text. The description comes from `get_short_epg` and is cached per channel along with the line-up.
-- The search pills move into the info panel's top-right corner on boxes. A D-pad Up from the first guide row moves focus there.
-- Delete `showLiveCategories`, `showLiveChannel` and their `lv*` fields. Keep `LiveNowNext` and its tests.
-- Update the screen rule in `tv-player/app/src/main/java/uk/bmsupport/player/AGENTS.md`, run all Android checks, then build and sign 3.15 with the BM key, upload it, set it as current and verify the download.
+- `showTvGuide` box path:
+  - Set the top row and info column to `setBaselineAligned(false)` with top gravity; baseline alignment is what scattered the text.
+  - Zero the vertical padding on the info texts.
+  - Preview becomes about 30% of the screen width at 16:9, capped to 32% of the screen height.
+  - Drop `dateLbl`, and give the date and time to the grid's corner label through a new `GuideGridView.setCornerText()`.
+- Announcements icon (`PlayerApplication.showMajorIcon`):
+  - A fixed 44dp circle using the app's CARD/ACCENT colours, with a separate red count badge.
+  - Expose its reserved width as `MAJOR_ICON_SLOT` (about 64dp). MainActivity's header rows (`showHome`, `browse`, the guide pills row, search screens) add that much end padding while the app is unlocked.
+- Update the matching rules in the player AGENTS.md, then run the Android checks. Sign 3.16 with the BM key, upload it, set it as current and verify the download.
