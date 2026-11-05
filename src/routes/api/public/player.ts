@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, platform")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, watching_preview, platform")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
 
@@ -363,8 +363,11 @@ export const Route = createFileRoute("/api/public/player")({
         }
         await supabaseAdmin.from("player_devices").update(fields).eq("id", device.id);
         // Weekly viewing hours: credit the gap since the last check-in to what was playing then.
+        // Live TV previews are never credited — only real playback counts.
         const { watchCredit } = await import("@/lib/player-live");
-        const credit = watchCredit({ now, lastSeenAt: device.last_seen_at, watchingKind: device.watching_kind });
+        const credit = device.watching_preview
+          ? null
+          : watchCredit({ now, lastSeenAt: device.last_seen_at, watchingKind: device.watching_kind });
         if (credit) await supabaseAdmin.rpc("add_player_watch_seconds", { _device: device.id, _kind: credit.kind, _seconds: credit.seconds });
         const { watchActivityCredit } = await import("@/lib/player-watch-activity");
         const activity = watchActivityCredit(device, credit, now);

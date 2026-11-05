@@ -40,3 +40,14 @@ test("watch credit is nothing when nothing was playing or the app went offline",
   expect(wc({ now, lastSeenAt: "2026-11-05T07:59:00Z", watchingKind: null })).toBeNull();
   expect(wc({ now, lastSeenAt: "2026-11-05T07:50:00Z", watchingKind: "film" })).toBeNull();
 });
+
+test("previews are flagged so viewing hours skip them, real playback is not", () => {
+  const now = Date.parse("2026-11-05T08:00:00Z");
+  const preview = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null, watching: { kind: "live", title: "Sky Sports 1", since: now, preview: true } });
+  expect(preview.watching_preview).toBe(true);
+  expect(preview.watching_title).toBe("Sky Sports 1"); // still shown on Live connections
+  const real = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null, watching: { kind: "live", title: "Sky Sports 1", since: now } });
+  expect(real.watching_preview).toBe(false);
+  const idle = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null });
+  expect(idle.watching_preview).toBe(false);
+});
