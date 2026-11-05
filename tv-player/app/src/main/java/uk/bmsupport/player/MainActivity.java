@@ -1507,6 +1507,14 @@ public class MainActivity extends Activity {
             if ("catchup".equals(it.kind)) i.putExtra("disable_hardware", true);
             if (!"off".equals(SoundBoost.current(this))) Toast.makeText(this, "Sound booster doesn't work in VLC – use VLC's own volume.", Toast.LENGTH_LONG).show();
             vlcCatchup = "catchup".equals(it.kind) ? it : null; vlcStarted = android.os.SystemClock.elapsedRealtime();
+            // Live: VLC gets the channel's next address and software decoding on each retry, then BM Player takes over.
+            if ("live".equals(it.kind)) {
+                if (vlcLive != it) { vlcLive = it; vlcLiveTry = 0; }
+                String[] urls = streamUrls(it);
+                i.setDataAndTypeAndNormalize(Uri.parse(urls[Math.min(vlcLiveTry, urls.length - 1)]), "video/*");
+                if (vlcLiveTry > 0) i.putExtra("disable_hardware", true);
+                i.removeExtra("position"); i.removeExtra("from_start");
+            } else vlcLive = null;
             // Close the preview's provider connection first and give the panel a moment to drop it:
             // with a 1-connection login, VLC opening while the preview still holds the stream gets refused.
             boolean hadPreview = preview != null;
@@ -1547,6 +1555,7 @@ public class MainActivity extends Activity {
     }
 
     private static final int VLC_REQUEST = 4242;
+    private Item vlcLive; private int vlcLiveTry;
     private Item vlcCatchup; private long vlcStarted;
 
     // ---------- search (TV / Movies / Series, typed or by voice) ----------
@@ -1762,6 +1771,16 @@ public class MainActivity extends Activity {
                 Toast.makeText(this, "VLC couldn't play this recording, playing it in BM Player instead", Toast.LENGTH_LONG).show();
                 beginPlayback(cu, false, 0, false);
             }
+            return;
+        }
+        if (req == VLC_REQUEST && vlcLive != null) {
+            Item lv = vlcLive;
+            long pos = data == null ? -1 : data.getLongExtra("extra_position", -1);
+            if (!CatchupFallback.vlcFailed(res, android.os.SystemClock.elapsedRealtime() - vlcStarted, pos)) { vlcLive = null; return; }
+            if (++vlcLiveTry < Math.min(3, streamUrls(lv).length)) { beginPlayback(lv, true, 0, false); return; }
+            vlcLive = null;
+            Toast.makeText(this, "VLC couldn't play this channel (VLC code " + res + "), playing it in BM Player instead", Toast.LENGTH_LONG).show();
+            beginPlayback(lv, false, 0, false);
             return;
         }
         if (req != VLC_REQUEST || data == null || vlcKey == null) return;
