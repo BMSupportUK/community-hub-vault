@@ -2712,12 +2712,12 @@ public class MainActivity extends Activity {
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
         final boolean phoneLive = live && "phone".equals(platform());
         TextView selectedCategory = text("Category: All", 15, MUTED, false);
+        // Phones: "Preview channel" loads the selected channel into the preview box; double-tapping the box opens its play menu.
+        final Runnable[] previewSelected = { null };
         if (phoneLive) {
             info.addView(selectedCategory);
-            info.addView(button("▶ Play channel", v -> {
-                Item cur = previewItem;
-                if (cur == null) { Toast.makeText(this, "Tap a channel to preview it first", Toast.LENGTH_SHORT).show(); return; }
-                stopPreview(); play(cur, defaultVlc());
+            info.addView(button("▶ Preview channel", v -> {
+                if (previewSelected[0] != null) previewSelected[0].run();
             }));
         }
         LinearLayout btns = row();
@@ -2749,6 +2749,18 @@ public class MainActivity extends Activity {
             side.addView(pvFrame, new LinearLayout.LayoutParams(dp(400), dp(225)));
             pvStatus.setText("OK on a programme that's on now to preview it · OK again for the channel menu");
             pvStatus.setMaxWidth(dp(400));
+            if (phoneLive) {
+                pvStatus.setVisibility(View.GONE); // phones: no instruction text under the picture
+                android.view.GestureDetector dbl = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
+                    @Override public boolean onDown(android.view.MotionEvent e) { return true; }
+                    @Override public boolean onDoubleTap(android.view.MotionEvent e) {
+                        if (previewItem != null) open(previewItem);
+                        else Toast.makeText(MainActivity.this, "Preview a channel first", Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+                pvFrame.setOnTouchListener((v, e) -> dbl.onTouchEvent(e));
+            }
         } else side.addView(pv, new LinearLayout.LayoutParams(dp(288), dp(162)));
         side.addView(pvStatus);
         top.addView(side, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -2781,6 +2793,11 @@ public class MainActivity extends Activity {
         panel.setPadding(dp(18), dp(24), dp(18), dp(16));
         panel.addView(text("Categories", 22, TEXT, true));
         final List<Item> shownCh = new ArrayList<>();
+        previewSelected[0] = () -> {
+            int r = grid.selectedRow();
+            if (r < 0 || r >= shownCh.size()) { Toast.makeText(this, "Pick a channel from Channels first", Toast.LENGTH_SHORT).show(); return; }
+            schedulePreview(shownCh.get(r), pv, pvStatus);
+        };
         android.widget.ListView catList = new android.widget.ListView(this);
         catList.setDivider(new android.graphics.drawable.ColorDrawable(0x1FFFFFFF));
         catList.setDividerHeight(1);
