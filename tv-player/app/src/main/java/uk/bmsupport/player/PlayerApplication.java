@@ -90,10 +90,12 @@ public final class PlayerApplication extends Application implements Application.
             ui.post(() -> { annBusy = false; if (got) { annId = fid; annMsg = fmsg; showAnnouncement(); } });
         });
     }
+    /** Called right after the account number unlocks the app, so members see the icon straight away. */
+    void refreshMajor() { fetchMajor(); showMajorIcon(); }
     private void fetchMajor() {
         if (majorBusy) return;
         // Major announcements are for signed-in viewers only: a logged-out app keeps no list and shows no icon.
-        if (getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty()) {
+        if (!MainActivity.isUnlocked() || getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty()) {
             if (majorItems.length() > 0) { majorItems = new org.json.JSONArray(); showMajorIcon(); }
             return;
         }
@@ -122,7 +124,7 @@ public final class PlayerApplication extends Application implements Application.
     /** Top-right announcement icon on the app's own screens (never over full-screen video). */
     private void showMajorIcon() {
         Activity a = foreground;
-        boolean want = a instanceof MainActivity && !a.isFinishing()
+        boolean want = a instanceof MainActivity && !a.isFinishing() && MainActivity.isUnlocked()
                 && !getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty();
         if (majorIcon != null && (!want || majorIcon.getContext() != a)) {
             if (majorIcon.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) majorIcon.getParent()).removeView(majorIcon);

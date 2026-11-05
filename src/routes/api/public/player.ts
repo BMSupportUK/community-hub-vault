@@ -144,7 +144,8 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         if (body.action === "major_announcements") {
-          // Longer announcements for the top-right icon; one shared read per 30s for any number of players.
+          // Longer announcements for the top-right icon; members only, one shared read per 30s.
+          if (!ratingVoter(device)) return json({ items: [] });
           const now = Date.now();
           if (!majorCache || now - majorCache.at > 30_000) {
             const { data } = await supabaseAdmin.from("player_major_announcements").select("id, title, body, created_at")
