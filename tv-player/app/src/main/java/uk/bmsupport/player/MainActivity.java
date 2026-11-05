@@ -470,7 +470,7 @@ public class MainActivity extends Activity {
                 boolean vlcPlaying = prefs.getLong("np_since", 0) > 0 && "VLC".equals(prefs.getString("np_player", ""));
                 // Self-heal: a preview that is playing must always report itself, even if a resume cleared it.
                 if (preview != null && previewItem != null && preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY
-                        && prefs.getLong("np_since", 0) == 0) { previewCounted = true; setNowPlaying(previewItem, false); }
+                        && prefs.getLong("np_since", 0) == 0) { previewCounted = true; setNowPlaying(previewItem, false, true); }
                 if (PlayerApplication.onScreen() || vlcPlaying || !hasLogin()) {
                     if (!safeRun(io, MainActivity.this::pollOnce)) return;
                 }
@@ -496,14 +496,19 @@ public class MainActivity extends Activity {
         long since = prefs.getLong("np_since", 0);
         if (since > 0) b.put("watching", new JSONObject().put("kind", prefs.getString("np_kind", "live"))
                 .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
-                .put("player", prefs.getString("np_player", "BM Player")).put("since", since));
+                .put("player", prefs.getString("np_player", "BM Player")).put("since", since)
+                .put("preview", prefs.getBoolean("np_preview", false)));
         return b;
     }
 
-    private void setNowPlaying(Item it, boolean vlc) {
+    private void setNowPlaying(Item it, boolean vlc) { setNowPlaying(it, vlc, false); }
+
+    /** Preview playback is flagged so the website shows it on Live connections but never counts it in viewing hours. */
+    private void setNowPlaying(Item it, boolean vlc, boolean preview) {
         long since = System.currentTimeMillis();
         prefs.edit().putString("np_kind", it.kind).putString("np_title", it.name == null ? "" : it.name)
-                .putString("np_cat", "").putString("np_player", vlc ? "VLC" : "BM Player").putLong("np_since", since).apply();
+                .putString("np_cat", "").putString("np_player", vlc ? "VLC" : "BM Player").putLong("np_since", since)
+                .putBoolean("np_preview", preview).apply();
         io.execute(() -> {
             String cat = ""; try { cat = categoryName(it); } catch (Exception ignored) {}
             if (prefs.getLong("np_since", 0) == since) prefs.edit().putString("np_cat", cat == null ? "" : cat).apply();
@@ -513,7 +518,7 @@ public class MainActivity extends Activity {
 
     private void clearNowPlaying() {
         if (prefs.getLong("np_since", 0) == 0) return;
-        prefs.edit().putLong("np_since", 0).apply();
+        prefs.edit().putLong("np_since", 0).putBoolean("np_preview", false).apply();
         io.execute(this::pollOnce);
     }
 
@@ -826,7 +831,7 @@ public class MainActivity extends Activity {
                 @Override public void onPlaybackStateChanged(int s) {
                     if (s == androidx.media3.common.Player.STATE_READY) {
                         status.setText("Press OK twice for full screen");
-                        if (!previewCounted) { previewCounted = true; setNowPlaying(it, false); }
+                        if (!previewCounted) { previewCounted = true; setNowPlaying(it, false, true); }
                         previewStarted();
                     }
                 }
