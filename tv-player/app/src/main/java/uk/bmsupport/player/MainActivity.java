@@ -2746,10 +2746,16 @@ public class MainActivity extends Activity {
         LinearLayout content = root;
         if (live) {
             content = row();
-            Button chBtn = button("☰\nChannels", v -> catBtn.performClick());
-            chBtn.setSingleLine(false);
-            chBtn.setTextSize(14);
-            content.addView(chBtn, new LinearLayout.LayoutParams(dp(96), ViewGroup.LayoutParams.MATCH_PARENT));
+            // A proper one-line "Channels" button, website-pill style, at the top of a narrow strip.
+            LinearLayout rail = new LinearLayout(this);
+            rail.setOrientation(LinearLayout.VERTICAL);
+            rail.setBackgroundColor(BG);
+            rail.setPadding(dp(10), dp(10), dp(10), dp(10));
+            Button chBtn = button("☰ Channels", v -> catBtn.performClick());
+            chBtn.setSingleLine(true);
+            chBtn.setTextSize(16);
+            rail.addView(chBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            content.addView(rail, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
             content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
         }
         setContentView(sideDrawer(content, panel));
