@@ -3089,7 +3089,13 @@ public class MainActivity extends Activity {
                 List<String> channelNames = new ArrayList<>();
                 for (Item ch : shownCh) channelNames.add(ch.name);
                 channelDrawer.showChannels(channelNames);
-            } else hidePanel();
+            } else {
+                hidePanel();
+                // Focus lands on the category's first channel in the guide, never the Search TV pill.
+                if (!shownCh.isEmpty()) grid.selectChannel(0);
+                grid.requestFocus();
+                grid.post(grid::requestFocus);
+            }
         });
         grid.setListener(new GuideGridView.Listener() {
             @Override public void needEpg(int r) {
