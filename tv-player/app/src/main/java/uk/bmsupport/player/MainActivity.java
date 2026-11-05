@@ -2718,7 +2718,8 @@ public class MainActivity extends Activity {
         btns.addView(button("Now", v -> {}));
         btns.addView(button("◀ Day", v -> {}));
         btns.addView(button("Day ▶", v -> {}));
-        info.addView(btns);
+        // Phones: the Now/Day row is gone so the guide gets the room; the bigger-guide control sits in the header.
+        if (!phoneLive) info.addView(btns);
         top.addView(info, weight(1.6f, ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout side = column();
         androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
@@ -2750,11 +2751,12 @@ public class MainActivity extends Activity {
         root.addView(bigBar);
         Runnable closeBig = () -> { bigBar.setVisibility(View.GONE); top.setVisibility(View.VISIBLE); head.setVisibility(View.VISIBLE); back = this::showHome; };
         bigBar.addView(headerPill("✕ Close", v -> closeBig.run()));
-        if (live && "phone".equals(platform())) {
-            btns.addView(button("⤢ Bigger guide", v -> {
+        if (phoneLive) {
+            // Header, not the bottom of the screen: it goes in first so it is never the pill that runs off the edge.
+            head.addView(headerPill("⤢ Bigger guide", v -> {
                 top.setVisibility(View.GONE); head.setVisibility(View.GONE); bigBar.setVisibility(View.VISIBLE);
                 back = closeBig; grid.requestFocus();
-            }));
+            }), 2);
         }
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         // The category list pops out from the left edge instead of a pop-up at the top.
@@ -2828,9 +2830,11 @@ public class MainActivity extends Activity {
         FrameLayout guideScreen = sideDrawer(content, panel);
         if ("phone".equals(platform())) GuideSafeArea.apply(guideScreen);
         setContentView(guideScreen);
-        btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });
-        btns.getChildAt(2).setOnClickListener(v -> grid.shiftDay(-1));
-        btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));
+        if (!phoneLive) {
+            btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });
+            btns.getChildAt(2).setOnClickListener(v -> grid.shiftDay(-1));
+            btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));
+        }
 
         final List<String[]> catRows = new ArrayList<>();
         final java.util.Set<String> requested = new java.util.HashSet<>();
