@@ -7,6 +7,7 @@ import {
   Loader2,
   Calendar,
   Clock,
+  Coffee,
   ArrowRight,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -34,7 +35,7 @@ import { todayClosingTime } from "@/lib/business-hours";
 import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
-import { BreakPlanRows, NextBreakPill } from "@/components/app/BreakPlanRows";
+import { BreakPlanDialog, BreakPlanRows, NextBreakPill } from "@/components/app/BreakPlanRows";
 import { StaffBreakChip } from "@/components/app/StaffBreakChip";
 import { offerTicketHandover } from "@/lib/break-handover";
 import { isPreparingForShift } from "@/lib/shift-start";
@@ -315,6 +316,8 @@ export function WorkingStatusBox({
   const [endedToday, setEndedToday] = useState<NextSlot | null>(null);
   const [laterToday, setLaterToday] = useState<NextSlot | null>(null);
   const [shiftTab, setShiftTab] = useState<"current" | "next">("current");
+  // The break list lives in its own pop-up box, opened from the Breaks tab.
+  const [breaksOpen, setBreaksOpen] = useState(false);
   // Auto-switch the tab: once today's shift has finished show Next shift, and
   // switch back to Current shift when the new shift day arrives. Only flips
   // when the derived state changes, so manual tab taps still stick.
@@ -929,26 +932,44 @@ export function WorkingStatusBox({
               </div>
             </div>
           </div>
-          <div role="tablist" aria-label="Shifts" className="grid grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
-            {([
-              ["current", "Today's shift"],
-              ["next", "Next shift"],
-            ] as const).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={shiftTab === key}
-                onClick={() => setShiftTab(key)}
-                className={cn(
-                  "rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide transition",
-                  shiftTab === key ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            ))}
+          {/* Breaks get their own tab that opens a pop-up box, so the four break
+              lines no longer stack up and push this box taller than it needs to be. */}
+          <div className="flex items-center gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
+            <div role="tablist" aria-label="Shifts" className="grid min-w-0 flex-1 grid-cols-2 gap-1">
+              {([
+                ["current", "Today's shift"],
+                ["next", "Next shift"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={shiftTab === key}
+                  onClick={() => setShiftTab(key)}
+                  className={cn(
+                    "truncate rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide transition",
+                    shiftTab === key ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={breaksOpen}
+              onClick={() => setBreaksOpen(true)}
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide transition",
+                breaksOpen ? "bg-warning text-background shadow" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Coffee className="size-3" />
+              Breaks
+            </button>
           </div>
+          <BreakPlanDialog open={breaksOpen} onOpenChange={setBreaksOpen} userId={user.id} usedKinds={usedKinds} />
           {/* Shift controls sit on one wrapping row under the Shifts tabs: shift actions and Away.
               Tickets and screen share move above the box on the portal home (showTools=false). */}
           <div>
@@ -985,11 +1006,13 @@ export function WorkingStatusBox({
                 <ShiftEndCountdown />
               </div>
               <ShiftTimePills slot={currentHours} />
-              <BreakPlanRows userId={user.id} usedKinds={usedKinds} onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
+              {/* Breaks are in the Breaks tab's pop-up box now — only the
+                  allocated-time start pop-up stays on this tab. */}
+              <BreakPlanRows userId={user.id} usedKinds={usedKinds} listHidden onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
             </>
           ) : (
             <>
-              <BreakPlanRows userId={user.id} usedKinds={usedKinds} listHidden onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
+              <BreakPlanRows userId={user.id} usedKinds={usedKinds} listHidden />
               {hadShiftToday && !todayWindow ? (
                 <>
                   <div className="flex items-center justify-between">
