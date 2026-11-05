@@ -13,7 +13,10 @@ android {
         targetSdkVersion 36
         versionCode 140
         versionName "3.29"
+        // Android TV, Fire TV and phones are ARM; the backup engine's native libraries stay ARM-only to keep the download small.
+        ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
     }
+    packagingOptions { jniLibs { useLegacyPackaging true } }
     signingConfigs {
         release {
             if (ksPass) {
