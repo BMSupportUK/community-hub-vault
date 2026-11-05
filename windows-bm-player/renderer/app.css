@@ -51,3 +51,24 @@
 .lg-scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:center;justify-content:center}
 .lg-cats{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;width:min(420px,90vw);max-height:80vh;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
 .lg-cats h3{margin:0}.lg-cat-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px}.lg-cat-list button{text-align:left}.lg-cat-list .selected{border:3px solid var(--accent);font-weight:700}
+
+/* Android/Amazon BM Player look: same navy palette, card buttons with a 3px accent focus ring. */
+:root{--background:#0b1220;--surface:#16213a;--raised:#1c2a48;--foreground:#f1f5f9;--muted:#94a3b8;--border:#24324f;--accent:#e11d48;--track:#334155;--overlay:#0b1220eb;--scrim:#0b1220b8;--font:Roboto,'Segoe UI',Arial,sans-serif}
+body{background:var(--background);color:var(--foreground);font-family:var(--font)}
+button{background:var(--surface);color:var(--foreground);border:3px solid transparent;border-radius:12px;padding:10px 16px;font-size:16px}
+button:hover,button:focus-visible{border-color:var(--accent);outline:none}
+button.primary{background:var(--accent);color:#fff}
+.bar{background:var(--background);border-bottom:0}
+.home-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}.home-head .spacer{flex:1}
+.pill{white-space:nowrap}
+.home .account{display:block;color:var(--muted);font-size:15px;margin:0 0 6px}
+.home .tiles{gap:12px;padding:20px 0 12px}
+.home .tile{background:transparent;border:0;display:flex;flex-direction:column;gap:8px}
+.home .tile .big{height:170px;background:var(--surface);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:26px;font-weight:700}
+.home .tile .big span{font-size:44px}
+.home .tile .refresh{width:100%;border-top:3px solid transparent}
+.home-nav{display:flex;gap:12px}.home-nav button{flex:1 1 auto;white-space:nowrap}
+.sort-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 10px}.sort-row button{opacity:.55}.sort-row button.on{opacity:1}
+.categories button.selected{border-color:var(--accent);background:var(--raised)}
+.poster{background:var(--surface);border-radius:12px}
+.modal{background:var(--surface);border-radius:14px}
