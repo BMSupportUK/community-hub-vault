@@ -11,8 +11,8 @@ android {
         applicationId "uk.bmsupport.player"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 125
-        versionName "3.14"
+        versionCode 126
+        versionName "3.15"
     }
     signingConfigs {
         release {
