@@ -2860,29 +2860,33 @@ public class MainActivity extends Activity {
             boxInfo.setPadding(dp(18), 0, dp(8), 0);
             boxInfo.setGravity(Gravity.TOP);
             top.setBaselineAligned(false); top.setGravity(Gravity.TOP);
-            for (TextView t : new TextView[]{progTitle, progTime, boxDesc, boxNext, boxCat, boxStar, boxLeft}) t.setPadding(t.getPaddingLeft(), dp(2), t.getPaddingRight(), dp(2));
+            for (TextView t : new TextView[]{progTitle, progTime, boxDesc, boxNext, boxCat, boxStar, boxLeft}) { t.setPadding(t.getPaddingLeft(), dp(2), t.getPaddingRight(), dp(2)); t.setIncludeFontPadding(false); }
             LinearLayout pills = row(); pills.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
             pills.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
             pills.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             pills.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
             pills.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
             boxInfo.addView(pills);
-            progTitle.setTextSize(24); boxInfo.addView(progTitle);
-            progTitle.setMaxLines(2);
-            LinearLayout tr = row(); tr.setGravity(Gravity.CENTER_VERTICAL); tr.setBaselineAligned(false);
-            tr.addView(progTime);
+            // Tight stack: every line wraps its own content (single line or a fixed limit), so nothing can stretch tall.
+            final int wrap = ViewGroup.LayoutParams.WRAP_CONTENT, fill = ViewGroup.LayoutParams.MATCH_PARENT;
+            progTitle.setTextSize(24); progTitle.setMaxLines(2); progTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            boxInfo.addView(progTitle, new LinearLayout.LayoutParams(fill, wrap));
+            // Time and minutes left share one line of text (no side-by-side views that can squeeze).
+            progTime.setSingleLine(true); progTime.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            boxInfo.addView(progTime, new LinearLayout.LayoutParams(fill, wrap));
             boxBar.setMax(100); boxBar.setVisibility(View.GONE);
-            LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(90), dp(6)); bp.setMargins(dp(14), 0, dp(10), 0);
-            tr.addView(boxBar, bp); tr.addView(boxLeft);
-            boxInfo.addView(tr);
+            LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(160), dp(4)); bp.setMargins(0, dp(3), 0, dp(4));
+            boxInfo.addView(boxBar, bp);
             boxDesc.setMaxLines(3); boxDesc.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            boxInfo.addView(boxDesc);
+            boxInfo.addView(boxDesc, new LinearLayout.LayoutParams(fill, wrap));
             boxNext.setSingleLine(true); boxNext.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            boxStar.setSingleLine(true); boxCat.setSingleLine(true); boxCat.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            boxCat.setMaxWidth(dp(220));
             LinearLayout br = row(); br.setGravity(Gravity.CENTER_VERTICAL); br.setBaselineAligned(false);
-            br.addView(boxNext, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+            br.addView(boxNext, new LinearLayout.LayoutParams(0, wrap, 1));
             boxStar.setPadding(dp(10), 0, dp(10), 0);
-            br.addView(boxStar); br.addView(boxCat);
-            boxInfo.addView(br);
+            br.addView(boxStar, new LinearLayout.LayoutParams(wrap, wrap)); br.addView(boxCat, new LinearLayout.LayoutParams(wrap, wrap));
+            boxInfo.addView(br, new LinearLayout.LayoutParams(fill, wrap));
         } else top.addView(info, weight(1.6f, ViewGroup.LayoutParams.WRAP_CONTENT));
         androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
         pv.setUseController(false); pv.setBackgroundColor(Color.BLACK); pv.setFocusable(false);
@@ -3125,11 +3129,11 @@ public class MainActivity extends Activity {
                     boolean on = p.st <= now;
                     progTitle.setText(p.title);
                     if (boxLive) {
-                        progTime.setText(clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : ""));
                         boolean live2 = on && p.en > now;
+                        String left = live2 ? ((p.en - now + 59) / 60) + " min left" : p.en > p.st ? ((p.en - p.st) / 60) + " min" : "";
+                        progTime.setText(clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : "") + (left.isEmpty() ? "" : "  ·  " + left));
                         boxBar.setVisibility(live2 ? View.VISIBLE : View.GONE);
                         if (live2) boxBar.setProgress((int) ((now - p.st) * 100 / Math.max(1, p.en - p.st)));
-                        boxLeft.setText(live2 ? ((p.en - now + 59) / 60) + " min left" : p.en > p.st ? ((p.en - p.st) / 60) + " min" : "");
                         boxDesc.setText(p.desc == null || p.desc.isEmpty() ? (ch.archiveDays > 0 && on ? "Press ◀ for Catch up" : "") : p.desc);
                         GuideGridView.Prog nx = null;
                         List<GuideGridView.Prog> lst = guideCache.get(ch.id);
