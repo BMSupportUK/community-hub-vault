@@ -226,6 +226,9 @@ public class MainActivity extends Activity {
             pl.setVolume(i == 0 ? 1f : 0f);
             pv.setPlayer(pl);
             multiPlayers.add(pl);
+            pl.addListener(new androidx.media3.common.Player.Listener() {
+                @Override public void onPlaybackStateChanged(int s) { updateKeepScreenOn(); }
+            });
             f.addView(pv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             TextView t = text("Screen " + (i + 1) + "\nPress OK to pick a channel", 16, TEXT, true);
             t.setGravity(Gravity.CENTER);
