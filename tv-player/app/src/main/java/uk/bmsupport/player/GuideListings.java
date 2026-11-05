@@ -42,7 +42,16 @@ public final class GuideListings {
 
     /** True when a cached line-up is too old or has run out, so the guide should fetch again. */
     public static boolean stale(long fetchedAt, List<GuideGridView.Prog> l, long now, long window) {
+        return stale(fetchedAt, l, now, window, now + window, false);
+    }
+
+    /** Same, but also stale when the line-up stops before the time span on screen (a later day), unless the full table was already asked for. */
+    public static boolean stale(long fetchedAt, List<GuideGridView.Prog> l, long now, long window, long viewEnd, boolean fullFetched) {
         if (now - fetchedAt >= REFRESH_SECS) return true;
+        if (!fullFetched && l != null && !l.isEmpty()) {
+            GuideGridView.Prog z = l.get(l.size() - 1);
+            if ((z.en > 0 ? z.en : z.st) < viewEnd) return true;
+        }
         if (l == null || l.isEmpty()) return now - fetchedAt >= 120;
         GuideGridView.Prog last = l.get(l.size() - 1);
         return (last.en > 0 ? last.en : last.st) < now + window / 2;

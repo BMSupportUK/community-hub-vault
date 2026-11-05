@@ -2791,6 +2791,7 @@ public class MainActivity extends Activity {
         @Override protected boolean removeEldestEntry(java.util.Map.Entry<String, List<GuideGridView.Prog>> e) { return size() > 400; }
     };
     private final java.util.Map<String, Long> guideFetchedAt = new java.util.HashMap<>();
+    private final java.util.Set<String> guideFullFetched = new java.util.HashSet<>();
     private long guideWindowSecs() { return getResources().getConfiguration().smallestScreenWidthDp < 600 ? 10800 : 7200; }
 
     /** Channels down the left, time across the top; OK on a programme on now watches it, on a future one sets/removes a reminder. */
@@ -3019,30 +3020,33 @@ public class MainActivity extends Activity {
                 List<GuideGridView.Prog> c = guideCache.get(it.id);
                 long nowS = System.currentTimeMillis() / 1000, win = guideWindowSecs();
                 Long at = guideFetchedAt.get(it.id);
-                boolean fresh = c != null && at != null && !GuideListings.stale(at, c, nowS, win);
+                long viewEnd = Math.max(nowS + win, grid.windowEnd());
+                boolean fresh = c != null && at != null && !GuideListings.stale(at, c, nowS, win, viewEnd, guideFullFetched.contains(it.id));
                 if (c != null) { if (!grid.loaded(r)) grid.setProgs(r, c); if (fresh) return; }
                 if (!requested.add(it.id)) return;
                 final int g = gen[0];
                 guideIo.execute(() -> {
                     long now = System.currentTimeMillis() / 1000;
                     List<GuideGridView.Prog> got = new ArrayList<>();
-                    boolean ok = false;
+                    boolean ok = false, full0 = false;
                     try {
                         got = GuideListings.parse(new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings"), now);
                         ok = true;
                     } catch (Exception ignored) {}
                     // Some providers only send "now" in the short list; the full day's table has the rest.
-                    if (GuideListings.tooShort(got, now, win)) try {
+                    // Day ▶ / swiping ahead needs programmes beyond the short list, so ask for the full table too.
+                    if (GuideListings.tooShort(got, now, Math.max(win, viewEnd - now))) try {
                         List<GuideGridView.Prog> full = GuideListings.parse(new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + it.id)).optJSONArray("epg_listings"), now);
                         if (full.size() > got.size()) got = full;
-                        ok = true;
+                        ok = true; full0 = true;
                     } catch (Exception ignored) {}
-                    final List<GuideGridView.Prog> res = got; final boolean fetched = ok;
+                    final List<GuideGridView.Prog> res = got; final boolean fetched = ok, gotFull = full0;
                     ui.post(() -> {
                         requested.remove(it.id);
                         if (!fetched) return;
                         List<GuideGridView.Prog> got2 = res;
                         guideFetchedAt.put(it.id, System.currentTimeMillis() / 1000);
+                        if (gotFull) guideFullFetched.add(it.id); else guideFullFetched.remove(it.id);
                         guideCache.put(it.id, got2);
                         if (g == gen[0] && "tvguide".equals(screen)) grid.setProgs(r, got2);
                     });
