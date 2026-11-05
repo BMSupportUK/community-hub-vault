@@ -12,3 +12,4 @@
 - Voice search records 16 kHz WAV in the renderer and sends it through the device-token `voice` action (rate-limited per device, src/lib/player-voice.ts); the AI key stays on the website, never in the app.
 - The installer closes BM Player (taskkill + path-matched Stop-Process) and confirms the DLLs are writable before copying, asking Retry/Cancel if still locked.
 - Sound booster levels live in sound-boost.cjs (shared with Mac); main.cjs applies boosted libVLC volume only to the audible pane, Mac's <video> engine uses a Web Audio gain node above 100.
+- Live TV (non-saved lists) renders renderer/live-guide.jsx, mirroring the Android/Amazon box layout: preview + programme info, 24h/Now/Category pills, lazily loaded guide grid; 1st channel click previews, 2nd opens the play menu.
