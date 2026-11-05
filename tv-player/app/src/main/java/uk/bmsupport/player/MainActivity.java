@@ -540,6 +540,11 @@ public class MainActivity extends Activity {
         io.execute(this::pollOnce);
     }
 
+    /** stopPreview only clears the now-playing note while that note still belongs to the preview. */
+    static boolean previewStopClearsNowPlaying(boolean previewCounted, boolean nowPlayingIsPreview) {
+        return previewCounted && nowPlayingIsPreview;
+    }
+
     private void stopPolling() {
         if (pollTask != null) ui.removeCallbacks(pollTask); pollTask = null;
         if (connectionTask != null) ui.removeCallbacks(connectionTask); connectionTask = null;
@@ -794,7 +799,11 @@ public class MainActivity extends Activity {
         if (preview != null) { preview.release(); preview = null; }
         if (previewPoster != null) previewPoster.setVisibility(View.VISIBLE);
         // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
-        if (previewCounted) { previewCounted = false; clearNowPlaying(); }
+        // Only clear the note while it still belongs to the preview: real playback (or VLC) started
+        // from a preview replaces it first (np_preview=false), and onPause runs stopPreview after
+        // that — wiping it there would leave Live connections blind for the whole watch.
+        if (previewStopClearsNowPlaying(previewCounted, prefs.getBoolean("np_preview", false))) clearNowPlaying();
+        previewCounted = false;
         previewStopped();
     }
     private boolean previewCounted;
