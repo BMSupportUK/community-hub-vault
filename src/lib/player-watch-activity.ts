@@ -34,3 +34,11 @@ export function viewingDuration(seconds: number) {
   const minutes = Math.floor(Math.max(0, Number(seconds)) / 60);
   return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : minutes ? `${minutes}m` : `${Math.max(0, Math.round(Number(seconds)))}s`;
 }
+export const WATCH_ACTIVITY_DAYS = 7;
+const ukDay = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+/** The latest 7 UK days (newest first), each with that day's activities newest first; empty days included. */
+export function watchActivityByDay<T extends { last_watched_at: string }>(rows: T[], now = Date.now()): { day: string; rows: T[] }[] {
+  const days: string[] = [];
+  for (let i = 0; days.length < WATCH_ACTIVITY_DAYS; i++) { const d = ukDay(new Date(now - i * 86400000).toISOString()); if (!days.includes(d)) days.push(d); }
+  return days.map(day => ({ day, rows: rows.filter(r => ukDay(r.last_watched_at) === day).sort((a, b) => b.last_watched_at.localeCompare(a.last_watched_at)) }));
+}
