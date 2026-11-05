@@ -3898,8 +3898,6 @@ public class MainActivity extends Activity {
                 LinearLayout card; android.widget.ImageView img; TextView t;
                 if (cv == null) {
                     card = column(); card.setPadding(dp(5), dp(5), dp(5), dp(5));
-                    // Every poster card is the same height (two title lines + bar + rating) so rows never touch or stagger.
-                    card.setLayoutParams(new android.widget.AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(272)));
                     card.setBackground(posterCardBg());
                     card.setDuplicateParentStateEnabled(false);
                     img = new android.widget.ImageView(MainActivity.this);
@@ -3917,7 +3915,16 @@ public class MainActivity extends Activity {
                 LinearLayout progress = (LinearLayout) ((Object[]) card.getTag())[2];
                 progress.removeAllViews();
                 // Series progress belongs on each episode, not the show's poster.
-                if (!"series".equals(it.kind)) progress.addView(watchedBar(it));
+                // Every card reserves the watched bar's space (invisible when unwatched) so all cards share one
+                // natural height on any screen or text size — nothing is cut off and rows stay evenly spaced.
+                LinearLayout wb = "series".equals(it.kind) ? null : watchedBar(it);
+                if (wb == null || wb.getVisibility() == View.GONE) {
+                    wb = new LinearLayout(MainActivity.this); wb.setOrientation(LinearLayout.VERTICAL);
+                    wb.addView(new View(MainActivity.this), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(6)));
+                    wb.addView(text("0% watched", 12, MUTED, false));
+                    wb.setVisibility(View.INVISIBLE);
+                }
+                progress.addView(wb);
                 t.setLines(2); t.setText(it.name);
                 progress.addView(text(ratingText(it), 12, MUTED, false)); requestRating(it);
                 loadPoster(img, it.poster);
