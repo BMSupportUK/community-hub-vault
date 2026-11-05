@@ -200,7 +200,6 @@ function AdminPlayerLivePageInner() {
         <h1 className="font-display text-2xl font-bold">BM Player – Live connections</h1>
         <div className="flex gap-2 text-sm">
           <span className="rounded-full border border-border bg-surface px-3 py-1"><Radio className="mr-1 inline size-3.5 text-primary" />{live.length} watching</span>
-          <span className="rounded-full border border-border bg-surface px-3 py-1"><MonitorPlay className="mr-1 inline size-3.5 text-primary" />{watching} watching</span>
           {onVpn > 0 && <span className="rounded-full border border-warning/40 bg-warning/10 px-3 py-1 font-medium text-warning"><ShieldAlert className="mr-1 inline size-3.5" />{onVpn} on VPN</span>}
         </div>
       </div>
