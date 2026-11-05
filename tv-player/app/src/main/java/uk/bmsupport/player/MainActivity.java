@@ -2709,6 +2709,7 @@ public class MainActivity extends Activity {
         TextView progTime = text("", 15, MUTED, false);
         TextView pvStatus = text("", 13, MUTED, false);
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
+        final boolean phoneLive = live && "phone".equals(platform());
         LinearLayout btns = row();
         Button catBtn = button(live ? "☰ Categories: All" : "Category: All", v -> {});
         btns.addView(catBtn);
