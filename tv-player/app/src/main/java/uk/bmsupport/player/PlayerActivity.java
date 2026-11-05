@@ -452,18 +452,27 @@ public class PlayerActivity extends Activity {
         box.setPadding(pad, pad / 2, pad, 0);
         TextView info = new TextView(this);
         info.setText((kind.equals("live") ? "Channel: " : kind.equals("film") ? "Film: " : "Series: ") + title + (cat == null || cat.isEmpty() ? "" : "\nCategory: " + cat));
+        // Sideways phones leave only a strip above the keypad, so Send and Cancel sit at the top, above the box.
+        android.widget.LinearLayout actions = new android.widget.LinearLayout(this);
+        actions.setGravity(Gravity.END);
+        final android.widget.Button cancelBtn = new android.widget.Button(this); cancelBtn.setAllCaps(false); cancelBtn.setText("Cancel");
+        final android.widget.Button sendBtn = new android.widget.Button(this); sendBtn.setAllCaps(false); sendBtn.setText("Send to BM Support");
+        actions.addView(cancelBtn); actions.addView(sendBtn);
+        box.addView(actions);
         box.addView(info);
         final android.widget.EditText issue = new android.widget.EditText(this);
         issue.setHint("Briefly tell us what's wrong (e.g. buffering, no sound, won't play)");
-        issue.setMinLines(3); issue.setMaxLines(5);
-        issue.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
+        issue.setMinLines(1); issue.setMaxLines(3);
+        issue.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND | android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI | android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN);
         issue.setFilters(new android.text.InputFilter[]{ new android.text.InputFilter.LengthFilter(1000) });
+        issue.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         box.addView(issue);
         final String fTitle = title;
-        final android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this).setTitle("Report a problem").setView(box)
-                .setNegativeButton("Cancel", null).setPositiveButton("Send to BM Support", null).create();
+        final android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this).setView(box).create();
+        cancelBtn.setOnClickListener(v -> dlg.dismiss());
+        issue.setOnEditorActionListener((tv, a, e) -> { if (a == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) { sendBtn.performClick(); return true; } return false; });
         if (dlg.getWindow() != null) dlg.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-        dlg.setOnShowListener(x -> dlg.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        sendBtn.setOnClickListener(v -> {
             String msg = issue.getText().toString().trim();
             if (msg.length() < 3) { issue.setError("Please type a short description"); return; }
             v.setEnabled(false);
@@ -490,7 +499,7 @@ public class PlayerActivity extends Activity {
                     Toast.makeText(this, "Thanks – a support ticket has been opened. You'll find replies at bmsupport.uk/tickets", Toast.LENGTH_LONG).show();
                 });
             }).start();
-        }));
+        });
         dlg.show();
     }
 
