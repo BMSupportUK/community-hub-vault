@@ -226,7 +226,8 @@ public class GuideGridView extends View {
                 invalidate(); changed();
                 if (listener != null) {
                     if (hasCatchup(r) && e.getX() >= chW() - 32 * d && e.getX() < chW()) listener.onCatchup(r);
-                    else listener.onPick(r, selected());
+                    // A tap on the channel name picks the channel itself, never a later programme left selected.
+                    else listener.onPick(r, e.getX() < chW() ? null : selected());
                 }
                 performClick();
                 return true;
