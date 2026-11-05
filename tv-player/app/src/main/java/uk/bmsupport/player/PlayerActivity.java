@@ -259,35 +259,24 @@ public class PlayerActivity extends Activity {
             boostBtn.setText("🔊 Sound booster: " + SoundBoost.label(this));
             android.widget.Toast.makeText(this, "Sound booster: " + SoundBoost.label(this) + ("high".equals(id) ? "\n" + SoundBoost.HIGH_NOTE : ""), android.widget.Toast.LENGTH_SHORT).show();
         });
-        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
-        blp.topMargin = 24; blp.rightMargin = 24;
+        // Sound booster and Report a problem sit bottom-left, opposite the player's settings cog, just above the time bar.
+        final int ctrlBottom = (int) (84 * getResources().getDisplayMetrics().density);
+        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
+        blp.bottomMargin = ctrlBottom; blp.leftMargin = 24;
         root.addView(boostBtn, blp);
-        // Picture size, remembered on this device: wide films show bars on Fit, Zoom fills the screen.
-        final android.content.SharedPreferences pp = prefs(this);
-        final android.widget.Button picBtn = new android.widget.Button(this);
-        picBtn.setAllCaps(false);
-        final Runnable applyPic = () -> {
-            String id = pp.getString("picture", "fit");
-            view.setResizeMode("zoom".equals(id) ? androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                    : "stretch".equals(id) ? androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL : androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT);
-            picBtn.setText("⛶ Picture: " + PlayerControls.pictureLabel(id));
-        };
-        applyPic.run();
-        picBtn.setOnClickListener(v -> { pp.edit().putString("picture", PlayerControls.nextPicture(pp.getString("picture", "fit"))).apply(); applyPic.run(); });
-        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
-        plp.topMargin = 24 + (int) (64 * getResources().getDisplayMetrics().density); plp.rightMargin = 24;
-        root.addView(picBtn, plp);
+        // Films and series always fill the screen (Zoom); live TV and catch up keep their own shape.
+        if (PlayerControls.canSkip(kind())) view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM);
         final android.widget.Button reportBtn = new android.widget.Button(this);
         reportBtn.setAllCaps(false);
         reportBtn.setText("⚠ Report a problem");
         reportBtn.setOnClickListener(v -> showReport());
-        FrameLayout.LayoutParams reportLp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
-        reportLp.topMargin = 24; reportLp.leftMargin = 24;
+        FrameLayout.LayoutParams reportLp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
+        reportLp.bottomMargin = ctrlBottom; reportLp.leftMargin = 24 + (int) (230 * getResources().getDisplayMetrics().density);
         root.addView(reportBtn, reportLp);
         // Catch up problems can't be fixed by us, so there is no report button on catch up.
         final boolean canReport = PlayerControls.canReport(kind());
         if (!canReport) reportBtn.setVisibility(android.view.View.GONE);
-        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); picBtn.setVisibility(vis); reportBtn.setVisibility(canReport ? vis : android.view.View.GONE); });
+        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(canReport ? vis : android.view.View.GONE); });
         setContentView(root);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
