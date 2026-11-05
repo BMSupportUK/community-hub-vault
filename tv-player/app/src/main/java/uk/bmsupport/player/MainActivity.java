@@ -2746,15 +2746,41 @@ public class MainActivity extends Activity {
         LinearLayout content = root;
         if (live) {
             content = row();
-            // A proper one-line "Channels" button, website-pill style, at the top of a narrow strip.
+            // Edge tab like the website's "Order chat" side button: stuck to the left edge, vertically centred, vertical label.
             LinearLayout rail = new LinearLayout(this);
             rail.setOrientation(LinearLayout.VERTICAL);
+            rail.setGravity(Gravity.CENTER_VERTICAL);
             rail.setBackgroundColor(BG);
-            rail.setPadding(dp(10), dp(10), dp(10), dp(10));
-            Button chBtn = button("☰ Channels", v -> catBtn.performClick());
-            chBtn.setSingleLine(true);
-            chBtn.setTextSize(16);
-            rail.addView(chBtn, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout tab = new LinearLayout(this);
+            tab.setOrientation(LinearLayout.VERTICAL);
+            tab.setGravity(Gravity.CENTER_HORIZONTAL);
+            tab.setPadding(dp(10), dp(16), dp(10), dp(16));
+            tab.setFocusable(true);
+            tab.setClickable(true);
+            GradientDrawable tabOn = new GradientDrawable(); tabOn.setColor(ACCENT);
+            tabOn.setCornerRadii(new float[]{0,0,dp(14),dp(14),dp(14),dp(14),0,0});
+            tabOn.setStroke(dp(3), TEXT);
+            GradientDrawable tabOff = new GradientDrawable(); tabOff.setColor(ACCENT);
+            tabOff.setCornerRadii(new float[]{0,0,dp(14),dp(14),dp(14),dp(14),0,0});
+            StateListDrawable tabBg = new StateListDrawable();
+            tabBg.addState(new int[]{android.R.attr.state_focused}, tabOn);
+            tabBg.addState(new int[]{android.R.attr.state_pressed}, tabOn);
+            tabBg.addState(new int[]{}, tabOff);
+            tab.setBackground(tabBg);
+            TextView icon = new TextView(this);
+            icon.setText("☰"); icon.setTextColor(TEXT); icon.setTextSize(18); icon.setGravity(Gravity.CENTER);
+            tab.addView(icon);
+            TextView vlabel = new TextView(this) {
+                @Override protected void onMeasure(int w, int h) { super.onMeasure(h, w); setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth()); }
+                @Override protected void onDraw(android.graphics.Canvas c) { c.save(); c.translate(0, getHeight()); c.rotate(-90); c.translate(getCompoundPaddingLeft(), getExtendedPaddingTop()); getLayout().draw(c); c.restore(); }
+            };
+            vlabel.setText("Channels"); vlabel.setTextColor(TEXT); vlabel.setTextSize(15);
+            vlabel.setTypeface(Typeface.DEFAULT_BOLD); vlabel.setSingleLine(true);
+            LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            vlp.topMargin = dp(8);
+            tab.addView(vlabel, vlp);
+            tab.setOnClickListener(v -> catBtn.performClick());
+            rail.addView(tab, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             content.addView(rail, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
             content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
         }
