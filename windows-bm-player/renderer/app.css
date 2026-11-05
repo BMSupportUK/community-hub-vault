@@ -109,3 +109,4 @@ button.primary{background:var(--accent);color:#fff}
 .episode-card img,.episode-card .no-poster{width:100%;aspect-ratio:16/9;object-fit:contain;display:block;background:var(--raised)}
 .episode-card .no-poster{display:flex;align-items:center;justify-content:center;font-size:30px}
 .ep-name{padding:6px 4px 2px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+select{color-scheme:dark}select option,select optgroup{background:var(--surface);color:var(--foreground)}select option:checked{background:var(--accent);color:var(--accent-foreground)}
