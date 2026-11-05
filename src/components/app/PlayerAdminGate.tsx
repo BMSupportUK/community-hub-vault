@@ -37,7 +37,7 @@ export function PlayerAdminGate({ children }: { children: ReactNode }) {
     }}>
       <div className="flex items-baseline gap-x-3">
         <div className="flex shrink-0 items-center gap-2"><KeyRound className="size-5 shrink-0 text-primary" /><h1 className="font-display text-xl font-bold">BM Player Admin login</h1></div>
-        <p className="text-sm text-muted-foreground">Enter your Staff PIN — 15 minutes of access.</p>
+        <p className="whitespace-nowrap text-sm text-muted-foreground">Staff PIN · 15-minute access.</p>
       </div>
       <Input type="password" inputMode="numeric" autoComplete="off" autoFocus aria-label="Staff PIN" placeholder="Staff PIN" value={pin} onChange={(e) => setPin(e.target.value)} aria-invalid={!!error} />
       {error && <p className="text-sm text-destructive">{error}</p>}
