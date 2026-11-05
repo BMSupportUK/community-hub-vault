@@ -1,0 +1,56 @@
+package uk.bmsupport.player;
+
+import android.util.Base64;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.TreeMap;
+
+/** Turns provider EPG listings into the Live TV guide's programme list: sorted, de-duplicated, only what is still to come. */
+public final class GuideListings {
+    private GuideListings() {}
+
+    /** Minutes a cached channel line-up stays fresh before the guide asks again. */
+    public static final long REFRESH_SECS = 15 * 60;
+
+    public static List<GuideGridView.Prog> parse(JSONArray l, long now) {
+        TreeMap<Long, GuideGridView.Prog> byStart = new TreeMap<>();
+        if (l != null) for (int i = 0; i < l.length(); i++) {
+            JSONObject e = l.optJSONObject(i);
+            if (e == null) continue;
+            long st = e.optLong("start_timestamp", 0), en = e.optLong("stop_timestamp", 0);
+            if (st <= 0 || (en > 0 && en <= now - 3600)) continue;
+            String t = e.optString("title", "");
+            try { t = new String(Base64.decode(t, Base64.DEFAULT), "UTF-8"); } catch (Exception ignored) {}
+            if (t.trim().isEmpty()) t = "Programme";
+            if (!byStart.containsKey(st)) byStart.put(st, new GuideGridView.Prog(t, st, en));
+        }
+        return new ArrayList<>(byStart.values());
+    }
+
+    /** True when the line-up only reaches "now" (or nothing), so the full day's table is worth fetching. */
+    public static boolean tooShort(List<GuideGridView.Prog> l, long now, long window) {
+        if (l == null || l.size() < 2) return true;
+        GuideGridView.Prog last = l.get(l.size() - 1);
+        long end = last.en > 0 ? last.en : last.st;
+        return end < now + window;
+    }
+
+    /** True when a cached line-up is too old or has run out, so the guide should fetch again. */
+    public static boolean stale(long fetchedAt, List<GuideGridView.Prog> l, long now, long window) {
+        if (now - fetchedAt >= REFRESH_SECS) return true;
+        if (l == null || l.isEmpty()) return now - fetchedAt >= 120;
+        GuideGridView.Prog last = l.get(l.size() - 1);
+        return (last.en > 0 ? last.en : last.st) < now + window / 2;
+    }
+
+    static List<GuideGridView.Prog> sorted(List<GuideGridView.Prog> l) {
+        List<GuideGridView.Prog> c = new ArrayList<>(l);
+        Collections.sort(c, (a, b) -> Long.compare(a.st, b.st));
+        return c;
+    }
+}
