@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { ArrowLeft, ChartPie, Search } from "lucide-react";
@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { viewingDuration, viewingSegments, watchActivityByDay, WATCH_ACTIVITY_DAYS, WATCH_KINDS } from "@/lib/player-watch-activity";
+import { membersByLetter, viewingDuration, viewingSegments, watchActivityByDay, WATCH_ACTIVITY_DAYS, WATCH_KINDS } from "@/lib/player-watch-activity";
 
 type Member = { user_id: string; username: string; seconds: number; last_watched_at: string | null };
 const date = (value: string) => new Date(value).toLocaleString("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
