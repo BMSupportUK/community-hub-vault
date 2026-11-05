@@ -64,6 +64,8 @@ public class GuideGridView extends View {
     }
     public void setProgs(int row, List<Prog> l) { progs.put(row, l); invalidate(); if (row == selRow) changed(); }
     public boolean loaded(int row) { return progs.containsKey(row); }
+    /** End of the time span currently on screen (moves forward with Day ▶ and sideways swipes). */
+    public long windowEnd() { return windowStart + WINDOW; }
     public int selectedRow() { return selRow; }
     public void selectChannel(int row) {
         if (row < 0 || row >= names.size()) return;
