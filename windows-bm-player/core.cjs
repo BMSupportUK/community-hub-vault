@@ -32,7 +32,7 @@ function catchupProgrammes(rows, days, now = Date.now()) {
 }
 function decode(value) { try { const text=Buffer.from(value || '', 'base64').toString('utf8'); return text.includes('\uFFFD') ? value : text; } catch { return value || ''; } }
 function programmes(rows) {
-  return (rows || []).map(p => ({ id:String(p.id || p.start_timestamp), title:decode(p.title), start:Number(p.start_timestamp)*1000, end:Number(p.stop_timestamp || p.end_timestamp)*1000 }))
+  return (rows || []).map(p => ({ id:String(p.id || p.start_timestamp), title:decode(p.title), desc:decode(p.description || ''), start:Number(p.start_timestamp)*1000, end:Number(p.stop_timestamp || p.end_timestamp)*1000 }))
     .filter(p=>Number.isFinite(p.start) && Number.isFinite(p.end) && p.end > p.start);
 }
 function itemFromProvider(kind, p) {
