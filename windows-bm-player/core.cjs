@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 const IDLE_MS = 3 * 60 * 60_000;
-const RESPONSE_MS = 60_000;
+const RESPONSE_MS = 120_000;
 const adult = value => /adult|xxx|18\+|porn|erotic/i.test(String(value || ''));
 function progress(position, duration) { return duration > 0 ? Math.min(100, Math.max(0, Math.round(position / duration * 100))) : 0; }
 function resume(position, duration) { return duration > 0 && position > 0 && position < duration * .95; }
