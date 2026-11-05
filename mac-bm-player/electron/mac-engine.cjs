@@ -134,21 +134,21 @@ class MacEngine {
     if (typeof ua === 'function') userAgent = ua;
   }
   send(data) { if (this.win && !this.win.isDestroyed()) this.win.webContents.send('player:event', { type: 'video', ...data }); }
-  play(index, url, { buffer = 3000, resume = 0, live = true, subtitles = null } = {}) {
+  play(index, url, { buffer = 3000, resume = 0, live = true, subtitles = null, fill = false } = {}) {
     const src = toProxy(url);
     this.sessions.set(index, { position: 0, duration: 0, state: 1, seekable: false });
     this.endBackup(index);
-    this.send({ action: 'play', index, src, kind: streamKind(url), buffer: Number(buffer) || 3000, resume: Number(resume) || 0, live: live !== false, subtitles });
+    this.send({ action: 'play', index, src, kind: streamKind(url), buffer: Number(buffer) || 3000, resume: Number(resume) || 0, live: live !== false, subtitles, fill: !!fill });
   }
   backupReady() { return backupReady(); }
   /** Play through the backup engine; films, episodes and catch up keep their place (seeking restarts the conversion there). */
-  playBackup(index, url, { buffer = 3000, resume = 0, live = true } = {}) {
+  playBackup(index, url, { buffer = 3000, resume = 0, live = true, fill = false } = {}) {
     this.endBackup(index);
     const token = crypto.randomBytes(12).toString('hex'), ss = live ? 0 : Math.max(0, Number(resume) || 0);
     backups.set(token, { url, ss, live, proc: null, duration: 0 });
     const old = this.sessions.get(index);
     this.sessions.set(index, { position: 0, duration: 0, state: 1, seekable: false, backup: { token, url, live, offset: ss, buffer }, volume: old?.volume });
-    this.send({ action: 'play', index, src: `${SCHEME}://backup-${token}/stream.ts`, kind: 'ts', buffer: Number(buffer) || 3000, resume: 0, live: true, subtitles: null });
+    this.send({ action: 'play', index, src: `${SCHEME}://backup-${token}/stream.ts`, kind: 'ts', buffer: Number(buffer) || 3000, resume: 0, live: true, subtitles: null, fill: !!fill });
     if (old?.volume !== undefined) this.send({ action: 'volume', index, volume: old.volume });
   }
   endBackup(index) { const b = this.sessions.get(index)?.backup; if (b) { killBackup(backups.get(b.token)); backups.delete(b.token); } }

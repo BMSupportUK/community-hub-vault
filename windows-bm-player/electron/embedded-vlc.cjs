@@ -16,7 +16,7 @@ class EmbeddedVlc {
   this.destroy=this.user.func('__stdcall','DestroyWindow','bool',['void *']);
   this.client=this.user.func('__stdcall','GetClientRect','bool',['void *','void *']);
   this.dll=this.k.load(path.join(root,'libvlc.dll'));
-  const api={new:['void *',['int','const char **']],release:['void',['void *']],media_new_location:['void *',['void *','str']],media_add_option:['void',['void *','str']],media_release:['void',['void *']],media_player_new:['void *',['void *']],media_player_release:['void',['void *']],media_player_set_media:['void',['void *','void *']],media_player_set_hwnd:['void',['void *','void *']],media_player_play:['int',['void *']],media_player_stop:['void',['void *']],media_player_set_pause:['void',['void *','int']],media_player_get_state:['int',['void *']],media_player_get_time:['int64',['void *']],media_player_get_length:['int64',['void *']],media_player_set_time:['void',['void *','int64']],media_player_is_seekable:['int',['void *']],audio_set_volume:['int',['void *','int']],video_set_mouse_input:['void',['void *','uint']],video_set_key_input:['void',['void *','uint']],video_get_spu_count:['int',['void *']],video_set_spu:['int',['void *','int']],video_get_spu_description:['void *',['void *']],track_description_list_release:['void',['void *']]};
+  const api={new:['void *',['int','const char **']],release:['void',['void *']],media_new_location:['void *',['void *','str']],media_add_option:['void',['void *','str']],media_release:['void',['void *']],media_player_new:['void *',['void *']],media_player_release:['void',['void *']],media_player_set_media:['void',['void *','void *']],media_player_set_hwnd:['void',['void *','void *']],media_player_play:['int',['void *']],media_player_stop:['void',['void *']],media_player_set_pause:['void',['void *','int']],media_player_get_state:['int',['void *']],media_player_get_time:['int64',['void *']],media_player_get_length:['int64',['void *']],media_player_set_time:['void',['void *','int64']],media_player_is_seekable:['int',['void *']],audio_set_volume:['int',['void *','int']],video_set_crop_geometry:['void',['void *','str']],video_set_mouse_input:['void',['void *','uint']],video_set_key_input:['void',['void *','uint']],video_get_spu_count:['int',['void *']],video_set_spu:['int',['void *','int']],video_get_spu_description:['void *',['void *']],track_description_list_release:['void',['void *']]};
   this.api=Object.fromEntries(Object.entries(api).map(([name,[ret,args]])=>[name,this.dll.func('libvlc_'+name,ret,args)]));
   const args=['--ignore-config','--no-video-title-show','--no-osd','--no-stats','--quiet'];
   this.instance=this.api.new(args.length,args);
@@ -33,8 +33,8 @@ class EmbeddedVlc {
   this.api.video_set_mouse_input(player,0);this.api.video_set_key_input(player,0);
   const s={hwnd,player};this.surfaces.set(index,s);return s;
  }
- play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0}={}){
-  const s=this.surface(index);this.api.media_player_stop(s.player);
+ play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,fill=false}={}){
+  const s=this.surface(index);s.fill=!!fill;s.crop='';this.api.media_player_stop(s.player);
   const media=this.api.media_new_location(this.instance,url);
   if(!media)throw new Error('This stream could not be opened.');
   try{
@@ -59,6 +59,8 @@ class EmbeddedVlc {
    if(!row.visible){this.show(s.hwnd,0);continue;}
    const x=Math.round(row.x*width),y=Math.round(row.y*height),w=Math.round(row.width*width),h=Math.round(row.height*height);
    this.move(s.hwnd,null,x,y,w,h,0x0010|0x0040);this.show(s.hwnd,5);
+   // Zoom: crop the picture to the surface's own shape so films and episodes fill it with no bars.
+   const crop=s.fill&&w>0&&h>0?w+':'+h:'';if(crop!==s.crop){s.crop=crop;try{this.api.video_set_crop_geometry(s.player,crop||null);}catch{}}
   }
   for(const [index,s]of this.surfaces)if(!shown.has(index))this.show(s.hwnd,0);
  }
