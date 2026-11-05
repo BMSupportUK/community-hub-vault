@@ -65,7 +65,7 @@ class EmbeddedVlc {
    if(!row.visible){this.show(s.hwnd,0);continue;}
    const x=Math.round(row.x*width),y=Math.round(row.y*height),w=Math.round(row.width*width),h=Math.round(row.height*height);
    this.move(s.hwnd,null,x,y,w,h,0x0010|0x0040);this.show(s.hwnd,5);
-   // Zoom: crop the picture to the surface's own shape so films and episodes fill it with no bars.
+   // Films/episodes zoom by enlarging the inner picture window inside this pane.
    s.w=w;s.h=h;this.place(s);
   }
   for(const [index,s]of this.surfaces)if(!shown.has(index))this.show(s.hwnd,0);
@@ -82,6 +82,7 @@ class EmbeddedVlc {
  /** Every couple of seconds while a film/episode plays: snapshot a tiny frame and zoom past baked-in black bars. */
  checkBars(index,decode){
   const s=this.surfaces.get(index);if(!s||!s.fill||this.api.media_player_get_state(s.player)!==3)return;
+  this.place(s);
   const file=path.join(os.tmpdir(),'bm-bars-'+process.pid+'-'+index+'.png');
   try{if(this.api.video_take_snapshot(s.player,0,file,96,54)!==0)return;const img=decode(file);if(!img)return;
    s.bars.push(contentShare(img.data,img.width,img.height,[2,1,0]));this.place(s);
