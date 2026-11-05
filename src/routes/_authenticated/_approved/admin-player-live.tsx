@@ -177,7 +177,13 @@ function AdminPlayerLivePageInner() {
     void load();
     const poll = setInterval(load, 10_000);
     const tick = setInterval(() => setNow(Date.now()), 1000);
-    return () => { stop = true; clearInterval(poll); clearInterval(tick); };
+    let pending: ReturnType<typeof setTimeout> | null = null;
+    const channel = supabase.channel(`player-live-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "player_devices" }, () => {
+        if (pending) return;
+        pending = setTimeout(() => { pending = null; void load(); }, 500);
+      }).subscribe();
+    return () => { stop = true; clearInterval(poll); clearInterval(tick); if (pending) clearTimeout(pending); void supabase.removeChannel(channel); };
   }, [isAdmin]);
 
   const live = useMemo(() => (rows ?? []).filter((r) => isLive(r.last_seen_at, now)), [rows, now]);
