@@ -1418,12 +1418,13 @@ public class MainActivity extends Activity {
         top.addView(poster, plp);
         loadPoster(poster, show.poster);
         LinearLayout head = column();
-        head.addView(text(show.name, 26, TEXT, true));
+        // Series review: same details as films (rating · year · genre, cast, director, plot), then seasons and episodes.
+        MediaHero sh = new MediaHero(); sh.show(show); sh.backdrop.setVisibility(View.GONE);
+        head.addView(sh.view);
         seriesRatingItem = show; seriesRatingLabel = text(ratingText(show), 14, MUTED, false); head.addView(seriesRatingLabel); requestRating(show);
         TextView info = text("Loading episodes…", 15, MUTED, false);
         head.addView(info);
         TextView plot = text("", 14, TEXT, false); plot.setMaxLines(5);
-        head.addView(plot);
         LinearLayout btns = row();
         btns.addView(button(isSaved("fav", show) ? "★ Remove favourite" : "☆ Add favourite", v -> toggleSaved("fav", show)));
         btns.addView(button("☆ Vote", v -> showVote(show)));
