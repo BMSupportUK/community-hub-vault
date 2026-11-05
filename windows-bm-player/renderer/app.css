@@ -91,3 +91,5 @@ button.primary{background:var(--accent);color:#fff}
 
 .sort-pill{display:inline-flex;align-items:center;gap:4px}.sort-pill select{background:transparent;color:inherit;border:0;font:inherit;padding:0 2px}
 .media-grid{scroll-behavior:smooth;scroll-padding:8px}.media-grid .poster:focus{scroll-margin:12px}
+.modal .media-hero{margin:-8px -8px 16px}.modal .media-info{width:100%}.modal .media-info h1{white-space:normal}.modal .media-info .media-plot{-webkit-line-clamp:8}.modal:has(.media-hero){width:640px}
+.media-view{padding-top:8px}
