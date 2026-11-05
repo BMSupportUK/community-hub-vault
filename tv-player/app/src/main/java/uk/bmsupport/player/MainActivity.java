@@ -3877,7 +3877,8 @@ public class MainActivity extends Activity {
         g.setColumnWidth(dp(130));
         g.setNumColumns(android.widget.GridView.AUTO_FIT);
         g.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
-        g.setHorizontalSpacing(dp(8)); g.setVerticalSpacing(dp(10));
+        // Same gap across and down so every row sits an even distance below the one above.
+        g.setHorizontalSpacing(dp(12)); g.setVerticalSpacing(dp(12));
         g.setPadding(dp(8), dp(8), dp(8), dp(8));
         g.setDrawSelectorOnTop(false);
         return g;
@@ -3897,13 +3898,15 @@ public class MainActivity extends Activity {
                 LinearLayout card; android.widget.ImageView img; TextView t;
                 if (cv == null) {
                     card = column(); card.setPadding(dp(5), dp(5), dp(5), dp(5));
+                    // Every poster card is the same height (two title lines + bar + rating) so rows never touch or stagger.
+                    card.setLayoutParams(new android.widget.AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(272)));
                     card.setBackground(posterCardBg());
                     card.setDuplicateParentStateEnabled(false);
                     img = new android.widget.ImageView(MainActivity.this);
                     img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
                     img.setBackgroundColor(Color.rgb(20, 28, 48));
                     card.addView(img, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(180)));
-                    t = text("", 13, TEXT, false); t.setMaxLines(2); t.setGravity(Gravity.CENTER);
+                    t = text("", 13, TEXT, false); t.setLines(2); t.setEllipsize(android.text.TextUtils.TruncateAt.END); t.setGravity(Gravity.CENTER);
                     card.addView(t);
                     LinearLayout progress = new LinearLayout(MainActivity.this);
                     progress.setOrientation(LinearLayout.VERTICAL);
@@ -3915,7 +3918,7 @@ public class MainActivity extends Activity {
                 progress.removeAllViews();
                 // Series progress belongs on each episode, not the show's poster.
                 if (!"series".equals(it.kind)) progress.addView(watchedBar(it));
-                t.setMaxLines(2); t.setText(it.name);
+                t.setLines(2); t.setText(it.name);
                 progress.addView(text(ratingText(it), 12, MUTED, false)); requestRating(it);
                 loadPoster(img, it.poster);
                 return card;
