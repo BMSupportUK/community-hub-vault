@@ -769,6 +769,7 @@ public class MainActivity extends Activity {
         if (previewTask != null) ui.removeCallbacks(previewTask);
         previewTask = null;
         if (preview != null) { preview.release(); preview = null; }
+        if (previewPoster != null) previewPoster.setVisibility(View.VISIBLE);
         // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
         if (previewCounted) { previewCounted = false; clearNowPlaying(); }
     }
@@ -2704,7 +2705,7 @@ public class MainActivity extends Activity {
         }
         LinearLayout top = row();
         LinearLayout info = column();
-        TextView heading = text(live ? "Pick a programme" : "TV guide", live ? 16 : 26, live ? MUTED : TEXT, !live);
+        TextView heading = text(live ? ("phone".equals(platform()) ? "Current programme" : "Pick a programme") : "TV guide", live ? 16 : 26, live ? MUTED : TEXT, !live);
         TextView progTitle = text("Loading your channels…", 20, TEXT, true);
         TextView progTime = text("", 15, MUTED, false);
         TextView pvStatus = text("", 13, MUTED, false);
@@ -2735,11 +2736,20 @@ public class MainActivity extends Activity {
             posterImg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
             pvFrame.addView(posterImg, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             previewPoster = posterImg; previewItem = null;
+            posterImg.setVisibility(View.VISIBLE); posterImg.bringToFront();
             side.addView(pvFrame, new LinearLayout.LayoutParams(dp(400), dp(225)));
             pvStatus.setText("OK on a programme that's on now to preview it · OK again for the channel menu");
             pvStatus.setMaxWidth(dp(400));
         } else side.addView(pv, new LinearLayout.LayoutParams(dp(288), dp(162)));
         side.addView(pvStatus);
+        if (live && "phone".equals(platform())) {
+            // Phones: a Play channel button under the instruction line opens the previewed channel full screen.
+            side.addView(button("▶ Play channel", v -> {
+                Item cur = previewItem;
+                if (cur == null) { Toast.makeText(this, "Tap a channel to preview it first", Toast.LENGTH_SHORT).show(); return; }
+                stopPreview(); play(cur, defaultVlc());
+            }));
+        }
         top.addView(side, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(top);
         GuideGridView grid = new GuideGridView(this);
