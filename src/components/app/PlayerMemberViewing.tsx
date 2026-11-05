@@ -31,19 +31,24 @@ export function PlayerMemberViewing() {
   } });
   const segments = viewingSegments(details.data?.breakdown ?? []);
   const total = segments.reduce((sum, row) => sum + row.seconds, 0);
-  const shown = (members.data ?? []).filter(row => row.username.toLowerCase().includes(search.toLowerCase()));
+  const groups = membersByLetter(members.data ?? []);
+  const [pickedLetter, setPickedLetter] = useState<string | null>(null);
+  const letter = pickedLetter && groups.some(g => g.letter === pickedLetter) ? pickedLetter : groups[0]?.letter ?? null;
+  const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", ...(groups.some(g => g.letter === "#") ? ["#"] : [])];
+  const shown = (groups.find(g => g.letter === letter)?.members ?? []).filter(row => row.username.toLowerCase().includes(search.toLowerCase()));
 
   return <section className="space-y-4 border-t border-border pt-5">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h3 className="text-base font-semibold">Members</h3>
       <div className="relative w-full sm:w-64"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input aria-label="Search members" placeholder="Search members" value={search} onChange={e => setSearch(e.target.value)} className="pl-9" /></div>
     </div>
+    {groups.length > 0 && <div role="group" aria-label="Members by letter" className="flex flex-wrap gap-2">{letters.map(l => {
+      const has = groups.some(g => g.letter === l);
+      return <Button key={l} type="button" size="sm" variant={l === letter ? "default" : "outline"} disabled={!has} aria-pressed={l === letter} className="h-8 min-w-8 rounded-full px-3" onClick={() => setPickedLetter(l)}>{l}</Button>;
+    })}</div>}
     {members.isPending ? <p className="text-sm text-muted-foreground">Loading members…</p> : members.isError ? <p role="alert" className="text-sm text-destructive">Couldn’t load members. <Button variant="link" onClick={() => void members.refetch()}>Retry</Button></p> : shown.length === 0 ? <p className="text-sm text-muted-foreground">{search ? "No matching members." : "No members have linked a BM Player yet."}</p> : <div className="overflow-x-auto"><table className="w-full text-sm">
       <thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="py-3 pr-3">Member</th><th className="p-3">Total viewed</th><th className="p-3 max-sm:hidden">Last watched · UK</th><th className="py-3 pl-3"><span className="sr-only">Viewing details</span></th></tr></thead>
-      <tbody>{membersByLetter(shown).map(group => <Fragment key={group.letter}>
-        <tr className="border-b border-border"><th colSpan={4} scope="colgroup" className="py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.letter}</th></tr>
-        {group.members.map(row => <tr key={row.user_id} className="border-b border-border"><td className="py-3 pr-3"><Button variant="link" className="h-auto max-w-56 whitespace-normal break-words p-0 text-left" onClick={() => setMember(row)}>{row.username}</Button></td><td className="p-3 tabular-nums">{viewingDuration(row.seconds)}</td><td className="p-3 text-muted-foreground max-sm:hidden">{row.last_watched_at ? date(row.last_watched_at) : "—"}</td><td className="py-3 pl-3"><Button variant="ghost" size="icon" title={`Viewing details for ${row.username}`} aria-label={`Viewing details for ${row.username}`} onClick={() => setMember(row)}><ChartPie className="size-4" /></Button></td></tr>)}
-      </Fragment>)}</tbody>
+      <tbody>{shown.map(row => <tr key={row.user_id} className="border-b border-border"><td className="py-3 pr-3"><Button variant="link" className="h-auto max-w-56 whitespace-normal break-words p-0 text-left" onClick={() => setMember(row)}>{row.username}</Button></td><td className="p-3 tabular-nums">{viewingDuration(row.seconds)}</td><td className="p-3 text-muted-foreground max-sm:hidden">{row.last_watched_at ? date(row.last_watched_at) : "—"}</td><td className="py-3 pl-3"><Button variant="ghost" size="icon" title={`Viewing details for ${row.username}`} aria-label={`Viewing details for ${row.username}`} onClick={() => setMember(row)}><ChartPie className="size-4" /></Button></td></tr>)}</tbody>
     </table></div>}
     {member && <div role="dialog" aria-modal="true" aria-label={`${member.username} viewing activity`} className="fixed inset-0 z-50 overflow-y-auto bg-background"><div className="mx-auto w-full max-w-5xl space-y-5 p-4 sm:p-8">
       <Button variant="outline" onClick={() => setMember(null)}><ArrowLeft className="size-4" />Back to members</Button>
