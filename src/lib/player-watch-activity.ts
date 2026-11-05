@@ -2,7 +2,7 @@ export type WatchActivity = { id: string; kind: string; title: string; category:
 export const WATCH_ACTIVITY_LIMIT = 10;
 export const WATCH_KINDS = [
   { key: "live", label: "Live TV", color: "var(--primary)", swatch: "bg-primary" },
-  { key: "film", label: "Films", color: "var(--success)", swatch: "bg-success" },
+  { key: "film", label: "Movies", color: "var(--success)", swatch: "bg-success" },
   { key: "series", label: "Series", color: "var(--warning)", swatch: "bg-warning" },
   { key: "catchup", label: "Catch up", color: "var(--accent)", swatch: "bg-accent" },
 ];
