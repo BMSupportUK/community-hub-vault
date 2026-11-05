@@ -1,7 +1,7 @@
 const {app,BrowserWindow,ipcMain,safeStorage,shell,dialog,powerSaveBlocker,powerMonitor,protocol,session:electronSession,systemPreferences}=require('electron');
 const MAC=process.platform==='darwin';
 const PLATFORM=MAC?{id:'mac',name:'Mac',device:'Mac BM Player'}:{id:'windows',name:'Windows',device:'Windows BM Player'};
-if(MAC)require('./mac-engine.cjs').registerScheme(protocol);
+require('./mac-engine.cjs').registerScheme(protocol);
 const fs=require('node:fs');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
@@ -13,7 +13,16 @@ const boost=require('../sound-boost.cjs');
 const recovery=require('../stream-recovery.cjs');
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
-function createEngine(w){if(MAC){const {MacEngine}=require('./mac-engine.cjs');return new MacEngine(w,()=>store.settings?.userAgent);}const {EmbeddedVlc}=require('./embedded-vlc.cjs');return new EmbeddedVlc(w);}
+function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w);}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
+/** Main player gave up: hand the screen to the BM backup engine (once), keeping a film's place. */
+function toBackup(session){
+ if(session.backup||!engine?.useBackup)return false;
+ const live=session.item.kind==='live';
+ try{if(!engine.useBackup(session.index,session.urls[session.urlIndex]||session.urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),resume:live?0:session.position||0,live}))return false;}catch{return false;}
+ Object.assign(session,{backup:true,ready:false,failed:false,since:Date.now(),stallAt:0,reconnects:0,retryAt:0,stallTimes:[],stillSince:0,lastPos:undefined,subCheck:false});
+ applyAudio();send({type:'notice',message:'The main player couldn\'t play this, so the BM backup engine has taken over.'});
+ return true;
+}
 const SITE='https://bmsupport.uk';
 let win,store={},file,lastInput=Date.now(),promptedAt=0,excessSince=0,excessReported=false,linkCode='',maintenance=null;
 let sessions=[],awake=null,pollBusy=false,checkBusy=false,engine=null;
@@ -112,9 +121,11 @@ async function play({item,resume=false,screens=1,subtitles=null}){
  const baseUrls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto'),urls=item.kind==='live'?recovery.preferFormat(baseUrls,store.formatPref?.[item.id]):baseUrls;
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
- try{engine.play(index,urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0});}
- catch{engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}
- const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,subCheck:['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
+ const startAt=resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0;
+ try{engine.play(index,urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
+ catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
+ const onBackup=engine.usingBackup(index);
+ const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
  if(index===0)audible=0;applyAudio();
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
@@ -127,8 +138,8 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  if(session.ready&&recovery.frozen(session,s.state,s.position,Date.now())){queueBuffer(session.item,{ms:recovery.FREEZE_MS,reconnected:true,freeze:true});const at=session.item.kind==='live'?0:session.position;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}}
  if(rec.reconnect){const at=session.item.kind==='live'?0:session.position;send({type:'notice',message:'Reconnecting…'});setTimeout(()=>{if(!sessions.includes(session)||!engine)return;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}},rec.reconnect);}
  if(rec.offerSd)send({type:'notice',message:'This HD channel keeps buffering on your connection. Try the SD version of the channel for smoother playback.'});
- if(rec.failed)send({type:'notice',message:'This stream keeps dropping and couldn\'t reconnect. Try again or report the issue.'});
- if(!session.ready&&(s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer)});}else if(!session.failed){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
+ if(rec.failed&&!toBackup(session))send({type:'notice',message:'This stream keeps dropping and couldn\'t reconnect. Try again or report the issue.'});
+ if(!session.ready&&(s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer)});}else if(!session.failed&&!toBackup(session)){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
  // Like Android: subtitles start on; only ask (paused) when the film actually has some.
  if(session.subCheck&&s.state===3){const n=Number(engine.subtitleTracks?.(session.index))||0;if(n>0){session.subCheck=false;engine.pause(session.index,true);session.paused=true;send({type:'subtitles-found',index:session.index,item:session.item});}else if(Date.now()-session.since>25000)session.subCheck=false;}
  persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable});}catch{}}}
@@ -191,7 +202,7 @@ else{
   register('ratings',items=>{if(!Array.isArray(items)||!items.length||items.length>200)throw new Error('Choose titles to rate.');return site({action:'ratings',items:items.map(r=>({kind:r.kind,title:String(r.title||'').slice(0,300)}))});});
   register('vote',v=>{if(!['film','series'].includes(v?.kind)||!Number.isInteger(v?.stars)||v.stars<1||v.stars>5)throw new Error('Choose 1–5 stars.');return site({action:'vote',kind:v.kind,title:String(v.title||'').slice(0,300),stars:v.stars});});
   register('play',play);register('stop',stopAll);
-  if(MAC)require('./mac-engine.cjs').handleProtocol(protocol);
+  require('./mac-engine.cjs').handleProtocol(protocol);
   ipcMain.handle('player:videoStatus',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.report?.(value);return true;});
   ipcMain.handle('player:surface',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.layout(surfaceRows(value));return true;});
   register('control',value=>{

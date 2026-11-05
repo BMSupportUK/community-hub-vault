@@ -6,12 +6,49 @@
  * <video> element (hls.js / mpegts.js / native), which reports status back.
  */
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+const { spawn } = require('node:child_process');
+const { Readable } = require('node:stream');
 
 const SCHEME = 'bmstream';
 const TOKEN_TTL_MS = 12 * 60 * 60_000;
 const origins = new Map(); // token -> { origin, expires }
 const byOrigin = new Map(); // origin -> token
 let userAgent = () => '';
+
+/*
+ * BM backup engine: when the main player can't cope with a stream, the bundled
+ * ffmpeg converts it on this computer to plain H.264/AAC MPEG-TS, which the
+ * renderer's <video> always plays. Same idea as Android's built-in backup engine.
+ */
+const backups = new Map(); // token -> { url, ss, live, proc, duration }
+// Packed (asar) apps keep the converter beside the archive in app.asar.unpacked, where it can be run.
+function ffmpegPath() { return path.join(__dirname, '../tools/ffmpeg', process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg').replace(/app\.asar(?=[\\/])/, 'app.asar.unpacked'); }
+function backupReady() { try { return fs.statSync(ffmpegPath()).isFile(); } catch { return false; } }
+function backupArgs(url, { ss = 0, ua = '' } = {}) {
+  const net = /^https?:/i.test(url) ? ['-user_agent', ua || 'VLC/3.0.21 LibVLC/3.0.21', '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_on_network_error', '1', '-reconnect_delay_max', '5'] : [];
+  return ['-hide_banner', '-nostdin', '-loglevel', 'info', ...net,
+    ...(ss > 0 ? ['-ss', String(Math.floor(ss))] : []), '-fflags', '+genpts+discardcorrupt', '-i', url,
+    '-map', '0:v:0?', '-map', '0:a:0?', '-sn', '-dn',
+    '-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'zerolatency', '-crf', '22', '-pix_fmt', 'yuv420p',
+    '-vf', "scale=w='min(1920,iw)':h=-2", '-g', '50', '-c:a', 'aac', '-ac', '2', '-b:a', '160k', '-f', 'mpegts', 'pipe:1'];
+}
+function parseDuration(text) {
+  const m = /Duration: (\d+):(\d+):(\d+(?:\.\d+)?)/.exec(String(text));
+  return m ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) : 0;
+}
+function killBackup(entry) { if (entry?.proc) { try { entry.proc.kill('SIGKILL'); } catch {} entry.proc = null; } }
+function serveBackup(entry, request) {
+  killBackup(entry);
+  const proc = spawn(ffmpegPath(), backupArgs(entry.url, { ss: entry.ss, ua: userAgent() }), { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+  entry.proc = proc;
+  let log = '';
+  proc.stderr.on('data', d => { if (!entry.duration) { log = (log + d).slice(-8000); entry.duration = parseDuration(log); } });
+  proc.on('error', () => {});
+  request.signal?.addEventListener?.('abort', () => { if (entry.proc === proc) killBackup(entry); });
+  return new Response(Readable.toWeb(proc.stdout), { status: 200, headers: { 'Content-Type': 'video/mp2t', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' } });
+}
 
 function tokenFor(origin) {
   const now = Date.now();
@@ -62,6 +99,11 @@ function registerScheme(protocol) {
 
 function handleProtocol(protocol) {
   protocol.handle(SCHEME, async request => {
+    const host = new URL(request.url).hostname;
+    if (host.startsWith('backup-')) {
+      const entry = backups.get(host.slice(7));
+      return entry ? serveBackup(entry, request) : new Response('Stream expired', { status: 404 });
+    }
     const target = fromProxy(request.url);
     if (!target) return new Response('Stream expired', { status: 404 });
     const headers = { 'User-Agent': userAgent() || 'VLC/3.0.21 LibVLC/3.0.21' };
@@ -95,8 +137,21 @@ class MacEngine {
   play(index, url, { buffer = 3000, resume = 0, live = true, subtitles = null } = {}) {
     const src = toProxy(url);
     this.sessions.set(index, { position: 0, duration: 0, state: 1, seekable: false });
+    this.endBackup(index);
     this.send({ action: 'play', index, src, kind: streamKind(url), buffer: Number(buffer) || 3000, resume: Number(resume) || 0, live: live !== false, subtitles });
   }
+  backupReady() { return backupReady(); }
+  /** Play through the backup engine; films, episodes and catch up keep their place (seeking restarts the conversion there). */
+  playBackup(index, url, { buffer = 3000, resume = 0, live = true } = {}) {
+    this.endBackup(index);
+    const token = crypto.randomBytes(12).toString('hex'), ss = live ? 0 : Math.max(0, Number(resume) || 0);
+    backups.set(token, { url, ss, live, proc: null, duration: 0 });
+    const old = this.sessions.get(index);
+    this.sessions.set(index, { position: 0, duration: 0, state: 1, seekable: false, backup: { token, url, live, offset: ss, buffer }, volume: old?.volume });
+    this.send({ action: 'play', index, src: `${SCHEME}://backup-${token}/stream.ts`, kind: 'ts', buffer: Number(buffer) || 3000, resume: 0, live: true, subtitles: null });
+    if (old?.volume !== undefined) this.send({ action: 'volume', index, volume: old.volume });
+  }
+  endBackup(index) { const b = this.sessions.get(index)?.backup; if (b) { killBackup(backups.get(b.token)); backups.delete(b.token); } }
   report(value) {
     const index = Number(value?.index);
     const s = this.sessions.get(index);
@@ -108,15 +163,26 @@ class MacEngine {
     s.seekable = !!value.seekable;
     s.subs = Math.max(0, Math.min(50, Number(value.subs) || 0));
   }
-  status(index) { const s = this.sessions.get(index); return s ? { ...s } : null; }
-  subtitleTracks(index) { return this.sessions.get(index)?.subs || 0; }
+  status(index) {
+    const s = this.sessions.get(index);
+    if (!s) return null;
+    if (!s.backup) return { position: s.position, duration: s.duration, state: s.state, seekable: s.seekable, subs: s.subs || 0 };
+    const duration = s.backup.live ? 0 : backups.get(s.backup.token)?.duration || 0;
+    return { position: s.position + s.backup.offset, duration, state: s.state, seekable: duration > 0, backup: true };
+  }
+  subtitleTracks(index) { const s = this.sessions.get(index); return s && !s.backup ? s.subs || 0 : 0; }
   setSubtitles(index, on) { if (this.sessions.has(index)) this.send({ action: 'subtitles', index, on: !!on }); }
   layout() {}
   pause(index, paused) { if (this.sessions.has(index)) this.send({ action: 'pause', index, paused: !!paused }); }
-  seek(index, seconds) { if (this.sessions.has(index)) this.send({ action: 'seek', index, seconds }); }
-  volume(index, value) { if (this.sessions.has(index)) this.send({ action: 'volume', index, volume: value }); }
-  stop(index) { if (this.sessions.delete(index)) this.send({ action: 'stop', index }); }
+  seek(index, seconds) {
+    const s = this.sessions.get(index);
+    if (!s) return;
+    if (s.backup) { if (!s.backup.live) this.playBackup(index, s.backup.url, { buffer: s.backup.buffer, resume: seconds, live: false }); return; }
+    this.send({ action: 'seek', index, seconds });
+  }
+  volume(index, value) { const s = this.sessions.get(index); if (s) { s.volume = value; this.send({ action: 'volume', index, volume: value }); } }
+  stop(index) { this.endBackup(index); if (this.sessions.delete(index)) this.send({ action: 'stop', index }); }
   close() { for (const index of [...this.sessions.keys()]) this.stop(index); }
 }
 
-module.exports = { MacEngine, registerScheme, handleProtocol, rewritePlaylist, toProxy, fromProxy, streamKind };
+module.exports = { MacEngine, backupArgs, parseDuration, registerScheme, handleProtocol, rewritePlaylist, toProxy, fromProxy, streamKind };

@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 import mpegts from 'mpegts.js';
 
+// Windows plays through its own libVLC surfaces; this <video> only shows when the backup engine takes over.
+const HIDE_IDLE = typeof window !== 'undefined' && window.bm?.platform === 'windows';
 // Latest command per screen, kept even before the video element mounts.
 const commands = new Map();
 const elements = new Map();
@@ -22,13 +24,14 @@ function destroy(index) {
   const p = players.get(index);
   if (p) { try { p.destroy(); } catch {} players.delete(index); }
   const video = elements.get(index);
-  if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
+  if (video) { video.pause(); video.removeAttribute('src'); video.load(); if (HIDE_IDLE) video.style.visibility = 'hidden'; }
 }
 
 function start(index) {
   const cmd = commands.get(index), video = elements.get(index);
   if (!cmd || !video || cmd.action !== 'play') return;
   destroy(index);
+  video.style.visibility = 'visible';
   video.dataset.failed = '';
   const fail = () => { video.dataset.failed = '1'; };
   const seconds = Math.max(2, Math.round(cmd.buffer / 1000));
@@ -75,7 +78,7 @@ function apply(data) {
   else if (data.action === 'volume') setLoudness(index, video, data.volume);
 }
 
-if (window.bm?.platform === 'mac') {
+if (window.bm) {
   window.bm.subscribe(apply);
   setInterval(() => {
     for (const [index, video] of elements) {
@@ -95,7 +98,7 @@ export function MacVideo({ index }) {
     start(index);
     return () => { destroy(index); elements.delete(index); };
   }, [index]);
-  return <video ref={ref} className="mac-video" playsInline autoPlay style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000', display: 'block' }} />;
+  return <video ref={ref} className="mac-video" playsInline autoPlay style={{ visibility: HIDE_IDLE ? 'hidden' : 'visible', width: '100%', height: '100%', objectFit: 'contain', background: '#000', display: 'block' }} />;
 }
 
 window.__bmMacVideo = MacVideo;
