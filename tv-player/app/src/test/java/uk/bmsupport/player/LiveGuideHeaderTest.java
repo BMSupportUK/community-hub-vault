@@ -71,16 +71,34 @@ public class LiveGuideHeaderTest {
         assertTrue("Live TV on a phone must offer the bigger-guide control", found);
     }
 
-    @Test public void theNowAndDayRowIsGoneFromThePhoneGuide() throws Exception {
+    @Test public void theNowAndDayControlsLiveInsideTheBiggerGuidePopup() throws Exception {
         MainActivity a = open();
         openLiveGuide(a);
+        LinearLayout root = rootOf(a);
         List<View> pills = new ArrayList<>();
         collect(a.getWindow().getDecorView(), Button.class, pills);
-        for (View p : pills) {
-            String t = text(p);
-            assertNotEquals("the Now button must be gone", "Now", t);
-            assertNotEquals("the back-a-day button must be gone", "◀ Day", t);
-            assertNotEquals("the forward-a-day button must be gone", "Day ▶", t);
+        View bigBar = null;
+        for (View p : pills) if (text(p).equals("✕ Close")) bigBar = (View) p.getParent();
+        assertNotNull("the bigger-guide pop-up bar must exist", bigBar);
+        assertEquals("the pop-up bar stays hidden until Bigger guide is tapped", View.GONE, bigBar.getVisibility());
+        for (String label : new String[]{"Now", "◀ Day", "Day ▶"}) {
+            int found = 0;
+            for (View p : pills) if (text(p).equals(label)) {
+                found++;
+                View parent = (View) p.getParent();
+                assertTrue("the " + label + " button must sit inside the pop-up bar, not the normal guide",
+                        parent == bigBar || parent.getParent() == bigBar);
+            }
+            assertEquals("exactly one " + label + " button", 1, found);
+        }
+        View head = root.getChildAt(0);
+        List<View> inHead = new ArrayList<>();
+        collect(head, Button.class, inHead);
+        for (View b : inHead) {
+            String t = text(b);
+            assertNotEquals("the Now button must not be in the header", "Now", t);
+            assertNotEquals("the back-a-day button must not be in the header", "◀ Day", t);
+            assertNotEquals("the forward-a-day button must not be in the header", "Day ▶", t);
         }
     }
 
