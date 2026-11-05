@@ -70,14 +70,14 @@ export function PortalHome({ staff }: { staff: boolean }) {
   return (
     <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-visible md:overflow-y-auto">
       {/* Hero */}
-      <div className="grid min-h-dvh w-full min-w-0 grid-rows-[1fr_auto] overflow-x-hidden overflow-y-visible">
+      <div className="grid min-h-full w-full min-w-0 grid-rows-[1fr_auto] lg:h-full overflow-x-hidden overflow-y-visible">
       <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
-        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
-          <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
-            <div className="relative flex min-h-0 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 gap-4 p-4 pb-14 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
-                <div className="order-1 flex min-w-0 flex-col gap-3 text-white">
-                  <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 min-h-[220px] max-h-[calc(100dvh-14rem)] ${isStaffAccount ? "aspect-[1920/832]" : "aspect-[16/9]"} lg:aspect-auto lg:max-h-none lg:h-[max(380px,calc(100dvh-18.5rem))]`}>
+        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 items-start gap-4 lg:h-full md:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
+          <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:h-full lg:pb-10">
+            <div className="relative flex min-h-0 flex-col overflow-hidden lg:flex-1 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
+              <div className="grid min-h-0 gap-4 lg:flex-1 lg:grid-rows-[minmax(0,1fr)] p-4 pb-14 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
+                <div className="order-1 flex min-h-0 min-w-0 flex-col gap-3 text-white">
+                  <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 min-h-[220px] max-h-[calc(100dvh-14rem)] ${isStaffAccount ? "aspect-[1920/832]" : "aspect-[16/9]"} lg:aspect-auto lg:max-h-none lg:flex-1 lg:min-h-[320px]`}>
                     <div className="absolute inset-0">
                       <img
                         src={isStaffAccount ? staffHeroImg : heroImg}
