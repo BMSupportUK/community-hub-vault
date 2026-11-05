@@ -77,7 +77,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
             <div className="relative flex min-h-0 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
               <div className="grid min-h-0 gap-4 p-4 pb-14 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
                 <div className="order-1 flex min-w-0 flex-col gap-3 text-white">
-                  <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 min-h-[220px] max-h-[calc(100dvh-14rem)] ${isStaffAccount ? "aspect-[1920/832]" : "aspect-[16/9]"} lg:aspect-auto lg:max-h-none lg:h-[max(420px,calc(100dvh-16rem))]`}>
+                  <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 min-h-[220px] max-h-[calc(100dvh-14rem)] ${isStaffAccount ? "aspect-[1920/832]" : "aspect-[16/9]"} lg:aspect-auto lg:max-h-none lg:h-[max(380px,calc(100dvh-18.5rem))]`}>
                     <div className="absolute inset-0">
                       <img
                         src={isStaffAccount ? staffHeroImg : heroImg}
