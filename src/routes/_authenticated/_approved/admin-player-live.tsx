@@ -186,7 +186,7 @@ function AdminPlayerLivePageInner() {
     return () => { stop = true; clearInterval(poll); clearInterval(tick); if (pending) clearTimeout(pending); void supabase.removeChannel(channel); };
   }, [isAdmin]);
 
-  const live = useMemo(() => (rows ?? []).filter((r) => isLive(r.last_seen_at, now)), [rows, now]);
+  const live = useMemo(() => (rows ?? []).filter((r) => isLive(r.last_seen_at, now) && !!r.watching_since), [rows, now]);
   const watching = live.filter((r) => r.watching_since).length;
   const onVpn = live.filter((r) => r.vpn_status === "yes").length;
 
