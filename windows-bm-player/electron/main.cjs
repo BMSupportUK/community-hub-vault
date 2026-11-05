@@ -46,7 +46,7 @@ async function poll(){
  if(pollBusy||!store.token)return;pollBusy=true;
  try{
   const session=sessions[0];
-  const r=await site({action:'poll',login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:session.item.name,category:session.item.categoryName||'',player:'VLC',since:session.since}:null});
+  const r=await site({action:'poll',login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
   maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
   let changed=false;

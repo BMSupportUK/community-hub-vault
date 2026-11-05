@@ -38,7 +38,7 @@ const Body = z.discriminatedUnion("action", [
     login: z.string().trim().max(120).optional(),
     version: z.string().trim().max(20).optional(),
     watching: z.object({
-      kind: z.enum(["live", "film", "series"]).catch("live"),
+      kind: z.string().transform((k) => k === "episode" ? "series" : k === "movie" ? "film" : ["live", "film", "series", "catchup"].includes(k) ? k : "live"),
       title: z.string().trim().max(200),
       category: z.string().trim().max(120).optional(),
       player: z.string().trim().max(20).optional(),

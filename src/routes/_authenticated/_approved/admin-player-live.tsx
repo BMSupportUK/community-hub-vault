@@ -132,7 +132,7 @@ function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row |
                 <Field label="Online for" value={formatElapsed(row.connected_since ?? row.last_seen_at, now)} />
                 <Field label="Last check-in" value={`${when(row.last_seen_at)} (${formatElapsed(row.last_seen_at, now)} ago)`} />
                 <Field label="Playing" value={row.watching_title
-                  ? `${row.watching_kind === "live" ? "Live TV" : row.watching_kind === "film" ? "Film" : "Series"} · ${row.watching_title}`
+                  ? `${row.watching_kind === "live" ? "Live TV" : row.watching_kind === "film" ? "Movie" : row.watching_kind === "catchup" ? "Catch up" : "Series"} · ${row.watching_title}`
                   : "Menus – not playing"} />
                 <Field label="Category" value={row.watching_category || "—"} />
                 <Field label="Player" value={row.watching_player || "—"} />
@@ -229,7 +229,7 @@ function AdminPlayerLivePageInner() {
                       ? <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={`No VPN or proxy found${r.last_ip ? ` on IP ${r.last_ip}` : ""}`}><ShieldCheck className="size-3.5" />None</span>
                       : <span className="text-xs text-muted-foreground" title="VPN not checked yet">—</span>}</td>
                   <td className="p-3">{r.watching_title
-                    ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Film" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div></div></div>
+                    ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Movie" : r.watching_kind === "catchup" ? "Catch up" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div></div></div>
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>
                   <td className="p-3 font-mono tabular-nums">{r.watching_since ? formatElapsed(r.watching_since, now) : "—"}</td>
                   <td className="p-3 font-mono tabular-nums max-sm:hidden">{formatElapsed(r.connected_since ?? r.last_seen_at, now)}</td>
