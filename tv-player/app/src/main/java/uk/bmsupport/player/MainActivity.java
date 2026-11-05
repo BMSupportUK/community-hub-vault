@@ -870,7 +870,7 @@ public class MainActivity extends Activity {
                 }
             });
             PlayerActivity.playWithFallback(preview, streamUrls(it),
-                    () -> status.setText("Preview unavailable – try Play with VLC"));
+                    () -> status.setText("Preview unavailable – press OK to play full screen"));
         };
         ui.postDelayed(previewTask, 700);
     }
@@ -1240,7 +1240,7 @@ public class MainActivity extends Activity {
         long pos = prefs.getLong(key + ":position", 0), dur = prefs.getLong(key + ":duration", 0);
         if (WatchProgress.eligible(it.kind) && WatchProgress.resumable(pos, dur)) {
             String time = String.format(java.util.Locale.UK, "%d:%02d", pos / 60000, (pos / 1000) % 60);
-            String[] o2 = {"▶ Continue watching · " + time + " (" + WatchProgress.percent(pos, dur) + "%)", "Play from beginning", "Play with VLC", fav};
+            String[] o2 = {"▶ Continue watching · " + time + " (" + WatchProgress.percent(pos, dur) + "%)", "Play from beginning", fav};
             if ("film".equals(it.kind)) o2 = java.util.Arrays.copyOf(o2, o2.length + 1);
             if ("film".equals(it.kind)) o2[o2.length - 1] = "☆ Vote";
             final boolean cast2 = platform().equals("phone");
@@ -1250,21 +1250,19 @@ public class MainActivity extends Activity {
                 if (cast2 && w == cast2At) castToTv(it);
                 else if (w == 0) startPlayback(it, defaultVlc(), pos);
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
-                else if (w == 2) play(it, true);
-                else if (w == 3) toggleSaved("fav", it);
+                else if (w == 2) toggleSaved("fav", it);
                 else showVote(it);
             }).show();
             return;
         }
-        String[] opts = "film".equals(it.kind) ? new String[]{"Play", "Play with VLC", fav, "☆ Vote"} : new String[]{"Play", "Play with VLC", fav};
+        String[] opts = "film".equals(it.kind) ? new String[]{"Play", fav, "☆ Vote"} : new String[]{"Play", fav};
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
         new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
             if (cast && w == castAt) castToTv(it);
             else if (w == 0) play(it, defaultVlc());
-            else if (w == 1) play(it, true);
-            else if (w == 2) toggleSaved("fav", it);
+            else if (w == 1) toggleSaved("fav", it);
             else showVote(it);
         }).show();
     }
@@ -1391,8 +1389,8 @@ public class MainActivity extends Activity {
             Item named = new Item(ep.kind, ep.id, show.name + " – " + ep.name, ep.ext, ep.category);
             named.poster = show.poster;
             named.seriesId = show.id;
-            new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play", "Play with VLC"},
-                    (d, w) -> { play(named, w == 1 || (w == 0 && defaultVlc())); }).show();
+            new AlertDialog.Builder(this).setTitle(named.name).setItems(new String[]{"Play"},
+                    (d, w) -> play(named, false)).show();
         });
     }
 
@@ -2046,7 +2044,8 @@ public class MainActivity extends Activity {
 
     // ---------- settings ----------
 
-    private boolean defaultVlc() { return "vlc".equals(prefs.getString("player", "internal")); }
+    /** External VLC is gone from the app: BM Player plays everything, with its built-in backup engine. */
+    private boolean defaultVlc() { return false; }
 
     private String appVersion() {
         try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return "?"; }
@@ -2090,7 +2089,7 @@ public class MainActivity extends Activity {
         root.addView(text("Settings", 26, TEXT, true));
         root.addView(text("Account: " + prefs.getString("user", "") + "  ·  " + deviceLabel() + "  ·  Version " + appVersion(), 15, MUTED, false));
 
-        String[] playerL = {"BM Player (built-in)", "VLC"}, playerV = {"internal", "vlc"};
+        String[] playerL = {"BM Player (built-in, with backup engine)"}, playerV = {"internal"};
         String[] fmtL = {"Auto", "MPEG-TS (.ts)", "HLS (.m3u8)"}, fmtV = {"auto", "ts", "hls"};
         String[] bufL = StreamRecovery.BUFFER_LABELS, bufV = StreamRecovery.BUFFER_IDS;
         String[] decL = {"Hardware", "Software"}, decV = {"hardware", "software"};
@@ -2815,7 +2814,7 @@ public class MainActivity extends Activity {
                     c.url = catchupUrl(ch, t[0], t[1]);
                     c.catchupId = ch.id; c.catchupStart = t[0]; c.catchupEnd = t[1] > t[0] ? t[1] : t[0] + 3600;
                     // Catch up recordings play through VLC automatically; BM Player's own player is the fallback when VLC is missing.
-                    play(c, CatchupFallback.useVlc(Build.MANUFACTURER));
+                    play(c, false);
                 });
                 pickDay.accept(0);
                 days.requestFocus();
