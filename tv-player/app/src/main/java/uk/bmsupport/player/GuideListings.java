@@ -27,7 +27,13 @@ public final class GuideListings {
             String t = e.optString("title", "");
             try { t = new String(Base64.decode(t, Base64.DEFAULT), "UTF-8"); } catch (Exception ignored) {}
             if (t.trim().isEmpty()) t = "Programme";
-            if (!byStart.containsKey(st)) byStart.put(st, new GuideGridView.Prog(t, st, en));
+            if (!byStart.containsKey(st)) {
+                GuideGridView.Prog pr = new GuideGridView.Prog(t, st, en);
+                String d = e.optString("description", "");
+                try { d = new String(Base64.decode(d, Base64.DEFAULT), "UTF-8"); } catch (Exception ignored) {}
+                pr.desc = d.trim();
+                byStart.put(st, pr);
+            }
         }
         return new ArrayList<>(byStart.values());
     }

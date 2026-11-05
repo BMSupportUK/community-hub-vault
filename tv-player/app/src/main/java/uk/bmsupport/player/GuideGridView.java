@@ -18,6 +18,7 @@ import java.util.Map;
 public class GuideGridView extends View {
     public static final class Prog {
         public final String title; public final long st, en;
+        public String desc = "";
         public Prog(String t, long s, long e) { title = t; st = s; en = e; }
     }
     public interface Listener {
@@ -147,8 +148,10 @@ public class GuideGridView extends View {
             case KeyEvent.KEYCODE_DPAD_RIGHT: if (onClock) { onClock = false; invalidate(); return true; } moveTime(true); return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 // Already at "now": the next press left only highlights the catch up clock; OK opens it.
-                if (onClock) return true;
+                if (onClock) { if (leftEdge != null) { onClock = false; invalidate(); leftEdge.run(); } return true; }
                 if (selTime <= now() + 1 && windowStart <= minStart() && hasCatchup(selRow)) { onClock = true; invalidate(); return true; }
+                // TV boxes: Left at "now" (past the clock) slides the categories out.
+                if (selTime <= now() + 1 && windowStart <= minStart() && leftEdge != null) { leftEdge.run(); return true; }
                 moveTime(false); return true;
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_NUMPAD_ENTER:
                 if (e.getRepeatCount() > 0) return true;
@@ -159,6 +162,9 @@ public class GuideGridView extends View {
     }
 
     private boolean onClock;
+    private Runnable leftEdge;
+    /** Called when Left is pressed with nowhere further left to go (TV boxes open the categories). */
+    public void setOnLeftEdge(Runnable r) { leftEdge = r; }
     private boolean hasCatchup(int r) { return r >= 0 && r < catchup.size() && catchup.get(r); }
 
     private float touchX, touchY, scrollY;
