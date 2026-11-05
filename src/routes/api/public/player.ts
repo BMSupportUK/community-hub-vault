@@ -365,6 +365,9 @@ export const Route = createFileRoute("/api/public/player")({
         const { watchCredit } = await import("@/lib/player-live");
         const credit = watchCredit({ now, lastSeenAt: device.last_seen_at, watchingKind: device.watching_kind });
         if (credit) await supabaseAdmin.rpc("add_player_watch_seconds", { _device: device.id, _kind: credit.kind, _seconds: credit.seconds });
+        const { watchActivityCredit } = await import("@/lib/player-watch-activity");
+        const activity = watchActivityCredit(device, credit, now);
+        if (activity) await supabaseAdmin.rpc("record_player_watch_activity", activity);
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({
           linked: !!(device.user_id || device.offsite_customer_id),
