@@ -23,4 +23,14 @@ describe("member viewing activity", () => {
     expect(watchActivityCredit({ ...device, user_id: null }, { kind: "film", seconds: 60 }, 0)).toBeNull();
     expect(watchActivityCredit(device, null, 0)).toBeNull();
   });
+  test("members are listed under their letter in A–Z order with no all group", () => {
+    const members = [{ username: "dane" }, { username: "alice" }, { username: "Aaron" }, { username: "88_fan" }, { username: "brian" }];
+    expect(membersByLetter(members)).toEqual([
+      { letter: "A", members: [{ username: "Aaron" }, { username: "alice" }] },
+      { letter: "B", members: [{ username: "brian" }] },
+      { letter: "D", members: [{ username: "dane" }] },
+      { letter: "#", members: [{ username: "88_fan" }] },
+    ]);
+    expect(membersByLetter([])).toEqual([]);
+  });
 });
