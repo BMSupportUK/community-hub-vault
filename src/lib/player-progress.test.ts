@@ -1,3 +1,4 @@
+// @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { test, expect } from "bun:test";
 import { newerThanStored } from "./player-progress";
 
