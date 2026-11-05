@@ -1529,7 +1529,7 @@ public class MainActivity extends Activity {
             LinearLayout card = column(); card.setPadding(dp(4), dp(4), dp(4), dp(4));
             card.setBackground(posterCardBg()); card.setFocusable(true); card.setClickable(true);
             android.widget.ImageView img = new android.widget.ImageView(this);
-            img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP); img.setBackgroundColor(Color.rgb(20, 28, 48));
+            img.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER); img.setBackgroundColor(Color.rgb(20, 28, 48));
             card.addView(img, new LinearLayout.LayoutParams(-1, ch));
             loadPoster(img, ep.poster == null || ep.poster.isEmpty() ? show.poster : ep.poster);
             TextView t = text(ep.name, 13, TEXT, false); t.setSingleLine(true); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -4067,7 +4067,7 @@ public class MainActivity extends Activity {
                     card.setBackground(posterCardBg());
                     card.setDuplicateParentStateEnabled(false);
                     img = new android.widget.ImageView(MainActivity.this);
-                    img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                    img.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER); // whole poster shown, never cropped
                     img.setBackgroundColor(Color.rgb(20, 28, 48));
                     card.addView(img, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(150)));
                     t = text("", 13, TEXT, false); t.setLines(2); t.setEllipsize(android.text.TextUtils.TruncateAt.END); t.setGravity(Gravity.CENTER);
