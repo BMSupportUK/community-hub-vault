@@ -14,12 +14,12 @@ const date = (value: string) => new Date(value).toLocaleString("en-GB", { timeZo
 export function PlayerMemberViewing() {
   const [search, setSearch] = useState("");
   const [member, setMember] = useState<Member | null>(null);
-  const members = useQuery({ queryKey: ["player-watch-members"], refetchInterval: 60_000, queryFn: async () => {
+  const members = useQuery({ queryKey: ["player-watch-members"], refetchInterval: 15_000, refetchOnWindowFocus: true, queryFn: async () => {
     const { data, error } = await supabase.rpc("player_watch_members");
     if (error) throw error;
     return data ?? [];
   } });
-  const details = useQuery({ queryKey: ["player-watch-member", member?.user_id], enabled: !!member, refetchInterval: member ? 60_000 : false, queryFn: async () => {
+  const details = useQuery({ queryKey: ["player-watch-member", member?.user_id], enabled: !!member, refetchInterval: member ? 15_000 : false, queryFn: async () => {
     if (!member) return { breakdown: [], activity: [] };
     const [breakdown, activity] = await Promise.all([
       supabase.rpc("player_watch_member_breakdown", { _user: member.user_id }),

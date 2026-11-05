@@ -16,7 +16,7 @@ export function WatchTimeSection() {
       if (!stop) setRows((data ?? []) as Row[]);
     };
     void load();
-    const poll = setInterval(load, 60_000);
+    const poll = setInterval(load, 15_000);
     return () => { stop = true; clearInterval(poll); };
   }, []);
   const weeks = [...new Set((rows ?? []).map((r) => r.week_start))];
