@@ -30,6 +30,19 @@ export function watchActivityCredit(device: {
     _started: device.watching_since, _ended: new Date(now).toISOString(), _seconds: credit.seconds };
 }
 
+/** Members grouped under their first letter (A–Z, anything else under "#"), sorted within each letter; empty letters omitted, no "all" group. */
+export function membersByLetter<T extends { username: string }>(rows: T[]): { letter: string; members: T[] }[] {
+  const groups = new Map<string, T[]>();
+  for (const row of rows) {
+    const first = row.username.trim().charAt(0).toUpperCase();
+    const letter = first >= "A" && first <= "Z" ? first : "#";
+    if (!groups.has(letter)) groups.set(letter, []);
+    groups.get(letter)!.push(row);
+  }
+  return [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"].filter(letter => groups.has(letter))
+    .map(letter => ({ letter, members: groups.get(letter)!.sort((a, b) => a.username.localeCompare(b.username, "en", { sensitivity: "base" })) }));
+}
+
 export function viewingDuration(seconds: number) {
   const minutes = Math.floor(Math.max(0, Number(seconds)) / 60);
   return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : minutes ? `${minutes}m` : `${Math.max(0, Math.round(Number(seconds)))}s`;
