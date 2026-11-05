@@ -1186,8 +1186,8 @@ public class MainActivity extends Activity {
             }
             open(it);
         });
-        if (hero != null) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { hero.show((Item) items.getItemAtPosition(pos)); if (items.isInTouchMode()) return; android.widget.GridView g = (android.widget.GridView) items; int cols = Math.max(1, g.getNumColumns()); int first = g.getFirstVisiblePosition(), last = g.getLastVisiblePosition(); if (pos < first + cols || pos > last - cols) g.smoothScrollToPositionFromTop(pos - (pos % cols), dp(8), 180); }
+        if (posters) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { if (items.isInTouchMode()) return; android.widget.GridView g = (android.widget.GridView) items; int cols = Math.max(1, g.getNumColumns()); int first = g.getFirstVisiblePosition(), last = g.getLastVisiblePosition(); if (pos < first + cols || pos > last - cols) g.smoothScrollToPositionFromTop(pos - (pos % cols), dp(8), 180); }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         if (kind.equals("live")) items.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
