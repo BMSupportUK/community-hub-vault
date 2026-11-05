@@ -1510,7 +1510,8 @@ public class MainActivity extends Activity {
             // Live: VLC gets the channel's next address and software decoding on each retry, then BM Player takes over.
             if ("live".equals(it.kind)) {
                 if (vlcLive != it) { vlcLive = it; vlcLiveTry = 0; }
-                String[] urls = streamUrls(it);
+                // VLC rejects the provider's raw .ts live address ("location couldn't be played"), so it starts on HLS.
+                String[] urls = vlcLiveOrder(streamUrls(it));
                 i.setDataAndTypeAndNormalize(Uri.parse(urls[Math.min(vlcLiveTry, urls.length - 1)]), "video/*");
                 if (vlcLiveTry > 0) i.putExtra("disable_hardware", true);
                 i.removeExtra("position"); i.removeExtra("from_start");
@@ -1556,6 +1557,12 @@ public class MainActivity extends Activity {
 
     private static final int VLC_REQUEST = 4242;
     private Item vlcLive; private int vlcLiveTry;
+    static String[] vlcLiveOrder(String[] urls) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String u : urls) if (u.endsWith(".m3u8")) out.add(u);
+        for (String u : urls) if (!u.endsWith(".m3u8")) out.add(u);
+        return out.toArray(new String[0]);
+    }
     private Item vlcCatchup; private long vlcStarted;
 
     // ---------- search (TV / Movies / Series, typed or by voice) ----------
