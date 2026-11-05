@@ -343,6 +343,7 @@ export const Route = createFileRoute("/api/public/player")({
         const { presenceUpdate } = await import("@/lib/player-live");
         const { checkDeviceVpn, needsVpnCheck } = await import("@/lib/player-vpn");
         const now = Date.now();
+        console.log(`[player poll] device=${device.id.slice(0, 8)} v=${body.version ?? "?"} watching=${body.watching ? body.watching.kind : "none"}`);
         const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
         const fields = presenceUpdate({
           now, lastSeenAt: device.last_seen_at, connectedSince: device.connected_since,
