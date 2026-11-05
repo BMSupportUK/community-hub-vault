@@ -1989,6 +1989,13 @@
       "when": 1793874075419,
       "tag": "0283_player_devices_watching_preview",
       "breakpoints": true
+    },
+    {
+      "idx": 284,
+      "version": "7",
+      "when": 1793909840605,
+      "tag": "0284_player_watch_progress",
+      "breakpoints": true
     }
   ]
 }

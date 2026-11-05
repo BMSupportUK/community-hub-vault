@@ -127,11 +127,14 @@ public final class BackupPlayerActivity extends Activity {
         SharedPreferences.Editor ed = getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putLong(key + ":position", pos).putLong(key + ":duration", len);
         String series = getIntent().getStringExtra("series_key");
         if (series != null) ed.putLong(series + ":position", pos).putLong(series + ":duration", len);
+        ProgressSync.touch(getSharedPreferences("bmplayer", MODE_PRIVATE), ed, key, series);
         ed.apply();
+        ProgressSync.push(this, false);
     }
 
     @Override protected void onDestroy() {
         ui.removeCallbacksAndMessages(null);
+        ProgressSync.push(this, true);
         if (mp != null) { mp.stop(); mp.detachViews(); mp.release(); mp = null; }
         if (vlc != null) { vlc.release(); vlc = null; }
         super.onDestroy();

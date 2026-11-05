@@ -6135,6 +6135,33 @@ export type Database = {
         }
         Relationships: []
       }
+      player_watch_progress: {
+        Row: {
+          duration_ms: number
+          item_key: string
+          owner_key: string
+          position_ms: number
+          scope_key: string
+          updated_at: string
+        }
+        Insert: {
+          duration_ms?: number
+          item_key: string
+          owner_key: string
+          position_ms?: number
+          scope_key: string
+          updated_at?: string
+        }
+        Update: {
+          duration_ms?: number
+          item_key?: string
+          owner_key?: string
+          position_ms?: number
+          scope_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prediction_winners: {
         Row: {
           competition: string
