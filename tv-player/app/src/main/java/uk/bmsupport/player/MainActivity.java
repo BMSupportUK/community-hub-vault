@@ -880,8 +880,7 @@ public class MainActivity extends Activity {
     private void browse(String kind) {
         // Phones: Live TV is the guide screen (preview, View EPG pop-up). TV boxes keep the original
         // categories | channels | preview + Now/Up next layout, with the 📅 EPG pill for the full guide.
-        if (kind.equals("live") && getResources().getConfiguration().smallestScreenWidthDp < 600) { showTvGuide(liveCatId, true); return; }
-        if (kind.equals("live")) { showLiveCategories(); return; }
+        if (kind.equals("live")) { showTvGuide(liveCatId, true); return; }
         screen = "browse"; back = this::showHome;
         String title = kind.equals("live") ? "Live TV" : kind.equals("film") ? "Films" : "Series";
         String catAction = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
@@ -1172,435 +1171,6 @@ public class MainActivity extends Activity {
             }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
-    }
-
-    // ---------- TV-box Live TV (Smarters style: category grid, then channel + preview + Now/Next) ----------
-
-    private final List<String[]> lvRows = new ArrayList<>(); // {id, name}; "*" All, "fav", "hist"
-    private final java.util.Map<String, List<Item>> lvByCat = new java.util.HashMap<>();
-    private final List<Item> lvAll = new ArrayList<>();
-    private int lvCatPos = 0, lvToken = 0;
-    private final java.util.Map<String, String> lvNowTitle = new java.util.HashMap<>();
-    private final java.util.Set<String> lvNowAsked = new java.util.HashSet<>();
-    private final java.util.concurrent.ExecutorService lvEpgIo = java.util.concurrent.Executors.newFixedThreadPool(3);
-
-    private List<Item> lvItems(int pos) {
-        if (pos < 0 || pos >= lvRows.size()) return new ArrayList<>();
-        String id = lvRows.get(pos)[0];
-        if (id.equals("*")) return lvAll;
-        if (id.equals("fav") || id.equals("hist")) {
-            java.util.Map<String, Item> idx = new java.util.HashMap<>();
-            for (Item it : lvAll) idx.put(it.id, it);
-            List<Item> out = new ArrayList<>();
-            JSONArray a = saved(id.equals("fav") ? "fav" : "recent");
-            for (int i = 0; i < a.length(); i++) {
-                JSONObject o = a.optJSONObject(i);
-                if (o == null || !"live".equals(o.optString("kind"))) continue;
-                Item full = idx.get(o.optString("id"));
-                out.add(full != null ? full : Item.fromJson(o));
-            }
-            return out;
-        }
-        List<Item> l = lvByCat.get(id);
-        return l == null ? new ArrayList<>() : l;
-    }
-
-    private void lvLoad(Runnable done, TextView status) {
-        if (!lvAll.isEmpty()) { done.run(); return; }
-        if (!hasFullList("live")) updatePlaylists(java.util.Collections.singletonList("live"), true);
-        else if (plQueued.contains("live")) showPlaylistDialog();
-        plIo.execute(() -> {
-            try {
-                JSONArray a = new JSONArray(cachedGet("live", "get_live_categories", ""));
-                java.util.Map<String, String> catName = new java.util.HashMap<>();
-                List<String[]> rows = new ArrayList<>();
-                rows.add(new String[]{"*", "All"});
-                rows.add(new String[]{"fav", "Favourites"});
-                rows.add(new String[]{"hist", "Channels history"});
-                for (int i = 0; i < a.length(); i++) {
-                    JSONObject o = a.getJSONObject(i);
-                    String cid = o.optString("category_id"), cn = o.optString("category_name");
-                    catName.put(cid, cn);
-                    if (hideAdult(cn)) continue;
-                    rows.add(new String[]{cid, cn});
-                }
-                JSONArray full = new JSONArray(cachedGet("live", "get_live_streams", ""));
-                java.util.Map<String, List<Item>> groups = new java.util.HashMap<>();
-                List<Item> everything = new ArrayList<>();
-                for (int i = 0; i < full.length(); i++) {
-                    JSONObject o = full.getJSONObject(i);
-                    String cid = o.optString("category_id");
-                    String cn = catName.containsKey(cid) ? catName.get(cid) : "";
-                    if (hideAdult(cn)) continue;
-                    Item it = itemFrom("live", o, cn, i);
-                    everything.add(it);
-                    if (!cid.isEmpty()) { List<Item> g = groups.get(cid); if (g == null) groups.put(cid, g = new ArrayList<>()); g.add(it); }
-                }
-                ui.post(() -> {
-                    lvRows.clear(); lvRows.addAll(rows);
-                    lvByCat.clear(); lvByCat.putAll(groups);
-                    lvAll.clear(); lvAll.addAll(everything);
-                    done.run();
-                });
-            } catch (Exception ex) { ui.post(() -> status.setText("Couldn't load Live TV. Check your login in Settings, or press Refresh on the front screen.")); }
-        });
-    }
-
-    private LinearLayout lvHeader(String title, TextView extra) {
-        LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
-        head.addView(text(title, 26, TEXT, true));
-        if (extra != null) { extra.setPadding(dp(24), 0, 0, 0); head.addView(extra); }
-        head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
-        head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
-        head.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
-        head.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
-        return head;
-    }
-
-    private StateListDrawable lvRowBg() {
-        GradientDrawable on = new GradientDrawable(); on.setColor(ACCENT);
-        GradientDrawable off = new GradientDrawable(); off.setColor(Color.TRANSPARENT);
-        StateListDrawable s = new StateListDrawable();
-        s.addState(new int[]{android.R.attr.state_selected}, on);
-        s.addState(new int[]{android.R.attr.state_pressed}, on);
-        s.addState(new int[]{android.R.attr.state_activated}, on);
-        s.addState(new int[]{}, off);
-        return s;
-    }
-
-    /** Screen 1: categories with counts on the left, the highlighted category's channel tiles on the right. */
-    private void showLiveCategories() {
-        stopPreview();
-        screen = "livecats"; back = this::showHome;
-        LinearLayout root = column();
-        root.addView(lvHeader("Live TV", null));
-        LinearLayout panes = row();
-        LinearLayout left = column();
-        EditText find = new EditText(this);
-        find.setHint("🔍 Search in categories"); find.setHintTextColor(MUTED); find.setTextColor(TEXT);
-        find.setSingleLine(true); find.setBackground(focusBg(8)); find.setPadding(dp(12), dp(10), dp(12), dp(10));
-        left.addView(find);
-        ListView cats = list();
-        cats.setSelector(lvRowBg());
-        cats.setDrawSelectorOnTop(false);
-        left.addView(cats, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        panes.addView(left, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout right = column();
-        TextView heading = text("Loading Live TV…", 22, TEXT, true);
-        heading.setGravity(Gravity.CENTER);
-        right.addView(heading, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        android.widget.GridView grid = posterGrid();
-        grid.setNumColumns(5);
-        grid.setColumnWidth(android.widget.GridView.AUTO_FIT);
-        right.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        panes.addView(right, weight(2.6f, ViewGroup.LayoutParams.MATCH_PARENT));
-        root.addView(panes, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        setContentView(root);
-
-        final List<Integer> shownRows = new ArrayList<>();
-        final List<Item> tiles = new ArrayList<>();
-        final int[] gridCat = { -1 };
-        BaseAdapter tileAdapter = new BaseAdapter() {
-            @Override public int getCount() { return tiles.size(); }
-            @Override public Object getItem(int i) { return tiles.get(i); }
-            @Override public long getItemId(int i) { return i; }
-            @Override public View getView(int i, View cv, ViewGroup parent) {
-                LinearLayout card; ImageView img; TextView t;
-                if (cv == null) {
-                    card = column(); card.setPadding(dp(5), dp(5), dp(5), dp(5));
-                    card.setBackground(posterCardBg());
-                    img = new ImageView(MainActivity.this);
-                    img.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    img.setBackgroundColor(Color.rgb(20, 28, 48));
-                    card.addView(img, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(70)));
-                    t = text("", 14, TEXT, true); t.setMaxLines(2); t.setGravity(Gravity.CENTER);
-                    card.addView(t);
-                    card.setTag(new Object[]{img, t});
-                } else { card = (LinearLayout) cv; Object[] h = (Object[]) card.getTag(); img = (ImageView) h[0]; t = (TextView) h[1]; }
-                Item it = tiles.get(i);
-                t.setText(it.name);
-                loadPoster(img, it.poster);
-                return card;
-            }
-        };
-        grid.setAdapter(tileAdapter);
-        final Runnable[] fillCats = new Runnable[1];
-        java.util.function.IntConsumer showGrid = rowPos -> {
-            if (rowPos == gridCat[0]) return;
-            gridCat[0] = rowPos;
-            lvCatPos = rowPos;
-            liveCatId = lvRows.get(rowPos)[0];
-            tiles.clear(); tiles.addAll(lvItems(rowPos));
-            tileAdapter.notifyDataSetChanged();
-            grid.setSelection(0);
-            heading.setText(lvRows.get(rowPos)[1] + (tiles.isEmpty() ? " · no channels" : ""));
-        };
-        fillCats[0] = () -> {
-            String q = find.getText().toString().trim().toLowerCase();
-            shownRows.clear();
-            for (int i = 0; i < lvRows.size(); i++) if (q.isEmpty() || lvRows.get(i)[1].toLowerCase().contains(q)) shownRows.add(i);
-            cats.setAdapter(new BaseAdapter() {
-                @Override public int getCount() { return shownRows.size(); }
-                @Override public Object getItem(int i) { return lvRows.get(shownRows.get(i)); }
-                @Override public long getItemId(int i) { return i; }
-                @Override public View getView(int i, View cv, ViewGroup parent) {
-                    LinearLayout r = row(); r.setGravity(Gravity.CENTER_VERTICAL);
-                    r.setPadding(dp(14), dp(12), dp(14), dp(12));
-                    int rp = shownRows.get(i);
-                    TextView n = text(lvRows.get(rp)[1].toUpperCase(java.util.Locale.UK), 17, TEXT, true);
-                    n.setSingleLine(true); n.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                    r.addView(n, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-                    r.addView(text(String.valueOf(lvItems(rp).size()), 17, TEXT, true));
-                    return r;
-                }
-            });
-            int sel = Math.max(0, shownRows.indexOf(lvCatPos));
-            if (!shownRows.isEmpty()) { cats.setSelection(sel); showGrid.accept(shownRows.get(sel)); }
-        };
-        find.addTextChangedListener(new android.text.TextWatcher() {
-            public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
-            public void onTextChanged(CharSequence s, int a, int b, int c) {}
-            public void afterTextChanged(android.text.Editable s) { if (!lvRows.isEmpty()) fillCats[0].run(); }
-        });
-        final Runnable[] pending = new Runnable[1];
-        cats.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                if (pending[0] != null) ui.removeCallbacks(pending[0]);
-                pending[0] = () -> { if (pos < shownRows.size()) showGrid.accept(shownRows.get(pos)); };
-                ui.postDelayed(pending[0], 250);
-            }
-            @Override public void onNothingSelected(AdapterView<?> p) {}
-        });
-        cats.setOnItemClickListener((p, v, pos, id) -> {
-            if (pos >= shownRows.size()) return;
-            int rp = shownRows.get(pos);
-            if (lvItems(rp).isEmpty()) { showGrid.accept(rp); Toast.makeText(this, "No channels in this category", Toast.LENGTH_SHORT).show(); return; }
-            showLiveChannel(rp, 0);
-        });
-        grid.setOnItemClickListener((p, v, pos, id) -> { if (gridCat[0] >= 0) showLiveChannel(gridCat[0], pos); });
-        lvLoad(() -> { fillCats[0].run(); cats.requestFocus(); }, heading);
-    }
-
-    /** Screen 2: ‹ category › channel list, preview, LIVE TV Now/Next panel beside it, programmes beneath. */
-    private void showLiveChannel(int catPos, int chanPos) {
-        stopPreview();
-        screen = "livech"; back = this::showLiveCategories;
-        final int token = ++lvToken;
-        lvCatPos = catPos; liveCatId = lvRows.get(catPos)[0];
-        LinearLayout root = column();
-        TextView clockView = text("", 20, TEXT, true);
-        root.addView(lvHeader("Live", clockView));
-        LinearLayout body = row();
-
-        LinearLayout left = column();
-        LinearLayout catBar = row(); catBar.setGravity(Gravity.CENTER_VERTICAL); catBar.setBackgroundColor(CARD);
-        TextView catName = text("", 20, TEXT, true); catName.setGravity(Gravity.CENTER); catName.setSingleLine(true);
-        final List<Item> chans = new ArrayList<>();
-        final int[] cat = { catPos };
-        final ListView list = list();
-        list.setSelector(lvRowBg());
-        list.setDrawSelectorOnTop(false);
-        final Runnable[] fillChans = new Runnable[1];
-        Button prev = button("‹", v -> { cat[0] = LiveNowNext.step(cat[0], -1, lvRows.size()); fillChans[0].run(); });
-        Button next = button("›", v -> { cat[0] = LiveNowNext.step(cat[0], 1, lvRows.size()); fillChans[0].run(); });
-        prev.setContentDescription("Previous category"); next.setContentDescription("Next category");
-        catBar.addView(prev);
-        catBar.addView(catName, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        catBar.addView(next);
-        left.addView(catBar);
-        left.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        body.addView(left, weight(1.3f, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        LinearLayout rightCol = column();
-        LinearLayout top = row();
-        androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
-        pv.setUseController(false);
-        pv.setBackgroundColor(Color.BLACK);
-        pv.setFocusable(true); pv.setFocusableInTouchMode(true);
-        pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT);
-        pv.setShutterBackgroundColor(Color.BLACK);
-        pv.setOnFocusChangeListener((v, has) -> {
-            if (has) { GradientDrawable ring = new GradientDrawable(); ring.setColor(Color.TRANSPARENT); ring.setStroke(dp(3), ACCENT); v.setForeground(ring); }
-            else v.setForeground(null);
-        });
-        FrameLayout pvFrame = new FrameLayout(this);
-        pvFrame.addView(pv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        FrameLayout poster = new FrameLayout(this);
-        ImageView posterImg = new ImageView(this);
-        posterImg.setImageResource(R.drawable.preview_family);
-        posterImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        poster.addView(posterImg, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        pvFrame.addView(poster, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        previewPoster = poster; previewItem = null;
-        pv.setClickable(true);
-        pv.setContentDescription("Channel preview · press OK twice to open full screen");
-        pv.setOnClickListener(v -> previewDoubleTap());
-        top.addView(pvFrame, weight(1.6f, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        LinearLayout info = column();
-        info.setBackgroundColor(CARD);
-        info.setGravity(Gravity.CENTER_HORIZONTAL);
-        info.setPadding(dp(12), dp(10), dp(12), dp(10));
-        TextView badge = text("LIVE TV", 18, TEXT, true);
-        badge.setBackgroundColor(ACCENT); badge.setPadding(dp(14), dp(4), dp(14), dp(4));
-        info.addView(badge, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView chName = text("", 18, TEXT, true); chName.setGravity(Gravity.CENTER); chName.setMaxLines(2);
-        TextView nowLabel = text("", 15, ACCENT, true); nowLabel.setGravity(Gravity.CENTER); nowLabel.setMaxLines(3);
-        TextView nextLabel = text("", 15, MUTED, true); nextLabel.setGravity(Gravity.CENTER); nextLabel.setMaxLines(3);
-        TextView pvStatus = text("Press OK on a channel to preview it", 12, MUTED, false); pvStatus.setGravity(Gravity.CENTER);
-        info.addView(chName); info.addView(nowLabel); info.addView(nextLabel); info.addView(pvStatus);
-        top.addView(info, weight(1f, ViewGroup.LayoutParams.MATCH_PARENT));
-        rightCol.addView(top, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.1f));
-
-        TextView progs = text("", 15, TEXT, false);
-        progs.setPadding(dp(14), dp(10), dp(14), dp(10));
-        android.widget.ScrollView progScroll = new android.widget.ScrollView(this);
-        progScroll.setBackground(focusBg(8));
-        progScroll.setFocusable(true);
-        progScroll.setContentDescription("Coming up on this channel");
-        progScroll.addView(progs, new android.widget.ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        rightCol.addView(progScroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-        body.addView(rightCol, weight(2.4f, ViewGroup.LayoutParams.MATCH_PARENT));
-        root.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        setContentView(root);
-
-        final Item[] shown = { null };
-        final java.util.function.Consumer<Item> loadInfo = it -> {
-            shown[0] = it;
-            chName.setText(it.name);
-            nowLabel.setText("Loading TV guide…"); nextLabel.setText(""); progs.setText("");
-            io.execute(() -> {
-                List<String[]> rows = new ArrayList<>(); // title, desc, times
-                List<Long> st = new ArrayList<>(), en = new ArrayList<>();
-                try {
-                    JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=8")).optJSONArray("epg_listings");
-                    java.util.TreeMap<Long, JSONObject> byStart = new java.util.TreeMap<>();
-                    if (l != null) for (int i = 0; i < l.length(); i++) { JSONObject e = l.optJSONObject(i); if (e != null && e.optLong("start_timestamp", 0) > 0) byStart.put(e.optLong("start_timestamp"), e); }
-                    for (JSONObject e : byStart.values()) {
-                        String t = e.optString("title", ""), d = e.optString("description", "");
-                        try { t = new String(Base64.decode(t, Base64.DEFAULT), "UTF-8"); } catch (Exception ignored) {}
-                        try { d = new String(Base64.decode(d, Base64.DEFAULT), "UTF-8"); } catch (Exception ignored) {}
-                        long s = e.optLong("start_timestamp"), x = e.optLong("stop_timestamp", 0);
-                        st.add(s); en.add(x);
-                        rows.add(new String[]{t, d, clock(s) + (x > 0 ? " – " + clock(x) : "")});
-                    }
-                } catch (Exception ignored) {}
-                long[] sa = new long[st.size()], ea = new long[en.size()];
-                for (int i = 0; i < sa.length; i++) { sa[i] = st.get(i); ea[i] = en.get(i); }
-                int[] nn = LiveNowNext.pick(sa, ea, System.currentTimeMillis() / 1000);
-                StringBuilder up = new StringBuilder();
-                int from = nn[0] >= 0 ? nn[0] : Math.max(0, nn[1]);
-                boolean any = nn[0] >= 0 || nn[1] >= 0;
-                for (int i = from; any && i < rows.size() && i < from + 5; i++) {
-                    up.append(rows.get(i)[2]).append("   ").append(rows.get(i)[0]).append("\n");
-                    if (!rows.get(i)[1].trim().isEmpty()) up.append(rows.get(i)[1].trim()).append("\n");
-                    up.append("\n");
-                }
-                String nowTxt = nn[0] >= 0 ? "NOW  " + rows.get(nn[0])[2] + "\n" + rows.get(nn[0])[0] : (rows.isEmpty() ? "No TV guide for this channel" : "");
-                String nextTxt = nn[1] >= 0 ? "NEXT  " + rows.get(nn[1])[2] + "\n" + rows.get(nn[1])[0] : "";
-                String upTxt = up.length() == 0 ? "No TV guide for this channel." : up.toString().trim();
-                if (nn[0] >= 0) lvNowTitle.put(it.id, rows.get(nn[0])[0]);
-                ui.post(() -> {
-                    if (shown[0] != it) return;
-                    nowLabel.setText(nowTxt); nextLabel.setText(nextTxt); progs.setText(upTxt);
-                    if (list.getAdapter() instanceof BaseAdapter) ((BaseAdapter) list.getAdapter()).notifyDataSetChanged();
-                });
-            });
-        };
-
-        BaseAdapter chanAdapter = new BaseAdapter() {
-            @Override public int getCount() { return chans.size(); }
-            @Override public Object getItem(int i) { return chans.get(i); }
-            @Override public long getItemId(int i) { return i; }
-            @Override public View getView(int i, View cv, ViewGroup parent) {
-                LinearLayout r; TextView num, name, now; ImageView img;
-                if (cv == null) {
-                    r = row(); r.setGravity(Gravity.CENTER_VERTICAL); r.setPadding(dp(6), dp(6), dp(6), dp(6));
-                    num = text("", 16, TEXT, true); num.setMinWidth(dp(34));
-                    img = new ImageView(MainActivity.this); img.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(64), dp(40)); ip.setMargins(dp(4), 0, dp(10), 0);
-                    LinearLayout tc = column();
-                    name = text("", 17, TEXT, true); name.setSingleLine(true); name.setEllipsize(android.text.TextUtils.TruncateAt.END); name.setPadding(0, 0, 0, 0);
-                    now = text("", 14, TEXT, false); now.setSingleLine(true); now.setEllipsize(android.text.TextUtils.TruncateAt.END); now.setPadding(0, 0, 0, 0);
-                    tc.addView(name); tc.addView(now);
-                    r.addView(num); r.addView(img, ip); r.addView(tc, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-                    r.setTag(new Object[]{num, img, name, now});
-                } else { r = (LinearLayout) cv; Object[] h = (Object[]) r.getTag(); num = (TextView) h[0]; img = (ImageView) h[1]; name = (TextView) h[2]; now = (TextView) h[3]; }
-                Item it = chans.get(i);
-                num.setText(String.valueOf(i + 1));
-                name.setText(it.name);
-                String t = lvNowTitle.get(it.id);
-                now.setText(t == null ? "" : t);
-                loadPoster(img, it.poster);
-                if (t == null && lvNowAsked.add(it.id)) lvEpgIo.execute(() -> {
-                    String title = "";
-                    try {
-                        JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=2")).optJSONArray("epg_listings");
-                        List<GuideGridView.Prog> ps = GuideListings.parse(l, System.currentTimeMillis() / 1000);
-                        long nowS = System.currentTimeMillis() / 1000;
-                        for (GuideGridView.Prog p : ps) if (p.st <= nowS && (p.en <= 0 || nowS < p.en)) { title = p.title; break; }
-                    } catch (Exception ignored) {}
-                    String got = title;
-                    ui.post(() -> { lvNowTitle.put(it.id, got); if ("livech".equals(screen)) notifyDataSetChanged(); });
-                });
-                return r;
-            }
-        };
-        list.setAdapter(chanAdapter);
-        final int[] selPos = { chanPos };
-        fillChans[0] = () -> {
-            lvCatPos = cat[0]; liveCatId = lvRows.get(cat[0])[0];
-            catName.setText(lvRows.get(cat[0])[1]);
-            chans.clear(); chans.addAll(lvItems(cat[0]));
-            chanAdapter.notifyDataSetChanged();
-            selPos[0] = 0;
-            list.setSelection(0);
-        };
-        catName.setText(lvRows.get(cat[0])[1]);
-        chans.addAll(lvItems(cat[0]));
-        chanAdapter.notifyDataSetChanged();
-        int start = Math.max(0, Math.min(chanPos, chans.size() - 1));
-        list.setSelection(start);
-        list.post(() -> { list.setSelection(start); list.requestFocus(); });
-        if (!chans.isEmpty()) loadInfo.accept(chans.get(start));
-
-        list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                if (pos < chans.size()) { selPos[0] = pos; loadInfo.accept(chans.get(pos)); }
-            }
-            @Override public void onNothingSelected(AdapterView<?> p) {}
-        });
-        list.setOnItemClickListener((p, v, pos, id) -> {
-            Item it = chans.get(pos);
-            selPos[0] = pos;
-            if (previewItem == null || !it.id.equals(previewItem.id)) { loadInfo.accept(it); schedulePreview(it, pv, pvStatus); return; }
-            open(it);
-        });
-        // Left from the preview or guide goes back to the channel being watched.
-        View.OnKeyListener backToChannel = (v, code, ev) -> {
-            if (code != KeyEvent.KEYCODE_DPAD_LEFT) return false;
-            if (ev.getAction() == KeyEvent.ACTION_DOWN) { int k = selPos[0]; list.requestFocus(); list.setSelection(k); list.post(() -> list.setSelection(k)); }
-            return true;
-        };
-        pv.setOnKeyListener(backToChannel);
-
-        Runnable tick = new Runnable() {
-            @Override public void run() {
-                if (!"livech".equals(screen) || lvToken != token) return;
-                String f = "12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm";
-                clockView.setText(new java.text.SimpleDateFormat(f + "   d MMMM yyyy", java.util.Locale.UK).format(new java.util.Date()));
-                ui.postDelayed(this, 30_000);
-            }
-        };
-        tick.run();
-        Runnable minute = new Runnable() {
-            @Override public void run() {
-                if (!"livech".equals(screen) || lvToken != token || shown[0] == null) return;
-                loadInfo.accept(shown[0]);
-                ui.postDelayed(this, 60_000);
-            }
-        };
-        ui.postDelayed(minute, 60_000);
     }
 
     private Item itemFrom(String kind, JSONObject o, String category, int pos) {
@@ -3238,7 +2808,8 @@ public class MainActivity extends Activity {
         stopPreview();
         LinearLayout root = column();
         LinearLayout head = row();
-        if (live) { head.setGravity(Gravity.CENTER_VERTICAL);
+        final boolean boxLive = live && !"phone".equals(platform());
+        if (live && !boxLive) { head.setGravity(Gravity.CENTER_VERTICAL);
             head.addView(text("Live TV", 26, TEXT, true));
             head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             head.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
@@ -3275,8 +2846,36 @@ public class MainActivity extends Activity {
         btns.addView(button("Day ▶", v -> {}));
         // Phones: the Now/Day controls move into the bigger-guide pop-up bar so the normal guide keeps the room.
         if (!phoneLive) info.addView(btns);
-        top.addView(info, weight(1.6f, ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout side = column();
+        // TV boxes (photo layout): preview on the left, programme info beside it with the search pills top right.
+        LinearLayout boxInfo = column();
+        TextView boxDesc = text("", 15, MUTED, false), boxNext = text("", 15, TEXT, false), boxCat = text("", 14, MUTED, false), boxStar = text("", 20, TEXT, false), boxLeft = text("", 15, MUTED, false);
+        android.widget.ProgressBar boxBar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        TextView dateLbl = text("", 18, ACCENT, true);
+        if (boxLive) {
+            info.removeView(progTitle); info.removeView(progTime);
+            boxInfo.setPadding(dp(18), 0, dp(8), 0);
+            LinearLayout pills = row(); pills.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+            pills.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+            pills.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
+            pills.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
+            boxInfo.addView(pills);
+            progTitle.setTextSize(24); boxInfo.addView(progTitle);
+            LinearLayout tr = row(); tr.setGravity(Gravity.CENTER_VERTICAL);
+            tr.addView(progTime);
+            boxBar.setMax(100); boxBar.setVisibility(View.GONE);
+            LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(90), dp(6)); bp.setMargins(dp(14), 0, dp(10), 0);
+            tr.addView(boxBar, bp); tr.addView(boxLeft);
+            boxInfo.addView(tr);
+            boxDesc.setMaxLines(3); boxDesc.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            boxInfo.addView(boxDesc);
+            boxNext.setSingleLine(true); boxNext.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            LinearLayout br = row(); br.setGravity(Gravity.CENTER_VERTICAL);
+            br.addView(boxNext, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+            boxStar.setPadding(dp(10), 0, dp(10), 0);
+            br.addView(boxStar); br.addView(boxCat);
+            boxInfo.addView(br);
+        } else top.addView(info, weight(1.6f, ViewGroup.LayoutParams.WRAP_CONTENT));
         androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
         pv.setUseController(false); pv.setBackgroundColor(Color.BLACK); pv.setFocusable(false);
         pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
@@ -3309,8 +2908,14 @@ public class MainActivity extends Activity {
             }
         } else side.addView(pv, new LinearLayout.LayoutParams(dp(288), dp(162)));
         side.addView(pvStatus);
+        if (boxLive) pvStatus.setVisibility(View.GONE);
         top.addView(side, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        if (boxLive) top.addView(boxInfo, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         root.addView(top);
+        if (boxLive) {
+            dateLbl.setText(new java.text.SimpleDateFormat("EEE, d MMM, " + ("12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm"), java.util.Locale.UK).format(new java.util.Date()));
+            root.addView(dateLbl);
+        }
         GuideGridView grid = new GuideGridView(this);
         // Phones: "Bigger guide" hides the preview and header so the guide fills the screen.
         LinearLayout bigBar = row(); bigBar.setGravity(Gravity.CENTER_VERTICAL);
@@ -3332,6 +2937,8 @@ public class MainActivity extends Activity {
             grid.setVisibility(View.GONE);
         }
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        // TV boxes: Left on the remote at "now" slides the categories out.
+        if (boxLive) grid.setOnLeftEdge(() -> catBtn.performClick());
         // The category list pops out from the left edge instead of a pop-up at the top.
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -3493,6 +3100,23 @@ public class MainActivity extends Activity {
                     long now = System.currentTimeMillis() / 1000;
                     boolean on = p.st <= now;
                     progTitle.setText(p.title);
+                    if (boxLive) {
+                        progTime.setText(clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : ""));
+                        boolean live2 = on && p.en > now;
+                        boxBar.setVisibility(live2 ? View.VISIBLE : View.GONE);
+                        if (live2) boxBar.setProgress((int) ((now - p.st) * 100 / Math.max(1, p.en - p.st)));
+                        boxLeft.setText(live2 ? ((p.en - now + 59) / 60) + " min left" : p.en > p.st ? ((p.en - p.st) / 60) + " min" : "");
+                        boxDesc.setText(p.desc == null || p.desc.isEmpty() ? (ch.archiveDays > 0 && on ? "Press ◀ for Catch up" : "") : p.desc);
+                        GuideGridView.Prog nx = null;
+                        List<GuideGridView.Prog> lst = guideCache.get(ch.id);
+                        if (lst != null) for (GuideGridView.Prog q : lst) if (q.st >= (p.en > 0 ? p.en : p.st + 1)) { nx = q; break; }
+                        boxNext.setText(nx == null ? "" : "Next:  " + clock(nx.st) + "  " + nx.title);
+                        boxStar.setText(isSaved("fav", ch) ? "★" : "☆");
+                        String cn = "";
+                        for (String[] c : catRows) if (c[0].equals(ch.category)) { cn = c[1]; break; }
+                        boxCat.setText(cn);
+                        dateLbl.setText(new java.text.SimpleDateFormat("EEE, d MMM, " + ("12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm"), java.util.Locale.UK).format(new java.util.Date()));
+                    } else
                     progTime.setText(ch.name + "  ·  " + clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : "")
                             + (ch.archiveDays > 0 && on ? "   ·  🕘 ◀ for Catch up" : "")
                             + (on ? "   ·  On now – OK to watch" : MainActivity.this.hasReminder(ch.id, p.st) ? "   ·  ⏰ Reminder set – OK to remove" : "   ·  OK to set a reminder"));
