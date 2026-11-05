@@ -2852,7 +2852,7 @@ public class MainActivity extends Activity {
         LinearLayout side = column();
         // TV boxes (photo layout): preview on the left, programme info beside it with the search pills top right.
         LinearLayout boxInfo = column();
-        TextView boxDesc = text("", 15, MUTED, false), boxNext = text("", 15, TEXT, false), boxCat = text("", 14, MUTED, false), boxStar = text("", 20, TEXT, false), boxLeft = text("", 15, MUTED, false);
+        TextView boxDesc = text("", 15, MUTED, false), boxNext = text("", 15, TEXT, false), boxCat = text("", 14, MUTED, false), boxStar = text("", 20, TEXT, false);
         android.widget.ProgressBar boxBar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         TextView dateLbl = text("", 18, ACCENT, true);
         if (boxLive) {
@@ -2860,7 +2860,7 @@ public class MainActivity extends Activity {
             boxInfo.setPadding(dp(18), 0, dp(8), 0);
             boxInfo.setGravity(Gravity.TOP);
             top.setBaselineAligned(false); top.setGravity(Gravity.TOP);
-            for (TextView t : new TextView[]{progTitle, progTime, boxDesc, boxNext, boxCat, boxStar, boxLeft}) { t.setPadding(t.getPaddingLeft(), dp(2), t.getPaddingRight(), dp(2)); t.setIncludeFontPadding(false); }
+            for (TextView t : new TextView[]{progTitle, progTime, boxDesc, boxNext, boxCat, boxStar}) { t.setPadding(t.getPaddingLeft(), dp(2), t.getPaddingRight(), dp(2)); t.setIncludeFontPadding(false); }
             LinearLayout pills = row(); pills.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
             pills.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
             pills.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
