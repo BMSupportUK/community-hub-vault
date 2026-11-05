@@ -769,6 +769,7 @@ public class MainActivity extends Activity {
         if (previewTask != null) ui.removeCallbacks(previewTask);
         previewTask = null;
         if (preview != null) { preview.release(); preview = null; }
+        if (previewPoster != null) previewPoster.setVisibility(View.VISIBLE);
         // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
         if (previewCounted) { previewCounted = false; clearNowPlaying(); }
     }
