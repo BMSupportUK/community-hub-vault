@@ -2694,8 +2694,8 @@ public class MainActivity extends Activity {
         screen = "tvguide"; back = this::showHome;
         stopPreview();
         LinearLayout root = column();
-        if (live) {
-            LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout head = row();
+        if (live) { head.setGravity(Gravity.CENTER_VERTICAL);
             head.addView(text("Live TV", 26, TEXT, true));
             head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             head.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
@@ -2741,6 +2741,20 @@ public class MainActivity extends Activity {
         top.addView(side, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(top);
         GuideGridView grid = new GuideGridView(this);
+        // Phones: "Bigger guide" hides the preview and header so the guide fills the screen.
+        LinearLayout bigBar = row(); bigBar.setGravity(Gravity.CENTER_VERTICAL);
+        bigBar.addView(text("TV guide", 20, TEXT, true));
+        bigBar.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        bigBar.setVisibility(View.GONE);
+        root.addView(bigBar);
+        Runnable closeBig = () -> { bigBar.setVisibility(View.GONE); top.setVisibility(View.VISIBLE); head.setVisibility(View.VISIBLE); back = this::showHome; };
+        bigBar.addView(headerPill("✕ Close", v -> closeBig.run()));
+        if (live && "phone".equals(platform())) {
+            btns.addView(button("⤢ Bigger guide", v -> {
+                top.setVisibility(View.GONE); head.setVisibility(View.GONE); bigBar.setVisibility(View.VISIBLE);
+                back = closeBig; grid.requestFocus();
+            }));
+        }
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         // The category list pops out from the left edge instead of a pop-up at the top.
         LinearLayout panel = new LinearLayout(this);
