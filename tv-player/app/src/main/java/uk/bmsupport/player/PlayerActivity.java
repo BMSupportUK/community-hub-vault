@@ -467,7 +467,7 @@ public class PlayerActivity extends Activity {
             String msg = issue.getText().toString().trim();
             if (msg.length() < 3) { issue.setError("Please type a short description"); return; }
             v.setEnabled(false);
-            final String token = getSharedPreferences("bm", MODE_PRIVATE).getString("token", "");
+            final String token = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("token", "");
             new Thread(() -> {
                 String err = null;
                 try {
