@@ -1179,7 +1179,7 @@ public class MainActivity extends Activity {
     private final List<String[]> lvRows = new ArrayList<>(); // {id, name}; "*" All, "fav", "hist"
     private final java.util.Map<String, List<Item>> lvByCat = new java.util.HashMap<>();
     private final List<Item> lvAll = new ArrayList<>();
-    private int lvCatPos = 0;
+    private int lvCatPos = 0, lvToken = 0;
     private final java.util.Map<String, String> lvNowTitle = new java.util.HashMap<>();
     private final java.util.Set<String> lvNowAsked = new java.util.HashSet<>();
     private final java.util.concurrent.ExecutorService lvEpgIo = java.util.concurrent.Executors.newFixedThreadPool(3);
@@ -1385,6 +1385,7 @@ public class MainActivity extends Activity {
     private void showLiveChannel(int catPos, int chanPos) {
         stopPreview();
         screen = "livech"; back = this::showLiveCategories;
+        final int token = ++lvToken;
         lvCatPos = catPos; liveCatId = lvRows.get(catPos)[0];
         LinearLayout root = column();
         TextView clockView = text("", 20, TEXT, true);
@@ -1489,7 +1490,8 @@ public class MainActivity extends Activity {
                 int[] nn = LiveNowNext.pick(sa, ea, System.currentTimeMillis() / 1000);
                 StringBuilder up = new StringBuilder();
                 int from = nn[0] >= 0 ? nn[0] : Math.max(0, nn[1]);
-                for (int i = from; nn[0] >= 0 || nn[1] >= 0 ? i < rows.size() && i < from + 5 : false; i++) {
+                boolean any = nn[0] >= 0 || nn[1] >= 0;
+                for (int i = from; any && i < rows.size() && i < from + 5; i++) {
                     up.append(rows.get(i)[2]).append("   ").append(rows.get(i)[0]).append("\n");
                     if (!rows.get(i)[1].trim().isEmpty()) up.append(rows.get(i)[1].trim()).append("\n");
                     up.append("\n");
@@ -1584,7 +1586,7 @@ public class MainActivity extends Activity {
 
         Runnable tick = new Runnable() {
             @Override public void run() {
-                if (!"livech".equals(screen) || clockView.getParent() == null || !clockView.isAttachedToWindow() && clockView.getWindowToken() == null && shown[0] == null) return;
+                if (!"livech".equals(screen) || lvToken != token) return;
                 String f = "12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm";
                 clockView.setText(new java.text.SimpleDateFormat(f + "   d MMMM yyyy", java.util.Locale.UK).format(new java.util.Date()));
                 ui.postDelayed(this, 30_000);
@@ -1593,7 +1595,7 @@ public class MainActivity extends Activity {
         tick.run();
         Runnable minute = new Runnable() {
             @Override public void run() {
-                if (!"livech".equals(screen) || shown[0] == null) return;
+                if (!"livech".equals(screen) || lvToken != token || shown[0] == null) return;
                 loadInfo.accept(shown[0]);
                 ui.postDelayed(this, 60_000);
             }
