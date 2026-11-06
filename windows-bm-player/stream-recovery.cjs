@@ -9,6 +9,11 @@ const STALLS_TO_LOWER = 2;
 const STALLS_TO_OFFER_SD = 3;
 const BATCH = 20;
 const FREEZE_MS = 4000;
+/** Full quality returns after this long with no stalls (same as Android). */
+const STABLE_RAISE_MS = 120000;
+/** Live channels keep at least this much cushion so short provider cut-outs play through. */
+const LIVE_BUFFER_MS = 12000;
+function liveBufferMs(setting) { return Math.max(LIVE_BUFFER_MS, bufferMs(setting)); }
 
 /** Play position not moving for 4s while "playing" means the picture froze. */
 function frozen(session, state, position, now) {
@@ -53,6 +58,12 @@ function tick(session, state, now, live) {
         if (n >= STALLS_TO_OFFER_SD && live && !session.sdOffered && isHdName(session.item?.name)) { session.sdOffered = true; out.offerSd = true; }
       }
     }
+    if (session.lowered && !out.lower) {
+      const last = Math.max(session.lastStallAt || 0, ...(session.stallTimes || []));
+      if (!session.lastStallAt) session.lastStallAt = now;
+      if (now - last >= STABLE_RAISE_MS) { session.lowered = false; session.stallTimes = []; out.raise = true; }
+    }
+    if (out.event) session.lastStallAt = now;
     session.ready = true; session.stallAt = 0; session.reconnects = 0; session.retryAt = 0;
     return out;
   }
@@ -72,4 +83,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { FREEZE_MS, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
