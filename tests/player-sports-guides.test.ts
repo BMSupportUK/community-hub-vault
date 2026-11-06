@@ -20,7 +20,7 @@ test("Derby game written differently across guides becomes one card with every c
   ], Date.UTC(2026, 10, 6, 19));
   expect(events.length).toBe(1);
   expect(events[0].competition).toBe("EFL Championship");
-  expect(events[0].time).toBe("20:00");
+  expect(events[0].time).toBe("20:00 GMT");
   expect(events[0].channels).toEqual(["Sky Sports Football", "Paramount+ 3", "Dazn 10 HD", "MonoMax 11"]);
 });
 
