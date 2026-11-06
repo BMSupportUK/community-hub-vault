@@ -116,7 +116,9 @@ public class PlayerActivity extends Activity {
         int[] buf = StreamRecovery.bufferMs(p.getString("buffer", StreamRecovery.DEFAULT_BUFFER));
         DefaultLoadControl load = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(buf[0], buf[1], buf[2], buf[3])
-                .setPrioritizeTimeOverSizeThresholds(true).build();
+                // Memory cap: a 60s buffer of UHD (30–40 Mbps) would take hundreds of MB and get the app killed.
+                .setTargetBufferBytes(StreamRecovery.bufferBytes(Runtime.getRuntime().maxMemory()))
+                .setPrioritizeTimeOverSizeThresholds(false).build();
         ExoPlayer x = new ExoPlayer.Builder(c, renderers)
                 .setMediaSourceFactory(new DefaultMediaSourceFactory(c, ex).setDataSourceFactory(http))
                 .setLoadControl(load)

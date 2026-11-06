@@ -32,6 +32,12 @@ final class StreamRecovery {
         }
     }
 
+    /** Buffer memory cap: a quarter of the app's memory, between 32 MB and 128 MB. */
+    static int bufferBytes(long maxHeap) {
+        long q = maxHeap / 4;
+        return (int) Math.max(32L << 20, Math.min(128L << 20, q));
+    }
+
     /** Picture unchanged this many 1-second checks while playing = frozen. */
     static final int FREEZE_TICKS = 4;
     /** Live this far behind "now" jumps back to the live point. */
