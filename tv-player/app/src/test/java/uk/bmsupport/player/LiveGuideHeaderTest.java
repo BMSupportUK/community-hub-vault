@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
  * On a phone the Live TV guide keeps its header: the bigger-guide control sits up there with the
  * search pills, and the old Now / Day row is gone so the guide gets the room it was taking.
  */
-@org.junit.Ignore("Phones are trialling the TV box Live TV layout (3.24); these check the old phone-only layout — restore if the trial is reverted.")
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 34, application = PlayerApplication.class, qualifiers = "w960dp-h540dp-xhdpi")
 public class LiveGuideHeaderTest {
@@ -94,8 +93,26 @@ public class LiveGuideHeaderTest {
         collect(a.getWindow().getDecorView(), Button.class, pills);
         for (View p : pills) if (text(p).equals("View EPG")) { p.performClick(); break; }
         assertEquals("View EPG must open the guide full screen", View.VISIBLE, grid.getVisibility());
+        LinearLayout root = (LinearLayout) grid.getParent();
+        assertEquals(View.GONE, root.getChildAt(0).getVisibility());
+        assertEquals(View.GONE, root.getChildAt(1).getVisibility());
         for (View p : pills) if (text(p).equals("✕ Close")) { p.performClick(); break; }
         assertEquals("Close must put the guide away again", View.GONE, grid.getVisibility());
+        assertEquals(View.VISIBLE, root.getChildAt(0).getVisibility());
+        assertEquals(View.VISIBLE, root.getChildAt(1).getVisibility());
+    }
+
+    @Test public void tvBoxesKeepTheirAlwaysVisibleGuide() throws Exception {
+        MainActivity a = open();
+        org.robolectric.Shadows.shadowOf(a.getPackageManager()).setSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK, true);
+        openLiveGuide(a);
+        LinearLayout root = rootOf(a);
+        List<View> grids = new ArrayList<>();
+        collect(root, GuideGridView.class, grids);
+        assertEquals(View.VISIBLE, grids.get(0).getVisibility());
+        List<View> buttons = new ArrayList<>();
+        collect(root, Button.class, buttons);
+        for (View b : buttons) assertNotEquals("View EPG", text(b));
     }
 
     @Test public void theNowAndDayControlsLiveInsideTheBiggerGuidePopup() throws Exception {
