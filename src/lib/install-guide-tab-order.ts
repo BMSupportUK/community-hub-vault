@@ -22,7 +22,7 @@ export function resolveInstallTabOrder(saved: unknown): InstallTabKey[] {
   const order = [...picked, ...all.filter((k) => !picked.includes(k))];
   // Older saved orders insert the new section beside device linking, not at the end.
   if (!picked.includes("backup-apps")) {
-    const withoutBackup = order.filter((k) => k !== "backup-apps");
+    const withoutBackup: InstallTabKey[] = order.filter((k) => k !== "backup-apps");
     withoutBackup.splice(withoutBackup.indexOf("link-device") + 1, 0, "backup-apps");
     return withoutBackup;
   }
