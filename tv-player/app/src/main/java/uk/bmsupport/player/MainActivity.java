@@ -2861,15 +2861,21 @@ public class MainActivity extends Activity {
     private Runnable sportsTask;
     private String sportsVersion = "";
 
+    // Patterns are compiled once: compiling them per channel froze slow TV boxes (ANR) when searching 8,000+ channels.
+    private static final java.util.regex.Pattern N_PUNCT = java.util.regex.Pattern.compile("[^a-z0-9+]+"),
+            N_LD = java.util.regex.Pattern.compile("([a-z])(\\d)"), N_DL = java.util.regex.Pattern.compile("(\\d)([a-z])"),
+            N_TAGS = java.util.regex.Pattern.compile("\\b(?:uk|gb|usa|us|ire|ie|ireland|au|aus|australia|ca|canada|za|south africa|nz|int|fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv)\\b"),
+            N_SPORTS = java.util.regex.Pattern.compile("\\bsports\\b"), N_ZERO = java.util.regex.Pattern.compile("\\b0+(\\d)"),
+            N_COUPANG = java.util.regex.Pattern.compile("\\bcoupang\\s+play\\b"), N_SPACE = java.util.regex.Pattern.compile("\\s+");
     /** Mirrors src/lib/player-channel-match.ts normChannel. */
     static String normChannel(String name) {
         String s = name.toLowerCase(java.util.Locale.ROOT);
-        s = s.replaceAll("[^a-z0-9+]+", " ").replace("+", " plus ");
-        s = s.replaceAll("([a-z])(\\d)", "$1 $2").replaceAll("(\\d)([a-z])", "$1 $2");
-        s = s.replaceAll("\\b(?:uk|gb|usa|us|ire|ie|ireland|au|aus|australia|ca|canada|za|south africa|nz|int|fhd|uhd|hd|sd|4k|hevc|h265|raw|backup|vip|channel|tv)\\b", " ");
-        s = s.replaceAll("\\bsports\\b", "sport").replaceAll("\\b0+(\\d)", "$1");
-        s = s.replaceAll("\\bcoupang\\s+play\\b", "coupang");
-        return s.replaceAll("\\s+", " ").trim();
+        s = N_PUNCT.matcher(s).replaceAll(" ").replace("+", " plus ");
+        s = N_DL.matcher(N_LD.matcher(s).replaceAll("$1 $2")).replaceAll("$1 $2");
+        s = N_TAGS.matcher(s).replaceAll(" ");
+        s = N_ZERO.matcher(N_SPORTS.matcher(s).replaceAll("sport")).replaceAll("$1");
+        s = N_COUPANG.matcher(s).replaceAll("coupang");
+        return N_SPACE.matcher(s).replaceAll(" ").trim();
     }
     private static final String[][] BUILT_IN_ALIASES = {
         {"sky sports pl", "sky sports premier league"}, {"sky sports me", "sky sports main event"},
