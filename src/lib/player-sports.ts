@@ -58,7 +58,7 @@ export function playerSportsEvents(
   guides: { title: string; body: string | null; category: string | null; parent?: string | null }[],
   nowMs = Date.now(),
 ): PlayerSportsEvent[] {
-  type Card = PlayerSportsEvent & { pass: boolean };
+  type Card = PlayerSportsEvent & { pass: boolean; mainSet: Set<string> };
   const out: Card[] = [];
   for (const g of guides) {
     const pass = isPassGuide(g);
@@ -67,22 +67,24 @@ export function playerSportsEvents(
       const start = ukListingInstant(e.date, e.time);
       if (start == null || start < nowMs - WINDOW_BACK || start > nowMs + WINDOW_AHEAD) continue;
       const channels = e.channels.map((c) => c.trim()).filter(Boolean);
-      const ev: Card = { sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: e.title, date: e.date, time: e.time, start,
-        channels: [], pass };
+      const ev: Card = { sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: cardTitle(e.title), date: e.date, time: e.time, start,
+        channels: [], passChannels: [], pass, mainSet: new Set() };
       // One card per game: every guide listing the same game adds its channels to that card.
       const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && sameFixture(c.title, e.title));
       const target = existing ?? ev;
-      let merged = target.channels;
+      if (!pass) for (const c of channels) target.mainSet.add(c.toLowerCase());
+      let merged: string[];
       if (existing && existing.pass && !pass) {
         // A proper competition guide beats a sports-pass listing for the card's name and time.
-        Object.assign(existing, { ...ev, channels: [] });
-        merged = [...channels, ...merged];
-        existing.channels = [];
-      } else merged = [...merged, ...channels];
+        const old = existing.channels, keep = existing.mainSet;
+        Object.assign(existing, { ...ev, mainSet: keep });
+        merged = [...channels, ...old];
+      } else merged = [...target.channels, ...channels];
       const seen = new Set<string>();
       target.channels = merged.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, MAX_CHANNELS);
+      target.passChannels = target.channels.filter((c) => !target.mainSet.has(c.toLowerCase()));
       if (!existing) out.push(ev);
     }
   }
-  return out.sort((a, b) => a.start - b.start).slice(0, 400).map(({ pass: _p, ...ev }) => ev);
+  return out.sort((a, b) => a.start - b.start).slice(0, 400).map(({ pass: _p, mainSet: _m, ...ev }) => ev);
 }
