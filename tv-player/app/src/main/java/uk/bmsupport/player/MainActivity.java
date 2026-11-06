@@ -866,6 +866,9 @@ public class MainActivity extends Activity {
                         status.setText("Press OK twice for full screen");
                         if (!previewCounted) { previewCounted = true; setNowPlaying(it, false, true); }
                         previewStarted();
+                    } else if (s == androidx.media3.common.Player.STATE_ENDED && preview != null) {
+                        // Live preview dropped by the provider: reopen it instead of sitting frozen.
+                        preview.seekToDefaultPosition(); preview.prepare(); preview.play();
                     }
                 }
             });

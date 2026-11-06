@@ -408,6 +408,11 @@ public class PlayerActivity extends Activity {
                     everReady = true; stallStartedAt = 0; reconnects = 0; lastStableAt = now;
                     ui.removeCallbacks(stallWatch);
                     if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+                } else if (s == Player.STATE_ENDED && "live".equals(kind())) {
+                    // Live never really ends: the provider dropped the stream (picture and sound stop
+                    // with no buffering sign). Record it and reopen the channel at now.
+                    BufferReporter.record(PlayerActivity.this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), 0, true, true);
+                    reconnect();
                 }
             }
             @Override public void onPlayerError(PlaybackException e) {
