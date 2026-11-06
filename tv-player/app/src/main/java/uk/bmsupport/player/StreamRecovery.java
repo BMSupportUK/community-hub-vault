@@ -93,9 +93,10 @@ final class StreamRecovery {
         return Math.max(300000, (int) (currentBitrate * 0.6));
     }
 
+    private static final java.util.regex.Pattern HD_NAME = java.util.regex.Pattern.compile("\\b(hd|fhd|uhd|4k|1080p?|720p?)\\b");
     /** True for HD/FHD/UHD/4K names, where an SD sibling is worth offering. */
     static boolean isHdName(String name) {
         String l = name == null ? "" : name.toLowerCase(java.util.Locale.ROOT);
-        return l.matches(".*\\b(hd|fhd|uhd|4k|1080p?|720p?)\\b.*");
+        return HD_NAME.matcher(l).find();
     }
 }
