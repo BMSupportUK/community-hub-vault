@@ -9835,18 +9835,32 @@ export type Database = {
         Returns: number
       }
       package_item_months: { Args: { p_name: string }; Returns: number }
-      player_buffer_summary: {
-        Args: { _hours: number }
-        Returns: {
-          content_name: string
-          devices: number
-          kind: string
-          last_at: string
-          reconnects: number
-          stalls: number
-          total_stall_seconds: number
-        }[]
-      }
+      player_buffer_summary:
+        | {
+            Args: { _from: string; _to: string }
+            Returns: {
+              content_name: string
+              devices: number
+              kind: string
+              last_at: string
+              reconnects: number
+              stalls: number
+              total_stall_seconds: number
+            }[]
+          }
+        | {
+            Args: { _hours: number }
+            Returns: {
+              content_name: string
+              devices: number
+              kind: string
+              last_at: string
+              reconnects: number
+              stalls: number
+              total_stall_seconds: number
+            }[]
+          }
+      player_buffer_years: { Args: never; Returns: number[] }
       player_cast_rating: {
         Args: { p_key: string; p_stars: number; p_voter: string }
         Returns: undefined

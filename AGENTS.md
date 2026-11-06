@@ -73,4 +73,5 @@
 - iFollow/Scottish guide saves/imports use the two club names as fixture channels.
 - Account numbers: `customer_numbers` rows are assigned on profile creation and can never be updated or deleted, so a 6-digit number is never reissued (withdrawn ones stay in `customer_numbers_retired`; `customer_number_is_weak` rejects simple patterns); read only through `get_customer_number` (self or staff roles).
 - Bottom-screen player announcement targets are nullable profile IDs; filter after the shared cache against verified device ownership, never client-supplied identity, keeping existing app payloads unchanged.
+- Buffering calendar filters use half-open UK calendar ranges through role-checked summary RPCs, preserving existing rolling-hour reports and private event access.
 - Public homepage pictures are sized from the viewport only. Portal Home's picture sets its height without waiting for data (aspect ratio below large screens, remaining page height on large); beside it the sidebar matches that height, with compact Working Status/subscription layouts (shared `compact` variant) below large screens and on short screens.
