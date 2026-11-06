@@ -9,7 +9,7 @@ import { bufferDateRange, type BufferPeriod } from "@/lib/player-buffer-date";
 
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
-type BufferRow = { kind: string; content_name: string; stalls: number; devices: number; reconnects: number; total_stall_seconds: number; last_at: string };
+type BufferRow = { kind: string; content_name: string; stalls: number; devices: number; reconnects: number; total_stall_seconds: number; last_at: string; provider_cuts: number; advert_switches: number; network_drops: number };
 const KIND_LABEL: Record<string, string> = { live: "Live TV", film: "Film", series: "Series", catchup: "Catch up" };
 
 export function BufferingSection() {
@@ -72,11 +72,12 @@ export function BufferingSection() {
     {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : rows === null ? <p className="text-sm text-muted-foreground">Loading…</p> : rows.length === 0
       ? <p className="text-sm text-muted-foreground">No buffering reported.</p>
       : <div className="overflow-x-auto"><table className="w-full text-sm">
-        <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground"><tr><th className="p-3">Channel / title</th><th className="p-3">Devices</th><th className="p-3">Stalls</th><th className="p-3 max-sm:hidden">Reconnects</th><th className="p-3 max-sm:hidden">Time stalled</th><th className="p-3">Last</th></tr></thead>
+        <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground"><tr><th className="p-3">Channel / title</th><th className="p-3">Devices</th><th className="p-3">Stalls</th><th className="p-3">Cause</th><th className="p-3 max-sm:hidden">Reconnects</th><th className="p-3 max-sm:hidden">Time stalled</th><th className="p-3">Last</th></tr></thead>
         <tbody>{rows.map((r) => <tr key={r.kind + r.content_name} className="border-b border-border">
           <td className="p-3"><div className="font-medium">{r.content_name || "Unknown"}</div><div className="text-xs text-muted-foreground">{KIND_LABEL[r.kind] ?? r.kind}</div></td>
           <td className={`p-3 font-semibold ${r.devices >= 5 ? "text-warning" : ""}`}>{r.devices}</td>
           <td className="p-3">{r.stalls}</td>
+          <td className="p-3 text-xs"><div className="flex flex-wrap gap-1">{([["Provider cut", r.provider_cuts], ["Advert switch", r.advert_switches], ["Network drop", r.network_drops]] as const).filter(([, n]) => n > 0).map(([label, n]) => <span key={label} className="whitespace-nowrap rounded-full border border-border px-2 py-0.5">{label} {n}</span>)}</div></td>
           <td className="p-3 max-sm:hidden">{r.reconnects}</td>
           <td className="p-3 font-mono tabular-nums max-sm:hidden">{r.total_stall_seconds >= 60 ? `${Math.floor(r.total_stall_seconds / 60)}m ${r.total_stall_seconds % 60}s` : `${r.total_stall_seconds}s`}</td>
           <td className="p-3 text-xs">{when(r.last_at)}</td>

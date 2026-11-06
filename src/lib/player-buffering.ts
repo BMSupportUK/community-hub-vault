@@ -8,9 +8,15 @@ export const BufferEvent = z.object({
   stall_ms: z.number().int().min(0).max(3_600_000),
   reconnected: z.boolean().catch(false),
   freeze: z.boolean().optional().catch(false),
+  cause: z.enum(["provider_cut", "advert_switch", "network_drop"]).optional().catch(undefined),
   at: z.number().int().positive(),
 });
 export const BufferBatch = z.array(BufferEvent).min(1).max(20);
+/** Older apps send no cause: a zero-length freeze is a provider cut, anything else a network drop. */
+export function stallCause(e: { cause?: string; freeze?: boolean; stall_ms: number }): "provider_cut" | "advert_switch" | "network_drop" {
+  if (e.cause === "provider_cut" || e.cause === "advert_switch" || e.cause === "network_drop") return e.cause;
+  return e.freeze && e.stall_ms === 0 ? "provider_cut" : "network_drop";
+}
 export type BufferEventInput = z.infer<typeof BufferEvent>;
 
 /** Distinct devices stalling on one channel/title inside the window that means "provider problem". */

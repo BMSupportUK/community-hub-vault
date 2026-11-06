@@ -394,6 +394,7 @@ public class PlayerActivity extends Activity {
     private final long[] stallTimes = new long[16]; private int stallCount;
     private boolean everReady, capped, sdOffered;
     private long formatChangedAt = -100000;
+    private boolean stallAdvert;
     private final Runnable advertJump = () -> {
         if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING) { formatChangedAt = -100000; player.seekToDefaultPosition(); player.prepare(); player.play(); }
     };
@@ -408,7 +409,8 @@ public class PlayerActivity extends Activity {
                     stallStartedAt = now;
                     ui.postDelayed(stallWatch, StreamRecovery.STALL_RECONNECT_MS);
                     // Advert switch: jump straight to the live point instead of waiting to catch up.
-                    if ("live".equals(kind()) && StreamRecovery.advertSwitch(now - formatChangedAt)) ui.postDelayed(advertJump, StreamRecovery.ADVERT_JUMP_MS);
+                    stallAdvert = "live".equals(kind()) && StreamRecovery.advertSwitch(now - formatChangedAt);
+                    if (stallAdvert) ui.postDelayed(advertJump, StreamRecovery.ADVERT_JUMP_MS);
                 } else if (s == Player.STATE_READY) {
                     if (stallStartedAt > 0) onStallEnded(now - stallStartedAt, reconnects > 0);
                     everReady = true; stallStartedAt = 0; reconnects = 0; lastStableAt = now;
@@ -417,7 +419,7 @@ public class PlayerActivity extends Activity {
                 } else if (s == Player.STATE_ENDED && "live".equals(kind())) {
                     // Live never really ends: the provider dropped the stream (picture and sound stop
                     // with no buffering sign). Record it and reopen the channel at now.
-                    BufferReporter.record(PlayerActivity.this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), 0, true, true);
+                    BufferReporter.record(PlayerActivity.this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), 0, true, true, "provider_cut");
                     reconnect();
                 }
             }
@@ -497,7 +499,7 @@ public class PlayerActivity extends Activity {
         reconnects++;
         if (StreamRecovery.giveUp(reconnects)) {
             if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
-            BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), StreamRecovery.STALL_RECONNECT_MS, true);
+            BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), StreamRecovery.STALL_RECONNECT_MS, true, false, stallAdvert ? "advert_switch" : "network_drop");
             handToBackup();
             return;
         }
@@ -598,7 +600,8 @@ public class PlayerActivity extends Activity {
     private String kind() { String k = getIntent().getStringExtra("content_kind"); return k == null ? "live" : k; }
 
     private void onStallEnded(long ms, boolean reconnected) {
-        BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected);
+        BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, false, stallAdvert ? "advert_switch" : "network_drop");
+        stallAdvert = false;
         if (ms < StreamRecovery.MIN_REPORT_MS) return;
         long now = android.os.SystemClock.elapsedRealtime();
         stallTimes[stallCount % stallTimes.length] = now; stallCount++;
