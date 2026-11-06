@@ -104,8 +104,7 @@ public class LiveGuideHeaderTest {
 
     @Test public void tvBoxesKeepTheirAlwaysVisibleGuide() throws Exception {
         MainActivity a = open();
-        android.app.UiModeManager mode = (android.app.UiModeManager) a.getSystemService(android.content.Context.UI_MODE_SERVICE);
-        org.robolectric.Shadows.shadowOf(mode).setCurrentModeType(android.content.res.Configuration.UI_MODE_TYPE_TELEVISION);
+        org.robolectric.Shadows.shadowOf(a.getPackageManager()).setSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK, true);
         openLiveGuide(a);
         LinearLayout root = rootOf(a);
         List<View> grids = new ArrayList<>();
