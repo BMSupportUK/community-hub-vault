@@ -40,6 +40,11 @@ export function matchChannel(guideName: string, playlist: string[], aliases: Cha
   const all = [...aliases, ...BUILT_IN_ALIASES];
   const want = applyAlias(normChannel(guideName), all);
   if (!want) return [];
+  // Daily Sports: guide says "Channel 07"; the feed's name is "07 | 12:00 Trackside Live!" (changes daily).
+  if (/^\d+$/.test(want)) {
+    const n = Number(want);
+    return playlist.filter((p) => { const m = /^\s*(\d+)\s*\|/.exec(p); return !!m && Number(m[1]) === n; });
+  }
   const exact = playlist.filter((p) => applyAlias(normChannel(p), all) === want);
   if (exact.length) return [...exact].sort((a, b) => quality(b) - quality(a) || a.length - b.length);
   // Every word of the guide name appears in the playlist name (any order); fewest extra words first.

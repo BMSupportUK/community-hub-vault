@@ -2894,11 +2894,18 @@ public class MainActivity extends Activity {
         return l.contains("fhd") || l.contains("1080") ? 3 : l.matches(".*\\bhd\\b.*") ? 2 : l.contains("uhd") || l.contains("4k") ? 1 : 0;
     }
     /** Mirrors matchChannel: exact normalised (with aliases), else whole-word partial; best quality first. */
+    private static final java.util.regex.Pattern DAILY_NUM = java.util.regex.Pattern.compile("^\\s*0*(\\d{1,4})\\s*\\|");
     static List<Item> matchChannel(String guide, List<Item> playlist, List<String[]> aliases) {
         java.util.Map<String, String> am = aliasMap(aliases);
         String want = alias(normChannel(guide == null ? "" : guide), am);
         List<Item> out = new ArrayList<>();
         if (want.isEmpty()) return out;
+        // Daily Sports: guide says "Channel 07"; the feed's name is "07 | 12:00 Trackside Live!" (changes daily).
+        if (want.matches("\\d+")) {
+            int n = Integer.parseInt(want);
+            for (Item it : playlist) { java.util.regex.Matcher m = DAILY_NUM.matcher(it.name == null ? "" : it.name); if (m.find() && Integer.parseInt(m.group(1)) == n) out.add(it); }
+            return out;
+        }
         for (Item it : playlist) if (alias(it.norm(), am).equals(want)) out.add(it);
         if (!out.isEmpty()) {
             java.util.Collections.sort(out, (x, y) -> quality(y.name) != quality(x.name) ? quality(y.name) - quality(x.name) : x.name.length() - y.name.length());
