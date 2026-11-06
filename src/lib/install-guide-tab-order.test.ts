@@ -8,6 +8,14 @@ test("saved order is used and missing pills are appended", () => {
   expect(o.length).toBe(8);
 });
 
+test("phone and Windows setup remains hidden even in a saved order", () => {
+  expect(resolveInstallTabOrder(["phone-windows-setup", "welcome"])).not.toContain("phone-windows-setup");
+});
+
+test("staff help remains available when an older saved order omits it", () => {
+  expect(resolveInstallTabOrder(["welcome", "setup", "guides"])).toContain("staff-help");
+});
+
 test("up/down arrows swap neighbours and stop at the ends", () => {
   const o = resolveInstallTabOrder(null);
   expect(moveTab(o, 1, -1).slice(0, 2)).toEqual(["setup", "welcome"]);
