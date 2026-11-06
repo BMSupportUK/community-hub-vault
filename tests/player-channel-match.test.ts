@@ -32,6 +32,12 @@ describe("player channel matching", () => {
   test("partial match does not cross numbers", () => {
     expect(matchChannel("TNT Sports 1", ["UK: TNT Sports 10", "UK: TNT Sports 1 HD"])).toEqual(["UK: TNT Sports 1 HD"]);
   });
+  test("bare MonoMax does not list every numbered MonoMax feed", () => {
+    expect(matchChannel("MonoMax", ["MonoMax 1 HD", "MonoMax 2 HD", "MonoMax HD"])).toEqual(["MonoMax HD"]);
+  });
+  test("numbered MonoMax keeps only its listed feed", () => {
+    expect(matchChannel("MonoMax 1", ["MonoMax 1 HD", "MonoMax 10 HD", "MonoMax 2 HD"])).toEqual(["MonoMax 1 HD"]);
+  });
 });
 
 describe("country labels and spacing", () => {

@@ -18,7 +18,8 @@ export function playerSportsEvents(
       if (!safePublicEventTitle(e)) continue;
       const start = ukListingInstant(e.date, e.time);
       if (start == null || start < nowMs - WINDOW_BACK || start > nowMs + WINDOW_AHEAD) continue;
-      const key = `${start}|${e.title.toLowerCase()}`;
+      // Separate guides can list the same fixture with different channels; keep each guide's copy.
+      const key = `${g.title.toLowerCase()}|${start}|${e.title.toLowerCase()}`;
       if (seen.has(key)) continue;
       seen.add(key);
       out.push({ sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: e.title, date: e.date, time: e.time, start,

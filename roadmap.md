@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Fix Android Sports Guide's missing listings and Everton/Monomax results including unlisted numbered feeds; add regression checks.
+- [x] Fix missing Premier League guides (deduplication now guide-scoped) and Android/website unnumbered labels expanding to unrelated numbered feeds; 19 website checks, 81 Android checks and 2 added native matching checks pass. Signed Android 3.59 built, not released; website change needs publication and real-device verification has no attached device.
 - [x] Build signed Android 3.58 with phone-only View EPG opening the selected category in a full-screen guide; 81 Android checks pass and permanent BM signature verified. Not released; real-phone verification unavailable (no attached device).
 - [x] Add Backup Apps after Link Device and move QD/XCTV install cards; seven tests pass, signed-in real cards and saved tab order verified, build OK.
 - [x] Give Install Guides staff help its own visible tab and hide phone/Windows self-install; five tests pass, signed-in desktop/phone and old setup links verified; ticket creation unchanged.
