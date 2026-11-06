@@ -4,7 +4,7 @@ export const INSTALL_TABS = [
   { key: "welcome", label: "Welcome" },
   { key: "setup", label: "Setup Device | Direct To Device" },
   { key: "link-device", label: "Link Device" },
-  { key: "phone-windows-setup", label: "Setup Your Device Using | Android Phone | Or Windows" },
+  { key: "staff-help", label: "Help from staff" },
   { key: "ios-setup", label: "Apps For | iOS" },
   { key: "player-windows", label: "BM Player | Windows" },
   { key: "player-mac", label: "BM Player | Mac" },

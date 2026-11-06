@@ -31,7 +31,7 @@ import { INSTALL_TAB_LABELS_KEY, INSTALL_TAB_ORDER_KEY, installTabLabel, resolve
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
-import { DeviceInstallSetup, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
+import { DeviceInstallSetup, StaffInstallHelp, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
 import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
 import { PlayerDeviceLinkSection } from "@/components/app/PlayerDeviceLinkSection";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
@@ -144,26 +144,16 @@ function InstallGuidesPage() {
   const { tab: tabParam, checkout: checkoutToken } = Route.useSearch();
   // Opening the guides screen always starts on the Welcome tab (deep links
   // with an explicit ?tab= still win); we never restore the last viewed tab.
-  const legacyTab = (t?: string) => (t === "enabler" ? "phone-windows-setup" : t === "get-app" ? "setup" : t);
+  const legacyTab = (t?: string) => (t === "enabler" || t === "phone-windows-setup" ? "staff-help" : t === "get-app" ? "setup" : t);
   const [tab, setTab] = useState<string>(() => legacyTab(tabParam) || "welcome");
   useEffect(() => {
-    if (tabParam) setTab(legacyTab(tabParam)!);
+    const nextTab = legacyTab(tabParam);
+    if (nextTab) setTab(nextTab);
   }, [tabParam]);
   // Only TV setup screens reserve a column for Enabler downloads.
   // Guides and videos use the full available width without adverts.
   const [setupDevice, setSetupDevice] = useState<SetupDeviceKey | null>(() => readStoredSetupDevice());
-  const [enablerDevice, setEnablerDevice] = useState<SetupDeviceKey | null>(() => {
-    const saved = readStoredSetupDevice();
-    return saved === "amazon" || saved === "android" || saved === "remote" ? saved : null;
-  });
-  const showEnablerDownloads = tab === "phone-windows-setup" && (enablerDevice === "remote" || enablerDevice === "amazon" || enablerDevice === "android");
-  const pickEnablerDevice = (d: SetupDeviceKey | null) => {
-    setEnablerDevice(d);
-    try {
-      if (d) sessionStorage.setItem(INSTALL_SETUP_DEVICE_KEY, d);
-      else sessionStorage.removeItem(INSTALL_SETUP_DEVICE_KEY);
-    } catch { /* ignore */ }
-  };
+  const showEnablerDownloads = tab === "staff-help";
   const pickSetupDevice = (d: SetupDeviceKey | null) => {
     setSetupDevice(d);
     try {
@@ -731,9 +721,9 @@ function InstallGuidesPage() {
             </PhotoPanel>
           </TabsContent>
 
-          <TabsContent value="phone-windows-setup" className="mt-0 min-w-0">
+          <TabsContent value="staff-help" className="mt-0 min-w-0">
             <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
-              <DeviceInstallSetup section="enabler" device={enablerDevice} onPick={pickEnablerDevice} />
+              <StaffInstallHelp />
             </PhotoPanel>
           </TabsContent>
 

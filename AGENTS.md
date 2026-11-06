@@ -64,7 +64,7 @@
 - Order remote installation help goes through tickets: the customer secure order has no setup tabs — a help bar raises a General ticket (office hours only) naming the order reference, and staff connect via the ticket's screen share. `order_remote_setup` stays for legacy/test flows and the shared `/api/public/remote-setup` report; the legacy invitation-gated pairing path remains only for staff test orders, and the standalone customer helper URL redirects home.
 - Ticket screen-share requests unlock only after the customer's Remote setup is confirmed by a live BM Remote Helper code (server-verified RPC), so staff never invite before the TV app works.
 - Ticket/order renewal gates persist through tabs and release on replacement or timeout. Their shared instruction wizard is presentation-only; navigation never confirms TV checks.
-- Install Guides: route owns separate Direct Install and Enabler device choices; DeviceInstallSetup filters choices by section, and only Enabler setup/staff help reserve phone/Windows download columns so guide/video browsing retains full width.
+- Install Guides: Direct Install keeps its device choices; the standalone staff-help tab reuses the existing ticket flow and reserves Enabler download columns, while the hidden self-install tab is excluded from saved ordering so guide/video browsing retains full width.
 - All app download routes call `logDownload` (admin/management-only log; Enabler sends `x-enabler-token`); never blocks downloads, skips resumed ranges.
 - Direct Install completion retires download hashes atomically, preserving history. Progress targets explicit runs (monitoring-only for installed TVs); Start again clears the run, never issues a download, avoiding stale progress.
 
