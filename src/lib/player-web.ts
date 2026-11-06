@@ -6,11 +6,25 @@ export function isAppleMobile(userAgent: string, maxTouchPoints: number): boolea
   return /Macintosh/i.test(userAgent) && maxTouchPoints > 1;
 }
 
-/** Safari can only play these film/episode files directly; everything else is hidden (no website conversion). */
-const PLAYABLE_VOD = new Set(["mp4", "m4v", "mov"]);
-export function playableVod(ext: string | null | undefined): boolean {
-  return PLAYABLE_VOD.has(String(ext || "").trim().toLowerCase());
+/**
+ * Everything the service offers is listed and Safari is allowed to try it. Only a title Safari
+ * actually refuses gets hidden, so a title is never dropped for a guess about its file type.
+ */
+export type HiddenKind = "live" | "film" | "episode" | "series";
+export function hiddenKey(kind: HiddenKind, id: string) { return `${kind}:${id}`; }
+
+/** One browser's memory of what Safari refused: never repeats a title, keeps the newest 500. */
+export const HIDDEN_MAX = 500;
+export function withHidden(hidden: string[], key: string) {
+  return [...hidden.filter((k) => k !== key), key].slice(-HIDDEN_MAX);
 }
+/** Removes hidden titles from a list without copying it when nothing is hidden. */
+export function dropHidden<T>(list: T[], keyOf: (item: T) => string, hidden: Set<string>) {
+  return hidden.size ? list.filter((i) => !hidden.has(keyOf(i))) : list;
+}
+
+/** Safari's own error codes: 4 = the file isn't acceptable to it, 3 = it can't decode it. Both are final. */
+export function isFatalMediaError(code: number | undefined) { return code === 4 || code === 3; }
 
 const enc = encodeURIComponent;
 const root = (dns: string) => dns.replace(/\/+$/, "");
