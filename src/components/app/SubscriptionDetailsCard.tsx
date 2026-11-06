@@ -245,7 +245,7 @@ export function SubscriptionDetailsCard({
                 <span
                   className={cn(
                     "rounded-full border whitespace-nowrap shrink-0 font-semibold",
-                    compact && !fill && "absolute right-1.5 top-1.5",
+                    compact && !fill && "absolute right-1 top-1 !py-0 leading-4",
                     fill ? "text-[10px] px-1.5 py-0.5 md:text-sm md:px-3 md:py-1" : "text-[10px] px-1.5 py-0.5",
                     expired
                       ? "text-white border-red-400/50 bg-red-600 expiry-date-flash"
