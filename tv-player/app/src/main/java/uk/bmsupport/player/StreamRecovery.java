@@ -41,6 +41,16 @@ final class StreamRecovery {
     static boolean drifted(long liveOffsetMs) { return liveOffsetMs > LIVE_DRIFT_MS; }
 
     /** Puts the remembered working format (ts or hls) first; other addresses keep their order. */
+    /** Sky channels start on HLS: it copes with the provider's advert switches far better than MPEG-TS. */
+    static String startFormat(String pref, String name) {
+        if (pref != null) return pref;
+        return name != null && name.toLowerCase(java.util.Locale.ROOT).matches(".*\\bsky\\b.*") ? "m3u8" : null;
+    }
+
+    /** An advert switch: the picture size/format changed moments before the stall. */
+    static final long ADVERT_WINDOW_MS = 4000, ADVERT_JUMP_MS = 800;
+    static boolean advertSwitch(long sinceFormatChange) { return sinceFormatChange >= 0 && sinceFormatChange <= ADVERT_WINDOW_MS; }
+
     static String[] preferFormat(String[] urls, String pref) {
         if (pref == null || urls == null || urls.length < 2) return urls;
         String ext = "." + pref;

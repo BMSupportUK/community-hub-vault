@@ -393,6 +393,10 @@ public class PlayerActivity extends Activity {
     private long stallStartedAt, lastStableAt, lastPosition;
     private final long[] stallTimes = new long[16]; private int stallCount;
     private boolean everReady, capped, sdOffered;
+    private long formatChangedAt = -100000;
+    private final Runnable advertJump = () -> {
+        if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING) { formatChangedAt = -100000; player.seekToDefaultPosition(); player.prepare(); player.play(); }
+    };
     private TextView reconnectNote;
 
     private void startWithRecovery(String[] urls) {
@@ -403,6 +407,8 @@ public class PlayerActivity extends Activity {
                 if (s == Player.STATE_BUFFERING && everReady && stallStartedAt == 0) {
                     stallStartedAt = now;
                     ui.postDelayed(stallWatch, StreamRecovery.STALL_RECONNECT_MS);
+                    // Advert switch: jump straight to the live point instead of waiting to catch up.
+                    if ("live".equals(kind()) && StreamRecovery.advertSwitch(now - formatChangedAt)) ui.postDelayed(advertJump, StreamRecovery.ADVERT_JUMP_MS);
                 } else if (s == Player.STATE_READY) {
                     if (stallStartedAt > 0) onStallEnded(now - stallStartedAt, reconnects > 0);
                     everReady = true; stallStartedAt = 0; reconnects = 0; lastStableAt = now;
@@ -415,6 +421,7 @@ public class PlayerActivity extends Activity {
                     reconnect();
                 }
             }
+            @Override public void onVideoSizeChanged(VideoSize v) { if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime(); }
             @Override public void onPlayerError(PlaybackException e) {
                 if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { player.seekToDefaultPosition(); player.prepare(); return; }
                 if (!everReady && urlAt + 1 < liveUrls.length) { urlAt++; open(0); return; }

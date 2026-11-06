@@ -33,3 +33,5 @@ test('live channels always keep at least a 12 second cushion', () => {
   expect(r.liveBufferMs(3000)).toBe(12000);
   expect(r.liveBufferMs(15000)).toBe(15000);
 });
+
+test('sky starts on hls unless learned',()=>{assert.equal(r.startFormat(null,'Sky Sports News | NowTV |'),'m3u8');assert.equal(r.startFormat(null,'BBC One'),null);assert.equal(r.startFormat('ts','Sky Cinema'),'ts');});
