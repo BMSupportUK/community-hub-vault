@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { bufferDateRange } from "./player-buffer-date";
+import { bufferDateRange } from "../src/lib/player-buffer-date";
 
 describe("Buffering calendar filters", () => {
   test("a year covers that entire year", () => {
