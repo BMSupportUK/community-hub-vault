@@ -5692,6 +5692,24 @@ export type Database = {
         }
         Relationships: []
       }
+      player_channel_formats: {
+        Row: {
+          content_id: string
+          fmt: string
+          updated_at: string
+        }
+        Insert: {
+          content_id: string
+          fmt: string
+          updated_at?: string
+        }
+        Update: {
+          content_id?: string
+          fmt?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_connection_log: {
         Row: {
           app_version: string | null

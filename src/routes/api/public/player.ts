@@ -49,6 +49,8 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("announcement"), device_token: Token }),
+  z.object({ action: z.literal("formats"), device_token: Token }),
+  z.object({ action: z.literal("format_set"), device_token: Token, content_id: z.string().regex(/^[A-Za-z0-9._-]{1,80}$/), fmt: z.enum(["ts", "m3u8"]) }),
   z.object({ action: z.literal("major_announcements"), device_token: Token }),
   z.object({ action: z.literal("ratings"), device_token: Token, items: z.array(RatingTitle).min(1).max(200) }),
   RatingVote.extend({ action: z.literal("vote"), device_token: Token }),
@@ -298,6 +300,18 @@ export const Route = createFileRoute("/api/public/player")({
           ].filter((l) => l !== null).join("\n");
           await supabaseAdmin.from("ticket_messages").insert({ ticket_id: t.id, sender_id: device.user_id, is_internal: false, content: lines });
           return json({ ok: true, ticket_id: t.id });
+        }
+
+        if (body.action === "formats" || body.action === "format_set") {
+          // Steadier stream type per channel, learned on any device and shared with all of them.
+          if (body.action === "format_set") {
+            const { error } = await supabaseAdmin.from("player_channel_formats")
+              .upsert({ content_id: body.content_id, fmt: body.fmt, updated_at: new Date().toISOString() });
+            if (error) return json({ error: "Could not save" }, 503);
+            return json({ ok: true });
+          }
+          const { data } = await supabaseAdmin.from("player_channel_formats").select("content_id, fmt").limit(20000);
+          return json({ formats: Object.fromEntries((data ?? []).map((r) => [r.content_id, r.fmt])) });
         }
 
         if (body.action === "buffering") {
