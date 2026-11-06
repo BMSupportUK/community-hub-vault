@@ -4,7 +4,7 @@ import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
 
 /** `passChannels` lists which of `channels` came only from sports-pass guides (apps group them separately). */
-export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[]; teamChannels?: boolean; channelCountry?: Record<string, string> };
+export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[]; teamChannels?: boolean; channelCountry?: Record<string, string>; end?: number; endSource?: "epg" | "estimate" };
 
 /** "EFL : CHAMPIONSHIP: Derby County v Bolton" → "Derby County v Bolton"; keeps mixed-case prefixes ("UFC Fight Night Preview Show: …"). */
 export function cardTitle(title: string): string {
@@ -14,7 +14,9 @@ export function cardTitle(title: string): string {
   return !/[a-z]/.test(prefix) && /[A-Z]/.test(prefix) && fixtureTeams(rest) ? rest : title;
 }
 
-const WINDOW_BACK = 6 * 3600_000, WINDOW_AHEAD = 7 * 86400_000;
+/** Finished games stay this long (dimmed) before dropping off. */
+export const FINISHED_KEEP_MS = 2 * 3600_000;
+const WINDOW_BACK = 10 * 3600_000, WINDOW_AHEAD = 7 * 86400_000;
 /** Guides list the same game with different kick-off/coverage times (e.g. 19:20 build-up, 19:57, 20:00). */
 const SAME_GAME_MS = 90 * 60_000;
 const MAX_CHANNELS = 30;
@@ -100,5 +102,40 @@ export function playerSportsEvents(
       if (!existing) out.push(ev);
     }
   }
-  return out.sort((a, b) => a.start - b.start).slice(0, 400).map(({ pass: _p, mainSet: _m, ...ev }) => ev);
+  return out
+    .map(({ pass: _p, mainSet: _m, ...ev }) => ({ ...ev, end: ev.start + typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`), endSource: "estimate" as const }))
+    .filter((ev) => ev.end + FINISHED_KEEP_MS > nowMs)
+    .sort((a, b) => a.start - b.start).slice(0, 400);
+}
+
+const H = 3600_000;
+/** Standard length of a game when no TV guide entry says when it ends. */
+export function typicalLengthMs(text: string): number {
+  const t = text.toLowerCase();
+  if (/cricket|test match/.test(t)) return 8 * H;
+  if (/\bufc\b|boxing|\bmma\b|fight night|wrestling|\bwwe\b/.test(t)) return 5 * H;
+  if (/darts|snooker/.test(t)) return 4 * H;
+  if (/\bnfl\b|american football|sunday ticket/.test(t)) return 3.5 * H;
+  if (/tennis/.test(t)) return 3 * H;
+  if (/\bf1\b|formula|motorsport|moto ?gp|indycar|nascar|grand prix|racing/.test(t)) return 2.5 * H;
+  if (/\bnba\b|\bnhl\b|basketball|hockey|league pass|center ice/.test(t)) return 2.5 * H;
+  if (/football|soccer|rugby|premier league|efl|championship|cymru|ifollow|scottish|\bfa\b|uefa|champions league/.test(t)) return 2 * H;
+  return 3 * H;
+}
+
+/** Overwrite estimates with real TV-guide end times (keyed by channel name, lower-cased) and drop long-finished games. */
+export function applyGuideEnds(events: PlayerSportsEvent[], ends: Map<string, { start: number; end: number }[]>, nowMs = Date.now()): PlayerSportsEvent[] {
+  return events.map((ev) => {
+    for (const c of ev.channels) {
+      const hit = ends.get(c.toLowerCase())?.find((p) => p.start <= ev.start + 30 * 60_000 && p.end > ev.start + 30 * 60_000);
+      if (hit) return { ...ev, end: hit.end, endSource: "epg" as const };
+    }
+    return ev;
+  }).filter((ev) => (ev.end ?? Infinity) + FINISHED_KEEP_MS > nowMs);
+}
+
+/** "live" between start and end, "finished" after end, otherwise "upcoming". */
+export function sportsEventState(ev: { start: number; end?: number }, nowMs = Date.now()): "upcoming" | "live" | "finished" {
+  if (nowMs < ev.start) return "upcoming";
+  return ev.end != null && nowMs >= ev.end ? "finished" : "live";
 }

@@ -375,8 +375,13 @@ export const Route = createFileRoute("/api/public/player")({
               return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null, links: readChannelLinks(b.channel_links) };
             });
             const playlistCats = [...new Set(guideRows.map((g) => g.links.category).filter((c): c is string => !!c))];
-            const { playlistCategoryChannels } = await import("@/lib/playlist-source.server");
-            const events = playerSportsEvents(guideRows, Date.now(), await playlistCategoryChannels(playlistCats));
+            const { playlistCategoryChannels, playlistGuideTimes } = await import("@/lib/playlist-source.server");
+            const { applyGuideEnds } = await import("@/lib/player-sports");
+            const rawEvents = playerSportsEvents(guideRows, Date.now(), await playlistCategoryChannels(playlistCats));
+            // Real end times from the TV guide for games that have started (estimate stays when a channel has no guide).
+            const nowMs = Date.now();
+            const startedChannels = rawEvents.filter((e) => e.start <= nowMs).flatMap((e) => e.channels.slice(0, 2));
+            const events = applyGuideEnds(rawEvents, await playlistGuideTimes(startedChannels), nowMs);
             const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
             // Guides follow the website order too (sort_order, newest first), after the category names.
             const order = Array.from(new Set([...(cats ?? []).map((c) => c.name), ...(blogs ?? []).map((b) => b.title)]));
