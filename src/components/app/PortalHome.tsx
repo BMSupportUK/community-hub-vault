@@ -5,7 +5,7 @@ import heroImg from "@/assets/member-hero.jpg";
 import staffHeroImg from "@/assets/staff-portal-hero.jpg";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { Nameplate } from "@/components/app/Nameplate";
