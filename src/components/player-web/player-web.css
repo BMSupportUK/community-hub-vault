@@ -21,7 +21,7 @@
 .bmw-note p{margin:0;font-size:13px}
 .bmw-center h2{margin:0;font-size:22px}
 .bmw-pin{font-size:30px;letter-spacing:10px;min-height:44px;font-variant-numeric:tabular-nums}
-.bmw-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+.bmw-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:auto}
 .bmw-pad button{height:58px;font-size:22px}
 .bmw-err{color:var(--warn);max-width:420px}
 .bmw-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
