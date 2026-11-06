@@ -3,7 +3,7 @@ import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
 
 /** `passChannels` lists which of `channels` came only from sports-pass guides (apps group them separately). */
-export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[] };
+export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[]; teamChannels?: boolean };
 
 /** "EFL : CHAMPIONSHIP: Derby County v Bolton" → "Derby County v Bolton"; keeps mixed-case prefixes ("UFC Fight Night Preview Show: …"). */
 export function cardTitle(title: string): string {
@@ -62,6 +62,7 @@ export function playerSportsEvents(
   const out: Card[] = [];
   for (const g of guides) {
     const pass = isPassGuide(g);
+    const clubGuide = [g.parent, g.category, g.title].some((x) => /ifollow|scot/i.test(x ?? ""));
     for (const e of parseSportsListingBlock(g.body ?? "")) {
       if (!safePublicEventTitle(e)) continue;
       const start = ukListingInstant(e.date, e.time);
@@ -73,6 +74,8 @@ export function playerSportsEvents(
       const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && sameFixture(c.title, e.title));
       const target = existing ?? ev;
       if (!pass) for (const c of channels) target.mainSet.add(c.toLowerCase());
+      // Club-feed guides (iFollow, Scottish) list the two clubs; apps then find each club's own channels.
+      const club = clubGuide || !!target.teamChannels;
       let merged: string[];
       if (existing && existing.pass && !pass) {
         // A proper competition guide beats a sports-pass listing for the card's name and time.
@@ -83,6 +86,7 @@ export function playerSportsEvents(
       const seen = new Set<string>();
       target.channels = merged.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, MAX_CHANNELS);
       target.passChannels = target.channels.filter((c) => !target.mainSet.has(c.toLowerCase()));
+      if (club) target.teamChannels = true;
       if (!existing) out.push(ev);
     }
   }
