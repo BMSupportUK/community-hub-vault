@@ -5692,6 +5692,78 @@ export type Database = {
         }
         Relationships: []
       }
+      player_connection_log: {
+        Row: {
+          app_version: string | null
+          device_id: string
+          geo_city: string | null
+          geo_country: string | null
+          geo_lat: number | null
+          geo_lon: number | null
+          geo_region: string | null
+          id: string
+          iptv_username: string | null
+          last_ip: string | null
+          last_seen_at: string
+          platform: string | null
+          preview: boolean
+          started_at: string
+          user_id: string | null
+          vpn_provider: string | null
+          vpn_status: string | null
+          watching_category: string | null
+          watching_kind: string | null
+          watching_player: string | null
+          watching_title: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          device_id: string
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_lat?: number | null
+          geo_lon?: number | null
+          geo_region?: string | null
+          id?: string
+          iptv_username?: string | null
+          last_ip?: string | null
+          last_seen_at?: string
+          platform?: string | null
+          preview?: boolean
+          started_at: string
+          user_id?: string | null
+          vpn_provider?: string | null
+          vpn_status?: string | null
+          watching_category?: string | null
+          watching_kind?: string | null
+          watching_player?: string | null
+          watching_title?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          device_id?: string
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_lat?: number | null
+          geo_lon?: number | null
+          geo_region?: string | null
+          id?: string
+          iptv_username?: string | null
+          last_ip?: string | null
+          last_seen_at?: string
+          platform?: string | null
+          preview?: boolean
+          started_at?: string
+          user_id?: string | null
+          vpn_provider?: string | null
+          vpn_status?: string | null
+          watching_category?: string | null
+          watching_kind?: string | null
+          watching_player?: string | null
+          watching_title?: string | null
+        }
+        Relationships: []
+      }
       player_connection_reports: {
         Row: {
           active_connections: number
@@ -9930,6 +10002,7 @@ export type Database = {
         Args: { _body: string; _id: string }
         Returns: undefined
       }
+      purge_player_connection_log: { Args: never; Returns: undefined }
       purge_user_data: { Args: { _uid: string }; Returns: undefined }
       queue_shift_phone_alerts: { Args: never; Returns: number }
       reassign_ticket: {

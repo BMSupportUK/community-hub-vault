@@ -2003,6 +2003,13 @@
       "when": 1793957177722,
       "tag": "0285_player_buffer_calendar_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 286,
+      "version": "7",
+      "when": 1793987796222,
+      "tag": "0286_player_connection_log",
+      "breakpoints": true
     }
   ]
 }
