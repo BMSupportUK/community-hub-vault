@@ -783,7 +783,7 @@ public class MainActivity extends Activity {
                 String f = prefs.getString("format", "auto");
                 if (f.equals("ts")) return new String[]{base + ".ts"};
                 if (f.equals("hls")) return new String[]{base + ".m3u8"};
-                String pf = prefs.getString("fmt_pref:" + it.id, null);
+                String pf = StreamRecovery.startFormat(prefs.getString("fmt_pref:" + it.id, null), it.name);
                 return StreamRecovery.preferFormat(new String[]{base + ".ts", base + ".m3u8", d + "/" + u + "/" + p + "/" + it.id}, pf);
             }
             case "film": return new String[]{d + "/movie/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext)};

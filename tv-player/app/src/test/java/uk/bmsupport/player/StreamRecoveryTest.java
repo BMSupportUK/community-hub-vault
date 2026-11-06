@@ -55,4 +55,14 @@ public class StreamRecoveryTest {
         assertEquals("m3u8", StreamRecovery.otherFormat("x.ts"));
         assertEquals("ts", StreamRecovery.otherFormat("x.m3u8"));
     }
+
+    @org.junit.Test public void skyStartsOnHlsUnlessLearned() {
+        org.junit.Assert.assertEquals("m3u8", StreamRecovery.startFormat(null, "Sky Sports News | NowTV |"));
+        org.junit.Assert.assertNull(StreamRecovery.startFormat(null, "BBC One"));
+        org.junit.Assert.assertEquals("ts", StreamRecovery.startFormat("ts", "Sky Sports Main Event"));
+    }
+    @org.junit.Test public void advertSwitchWithinFourSeconds() {
+        org.junit.Assert.assertTrue(StreamRecovery.advertSwitch(1500));
+        org.junit.Assert.assertFalse(StreamRecovery.advertSwitch(9000));
+    }
 }
