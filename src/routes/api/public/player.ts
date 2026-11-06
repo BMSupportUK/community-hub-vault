@@ -378,7 +378,15 @@ export const Route = createFileRoute("/api/public/player")({
             const order = Array.from(new Set([...(cats ?? []).map((c) => c.name), ...(blogs ?? []).map((b) => b.title)]));
             // Category pop-up: the website's own main categories, each with its sub-categories, in site order.
             const categories = (cats ?? []).filter((c) => !c.parent_id).map((c) => ({ name: c.name, subs: (cats ?? []).filter((x) => x.parent_id === c.id).map((x) => x.name) }));
-            return { version, events, order, categories, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
+            // Third level: each category's guides (website order), keyed "Main|Sub" ("Main|" when no sub-category).
+            const guides: Record<string, string[]> = {};
+            for (const b of blogs ?? []) {
+              const c = (cats ?? []).find((x) => x.id === b.category_id); if (!c) continue;
+              const parent = c.parent_id ? (cats ?? []).find((x) => x.id === c.parent_id) : null;
+              const key = parent ? `${parent.name}|${c.name}` : `${c.name}|`;
+              (guides[key] ??= []).includes(b.title) || guides[key].push(b.title);
+            }
+            return { version, events, order, categories, guides, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
           });
           return json(payload);
         }
