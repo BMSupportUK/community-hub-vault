@@ -26,6 +26,16 @@
  .bmw-pad button{height:46px;font-size:20px}
  .bmw-pin{font-size:26px;letter-spacing:8px;min-height:36px}
 }
+/* Very short screens: tighten everything so the keypad is still on view. */
+@media (max-height:560px){
+ .bmw-unlock{gap:8px;padding:8px 14px}
+ .bmw-note{padding:8px 10px;gap:4px}
+ .bmw-note h3{font-size:13px}
+ .bmw-note p{font-size:12px}
+ .bmw-pad{grid-template-columns:repeat(3,58px);gap:6px}
+ .bmw-pad button{height:38px;font-size:18px}
+ .bmw-pin{font-size:22px;letter-spacing:6px;min-height:30px}
+}
 .bmw-center h2{margin:0;font-size:22px}
 .bmw-pin{font-size:30px;letter-spacing:10px;min-height:44px;font-variant-numeric:tabular-nums}
 .bmw-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:auto}
