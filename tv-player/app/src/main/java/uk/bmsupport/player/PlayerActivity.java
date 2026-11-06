@@ -454,7 +454,7 @@ public class PlayerActivity extends Activity {
         String id = getIntent().getStringExtra("content_id");
         if (!"live".equals(kind()) || id == null || liveUrls.length < 2) return;
         String other = StreamRecovery.otherFormat(liveUrls[urlAt]);
-        if (other != null) prefs(this).edit().putString("fmt_pref:" + id, other).apply();
+        if (other != null) { prefs(this).edit().putString("fmt_pref:" + id, other).apply(); FormatSync.push(this, id, other); }
     }
 
     private boolean handedOver;
@@ -472,7 +472,11 @@ public class PlayerActivity extends Activity {
     }
 
     private void open(long at) {
-        player.setMediaItem(item(liveUrls[urlAt]));
+        MediaItem mi = item(liveUrls[urlAt]);
+        // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
+        if ("live".equals(kind())) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
+                .setTargetOffsetMs(StreamRecovery.LIVE_TARGET_MS).setMinOffsetMs(StreamRecovery.LIVE_TARGET_MS / 2).build()).build();
+        player.setMediaItem(mi);
         player.setPlayWhenReady(true);
         player.prepare();
         if (at > 0) player.seekTo(at);

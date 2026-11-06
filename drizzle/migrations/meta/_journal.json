@@ -2010,6 +2010,13 @@
       "when": 1793987796222,
       "tag": "0286_player_connection_log",
       "breakpoints": true
+    },
+    {
+      "idx": 287,
+      "version": "7",
+      "when": 1793988206725,
+      "tag": "0287_player_channel_formats",
+      "breakpoints": true
     }
   ]
 }

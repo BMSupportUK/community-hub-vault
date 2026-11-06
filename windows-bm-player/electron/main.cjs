@@ -63,6 +63,7 @@ async function poll(){
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
   if(changed){save();if(store.user&&gate.unlocked)await refresh();}
   if(store.user&&gate.unlocked)syncFavourites().catch(()=>{});
+  if(gate.unlocked)syncFormats().catch(()=>{});
   send({type:'state',state:publicState()});
  }catch(error){send({type:'notice',message:error.message});}finally{pollBusy=false;}
 }
@@ -143,7 +144,7 @@ async function play({item,resume=false,screens=1,subtitles=null}){
  const index=sessions.length,watched=store.progress?.[key(item)];
  const startAt=resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0;
  engine.setFill?.(index,['film','episode'].includes(item.kind));
- try{engine.play(index,urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
+ try{engine.play(index,urls[0],{buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
  catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
  const onBackup=engine.usingBackup(index);
  const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
@@ -155,9 +156,10 @@ async function play({item,resume=false,screens=1,subtitles=null}){
 async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
  const rec=recovery.tick(session,s.state,Date.now(),session.item.kind==='live');
  if(rec.event)queueBuffer(session.item,rec.event);
- if(rec.lower){session.maxHeight=720;const other=session.item.kind==='live'&&session.urls.length>1?recovery.otherFormat(session.urls[session.urlIndex]):null;if(other){store.formatPref={...(store.formatPref||{}),[session.item.id]:other};save();}}
- if(session.ready&&recovery.frozen(session,s.state,s.position,Date.now())){queueBuffer(session.item,{ms:recovery.FREEZE_MS,reconnected:true,freeze:true});const at=session.item.kind==='live'?0:session.position;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}}
- if(rec.reconnect){const at=session.item.kind==='live'?0:session.position;send({type:'notice',message:'Reconnecting…'});setTimeout(()=>{if(!sessions.includes(session)||!engine)return;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}},rec.reconnect);}
+ if(rec.lower){session.maxHeight=720;const other=session.item.kind==='live'&&session.urls.length>1?recovery.otherFormat(session.urls[session.urlIndex]):null;if(other){store.formatPref={...(store.formatPref||{}),[session.item.id]:other};save();site({action:'format_set',content_id:String(session.item.id),fmt:other}).catch(()=>{});}}
+ if(rec.raise){session.maxHeight=0;if(/\.m3u8$/i.test(session.urls[session.urlIndex]||'')){try{engine.play(session.index,session.urls[session.urlIndex],{buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer):recovery.bufferMs(store.settings?.buffer),resume:session.item.kind==='live'?0:session.position,maxHeight:0});applyAudio();}catch{}}}
+ if(session.ready&&recovery.frozen(session,s.state,s.position,Date.now())){queueBuffer(session.item,{ms:recovery.FREEZE_MS,reconnected:true,freeze:true});const at=session.item.kind==='live'?0:session.position;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}}
+ if(rec.reconnect){const at=session.item.kind==='live'?0:session.position;send({type:'notice',message:'Reconnecting…'});setTimeout(()=>{if(!sessions.includes(session)||!engine)return;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}},rec.reconnect);}
  if(rec.offerSd)send({type:'notice',message:'This HD channel keeps buffering on your connection. Try the SD version of the channel for smoother playback.'});
  if(rec.failed&&!toBackup(session))send({type:'notice',message:'This stream keeps dropping and couldn\'t reconnect. Try again or report the issue.'});
  if(!session.ready&&(s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer)});}else if(!session.failed&&!toBackup(session)){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
@@ -199,6 +201,7 @@ function trusted(event){return event.sender===win?.webContents&&event.senderFram
 /** Favourites live on the website per account and provider login, so every BM Player shows the same list. */
 function favouriteItems(){return (store.favourites||[]).filter(i=>i&&i.id!=null&&i.kind&&JSON.stringify(i).length<=4000).slice(0,500).map(i=>({...i,id:String(i.id)}));}
 function pushFavourites(){if(!store.user||!store.token)return;site({action:'favourites_set',login:store.user,items:favouriteItems()}).catch(()=>{});}
+async function syncFormats(){if(!store.token)return;const r=await site({action:'formats'});if(!r||typeof r.formats!=='object')return;const ok=Object.fromEntries(Object.entries(r.formats).filter(([,v])=>v==='ts'||v==='m3u8'));store.formatPref={...(store.formatPref||{}),...ok};save();}
 async function syncFavourites(){if(!store.user||!store.token||!gate.unlocked)return;const r=await site({action:'favourites',login:store.user});if(!r||!Array.isArray(r.items))return;
  if(!r.stored){if((store.favourites||[]).length)pushFavourites();store.favSynced=true;save();return;}
  if(!store.favSynced){const seen=new Set(r.items.map(i=>i.kind+'|'+i.id));const extra=(store.favourites||[]).filter(i=>!seen.has(i.kind+'|'+String(i.id)));store.favourites=[...r.items,...extra];store.favSynced=true;save();if(extra.length)pushFavourites();send({type:'state',state:publicState()});return;}
@@ -216,7 +219,7 @@ else{
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',kind=>{if(kind==='film'||kind==='series')syncProgress(false).catch(()=>{});return catalogue(kind);});register('epg',epg);register('catchup',catchup);register('sports',()=>site({action:'sports'}));
-  register('unlock',async number=>{await gate.unlock(number,site);syncFavourites().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
+  register('unlock',async number=>{await gate.unlock(number,site);syncFavourites().catch(()=>{});syncFormats().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season,poster:String(p.info?.movie_image||'')}))]))};});
   electronSession.defaultSession.setPermissionRequestHandler((wc,perm,cb,details)=>cb(perm==='media'&&wc===win?.webContents&&(details?.mediaTypes||['audio']).every(t=>t==='audio')));
   electronSession.defaultSession.setPermissionCheckHandler((wc,perm)=>perm==='media'&&wc===win?.webContents);

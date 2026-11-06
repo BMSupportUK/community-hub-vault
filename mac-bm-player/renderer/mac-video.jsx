@@ -37,7 +37,7 @@ function start(index) {
   const fail = () => { video.dataset.failed = '1'; };
   const seconds = Math.max(2, Math.round(cmd.buffer / 1000));
   if (cmd.kind === 'hls' && Hls.isSupported()) {
-    const hls = new Hls({ enableWorker: false, maxBufferLength: Math.max(10, seconds * 3) });
+    const hls = new Hls({ enableWorker: false, maxBufferLength: Math.max(10, seconds * 3), ...(cmd.live !== false ? { liveSyncDuration: seconds, liveMaxLatencyDuration: seconds + 20 } : {}) });
     hls.on(Hls.Events.ERROR, (_e, d) => { if (d.fatal) fail(); });
     if (cmd.subtitles != null) {
       hls.subtitleDisplay = cmd.subtitles === true;
@@ -47,7 +47,7 @@ function start(index) {
   } else if (cmd.kind === 'ts' && mpegts.isSupported()) {
     // Catch up recordings are finite: play them as files so the length and seek bar work.
     const live = cmd.live !== false;
-    const p = mpegts.createPlayer({ type: 'mpegts', isLive: live, url: cmd.src }, { enableWorker: false, liveBufferLatencyChasing: live, stashInitialSize: 384 * 1024 });
+    const p = mpegts.createPlayer({ type: 'mpegts', isLive: live, url: cmd.src }, { enableWorker: false, liveBufferLatencyChasing: live, liveBufferLatencyMaxLatency: seconds + 20, liveBufferLatencyMinRemain: seconds, stashInitialSize: 384 * 1024 });
     p.on(mpegts.Events.ERROR, fail);
     p.attachMediaElement(video); p.load(); players.set(index, p);
   } else {

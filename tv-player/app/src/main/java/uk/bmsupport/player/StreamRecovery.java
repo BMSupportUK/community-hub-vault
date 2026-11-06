@@ -18,7 +18,9 @@ final class StreamRecovery {
     static final long STALL_WINDOW_MS = 120000;
     static final int STALLS_TO_LOWER = 2;
     static final int STALLS_TO_OFFER_SD = 3;
-    static final long STABLE_RAISE_MS = 300000;
+    static final long STABLE_RAISE_MS = 120000;
+    /** Live plays this far behind the edge, a safety cushion for short cut-outs. */
+    static final long LIVE_TARGET_MS = 12000;
 
     /** {minBuffer, maxBuffer, startPlayback, afterRebuffer} in milliseconds. */
     static int[] bufferMs(String id) {
@@ -26,7 +28,7 @@ final class StreamRecovery {
             case "small": return new int[]{10000, 15000, 1500, 3000};
             case "normal": return new int[]{15000, 30000, 2000, 4000};
             case "large": return new int[]{40000, 90000, 3000, 6000};
-            default: return new int[]{30000, 60000, 2500, 5000};
+            default: return new int[]{30000, 60000, 2500, 6000};
         }
     }
 

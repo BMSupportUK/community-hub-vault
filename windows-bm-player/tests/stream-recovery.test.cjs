@@ -21,3 +21,15 @@ test('position stuck 4s while playing is a freeze; paused or moving is not',()=>
  const m={};r.frozen(m,3,1,0);assert.equal(r.frozen(m,3,5,5000),false);
 });
 test('remembered format goes first',()=>{assert.deepEqual(r.preferFormat(['a.ts','a.m3u8','a'],'m3u8'),['a.m3u8','a.ts','a']);assert.equal(r.otherFormat('x.ts'),'m3u8');});
+
+test('full quality returns after 2 minutes with no stalls', () => {
+  const s = { ready: true, lowered: true, stallTimes: [], lastStallAt: 1000 };
+  expect(r.tick(s, 3, 1000 + 119000, true).raise).toBeUndefined();
+  expect(r.tick(s, 3, 1000 + 120000, true).raise).toBe(true);
+  expect(s.lowered).toBe(false);
+});
+
+test('live channels always keep at least a 12 second cushion', () => {
+  expect(r.liveBufferMs(3000)).toBe(12000);
+  expect(r.liveBufferMs(15000)).toBe(15000);
+});
