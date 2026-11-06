@@ -137,7 +137,7 @@ function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
         <button className="bmw-note-more" onClick={() => setShowLimits((v) => !v)}>{showLimits ? "Show less" : "Show what's available"}</button>
       </div>
       <h2>Enter your account number</h2>
-      <p className="muted">It's the 6-digit number in your subscription box on bmsupport.uk.</p>
+      <p className="muted">The 6-digit number in your subscription box.</p>
       <div className="bmw-pin" aria-label="Account number entered">{pin.padEnd(6, "•")}</div>
       {err && <p className="bmw-err">{err}</p>}
       <div className="bmw-pad">
