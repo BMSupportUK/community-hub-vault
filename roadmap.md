@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Sports guide one card per game even when guides spell teams differently or list times up to 90 min apart (Derby v Bolton: Sky, DAZN, MonoMax, Paramount+, iFollow on one card); checks pass on today's real guides. Needs website publish; not seen on a real player yet.
 - [x] Fix missing Premier League guides (deduplication now guide-scoped) and Android/website unnumbered labels expanding to unrelated numbered feeds; 19 website checks, 81 Android checks and 2 added native matching checks pass. Signed Android 3.59 built, not released; website change needs publication and real-device verification has no attached device.
 - [x] Build signed Android 3.58 with phone-only View EPG opening the selected category in a full-screen guide; 81 Android checks pass and permanent BM signature verified. Not released; real-phone verification unavailable (no attached device).
 - [x] Add Backup Apps after Link Device and move QD/XCTV install cards; seven tests pass, signed-in real cards and saved tab order verified, build OK.
