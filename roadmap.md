@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Build signed Android 3.58 with phone-only View EPG opening the selected category in a full-screen guide; keep TV-box layout unchanged.
 - [x] Add Backup Apps after Link Device and move QD/XCTV install cards; seven tests pass, signed-in real cards and saved tab order verified, build OK.
 - [x] Give Install Guides staff help its own visible tab and hide phone/Windows self-install; five tests pass, signed-in desktop/phone and old setup links verified; ticket creation unchanged.
 - [x] Phone Live TV: once a preview kicks in, the button under the category details becomes "▶ Play menu" and both it and a single tap on the preview box open that channel's play menu; 51 Android tests pass. Not released; real-phone tap check pending (no attached device).

@@ -3049,8 +3049,9 @@ public class MainActivity extends Activity {
         stopPreview();
         LinearLayout root = column();
         LinearLayout head = row();
-        // Phones now use the same Live TV layout as TV boxes (preview, info beside it, guide below, Category pill).
-        final boolean boxLive = live;
+        // Phones reserve the guide for View EPG; TV boxes keep their always-visible grid.
+        final boolean phoneLive = live && "phone".equals(platform());
+        final boolean boxLive = live && !phoneLive;
         if (live && !boxLive) { head.setGravity(Gravity.CENTER_VERTICAL);
             head.addView(text("Live TV", 26, TEXT, true));
             head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
@@ -3066,7 +3067,6 @@ public class MainActivity extends Activity {
         TextView progTime = text("", 15, MUTED, false);
         TextView pvStatus = text("", 13, MUTED, false);
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
-        final boolean phoneLive = false; // phone-only Live TV extras retired: phones share the box layout
         TextView selectedCategory = text("Category: All", 15, MUTED, false);
         // Phones: "Preview channel" loads the selected channel into the preview box; once it kicks in,
         // the box and the button both bring up that channel's play menu.
@@ -3190,10 +3190,13 @@ public class MainActivity extends Activity {
         GuideGridView grid = new GuideGridView(this);
         // Phones: "Bigger guide" hides the preview and header so the guide fills the screen.
         LinearLayout bigBar = row(); bigBar.setGravity(Gravity.CENTER_VERTICAL);
-        bigBar.addView(text("TV guide", 20, TEXT, true));
+        TextView guideTitle = text("TV guide", 20, TEXT, true);
+        guideTitle.setSingleLine(true);
+        guideTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        bigBar.addView(guideTitle, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         // Phones: jump-to-now and day shifting live inside the bigger-guide pop-up.
         if (phoneLive) bigBar.addView(btns);
-        bigBar.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        bigBar.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
         bigBar.setVisibility(View.GONE);
         root.addView(bigBar);
         Runnable closeBig = () -> { bigBar.setVisibility(View.GONE); grid.setVisibility(View.GONE); top.setVisibility(View.VISIBLE); head.setVisibility(View.VISIBLE); back = this::showHome; };
@@ -3304,6 +3307,7 @@ public class MainActivity extends Activity {
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
             if (boxLive && boxCatPill != null) boxCatPill.setText("☰ Category: " + cat[1]);
             selectedCategory.setText("Category: " + cat[1]);
+            guideTitle.setText("TV guide · " + cat[1]);
             if (live) liveCatId = cat[0];
             List<String> panelNames = new ArrayList<>();
             for (String[] c : catRows) panelNames.add((c[0].equals(cat[0]) ? "\u2713 " : "") + c[1]);
