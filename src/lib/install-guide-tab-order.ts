@@ -4,6 +4,7 @@ export const INSTALL_TABS = [
   { key: "welcome", label: "Welcome" },
   { key: "setup", label: "Setup Device | Direct To Device" },
   { key: "link-device", label: "Link Device" },
+  { key: "backup-apps", label: "Backup Apps" },
   { key: "staff-help", label: "Help from staff" },
   { key: "ios-setup", label: "Apps For | iOS" },
   { key: "player-windows", label: "BM Player | Windows" },
@@ -18,7 +19,14 @@ export function resolveInstallTabOrder(saved: unknown): InstallTabKey[] {
   const all = INSTALL_TABS.map((t) => t.key) as InstallTabKey[];
   const list = Array.isArray(saved) ? saved : [];
   const picked = list.filter((k, i): k is InstallTabKey => all.includes(k as InstallTabKey) && list.indexOf(k) === i);
-  return [...picked, ...all.filter((k) => !picked.includes(k))];
+  const order = [...picked, ...all.filter((k) => !picked.includes(k))];
+  // Older saved orders insert the new section beside device linking, not at the end.
+  if (!picked.includes("backup-apps")) {
+    const withoutBackup = order.filter((k) => k !== "backup-apps");
+    withoutBackup.splice(withoutBackup.indexOf("link-device") + 1, 0, "backup-apps");
+    return withoutBackup;
+  }
+  return order;
 }
 
 export function moveTab(order: InstallTabKey[], index: number, dir: -1 | 1): InstallTabKey[] {

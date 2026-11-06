@@ -708,7 +708,7 @@ function InstallGuidesPage() {
                     title="Download the BM Support Apps"
                     text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
                   >
-                    <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
+                    <AppTransferPanel appGroup="primary" onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
                   </IllustratedHero>
                 }
               />
@@ -718,6 +718,12 @@ function InstallGuidesPage() {
           <TabsContent value="link-device" className="mt-0 min-w-0">
             <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
               <PlayerDeviceLinkSection />
+            </PhotoPanel>
+          </TabsContent>
+
+          <TabsContent value="backup-apps" className="mt-0 min-w-0">
+            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
+              <AppTransferPanel appGroup="backup" />
             </PhotoPanel>
           </TabsContent>
 

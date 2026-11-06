@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useIsDemoAccount } from "@/hooks/use-demo-account";
 import { matchesRemoteDevice, remoteAppKind, type RemoteDevice } from "./remote-app-downloads";
+import { isBackupApp } from "@/lib/backup-apps";
 
 type Build = Awaited<ReturnType<typeof listAppBuilds>>[number];
 type Transfer = Awaited<ReturnType<typeof listMyAppTransfers>>[number];
@@ -466,7 +467,7 @@ function RequestAccessPanel() {
   );
 }
 
-export function AppTransferPanel({ onUploadClick, remoteDevice }: { onUploadClick?: () => void; remoteDevice?: RemoteDevice } = {}) {
+export function AppTransferPanel({ onUploadClick, remoteDevice, appGroup }: { onUploadClick?: () => void; remoteDevice?: RemoteDevice; appGroup?: "primary" | "backup" } = {}) {
   const fetchBuilds = useServerFn(listAppBuilds);
   const fetchTransfers = useServerFn(listMyAppTransfers);
   const now = useTick();
@@ -497,11 +498,12 @@ export function AppTransferPanel({ onUploadClick, remoteDevice }: { onUploadClic
     const map: Record<string, Build[]> = {};
     for (const b of builds ?? []) {
       if (remoteAppKind(b)) continue;
+      if (appGroup === "primary" && isBackupApp(b)) continue;
       const key = (b.category ?? "bm_store") as string;
       (map[key] ??= []).push(b);
     }
     return map;
-  }, [builds]);
+  }, [builds, appGroup]);
 
   // BM Support App Store is the default and shows first in the download tabs.
   const orderedCategories = useMemo(
@@ -513,6 +515,17 @@ export function AppTransferPanel({ onUploadClick, remoteDevice }: { onUploadClic
   const firstTab = "bm_store";
 
   if (!canDownload) return <RequestAccessPanel />;
+
+  if (appGroup === "backup") {
+    const backupBuilds = (builds ?? []).filter(isBackupApp);
+    return <section className="min-w-0 space-y-4 text-foreground">
+      <h2 className="font-display text-2xl font-bold">Backup Apps</h2>
+      {!builds ? <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label="Loading backup apps" />
+        : backupBuilds.length ? <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
+          {backupBuilds.map((build) => <AppCard key={build.id} build={build} transfer={byBuild.get(build.id)} now={now} />)}
+        </div> : <p className="text-sm text-muted-foreground">No backup apps are available yet.</p>}
+    </section>;
+  }
 
   if (remoteDevice) {
     const remoteBuilds = (builds ?? []).filter((build) => matchesRemoteDevice(build, remoteDevice));
