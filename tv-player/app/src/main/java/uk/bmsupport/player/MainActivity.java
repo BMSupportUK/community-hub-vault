@@ -2906,10 +2906,13 @@ public class MainActivity extends Activity {
         }
         // Every word of the guide name appears in the playlist name; fewest extra words first.
         String[] words = want.split(" ");
+        boolean guideHasNumber = false;
+        for (String w : words) if (w.matches("\\d+")) { guideHasNumber = true; break; }
         final java.util.Map<Item, Integer> extra = new java.util.HashMap<>();
         for (Item it : playlist) {
             java.util.List<String> t = java.util.Arrays.asList(it.norm().split(" "));
             boolean all = true;
+            if (!guideHasNumber) for (String w : t) if (w.matches("\\d+")) { all = false; break; }
             for (String w : words) if (!t.contains(w)) { all = false; break; }
             if (all) { out.add(it); extra.put(it, t.size() - words.length); }
         }

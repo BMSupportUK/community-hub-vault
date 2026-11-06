@@ -44,9 +44,11 @@ export function matchChannel(guideName: string, playlist: string[], aliases: Cha
   if (exact.length) return [...exact].sort((a, b) => quality(b) - quality(a) || a.length - b.length);
   // Every word of the guide name appears in the playlist name (any order); fewest extra words first.
   const words = want.split(" ");
+  const guideHasNumber = words.some((w) => /^\d+$/.test(w));
   const scored = playlist.map((p) => {
     const t = normChannel(p).split(" ");
-    return { p, extra: words.every((w) => t.includes(w)) ? t.length - words.length : -1 };
+    const numberedFeed = !guideHasNumber && t.some((w) => /^\d+$/.test(w));
+    return { p, extra: !numberedFeed && words.every((w) => t.includes(w)) ? t.length - words.length : -1 };
   }).filter((x) => x.extra >= 0);
   return scored.sort((a, b) => a.extra - b.extra || quality(b.p) - quality(a.p) || a.p.length - b.p.length).map((x) => x.p);
 }
