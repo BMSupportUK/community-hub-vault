@@ -129,3 +129,6 @@
 
 - [ ] Release Mac 0.1.36 (new Sports Guide + Daily Sports default + guide level) — built code ready, repack/sign pending
 - [ ] Publish website so apps receive sports categories/guides
+
+- [ ] Release Finished badge: Android 3.64 (code done, build tools need reinstall), Windows 0.4.26, Mac 0.1.36 — awaiting "release"
+- [ ] Publish website so apps get game end times
