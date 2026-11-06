@@ -2549,9 +2549,34 @@ public class MainActivity extends Activity {
 
     // ---------- maintenance ----------
 
+    /** Crashes Java can't catch (native decoder crash, out of memory, frozen app): Android keeps the reason; report each once. */
+    private String lastSystemExit() {
+        if (Build.VERSION.SDK_INT < 30) return "";
+        try {
+            android.app.ActivityManager am = (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            java.util.List<android.app.ApplicationExitInfo> list = am.getHistoricalProcessExitReasons(null, 0, 1);
+            if (list.isEmpty()) return "";
+            android.app.ApplicationExitInfo e = list.get(0);
+            int r = e.getReason();
+            boolean bad = r == android.app.ApplicationExitInfo.REASON_CRASH_NATIVE || r == android.app.ApplicationExitInfo.REASON_CRASH
+                    || r == android.app.ApplicationExitInfo.REASON_LOW_MEMORY || r == android.app.ApplicationExitInfo.REASON_ANR
+                    || r == android.app.ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE || r == android.app.ApplicationExitInfo.REASON_SIGNALED;
+            if (!bad || e.getTimestamp() <= prefs.getLong("exit_reported", 0)) return "";
+            prefs.edit().putLong("exit_reported", e.getTimestamp()).apply();
+            String trace = "";
+            try (java.io.InputStream in = e.getTraceInputStream()) {
+                if (in != null) { byte[] b = new byte[4000]; int n = in.read(b); if (n > 0) trace = new String(b, 0, n).replaceAll("[^\\x20-\\x7E\\n]", ""); }
+            } catch (Exception ignored) {}
+            String[] names = {"unknown","exit self","signaled","low memory","crash","native crash","ANR","init failure","permission change","excessive resources","user requested","user stopped","dependency died","other","freezer","package state","package updated"};
+            String name = r < names.length ? names[r] : String.valueOf(r);
+            return "App closed by Android (" + name + ", status " + e.getStatus() + ", memory " + (e.getPss() / 1024) + " MB) on " + Build.MANUFACTURER + " " + Build.MODEL + " Android " + Build.VERSION.RELEASE + ". " + e.getDescription() + "\n" + trace;
+        } catch (Exception ex) { return ""; }
+    }
+
     /** Sends the previous session's crash details to BM Support once, as a ticket. */
     private void sendLastCrash() {
         String crash = prefs.getString("last_crash", "");
+        if (crash.isEmpty()) crash = lastSystemExit();
         if (crash.isEmpty() || prefs.getString("token", "").isEmpty()) return;
         prefs.edit().remove("last_crash").apply();
         String issue = crash.length() > 990 ? crash.substring(0, 990) : crash;
