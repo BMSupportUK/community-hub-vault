@@ -362,16 +362,17 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "sports") {
           const payload = await sportsCache(async () => {
             const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
-              supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at, sort_order, created_at").eq("published", true).order("sort_order").order("created_at", { ascending: false }),
+              supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at, sort_order, created_at, channel_links").eq("published", true).order("sort_order").order("created_at", { ascending: false }),
               supabaseAdmin.from("sports_categories").select("id, name, parent_id, sort_order").order("sort_order"),
               supabaseAdmin.from("player_settings").select("channel_aliases").eq("id", 1).maybeSingle(),
             ]);
             const { playerSportsEvents } = await import("@/lib/player-sports");
+            const { readChannelLinks } = await import("@/lib/sports-channel-links");
             const catName = new Map((cats ?? []).map((c) => [c.id, c.name]));
             const parentOf = new Map((cats ?? []).map((c) => [c.id, c.parent_id]));
             const events = playerSportsEvents((blogs ?? []).map((b) => {
               const pid = b.category_id ? parentOf.get(b.category_id) : null;
-              return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null };
+              return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null, links: readChannelLinks(b.channel_links) };
             }));
             const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
             // Guides follow the website order too (sort_order, newest first), after the category names.
