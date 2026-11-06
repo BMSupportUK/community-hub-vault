@@ -202,12 +202,12 @@ export function SubscriptionDetailsCard({
             <div
               key={c.id}
               className={cn(
-                "flex items-center justify-between gap-2 rounded-lg border",
+                "relative flex items-center justify-between gap-2 rounded-lg border",
                 embedded ? "border-white/20 bg-background/20" : "border-border bg-surface-2/70",
                 fill ? "px-2 py-1.5 md:flex-1 md:min-h-0 md:px-5 md:py-5" : compact ? "px-2 py-1.5" : "px-2.5 py-2",
               )}
             >
-              <div className={cn("min-w-0", compact && !fill && "grid flex-1 grid-cols-2 gap-x-2 [&>*:first-child]:col-span-2 [&>div]:mt-0")}>
+              <div className={cn("min-w-0", compact && !fill && "grid flex-1 grid-cols-2 gap-x-2 pr-0 leading-tight [&>*:first-child]:col-span-2 [&>*:first-child]:pr-14 [&>div]:mt-0 [&>div]:truncate")}>
                 <div className={cn("font-semibold truncate", fill ? "text-xs md:text-lg" : "text-xs", embedded ? "text-white" : "text-foreground")}>
                   Account {c.account_number}
                   <span className={cn("ml-1 font-normal", fill ? "text-[10px] md:text-sm" : "text-[10px]", embedded ? "text-white/70" : "text-muted-foreground")}>
@@ -245,6 +245,7 @@ export function SubscriptionDetailsCard({
                 <span
                   className={cn(
                     "rounded-full border whitespace-nowrap shrink-0 font-semibold",
+                    compact && !fill && "absolute right-1.5 top-1.5",
                     fill ? "text-[10px] px-1.5 py-0.5 md:text-sm md:px-3 md:py-1" : "text-[10px] px-1.5 py-0.5",
                     expired
                       ? "text-white border-red-400/50 bg-red-600 expiry-date-flash"
