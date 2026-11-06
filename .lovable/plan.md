@@ -1,31 +1,33 @@
-# BM Player in the browser (Windows, Mac, iPhone/iPad)
+# BM Player for iPhone and iPad (in Safari)
 
 ## What members get
-- A new "BM Player | Web" page in the Customer Portal, for signed-in members who have a linked app login.
-- It asks for the 6-digit account number each time it opens, the same as the apps do.
-- The layout matches the Android/Windows player: the same navy colours, home tiles, Live TV with the family preview picture, Now/Up next, the guide grid and the sliding Categories/Channels menu, Films/Series posters with Category and Sort, series pages with season rows, Catch up (clock on channels that have it), Favourites, Recently watched and star ratings.
-- On iPhone you can tap Share › Add to Home Screen to get a BM Player icon that opens full screen. This adds the icon only; there is no offline mode.
-- Favourites, ratings, watched progress and viewing hours sync with the other apps, because the web player uses the same account.
-- Short announcements, major announcements and Live Connections work like they do in the other players.
+- A "BM Player" page on the website for signed-in members who have a linked app login. It asks for the 6-digit account number each time it opens, the same as the apps do.
+- The layout matches the Android/Windows player: the navy colours and home tiles; Live TV with the family preview picture, Now/Up next, a guide grid you can swipe and the sliding Categories/Channels menu; Films/Series posters with Category and Sort; series pages; Catch up; Favourites, Recently watched and star ratings.
+- Add to Home Screen gives a BM Player icon that opens full screen. This adds the icon only; there is no offline mode.
+- Favourites, ratings, watched progress and viewing hours sync with the other apps.
+- Short and major announcements and Live Connections work like they do in the other players.
+- On Windows/Mac computers the page points people to the desktop apps.
 
-## Limits to know
-- Browsers cannot open the provider's streams directly, so all video passes through our website. That uses website bandwidth for every viewer, and it is the biggest cost and risk of this project.
-- iPhone Safari plays only HLS (.m3u8) streams, so iPhone viewers get the m3u8 format. Channels that only offer .ts may not play on iPhone.
-- On iPhone, film and series subtitles depend on what Safari supports.
-- No sound booster above 100% on iPhone.
+## Cost
+- Video plays straight from the provider's secure address in Safari, so the website pays nothing for video.
+- Running costs are only the website pages, guide/list loading and syncing: a few credits a month for normal use.
+- Building it is a one-off cost, roughly half the full web player.
+
+## Trade-offs
+- The provider address and login reach the phone's browser so Safari can play it, which is less hidden than in the apps. They are fetched only after the unlock, never saved in the browser, and fetched again each session.
+- Some providers send the video itself from plain (non-secure) addresses even when the login address is secure. If that happens on a channel, it won't play, and the page will say so. We'll test that first with your provider.
+- iPhone plays the m3u8 format only; channels are always asked for in m3u8.
 
 ## Build steps
-1. A members-only page with the account-number unlock and the pick of linked login.
-2. A secure stream relay on the website: short-lived tokens, playlists rewritten so provider addresses are never shown, and checks on the member and the connection limit.
+1. Test: confirm your provider's live, film and catch-up streams play directly in iPhone Safari.
+2. A members-only page with the account-number unlock and a choice of linked login.
 3. Screens: Home, Live TV + guide, Films, Series, Catch up, Favourites/Recently watched, Settings.
-4. Playback: hls.js on Windows/Mac browsers and native HLS on Safari/iPhone, plus mpegts.js for .ts streams on desktop. Anti-freeze reconnects, progress sync, ratings and viewing-hour reporting.
-5. The home-screen icon (manifest and icons only).
-6. A download/launch card on Install Guides and a row in the player admin Live Connections ("Web").
+4. Playback in Safari's own player: anti-freeze reconnects, resume/progress, ratings, viewing-hour and Live Connections reporting.
+5. The home-screen icon (manifest and icons only), and an "iPhone / iPad" pill on Install Guides.
 
 ## Technical details
-- Routes under `src/routes/_authenticated/player-web/*`. Server functions use `requireSupabaseAuth`, and the unlock reuses the existing account-number verify.
-- Stream relay at `src/routes/api/public/player-web-stream/$token`. The token is an HMAC that is bound to the member and the stream and expires after a short time. It rewrites m3u8 playlists the same way the Mac `bmstream` proxy does. The Worker streams bodies through without buffering them.
-- The existing player logic (EPG parsing, catchupUrl, sort, stream-recovery numbers) is reused from `windows-bm-player` shared modules where they can run in a browser, never copied.
-- The web player reports as its own device type, so connection limits and viewing hours count it.
-- Manifest only, with no service worker, following the PWA guidance.
-- Add an AGENTS.md rule for the web player and the relay.
+- Route under `src/routes/_authenticated/player-web/*`. Server functions use `requireSupabaseAuth` and reuse the account-number verify and device-token actions (favourites, votes, progress, announcements, viewing hours), registered as device type "web-ios".
+- The guide (EPG) and provider lists are fetched by server functions from the stored login, so CORS isn't needed. Only the playback address goes to the client, after unlock.
+- Native `<video>` HLS, no hls.js. Recovery numbers mirror `windows-bm-player/stream-recovery.cjs`.
+- Manifest only, with no service worker.
+- Add an AGENTS.md rule for the web player.
