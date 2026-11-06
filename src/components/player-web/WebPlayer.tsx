@@ -109,7 +109,7 @@ function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
   const [showLimits, setShowLimits] = useState(true);
   // Short phone screens keep the keypad on view: the full list folds away, the summary line stays.
   useEffect(() => {
-    const fit = () => setShowLimits(window.innerHeight >= 620);
+    const fit = () => setShowLimits(window.innerHeight >= 760);
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
