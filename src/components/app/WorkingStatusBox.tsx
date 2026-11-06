@@ -750,13 +750,13 @@ export function WorkingStatusBox({
     const uk = timesFor(slot, "Europe/London");
     const local = deviceTz !== "Europe/London" ? timesFor(slot, deviceTz) : null;
     return (
-      <div className="grid gap-2.5 text-xs">
-        <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+      <div className="grid gap-2.5 text-xs md:max-lg:gap-1 md:max-lg:text-[11px] md:max-lg:leading-tight">
+        <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 md:max-lg:px-2.5 md:max-lg:py-1 ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
           <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
           <ShiftTimes {...uk} className="text-foreground @max-[12rem]:whitespace-normal" />
         </div>
         {local && (
-          <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+          <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 md:max-lg:px-2.5 md:max-lg:py-1 ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
             <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
             <ShiftTimes {...local} className="text-[11px] text-foreground @min-[19rem]:text-xs @max-[12rem]:whitespace-normal" />
           </div>
@@ -932,9 +932,10 @@ export function WorkingStatusBox({
               </div>
             </div>
           </div>
+          <div className={cn(compact && "md:max-lg:flex md:max-lg:items-center md:max-lg:gap-1")}>
           {/* Breaks get their own tab that opens a pop-up box, so the four break
               lines no longer stack up and push this box taller than it needs to be. */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 md:max-lg:min-w-0 md:max-lg:flex-1 md:max-lg:flex-nowrap md:max-lg:gap-1">
             <div role="tablist" aria-label="Shifts" className="grid min-w-[190px] md:max-lg:min-w-0 flex-1 grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
               {([
                 ["current", "Today's shift"],
@@ -947,7 +948,7 @@ export function WorkingStatusBox({
                   aria-selected={shiftTab === key}
                   onClick={() => setShiftTab(key)}
                   className={cn(
-                    "whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition",
+                    "whitespace-nowrap rounded-full px-2 py-1 text-[10px] md:max-lg:px-1 md:max-lg:text-[9px] font-bold uppercase tracking-wide transition",
                     shiftTab === key ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -974,7 +975,7 @@ export function WorkingStatusBox({
           <BreakPlanDialog open={breaksOpen} onOpenChange={setBreaksOpen} userId={user.id} usedKinds={usedKinds} />
           {/* Shift controls sit on one wrapping row under the Shifts tabs: shift actions and Away.
               Tickets and screen share move above the box on the portal home (showTools=false). */}
-          <div>
+          <div className={cn(compact && "md:max-lg:mt-0 md:max-lg:shrink-0 md:max-lg:[&_button]:size-7 md:max-lg:[&_a]:size-7")}>
             <div className={cn("flex flex-wrap items-center", compact ? "gap-1" : "gap-3")}>
               {showTools && <TalkScreenShareButton variant="icon" />}
               {showTools && (canAnswerTickets || roles.includes("moderator")) && (
