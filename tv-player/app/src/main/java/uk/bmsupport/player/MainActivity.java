@@ -2565,11 +2565,11 @@ public class MainActivity extends Activity {
             prefs.edit().putLong("exit_reported", e.getTimestamp()).apply();
             String trace = "";
             try (java.io.InputStream in = e.getTraceInputStream()) {
-                if (in != null) { byte[] b = new byte[4000]; int n = in.read(b); if (n > 0) trace = new String(b, 0, n).replaceAll("[^\\x20-\\x7E\\n]", ""); }
+                if (in != null) { java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(); byte[] b = new byte[8192]; int n; while ((n = in.read(b)) > 0 && bo.size() < 400000) bo.write(b, 0, n); trace = bo.toString().replaceAll("[^\\x20-\\x7E\\n]", ""); int m = trace.indexOf("\"main\""); if (m >= 0) trace = trace.substring(m); }
             } catch (Exception ignored) {}
             String[] names = {"unknown","exit self","signaled","low memory","crash","native crash","ANR","init failure","permission change","excessive resources","user requested","user stopped","dependency died","other","freezer","package state","package updated"};
             String name = r < names.length ? names[r] : String.valueOf(r);
-            return "App closed by Android (" + name + ", status " + e.getStatus() + ", memory " + (e.getPss() / 1024) + " MB) on " + Build.MANUFACTURER + " " + Build.MODEL + " Android " + Build.VERSION.RELEASE + ". " + e.getDescription() + "\n" + trace;
+            return "App closed by Android (" + name + ", status " + e.getStatus() + ", memory " + (e.getPss() / 1024) + " MB) on " + Build.MANUFACTURER + " " + Build.MODEL + " Android " + Build.VERSION.RELEASE + ".\n" + (trace.startsWith("\"main\"") ? trace : e.getDescription() + "\n" + trace);
         } catch (Exception ex) { return ""; }
     }
 
