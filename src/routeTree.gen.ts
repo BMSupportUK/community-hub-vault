@@ -37,6 +37,7 @@ import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
+import { Route as AuthenticatedPlayerWebRouteImport } from './routes/_authenticated/player-web'
 import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as CheckoutAccountTokenRouteImport } from './routes/checkout-account.$token'
 import { Route as CheckoutInstallTokenRouteImport } from './routes/checkout-install.$token'
@@ -363,6 +364,11 @@ const AuthenticatedFanZonePendingRoute =
 const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
   id: '/gate',
   path: '/gate',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPlayerWebRoute = AuthenticatedPlayerWebRouteImport.update({
+  id: '/player-web',
+  path: '/player-web',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const ATokenRoute = ATokenRouteImport.update({
@@ -1489,6 +1495,7 @@ export interface FileRoutesByFullPath {
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/player-web': typeof AuthenticatedPlayerWebRoute
   '/a/$token': typeof ATokenRoute
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
@@ -1704,6 +1711,7 @@ export interface FileRoutesByTo {
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/player-web': typeof AuthenticatedPlayerWebRoute
   '/a/$token': typeof ATokenRoute
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
@@ -1921,6 +1929,7 @@ export interface FileRoutesById {
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
+  '/_authenticated/player-web': typeof AuthenticatedPlayerWebRoute
   '/a/$token': typeof ATokenRoute
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
@@ -2139,6 +2148,7 @@ export interface FileRouteTypes {
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
+    | '/player-web'
     | '/a/$token'
     | '/checkout-account/$token'
     | '/checkout-install/$token'
@@ -2354,6 +2364,7 @@ export interface FileRouteTypes {
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
+    | '/player-web'
     | '/a/$token'
     | '/checkout-account/$token'
     | '/checkout-install/$token'
@@ -2570,6 +2581,7 @@ export interface FileRouteTypes {
     | '/_authenticated/banned'
     | '/_authenticated/fan-zone-pending'
     | '/_authenticated/gate'
+    | '/_authenticated/player-web'
     | '/a/$token'
     | '/checkout-account/$token'
     | '/checkout-install/$token'
@@ -3061,6 +3073,13 @@ declare module '@tanstack/react-router' {
       path: '/gate'
       fullPath: '/gate'
       preLoaderRoute: typeof AuthenticatedGateRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/player-web': {
+      id: '/_authenticated/player-web'
+      path: '/player-web'
+      fullPath: '/player-web'
+      preLoaderRoute: typeof AuthenticatedPlayerWebRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/a/$token': {
@@ -4737,6 +4756,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBannedRoute: typeof AuthenticatedBannedRoute
   AuthenticatedFanZonePendingRoute: typeof AuthenticatedFanZonePendingRoute
   AuthenticatedGateRoute: typeof AuthenticatedGateRoute
+  AuthenticatedPlayerWebRoute: typeof AuthenticatedPlayerWebRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -4744,6 +4764,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBannedRoute: AuthenticatedBannedRoute,
   AuthenticatedFanZonePendingRoute: AuthenticatedFanZonePendingRoute,
   AuthenticatedGateRoute: AuthenticatedGateRoute,
+  AuthenticatedPlayerWebRoute: AuthenticatedPlayerWebRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
