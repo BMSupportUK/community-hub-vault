@@ -3693,7 +3693,7 @@ public class MainActivity extends Activity {
         JSONArray ev = r == null ? null : r.optJSONArray("events");
         if (ev != null) for (int i = 0; i < ev.length(); i++) {
             JSONObject e = ev.optJSONObject(i);
-            if (e != null && e.optLong("start") >= now - 3 * 3600_000L) out.add(e);
+            if (e != null && sportsEnd(e) + 2 * 3600_000L > now) out.add(e);
         }
         return out;
     }
@@ -3799,6 +3799,8 @@ public class MainActivity extends Activity {
         }
         final List<JSONObject> cards = new ArrayList<>();
         for (JSONObject e : inCat) if (ukDayIndex(e.optLong("start"), now) == sportsDay) cards.add(e);
+        final long nowF = now;
+        java.util.Collections.sort(cards, (x, y) -> Boolean.compare(sportsEnd(x) <= nowF, sportsEnd(y) <= nowF));
         int keep = sportsList.getSelectedItemPosition();
         sportsList.setAdapter(new SportsCardAdapter(cards, now));
         sportsList.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
@@ -3829,7 +3831,9 @@ public class MainActivity extends Activity {
         @Override public View getView(int i, View cv, ViewGroup parent) {
             JSONObject e = cards.get(i); long st = e.optLong("start");
             LinearLayout r = row(); r.setGravity(Gravity.CENTER_VERTICAL); r.setPadding(dp(12), dp(10), dp(12), dp(10));
-            TextView t = text(st <= now ? "LIVE" : clock(st / 1000), 20, st <= now ? ACCENT : TEXT, true);
+            boolean done = sportsEnd(e) <= now;
+            TextView t = text(done ? "Finished" : st <= now ? "LIVE" : clock(st / 1000), done ? 14 : 20, done ? MUTED : st <= now ? ACCENT : TEXT, true);
+            r.setAlpha(done ? 0.55f : 1f);
             r.addView(t, new LinearLayout.LayoutParams(dp(78), ViewGroup.LayoutParams.WRAP_CONTENT));
             LinearLayout mid = new LinearLayout(MainActivity.this); mid.setOrientation(LinearLayout.VERTICAL);
             TextView name = text(e.optString("title"), 17, TEXT, true); name.setPadding(0, 0, 0, 0);
@@ -3848,13 +3852,19 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** When a game ends: the website's end time (TV guide or typical length), else start + 3h. */
+    static long sportsEnd(JSONObject e) {
+        long end = e.optLong("end", 0);
+        return end > 0 ? end : e.optLong("start") + 3 * 3600_000L;
+    }
+
     /** Right-hand panel: the selected game's channels grouped Channels / Sports passes / Club channels. */
     private void fillSportsPanel(JSONObject e, boolean focus) {
         final int token = ++sportsPanelToken;
         long st = e.optLong("start");
         java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK); day.setTimeZone(UK);
         sportsPanelTitle.setText(e.optString("title"));
-        sportsPanelSub.setText((st <= System.currentTimeMillis() ? "🔴 Live now" : day.format(new java.util.Date(st)) + "  " + clock(st / 1000)) + "  ·  " + e.optString("competition"));
+        sportsPanelSub.setText((sportsEnd(e) <= System.currentTimeMillis() ? "Finished" : st <= System.currentTimeMillis() ? "🔴 Live now" : day.format(new java.util.Date(st)) + "  " + clock(st / 1000)) + "  ·  " + e.optString("competition"));
         final List<String[]> aliases = sportsAliases;
         final List<String> labels = new ArrayList<>(); final List<Item> targets = new ArrayList<>();
         labels.add("Finding channels…"); targets.add(null);
