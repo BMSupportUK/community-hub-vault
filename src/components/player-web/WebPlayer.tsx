@@ -108,7 +108,12 @@ function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
   const [pin, setPin] = useState(""), [busy, setBusy] = useState(false), [err, setErr] = useState("");
   const [showLimits, setShowLimits] = useState(true);
   // Short phone screens keep the keypad on view: the full list folds away, the summary line stays.
-  useEffect(() => { if (window.innerHeight < 620) setShowLimits(false); }, []);
+  useEffect(() => {
+    const fit = () => setShowLimits(window.innerHeight >= 620);
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
   async function submit(value: string) {
     setBusy(true); setErr("");
     try { await api({ action: "unlock", device_token: token, account_number: value }); onDone(); }
