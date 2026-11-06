@@ -129,14 +129,15 @@ function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
   );
 }
 
-type ProviderFn = ReturnType<typeof useServerFn<typeof webPlayerProvider>>;
+type ProviderCall = Parameters<typeof webPlayerProvider>[0]["data"]["call"];
+type ProviderFn = (o: { data: { credentialId: string; call: ProviderCall } }) => Promise<unknown>;
 
 function Main({ token, login, dns, provider, view, setView, toast, startedAt, changeLogin }: {
   token: string; login: Login; dns: string; provider: ProviderFn; view: View; setView: (v: View) => void;
   toast: (m: string) => void; startedAt: number; changeLogin?: () => void;
 }) {
   const user = login.app_login_name!, pass = login.password!;
-  const call = useCallback(async <T,>(c: Parameters<ProviderFn>[0]["data"]["call"]) => (await provider({ data: { credentialId: login.id, call: c } })) as T, [provider, login.id]);
+  const call = useCallback(async <T,>(c: ProviderCall) => (await provider({ data: { credentialId: login.id, call: c } })) as T, [provider, login.id]);
   const [cats, setCats] = useState<Record<string, Cat[]>>({});
   const [items, setItems] = useState<Record<string, Item[]>>({});
   const [loading, setLoading] = useState(false);
