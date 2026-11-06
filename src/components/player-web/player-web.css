@@ -19,6 +19,7 @@
 .bmw-note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:13.5px;line-height:1.35;color:var(--muted)}
 .bmw-note li::marker{color:var(--accent)}
 .bmw-note p{margin:0;font-size:13px}
+.bmw-note-more{align-self:flex-start;background:transparent;border-color:var(--line);font-size:12.5px;padding:5px 9px}
 .bmw-center h2{margin:0;font-size:22px}
 .bmw-pin{font-size:30px;letter-spacing:10px;min-height:44px;font-variant-numeric:tabular-nums}
 .bmw-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:auto}
