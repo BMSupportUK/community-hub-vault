@@ -32,11 +32,12 @@ export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,v
  const now=Date.now();
  useEffect(()=>{let live=true;loadChannels().then(r=>{if(live&&r)setItems(r.items);});return()=>{live=false;};},[]);
  useEffect(()=>{if(!cat.sport&&sports.categories&&sports.categories.length)setCat(defaultCategory(sports));},[sports]);
- const upcoming=useMemo(()=>(sports.events||[]).filter(e=>e.start>=now-3*3600000),[sports]);
+ const ended=e=>(e.end||e.start+3*3600000)<=now;
+ const upcoming=useMemo(()=>(sports.events||[]).filter(e=>(e.end||e.start+3*3600000)+2*3600000>now),[sports]);
  const inCat=upcoming.filter(e=>inCategory(e,cat.sport,cat.sub,cat.guide));
  const perDay=Array.from({length:7},(_,d)=>inCat.filter(e=>ukDayIndex(e.start,now)===d).length);
  const q=lower(query).trim();
- const cards=q?upcoming.filter(e=>lower([e.title,e.competition,e.sport,e.subcategory,...(e.channels||[])].join(' ')).includes(q)):inCat.filter(e=>ukDayIndex(e.start,now)===day);
+ const cards=q?upcoming.filter(e=>lower([e.title,e.competition,e.sport,e.subcategory,...(e.channels||[])].join(' ')).includes(q)):inCat.filter(e=>ukDayIndex(e.start,now)===day).slice().sort((a,b)=>ended(a)-ended(b));
  const current=cards[Math.min(sel,cards.length-1)];
  const rows=useMemo(()=>current&&items?sportsRows(current,items,sports.aliases||[]):[],[current,items,sports]);
  const cats=(sports.categories&&sports.categories.length?sports.categories:[...new Set(upcoming.map(e=>e.sport))].map(name=>({name,subs:[]})));
@@ -49,9 +50,9 @@ export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,v
   <div className="toolbar"><button onClick={onBack}>← Back</button><h2>Sports guide</h2><button onClick={()=>setPopup('main')}>☰ Category: {label}</button><input placeholder="Search events" aria-label="Search events" value={query} onChange={e=>{setQuery(e.target.value);setSel(0);}}/>{voice(t=>{setQuery(t);setSel(0);})}<button onClick={onRefresh}>⟳ Refresh</button></div>
   {!q&&<div className="sports-days">{perDay.map((n,d)=><button key={d} className={d===day?'selected':n?'':'empty-day'} onClick={()=>{setDay(d);setSel(0);}}>{dayName(d)}{n?'  '+n:''}</button>)}</div>}
   {loading&&!upcoming.length?<p className="empty">Updating sports guide…</p>:<div className="sports-layout">
-   <div className="sports-cards">{cards.length?cards.map((e,i)=>{const n=(e.channels||[]).length,isLive=e.start<=now;return <button key={i} className={'sports-card'+(e===current?' selected':'')} onClick={()=>setSel(i)} onFocus={()=>setSel(i)}>
-     <span className={'sports-time'+(isLive?' live':'')}>{isLive?'LIVE':clock(e.start)}</span><span className="sports-name"><b>{e.title}</b><small>{e.competition}{e.subcategory?' · '+e.subcategory:''}</small></span><span className="sports-pill">{n} {n===1?'channel':'channels'}</span></button>;}):<p className="empty">No games here – pick another day or category.</p>}</div>
-   <aside className="sports-panel">{current&&<><h3>{current.title}</h3><p className="muted">{current.start<=now?'🔴 Live now':dayName(ukDayIndex(current.start,now))+' '+clock(current.start)} · {current.competition}</p>
+   <div className="sports-cards">{cards.length?cards.map((e,i)=>{const n=(e.channels||[]).length,done=ended(e),isLive=!done&&e.start<=now;return <button key={i} className={'sports-card'+(e===current?' selected':'')+(done?' finished':'')} onClick={()=>setSel(i)} onFocus={()=>setSel(i)}>
+     <span className={'sports-time'+(isLive?' live':'')+(done?' done':'')}>{done?'Finished':isLive?'LIVE':clock(e.start)}</span><span className="sports-name"><b>{e.title}</b><small>{e.competition}{e.subcategory?' · '+e.subcategory:''}</small></span><span className="sports-pill">{n} {n===1?'channel':'channels'}</span></button>;}):<p className="empty">No games here – pick another day or category.</p>}</div>
+   <aside className="sports-panel">{current&&<><h3>{current.title}</h3><p className="muted">{ended(current)?'Finished':current.start<=now?'🔴 Live now':dayName(ukDayIndex(current.start,now))+' '+clock(current.start)} · {current.competition}</p>
     {!items?<p className="muted">Finding channels…</p>:rows.map((r,i)=>r.heading?<div key={i} className="sports-heading">{r.heading}</div>:r.item?<button key={i} className="sports-channel" onClick={()=>play(r.item)}><span>{r.item.name}</span><span className="sports-play">▶ Play</span></button>:<div key={i} className="sports-channel off"><span>{r.missing}</span><span className="muted">Not in your channels</span></div>)}</>}</aside>
   </div>}
   {popup&&<div className="modal-backdrop" onClick={()=>setPopup(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
