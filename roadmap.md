@@ -126,3 +126,6 @@
 - [x] Android 3.13 (versionCode 124): TV boxes original Live TV layout, guide day-ahead fix
 - [x] Build, sign and release Android 3.59 (versionCode 170) with the phone-only View EPG guide (full-screen category guide with the day jumps inside it) and corrected sports-guide channel matching (MonoMax lists only the feed named in the guide); 81 Android tests pass, served APK matches the build byte-for-byte and carries the BM key signature. Real-phone eyeball check remains blocked: no attached device.
 - [ ] English Premier League channels still missing from the Sports Guide on the user's phone after Android 3.59. Next: confirm the website was actually published since the guide-scoped dedup fix, then read what the live Sports Guide feed returns for a Premier League fixture (which channels it names vs which the player lists). Blocked: user resting, no attached device to reproduce on.
+
+- [ ] Release Mac 0.1.36 (new Sports Guide + Daily Sports default + guide level) — built code ready, repack/sign pending
+- [ ] Publish website so apps receive sports categories/guides
