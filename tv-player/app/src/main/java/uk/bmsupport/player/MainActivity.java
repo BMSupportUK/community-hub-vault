@@ -3528,7 +3528,7 @@ public class MainActivity extends Activity {
     private Button sportsCatPill; private LinearLayout sportsDays;
     private TextView sportsPanelTitle, sportsPanelSub; private ListView sportsChannelList;
     /** Chosen website main category / sub-category (null = all) and day (0 = today). */
-    private String sportsSport, sportsSub; private int sportsDay;
+    private String sportsSport, sportsSub, sportsGuide; private int sportsDay;
     private List<String[]> sportsAliases = new ArrayList<>();
     private int sportsPanelToken;
     private ListView sportsList;
@@ -3638,9 +3638,22 @@ public class MainActivity extends Activity {
     private String cachedGetFresh() throws Exception { clearCache("live"); return cachedGet("live", "get_live_streams", ""); }
 
     private JSONObject sportsData;
-    private void resetSportsFilters() { sportsSport = null; sportsSub = null; sportsDay = 0; }
+    private void resetSportsFilters() { sportsSport = null; sportsSub = null; sportsGuide = null; sportsDay = 0; }
+    /** No "All sports": start on the website's first category (Daily Sports) and its first sub-category. */
+    private void defaultSportsCategory(JSONObject r) {
+        if (sportsSport != null || r == null) return;
+        JSONArray cats = r.optJSONArray("categories"); JSONObject c = cats == null ? null : cats.optJSONObject(0);
+        if (c == null) return;
+        sportsSport = c.optString("name"); JSONArray sb = c.optJSONArray("subs");
+        sportsSub = sb != null && sb.length() > 0 ? sb.optString(0) : null;
+        if (sportsCatPill != null) sportsCatPill.setText(sportsCatLabel());
+    }
+    private JSONArray sportsGuidesOf(String sport, String sub) {
+        JSONObject g = sportsData == null ? null : sportsData.optJSONObject("guides");
+        return g == null ? null : g.optJSONArray(sport + "|" + (sub == null ? "" : sub));
+    }
     private String sportsCatLabel() {
-        return "☰ Category: " + (sportsSport == null ? "All sports" : sportsSub == null ? sportsSport : sportsSport + " › " + sportsSub);
+        return "☰ Category: " + (sportsSport == null ? "Choose" : sportsSport + (sportsSub == null ? "" : " › " + sportsSub) + (sportsGuide == null ? "" : " › " + sportsGuide));
     }
     private static final java.util.TimeZone UK = java.util.TimeZone.getTimeZone("Europe/London");
     /** UK calendar days from today (0 = today); games already on from yesterday count as today. */
@@ -3658,6 +3671,9 @@ public class MainActivity extends Activity {
         if (sport == null) return true;
         if (!sport.equals(eventSport)) return false;
         return sub == null || sub.equals(eventSub);
+    }
+    static boolean inSportsCategory(String eventSport, String eventSub, String eventGuide, String sport, String sub, String guide) {
+        return inSportsCategory(eventSport, eventSub, sport, sub) && (guide == null || guide.equals(eventGuide));
     }
     private List<JSONObject> upcomingSports(JSONObject r, long now) {
         List<JSONObject> out = new ArrayList<>();
@@ -3682,17 +3698,21 @@ public class MainActivity extends Activity {
         }
         // Older website without the category list: fall back to the categories the games carry.
         if (names.isEmpty()) for (JSONObject e : up) if (!names.contains(e.optString("sport"))) { names.add(e.optString("sport")); subs.add(null); }
-        String[] labels = new String[names.size() + 1];
-        labels[0] = (sportsSport == null ? "✓ " : "") + "All sports  (" + up.size() + ")";
+        String[] labels = new String[names.size()];
         for (int i = 0; i < names.size(); i++) {
             int n = 0; for (JSONObject e : up) if (names.get(i).equals(e.optString("sport"))) n++;
-            JSONArray sb = subs.get(i);
-            labels[i + 1] = (names.get(i).equals(sportsSport) ? "✓ " : "") + names.get(i) + "  (" + n + ")" + (sb != null && sb.length() > 0 ? "   ›" : "");
+            JSONArray sb = subs.get(i); JSONArray gd = sportsGuidesOf(names.get(i), null);
+            boolean more = (sb != null && sb.length() > 0) || (gd != null && gd.length() > 1);
+            labels[i] = (names.get(i).equals(sportsSport) ? "✓ " : "") + names.get(i) + "  (" + n + ")" + (more ? "   ›" : "");
         }
         new AlertDialog.Builder(this).setTitle("Choose a category").setItems(labels, (d, w) -> {
-            if (w == 0) { applySportsCategory(null, null); return; }
-            String name = names.get(w - 1); JSONArray sb = subs.get(w - 1);
-            if (sb == null || sb.length() == 0) { applySportsCategory(name, null); return; }
+            String name = names.get(w); JSONArray sb = subs.get(w);
+            if (sb == null || sb.length() == 0) {
+                JSONArray gd = sportsGuidesOf(name, null);
+                if (gd != null && gd.length() > 1) showSportsGuides(name, null, up, this::showSportsCategories);
+                else applySportsCategory(name, null);
+                return;
+            }
             showSportsSubCategories(name, sb, up);
         }).setNegativeButton("Close", null).show();
     }
@@ -3703,13 +3723,35 @@ public class MainActivity extends Activity {
         for (int i = 0; i < sb.length(); i++) {
             String s = sb.optString(i); int n = 0;
             for (JSONObject e : up) if (sport.equals(e.optString("sport")) && s.equals(e.optString("subcategory", ""))) n++;
-            labels[i + 1] = (sport.equals(sportsSport) && s.equals(sportsSub) ? "✓ " : "") + s + "  (" + n + ")";
+            JSONArray gd = sportsGuidesOf(sport, s);
+            labels[i + 1] = (sport.equals(sportsSport) && s.equals(sportsSub) ? "✓ " : "") + s + "  (" + n + ")" + (gd != null && gd.length() > 1 ? "   ›" : "");
         }
-        new AlertDialog.Builder(this).setTitle(sport).setItems(labels, (d, w) -> applySportsCategory(sport, w == 0 ? null : sb.optString(w - 1)))
+        new AlertDialog.Builder(this).setTitle(sport).setItems(labels, (d, w) -> {
+            if (w == 0) { applySportsCategory(sport, null); return; }
+            String s = sb.optString(w - 1); JSONArray gd = sportsGuidesOf(sport, s);
+            if (gd != null && gd.length() > 1) showSportsGuides(sport, s, up, () -> showSportsSubCategories(sport, sb, up));
+            else applySportsCategory(sport, s);
+        })
                 .setNegativeButton("◀ Back", (d, w) -> showSportsCategories()).show();
     }
-    private void applySportsCategory(String sport, String sub) {
-        sportsSport = sport; sportsSub = sub; sportsDay = 0;
+    /** Third level: the guides inside a sub-category (e.g. Football › Mens › Premier League). */
+    private void showSportsGuides(String sport, String sub, List<JSONObject> up, Runnable back) {
+        JSONArray gd = sportsGuidesOf(sport, sub);
+        String[] labels = new String[gd.length() + 1];
+        int all = 0; for (JSONObject e : up) if (inSportsCategory(e.optString("sport"), e.optString("subcategory", ""), sport, sub)) all++;
+        labels[0] = "All " + (sub == null ? sport : sub) + "  (" + all + ")";
+        for (int i = 0; i < gd.length(); i++) {
+            String g = gd.optString(i); int n = 0;
+            for (JSONObject e : up) if (inSportsCategory(e.optString("sport"), e.optString("subcategory", ""), e.optString("competition"), sport, sub, g)) n++;
+            labels[i + 1] = (g.equals(sportsGuide) ? "✓ " : "") + g + "  (" + n + ")";
+        }
+        new AlertDialog.Builder(this).setTitle(sub == null ? sport : sport + " › " + sub)
+                .setItems(labels, (d, w) -> applySportsCategory(sport, sub, w == 0 ? null : gd.optString(w - 1)))
+                .setNegativeButton("◀ Back", (d, w) -> back.run()).show();
+    }
+    private void applySportsCategory(String sport, String sub) { applySportsCategory(sport, sub, null); }
+    private void applySportsCategory(String sport, String sub, String guide) {
+        sportsSport = sport; sportsSub = sub; sportsGuide = guide; sportsDay = 0;
         if (sportsCatPill != null) sportsCatPill.setText(sportsCatLabel());
         if (sportsData != null) renderSports(sportsData);
     }
@@ -3718,6 +3760,7 @@ public class MainActivity extends Activity {
     private void renderSports(JSONObject r) {
         if (sportsList == null) return;
         sportsData = r;
+        defaultSportsCategory(r);
         sportsVersion = r.optString("version");
         List<String[]> aliases = new ArrayList<>();
         JSONArray al = r.optJSONArray("aliases");
@@ -3726,7 +3769,7 @@ public class MainActivity extends Activity {
         sportsAliases = aliases;
         long now = System.currentTimeMillis();
         List<JSONObject> inCat = new ArrayList<>();
-        for (JSONObject e : upcomingSports(r, now)) if (inSportsCategory(e.optString("sport"), e.optString("subcategory", ""), sportsSport, sportsSub)) inCat.add(e);
+        for (JSONObject e : upcomingSports(r, now)) if (inSportsCategory(e.optString("sport"), e.optString("subcategory", ""), e.optString("competition"), sportsSport, sportsSub, sportsGuide)) inCat.add(e);
         int[] perDay = new int[7];
         for (JSONObject e : inCat) { int d = ukDayIndex(e.optLong("start"), now); if (d < 7) perDay[d]++; }
         if (sportsDays != null) {
