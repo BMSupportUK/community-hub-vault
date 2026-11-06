@@ -129,7 +129,10 @@ function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
   );
 }
 
-type ProviderCall = Parameters<typeof webPlayerProvider>[0]["data"]["call"];
+type ProviderCall =
+  | { action: "get_live_categories" | "get_vod_categories" | "get_series_categories" | "get_live_streams" | "get_vod_streams" | "get_series" }
+  | { action: "get_series_info"; series_id: string }
+  | { action: "get_short_epg" | "get_simple_data_table"; stream_id: string };
 type ProviderFn = (o: { data: { credentialId: string; call: ProviderCall } }) => Promise<unknown>;
 
 function Main({ token, login, dns, provider, view, setView, toast, startedAt, changeLogin }: {
