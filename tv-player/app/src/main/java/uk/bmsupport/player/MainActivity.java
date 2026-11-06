@@ -1719,7 +1719,11 @@ public class MainActivity extends Activity {
             intent.putExtra("progress_key", watchKey(it.kind, it.id)).putExtra("resume_ms", position);
             if (!it.seriesId.isEmpty()) intent.putExtra("series_key", watchKey("series", it.seriesId));
         }
-        startActivity(intent);
+        // Free the preview's decoder and provider connection before the full-screen player opens:
+        // UHD channels need the device's only 4K decoder, and a still-held preview makes full screen fail.
+        boolean hadPreview = preview != null;
+        stopPreview(); stopMulti();
+        if (hadPreview) ui.postDelayed(() -> startActivity(intent), 600); else startActivity(intent);
     }
 
     private static final int VLC_REQUEST = 4242;
