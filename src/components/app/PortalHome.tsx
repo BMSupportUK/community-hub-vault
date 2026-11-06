@@ -5,7 +5,7 @@ import heroImg from "@/assets/member-hero.jpg";
 import staffHeroImg from "@/assets/staff-portal-hero.jpg";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -52,6 +52,22 @@ export function PortalHome({ staff }: { staff: boolean }) {
     return () => window.clearInterval(id);
   }, []);
   const band = dayBand(hour);
+  // Hold the picture hidden until the sidebar (subscription / Working Status) stops resizing,
+  // so it appears once at its final height instead of growing on load.
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const [heroReady, setHeroReady] = useState(false);
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el) { setHeroReady(true); return; }
+    let t = window.setTimeout(() => setHeroReady(true), 500);
+    const cap = window.setTimeout(() => setHeroReady(true), 2500);
+    const ro = new ResizeObserver(() => {
+      window.clearTimeout(t);
+      t = window.setTimeout(() => setHeroReady(true), 400);
+    });
+    ro.observe(el);
+    return () => { ro.disconnect(); window.clearTimeout(t); window.clearTimeout(cap); };
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -72,12 +88,12 @@ export function PortalHome({ staff }: { staff: boolean }) {
       {/* Hero */}
       <div className="grid min-h-full w-full min-w-0 grid-rows-[1fr_auto] lg:h-full overflow-x-hidden overflow-y-visible">
       <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
-        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 items-start gap-4 lg:h-full md:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
-          <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:h-full lg:pb-10">
-            <div className="relative flex min-h-0 flex-col overflow-hidden lg:flex-1 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 gap-4 lg:flex-1 lg:grid-rows-[minmax(0,1fr)] p-4 pb-14 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
+        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 items-start md:items-stretch gap-4 lg:h-full md:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
+          <div className="relative flex min-h-0 min-w-0 flex-col pb-8 md:h-full lg:pb-10">
+            <div className="relative flex min-h-0 flex-col overflow-hidden md:flex-1 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
+              <div className="grid min-h-0 gap-4 md:flex-1 md:grid-rows-[minmax(0,1fr)] p-4 pb-14 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
                 <div className="order-1 flex min-h-0 min-w-0 flex-col gap-3 text-white">
-                  <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 min-h-[220px] max-h-[calc(100dvh-14rem)] ${isStaffAccount ? "aspect-[1920/832]" : "aspect-[16/9]"} lg:aspect-auto lg:max-h-none lg:flex-1 lg:min-h-[320px]`}>
+                  <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 min-h-[220px] max-h-[calc(100dvh-14rem)] ${isStaffAccount ? "aspect-[1920/832]" : "aspect-[16/9]"} md:aspect-auto md:max-h-none md:flex-1 lg:min-h-[320px] transition-opacity duration-300 ${heroReady ? "opacity-100" : "md:opacity-0"}`}>
                     <div className="absolute inset-0">
                       <img
                         src={isStaffAccount ? staffHeroImg : heroImg}
@@ -128,7 +144,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
             </div>
           </div>
 
-          <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
+          <div ref={sidebarRef} className="flex min-h-0 w-full flex-col items-stretch gap-4">
                 {/* Right column — same order for both portals: icons, Hey + nameplate, welcome, then status/subscription. Staff pills live in the portal header. */}
                 <div className="flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-4 text-white shadow-2xl">
                   {!isStaffAccount && <GreetingPills />}
