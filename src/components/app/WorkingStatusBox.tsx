@@ -751,12 +751,12 @@ export function WorkingStatusBox({
     const local = deviceTz !== "Europe/London" ? timesFor(slot, deviceTz) : null;
     return (
       <div className="grid gap-2.5 text-xs md:max-lg:gap-1 md:max-lg:text-[11px] md:max-lg:leading-tight">
-        <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 md:max-lg:px-2.5 md:max-lg:py-1 ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+        <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 md:max-lg:px-2.5 md:max-lg:py-1 md:max-lg:flex-row md:max-lg:items-center md:max-lg:justify-between md:max-lg:gap-2 md:max-lg:rounded-full md:max-lg:text-[10px] md:max-lg:[&_*]:text-[10px] ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
           <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
           <ShiftTimes {...uk} className="text-foreground @max-[12rem]:whitespace-normal" />
         </div>
         {local && (
-          <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 md:max-lg:px-2.5 md:max-lg:py-1 ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+          <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 md:max-lg:px-2.5 md:max-lg:py-1 md:max-lg:flex-row md:max-lg:items-center md:max-lg:justify-between md:max-lg:gap-2 md:max-lg:rounded-full md:max-lg:text-[10px] md:max-lg:[&_*]:text-[10px] ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
             <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
             <ShiftTimes {...local} className="text-[11px] text-foreground @min-[19rem]:text-xs @max-[12rem]:whitespace-normal" />
           </div>
