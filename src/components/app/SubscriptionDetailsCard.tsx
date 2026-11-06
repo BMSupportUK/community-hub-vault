@@ -207,7 +207,7 @@ export function SubscriptionDetailsCard({
                 fill ? "px-2 py-1.5 md:flex-1 md:min-h-0 md:px-5 md:py-5" : compact ? "px-2 py-1.5" : "px-2.5 py-2",
               )}
             >
-              <div className={cn("min-w-0", compact && !fill && "grid flex-1 grid-cols-2 gap-x-2 pr-0 leading-tight [&>*:first-child]:col-span-2 [&>*:first-child]:pr-14 [&>div]:mt-0 [&>div]:truncate")}>
+              <div className={cn("min-w-0", compact && !fill && "grid flex-1 grid-cols-2 gap-x-2 pr-0 leading-tight [&>*:first-child]:col-span-2 [&>*:first-child]:pr-14 [&>*:first-child]:mb-1 [&>div]:mt-0 [&>div]:truncate")}>
                 <div className={cn("font-semibold truncate", fill ? "text-xs md:text-lg" : "text-xs", embedded ? "text-white" : "text-foreground")}>
                   Account {c.account_number}
                   <span className={cn("ml-1 font-normal", fill ? "text-[10px] md:text-sm" : "text-[10px]", embedded ? "text-white/70" : "text-muted-foreground")}>
