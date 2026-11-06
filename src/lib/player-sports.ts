@@ -2,7 +2,16 @@ import { parseSportsListingBlock } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
 
-export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[] };
+/** `passChannels` lists which of `channels` came only from sports-pass guides (apps group them separately). */
+export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[] };
+
+/** "EFL : CHAMPIONSHIP: Derby County v Bolton" → "Derby County v Bolton"; keeps mixed-case prefixes ("UFC Fight Night Preview Show: …"). */
+export function cardTitle(title: string): string {
+  const i = title.lastIndexOf(":");
+  if (i <= 0) return title;
+  const prefix = title.slice(0, i), rest = title.slice(i + 1).trim();
+  return !/[a-z]/.test(prefix) && /[A-Z]/.test(prefix) && fixtureTeams(rest) ? rest : title;
+}
 
 const WINDOW_BACK = 6 * 3600_000, WINDOW_AHEAD = 7 * 86400_000;
 /** Guides list the same game with different kick-off/coverage times (e.g. 19:20 build-up, 19:57, 20:00). */
