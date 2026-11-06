@@ -13,6 +13,8 @@ export type ChannelLinks = {
   country?: string;
   /** Word swaps applied to guide channel names, e.g. "CYMRU FOOTBALL" → "Cymru Football event". */
   replace?: { from: string; to: string }[];
+  /** Playlist Live TV category the guide's channels live in, e.g. "UK | Cymru TV". */
+  category?: string;
 };
 
 export function readChannelLinks(raw: unknown): ChannelLinks {
@@ -25,7 +27,8 @@ export function readChannelLinks(raw: unknown): ChannelLinks {
         .filter((x) => x.from)
         .slice(0, 20)
     : [];
-  return { numbered: r.numbered === true, ...(country ? { country } : {}), ...(replace.length ? { replace } : {}) };
+  const category = typeof r.category === "string" ? r.category.trim().slice(0, 120) : "";
+  return { numbered: r.numbered === true, ...(category ? { category } : {}), ...(country ? { country } : {}), ...(replace.length ? { replace } : {}) };
 }
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -54,4 +57,22 @@ export function testChannelLinks(guideChannels: string[], playlist: string[], li
     const found = matchChannel(rewritten, playlist, aliases).filter((p) => channelInCountry(p, links.country));
     return { guide: g, rewritten, found };
   });
+}
+
+/**
+ * Link one guide channel to a real channel inside the guide's playlist category:
+ * normal matching first, then by number ("CYMRU FOOTBALL 3" → the category's channel numbered 3).
+ * Returns the exact playlist name, or null when the category has no such channel.
+ */
+export function resolveInCategory(channel: string, list: string[], links: ChannelLinks, aliases: ChannelAlias[] = []): string | null {
+  if (!list.length) return null;
+  const rewritten = applyChannelLinks(channel, links);
+  const found = matchChannel(rewritten, list, aliases);
+  if (found.length) return found[0];
+  const m = /(\d{1,4})\s*$/.exec(channel.trim()) ?? /(\d{1,4})/.exec(channel);
+  if (!m) return list.length === 1 ? list[0] : null;
+  const n = Number(m[1]);
+  const nums = (name: string) => (name.match(/\d+/g) ?? []).map(Number);
+  // Prefer a name whose last number is n, then one that leads with n ("03 | ...").
+  return list.find((p) => nums(p).at(-1) === n) ?? list.find((p) => nums(p)[0] === n) ?? null;
 }

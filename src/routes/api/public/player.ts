@@ -370,10 +370,13 @@ export const Route = createFileRoute("/api/public/player")({
             const { readChannelLinks } = await import("@/lib/sports-channel-links");
             const catName = new Map((cats ?? []).map((c) => [c.id, c.name]));
             const parentOf = new Map((cats ?? []).map((c) => [c.id, c.parent_id]));
-            const events = playerSportsEvents((blogs ?? []).map((b) => {
+            const guideRows = (blogs ?? []).map((b) => {
               const pid = b.category_id ? parentOf.get(b.category_id) : null;
               return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null, links: readChannelLinks(b.channel_links) };
-            }));
+            });
+            const playlistCats = [...new Set(guideRows.map((g) => g.links.category).filter((c): c is string => !!c))];
+            const { playlistCategoryChannels } = await import("@/lib/playlist-source.server");
+            const events = playerSportsEvents(guideRows, Date.now(), await playlistCategoryChannels(playlistCats));
             const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
             // Guides follow the website order too (sort_order, newest first), after the category names.
             const order = Array.from(new Set([...(cats ?? []).map((c) => c.name), ...(blogs ?? []).map((b) => b.title)]));
