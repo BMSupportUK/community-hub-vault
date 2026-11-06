@@ -94,7 +94,9 @@ export function playerSportsEvents(
       target.channels = merged.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, MAX_CHANNELS);
       target.passChannels = target.channels.filter((c) => !target.mainSet.has(c.toLowerCase()));
       if (club) target.teamChannels = true;
-      if (links.country) for (const c of channels) (target.channelCountry ??= {})[c] = links.country;
+      // A guide linked to a playlist category ("US | Paramount+") is locked to that category's country too.
+      const country = links.country || /^\s*([A-Z]{2,3})\s*\|/i.exec(links.category ?? "")?.[1]?.toUpperCase();
+      if (country) for (const c of channels) (target.channelCountry ??= {})[c] = country;
       if (!existing) out.push(ev);
     }
   }
