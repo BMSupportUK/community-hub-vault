@@ -69,7 +69,10 @@ export function playerSportsEvents(
       const start = ukListingInstant(e.date, e.time);
       if (start == null || start < nowMs - WINDOW_BACK || start > nowMs + WINDOW_AHEAD) continue;
       const links = g.links ?? {};
-      const channels = e.channels.map((c) => applyChannelLinks(c, links)).filter(Boolean);
+      const catList = links.category ? categoryChannels?.get(links.category.toLowerCase()) : undefined;
+      const channels = e.channels
+        .map((c) => (catList?.length ? resolveInCategory(c, catList, links) ?? applyChannelLinks(c, links) : applyChannelLinks(c, links)))
+        .filter(Boolean);
       const ev: Card = { sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: cardTitle(e.title), date: e.date, time: e.time, start,
         channels: [], passChannels: [], pass, mainSet: new Set() };
       // One card per game: every guide listing the same game adds its channels to that card.
