@@ -2894,6 +2894,12 @@ public class MainActivity extends Activity {
         return l.contains("fhd") || l.contains("1080") ? 3 : l.matches(".*\\bhd\\b.*") ? 2 : l.contains("uhd") || l.contains("4k") ? 1 : 0;
     }
     /** Mirrors matchChannel: exact normalised (with aliases), else whole-word partial; best quality first. */
+    /** Website "Channel linking" country rule: the playlist name must carry that tag, e.g. "US | Paramount+ 3". */
+    static boolean channelInCountry(String name, String country) {
+        if (country == null || country.isEmpty()) return true;
+        return java.util.regex.Pattern.compile("(^|[^A-Z0-9])" + java.util.regex.Pattern.quote(country.toUpperCase(java.util.Locale.ROOT)) + "([^A-Z0-9]|$)")
+                .matcher(name == null ? "" : name.toUpperCase(java.util.Locale.ROOT)).find();
+    }
     private static final java.util.regex.Pattern DAILY_NUM = java.util.regex.Pattern.compile("^\\s*0*(\\d{1,4})\\s*\\|");
     static List<Item> matchChannel(String guide, List<Item> playlist, List<String[]> aliases) {
         java.util.Map<String, String> am = aliasMap(aliases);
@@ -3903,6 +3909,9 @@ public class MainActivity extends Activity {
                 if (clubs && teamNames.contains(k)) continue;
                 if (!heading) { labels.add(section == 0 ? "━━  CHANNELS  ━━" : "━━  SPORTS PASSES  ━━"); targets.add(null); heading = true; }
                 List<Item> m = matchChannel(g, pl, aliases);
+                JSONObject ccMap = e.optJSONObject("channelCountry");
+                String cc = ccMap == null ? "" : ccMap.optString(g, "");
+                if (!cc.isEmpty()) { List<Item> keep = new ArrayList<>(); for (Item it : m) if (channelInCountry(it.name, cc)) keep.add(it); m = keep; }
                 if (m.isEmpty()) { labels.add("✕ " + g + "  —  not in your channels"); targets.add(null); }
                 for (Item it : m) if (seen.add(it.id)) { labels.add("▶  " + it.name); targets.add(it); }
             }
