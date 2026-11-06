@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Add Backup Apps after Link Device and move QD/XCTV install cards; verify tab ordering and signed-in cards.
 - [x] Give Install Guides staff help its own visible tab and hide phone/Windows self-install; five tests pass, signed-in desktop/phone and old setup links verified; ticket creation unchanged.
 - [x] Phone Live TV: once a preview kicks in, the button under the category details becomes "▶ Play menu" and both it and a single tap on the preview box open that channel's play menu; 51 Android tests pass. Not released; real-phone tap check pending (no attached device).
 - [x] Build, sign and release Android 3.09 (versionCode 120) with the phone Preview channel button and double-tap play menu; 50 Android tests pass, the download link and in-app update info both report 3.09 and the served file matches the build byte-for-byte. Real-phone check pending (no attached device).
