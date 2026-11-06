@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { isAppleMobile } from "@/lib/player-web";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
 
-const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC", mac: "Mac" };
+const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC", mac: "Mac", web: "iPhone / iPad browser" };
 
 export function PlayerDeviceLinkSection() {
   const sendCode = useServerFn(sendLoginWithCode);
@@ -69,6 +71,7 @@ export function PlayerDeviceLinkSection() {
     <div className="mx-auto max-w-5xl">
       <h2 className="font-display text-2xl font-bold">Link Device</h2>
       <p className="mt-1 text-sm text-muted-foreground">Enter the code shown on your TV, phone or PC to sign the BM Player app in.</p>
+      <AppleWebPlayerLink />
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <form onSubmit={submit} className="space-y-4 rounded-lg border border-border bg-surface/90 p-5">
           {target ? <div className="flex items-center justify-between rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">
@@ -131,4 +134,16 @@ export function PlayerDeviceLinkSection() {
       </div>
     </div>
   </section>;
+}
+
+/** Test link to the in-browser BM Player; only rendered on an iPhone or iPad. */
+function AppleWebPlayerLink() {
+  const [apple, setApple] = useState(false);
+  useEffect(() => { setApple(isAppleMobile(navigator.userAgent, navigator.maxTouchPoints || 0)); }, []);
+  if (!apple) return null;
+  return <div className="mt-4 rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
+    <p className="font-semibold">On an iPhone or iPad?</p>
+    <p className="mt-1 text-muted-foreground">Watch in BM Player right here in Safari. Test version.</p>
+    <Button asChild size="sm" className="mt-3"><Link to="/player-web"><Tv className="size-4" />Open BM Player</Link></Button>
+  </div>;
 }
