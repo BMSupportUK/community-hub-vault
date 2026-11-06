@@ -157,16 +157,17 @@ export function SubscriptionDetailsCard({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent_50%)]" />
         <div className={cn(
           "relative flex flex-col items-center justify-center text-white text-center",
-          fill ? "p-2.5 md:p-6" : compact ? "p-2.5" : "p-4",
+          fill ? "p-2.5 md:p-6" : compact ? "p-2 flex-row flex-wrap gap-x-2 gap-y-1" : "p-4",
         )}>
-          <CalendarClock className={cn("shrink-0 drop-shadow", fill ? "size-6 mb-1 md:size-10 md:mb-2" : compact ? "size-6 mb-1" : "size-10 mb-1")} />
+          <CalendarClock className={cn("shrink-0 drop-shadow", fill ? "size-6 mb-1 md:size-10 md:mb-2" : compact ? "size-5" : "size-10 mb-1")} />
           <h3 className={cn(
             "font-display font-bold leading-tight drop-shadow",
             fill ? "text-sm md:text-2xl" : compact ? "text-sm" : "text-lg",
           )}>
             Your Subscription Details
           </h3>
-          {customerName && (
+          {compact && <span className="basis-full h-0" aria-hidden />}
+          {customerName && !(compact && embedded) && (
             <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg mt-1">
               <Nameplate
                 id={nameplateId}
@@ -179,11 +180,11 @@ export function SubscriptionDetailsCard({
             </div>
           )}
           {customerNumber && (
-            <p className={cn("mt-1 rounded-full border border-white/30 bg-background/20 px-3 py-1 font-mono font-semibold tracking-wider text-white", fill ? "text-sm md:text-lg" : "text-sm")}>
+            <p className={cn("rounded-full border border-white/30 bg-background/20 px-3 py-1 font-mono font-semibold tracking-wider text-white", fill ? "mt-1 text-sm md:text-lg" : compact ? "py-0.5 text-xs" : "mt-1 text-sm")}>
               Account no. {customerNumber}
             </p>
           )}
-          <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px] mt-0.5" : "text-xs mt-0.5")}>
+          <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px]" : "text-xs mt-0.5")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
         </div>
@@ -201,12 +202,12 @@ export function SubscriptionDetailsCard({
             <div
               key={c.id}
               className={cn(
-                "flex items-center justify-between gap-2 rounded-lg border",
+                "relative flex items-center justify-between gap-2 rounded-lg border",
                 embedded ? "border-white/20 bg-background/20" : "border-border bg-surface-2/70",
                 fill ? "px-2 py-1.5 md:flex-1 md:min-h-0 md:px-5 md:py-5" : compact ? "px-2 py-1.5" : "px-2.5 py-2",
               )}
             >
-              <div className="min-w-0">
+              <div className={cn("min-w-0", compact && !fill && "grid flex-1 grid-cols-2 gap-x-2 pr-0 leading-tight [&>*:first-child]:col-span-2 [&>*:first-child]:pr-14 [&>*:first-child]:mb-1 [&>div]:mt-0 [&>div]:truncate")}>
                 <div className={cn("font-semibold truncate", fill ? "text-xs md:text-lg" : "text-xs", embedded ? "text-white" : "text-foreground")}>
                   Account {c.account_number}
                   <span className={cn("ml-1 font-normal", fill ? "text-[10px] md:text-sm" : "text-[10px]", embedded ? "text-white/70" : "text-muted-foreground")}>
@@ -244,6 +245,7 @@ export function SubscriptionDetailsCard({
                 <span
                   className={cn(
                     "rounded-full border whitespace-nowrap shrink-0 font-semibold",
+                    compact && !fill && "absolute right-1 top-1 !py-0 leading-4",
                     fill ? "text-[10px] px-1.5 py-0.5 md:text-sm md:px-3 md:py-1" : "text-[10px] px-1.5 py-0.5",
                     expired
                       ? "text-white border-red-400/50 bg-red-600 expiry-date-flash"
