@@ -1,4 +1,4 @@
-import { applyChannelLinks, type ChannelLinks } from "./sports-channel-links";
+import { applyChannelLinks, resolveInCategory, type ChannelLinks } from "./sports-channel-links";
 import { parseSportsListingBlock } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
@@ -58,6 +58,8 @@ const isPassGuide = (g: { title: string; category: string | null; parent?: strin
 export function playerSportsEvents(
   guides: { title: string; body: string | null; category: string | null; parent?: string | null; links?: ChannelLinks }[],
   nowMs = Date.now(),
+  /** Playlist channel names per lower-cased category name, for guides linked to a category. */
+  categoryChannels?: Map<string, string[]>,
 ): PlayerSportsEvent[] {
   type Card = PlayerSportsEvent & { pass: boolean; mainSet: Set<string> };
   const out: Card[] = [];

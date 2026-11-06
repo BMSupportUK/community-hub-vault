@@ -148,3 +148,25 @@ export const issueOffsitePlayerLogin = createServerFn({ method: "POST" })
     await supabaseAdmin.from("player_pending_credentials").upsert({ device_id: device.id, username: data.username, password: data.password, created_at: new Date().toISOString() });
     return { number: cust.number as number };
   });
+
+/** Admin: Live TV category names from the saved playlist login, for sports guide channel linking. */
+export const listPlaylistCategories = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only the admin can read the playlist categories.");
+    const { playlistCategoryNames } = await import("@/lib/playlist-source.server");
+    return { categories: await playlistCategoryNames() };
+  });
+
+/** Admin Test: channel names inside one playlist category. */
+export const listPlaylistCategoryChannels = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ category: z.string().trim().min(1).max(120) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Only the admin can read the playlist.");
+    const { playlistCategoryChannels } = await import("@/lib/playlist-source.server");
+    const m = await playlistCategoryChannels([data.category]);
+    return { channels: m.get(data.category.toLowerCase()) ?? [] };
+  });
