@@ -2565,7 +2565,12 @@ public class MainActivity extends Activity {
             prefs.edit().putLong("exit_reported", e.getTimestamp()).apply();
             String trace = "";
             try (java.io.InputStream in = e.getTraceInputStream()) {
-                if (in != null) { java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(); byte[] b = new byte[8192]; int n; while ((n = in.read(b)) > 0 && bo.size() < 400000) bo.write(b, 0, n); trace = bo.toString().replaceAll("[^\\x20-\\x7E\\n]", ""); int m = trace.indexOf("\"main\""); if (m >= 0) trace = trace.substring(m); }
+                if (in != null) { java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(); byte[] b = new byte[8192]; int n; while ((n = in.read(b)) > 0 && bo.size() < 400000) bo.write(b, 0, n); trace = bo.toString().replaceAll("[^\\x20-\\x7E\\n]", ""); int m = trace.indexOf("\"main\""); if (m >= 0) { trace = trace.substring(m); int end = trace.indexOf("\n\n"); if (end > 0) trace = trace.substring(0, end);
+                    // Keep only the frames that say where BM Player itself was stuck (framework lines first fill the space).
+                    StringBuilder k = new StringBuilder("\"main\" "); int shown = 0;
+                    for (String line : trace.split("\n")) { String t = line.trim(); if (!t.startsWith("at ")) continue;
+                        if (shown < 2 || t.contains("uk.bmsupport") || t.contains("media3") || t.contains("android.view.") || t.contains("android.media")) { k.append(t.substring(3).replace("java:", "")).append(" | "); shown++; } }
+                    trace = k.toString(); } }
             } catch (Exception ignored) {}
             String[] names = {"unknown","exit self","signaled","low memory","crash","native crash","ANR","init failure","permission change","excessive resources","user requested","user stopped","dependency died","other","freezer","package state","package updated"};
             String name = r < names.length ? names[r] : String.valueOf(r);
