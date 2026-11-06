@@ -935,7 +935,7 @@ export function WorkingStatusBox({
           {/* Breaks get their own tab that opens a pop-up box, so the four break
               lines no longer stack up and push this box taller than it needs to be. */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <div role="tablist" aria-label="Shifts" className="grid min-w-[190px] flex-1 grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
+            <div role="tablist" aria-label="Shifts" className="grid min-w-[190px] md:max-lg:min-w-0 flex-1 grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
               {([
                 ["current", "Today's shift"],
                 ["next", "Next shift"],
@@ -968,7 +968,7 @@ export function WorkingStatusBox({
               )}
             >
               <Coffee className="size-3" />
-              Breaks
+              <span className={compact ? "md:max-lg:sr-only" : undefined}>Breaks</span>
             </button>
           </div>
           <BreakPlanDialog open={breaksOpen} onOpenChange={setBreaksOpen} userId={user.id} usedKinds={usedKinds} />
