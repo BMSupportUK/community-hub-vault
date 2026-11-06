@@ -32,3 +32,14 @@ test("women's side and games hours apart stay separate cards", () => {
   ], Date.UTC(2026, 10, 6, 19));
   expect(events.length).toBe(3);
 });
+
+test("card names drop shouting competition prefixes and sports-pass channels are marked", () => {
+  const events = playerSportsEvents([
+    { title: "EFL Championship", category: "Mens", body: "Friday, 6th November\n20:00 GMT\nEFL : CHAMPIONSHIP: Derby County v Bolton Wanderers\nSky Sports Football" },
+    { title: "Dazn", category: "Sports Passes", body: "Friday, 6th November\n19:57 GMT\nDerby v Bolton\nDazn 10 HD" },
+    { title: "Paramount+", category: "Sports Passes", body: "Friday, 6th November\n22:30 GMT\nUFC Fight Night Preview Show: Cortes Acosta v Walker\nParamount+ 1" },
+  ], Date.UTC(2026, 10, 6, 19));
+  expect(events[0].title).toBe("Derby County v Bolton Wanderers");
+  expect(events[0].passChannels).toEqual(["Dazn 10 HD"]);
+  expect(events[1].title).toBe("UFC Fight Night Preview Show: Cortes Acosta v Walker");
+});
