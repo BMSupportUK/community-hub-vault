@@ -12,6 +12,13 @@
 .bmw-bar h1{font-size:20px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bmw-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 4px 16px}
 .bmw-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
+/* Account-number login: note + keypad stay reachable on short phone screens (auto margins centre them, then scroll). */
+.bmw-unlock{flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:16px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.bmw-note{margin-top:auto;max-width:460px;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.bmw-note h3{margin:0;font-size:15px;color:var(--warn)}
+.bmw-note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:13.5px;line-height:1.35;color:var(--muted)}
+.bmw-note li::marker{color:var(--accent)}
+.bmw-note p{margin:0;font-size:13px}
 .bmw-center h2{margin:0;font-size:22px}
 .bmw-pin{font-size:30px;letter-spacing:10px;min-height:44px;font-variant-numeric:tabular-nums}
 .bmw-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}

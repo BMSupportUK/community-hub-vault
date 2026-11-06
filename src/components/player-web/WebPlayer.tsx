@@ -114,7 +114,17 @@ function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
   }
   function press(d: string) { if (busy) return; const next = (pin + d).slice(0, 6); setPin(next); if (next.length === 6) void submit(next); }
   return (
-    <div className="bmw-center">
+    <div className="bmw-unlock">
+      <div className="bmw-note">
+        <h3>What this free browser player can play</h3>
+        <ul>
+          <li>Live TV: only channels that stream in the m3u8 format. If one won't start, it isn't offered that way.</li>
+          <li>Films and series: only the mp4 ones are listed. Everything else is hidden, not broken.</li>
+          <li>Catch up: only where the recording is available in that same format.</li>
+          <li>Video plays through Safari, so use a strong Wi-Fi or data connection.</li>
+        </ul>
+        <p className="muted">For everything else, use BM Player for Android, Windows or Mac.</p>
+      </div>
       <h2>Enter your account number</h2>
       <p className="muted">It's the 6-digit number in your subscription box on bmsupport.uk.</p>
       <div className="bmw-pin" aria-label="Account number entered">{pin.padEnd(6, "•")}</div>
