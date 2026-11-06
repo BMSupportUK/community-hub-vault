@@ -5647,6 +5647,7 @@ export type Database = {
       player_buffer_events: {
         Row: {
           app_version: string | null
+          cause: string | null
           content_id: string
           content_name: string
           created_at: string
@@ -5662,6 +5663,7 @@ export type Database = {
         }
         Insert: {
           app_version?: string | null
+          cause?: string | null
           content_id?: string
           content_name?: string
           created_at?: string
@@ -5677,6 +5679,7 @@ export type Database = {
         }
         Update: {
           app_version?: string | null
+          cause?: string | null
           content_id?: string
           content_name?: string
           created_at?: string
@@ -9929,10 +9932,13 @@ export type Database = {
         | {
             Args: { _from: string; _to: string }
             Returns: {
+              advert_switches: number
               content_name: string
               devices: number
               kind: string
               last_at: string
+              network_drops: number
+              provider_cuts: number
               reconnects: number
               stalls: number
               total_stall_seconds: number
@@ -9941,10 +9947,13 @@ export type Database = {
         | {
             Args: { _hours: number }
             Returns: {
+              advert_switches: number
               content_name: string
               devices: number
               kind: string
               last_at: string
+              network_drops: number
+              provider_cuts: number
               reconnects: number
               stalls: number
               total_stall_seconds: number
