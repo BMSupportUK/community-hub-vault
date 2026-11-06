@@ -430,7 +430,10 @@ public class PlayerActivity extends Activity {
                 if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { player.seekToDefaultPosition(); player.prepare(); return; }
                 if (!everReady && urlAt + 1 < liveUrls.length) { urlAt++; open(0); return; }
                 // Every address failed before any picture (format the main player cannot open): backup engine takes over.
-                if (!everReady && !"catchup".equals(kind())) { handToBackup(); return; }
+                lastError = e.getErrorCodeName() + ": " + e.getMessage() + (e.getCause() != null ? " / " + e.getCause() : "");
+                // A UHD decoder can still be held by the preview for a moment: retry the same address once before giving up.
+                if (!everReady && !retriedStart) { retriedStart = true; ui.postDelayed(() -> { if (player != null) open(0); }, 1500); return; }
+                if (!everReady && !"catchup".equals(kind())) { sendDiagnostic(); handToBackup(); return; }
                 reconnect();
             }
         });
@@ -468,7 +471,21 @@ public class PlayerActivity extends Activity {
         if (other != null) { prefs(this).edit().putString("fmt_pref:" + id, other).apply(); FormatSync.push(this, id, other); }
     }
 
-    private boolean handedOver;
+    private boolean handedOver, retriedStart;
+    private String lastError = "";
+    /** Tells BM Support why the main player couldn't open this stream (automatic, no customer text). */
+    private void sendDiagnostic() {
+        final String token = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("token", "");
+        if (token.isEmpty()) return;
+        String u = liveUrls[urlAt]; String fmt = u.endsWith(".m3u8") ? "m3u8" : u.endsWith(".ts") ? "ts" : "direct";
+        final String issue = ("Main player failed (" + fmt + "), switched to backup engine. " + lastError);
+        new Thread(() -> { try {
+            Net.postJson(Net.SITE + "/api/public/player", new org.json.JSONObject().put("action", "report").put("device_token", token)
+                    .put("kind", kind()).put("title", "Playback error (automatic): " + String.valueOf(getIntent().getStringExtra("content_name")))
+                    .put("issue", issue.length() > 990 ? issue.substring(0, 990) : issue)
+                    .put("device", String.valueOf(getIntent().getStringExtra("report_device"))).put("version", String.valueOf(getIntent().getStringExtra("report_version"))).toString());
+        } catch (Exception ignored) {} }).start();
+    }
     /** Restart this stream in the built-in backup engine (BackupPlayerActivity) with the same addresses and position. */
     private void handToBackup() {
         if (handedOver || isFinishing()) return;
