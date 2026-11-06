@@ -121,7 +121,7 @@ export function PlayerAnnouncementsCard({ onBack }: { onBack: () => void }) {
                 <CommandInput placeholder="Search online users…" />
                 <CommandList className="max-h-[50dvh]">
                   <CommandEmpty>{online === null ? "Loading…" : "No users online right now."}</CommandEmpty>
-                  {(online ?? []).map(r => <CommandItem key={r.id} value={`${r.username ?? ""} ${r.display_name ?? ""} ${r.id}`} onSelect={() => setPending(r)}>
+                  {(online ?? []).map(r => <CommandItem key={r.id} value={`${r.username ?? ""} ${r.display_name ?? ""} ${r.id}`} onSelect={() => { setPickerOpen(false); setTimeout(() => setPending(r), 150); }}>
                     <span className="size-2 rounded-full bg-primary shrink-0" />
                     <span className="min-w-0 break-words">{r.username || r.display_name || "Unnamed user"}</span>
                     <span className="ml-auto text-xs text-muted-foreground">{r.devices} device{r.devices === 1 ? "" : "s"}</span>
@@ -140,7 +140,7 @@ export function PlayerAnnouncementsCard({ onBack }: { onBack: () => void }) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>No, go back</AlertDialogCancel>
-                <AlertDialogAction onClick={() => { if (pending) { setTargetUserId(pending.id); setPickerOpen(false); } setPending(null); }}>Yes, that's them</AlertDialogAction>
+                <AlertDialogAction onClick={() => { if (pending) setTargetUserId(pending.id); setPending(null); }}>Yes, that's them</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
