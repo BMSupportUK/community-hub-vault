@@ -1,0 +1,2 @@
+# player-web rules
+- iPhone/iPad web BM Player (`/player-web`, `src/components/player-web/`) is a `web` player_devices row owned by the signed-in member and reuses the device-token `/api/public/player` actions; provider lists/EPG go through `webPlayerProvider` (owner's own app_credentials), video plays directly from the https provider in Safari and never through the website, and non-mp4/m4v/mov films/episodes are filtered out so no conversion cost exists. The entry link renders only on iPhone/iPad.
