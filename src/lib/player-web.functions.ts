@@ -56,13 +56,12 @@ const programmes = (rows: Row[]) => rows.map((p) => ({
 /**
  * Lists, guide and series details for one of the member's own saved app logins, fetched server-side
  * (provider panels don't allow browser requests). Results are trimmed to what the player shows;
- * films/episodes Safari can't play are dropped here so they never appear.
+ * nothing is dropped for its file type - Safari tries every title and the player hides the ones it refuses.
  */
 export const webPlayerProvider = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ credentialId: z.string().uuid(), call: ProviderCall }).parse(d))
   .handler(async ({ data, context }) => {
-    const { playableVod } = await import("@/lib/player-web");
     const { data: cred } = await context.supabase.from("app_credentials").select("app_login_name, password, owner_id")
       .eq("id", data.credentialId).maybeSingle();
     if (!cred || cred.owner_id !== context.userId || !cred.app_login_name || !cred.password) throw new Error("That app login isn't on your account.");
@@ -88,7 +87,7 @@ export const webPlayerProvider = createServerFn({ method: "POST" })
       kind: "live" as const, id: String(p.stream_id), name: String(p.name ?? "Untitled"), category: String(p.category_id ?? ""),
       poster: String(p.stream_icon ?? ""), archive: Number(p.tv_archive) === 1 ? Math.max(1, Number(p.tv_archive_duration) || 1) : 0,
     })) };
-    if (a === "get_vod_streams") return { items: rows.filter((p) => playableVod(String(p.container_extension ?? ""))).map((p) => ({
+    if (a === "get_vod_streams") return { items: rows.map((p) => ({
       kind: "film" as const, id: String(p.stream_id), name: String(p.name ?? "Untitled"), category: String(p.category_id ?? ""),
       poster: String(p.stream_icon ?? ""), ext: String(p.container_extension).toLowerCase(), added: Number(p.added) || 0, rating: Number(p.rating_5based ?? p.rating) || 0,
     })) };
@@ -100,11 +99,11 @@ export const webPlayerProvider = createServerFn({ method: "POST" })
       const info = (raw ?? {}) as { info?: Row; episodes?: Record<string, Row[]> };
       const seasons: Record<string, { id: string; title: string; num: number; ext: string; plot: string }[]> = {};
       for (const [season, eps] of Object.entries(info.episodes ?? {})) {
-        const ok = (eps ?? []).filter((e) => playableVod(String(e.container_extension ?? ""))).map((e) => ({
+        const ok = (eps ?? []).map((e) => ({
           id: String(e.id), title: String(e.title ?? `Episode ${e.episode_num}`), num: Number(e.episode_num) || 0,
           ext: String(e.container_extension).toLowerCase(), plot: String((e.info as Row | undefined)?.plot ?? ""),
         }));
-        if (ok.length) seasons[season] = ok; // a season with nothing playable doesn't show
+        if (ok.length) seasons[season] = ok; // a season with no episodes at all doesn't show
       }
       return { plot: String(info.info?.plot ?? ""), backdrop: String((info.info?.backdrop_path as string[] | undefined)?.[0] ?? info.info?.cover ?? ""), seasons };
     }
