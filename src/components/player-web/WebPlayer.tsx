@@ -133,7 +133,7 @@ function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
             <li>Video plays through Safari, so use a strong Wi-Fi or data connection.</li>
           </ul>
           <p className="muted">For everything else, use BM Player for Android, Windows or Mac.</p>
-        </> : <p className="muted">Only m3u8 channels and mp4 films and series. Everything else is hidden.</p>}
+        </> : <p className="muted">Only m3u8 channels and mp4 films/series play here.</p>}
         <button className="bmw-note-more" onClick={() => setShowLimits((v) => !v)}>{showLimits ? "Show less" : "Show what's available"}</button>
       </div>
       <h2>Enter your account number</h2>

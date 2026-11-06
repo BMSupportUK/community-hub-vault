@@ -33,7 +33,7 @@
  .bmw-note h3{font-size:13px}
  .bmw-note p{font-size:12px}
  .bmw-pad{grid-template-columns:repeat(3,58px);gap:6px}
- .bmw-pad button{height:38px;font-size:18px}
+ .bmw-pad button{height:34px;font-size:17px}
  .bmw-pin{font-size:22px;letter-spacing:6px;min-height:30px}
 }
 .bmw-center h2{margin:0;font-size:22px}
