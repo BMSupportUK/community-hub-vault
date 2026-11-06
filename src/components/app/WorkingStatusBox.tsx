@@ -996,6 +996,7 @@ export function WorkingStatusBox({
               />
             </div>
           </div>
+          </div>
           {shiftTab === "current" ? (
           <>
           {shift ? (
