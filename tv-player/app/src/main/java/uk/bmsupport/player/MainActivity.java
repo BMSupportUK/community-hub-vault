@@ -3654,10 +3654,10 @@ public class MainActivity extends Activity {
         return d;
     }
     /** Website category filter: main category, then (when chosen) its sub-category. */
-    static boolean inSportsCategory(JSONObject e, String sport, String sub) {
+    static boolean inSportsCategory(String eventSport, String eventSub, String sport, String sub) {
         if (sport == null) return true;
-        if (!sport.equals(e.optString("sport"))) return false;
-        return sub == null || sub.equals(e.optString("subcategory", ""));
+        if (!sport.equals(eventSport)) return false;
+        return sub == null || sub.equals(eventSub);
     }
     private List<JSONObject> upcomingSports(JSONObject r, long now) {
         List<JSONObject> out = new ArrayList<>();
@@ -3726,7 +3726,7 @@ public class MainActivity extends Activity {
         sportsAliases = aliases;
         long now = System.currentTimeMillis();
         List<JSONObject> inCat = new ArrayList<>();
-        for (JSONObject e : upcomingSports(r, now)) if (inSportsCategory(e, sportsSport, sportsSub)) inCat.add(e);
+        for (JSONObject e : upcomingSports(r, now)) if (inSportsCategory(e.optString("sport"), e.optString("subcategory", ""), sportsSport, sportsSub)) inCat.add(e);
         int[] perDay = new int[7];
         for (JSONObject e : inCat) { int d = ukDayIndex(e.optLong("start"), now); if (d < 7) perDay[d]++; }
         if (sportsDays != null) {

@@ -1,7 +1,6 @@
 package uk.bmsupport.player;
 
 import static org.junit.Assert.*;
-import org.json.JSONObject;
 import org.junit.Test;
 
 public class SportsGuideFilterTest {
@@ -14,12 +13,11 @@ public class SportsGuideFilterTest {
         assertEquals(0, MainActivity.ukDayIndex(NOW - 20 * 3600_000L, NOW));     // still on from yesterday
     }
 
-    @Test public void categoryFilterUsesWebsiteMainThenSubCategory() throws Exception {
-        JSONObject e = new JSONObject().put("sport", "Football").put("subcategory", "Mens");
-        assertTrue(MainActivity.inSportsCategory(e, null, null));
-        assertTrue(MainActivity.inSportsCategory(e, "Football", null));
-        assertTrue(MainActivity.inSportsCategory(e, "Football", "Mens"));
-        assertFalse(MainActivity.inSportsCategory(e, "Football", "Womens"));
-        assertFalse(MainActivity.inSportsCategory(e, "Rugby", null));
+    @Test public void categoryFilterUsesWebsiteMainThenSubCategory() {
+        assertTrue(MainActivity.inSportsCategory("Football", "Mens", null, null));
+        assertTrue(MainActivity.inSportsCategory("Football", "Mens", "Football", null));
+        assertTrue(MainActivity.inSportsCategory("Football", "Mens", "Football", "Mens"));
+        assertFalse(MainActivity.inSportsCategory("Football", "Mens", "Football", "Womens"));
+        assertFalse(MainActivity.inSportsCategory("Football", "Mens", "Rugby", null));
     }
 }
