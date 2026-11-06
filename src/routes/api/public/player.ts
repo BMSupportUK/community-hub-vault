@@ -376,7 +376,9 @@ export const Route = createFileRoute("/api/public/player")({
             const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
             // Guides follow the website order too (sort_order, newest first), after the category names.
             const order = Array.from(new Set([...(cats ?? []).map((c) => c.name), ...(blogs ?? []).map((b) => b.title)]));
-            return { version, events, order, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
+            // Category pop-up: the website's own main categories, each with its sub-categories, in site order.
+            const categories = (cats ?? []).filter((c) => !c.parent_id).map((c) => ({ name: c.name, subs: (cats ?? []).filter((x) => x.parent_id === c.id).map((x) => x.name) }));
+            return { version, events, order, categories, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
           });
           return json(payload);
         }
