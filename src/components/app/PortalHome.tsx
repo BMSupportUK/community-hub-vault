@@ -72,7 +72,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
       {/* Hero */}
       <div className="grid min-h-full w-full min-w-0 grid-rows-[1fr_auto] lg:h-full overflow-x-hidden overflow-y-visible">
       <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
-        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 items-start md:items-stretch gap-4 lg:h-full md:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
+        <div className="grid min-h-0 min-w-0 w-full grid-cols-1 items-start lg:items-stretch gap-4 lg:h-full lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 md:h-full lg:pb-10">
             <div className="relative flex min-h-0 flex-col overflow-hidden md:flex-1 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
               <div className="grid min-h-0 gap-4 md:flex-1 md:grid-rows-[minmax(0,1fr)] p-4 pb-14 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
@@ -128,9 +128,9 @@ export function PortalHome({ staff }: { staff: boolean }) {
             </div>
           </div>
 
-          <div className="flex min-h-0 w-full flex-col items-stretch gap-4 md:h-0 md:min-h-full">
+          <div className="flex min-h-0 w-full flex-col items-stretch gap-4 lg:h-0 lg:min-h-full">
                 {/* Right column — same order for both portals: icons, Hey + nameplate, welcome, then status/subscription. Staff pills live in the portal header. */}
-                <div className="flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-4 text-white shadow-2xl md:flex-1 md:overflow-y-auto">
+                <div className="flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-4 text-white shadow-2xl lg:flex-1 lg:overflow-y-auto">
                   {!isStaffAccount && <GreetingPills />}
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-1">
                     <span className="text-base font-bold text-amber-200 drop-shadow">Hey</span>
