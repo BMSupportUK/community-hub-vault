@@ -16,7 +16,12 @@
 ## Trade-offs
 - The provider address and login reach the phone's browser so Safari can play it, which is less hidden than in the apps. They are fetched only after the unlock, never saved in the browser, and fetched again each session.
 - Some providers send the video itself from plain (non-secure) addresses even when the login address is secure. If that happens on a channel, it won't play, and the page will say so. We'll test that first with your provider.
-- iPhone plays the m3u8 format only; channels are always asked for in m3u8.
+- Formats: Live TV and catch up are always requested from the provider in m3u8, which Safari plays. Your provider already offers both formats, so wrong-format live channels should be rare.
+- Films/series in mp4 play directly. Files in mkv/avi can't play in Safari as they are. For those, the page offers "Play through BM" for that one title, and the website converts it on the fly. Only those plays cost data (about 0.9 credits per HD hour). It's off unless used, and I can switch it off entirely if you prefer.
+
+## Test access
+- A private test link, shown only when the page is opened on an iPhone or iPad (including iPads that report themselves as Mac). On other devices the link is hidden, and the page says it's for iPhone/iPad.
+- No public pill or launch until you approve.
 
 ## Build steps
 1. Test: confirm your provider's live, film and catch-up streams play directly in iPhone Safari.
