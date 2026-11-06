@@ -52,22 +52,6 @@ export function PortalHome({ staff }: { staff: boolean }) {
     return () => window.clearInterval(id);
   }, []);
   const band = dayBand(hour);
-  // Hold the picture hidden until the sidebar (subscription / Working Status) stops resizing,
-  // so it appears once at its final height instead of growing on load.
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const [heroReady, setHeroReady] = useState(false);
-  useEffect(() => {
-    const el = sidebarRef.current;
-    if (!el) { setHeroReady(true); return; }
-    let t = window.setTimeout(() => setHeroReady(true), 500);
-    const cap = window.setTimeout(() => setHeroReady(true), 2500);
-    const ro = new ResizeObserver(() => {
-      window.clearTimeout(t);
-      t = window.setTimeout(() => setHeroReady(true), 400);
-    });
-    ro.observe(el);
-    return () => { ro.disconnect(); window.clearTimeout(t); window.clearTimeout(cap); };
-  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -93,7 +77,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
             <div className="relative flex min-h-0 flex-col overflow-hidden md:flex-1 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
               <div className="grid min-h-0 gap-4 md:flex-1 md:grid-rows-[minmax(0,1fr)] p-4 pb-14 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
                 <div className="order-1 flex min-h-0 min-w-0 flex-col gap-3 text-white">
-                  <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 min-h-[220px] max-h-[calc(100dvh-14rem)] ${isStaffAccount ? "aspect-[1920/832]" : "aspect-[16/9]"} md:aspect-auto md:max-h-none md:flex-1 lg:min-h-[320px] transition-opacity duration-300 ${heroReady ? "opacity-100" : "md:opacity-0"}`}>
+                  <div className={`relative w-full min-w-0 overflow-hidden rounded-2xl bg-blue-950/30 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] ring-2 ring-white/25 min-h-[220px] max-h-[calc(100dvh-14rem)] ${isStaffAccount ? "aspect-[1920/832]" : "aspect-[16/9]"} lg:aspect-auto lg:max-h-none lg:flex-1 lg:min-h-[320px]`}>
                     <div className="absolute inset-0">
                       <img
                         src={isStaffAccount ? staffHeroImg : heroImg}
@@ -144,9 +128,9 @@ export function PortalHome({ staff }: { staff: boolean }) {
             </div>
           </div>
 
-          <div ref={sidebarRef} className="flex min-h-0 w-full flex-col items-stretch gap-4">
+          <div className="flex min-h-0 w-full flex-col items-stretch gap-4 md:h-0 md:min-h-full">
                 {/* Right column — same order for both portals: icons, Hey + nameplate, welcome, then status/subscription. Staff pills live in the portal header. */}
-                <div className="flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-4 text-white shadow-2xl">
+                <div className="flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-4 text-white shadow-2xl md:flex-1 md:overflow-y-auto">
                   {!isStaffAccount && <GreetingPills />}
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-1">
                     <span className="text-base font-bold text-amber-200 drop-shadow">Hey</span>
