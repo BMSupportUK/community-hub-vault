@@ -12,9 +12,34 @@
 .bmw-bar h1{font-size:20px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bmw-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 4px 16px}
 .bmw-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
+/* Account-number login: note + keypad stay reachable on short phone screens (auto margins centre them, then scroll). */
+.bmw-unlock{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:12px 16px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.bmw-note{margin-top:auto;max-width:460px;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
+.bmw-note h3{margin:0;font-size:14px;color:var(--warn)}
+.bmw-note ul{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:4px;font-size:12.5px;line-height:1.3;color:var(--muted)}
+.bmw-note li::marker{color:var(--accent)}
+.bmw-note p{margin:0;font-size:12.5px}
+.bmw-note-more{align-self:flex-start;background:transparent;border-color:var(--line);font-size:12px;padding:4px 8px}
+/* Phones shorter than a large iPhone: smaller keypad and pin so it stays on view. */
+@media (max-height:700px){
+ .bmw-pad{grid-template-columns:repeat(3,64px);gap:8px}
+ .bmw-pad button{height:46px;font-size:20px}
+ .bmw-pin{font-size:26px;letter-spacing:8px;min-height:36px}
+}
+/* Very short screens: tighten everything so the keypad is still on view. */
+@media (max-height:560px){
+ .bmw-unlock{gap:8px;padding:8px 14px}
+ .bmw-note{padding:8px 10px;gap:4px}
+ .bmw-note h3{font-size:13px}
+ .bmw-note p{font-size:12px}
+ .bmw-note-more{display:none}
+ .bmw-pad{grid-template-columns:repeat(3,58px);gap:6px}
+ .bmw-pad button{height:34px;font-size:17px}
+ .bmw-pin{font-size:22px;letter-spacing:6px;min-height:30px}
+}
 .bmw-center h2{margin:0;font-size:22px}
 .bmw-pin{font-size:30px;letter-spacing:10px;min-height:44px;font-variant-numeric:tabular-nums}
-.bmw-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+.bmw-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:auto}
 .bmw-pad button{height:58px;font-size:22px}
 .bmw-err{color:var(--warn);max-width:420px}
 .bmw-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}

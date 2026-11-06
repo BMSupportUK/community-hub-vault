@@ -106,6 +106,14 @@ function Player() {
 
 function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
   const [pin, setPin] = useState(""), [busy, setBusy] = useState(false), [err, setErr] = useState("");
+  const [showLimits, setShowLimits] = useState(true);
+  // Short phone screens keep the keypad on view: the full list folds away, the summary line stays.
+  useEffect(() => {
+    const fit = () => setShowLimits(window.innerHeight >= 760);
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
   async function submit(value: string) {
     setBusy(true); setErr("");
     try { await api({ action: "unlock", device_token: token, account_number: value }); onDone(); }
@@ -114,9 +122,22 @@ function Unlock({ token, onDone }: { token: string; onDone: () => void }) {
   }
   function press(d: string) { if (busy) return; const next = (pin + d).slice(0, 6); setPin(next); if (next.length === 6) void submit(next); }
   return (
-    <div className="bmw-center">
+    <div className="bmw-unlock">
+      <div className="bmw-note">
+        <h3>What this free browser player can play</h3>
+        {showLimits ? <>
+          <ul>
+            <li>Live TV: only channels that stream in the m3u8 format. If one won't start, it isn't offered that way.</li>
+            <li>Films and series: only the mp4 ones are listed. Everything else is hidden, not broken.</li>
+            <li>Catch up: only where the recording is available in that same format.</li>
+            <li>Video plays through Safari, so use a strong Wi-Fi or data connection.</li>
+          </ul>
+          <p className="muted">For everything else, use BM Player for Android, Windows or Mac.</p>
+        </> : <p className="muted">Only m3u8 channels and mp4 films/series play here.</p>}
+        <button className="bmw-note-more" onClick={() => setShowLimits((v) => !v)}>{showLimits ? "Show less" : "Show what's available"}</button>
+      </div>
       <h2>Enter your account number</h2>
-      <p className="muted">It's the 6-digit number in your subscription box on bmsupport.uk.</p>
+      <p className="muted">The 6-digit number in your subscription box.</p>
       <div className="bmw-pin" aria-label="Account number entered">{pin.padEnd(6, "•")}</div>
       {err && <p className="bmw-err">{err}</p>}
       <div className="bmw-pad">
