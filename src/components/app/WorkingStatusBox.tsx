@@ -87,7 +87,7 @@ function SignInOpensNote({ win }: { win: { start: string; end: string } }) {
     }).format(startsAt);
   }
   return (
-    <p className="text-xs text-muted-foreground md:max-lg:text-[10px] md:max-lg:leading-tight">
+    <p className="text-xs text-muted-foreground compact:text-[10px] compact:leading-tight">
       Sign-in opens 15 minutes before your shift starts ({ukStart} UK
       {deviceText ? ` · ${deviceText} your time` : ""}).
     </p>
@@ -750,13 +750,13 @@ export function WorkingStatusBox({
     const uk = timesFor(slot, "Europe/London");
     const local = deviceTz !== "Europe/London" ? timesFor(slot, deviceTz) : null;
     return (
-      <div className="grid gap-2.5 text-xs md:max-lg:gap-1 md:max-lg:text-[11px] md:max-lg:leading-tight">
-        <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 md:max-lg:px-2.5 md:max-lg:py-1 md:max-lg:flex-row md:max-lg:items-center md:max-lg:justify-between md:max-lg:gap-2 md:max-lg:rounded-full md:max-lg:text-[10px] md:max-lg:[&_*]:text-[10px] ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+      <div className="grid gap-2.5 text-xs compact:gap-1 compact:text-[11px] compact:leading-tight">
+        <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 compact:px-2.5 compact:py-1 compact:flex-row compact:items-center compact:justify-between compact:gap-2 compact:rounded-full compact:text-[10px] compact:[&_*]:text-[10px] ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
           <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
           <ShiftTimes {...uk} className="text-foreground @max-[12rem]:whitespace-normal" />
         </div>
         {local && (
-          <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 md:max-lg:px-2.5 md:max-lg:py-1 md:max-lg:flex-row md:max-lg:items-center md:max-lg:justify-between md:max-lg:gap-2 md:max-lg:rounded-full md:max-lg:text-[10px] md:max-lg:[&_*]:text-[10px] ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+          <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 compact:px-2.5 compact:py-1 compact:flex-row compact:items-center compact:justify-between compact:gap-2 compact:rounded-full compact:text-[10px] compact:[&_*]:text-[10px] ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
             <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
             <ShiftTimes {...local} className="text-[11px] text-foreground @min-[19rem]:text-xs @max-[12rem]:whitespace-normal" />
           </div>
@@ -872,7 +872,7 @@ export function WorkingStatusBox({
   return (
     <section className={cn(compact ? "w-full self-start @container lg:aspect-video" : "px-2 pt-4")}>
       <div className={cn("bg-card border border-white/10 shadow-2xl overflow-hidden", compact ? "flex min-h-full flex-col rounded-xl" : "rounded-2xl")}>
-        <div className={cn("flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-success/80 to-primary/80", compact ? "px-3 py-2 md:max-lg:py-1" : "px-4 py-3")}>
+        <div className={cn("flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-success/80 to-primary/80", compact ? "px-3 py-2 compact:py-1" : "px-4 py-3")}>
           <div className="flex items-center gap-2.5">
             <Briefcase className={cn("text-white/90", compact ? "size-4" : "size-5")} />
             <h2 className="font-display text-[11px] font-bold tracking-widest uppercase text-white">
@@ -891,11 +891,11 @@ export function WorkingStatusBox({
             </Link>
           </div>
         </div>
-        <div className={cn("text-sm", compact ? "flex min-h-0 flex-1 flex-col justify-start space-y-2 px-3 py-2.5 md:max-lg:space-y-1.5 md:max-lg:px-2.5 md:max-lg:py-2 md:max-lg:text-xs" : "px-5 py-5 space-y-4")}>
+        <div className={cn("text-sm", compact ? "flex min-h-0 flex-1 flex-col justify-start space-y-2 px-3 py-2.5 compact:space-y-1.5 compact:px-2.5 compact:py-2 compact:text-xs" : "px-5 py-5 space-y-4")}>
           <div
             className={cn(
               "border-b border-white/10",
-              compact ? "gap-2 pb-2 md:max-lg:hidden" : "gap-4 pb-4",
+              compact ? "gap-2 pb-2 compact:hidden" : "gap-4 pb-4",
               stackActions ? "flex flex-col items-start" : "flex items-center justify-between",
             )}
           >
@@ -932,11 +932,11 @@ export function WorkingStatusBox({
               </div>
             </div>
           </div>
-          <div className={cn(compact && "md:max-lg:flex md:max-lg:items-center md:max-lg:gap-1")}>
+          <div className={cn(compact && "compact:flex compact:items-center compact:gap-1")}>
           {/* Breaks get their own tab that opens a pop-up box, so the four break
               lines no longer stack up and push this box taller than it needs to be. */}
-          <div className="flex flex-wrap items-center gap-1.5 md:max-lg:min-w-0 md:max-lg:flex-1 md:max-lg:flex-nowrap md:max-lg:gap-1">
-            <div role="tablist" aria-label="Shifts" className="grid min-w-[190px] md:max-lg:min-w-0 flex-1 grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
+          <div className="flex flex-wrap items-center gap-1.5 compact:min-w-0 compact:flex-1 compact:flex-nowrap compact:gap-1">
+            <div role="tablist" aria-label="Shifts" className="grid min-w-[190px] compact:min-w-0 flex-1 grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
               {([
                 ["current", "Today's shift"],
                 ["next", "Next shift"],
@@ -948,7 +948,7 @@ export function WorkingStatusBox({
                   aria-selected={shiftTab === key}
                   onClick={() => setShiftTab(key)}
                   className={cn(
-                    "whitespace-nowrap rounded-full px-2 py-1 text-[10px] md:max-lg:px-1 md:max-lg:text-[9px] font-bold uppercase tracking-wide transition",
+                    "whitespace-nowrap rounded-full px-2 py-1 text-[10px] compact:px-1 compact:text-[9px] font-bold uppercase tracking-wide transition",
                     shiftTab === key ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -969,13 +969,13 @@ export function WorkingStatusBox({
               )}
             >
               <Coffee className="size-3" />
-              <span className={compact ? "md:max-lg:sr-only" : undefined}>Breaks</span>
+              <span className={compact ? "compact:sr-only" : undefined}>Breaks</span>
             </button>
           </div>
           <BreakPlanDialog open={breaksOpen} onOpenChange={setBreaksOpen} userId={user.id} usedKinds={usedKinds} />
           {/* Shift controls sit on one wrapping row under the Shifts tabs: shift actions and Away.
               Tickets and screen share move above the box on the portal home (showTools=false). */}
-          <div className={cn(compact && "md:max-lg:mt-0 md:max-lg:shrink-0 md:max-lg:[&_button]:size-7 md:max-lg:[&_a]:size-7")}>
+          <div className={cn(compact && "compact:mt-0 compact:shrink-0 compact:[&_button]:size-7 compact:[&_a]:size-7")}>
             <div className={cn("flex flex-wrap items-center", compact ? "gap-1" : "gap-3")}>
               {showTools && <TalkScreenShareButton variant="icon" />}
               {showTools && (canAnswerTickets || roles.includes("moderator")) && (
@@ -1063,7 +1063,7 @@ export function WorkingStatusBox({
           {/* Away reads exactly like a break row: under the shift, above the next shift. */}
           {dnd?.active && (
             <div className="flex items-center justify-between gap-2">
-              <span className={cn("text-muted-foreground font-medium", compact && "md:max-lg:min-w-0 md:max-lg:truncate")}>
+              <span className={cn("text-muted-foreground font-medium", compact && "compact:min-w-0 compact:truncate")}>
                 Away{dnd.reason ? ` — ${dnd.reason}` : ""}
               </span>
               <span

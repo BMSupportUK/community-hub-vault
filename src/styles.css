@@ -10,6 +10,11 @@
 @import "@fontsource/inter/600.css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant compact {
+  @media (min-width: 48rem) and (max-width: 63.999rem), (min-width: 48rem) and (max-height: 56.25rem) {
+    @slot;
+  }
+}
 
 @theme inline {
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;

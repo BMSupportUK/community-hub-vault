@@ -58,10 +58,10 @@ export function PortalCounters({ staff, staffName = "" }: { staff: boolean; staf
 
   const body = (value: number, label: string, Icon: ComponentType<{ className?: string }>, alert = false) => (
     <>
-      <span title={label} className={`grid size-8 md:max-lg:size-5 md:max-lg:rounded-md shrink-0 place-items-center rounded-lg ${alert ? "bg-destructive animate-pulse" : "bg-white/15"}`}><Icon className="size-4 md:max-lg:size-3" /></span>
+      <span title={label} className={`grid size-8 compact:size-5 compact:rounded-md shrink-0 place-items-center rounded-lg ${alert ? "bg-destructive animate-pulse" : "bg-white/15"}`}><Icon className="size-4 compact:size-3" /></span>
       <span className="min-w-0" title={label}>
-        <span className="block font-display text-lg font-extrabold leading-none tabular-nums md:max-lg:text-sm">{value > 99 ? "99+" : value}</span>
-        <span className="block truncate text-[10px] font-medium text-white/80 md:max-lg:sr-only">{label}</span>
+        <span className="block font-display text-lg font-extrabold leading-none tabular-nums compact:text-sm">{value > 99 ? "99+" : value}</span>
+        <span className="block truncate text-[10px] font-medium text-white/80 compact:sr-only">{label}</span>
       </span>
     </>
   );
@@ -71,7 +71,7 @@ export function PortalCounters({ staff, staffName = "" }: { staff: boolean; staf
   // Staff tiles for tickets, orders and screen shares open the same overview
   // boxes as before and show their live hover tooltips.
   return (
-    <div className="grid grid-cols-2 gap-2 md:max-lg:grid-cols-5 md:max-lg:gap-1 md:max-lg:[&>*]:min-h-0 md:max-lg:[&>*]:justify-center md:max-lg:[&>*]:px-1 md:max-lg:[&>*]:py-1 md:max-lg:[&>*]:gap-1">
+    <div className="grid grid-cols-2 gap-2 compact:grid-cols-5 compact:gap-1 compact:[&>*]:min-h-0 compact:[&>*]:justify-center compact:[&>*]:px-1 compact:[&>*]:py-1 compact:[&>*]:gap-1">
       {tiles.map(({ label, value, Icon, to, search }) => {
         if (label === "Open tickets" && ticketStaff && user) {
           return <StaffTicketsButton key={label} staffId={user.id} staffName={staffName} placement="below" readOnly={!hasAny(["admin", "management", "staff"])} tile={(u) => body(value, label, Icon, u > 0)} />;
