@@ -2569,7 +2569,7 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {}
             String[] names = {"unknown","exit self","signaled","low memory","crash","native crash","ANR","init failure","permission change","excessive resources","user requested","user stopped","dependency died","other","freezer","package state","package updated"};
             String name = r < names.length ? names[r] : String.valueOf(r);
-            return "App closed by Android (" + name + ", status " + e.getStatus() + ", memory " + (e.getPss() / 1024) + " MB) on " + Build.MANUFACTURER + " " + Build.MODEL + " Android " + Build.VERSION.RELEASE + ". " + e.getDescription() + "\n" + trace;
+            return "App closed by Android (" + name + ", status " + e.getStatus() + ", memory " + (e.getPss() / 1024) + " MB) on " + Build.MANUFACTURER + " " + Build.MODEL + " Android " + Build.VERSION.RELEASE + ".\n" + (trace.startsWith("\"main\"") ? trace : e.getDescription() + "\n" + trace);
         } catch (Exception ex) { return ""; }
     }
 
