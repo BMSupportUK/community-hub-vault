@@ -73,4 +73,4 @@
 - iFollow/Scottish guide saves/imports use the two club names as fixture channels.
 - Account numbers: `customer_numbers` rows are assigned on profile creation and can never be updated or deleted, so a 6-digit number is never reissued (withdrawn ones stay in `customer_numbers_retired`; `customer_number_is_weak` rejects simple patterns); read only through `get_customer_number` (self or staff roles).
 - Bottom-screen player announcement targets are nullable profile IDs; filter after the shared cache against verified device ownership, never client-supplied identity, keeping existing app payloads unchanged.
-- Public homepage pictures are sized from the viewport only; Portal Home uses aspect ratio on small screens and, on large screens, flex-fills the page height left above its bottom cards so the whole home fits one screen whatever the header height.
+- Public homepage pictures are sized from the viewport only. Portal Home's picture sets its height without waiting for data (aspect ratio below large screens, remaining page height on large); the sidebar matches that height and scrolls inside, so nothing grows on load.
