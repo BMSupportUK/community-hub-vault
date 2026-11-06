@@ -122,6 +122,8 @@ public class PlayerActivity extends Activity {
         ExoPlayer x = new ExoPlayer.Builder(c, renderers)
                 .setMediaSourceFactory(new DefaultMediaSourceFactory(c, ex).setDataSourceFactory(http))
                 .setLoadControl(load)
+                // Some TV boxes (SDMC/Amlogic) hang when a 4K decoder is let go; never block the screen waiting for it.
+                .setReleaseTimeoutMs(400).setDetachSurfaceTimeoutMs(400)
                 .build();
         SoundBoost.attach(c, x);
         return x;
