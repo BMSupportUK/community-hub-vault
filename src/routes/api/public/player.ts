@@ -4,7 +4,7 @@ import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
 import { createSharedCache } from "@/lib/player-sports-cache";
 import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
 import { announcementMatchesUser } from "@/lib/player-announcement-audience";
-import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, eventTime, shouldAlert } from "@/lib/player-buffering";
+import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, eventTime, stallCause, shouldAlert } from "@/lib/player-buffering";
 
 // One sports-guide build per minute per server instance, however many apps ask.
 const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
@@ -319,7 +319,7 @@ export const Route = createFileRoute("/api/public/player")({
           const { data: dev } = await supabaseAdmin.from("player_devices").select("platform, app_version").eq("id", device.id).maybeSingle();
           const rows = body.events.map((e) => ({
             device_id: device.id, user_id: device.user_id, platform: dev?.platform ?? null, app_version: body.version ?? dev?.app_version ?? null,
-            kind: e.kind, content_id: e.content_id, content_name: e.name, stall_ms: e.stall_ms, reconnected: e.reconnected, is_freeze: e.freeze ?? false,
+            kind: e.kind, content_id: e.content_id, content_name: e.name, stall_ms: e.stall_ms, reconnected: e.reconnected, is_freeze: e.freeze ?? false, cause: stallCause(e),
             occurred_at: new Date(eventTime(e.at, now)).toISOString(),
           }));
           const { error } = await supabaseAdmin.from("player_buffer_events").insert(rows);

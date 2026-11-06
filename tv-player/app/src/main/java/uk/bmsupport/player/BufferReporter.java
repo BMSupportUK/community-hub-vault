@@ -21,10 +21,15 @@ final class BufferReporter {
     }
 
     static void record(Context c, String kind, String id, String name, long stallMs, boolean reconnected, boolean freeze) {
+        record(c, kind, id, name, stallMs, reconnected, freeze, null);
+    }
+
+    /** cause: provider_cut, advert_switch or network_drop (null lets the website work it out). */
+    static void record(Context c, String kind, String id, String name, long stallMs, boolean reconnected, boolean freeze, String cause) {
         if (stallMs < StreamRecovery.MIN_REPORT_MS && !reconnected) return;
         try {
             JSONObject e = new JSONObject().put("kind", kind == null ? "live" : kind).put("content_id", id == null ? "" : id)
-                    .put("name", name == null ? "" : name).put("stall_ms", stallMs).put("reconnected", reconnected).put("freeze", freeze)
+                    .put("name", name == null ? "" : name).put("stall_ms", stallMs).put("reconnected", reconnected).put("freeze", freeze).put("cause", cause == null ? JSONObject.NULL : cause)
                     .put("at", System.currentTimeMillis());
             int size;
             synchronized (queue) { if (queue.size() >= QUEUE_MAX) queue.remove(0); queue.add(e); size = queue.size(); }
