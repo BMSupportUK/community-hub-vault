@@ -159,14 +159,15 @@ class MacEngine {
     const num = v => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : 0);
     s.position = num(value.position);
     s.duration = num(value.duration);
-    s.state = [1, 3, 4, 5, 6, 7].includes(Number(value.state)) ? Number(value.state) : s.state;
+    s.state = [1, 2, 3, 4, 5, 6, 7].includes(Number(value.state)) ? Number(value.state) : s.state;
     s.seekable = !!value.seekable;
     s.subs = Math.max(0, Math.min(50, Number(value.subs) || 0));
+    s.w = Math.max(0, Math.min(10000, Number(value.w) || 0)); s.h = Math.max(0, Math.min(10000, Number(value.h) || 0));
   }
   status(index) {
     const s = this.sessions.get(index);
     if (!s) return null;
-    if (!s.backup) return { position: s.position, duration: s.duration, state: s.state, seekable: s.seekable, subs: s.subs || 0 };
+    if (!s.backup) return { position: s.position, duration: s.duration, state: s.state, seekable: s.seekable, subs: s.subs || 0, w: s.w || 0, h: s.h || 0 };
     const duration = s.backup.live ? 0 : backups.get(s.backup.token)?.duration || 0;
     return { position: s.position + s.backup.offset, duration, state: s.state, seekable: duration > 0, backup: true };
   }
