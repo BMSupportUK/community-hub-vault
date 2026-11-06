@@ -1,9 +1,10 @@
+import { applyChannelLinks, type ChannelLinks } from "./sports-channel-links";
 import { parseSportsListingBlock } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
 
 /** `passChannels` lists which of `channels` came only from sports-pass guides (apps group them separately). */
-export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[]; teamChannels?: boolean };
+export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[]; teamChannels?: boolean; channelCountry?: Record<string, string> };
 
 /** "EFL : CHAMPIONSHIP: Derby County v Bolton" → "Derby County v Bolton"; keeps mixed-case prefixes ("UFC Fight Night Preview Show: …"). */
 export function cardTitle(title: string): string {
@@ -55,7 +56,7 @@ const isPassGuide = (g: { title: string; category: string | null; parent?: strin
 
 /** Turn published guides into a validated event list for BM Player. */
 export function playerSportsEvents(
-  guides: { title: string; body: string | null; category: string | null; parent?: string | null }[],
+  guides: { title: string; body: string | null; category: string | null; parent?: string | null; links?: ChannelLinks }[],
   nowMs = Date.now(),
 ): PlayerSportsEvent[] {
   type Card = PlayerSportsEvent & { pass: boolean; mainSet: Set<string> };
@@ -67,7 +68,8 @@ export function playerSportsEvents(
       if (!safePublicEventTitle(e)) continue;
       const start = ukListingInstant(e.date, e.time);
       if (start == null || start < nowMs - WINDOW_BACK || start > nowMs + WINDOW_AHEAD) continue;
-      const channels = e.channels.map((c) => c.trim()).filter(Boolean);
+      const links = g.links ?? {};
+      const channels = e.channels.map((c) => applyChannelLinks(c, links)).filter(Boolean);
       const ev: Card = { sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: cardTitle(e.title), date: e.date, time: e.time, start,
         channels: [], passChannels: [], pass, mainSet: new Set() };
       // One card per game: every guide listing the same game adds its channels to that card.
@@ -87,6 +89,7 @@ export function playerSportsEvents(
       target.channels = merged.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, MAX_CHANNELS);
       target.passChannels = target.channels.filter((c) => !target.mainSet.has(c.toLowerCase()));
       if (club) target.teamChannels = true;
+      if (links.country) for (const c of channels) (target.channelCountry ??= {})[c] = links.country;
       if (!existing) out.push(ev);
     }
   }

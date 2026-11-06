@@ -1,3 +1,6 @@
+import { SportsChannelLinking } from "@/components/app/SportsChannelLinking";
+import { readChannelLinks } from "@/lib/sports-channel-links";
+import type { Json } from "@/integrations/supabase/types";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,6 +38,7 @@ type Blog = {
   published: boolean;
   not_guaranteed: boolean;
   subcategory: string | null;
+  channel_links?: unknown;
   updated_at?: string | null;
 };
 
@@ -463,6 +467,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       published: boolean;
       not_guaranteed: boolean;
       subcategory: string | null;
+      channel_links: Json;
       sort_order?: number;
     } = {
       category_id: editing.category_id,
@@ -474,6 +479,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       refresh_notice: editing.refresh_notice?.trim() || null,
       published: editing.published,
       not_guaranteed: editing.not_guaranteed,
+      channel_links: readChannelLinks(editing.channel_links) as Json,
       subcategory:
         subsForCat.length > 0 && editing.subcategory
           ? editing.subcategory
@@ -735,6 +741,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                 pasteTransform={normalizeSportsGuidePaste}
               />
             </div>
+            <SportsChannelLinking value={editing.channel_links} body={editing.body} onChange={(v) => setEditing({ ...editing, channel_links: v })} />
             <label className="flex items-center gap-2 text-sm text-purple-100">
               <input
                 type="checkbox"

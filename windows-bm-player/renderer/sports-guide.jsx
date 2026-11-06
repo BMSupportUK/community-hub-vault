@@ -1,5 +1,6 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import {matchChannel} from '../../src/lib/player-channel-match';
+import {channelInCountry} from '../../src/lib/sports-channel-links';
 
 // Sports guide (same layout as Android): day pills + website Category pop-up, one card per game, its channels beside it.
 const ukDate=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
@@ -20,7 +21,7 @@ export function sportsRows(e,items,aliases){
  [['Channels',false],['Sports passes',true]].forEach(([heading,isPass])=>{
   const list=(e.channels||[]).filter(c=>pass.has(lower(c))===isPass&&!(clubs&&teamSet.has(lower(c))));
   if(!list.length)return;rows.push({heading});
-  for(const c of list){const m=matchChannel(c,names,aliases);if(!m.length)rows.push({missing:c});for(const n of m)if(!seen.has(n)){seen.add(n);rows.push({item:byName.get(n)});}}
+  for(const c of list){const cc=(e.channelCountry||{})[c];const m=matchChannel(c,names,aliases).filter(n=>channelInCountry(n,cc));if(!m.length)rows.push({missing:c});for(const n of m)if(!seen.has(n)){seen.add(n);rows.push({item:byName.get(n)});}}
  });
  if(clubs){rows.push({heading:'Club channels'});for(const t of teams){const words=lower(t).replace(/\b(fc|afc|the)\b/g,' ').split(/\s+/).filter(Boolean);const m=items.filter(i=>{const n=lower(i.name).split(/[^a-z0-9]+/);return words.length&&words.every(w=>n.includes(w));}).slice(0,15);if(!m.length)rows.push({missing:'No '+t+' channel in your list'});for(const i of m)if(!seen.has(i.name)){seen.add(i.name);rows.push({item:i});}}}
  return rows;

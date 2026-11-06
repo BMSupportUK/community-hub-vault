@@ -1,0 +1,2 @@
+ALTER TABLE public.sports_blogs ADD COLUMN IF NOT EXISTS channel_links jsonb NOT NULL DEFAULT '{}'::jsonb;
+COMMENT ON COLUMN public.sports_blogs.channel_links IS 'Per-guide channel linking rules sent to BM Player: {numbered, country, replace:[{from,to}]}';

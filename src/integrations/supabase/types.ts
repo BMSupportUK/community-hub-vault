@@ -7093,6 +7093,7 @@ export type Database = {
           badge: string | null
           body: string | null
           category_id: string
+          channel_links: Json
           created_at: string
           created_by: string | null
           excerpt: string | null
@@ -7113,6 +7114,7 @@ export type Database = {
           badge?: string | null
           body?: string | null
           category_id: string
+          channel_links?: Json
           created_at?: string
           created_by?: string | null
           excerpt?: string | null
@@ -7133,6 +7135,7 @@ export type Database = {
           badge?: string | null
           body?: string | null
           category_id?: string
+          channel_links?: Json
           created_at?: string
           created_by?: string | null
           excerpt?: string | null
