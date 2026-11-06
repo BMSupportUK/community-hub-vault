@@ -1,0 +1,57 @@
+import React,{useEffect,useMemo,useState} from 'react';
+import {matchChannel} from '../../src/lib/player-channel-match';
+
+// Sports guide (same layout as Android): day pills + website Category pop-up, one card per game, its channels beside it.
+const ukDate=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
+const clock=ms=>new Date(ms).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/London'});
+export function ukDayIndex(start,now){const a=Date.parse(ukDate(now)),b=Date.parse(ukDate(start));return Math.max(0,Math.round((b-a)/86400000));}
+export function inCategory(e,sport,sub){return !sport||(e.sport===sport&&(!sub||(e.subcategory||'')===sub));}
+const lower=s=>String(s||'').toLowerCase();
+
+/** Channel rows for one game: guide channels, then sports passes, then each club's own channels. */
+export function sportsRows(e,items,aliases){
+ const rows=[],seen=new Set(),names=items.map(i=>i.name),byName=new Map(items.map(i=>[i.name,i]));
+ const where=lower([e.sport,e.subcategory,e.competition].join(' '));
+ const clubs=!!e.teamChannels||where.includes('ifollow')||where.includes('scot');
+ const teams=String(e.title||'').split(/\s+(?:v|vs\.?|v\.)\s+|\s+-\s+/i).map(t=>t.trim()).filter(Boolean);
+ const teamSet=new Set(teams.map(lower)),pass=new Set((e.passChannels||[]).map(lower));
+ [['Channels',false],['Sports passes',true]].forEach(([heading,isPass])=>{
+  const list=(e.channels||[]).filter(c=>pass.has(lower(c))===isPass&&!(clubs&&teamSet.has(lower(c))));
+  if(!list.length)return;rows.push({heading});
+  for(const c of list){const m=matchChannel(c,names,aliases);if(!m.length)rows.push({missing:c});for(const n of m)if(!seen.has(n)){seen.add(n);rows.push({item:byName.get(n)});}}
+ });
+ if(clubs){rows.push({heading:'Club channels'});for(const t of teams){const words=lower(t).replace(/\b(fc|afc|the)\b/g,' ').split(/\s+/).filter(Boolean);const m=items.filter(i=>{const n=lower(i.name).split(/[^a-z0-9]+/);return words.length&&words.every(w=>n.includes(w));}).slice(0,15);if(!m.length)rows.push({missing:'No '+t+' channel in your list'});for(const i of m)if(!seen.has(i.name)){seen.add(i.name);rows.push({item:i});}}}
+ return rows;
+}
+
+export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,voice}){
+ const [cat,setCat]=useState({sport:null,sub:null}),[day,setDay]=useState(0),[sel,setSel]=useState(0),[popup,setPopup]=useState(null),[items,setItems]=useState(null),[query,setQuery]=useState('');
+ const now=Date.now();
+ useEffect(()=>{let live=true;loadChannels().then(r=>{if(live&&r)setItems(r.items);});return()=>{live=false;};},[]);
+ const upcoming=useMemo(()=>(sports.events||[]).filter(e=>e.start>=now-3*3600000),[sports]);
+ const inCat=upcoming.filter(e=>inCategory(e,cat.sport,cat.sub));
+ const perDay=Array.from({length:7},(_,d)=>inCat.filter(e=>ukDayIndex(e.start,now)===d).length);
+ const q=lower(query).trim();
+ const cards=q?upcoming.filter(e=>lower([e.title,e.competition,e.sport,e.subcategory,...(e.channels||[])].join(' ')).includes(q)):inCat.filter(e=>ukDayIndex(e.start,now)===day);
+ const current=cards[Math.min(sel,cards.length-1)];
+ const rows=useMemo(()=>current&&items?sportsRows(current,items,sports.aliases||[]):[],[current,items,sports]);
+ const cats=(sports.categories&&sports.categories.length?sports.categories:[...new Set(upcoming.map(e=>e.sport))].map(name=>({name,subs:[]})));
+ const count=(sport,sub)=>upcoming.filter(e=>inCategory(e,sport,sub)).length;
+ const pick=(sport,sub)=>{setCat({sport,sub});setDay(0);setSel(0);setPopup(null);};
+ const label=!cat.sport?'All sports':cat.sub?cat.sport+' › '+cat.sub:cat.sport;
+ const dayName=d=>d===0?'Today':d===1?'Tomorrow':new Date(now+d*86400000).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',timeZone:'Europe/London'});
+ return <main className="content sports-guide">
+  <div className="toolbar"><button onClick={onBack}>← Back</button><h2>Sports guide</h2><button onClick={()=>setPopup('main')}>☰ Category: {label}</button><input placeholder="Search events" aria-label="Search events" value={query} onChange={e=>{setQuery(e.target.value);setSel(0);}}/>{voice(t=>{setQuery(t);setSel(0);})}<button onClick={onRefresh}>⟳ Refresh</button></div>
+  {!q&&<div className="sports-days">{perDay.map((n,d)=><button key={d} className={d===day?'selected':n?'':'empty-day'} onClick={()=>{setDay(d);setSel(0);}}>{dayName(d)}{n?'  '+n:''}</button>)}</div>}
+  {loading&&!upcoming.length?<p className="empty">Updating sports guide…</p>:<div className="sports-layout">
+   <div className="sports-cards">{cards.length?cards.map((e,i)=>{const n=(e.channels||[]).length,isLive=e.start<=now;return <button key={i} className={'sports-card'+(e===current?' selected':'')} onClick={()=>setSel(i)} onFocus={()=>setSel(i)}>
+     <span className={'sports-time'+(isLive?' live':'')}>{isLive?'LIVE':clock(e.start)}</span><span className="sports-name"><b>{e.title}</b><small>{e.competition}{e.subcategory?' · '+e.subcategory:''}</small></span><span className="sports-pill">{n} {n===1?'channel':'channels'}</span></button>;}):<p className="empty">No games here – pick another day or category.</p>}</div>
+   <aside className="sports-panel">{current&&<><h3>{current.title}</h3><p className="muted">{current.start<=now?'🔴 Live now':dayName(ukDayIndex(current.start,now))+' '+clock(current.start)} · {current.competition}</p>
+    {!items?<p className="muted">Finding channels…</p>:rows.map((r,i)=>r.heading?<div key={i} className="sports-heading">{r.heading}</div>:r.item?<button key={i} className="sports-channel" onClick={()=>play(r.item)}><span>{r.item.name}</span><span className="sports-play">▶ Play</span></button>:<div key={i} className="sports-channel off"><span>{r.missing}</span><span className="muted">Not in your channels</span></div>)}</>}</aside>
+  </div>}
+  {popup&&<div className="modal-backdrop" onClick={()=>setPopup(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
+   {popup==='main'?<><h2>Choose a category</h2><div className="modal-actions"><button className={!cat.sport?'primary':''} onClick={()=>pick(null,null)}>All sports ({upcoming.length})</button>{cats.map(c=><button key={c.name} className={cat.sport===c.name?'primary':''} onClick={()=>c.subs&&c.subs.length?setPopup(c):pick(c.name,null)}>{c.name} ({count(c.name,null)}){c.subs&&c.subs.length?'  ›':''}</button>)}<button onClick={()=>setPopup(null)}>Close</button></div></>
+   :<><h2>{popup.name}</h2><div className="modal-actions"><button onClick={()=>pick(popup.name,null)}>All {popup.name} ({count(popup.name,null)})</button>{popup.subs.map(s=><button key={s} className={cat.sport===popup.name&&cat.sub===s?'primary':''} onClick={()=>pick(popup.name,s)}>{s} ({count(popup.name,s)})</button>)}<button onClick={()=>setPopup('main')}>◀ Back</button></div></>}
+  </div></div>}
+ </main>;
+}

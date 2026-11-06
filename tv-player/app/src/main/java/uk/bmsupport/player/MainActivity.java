@@ -3469,24 +3469,48 @@ public class MainActivity extends Activity {
         };
     }
 
+    /** Sports guide: day pills + website Category pop-up on top, one card per game on the left, its channels on the right. */
     private void showSports() {
-        screen = "sports"; sportsPath.clear();
-        back = () -> { if (!sportsPath.isEmpty()) { sportsUp(); return; } stopSports(); retryEvent = null; showHome(); };
+        screen = "sports";
+        back = () -> { stopSports(); retryEvent = null; showHome(); };
         stopPreview();
         LinearLayout root = column();
+        root.setPadding(dp(24), dp(16), dp(24), dp(16));
         LinearLayout head = row();
         head.setGravity(Gravity.CENTER_VERTICAL);
-        head.addView(text("Sports guide", 26, TEXT, true), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView status = text("Loading…", 14, MUTED, false);
+        head.addView(text("Sports guide", 24, TEXT, true), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        TextView status = text("Loading…", 13, MUTED, false);
         head.addView(status);
-        head.addView(button("🎤 Voice search", v -> startVoice("sports")));
-        head.addView(button("⟳ Refresh", v -> loadSports(status, true)));
+        sportsCatPill = headerPill(sportsCatLabel(), v -> showSportsCategories());
+        sportsCatPill.setContentDescription("Choose a category");
+        head.addView(sportsCatPill);
+        head.addView(headerPill("🎤 Voice search", v -> startVoice("sports")));
+        head.addView(headerPill("⟳ Refresh", v -> loadSports(status, true)));
         root.addView(head);
-        sportsHeading = text("Pick a sport", 15, MUTED, false);
-        root.addView(sportsHeading);
+        sportsDays = row();
+        sportsDays.setGravity(Gravity.CENTER_VERTICAL);
+        sportsDays.setPadding(0, dp(4), 0, dp(8));
+        root.addView(sportsDays);
+        LinearLayout body = row();
         ListView lv = list();
         lv.setTag("sports");
-        root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.15f);
+        lp.setMargins(0, 0, dp(12), 0);
+        body.addView(lv, lp);
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable pbg = new GradientDrawable(); pbg.setColor(CARD); pbg.setCornerRadius(dp(12));
+        panel.setBackground(pbg);
+        panel.setPadding(dp(14), dp(10), dp(14), dp(10));
+        sportsPanelTitle = text("", 19, TEXT, true);
+        sportsPanelTitle.setMaxLines(2); sportsPanelTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        sportsPanelSub = text("", 13, MUTED, false);
+        panel.addView(sportsPanelTitle); panel.addView(sportsPanelSub);
+        sportsChannelList = list();
+        sportsChannelList.setBackgroundColor(Color.TRANSPARENT);
+        panel.addView(sportsChannelList, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        body.addView(panel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        root.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
         sportsList = lv;
         sportsVersion = "";
@@ -3501,6 +3525,12 @@ public class MainActivity extends Activity {
         } };
         ui.postDelayed(sportsTask, 60000);
     }
+    private Button sportsCatPill; private LinearLayout sportsDays;
+    private TextView sportsPanelTitle, sportsPanelSub; private ListView sportsChannelList;
+    /** Chosen website main category / sub-category (null = all) and day (0 = today). */
+    private String sportsSport, sportsSub; private int sportsDay;
+    private List<String[]> sportsAliases = new ArrayList<>();
+    private int sportsPanelToken;
     private ListView sportsList;
     private String pendingSportsQuery;
 
@@ -3508,8 +3538,8 @@ public class MainActivity extends Activity {
     private void askSportsMode() {
         new AlertDialog.Builder(this).setTitle("Sports guide")
                 .setMessage("How would you like to find an event?")
-                .setPositiveButton("📂 Search manually", (d, w) -> showSports())
-                .setNegativeButton("🎤 Voice search", (d, w) -> { showSports(); startVoice("sports"); })
+                .setPositiveButton("📂 Search manually", (d, w) -> { resetSportsFilters(); showSports(); })
+                .setNegativeButton("🎤 Voice search", (d, w) -> { resetSportsFilters(); showSports(); startVoice("sports"); })
                 .setNeutralButton("Cancel", null).show();
     }
 
@@ -3607,84 +3637,235 @@ public class MainActivity extends Activity {
     }
     private String cachedGetFresh() throws Exception { clearCache("live"); return cachedGet("live", "get_live_streams", ""); }
 
-    private JSONObject sportsData; private final List<String> sportsPath = new ArrayList<>();
-    private static List<String> eventPath(JSONObject e) {
-        List<String> p = new ArrayList<>();
-        String sp = e.optString("sport"), sub = e.optString("subcategory", ""), g = e.optString("competition", sp);
-        p.add(sp); if (!sub.isEmpty()) p.add(sub); if (!g.isEmpty()) p.add(g);
-        return p;
+    private JSONObject sportsData;
+    private void resetSportsFilters() { sportsSport = null; sportsSub = null; sportsDay = 0; }
+    private String sportsCatLabel() {
+        return "☰ Category: " + (sportsSport == null ? "All sports" : sportsSub == null ? sportsSport : sportsSport + " › " + sportsSub);
+    }
+    private static final java.util.TimeZone UK = java.util.TimeZone.getTimeZone("Europe/London");
+    /** UK calendar days from today (0 = today); games already on from yesterday count as today. */
+    static int ukDayIndex(long start, long now) {
+        java.util.Calendar c = java.util.Calendar.getInstance(UK);
+        c.setTimeInMillis(now); c.set(java.util.Calendar.HOUR_OF_DAY, 0); c.set(java.util.Calendar.MINUTE, 0); c.set(java.util.Calendar.SECOND, 0); c.set(java.util.Calendar.MILLISECOND, 0);
+        long midnight = c.getTimeInMillis();
+        if (start < midnight) return 0;
+        int d = 0;
+        while (d < 14) { c.add(java.util.Calendar.DAY_OF_MONTH, 1); if (start < c.getTimeInMillis()) return d; d++; }
+        return d;
+    }
+    /** Website category filter: main category, then (when chosen) its sub-category. */
+    static boolean inSportsCategory(String eventSport, String eventSub, String sport, String sub) {
+        if (sport == null) return true;
+        if (!sport.equals(eventSport)) return false;
+        return sub == null || sub.equals(eventSub);
+    }
+    private List<JSONObject> upcomingSports(JSONObject r, long now) {
+        List<JSONObject> out = new ArrayList<>();
+        JSONArray ev = r == null ? null : r.optJSONArray("events");
+        if (ev != null) for (int i = 0; i < ev.length(); i++) {
+            JSONObject e = ev.optJSONObject(i);
+            if (e != null && e.optLong("start") >= now - 3 * 3600_000L) out.add(e);
+        }
+        return out;
     }
 
-    /** Sports guide in three levels: sport → competition → events; an event opens its channel picker. */
+    /** Category pop-up: the website's main categories, then the chosen one's sub-categories. */
+    private void showSportsCategories() {
+        JSONObject r = sportsData;
+        if (r == null) { Toast.makeText(this, "Loading the sports guide…", Toast.LENGTH_SHORT).show(); return; }
+        List<JSONObject> up = upcomingSports(r, System.currentTimeMillis());
+        List<String> names = new ArrayList<>(); final List<JSONArray> subs = new ArrayList<>();
+        JSONArray cats = r.optJSONArray("categories");
+        if (cats != null) for (int i = 0; i < cats.length(); i++) {
+            JSONObject c = cats.optJSONObject(i); if (c == null) continue;
+            names.add(c.optString("name")); subs.add(c.optJSONArray("subs"));
+        }
+        // Older website without the category list: fall back to the categories the games carry.
+        if (names.isEmpty()) for (JSONObject e : up) if (!names.contains(e.optString("sport"))) { names.add(e.optString("sport")); subs.add(null); }
+        String[] labels = new String[names.size() + 1];
+        labels[0] = (sportsSport == null ? "✓ " : "") + "All sports  (" + up.size() + ")";
+        for (int i = 0; i < names.size(); i++) {
+            int n = 0; for (JSONObject e : up) if (names.get(i).equals(e.optString("sport"))) n++;
+            JSONArray sb = subs.get(i);
+            labels[i + 1] = (names.get(i).equals(sportsSport) ? "✓ " : "") + names.get(i) + "  (" + n + ")" + (sb != null && sb.length() > 0 ? "   ›" : "");
+        }
+        new AlertDialog.Builder(this).setTitle("Choose a category").setItems(labels, (d, w) -> {
+            if (w == 0) { applySportsCategory(null, null); return; }
+            String name = names.get(w - 1); JSONArray sb = subs.get(w - 1);
+            if (sb == null || sb.length() == 0) { applySportsCategory(name, null); return; }
+            showSportsSubCategories(name, sb, up);
+        }).setNegativeButton("Close", null).show();
+    }
+    private void showSportsSubCategories(String sport, JSONArray sb, List<JSONObject> up) {
+        String[] labels = new String[sb.length() + 1];
+        int all = 0; for (JSONObject e : up) if (sport.equals(e.optString("sport"))) all++;
+        labels[0] = "All " + sport + "  (" + all + ")";
+        for (int i = 0; i < sb.length(); i++) {
+            String s = sb.optString(i); int n = 0;
+            for (JSONObject e : up) if (sport.equals(e.optString("sport")) && s.equals(e.optString("subcategory", ""))) n++;
+            labels[i + 1] = (sport.equals(sportsSport) && s.equals(sportsSub) ? "✓ " : "") + s + "  (" + n + ")";
+        }
+        new AlertDialog.Builder(this).setTitle(sport).setItems(labels, (d, w) -> applySportsCategory(sport, w == 0 ? null : sb.optString(w - 1)))
+                .setNegativeButton("◀ Back", (d, w) -> showSportsCategories()).show();
+    }
+    private void applySportsCategory(String sport, String sub) {
+        sportsSport = sport; sportsSub = sub; sportsDay = 0;
+        if (sportsCatPill != null) sportsCatPill.setText(sportsCatLabel());
+        if (sportsData != null) renderSports(sportsData);
+    }
+
+    /** Day pills, cards for the chosen day and category, and the selected card's channels beside them. */
     private void renderSports(JSONObject r) {
         if (sportsList == null) return;
         sportsData = r;
         sportsVersion = r.optString("version");
-        JSONArray ev = r.optJSONArray("events");
         List<String[]> aliases = new ArrayList<>();
         JSONArray al = r.optJSONArray("aliases");
         if (al != null) for (int i = 0; i < al.length(); i++) { JSONObject o = al.optJSONObject(i); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
         for (String[] x : BUILT_IN_ALIASES) aliases.add(x);
+        sportsAliases = aliases;
         long now = System.currentTimeMillis();
-        java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK);
-        day.setTimeZone(java.util.TimeZone.getTimeZone("Europe/London"));
-        java.util.LinkedHashMap<String, Integer> groups = new java.util.LinkedHashMap<>();
-        java.util.Set<String> liveGroups = new java.util.HashSet<>();
-        List<JSONObject> events = new ArrayList<>();
-        if (ev != null) for (int i = 0; i < ev.length(); i++) {
-            JSONObject e = ev.optJSONObject(i);
-            if (e == null || e.optLong("start") < now - 3 * 3600_000L) continue;
-            List<String> path = eventPath(e);
-            int d = sportsPath.size();
-            if (path.size() < d || !path.subList(0, d).equals(sportsPath)) continue;
-            if (path.size() == d) { events.add(e); continue; }
-            String key = path.get(d);
-            groups.put(key, groups.containsKey(key) ? groups.get(key) + 1 : 1);
-            if (e.optLong("start") <= now) liveGroups.add(key);
-        }
-        List<String> rows = new ArrayList<>();
-        final List<Object> targets = new ArrayList<>();
-        if (!sportsPath.isEmpty()) { rows.add("◀ Back"); targets.add("<back>"); }
-        if (events.isEmpty()) {
-            // Categories follow the website's own order; anything unknown keeps its place after them.
-            final List<String> siteOrder = new ArrayList<>();
-            JSONArray so = r.optJSONArray("order");
-            if (so != null) for (int i = 0; i < so.length(); i++) siteOrder.add(so.optString(i));
-            List<java.util.Map.Entry<String, Integer>> sortedGroups = new ArrayList<>(groups.entrySet());
-            java.util.Collections.sort(sortedGroups, (a, b) -> {
-                int x = siteOrder.indexOf(a.getKey()), y = siteOrder.indexOf(b.getKey());
-                return Integer.compare(x < 0 ? Integer.MAX_VALUE : x, y < 0 ? Integer.MAX_VALUE : y);
-            });
-            for (java.util.Map.Entry<String, Integer> g : sortedGroups) {
-                rows.add((liveGroups.contains(g.getKey()) ? "🔴 " : "") + g.getKey() + "   (" + g.getValue() + (g.getValue() == 1 ? " event)" : " events)") + "  ›");
-                targets.add(g.getKey());
+        List<JSONObject> inCat = new ArrayList<>();
+        for (JSONObject e : upcomingSports(r, now)) if (inSportsCategory(e.optString("sport"), e.optString("subcategory", ""), sportsSport, sportsSub)) inCat.add(e);
+        int[] perDay = new int[7];
+        for (JSONObject e : inCat) { int d = ukDayIndex(e.optLong("start"), now); if (d < 7) perDay[d]++; }
+        if (sportsDays != null) {
+            sportsDays.removeAllViews();
+            java.text.SimpleDateFormat dn = new java.text.SimpleDateFormat("EEE d", java.util.Locale.UK); dn.setTimeZone(UK);
+            for (int d = 0; d < 7; d++) {
+                final int day = d;
+                String label = d == 0 ? "Today" : d == 1 ? "Tomorrow" : dn.format(new java.util.Date(now + d * 86400_000L));
+                Button b = miniPill(label + (perDay[d] > 0 ? "  " + perDay[d] : ""), label, () -> { sportsDay = day; renderSports(sportsData); });
+                if (d == sportsDay) { GradientDrawable on = new GradientDrawable(); on.setColor(ACCENT); on.setCornerRadius(dp(12)); b.setBackground(on); }
+                else if (perDay[d] == 0) b.setTextColor(MUTED);
+                sportsDays.addView(b);
             }
-        } else for (JSONObject e : events) {
-            long start = e.optLong("start");
-            JSONArray ch = e.optJSONArray("channels");
-            int n = ch == null ? 0 : ch.length();
-            rows.add((start <= now ? "🔴 LIVE NOW  " : day.format(new java.util.Date(start)) + "  " + clock(start / 1000) + "  ") + e.optString("title")
-                    + "\n      📺 " + n + (n == 1 ? " channel" : " channels") + " – press OK to pick one" + "\n");
-            targets.add(e);
         }
-        if (targets.isEmpty() || (targets.size() == 1 && !sportsPath.isEmpty())) { rows.add("No upcoming events here right now"); targets.add(null); }
-        if (sportsHeading != null) sportsHeading.setText(sportsPath.isEmpty() ? "Pick a sport" : String.join(" › ", sportsPath) + (events.isEmpty() ? (sportsPath.size() == 1 ? " › pick a category" : " › pick a guide") : " › pick an event"));
+        final List<JSONObject> cards = new ArrayList<>();
+        for (JSONObject e : inCat) if (ukDayIndex(e.optLong("start"), now) == sportsDay) cards.add(e);
         int keep = sportsList.getSelectedItemPosition();
-        sportsList.setAdapter(adapter(rows));
-        if (keep > 0 && keep < rows.size()) sportsList.setSelection(keep);
-        sportsList.requestFocus();
-        sportsList.setOnItemClickListener((p, v, pos, id) -> {
-            Object t = targets.get(pos);
-            if (t == null) return;
-            if ("<back>".equals(t)) { sportsUp(); return; }
-            if (t instanceof String) { sportsPath.add((String) t); renderSports(sportsData); sportsList.setSelection(0); return; }
-            pickSportsChannel((JSONObject) t, aliases, false);
+        sportsList.setAdapter(new SportsCardAdapter(cards, now));
+        sportsList.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) { if (pos < cards.size()) fillSportsPanel(cards.get(pos), false); }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
+        });
+        sportsList.setOnItemClickListener((p, v, pos, id) -> { if (pos < cards.size()) fillSportsPanel(cards.get(pos), true); });
+        if (cards.isEmpty()) {
+            sportsPanelTitle.setText("No games here");
+            sportsPanelSub.setText("Pick another day or category");
+            sportsChannelList.setAdapter(adapter(new ArrayList<>()));
+            sportsCatPill.requestFocus();
+            return;
+        }
+        int sel = keep >= 0 && keep < cards.size() ? keep : 0;
+        sportsList.setSelection(sel);
+        fillSportsPanel(cards.get(sel), false);
+        if (!sportsChannelList.hasFocus()) sportsList.requestFocus();
+    }
+
+    /** One game card: big kick-off time (or LIVE), game name, competition, channel count pill. */
+    private final class SportsCardAdapter extends android.widget.BaseAdapter {
+        private final List<JSONObject> cards; private final long now;
+        SportsCardAdapter(List<JSONObject> cards, long now) { this.cards = cards; this.now = now; }
+        @Override public int getCount() { return cards.size(); }
+        @Override public Object getItem(int i) { return cards.get(i); }
+        @Override public long getItemId(int i) { return i; }
+        @Override public View getView(int i, View cv, ViewGroup parent) {
+            JSONObject e = cards.get(i); long st = e.optLong("start");
+            LinearLayout r = row(); r.setGravity(Gravity.CENTER_VERTICAL); r.setPadding(dp(12), dp(10), dp(12), dp(10));
+            TextView t = text(st <= now ? "LIVE" : clock(st / 1000), 20, st <= now ? ACCENT : TEXT, true);
+            r.addView(t, new LinearLayout.LayoutParams(dp(78), ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout mid = new LinearLayout(MainActivity.this); mid.setOrientation(LinearLayout.VERTICAL);
+            TextView name = text(e.optString("title"), 17, TEXT, true); name.setPadding(0, 0, 0, 0);
+            name.setMaxLines(2); name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            String sub = e.optString("subcategory", "");
+            TextView comp = text(e.optString("competition") + (sub.isEmpty() ? "" : "  ·  " + sub), 13, MUTED, false); comp.setPadding(0, dp(2), 0, 0);
+            comp.setSingleLine(true); comp.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            mid.addView(name); mid.addView(comp);
+            r.addView(mid, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+            JSONArray ch = e.optJSONArray("channels"); int n = ch == null ? 0 : ch.length();
+            TextView pill = text(n + (n == 1 ? " channel" : " channels"), 12, TEXT, false);
+            GradientDrawable pb = new GradientDrawable(); pb.setColor(0xFF22314F); pb.setCornerRadius(dp(12));
+            pill.setBackground(pb); pill.setPadding(dp(10), dp(4), dp(10), dp(4));
+            r.addView(pill);
+            return r;
+        }
+    }
+
+    /** Right-hand panel: the selected game's channels grouped Channels / Sports passes / Club channels. */
+    private void fillSportsPanel(JSONObject e, boolean focus) {
+        final int token = ++sportsPanelToken;
+        long st = e.optLong("start");
+        java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK); day.setTimeZone(UK);
+        sportsPanelTitle.setText(e.optString("title"));
+        sportsPanelSub.setText((st <= System.currentTimeMillis() ? "🔴 Live now" : day.format(new java.util.Date(st)) + "  " + clock(st / 1000)) + "  ·  " + e.optString("competition"));
+        final List<String[]> aliases = sportsAliases;
+        final List<String> labels = new ArrayList<>(); final List<Item> targets = new ArrayList<>();
+        labels.add("Finding channels…"); targets.add(null);
+        sportsChannelList.setAdapter(adapter(labels));
+        io.execute(() -> {
+            List<String> l = new ArrayList<>(); List<Item> t = new ArrayList<>();
+            try {
+                if (liveChannels == null) {
+                    JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
+                    List<Item> pl = new ArrayList<>();
+                    for (int i = 0; i < a.length(); i++) pl.add(liveItem(a.getJSONObject(i)));
+                    liveChannels = pl;
+                }
+                buildSportsRows(e, aliases, liveChannels, l, t);
+            } catch (Exception ex) { l.clear(); t.clear(); l.add("Couldn't load your channels – check your login in Settings"); t.add(null); }
+            ui.post(() -> {
+                if (token != sportsPanelToken || !"sports".equals(screen)) return;
+                l.add("🔍 Search all channels…"); t.add(null);
+                final int searchRow = l.size() - 1;
+                sportsChannelList.setAdapter(adapter(l));
+                sportsChannelList.setOnItemClickListener((p, v, w, id) -> {
+                    JSONArray ch = e.optJSONArray("channels");
+                    if (w == searchRow) { searchChannels(e, aliases, ch != null && ch.length() > 0 ? normChannel(ch.optString(0)) : ""); return; }
+                    Item it = t.get(w);
+                    if (it == null && !l.get(w).startsWith("✕")) return;
+                    if (it == null) Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show();
+                    else { retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
+                });
+                if (focus) { sportsChannelList.requestFocus(); sportsChannelList.setSelection(firstPlayable(t)); }
+            });
         });
     }
-    private TextView sportsHeading;
-    private void sportsUp() {
-        if (!sportsPath.isEmpty()) sportsPath.remove(sportsPath.size() - 1);
-        if (sportsData != null) renderSports(sportsData);
+    private static int firstPlayable(List<Item> t) { for (int i = 0; i < t.size(); i++) if (t.get(i) != null) return i; return 0; }
+
+    /** Channel rows for a game: the guide's channels, then sports passes, then each club's own channels. */
+    void buildSportsRows(JSONObject e, List<String[]> aliases, List<Item> pl, List<String> labels, List<Item> targets) {
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        String where = (e.optString("sport") + " " + e.optString("subcategory") + " " + e.optString("competition")).toLowerCase(java.util.Locale.ROOT);
+        boolean clubs = e.optBoolean("teamChannels") || where.contains("ifollow") || where.contains("scot");
+        String[] teams = e.optString("title").split("\\s+(?:v|vs|vs\\.|v\\.)\\s+|\\s+-\\s+");
+        java.util.Set<String> teamNames = new java.util.HashSet<>();
+        for (String tm : teams) teamNames.add(tm.trim().toLowerCase(java.util.Locale.ROOT));
+        java.util.Set<String> pass = new java.util.HashSet<>();
+        JSONArray pc = e.optJSONArray("passChannels");
+        if (pc != null) for (int j = 0; j < pc.length(); j++) pass.add(pc.optString(j).toLowerCase(java.util.Locale.ROOT));
+        JSONArray ch = e.optJSONArray("channels");
+        for (int section = 0; section < 2; section++) {
+            boolean heading = false;
+            if (ch != null) for (int j = 0; j < ch.length(); j++) {
+                String g = ch.optString(j); String k = g.toLowerCase(java.util.Locale.ROOT);
+                if (pass.contains(k) != (section == 1)) continue;
+                if (clubs && teamNames.contains(k)) continue;
+                if (!heading) { labels.add(section == 0 ? "━━  CHANNELS  ━━" : "━━  SPORTS PASSES  ━━"); targets.add(null); heading = true; }
+                List<Item> m = matchChannel(g, pl, aliases);
+                if (m.isEmpty()) { labels.add("✕ " + g + "  —  not in your channels"); targets.add(null); }
+                for (Item it : m) if (seen.add(it.id)) { labels.add("▶  " + it.name); targets.add(it); }
+            }
+        }
+        if (clubs) {
+            labels.add("━━  CLUB CHANNELS  ━━"); targets.add(null);
+            for (String team : teams) {
+                if (team.trim().isEmpty()) continue;
+                List<Item> m = teamChannels(team, pl);
+                if (m.isEmpty()) { labels.add("✕ No " + team.trim() + " channel in your list"); targets.add(null); }
+                for (Item it : m) if (seen.add(it.id)) { labels.add("▶  " + it.name); targets.add(it); }
+            }
+        }
     }
 
     private JSONObject retryEvent; private List<String[]> retryAliases;
@@ -3723,7 +3904,8 @@ public class MainActivity extends Activity {
         if (unlocked && hasLogin()) ProgressSync.pull(this, false, () -> { if ("home".equals(screen)) showHome(); });
         refreshVersionScreens();
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
-        if (("sports".equals(screen) || "sports_channels".equals(screen)) && retryEvent != null) {
+        if ("sports".equals(screen) && retryEvent != null) { retryEvent = null; if (sportsList != null) sportsList.requestFocus(); }
+        else if ("sports_channels".equals(screen) && retryEvent != null) {
             JSONObject e = retryEvent; retryEvent = null;
             ui.postDelayed(() -> pickSportsChannel(e, retryAliases, true), 300);
         }
@@ -3751,24 +3933,7 @@ public class MainActivity extends Activity {
             List<String> labels = new ArrayList<>();
             List<Item> targets = new ArrayList<>();
             try {
-                java.util.Set<String> seen = new java.util.HashSet<>();
-                String where = (e.optString("sport") + " " + e.optString("subcategory") + " " + e.optString("competition")).toLowerCase(java.util.Locale.ROOT);
-                if (where.contains("ifollow") || where.contains("scot")) {
-                    for (String team : e.optString("title").split("\\s+(?:v|vs|vs\\.|v\\.)\\s+|\\s+-\\s+")) {
-                        List<Item> m = teamChannels(team, pl);
-                        if (team.trim().isEmpty()) continue;
-                        labels.add("━━  " + team.trim() + "  ━━"); targets.add(null);
-                        if (m.isEmpty()) { labels.add("      ✕ No " + team.trim() + " channel in your list"); targets.add(null); }
-                        for (Item it : m) { labels.add("      ▶ Watch " + it.name); targets.add(it); seen.add(it.id); }
-                    }
-                    if (ch != null && ch.length() > 0) { labels.add("━━  Other channels  ━━"); targets.add(null); }
-                }
-                if (ch != null) for (int j = 0; j < ch.length(); j++) {
-                    String g = ch.optString(j);
-                    List<Item> m = matchChannel(g, pl, aliases);
-                    if (m.isEmpty()) { labels.add("✕ " + g + "  —  not in your list"); targets.add(null); }
-                    for (Item it : m) if (seen.add(it.id)) { labels.add("▶ Watch " + it.name + "   (" + g + ")"); targets.add(it); }
-                }
+                buildSportsRows(e, aliases, pl, labels, targets);
             } catch (Exception ex) { labels.clear(); targets.clear(); }
             ui.post(() -> { try { showSportsChannels(e, aliases, retry, ch, labels, targets); }
                 catch (Exception ex) { Toast.makeText(this, "Couldn't open the channel list", Toast.LENGTH_LONG).show(); } });
@@ -3819,13 +3984,8 @@ public class MainActivity extends Activity {
         lv.requestFocus();
     }
 
-    /** Reopen the sports guide at the sport/competition the customer was in. */
-    private void showSportsKeep() {
-        List<String> keep = new ArrayList<>(sportsPath);
-        showSports();
-        sportsPath.addAll(keep);
-        if (sportsData != null) renderSports(sportsData);
-    }
+    /** Reopen the sports guide on the category and day the customer was on. */
+    private void showSportsKeep() { showSports(); }
 
     private void searchChannels(JSONObject e, List<String[]> aliases, String start) {
         android.widget.EditText q = new android.widget.EditText(this);

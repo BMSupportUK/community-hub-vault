@@ -1,4 +1,6 @@
 # Roadmap
+- [x] New Sports Guide layout (day pills, website Category › sub-category pop-up, game cards, channels panel grouped Channels / Sports passes / Club channels) on Android 3.60 (built, signed, 85 checks pass) and the shared Windows/Mac screen (checked with real guides). Not released; Android screen not seen on a real device; needs website publish.
+- [ ] Release Android 3.60, Windows 0.4.23 and Mac 0.1.36 with the new Sports Guide (waiting for user go-ahead)
 - [x] Sports guide one card per game even when guides spell teams differently or list times up to 90 min apart (Derby v Bolton: Sky, DAZN, MonoMax, Paramount+, iFollow on one card); checks pass on today's real guides. Needs website publish; not seen on a real player yet.
 - [x] Fix missing Premier League guides (deduplication now guide-scoped) and Android/website unnumbered labels expanding to unrelated numbered feeds; 19 website checks, 81 Android checks and 2 added native matching checks pass. Signed Android 3.59 built, not released; website change needs publication and real-device verification has no attached device.
 - [x] Build signed Android 3.58 with phone-only View EPG opening the selected category in a full-screen guide; 81 Android checks pass and permanent BM signature verified. Not released; real-phone verification unavailable (no attached device).
