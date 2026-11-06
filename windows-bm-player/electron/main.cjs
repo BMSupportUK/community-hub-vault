@@ -139,7 +139,7 @@ async function play({item,resume=false,screens=1,subtitles=null}){
  const allowed=Math.min(3,Number(store.account?.max_connections)||1);
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
  if(screens===1||sessions.length>=screens)await stopAll();
- const baseUrls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto'),urls=item.kind==='live'?recovery.preferFormat(baseUrls,recovery.startFormat(store.formatPref?.[item.id],item.name)):baseUrls;
+ const baseUrls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto'),urls=item.kind==='live'?recovery.preferFormat(baseUrls,store.formatPref?.[item.id]):baseUrls;
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
  const startAt=resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0;
