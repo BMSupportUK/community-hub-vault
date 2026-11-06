@@ -35,3 +35,6 @@ test('live channels always keep at least a 12 second cushion', () => {
 });
 
 test('sky starts on hls unless learned',()=>{assert.equal(r.startFormat(null,'Sky Sports News | NowTV |'),'m3u8');assert.equal(r.startFormat(null,'BBC One'),null);assert.equal(r.startFormat('ts','Sky Cinema'),'ts');});
+
+test('advert switch: size change then stall jumps to live once after 0.8s',()=>{const s={ready:true};r.advertJump(s,1920,1080,3,0,true);r.advertJump(s,1280,720,3,1000,true);s.stallAt=2000;assert.equal(r.advertJump(s,1280,720,2,2300,true),false);assert.equal(r.advertJump(s,1280,720,2,2900,true),true);assert.equal(r.advertJump(s,1280,720,2,3500,true),false);});
+test('stall with no recent size change is not an advert',()=>{const s={ready:true};r.advertJump(s,1920,1080,3,0,true);r.advertJump(s,1280,720,3,1000,true);s.stallAt=20000;assert.equal(r.advertJump(s,1280,720,2,21000,true),false);});

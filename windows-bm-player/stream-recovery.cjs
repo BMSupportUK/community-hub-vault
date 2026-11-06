@@ -48,13 +48,26 @@ function isHdName(name) { return /\b(hd|fhd|uhd|4k|1080p?|720p?)\b/i.test(String
  * (1 opening, 2 buffering, 3 playing, 4 paused, 5 stopped, 6 ended, 7 error).
  * Returns what to do: {event, reconnect, lower, offerSd, failed}.
  */
+// Advert switch: the provider changes the picture size at a Sky advert break and the stream stalls straight after.
+const ADVERT_WINDOW_MS = 4000, ADVERT_JUMP_MS = 800;
+function advertJump(session, w, h, state, now, live) {
+  if (w > 0 && h > 0) { const key = w + 'x' + h; if (session.size && session.size !== key) session.sizeAt = now; session.size = key; }
+  if (state === 3 || state === 4) { session.advertJumped = false; return false; }
+  if (!live || !session.ready || !session.stallAt || session.advertJumped || !session.sizeAt) return false;
+  if (session.stallAt - session.sizeAt > ADVERT_WINDOW_MS || session.stallAt < session.sizeAt - 1000) return false;
+  session.advertStall = true;
+  if (now - session.stallAt < ADVERT_JUMP_MS) return false;
+  session.advertJumped = true;
+  return true;
+}
+
 function tick(session, state, now, live) {
   const out = {};
   if (state === 3) {
     if (session.stallAt) {
       const ms = now - session.stallAt;
       if (ms >= MIN_REPORT_MS) {
-        out.event = { ms, reconnected: (session.reconnects || 0) > 0 };
+        out.event = { ms, reconnected: (session.reconnects || 0) > 0, cause: session.advertStall ? 'advert_switch' : 'network_drop' };
         session.stallTimes = [...(session.stallTimes || []), now].filter(t => now - t <= STALL_WINDOW_MS);
         const n = session.stallTimes.length;
         if (n >= STALLS_TO_LOWER && !session.lowered) { session.lowered = true; out.lower = true; }
@@ -67,7 +80,7 @@ function tick(session, state, now, live) {
       if (now - last >= STABLE_RAISE_MS) { session.lowered = false; session.stallTimes = []; out.raise = true; }
     }
     if (out.event) session.lastStallAt = now;
-    session.ready = true; session.stallAt = 0; session.reconnects = 0; session.retryAt = 0;
+    session.ready = true; session.advertStall = false; session.stallAt = 0; session.reconnects = 0; session.retryAt = 0;
     return out;
   }
   if (!session.ready || state === 4) return out;
@@ -86,4 +99,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };

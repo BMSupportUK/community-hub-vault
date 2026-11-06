@@ -44,7 +44,7 @@ test('engine sends only proxy addresses to the window and reports status', () =>
   expect(sent[0].src).not.toContain('dns.example');
   expect(sent[0].resume).toBe(30);
   e.report({ index: 0, position: 12, duration: 100, state: 3, seekable: true });
-  expect(e.status(0)).toEqual({ position: 12, duration: 100, state: 3, seekable: true, subs: 0 });
+  expect(e.status(0)).toEqual({ position: 12, duration: 100, state: 3, seekable: true, subs: 0, w: 0, h: 0 });
   e.stop(0);
   expect(e.status(0)).toBe(null);
   expect(sent.at(-1).action).toBe('stop');

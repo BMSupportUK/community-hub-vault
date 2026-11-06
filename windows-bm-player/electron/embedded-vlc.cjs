@@ -67,7 +67,8 @@ class EmbeddedVlc {
  }
  /** Black-bar zoom removed: any live re-sizing of the picture caused a duplicate frame on Windows. */
  checkBars(){}
- status(index){const s=this.surfaces.get(index);if(!s)return null;return{position:Math.max(0,Number(this.api.media_player_get_time(s.player))/1000),duration:Math.max(0,Number(this.api.media_player_get_length(s.player))/1000),state:this.api.media_player_get_state(s.player),seekable:!!this.api.media_player_is_seekable(s.player)};}
+ status(index){const s=this.surfaces.get(index);if(!s)return null;return{position:Math.max(0,Number(this.api.media_player_get_time(s.player))/1000),duration:Math.max(0,Number(this.api.media_player_get_length(s.player))/1000),state:this.api.media_player_get_state(s.player),seekable:!!this.api.media_player_is_seekable(s.player),...this.size(s.player)};}
+ size(player){try{const w=[0],h=[0];if(this.api.video_get_size(player,0,w,h)===0)return{w:w[0]||0,h:h[0]||0};}catch{}return{};}
  pause(index,paused){const s=this.surfaces.get(index);if(s)this.api.media_player_set_pause(s.player,paused?1:0);}
  seek(index,seconds){const s=this.surfaces.get(index);if(s&&this.api.media_player_is_seekable(s.player))this.api.media_player_set_time(s.player,Math.round(seconds*1000));}
  volume(index,value){const s=this.surfaces.get(index);if(s)this.api.audio_set_volume(s.player,value);}
