@@ -24,6 +24,9 @@ function frozen(session, state, position, now) {
   return false;
 }
 /** Remembered working format (ts/m3u8) goes first. */
+// Sky channels start on HLS: it copes with the provider's advert switches far better than MPEG-TS.
+function startFormat(pref, name) { return pref || (/\bsky\b/i.test(String(name || '')) ? 'm3u8' : null); }
+
 function preferFormat(urls, pref) {
   if (!pref || !Array.isArray(urls) || urls.length < 2) return urls;
   const ext = '.' + pref;
@@ -83,4 +86,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
