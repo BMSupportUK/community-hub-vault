@@ -1,4 +1,5 @@
 import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
+import { PlayerConnectionLog } from "@/components/app/PlayerConnectionLog";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -243,6 +244,7 @@ function AdminPlayerLivePageInner() {
             </tbody>
           </table>
         </div>}
+      <PlayerConnectionLog />
     </div>
     <ConnectionDetailsDialog
       row={detailsId ? (rows ?? []).find((r) => r.id === detailsId) ?? null : null}
