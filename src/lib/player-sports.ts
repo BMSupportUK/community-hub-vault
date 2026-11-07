@@ -124,6 +124,7 @@ export function playerSportsEvents(
       const key = seriesKey(e.title, `${g.title} ${g.category ?? ""} ${g.parent ?? ""}`);
       const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && (sameFixture(c.title, e.title) || sameSeriesEvent(c.seriesKey, key)));
       const target = existing ?? ev;
+      const prevKey = existing?.seriesKey ?? null;
       if (!pass) for (const c of channels) target.mainSet.add(c.toLowerCase());
       // Club-feed guides (iFollow, Scottish) list the two clubs; apps then find each club's own channels.
       const club = clubGuide || !!target.teamChannels;
@@ -138,6 +139,8 @@ export function playerSportsEvents(
       target.channels = merged.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, MAX_CHANNELS);
       target.passChannels = target.channels.filter((c) => !target.mainSet.has(c.toLowerCase()));
       if (club) target.teamChannels = true;
+      // Keep the most specific session key ("motogp|sprint" over "motogp|").
+      target.seriesKey = prevKey && prevKey.split("|")[1] ? prevKey : key ?? prevKey;
       // Verified category membership supplies the country when the exact channel
       // name has no country tag. Unresolved names still need the app's country
       // filter, and tagged names retain it so US Paramount never selects AU.
@@ -154,7 +157,7 @@ export function playerSportsEvents(
     }
   }
   return out
-    .map(({ pass: _p, mainSet: _m, ...ev }) => ({ ...ev, end: ev.start + typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`), endSource: "estimate" as const }))
+    .map(({ pass: _p, mainSet: _m, seriesKey: _k, ...ev }) => ({ ...ev, end: ev.start + typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`), endSource: "estimate" as const }))
     .filter((ev) => ev.end + FINISHED_KEEP_MS > nowMs)
     .sort((a, b) => a.start - b.start).slice(0, 400);
 }
