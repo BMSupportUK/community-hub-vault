@@ -39,7 +39,7 @@ final class ChannelHealth {
 
     /** A crossed channel before its event starts is usually just not live yet. */
     static boolean beforeStart(org.json.JSONObject e, long nowMs) {
-        long st = e == null ? 0 : e.optLong("start");
-        return st > 0 && nowMs < st;
+        return beforeStart(e == null ? 0 : e.optLong("start"), nowMs);
     }
+    static boolean beforeStart(long startMs, long nowMs) { return startMs > 0 && nowMs < startMs; }
 }
