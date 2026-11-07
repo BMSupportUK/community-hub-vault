@@ -86,6 +86,9 @@ public class PlayerActivity extends Activity {
 
     static ExoPlayer build(Context c) { return build(c, false); }
     static ExoPlayer build(Context c, boolean catchup) {
+        return build(c, catchup, null);
+    }
+    static ExoPlayer build(Context c, boolean catchup, String channelName) {
         SharedPreferences p = prefs(c);
         DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
                 .setUserAgent(p.getString("ua", UA))
@@ -96,16 +99,16 @@ public class PlayerActivity extends Activity {
                 .setConstantBitrateSeekingEnabled(true)
                 // Catch up recordings start mid-picture; waiting for a full keyframe avoids the blocky
                 // smeared picture phones showed when decoding began from a partial frame.
-                .setTsExtractorFlags(catchup ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+                .setTsExtractorFlags(VideoDecodePolicy.cleanKeyframes(catchup, channelName) ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
                         : DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
-        boolean sw = "software".equals(p.getString("decoder", "hardware"));
+        boolean sw = VideoDecodePolicy.preferSoftware(catchup, p.getString("decoder", "hardware"), channelName);
         DefaultRenderersFactory renderers = new DefaultRenderersFactory(c)
                 .setEnableDecoderFallback(true)
                 .setExtensionRendererMode(sw ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
                         : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
         // Catch up on phones: hardware decoders smear timeshift recordings into blocks, so prefer the
         // phone's software (backup) decoder, falling back to hardware if none exists.
-        if (catchup) renderers.setMediaCodecSelector((mime, secure, tunneling) -> {
+        if (sw) renderers.setMediaCodecSelector((mime, secure, tunneling) -> {
             java.util.List<androidx.media3.exoplayer.mediacodec.MediaCodecInfo> all =
                     androidx.media3.exoplayer.mediacodec.MediaCodecSelector.DEFAULT.getDecoderInfos(mime, secure, tunneling);
             java.util.List<androidx.media3.exoplayer.mediacodec.MediaCodecInfo> out = new java.util.ArrayList<>();
@@ -308,7 +311,7 @@ public class PlayerActivity extends Activity {
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
 
-        player = build(this, getIntent().hasExtra("catchup_prefix"));
+        player = build(this, getIntent().hasExtra("catchup_prefix"), getIntent().getStringExtra("content_name"));
         final int subs = getIntent().getIntExtra("subtitles", -1);
         if (subs == 0 || subs == 1) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, subs == 0)

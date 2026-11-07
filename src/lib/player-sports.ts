@@ -32,11 +32,19 @@ function teamTokens(name: string): string[] {
 }
 
 /** The two teams of a "Home v Away" / "Home - Away" title, ignoring any "COMPETITION:" prefix. */
-export function fixtureTeams(title: string): [string[], string[]] | null {
-  const body = title.includes(":") ? title.slice(title.lastIndexOf(":") + 1) : title;
+export function fixtureTeams(title: string, context = ""): [string[], string[]] | null {
+  // HBO appends competition/session text AFTER the teams, unlike prefixed TV guides.
+  const separator = /\s+(?:v|vs\.?|versus|-|–|—|@)\s+/i.exec(title);
+  const before = separator ? title.slice(0, separator.index) : title;
+  const prefixEnd = before.lastIndexOf(":");
+  let body = title.slice(prefixEnd + 1).split(":")[0].trim();
+  const aflw = /\baflw\b/i.test(title) || /aussie rules.*women|women.*aussie rules/i.test(context);
+  body = body.replace(/\s+(?:AFLW|A-League(?: Women)?|NWSL|The Emirates FA Cup|International Championship|Premier League|Men(?:'s)?(?: Group Stage)?|Main Card|Preliminary)\b.*$/i, "");
+  if (aflw) body = body.replace(/\bGeelong Cats\b/i, "Geelong");
   const parts = body.split(/\s+(?:v|vs\.?|versus|-|–|—|@)\s+/i);
   if (parts.length !== 2) return null;
   const a = teamTokens(parts[0]), b = teamTokens(parts[1]);
+  if (aflw) { a.push("women"); b.push("women"); }
   return a.length && b.length ? [a, b] : null;
 }
 
@@ -48,8 +56,8 @@ function sameTeam(a: string[], b: string[]): boolean {
   return long.every((t) => !SIDE_MARKERS.has(t) || short.includes(t));
 }
 
-export function sameFixture(x: string, y: string): boolean {
-  const fx = fixtureTeams(x), fy = fixtureTeams(y);
+export function sameFixture(x: string, y: string, xContext = "", yContext = ""): boolean {
+  const fx = fixtureTeams(x, xContext), fy = fixtureTeams(y, yContext);
   if (!fx || !fy) return x.toLowerCase().replace(/\b(vs?\.?|versus)\b/g, "v").replace(/[^a-z0-9]+/g, " ").trim()
     === y.toLowerCase().replace(/\b(vs?\.?|versus)\b/g, "v").replace(/[^a-z0-9]+/g, " ").trim();
   return sameTeam(fx[0], fy[0]) && sameTeam(fx[1], fy[1]);
@@ -67,8 +75,13 @@ export function seriesKey(title: string, context = ""): string | null {
   const c = context.toLowerCase();
   const fight = /\b(bkfc|ufc|pfl|cage warriors|oktagon)\s*(?:fight night\s*)?(\d+)\b/.exec(t);
   if (fight) return `${fight[1]}|${fight[2]}`;
+  if (/\bsupercars\b/.test(`${t} ${c}`)) {
+    const race = /\brace\s*(\d+)\b/.exec(t);
+    const venue = t.replace(/\bsupercars\b|\bchampionship\b|\brace\s*\d+\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+    if (race && venue) return `supercars|${venue}|race${race[1]}`;
+  }
   let series: string | null = null;
-  if (/moto\s?gp/.test(t) || (/moto\s?gp/.test(c) && !/\bf1\b|formula/.test(t))) series = "motogp";
+  if (/moto\s?gp/.test(t) || (/moto\s?gp/.test(c) && !/\bf1\b|formula|\bmoto\s*[234]\b/.test(t))) series = "motogp";
   else if (/\bf1\b|formula 1|formula one|grand prix/.test(t) || /\bf1\b|formula 1|formula one/.test(c)) series = "f1";
   if (!series) return null;
   if (/formula\s*\d\s*,/.test(t)) return null; // "Formula 3,2,1" magazine show
@@ -117,14 +130,20 @@ export function playerSportsEvents(
         }
         if (teams.length === 2) for (const team of teams) if (!sourceChannels.some((c) => c.toLowerCase() === team.toLowerCase())) sourceChannels.push(team);
       }
-      const channels = sourceChannels
+      const onboard = /^on[- ]board\s*\d*$/i.test(e.title.trim());
+      const onboardIdentity = onboard ? `${e.title} ${sourceChannels.join(" ")}` : e.title;
+      // Pipe-separated race metadata in HBO on-board rows is not a list of extra TV channels.
+      const channelNames = onboard ? sourceChannels.filter(c => !/^moto\s*gp$|^round\s*\d+$|sprint race$/i.test(c.trim())) : sourceChannels;
+      const channels = channelNames
         .map((c) => (catList?.length ? resolveInCategory(c, catList, links) ?? applyChannelLinks(c, links) : applyChannelLinks(c, links)))
         .filter(Boolean);
       const ev: Card = { sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: cardTitle(e.title), date: e.date, time: e.time, start,
         channels: [], passChannels: [], pass, mainSet: new Set(), seriesKey: null };
       // One card per game: every guide listing the same game adds its channels to that card.
-      const key = seriesKey(e.title, `${g.title} ${g.category ?? ""} ${g.parent ?? ""}`);
-      const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && (sameFixture(c.title, e.title) || sameSeriesEvent(c.seriesKey, key)));
+      const context = `${g.title} ${g.category ?? ""} ${g.parent ?? ""}`;
+      // On-board rows carry the actual race/session in their supplied channel suffix.
+      const key = seriesKey(onboardIdentity, context);
+      const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && (sameFixture(c.title, e.title, `${c.sport} ${c.subcategory} ${c.competition}`, context) || sameSeriesEvent(c.seriesKey, key)));
       const target = existing ?? ev;
       const prevKey = existing?.seriesKey ?? null;
       if (!pass) for (const c of channels) target.mainSet.add(c.toLowerCase());
