@@ -417,6 +417,14 @@ public class PlayerActivity extends Activity {
         if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING) { formatChangedAt = -100000; player.seekToDefaultPosition(); player.prepare(); player.play(); }
     };
     private TextView reconnectNote;
+    private TextView feedNote;
+
+    private void showFeed(String label) {
+        if (feedNote == null) return;
+        if (label == null) { feedNote.setVisibility(TextView.GONE); return; }
+        feedNote.setText(label);
+        feedNote.setVisibility(TextView.VISIBLE);
+    }
 
     private volatile boolean rateMatched;
     private final long[] frameTimes = new long[31];
@@ -438,6 +446,7 @@ public class PlayerActivity extends Activity {
                 long now = android.os.SystemClock.elapsedRealtime();
                 if (s == Player.STATE_BUFFERING && everReady && stallStartedAt == 0) {
                     stallStartedAt = now;
+                    showFeed(FeedStatus.label(blackSent, true));
                     ui.removeCallbacks(cleanPlay);
                     ui.postDelayed(stallWatch, StreamRecovery.STALL_RECONNECT_MS);
                     // Advert switch: jump straight to the live point instead of waiting to catch up.
@@ -446,6 +455,7 @@ public class PlayerActivity extends Activity {
                 } else if (s == Player.STATE_READY) {
                     if (stallStartedAt > 0) onStallEnded(now - stallStartedAt, reconnects > 0);
                     everReady = true; stallStartedAt = 0; reconnects = 0; lastStableAt = now;
+                    showFeed(FeedStatus.label(blackSent, false));
                     if ("live".equals(kind())) {
                         ui.removeCallbacks(cleanPlay); ui.postDelayed(cleanPlay, ChannelHealth.CLEAN_MS);
                         if (!blackArmed) { blackArmed = true; ui.postDelayed(blackCheck, ChannelHealth.BLACK_MS); }
@@ -487,7 +497,7 @@ public class PlayerActivity extends Activity {
     private final Runnable blackCheck = () -> {
         if (player == null || blackSent) return;
         androidx.media3.exoplayer.DecoderCounters c = player.getVideoDecoderCounters();
-        if (c == null || c.renderedOutputBufferCount == 0) { blackSent = true; ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "black"); }
+        if (c == null || c.renderedOutputBufferCount == 0) { blackSent = true; showFeed(FeedStatus.NO_PICTURE); ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "black"); }
     };
     private final Runnable cleanPlay = () -> {
         if (player == null || cleanSent || blackSent) return;
