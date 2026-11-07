@@ -81,7 +81,7 @@ describe("crosses only around event time", () => {
     expect(acceptProblemReport("Sky Sports Main Event", [ev], start - 30 * 60_000)).toBe(true);
   });
   test("event channels recognised", () => {
-    for (const n of ["UFC 04 |", "MonoMax 27 | (Events Only)", "HBO Max UK | Event 1", "Boxing 03 | Billam-Smith", "Channel 15"]) expect(isEventChannel(n)).toBe(true);
+    for (const n of ["UFC 04 |", "MonoMax 27 | (Events Only)", "HBO Max UK | Event 1", "Boxing 03 | Billam-Smith", "Channel 15", "ᴰᴬᶻᴺ ¹ 01 (CA | Main)", "DAZN 05 (CA)"]) expect(isEventChannel(n)).toBe(true);
     for (const n of ["Sky Sports Main Event", "UK | UFC TV HD", "TNT Sports 1"]) expect(isEventChannel(n)).toBe(false);
   });
 });
