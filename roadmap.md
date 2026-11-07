@@ -153,3 +153,4 @@
 - [ ] Publish website so apps get game end times
 - [x] Admin Channel status page: every playlist channel with Online / Offline / Not checked.
 - [x] Test login checks a channel only after a player reports it (no constant testing).
+- [x] Android 3.74 / Windows 0.4.29 / Mac 0.1.39: failed channel reported at first failure; offline before event start says "event hasn't started yet". Not tried on a real device.
