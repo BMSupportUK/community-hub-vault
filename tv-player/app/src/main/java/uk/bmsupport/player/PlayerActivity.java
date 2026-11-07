@@ -440,30 +440,56 @@ public class PlayerActivity extends Activity {
     // 50Hz switch before the picture: the TV goes black while it changes mode, so the picture (and sound)
     // stay covered until the frame rate is known and the TV has settled, giving one blank at the start.
     private android.view.View rateCover;
-    private boolean uncovered;
+    private boolean uncovered, firstFrame, rateDone;
+    private long rateSettleAt;
     private final Runnable uncover = () -> {
         if (uncovered) return; uncovered = true;
         if (rateCover != null) rateCover.setVisibility(android.view.View.GONE);
         if (player != null) player.setVolume(1f);
     };
+    /** Lift the "Channel Loading" picture once a frame has rendered and any 50Hz switch has settled. */
+    private void maybeUncover() {
+        if (uncovered || !firstFrame || !rateDone) return;
+        ui.removeCallbacks(uncover);
+        ui.postDelayed(uncover, Math.max(0, rateSettleAt - android.os.SystemClock.elapsedRealtime()));
+    }
     private void rateKnown(float fps) {
         String id = getIntent().getStringExtra("content_id");
         if (fps > 0 && id != null) prefs(this).edit().putFloat("fps:" + id, fps).apply();
         boolean switched = fps > 0 && FrameRateMatch.apply(this, fps);
-        if (uncovered) return;
-        ui.removeCallbacks(uncover); ui.postDelayed(uncover, FrameRateMatch.uncoverDelay(switched));
+        rateSettleAt = android.os.SystemClock.elapsedRealtime() + FrameRateMatch.uncoverDelay(switched);
+        rateDone = true; maybeUncover();
     }
     private void coverUntilRateKnown(FrameLayout root) {
-        if (FrameRateMatch.skip() || carried != null) { uncovered = true; return; }
-        rateCover = new android.view.View(this);
-        rateCover.setBackgroundColor(0xFF000000);
-        root.addView(rateCover, 1, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        if (carried != null) { uncovered = true; return; }
+        // Loading picture: family watching TV with popcorn and "Channel Loading" (sound muted underneath).
+        FrameLayout cover = new FrameLayout(this);
+        cover.setBackgroundColor(0xFF000000);
+        android.widget.ImageView art = new android.widget.ImageView(this);
+        art.setImageResource(R.drawable.channel_loading);
+        art.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        cover.addView(art, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        TextView msg = new TextView(this);
+        msg.setText("Channel Loading…");
+        msg.setTextSize(30); msg.setTypeface(Typeface.DEFAULT_BOLD); msg.setTextColor(0xFFFFFFFF);
+        msg.setShadowLayer(12, 0, 2, 0xCC000000);
+        msg.setBackgroundColor(0x99000000); msg.setPadding(48, 18, 48, 18);
+        FrameLayout.LayoutParams mlp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        mlp.bottomMargin = 90;
+        cover.addView(msg, mlp);
+        rateCover = cover;
+        root.addView(cover, 1, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         player.setVolume(0f);
-        // Channel played before: switch the TV now, while the stream is still connecting.
-        String id = getIntent().getStringExtra("content_id");
-        float known = id == null ? 0 : prefs(this).getFloat("fps:" + id, 0);
-        if (known > 0) FrameRateMatch.apply(this, known);
-        ui.postDelayed(uncover, FrameRateMatch.MAX_HOLD_MS);
+        player.addListener(new Player.Listener() { @Override public void onRenderedFirstFrame() { firstFrame = true; maybeUncover(); } });
+        if (FrameRateMatch.skip()) rateDone = true;
+        else {
+            // Channel played before: switch the TV now, while the stream is still connecting.
+            String id = getIntent().getStringExtra("content_id");
+            float known = id == null ? 0 : prefs(this).getFloat("fps:" + id, 0);
+            if (known > 0) FrameRateMatch.apply(this, known);
+        }
+        // Never hold sound back long after the picture: the frame-rate wait gives up after MAX_HOLD_MS.
+        ui.postDelayed(() -> { rateDone = true; maybeUncover(); }, FrameRateMatch.MAX_HOLD_MS);
     }
 
     private void startWithRecovery(String[] urls) {
