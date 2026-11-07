@@ -4019,7 +4019,10 @@ public class MainActivity extends Activity {
     static String sportsRowLabel(JSONObject e, String guideName, String channel) {
         boolean down = ChannelHealth.crossed(e, guideName) || ChannelHealth.crossed(e, channel)
                 || sportsDown.contains(channel.toLowerCase(java.util.Locale.ROOT));
-        return down ? "❌  " + channel + "  —  not working right now, try another channel" : "▶  " + channel;
+        if (!down) return "▶  " + channel;
+        return ChannelHealth.beforeStart(e, System.currentTimeMillis())
+                ? "⏳  " + channel + "  —  event hasn't started yet, this channel goes live nearer the start"
+                : "❌  " + channel + "  —  not working right now, try another channel";
     }
 
     private JSONObject retryEvent; private List<String[]> retryAliases;

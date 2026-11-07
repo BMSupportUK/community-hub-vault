@@ -36,4 +36,10 @@ final class ChannelHealth {
         for (int i = 0; i < a.length(); i++) if (channel.equalsIgnoreCase(a.optString(i))) return true;
         return false;
     }
+
+    /** A crossed channel before its event starts is usually just not live yet. */
+    static boolean beforeStart(org.json.JSONObject e, long nowMs) {
+        return beforeStart(e == null ? 0 : e.optLong("start"), nowMs);
+    }
+    static boolean beforeStart(long startMs, long nowMs) { return startMs > 0 && nowMs < startMs; }
 }
