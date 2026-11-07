@@ -2052,6 +2052,13 @@
       "when": 1794072823988,
       "tag": "0292_player_checkin_slowdown",
       "breakpoints": true
+    },
+    {
+      "idx": 293,
+      "version": "7",
+      "when": 1794076579250,
+      "tag": "0293_manual_customer_account_numbers",
+      "breakpoints": true
     }
   ]
 }
