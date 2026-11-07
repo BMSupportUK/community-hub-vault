@@ -1,5 +1,15 @@
 import { zonedWallTimeToUtcMs, dateInTimeZone } from "@/hooks/use-timezone";
-import { isLikelyChannelLabel, normalizeSportsEventTitle } from "@/lib/sports-listing-format";
+import { fixtureTeams, isLikelyChannelLabel, normalizeSportsEventTitle } from "@/lib/sports-listing-format";
+
+/** Club-feed labels can contain full stops (St. Johnstone), not sentence endings. */
+export function isSportsChannelLine(value: string, eventTitle: string): boolean {
+  const text = value.trim();
+  if (!text || text.length > 180) return false;
+  const teams = fixtureTeams(eventTitle).map((team) => team.toLowerCase());
+  const parts = text.split(/\s*[|·•]\s*/).filter(Boolean);
+  if (teams.length === 2 && parts.length > 0 && parts.every((part) => teams.includes(part.trim().toLowerCase()))) return true;
+  return !/[.!?]\s/.test(text);
+}
 
 // Abbreviation -> IANA zone. IANA zones already handle DST correctly.
 const ZONE_MAP: Record<string, string> = {
@@ -863,8 +873,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const splitChannelLine = (s: string) =>
       s.split(/\s*(?:[·•|]|\s[-–—]\s)\s*/).map((part) => part.trim()).filter(Boolean);
     if (!groupedChannels && extraLines.length) {
-      const looksLikeChannel = (s: string) =>
-        s.length > 0 && s.length <= 180 && !/[.!?]\s/.test(s);
+      const looksLikeChannel = (s: string) => isSportsChannelLine(s, eventName);
       if (extraLines.every(looksLikeChannel)) {
         extraChannelLines.push(...extraLines.flatMap(splitChannelLine));
       } else {
