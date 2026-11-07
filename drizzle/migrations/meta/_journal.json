@@ -2045,6 +2045,13 @@
       "when": 1794062185972,
       "tag": "0291_announcement_target_device",
       "breakpoints": true
+    },
+    {
+      "idx": 292,
+      "version": "7",
+      "when": 1794072823988,
+      "tag": "0292_player_checkin_slowdown",
+      "breakpoints": true
     }
   ]
 }

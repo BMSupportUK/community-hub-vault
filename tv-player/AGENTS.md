@@ -32,3 +32,4 @@
 - Every activity is sensorLandscape so phones show the same TV-shaped layout sideways instead of squashing it portrait.
 - Phones (shortest side under 500dp) shrink screen density via PhoneScale in attachBaseContext so the TV layout fits sideways; front/link/unlock screens also scroll.
 - Screen, catch-up, guide, favourites, announcement and keypad rules live in `tv-player/app/src/main/java/uk/bmsupport/player/AGENTS.md`.
+- Background website check-ins (poll, announcements, sports refresh, buffering flush) go through Checkin.java / windows-bm-player/checkin.cjs: ±20% jitter, random start offset, doubling back-off to 5 min on 429/5xx/timeouts, Retry-After honoured, and the poll`s `slow` multiplier (player_settings.checkin_slowdown, 1–10) stretches every timer so load can be eased without an app release.

@@ -12,6 +12,7 @@ const {surfaceRows}=require('../playback-core.cjs');
 const boost=require('../sound-boost.cjs');
 const recovery=require('../stream-recovery.cjs');
 const feedst=require('../feed-status.cjs');
+const checkin=require('../checkin.cjs');
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
 function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w);}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
@@ -42,7 +43,8 @@ function publicState(){
   progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],refreshed:gate.unlocked?store.refreshed||{}:{},playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
 }
 async function site(body){
- const response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});
+ let response;try{response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});}catch(e){checkin.fail();throw e;}
+ if(response.status===429||response.status>=500)checkin.fail(response.headers.get('retry-after'));else checkin.ok();
  let data;try{data=await response.json();}catch{throw new Error('BM Support is unavailable. Try again shortly.');}
  if(!response.ok){if(response.status===401&&body.action!=='unlock'){gate.lock();store.token=null;store.user=null;store.pass=null;save();}throw new Error(data.error||'BM Support request failed.');}
  return data;
@@ -57,7 +59,7 @@ async function poll(){
  try{
   const session=sessions[0];
   const r=await site({action:'poll',login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
-  maintenance=r.maintenance?.enabled?r.maintenance.message:null;
+  checkin.setSlow(r.slow);maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
   let changed=false;
   if(r.credentials){gate.lock();await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
@@ -183,7 +185,7 @@ function healthTick(session,s){if(session.item.kind!=='live')return;const now=Da
 let bufferQueue=[],bufferBusy=false;
 function queueBuffer(item,ev){bufferQueue.push({kind:item.kind==='episode'?'series':item.kind,content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:Math.max(0,Math.min(3600000,Math.round(ev.ms))),reconnected:!!ev.reconnected,freeze:!!ev.freeze,...(ev.cause?{cause:ev.cause}:{}),at:Date.now()});if(bufferQueue.length>100)bufferQueue=bufferQueue.slice(-100);if(bufferQueue.length>=10)flushBuffer();}
 async function flushBuffer(){if(bufferBusy||!store.token||!bufferQueue.length)return;bufferBusy=true;const events=bufferQueue.splice(0,recovery.BATCH);try{await site({action:'buffering',version:app.getVersion(),events});}catch{}finally{bufferBusy=false;}}
-setInterval(()=>{flushBuffer();},60000);
+checkin.every(flushBuffer,()=>60000,60000);
 // Films/episodes: zoom past black bars baked into the picture (Windows libVLC; Mac and backup check in the window).
 setInterval(()=>{if(!engine?.checkBars)return;const {nativeImage}=require('electron');const decode=f=>{const im=nativeImage.createFromPath(f);if(im.isEmpty())return null;const sz=im.getSize();return{data:im.toBitmap(),width:sz.width,height:sz.height};};for(const s of sessions)if(['film','episode'].includes(s.item.kind)&&!s.backup)engine.checkBars(s.index,decode);},2000);
 async function connectionCheck(){
@@ -271,7 +273,7 @@ else{
   register('speed',async()=>{const start=Date.now();await fetch('https://speed.cloudflare.com/__down?bytes=100',{signal:AbortSignal.timeout(10000)});const ping=Date.now()-start;const down=Date.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{signal:AbortSignal.timeout(20000)});const bytes=(await r.arrayBuffer()).byteLength;const download=bytes*8/(Date.now()-down)/1000;const up=Date.now();await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Uint8Array(3000000),signal:AbortSignal.timeout(20000)});return{ping,download,upload:3000000*8/(Date.now()-up)/1000};});
   await win.loadFile(page);
   if(!store.user)getCode().catch(e=>send({type:'notice',message:e.message}));else{poll();}
-  setInterval(poll,store.user?60000:5000);fetchAnnouncement();setInterval(fetchAnnouncement,15000);fetchMajor();setInterval(fetchMajor,60000);setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
+  checkin.every(poll,()=>store.user?60000:5000,store.user?60000*Math.random():5000);checkin.every(fetchAnnouncement,()=>15000,15000*Math.random());checkin.every(fetchMajor,()=>60000,15000*Math.random());setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
  });
  app.on('activate',foreground);
  app.on('window-all-closed',async()=>{await stopAll();app.quit();});

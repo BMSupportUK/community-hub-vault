@@ -31,7 +31,10 @@ final class Net {
             c.setRequestProperty("content-type", "application/json");
             try (OutputStream o = c.getOutputStream()) { o.write(body.getBytes(StandardCharsets.UTF_8)); }
         }
-        int code = c.getResponseCode();
+        boolean site = url.startsWith(SITE);
+        int code;
+        try { code = c.getResponseCode(); } catch (java.io.IOException e) { if (site) Checkin.fail(0); throw e; }
+        if (site) { if (code == 429 || code >= 500) Checkin.fail(Checkin.retryAfterMs(c.getHeaderField("Retry-After"))); else Checkin.ok(); }
         InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
         ByteArrayOutputStream b = new ByteArrayOutputStream();
         if (in != null) { byte[] buf = new byte[16384]; int n; long total = 0, next = 262144;
