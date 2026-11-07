@@ -1,4 +1,4 @@
-import { applyChannelLinks, resolveInCategory, type ChannelLinks } from "./sports-channel-links";
+import { applyChannelLinks, channelInCountry, resolveInCategory, type ChannelLinks } from "./sports-channel-links";
 import { parseSportsListingBlock, isClubChannelGuide, fixtureTeams as clubNames } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
@@ -107,9 +107,15 @@ export function playerSportsEvents(
       target.channels = merged.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, MAX_CHANNELS);
       target.passChannels = target.channels.filter((c) => !target.mainSet.has(c.toLowerCase()));
       if (club) target.teamChannels = true;
-      // A guide linked to a playlist category ("US | Paramount+") is locked to that category's country too.
-      const country = links.country || /^\s*([A-Z]{2,3})\s*\|/i.exec(links.category ?? "")?.[1]?.toUpperCase();
-      if (country) for (const c of channels) (target.channelCountry ??= {})[c] = country;
+      // Verified category membership supplies the country when the exact channel
+      // name has no country tag. Unresolved names still need the app's country
+      // filter, and tagged names retain it so US Paramount never selects AU.
+      const categoryCountry = /^\s*([A-Z]{2,3})\s*\|/i.exec(links.category ?? "")?.[1]?.toUpperCase();
+      const country = links.country || categoryCountry;
+      if (country) for (const c of channels) {
+        const verifiedCategoryCountry = country === categoryCountry && catList?.includes(c);
+        if (!verifiedCategoryCountry || channelInCountry(c, country)) (target.channelCountry ??= {})[c] = country;
+      }
       if (!existing) out.push(ev);
     }
   }
