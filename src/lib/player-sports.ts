@@ -11,6 +11,8 @@ export function cardTitle(title: string): string {
   const i = title.lastIndexOf(":");
   if (i <= 0) return title;
   const prefix = title.slice(0, i), rest = title.slice(i + 1).trim();
+  // Numbered event brands ("BKFC 96", "UFC 300") stay in the title so search/voice can find them.
+  if (/\d/.test(prefix)) return title;
   return !/[a-z]/.test(prefix) && /[A-Z]/.test(prefix) && fixtureTeams(rest) ? rest : title;
 }
 
