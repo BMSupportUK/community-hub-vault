@@ -125,9 +125,10 @@ public final class PlayerApplication extends Application implements Application.
         return n;
     }
     /** Top-right announcement icon on the app's own screens (never over full-screen video). */
+    void refreshMajorIcon() { showMajorIcon(); }
     private void showMajorIcon() {
         Activity a = foreground;
-        boolean want = a instanceof MainActivity && !a.isFinishing() && MainActivity.isUnlocked()
+        boolean want = a instanceof MainActivity && ((MainActivity) a).showsAnnouncementIcon() && !a.isFinishing() && MainActivity.isUnlocked()
                 && !getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty();
         if (majorIcon != null && (!want || majorIcon.getContext() != a)) {
             if (majorBox != null && majorBox.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) majorBox.getParent()).removeView(majorBox);

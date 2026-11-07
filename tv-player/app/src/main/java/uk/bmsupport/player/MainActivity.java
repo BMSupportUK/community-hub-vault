@@ -417,7 +417,22 @@ public class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); refreshVersionScreens(); }
 
     @Override public void onUserInteraction() { super.onUserInteraction(); PlayerApplication.interaction(this); }
-    @Override public boolean dispatchKeyEvent(KeyEvent e) { return PlayerApplication.closeAnnouncementOnBack(this, e) || super.dispatchKeyEvent(e); }
+    boolean showsAnnouncementIcon() { return !"sports".equals(screen) && !"sports_channels".equals(screen); }
+    @Override public void onContentChanged() {
+        super.onContentChanged();
+        if (getApplication() instanceof PlayerApplication) ((PlayerApplication) getApplication()).refreshMajorIcon();
+    }
+    @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        if ("sports".equals(screen) && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT && sportsList != null && sportsList.hasFocus()) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN && sportsChannelList != null) sportsChannelList.requestFocus();
+            return true;
+        }
+        if ("sports".equals(screen) && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT && sportsChannelList != null && sportsChannelList.hasFocus()) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN && sportsList != null) sportsList.requestFocus();
+            return true;
+        }
+        return PlayerApplication.closeAnnouncementOnBack(this, e) || super.dispatchKeyEvent(e);
+    }
     @Override protected void onDestroy() { stopPreview(); stopMulti(); stopPolling(); ui.removeCallbacksAndMessages(null); super.onDestroy(); io.shutdownNow(); connectionIo.shutdownNow(); }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
@@ -3558,6 +3573,7 @@ public class MainActivity extends Activity {
 
     private Button sportsCatPill; private LinearLayout sportsDays;
     private TextView sportsPanelTitle, sportsPanelSub; private ListView sportsChannelList;
+    private String sportsReturnChannelId;
     /** Chosen website main category / sub-category (null = all) and day (0 = today). */
     private String sportsSport, sportsSub, sportsGuide; private int sportsDay;
     private List<String[]> sportsAliases = new ArrayList<>();
@@ -3681,7 +3697,15 @@ public class MainActivity extends Activity {
     }
     private JSONArray sportsGuidesOf(String sport, String sub) {
         JSONObject g = sportsData == null ? null : sportsData.optJSONObject("guides");
-        return g == null ? null : g.optJSONArray(sport + "|" + (sub == null ? "" : sub));
+        JSONArray supplied = g == null ? null : g.optJSONArray(sport + "|" + (sub == null ? "" : sub));
+        if (supplied == null) return null;
+        JSONArray active = new JSONArray();
+        List<JSONObject> events = upcomingSports(sportsData, System.currentTimeMillis());
+        for (int i = 0; i < supplied.length(); i++) {
+            String name = supplied.optString(i);
+            for (JSONObject e : events) if (inSportsCategory(e.optString("sport"), e.optString("subcategory"), e.optString("competition"), sport, sub, name)) { active.put(name); break; }
+        }
+        return active;
     }
     private String sportsCatLabel() {
         return "☰ Category: " + (sportsSport == null ? "Choose" : sportsSport + (sportsSub == null ? "" : " › " + sportsSub) + (sportsGuide == null ? "" : " › " + sportsGuide));
@@ -3725,7 +3749,9 @@ public class MainActivity extends Activity {
         JSONArray cats = r.optJSONArray("categories");
         if (cats != null) for (int i = 0; i < cats.length(); i++) {
             JSONObject c = cats.optJSONObject(i); if (c == null) continue;
-            names.add(c.optString("name")); subs.add(c.optJSONArray("subs"));
+            String name = c.optString("name");
+            boolean active = false; for (JSONObject e : up) if (name.equals(e.optString("sport"))) { active = true; break; }
+            if (active) { names.add(name); subs.add(c.optJSONArray("subs")); }
         }
         // Older website without the category list: fall back to the categories the games carry.
         if (names.isEmpty()) for (JSONObject e : up) if (!names.contains(e.optString("sport"))) { names.add(e.optString("sport")); subs.add(null); }
@@ -3748,6 +3774,13 @@ public class MainActivity extends Activity {
         }).setNegativeButton("Close", null).show();
     }
     private void showSportsSubCategories(String sport, JSONArray sb, List<JSONObject> up) {
+        JSONArray activeSubs = new JSONArray();
+        for (int i = 0; i < sb.length(); i++) {
+            String name = sb.optString(i);
+            for (JSONObject e : up) if (inSportsCategory(e.optString("sport"), e.optString("subcategory"), sport, name)) { activeSubs.put(name); break; }
+        }
+        sb = activeSubs;
+        final JSONArray shownSubs = sb;
         String[] labels = new String[sb.length() + 1];
         int all = 0; for (JSONObject e : up) if (sport.equals(e.optString("sport"))) all++;
         labels[0] = "All " + sport + "  (" + all + ")";
@@ -3759,8 +3792,8 @@ public class MainActivity extends Activity {
         }
         new AlertDialog.Builder(this).setTitle(sport).setItems(labels, (d, w) -> {
             if (w == 0) { applySportsCategory(sport, null); return; }
-            String s = sb.optString(w - 1); JSONArray gd = sportsGuidesOf(sport, s);
-            if (gd != null && gd.length() > 1) showSportsGuides(sport, s, up, () -> showSportsSubCategories(sport, sb, up));
+            String s = shownSubs.optString(w - 1); JSONArray gd = sportsGuidesOf(sport, s);
+            if (gd != null && gd.length() > 1) showSportsGuides(sport, s, up, () -> showSportsSubCategories(sport, shownSubs, up));
             else applySportsCategory(sport, s);
         })
                 .setNegativeButton("◀ Back", (d, w) -> showSportsCategories()).show();
@@ -3803,15 +3836,16 @@ public class MainActivity extends Activity {
         for (JSONObject e : upcomingSports(r, now)) if (inSportsCategory(e.optString("sport"), e.optString("subcategory", ""), e.optString("competition"), sportsSport, sportsSub, sportsGuide)) inCat.add(e);
         int[] perDay = new int[7];
         for (JSONObject e : inCat) { int d = ukDayIndex(e.optLong("start"), now); if (d < 7) perDay[d]++; }
+        sportsDay = populatedSportsDay(perDay, sportsDay);
         if (sportsDays != null) {
             sportsDays.removeAllViews();
             java.text.SimpleDateFormat dn = new java.text.SimpleDateFormat("EEE d", java.util.Locale.UK); dn.setTimeZone(UK);
             for (int d = 0; d < 7; d++) {
+                if (perDay[d] == 0) continue;
                 final int day = d;
                 String label = d == 0 ? "Today" : d == 1 ? "Tomorrow" : dn.format(new java.util.Date(now + d * 86400_000L));
                 Button b = miniPill(label + (perDay[d] > 0 ? "  " + perDay[d] : ""), label, () -> { sportsDay = day; renderSports(sportsData); });
                 if (d == sportsDay) { GradientDrawable on = new GradientDrawable(); on.setColor(ACCENT); on.setCornerRadius(dp(12)); b.setBackground(on); }
-                else if (perDay[d] == 0) b.setTextColor(MUTED);
                 sportsDays.addView(b);
             }
         }
@@ -3822,7 +3856,7 @@ public class MainActivity extends Activity {
         int keep = sportsList.getSelectedItemPosition();
         sportsList.setAdapter(new SportsCardAdapter(cards, now));
         sportsList.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) { if (pos < cards.size()) fillSportsPanel(cards.get(pos), false); }
+            @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) { if (pos < cards.size()) fillSportsPanel(cards.get(pos), sportsChannelList.hasFocus()); }
             @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
         });
         sportsList.setOnItemClickListener((p, v, pos, id) -> { if (pos < cards.size()) fillSportsPanel(cards.get(pos), true); });
@@ -3835,7 +3869,7 @@ public class MainActivity extends Activity {
         }
         int sel = keep >= 0 && keep < cards.size() ? keep : 0;
         sportsList.setSelection(sel);
-        fillSportsPanel(cards.get(sel), false);
+        fillSportsPanel(cards.get(sel), sportsChannelList.hasFocus());
         if (!sportsChannelList.hasFocus()) sportsList.requestFocus();
     }
 
@@ -3878,6 +3912,7 @@ public class MainActivity extends Activity {
 
     /** Right-hand panel: the selected game's channels grouped Channels / Sports passes / Club channels. */
     private void fillSportsPanel(JSONObject e, boolean focus) {
+        final int keepChannel = focus && sportsChannelList != null ? sportsChannelList.getSelectedItemPosition() : -1;
         final int token = ++sportsPanelToken;
         long st = e.optLong("start");
         java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.UK); day.setTimeZone(UK);
@@ -3909,13 +3944,22 @@ public class MainActivity extends Activity {
                     Item it = t.get(w);
                     if (it == null && !l.get(w).startsWith("✕")) return;
                     if (it == null) Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show();
-                    else { retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
+                    else { sportsReturnChannelId = it.id; retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
                 });
-                if (focus) { sportsChannelList.requestFocus(); sportsChannelList.setSelection(firstPlayable(t)); }
+                if (focus) {
+                    int restore = keepChannel >= 0 && keepChannel < t.size() && t.get(keepChannel) != null ? keepChannel : firstPlayable(t);
+                    if (sportsReturnChannelId != null) for (int i = 0; i < t.size(); i++) if (t.get(i) != null && sportsReturnChannelId.equals(t.get(i).id)) { restore = i; break; }
+                    sportsChannelList.requestFocus(); sportsChannelList.setSelection(restore);
+                }
             });
         });
     }
     private static int firstPlayable(List<Item> t) { for (int i = 0; i < t.size(); i++) if (t.get(i) != null) return i; return 0; }
+    static int populatedSportsDay(int[] counts, int selected) {
+        if (selected >= 0 && selected < counts.length && counts[selected] > 0) return selected;
+        for (int i = 0; i < counts.length; i++) if (counts[i] > 0) return i;
+        return 0;
+    }
 
     /** Channel rows for a game: the guide's channels, then sports passes, then each club's own channels. */
     void buildSportsRows(JSONObject e, List<String[]> aliases, List<Item> pl, List<String> labels, List<Item> targets) {
@@ -3933,13 +3977,14 @@ public class MainActivity extends Activity {
             boolean heading = false;
             if (ch != null) for (int j = 0; j < ch.length(); j++) {
                 String g = ch.optString(j); String k = g.toLowerCase(java.util.Locale.ROOT);
-                if (pass.contains(k) != (section == 1)) continue;
+                if (g.trim().isEmpty() || pass.contains(k) != (section == 1)) continue;
                 if (clubs && teamNames.contains(k)) continue;
-                if (!heading) { labels.add(section == 0 ? "━━  CHANNELS  ━━" : "━━  SPORTS PASSES  ━━"); targets.add(null); heading = true; }
                 List<Item> m = matchChannel(g, pl, aliases);
                 JSONObject ccMap = e.optJSONObject("channelCountry");
                 String cc = ccMap == null ? "" : ccMap.optString(g, "");
                 if (!cc.isEmpty()) { List<Item> keep = new ArrayList<>(); for (Item it : m) if (channelInCountry(it.name, cc)) keep.add(it); m = keep; }
+                if (section == 1 && (m.isEmpty() || m.stream().allMatch(it -> seen.contains(it.id)))) continue;
+                if (!heading) { labels.add(section == 0 ? "━━  CHANNELS  ━━" : "━━  SPORTS PASSES  ━━"); targets.add(null); heading = true; }
                 if (m.isEmpty()) { labels.add("✕ " + g + "  —  not in your channels"); targets.add(null); }
                 for (Item it : m) if (seen.add(it.id)) { labels.add("▶  " + it.name); targets.add(it); }
             }
@@ -3991,7 +4036,7 @@ public class MainActivity extends Activity {
         if (unlocked && hasLogin()) ProgressSync.pull(this, false, () -> { if ("home".equals(screen)) showHome(); });
         refreshVersionScreens();
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
-        if ("sports".equals(screen) && retryEvent != null) { retryEvent = null; if (sportsList != null) sportsList.requestFocus(); }
+        if ("sports".equals(screen) && retryEvent != null) { retryEvent = null; if (sportsChannelList != null) sportsChannelList.requestFocus(); }
         else if ("sports_channels".equals(screen) && retryEvent != null) {
             JSONObject e = retryEvent; retryEvent = null;
             ui.postDelayed(() -> pickSportsChannel(e, retryAliases, true), 300);
