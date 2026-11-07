@@ -249,8 +249,10 @@ export const Route = createFileRoute("/api/public/player")({
           const { data: lock } = await supabaseAdmin.from("player_devices").select("unlock_failures, unlock_locked_until").eq("id", device.id).single();
           if (lock?.unlock_locked_until && new Date(lock.unlock_locked_until).getTime() > Date.now())
             return json({ error: "Too many wrong tries. Please wait 15 minutes and try again." }, 429);
+          // Each app login has its own number: a customer's second single-connection login unlocks with its own.
           const { data: cn } = device.user_id
-            ? await supabaseAdmin.from("customer_numbers").select("number").eq("user_id", device.user_id).maybeSingle()
+            ? await supabaseAdmin.rpc("device_login_player_number", { _owner: device.user_id, _login: device.iptv_username ?? "" })
+                .then((r) => ({ data: r.data == null ? null : { number: r.data as number } }))
             : await supabaseAdmin.from("player_offsite_customers").select("number").eq("id", device.offsite_customer_id as string).maybeSingle();
           if (cn && String(cn.number) === body.account_number) {
             await supabaseAdmin.from("player_devices").update({ unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
