@@ -509,7 +509,7 @@ public class MainActivity extends Activity {
                 if (PlayerApplication.onScreen() || vlcPlaying || !hasLogin()) {
                     if (!safeRun(io, MainActivity.this::pollOnce)) return;
                 }
-                ui.postDelayed(this, maintenance ? 15000 : hasLogin() ? 60000 : 5000);
+                ui.postDelayed(this, maintenance ? Checkin.delay(15000) : hasLogin() ? Checkin.delay(60000) : 5000);
             }
         };
         ui.post(pollTask);
@@ -598,6 +598,7 @@ public class MainActivity extends Activity {
         try {
             JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
                     pollBody().toString()));
+            Checkin.setSlow(r.optInt("slow", 1));
             JSONObject mt = r.optJSONObject("maintenance");
             boolean down = mt != null && mt.optBoolean("enabled");
             boolean wasDown = maintenance;
@@ -3569,7 +3570,7 @@ public class MainActivity extends Activity {
         sportsTask = new Runnable() { @Override public void run() {
             if (!"sports".equals(screen)) return;
             loadSports(status, false);
-            ui.postDelayed(this, 60000);
+            ui.postDelayed(this, Checkin.delay(60000));
         } };
         ui.postDelayed(sportsTask, 60000);
     }

@@ -23,12 +23,14 @@ public final class PlayerApplication extends Application implements Application.
     private final java.util.concurrent.ExecutorService annIo = java.util.concurrent.Executors.newSingleThreadExecutor();
     private String annId, annMsg;
     private android.view.View banner;
-    private int annTicks = 14;
+    private int annTicks = (int) (Math.random() * 15);
+    private int annEvery = 15;
     private boolean annBusy;
     private final long startedAt = SystemClock.elapsedRealtime();
     // Longer "major" announcements behind a top-right icon with an unread counter, refreshed every 60s.
     private org.json.JSONArray majorItems = new org.json.JSONArray();
-    private int majorTicks = 55;
+    private int majorTicks = 45 + (int) (Math.random() * 15);
+    private int majorEvery = 60;
     private boolean majorBusy;
     private android.widget.TextView majorIcon;
     private android.widget.FrameLayout majorBox;
@@ -51,7 +53,7 @@ public final class PlayerApplication extends Application implements Application.
             if (prev != null) prev.uncaughtException(t, e);
         });
         ui.post(new Runnable() {
-            @Override public void run() { if (!exiting) { tick(); if (++annTicks >= 15) { annTicks = 0; fetchAnnouncement(); } if (++majorTicks >= 60) { majorTicks = 0; fetchMajor(); } } ui.postDelayed(this, 1000); }
+            @Override public void run() { if (!exiting) { tick(); if (++annTicks >= annEvery) { annTicks = 0; annEvery = (int) (Checkin.delay(15000) / 1000); fetchAnnouncement(); } if (++majorTicks >= majorEvery) { majorTicks = 0; majorEvery = (int) (Checkin.delay(60000) / 1000); fetchMajor(); } } ui.postDelayed(this, 1000); }
         });
     }
     private void tick() {
