@@ -18,4 +18,10 @@ public class FrameRateMatchTest {
         assertEquals(50f, FrameRateMatch.measure(t), 0.001f);
     }
     @Test public void neverChangesResolution() { assertEquals(-1, FrameRateMatch.pick(50f, rates, w, h, 3840, 2160, 60f)); }
+
+    @org.junit.Test public void pictureStaysCoveredOnlyWhileTheTvSwitches() {
+        org.junit.Assert.assertEquals(FrameRateMatch.SETTLE_MS, FrameRateMatch.uncoverDelay(true));
+        org.junit.Assert.assertEquals(0, FrameRateMatch.uncoverDelay(false));
+        org.junit.Assert.assertTrue(FrameRateMatch.MAX_HOLD_MS <= 4000);
+    }
 }
