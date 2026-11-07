@@ -1,5 +1,7 @@
 import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
 import { PlayerConnectionLog } from "@/components/app/PlayerConnectionLog";
+import { PlayerDeviceMessageDialog } from "@/components/app/PlayerDeviceMessageDialog";
+import { MessageSquare } from "lucide-react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -154,6 +156,7 @@ function AdminPlayerLivePageInner() {
   const { hasAny, loading } = useAuth();
   const isAdmin = hasAny(["admin"]);
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [messageId, setMessageId] = useState<string | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const [now, setNow] = useState(() => Date.now());
   const [detailsId, setDetailsId] = useState<string | null>(null);
@@ -234,11 +237,12 @@ function AdminPlayerLivePageInner() {
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>
                   <td className="p-3 font-mono tabular-nums">{r.watching_since ? formatElapsed(r.watching_since, now) : "—"}</td>
                   <td className="p-3 font-mono tabular-nums max-sm:hidden">{formatElapsed(r.connected_since ?? r.last_seen_at, now)}</td>
-                  <td className="p-3">
+                  <td className="p-3"><div className="flex gap-1.5">
+                    <Button size="sm" variant="outline" onClick={() => setMessageId(r.id)} aria-label="Message this device" title="Message this device"><MessageSquare className="size-3.5" /></Button>
                     <Button size="sm" variant="outline" onClick={() => setDetailsId(r.id)} className="gap-1.5 whitespace-nowrap">
                       <Info className="size-3.5" />Details
                     </Button>
-                  </td>
+                  </div></td>
                 </tr>;
               })}
             </tbody>
@@ -251,6 +255,10 @@ function AdminPlayerLivePageInner() {
       names={names}
       now={now}
       onOpenChange={(open) => !open && setDetailsId(null)}
+    />
+    <PlayerDeviceMessageDialog
+      device={(() => { const r = messageId ? (rows ?? []).find((x) => x.id === messageId) : null; return r ? { id: r.id, user_id: r.user_id, label: `${r.user_id ? names[r.user_id] ?? "this user" : "Not linked"} (${r.id.slice(0, 8).toUpperCase()})` } : null; })()}
+      onOpenChange={(open) => !open && setMessageId(null)}
     />
   </main>;
 }
