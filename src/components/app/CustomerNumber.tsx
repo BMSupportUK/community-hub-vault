@@ -17,8 +17,24 @@ export function useCustomerNumber(userId: string | null | undefined) {
   return number;
 }
 
-export function CustomerNumberBadge({ userId, className }: { userId: string; className?: string }) {
-  const number = useCustomerNumber(userId);
+/** Admin/management: a manual (no website account) customer's number, issued on first view if missing. */
+export function useManualCustomerNumber(id: string | null | undefined) {
+  const [number, setNumber] = useState<number | null>(null);
+  useEffect(() => {
+    if (!id) { setNumber(null); return; }
+    let active = true;
+    supabase.rpc("admin_ensure_customer_number", { _id: id }).then(({ data }) => {
+      if (active) setNumber((data as number | null) ?? null);
+    });
+    return () => { active = false; };
+  }, [id]);
+  return number;
+}
+
+export function CustomerNumberBadge({ userId, className, manual }: { userId: string; className?: string; manual?: boolean }) {
+  const own = useCustomerNumber(manual ? null : userId);
+  const issued = useManualCustomerNumber(manual ? userId : null);
+  const number = manual ? issued : own;
   if (!number) return null;
   return (
     <span

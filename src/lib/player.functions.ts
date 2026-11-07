@@ -121,7 +121,8 @@ export const issueOffsitePlayerLogin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     customerName: z.string().trim().min(1, "Customer name is required").max(120),
-    email: z.string().trim().email("A valid email is required").max(200),
+    manualCustomerId: z.string().uuid().nullable().optional(),
+    email: z.union([z.string().trim().email("A valid email is required").max(200), z.literal("")]),
     code: z.string().regex(/^\s*\d{3}\s*\d{3}\s*$/, "Enter the 6-digit code shown on the app"),
     expiresAt: z.string().datetime().nullable(),
     ...Creds,
@@ -139,9 +140,15 @@ export const issueOffsitePlayerLogin = createServerFn({ method: "POST" })
     const { data: claimed } = await supabaseAdmin.from("player_link_codes").update({ used_at: new Date().toISOString() })
       .eq("code_hash", hash).is("used_at", null).select("device_id").maybeSingle();
     if (!claimed) throw new Error("That code has already been used. Ask for a new code.");
-    const { data: issued, error } = await supabaseAdmin.rpc("issue_offsite_player_customer", {
-      _name: data.customerName, _email: data.email, _username: data.username, _expires: data.expiresAt as string, _admin: context.userId,
-    });
+    if (!data.manualCustomerId && !data.email) throw new Error("A valid email is required");
+    // A manual customer keeps the account number already shown on their customer card.
+    const { data: issued, error } = data.manualCustomerId
+      ? await supabaseAdmin.rpc("issue_manual_player_customer", {
+          _manual: data.manualCustomerId, _name: data.customerName, _email: data.email, _username: data.username, _expires: data.expiresAt as string, _admin: context.userId,
+        })
+      : await supabaseAdmin.rpc("issue_offsite_player_customer", {
+          _name: data.customerName, _email: data.email, _username: data.username, _expires: data.expiresAt as string, _admin: context.userId,
+        });
     const cust = Array.isArray(issued) ? issued[0] : issued;
     if (error || !cust) throw new Error("Could not create the account number. Try again.");
     await supabaseAdmin.from("player_devices").update({ offsite_customer_id: cust.id, linked_at: new Date().toISOString() }).eq("id", device.id);
