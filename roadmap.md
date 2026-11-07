@@ -1,8 +1,8 @@
 # Roadmap
 - [ ] Website publication requested on 7 Nov at 09:54 for sports end times; deployment completion and published authenticated sports response not yet verified.
 - [ ] Verify Sports Guide opens channel listings on a real Android/Amazon box; blocked: no device is connected to this workspace. Website publishing does not install the pending Android header repair.
-- [x] Repair Android/Amazon Sports Guide oversized header shown in supplied TV photo; bound category width and disable baseline measurement. TV/short-screen measurement tests and all 87 native checks pass. Not released; real-TV verification unavailable without attached device.
-- [ ] Build and release Android update containing the Sports Guide header repair; real-TV verification requires installed update.
+- [x] Repair Android/Amazon Sports Guide oversized header shown in supplied TV photo; bound category width and disable baseline measurement. TV/short-screen measurements and playable EPL channel-list target test pass; all 88 native checks pass. Real-TV verification unavailable without attached device.
+- [x] Build, sign and release Android 3.65 (176) containing Sports Guide header repair; published update endpoint reports 3.65 and downloaded APK matches signed build byte-for-byte.
 - [x] Preserve TV broadcaster names alongside Scottish club feeds; fix real Aberdeen/Hibernian listing carrying competition text in the channel name. Focused tests pass; website publish and real-player check required.
 - [x] Repair EPL UK/UK clock typo swallowing the final fixture; today's actual queued post split into 12 saved cards (3 per fixture), confirmed after reload; 47 focused checks pass. Website publication needed for future posts on the published site.
 - [x] New Sports Guide layout (day pills, website Category › sub-category pop-up, game cards, channels panel grouped Channels / Sports passes / Club channels) on Android 3.60 (built, signed, 85 checks pass) and the shared Windows/Mac screen (checked with real guides). Not released; Android screen not seen on a real device; needs website publish.
