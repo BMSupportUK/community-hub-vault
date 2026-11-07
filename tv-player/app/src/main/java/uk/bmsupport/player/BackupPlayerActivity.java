@@ -29,6 +29,7 @@ public final class BackupPlayerActivity extends Activity {
     private MediaPlayer mp;
     private VLCVideoLayout layout;
     private TextView note;
+    private TextView feedNote;
     private String[] urls;
     private int at;
     private boolean started;
@@ -46,6 +47,12 @@ public final class BackupPlayerActivity extends Activity {
         note.setBackgroundColor(0xCC0B1220);
         note.setText("Playing with BM Player backup engine…");
         root.addView(note, new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.START));
+        // Live feed status pill (top right): shows "Buffering…" while the backup engine rides out a stall.
+        feedNote = new TextView(this);
+        feedNote.setTextColor(Color.WHITE); feedNote.setTextSize(16); feedNote.setPadding(28, 12, 28, 12);
+        feedNote.setBackgroundColor(0xB30B1220);
+        feedNote.setVisibility(TextView.GONE);
+        root.addView(feedNote, new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END));
         setContentView(root);
         ui.postDelayed(() -> note.setVisibility(TextView.GONE), 4000);
 
@@ -64,7 +71,13 @@ public final class BackupPlayerActivity extends Activity {
             switch (ev.type) {
                 case MediaPlayer.Event.Playing:
                     if (!started && resume > 0 && mp.getLength() > 0) mp.setTime(resume);
-                    started = true; break;
+                    started = true;
+                    feedNote.setVisibility(TextView.GONE);
+                    break;
+                case MediaPlayer.Event.Buffering:
+                    // Once playing, a buffering tick means the feed stalled: say so on screen.
+                    if (started) { feedNote.setText(FeedStatus.BUFFERING); feedNote.setVisibility(TextView.VISIBLE); }
+                    break;
                 case MediaPlayer.Event.EncounteredError:
                     ui.post(this::next); break;
                 case MediaPlayer.Event.EndReached:
