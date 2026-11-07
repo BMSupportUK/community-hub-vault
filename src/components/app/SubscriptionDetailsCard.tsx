@@ -214,7 +214,7 @@ export function SubscriptionDetailsCard({
                   <span className={cn("ml-1 font-normal", fill ? "text-[10px] md:text-sm" : "text-[10px]", embedded ? "text-white/70" : "text-muted-foreground")}>
                     · {accountTypeLabel(c.account_type)}
                   </span>
-                  {(() => { const n = loginNumbers.find((r) => r.credential_id === c.id)?.number; return n && loginNumbers.length > 1 ? <span className="ml-1 font-mono font-normal" title="BM Player account number for this login">· No. {n}</span> : null; })()}
+                  {(() => { const n = loginNumbers.find((r) => r.credential_id === c.id)?.number; return n ? <span className="ml-1 font-mono font-normal" title="BM Player account number for this login">· No. {n}</span> : null; })()}
                 </div>
                 {c.app_login_name && (
                   <div className={cn("truncate", fill ? "text-[11px] md:text-base md:mt-1" : "text-[11px]", embedded ? "text-white/70" : "text-muted-foreground")}>
