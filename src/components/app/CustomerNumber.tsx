@@ -45,3 +45,25 @@ export function CustomerNumberBadge({ userId, className, manual }: { userId: str
     </span>
   );
 }
+
+/** Each app login's BM Player number (first login = main number; extra logins have their own). */
+export function useLoginPlayerNumbers(ownerId: string | null | undefined) {
+  const [rows, setRows] = useState<{ credential_id: string; login: string | null; number: number | null }[]>([]);
+  useEffect(() => {
+    if (!ownerId) { setRows([]); return; }
+    let active = true;
+    supabase.rpc("login_player_numbers", { _owner: ownerId }).then(({ data }) => {
+      if (active) setRows((data ?? []) as never);
+    });
+    return () => { active = false; };
+  }, [ownerId]);
+  return rows;
+}
+
+export function LoginNumberBadge({ ownerId, accountId, login }: { ownerId: string; accountId?: string; login?: string | null }) {
+  const rows = useLoginPlayerNumbers(ownerId);
+  const key = login?.trim().toLowerCase();
+  const row = rows.find((r) => r.credential_id === accountId) ?? rows.find((r) => key && r.login?.trim().toLowerCase() === key);
+  if (!row?.number) return null;
+  return <span className="inline-flex w-fit items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary" title="BM Player account number for this login"><Hash className="size-3" aria-hidden="true" />{row.number}</span>;
+}

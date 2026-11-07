@@ -2059,6 +2059,13 @@
       "when": 1794076579250,
       "tag": "0293_manual_customer_account_numbers",
       "breakpoints": true
+    },
+    {
+      "idx": 294,
+      "version": "7",
+      "when": 1794076695320,
+      "tag": "0294_per_login_player_numbers",
+      "breakpoints": true
     }
   ]
 }

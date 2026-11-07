@@ -9429,6 +9429,10 @@ export type Database = {
         Returns: string
       }
       delete_app_role: { Args: { _name: string }; Returns: undefined }
+      device_login_player_number: {
+        Args: { _login: string; _owner: string }
+        Returns: number
+      }
       directory_member_roles: {
         Args: never
         Returns: {
@@ -9928,6 +9932,14 @@ export type Database = {
           other_user_id: string
           thread_id: string
           unread: boolean
+        }[]
+      }
+      login_player_numbers: {
+        Args: { _owner: string }
+        Returns: {
+          credential_id: string
+          login: string
+          number: number
         }[]
       }
       manual_credentials_for_email: { Args: { p_email: string }; Returns: Json }
