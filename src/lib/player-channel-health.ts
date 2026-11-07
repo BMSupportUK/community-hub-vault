@@ -84,3 +84,13 @@ export function tsVideoPackets(buf: Uint8Array): number | null {
 
 /** A website check passes when at least this many video packets (~50 KB of picture) arrive in the sample. */
 export const MIN_VIDEO_PACKETS = 300;
+
+/** Admin channel list: offline when crossed, online when it played/passed within ONLINE_WINDOW_MS, else unchecked. */
+export const ONLINE_WINDOW_MS = 24 * 3600_000;
+export type ChannelStatus = "online" | "offline" | "unchecked";
+export function channelStatus(row: Pick<HealthRow, "last_problem_at" | "last_ok_at"> | undefined, nowMs: number): ChannelStatus {
+  if (!row) return "unchecked";
+  if (isCrossed(row, nowMs)) return "offline";
+  const ok = row.last_ok_at ? Date.parse(row.last_ok_at) : 0;
+  return ok && nowMs - ok <= ONLINE_WINDOW_MS ? "online" : "unchecked";
+}
