@@ -13,6 +13,8 @@ final class ChannelHealth {
     static final long BLACK_MS = 10_000;
     /** Clean playback this long (no stalls) clears a cross. */
     static final long CLEAN_MS = 120_000;
+    /** Leaving a live channel that never played after this long counts as it not working. */
+    static final long GIVE_UP_MS = 6_000;
 
     private ChannelHealth() {}
 

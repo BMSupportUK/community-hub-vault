@@ -417,6 +417,7 @@ public class PlayerActivity extends Activity {
     private long stallStartedAt, lastStableAt, lastPosition;
     private final long[] stallTimes = new long[16]; private int stallCount;
     private boolean everReady, capped, sdOffered;
+    private final long openedAt = android.os.SystemClock.elapsedRealtime();
     private ExoPlayer carried;
     private long formatChangedAt = -100000;
     private boolean stallAdvert;
@@ -821,5 +822,10 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
-    @Override protected void onDestroy() { ui.removeCallbacks(uncover); ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+    @Override protected void onDestroy() {
+        // Viewer gave up on a live channel that never showed a picture: tell the Sports Guide so it gets crossed.
+        if ("live".equals(kind()) && !everReady && !handedOver && !blackSent && isFinishing()
+                && android.os.SystemClock.elapsedRealtime() - openedAt >= ChannelHealth.GIVE_UP_MS)
+            ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "failed");
+        ui.removeCallbacks(uncover); ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
