@@ -346,6 +346,15 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "channel_health") {
           // Live channel failed / black screen / played cleanly for 2 minutes on this device.
           const key = body.name.toLowerCase(); const nowIso = new Date().toISOString();
+          if (body.status !== "ok") {
+            // Event-only channels are blank between events: only count reports from 10 min before an event using it.
+            const { isEventChannel, acceptProblemReport } = await import("@/lib/player-channel-health");
+            if (isEventChannel(body.name)) {
+              const { buildSportsFeed } = await import("@/lib/player-sports-feed.server");
+              const feed = await sportsCache(buildSportsFeed).catch(() => null);
+              if (!acceptProblemReport(body.name, (feed?.events ?? []) as { start: number; end?: number; channels: string[] }[], Date.now())) return json({ ok: true, ignored: true });
+            }
+          }
           const { data: row } = await supabaseAdmin.from("player_channel_health").select("reporters, last_problem_at").eq("channel_key", key).maybeSingle();
           const fresh = row?.last_problem_at && Date.now() - Date.parse(row.last_problem_at) < 15 * 60_000;
           const patch = body.status === "ok"
@@ -374,15 +383,21 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         if (body.action === "sports") {
-          const { buildSportsFeed, currentCrossedChannels } = await import("@/lib/player-sports-feed.server");
+          const { buildSportsFeed, currentCrossData } = await import("@/lib/player-sports-feed.server");
+          const { eventUnavailable, isEventChannel, crossedChannels } = await import("@/lib/player-channel-health");
           const payload = await sportsCache(buildSportsFeed);
           // Crossed channels change minute to minute, so they're added outside the guide cache.
-          const down = await currentCrossedChannels().catch(() => [] as string[]);
-          const downSet = new Set(down.map((n) => n.toLowerCase()));
-          const events = (payload.events as { channels: string[] }[]).map((e) => {
-            const unavailable = e.channels.filter((c) => downSet.has(c.toLowerCase()));
+          // Crosses only show from 10 min before an event until it ends; event-only channels only
+          // count problems from that event's own window.
+          const data = await currentCrossData().catch(() => ({ rows: [], stalls: [], at: Date.now() }));
+          const now = Date.now();
+          const events = (payload.events as { start: number; end?: number; channels: string[] }[]).map((e) => {
+            const unavailable = eventUnavailable(e, data.rows, data.stalls, now);
             return unavailable.length ? { ...e, unavailable } : e;
           });
+          const perEvent = new Set(events.flatMap((e) => ((e as { unavailable?: string[] }).unavailable ?? []).map((c) => c.toLowerCase())));
+          // Global list (older apps): 24/7 channels as before, event channels only when crossed on an open event.
+          const down = crossedChannels(data.rows, data.stalls, now).filter((c) => !isEventChannel(c) || perEvent.has(c.toLowerCase()));
           return json({ ...payload, events, unavailable: down });
         }
 

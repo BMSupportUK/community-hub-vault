@@ -47,7 +47,13 @@ export async function buildSportsFeed() {
   return { version, events, order, categories, guides, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
 }
 
-let crossCache: { at: number; list: string[] } | null = null;
+type CrossData = { rows: import("@/lib/player-channel-health").HealthRow[]; stalls: { name: string; at: number }[]; at: number };
+let crossCache: { at: number; list: string[]; data: CrossData } | null = null;
+/** Recent health rows and stalls (cached 30 s per server instance), for per-event crosses. */
+export async function currentCrossData(): Promise<CrossData> {
+  await currentCrossedChannels();
+  return crossCache!.data;
+}
 /** Channels currently marked not working (cached 30 s per server instance). */
 export async function currentCrossedChannels(): Promise<string[]> {
   if (crossCache && Date.now() - crossCache.at < 30_000) return crossCache.list;
@@ -67,7 +73,9 @@ export async function currentCrossedChannels(): Promise<string[]> {
   const { data: extra } = missing.length
     ? await supabaseAdmin.from("player_channel_health").select("channel_key, channel_name, last_problem_at, last_ok_at").in("channel_key", missing.slice(0, 300))
     : { data: [] };
-  const list = crossedChannels([...(rows ?? []), ...(extra ?? [])], (stalls ?? []).map((s) => ({ name: s.content_name, at: Date.parse(s.occurred_at) })), now);
-  crossCache = { at: now, list };
+  const allRows = [...(rows ?? []), ...(extra ?? [])];
+  const stallList = (stalls ?? []).map((s) => ({ name: s.content_name, at: Date.parse(s.occurred_at) }));
+  const list = crossedChannels(allRows, stallList, now);
+  crossCache = { at: now, list, data: { rows: allRows, stalls: stallList, at: now } };
   return list;
 }

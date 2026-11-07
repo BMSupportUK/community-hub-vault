@@ -94,3 +94,45 @@ export function channelStatus(row: Pick<HealthRow, "last_problem_at" | "last_ok_
   const ok = row.last_ok_at ? Date.parse(row.last_ok_at) : 0;
   return ok && nowMs - ok <= ONLINE_WINDOW_MS ? "online" : "unchecked";
 }
+
+/** Crosses only show from this long before an event starts until it ends. */
+export const CROSS_LEAD_MS = 10 * 60_000;
+
+/**
+ * Event-only feeds are blank between events, so reports outside an event mean nothing:
+ * "UFC 04 |", "MonoMax 27 | (Events Only)", "HBO Max UK | Event 1", "Boxing 03 | …", "Channel 15".
+ */
+export function isEventChannel(name: string): boolean {
+  const n = name.normalize("NFKD").trim();
+  if (/\|\s*$/.test(n) || /events?\s*only/i.test(n) || /\bevent\s*\d+\b/i.test(n) || /^channel\s+\d+$/i.test(n)) return true;
+  return /^[^|]*?\b\d{1,3}\s*(\([^)]*\))?\s*\|/.test(n) && !/^(uk|us|ca|au|ie)\s*\|/i.test(n);
+}
+
+export type GuideEvent = { start: number; end?: number; channels: string[] };
+
+/** True from 10 minutes before the start until the event's end (or 4h after start if unknown). */
+export function eventWindowOpen(e: GuideEvent, nowMs: number): boolean {
+  const end = e.end && e.end > e.start ? e.end : e.start + 4 * 3_600_000;
+  return nowMs >= e.start - CROSS_LEAD_MS && nowMs <= end;
+}
+
+/** Channels to cross on one event card: only inside its window, counting only problems from that window. */
+export function eventUnavailable(e: GuideEvent, rows: HealthRow[], stalls: { name: string; at: number }[], nowMs: number): string[] {
+  if (!eventWindowOpen(e, nowMs)) return [];
+  const since = e.start - CROSS_LEAD_MS;
+  const byKey = new Map(rows.map((r) => [r.channel_key, r]));
+  return e.channels.filter((c) => {
+    const k = channelKey(c); const r = byKey.get(k);
+    const event = isEventChannel(c);
+    const problem = r?.last_problem_at && (!event || Date.parse(r.last_problem_at) >= since) ? r.last_problem_at : null;
+    const times = stalls.filter((s) => channelKey(s.name) === k && (!event || s.at >= since)).map((s) => s.at);
+    return isCrossed({ last_problem_at: problem, last_ok_at: r?.last_ok_at ?? null }, nowMs, times);
+  });
+}
+
+/** Whether a problem report on this channel should count right now. 24/7 channels always count. */
+export function acceptProblemReport(name: string, events: GuideEvent[], nowMs: number): boolean {
+  if (!isEventChannel(name)) return true;
+  const k = channelKey(name);
+  return events.some((e) => eventWindowOpen(e, nowMs) && e.channels.some((c) => channelKey(c) === k));
+}
