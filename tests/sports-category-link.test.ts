@@ -4,6 +4,22 @@ import { playerSportsEvents } from "../src/lib/player-sports";
 
 const cymru = ["UK | Cymru Football event 1", "UK | Cymru Football event 3", "UK | Cymru Football event 8"];
 
+const daznCategory = Array.from({ length: 30 }, (_, i) => `ᴰᴬᶻᴺ ¹ ${String(i + 1).padStart(2, "0")} (CA | Main)`);
+
+test("DAZN decorative brand lettering resolves every numbered feed and retains its exact playlist name", () => {
+  const list = [...daznCategory, "DAZN UK | Event 1", "DAZN 1 UK New"];
+  for (let n = 1; n <= 30; n++) expect(resolveInCategory(`Dazn ${n} HD`, list, {})).toBe(daznCategory[n - 1]);
+});
+
+test("category linking strips quality suffixes without confusing 4K with the feed number", () => {
+  expect(resolveInCategory("Triller TV 4 HD", ["01 | Boxing 4K", "04 | Main Card HD"], {})).toBe("04 | Main Card HD");
+});
+
+test("DAZN fixtures carry the original decorative playlist names for installed players", () => {
+  const events = playerSportsEvents([{ title: "Dazn", category: "Sports Passes", links: { category: "VIP | DAZN" }, body: "Saturday, 7th November\n15:00 GMT\nCoventry v Derby\nDazn 19 HD" }], Date.UTC(2026, 10, 7, 10, 40), new Map([["vip | dazn", daznCategory]]));
+  expect(events[0].channels).toEqual(["ᴰᴬᶻᴺ ¹ 19 (CA | Main)"]);
+});
+
 const trillerCategory = ["UK | UFC TV HD", "UFC 01 | UFC Fight Night", "UFC 04 | ", "TrillerTv (24/7)", "TrillerTv 01 | ", "TrillerTv 04 | "];
 
 test("Triller uses its own numbered feed rather than UFC in their shared category", () => {
