@@ -263,7 +263,7 @@ public class MainActivity extends Activity {
 
     private void pickMultiChannel(int n, TextView label) {
         if (liveChannels == null) {
-            Toast.makeText(this, "Loading your channels…", Toast.LENGTH_SHORT).show();
+            final AlertDialog wait = findingDialog();
             io.execute(() -> {
                 try {
                     JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
@@ -4089,20 +4089,20 @@ public class MainActivity extends Activity {
     /** Every playlist channel the event could be on: all guide matches, best first, then a search. */
     private void pickSportsChannel(JSONObject e, List<String[]> aliases, boolean retry) {
         if (liveChannels == null) {
-            Toast.makeText(this, "Loading your channels…", Toast.LENGTH_SHORT).show();
+            final AlertDialog wait = findingDialog();
             io.execute(() -> {
                 try {
                     JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
                     List<Item> l = new ArrayList<>();
                     for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
                     liveChannels = l;
-                    ui.post(() -> pickSportsChannel(e, aliases, retry));
-                } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't load your channels – check your login in Settings", Toast.LENGTH_LONG).show()); }
+                    ui.post(() -> { dismissQuietly(wait); pickSportsChannel(e, aliases, retry); });
+                } catch (Exception ex) { ui.post(() -> { dismissQuietly(wait); Toast.makeText(this, "Couldn't load your channels – check your login in Settings", Toast.LENGTH_LONG).show(); }); }
             });
             return;
         }
         JSONArray ch = e.optJSONArray("channels");
-        Toast.makeText(this, "Finding channels…", Toast.LENGTH_SHORT).show();
+        final AlertDialog wait = findingDialog();
         List<Item> pl = liveChannels;
         io.execute(() -> {
             List<String> labels = new ArrayList<>();
@@ -4110,10 +4110,23 @@ public class MainActivity extends Activity {
             try {
                 buildSportsRows(e, aliases, pl, labels, targets);
             } catch (Exception ex) { labels.clear(); targets.clear(); }
-            ui.post(() -> { try { showSportsChannels(e, aliases, retry, ch, labels, targets); }
+            ui.post(() -> { dismissQuietly(wait); try { showSportsChannels(e, aliases, retry, ch, labels, targets); }
                 catch (Exception ex) { Toast.makeText(this, "Couldn't open the channel list", Toast.LENGTH_LONG).show(); } });
         });
     }
+
+    /** "Finding channels…" stays on screen until every channel row is ready (a toast vanished too early). */
+    private AlertDialog findingDialog() {
+        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setGravity(android.view.Gravity.CENTER_VERTICAL); box.setPadding(dp(24), dp(20), dp(24), dp(20));
+        box.addView(new android.widget.ProgressBar(this), new LinearLayout.LayoutParams(dp(40), dp(40)));
+        TextView t = text("Finding channels… please wait", 18, TEXT, true); t.setPadding(dp(16), 0, 0, 0);
+        box.addView(t);
+        AlertDialog d = new AlertDialog.Builder(this).setView(box).setCancelable(true).create();
+        d.show();
+        return d;
+    }
+    private static void dismissQuietly(AlertDialog d) { try { if (d != null && d.isShowing()) d.dismiss(); } catch (Exception ignored) {} }
 
     /** Club channels for one team (iFollow / Scottish club feeds): every word of the team name, iFollow-style first. */
     static List<Item> teamChannels(String team, List<Item> playlist) {
