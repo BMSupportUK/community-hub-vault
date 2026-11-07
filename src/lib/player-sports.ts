@@ -130,7 +130,11 @@ export function playerSportsEvents(
         }
         if (teams.length === 2) for (const team of teams) if (!sourceChannels.some((c) => c.toLowerCase() === team.toLowerCase())) sourceChannels.push(team);
       }
-      const channels = sourceChannels
+      const onboard = /^on[- ]board\s*\d*$/i.test(e.title.trim());
+      const onboardIdentity = onboard ? `${e.title} ${sourceChannels.join(" ")}` : e.title;
+      // Pipe-separated race metadata in HBO on-board rows is not a list of extra TV channels.
+      const channelNames = onboard ? sourceChannels.filter(c => !/^moto\s*gp$|^round\s*\d+$|sprint race$/i.test(c.trim())) : sourceChannels;
+      const channels = channelNames
         .map((c) => (catList?.length ? resolveInCategory(c, catList, links) ?? applyChannelLinks(c, links) : applyChannelLinks(c, links)))
         .filter(Boolean);
       const ev: Card = { sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: cardTitle(e.title), date: e.date, time: e.time, start,
@@ -138,8 +142,7 @@ export function playerSportsEvents(
       // One card per game: every guide listing the same game adds its channels to that card.
       const context = `${g.title} ${g.category ?? ""} ${g.parent ?? ""}`;
       // On-board rows carry the actual race/session in their supplied channel suffix.
-      const identityTitle = /^on[- ]board\s*\d*$/i.test(e.title.trim()) ? `${e.title} ${sourceChannels.join(" ")}` : e.title;
-      const key = seriesKey(identityTitle, context);
+      const key = seriesKey(onboardIdentity, context);
       const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && (sameFixture(c.title, e.title, `${c.sport} ${c.subcategory} ${c.competition}`, context) || sameSeriesEvent(c.seriesKey, key)));
       const target = existing ?? ev;
       const prevKey = existing?.seriesKey ?? null;

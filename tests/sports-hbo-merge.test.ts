@@ -32,6 +32,9 @@ test("HBO on-board feeds join the main MotoGP sprint without qualifying or Moto2
   expect(sprint?.channels).toContain("HBO Max UK 4");
   expect(sprint?.channels).toContain("HBO Max UK 3");
   expect(sprint?.channels).not.toContain("TNT Sports 3");
+  expect(sprint?.channels).not.toContain("MotoGP");
+  expect(sprint?.channels).not.toContain("Round 20");
+  expect(sprint?.channels).not.toContain("Qatar Sprint Race");
 });
 test("HBO Supercars race joins main TV card but other races and venues stay separate", () => {
   const events = playerSportsEvents([
