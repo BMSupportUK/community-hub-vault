@@ -1,0 +1,1 @@
+ALTER TABLE public.player_settings ADD COLUMN IF NOT EXISTS checkin_slowdown smallint NOT NULL DEFAULT 1 CHECK (checkin_slowdown BETWEEN 1 AND 10);
