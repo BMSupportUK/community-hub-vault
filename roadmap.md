@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Repair website Scottish reader misclassifying St. Johnstone and St. Mirren club-feed lines as descriptions; 10 focused tests pass and signed-in real guide shows Available channels for all four fixtures. Website publication needed for live site.
 - [x] Android/Amazon 3.66 released: hide announcement icon only in Sports Guide, omit empty days/categories and empty Sports Pass entries, Right enters channels directly, playback return restores channel-list focus and watched channel ID. All 92 native checks pass; signed public APK matches byte-for-byte. Real-box check blocked by no attached device.
 - [ ] Website publication requested on 7 Nov at 09:54 for sports end times; deployment completion and published authenticated sports response not yet verified.
 - [ ] Verify Sports Guide opens channel listings on a real Android/Amazon box; blocked: no device is connected to this workspace. Android 3.66 includes the header and navigation repairs.
