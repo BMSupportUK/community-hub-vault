@@ -407,8 +407,21 @@ public class PlayerActivity extends Activity {
     };
     private TextView reconnectNote;
 
+    private volatile boolean rateMatched;
+    private final long[] frameTimes = new long[31];
+    private int frameCount;
+
     private void startWithRecovery(String[] urls) {
         liveUrls = urls;
+        // TS streams rarely state their frame rate: measure it from the first decoded frames instead.
+        player.setVideoFrameMetadataListener((presentationUs, releaseNs, format, mediaFormat) -> {
+            if (rateMatched || frameCount >= frameTimes.length) return;
+            frameTimes[frameCount++] = presentationUs;
+            if (frameCount < frameTimes.length) return;
+            float fps = FrameRateMatch.measure(frameTimes);
+            rateMatched = true;
+            if (fps > 0) ui.post(() -> FrameRateMatch.apply(PlayerActivity.this, fps));
+        });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
                 long now = android.os.SystemClock.elapsedRealtime();
@@ -435,7 +448,7 @@ public class PlayerActivity extends Activity {
                 // 50fps UK sport judders on 60Hz Android boxes: ask the TV for a matching refresh rate.
                 for (androidx.media3.common.Tracks.Group g : t.getGroups())
                     if (g.getType() == androidx.media3.common.C.TRACK_TYPE_VIDEO)
-                        for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i)) { FrameRateMatch.apply(PlayerActivity.this, g.getTrackFormat(i).frameRate); return; }
+                        for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i) && g.getTrackFormat(i).frameRate > 0) { rateMatched = true; FrameRateMatch.apply(PlayerActivity.this, g.getTrackFormat(i).frameRate); return; }
             }
             @Override public void onPlayerError(PlaybackException e) {
                 if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { player.seekToDefaultPosition(); player.prepare(); return; }

@@ -24,6 +24,18 @@ final class FrameRateMatch {
         return best;
     }
 
+    /** Frame rate from consecutive presentation times (µs), snapped to broadcast rates; -1 if unclear. */
+    static float measure(long[] us) {
+        long[] d = new long[us.length - 1];
+        for (int i = 1; i < us.length; i++) d[i - 1] = Math.abs(us[i] - us[i - 1]);
+        java.util.Arrays.sort(d);
+        long mid = d[d.length / 2];
+        if (mid <= 0) return -1;
+        float fps = 1_000_000f / mid;
+        for (float s : new float[]{23.976f, 24f, 25f, 29.97f, 30f, 50f, 59.94f, 60f}) if (Math.abs(fps - s) < 0.3f) return s;
+        return -1;
+    }
+
     static boolean fits(float fps, float rate) {
         double m = rate / fps, r = Math.rint(m);
         return r >= 1 && Math.abs(m - r) < 0.01;
