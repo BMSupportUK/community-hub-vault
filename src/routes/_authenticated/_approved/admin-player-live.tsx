@@ -1,5 +1,4 @@
 import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
-import { PlayerConnectionLog } from "@/components/app/PlayerConnectionLog";
 import { PlayerDeviceMessageDialog } from "@/components/app/PlayerDeviceMessageDialog";
 import { MessageSquare } from "lucide-react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
@@ -248,7 +247,6 @@ function AdminPlayerLivePageInner() {
             </tbody>
           </table>
         </div>}
-      <PlayerConnectionLog />
     </div>
     <ConnectionDetailsDialog
       row={detailsId ? (rows ?? []).find((r) => r.id === detailsId) ?? null : null}

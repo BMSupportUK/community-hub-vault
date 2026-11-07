@@ -1,6 +1,10 @@
 /** Connection log keeps 30 days; the filter never reaches past that or into the future. */
 export const LOG_DAYS = 30;
 
+export function watchedConnections<T extends { preview: boolean | null }>(rows: T[]): T[] {
+  return rows.filter((row) => row.preview !== true);
+}
+
 export function logRange({ year, month, day, now }: { year: number; month: number | "all"; day?: Date; now: number }) {
   const floor = new Date(now - LOG_DAYS * 86400000);
   const ceil = new Date(now + 60000);

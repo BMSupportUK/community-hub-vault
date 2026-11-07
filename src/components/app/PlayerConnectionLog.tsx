@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { logRange, LOG_DAYS } from "@/lib/player-connection-log";
+import { logRange, LOG_DAYS, watchedConnections } from "@/lib/player-connection-log";
 
 type LogRow = {
   id: string; device_id: string; user_id: string | null; platform: string | null; iptv_username: string | null;
@@ -24,7 +24,7 @@ const mins = (a: string, b: string) => {
 };
 
 /** Past BM Player playback sessions, kept for 30 days (cleared nightly). */
-export function PlayerConnectionLog() {
+export function PlayerConnectionLog({ userId }: { userId?: string }) {
   const today = new Date();
   const earliest = new Date(today.getTime() - LOG_DAYS * 86400000);
   const years = [...new Set([earliest.getFullYear(), today.getFullYear()])];
@@ -33,6 +33,7 @@ export function PlayerConnectionLog() {
   const [day, setDay] = useState<Date | undefined>();
   const [rows, setRows] = useState<LogRow[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
   const months = useMemo(() => MONTHS.map((n, i) => ({ n, i })).filter(({ i }) => {
     const start = new Date(year, i, 1), end = new Date(year, i + 1, 1);
@@ -42,14 +43,18 @@ export function PlayerConnectionLog() {
   useEffect(() => {
     let stop = false;
     setRows(null);
+    setError(null);
     const { from, to } = logRange({ year, month, day, now: Date.now() });
-    void supabase.from("player_connection_log")
+    let query = supabase.from("player_connection_log")
       .select("id, device_id, user_id, platform, iptv_username, watching_kind, watching_title, watching_category, preview, started_at, last_seen_at, last_ip, geo_city, geo_country, vpn_status")
+      .or("preview.eq.false,preview.is.null")
       .gte("started_at", from.toISOString()).lt("started_at", to.toISOString())
-      .order("started_at", { ascending: false }).limit(500)
-      .then(async ({ data }) => {
+      .order("started_at", { ascending: false }).limit(500);
+    if (userId) query = query.eq("user_id", userId);
+    void query.then(async ({ data, error: queryError }) => {
         if (stop) return;
-        const list = (data ?? []) as LogRow[];
+        if (queryError) { setError("Couldn't load connection logs. Please try again."); setRows([]); return; }
+        const list = watchedConnections((data ?? []) as LogRow[]);
         setRows(list);
         const ids = [...new Set(list.map((r) => r.user_id).filter(Boolean))] as string[];
         if (ids.length) {
@@ -58,13 +63,13 @@ export function PlayerConnectionLog() {
         }
       });
     return () => { stop = true; };
-  }, [year, month, day]);
+  }, [year, month, day, userId]);
 
   return (
     <section className="space-y-3 pt-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-bold">Connection log</h2>
+          <h2 className="font-display text-xl font-bold">Playback history</h2>
           <p className="text-xs text-muted-foreground">Everything watched in the last 30 days. Older entries are cleared automatically.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -96,7 +101,7 @@ export function PlayerConnectionLog() {
         </div>
       </div>
 
-      {rows === null ? <p className="text-sm text-muted-foreground">Loading…</p> : rows.length === 0
+      {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : rows === null ? <p className="text-sm text-muted-foreground">Loading…</p> : rows.length === 0
         ? <p className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted-foreground">Nothing was watched in this period.</p>
         : <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full text-sm">
