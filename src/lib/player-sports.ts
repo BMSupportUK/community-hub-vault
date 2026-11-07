@@ -110,7 +110,7 @@ function sameSeriesEvent(a: string | null, b: string | null): boolean {
   if (!a || !b) return false;
   if (a === b) return true;
   const [sa, xa] = a.split("|"), [sb, xb] = b.split("|");
-  return sa === sb && (sa === "motogp" || sa === "f1") && (!xa || !xb);
+  return sa === sb && (sa === "motogp" || sa === "f1" || sa === "snooker") && (!xa || !xb);
 }
 
 const isPassGuide = (g: { title: string; category: string | null; parent?: string | null }) =>
