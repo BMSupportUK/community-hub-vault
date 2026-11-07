@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Exclude preview connections from Connection log and move it to Customers icons opening a full page with Close; preserve existing access gates and verify with real history.
+- [x] Connection log excludes preview rows before the 500-row limit; Customers toolbar/customer icons open a full page with Close. Admin-only reads preserved; 207 real history rows, customer-scoped query and Close return verified; three tests pass. Presentation unlock caches restored for inspection, password/PIN entry not retested.
 - [x] Released Windows 0.4.30 and universal Mac 0.1.40 with Android-equivalent spread-out website check-ins; 69 checks pass, packaged shared scheduling verified, both public downloads match byte-for-byte. Real-device playback/installation and Apple signature validation remain unavailable in Linux.
 - [x] Build, permanently sign and release Android 3.69 (180) with fullscreen alternative-stream recovery; all 103 native tests pass, public update reports 3.69 and served APK matches byte-for-byte.
 - [x] Repair Android fullscreen live launch dropping Auto stream alternatives; released in 3.69 with four actual launch regressions. Fire TV playback verification blocked by no attached device.
