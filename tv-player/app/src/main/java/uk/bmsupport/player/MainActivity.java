@@ -3489,17 +3489,8 @@ public class MainActivity extends Activity {
         stopPreview();
         LinearLayout root = column();
         root.setPadding(dp(24), dp(16), dp(24), dp(16));
-        LinearLayout head = row();
-        head.setGravity(Gravity.CENTER_VERTICAL);
-        head.addView(text("Sports guide", 24, TEXT, true), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         TextView status = text("Loading…", 13, MUTED, false);
-        head.addView(status);
-        sportsCatPill = headerPill(sportsCatLabel(), v -> showSportsCategories());
-        sportsCatPill.setContentDescription("Choose a category");
-        head.addView(sportsCatPill);
-        head.addView(headerPill("🎤 Voice search", v -> startVoice("sports")));
-        head.addView(headerPill("⟳ Refresh", v -> loadSports(status, true)));
-        root.addView(head);
+        root.addView(sportsHeader(status), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         sportsDays = row();
         sportsDays.setGravity(Gravity.CENTER_VERTICAL);
         sportsDays.setPadding(0, dp(4), 0, dp(8));
@@ -3538,6 +3529,33 @@ public class MainActivity extends Activity {
         } };
         ui.postDelayed(sportsTask, 60000);
     }
+    /** Keep the header bounded even when the website supplies a long competition name. */
+    private LinearLayout sportsHeader(TextView status) {
+        LinearLayout head = row();
+        head.setBaselineAligned(false);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title = text("Sports guide", 24, TEXT, true);
+        title.setSingleLine(true);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        head.addView(title, new LinearLayout.LayoutParams(dp(150), ViewGroup.LayoutParams.WRAP_CONTENT));
+        status.setSingleLine(true);
+        head.addView(status);
+        sportsCatPill = headerPill(sportsCatLabel(), v -> showSportsCategories());
+        sportsCatPill.setSingleLine(true);
+        sportsCatPill.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        sportsCatPill.setContentDescription("Choose a category: " + sportsCatLabel());
+        LinearLayout.LayoutParams categorySize = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+        categorySize.setMargins(dp(12), 0, dp(12), 0);
+        head.addView(sportsCatPill, categorySize);
+        Button voice = headerPill("🎤 Voice search", v -> startVoice("sports"));
+        voice.setSingleLine(true);
+        head.addView(voice);
+        Button refresh = headerPill("⟳ Refresh", v -> loadSports(status, true));
+        refresh.setSingleLine(true);
+        head.addView(refresh);
+        return head;
+    }
+
     private Button sportsCatPill; private LinearLayout sportsDays;
     private TextView sportsPanelTitle, sportsPanelSub; private ListView sportsChannelList;
     /** Chosen website main category / sub-category (null = all) and day (0 = today). */
