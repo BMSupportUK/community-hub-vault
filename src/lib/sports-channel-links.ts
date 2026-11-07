@@ -31,6 +31,16 @@ export function readChannelLinks(raw: unknown): ChannelLinks {
   return { numbered: r.numbered === true, ...(category ? { category } : {}), ...(country ? { country } : {}), ...(replace.length ? { replace } : {}) };
 }
 
+/**
+ * Swap rows exactly as the admin is typing them — untrimmed, empties kept — so the
+ * editor can show a half-filled row. readChannelLinks sanitises them on save.
+ */
+export function readReplaceRows(raw: unknown): { from: string; to: string }[] {
+  const r = (raw as { replace?: unknown } | null)?.replace;
+  if (!Array.isArray(r)) return [];
+  return r.map((x) => ({ from: String((x as { from?: unknown })?.from ?? ""), to: String((x as { to?: unknown })?.to ?? "") })).slice(0, 20);
+}
+
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Rewrite one guide channel name with the guide's rules. */
