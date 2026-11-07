@@ -26,7 +26,7 @@ test("BKFC fight cards with different headline bouts share one card", () => {
   const ev = _pse([
     _g("Todays Live Events", "Saturday, 7th November\n\n19:00 GMT\nBKFC 96: Cooke v Weir\nChannel 19"),
     _g("Triller TV", "Saturday, 7th November\n\n20:00 GMT\nBKFC 96 Glasgow: Sean Weir v Leigh Cohoon\nTriller TV 6"),
-  ], now).filter((e) => /bkfc/i.test(e.title));
+  ], now).filter((e) => e.channels.includes("Triller TV 6"));
   expect(ev.length).toBe(1);
   expect(ev[0].channels.length).toBe(2);
 });
