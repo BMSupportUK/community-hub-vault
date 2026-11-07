@@ -3678,7 +3678,12 @@ public class MainActivity extends Activity {
                     }
                     liveChannels = l;
                 }
-                String v = r.optString("version");
+                JSONArray down = r.optJSONArray("unavailable");
+                java.util.Set<String> ds = new java.util.HashSet<>();
+                if (down != null) for (int i = 0; i < down.length(); i++) ds.add(down.optString(i).toLowerCase(java.util.Locale.ROOT));
+                sportsDown = ds;
+                // A channel gaining or losing its cross redraws the guide too.
+                String v = r.optString("version") + "|" + (down == null ? "" : down.toString());
                 ui.post(() -> {
                     if (!"sports".equals(screen)) return;
                     status.setText("Updated " + clock(System.currentTimeMillis() / 1000) + "  ");
@@ -3833,7 +3838,8 @@ public class MainActivity extends Activity {
         if (sportsList == null) return;
         sportsData = r;
         defaultSportsCategory(r);
-        sportsVersion = r.optString("version");
+        JSONArray downNow = r.optJSONArray("unavailable");
+        sportsVersion = r.optString("version") + "|" + (downNow == null ? "" : downNow.toString());
         List<String[]> aliases = new ArrayList<>();
         JSONArray al = r.optJSONArray("aliases");
         if (al != null) for (int i = 0; i < al.length(); i++) { JSONObject o = al.optJSONObject(i); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
@@ -3994,7 +4000,7 @@ public class MainActivity extends Activity {
                 if (section == 1 && (m.isEmpty() || m.stream().allMatch(it -> seen.contains(it.id)))) continue;
                 if (!heading) { labels.add(section == 0 ? "━━  CHANNELS  ━━" : "━━  SPORTS PASSES  ━━"); targets.add(null); heading = true; }
                 if (m.isEmpty()) { labels.add("✕ " + g + "  —  not in your channels"); targets.add(null); }
-                for (Item it : m) if (seen.add(it.id)) { labels.add("▶  " + it.name); targets.add(it); }
+                for (Item it : m) if (seen.add(it.id)) { labels.add(sportsRowLabel(e, g, it.name)); targets.add(it); }
             }
         }
         if (clubs) {
@@ -4006,6 +4012,14 @@ public class MainActivity extends Activity {
                 for (Item it : m) if (seen.add(it.id)) { labels.add("▶  " + it.name); targets.add(it); }
             }
         }
+    }
+
+    /** Channels the website currently marks not working (Sports Guide crosses). */
+    static volatile java.util.Set<String> sportsDown = new java.util.HashSet<>();
+    static String sportsRowLabel(JSONObject e, String guideName, String channel) {
+        boolean down = ChannelHealth.crossed(e, guideName) || ChannelHealth.crossed(e, channel)
+                || sportsDown.contains(channel.toLowerCase(java.util.Locale.ROOT));
+        return down ? "❌  " + channel + "  —  not working right now, try another channel" : "▶  " + channel;
     }
 
     private JSONObject retryEvent; private List<String[]> retryAliases;

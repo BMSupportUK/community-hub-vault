@@ -93,6 +93,7 @@ public final class BackupPlayerActivity extends Activity {
     private void next() {
         if (mp == null || isFinishing()) return;
         if (++errors > urls.length * 3) {
+            if (isLive()) ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "failed");
             Toast.makeText(this, "This stream couldn't be played by either player. Try again later or report a problem.", Toast.LENGTH_LONG).show();
             finish(); return;
         }

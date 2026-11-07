@@ -166,7 +166,16 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  if(!session.ready&&(s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer)});}else if(!session.failed&&!toBackup(session)){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
  // Like Android: subtitles start on; only ask (paused) when the film actually has some.
  if(session.subCheck&&s.state===3){const n=Number(engine.subtitleTracks?.(session.index))||0;if(n>0){session.subCheck=false;engine.pause(session.index,true);session.paused=true;send({type:'subtitles-found',index:session.index,item:session.item});}else if(Date.now()-session.since>25000)session.subCheck=false;}
+ healthTick(session,s);
  persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable});}catch{}}}
+// Sports Guide crosses: tell the website a live channel failed, showed no picture after 10s, or played 2 clean minutes.
+function healthTick(session,s){if(session.item.kind!=='live')return;const now=Date.now(),name=String(session.item.name||'').slice(0,200);if(!name)return;
+ const report=status=>site({action:'channel_health',name,status}).catch(()=>{});
+ if(session.failed&&!session.hFailed){session.hFailed=true;report('failed');return;}
+ if(!session.hBlack&&!session.backup&&s.state===3&&now-session.since>10000&&!(Number(s.w)>0)){session.hBlack=true;report('black');}
+ if(s.state===3){if(!session.cleanSince)session.cleanSince=now;}else if(s.state===2||s.state===7)session.cleanSince=0;
+ if(!session.hOk&&!session.hBlack&&session.cleanSince&&now-session.cleanSince>=120000){session.hOk=true;report('ok');}
+}
 let bufferQueue=[],bufferBusy=false;
 function queueBuffer(item,ev){bufferQueue.push({kind:item.kind==='episode'?'series':item.kind,content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:Math.max(0,Math.min(3600000,Math.round(ev.ms))),reconnected:!!ev.reconnected,freeze:!!ev.freeze,...(ev.cause?{cause:ev.cause}:{}),at:Date.now()});if(bufferQueue.length>100)bufferQueue=bufferQueue.slice(-100);if(bufferQueue.length>=10)flushBuffer();}
 async function flushBuffer(){if(bufferBusy||!store.token||!bufferQueue.length)return;bufferBusy=true;const events=bufferQueue.splice(0,recovery.BATCH);try{await site({action:'buffering',version:app.getVersion(),events});}catch{}finally{bufferBusy=false;}}

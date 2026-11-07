@@ -427,6 +427,7 @@ public class PlayerActivity extends Activity {
                 long now = android.os.SystemClock.elapsedRealtime();
                 if (s == Player.STATE_BUFFERING && everReady && stallStartedAt == 0) {
                     stallStartedAt = now;
+                    ui.removeCallbacks(cleanPlay);
                     ui.postDelayed(stallWatch, StreamRecovery.STALL_RECONNECT_MS);
                     // Advert switch: jump straight to the live point instead of waiting to catch up.
                     stallAdvert = "live".equals(kind()) && StreamRecovery.advertSwitch(now - formatChangedAt);
@@ -434,6 +435,10 @@ public class PlayerActivity extends Activity {
                 } else if (s == Player.STATE_READY) {
                     if (stallStartedAt > 0) onStallEnded(now - stallStartedAt, reconnects > 0);
                     everReady = true; stallStartedAt = 0; reconnects = 0; lastStableAt = now;
+                    if ("live".equals(kind())) {
+                        ui.removeCallbacks(cleanPlay); ui.postDelayed(cleanPlay, ChannelHealth.CLEAN_MS);
+                        if (!blackArmed) { blackArmed = true; ui.postDelayed(blackCheck, ChannelHealth.BLACK_MS); }
+                    }
                     ui.removeCallbacks(stallWatch);
                     if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
                 } else if (s == Player.STATE_ENDED && "live".equals(kind())) {
@@ -465,6 +470,18 @@ public class PlayerActivity extends Activity {
         ui.postDelayed(qualityRaise, StreamRecovery.STABLE_RAISE_MS);
         ui.postDelayed(antiFreeze, 1000);
     }
+
+    // Sports Guide crosses: a live channel with no picture 10s after opening, or 2 clean minutes to clear a cross.
+    private boolean blackArmed, cleanSent, blackSent;
+    private final Runnable blackCheck = () -> {
+        if (player == null || blackSent) return;
+        androidx.media3.exoplayer.DecoderCounters c = player.getVideoDecoderCounters();
+        if (c == null || c.renderedOutputBufferCount == 0) { blackSent = true; ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "black"); }
+    };
+    private final Runnable cleanPlay = () -> {
+        if (player == null || cleanSent || blackSent) return;
+        cleanSent = true; ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "ok");
+    };
 
     // Anti-freeze: picture stuck while "playing" (sound carries on) or live drifting far behind now.
     private int afLastFrames = -1, afTicks;
