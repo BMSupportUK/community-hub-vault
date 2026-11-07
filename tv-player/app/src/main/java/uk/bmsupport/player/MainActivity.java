@@ -3605,7 +3605,7 @@ public class MainActivity extends Activity {
     private void sportsVoice(String spoken) {
         JSONObject r = sportsData;
         if (r == null) { pendingSportsQuery = spoken; Toast.makeText(this, "Loading the sports guide…", Toast.LENGTH_SHORT).show(); return; }
-        String want = normChannel(spoken).replaceAll("\\b(?:v|vs|versus|and|the|fc|afc|match|game|on|watch)\\b", " ").replaceAll("\\s+", " ").trim();
+        String want = SportsVoiceSearch.query(spoken);
         List<String[]> aliases = new ArrayList<>();
         JSONArray al = r.optJSONArray("aliases");
         if (al != null) for (int i = 0; i < al.length(); i++) { JSONObject o = al.optJSONObject(i); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
@@ -3613,15 +3613,11 @@ public class MainActivity extends Activity {
         List<JSONObject> hits = new ArrayList<>();
         JSONArray ev = r.optJSONArray("events");
         if (!want.isEmpty() && ev != null) {
-            String[] words = want.split(" ");
             for (int i = 0; i < ev.length() && hits.size() < 60; i++) {
                 JSONObject e = ev.optJSONObject(i); if (e == null) continue;
                 String hay = " " + normChannel(e.optString("title") + " " + e.optString("competition") + " " + e.optString("subcategory") + " " + e.optString("sport") + " " + sportsChannelText(e)) + " ";
                 hay = hay + expandTeamNicknames(hay);
-                int found = 0;
-                for (String w : words) if (hay.contains(" " + w)) found++;
-                // Every word for short searches; longer spoken searches may miss one word ("the Chelsea game tonight").
-                if (found == words.length || (words.length >= 3 && found >= words.length - 1)) hits.add(e);
+                if (SportsVoiceSearch.matches(hay, spoken)) hits.add(e);
             }
         }
         if (hits.isEmpty()) {

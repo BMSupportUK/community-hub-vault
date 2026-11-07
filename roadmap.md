@@ -1,5 +1,6 @@
 # Roadmap
-- [x] Prepare Android 3.68 MonoMax software-first/clean-keyframe handling in full-screen and preview plus embedded backup; 96 native tests pass. Not released; picture quality requires a real device check.
+- [x] Release permanently signed Android 3.68 (179) with MonoMax decoding and desktop-equivalent Sports Guide voice matching; 99 native tests pass, live update reports 3.68 and served APK matches byte-for-byte. Actual picture/voice needs a real device check.
+- [x] Android 3.68 MonoMax software-first/clean-keyframe handling in full-screen and preview plus embedded backup released; unrelated UHD channels retain hardware defaults.
 - [x] Repair HBO Max suffix/AFLW/Supercars/on-board event identities; real saved examples merge into main cards with HBO channels. 81 focused checks pass; website publication and native playback unverified.
 - [x] Repair Boxing feed matching when cached playlist names describe old events/replays: match stable Boxing number, never programme text. Released permanently signed Android 3.67 (178); native tests pass, live update reports 3.67 and APK matches byte-for-byte. Actual stream content unverified without device.
 - [x] Compare actual published/preview Peacock payloads; remove bogus EPL/VIP country inference, 26 regressions pass and real preview sports response has no Peacock country gates. Peacock 0 does not exist in playlist; merged fixtures appear under canonical competition rather than Peacock. Native playback and publication unverified.
