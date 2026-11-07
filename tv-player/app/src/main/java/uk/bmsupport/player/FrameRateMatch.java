@@ -1,0 +1,73 @@
+package uk.bmsupport.player;
+
+import android.app.Activity;
+import android.os.Build;
+import android.view.Display;
+import android.view.WindowManager;
+
+/**
+ * Android boxes output 60Hz, so 50fps UK broadcasts judder. Switch the TV to a refresh rate that is a
+ * whole multiple of the content's frame rate while playing; leaving the activity restores the default.
+ * Fire TV matches by itself, so it is left alone.
+ */
+final class FrameRateMatch {
+    /** Index of the best mode for {@code fps} among same-size modes, or -1 when the current one already fits. */
+    static int pick(float fps, float[] rates, int[] widths, int[] heights, int curW, int curH, float curRate) {
+        if (!(fps >= 20 && fps <= 61)) return -1;
+        if (fits(fps, curRate)) return -1;
+        int best = -1;
+        for (int i = 0; i < rates.length; i++) {
+            if (widths[i] != curW || heights[i] != curH || !fits(fps, rates[i])) continue;
+            // Prefer the lowest exact multiple (50 over 100) — fewer boxes struggle with it.
+            if (best < 0 || rates[i] < rates[best]) best = i;
+        }
+        return best;
+    }
+
+    /** Frame rate from consecutive presentation times (µs), snapped to broadcast rates; -1 if unclear. */
+    static float measure(long[] us) {
+        long[] d = new long[us.length - 1];
+        for (int i = 1; i < us.length; i++) d[i - 1] = Math.abs(us[i] - us[i - 1]);
+        java.util.Arrays.sort(d);
+        long mid = d[d.length / 2];
+        if (mid <= 0) return -1;
+        float fps = 1_000_000f / mid;
+        for (float s : new float[]{23.976f, 24f, 25f, 29.97f, 30f, 50f, 59.94f, 60f}) if (Math.abs(fps - s) < 0.3f) return s;
+        return -1;
+    }
+
+    static boolean fits(float fps, float rate) {
+        double m = rate / fps, r = Math.rint(m);
+        return r >= 1 && Math.abs(m - r) < 0.01;
+    }
+
+    static boolean skip() {
+        return Build.VERSION.SDK_INT < 23 || "amazon".equalsIgnoreCase(Build.MANUFACTURER);
+    }
+
+    static void apply(Activity a, float fps) {
+        if (skip() || a == null) return;
+        try {
+            Display d = a.getWindowManager().getDefaultDisplay();
+            Display.Mode cur = d.getMode();
+            Display.Mode[] modes = d.getSupportedModes();
+            float[] rates = new float[modes.length]; int[] w = new int[modes.length], h = new int[modes.length];
+            for (int i = 0; i < modes.length; i++) { rates[i] = modes[i].getRefreshRate(); w[i] = modes[i].getPhysicalWidth(); h[i] = modes[i].getPhysicalHeight(); }
+            int i = pick(fps, rates, w, h, cur.getPhysicalWidth(), cur.getPhysicalHeight(), cur.getRefreshRate());
+            if (i < 0) return;
+            WindowManager.LayoutParams lp = a.getWindow().getAttributes();
+            lp.preferredDisplayModeId = modes[i].getModeId();
+            a.getWindow().setAttributes(lp);
+        } catch (Exception ignored) {}
+    }
+
+    static void reset(Activity a) {
+        if (skip() || a == null) return;
+        try {
+            WindowManager.LayoutParams lp = a.getWindow().getAttributes();
+            if (lp.preferredDisplayModeId == 0) return;
+            lp.preferredDisplayModeId = 0;
+            a.getWindow().setAttributes(lp);
+        } catch (Exception ignored) {}
+    }
+}
