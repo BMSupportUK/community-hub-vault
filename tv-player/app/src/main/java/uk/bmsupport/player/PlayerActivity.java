@@ -390,6 +390,17 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams rlp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
         rlp.leftMargin = 32; rlp.bottomMargin = 32;
         root.addView(reconnectNote, rlp);
+        // Live feed status pill (top right): only appears for "Buffering…" or "No picture".
+        feedNote = new TextView(this);
+        feedNote.setTextSize(16);
+        feedNote.setTypeface(Typeface.DEFAULT_BOLD);
+        feedNote.setTextColor(0xFFFFFFFF);
+        feedNote.setBackgroundColor(0xB30B1220);
+        feedNote.setPadding(28, 12, 28, 12);
+        feedNote.setVisibility(TextView.GONE);
+        FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+        flp.rightMargin = 32; flp.topMargin = 32;
+        root.addView(feedNote, flp);
         startWithRecovery(urls);
         ui.postDelayed(saveTick, 5000);
     }
