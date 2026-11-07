@@ -53,3 +53,35 @@ describe("channelStatus", () => {
   test("clean play within 24h is online", () => expect(channelStatus({ last_problem_at: null, last_ok_at: iso(now - 23 * 3600_000) }, now)).toBe("online"));
   test("clean play over 24h ago is unchecked", () => expect(channelStatus({ last_problem_at: null, last_ok_at: iso(now - 25 * 3600_000) }, now)).toBe("unchecked"));
 });
+
+describe("crosses only around event time", () => {
+  const { eventUnavailable, acceptProblemReport, isEventChannel } = require("./player-channel-health");
+  const start = Date.parse("2026-11-07T23:00:00Z");
+  const ev = { start, end: start + 3 * 3600_000, channels: ["UFC 04 |", "Sky Sports Main Event"] };
+  const row = (k: string, problemAt: number) => ({ channel_key: k.toLowerCase(), channel_name: k, last_problem_at: new Date(problemAt).toISOString(), last_ok_at: null });
+  test("no cross 11 minutes before the start", () => {
+    const now = start - 11 * 60_000;
+    expect(eventUnavailable(ev, [row("Sky Sports Main Event", now - 60_000)], [], now)).toEqual([]);
+  });
+  test("cross 9 minutes before the start after a report", () => {
+    const now = start - 9 * 60_000;
+    expect(eventUnavailable(ev, [row("UFC 04 |", now - 30_000)], [], now)).toEqual(["UFC 04 |"]);
+  });
+  test("a report from before this event's window doesn't cross a shared event channel", () => {
+    const now = start - 5 * 60_000;
+    expect(eventUnavailable(ev, [row("UFC 04 |", start - 12 * 60_000)], [], now)).toEqual([]);
+  });
+  test("24/7 channel is crossed from its earlier report once the window opens", () => {
+    const now = start - 5 * 60_000;
+    expect(eventUnavailable(ev, [row("Sky Sports Main Event", start - 12 * 60_000)], [], now)).toEqual(["Sky Sports Main Event"]);
+  });
+  test("early report on an event channel is ignored; 24/7 always counts", () => {
+    expect(acceptProblemReport("UFC 04 |", [ev], start - 30 * 60_000)).toBe(false);
+    expect(acceptProblemReport("UFC 04 |", [ev], start - 5 * 60_000)).toBe(true);
+    expect(acceptProblemReport("Sky Sports Main Event", [ev], start - 30 * 60_000)).toBe(true);
+  });
+  test("event channels recognised", () => {
+    for (const n of ["UFC 04 |", "MonoMax 27 | (Events Only)", "HBO Max UK | Event 1", "Boxing 03 | Billam-Smith", "Channel 15"]) expect(isEventChannel(n)).toBe(true);
+    for (const n of ["Sky Sports Main Event", "UK | UFC TV HD", "TNT Sports 1"]) expect(isEventChannel(n)).toBe(false);
+  });
+});

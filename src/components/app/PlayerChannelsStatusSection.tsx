@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { listPlayerChannels } from "@/lib/player-channels.functions";
-import { channelKey, channelStatus, type ChannelStatus } from "@/lib/player-channel-health";
+import { channelKey, channelStatus, isEventChannel, type ChannelStatus } from "@/lib/player-channel-health";
 
 type Row = { channel_key: string; channel_name: string; problem: string | null; last_problem_at: string | null; last_ok_at: string | null };
 const PAGE = 100;
@@ -20,12 +20,13 @@ export function PlayerChannelsStatusSection() {
   const list = useServerFn(listPlayerChannels);
   const [channels, setChannels] = useState<{ name: string; category: string }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [openEvents, setOpenEvents] = useState<Set<string>>(new Set());
   const [health, setHealth] = useState<Map<string, Row>>(new Map());
   const [q, setQ] = useState(""), [cat, setCat] = useState(""), [offlineOnly, setOfflineOnly] = useState(false), [page, setPage] = useState(0);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    void list().then((r) => { setChannels(r.channels); setError(r.error); }).catch(() => { setChannels([]); setError("Couldn't load the channel list."); });
+    void list().then((r) => { setChannels(r.channels); setOpenEvents(new Set(r.openEventChannels)); setError(r.error); }).catch(() => { setChannels([]); setError("Couldn't load the channel list."); });
     const loadHealth = async () => {
       const { data } = await supabase.from("player_channel_health").select("channel_key, channel_name, problem, last_problem_at, last_ok_at");
       setHealth(new Map(((data ?? []) as Row[]).map((r) => [r.channel_key, r]))); setNow(Date.now());
@@ -37,8 +38,11 @@ export function PlayerChannelsStatusSection() {
 
   const rows = useMemo(() => (channels ?? []).map((c) => {
     const h = health.get(channelKey(c.name));
-    return { ...c, h, status: channelStatus(h, now) };
-  }), [channels, health, now]);
+    const s = channelStatus(h, now);
+    // Event-only channels are blank between events: never "Offline" unless one of their events is on.
+    const status: ChannelStatus = s === "offline" && isEventChannel(c.name) && !openEvents.has(channelKey(c.name)) ? "unchecked" : s;
+    return { ...c, h, status };
+  }), [channels, health, now, openEvents]);
   const cats = useMemo(() => [...new Set(rows.map((r) => r.category))].sort((a, b) => a.localeCompare(b)), [rows]);
   const totals = useMemo(() => rows.reduce((t, r) => { t[r.status]++; return t; }, { online: 0, offline: 0, unchecked: 0 } as Record<ChannelStatus, number>), [rows]);
   const filtered = useMemo(() => {
