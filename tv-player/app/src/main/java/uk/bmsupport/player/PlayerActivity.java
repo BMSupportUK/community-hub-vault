@@ -552,6 +552,8 @@ public class PlayerActivity extends Activity {
     private void handToBackup() {
         if (handedOver || isFinishing()) return;
         handedOver = true;
+        // Report straight away so the Sports Guide marks it even if the viewer gives up on the backup engine.
+        if (!"catchup".equals(kind()) && !everReady) ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "failed");
         long pos = player != null && player.getDuration() > 0 ? Math.max(lastPosition, player.getCurrentPosition()) : resumePosition;
         if (player != null) { player.release(); player = null; }
         Toast.makeText(this, "Switching to BM Player's backup engine…", Toast.LENGTH_SHORT).show();
