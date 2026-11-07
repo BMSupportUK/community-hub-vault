@@ -45,4 +45,26 @@ test("HBO Supercars race joins main TV card but other races and venues stay sepa
   expect(events[0].channels).toEqual(["TNT Sports 2", "HBO Max UK 1"]);
   expect(seriesKey("Supercars Championship Race 34: Sandown")).not.toBe(seriesKey("SUPERCARS: Sandown : Race 33"));
   expect(seriesKey("Supercars Championship Race 33: Bathurst")).not.toBe(seriesKey("SUPERCARS: Sandown : Race 33"));
+});test("HBO snooker final with and without player names shares one card", () => {
+  const events = playerSportsEvents([{ title: "HBO Max", category: "Sports Passes", body: [body("11:30", "Snooker International Championship: Final", "HBO Max UK 1"), body("11:30", "Kyren Wilson - John Higgins International Championship: Final", "HBO Max UK 5")].join("\n\n") }], now);
+  expect(events).toHaveLength(1);
+  expect(events[0].channels).toEqual(["HBO Max UK 1", "HBO Max UK 5"]);
+  expect(seriesKey("Snooker International Championship: Semi-Final")).not.toBe(seriesKey("Snooker International Championship: Final"));
+});
+test("HBO FA Cup tie joins a main card whose team name has a one-letter typo", () => {
+  const events = playerSportsEvents([
+    { title: "English FA Cup Channels", category: "Football", body: body("17:30", "ALTRINVHAM v NOTTS COUNTY", "BBC Two") },
+    { title: "HBO Max", category: "Sports Passes", body: body("17:00", "Altrincham - Notts County The Emirates FA Cup: First Round", "HBO Max UK 3") },
+  ], now);
+  expect(events).toHaveLength(1);
+  expect(events[0].channels).toEqual(["BBC Two", "HBO Max UK 3"]);
+  expect(sameFixture("Arsenal v Chelsea", "Arsenal v Chelsea Women")).toBe(false);
+});
+test("HBO snooker final joins the main snooker card that names no stage", () => {
+  const events = playerSportsEvents([
+    { title: "Snooker", category: "Snooker", body: body("11:30", "WST: INTERNATIONAL CHAMPIONSHIP", "TNT Sports 3") },
+    { title: "HBO Max", category: "Sports Passes", body: body("11:30", "Snooker International Championship: Final", "HBO Max UK 1") },
+  ], now);
+  expect(events).toHaveLength(1);
+  expect(events[0].channels).toEqual(["TNT Sports 3", "HBO Max UK 1"]);
 });
