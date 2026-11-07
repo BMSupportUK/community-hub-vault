@@ -10,6 +10,17 @@ export function inCategory(e,sport,sub,guide){return !sport||(e.sport===sport&&(
 /** Default category: the website's first one (Daily Sports) and its first sub-category. */
 export function defaultCategory(sports){const c=(sports&&sports.categories||[])[0];return c?{sport:c.name,sub:(c.subs||[])[0]||null,guide:null}:{sport:null,sub:null,guide:null};}
 const lower=s=>String(s||'').toLowerCase();
+const FILLER=new Set(['v','vs','versus','and','the','fc','afc','match','game','on','watch','show','me','find','play','a','for','please','tonight','today','now','live','is','it','what','where','channel','channels','sports','sport','guide']);
+const words=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').filter(Boolean);
+/** Spoken or typed search, like Android: every word must start a word in the event text; 3+ words may miss one. "Moto GP" also finds "MotoGP". */
+export function matchesSearch(e,query){
+ const want=words(query).filter(w=>!FILLER.has(w));if(!want.length)return false;
+ const hw=words([e.title,e.competition,e.sport,e.subcategory,...(e.channels||[])].join(' '));
+ const hay=' '+hw.join(' ')+' ',joined=' '+hw.join('')+' ';
+ const has=w=>hay.includes(' '+w);
+ let found=0;for(let i=0;i<want.length;i++){if(has(want[i]))found++;else if(i+1<want.length&&has(want[i]+want[i+1])){found+=2;i++;}else if(joined.includes(want[i]))found++;}
+ return found>=want.length||(want.length>=3&&found>=want.length-1);
+}
 
 /** Channel rows for one game: guide channels, then sports passes, then each club's own channels. */
 export function sportsRows(e,items,aliases){
@@ -37,7 +48,7 @@ export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,v
  const inCat=upcoming.filter(e=>inCategory(e,cat.sport,cat.sub,cat.guide));
  const perDay=Array.from({length:7},(_,d)=>inCat.filter(e=>ukDayIndex(e.start,now)===d).length);
  const q=lower(query).trim();
- const cards=q?upcoming.filter(e=>lower([e.title,e.competition,e.sport,e.subcategory,...(e.channels||[])].join(' ')).includes(q)):inCat.filter(e=>ukDayIndex(e.start,now)===day).slice().sort((a,b)=>ended(a)-ended(b));
+ const cards=q?upcoming.filter(e=>matchesSearch(e,q)):inCat.filter(e=>ukDayIndex(e.start,now)===day).slice().sort((a,b)=>ended(a)-ended(b));
  const current=cards[Math.min(sel,cards.length-1)];
  const rows=useMemo(()=>current&&items?sportsRows(current,items,sports.aliases||[]):[],[current,items,sports]);
  const cats=(sports.categories&&sports.categories.length?sports.categories:[...new Set(upcoming.map(e=>e.sport))].map(name=>({name,subs:[]})));
