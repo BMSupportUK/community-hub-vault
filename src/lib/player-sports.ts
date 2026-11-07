@@ -49,10 +49,19 @@ export function fixtureTeams(title: string, context = ""): [string[], string[]] 
 }
 
 /** "Derby" matches "Derby County"; "Arsenal" never matches "Arsenal Women". */
+/** One typo in a long name ("ALTRINVHAM" vs "Altrincham") is still the same word. */
+function nearWord(x: string, y: string): boolean {
+  if (x === y) return true;
+  if (x.length < 6 || x.length !== y.length || /\d/.test(x + y)) return false;
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) if (x[i] !== y[i] && ++diff > 1) return false;
+  return true;
+}
+
 function sameTeam(a: string[], b: string[]): boolean {
-  if (a[0] !== b[0]) return false;
+  if (!nearWord(a[0], b[0])) return false;
   const [short, long] = a.length <= b.length ? [a, b] : [b, a];
-  if (!short.every((t) => long.includes(t))) return false;
+  if (!short.every((t, i) => long.includes(t) || (i === 0 && nearWord(t, long[0])))) return false;
   return long.every((t) => !SIDE_MARKERS.has(t) || short.includes(t));
 }
 
@@ -75,6 +84,12 @@ export function seriesKey(title: string, context = ""): string | null {
   const c = context.toLowerCase();
   const fight = /\b(bkfc|ufc|pfl|cage warriors|oktagon)\s*(?:fight night\s*)?(\d+)\b/.exec(t);
   if (fight) return `${fight[1]}|${fight[2]}`;
+  // Snooker: "Snooker International Championship: Final" = "Kyren Wilson - John Higgins International Championship: Final".
+  const cue = /\b(international|uk|world|scottish|welsh|english|northern ireland|german|shanghai|wuhan|british|xian) (championship|open|masters)\b(?:\s*:\s*([a-z0-9 -]+))?/.exec(t);
+  if (cue && (/\bsnooker\b/.test(`${t} ${c}`) || /\s(?:-|–|v|vs)\s/.test(t))) {
+    const stage = (cue[3] ?? "").replace(/[^a-z0-9]+/g, " ").trim();
+    return `snooker|${cue[1]} ${cue[2]}|${stage}`;
+  }
   if (/\bsupercars\b/.test(`${t} ${c}`)) {
     const race = /\brace\s*(\d+)\b/.exec(t);
     const venue = t.replace(/\bsupercars\b|\bchampionship\b|\brace\s*\d+\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
