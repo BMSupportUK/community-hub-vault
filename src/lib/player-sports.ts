@@ -110,7 +110,10 @@ export function playerSportsEvents(
       // Verified category membership supplies the country when the exact channel
       // name has no country tag. Unresolved names still need the app's country
       // filter, and tagged names retain it so US Paramount never selects AU.
-      const categoryCountry = /^\s*([A-Z]{2,3})\s*\|/i.exec(links.category ?? "")?.[1]?.toUpperCase();
+      // Category brands (EPL, VIP, UFC) are not countries. Sending them as
+      // country restrictions makes players discard otherwise real channels.
+      const prefix = /^\s*([A-Z]{2,3})\s*\|/i.exec(links.category ?? "")?.[1]?.toUpperCase();
+      const categoryCountry = prefix && /^(?:UK|GB|US|USA|AU|AUS|CA|FR|DE|IE|IRE|ZA|NZ|ES|IT|PT|NL|BE|AT|CH|SE|NO|DK|FI|PL|CZ|GR|TR|IN|JP|KR|HK|SG|MY|TH|AE|SA|BR|MX|AR)$/.test(prefix) ? prefix : undefined;
       const country = links.country || categoryCountry;
       if (country) for (const c of channels) {
         const verifiedCategoryCountry = country === categoryCountry && catList?.includes(c);

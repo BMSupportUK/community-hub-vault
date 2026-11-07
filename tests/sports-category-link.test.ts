@@ -54,6 +54,18 @@ test("a number the category does not have links to nothing, never a lookalike", 
 });
 
 const now = Date.UTC(2026, 10, 7, 10, 34);
+
+test("EPL category never becomes a Peacock country restriction when the playlist lookup is unavailable", () => {
+  const events = playerSportsEvents([{ title: "Peacock Sports", category: "Sports Passes", links: { category: "EPL | Premier League Hub" }, body: "Saturday, 7th November\n14:00 GMT\nMens Qualification: Part 2\nPEACOCK 2 HD" }], now);
+  expect(events[0].channels).toEqual(["PEACOCK 2 HD"]);
+  expect(events[0].channelCountry).toBeUndefined();
+});
+
+test("Peacock uses its exact numbered playlist feed without an EPL country gate", () => {
+  const events = playerSportsEvents([{ title: "Peacock Sports", category: "Sports Passes", links: { category: "EPL | Premier League Hub" }, body: "Saturday, 7th November\n14:00 GMT\nMens Qualification: Part 2\nPEACOCK 2 HD" }], now, new Map([["epl | premier league hub", ["Peacock 2 | (Events Only)"]]]));
+  expect(events[0].channels).toEqual(["Peacock 2 | (Events Only)"]);
+  expect(events[0].channelCountry).toBeUndefined();
+});
 const frenchGuide = { title: "Ligue 1 Streams", category: "France", links: { category: "FR | Ligue 1", numbered: false }, body: "Saturday, 7th November\n16:15 GMT\nAuxerre v Paris\nMatch 1\n19:45 GMT\nPSG v Troyes\nMatch 2" };
 
 test("Ligue 1 Streams uses verified French category channels without requiring FR in their names", () => {
