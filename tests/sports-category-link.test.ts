@@ -6,6 +6,16 @@ const cymru = ["UK | Cymru Football event 1", "UK | Cymru Football event 3", "UK
 
 const daznCategory = Array.from({ length: 30 }, (_, i) => `ᴰᴬᶻᴺ ¹ ${String(i + 1).padStart(2, "0")} (CA | Main)`);
 
+test("DAZN CA-only guide selects Canadian feeds even when UK alternatives come first", () => {
+  const list = ["DAZN UK | Event 1", "DAZN UK | Event 2", ...daznCategory];
+  const links = { category: "VIP | DAZN", country: "CA", numbered: true };
+  for (let n = 1; n <= 30; n++) expect(resolveInCategory(`Dazn ${n} HD`, list, links)).toBe(daznCategory[n - 1]);
+  expect(resolveInCategory("Dazn 1 HD", ["DAZN UK | Event 1"], links)).toBeNull();
+  const events = playerSportsEvents([{ title: "Dazn", category: "Sports Passes", links, body: "Saturday, 7th November\n15:00 GMT\nCoventry v Derby\nDazn 1 HD" }], Date.UTC(2026, 10, 7, 10, 47), new Map([["vip | dazn", list]]));
+  expect(events[0].channels).toEqual([daznCategory[0]]);
+  expect(events[0].channelCountry).toEqual({ [daznCategory[0]]: "CA" });
+});
+
 test("DAZN decorative brand lettering resolves every numbered feed and retains its exact playlist name", () => {
   const list = [...daznCategory, "DAZN UK | Event 1", "DAZN 1 UK New"];
   for (let n = 1; n <= 30; n++) expect(resolveInCategory(`Dazn ${n} HD`, list, {})).toBe(daznCategory[n - 1]);
