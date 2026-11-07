@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Build and release Windows 0.4.30 and universal Mac 0.1.40 with Android-equivalent spread-out website check-ins; verify packaged scheduling and public downloads. Real-device checks require Windows/Mac hardware.
+- [x] Released Windows 0.4.30 and universal Mac 0.1.40 with Android-equivalent spread-out website check-ins; 69 checks pass, packaged shared scheduling verified, both public downloads match byte-for-byte. Real-device playback/installation and Apple signature validation remain unavailable in Linux.
 - [x] Build, permanently sign and release Android 3.69 (180) with fullscreen alternative-stream recovery; all 103 native tests pass, public update reports 3.69 and served APK matches byte-for-byte.
 - [x] Repair Android fullscreen live launch dropping Auto stream alternatives; released in 3.69 with four actual launch regressions. Fire TV playback verification blocked by no attached device.
 - [x] Release permanently signed Android 3.68 (179) with MonoMax decoding and desktop-equivalent Sports Guide voice matching; 99 native tests pass, live update reports 3.68 and served APK matches byte-for-byte. Actual picture/voice needs a real device check.
