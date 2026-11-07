@@ -17,8 +17,16 @@ export async function buildSportsFeed() {
     return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null, links: readChannelLinks(b.channel_links) };
   });
   const playlistCats = [...new Set(guideRows.map((g) => g.links.category).filter((c): c is string => !!c))];
-  const { playlistCategoryChannels, playlistGuideTimes } = await import("@/lib/playlist-source.server");
-  const rawEvents = playerSportsEvents(guideRows, Date.now(), await playlistCategoryChannels(playlistCats));
+  const { playlistCategoryChannels, playlistGuideTimes, playlistAllChannels } = await import("@/lib/playlist-source.server");
+  const { pinLiveChannels, isReplayChannel } = await import("@/lib/sports-live-only");
+  const aliasRows = Array.isArray(st?.channel_aliases) ? (st.channel_aliases as { from: string; to: string }[]) : [];
+  const live = await playlistAllChannels().then((all) => all.filter((c) => !isReplayChannel(c.name, c.category)).map((c) => c.name)).catch(() => [] as string[]);
+  const rawEvents = playerSportsEvents(guideRows, Date.now(), await playlistCategoryChannels(playlistCats)).map((e) => {
+    if (!live.length) return e;
+    const channels = pinLiveChannels(e.channels, live, aliasRows);
+    const pass = (e.passChannels ?? []).map((c) => pinLiveChannels([c], live, aliasRows)[0]).filter((c): c is string => !!c && channels.includes(c));
+    return { ...e, channels, passChannels: pass };
+  });
   // Real end times from the TV guide for games that have started (estimate stays when a channel has no guide).
   const nowMs = Date.now();
   const startedChannels = rawEvents.filter((e) => e.start <= nowMs).flatMap((e) => e.channels.slice(0, 2));
