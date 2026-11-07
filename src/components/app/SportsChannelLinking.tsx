@@ -44,7 +44,7 @@ export function SportsChannelLinking({ value, body, onChange }: { value: unknown
     } catch (e) { setErr(e instanceof Error ? e.message : "Could not read the playlist."); }
     setBusy(false);
   };
-  const set = (patch: Partial<ChannelLinks>) => { onChange({ ...links, ...patch }); setTested(null); };
+  const set = (patch: Partial<ChannelLinks>) => { onChange({ ...links, replace, ...patch }); setTested(null); };
   const setRow = (i: number, k: "from" | "to", v: string) => set({ replace: replace.map((r, j) => (j === i ? { ...r, [k]: v } : r)) });
 
   const runTest = () => {
