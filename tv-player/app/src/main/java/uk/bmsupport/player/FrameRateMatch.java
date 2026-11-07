@@ -45,8 +45,9 @@ final class FrameRateMatch {
         return Build.VERSION.SDK_INT < 23 || "amazon".equalsIgnoreCase(Build.MANUFACTURER);
     }
 
-    static void apply(Activity a, float fps) {
-        if (skip() || a == null) return;
+    /** Asks for a matching mode; true when the TV is being switched (it goes black for a moment). */
+    static boolean apply(Activity a, float fps) {
+        if (skip() || a == null) return false;
         try {
             Display d = a.getWindowManager().getDefaultDisplay();
             Display.Mode cur = d.getMode();
@@ -54,12 +55,21 @@ final class FrameRateMatch {
             float[] rates = new float[modes.length]; int[] w = new int[modes.length], h = new int[modes.length];
             for (int i = 0; i < modes.length; i++) { rates[i] = modes[i].getRefreshRate(); w[i] = modes[i].getPhysicalWidth(); h[i] = modes[i].getPhysicalHeight(); }
             int i = pick(fps, rates, w, h, cur.getPhysicalWidth(), cur.getPhysicalHeight(), cur.getRefreshRate());
-            if (i < 0) return;
+            if (i < 0) return false;
             WindowManager.LayoutParams lp = a.getWindow().getAttributes();
+            if (lp.preferredDisplayModeId == modes[i].getModeId()) return false;
             lp.preferredDisplayModeId = modes[i].getModeId();
             a.getWindow().setAttributes(lp);
-        } catch (Exception ignored) {}
+            return true;
+        } catch (Exception ignored) { return false; }
     }
+
+    /** How long the picture stays covered after a switch so the TV's re-sync blank isn't seen mid-picture. */
+    static final long SETTLE_MS = 2000;
+    /** Longest the picture is held back waiting for the frame rate. */
+    static final long MAX_HOLD_MS = 4000;
+    /** Cover stays up after the rate is known only when the TV is actually switching. */
+    static long uncoverDelay(boolean switched) { return switched ? SETTLE_MS : 0; }
 
     static void reset(Activity a) {
         if (skip() || a == null) return;

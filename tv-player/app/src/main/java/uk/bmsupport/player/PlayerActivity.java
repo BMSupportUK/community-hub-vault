@@ -406,6 +406,7 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         flp.rightMargin = 32; flp.topMargin = 32;
         root.addView(feedNote, flp);
+        coverUntilRateKnown(root);
         startWithRecovery(urls);
         ui.postDelayed(saveTick, 5000);
     }
@@ -436,6 +437,35 @@ public class PlayerActivity extends Activity {
     private final long[] frameTimes = new long[31];
     private int frameCount;
 
+    // 50Hz switch before the picture: the TV goes black while it changes mode, so the picture (and sound)
+    // stay covered until the frame rate is known and the TV has settled, giving one blank at the start.
+    private android.view.View rateCover;
+    private boolean uncovered;
+    private final Runnable uncover = () -> {
+        if (uncovered) return; uncovered = true;
+        if (rateCover != null) rateCover.setVisibility(android.view.View.GONE);
+        if (player != null) player.setVolume(1f);
+    };
+    private void rateKnown(float fps) {
+        String id = getIntent().getStringExtra("content_id");
+        if (fps > 0 && id != null) prefs(this).edit().putFloat("fps:" + id, fps).apply();
+        boolean switched = fps > 0 && FrameRateMatch.apply(this, fps);
+        if (uncovered) return;
+        ui.removeCallbacks(uncover); ui.postDelayed(uncover, FrameRateMatch.uncoverDelay(switched));
+    }
+    private void coverUntilRateKnown(FrameLayout root) {
+        if (FrameRateMatch.skip() || carried != null) { uncovered = true; return; }
+        rateCover = new android.view.View(this);
+        rateCover.setBackgroundColor(0xFF000000);
+        root.addView(rateCover, 1, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        player.setVolume(0f);
+        // Channel played before: switch the TV now, while the stream is still connecting.
+        String id = getIntent().getStringExtra("content_id");
+        float known = id == null ? 0 : prefs(this).getFloat("fps:" + id, 0);
+        if (known > 0) FrameRateMatch.apply(this, known);
+        ui.postDelayed(uncover, FrameRateMatch.MAX_HOLD_MS);
+    }
+
     private void startWithRecovery(String[] urls) {
         liveUrls = urls;
         // TS streams rarely state their frame rate: measure it from the first decoded frames instead.
@@ -445,7 +475,7 @@ public class PlayerActivity extends Activity {
             if (frameCount < frameTimes.length) return;
             float fps = FrameRateMatch.measure(frameTimes);
             rateMatched = true;
-            if (fps > 0) ui.post(() -> FrameRateMatch.apply(PlayerActivity.this, fps));
+            ui.post(() -> rateKnown(fps));
         });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
@@ -480,7 +510,7 @@ public class PlayerActivity extends Activity {
                 // 50fps UK sport judders on 60Hz Android boxes: ask the TV for a matching refresh rate.
                 for (androidx.media3.common.Tracks.Group g : t.getGroups())
                     if (g.getType() == androidx.media3.common.C.TRACK_TYPE_VIDEO)
-                        for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i) && g.getTrackFormat(i).frameRate > 0) { rateMatched = true; FrameRateMatch.apply(PlayerActivity.this, g.getTrackFormat(i).frameRate); return; }
+                        for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i) && g.getTrackFormat(i).frameRate > 0) { rateMatched = true; rateKnown(g.getTrackFormat(i).frameRate); return; }
             }
             @Override public void onPlayerError(PlaybackException e) {
                 if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { player.seekToDefaultPosition(); player.prepare(); return; }
@@ -765,5 +795,5 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
-    @Override protected void onDestroy() { ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+    @Override protected void onDestroy() { ui.removeCallbacks(uncover); ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
