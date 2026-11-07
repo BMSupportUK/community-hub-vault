@@ -1,4 +1,6 @@
 # Roadmap
+- [ ] Website publication requested on 7 Nov at 09:54 for sports end times; deployment completion and published authenticated sports response not yet verified.
+- [ ] Verify Sports Guide opens channel listings on a real Android/Amazon box; blocked: no device is connected to this workspace. Website publishing does not install the pending Android header repair.
 - [x] Repair Android/Amazon Sports Guide oversized header shown in supplied TV photo; bound category width and disable baseline measurement. TV/short-screen measurement tests and all 87 native checks pass. Not released; real-TV verification unavailable without attached device.
 - [ ] Build and release Android update containing the Sports Guide header repair; real-TV verification requires installed update.
 - [x] Preserve TV broadcaster names alongside Scottish club feeds; fix real Aberdeen/Hibernian listing carrying competition text in the channel name. Focused tests pass; website publish and real-player check required.
