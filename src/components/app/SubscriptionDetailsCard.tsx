@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCustomerNumber } from "@/components/app/CustomerNumber";
+import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
 import { Nameplate } from "@/components/app/Nameplate";
 import { customerJoinedYear, customerYearsFromYear } from "@/lib/customer-joined-year";
 
@@ -37,6 +37,7 @@ export function SubscriptionDetailsCard({
   const [joinedRecorded, setJoinedRecorded] = useState<boolean | null>(null);
   const [viewIndex, setViewIndex] = useState(0);
   const customerNumber = useCustomerNumber(user?.id);
+  const loginNumbers = useLoginPlayerNumbers(user?.id);
 
   useEffect(() => {
     if (!user) {
@@ -213,6 +214,7 @@ export function SubscriptionDetailsCard({
                   <span className={cn("ml-1 font-normal", fill ? "text-[10px] md:text-sm" : "text-[10px]", embedded ? "text-white/70" : "text-muted-foreground")}>
                     · {accountTypeLabel(c.account_type)}
                   </span>
+                  {(() => { const n = loginNumbers.find((r) => r.credential_id === c.id)?.number; return n && loginNumbers.length > 1 ? <span className="ml-1 font-mono font-normal" title="BM Player account number for this login">· No. {n}</span> : null; })()}
                 </div>
                 {c.app_login_name && (
                   <div className={cn("truncate", fill ? "text-[11px] md:text-base md:mt-1" : "text-[11px]", embedded ? "text-white/70" : "text-muted-foreground")}>
