@@ -40,6 +40,13 @@ export function matchChannel(guideName: string, playlist: string[], aliases: Cha
   const all = [...aliases, ...BUILT_IN_ALIASES];
   const want = applyAlias(normChannel(guideName), all);
   if (!want) return [];
+  // Boxing event text changes daily, while the numbered feed stays the same.
+  // Never match a fight title, replay number or start time as channel identity.
+  const boxing = /^boxing\s+(\d+)\b/.exec(normChannel(guideName.split("|")[0]));
+  if (boxing) return playlist.filter((p) => {
+    const label = /^boxing\s+(\d+)\b/.exec(normChannel(p.split("|")[0]));
+    return label != null && Number(label[1]) === Number(boxing[1]);
+  });
   // Daily Sports: guide says "Channel 07"; the feed's name is "07 | 12:00 Trackside Live!" (changes daily).
   if (/^\d+$/.test(want)) {
     const n = Number(want);

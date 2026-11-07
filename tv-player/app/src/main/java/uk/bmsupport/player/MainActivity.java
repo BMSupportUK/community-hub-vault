@@ -2916,11 +2916,22 @@ public class MainActivity extends Activity {
                 .matcher(name == null ? "" : name.toUpperCase(java.util.Locale.ROOT)).find();
     }
     private static final java.util.regex.Pattern DAILY_NUM = java.util.regex.Pattern.compile("^\\s*0*(\\d{1,4})\\s*\\|");
+    private static final java.util.regex.Pattern BOXING_FEED = java.util.regex.Pattern.compile("^boxing\\s+(\\d+)\\b");
     static List<Item> matchChannel(String guide, List<Item> playlist, List<String[]> aliases) {
         java.util.Map<String, String> am = aliasMap(aliases);
         String want = alias(normChannel(guide == null ? "" : guide), am);
         List<Item> out = new ArrayList<>();
         if (want.isEmpty()) return out;
+        // Programme/replay names are mutable metadata, not feed identity.
+        java.util.regex.Matcher boxing = BOXING_FEED.matcher(normChannel((guide == null ? "" : guide).split("\\|", 2)[0]));
+        if (boxing.find()) {
+            int number = Integer.parseInt(boxing.group(1));
+            for (Item it : playlist) {
+                java.util.regex.Matcher feed = BOXING_FEED.matcher(normChannel((it.name == null ? "" : it.name).split("\\|", 2)[0]));
+                if (feed.find() && Integer.parseInt(feed.group(1)) == number) out.add(it);
+            }
+            return out;
+        }
         // Daily Sports: guide says "Channel 07"; the feed's name is "07 | 12:00 Trackside Live!" (changes daily).
         if (want.matches("\\d+")) {
             int n = Integer.parseInt(want);
