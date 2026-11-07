@@ -9,3 +9,4 @@
 - Built-in playback hands over to BackupPlayerActivity (in-app libVLC, ARM-only native libs) when every address fails before a picture or reconnects give up; catch-up keeps its own recovery.
 - Player controls per kind live in PlayerControls: fast forward/rewind only on films and episodes (not live or catch up); no Report a problem on catch up.
 - Full-screen playback asks Android boxes/phones for a display mode whose refresh rate is a whole multiple of the content frame rate (FrameRateMatch; measured from frame times when TS gives none), same resolution only; Fire TV is skipped because Fire OS matches itself.
+- Sports Guide crosses: PlayerActivity reports `channel_health` black (no video frame 10s after first ready) and ok (2 stall-free minutes); BackupPlayerActivity reports failed when both engines give up; desktop main.cjs healthTick mirrors this. Website rules live in src/lib/player-channel-health.ts.
