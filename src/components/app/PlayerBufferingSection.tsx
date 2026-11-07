@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Activity, CalendarIcon } from "lucide-react";
+import { Activity, CalendarIcon, XCircle } from "lucide-react";
+import { isCrossed } from "@/lib/player-channel-health";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -42,7 +43,7 @@ export function BufferingSection() {
     const poll = setInterval(load, 60_000);
     return () => { stop = true; clearInterval(poll); };
   }, [hours, period]);
-  return <section className="rounded-xl border border-border bg-surface p-5">
+  return <div className="space-y-4"><NotWorkingSection /><section className="rounded-xl border border-border bg-surface p-5">
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <h2 className="flex items-center gap-2 text-lg font-semibold"><Activity className="size-5 text-primary" />Buffering</h2>
       <div className="flex flex-wrap items-center gap-2">
@@ -83,6 +84,41 @@ export function BufferingSection() {
           <td className="p-3 text-xs">{when(r.last_at)}</td>
         </tr>)}</tbody>
       </table></div>}
-  </section>;
+  </section></div>;
 }
 
+type HealthRow = { channel_key: string; channel_name: string; problem: string | null; problem_source: string | null; last_problem_at: string | null; last_ok_at: string | null; reporters: number };
+
+/** Sports Guide channels currently showing a cross in the apps (player reports or the website's own check). */
+function NotWorkingSection() {
+  const [rows, setRows] = useState<HealthRow[] | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const load = async () => {
+    const { data } = await supabase.from("player_channel_health").select("channel_key, channel_name, problem, problem_source, last_problem_at, last_ok_at, reporters")
+      .gte("last_problem_at", new Date(Date.now() - 15 * 60_000).toISOString()).order("last_problem_at", { ascending: false });
+    setRows(((data ?? []) as HealthRow[]).filter((r) => isCrossed(r, Date.now())));
+  };
+  useEffect(() => {
+    void load();
+    void supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      const { data: ok } = await supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" });
+      setIsAdmin(!!ok);
+    });
+    const poll = setInterval(load, 60_000);
+    return () => clearInterval(poll);
+  }, []);
+  const clear = async (key: string) => {
+    await supabase.from("player_channel_health").update({ last_ok_at: new Date().toISOString() }).eq("channel_key", key);
+    void load();
+  };
+  return <section className="rounded-xl border border-border bg-surface p-5">
+    <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold"><XCircle className="size-5 text-destructive" />Channels marked not working</h2>
+    <p className="mb-3 text-xs text-muted-foreground">These show a red cross in the Sports Guide with "try another channel". Crosses clear after a clean 2-minute play or 15 minutes with no new problem.</p>
+    {rows === null ? <p className="text-sm text-muted-foreground">Loading…</p> : rows.length === 0 ? <p className="text-sm text-muted-foreground">No channels marked right now.</p>
+      : <ul className="divide-y divide-border">{rows.map((r) => <li key={r.channel_key} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+        <div><div className="font-medium">{r.channel_name}</div><div className="text-xs text-muted-foreground">{r.problem ?? "Keeps cutting out"} · {r.problem_source === "check" ? "Website check" : `${r.reporters} player report${r.reporters === 1 ? "" : "s"}`} · {r.last_problem_at ? when(r.last_problem_at) : ""}</div></div>
+        {isAdmin && <Button size="sm" variant="outline" onClick={() => void clear(r.channel_key)}>Clear</Button>}
+      </li>)}</ul>}
+  </section>;
+}

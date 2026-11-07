@@ -55,6 +55,28 @@ export async function playlistCategoryChannels(names: string[]): Promise<Map<str
   return out;
 }
 
+/** Stream IDs for the named channels (exact playlist names, case-insensitive). */
+export async function playlistStreamIds(names: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  try {
+    const { streams } = await load();
+    const byName = new Map(streams.map((s) => [s.name.toLowerCase(), s.stream_id ?? ""]));
+    for (const n of names) { const id = byName.get(n.toLowerCase()); if (id) out.set(n.toLowerCase(), id); }
+  } catch { /* nothing to check */ }
+  return out;
+}
+
+/** Stream address on the separate channel-check login, or null when that login isn't saved. */
+export async function channelCheckUrl(streamId: string): Promise<string | null> {
+  const user = process.env.CHANNEL_CHECK_USERNAME, pass = process.env.CHANNEL_CHECK_PASSWORD;
+  if (!user || !pass) return null;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("player_settings").select("dns").eq("id", 1).maybeSingle();
+  const { normaliseDns } = await import("@/lib/player-link");
+  const dns = normaliseDns(data?.dns ?? "");
+  return dns ? `${dns}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${encodeURIComponent(streamId)}.ts` : null;
+}
+
 const epgCache = new Map<string, { at: number; list: { start: number; end: number }[] }>();
 /** TV-guide programme times for the named channels (exact playlist names), at most `limit` lookups. Missing data is skipped. */
 export async function playlistGuideTimes(names: string[], limit = 25): Promise<Map<string, { start: number; end: number }[]>> {

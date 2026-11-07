@@ -49,6 +49,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("announcement"), device_token: Token }),
+  z.object({ action: z.literal("channel_health"), device_token: Token, name: z.string().trim().min(1).max(200), status: z.enum(["failed", "black", "ok"]) }),
   z.object({ action: z.literal("formats"), device_token: Token }),
   z.object({ action: z.literal("format_set"), device_token: Token, content_id: z.string().regex(/^[A-Za-z0-9._-]{1,80}$/), fmt: z.enum(["ts", "m3u8"]) }),
   z.object({ action: z.literal("major_announcements"), device_token: Token }),
@@ -342,6 +343,19 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ ok: true, recorded: rows.length });
         }
 
+        if (body.action === "channel_health") {
+          // Live channel failed / black screen / played cleanly for 2 minutes on this device.
+          const key = body.name.toLowerCase(); const nowIso = new Date().toISOString();
+          const { data: row } = await supabaseAdmin.from("player_channel_health").select("reporters, last_problem_at").eq("channel_key", key).maybeSingle();
+          const fresh = row?.last_problem_at && Date.now() - Date.parse(row.last_problem_at) < 15 * 60_000;
+          const patch = body.status === "ok"
+            ? { last_ok_at: nowIso }
+            : { problem: body.status === "black" ? "Black screen" : "Won't play", problem_source: "player", last_problem_at: nowIso, reporters: (fresh ? row?.reporters ?? 0 : 0) + 1 };
+          const { error } = await supabaseAdmin.from("player_channel_health").upsert({ channel_key: key, channel_name: body.name, updated_at: nowIso, ...patch });
+          if (error) return json({ error: "Could not record" }, 503);
+          return json({ ok: true });
+        }
+
         if (body.action === "connection_alert") {
           const { CONNECTION_REPORT_COOLDOWN_MS, isSustainedConnectionExcess } = await import("@/lib/player-connection-limit");
           if (!isSustainedConnectionExcess({ active: body.active, max: body.max, exceededSince: body.exceeded_since, now: Date.now() }))
@@ -360,44 +374,16 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         if (body.action === "sports") {
-          const payload = await sportsCache(async () => {
-            const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
-              supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at, sort_order, created_at, channel_links").eq("published", true).order("sort_order").order("created_at", { ascending: false }),
-              supabaseAdmin.from("sports_categories").select("id, name, parent_id, sort_order").order("sort_order"),
-              supabaseAdmin.from("player_settings").select("channel_aliases").eq("id", 1).maybeSingle(),
-            ]);
-            const { playerSportsEvents } = await import("@/lib/player-sports");
-            const { readChannelLinks } = await import("@/lib/sports-channel-links");
-            const catName = new Map((cats ?? []).map((c) => [c.id, c.name]));
-            const parentOf = new Map((cats ?? []).map((c) => [c.id, c.parent_id]));
-            const guideRows = (blogs ?? []).map((b) => {
-              const pid = b.category_id ? parentOf.get(b.category_id) : null;
-              return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null, links: readChannelLinks(b.channel_links) };
-            });
-            const playlistCats = [...new Set(guideRows.map((g) => g.links.category).filter((c): c is string => !!c))];
-            const { playlistCategoryChannels, playlistGuideTimes } = await import("@/lib/playlist-source.server");
-            const { applyGuideEnds } = await import("@/lib/player-sports");
-            const rawEvents = playerSportsEvents(guideRows, Date.now(), await playlistCategoryChannels(playlistCats));
-            // Real end times from the TV guide for games that have started (estimate stays when a channel has no guide).
-            const nowMs = Date.now();
-            const startedChannels = rawEvents.filter((e) => e.start <= nowMs).flatMap((e) => e.channels.slice(0, 2));
-            const events = applyGuideEnds(rawEvents, await playlistGuideTimes(startedChannels), nowMs);
-            const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.length;
-            // Guides follow the website order too (sort_order, newest first), after the category names.
-            const order = Array.from(new Set([...(cats ?? []).map((c) => c.name), ...(blogs ?? []).map((b) => b.title)]));
-            // Category pop-up: the website's own main categories, each with its sub-categories, in site order.
-            const categories = (cats ?? []).filter((c) => !c.parent_id).map((c) => ({ name: c.name, subs: (cats ?? []).filter((x) => x.parent_id === c.id).map((x) => x.name) }));
-            // Third level: each category's guides (website order), keyed "Main|Sub" ("Main|" when no sub-category).
-            const guides: Record<string, string[]> = {};
-            for (const b of blogs ?? []) {
-              const c = (cats ?? []).find((x) => x.id === b.category_id); if (!c) continue;
-              const parent = c.parent_id ? (cats ?? []).find((x) => x.id === c.parent_id) : null;
-              const key = parent ? `${parent.name}|${c.name}` : `${c.name}|`;
-              (guides[key] ??= []).includes(b.title) || guides[key].push(b.title);
-            }
-            return { version, events, order, categories, guides, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
+          const { buildSportsFeed, currentCrossedChannels } = await import("@/lib/player-sports-feed.server");
+          const payload = await sportsCache(buildSportsFeed);
+          // Crossed channels change minute to minute, so they're added outside the guide cache.
+          const down = await currentCrossedChannels().catch(() => [] as string[]);
+          const downSet = new Set(down.map((n) => n.toLowerCase()));
+          const events = (payload.events as { channels: string[] }[]).map((e) => {
+            const unavailable = e.channels.filter((c) => downSet.has(c.toLowerCase()));
+            return unavailable.length ? { ...e, unavailable } : e;
           });
-          return json(payload);
+          return json({ ...payload, events, unavailable: down });
         }
 
         if (body.action === "code") {
