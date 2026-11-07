@@ -88,7 +88,7 @@ export function seriesKey(title: string, context = ""): string | null {
   const cue = /\b(international|uk|world|scottish|welsh|english|northern ireland|german|shanghai|wuhan|british|xian) (championship|open|masters)\b(?:\s*:\s*([a-z0-9 -]+))?/.exec(t);
   if (cue && (/\bsnooker\b/.test(`${t} ${c}`) || /\s(?:-|–|v|vs)\s/.test(t))) {
     const stage = (cue[3] ?? "").replace(/[^a-z0-9]+/g, " ").trim();
-    return `snooker|${cue[1]} ${cue[2]}|${stage}`;
+    return `snooker ${cue[1]} ${cue[2]}|${stage}`;
   }
   if (/\bsupercars\b/.test(`${t} ${c}`)) {
     const race = /\brace\s*(\d+)\b/.exec(t);
@@ -110,7 +110,7 @@ function sameSeriesEvent(a: string | null, b: string | null): boolean {
   if (!a || !b) return false;
   if (a === b) return true;
   const [sa, xa] = a.split("|"), [sb, xb] = b.split("|");
-  return sa === sb && (sa === "motogp" || sa === "f1" || sa === "snooker") && (!xa || !xb);
+  return sa === sb && (sa === "motogp" || sa === "f1" || sa.startsWith("snooker ")) && (!xa || !xb);
 }
 
 const isPassGuide = (g: { title: string; category: string | null; parent?: string | null }) =>

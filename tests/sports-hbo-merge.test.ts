@@ -60,3 +60,11 @@ test("HBO FA Cup tie joins a main card whose team name has a one-letter typo", (
   expect(events[0].channels).toEqual(["BBC Two", "HBO Max UK 3"]);
   expect(sameFixture("Arsenal v Chelsea", "Arsenal v Chelsea Women")).toBe(false);
 });
+test("HBO snooker final joins the main snooker card that names no stage", () => {
+  const events = playerSportsEvents([
+    { title: "Snooker", category: "Snooker", body: body("11:30", "WST: INTERNATIONAL CHAMPIONSHIP", "TNT Sports 3") },
+    { title: "HBO Max", category: "Sports Passes", body: body("11:30", "Snooker International Championship: Final", "HBO Max UK 1") },
+  ], now);
+  expect(events).toHaveLength(1);
+  expect(events[0].channels).toEqual(["TNT Sports 3", "HBO Max UK 1"]);
+});
