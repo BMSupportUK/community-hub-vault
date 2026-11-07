@@ -3573,6 +3573,7 @@ public class MainActivity extends Activity {
 
     private Button sportsCatPill; private LinearLayout sportsDays;
     private TextView sportsPanelTitle, sportsPanelSub; private ListView sportsChannelList;
+    private String sportsReturnChannelId;
     /** Chosen website main category / sub-category (null = all) and day (0 = today). */
     private String sportsSport, sportsSub, sportsGuide; private int sportsDay;
     private List<String[]> sportsAliases = new ArrayList<>();
@@ -3855,7 +3856,7 @@ public class MainActivity extends Activity {
         int keep = sportsList.getSelectedItemPosition();
         sportsList.setAdapter(new SportsCardAdapter(cards, now));
         sportsList.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) { if (pos < cards.size()) fillSportsPanel(cards.get(pos), false); }
+            @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) { if (pos < cards.size()) fillSportsPanel(cards.get(pos), sportsChannelList.hasFocus()); }
             @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
         });
         sportsList.setOnItemClickListener((p, v, pos, id) -> { if (pos < cards.size()) fillSportsPanel(cards.get(pos), true); });
@@ -3943,9 +3944,13 @@ public class MainActivity extends Activity {
                     Item it = t.get(w);
                     if (it == null && !l.get(w).startsWith("✕")) return;
                     if (it == null) Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show();
-                    else { retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
+                    else { sportsReturnChannelId = it.id; retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
                 });
-                if (focus) { sportsChannelList.requestFocus(); sportsChannelList.setSelection(keepChannel >= 0 && keepChannel < t.size() && t.get(keepChannel) != null ? keepChannel : firstPlayable(t)); }
+                if (focus) {
+                    int restore = keepChannel >= 0 && keepChannel < t.size() && t.get(keepChannel) != null ? keepChannel : firstPlayable(t);
+                    if (sportsReturnChannelId != null) for (int i = 0; i < t.size(); i++) if (t.get(i) != null && sportsReturnChannelId.equals(t.get(i).id)) { restore = i; break; }
+                    sportsChannelList.requestFocus(); sportsChannelList.setSelection(restore);
+                }
             });
         });
     }
