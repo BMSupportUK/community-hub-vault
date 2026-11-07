@@ -1,6 +1,23 @@
 import { expect, test } from "bun:test";
 import { playerSportsEvents } from "../src/lib/player-sports";
 
+test("real Scottish listing strips competition text from club channels", () => {
+  const events = playerSportsEvents([{ title: "Scotland Premier League Channels", category: "Mens", body: "<div>Saturday, 7th November</div><div>17:45 GMT</div><div>WILLIAM HILL PREMIERSHIP: ABERDEEN v HIBERNIAN</div><div>WILLIAM HILL PREMIERSHIP: ABERDEEN | HIBERNIAN</div>" }], Date.UTC(2026, 10, 7, 9));
+  expect(events[0].channels).toEqual(["HIBERNIAN", "ABERDEEN"]);
+});
+
+test("Scottish club feeds offer both teams and retain real TV names", () => {
+  const events = playerSportsEvents([{ title: "Scotland Premier League Streams", category: "Sports Passes", body: "Saturday, 7th November\n15:00 GMT\nDundee United v Rangers\nSky Sports Football\nUnder Team Channels" }], Date.UTC(2026, 10, 7, 14));
+  expect(events[0].channels).toEqual(["Sky Sports Football", "Dundee United", "Rangers"]);
+  expect(events[0].teamChannels).toBe(true);
+});
+
+test("ordinary TV guides retain broadcasters without invented team channels", () => {
+  const events = playerSportsEvents([{ title: "Scottish Cup TV Channels", category: "Mens", parent: "Football", body: "Saturday, 7th November\n15:00 GMT\nDundee United v Rangers\nSky Sports Football" }], Date.UTC(2026, 10, 7, 14));
+  expect(events[0].channels).toEqual(["Sky Sports Football"]);
+  expect(events[0].teamChannels).toBeUndefined();
+});
+
 test("same fixture from several guides becomes one card with every channel", () => {
   const events = playerSportsEvents([
     { title: "English Premier League TV Channels", category: "Mens", parent: "Football", body: "Friday, 6th November\n20:00 GMT\nEverton v Coventry City\nSky Sports Main Event" },

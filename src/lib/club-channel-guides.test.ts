@@ -10,7 +10,7 @@ describe("club channel guides", () => {
   });
   test("Scottish guide lists the fixture under each club", () => {
     const out = clubChannelListingHtml(html, "Scotland Premier League Channels");
-    expect(parseSportsListingBlock(out!)[0].channels).toEqual(["Dundee United", "Rangers"]);
+    expect(parseSportsListingBlock(out ?? html)[0].channels).toEqual(["Sky Sports Football", "Dundee United", "Rangers"]);
   });
   test("iFollow guide renamed too", () => {
     expect(clubChannelListingHtml(html, "iFollow | League One")).not.toBeNull();

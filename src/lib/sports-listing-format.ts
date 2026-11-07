@@ -2234,17 +2234,21 @@ export function isClubChannelGuide(guideTitle: string | null | undefined): boole
 
 /** "Dundee United v Rangers" → ["Dundee United", "Rangers"]. */
 export function fixtureTeams(title: string): string[] {
-  return title.split(/\s+(?:v|vs|vs\.|v\.|versus|@)\s+|\s+[-–—]\s+/i).map((t) => t.trim()).filter(Boolean).slice(0, 2);
+  const body = title.includes(":") ? title.slice(title.lastIndexOf(":") + 1) : title;
+  return body.split(/\s+(?:v|vs|vs\.|v\.|versus|@)\s+|\s+[-–—]\s+/i).map((t) => t.trim()).filter(Boolean).slice(0, 2);
 }
 
-/** Rename each fixture's channels to its club names for club-channel guides; null when unchanged. */
+/** Add club-feed names without discarding real TV broadcasters; null when unchanged. */
 export function clubChannelListingHtml(html: string | null | undefined, guideTitle: string | null | undefined): string | null {
   if (!html || !isClubChannelGuide(guideTitle) || /data-link-preview|<img|<iframe|<video|<table/i.test(html)) return null;
   const events = parseSportsListingBlock(html);
   if (!events.length) return null;
   const renamed = events.map((e) => {
     const teams = fixtureTeams(e.title);
-    return teams.length === 2 ? { ...e, channels: teams } : e;
+    if (teams.length !== 2) return e;
+    const channels = e.channels.filter((c) => !/^under team channels$/i.test(c) && !(c.includes(":") && teams.some((t) => t.toLowerCase() === c.slice(c.lastIndexOf(":") + 1).trim().toLowerCase())));
+    for (const team of teams) if (!channels.some((c) => c.toLowerCase() === team.toLowerCase())) channels.push(team);
+    return { ...e, channels };
   });
   const out = plainListingToHtml(formatSportsListingEvents(sortSportsListingEvents(renamed), { channels: [] }));
   return out === html ? null : out;

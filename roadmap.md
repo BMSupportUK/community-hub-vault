@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Preserve TV broadcaster names alongside Scottish club feeds; fix real Aberdeen/Hibernian listing carrying competition text in the channel name. Focused tests pass; website publish and real-player check required.
 - [x] Repair EPL UK/UK clock typo swallowing the final fixture; today's actual queued post split into 12 saved cards (3 per fixture), confirmed after reload; 47 focused checks pass. Website publication needed for future posts on the published site.
 - [x] New Sports Guide layout (day pills, website Category › sub-category pop-up, game cards, channels panel grouped Channels / Sports passes / Club channels) on Android 3.60 (built, signed, 85 checks pass) and the shared Windows/Mac screen (checked with real guides). Not released; Android screen not seen on a real device; needs website publish.
 - [ ] Release Android 3.60, Windows 0.4.23 and Mac 0.1.36 with the new Sports Guide (waiting for user go-ahead)
