@@ -5713,6 +5713,42 @@ export type Database = {
         }
         Relationships: []
       }
+      player_channel_health: {
+        Row: {
+          channel_key: string
+          channel_name: string
+          last_checked_at: string | null
+          last_ok_at: string | null
+          last_problem_at: string | null
+          problem: string | null
+          problem_source: string | null
+          reporters: number
+          updated_at: string
+        }
+        Insert: {
+          channel_key: string
+          channel_name: string
+          last_checked_at?: string | null
+          last_ok_at?: string | null
+          last_problem_at?: string | null
+          problem?: string | null
+          problem_source?: string | null
+          reporters?: number
+          updated_at?: string
+        }
+        Update: {
+          channel_key?: string
+          channel_name?: string
+          last_checked_at?: string | null
+          last_ok_at?: string | null
+          last_problem_at?: string | null
+          problem?: string | null
+          problem_source?: string | null
+          reporters?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_connection_log: {
         Row: {
           app_version: string | null
