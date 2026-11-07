@@ -79,6 +79,10 @@ export function playerSportsEvents(
       const sourceChannels = [...e.channels.filter((c) => !clubGuide || !/^under team channels$/i.test(c))];
       if (clubGuide) {
         const teams = clubNames(cardTitle(e.title));
+        for (let i = sourceChannels.length - 1; i >= 0; i--) {
+          const c = sourceChannels[i];
+          if (c.includes(":") && teams.some((t) => t.toLowerCase() === c.slice(c.lastIndexOf(":") + 1).trim().toLowerCase())) sourceChannels.splice(i, 1);
+        }
         if (teams.length === 2) for (const team of teams) if (!sourceChannels.some((c) => c.toLowerCase() === team.toLowerCase())) sourceChannels.push(team);
       }
       const channels = sourceChannels
