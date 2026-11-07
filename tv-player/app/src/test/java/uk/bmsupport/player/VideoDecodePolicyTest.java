@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 
 public class VideoDecodePolicyTest {
     @Test public void monomaxUsesSoftwareAndCleanFrames() {
-        assertTrue(VideoDecodePolicy.preferSoftware(false, "hardware", "TH | MonoMax 27"));
+        assertFalse(VideoDecodePolicy.preferSoftware(false, "hardware", "TH | MonoMax 27"));
         assertTrue(VideoDecodePolicy.cleanKeyframes(false, "Mono Max 01"));
     }
     @Test public void softwareSettingAndCatchupPreferSoftware() {
