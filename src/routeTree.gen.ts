@@ -189,6 +189,7 @@ import { Route as ApiPublicHooksBoroMatchThreadRouteImport } from './routes/api/
 import { Route as ApiPublicHooksBoroPredictionRemindersRouteImport } from './routes/api/public/hooks/boro-prediction-reminders'
 import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/api/public/hooks/boro-predictor-invite'
 import { Route as ApiPublicHooksBoroTeamSheetRouteImport } from './routes/api/public/hooks/boro-team-sheet'
+import { Route as ApiPublicHooksChannelCheckRouteImport } from './routes/api/public/hooks/channel-check'
 import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/api/public/hooks/device-release-watch'
 import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
 import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
@@ -1249,6 +1250,12 @@ const ApiPublicHooksBoroTeamSheetRoute =
     path: '/api/public/hooks/boro-team-sheet',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksChannelCheckRoute =
+  ApiPublicHooksChannelCheckRouteImport.update({
+    id: '/api/public/hooks/channel-check',
+    path: '/api/public/hooks/channel-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDeviceReleaseWatchRoute =
   ApiPublicHooksDeviceReleaseWatchRouteImport.update({
     id: '/api/public/hooks/device-release-watch',
@@ -1639,6 +1646,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
+  '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -1852,6 +1860,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
+  '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -2071,6 +2080,7 @@ export interface FileRoutesById {
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
+  '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -2289,6 +2299,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/boro-team-sheet'
+    | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -2502,6 +2513,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/boro-team-sheet'
+    | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -2720,6 +2732,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/boro-team-sheet'
+    | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -2835,6 +2848,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBoroPredictionRemindersRoute: typeof ApiPublicHooksBoroPredictionRemindersRoute
   ApiPublicHooksBoroPredictorInviteRoute: typeof ApiPublicHooksBoroPredictorInviteRoute
   ApiPublicHooksBoroTeamSheetRoute: typeof ApiPublicHooksBoroTeamSheetRoute
+  ApiPublicHooksChannelCheckRoute: typeof ApiPublicHooksChannelCheckRoute
   ApiPublicHooksDeviceReleaseWatchRoute: typeof ApiPublicHooksDeviceReleaseWatchRoute
   ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksFantasySquadSyncRoute: typeof ApiPublicHooksFantasySquadSyncRoute
@@ -4127,6 +4141,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBoroTeamSheetRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/channel-check': {
+      id: '/api/public/hooks/channel-check'
+      path: '/api/public/hooks/channel-check'
+      fullPath: '/api/public/hooks/channel-check'
+      preLoaderRoute: typeof ApiPublicHooksChannelCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/device-release-watch': {
       id: '/api/public/hooks/device-release-watch'
       path: '/api/public/hooks/device-release-watch'
@@ -4858,6 +4879,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBoroPredictorInviteRoute:
     ApiPublicHooksBoroPredictorInviteRoute,
   ApiPublicHooksBoroTeamSheetRoute: ApiPublicHooksBoroTeamSheetRoute,
+  ApiPublicHooksChannelCheckRoute: ApiPublicHooksChannelCheckRoute,
   ApiPublicHooksDeviceReleaseWatchRoute: ApiPublicHooksDeviceReleaseWatchRoute,
   ApiPublicHooksFantasySquadRemindersRoute:
     ApiPublicHooksFantasySquadRemindersRoute,
