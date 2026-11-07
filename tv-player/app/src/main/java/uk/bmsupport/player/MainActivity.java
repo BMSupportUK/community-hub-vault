@@ -4069,6 +4069,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onResume() {
+        PreviewHandoff.drop(); // a hand-off nobody claimed must not keep the decoder or provider connection
         resetShiftAfterClockChange();
         super.onResume();
         // Only clear when nothing in this screen is still playing (a running preview keeps counting).
