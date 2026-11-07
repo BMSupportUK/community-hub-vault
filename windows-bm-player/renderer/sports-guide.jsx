@@ -10,7 +10,7 @@ export function inCategory(e,sport,sub,guide){return !sport||(e.sport===sport&&(
 /** Default category: the website's first one (Daily Sports) and its first sub-category. */
 export function defaultCategory(sports){const c=(sports&&sports.categories||[])[0];return c?{sport:c.name,sub:(c.subs||[])[0]||null,guide:null}:{sport:null,sub:null,guide:null};}
 const lower=s=>String(s||'').toLowerCase();
-const FILLER=new Set(['v','vs','versus','and','the','fc','afc','match','game','on','watch','show','me','find','play','a','for','please']);
+const FILLER=new Set(['v','vs','versus','and','the','fc','afc','match','game','on','watch','show','me','find','play','a','for','please','tonight','today','now','live','is','it','what','where','channel','channels','sports','sport','guide']);
 const words=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').filter(Boolean);
 /** Spoken or typed search, like Android: every word must start a word in the event text; 3+ words may miss one. "Moto GP" also finds "MotoGP". */
 export function matchesSearch(e,query){
