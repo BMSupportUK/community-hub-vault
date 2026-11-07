@@ -1716,6 +1716,7 @@ public class MainActivity extends Activity {
                 .putExtra("content_kind", it.kind).putExtra("content_id", it.id).putExtra("content_name", it.name)
                 .putExtra("report_kind", savedKind(it)).putExtra("report_category", categoryName(it))
                 .putExtra("report_device", deviceLabel()).putExtra("report_version", appVersion());
+        if ("live".equals(it.kind)) intent.putExtra("urls", streamUrls(it));
         if ("live".equals(it.kind) && liveChannels != null && StreamRecovery.isHdName(it.name)) {
             for (Item o : liveChannels) {
                 if (o != it && !o.id.equals(it.id) && o.norm().equals(it.norm()) && !StreamRecovery.isHdName(o.name)) {

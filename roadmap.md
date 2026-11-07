@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Repair Android fullscreen live launch dropping Auto stream alternatives; all 103 native tests pass (four actual launch regressions). Not released; Fire TV playback verification blocked by no attached device.
 - [x] Release permanently signed Android 3.68 (179) with MonoMax decoding and desktop-equivalent Sports Guide voice matching; 99 native tests pass, live update reports 3.68 and served APK matches byte-for-byte. Actual picture/voice needs a real device check.
 - [x] Android 3.68 MonoMax software-first/clean-keyframe handling in full-screen and preview plus embedded backup released; unrelated UHD channels retain hardware defaults.
 - [x] Repair HBO Max suffix/AFLW/Supercars/on-board event identities; real saved examples merge into main cards with HBO channels. 81 focused checks pass; website publication and native playback unverified.
