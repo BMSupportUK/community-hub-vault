@@ -1,5 +1,5 @@
 import { CustomerNumberBadge } from "@/components/app/CustomerNumber";
-import { ClientOnly, Navigate } from "@tanstack/react-router";
+import { ClientOnly, Link, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CUSTOMER_LIST_CHANGED, subscribeCustomerListRefresh } from "@/lib/customer-list-refresh";
@@ -21,6 +21,7 @@ import {
   Check,
   KeyRound,
   Ban,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -374,6 +375,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     if (!row) return null;
     const banned = row.roles.includes("banned");
     return <>
+      {hasAny(["admin"]) && <Button asChild variant="ghost" size="icon" className="size-6" title="Connection log"><Link to="/admin-customer-connections" search={{ customer: row.id }} aria-label={`Connection log for ${row.username || row.display_name || "customer"}`}><History className="size-4" /></Link></Button>}
       <MemberScreenShareButton name={row.username || row.display_name || "Member"} disabled={share !== null}
         onPaired={(live, name) => setShare({ live, name })} />
       <Button variant="ghost" size="icon" className="size-6" title="View location history" aria-label={`View location history for ${row.username || row.display_name}`} onClick={() => setHistoryFor(row)}><MapPin className="size-4" /></Button>
@@ -431,7 +433,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
     })}</div>;
   };
   return <>
-    {children({ staffCount: staffRows.length, staffList, toolbar: <><AddUserButton onCreated={() => window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED))} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras, header: memberHeader, rolesRow: memberRoles })}
+    {children({ staffCount: staffRows.length, staffList, toolbar: <>{hasAny(["admin"]) && <Button asChild variant="outline" size="icon" title="Connection logs"><Link to="/admin-customer-connections" aria-label="Connection logs"><History className="size-4" /></Link></Button>}<AddUserButton onCreated={() => window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED))} /><Button variant="outline" size="sm" onClick={() => setTab("roles")}><Tags className="size-4" />Manage roles</Button></>, details: memberDetails, editor: memberEditor, extras: memberExtras, header: memberHeader, rolesRow: memberRoles })}
     <Dialog open={!!staffEditingRow && hasAny(["admin"])} onOpenChange={(open) => { if (!open) setStaffEditingId(null); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto"><DialogHeader><DialogTitle>Edit staff details · {staffEditingRow?.username || "Staff"}</DialogTitle></DialogHeader>{staffEditingRow && memberEditor(staffEditingRow.id)}</DialogContent></Dialog>
     <Dialog open={tab === "roles"} onOpenChange={(open) => { if (!open) setTab("members"); }}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Manage roles</DialogTitle></DialogHeader><RolesManager defs={roleDefs} onChange={() => void loadAll()} /></DialogContent></Dialog>
     <Dialog open={!!addRoleRow} onOpenChange={(open) => { if (!open) setAddRolesFor(null); }}><DialogContent><DialogHeader><DialogTitle>Add role · {addRoleRow?.username || addRoleRow?.display_name}</DialogTitle></DialogHeader><div className="flex flex-wrap gap-2">{addRoleRow && activeRoles.filter((rd) => !addRoleRow.roles.includes(rd.name)).map((rd) => <Button key={rd.name} variant="outline" size="sm" disabled={saving !== null} onClick={() => void toggleRole(addRoleRow, rd.name)}>{displayRoleLabel(rd.name, rd.label)}</Button>)}</div></DialogContent></Dialog>
