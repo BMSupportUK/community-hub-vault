@@ -810,6 +810,21 @@ public class MainActivity extends Activity {
 
     private androidx.media3.exoplayer.ExoPlayer preview;
     private Runnable previewTask;
+    private androidx.media3.ui.PlayerView previewView;
+    private androidx.media3.common.Player.Listener previewListener, previewFallback;
+
+    /** Hands the playing preview to full screen (no reconnect); false when it can't be carried over. */
+    private boolean carryPreview(Item it) {
+        boolean ready = preview != null && preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY;
+        if (!PreviewHandoff.canCarry(it.kind, previewItem == null ? null : previewItem.id, it.id, ready)) return false;
+        androidx.media3.exoplayer.ExoPlayer p = preview;
+        if (previewListener != null) p.removeListener(previewListener);
+        if (previewFallback != null) p.removeListener(previewFallback);
+        if (previewView != null) previewView.setPlayer(null);
+        preview = null; previewListener = null; previewFallback = null;
+        PreviewHandoff.offer(p, it.id);
+        return true;
+    }
 
     private void stopPreview() {
         if (previewTask != null) ui.removeCallbacks(previewTask);
@@ -862,8 +877,7 @@ public class MainActivity extends Activity {
         previewLastTap = 0;
         Item cur = previewItem;
         if (cur == null) { Toast.makeText(this, "Highlight a channel first", Toast.LENGTH_SHORT).show(); return; }
-        stopPreview();
-        play(cur, defaultVlc());
+        play(cur, defaultVlc()); // full screen carries the playing preview over
     }
 
 
@@ -874,8 +888,9 @@ public class MainActivity extends Activity {
         status.setText("Loading preview…");
         previewTask = () -> {
             preview = PlayerActivity.build(this, false, it.name);
+            previewView = view;
             view.setPlayer(preview);
-            preview.addListener(new androidx.media3.common.Player.Listener() {
+            preview.addListener(previewListener = new androidx.media3.common.Player.Listener() {
                 @Override public void onPlaybackStateChanged(int s) {
                     if (s == androidx.media3.common.Player.STATE_READY) {
                         status.setText("Press OK twice for full screen");
@@ -887,7 +902,7 @@ public class MainActivity extends Activity {
                     }
                 }
             });
-            PlayerActivity.playWithFallback(preview, streamUrls(it),
+            previewFallback = PlayerActivity.playWithFallback(preview, streamUrls(it),
                     () -> status.setText("Preview unavailable – press OK to play full screen"));
         };
         ui.postDelayed(previewTask, 700);
@@ -1737,6 +1752,8 @@ public class MainActivity extends Activity {
         }
         // Free the preview's decoder and provider connection before the full-screen player opens:
         // UHD channels need the device's only 4K decoder, and a still-held preview makes full screen fail.
+        // The playing preview of this same channel goes full screen as it is: no reconnect, no second load.
+        if (carryPreview(it)) { intent.putExtra("carried", true); stopPreview(); stopMulti(); startActivity(intent); return; }
         boolean hadPreview = preview != null;
         stopPreview(); stopMulti();
         if (hadPreview) ui.postDelayed(() -> startActivity(intent), 600); else startActivity(intent);

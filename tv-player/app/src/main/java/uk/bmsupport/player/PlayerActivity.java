@@ -144,18 +144,20 @@ public class PlayerActivity extends Activity {
     }
 
     /** Plays urls[0], moving to the next address whenever one fails. */
-    static void playWithFallback(ExoPlayer p, String[] urls, Runnable allFailed) {
+    static Player.Listener playWithFallback(ExoPlayer p, String[] urls, Runnable allFailed) {
         final int[] at = {0};
-        p.addListener(new Player.Listener() {
+        Player.Listener l = new Player.Listener() {
             @Override public void onPlayerError(PlaybackException e) {
                 if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { p.seekToDefaultPosition(); p.prepare(); return; }
                 if (++at[0] < urls.length) { p.setMediaItem(item(urls[at[0]])); p.prepare(); p.play(); }
                 else if (allFailed != null) allFailed.run();
             }
-        });
+        };
+        p.addListener(l);
         p.setMediaItem(item(urls[0]));
         p.setPlayWhenReady(true);
         p.prepare();
+        return l;
     }
 
     // ---------- catch up: reconnect when the provider closes the recording early ----------
@@ -311,7 +313,10 @@ public class PlayerActivity extends Activity {
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
 
-        player = build(this, getIntent().hasExtra("catchup_prefix"), getIntent().getStringExtra("content_name"));
+        // Live channel opened from its playing preview: keep that stream instead of reconnecting.
+        carried = getIntent().getBooleanExtra("carried", false) && !getIntent().hasExtra("catchup_prefix")
+                ? PreviewHandoff.take(getIntent().getStringExtra("content_id")) : null;
+        player = carried != null ? carried : build(this, getIntent().hasExtra("catchup_prefix"), getIntent().getStringExtra("content_name"));
         final int subs = getIntent().getIntExtra("subtitles", -1);
         if (subs == 0 || subs == 1) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, subs == 0)
@@ -411,6 +416,7 @@ public class PlayerActivity extends Activity {
     private long stallStartedAt, lastStableAt, lastPosition;
     private final long[] stallTimes = new long[16]; private int stallCount;
     private boolean everReady, capped, sdOffered;
+    private ExoPlayer carried;
     private long formatChangedAt = -100000;
     private boolean stallAdvert;
     private final Runnable advertJump = () -> {
@@ -487,7 +493,15 @@ public class PlayerActivity extends Activity {
                 reconnect();
             }
         });
-        open(0);
+        if (carried != null && player.getPlaybackState() != Player.STATE_IDLE) {
+            // Already playing from the preview: pick up where it is and arm the usual health checks.
+            urlAt = PreviewHandoff.urlIndex(player, urls);
+            player.setPlayWhenReady(true);
+            if (player.getPlaybackState() == Player.STATE_READY) {
+                everReady = true; lastStableAt = android.os.SystemClock.elapsedRealtime();
+                if ("live".equals(kind())) { ui.postDelayed(cleanPlay, ChannelHealth.CLEAN_MS); blackArmed = true; ui.postDelayed(blackCheck, ChannelHealth.BLACK_MS); }
+            }
+        } else open(0);
         ui.postDelayed(qualityRaise, StreamRecovery.STABLE_RAISE_MS);
         ui.postDelayed(antiFreeze, 1000);
     }
