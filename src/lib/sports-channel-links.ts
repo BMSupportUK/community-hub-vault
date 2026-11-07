@@ -4,7 +4,7 @@
  * naming styles never need an app release. `country` is enforced by the apps
  * (via each event's `channelCountry`) and by testChannelLinks below.
  */
-import { matchChannel, type ChannelAlias } from "./player-channel-match";
+import { matchChannel, normChannel, type ChannelAlias } from "./player-channel-match";
 
 export type ChannelLinks = {
   /** Guide says "Channel 07" → the playlist channel whose name starts "07 |". */
@@ -67,12 +67,25 @@ export function testChannelLinks(guideChannels: string[], playlist: string[], li
 export function resolveInCategory(channel: string, list: string[], links: ChannelLinks, aliases: ChannelAlias[] = []): string | null {
   if (!list.length) return null;
   const rewritten = applyChannelLinks(channel, links);
-  const found = matchChannel(rewritten, list, aliases);
+  const allowed = list.filter((p) => channelInCountry(p, links.country));
+  const found = matchChannel(rewritten, allowed, aliases);
   if (found.length) return found[0];
-  const m = /(\d{1,4})\s*$/.exec(channel.trim()) ?? /(\d{1,4})/.exec(channel);
-  if (!m) return list.length === 1 ? list[0] : null;
+  const m = /(?:^|\s)(\d{1,4})\s*$/.exec(rewritten);
+  if (!m) return allowed.length === 1 ? allowed[0] : null;
   const n = Number(m[1]);
-  const nums = (name: string) => (name.match(/\d+/g) ?? []).map(Number);
-  // Prefer a name whose last number is n, then one that leads with n ("03 | ...").
-  return list.find((p) => nums(p).at(-1) === n) ?? list.find((p) => nums(p)[0] === n) ?? null;
+  // Only the feed label before | supplies its number, never a programme's
+  // year, episode, start time or 4K suffix. Mixed categories need brand parity.
+  const label = (name: string) => name.split("|").find((part) => /(?:^|\s)\d{1,4}(?:\s|$)/.test(part.trim()))?.trim() ?? name.split("|")[0].trim();
+  const family = (name: string) => normChannel(name.replace(/(?:^|\s)\d{1,4}(?=\s|$)/g, " "))
+    .replace(/\b(?:event|match)\b/g, "").replace(/\s+/g, "").replace(/tv$/, "");
+  const wantedFamily = family(rewritten);
+  const candidates = allowed.filter((p) => {
+    const number = /(?:^|\s)(\d{1,4})(?:\s|$)/.exec(label(p));
+    return number != null && Number(number[1]) === n;
+  });
+  const sameFamily = candidates.filter((p) => family(label(p)) === wantedFamily);
+  if (sameFamily.length) return sameFamily[0];
+  // Renamed single-brand categories (e.g. Cymru) can still resolve by number;
+  // conflicting brands with the same number are never guessed.
+  return candidates.length === 1 ? candidates[0] : null;
 }

@@ -4,6 +4,30 @@ import { playerSportsEvents } from "../src/lib/player-sports";
 
 const cymru = ["UK | Cymru Football event 1", "UK | Cymru Football event 3", "UK | Cymru Football event 8"];
 
+const trillerCategory = ["UK | UFC TV HD", "UFC 01 | UFC Fight Night", "UFC 04 | ", "TrillerTv (24/7)", "TrillerTv 01 | ", "TrillerTv 04 | "];
+
+test("Triller uses its own numbered feed rather than UFC in their shared category", () => {
+  expect(resolveInCategory("Triller TV 1", trillerCategory, {})).toBe("TrillerTv 01 | ");
+  expect(resolveInCategory("Triller TV 4", trillerCategory, {})).toBe("TrillerTv 04 | ");
+});
+
+test("programme numbers and 4K never override the numbered channel label", () => {
+  expect(resolveInCategory("Triller TV 4", ["01 | Boxing Show 4", "02 | Boxing 4K", "04 | Main Card HD"], {})).toBe("04 | Main Card HD");
+});
+
+test("category number fallback honours the administrator's replacement", () => {
+  expect(resolveInCategory("Triller TV 4", ["05 | Main Card HD", "04 | Undercard HD"], { replace: [{ from: "4", to: "5" }] })).toBe("05 | Main Card HD");
+});
+
+test("unknown brands do not guess between conflicting same-number feeds", () => {
+  expect(resolveInCategory("Other TV 1", trillerCategory, {})).toBeNull();
+});
+
+test("Triller fixtures reach the player with exact playlist names", () => {
+  const events = playerSportsEvents([{ title: "Triller TV", category: "Sports Passes", links: { category: "VIP | UFC & Triller Tv" }, body: "Saturday, 7th November\n11:00 GMT\nSuea Games v Satangthong\nTriller TV 1\n16:00 GMT\nMemphis Wrestling\nTriller TV 4" }], Date.UTC(2026, 10, 7, 10, 37), new Map([["vip | ufc & triller tv", trillerCategory]]));
+  expect(events.map((e) => e.channels)).toEqual([["TrillerTv 01 | "], ["TrillerTv 04 | "]]);
+});
+
 test("guide channel links to the same-numbered channel in the chosen category", () => {
   expect(resolveInCategory("CYMRU FOOTBALL 3", cymru, {})).toBe("UK | Cymru Football event 3");
   expect(resolveInCategory("CYMRU FOOTBALL 8", cymru, {})).toBe("UK | Cymru Football event 8");
