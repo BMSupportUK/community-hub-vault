@@ -3838,7 +3838,8 @@ public class MainActivity extends Activity {
         if (sportsList == null) return;
         sportsData = r;
         defaultSportsCategory(r);
-        sportsVersion = r.optString("version");
+        JSONArray downNow = r.optJSONArray("unavailable");
+        sportsVersion = r.optString("version") + "|" + (downNow == null ? "" : downNow.toString());
         List<String[]> aliases = new ArrayList<>();
         JSONArray al = r.optJSONArray("aliases");
         if (al != null) for (int i = 0; i < al.length(); i++) { JSONObject o = al.optJSONObject(i); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
