@@ -103,48 +103,9 @@ export function PlayerAnnouncementsCard({ onBack }: { onBack: () => void }) {
         <p className="text-sm text-muted-foreground">
           One-off bottom-screen announcements. Sending a new one replaces the current one.
         </p>
-        <div className="space-y-2">
-          <p id="announcement-recipient-label" className="text-sm font-medium">Send to</p>
-          <div className="flex flex-wrap gap-2">
-            <Button variant={targetUserId === null ? "default" : "outline"} disabled={busy} onClick={() => setTargetUserId(null)}>Everyone</Button>
-            <Button variant={targetUserId ? "default" : "outline"} disabled={busy || loadingUsers} onClick={() => setPickerOpen(true)} aria-labelledby="announcement-recipient-label">
-              <Users className="size-4" /> {targetUserId ? recipientName(targetUserId) : "Choose an online user…"}
-            </Button>
-          </div>
-          <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-            <DialogContent className="max-h-[85dvh] flex flex-col">
-              <DialogHeader>
-                <DialogTitle>Online BM Player users</DialogTitle>
-                <DialogDescription>Only users with a BM Player open right now are listed.</DialogDescription>
-              </DialogHeader>
-              <Command className="min-h-0 flex-1">
-                <CommandInput placeholder="Search online users…" />
-                <CommandList className="max-h-[50dvh]">
-                  <CommandEmpty>{online === null ? "Loading…" : "No users online right now."}</CommandEmpty>
-                  {(online ?? []).map(r => <CommandItem key={r.id} value={`${r.username ?? ""} ${r.display_name ?? ""} ${r.id}`} onSelect={() => { setPickerOpen(false); setTimeout(() => setPending(r), 150); }}>
-                    <span className="size-2 rounded-full bg-primary shrink-0" />
-                    <span className="min-w-0 break-words">{r.username || r.display_name || "Unnamed user"}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{r.devices} device{r.devices === 1 ? "" : "s"}</span>
-                  </CommandItem>)}
-                </CommandList>
-              </Command>
-            </DialogContent>
-          </Dialog>
-          <AlertDialog open={!!pending} onOpenChange={(o) => { if (!o) setPending(null); }}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Send to this user?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Is <strong>{pending?.username || pending?.display_name || "this user"}</strong> the user you want to send the announcement to?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>No, go back</AlertDialogCancel>
-                <AlertDialogAction onClick={() => { if (pending) setTargetUserId(pending.id); setPending(null); }}>Yes, that's them</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Goes to every BM Player that is online right now. To message one device, use the message icon in Live connections.
+        </p>
         <Textarea value={text} maxLength={MAX} rows={3} placeholder="e.g. Some channels are down tonight — we're working on it."
           onChange={(e) => setText(e.target.value)} />
         <div className="flex items-center justify-between gap-3">
