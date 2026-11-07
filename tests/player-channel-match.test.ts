@@ -2,6 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { matchChannel, normChannel } from "../src/lib/player-channel-match";
 
 describe("player channel matching", () => {
+  test("Boxing keeps the numbered feed when cached programme names are old replays", () => {
+    expect(matchChannel("Boxing 02 | Buatsi vs. Hutchinson 2 19:00", ["Boxing 01 | Replay Buatsi vs. Hutchinson 2", "Boxing 02 | Old event replay", "Boxing 12 | Buatsi vs. Hutchinson 2 19:00"])).toEqual(["Boxing 02 | Old event replay"]);
+  });
   test("Coupang Play guide matches shortened Coupang playlist feeds", () => {
     expect(matchChannel("Coupang Play 1", ["Coupang 01 HD", "Coupang 2 HD", "Coupang 10 HD"]))
       .toEqual(["Coupang 01 HD"]);
