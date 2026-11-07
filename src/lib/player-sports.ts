@@ -192,13 +192,26 @@ export function playerSportsEvents(
       if (!existing) out.push(ev);
     }
   }
-  return out
-    .map(({ pass: _p, mainSet: _m, seriesKey: _k, ...ev }) => ({ ...ev, end: ev.start + typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`), endSource: "estimate" as const }))
-    .filter((ev) => ev.end + FINISHED_KEEP_MS > nowMs)
+  return capPrelims(out
+    .map(({ pass: _p, mainSet: _m, seriesKey: _k, ...ev }) => ({ ...ev, end: ev.start + (isPrelim(ev.title) ? PRELIM_MS : typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`)), endSource: "estimate" as const })))
+    .filter((ev) => ev.end! + FINISHED_KEEP_MS > nowMs)
     .sort((a, b) => a.start - b.start).slice(0, 400);
 }
 
 const H = 3600_000;
+/** Fight-card prelims/undercards ("Buatsi v Hutchinson 2: Prelims", "UFC …: … Preliminary"). */
+export const isPrelim = (title: string) => /\b(?:prelims?|preliminary|preliminaries|undercard)\b/i.test(title);
+const PRELIM_MS = 3 * H;
+/** Prelims finish when their main card starts (or 3h without one), so their card shows Finished on time. */
+export function capPrelims<T extends PlayerSportsEvent>(events: T[]): T[] {
+  return events.map((ev) => {
+    if (!isPrelim(ev.title)) return ev;
+    const main = events.find((m) => m !== ev && !isPrelim(m.title) && m.start > ev.start && m.start - ev.start <= 6 * H
+      && (sameFixture(ev.title, m.title) || (seriesKey(ev.title) != null && seriesKey(ev.title) === seriesKey(m.title))));
+    const cap = main ? main.start : ev.start + PRELIM_MS;
+    return ev.end == null || ev.end > cap ? { ...ev, end: cap } : ev;
+  });
+}
 /** Standard length of a game when no TV guide entry says when it ends. */
 export function typicalLengthMs(text: string): number {
   const t = text.toLowerCase();
@@ -215,13 +228,13 @@ export function typicalLengthMs(text: string): number {
 
 /** Overwrite estimates with real TV-guide end times (keyed by channel name, lower-cased) and drop long-finished games. */
 export function applyGuideEnds(events: PlayerSportsEvent[], ends: Map<string, { start: number; end: number }[]>, nowMs = Date.now()): PlayerSportsEvent[] {
-  return events.map((ev) => {
+  return capPrelims(events.map((ev) => {
     for (const c of ev.channels) {
       const hit = ends.get(c.toLowerCase())?.find((p) => p.start <= ev.start + 30 * 60_000 && p.end > ev.start + 30 * 60_000);
       if (hit) return { ...ev, end: hit.end, endSource: "epg" as const };
     }
     return ev;
-  }).filter((ev) => (ev.end ?? Infinity) + FINISHED_KEEP_MS > nowMs);
+  })).filter((ev) => (ev.end ?? Infinity) + FINISHED_KEEP_MS > nowMs);
 }
 
 /** "live" between start and end, "finished" after end, otherwise "upcoming". */
