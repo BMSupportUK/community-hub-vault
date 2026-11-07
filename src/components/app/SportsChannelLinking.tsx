@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
-import { readChannelLinks, resolveInCategory, testChannelLinks, type ChannelLinks } from "@/lib/sports-channel-links";
+import { readChannelLinks, readReplaceRows, resolveInCategory, testChannelLinks, type ChannelLinks } from "@/lib/sports-channel-links";
 
 const field = "bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50";
 
@@ -20,7 +20,9 @@ export function SportsChannelLinking({ value, body, onChange }: { value: unknown
     for (const e of parseSportsListingBlock(body ?? "")) for (const c of e.channels) if (c.trim()) set.add(c.trim());
     return [...set].slice(0, 60);
   }, [body]);
-  const replace = links.replace ?? [];
+  // Rows come from the raw value, not the sanitised links, so a half-typed swap
+  // (empty "from", trailing spaces) isn't swallowed between keystrokes.
+  const replace = readReplaceRows(value);
   const loadCats = useServerFn(listPlaylistCategories);
   const loadChans = useServerFn(listPlaylistCategoryChannels);
   const [cats, setCats] = useState<string[] | null>(null);
