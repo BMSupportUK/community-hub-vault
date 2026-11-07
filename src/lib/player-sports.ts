@@ -53,6 +53,36 @@ export function sameFixture(x: string, y: string): boolean {
   return sameTeam(fx[0], fy[0]) && sameTeam(fx[1], fy[1]);
 }
 
+/**
+ * Shows without a "Home v Away" pair (fight cards, race sessions) are named differently
+ * by every guide. Key them by series + event/session so they share one card:
+ * "BKFC 96: Cooke v Weir" = "BKFC 96 Glasgow: Prelims"; "Qatar : Moto GP Sprint" =
+ * "MotoGP: Round 20: Qatar Sprint Race"; "Sao Paulo : Practice 3" (F1 guide) = "São Paulo Grand Prix Practice 3".
+ * Returns "series|session"; an empty session means the guide gave no session (matches any of that series).
+ */
+export function seriesKey(title: string, context = ""): string | null {
+  const t = title.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const c = context.toLowerCase();
+  const fight = /\b(bkfc|ufc|pfl|cage warriors|oktagon)\s*(?:fight night\s*)?(\d+)\b/.exec(t);
+  if (fight) return `${fight[1]}|${fight[2]}`;
+  let series: string | null = null;
+  if (/moto\s?gp/.test(t) || (/moto\s?gp/.test(c) && !/\bf1\b|formula/.test(t))) series = "motogp";
+  else if (/\bf1\b|formula 1|formula one|grand prix/.test(t) || /\bf1\b|formula 1|formula one/.test(c)) series = "f1";
+  if (!series) return null;
+  if (/formula\s*\d\s*,/.test(t)) return null; // "Formula 3,2,1" magazine show
+  const p = /(?:practice|fp)\s*(\d)/.exec(t);
+  const session = p ? `p${p[1]}` : /sprint\s*(?:shoot|qual)/.test(t) ? "sprintq" : /sprint/.test(t) ? "sprint"
+    : /qual/.test(t) ? "qual" : /\brace\b|grand prix$/.test(t.trim()) ? "race" : "";
+  return `${series}|${session}`;
+}
+
+function sameSeriesEvent(a: string | null, b: string | null): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const [sa, xa] = a.split("|"), [sb, xb] = b.split("|");
+  return sa === sb && (sa === "motogp" || sa === "f1") && (!xa || !xb);
+}
+
 const isPassGuide = (g: { title: string; category: string | null; parent?: string | null }) =>
   [g.parent, g.category, g.title].some((s) => /sports?\s*pass/i.test(s ?? ""));
 
@@ -63,7 +93,7 @@ export function playerSportsEvents(
   /** Playlist channel names per lower-cased category name, for guides linked to a category. */
   categoryChannels?: Map<string, string[]>,
 ): PlayerSportsEvent[] {
-  type Card = PlayerSportsEvent & { pass: boolean; mainSet: Set<string> };
+  type Card = PlayerSportsEvent & { pass: boolean; mainSet: Set<string>; seriesKey: string | null };
   const out: Card[] = [];
   for (const g of guides) {
     const pass = isPassGuide(g);
@@ -89,10 +119,12 @@ export function playerSportsEvents(
         .map((c) => (catList?.length ? resolveInCategory(c, catList, links) ?? applyChannelLinks(c, links) : applyChannelLinks(c, links)))
         .filter(Boolean);
       const ev: Card = { sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: cardTitle(e.title), date: e.date, time: e.time, start,
-        channels: [], passChannels: [], pass, mainSet: new Set() };
+        channels: [], passChannels: [], pass, mainSet: new Set(), seriesKey: null };
       // One card per game: every guide listing the same game adds its channels to that card.
-      const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && sameFixture(c.title, e.title));
+      const key = seriesKey(e.title, `${g.title} ${g.category ?? ""} ${g.parent ?? ""}`);
+      const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && (sameFixture(c.title, e.title) || sameSeriesEvent(c.seriesKey, key)));
       const target = existing ?? ev;
+      const prevKey = existing?.seriesKey ?? null;
       if (!pass) for (const c of channels) target.mainSet.add(c.toLowerCase());
       // Club-feed guides (iFollow, Scottish) list the two clubs; apps then find each club's own channels.
       const club = clubGuide || !!target.teamChannels;
@@ -107,6 +139,8 @@ export function playerSportsEvents(
       target.channels = merged.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, MAX_CHANNELS);
       target.passChannels = target.channels.filter((c) => !target.mainSet.has(c.toLowerCase()));
       if (club) target.teamChannels = true;
+      // Keep the most specific session key ("motogp|sprint" over "motogp|").
+      target.seriesKey = prevKey && prevKey.split("|")[1] ? prevKey : key ?? prevKey;
       // Verified category membership supplies the country when the exact channel
       // name has no country tag. Unresolved names still need the app's country
       // filter, and tagged names retain it so US Paramount never selects AU.
@@ -123,7 +157,7 @@ export function playerSportsEvents(
     }
   }
   return out
-    .map(({ pass: _p, mainSet: _m, ...ev }) => ({ ...ev, end: ev.start + typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`), endSource: "estimate" as const }))
+    .map(({ pass: _p, mainSet: _m, seriesKey: _k, ...ev }) => ({ ...ev, end: ev.start + typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`), endSource: "estimate" as const }))
     .filter((ev) => ev.end + FINISHED_KEEP_MS > nowMs)
     .sort((a, b) => a.start - b.start).slice(0, 400);
 }

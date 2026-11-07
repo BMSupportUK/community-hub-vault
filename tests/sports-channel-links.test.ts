@@ -18,3 +18,20 @@ test("guide rules reach the app feed (rewritten channel + country)", () => {
   const ev = playerSportsEvents([{ title: "P", body, category: "X", links: { country: "US" } }], Date.parse("2026-11-06T12:00:00Z"));
   expect(ev[0].channelCountry).toEqual({ "Paramount+ 3": "US" });
 });
+
+import { seriesKey as _seriesKey, playerSportsEvents as _pse } from "../src/lib/player-sports";
+const _g = (title: string, body: string) => ({ title, category: null, body });
+test("BKFC fight cards with different headline bouts share one card", () => {
+  const now = Date.UTC(2026, 10, 7, 12);
+  const ev = _pse([
+    _g("Todays Live Events", "Saturday, 7th November\n\n19:00 GMT\nBKFC 96: Cooke v Weir\nChannel 19"),
+    _g("Triller TV", "Saturday, 7th November\n\n20:00 GMT\nBKFC 96 Glasgow: Sean Weir v Leigh Cohoon\nTriller TV 6"),
+  ], now).filter((e) => e.channels.includes("Triller TV 6"));
+  expect(ev.length).toBe(1);
+  expect(ev[0].channels.length).toBe(2);
+});
+test("MotoGP and F1 sessions key by series and session", () => {
+  expect(_seriesKey("Qatar : Moto GP Sprint")).toBe(_seriesKey("MotoGP: Round 20: Qatar Sprint Race"));
+  expect(_seriesKey("Sao Paulo : Practice 3", "F1")).toBe(_seriesKey("São Paulo Grand Prix Practice 3"));
+  expect(_seriesKey("Qatar : Moto GP Qualying")).not.toBe(_seriesKey("Qatar : Moto GP Sprint"));
+});
