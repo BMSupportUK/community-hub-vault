@@ -68,14 +68,26 @@ export function resolveInCategory(channel: string, list: string[], links: Channe
   if (!list.length) return null;
   const rewritten = applyChannelLinks(channel, links);
   const allowed = list.filter((p) => channelInCountry(p, links.country));
-  const found = matchChannel(rewritten, allowed, aliases);
-  if (found.length) return found[0];
-  const m = /(?:^|\s)(\d{1,4})\s*$/.exec(rewritten);
+  // Provider display typography is not identity: DAZN uses modifier letters
+  // and a superscript brand marker before its real two-digit feed number.
+  // Keep original names in responses so existing apps match their playlists.
+  const canonical = (name: string) => name.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  const label = (name: string) => {
+    const parts = canonical(name).replace(/\([^)]*\)/g, "").split("|");
+    const index = parts.findIndex((part) => /(?:^|\s)\d{1,4}(?:\s|$)/.test(part.trim()));
+    return (index >= 0 ? parts.slice(0, index + 1).join(" ") : parts[0]).trim();
+  };
+  const labels = allowed.map(label);
+  const labelMatch = matchChannel(canonical(rewritten), labels, aliases);
+  if (labelMatch.length) return allowed[labels.indexOf(labelMatch[0])];
+  const normalized = allowed.map(canonical);
+  const found = matchChannel(canonical(rewritten), normalized, aliases);
+  if (found.length) return allowed[normalized.indexOf(found[0])];
+  const m = /(?:^|\s)(\d{1,4})\s*$/.exec(normChannel(canonical(rewritten)));
   if (!m) return allowed.length === 1 ? allowed[0] : null;
   const n = Number(m[1]);
   // Only the feed label before | supplies its number, never a programme's
   // year, episode, start time or 4K suffix. Mixed categories need brand parity.
-  const label = (name: string) => name.split("|").find((part) => /(?:^|\s)\d{1,4}(?:\s|$)/.test(part.trim()))?.trim() ?? name.split("|")[0].trim();
   const family = (name: string) => normChannel(name.replace(/(?:^|\s)\d{1,4}(?=\s|$)/g, " "))
     .replace(/\b(?:event|match)\b/g, "").replace(/\s+/g, "").replace(/tv$/, "");
   const wantedFamily = family(rewritten);
