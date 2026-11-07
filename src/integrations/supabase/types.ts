@@ -5614,6 +5614,7 @@ export type Database = {
           ended_at: string | null
           id: string
           message: string
+          target_device_id: string | null
           target_user_id: string | null
         }
         Insert: {
@@ -5623,6 +5624,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           message: string
+          target_device_id?: string | null
           target_user_id?: string | null
         }
         Update: {
@@ -5632,6 +5634,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           message?: string
+          target_device_id?: string | null
           target_user_id?: string | null
         }
         Relationships: [

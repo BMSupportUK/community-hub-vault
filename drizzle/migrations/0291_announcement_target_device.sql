@@ -1,0 +1,2 @@
+ALTER TABLE public.player_announcements ADD COLUMN IF NOT EXISTS target_device_id uuid;
+COMMENT ON COLUMN public.player_announcements.target_user_id IS 'Legacy per-user target; new single-device messages use target_device_id';
