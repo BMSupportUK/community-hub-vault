@@ -104,6 +104,8 @@ export const CROSS_LEAD_MS = 10 * 60_000;
  */
 export function isEventChannel(name: string): boolean {
   const n = name.normalize("NFKD").trim();
+  // DAZN Canada feeds ("ᴰᴬᶻᴺ ¹ 01 (CA | Main)") only carry events.
+  if (/d\s*a\s*z\s*n/i.test(n) && /\bca\b/i.test(n)) return true;
   if (/\|\s*$/.test(n) || /events?\s*only/i.test(n) || /\bevent\s*\d+\b/i.test(n) || /^channel\s+\d+$/i.test(n)) return true;
   return /^[^|]*?\b\d{1,3}\s*(\([^)]*\))?\s*\|/.test(n) && !/^(uk|us|ca|au|ie)\s*\|/i.test(n);
 }
