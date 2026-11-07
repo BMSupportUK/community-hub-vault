@@ -14,6 +14,14 @@ type Row = { id: string; customer_name: string; email: string; number: number; i
 export function OffsitePlayerLogins() {
   const issue = useServerFn(issueOffsitePlayerLogin);
   const [f, setF] = useState({ customerName: "", email: "", code: "", username: "", password: "", expiry: "" });
+  const [manualId, setManualId] = useState("");
+  const [manuals, setManuals] = useState<{ userId: string; name: string }[]>([]);
+  useEffect(() => {
+    void supabase.rpc("admin_customer_subscription_list").then(({ data }) => {
+      setManuals(((data ?? []) as unknown as { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean }[])
+        .filter((c) => !c.hasSiteAccount).map((c) => ({ userId: c.userId, name: c.username || c.displayName || "Not recorded" })));
+    });
+  }, []);
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<number | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
@@ -21,16 +29,24 @@ export function OffsitePlayerLogins() {
     .order("created_at", { ascending: false }).then(({ data }) => setRows((data ?? []) as Row[]));
   useEffect(load, []);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
-  const ready = f.customerName.trim() && /^\S+@\S+\.\S+$/.test(f.email.trim()) && /^\d{6}$/.test(f.code.replace(/\s/g, "")) && f.username.trim() && f.password;
+  const ready = f.customerName.trim() && (manualId ? (!f.email.trim() || /^\S+@\S+\.\S+$/.test(f.email.trim())) : /^\S+@\S+\.\S+$/.test(f.email.trim())) && /^\d{6}$/.test(f.code.replace(/\s/g, "")) && f.username.trim() && f.password;
 
   return <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
     <div>
       <h2 className="font-display font-semibold">App logins for non-site customers</h2>
       <p className="text-sm text-muted-foreground">For customers without a BM Support account. They get their own account number, which the app asks for every time it opens.</p>
     </div>
+    <div className="space-y-1">
+      <Label htmlFor="os-manual">Manual customer (keeps their account number)</Label>
+      <select id="os-manual" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={manualId}
+        onChange={(e) => { const id = e.target.value; setManualId(id); const m = manuals.find((x) => x.userId === id); if (m) setF((v) => ({ ...v, customerName: m.name })); }}>
+        <option value="">New customer (gets a new number)</option>
+        {manuals.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}
+      </select>
+    </div>
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-1"><Label htmlFor="os-name">Customer name *</Label><Input id="os-name" value={f.customerName} onChange={set("customerName")} maxLength={120} /></div>
-      <div className="space-y-1"><Label htmlFor="os-email">Email *</Label><Input id="os-email" type="email" value={f.email} onChange={set("email")} /></div>
+      <div className="space-y-1"><Label htmlFor="os-email">Email {manualId ? "(optional)" : "*"}</Label><Input id="os-email" type="email" value={f.email} onChange={set("email")} /></div>
       <div className="space-y-1"><Label htmlFor="os-user">App username *</Label><Input id="os-user" value={f.username} onChange={set("username")} autoComplete="off" /></div>
       <div className="space-y-1"><Label htmlFor="os-pass">App password *</Label><Input id="os-pass" value={f.password} onChange={set("password")} autoComplete="off" /></div>
       <div className="space-y-1"><Label htmlFor="os-code">Code on their app screen *</Label><Input id="os-code" inputMode="numeric" placeholder="123 456" value={f.code} onChange={set("code")} /></div>
@@ -39,8 +55,8 @@ export function OffsitePlayerLogins() {
     <Button disabled={!ready || busy} onClick={async () => {
       setBusy(true);
       try {
-        const r = await issue({ data: { customerName: f.customerName, email: f.email, code: f.code, username: f.username, password: f.password, expiresAt: f.expiry ? new Date(f.expiry).toISOString() : null } });
-        setIssued(r.number); setF({ customerName: "", email: "", code: "", username: "", password: "", expiry: "" }); load();
+        const r = await issue({ data: { customerName: f.customerName, manualCustomerId: manualId || null, email: f.email, code: f.code, username: f.username, password: f.password, expiresAt: f.expiry ? new Date(f.expiry).toISOString() : null } });
+        setIssued(r.number); setManualId(""); setF({ customerName: "", email: "", code: "", username: "", password: "", expiry: "" }); load();
         toast.success("Login sent to the app");
       } catch (e) { toast.error(e instanceof Error ? e.message : "Could not issue the login"); }
       finally { setBusy(false); }

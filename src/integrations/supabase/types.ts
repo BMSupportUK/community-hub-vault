@@ -6085,6 +6085,7 @@ export type Database = {
           expires_at: string | null
           id: string
           iptv_username: string
+          manual_customer_id: string | null
           number: number
         }
         Insert: {
@@ -6095,6 +6096,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           iptv_username: string
+          manual_customer_id?: string | null
           number: number
         }
         Update: {
@@ -6105,6 +6107,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           iptv_username?: string
+          manual_customer_id?: string | null
           number?: number
         }
         Relationships: []
@@ -9154,6 +9157,7 @@ export type Database = {
       admin_customer_subscriptions: { Args: never; Returns: Json }
       admin_customer_subscriptions_with_tenure: { Args: never; Returns: Json }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }
+      admin_ensure_customer_number: { Args: { _id: string }; Returns: number }
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
         Returns: {
@@ -9842,6 +9846,20 @@ export type Database = {
       }
       is_sales_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
+      issue_manual_player_customer: {
+        Args: {
+          _admin: string
+          _email: string
+          _expires: string
+          _manual: string
+          _name: string
+          _username: string
+        }
+        Returns: {
+          id: string
+          number: number
+        }[]
+      }
       issue_offsite_player_customer: {
         Args: {
           _admin: string
