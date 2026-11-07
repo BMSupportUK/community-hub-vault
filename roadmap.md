@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Android/Amazon Sports Guide: hide announcement icon only here, omit empty days, Right goes straight from fixture to channels, playback return restores channel-list focus and selection.
 - [ ] Website publication requested on 7 Nov at 09:54 for sports end times; deployment completion and published authenticated sports response not yet verified.
 - [ ] Verify Sports Guide opens channel listings on a real Android/Amazon box; blocked: no device is connected to this workspace. Website publishing does not install the pending Android header repair.
 - [x] Repair Android/Amazon Sports Guide oversized header shown in supplied TV photo; bound category width and disable baseline measurement. TV/short-screen measurements and playable EPL channel-list target test pass; all 88 native checks pass. Real-TV verification unavailable without attached device.
