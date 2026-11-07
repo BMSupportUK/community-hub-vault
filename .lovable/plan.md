@@ -1,22 +1,19 @@
-# All-channels list with Online / Offline status
+# Sports Guide crosses only around event time
 
-## What you'll see
-A new **Channels** section in the BM Player admin area (next to Buffering). It lists every live channel from the playlist, grouped by category, with search and a category filter. Each channel has a status pill:
-
-- **Online** (green): played cleanly or passed a check recently
-- **Offline** (red): marked not working right now (the same signal that puts the cross on the Sports Guide)
-- **Not checked** (grey): nobody has watched it and it hasn't been tested yet
-
-Each row also shows when the channel was last seen working or failing, and why it failed ("No picture", "Wouldn't play", "Keeps cutting out"). The top of the page shows totals (Online / Offline / Not checked) and has an "Offline only" toggle. Admins keep the existing Clear button on offline rows. The page refreshes every 60 seconds.
-
-## Where the status comes from
-- Viewers' BM Players already report failures, no-picture and clean playback. This covers channels people actually watch.
-- The separate test login checks 5 channels every 5 minutes. It is still being refused by the provider (401), so until that's sorted, most channels nobody watches will show **Not checked**. Testing all 8,400+ channels isn't realistic with one test connection, so this is expected.
-
-No app updates are needed. This is website-only.
+## What changes for you
+- Channel lists on Sports Guide cards stay visible all day.
+- A cross ("Not working right now – try another channel") only shows from **10 minutes before** an event starts until it ends. Before that, the channel shows normally with no cross.
+- **Event channels** (ones that only carry events and are blank between them, e.g. "UFC 04 |", "MonoMax 27 | (Events Only)", "HBO Max UK | Event 1", "Boxing 03 | …") ignore problem reports sent while none of their events is on, so a blank channel tried early can't get marked.
+- A shared event channel starts fresh 10 minutes before each event: only reports from that event's own time count, so a cross never carries over from an earlier event.
+- Ordinary 24/7 channels (Sky Sports, TNT, etc.) keep today's behaviour: marked straight away.
+- The admin Channel status list follows the same rules.
+- Website only, no app updates.
 
 ## Technical details
-- New admin/management server function (`requireSupabaseAuth` plus a role check) that returns the playlist live channels (cached `playlist-source.server.ts`, name + category) joined in memory with `player_channel_health` rows by `channelKey()`.
-- Status helper in `src/lib/player-channel-health.ts`: `channelStatus(row, now)` returns offline when `isCrossed`, online when `last_ok_at` is within 24h, otherwise unchecked. Tests in the existing test file use concrete timestamps.
-- New `PlayerChannelsSection.tsx`, using a virtualised or paginated list (100 per page) for performance. It is mounted beside `PlayerBufferingSection` behind the existing admin-panel access gates.
-- No database changes. The table and RLS already exist.
+- `src/lib/player-channel-health.ts`: add `CROSS_LEAD_MS = 10 min`, `isEventChannel(name)` (pattern: name ends in a bare `|`, contains "Events Only", "Event N", or a numbered event-feed prefix such as `UFC/Boxing/MonoMax/TrillerTv/DAZN NN |`), `eventWindowOpen(event, now)` (start − 10 min ≤ now ≤ end) and `crossForEvent(row/stalls, event, now)` that only counts problems/stalls at or after `start − 10 min`.
+- `src/routes/api/public/player.ts` `channel_health`: for an event channel, accept a "failed"/"black" report only if some current guide event using that channel has its window open; otherwise ignore it. "ok" reports are always stored.
+- `sports` response: per-event `unavailable` is worked out per event with `crossForEvent` (empty outside the window). The global `unavailable` list drops event channels, so apps that read the global list can't cross them early.
+- `currentCrossedChannels` returns the raw rows/stalls so per-event filtering can use timestamps; keep its 30 s cache.
+- `channelStatus` (admin list): event channels outside any open window show "Not checked" instead of Offline.
+- Tests (`player-channel-health.test.ts`): no cross 11 min before start; cross 9 min before start after a report; report from an earlier event doesn't cross the next one; 24/7 channel crossed regardless of time; early report on an event channel is ignored.
+- Update the Sports Guide crosses rule in `src/lib/AGENTS.md`.
