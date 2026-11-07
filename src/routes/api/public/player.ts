@@ -153,7 +153,7 @@ export const Route = createFileRoute("/api/public/player")({
           // age_ms lets apps compare against their own start time without trusting the device clock;
           // announcements only reach apps that were already open when it was sent.
           const a = await currentAnnouncement(supabaseAdmin);
-          const visible = a && announcementReachesDevice(a, device);
+          const visible = a && announcementReachesDevice(a, device, Date.now());
           return json({ announcement: visible ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
         }
 

@@ -1,3 +1,4 @@
+import { LIVE_WINDOW_MS } from "@/lib/player-live";
 /** Recipient filtering is applied after the shared cache, using verified device ownership. */
 export function announcementMatchesUser(
   targetUserId: string | null,
@@ -13,8 +14,11 @@ export function announcementMatchesUser(
  */
 export function announcementReachesDevice(
   a: { sent_at: number; target_user_id: string | null; target_device_id: string | null },
-  device: { id: string; user_id: string | null; offsite_customer_id: string | null; connected_since: string | null },
+  device: { id: string; user_id: string | null; offsite_customer_id: string | null; connected_since: string | null; last_seen_at: string | null },
+  nowMs: number,
 ) {
+  // A device returning from offline still carries its old connection time until its next check-in.
+  if (!device.last_seen_at || nowMs - Date.parse(device.last_seen_at) > LIVE_WINDOW_MS) return false;
   if (!device.connected_since || Date.parse(device.connected_since) > a.sent_at) return false;
   if (a.target_device_id) return device.id === a.target_device_id;
   return announcementMatchesUser(a.target_user_id, device);
