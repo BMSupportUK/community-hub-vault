@@ -55,6 +55,13 @@ export async function playlistCategoryChannels(names: string[]): Promise<Map<str
   return out;
 }
 
+/** Every live channel with its category name, in playlist order. */
+export async function playlistAllChannels(): Promise<{ name: string; category: string }[]> {
+  const { cats, streams } = await load();
+  const byId = new Map(cats.map((c) => [c.category_id, c.category_name]));
+  return streams.filter((s) => s.name).map((s) => ({ name: s.name, category: byId.get(s.category_id) ?? "Other" }));
+}
+
 /** Stream IDs for the named channels (exact playlist names, case-insensitive). */
 export async function playlistStreamIds(names: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();

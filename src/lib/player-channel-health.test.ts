@@ -1,6 +1,6 @@
 // @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { describe, expect, test } from "bun:test";
-import { crossedChannels, isCrossed, tsVideoPackets } from "./player-channel-health";
+import { channelStatus, crossedChannels, isCrossed, tsVideoPackets } from "./player-channel-health";
 
 const now = Date.parse("2026-11-07T15:00:00Z");
 const ago = (min: number) => new Date(now - min * 60_000).toISOString();
@@ -44,4 +44,12 @@ test("counts video packets named by the PMT", () => {
   [pat, pmt, ...vids].forEach((p, i) => buf.set(p, i * 188));
   expect(tsVideoPackets(buf)).toBe(5);
   expect(tsVideoPackets(new Uint8Array(2000))).toBe(null);
+});
+
+describe("channelStatus", () => {
+  const iso = (ms: number) => new Date(ms).toISOString();
+  test("never seen is unchecked", () => expect(channelStatus(undefined, now)).toBe("unchecked"));
+  test("recent problem is offline", () => expect(channelStatus({ last_problem_at: iso(now - 5 * 60_000), last_ok_at: null }, now)).toBe("offline"));
+  test("clean play within 24h is online", () => expect(channelStatus({ last_problem_at: null, last_ok_at: iso(now - 23 * 3600_000) }, now)).toBe("online"));
+  test("clean play over 24h ago is unchecked", () => expect(channelStatus({ last_problem_at: null, last_ok_at: iso(now - 25 * 3600_000) }, now)).toBe("unchecked"));
 });

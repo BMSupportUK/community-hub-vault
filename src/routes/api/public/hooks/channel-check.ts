@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 /**
  * Scheduled Sports Guide channel check (pg_cron, every 2 minutes, x-cron-secret).
- * Uses the separate CHANNEL_CHECK login so customers' viewing is never touched: opens up to
- * PER_RUN channels that are on or about to be on, one at a time, reads ~8 s and closes it.
+ * Uses the separate CHANNEL_CHECK login only for channels a player reported in the last 15 min
+ * (and not yet checked since), one at a time, ~8 s each. No reports = no provider requests.
  */
 const PER_RUN = 5;
 const SAMPLE_MS = 8000;
@@ -42,20 +42,16 @@ export const Route = createFileRoute("/api/public/hooks/channel-check")({
         if (!expected || request.headers.get("x-cron-secret") !== expected) return new Response("Unauthorized", { status: 401 });
         const { channelCheckUrl, playlistStreamIds } = await import("@/lib/playlist-source.server");
         if (!(await channelCheckUrl("0"))) return Response.json({ skipped: "No channel-check login saved" });
-        const { buildSportsFeed } = await import("@/lib/player-sports-feed.server");
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const now = Date.now();
-        const feed = await buildSportsFeed();
-        const live = feed.events.filter((e) => e.start <= now + 30 * 60_000 && (e.end ?? e.start + 3 * 3600_000) >= now);
-        const names = [...new Set(live.flatMap((e) => e.channels))];
-        if (!names.length) return Response.json({ checked: 0 });
-        const ids = await playlistStreamIds(names);
-        const { data: rows } = await supabaseAdmin.from("player_channel_health").select("channel_key, last_checked_at, problem_source")
-          .in("channel_key", names.map((n) => n.toLowerCase()).slice(0, 500));
-        const seen = new Map((rows ?? []).map((r) => [r.channel_key, r]));
-        const queue = names.filter((n) => ids.has(n.toLowerCase()))
-          .sort((a, b) => Date.parse(seen.get(a.toLowerCase())?.last_checked_at ?? "1970") - Date.parse(seen.get(b.toLowerCase())?.last_checked_at ?? "1970"))
-          .slice(0, PER_RUN);
+        // Only test channels a player has just reported, so the check login never hammers the provider.
+        const since = new Date(Date.now() - 15 * 60_000).toISOString();
+        const { data: rows } = await supabaseAdmin.from("player_channel_health").select("channel_key, channel_name, last_checked_at, last_problem_at, last_ok_at, problem_source")
+          .gte("last_problem_at", since).neq("problem_source", "check").order("last_problem_at", { ascending: false }).limit(50);
+        const reported = (rows ?? []).filter((r) => (!r.last_ok_at || r.last_ok_at < r.last_problem_at!) && (!r.last_checked_at || r.last_checked_at < r.last_problem_at!));
+        if (!reported.length) return Response.json({ checked: 0 });
+        const seen = new Map(reported.map((r) => [r.channel_key, r]));
+        const ids = await playlistStreamIds(reported.map((r) => r.channel_name));
+        const queue = reported.map((r) => r.channel_name).filter((n) => ids.has(n.toLowerCase())).slice(0, PER_RUN);
         const results: { name: string; ok: boolean; why?: string }[] = [];
         for (const name of queue) {
           const key = name.toLowerCase();
@@ -64,10 +60,10 @@ export const Route = createFileRoute("/api/public/hooks/channel-check")({
           const r = await sample(url);
           if (r.busy) { results.push({ name, ok: false, why: "Check login busy" }); break; }
           const nowIso = new Date().toISOString();
-          const prev = seen.get(key);
+          void seen;
           const patch = r.ok
-            // A passing check only clears its own earlier failure; player black-screen reports wait for a clean play.
-            ? { last_checked_at: nowIso, ...(prev?.problem_source === "check" ? { last_ok_at: nowIso } : {}) }
+            // A passing check confirms the reported channel is back.
+            ? { last_checked_at: nowIso, last_ok_at: nowIso }
             : { last_checked_at: nowIso, problem: r.why ?? "Won't open", problem_source: "check", last_problem_at: nowIso };
           await supabaseAdmin.from("player_channel_health").upsert({ channel_key: key, channel_name: name, updated_at: nowIso, ...patch });
           results.push({ name, ok: r.ok, why: r.why });

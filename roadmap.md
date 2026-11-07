@@ -151,3 +151,5 @@
 
 - [x] Released Android 3.64, Windows 0.4.26, Mac 0.1.36 (Finished badge)
 - [ ] Publish website so apps get game end times
+- [x] Admin Channel status page: every playlist channel with Online / Offline / Not checked.
+- [x] Test login checks a channel only after a player reports it (no constant testing).
