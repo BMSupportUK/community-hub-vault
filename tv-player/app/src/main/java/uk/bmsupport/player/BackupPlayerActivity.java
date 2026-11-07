@@ -81,7 +81,9 @@ public final class BackupPlayerActivity extends Activity {
     private void open() {
         if (mp == null) return;
         Media m = new Media(vlc, Uri.parse(urls[at]));
-        m.setHWDecoderEnabled(true, false);
+        boolean software = VideoDecodePolicy.preferSoftware("catchup".equals(getIntent().getStringExtra("content_kind")),
+                PlayerActivity.prefs(this).getString("decoder", "hardware"), getIntent().getStringExtra("content_name"));
+        m.setHWDecoderEnabled(!software, false);
         mp.setMedia(m);
         m.release();
         mp.play();

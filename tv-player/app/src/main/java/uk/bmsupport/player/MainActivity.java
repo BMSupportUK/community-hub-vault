@@ -873,7 +873,7 @@ public class MainActivity extends Activity {
         if (previewPoster != null) previewPoster.setVisibility(View.GONE);
         status.setText("Loading preview…");
         previewTask = () -> {
-            preview = PlayerActivity.build(this);
+            preview = PlayerActivity.build(this, false, it.name);
             view.setPlayer(preview);
             preview.addListener(new androidx.media3.common.Player.Listener() {
                 @Override public void onPlaybackStateChanged(int s) {
