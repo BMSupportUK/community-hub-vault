@@ -431,6 +431,12 @@ public class PlayerActivity extends Activity {
                 }
             }
             @Override public void onVideoSizeChanged(VideoSize v) { if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime(); }
+            @Override public void onTracksChanged(androidx.media3.common.Tracks t) {
+                // 50fps UK sport judders on 60Hz Android boxes: ask the TV for a matching refresh rate.
+                for (androidx.media3.common.Tracks.Group g : t.getGroups())
+                    if (g.getType() == androidx.media3.common.C.TRACK_TYPE_VIDEO)
+                        for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i)) { FrameRateMatch.apply(PlayerActivity.this, g.getTrackFormat(i).frameRate); return; }
+            }
             @Override public void onPlayerError(PlaybackException e) {
                 if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { player.seekToDefaultPosition(); player.prepare(); return; }
                 if (!everReady && urlAt + 1 < liveUrls.length) { urlAt++; open(0); return; }
