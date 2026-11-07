@@ -2153,10 +2153,17 @@ export function listingBlockHasDate(raw: string): boolean {
  */
 /** Strips Discord bold/code wrappers: "**## A v B**" → "## A v B", "`12:30pm UK | …`" → "12:30pm UK | …". */
 const unwrapEplMarkdown = (line: string) => line.trim().replace(/^\*{1,3}(.*?)\*{1,3}$/, "$1").replace(/^`+(.*?)`+$/, "$1").trim();
-/** "12:30pm UK / 7:30am ET", or the backticked "`12:30pm UK | 7:00am ET`" form. */
-const eplTimeLine = (line: string, lines: string[]) =>
-  /\bUK\s*\/\s*[^\n]*\bET\b/i.test(unwrapEplMarkdown(line)) ||
-  (/\bUK\s*\|\s*[^\n]*\bET\b/i.test(unwrapEplMarkdown(line)) && lines.some((l) => /\bEPL\b/.test(l)));
+/** The first UK clock owns kick-off; a repeated UK label on the second clock
+ * is a provider typo, not a reason to swallow the next fixture into channels. */
+const eplTimeLine = (line: string, lines: string[]) => {
+  const time = unwrapEplMarkdown(line);
+  if (/\bUK\s*\/\s*[^\n]*\bET\b/i.test(time)) return true;
+  const hasEpl = lines.some((l) => /\bEPL\b/i.test(l));
+  return hasEpl && (
+    /\bUK\s*\|\s*[^\n]*\bET\b/i.test(time) ||
+    new RegExp(`^\\s*(${TIME_SOURCE})\\s+UK\\s*[/|]\\s*(${TIME_SOURCE})\\s+UK\\s*$`, "i").test(time)
+  );
+};
 const eplFixtureLineAt = (lines: string[], i: number) =>
   (/^##\s+\S/.test(unwrapEplMarkdown(lines[i] ?? "")) || /\S\s+v\s+\S/i.test(unwrapEplMarkdown(lines[i] ?? ""))) &&
   eplTimeLine(lines[i + 1] ?? "", lines) &&
