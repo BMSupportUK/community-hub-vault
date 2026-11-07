@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Repair EPL import splitting into its separate channel sections; reproduce with the current queued post and check split/read-back.
 - [x] New Sports Guide layout (day pills, website Category › sub-category pop-up, game cards, channels panel grouped Channels / Sports passes / Club channels) on Android 3.60 (built, signed, 85 checks pass) and the shared Windows/Mac screen (checked with real guides). Not released; Android screen not seen on a real device; needs website publish.
 - [ ] Release Android 3.60, Windows 0.4.23 and Mac 0.1.36 with the new Sports Guide (waiting for user go-ahead)
 - [x] Sports guide one card per game even when guides spell teams differently or list times up to 90 min apart (Derby v Bolton: Sky, DAZN, MonoMax, Paramount+, iFollow on one card); checks pass on today's real guides. Needs website publish; not seen on a real player yet.
