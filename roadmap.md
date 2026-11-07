@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Diagnose and repair Triller TV listings linked to VIP | UFC & Triller Tv; verify actual event feeds and channel names.
 - [x] Repair Ligue 1 Streams country rejection and re-save FR | Ligue 1 category; 16 tests pass, real preview player feed returns Match 1/2 without FR rejection, US/AU filtering preserved. Website publication required; no real box attached.
 - [x] Repair website Scottish reader misclassifying St. Johnstone and St. Mirren club-feed lines as descriptions; 10 focused tests pass and signed-in real guide shows Available channels for all four fixtures. Website publication needed for live site.
 - [x] Android/Amazon 3.66 released: hide announcement icon only in Sports Guide, omit empty days/categories and empty Sports Pass entries, Right enters channels directly, playback return restores channel-list focus and watched channel ID. All 92 native checks pass; signed public APK matches byte-for-byte. Real-box check blocked by no attached device.
