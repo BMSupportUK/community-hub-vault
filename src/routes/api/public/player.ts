@@ -3,7 +3,7 @@ import { z } from "zod";
 import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
 import { createSharedCache } from "@/lib/player-sports-cache";
 import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
-import { announcementMatchesUser } from "@/lib/player-announcement-audience";
+import { announcementReachesDevice } from "@/lib/player-announcement-audience";
 import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, eventTime, stallCause, shouldAlert } from "@/lib/player-buffering";
 
 // One sports-guide build per minute per server instance, however many apps ask.
