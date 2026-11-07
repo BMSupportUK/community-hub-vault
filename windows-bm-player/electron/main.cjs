@@ -11,6 +11,7 @@ const gate=require('../account-gate.cjs').createAccountGate();
 const {surfaceRows}=require('../playback-core.cjs');
 const boost=require('../sound-boost.cjs');
 const recovery=require('../stream-recovery.cjs');
+const feedst=require('../feed-status.cjs');
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
 function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w);}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
@@ -175,6 +176,9 @@ function healthTick(session,s){if(session.item.kind!=='live')return;const now=Da
  if(!session.hBlack&&!session.backup&&s.state===3&&now-session.since>10000&&!(Number(s.w)>0)){session.hBlack=true;report('black');}
  if(s.state===3){if(!session.cleanSince)session.cleanSince=now;}else if(s.state===2||s.state===7)session.cleanSince=0;
  if(!session.hOk&&!session.hBlack&&session.cleanSince&&now-session.cleanSince>=120000){session.hOk=true;report('ok');}
+ // Live feed status pill: tell the renderer when Buffering…/No picture starts or clears.
+ const fs=feedst.feedStatus(session,s);
+ if(fs!==session.feedStatus){session.feedStatus=fs;send({type:'feed',index:session.index,status:fs});}
 }
 let bufferQueue=[],bufferBusy=false;
 function queueBuffer(item,ev){bufferQueue.push({kind:item.kind==='episode'?'series':item.kind,content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:Math.max(0,Math.min(3600000,Math.round(ev.ms))),reconnected:!!ev.reconnected,freeze:!!ev.freeze,...(ev.cause?{cause:ev.cause}:{}),at:Date.now()});if(bufferQueue.length>100)bufferQueue=bufferQueue.slice(-100);if(bufferQueue.length>=10)flushBuffer();}
