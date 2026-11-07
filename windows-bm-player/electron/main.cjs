@@ -172,7 +172,7 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
 function healthTick(session,s){if(session.item.kind!=='live')return;const now=Date.now(),name=String(session.item.name||'').slice(0,200);if(!name)return;
  const report=status=>site({action:'channel_health',name,status}).catch(()=>{});
  if(session.failed&&!session.hFailed){session.hFailed=true;report('failed');return;}
- if(!session.hBlack&&s.state===3&&now-session.since>10000&&!(Number(s.w)>0)){session.hBlack=true;report('black');}
+ if(!session.hBlack&&!session.backup&&s.state===3&&now-session.since>10000&&!(Number(s.w)>0)){session.hBlack=true;report('black');}
  if(s.state===3){if(!session.cleanSince)session.cleanSince=now;}else if(s.state===2||s.state===7)session.cleanSince=0;
  if(!session.hOk&&!session.hBlack&&session.cleanSince&&now-session.cleanSince>=120000){session.hOk=true;report('ok');}
 }
