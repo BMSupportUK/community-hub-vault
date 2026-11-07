@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
+import { checkinSlowdown } from "@/lib/player-checkin";
 import { createSharedCache } from "@/lib/player-sports-cache";
 import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
 import { announcementReachesDevice } from "@/lib/player-announcement-audience";
@@ -427,7 +428,7 @@ export const Route = createFileRoute("/api/public/player")({
           headerCountry: request.headers.get("cf-ipcountry"),
         });
         const [{ data: settings }, { data: pending }] = await Promise.all([
-          supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message").eq("id", 1).maybeSingle(),
+          supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message, checkin_slowdown").eq("id", 1).maybeSingle(),
           supabaseAdmin.from("player_pending_credentials").delete().eq("device_id", device.id).select("username, password, created_at").maybeSingle(),
         ]);
         // A poll that is about to hand the app its login must never wait on an
@@ -452,6 +453,8 @@ export const Route = createFileRoute("/api/public/player")({
           dns: settings?.dns ?? "",
           credentials: fresh ? { username: pending.username, password: pending.password } : null,
           report_url: "https://bmsupport.uk/tickets",
+          // Apps multiply their check-in timers by this (1 = normal) to ease load during busy events.
+          slow: checkinSlowdown(settings?.checkin_slowdown),
           maintenance: {
             enabled: !!settings?.maintenance_enabled,
             message: settings?.maintenance_message || "BM Player is down for maintenance. Please try again soon.",
