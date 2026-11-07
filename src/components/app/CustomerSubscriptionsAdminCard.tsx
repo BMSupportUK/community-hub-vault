@@ -306,7 +306,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
               const pkg = (multi && a ? a.package : c.package) || "Not recorded";
               return (
               <section key={a?.id ?? "none"} className={multi ? "space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-3" : "space-y-2.5"}>
-                {multi && <div className="flex flex-wrap items-center gap-2"><span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {i + 1}</span>{a && <LoginNumberBadge ownerId={c.userId} accountId={a.id} login={a.login} />}</div>}
+                {(multi || a) && <div className="flex flex-wrap items-center gap-2">{multi && <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {i + 1}</span>}{a && <LoginNumberBadge ownerId={c.userId} accountId={a.id} login={a.login} />}</div>}
                 <div className="flex items-center gap-1 break-all text-xs text-muted-foreground"><span className="font-semibold uppercase tracking-wide">App Login:</span> {a?.login || "No login details"}</div>
                 <dl className="space-y-2 text-sm">
                   <Detail label="Current package">{pkg}</Detail>
