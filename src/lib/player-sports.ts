@@ -1,5 +1,5 @@
 import { applyChannelLinks, resolveInCategory, type ChannelLinks } from "./sports-channel-links";
-import { parseSportsListingBlock } from "./sports-listing-format";
+import { parseSportsListingBlock, isClubChannelGuide, fixtureTeams as clubNames } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
 
@@ -67,14 +67,21 @@ export function playerSportsEvents(
   const out: Card[] = [];
   for (const g of guides) {
     const pass = isPassGuide(g);
-    const clubGuide = [g.parent, g.category, g.title].some((x) => /ifollow|scot/i.test(x ?? ""));
+    const clubGuide = isClubChannelGuide(g.title);
     for (const e of parseSportsListingBlock(g.body ?? "")) {
       if (!safePublicEventTitle(e)) continue;
       const start = ukListingInstant(e.date, e.time);
       if (start == null || start < nowMs - WINDOW_BACK || start > nowMs + WINDOW_AHEAD) continue;
       const links = g.links ?? {};
       const catList = links.category ? categoryChannels?.get(links.category.toLowerCase()) : undefined;
-      const channels = e.channels
+      // Older stored club guides may still carry only the placeholder. Add club names
+      // on read as well as save, retaining actual broadcasters for the same fixture.
+      const sourceChannels = [...e.channels.filter((c) => !clubGuide || !/^under team channels$/i.test(c))];
+      if (clubGuide) {
+        const teams = clubNames(cardTitle(e.title));
+        if (teams.length === 2) for (const team of teams) if (!sourceChannels.some((c) => c.toLowerCase() === team.toLowerCase())) sourceChannels.push(team);
+      }
+      const channels = sourceChannels
         .map((c) => (catList?.length ? resolveInCategory(c, catList, links) ?? applyChannelLinks(c, links) : applyChannelLinks(c, links)))
         .filter(Boolean);
       const ev: Card = { sport: g.parent || g.category || g.title, subcategory: g.parent ? g.category ?? "" : "", competition: g.title, title: cardTitle(e.title), date: e.date, time: e.time, start,
