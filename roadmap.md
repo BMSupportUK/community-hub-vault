@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Audit DAZN and every populated linked sports guide against the real playlist; repair failures and report missing links.
+- [x] Audit all 41 populated guides and nine category-linked guides against real playlist; DAZN decorative feed-label repair passes 66 tests and signed-in 58 fixtures resolve to 20 exact feeds. Linked checks: 84/85; Peacock 0 absent. Unlinked broadcaster mismatches: Fox Cricket 501, Fox Footy 504, Ten 5, Fox Sports More 507; Scottish raw placeholders covered by existing player-read repair. Website publication and native playback remain unverified.
 - [x] Repair Triller TV resolving to UFC in their shared category; 63 focused tests pass, signed-in saved guide contains eight events and all resolve to TrillerTv 01–08; build OK. Website publication and actual device playback remain unverified.
 - [x] Repair Ligue 1 Streams country rejection and re-save FR | Ligue 1 category; 16 tests pass, real preview player feed returns Match 1/2 without FR rejection, US/AU filtering preserved. Website publication required; no real box attached.
 - [x] Repair website Scottish reader misclassifying St. Johnstone and St. Mirren club-feed lines as descriptions; 10 focused tests pass and signed-in real guide shows Available channels for all four fixtures. Website publication needed for live site.
