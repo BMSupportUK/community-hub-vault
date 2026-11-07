@@ -43,6 +43,8 @@ class EmbeddedVlc {
   try{
    this.api.media_add_option(media,':network-caching='+Math.max(500,Math.min(15000,Number(buffer)||3000)));
    this.api.media_add_option(media,':http-user-agent=VLC/3.0.21 LibVLC/3.0.21');
+   // Software decoding: Windows hardware decoders paint smeared colour blocks when a live feed (e.g. MonoMax) joins mid-picture or drops packets.
+   this.api.media_add_option(media,':avcodec-hw=none');
    if(maxHeight>0)this.api.media_add_option(media,':adaptive-maxheight='+Math.floor(maxHeight));
    if(subtitles===false)this.api.media_add_option(media,':no-spu');
    if(subtitles===true)this.api.media_add_option(media,':sub-track=0');
