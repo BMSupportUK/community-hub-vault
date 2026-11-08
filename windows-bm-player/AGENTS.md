@@ -1,5 +1,5 @@
 # Windows BM Player rules
-- Live country category entry sends a separate unlock-gated epgCategory notice from cached catalogue IDs, never from row reads or All/saved categories; Windows and Mac share this demand path.
+- Channel EPG is read directly from the stored provider login; never call website guide/category-refresh endpoints. Windows and Mac share this path.
 - Sports Guide loading presentation covers both the guide request and channel catalog preparation; the shared renderer also serves Mac and clears failed requests instead of leaving an endless wait.
 - DAZN recovery is shared with Mac, using catalog-verified channel/category identity and Sports Guide event context; alternative choices never accept provider URLs from the renderer.
 - Windows and Mac share checkin.cjs for staggered website polling, jitter, busy-response backoff and server slowdown; keep stream/provider traffic outside this scheduler.
