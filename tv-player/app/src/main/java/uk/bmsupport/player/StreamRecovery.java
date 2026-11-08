@@ -25,11 +25,19 @@ final class StreamRecovery {
         String n = java.text.Normalizer.normalize(name == null ? "" : name, java.text.Normalizer.Form.NFKC);
         return n.toLowerCase(java.util.Locale.ROOT).matches(".*\\bdazn\\b.*");
     }
-    static long liveTargetMs(String name) { return isDazn(name) ? 30000 : LIVE_TARGET_MS; }
-    static long stallReconnectMs(String name) { return isDazn(name) ? 6000 : STALL_RECONNECT_MS; }
-    static int formatSwapStalls(String name) { return isDazn(name) ? 1 : 2; }
-    static boolean drifted(long offset, String name) { return offset > (isDazn(name) ? 60000 : LIVE_DRIFT_MS); }
-    static int[] bufferMs(String id, String name) { return bufferMs(isDazn(name) ? "large" : id); }
+    static boolean isCoupang(String name) {
+        String n = java.text.Normalizer.normalize(name == null ? "" : name, java.text.Normalizer.Form.NFKC);
+        return n.toLowerCase(java.util.Locale.ROOT).matches(".*\\bcoupang\\b.*");
+    }
+    /** Sports-pass feeds (DAZN, Coupang Play) get the steadier large-buffer profile. */
+    static boolean cushioned(String name) { return isDazn(name) || isCoupang(name); }
+    /** Diagnostic tag for the admin buffering report. */
+    static String providerTag(String name) { return isDazn(name) ? "dazn" : isCoupang(name) ? "coupang" : null; }
+    static long liveTargetMs(String name) { return cushioned(name) ? 30000 : LIVE_TARGET_MS; }
+    static long stallReconnectMs(String name) { return cushioned(name) ? 6000 : STALL_RECONNECT_MS; }
+    static int formatSwapStalls(String name) { return cushioned(name) ? 1 : 2; }
+    static boolean drifted(long offset, String name) { return offset > (cushioned(name) ? 60000 : LIVE_DRIFT_MS); }
+    static int[] bufferMs(String id, String name) { return bufferMs(cushioned(name) ? "large" : id); }
 
     /** {minBuffer, maxBuffer, startPlayback, afterRebuffer} in milliseconds. */
     static int[] bufferMs(String id) {
