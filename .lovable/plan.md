@@ -11,7 +11,8 @@
    - US channels are shown in UK time like everything else (no Eastern/Pacific mix-ups).
    - The admin page has a country filter and lets you add extra countries. Event-only and Replay feeds are skipped. Your manual fixes always win.
 3. Players ask BM Support for a channel's listings; it sends the real guide when matched, otherwise the provider's. Times are stored in UTC and shown in UK time, so clock changes never shift them.
-4. Sports Guide finish detection also uses the real guide, making "Finished" more accurate.
+4. Sports Pass and event-only channels (DAZN, DAZN CA, UFC/Fight Pass, Peacock, BKFC, MonoMax events etc.) take their listings from the website Sports Guide: each event linked to that channel appears in the guide with its title, start and estimated/real finish time, and "No event scheduled" fills the gaps. If a real published guide also exists, the Sports Guide event wins during its time slot.
+5. Sports Guide finish detection also uses the real guide, making "Finished" more accurate.
 
 ## Releases
 - Website change publishes first; then Android 3.86, Windows 0.4.34 and Mac 0.1.43 so the apps read listings from BM Support.
