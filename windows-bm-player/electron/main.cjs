@@ -14,6 +14,7 @@ const recovery=require('../stream-recovery.cjs');
 const feedst=require('../feed-status.cjs');
 const checkin=require('../checkin.cjs');
 const categoryOrder=require('../category-order.cjs');
+const watchreq=require('../watch-request.cjs');
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
 function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w);}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
@@ -55,7 +56,7 @@ async function getCode(){if(!store.token){const r=await site({action:'register',
 let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||'')}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
 let announcement=null,annBusy=false;const STARTED_AT=Date.now();
-async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}}catch{}finally{annBusy=false;}}
+async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}if(r&&r.watch)openWatch(r.watch).catch(()=>{});}catch{}finally{annBusy=false;}}
 async function poll(){
  if(pollBusy||!store.token)return;pollBusy=true;
  try{
@@ -161,6 +162,18 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
  lastInput=Date.now();promptedAt=0;poll();send({type:'state',state:publicState()});return true;
+}
+/** "Watch on my box" from the website: open the title the customer picked on this screen. */
+async function openWatch(w){
+ const kind=String(w?.kind||'');
+ if(!['film','series'].includes(kind))return;
+ if(!store.user||!gate.unlocked||maintenance||publicState().expired)return;
+ const title=String(w?.title||'').slice(0,200);
+ const catalog=await catalogue(kind);
+ const item=watchreq.find(catalog?.items||[],w?.id,title);
+ if(!item){send({type:'notice',message:'BM Player couldn\'t find "'+title+'" on your playlist.'});return;}
+ await foreground();
+ send({type:'watch',item});
 }
 async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
  const rec=recovery.tick(session,s.state,Date.now(),session.item.kind==='live');
