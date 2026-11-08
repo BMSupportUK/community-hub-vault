@@ -793,7 +793,7 @@ public class PlayerActivity extends Activity {
                     try {
                         org.json.JSONObject selected = options.getJSONObject(index); org.json.JSONArray urls = selected.getJSONArray("urls");
                         String[] next = new String[urls.length()]; for (int j = 0; j < next.length; j++) next[j] = urls.getString(j);
-                        android.content.Intent intent = new android.content.Intent(getIntent()).removeExtra("carried");
+                        android.content.Intent intent = new android.content.Intent(getIntent()); intent.removeExtra("carried");
                         intent.setClass(this, PlayerActivity.class).putExtra("content_id", selected.getString("id")).putExtra("content_name", selected.getString("name"))
                             .putExtra("recovery_name", selected.getString("recovery_name")).putExtra("urls", next).putExtra("url", next[0]);
                         intent.removeExtra("sd_urls"); intent.removeExtra("sd_name");
