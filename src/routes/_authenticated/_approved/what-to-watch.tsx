@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { queryOptions, useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { Popcorn, Star, Calendar, Tv, RefreshCw } from 'lucide-react';
 import { getWatchPlaylist, getWatchDescription } from '@/lib/watch-playlist.functions';
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import whatToWatchBg from '@/assets/what-to-watch-bg.jpg.asset.json';
 
-const watchQuery = queryOptions({ queryKey: ['watch-playlist'], queryFn: () => getWatchPlaylist(), staleTime: 60 * 60_000 });
 export const Route = createFileRoute('/_authenticated/_approved/what-to-watch')({
   head: () => ({ meta: [
     { title: 'What to Watch Now — BM Support' },
@@ -21,12 +20,12 @@ export const Route = createFileRoute('/_authenticated/_approved/what-to-watch')(
     { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' },
     { property: 'og:image', content: whatToWatchBg.url }, { name: 'twitter:image', content: whatToWatchBg.url },
   ] }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(watchQuery),
   component: WhatToWatchPage,
 });
 function WhatToWatchPage() {
   const [selected, setSelected] = useState<WatchTitle | null>(null);
-  const { data, refetch, isFetching } = useSuspenseQuery(watchQuery);
+  const fetchPlaylist = useServerFn(getWatchPlaylist);
+  const { data, refetch, isFetching, isLoading, isError } = useQuery({ queryKey: ['watch-playlist'], queryFn: () => fetchPlaylist(), staleTime: 60 * 60_000 });
   return (
     <div className="flex-1 min-w-0 overflow-y-auto bg-background bg-cover bg-center bg-fixed relative" style={{ backgroundImage: `url(${whatToWatchBg.url})` }}>
       <div className="absolute inset-0 bg-background/75 pointer-events-none" aria-hidden />
@@ -37,9 +36,10 @@ function WhatToWatchPage() {
             <TabsTrigger value="movies" className="gap-2"><Popcorn className="size-4" />Cinema films</TabsTrigger>
             <TabsTrigger value="series" className="gap-2"><Tv className="size-4" />Recommended series</TabsTrigger>
           </TabsList>
-          {data.error && <div role="alert" className="mt-6 border border-destructive/40 bg-background/90 p-4 rounded-lg"><p className="text-sm">{data.error}</p><Button variant="outline" className="mt-3" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
-          <TabsContent value="movies" className="mt-6"><Grid items={data.movies} onPick={setSelected} /></TabsContent>
-          <TabsContent value="series" className="mt-6"><Grid items={data.series} onPick={setSelected} /></TabsContent>
+          {(data?.error || isError) && <div role="alert" className="mt-6 border border-destructive/40 bg-background/90 p-4 rounded-lg"><p className="text-sm">{data?.error || 'Could not load the playlist. Please try again.'}</p><Button variant="outline" className="mt-3" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
+          {isLoading && <div aria-label="Loading playlist" className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{Array.from({length:10}, (_,i) => <Skeleton key={i} className="aspect-[2/3] rounded-lg" />)}</div>}
+          <TabsContent value="movies" className="mt-6">{!isLoading && <Grid items={data?.movies ?? []} onPick={setSelected} />}</TabsContent>
+          <TabsContent value="series" className="mt-6">{!isLoading && <Grid items={data?.series ?? []} onPick={setSelected} />}</TabsContent>
         </Tabs>
       </main>
       <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null); }}>
