@@ -508,6 +508,9 @@ public class PlayerActivity extends Activity {
             rateMatched = true;
             ui.post(() -> rateKnown(fps));
         });
+        player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
+            @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
+        });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
                 long now = android.os.SystemClock.elapsedRealtime();
