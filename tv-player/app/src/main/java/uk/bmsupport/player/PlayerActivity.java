@@ -870,6 +870,20 @@ public class PlayerActivity extends Activity {
                 .setNegativeButton("Stay on HD", null).show();
     }
 
+    // Player control buttons (Sound booster, Report a problem, Swap channel) get a bright border
+    // while the remote is on them, so the focused box is obvious on a TV.
+    private void focusBorder(android.widget.Button b) {
+        final float d = getResources().getDisplayMetrics().density;
+        final android.graphics.drawable.GradientDrawable normal = new android.graphics.drawable.GradientDrawable();
+        normal.setColor(0xB30B1220); normal.setCornerRadius(12 * d);
+        final android.graphics.drawable.GradientDrawable focused = new android.graphics.drawable.GradientDrawable();
+        focused.setColor(0xB30B1220); focused.setCornerRadius(12 * d);
+        focused.setStroke((int) (3 * d), 0xFFFBBF24);
+        b.setBackground(normal);
+        b.setTextColor(0xFFFFFFFF);
+        b.setOnFocusChangeListener((v, has) -> v.setBackground(has ? focused : normal));
+    }
+
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE && player != null) {
             player.setPlayWhenReady(!player.getPlayWhenReady());
