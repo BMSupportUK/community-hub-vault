@@ -3561,6 +3561,7 @@ public class MainActivity extends Activity {
     /** Sports guide: day pills + website Category pop-up on top, one card per game on the left, its channels on the right. */
     private void showSports() {
         screen = "sports";
+        stopSports();
         back = () -> { stopSports(); retryEvent = null; showHome(); };
         stopPreview();
         LinearLayout root = column();
@@ -3571,17 +3572,8 @@ public class MainActivity extends Activity {
         sportsDays.setGravity(Gravity.CENTER_VERTICAL);
         sportsDays.setPadding(0, dp(4), 0, dp(8));
         root.addView(sportsDays);
-        LinearLayout loadingRow = row();
-        loadingRow.setGravity(Gravity.CENTER_VERTICAL);
-        loadingRow.setPadding(0, dp(8), 0, dp(12));
-        android.widget.ProgressBar loadingSpinner = new android.widget.ProgressBar(this);
-        loadingRow.addView(loadingSpinner, new LinearLayout.LayoutParams(dp(28), dp(28)));
-        TextView loadingText = text("Loading sports listings… please wait", 18, TEXT, true);
-        loadingText.setPadding(dp(12), 0, 0, 0);
-        loadingRow.addView(loadingText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        root.addView(loadingRow);
-        status.setTag(loadingRow);
         LinearLayout body = row();
+        body.setBaselineAligned(false);
         ListView lv = list();
         lv.setTag("sports");
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.15f);
@@ -3606,8 +3598,7 @@ public class MainActivity extends Activity {
         sportsVersion = "";
         String cached = prefs.getString("sports_cache", "");
         if (!cached.isEmpty()) try { renderSports(new JSONObject(cached)); } catch (Exception ignored) {}
-        loadSports(status, false);
-        stopSports();
+        loadSports(status, false, true);
         sportsTask = new Runnable() { @Override public void run() {
             if (!"sports".equals(screen)) return;
             loadSports(status, false);
@@ -3719,17 +3710,41 @@ public class MainActivity extends Activity {
         for (String[] n : TEAM_NICKNAMES) if (hay.contains(" " + n[0])) b.append(n[1]).append(' ');
         return b.toString();
     }
-    private void stopSports() { if (sportsTask != null) ui.removeCallbacks(sportsTask); sportsTask = null; }
+    private AlertDialog sportsLoadingDialog;
+    private TextView sportsLoadingStatus;
+    private Runnable sportsReady;
+    private void finishSportsLoading() {
+        dismissQuietly(sportsLoadingDialog); sportsLoadingDialog = null; sportsLoadingStatus = null; sportsReady = null;
+    }
+    private void showSportsLoading() {
+        if (sportsLoadingDialog != null && sportsLoadingDialog.isShowing()) return;
+        LinearLayout box = column();
+        box.setPadding(dp(28), dp(24), dp(28), dp(24)); box.setBackgroundColor(CARD);
+        box.addView(text("Loading sports listings… please wait", 22, TEXT, true));
+        android.widget.ProgressBar bar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        bar.setIndeterminate(true); bar.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+        box.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(24)));
+        sportsLoadingStatus = text("Fetching listings…", 16, TEXT, false); box.addView(sportsLoadingStatus);
+        sportsLoadingDialog = new AlertDialog.Builder(this).setView(box).create();
+        sportsLoadingDialog.show();
+    }
+    private void stopSports() {
+        if (sportsTask != null) ui.removeCallbacks(sportsTask); sportsTask = null;
+        finishSportsLoading();
+    }
 
     private void loadSports(TextView status, boolean manual) {
-        View loadingRow = status.getTag() instanceof View ? (View) status.getTag() : null;
-        if (loadingRow != null) loadingRow.setVisibility(View.VISIBLE);
+        loadSports(status, manual, manual);
+    }
+    private void loadSports(TextView status, boolean manual, boolean popup) {
+        if (popup) showSportsLoading();
         io.execute(() -> {
             try {
                 String raw = Net.postJson(Net.SITE + "/api/public/player",
                         new JSONObject().put("action", "sports").put("device_token", prefs.getString("token", "")).toString());
                 JSONObject r = new JSONObject(raw);
                 prefs.edit().putString("sports_cache", raw).apply();
+                ui.post(() -> { if (sportsLoadingStatus != null) sportsLoadingStatus.setText("Preparing channels…"); });
                 if (liveChannels == null || manual) {
                     JSONArray a = new JSONArray(manual ? cachedGetFresh() : cachedGet("live", "get_live_streams", ""));
                     List<Item> l = new ArrayList<>();
@@ -3747,14 +3762,14 @@ public class MainActivity extends Activity {
                 String v = r.optString("version") + "|" + (down == null ? "" : down.toString());
                 ui.post(() -> {
                     if (!"sports".equals(screen)) return;
-                    if (manual || !v.equals(sportsVersion)) renderSports(r);
-                    if (loadingRow != null) loadingRow.setVisibility(View.GONE);
+                    if (popup) sportsReady = this::finishSportsLoading;
+                    if (popup || manual || !v.equals(sportsVersion)) renderSports(r);
                     status.setText("Updated " + clock(System.currentTimeMillis() / 1000) + "  ");
                     if (pendingSportsQuery != null) { String q = pendingSportsQuery; pendingSportsQuery = null; sportsVoice(q); }
                 });
             } catch (Exception e) {
                 ui.post(() -> {
-                    if (loadingRow != null) loadingRow.setVisibility(View.GONE);
+                    finishSportsLoading();
                     status.setText("Couldn't update – try Refresh  ");
                 });
             }
@@ -3940,6 +3955,7 @@ public class MainActivity extends Activity {
         });
         sportsList.setOnItemClickListener((p, v, pos, id) -> { if (pos < cards.size()) fillSportsPanel(cards.get(pos), true); });
         if (cards.isEmpty()) {
+            finishSportsLoading();
             sportsPanelTitle.setText("No games here");
             sportsPanelSub.setText("Pick another day or category");
             sportsChannelList.setAdapter(adapter(new ArrayList<>()));
@@ -3962,6 +3978,7 @@ public class MainActivity extends Activity {
         @Override public View getView(int i, View cv, ViewGroup parent) {
             JSONObject e = cards.get(i); long st = e.optLong("start");
             LinearLayout r = row(); r.setGravity(Gravity.CENTER_VERTICAL); r.setPadding(dp(12), dp(10), dp(12), dp(10));
+            r.setBaselineAligned(false);
             boolean done = sportsEnd(e) <= now;
             TextView t = text(done ? "Finished" : st <= now ? "LIVE" : clock(st / 1000), done ? 14 : 20, done ? MUTED : st <= now ? ACCENT : TEXT, true);
             r.setAlpha(done ? 0.55f : 1f);
@@ -4017,6 +4034,7 @@ public class MainActivity extends Activity {
                 l.add("🔍 Search all channels…"); t.add(null);
                 final int searchRow = l.size() - 1;
                 sportsChannelList.setAdapter(adapter(l));
+                if (sportsReady != null) sportsReady.run();
                 sportsChannelList.setOnItemClickListener((p, v, w, id) -> {
                     JSONArray ch = e.optJSONArray("channels");
                     if (w == searchRow) { searchChannels(e, aliases, ch != null && ch.length() > 0 ? normChannel(ch.optString(0)) : ""); return; }
