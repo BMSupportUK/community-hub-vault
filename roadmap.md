@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Restore website Sports Guide fixtures in event/club channel EPG only, keeping country imports disabled; check Scottish category mapping and real guide response.
 - [x] What to watch now uses real playlist Cinema films (57) and Recommended series (49), matching poster/rating cards and click descriptions. Signed-in desktop verified Elio and Rome descriptions; phone layout has no horizontal overflow. Three category/metadata tests pass, preview builds OK; publish to update the live site.
 - [x] Cancel website channel EPG: no EPG cron jobs remain, database import/dispatch capabilities retired, HTTP import routes return 410, released-app guide requests return provider fallback, Android and shared Windows/Mac source reads provider directly; separate Sports Guide unchanged. Tests pass; website publication required for compatibility replies, no new player installers built or real-device check performed.
 - [x] Explain EPG credit usage: project-wide billing cannot isolate EPG; request rate supports 0.15 requested credits per 100,000 requests, excluding database compute, transfer and worker-day costs. No EPG monthly total claimed.
