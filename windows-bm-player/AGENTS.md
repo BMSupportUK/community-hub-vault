@@ -1,4 +1,5 @@
 # Windows BM Player rules
+- Main and backup playback share PlayerControls and its 3.5-second input timer; transport and action rows hide together, with content-gated skip/report/swap commands and engine-backed speed/audio/subtitle selection.
 - Shared series detail entry focuses its top Back control without scrolling and resets its own pane once per series identity; episode reveal runs only on user focus navigation.
 - Programme grid uses guide-axis.cjs for a fixed two-hour/half-hour axis independent of listings, matching Android; short titles truncate to two lines with full details above and in-box reminder bells, so refreshes never change geometry.
 - Live TV voice results group only provider category names and channel names independently of typed search, without sports requests; Sports Guide retains its separate event-search.cjs matching.
