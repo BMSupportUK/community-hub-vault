@@ -81,6 +81,13 @@ final class StreamRecovery {
     static boolean overrideLiveOffset(String url) {
         return url == null || !url.toLowerCase(java.util.Locale.ROOT).contains(".m3u8");
     }
+    /** HLS live may ease down to this speed when the buffer runs low, so the picture keeps moving instead of stalling. */
+    static final float HLS_MIN_SPEED = 0.97f;
+    /** Never speed up towards the edge: that empties the preloaded segments. */
+    static final float HLS_MAX_SPEED = 1.0f;
+    /** A slow or missing segment is retried this many times before the stream counts as failed. */
+    static final int SEGMENT_RETRIES = 6;
+    static float[] hlsLiveSpeeds(String url) { return overrideLiveOffset(url) ? null : new float[]{HLS_MIN_SPEED, HLS_MAX_SPEED}; }
     static int[] bufferMs(String id, String name) { return bufferMs(cushioned(name) ? "large" : id); }
 
     /** {minBuffer, maxBuffer, startPlayback, afterRebuffer} in milliseconds. */

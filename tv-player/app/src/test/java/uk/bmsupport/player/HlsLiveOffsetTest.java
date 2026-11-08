@@ -20,4 +20,10 @@ public class HlsLiveOffsetTest {
         assertEquals(3, StreamRecovery.formatSwapStalls("Coupang Play 3"));
         assertEquals(3, StreamRecovery.formatSwapStalls("BBC One"));
     }
+    @Test public void hlsEasesSlowerButNeverRacesEdge() {
+        float[] s = StreamRecovery.hlsLiveSpeeds("http://x/live/u/p/1.m3u8");
+        assertEquals(0.97f, s[0], 0.0001f); assertEquals(1.0f, s[1], 0.0001f);
+        assertNull(StreamRecovery.hlsLiveSpeeds("http://x/live/u/p/1.ts"));
+        assertEquals(6, StreamRecovery.SEGMENT_RETRIES);
+    }
 }
