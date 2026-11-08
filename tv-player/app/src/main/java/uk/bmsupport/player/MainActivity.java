@@ -1125,7 +1125,7 @@ public class MainActivity extends Activity {
         epg.setText("Loading " + title + "…");
         plIo.execute(() -> {
             try {
-                JSONArray a = new JSONArray(cachedGet(kind, catAction, ""));
+                JSONArray a = orderedCategories(kind, new JSONArray(cachedGet(kind, catAction, "")));
                 java.util.Map<String, String> catName = new java.util.HashMap<>();
                 List<String[]> rows = new ArrayList<>();
                 rows.add(new String[]{"*", "All"});
@@ -2318,6 +2318,9 @@ public class MainActivity extends Activity {
         String[] uaL = {"Standard", "BM Player", "IPTV Smarters"}, uaV = {PlayerActivity.UA, "BMPlayer/" + appVersion(), "IPTVSmartersPlayer"};
 
         List<View> boxes = new ArrayList<>();
+        for (String kind : new String[]{"live", "film", "series"}) {
+            boxes.add(settingBox("⇅", sectionName(kind) + " categories", "Rearrange categories", v -> editCategoryOrder(kind)));
+        }
         boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
         boxes.add(settingBox("🛡", "Anti-Freeze: On", "Always on: unfreezes stuck pictures, reconnects drops, keeps live TV at now",
@@ -2407,6 +2410,64 @@ public class MainActivity extends Activity {
         root.addView(sc, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
         boxes.get(0).requestFocus();
+    }
+
+    private JSONArray orderedCategories(String kind, JSONArray categories) throws Exception {
+        List<String[]> ids = new ArrayList<>();
+        java.util.Map<String, JSONObject> values = new java.util.HashMap<>();
+        for (int i = 0; i < categories.length(); i++) {
+            JSONObject o = categories.getJSONObject(i);
+            String id = o.optString("category_id");
+            ids.add(new String[]{id, o.optString("category_name")}); values.put(id, o);
+        }
+        JSONArray result = new JSONArray();
+        for (String[] row : CategoryOrder.apply(ids, prefs.getString(CategoryOrder.key(prefs, kind), "[]"))) result.put(values.get(row[0]));
+        return result;
+    }
+
+    private void editCategoryOrder(String kind) {
+        Toast.makeText(this, "Loading categories…", Toast.LENGTH_SHORT).show();
+        io.execute(() -> {
+            try {
+                JSONArray categories = new JSONArray(cachedGet(kind, catActionFor(kind), ""));
+                List<String[]> original = new ArrayList<>();
+                for (int i = 0; i < categories.length(); i++) {
+                    JSONObject o = categories.getJSONObject(i);
+                    if (!hideAdult(o.optString("category_name"))) original.add(new String[]{o.optString("category_id"), o.optString("category_name")});
+                }
+                ui.post(() -> {
+                    if (!"settings".equals(screen)) return;
+                    List<String[]> rows = CategoryOrder.apply(original, prefs.getString(CategoryOrder.key(prefs, kind), "[]"));
+                    int[] selected = {0};
+                    LinearLayout content = column();
+                    ListView list = list();
+                    content.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(platform().equals("phone") ? 120 : 240)));
+                    Runnable redraw = () -> {
+                        List<String> names = new ArrayList<>();
+                        for (int i = 0; i < rows.size(); i++) names.add((i + 1) + ". " + rows.get(i)[1]);
+                        list.setAdapter(rowAdapter(names)); list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+                        if (!rows.isEmpty()) { list.setItemChecked(selected[0], true); list.setSelection(selected[0]); }
+                    };
+                    list.setOnItemClickListener((a,v,p,id) -> { selected[0] = p; list.setItemChecked(p, true); });
+                    list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override public void onItemSelected(AdapterView<?> a, View v, int p, long id) { selected[0] = p; }
+                        @Override public void onNothingSelected(AdapterView<?> a) {}
+                    });
+                    LinearLayout tools = row();
+                    for (int delta : new int[]{-1, 1}) tools.addView(button(delta < 0 ? "↑ Move up" : "↓ Move down", v -> {
+                        int target = selected[0] + delta;
+                        if (target < 0 || target >= rows.size()) return;
+                        java.util.Collections.swap(rows, selected[0], target); selected[0] = target; redraw.run();
+                    }), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+                    content.addView(tools);
+                    content.addView(button("↺ Reset order", v -> { rows.clear(); rows.addAll(original); selected[0] = 0; redraw.run(); }));
+                    redraw.run();
+                    new AlertDialog.Builder(this).setTitle(sectionName(kind) + " category order").setView(content)
+                        .setPositiveButton("Save", (d,w) -> { CategoryOrder.save(prefs, kind, rows); Toast.makeText(this, "Category order saved", Toast.LENGTH_SHORT).show(); })
+                        .setNegativeButton("Cancel", null).show();
+                });
+            } catch (Exception e) { ui.post(() -> Toast.makeText(this, "Couldn't load categories. Try Refresh.", Toast.LENGTH_LONG).show()); }
+        });
     }
 
     // ---------- playlist cache + refresh ----------
@@ -3534,7 +3595,7 @@ public class MainActivity extends Activity {
         });
         io.execute(() -> {
             try {
-                JSONArray ca = new JSONArray(cachedGet("live", "get_live_categories", ""));
+                JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
                 if (liveChannels == null) {
                     JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
                     List<Item> l = new ArrayList<>();
