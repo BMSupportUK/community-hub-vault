@@ -3545,12 +3545,22 @@ public class MainActivity extends Activity {
         stopPreview();
         LinearLayout root = column();
         root.setPadding(dp(24), dp(16), dp(24), dp(16));
-        TextView status = text("Loading…", 13, MUTED, false);
+        TextView status = text("", 13, MUTED, false);
         root.addView(sportsHeader(status), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         sportsDays = row();
         sportsDays.setGravity(Gravity.CENTER_VERTICAL);
         sportsDays.setPadding(0, dp(4), 0, dp(8));
         root.addView(sportsDays);
+        LinearLayout loadingRow = row();
+        loadingRow.setGravity(Gravity.CENTER_VERTICAL);
+        loadingRow.setPadding(0, dp(8), 0, dp(12));
+        android.widget.ProgressBar loadingSpinner = new android.widget.ProgressBar(this);
+        loadingRow.addView(loadingSpinner, new LinearLayout.LayoutParams(dp(28), dp(28)));
+        TextView loadingText = text("Loading sports listings… please wait", 18, TEXT, true);
+        loadingText.setPadding(dp(12), 0, 0, 0);
+        loadingRow.addView(loadingText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        root.addView(loadingRow);
+        status.setTag(loadingRow);
         LinearLayout body = row();
         ListView lv = list();
         lv.setTag("sports");
@@ -3692,6 +3702,8 @@ public class MainActivity extends Activity {
     private void stopSports() { if (sportsTask != null) ui.removeCallbacks(sportsTask); sportsTask = null; }
 
     private void loadSports(TextView status, boolean manual) {
+        View loadingRow = status.getTag() instanceof View ? (View) status.getTag() : null;
+        if (loadingRow != null) loadingRow.setVisibility(View.VISIBLE);
         io.execute(() -> {
             try {
                 String raw = Net.postJson(Net.SITE + "/api/public/player",
@@ -3715,12 +3727,16 @@ public class MainActivity extends Activity {
                 String v = r.optString("version") + "|" + (down == null ? "" : down.toString());
                 ui.post(() -> {
                     if (!"sports".equals(screen)) return;
-                    status.setText("Updated " + clock(System.currentTimeMillis() / 1000) + "  ");
                     if (manual || !v.equals(sportsVersion)) renderSports(r);
+                    if (loadingRow != null) loadingRow.setVisibility(View.GONE);
+                    status.setText("Updated " + clock(System.currentTimeMillis() / 1000) + "  ");
                     if (pendingSportsQuery != null) { String q = pendingSportsQuery; pendingSportsQuery = null; sportsVoice(q); }
                 });
             } catch (Exception e) {
-                ui.post(() -> status.setText(manual ? "Couldn't update – check the connection  " : status.getText()));
+                ui.post(() -> {
+                    if (loadingRow != null) loadingRow.setVisibility(View.GONE);
+                    status.setText("Couldn't update – try Refresh  ");
+                });
             }
         });
     }
