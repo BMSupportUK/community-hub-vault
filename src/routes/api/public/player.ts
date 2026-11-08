@@ -395,7 +395,13 @@ export const Route = createFileRoute("/api/public/player")({
 
         if (body.action === "guide") {
           const { providerGuideFallback } = await import('@/lib/provider-epg-policy');
-          return json(providerGuideFallback());
+          const { isOfficialSportsChannel } = await import('@/lib/sports-programme-end');
+          const { needsSportsEvents } = await import('@/lib/real-epg');
+          if (!needsSportsEvents(body.channel, isOfficialSportsChannel(body.channel), false)) return json(providerGuideFallback());
+          const { buildSportsFixtures } = await import('@/lib/player-sports-feed.server');
+          const { sportsFixtureEpg } = await import('@/lib/sports-fixture-epg');
+          const feed = await buildSportsFixtures();
+          return json(sportsFixtureEpg(body.channel, feed.events));
         }
 
         if (body.action === "sports") {

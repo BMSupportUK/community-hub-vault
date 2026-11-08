@@ -4,7 +4,7 @@ import { countryEpgEnabled, providerGuideFallback, retiredCategoryRefresh } from
 test('country imports are disabled before any database or download work', () => {
   expect(countryEpgEnabled()).toBe(false);
 });
-test('channel guide tells existing apps to use their own provider, never website listings', () => {
+test('unmatched channel guide tells existing apps to use their own provider', () => {
   expect(providerGuideFallback()).toEqual({ epg_listings: null, source: 'none' });
 });
 test('category entry can never queue a country update', () => {
