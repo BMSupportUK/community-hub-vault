@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Hash, UserRound, Check } from "lucide-react";
+import { Hash, UserRound, UsersRound, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import {
   needsProfileChoice,
   pickActiveProfile,
   readActiveProfileId,
+  requestProfileChooser,
   saveActiveProfile,
   wasProfileChosen,
 } from "@/lib/account-profiles";
@@ -76,6 +77,23 @@ export const accountTypeLabel = (type: string | null) => {
   if (t === "triple") return "Triple-room";
   return "Single";
 };
+
+/** Header pill: reopen the profile chooser. Only shown when the customer has 2+ logins. */
+export function SwitchProfilePill() {
+  const { userId, profiles, loaded } = useAccountProfiles();
+  if (!userId || !loaded || profiles.length < 2) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => requestProfileChooser(userId)}
+      title="Switch profile"
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-violet-500/15 border border-violet-500/40 text-violet-300 text-[11px] font-semibold hover:bg-violet-500/25 transition-colors"
+    >
+      <UsersRound className="size-3.5" />
+      <span className="hidden xl:inline">Switch profile</span>
+    </button>
+  );
+}
 
 /** Full-screen "Choose your profile" screen for customers with more than one login. */
 export function ProfileChooser() {

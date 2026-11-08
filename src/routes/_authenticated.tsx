@@ -37,6 +37,7 @@ const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then
 const VpnPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.VpnPill })));
 const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
 const LockNowPill = lazy(() => import("@/components/app/ScreenLockProvider").then((m) => ({ default: m.LockNowPill })));
+const ProfileChooser = lazy(() => import("@/components/app/AccountProfiles").then((m) => ({ default: m.ProfileChooser })));
 
 const BreakEndingAlert = lazy(() => import("@/components/app/BreakEndingAlert").then((m) => ({ default: m.BreakEndingAlert })));
 const ShiftStartEndAlert = lazy(() => import("@/components/app/ShiftStartEndAlert").then((m) => ({ default: m.ShiftStartEndAlert })));
@@ -337,6 +338,9 @@ function AuthLayout() {
         </DeferUntilIdle>
         <DeferUntilIdle>
           <GpsCapture />
+        </DeferUntilIdle>
+        <DeferUntilIdle>
+          <ProfileChooser />
         </DeferUntilIdle>
         <DeferUntilIdle>
           <OnlinePresence />

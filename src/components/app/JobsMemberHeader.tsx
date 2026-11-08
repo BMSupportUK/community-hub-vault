@@ -14,6 +14,7 @@ import { PendingOrdersBadge } from "./PendingOrdersBadge";
 import { Clocks } from "./Clocks";
 import { AccountNumberPill } from "./AccountNumberPill";
 import { LockNowPill } from "./ScreenLockProvider";
+import { SwitchProfilePill } from "./AccountProfiles";
 import { TwoFactorPill, VpnPill } from "./TwoFactorBanner";
 
 const pill = "hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors";
@@ -49,6 +50,7 @@ export function JobsMemberHeader() {
       <div className="hidden xl:flex flex-1 min-w-0 px-3" />
       <div className="hidden lg:contents"><Clocks /></div>
       <div className="hidden lg:flex"><AccountNumberPill /></div>
+      <SwitchProfilePill />
       <LockNowPill />
       <TwoFactorPill />
       <VpnPill />
