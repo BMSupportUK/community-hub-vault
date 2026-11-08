@@ -9,6 +9,7 @@ import org.robolectric.RuntimeEnvironment;
 import android.content.SharedPreferences;
 
 @RunWith(RobolectricTestRunner.class)
+@org.robolectric.annotation.Config(sdk = 28)
 public class CategoryOrderTest {
     private List<String[]> rows() { return Arrays.asList(new String[]{"*","All"},new String[]{"1","News"},new String[]{"2","Sport"},new String[]{"3","New"}); }
     @Test public void allStaysFirstAndNewCategoriesAppendInProviderOrder() {
