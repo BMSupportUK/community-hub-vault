@@ -105,8 +105,8 @@ async function refreshInner(){
  send({type:'progress',message:'Playlists updated',percent:100});send({type:'catalogues'});return true;
 }
 async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||String(channel.id).length>80)throw new Error('Catch up isn\'t available on this channel.');const r=await provider('get_simple_data_table',{stream_id:String(channel.id)});return core.catchupProgrammes(r.epg_listings,Math.min(30,Number(channel.archive)));}
-// Channel EPG goes directly to the saved playlist provider, never BM hosting.
-async function epg(id){const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return core.programmes(r.epg_listings);}
+// Resolve trusted catalogue names; only saved sports fixtures override provider EPG.
+async function epg(id){const catalog=await catalogue('live');const channel=catalog.items.find(c=>String(c.id)===String(id));const {loadFixtureGuide}=require('../fixture-guide.cjs');const rows=await loadFixtureGuide(channel,site,async()=>{const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return r.epg_listings;});return core.programmes(rows);}
 function persistProgress(session){
  if(!['film','episode'].includes(session.item.kind)||!(session.duration>0))return;
  store.progress=store.progress||{};const k=key(session.item);store.progress[k]={position:session.position||0,duration:session.duration,at:Date.now()};

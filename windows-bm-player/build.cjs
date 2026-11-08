@@ -11,6 +11,7 @@ for(const file of ['package.json','core.cjs','playback-core.cjs','account-gate.c
 for(const file of ['main.cjs','preload.cjs','embedded-vlc.cjs'])fs.copyFileSync(path.join(root,'electron',file),path.join(stage,'electron',file));
 fs.copyFileSync(path.join(root,'../mac-bm-player/electron/mac-engine.cjs'),path.join(stage,'electron/mac-engine.cjs'));
 const vendor=path.join(stage,'vendor');fs.mkdirSync(path.join(vendor,'@koromix/koffi-win32-x64'),{recursive:true});
+fs.copyFileSync(path.join(root,'fixture-guide.cjs'),path.join(stage,'fixture-guide.cjs'));
 for(const [name,url]of [['koffi','https://registry.npmjs.org/koffi/-/koffi-3.3.6.tgz'],['@koromix/koffi-win32-x64','https://registry.npmjs.org/@koromix/koffi-win32-x64/-/koffi-win32-x64-3.3.6.tgz']]){
  const dest=path.join(vendor,name);fs.mkdirSync(dest,{recursive:true});const archive='/tmp/'+name.replaceAll('/','-')+'.tgz';
  execFileSync('curl',['-fsSL',url,'-o',archive]);execFileSync('tar',['-xzf',archive,'--strip-components=1','-C',dest]);

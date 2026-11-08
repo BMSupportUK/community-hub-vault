@@ -11,6 +11,7 @@ execFileSync('bun', ['build', path.join(shared,'sports-context.cjs'), '--target=
 execFileSync('lovable-assets', ['get', '--overwrite', '--file', path.join(root, '../src/assets/player-family-intro.mp4.asset.json'), '-o', path.join(stage, 'dist/player-intro.mp4')], { stdio: 'inherit' });
 execFileSync('bun', ['build', path.join(root, 'renderer/entry.jsx'), '--target=browser', '--minify', '--outfile=' + path.join(stage, 'dist/app.js')], { stdio: 'inherit' });
 fs.copyFileSync(path.join(root, 'package.json'), path.join(stage, 'package.json'));
+fs.copyFileSync(path.join(shared,'fixture-guide.cjs'),path.join(stage,'fixture-guide.cjs'));
 for (const file of ['core.cjs', 'playback-core.cjs', 'account-gate.cjs', 'sound-boost.cjs', 'stream-recovery.cjs', 'backup-switch.cjs', 'progress-sync.cjs', 'letterbox.cjs', 'feed-status.cjs','checkin.cjs','channel-variants.cjs','category-order.cjs','epg-category.cjs']) fs.copyFileSync(path.join(shared, file), path.join(stage, file));
 for (const file of ['main.cjs', 'preload.cjs']) fs.copyFileSync(path.join(shared, 'electron', file), path.join(stage, 'electron', file));
 fs.copyFileSync(path.join(root, 'electron/mac-engine.cjs'), path.join(stage, 'electron/mac-engine.cjs'));

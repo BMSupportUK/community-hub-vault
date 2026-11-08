@@ -1332,11 +1332,16 @@ public class MainActivity extends Activity {
     }
 
     /** Header line gets "Now", the mini guide box gets now (with progress) plus the next programmes. */
+    private JSONArray fixtureListings(Item it) {
+        return FixtureGuide.listings(it.name, () -> new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
+                new JSONObject().put("action", "guide").put("device_token", prefs.getString("token", "")).put("channel", it.name).toString())));
+    }
     private void loadEpg(Item it, TextView out, TextView box) {
         if (box != null) box.setText("TV guide for " + it.name + "…");
         io.execute(() -> {
             try {
-                JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=6")).optJSONArray("epg_listings");
+                JSONArray l = fixtureListings(it);
+                if (l == null) l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=6")).optJSONArray("epg_listings");
                 StringBuilder head = new StringBuilder(it.name), guide = new StringBuilder();
                 List<Object[]> progs = new ArrayList<>();
                 long nowSec = System.currentTimeMillis() / 1000;
@@ -3585,7 +3590,10 @@ public class MainActivity extends Activity {
                     long now = System.currentTimeMillis() / 1000;
                     List<GuideGridView.Prog> got = new ArrayList<>();
                     boolean ok = false, full0 = false;
-                    // Channel guide comes directly from the playlist provider.
+                    JSONArray fixtures = fixtureListings(it);
+                    if (fixtures != null) { got = GuideListings.parse(fixtures, now); ok = true; full0 = true; }
+                    // Ordinary and unmatched channels retain provider short/full-day EPG.
+                    if (fixtures == null) {
                     try {
                         got = GuideListings.parse(new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings"), now);
                         ok = true;
@@ -3597,6 +3605,7 @@ public class MainActivity extends Activity {
                         if (full.size() > got.size()) got = full;
                         ok = true; full0 = true;
                     } catch (Exception ignored) {}
+                    }
                     final List<GuideGridView.Prog> res = got; final boolean fetched = ok, gotFull = full0;
                     ui.post(() -> {
                         requested.remove(it.id);
