@@ -12,6 +12,11 @@ test("indexed sports matching preserves existing exact, alias, numbered and fall
   }
   expect(pin(["Coupang Event 1"])).toEqual(["Coupang | Event 1"]);
 });
+test("indexed matching retains fuzzy quality ranking and numeric catalogue feeds", () => {
+  const names = ["7 | Live football", "Sky Sports Main Event UHD", "Sky Sports Main Event FHD", "Coupang Event 11", "Coupang Event 1 HD"];
+  const pin = createLiveChannelPinner(names);
+  for (const channel of ["7", "Sky Sport Main", "Coupang Event 1", "Sky Sports Main Event", "Missing"]) expect(pin([channel])).toEqual(pinLiveChannels([channel], names));
+});
 
 test("a guide channel that only loosely matches a Replay feed is dropped, not linked", () => {
   expect(pinLiveChannels(["UFC 3 HD"], live)).toEqual([]);
