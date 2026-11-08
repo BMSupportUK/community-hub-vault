@@ -44,6 +44,7 @@ public class PlayerActivity extends Activity {
     /** IPTV panels often block unknown players, so identify as VLC like most IPTV apps. */
     static final String UA = "VLC/3.0.20 LibVLC/3.0.20";
     private ExoPlayer player;
+    private String activeDecoder = "media3/unknown";
     private final Handler ui = new Handler(Looper.getMainLooper());
     private String progressKey, seriesKey;
     private boolean playbackReady;
@@ -173,6 +174,9 @@ public class PlayerActivity extends Activity {
     private void startCatchup() {
         cuSegStart = getIntent().getLongExtra("catchup_start", 0);
         cuEnd = getIntent().getLongExtra("catchup_end", 0);
+        player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
+            @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
+        });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
                 if (s == Player.STATE_READY) cuRetries = 0;
@@ -504,6 +508,9 @@ public class PlayerActivity extends Activity {
             rateMatched = true;
             ui.post(() -> rateKnown(fps));
         });
+        player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
+            @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
+        });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
                 long now = android.os.SystemClock.elapsedRealtime();
@@ -759,7 +766,7 @@ public class PlayerActivity extends Activity {
     private void reportBuffer(long ms, boolean reconnected, boolean freeze, String cause) {
         String u = liveUrls.length > urlAt ? liveUrls[urlAt] : "";
         String fmt = u.endsWith(".m3u8") ? "m3u8" : u.endsWith(".ts") ? "ts" : "direct";
-        String decoder = player != null && player.getVideoFormat() != null ? "media3/" + String.valueOf(player.getVideoFormat().sampleMimeType) : "media3";
+        String decoder = activeDecoder.substring(0, Math.min(120, activeDecoder.length()));
         BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, freeze, cause, fmt, decoder, StreamRecovery.isDazn(recoveryName()) ? "dazn" : null, getIntent().getStringExtra("event_name"));
     }
 
@@ -793,7 +800,7 @@ public class PlayerActivity extends Activity {
                     try {
                         org.json.JSONObject selected = options.getJSONObject(index); org.json.JSONArray urls = selected.getJSONArray("urls");
                         String[] next = new String[urls.length()]; for (int j = 0; j < next.length; j++) next[j] = urls.getString(j);
-                        android.content.Intent intent = new android.content.Intent(getIntent()).removeExtra("carried");
+                        android.content.Intent intent = new android.content.Intent(getIntent()); intent.removeExtra("carried");
                         intent.setClass(this, PlayerActivity.class).putExtra("content_id", selected.getString("id")).putExtra("content_name", selected.getString("name"))
                             .putExtra("recovery_name", selected.getString("recovery_name")).putExtra("urls", next).putExtra("url", next[0]);
                         intent.removeExtra("sd_urls"); intent.removeExtra("sd_name");

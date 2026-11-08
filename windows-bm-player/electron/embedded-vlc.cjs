@@ -41,7 +41,7 @@ class EmbeddedVlc {
   const media=this.api.media_new_location(this.instance,url);
   if(!media)throw new Error('This stream could not be opened.');
   try{
-   this.api.media_add_option(media,':network-caching='+Math.max(500,Math.min(15000,Number(buffer)||3000)));
+   this.api.media_add_option(media,':network-caching='+Math.max(500,Math.min(Number(buffer)===30000?30000:15000,Number(buffer)||3000)));
    this.api.media_add_option(media,':http-user-agent=VLC/3.0.21 LibVLC/3.0.21');
    // Software decoding: Windows hardware decoders paint smeared colour blocks when a live feed (e.g. MonoMax) joins mid-picture or drops packets.
    this.api.media_add_option(media,':avcodec-hw=none');

@@ -27,6 +27,7 @@ function toBackup(session){
 }
 const SITE='https://bmsupport.uk';
 let win,store={},file,lastInput=Date.now(),promptedAt=0,excessSince=0,excessReported=false,linkCode='',maintenance=null;
+let sportsSnapshot=null;
 let sessions=[],awake=null,pollBusy=false,checkBusy=false,engine=null;
 let lastSystemIdle=0,refreshPromise=null;
 const page=path.join(__dirname,'../dist/index.html');
@@ -134,7 +135,7 @@ async function stopAll(){
  if(awake!==null){powerSaveBlocker.stop(awake);awake=null;}
  send({type:'state',state:publicState()});
 }
-async function play({item,resume=false,screens=1,subtitles=null}){
+async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
  if(item?.kind==='catchup'&&!(Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start&&item.end<=Date.now()))throw new Error('Choose a programme that has finished.');
  if(!item||!['live','film','episode','catchup'].includes(item.kind)||String(item.id).length>80)throw new Error('Choose a playable item.');
  if(maintenance)throw new Error(maintenance);
@@ -142,15 +143,19 @@ async function play({item,resume=false,screens=1,subtitles=null}){
  const allowed=Math.min(3,Number(store.account?.max_connections)||1);
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
  if(screens===1||sessions.length>=screens)await stopAll();
+ const catalog=item.kind==='live'?await catalogue('live'):null;
+ if(catalog){const verified=catalog.items.find(c=>String(c.id)===String(item.id));if(!verified)throw new Error('Channel unavailable.');item={...verified};}
+ const event=sportsSnapshot?.events?.find(e=>String(e.start)+':'+e.title===eventKey);
+ const recoveryName=item.kind==='live'?item.name+' '+(item.categoryName||''):'';
  const baseUrls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto'),urls=item.kind==='live'?recovery.preferFormat(baseUrls,store.formatPref?.[item.id]):baseUrls;
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
  const startAt=resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0;
  engine.setFill?.(index,['film','episode'].includes(item.kind));
- try{engine.play(index,urls[0],{buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
+ try{engine.play(index,urls[0],{steady:recovery.isDazn(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
  catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
  const onBackup=engine.usingBackup(index);
- const session={index,item,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
+ const session={index,item,event,recoveryName,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
  if(index===0)audible=0;applyAudio();
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
@@ -158,12 +163,14 @@ async function play({item,resume=false,screens=1,subtitles=null}){
 }
 async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
  const rec=recovery.tick(session,s.state,Date.now(),session.item.kind==='live');
- if(recovery.advertJump(session,Number(s.w)||0,Number(s.h)||0,s.state,Date.now(),session.item.kind==='live')){try{engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.liveBufferMs(store.settings?.buffer),resume:0,maxHeight:session.maxHeight});applyAudio();}catch{}}
- if(rec.event)queueBuffer(session.item,rec.event);
- if(rec.lower){session.maxHeight=720;const other=session.item.kind==='live'&&session.urls.length>1?recovery.otherFormat(session.urls[session.urlIndex]):null;if(other){store.formatPref={...(store.formatPref||{}),[session.item.id]:other};save();site({action:'format_set',content_id:String(session.item.id),fmt:other}).catch(()=>{});}}
- if(rec.raise){session.maxHeight=0;if(/\.m3u8$/i.test(session.urls[session.urlIndex]||'')){try{engine.play(session.index,session.urls[session.urlIndex],{buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer):recovery.bufferMs(store.settings?.buffer),resume:session.item.kind==='live'?0:session.position,maxHeight:0});applyAudio();}catch{}}}
- if(session.ready&&recovery.frozen(session,s.state,s.position,Date.now())){queueBuffer(session.item,{ms:recovery.FREEZE_MS,reconnected:true,freeze:true});const at=session.item.kind==='live'?0:session.position;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}}
- if(rec.reconnect){const at=session.item.kind==='live'?0:session.position;send({type:'notice',message:'Reconnecting…'});setTimeout(()=>{if(!sessions.includes(session)||!engine)return;try{engine.play(session.index,session.urls[session.urlIndex],{buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}},rec.reconnect);}
+ if(recovery.advertJump(session,Number(s.w)||0,Number(s.h)||0,s.state,Date.now(),session.item.kind==='live')){try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.isDazn(session.recoveryName),buffer:recovery.liveBufferMs(store.settings?.buffer,session.recoveryName),resume:0,maxHeight:session.maxHeight});applyAudio();}catch{}}
+ if(rec.event)queueBuffer(session.item,rec.event,session);
+ if(rec.lower)session.maxHeight=720;
+ if(rec.event&&!session.formatSwapped&&recovery.recentStalls(session.stallTimes||[],Date.now())>=recovery.profile(session.recoveryName).swap){const other=session.item.kind==='live'&&session.urls.length>1?recovery.otherFormat(session.urls[session.urlIndex]):null;if(other){session.formatSwapped=true;store.formatPref={...(store.formatPref||{}),[session.item.id]:other};save();site({action:'format_set',content_id:String(session.item.id),fmt:other}).catch(()=>{});if(recovery.isDazn(session.recoveryName)){const next=session.urls.findIndex(u=>u.endsWith('.'+other));if(next>=0){session.urlIndex=next;engine.play(session.index,session.urls[next],{steady:recovery.isDazn(session.recoveryName),buffer:recovery.liveBufferMs(store.settings?.buffer,session.recoveryName),live:true,resume:0,maxHeight:session.maxHeight});applyAudio();}}}}
+ if(rec.offerFeed&&session.event&&sessions.length===1){const catalog=await catalogue('live');const {sportsRows}=require('../sports-context.cjs');const options=sportsRows(session.event,catalog.items,sportsSnapshot?.aliases||[]).filter(i=>i.id!==session.item.id);if(options.length)send({type:'alternate-feed',items:options,eventKey:String(session.event.start)+':'+session.event.title});}
+ if(rec.raise){session.maxHeight=0;if(/\.m3u8$/i.test(session.urls[session.urlIndex]||'')){try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.isDazn(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:session.item.kind==='live'?0:session.position,maxHeight:0});applyAudio();}catch{}}}
+ if(session.ready&&recovery.frozen(session,s.state,s.position,Date.now())){queueBuffer(session.item,{ms:recovery.FREEZE_MS,reconnected:true,freeze:true},session);const at=session.item.kind==='live'?0:session.position;try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.isDazn(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}}
+ if(rec.reconnect!==undefined){const at=session.item.kind==='live'?0:session.position;send({type:'notice',message:'Reconnecting…'});setTimeout(()=>{if(!sessions.includes(session)||!engine)return;try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.isDazn(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}},rec.reconnect);}
  if(rec.offerSd)send({type:'notice',message:'This HD channel keeps buffering on your connection. Try the SD version of the channel for smoother playback.'});
  if(rec.failed&&!toBackup(session))send({type:'notice',message:'This stream keeps dropping and couldn\'t reconnect. Try again or report the issue.'});
  if(!session.ready&&(s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer)});}else if(!session.failed&&!toBackup(session)){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
@@ -183,7 +190,7 @@ function healthTick(session,s){if(session.item.kind!=='live')return;const now=Da
  if(fs!==session.feedStatus){session.feedStatus=fs;send({type:'feed',index:session.index,status:fs});}
 }
 let bufferQueue=[],bufferBusy=false;
-function queueBuffer(item,ev){bufferQueue.push({kind:item.kind==='episode'?'series':item.kind,content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:Math.max(0,Math.min(3600000,Math.round(ev.ms))),reconnected:!!ev.reconnected,freeze:!!ev.freeze,...(ev.cause?{cause:ev.cause}:{}),at:Date.now()});if(bufferQueue.length>100)bufferQueue=bufferQueue.slice(-100);if(bufferQueue.length>=10)flushBuffer();}
+function queueBuffer(item,ev,session){const url=session?.urls?.[session.urlIndex]||'';bufferQueue.push({stream_format:url.endsWith('.m3u8')?'m3u8':url.endsWith('.ts')?'ts':'direct',decoder:session?.backup?'ffmpeg':MAC?'browser-video':'libvlc/software',...(recovery.isDazn(session?.recoveryName)?{recovery_provider:'dazn'}:{}),...(session?.event?.title?{event_name:String(session.event.title).slice(0,200)}:{}),kind:item.kind==='episode'?'series':item.kind,content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:Math.max(0,Math.min(3600000,Math.round(ev.ms))),reconnected:!!ev.reconnected,freeze:!!ev.freeze,...(ev.cause?{cause:ev.cause}:{}),at:Date.now()});if(bufferQueue.length>100)bufferQueue=bufferQueue.slice(-100);if(bufferQueue.length>=10)flushBuffer();}
 async function flushBuffer(){if(bufferBusy||!store.token||!bufferQueue.length)return;bufferBusy=true;const events=bufferQueue.splice(0,recovery.BATCH);try{await site({action:'buffering',version:app.getVersion(),events});}catch{}finally{bufferBusy=false;}}
 checkin.every(flushBuffer,()=>60000,60000);
 // Films/episodes: zoom past black bars baked into the picture (Windows libVLC; Mac and backup check in the window).
@@ -234,7 +241,7 @@ else{
   win.once('ready-to-show',()=>{win.maximize();win.show();});
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
-  register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',kind=>{if(kind==='film'||kind==='series')syncProgress(false).catch(()=>{});return catalogue(kind);});register('epg',epg);register('catchup',catchup);register('sports',()=>site({action:'sports'}));
+  register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',kind=>{if(kind==='film'||kind==='series')syncProgress(false).catch(()=>{});return catalogue(kind);});register('epg',epg);register('catchup',catchup);register('sports',async()=>{sportsSnapshot=await site({action:'sports'});return sportsSnapshot;});
   register('unlock',async number=>{await gate.unlock(number,site);syncFavourites().catch(()=>{});syncFormats().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season,poster:String(p.info?.movie_image||'')}))]))};});
   electronSession.defaultSession.setPermissionRequestHandler((wc,perm,cb,details)=>cb(perm==='media'&&wc===win?.webContents&&(details?.mediaTypes||['audio']).every(t=>t==='audio')));
