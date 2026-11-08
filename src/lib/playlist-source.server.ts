@@ -6,9 +6,12 @@
 type Cat = { category_id: string; category_name: string };
 type Stream = { name: string; category_id: string; stream_id?: string };
 import type { SportsProgramme } from "./sports-programme-end";
+import { createSharedCache } from "./player-sports-cache";
 
-let cache: { at: number; cats: Cat[]; streams: Stream[] } | null = null;
+type Catalogue = { at: number; cats: Cat[]; streams: Stream[] };
+let cache: Catalogue | null = null;
 const TTL = 10 * 60_000;
+const sharedCatalogue = createSharedCache<Catalogue>(TTL);
 
 async function base(): Promise<string | null> {
   const user = process.env.PLAYLIST_USERNAME, pass = process.env.PLAYLIST_PASSWORD;
@@ -22,12 +25,16 @@ async function base(): Promise<string | null> {
 }
 
 async function load() {
+  return sharedCatalogue(loadCatalogue);
+}
+
+async function loadCatalogue() {
   if (cache && Date.now() - cache.at < TTL) return cache;
   const url = await base();
   if (!url) throw new Error("No playlist login or DNS saved.");
   const [c, s] = await Promise.all([
-    fetch(`${url}&action=get_live_categories`, { signal: AbortSignal.timeout(15000) }).then((r) => r.json()),
-    fetch(`${url}&action=get_live_streams`, { signal: AbortSignal.timeout(30000) }).then((r) => r.json()),
+    fetch(`${url}&action=get_live_categories`, { signal: AbortSignal.timeout(15000) }).then((r) => { if (!r.ok) throw new Error("Playlist unavailable"); return r.json(); }),
+    fetch(`${url}&action=get_live_streams`, { signal: AbortSignal.timeout(30000) }).then((r) => { if (!r.ok) throw new Error("Playlist unavailable"); return r.json(); }),
   ]);
   if (!Array.isArray(c) || !Array.isArray(s)) throw new Error("The playlist did not answer.");
   cache = {
