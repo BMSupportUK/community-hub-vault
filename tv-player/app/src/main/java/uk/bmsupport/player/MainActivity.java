@@ -3574,9 +3574,15 @@ public class MainActivity extends Activity {
                 if (r < 0 || r >= shownCh.size()) return;
                 Item ch = shownCh.get(r);
                 long now = System.currentTimeMillis() / 1000;
+                if (GuideReminder.eligible(p, now)) {
+                    Runnable redraw = () -> { grid.invalidate(); onHighlight(r, p); };
+                    if (MainActivity.this.hasReminder(ch.id, p.st)) confirmRemoveReminder(ch, p.title, p.st, redraw);
+                    else confirmAddReminder(ch, p.title, p.st, redraw);
+                    return;
+                }
+                if (p != null && p.st > now) return;
                 if (live) {
-                    // 1st click on a channel always plays it in the preview; the 2nd click on that channel
-                    // brings up its play menu (a later programme on the previewing channel sets a reminder).
+                    // Only current programmes/channel names start previews; reminders returned above.
                     if (previewItem == null || !ch.id.equals(previewItem.id)) { schedulePreview(ch, pv, pvStatus); return; }
                     if (p == null || p.st <= now) { open(ch); return; }
                 }

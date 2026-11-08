@@ -356,10 +356,18 @@ public class GuideGridView extends View {
                 }
                 txt.setColor(0xFFF1F5F9); txt.setTextSize(14 * d); txt.setFakeBoldText(p == sel);
                 boolean rem = listener != null && listener.hasReminder(r, p.st);
-                String t = (rem ? "⏰ " : "") + p.title;
+                boolean reminderIcon = GuideReminder.eligible(p, nowS);
+                String t = p.title;
                 float pad = box.width() < 60 * d ? 3 * d : 6 * d;
-                float avail = box.width() - 2 * pad;
+                float iconW = reminderIcon ? Math.min(30 * d, box.width()) : 0;
+                float avail = box.width() - 2 * pad - iconW;
                 c.save(); c.clipRect(box);
+                if (reminderIcon) {
+                    txt.setColor(rem ? 0xFFF9C55B : 0xFFF1F5F9);
+                    txt.setTextSize(18 * d); txt.setFakeBoldText(false);
+                    c.drawText(rem ? "⏰" : "♧", box.right - iconW + 4 * d, y + rh / 2 + 6 * d, txt);
+                    txt.setColor(0xFFF1F5F9); txt.setTextSize(14 * d); txt.setFakeBoldText(p == sel);
+                }
                 if (avail >= 14 * d) {
                     boolean narrow = box.width() < 90 * d;
                     if (narrow) txt.setTextSize(12 * d);
