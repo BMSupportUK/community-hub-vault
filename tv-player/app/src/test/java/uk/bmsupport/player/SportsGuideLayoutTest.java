@@ -58,7 +58,9 @@ public class SportsGuideLayoutTest {
         Class<?> type = Class.forName("uk.bmsupport.player.MainActivity$SportsCardAdapter");
         java.lang.reflect.Constructor<?> constructor = type.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
-        android.widget.ListView list = new android.widget.ListView(activity);
+        android.widget.ListView list = new android.widget.ListView(activity) {
+            @Override public boolean isInTouchMode() { return false; }
+        };
         list.setPadding(6, 6, 6, 6);
         list.setAdapter((android.widget.BaseAdapter) constructor.newInstance(activity, cards, System.currentTimeMillis()));
         activity.setContentView(list);
