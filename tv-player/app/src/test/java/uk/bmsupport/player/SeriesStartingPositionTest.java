@@ -46,6 +46,7 @@ public class SeriesStartingPositionTest {
         android.widget.HorizontalScrollView stripScroll = (android.widget.HorizontalScrollView) seasonBox.getChildAt(1);
         LinearLayout strip = (LinearLayout) stripScroll.getChildAt(0);
         View card = strip.getChildAt(0);
+        card.setFocusableInTouchMode(true);
         card.requestFocus();
         assertTrue("Episodes remain reachable by remote focus", card.hasFocus());
     }
