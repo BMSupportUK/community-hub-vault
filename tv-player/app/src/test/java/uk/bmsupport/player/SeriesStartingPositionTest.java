@@ -28,11 +28,11 @@ public class SeriesStartingPositionTest {
         ScrollView scroll = new ScrollView(activity);
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        Button top = new Button(activity); top.setText("Add favourite");
+        Button top = new Button(activity); top.setText("Add favourite"); top.setFocusableInTouchMode(true);
         root.addView(top);
         root.addView(new View(activity), new LinearLayout.LayoutParams(1200, 1200));
         scroll.addView(root); activity.setContentView(scroll);
-        top.requestFocus(); layout(scroll);
+        layout(scroll); top.requestFocus();
         MainActivity.Item show = new MainActivity.Item("series", "1", "Test series", "", "");
         MainActivity.Item episode = new MainActivity.Item("episode", "11", "Episode 1", "mp4", "");
         Method row = MainActivity.class.getDeclaredMethod("seasonRow", MainActivity.Item.class, int.class, List.class);
