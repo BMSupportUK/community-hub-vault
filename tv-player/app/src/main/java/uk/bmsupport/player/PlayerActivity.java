@@ -778,13 +778,8 @@ public class PlayerActivity extends Activity {
         stallTimes[stallCount % stallTimes.length] = now; stallCount++;
         int recent = StreamRecovery.recentStalls(stallTimes, Math.min(stallCount, stallTimes.length), now);
         if (recent >= StreamRecovery.STALLS_TO_LOWER) lowerQuality();
-        if (recent >= StreamRecovery.formatSwapStalls(recoveryName())) {
-            rememberBetterFormat();
-            if (StreamRecovery.cushioned(recoveryName()) && !daznFormatSwapped && liveUrls.length > 1) {
-                daznFormatSwapped = true; pendingFormat = StreamRecovery.otherFormat(liveUrls[urlAt]);
-                // Remember for the next failed connection/open; never throw away a recovered picture.
-            }
-        }
+        // Stream type (ts/m3u8) is never switched or shared because of buffering: channels
+        // always play in the playlist's own order, like other IPTV apps.
         if (recent >= ChannelSwap.AUTO_STALLS && swapOptions().length() > 0) offerSwap(true);
         else if (recent >= StreamRecovery.STALLS_TO_OFFER_SD) offerSd();
     }
