@@ -165,6 +165,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
 }
 async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
  const rec=recovery.tick(session,s.state,Date.now(),session.item.kind==='live');
+ if(session.item.kind==='live'&&recovery.heavyFormat(Number(s.w)||0,Number(s.h)||0,Number(s.fps)||0,Number(s.bitrate)||0)&&recovery.rememberHeavy(session.recoveryName)){store.heavyChannels=recovery.heavyList();try{save();}catch{}}
  if(recovery.advertJump(session,Number(s.w)||0,Number(s.h)||0,s.state,Date.now(),session.item.kind==='live')){try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:recovery.liveBufferMs(store.settings?.buffer,session.recoveryName),resume:0,maxHeight:session.maxHeight});applyAudio();}catch{}}
  if(rec.event)queueBuffer(session.item,rec.event,session);
  if(rec.lower)session.maxHeight=720;
@@ -239,6 +240,7 @@ else{
  app.whenReady().then(async()=>{
   file=path.join(app.getPath('userData'),'player-encrypted.bin');
   if(fs.existsSync(file)){try{store=JSON.parse(safeStorage.decryptString(fs.readFileSync(file)));}catch{store={};}}
+  recovery.loadHeavy(store.heavyChannels);
   store.recent=(store.recent||[]).filter(i=>!core.adult(i.categoryName));
   win=new BrowserWindow({title:'BM Player · '+PLATFORM.name,show:false,width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,...(MAC?{}:{icon:path.join(__dirname,'../build.ico')}),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
   win.once('ready-to-show',()=>{win.maximize();win.show();});

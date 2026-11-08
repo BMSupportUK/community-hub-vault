@@ -15,10 +15,21 @@ const STABLE_RAISE_MS = 120000;
 const LIVE_BUFFER_MS = 12000;
 function isDazn(name) { return /\bdazn\b/i.test(String(name || '').normalize('NFKC')); }
 function isCoupang(name) { return /\bcoupang\b/i.test(String(name || '').normalize('NFKC')); }
-/** Sports-pass feeds (DAZN, Coupang Play) get the steadier large-buffer profile. */
-function cushioned(name) { return isDazn(name) || isCoupang(name); }
+/** Heavy before playing: UHD/4K/2160, FHD, 1080p50/60, 50/60fps (same rule as Android). */
+function isHeavyName(name) { return /(\buhd\b|\b4k\b|2160|\bfhd\b|1080p?\s*(50|60)|\b(50|60)\s*fps\b)/i.test(String(name || '').normalize('NFKC')); }
+/** Measured heavy: 8 Mbps+, taller than 1080, or 1080 at 49fps+. */
+function heavyFormat(w, h, fps, bitrate) { const hh = w > 0 && h > 0 ? h : 0; return (bitrate || 0) >= 8000000 || hh > 1088 || (hh >= 1080 && (fps || 0) >= 49); }
+const HEAVY = new Set(); const HEAVY_MAX = 500;
+function heavyKey(name) { return String(name || '').normalize('NFKC').trim().toLowerCase(); }
+function isHeavy(name) { return isHeavyName(name) || (!!heavyKey(name) && HEAVY.has(heavyKey(name))); }
+/** Remember a measured heavy channel; true when newly added. */
+function rememberHeavy(name) { const k = heavyKey(name); if (!k || isHeavyName(name) || HEAVY.has(k)) return false; HEAVY.add(k); while (HEAVY.size > HEAVY_MAX) HEAVY.delete(HEAVY.values().next().value); return true; }
+function loadHeavy(list) { HEAVY.clear(); for (const k of Array.isArray(list) ? list.slice(-HEAVY_MAX) : []) if (typeof k === 'string' && k) HEAVY.add(k); }
+function heavyList() { return [...HEAVY]; }
+/** Sports-pass feeds (DAZN, Coupang Play) and high-bitrate streams get the steadier large-buffer profile. */
+function cushioned(name) { return isDazn(name) || isCoupang(name) || isHeavy(name); }
 /** Diagnostic tag for the admin buffering report. */
-function providerTag(name) { return isDazn(name) ? 'dazn' : isCoupang(name) ? 'coupang' : null; }
+function providerTag(name) { return isDazn(name) ? 'dazn' : isCoupang(name) ? 'coupang' : isHeavy(name) ? 'high_bitrate' : null; }
 function profile(name) { return cushioned(name) ? { min:40000, max:90000, start:3000, rebuffer:6000, live:30000, reconnect:6000, swap:1 } : { live:LIVE_BUFFER_MS, reconnect:STALL_RECONNECT_MS, swap:2 }; }
 function liveBufferMs(setting, name) { return Math.max(profile(name).live, bufferMs(setting)); }
 
@@ -109,4 +120,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { isDazn, isCoupang, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { isDazn, isCoupang, isHeavyName, heavyFormat, isHeavy, rememberHeavy, loadHeavy, heavyList, HEAVY_MAX, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
