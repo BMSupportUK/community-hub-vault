@@ -285,6 +285,18 @@ export const Route = createFileRoute("/api/public/player")({
 
         if (body.action === "report") {
           if (!device.user_id) return json({ error: "Link this app to your BM Support account first." }, 403);
+          if (body.kind === "live") {
+            const { data, error } = await supabaseAdmin.rpc("create_player_fault_ticket", {
+              _device_id: device.id, _title: body.title, _category: body.category ?? "",
+              _issue: body.issue, _device: body.device ?? "Unknown", _version: body.version ?? "",
+            });
+            if (error) return json({ error: "Couldn't open a ticket. Try again." }, 503);
+            const result = data as { duplicate?: boolean; rate_limited?: boolean; ok?: boolean; ticket_id?: string } | null;
+            if (result?.duplicate) return json({ duplicate: true, error: "A fault is already reported for this channel. Please try another channel while staff investigate." }, 409);
+            if (result?.rate_limited) return json({ error: "You've just sent a few reports. Our staff will be with you shortly." }, 429);
+            if (!result?.ok) return json({ error: "Couldn't open a ticket. Try again." }, 503);
+            return json(result);
+          }
           const { count } = await supabaseAdmin.from("tickets").select("id", { count: "exact", head: true })
             .eq("user_id", device.user_id).like("subject", "BM Player:%").gte("created_at", new Date(Date.now() - 10 * 60_000).toISOString());
           if ((count ?? 0) >= 3) return json({ error: "You've just sent a few reports. Our staff will be with you shortly." }, 429);
@@ -412,15 +424,24 @@ export const Route = createFileRoute("/api/public/player")({
           // Crosses only show from 10 min before an event until it ends; event-only channels only
           // count problems from that event's own window.
           const data = await currentCrossData().catch(() => ({ rows: [], stalls: [], at: Date.now() }));
+          // Ticket faults never expire with the 15-minute health window. Read them fresh,
+          // exposing channel names only, never another customer's ticket or message.
+          const { activeFaultChannels, eventTicketFaults } = await import("@/lib/player-ticket-faults");
+          const { data: tickets, error: faultError } = await supabaseAdmin.from("tickets")
+            .select("player_channel_name, player_channel_key, status")
+            .not("player_channel_key", "is", null).not("status", "in", "(resolved,closed)");
+          if (faultError) return json({ error: "Couldn't refresh channel faults. Try again." }, 503);
+          const faults = activeFaultChannels(tickets ?? []);
           const now = Date.now();
           const events = (payload.events as { start: number; end?: number; channels: string[] }[]).map((e) => {
-            const unavailable = eventUnavailable(e, data.rows, data.stalls, now);
-            return unavailable.length ? { ...e, unavailable } : e;
+            const ticketFaults = eventTicketFaults(e, faults);
+            const unavailable = [...new Set([...eventUnavailable(e, data.rows, data.stalls, now), ...ticketFaults])];
+            return { ...e, unavailable, ticketFaults };
           });
           const perEvent = new Set(events.flatMap((e) => ((e as { unavailable?: string[] }).unavailable ?? []).map((c) => c.toLowerCase())));
           // Global list (older apps): 24/7 channels as before, event channels only when crossed on an open event.
           const down = crossedChannels(data.rows, data.stalls, now).filter((c) => !isEventChannel(c) || perEvent.has(c.toLowerCase()));
-          return json({ ...payload, events, unavailable: down });
+          return json({ ...payload, events, ticketFaults: faults, unavailable: [...new Set([...down, ...faults])], version: payload.version + ":faults:" + JSON.stringify(faults) });
         }
 
         if (body.action === "code") {
