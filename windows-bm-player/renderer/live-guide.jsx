@@ -23,7 +23,8 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  const [guide,setGuide]=useState({});
  const asked=useRef(new Map()),pending=useRef(new Set()),grid=useRef(null);
  const [gridWidth,setGridWidth]=useState(800);
- useEffect(()=>{const root=grid.current;if(!root)return;const resize=new ResizeObserver(()=>setGridWidth(Math.max(220,root.clientWidth-240)));resize.observe(root);return()=>resize.disconnect();},[]);
+ useEffect(()=>{const root=grid.current;if(!root)return;// Ignore scrollbar-sized changes: a scrollbar appearing re-sized the axis, which hid the scrollbar again and made the guide shake.
+ const resize=new ResizeObserver(()=>{const w=Math.max(220,root.offsetWidth-240);setGridWidth(o=>Math.abs(o-w)<32?o:w);});resize.observe(root);return()=>resize.disconnect();},[]);
  const epgRef=useRef(epg);epgRef.current=epg;
  const now=Date.now();
  async function load(ch,isActive){if(pending.current.has(ch.id)||!guideRefresh.due(asked.current.get(ch.id)))return;pending.current.add(ch.id);try{const p=await epgRef.current(ch.id);if(!isActive())return;asked.current.set(ch.id,Date.now());setGuide(g=>({...g,[ch.id]:p||[]}));}catch{/* Keep the last good line-up and retry on the next tick. */}finally{pending.current.delete(ch.id);}}
