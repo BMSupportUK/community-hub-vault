@@ -5096,6 +5096,7 @@ export type Database = {
           renewal_credential_id: string | null
           renewal_customer_id: string | null
           skip_registration: boolean
+          square_attempt_key: string | null
           subscription_expiry_at: string | null
           token: string
         }
@@ -5117,6 +5118,7 @@ export type Database = {
           renewal_credential_id?: string | null
           renewal_customer_id?: string | null
           skip_registration?: boolean
+          square_attempt_key?: string | null
           subscription_expiry_at?: string | null
           token: string
         }
@@ -5138,6 +5140,7 @@ export type Database = {
           renewal_credential_id?: string | null
           renewal_customer_id?: string | null
           skip_registration?: boolean
+          square_attempt_key?: string | null
           subscription_expiry_at?: string | null
           token?: string
         }
