@@ -1,3 +1,4 @@
+// @ts-nocheck — bun:test is provided by the test runner, not the app typecheck.
 import { expect, test } from "bun:test";
 import { applyGuideEnds, sportsEventState, type PlayerSportsEvent } from "./player-sports";
 import { isOfficialSportsChannel, programmeMatchesEvent } from "./sports-programme-end";
