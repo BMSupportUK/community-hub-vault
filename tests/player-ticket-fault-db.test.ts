@@ -13,7 +13,7 @@ databaseTest("database blocks duplicate channel tickets and clears faults on res
     await sql.begin(async tx => {
       const name = `Channel fault test ${crypto.randomUUID()}`;
       const call = async () => {
-        const [ticket] = await tx`insert into public.tickets(user_id,subject,player_channel_name) values (${owner}, ${'BM Player: Channel – ' + name}, ${name}) returning id`;
+        const [ticket] = await tx`insert into public.tickets(user_id,category_id,subject,player_channel_name) values (${owner}, (select id from public.ticket_categories where slug = 'live-tv'), ${'BM Player: Channel – ' + name}, ${name}) returning id`;
         return [{ result: { ok: true, ticket_id: ticket.id } }];
       };
       const [first] = await call();
