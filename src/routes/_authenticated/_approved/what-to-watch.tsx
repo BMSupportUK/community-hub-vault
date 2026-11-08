@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SendToBoxButton } from '@/components/watch/SendToBoxButton';
 import whatToWatchBg from '@/assets/what-to-watch-bg.jpg.asset.json';
 
 export const Route = createFileRoute('/_authenticated/_approved/what-to-watch')({
@@ -108,6 +109,7 @@ function TitleDetails({ item }: { item: WatchTitle | NewSeries }) {
       {'premiereDate' in item && <p className="text-xs text-muted-foreground">Premiered {new Date(`${item.premiereDate}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</p>}
       {isLoading ? <div aria-label="Loading description" className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-2/3" /></div> : <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.overview || data?.overview || data?.error || 'No description available.'}</p>}
       {data?.error && <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button>}
+      <SendToBoxButton kind={item.kind} itemId={'premiereDate' in item ? null : item.id} title={item.title} />
     </div>
   </div>;
 }

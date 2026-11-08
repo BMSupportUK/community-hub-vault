@@ -178,7 +178,7 @@ public class MainActivity extends Activity {
         checkForUpdate(false);
         sendLastCrash();
         startReminderCheck();
-        handleReminderIntent(getIntent());
+        handleReminderIntent(getIntent()); handleWatchIntent(getIntent());
     }
 
     // ---------- multi-screen (Multi Room = 2, Triple Room = 3) ----------
@@ -416,7 +416,26 @@ public class MainActivity extends Activity {
         removeReminder(id, i.getLongExtra("reminder_start", 0));
         ui.postDelayed(() -> play(new Item("live", id, name, "ts", ""), defaultVlc()), 800);
     }
-    @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); refreshVersionScreens(); }
+    @Override protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); handleReminderIntent(i); handleWatchIntent(i); refreshVersionScreens(); }
+
+    /** "Watch on my box" from the website: open that film or series (by provider id, else exact title, else a title search). */
+    private void handleWatchIntent(Intent i) {
+        String kind = i == null ? null : i.getStringExtra("watch_kind");
+        if (kind == null) return;
+        String id = i.getStringExtra("watch_id"), title = i.getStringExtra("watch_title");
+        i.removeExtra("watch_kind");
+        if (!isUnlocked()) { Toast.makeText(this, "Unlock BM Player to watch " + title, Toast.LENGTH_LONG).show(); return; }
+        Toast.makeText(this, "Opening " + title + "…", Toast.LENGTH_SHORT).show();
+        io.execute(() -> {
+            Item hit = null;
+            try {
+                List<Item> all = parseItems(kind, new JSONArray(cachedGet(kind, listActionFor(kind), "")), null);
+                hit = WatchRequest.find(all, id, title);
+            } catch (Exception ignored) {}
+            final Item f = hit;
+            ui.post(() -> { if (isFinishing()) return; if (f != null) open(f); else runSearch(kind, title == null ? "" : title); });
+        });
+    }
 
     @Override public void onUserInteraction() { super.onUserInteraction(); PlayerApplication.interaction(this); }
     boolean showsAnnouncementIcon() { return !"sports".equals(screen) && !"sports_channels".equals(screen); }

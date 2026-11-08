@@ -6489,6 +6489,47 @@ export type Database = {
         }
         Relationships: []
       }
+      player_watch_requests: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          device_id: string
+          id: string
+          item_id: string | null
+          kind: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          device_id: string
+          id?: string
+          item_id?: string | null
+          kind: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          device_id?: string
+          id?: string
+          item_id?: string | null
+          kind?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_watch_requests_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "player_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prediction_winners: {
         Row: {
           competition: string

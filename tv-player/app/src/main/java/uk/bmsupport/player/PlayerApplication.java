@@ -75,6 +75,15 @@ public final class PlayerApplication extends Application implements Application.
         prompt.setOnShowListener(d -> { if (prompt != null) prompt.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus(); });
         prompt.show();
     }
+    /** Brings the app's home screen forward (closing any playback above it) and opens the title sent from the website. */
+    private void openWatch(org.json.JSONObject w) {
+        String kind = w.optString("kind");
+        if (!"film".equals(kind) && !"series".equals(kind)) return;
+        android.content.Intent i = new android.content.Intent(this, MainActivity.class)
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra("watch_kind", kind).putExtra("watch_id", w.isNull("id") ? null : w.optString("id")).putExtra("watch_title", w.optString("title"));
+        startActivity(i);
+    }
     private void fetchAnnouncement() {
         if (annBusy) return;
         final String token = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("token", "");
@@ -85,6 +94,8 @@ public final class PlayerApplication extends Application implements Application.
             try {
                 org.json.JSONObject r = new org.json.JSONObject(Net.postJson(Net.SITE + "/api/public/player",
                         new org.json.JSONObject().put("action", "announcement").put("device_token", token).toString()));
+                org.json.JSONObject w = r.optJSONObject("watch");
+                if (w != null) { final org.json.JSONObject fw = w; ui.post(() -> openWatch(fw)); }
                 org.json.JSONObject a = r.optJSONObject("announcement");
                 // Only apps already open when it was sent show it; anyone opening later never sees it.
                 if (a != null && SystemClock.elapsedRealtime() - a.optLong("age_ms", 0) < startedAt) a = null;
