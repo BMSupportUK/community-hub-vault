@@ -13,3 +13,18 @@ test('ordinary channels keep provider EPG and country downloads stay disabled', 
   expect(sportsFixtureEpg('BBC One', [], now)).toEqual({epg_listings:null,source:'none'});
   expect(countryEpgEnabled()).toBe(false);
 });
+test('main Center Ice 01 gets the website fixture already linked to NHL Set 2 feed 01', () => {
+  const start = Date.parse('2026-11-08T18:00:00Z');
+  const events = [{title:'Panthers @ Bruins',start,end:start+9000000,competition:'NHL Center Ice',channels:['NHL 01 | Set 2 (Events Only)']}];
+  const main = sportsFixtureEpg('NHL Center Ice 01 | (Events Only)',events,now);
+  expect(main.source).toBe('sports');
+  expect(main.epg_listings?.find(p => atob(p.title) === 'Panthers @ Bruins')?.start_timestamp).toBe(start/1000);
+  expect(sportsFixtureEpg('NHL Center Ice 02 | (Events Only)',events,now).source).toBe('none');
+  expect(sportsFixtureEpg('NHL Network.',events,now).source).toBe('none');
+  expect(events[0].channels).toEqual(['NHL 01 | Set 2 (Events Only)']);
+});
+test('Center Ice identity ignores changing programme text after the stable feed label', () => {
+  const events = [{title:'Panthers @ Bruins',start:Date.parse('2026-11-08T18:00:00Z'),channels:['NHL Center Ice 01 | (Events Only)']}];
+  expect(sportsFixtureEpg('NHL 01 | Set 2 (Events Only) | Old replay title',events,now).source).toBe('sports');
+  expect(sportsFixtureEpg('NBA 01 | (Events Only)',events,now).source).toBe('none');
+});
