@@ -192,6 +192,7 @@ import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/
 import { Route as ApiPublicHooksBoroTeamSheetRouteImport } from './routes/api/public/hooks/boro-team-sheet'
 import { Route as ApiPublicHooksChannelCheckRouteImport } from './routes/api/public/hooks/channel-check'
 import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/api/public/hooks/device-release-watch'
+import { Route as ApiPublicHooksEpgImportRouteImport } from './routes/api/public/hooks/epg-import'
 import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
 import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
 import { Route as ApiPublicHooksFinalLockRemindersRouteImport } from './routes/api/public/hooks/final-lock-reminders'
@@ -1269,6 +1270,11 @@ const ApiPublicHooksDeviceReleaseWatchRoute =
     path: '/api/public/hooks/device-release-watch',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEpgImportRoute = ApiPublicHooksEpgImportRouteImport.update({
+  id: '/api/public/hooks/epg-import',
+  path: '/api/public/hooks/epg-import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksFantasySquadRemindersRoute =
   ApiPublicHooksFantasySquadRemindersRouteImport.update({
     id: '/api/public/hooks/fantasy-squad-reminders',
@@ -1656,6 +1662,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
+  '/api/public/hooks/epg-import': typeof ApiPublicHooksEpgImportRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
@@ -1871,6 +1878,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
+  '/api/public/hooks/epg-import': typeof ApiPublicHooksEpgImportRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
@@ -2092,6 +2100,7 @@ export interface FileRoutesById {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
+  '/api/public/hooks/epg-import': typeof ApiPublicHooksEpgImportRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
@@ -2312,6 +2321,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
+    | '/api/public/hooks/epg-import'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
@@ -2527,6 +2537,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
+    | '/api/public/hooks/epg-import'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
@@ -2747,6 +2758,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
+    | '/api/public/hooks/epg-import'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
@@ -2863,6 +2875,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBoroTeamSheetRoute: typeof ApiPublicHooksBoroTeamSheetRoute
   ApiPublicHooksChannelCheckRoute: typeof ApiPublicHooksChannelCheckRoute
   ApiPublicHooksDeviceReleaseWatchRoute: typeof ApiPublicHooksDeviceReleaseWatchRoute
+  ApiPublicHooksEpgImportRoute: typeof ApiPublicHooksEpgImportRoute
   ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksFantasySquadSyncRoute: typeof ApiPublicHooksFantasySquadSyncRoute
   ApiPublicHooksFinalLockRemindersRoute: typeof ApiPublicHooksFinalLockRemindersRoute
@@ -4175,6 +4188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksDeviceReleaseWatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/epg-import': {
+      id: '/api/public/hooks/epg-import'
+      path: '/api/public/hooks/epg-import'
+      fullPath: '/api/public/hooks/epg-import'
+      preLoaderRoute: typeof ApiPublicHooksEpgImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/fantasy-squad-reminders': {
       id: '/api/public/hooks/fantasy-squad-reminders'
       path: '/api/public/hooks/fantasy-squad-reminders'
@@ -4904,6 +4924,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBoroTeamSheetRoute: ApiPublicHooksBoroTeamSheetRoute,
   ApiPublicHooksChannelCheckRoute: ApiPublicHooksChannelCheckRoute,
   ApiPublicHooksDeviceReleaseWatchRoute: ApiPublicHooksDeviceReleaseWatchRoute,
+  ApiPublicHooksEpgImportRoute: ApiPublicHooksEpgImportRoute,
   ApiPublicHooksFantasySquadRemindersRoute:
     ApiPublicHooksFantasySquadRemindersRoute,
   ApiPublicHooksFantasySquadSyncRoute: ApiPublicHooksFantasySquadSyncRoute,

@@ -49,6 +49,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
+  z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal("announcement"), device_token: Token }),
   z.object({ action: z.literal("channel_health"), device_token: Token, name: z.string().trim().min(1).max(200), status: z.enum(["failed", "black", "ok"]) }),
   z.object({ action: z.literal("formats"), device_token: Token }),
@@ -384,6 +385,15 @@ export const Route = createFileRoute("/api/public/player")({
           });
           if (error) return json({ error: "Could not report" }, 503);
           return json({ ok: true, reported: true });
+        }
+
+        if (body.action === "guide") {
+          // Real published TV guide (or Sports Guide events for Sports Pass feeds); null = use the provider's guide.
+          const { buildSportsFeed } = await import("@/lib/player-sports-feed.server");
+          const { guideFor } = await import("@/lib/real-epg.server");
+          const payload = await sportsCache(buildSportsFeed).catch(() => ({ events: [] as unknown[] }));
+          const g = await guideFor(body.channel, payload.events as { title: string; start: number; end?: number; channels: string[]; competition?: string }[]).catch(() => ({ rows: null, source: "none" as const }));
+          return json({ epg_listings: g.rows, source: g.source });
         }
 
         if (body.action === "sports") {
