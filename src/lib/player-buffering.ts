@@ -13,6 +13,8 @@ export const BufferEvent = z.object({
   decoder: z.string().trim().max(120).optional().catch(undefined),
   recovery_provider: z.enum(['dazn']).optional().catch(undefined),
   event_name: z.string().trim().max(200).optional().catch(undefined),
+  swapped_to: z.string().trim().max(200).optional().catch(undefined),
+  swap_reason: z.enum(['manual', 'auto']).optional().catch(undefined),
   at: z.number().int().positive(),
 });
 export const BufferBatch = z.array(BufferEvent).min(1).max(20);
