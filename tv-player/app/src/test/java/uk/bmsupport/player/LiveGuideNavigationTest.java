@@ -20,6 +20,29 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 34, qualifiers = "w960dp-h540dp-mdpi")
 public class LiveGuideNavigationTest {
+    @Test public void upcomingReminderSelectionWorksBeforeAnyPreviewAndRemoteMatchesTouch() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        GuideGridView grid = grid(activity);
+        long now = System.currentTimeMillis() / 1000;
+        GuideGridView.Prog programme = new GuideGridView.Prog("Upcoming match", now + 1800, now + 7200);
+        grid.setProgs(0, Arrays.asList(programme));
+        final int[] reminders = {0}, previews = {0};
+        grid.setListener(new GuideGridView.Listener() {
+            public void needEpg(int row) {}
+            public void onHighlight(int row, GuideGridView.Prog p) {}
+            public void onPick(int row, GuideGridView.Prog p) {
+                if (GuideReminder.eligible(p, now)) reminders[0]++; else previews[0]++;
+            }
+            public boolean hasReminder(int row, long start) { return false; }
+            public void onCatchup(int row) { fail("Reminder must not open catch up"); }
+        });
+        touch(grid, MotionEvent.ACTION_DOWN, 940, 66);
+        touch(grid, MotionEvent.ACTION_UP, 940, 66);
+        assertEquals(1, reminders[0]); assertEquals(0, previews[0]);
+        grid.onKeyDown(KeyEvent.KEYCODE_DPAD_CENTER, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER));
+        assertEquals(2, reminders[0]); assertEquals(0, previews[0]);
+        assertFalse(GuideReminder.eligible(new GuideGridView.Prog("No Event Scheduled", now + 1800, now + 7200), now));
+    }
     @Test public void categoryOpensChannelsAndPickSelectsTheirGuideRow() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         GuideGridView grid = grid(activity);

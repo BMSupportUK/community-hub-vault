@@ -363,10 +363,14 @@ public class GuideGridView extends View {
                 float avail = box.width() - 2 * pad - iconW;
                 c.save(); c.clipRect(box);
                 if (reminderIcon) {
-                    txt.setColor(rem ? 0xFFF9C55B : 0xFFF1F5F9);
-                    txt.setTextSize(18 * d); txt.setFakeBoldText(false);
-                    c.drawText(rem ? "⏰" : "♧", box.right - iconW + 4 * d, y + rh / 2 + 6 * d, txt);
-                    txt.setColor(0xFFF1F5F9); txt.setTextSize(14 * d); txt.setFakeBoldText(p == sel);
+                    Paint bell = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    bell.setColor(rem ? 0xFFF9C55B : 0xFFF1F5F9); bell.setStyle(Paint.Style.STROKE); bell.setStrokeWidth(2 * d);
+                    float cx = box.right - iconW / 2, cy = y + rh / 2;
+                    c.drawArc(new RectF(cx - 6 * d, cy - 9 * d, cx + 6 * d, cy + 3 * d), 180, 180, false, bell);
+                    c.drawLine(cx - 6 * d, cy - 3 * d, cx - 7 * d, cy + 5 * d, bell);
+                    c.drawLine(cx + 6 * d, cy - 3 * d, cx + 7 * d, cy + 5 * d, bell);
+                    c.drawLine(cx - 8 * d, cy + 5 * d, cx + 8 * d, cy + 5 * d, bell);
+                    c.drawArc(new RectF(cx - 2 * d, cy + 5 * d, cx + 2 * d, cy + 9 * d), 0, 180, false, bell);
                 }
                 if (avail >= 14 * d) {
                     boolean narrow = box.width() < 90 * d;
