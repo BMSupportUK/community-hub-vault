@@ -5,6 +5,7 @@ import checkin from '../checkin.cjs';
 import guideRefresh from '../guide-refresh.cjs';
 import guideActions from '../guide-action.cjs';
 import {ChannelName} from './channel-name';
+import guideAxis from '../guide-axis.cjs';
 
 // Live TV laid out like the Android/Amazon BM Player: preview top-left, programme info beside it with
 // Search TV / Voice search top right, a slim date row (◀ 24h / Now / 24h ▶ / Category pill) and the guide grid below.
@@ -21,6 +22,8 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  const [searchOpen,setSearchOpen]=useState(false);
  const [guide,setGuide]=useState({});
  const asked=useRef(new Map()),pending=useRef(new Set()),grid=useRef(null);
+ const [gridWidth,setGridWidth]=useState(800);
+ useEffect(()=>{const root=grid.current;if(!root)return;const resize=new ResizeObserver(()=>setGridWidth(Math.max(220,root.clientWidth-240)));resize.observe(root);return()=>resize.disconnect();},[]);
  const epgRef=useRef(epg);epgRef.current=epg;
  const now=Date.now();
  async function load(ch,isActive){if(pending.current.has(ch.id)||!guideRefresh.due(asked.current.get(ch.id)))return;pending.current.add(ch.id);try{const p=await epgRef.current(ch.id);if(!isActive())return;asked.current.set(ch.id,Date.now());setGuide(g=>({...g,[ch.id]:p||[]}));}catch{/* Keep the last good line-up and retry on the next tick. */}finally{pending.current.delete(ch.id);}}
@@ -52,6 +55,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  const left=shownProg?(live?Math.ceil((shownProg.end-now)/60000)+' min left':Math.round((shownProg.end-shownProg.start)/60000)+' min'):'';
  const nx=shownCh&&shownProg?nextAfter(shownCh.id,shownProg):null;
  const dateLabel=new Date(start).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+clock(now);
+ const axis=guideAxis.guideAxis(start,start+WINDOW,channels.flatMap(ch=>list(ch.id)),gridWidth);
  return <div className="lg">
   <div className="lg-top">
    <div className="lg-preview" role="button" title={selected?'Double-click for full screen':undefined} onClick={()=>{if(!selected){toast('Click a channel to preview it');return;}const t=Date.now();if(t-tapAt<500){tapAt=0;onFull(selected);}else tapAt=t;}}>
@@ -79,14 +83,14 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
    <span className="lg-step"><button className="mini" aria-label="Earlier" onClick={()=>setStart(s=>s-SLOT)}>◀</button><button className="mini" aria-label="Later" onClick={()=>setStart(s=>s+SLOT)}>▶</button></span>
   </div>
   <div className="lg-grid" ref={grid}>
-   <div className="lg-row lg-head"><div className="lg-ch">{new Date(start).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div><div className="lg-times">{[0,1,2,3].map(i=><span key={i}>{clock(start+i*SLOT)}</span>)}</div></div>
-   {channels.map((ch,n)=><div className="lg-row" key={ch.id} data-ch={ch.id}>
+   <div className="lg-row lg-head" style={{width:axis.width+240}}><div className="lg-ch">{new Date(start).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div><div className="lg-times">{axis.times.slice(0,-1).map(t=><span key={t} style={{left:axis.x(t)}}>{clock(t)}</span>)}</div></div>
+   {channels.map((ch,n)=><div className="lg-row" key={ch.id} data-ch={ch.id} style={{width:axis.width+240}}>
     <div className={'lg-ch'+(selected?.id===ch.id?' on':'')}><button onClick={()=>pick(ch,null)} onFocus={()=>setFocus({channel:ch,programme:onAt(ch.id,now)})}><ChannelName>{n+1+'  '+ch.name}</ChannelName>{query.trim()&&<small className="lg-search-category" title={catName(ch.category)}>{catName(ch.category)||'Uncategorised'}</small>}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>onCatchup(ch)}>🕘</button>}</div>
     <div className="lg-line">
-     {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:(now-start)/WINDOW*100+'%'}}/>}
-     {list(ch.id).filter(p=>p.end>start&&p.start<start+WINDOW).map(p=>{const on=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=reminders.some(r=>r.id===ch.id+':'+p.start);return <div key={p.id} className={'lg-prog'+(on&&selected?.id===ch.id?' on':'')} style={{left:Math.max(0,(p.start-start)/WINDOW*100)+'%',width:(Math.min(start+WINDOW,p.end)-Math.max(start,p.start))/WINDOW*100+'%'}} onMouseEnter={()=>setFocus({channel:ch,programme:p})}>
-      <button className="lg-prog-title" title={p.title} onFocus={()=>setFocus({channel:ch,programme:p})} onClick={()=>pick(ch,p)}><span>{p.title}</span><small>{clock(p.start)} – {clock(p.end)}</small></button>
-      {eligible&&<button className={'lg-reminder'+(set?' set':'')} title={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-label={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-pressed={set} onFocus={()=>setFocus({channel:ch,programme:p})} onClick={()=>onReminder(ch,p)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>{set&&<path d="m8 10 3 3 5-5"/>}</svg></button>}
+     {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:axis.x(now)}}/>}
+     {list(ch.id).filter(p=>p.end>start&&p.start<start+WINDOW).map(p=>{const on=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=reminders.some(r=>r.id===ch.id+':'+p.start);return <div key={p.id} className={'lg-prog'+(on&&selected?.id===ch.id?' on':'')} style={{left:axis.x(Math.max(start,p.start)),width:axis.x(Math.min(start+WINDOW,p.end))-axis.x(Math.max(start,p.start))}} onMouseEnter={()=>setFocus({channel:ch,programme:p})}>
+      <button className="lg-prog-title" title={p.title} onFocus={e=>{e.currentTarget.parentElement?.scrollIntoView({block:'nearest',inline:'nearest'});setFocus({channel:ch,programme:p});}} onClick={()=>pick(ch,p)}><span>{p.title}</span><small>{clock(p.start)} – {clock(p.end)}</small></button>
+      {eligible&&<button className={'lg-reminder'+(set?' set':'')} title={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-label={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-pressed={set} onFocus={e=>{e.currentTarget.parentElement?.scrollIntoView({block:'nearest',inline:'nearest'});setFocus({channel:ch,programme:p});}} onClick={()=>onReminder(ch,p)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>{set&&<path d="m8 10 3 3 5-5"/>}</svg></button>}
      </div>;})}
      {guide[ch.id]&&!list(ch.id).some(p=>p.end>start&&p.start<start+WINDOW)&&<span className="lg-empty">No guide information for this time</span>}
      {!guide[ch.id]&&<span className="lg-empty">Loading programmes…</span>}
