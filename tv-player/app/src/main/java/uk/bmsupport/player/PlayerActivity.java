@@ -413,6 +413,7 @@ public class PlayerActivity extends Activity {
     private boolean reopenForBuffer;
     private long reopenBufferedPosition;
     private String pendingFormat;
+    private TextView reconnectNote;
     private final Runnable reopenStream = () -> {
         reconnectPending = false;
         if (player == null || isFinishing()) return;
@@ -428,7 +429,6 @@ public class PlayerActivity extends Activity {
         }
         open(!"live".equals(kind()) ? lastPosition : 0);
     };
-    private TextView reconnectNote;
     private TextView feedNote;
 
     private void showFeed(String label) {
