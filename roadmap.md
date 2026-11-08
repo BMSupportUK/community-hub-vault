@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Inspect Dane J’s latest buffering and box version; report confirmed stalls without assuming the provider or player is at fault.
 - [ ] Match Windows/Mac main and backup controls to Android 3.99; verify both platform modes and release Windows 0.4.44 / Mac 0.1.54 with the existing fixed Sky-style guide.
 - [x] Released Android 3.99/210 with full backup controls and existing buffer/stall fixes; 185 tests pass, permanent signature matches 3.98, public download matches SHA-256.
 - [ ] Update Dane J's box and exercise Coupang backup controls; blocked: no connected Android device; live box last checked on 3.97 at 18:28 UTC. User must install 3.99 and play backup before post-update stalls/control behavior can be assessed.
