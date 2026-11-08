@@ -48,6 +48,8 @@ public class SportsGuideLayoutTest {
 
     @Test public void eventContentsStayInsideFirstRow() throws Exception {
         MainActivity a = Robolectric.buildActivity(MainActivity.class).get();
+        Field prefs = MainActivity.class.getDeclaredField("prefs"); prefs.setAccessible(true);
+        prefs.set(a, a.getSharedPreferences("bmplayer", 0));
         java.util.List<org.json.JSONObject> cards = new java.util.ArrayList<>();
         cards.add(new org.json.JSONObject().put("title", "Middlesbrough v Coventry City")
                 .put("competition", "Championship").put("start", System.currentTimeMillis() + 60000)
