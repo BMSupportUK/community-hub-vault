@@ -21,3 +21,10 @@ test("readReplaceRows tolerates missing or wrong-shaped replace", () => {
   expect(readReplaceRows(null)).toEqual([]);
   expect(readReplaceRows({ replace: "no" })).toEqual([]);
 });
+
+test("assigning a sports category retains the guide's country, numbering and swaps", () => {
+  const existing = readChannelLinks({ category: "Old category", country: "CA", numbered: true, replace: [{ from: "DAZN", to: "Dazn CA" }] });
+  expect(readChannelLinks({ ...existing, category: "CA | DAZN" })).toEqual({
+    category: "CA | DAZN", country: "CA", numbered: true, replace: [{ from: "DAZN", to: "Dazn CA" }],
+  });
+});
