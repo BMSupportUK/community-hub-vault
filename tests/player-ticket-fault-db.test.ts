@@ -11,6 +11,7 @@ databaseTest("channel reports create one ticket/message, block duplicates and cl
   let verified = false;
   try {
     await sql.begin(async tx => {
+      await tx`set local role service_role`;
       const name = `Channel fault test ${crypto.randomUUID()}`;
       const [device] = await tx`insert into public.player_devices(user_id, token_hash, platform, name) values (${owner}, ${crypto.randomUUID()}, 'windows', 'Rollback fault test') returning id`;
       const call = () => tx`select public.create_player_fault_ticket(${device.id}::uuid, ${name}, '', 'Channel not working', 'Test', '') as result`;
