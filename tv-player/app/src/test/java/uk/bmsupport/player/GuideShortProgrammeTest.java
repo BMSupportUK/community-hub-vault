@@ -56,4 +56,20 @@ public class GuideShortProgrammeTest {
         }
         assertSame(shows.get(2),picked[0]);
     }
+
+    @Test public void boxesStayPutWhenMoreListingsArrive() throws Exception {
+        Activity a=Robolectric.buildActivity(Activity.class).setup().get();
+        GuideGridView grid=new GuideGridView(a); a.setContentView(grid);
+        grid.setChannels(Arrays.asList("A","B"), Arrays.asList(false,false));
+        long start=System.currentTimeMillis()/1000/1800*1800;
+        grid.setProgs(0,Arrays.asList(new GuideGridView.Prog("Long programme", start,start+3600)));
+        grid.measure(View.MeasureSpec.makeMeasureSpec(1280,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(340,View.MeasureSpec.EXACTLY));
+        grid.layout(0,0,1280,340);
+        Bitmap image=Bitmap.createBitmap(1280,340,Bitmap.Config.ARGB_8888); grid.draw(new Canvas(image));
+        java.lang.reflect.Method xAt=GuideGridView.class.getDeclaredMethod("xAt",long.class);xAt.setAccessible(true);
+        float before=(float)xAt.invoke(grid,start+3600);
+        grid.setProgs(1,Arrays.asList(new GuideGridView.Prog("A very long title for a five minute programme slot", start+600,start+900)));
+        grid.draw(new Canvas(image));
+        assertEquals(before,(float)xAt.invoke(grid,start+3600),0.01f);
+    }
 }
