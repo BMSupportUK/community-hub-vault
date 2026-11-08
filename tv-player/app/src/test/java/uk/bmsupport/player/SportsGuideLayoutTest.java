@@ -45,4 +45,24 @@ public class SportsGuideLayoutTest {
 
     @Test public void longPremierLeagueCategoryFitsTv() throws Exception { measureHeader(960, 540); }
     @Test public void longPremierLeagueCategoryFitsShortLandscape() throws Exception { measureHeader(800, 360); }
+
+    @Test public void eventContentsStayInsideFirstRow() throws Exception {
+        MainActivity a = Robolectric.buildActivity(MainActivity.class).get();
+        java.util.List<org.json.JSONObject> cards = new java.util.ArrayList<>();
+        cards.add(new org.json.JSONObject().put("title", "Middlesbrough v Coventry City")
+                .put("competition", "Championship").put("start", System.currentTimeMillis() + 60000)
+                .put("channels", new org.json.JSONArray().put("Sky Sports")));
+        Class<?> type = Class.forName("uk.bmsupport.player.MainActivity$SportsCardAdapter");
+        java.lang.reflect.Constructor<?> constructor = type.getDeclaredConstructors()[0]; constructor.setAccessible(true);
+        android.widget.BaseAdapter adapter = (android.widget.BaseAdapter) constructor.newInstance(a, cards, System.currentTimeMillis());
+        LinearLayout card = (LinearLayout) adapter.getView(0, null, new LinearLayout(a));
+        card.measure(View.MeasureSpec.makeMeasureSpec(430, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.AT_MOST));
+        card.layout(0, 0, 430, card.getMeasuredHeight());
+        assertFalse(card.isBaselineAligned());
+        for (int i = 0; i < card.getChildCount(); i++) {
+            View child = card.getChildAt(i);
+            assertTrue("event content clipped at top", child.getTop() >= 0);
+            assertTrue("event content clipped at bottom", child.getBottom() <= card.getHeight());
+        }
+    }
 }
