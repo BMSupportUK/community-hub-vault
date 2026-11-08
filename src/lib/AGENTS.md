@@ -45,3 +45,4 @@
 - Competition-only WBBL EPG completion requires an explicit Live women's competition label and exactly one same-channel women's fixture within 30 minutes of slot start; repeats and ambiguous slots retain estimates.
 - Every app login credential stores its own BM Player account number (first login keeps the customer's existing number); device unlock accepts only the number of the login that device uses.
 - Customer portal profiles: each app login is a profile; the chosen login is device-saved per user (account-profiles) and drives the subscription box and header account number, with a chooser shown once per session for 2+ logins.
+- Category-linked guide channels never resolve to replay feeds unless the guide names a replay, so numbered event feeds (e.g. NFL Sunday Ticket) keep their live channel.
