@@ -64,6 +64,18 @@ export function playlistCandidates(name: string, epgId?: string | null): string[
 
 export type EpgChannel = { id: string; names: string[] };
 
+/** "BBC One | FHD |" → "BBC One": drops trailing quality-only segments so 24/7 channels aren't mistaken for event feeds. */
+export function stripQualityTail(name: string): string {
+  const parts = (name || "").split("|");
+  while (parts.length > 1 && (!parts[parts.length - 1].trim() || QUALITY.test(parts[parts.length - 1].replace(/\s+/g, "")))) {
+    // Keep a bare trailing "|" when the segment before it is a numbered event feed ("UFC 04 |").
+    const prev = parts[parts.length - 2].trim();
+    if (!parts[parts.length - 1].trim() && /\d\s*$/.test(prev) && parts.length === 2) break;
+    parts.pop();
+  }
+  return parts.join("|").trim();
+}
+
 /** Index of normalised names → guide channel id (first listed wins). */
 export function buildIndex(channels: EpgChannel[]): Map<string, string> {
   const idx = new Map<string, string>();
