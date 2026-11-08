@@ -8,6 +8,7 @@ export const getNewSeries = createServerFn({ method: 'GET' })
     const today = new Date().toISOString().slice(0, 10);
     const currentYear = Number(today.slice(0, 4));
     const years = newSeriesYears(currentYear);
+    const currentMonth = Number(today.slice(5, 7));
     const year = data?.year && years.includes(data.year) ? data.year : currentYear;
     const cutoff = newSeriesCutoff(year, today);
     const key = process.env.TMDB_API_KEY;

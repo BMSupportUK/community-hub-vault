@@ -6,6 +6,7 @@ import { Popcorn, Star, Calendar, Tv, RefreshCw } from 'lucide-react';
 import { getWatchPlaylist, getWatchDescription } from '@/lib/watch-playlist.functions';
 import type { WatchTitle } from '@/lib/watch-playlist';
 import { getNewSeries } from '@/lib/new-series.functions';
+import { MONTH_NAMES } from '@/lib/new-series';
 import type { NewSeries } from '@/lib/new-series';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
