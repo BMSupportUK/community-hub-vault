@@ -1,6 +1,6 @@
 # src/lib rules
 - EPG imports stream matched stations; US locals use station callsigns. EPG uses shared indexed fixture matching and single-flight catalogues without provider completion waits; sports cards retain those checks separately. Published-row caches never freeze event overlays.
-- Channel EPG is provider-only: retired guide/category actions are inert compatibility replies; country import routes and database dispatch/claim functions remain disabled so old clients cannot restart downloads.
+- Channel EPG uses provider listings except matched non-official sports/club feeds, which receive saved website fixtures through sportsFixtureEpg; country imports and category-refresh dispatch/claim functions remain disabled.
 - Buffering diagnostics store bounded device-reported format/decoder/event metadata; admin/management summaries filter before limiting and do not turn cause labels into definitive diagnoses.
 - Player viewing history records credited prior-poll playback under the verified device owner and session; admin/management-only reads return member totals, kind breakdowns and the latest 7 UK days of activities grouped per day, never account credentials or emails.
 - Customers staff-detail forms reuse member username/email updates; handlers read target roles and require admin for staff targets while preserving management edits for non-staff customers.
