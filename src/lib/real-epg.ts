@@ -103,11 +103,15 @@ export type EpgProgramme = { channel: string; start: number; stop: number; title
  */
 export class XmltvReader {
   private buf = "";
+  private progs = false;
   push(chunk: string, onChannel: (c: EpgChannel) => void, onProgramme: (p: EpgProgramme) => void) {
     this.buf += chunk;
     let at = 0;
     for (;;) {
-      const c = this.buf.indexOf("<channel ", at), p = this.buf.indexOf("<programme ", at);
+      // XMLTV lists every channel before the programmes, so stop looking for channels after the first programme.
+      const p = this.buf.indexOf("<programme ", at);
+      const c = this.progs ? -1 : this.buf.indexOf("<channel ", at);
+      if (p >= 0 && (c < 0 || p < c)) this.progs = true;
       const open = c < 0 ? p : p < 0 ? c : Math.min(c, p);
       if (open < 0) { at = Math.max(at, this.buf.length - 12); break; }
       const isProg = open === p;
