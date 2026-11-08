@@ -34,4 +34,14 @@ public class BackupControlsInteractionTest {
         LinearLayout row=PlayerActionControls.add(a,root,()->gain[0]=SoundBoost.gainFor(SoundBoost.current(a)),()->{},()->{});
         row.getChildAt(0).performClick();assertEquals(600,gain[0]);
     }
+    @Test public void originalPlaybackBarPausesAndResumesBackup() {
+        BackupPlayerActivity a=Robolectric.buildActivity(BackupPlayerActivity.class).get();
+        BackupControlPlayerTest.Fake engine=new BackupControlPlayerTest.Fake();
+        BackupControlPlayer player=new BackupControlPlayer(engine,"film");
+        PlayerControlView bar=new PlayerControlView(a);bar.setPlayer(player);bar.show();
+        View play=bar.findViewById(androidx.media3.ui.R.id.exo_play_pause);
+        play.performClick();assertTrue(engine.paused);
+        play.performClick();assertFalse(engine.paused);
+        bar.setPlayer(null);player.release();
+    }
 }
