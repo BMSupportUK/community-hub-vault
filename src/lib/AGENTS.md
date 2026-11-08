@@ -1,5 +1,5 @@
 # src/lib rules
-- EPG imports stream and filter only matched stations; US locals use main-station callsigns, never generic network guesses. Ordinary/local EPG reads bypass sports builds and share per-channel published-row reads; event overlays remain fresh outside that cache.
+- EPG imports stream and filter only matched stations; US locals use main-station callsigns, never generic network guesses. Ordinary/local EPG reads bypass sports builds and share per-channel published-row reads; pass EPG uses current fixtures without blocking on provider completion checks, and overlays stay outside published-row caches.
 - Buffering diagnostics store bounded device-reported format/decoder/event metadata; admin/management summaries filter before limiting and do not turn cause labels into definitive diagnoses.
 - Player viewing history records credited prior-poll playback under the verified device owner and session; admin/management-only reads return member totals, kind breakdowns and the latest 7 UK days of activities grouped per day, never account credentials or emails.
 - Customers staff-detail forms reuse member username/email updates; handlers read target roles and require admin for staff targets while preserving management edits for non-staff customers.

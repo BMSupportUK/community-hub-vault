@@ -2,7 +2,7 @@ import type { PlayerSportsEvent } from "@/lib/player-sports";
 import { isOfficialSportsChannel } from "./sports-programme-end";
 
 /** Builds the Sports Guide feed the BM Player apps receive (server-only, uses the admin client). */
-export async function buildSportsFeed() {
+export async function buildSportsFeed(options: { programmeEnds?: boolean } = {}) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
     supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at, sort_order, created_at, channel_links").eq("published", true).order("sort_order").order("created_at", { ascending: false }),
@@ -31,7 +31,9 @@ export async function buildSportsFeed() {
   // Real end times from the TV guide for games that have started (estimate stays when a channel has no guide).
   const nowMs = Date.now();
   const startedChannels = rawEvents.filter((e) => e.start <= nowMs).flatMap((e) => e.channels.filter(isOfficialSportsChannel));
-  const events: PlayerSportsEvent[] = applyGuideEnds(rawEvents, await playlistGuideTimes(startedChannels), nowMs);
+  // Channel EPG needs current fixtures, not dozens of provider programme-end
+  // checks. The main Sports Guide retains those completion checks separately.
+  const events: PlayerSportsEvent[] = options.programmeEnds === false ? rawEvents : applyGuideEnds(rawEvents, await playlistGuideTimes(startedChannels), nowMs);
   const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.map(e => `${e.start}:${e.end}:${e.endSource}`).join(",");
   // Guides follow the website order too (sort_order, newest first), after the category names.
   const order = Array.from(new Set([...(cats ?? []).map((c) => c.name), ...(blogs ?? []).map((b) => b.title)]));
