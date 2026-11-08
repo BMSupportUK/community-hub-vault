@@ -1,6 +1,6 @@
 # tv-player rules
 - Programme grid measures title-sized minimum spans on a shared expandable one-hour/quarter-hour axis; crowded hours scroll to the selected programme instead of compressing spans, and touch hit-testing uses that same axis. Start/end times stay separate and unscaled so widening never changes playback or reminder routing.
-- Live TV voice recognition and Fire TV dictation share LiveVoiceSearch grouping; headers are disabled resultList rows, categories retain provider IDs and events reuse existing Sports Guide channel selection without opening a second stream.
+- Live TV voice recognition and Fire TV dictation share category/channel-only LiveVoiceSearch grouping without sports requests; headers are disabled resultList rows and categories retain provider IDs. Sports Guide voice matching remains separate.
 - Sports Guide opening/manual refresh uses its own status dialog through listings, catalogue and selected-channel matching; periodic refresh stays unobtrusive, and completion, failure or exit clears the dialog. Sports body/card rows disable baseline alignment to keep unequal columns inside their bounds.
 - Sports event selections restore at the padded list origin and reveal clipped selected cards after remote navigation/focus; viewport checks must use an attached scrolling list, not just detached row measurements.
 - DAZN recovery uses verified channel/category identity, not numeric feed prefixes; its live-offset drift guard allows the larger cushion and same-event alternatives come from the selected Sports Guide card.

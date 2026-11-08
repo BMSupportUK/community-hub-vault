@@ -1,6 +1,6 @@
 # Windows BM Player rules
 - Programme grid uses guide-axis.cjs for a shared expandable one-hour/quarter-hour axis; crowded hours scroll horizontally with sticky channels and focus reveals the whole programme, never compressing short spans. Wrapped titles and a separate start/end line keep box edges aligned with header times.
-- Live TV voice results group provider categories/channels and published sports events independently of typed search; event selections focus the shared Sports Guide and retain its verified playback key. Pure event matching lives in event-search.cjs for reuse.
+- Live TV voice results group only provider category names and channel names independently of typed search, without sports requests; Sports Guide retains its separate event-search.cjs matching.
 - Upcoming EPG programme/title and reminder-icon actions open confirmation before any preview selection; title and icon are sibling buttons so mouse and keyboard actions never nest.
 - Channel EPG uses fixture-guide.cjs with trusted catalogue names for saved website sports/club fixtures, then provider fallback; ordinary/official stations stay provider-direct. Never restore country imports/category-refresh. Windows and Mac share this path.
 - Sports Guide loading presentation covers both the guide request and channel catalog preparation; the shared renderer also serves Mac and clears failed requests instead of leaving an endless wait.

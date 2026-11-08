@@ -18,15 +18,15 @@ final class LiveVoiceSearch {
     static String query(String spoken) {
         return (spoken == null ? "" : spoken).replaceAll("(?i)\\b(?:please|show|me|find|watch|play|the|a|on|today|tonight|now|live|tv|channel|channels|category|categories|event|events)\\b", " ").replaceAll("\\s+", " ").trim();
     }
-    static List<Row> results(JSONArray categories, JSONArray channels, JSONArray events, String spoken, long now) {
+    static List<Row> results(JSONArray categories, JSONArray channels, String spoken) {
         String query = query(spoken);
         List<Row> rows = new ArrayList<>();
-        for (String group : new String[]{"Categories", "TV channels", "Events"}) {
+        for (String group : new String[]{"Categories", "TV channels"}) {
             List<Row> hits = new ArrayList<>();
-            JSONArray source = group.equals("Categories") ? categories : group.equals("TV channels") ? channels : events;
+            JSONArray source = group.equals("Categories") ? categories : channels;
             if (!query.isEmpty() && source != null) for (int i = 0; i < source.length(); i++) {
                 JSONObject value = source.optJSONObject(i); if (value == null) continue;
-                String title = value.optString(group.equals("Categories") ? "category_name" : group.equals("Events") ? "title" : "name");
+                String title = value.optString(group.equals("Categories") ? "category_name" : "name");
                 String hay = title, subtitle = "";
                 if (group.equals("Categories")) {
                     boolean populated = false;
@@ -40,15 +40,8 @@ final class LiveVoiceSearch {
                         JSONObject cat = categories.optJSONObject(j);
                         if (cat != null && cat.optString("category_id").equals(value.optString("category_id"))) { subtitle = cat.optString("category_name"); break; }
                     }
-                } else {
-                    long start = value.optLong("start"), end = value.optLong("end", start + 3 * 3600000L);
-                    if (end <= now) continue;
-                    subtitle = value.optString("competition");
-                    hay += " " + subtitle + " " + value.optString("sport") + " " + value.optString("subcategory");
-                    JSONArray names = value.optJSONArray("channels");
-                    if (names != null) for (int j = 0; j < names.length(); j++) hay += " " + names.optString(j);
                 }
-                if (group.equals("Events") ? SportsVoiceSearch.matches(hay, spoken) : LiveSearch.matches(hay, query)) hits.add(new Row(group, title, subtitle, value));
+                if (LiveSearch.matches(hay, query)) hits.add(new Row(group, title, subtitle, value));
             }
             rows.add(new Row(group, group + " (" + hits.size() + ")", "", null));
             rows.addAll(hits);

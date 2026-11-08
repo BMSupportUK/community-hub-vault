@@ -2003,26 +2003,17 @@ public class MainActivity extends Activity {
     private int liveVoiceRequest;
     private void runLiveVoiceSearch(String spoken) {
         int request = ++liveVoiceRequest;
-        AlertDialog wait = new AlertDialog.Builder(this).setMessage("Searching categories, TV channels and events…")
+        AlertDialog wait = new AlertDialog.Builder(this).setMessage("Searching categories and TV channels…")
                 .setNegativeButton("Cancel", (d, w) -> liveVoiceRequest++).create();
         wait.setOnCancelListener(d -> liveVoiceRequest++); wait.show();
         io.execute(() -> {
             try {
                 JSONArray channels = new JSONArray(cachedGet("live", "get_live_streams", ""));
                 JSONArray categories = new JSONArray(cachedGet("live", "get_live_categories", ""));
-                JSONObject sports;
-                boolean failed = false;
-                try {
-                    sports = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
-                            .put("action", "sports").put("device_token", prefs.getString("token", "")).toString()));
-                } catch (Exception ex) { sports = new JSONObject(); failed = true; }
-                JSONObject eventData = sports;
-                boolean eventsFailed = failed;
-                List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories, channels, sports.optJSONArray("events"), spoken, System.currentTimeMillis());
+                List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories, channels, spoken);
                 ui.post(() -> {
                     dismissQuietly(wait);
                     if (request != liveVoiceRequest || isFinishing()) return;
-                    if (eventsFailed) Toast.makeText(this, "Couldn’t load events — search again to retry", Toast.LENGTH_LONG).show();
                     resultList("Voice results for \"" + spoken + "\"", rows.size(), i -> {
                         LiveVoiceSearch.Row hit = rows.get(i);
                         LinearLayout row = column();
@@ -2030,24 +2021,12 @@ public class MainActivity extends Activity {
                         name.setText(hit.title); name.setTextSize(hit.selectable() ? 16 : 14); name.setTextColor(hit.selectable() ? TEXT : MUTED);
                         row.addView(name);
                         if (!hit.subtitle.isEmpty()) row.addView(text(hit.subtitle, 13, MUTED, false));
-                        if (hit.group.equals("Events") && hit.value != null) {
-                            java.text.SimpleDateFormat when = new java.text.SimpleDateFormat("EEE d MMM HH:mm", java.util.Locale.UK);
-                            when.setTimeZone(java.util.TimeZone.getTimeZone("Europe/London"));
-                            row.addView(text(when.format(new java.util.Date(hit.value.optLong("start"))), 13, MUTED, false));
-                        }
                         return row;
                     }, i -> {
                         LiveVoiceSearch.Row hit = rows.get(i);
                         if (hit.value == null) return;
                         if (hit.group.equals("Categories")) showTvGuide(hit.value.optString("category_id"), true);
                         else if (hit.group.equals("TV channels")) open(liveItem(hit.value));
-                        else {
-                            List<String[]> aliases = new ArrayList<>();
-                            JSONArray al = eventData.optJSONArray("aliases");
-                            if (al != null) for (int j = 0; j < al.length(); j++) { JSONObject o = al.optJSONObject(j); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
-                            for (String[] alias : BUILT_IN_ALIASES) aliases.add(alias);
-                            pickSportsChannel(hit.value, aliases, false);
-                        }
                     }, "🎤 Search again", () -> startVoice("live"), "Close", null, i -> rows.get(i).selectable());
                 });
             } catch (Exception ex) { ui.post(() -> { dismissQuietly(wait); if (request == liveVoiceRequest) Toast.makeText(this, "Couldn’t search — try refreshing your playlist", Toast.LENGTH_LONG).show(); }); }
