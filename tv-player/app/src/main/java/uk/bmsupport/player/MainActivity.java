@@ -1310,7 +1310,7 @@ public class MainActivity extends Activity {
 
     private Item itemFrom(String kind, JSONObject o, String category, int pos) {
         String sid = kind.equals("series") ? o.optString("series_id") : o.optString("stream_id");
-        Item it = new Item(kind, sid, o.optString("name"), o.optString("container_extension"), category);
+        Item it = new Item(kind, sid, o.optString("name"), o.optString("container_extension"), category == null ? o.optString("category_id") : category);
         it.poster = kind.equals("series") ? o.optString("cover") : o.optString("stream_icon");
         it.added = o.optLong(kind.equals("series") ? "last_modified" : "added", 0);
         it.rating = o.optDouble(o.has("rating_5based") ? "rating_5based" : "rating", 0);
