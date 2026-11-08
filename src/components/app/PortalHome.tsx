@@ -16,6 +16,7 @@ import { TalkScreenShareButton } from "@/components/app/TalkScreenShareButton";
 import { formatRoleLabel } from "@/lib/role-label";
 import { Clocks } from "@/components/app/Clocks";
 import { LockNowPill } from "@/components/app/ScreenLockProvider";
+import { SwitchProfilePill } from "@/components/app/AccountProfiles";
 import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 import { PortalCounters } from "@/components/app/PortalCounters";
 import { dayBand, greetingFor, ukHour } from "@/lib/greeting";
@@ -25,6 +26,7 @@ function GreetingPills() {
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1.5 shadow-lg backdrop-blur [&_span.hidden]:!inline">
       <Clocks />
+      <SwitchProfilePill />
       <LockNowPill />
       <TwoFactorPill />
       <VpnPill />
