@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock, Users } from "lucide-react";
-import { useAccountProfiles } from "@/components/app/AccountProfiles";
+import { ProfileChooser, useAccountProfiles } from "@/components/app/AccountProfiles";
 import { requestProfileChooser } from "@/lib/account-profiles";
 import { cn } from "@/lib/utils";
 import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
@@ -154,6 +154,7 @@ export function SubscriptionDetailsCard({
         (!compact || fill) && "h-full",
       )}
     >
+      <ProfileChooser />
       {/* Header */}
       <div className="relative shrink-0 overflow-hidden">
         <div className={cn("absolute inset-0", embedded ? "bg-background/20" : "bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600")} />
