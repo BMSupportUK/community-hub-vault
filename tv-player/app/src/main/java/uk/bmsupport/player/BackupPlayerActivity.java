@@ -24,6 +24,20 @@ import org.videolan.libvlc.util.VLCVideoLayout;
  * by itself when the main player can't open or keep a stream going; customers install nothing extra.
  */
 public final class BackupPlayerActivity extends Activity {
+    @Override protected void attachBaseContext(android.content.Context b) { super.attachBaseContext(PhoneScale.wrap(b)); }
+    private androidx.media3.ui.PlayerControlView controller;
+    private android.widget.LinearLayout controlsRow;
+    private BackupControlPlayer controlPlayer;
+    private long lastPressAt;
+    private final Runnable hideControls = new Runnable() {
+        @Override public void run() {
+            if (InactivityPolicy.hideControls(lastPressAt, android.os.SystemClock.elapsedRealtime())) {
+                if (controller != null) controller.hide();
+                if (controlsRow != null) controlsRow.setVisibility(android.view.View.GONE);
+            }
+            ui.postDelayed(this, 1000);
+        }
+    };
     private final Handler ui = new Handler(Looper.getMainLooper());
     private LibVLC vlc;
     private MediaPlayer mp;
@@ -49,6 +63,7 @@ public final class BackupPlayerActivity extends Activity {
             if (mp == null || isFinishing()) return;
             feedStatus.progress(mp.getTime(), android.os.SystemClock.elapsedRealtime());
             updateFeedNote();
+            if (controlPlayer != null) controlPlayer.refresh();
             ui.postDelayed(this, 500);
         }
     };
@@ -80,6 +95,7 @@ public final class BackupPlayerActivity extends Activity {
         feedNote.setBackgroundColor(0xB30B1220);
         feedNote.setVisibility(TextView.GONE);
         root.addView(feedNote, new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END));
+        installControls(root);
         setContentView(root);
         ui.postDelayed(() -> note.setVisibility(TextView.GONE), 4000);
 
@@ -101,6 +117,7 @@ public final class BackupPlayerActivity extends Activity {
                     started = true;
                     feedStatus.playing(android.os.SystemClock.elapsedRealtime());
                     feedNote.setVisibility(TextView.GONE);
+                    applyBoost();
                     break;
                 case MediaPlayer.Event.Buffering:
                     feedStatus.buffering(ev.getBuffering());
@@ -121,6 +138,95 @@ public final class BackupPlayerActivity extends Activity {
         open();
         ui.post(feedTick);
         ui.postDelayed(reportTick, 60000);
+        lastPressAt = android.os.SystemClock.elapsedRealtime();
+        ui.postDelayed(hideControls, 1000);
+    }
+
+    private String kind() { return PlayerActionControls.kind(this); }
+
+    private void applyBoost() {
+        if (mp == null) return;
+        try {
+            MediaPlayer.Equalizer equalizer = MediaPlayer.Equalizer.create();
+            equalizer.setPreAmp(SoundBoost.gainFor(SoundBoost.current(this)) / 100f);
+            mp.setEqualizer(equalizer);
+        } catch (Exception ignored) {}
+    }
+
+    private void setPlaying(boolean play) {
+        if (mp == null) return;
+        if (!play) reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), false);
+        paused = !play;
+        if (play) { feedStatus.playing(android.os.SystemClock.elapsedRealtime()); mp.play(); } else mp.pause();
+        updateFeedNote();
+    }
+
+    private void installControls(FrameLayout root) {
+        controller = new androidx.media3.ui.PlayerControlView(this);
+        controller.setShowTimeoutMs((int)InactivityPolicy.CONTROLS_MS);
+        controller.setShowFastForwardButton(PlayerControls.canSkip(kind()));
+        controller.setShowRewindButton(PlayerControls.canSkip(kind()));
+        controlPlayer = new BackupControlPlayer(new BackupControlPlayer.Engine() {
+            public long position() { return mp == null ? 0 : mp.getTime(); }
+            public long duration() { return mp == null ? 0 : mp.getLength(); }
+            public boolean ready() { return started; }
+            public boolean paused() { return BackupPlayerActivity.this.paused; }
+            public void play(boolean play) { setPlaying(play); }
+            public void seek(long position) { if (mp != null) mp.setTime(position); }
+            public float speed() { return mp == null ? 1 : mp.getRate(); }
+            public void speed(float speed) { if (mp != null) mp.setRate(speed); }
+            public androidx.media3.common.Tracks tracks() { return backupTracks(); }
+            public void tracks(androidx.media3.common.TrackSelectionParameters p) { selectTracks(p); }
+        }, kind());
+        controller.setPlayer(controlPlayer);
+        root.addView(controller, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+        controlsRow = PlayerActionControls.add(this, root, this::applyBoost,
+                () -> PlayerActionControls.report(this),
+                () -> PlayerActionControls.swap(this, false, () -> { if (mp != null) mp.stop(); }));
+        controller.addVisibilityListener(visibility -> {
+            controlsRow.setVisibility(visibility);
+            if (visibility == android.view.View.VISIBLE) lastPressAt = android.os.SystemClock.elapsedRealtime();
+        });
+        root.setOnClickListener(v -> showControls());
+        controller.show();
+    }
+
+    private androidx.media3.common.Tracks backupTracks() {
+        if (mp == null) return androidx.media3.common.Tracks.EMPTY;
+        java.util.List<androidx.media3.common.Tracks.Group> groups = new java.util.ArrayList<>();
+        addTracks(groups, mp.getAudioTracks(), mp.getAudioTrack(), "audio", androidx.media3.common.MimeTypes.AUDIO_AAC);
+        addTracks(groups, mp.getSpuTracks(), mp.getSpuTrack(), "subtitle", androidx.media3.common.MimeTypes.APPLICATION_SUBRIP);
+        return new androidx.media3.common.Tracks(groups);
+    }
+
+    private void addTracks(java.util.List<androidx.media3.common.Tracks.Group> groups, MediaPlayer.TrackDescription[] descriptions, int selected, String kind, String mime) {
+        if (descriptions == null) return;
+        for (MediaPlayer.TrackDescription track : descriptions) {
+            if (track.id < 0) continue;
+            androidx.media3.common.Format format = new androidx.media3.common.Format.Builder().setId(kind + ":" + track.id).setLabel(track.name).setSampleMimeType(mime).build();
+            androidx.media3.common.TrackGroup group = new androidx.media3.common.TrackGroup(kind + ":" + track.id, format);
+            groups.add(new androidx.media3.common.Tracks.Group(group, false, new int[]{androidx.media3.common.C.FORMAT_HANDLED}, new boolean[]{selected == track.id}));
+        }
+    }
+
+    private void selectTracks(androidx.media3.common.TrackSelectionParameters p) {
+        if (mp == null) return;
+        if (p.disabledTrackTypes.contains(androidx.media3.common.C.TRACK_TYPE_TEXT)) mp.setSpuTrack(-1);
+        for (androidx.media3.common.TrackSelectionOverride override : p.overrides.values()) {
+            if (override.trackIndices.isEmpty()) continue;
+            String id = override.mediaTrackGroup.getFormat(override.trackIndices.get(0)).id;
+            if (id == null) continue;
+            try {
+                if (id.startsWith("audio:")) mp.setAudioTrack(Integer.parseInt(id.substring(6)));
+                if (id.startsWith("subtitle:") && !p.disabledTrackTypes.contains(androidx.media3.common.C.TRACK_TYPE_TEXT)) mp.setSpuTrack(Integer.parseInt(id.substring(9)));
+            } catch (NumberFormatException ignored) {}
+        }
+    }
+
+    private void showControls() {
+        lastPressAt = android.os.SystemClock.elapsedRealtime();
+        if (controller != null) controller.show();
+        if (controlsRow != null) controlsRow.setVisibility(android.view.View.VISIBLE);
     }
 
     private boolean isLive() { return "live".equals(getIntent().getStringExtra("content_kind")) || getIntent().getStringExtra("content_kind") == null; }
@@ -169,28 +275,27 @@ public final class BackupPlayerActivity extends Activity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        if (PlayerApplication.closeAnnouncementOnBack(this, e)) return true;
         PlayerApplication.interaction(this);
         if (e.getAction() == KeyEvent.ACTION_DOWN && mp != null) {
             switch (e.getKeyCode()) {
-                case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                    if (!paused) {
-                        reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), false);
-                        paused = true;
-                        mp.pause();
-                    } else {
-                        paused = false;
-                        feedStatus.playing(android.os.SystemClock.elapsedRealtime());
-                        mp.play();
-                    }
-                    updateFeedNote(); return true;
-                case KeyEvent.KEYCODE_DPAD_RIGHT: case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
-                    if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind")) && mp.getLength() > 0) { mp.setTime(Math.min(mp.getLength(), mp.getTime() + 10000)); return true; } break;
-                case KeyEvent.KEYCODE_DPAD_LEFT: case KeyEvent.KEYCODE_MEDIA_REWIND:
-                    if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind")) && mp.getLength() > 0) { mp.setTime(Math.max(0, mp.getTime() - 10000)); return true; } break;
+                case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: setPlaying(paused); showControls(); return true;
+                case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD: case KeyEvent.KEYCODE_MEDIA_REWIND:
+                    if (PlayerControls.canSkip(kind()) && mp.getLength() > 0) controlPlayer.seekTo(Math.max(0, Math.min(mp.getLength(), mp.getTime() + (e.getKeyCode() == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD ? 15000 : -5000))));
+                    return true;
+                case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER:
+                case KeyEvent.KEYCODE_DPAD_LEFT: case KeyEvent.KEYCODE_DPAD_RIGHT:
+                case KeyEvent.KEYCODE_DPAD_UP: case KeyEvent.KEYCODE_DPAD_DOWN:
+                    if (controller != null && !controller.isVisible()) { showControls(); controller.requestPlayPauseFocus(); return true; }
+                    break;
                 default: break;
             }
         }
         return super.dispatchKeyEvent(e);
+    }
+
+    @Override public void onUserInteraction() {
+        super.onUserInteraction(); lastPressAt = android.os.SystemClock.elapsedRealtime(); PlayerApplication.interaction(this);
     }
 
     @Override protected void onPause() {
@@ -217,6 +322,8 @@ public final class BackupPlayerActivity extends Activity {
         reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), false);
         BufferReporter.flush(this);
         ui.removeCallbacksAndMessages(null);
+        if (controller != null) controller.setPlayer(null);
+        if (controlPlayer != null) controlPlayer.release();
         ProgressSync.push(this, true);
         if (mp != null) { mp.stop(); mp.detachViews(); mp.release(); mp = null; }
         if (vlc != null) { vlc.release(); vlc = null; }
