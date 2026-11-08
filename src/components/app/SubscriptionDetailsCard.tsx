@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { CalendarClock, ChevronRight } from "lucide-react";
+import { CalendarClock, Users } from "lucide-react";
+import { useAccountProfiles } from "@/components/app/AccountProfiles";
+import { requestProfileChooser } from "@/lib/account-profiles";
 import { cn } from "@/lib/utils";
 import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -35,7 +37,7 @@ export function SubscriptionDetailsCard({
   const [nameplateId, setNameplateId] = useState<string | null>(null);
   const [joinedYear, setJoinedYear] = useState<number | null>(null);
   const [joinedRecorded, setJoinedRecorded] = useState<boolean | null>(null);
-  const [viewIndex, setViewIndex] = useState(0);
+  const { activeProfile } = useAccountProfiles();
   const customerNumber = useCustomerNumber(user?.id);
   const loginNumbers = useLoginPlayerNumbers(user?.id);
 
@@ -180,9 +182,9 @@ export function SubscriptionDetailsCard({
               </div>
             </div>
           )}
-          {customerNumber && (
+          {(loginNumbers.find((r) => r.credential_id === activeProfile?.id)?.number ?? customerNumber) && (
             <p className={cn("rounded-full border border-white/30 bg-background/20 px-3 py-1 font-mono font-semibold tracking-wider text-white", fill ? "mt-1 text-sm md:text-lg" : compact ? "py-0.5 text-xs" : "mt-1 text-sm")}>
-              Account no. {customerNumber}
+              Account no. {loginNumbers.find((r) => r.credential_id === activeProfile?.id)?.number ?? customerNumber}
             </p>
           )}
           <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px]" : "text-xs mt-0.5")}>
@@ -193,8 +195,7 @@ export function SubscriptionDetailsCard({
 
       {/* Account expiry — one at a time with next button */}
       {hasCreds && (() => {
-        const safeIndex = Math.min(viewIndex, creds.length - 1);
-        const c = creds[safeIndex];
+        const c = creds.find((r) => r.id === activeProfile?.id) ?? creds[0];
         const t = c.expiry_at ? new Date(c.expiry_at).getTime() : null;
         const expired = t !== null && t < now;
         const expSoon = t !== null && !expired && t - now < 7 * 86400_000;
@@ -263,14 +264,14 @@ export function SubscriptionDetailsCard({
             {creds.length > 1 && (
               <button
                 type="button"
-                onClick={() => setViewIndex((safeIndex + 1) % creds.length)}
+                onClick={() => user && requestProfileChooser(user.id)}
                 className={cn(
                   "mt-auto flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-600/80 font-semibold text-white transition-colors hover:bg-violet-500",
                   fill ? "px-2.5 py-1.5 text-[11px] md:px-4 md:py-3 md:text-base" : compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-xs",
                 )}
               >
-                View Next Subscription Details
-                <ChevronRight className="size-3.5" />
+                <Users className="size-3.5" />
+                Switch profile
               </button>
             )}
           </div>

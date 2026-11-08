@@ -2,6 +2,7 @@ import { Hash } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { accountNumberPillLabel } from "@/lib/account-number-label";
 import { useCustomerNumber } from "@/components/app/CustomerNumber";
+import { useAccountProfiles } from "@/components/app/AccountProfiles";
 import { cn } from "@/lib/utils";
 
 /**
@@ -12,7 +13,9 @@ import { cn } from "@/lib/utils";
  */
 export function AccountNumberPill({ className }: { className?: string }) {
   const { user, roles } = useAuth();
-  const number = useCustomerNumber(user?.id);
+  const own = useCustomerNumber(user?.id);
+  const { activeProfile } = useAccountProfiles();
+  const number = activeProfile?.playerNumber ?? own;
   if (!number) return null;
   return (
     <span

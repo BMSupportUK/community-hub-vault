@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
+import { ProfileChooser } from "@/components/app/AccountProfiles";
 import { Nameplate } from "@/components/app/Nameplate";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
@@ -154,7 +155,10 @@ export function PortalHome({ staff }: { staff: boolean }) {
                       <WorkingStatusBox compact showTools={false} onShiftStatusChange={setIsStaffShiftActive} />
                     </>
                   ) : (
-                    <SubscriptionDetailsCard compact embedded />
+                    <>
+                      <SubscriptionDetailsCard compact embedded />
+                      <ProfileChooser />
+                    </>
                   )}
                 </div>
             </div>
