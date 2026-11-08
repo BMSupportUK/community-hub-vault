@@ -2,6 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
 import checkin from '../checkin.cjs';
+import guideRefresh from '../guide-refresh.cjs';
 
 // Live TV laid out like the Android/Amazon BM Player: preview top-left, programme info beside it with
 // Search TV / Voice search top right, a slim date row (◀ 24h / Now / 24h ▶ / Category pill) and the guide grid below.
@@ -20,7 +21,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  const asked=useRef(new Map()),pending=useRef(new Set()),grid=useRef(null);
  const epgRef=useRef(epg);epgRef.current=epg;
  const now=Date.now();
- async function load(ch,isActive){if(pending.current.has(ch.id)||Date.now()-(asked.current.get(ch.id)??-Infinity)<60000)return;pending.current.add(ch.id);try{const p=await epgRef.current(ch.id);if(!isActive())return;asked.current.set(ch.id,Date.now());setGuide(g=>({...g,[ch.id]:p||[]}));}catch{/* Keep the last good line-up and retry on the next tick. */}finally{pending.current.delete(ch.id);}}
+ async function load(ch,isActive){if(pending.current.has(ch.id)||!guideRefresh.due(asked.current.get(ch.id)))return;pending.current.add(ch.id);try{const p=await epgRef.current(ch.id);if(!isActive())return;asked.current.set(ch.id,Date.now());setGuide(g=>({...g,[ch.id]:p||[]}));}catch{/* Keep the last good line-up and retry on the next tick. */}finally{pending.current.delete(ch.id);}}
  // Fetch programmes only for rows that scroll into view, three at a time like the Android guide.
  useEffect(()=>{const root=grid.current;if(!root)return;const queue=[],visible=new Set();let running=0,active=true;
   const pump=()=>{while(active&&running<3&&queue.length){const ch=queue.shift();running++;load(ch,()=>active).finally(()=>{running--;pump();});}};
