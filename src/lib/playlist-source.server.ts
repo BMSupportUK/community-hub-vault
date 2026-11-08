@@ -5,6 +5,7 @@
  */
 type Cat = { category_id: string; category_name: string };
 type Stream = { name: string; category_id: string; stream_id?: string };
+import type { SportsProgramme } from "./sports-programme-end";
 
 let cache: { at: number; cats: Cat[]; streams: Stream[] } | null = null;
 const TTL = 10 * 60_000;
@@ -84,10 +85,10 @@ export async function channelCheckUrl(streamId: string): Promise<string | null> 
   return dns ? `${dns}/live/${encodeURIComponent(user)}/${encodeURIComponent(pass)}/${encodeURIComponent(streamId)}.ts` : null;
 }
 
-const epgCache = new Map<string, { at: number; list: { start: number; end: number }[] }>();
+const epgCache = new Map<string, { at: number; list: SportsProgramme[] }>();
 /** TV-guide programme times for the named channels (exact playlist names), at most `limit` lookups. Missing data is skipped. */
-export async function playlistGuideTimes(names: string[], limit = 25): Promise<Map<string, { start: number; end: number }[]>> {
-  const out = new Map<string, { start: number; end: number }[]>();
+export async function playlistGuideTimes(names: string[], limit = 25): Promise<Map<string, SportsProgramme[]>> {
+  const out = new Map<string, SportsProgramme[]>();
   try {
     const url = await base();
     if (!url) return out;
@@ -96,13 +97,20 @@ export async function playlistGuideTimes(names: string[], limit = 25): Promise<M
     const wanted = [...new Set(names.map((n) => n.toLowerCase()))].filter((n) => byName.get(n)).slice(0, limit);
     await Promise.all(wanted.map(async (n) => {
       const hit = epgCache.get(n);
-      if (hit && Date.now() - hit.at < TTL) { out.set(n, hit.list); return; }
+      if (hit && Date.now() - hit.at < 2 * 60_000) { out.set(n, hit.list); return; }
       try {
-        const r = await fetch(`${url}&action=get_short_epg&stream_id=${encodeURIComponent(byName.get(n)!)}&limit=6`, { signal: AbortSignal.timeout(8000) });
+        const id = byName.get(n);
+        if (!id) return;
+        const r = await fetch(`${url}&action=get_simple_data_table&stream_id=${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) return;
         const j = await r.json();
         const list = (Array.isArray(j?.epg_listings) ? j.epg_listings : [])
-          .map((p: { start_timestamp?: string | number; stop_timestamp?: string | number }) => ({ start: Number(p.start_timestamp) * 1000, end: Number(p.stop_timestamp) * 1000 }))
-          .filter((p: { start: number; end: number }) => p.start > 0 && p.end > p.start && p.end - p.start <= 12 * 3600_000);
+          .map((p: { title?: string; start_timestamp?: string | number; stop_timestamp?: string | number; end_timestamp?: string | number }) => {
+            const raw = String(p.title ?? ""); let title = raw;
+            try { if (/^[A-Za-z0-9+/]+={0,2}$/.test(raw) && raw.length % 4 === 0) title = new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(atob(raw), c => c.charCodeAt(0))); } catch { /* provider may send plain text */ }
+            return { title, start: Number(p.start_timestamp) * 1000, end: Number(p.stop_timestamp ?? p.end_timestamp) * 1000 };
+          })
+          .filter((p: SportsProgramme) => p.start > 0 && p.end > p.start && p.end - p.start <= 12 * 3600_000 && p.end > Date.now() - 12 * 3600_000);
         epgCache.set(n, { at: Date.now(), list });
         out.set(n, list);
       } catch { /* no guide for this channel */ }
