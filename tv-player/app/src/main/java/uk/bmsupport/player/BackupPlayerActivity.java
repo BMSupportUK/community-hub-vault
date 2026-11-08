@@ -33,6 +33,7 @@ public final class BackupPlayerActivity extends Activity {
     private String[] urls;
     private int at;
     private boolean started;
+    private boolean paused;
     private long resume;
     private final BackupFeedStatus feedStatus = new BackupFeedStatus();
     private final BackupStallTracker stallTracker = new BackupStallTracker();
@@ -54,7 +55,8 @@ public final class BackupPlayerActivity extends Activity {
 
     private void updateFeedNote() {
         if (mp == null || feedNote == null) return;
-        boolean stalled = isLive() && feedStatus.stalled(started, mp.isPlaying(), android.os.SystemClock.elapsedRealtime());
+        // VLC can stop reporting isPlaying during rebuffering; only an explicit user pause suppresses a stall.
+        boolean stalled = isLive() && feedStatus.stalled(started, !paused, android.os.SystemClock.elapsedRealtime());
         reportStall(stallTracker.update(stalled, android.os.SystemClock.elapsedRealtime()), false);
         feedNote.setText(FeedStatus.BUFFERING);
         feedNote.setVisibility(stalled ? TextView.VISIBLE : TextView.GONE);
@@ -141,6 +143,7 @@ public final class BackupPlayerActivity extends Activity {
         if (mp == null) return;
         reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), true);
         started = false;
+        paused = false;
         feedStatus.reset(android.os.SystemClock.elapsedRealtime());
         feedNote.setVisibility(TextView.GONE);
         Media m = new Media(vlc, Uri.parse(urls[at]));
@@ -170,7 +173,16 @@ public final class BackupPlayerActivity extends Activity {
         if (e.getAction() == KeyEvent.ACTION_DOWN && mp != null) {
             switch (e.getKeyCode()) {
                 case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                    if (mp.isPlaying()) mp.pause(); else mp.play(); return true;
+                    if (!paused) {
+                        reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), false);
+                        paused = true;
+                        mp.pause();
+                    } else {
+                        paused = false;
+                        feedStatus.playing(android.os.SystemClock.elapsedRealtime());
+                        mp.play();
+                    }
+                    updateFeedNote(); return true;
                 case KeyEvent.KEYCODE_DPAD_RIGHT: case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
                     if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind")) && mp.getLength() > 0) { mp.setTime(Math.min(mp.getLength(), mp.getTime() + 10000)); return true; } break;
                 case KeyEvent.KEYCODE_DPAD_LEFT: case KeyEvent.KEYCODE_MEDIA_REWIND:
