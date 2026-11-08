@@ -1,6 +1,6 @@
 // @ts-nocheck — bun:test is used only by the test runner.
 import { expect, test } from 'bun:test';
-import { groupNewSeries, newSeriesCutoff, newSeriesMonthCount, newSeriesYears } from './new-series';
+import { groupNewSeries, groupPlaylistNewSeries, newSeriesCutoff, newSeriesMonthCount, newSeriesYears } from './new-series';
 const series = (id, date, extra = {}) => ({ id, name: `Series ${id}`, first_air_date: date, overview: 'A new drama.', vote_average: 8, vote_count: 100, ...extra });
 test('current-year first premieres exclude returning series and future premieres', () => {
   expect(groupNewSeries([series(1, '2026-01-03'), series(2, '2025-01-03'), series(3, '2026-12-03'), series(4, '2026-11-08')], '2026-11-08').flatMap(g => g.items).map(s => s.id)).toEqual(['1', '4']);
@@ -35,4 +35,9 @@ test('a past year keeps its own December premieres and drops the next year', () 
   expect(groups[11].items.map(s => s.id)).toEqual(['1']);
   expect(groups[11].items[0].year).toBe('2025');
   expect(groups[0].items).toEqual([]);
+});test('playlist new series group by releaseDate, skip adult categories and keep playlist ids', () => {
+  const rows = [{ series_id: 11, name: 'Show A', releaseDate: '2026-03-04', category_id: '1' }, { series_id: 12, name: 'Show B', releaseDate: '2026-03-09', category_id: '99' }, { series_id: 13, name: 'Show C', releaseDate: '2025-03-01', category_id: '1' }];
+  const groups = groupPlaylistNewSeries(rows, '2026-11-08', new Set(['99']));
+  expect(groups[2].items.map(s => s.id)).toEqual(['11']);
+  expect(groups.flatMap(g => g.items)).toHaveLength(1);
 });

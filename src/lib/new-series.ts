@@ -1,4 +1,4 @@
-import type { WatchTitle } from './watch-playlist';
+import { mapWatchTitle, type WatchTitle, type WatchRow } from './watch-playlist';
 export type NewSeries = WatchTitle & { premiereDate: string };
 export type SeriesMonth = { month: number; name: string; items: NewSeries[] };
 export type DiscoverySeries = { id: number; name?: string; first_air_date?: string; overview?: string; poster_path?: string | null; vote_average?: number; vote_count?: number };
@@ -30,5 +30,22 @@ export function groupNewSeries(rows: DiscoverySeries[], today: string): SeriesMo
     groups[month - 1]?.items.push({ id: String(row.id), kind: 'series', title: row.name, year: String(year), premiereDate: date, overview: row.overview, posterUrl: row.poster_path ? `https://image.tmdb.org/t/p/w500${row.poster_path}` : null, rating: Math.round((row.vote_average ?? 0) * 10) / 10 });
   }
   for (const group of groups) group.items.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || a.title.localeCompare(b.title));
+  return groups;
+}/** Playlist series grouped by their premiere (releaseDate) month for the cutoff's year; adult categories are excluded. */
+export function groupPlaylistNewSeries(rows: WatchRow[], today: string, excludedCategories: Set<string> = new Set()): SeriesMonth[] {
+  const year = Number(today.slice(0, 4));
+  const seen = new Set<string>();
+  const groups = MONTH_NAMES.map((name, index) => ({ month: index + 1, name, items: [] as NewSeries[] }));
+  for (const row of rows) {
+    if (excludedCategories.has(String(row.category_id))) continue;
+    const date = String(row.releaseDate ?? row.release_date ?? '').slice(0, 10);
+    const month = Number(date.slice(5, 7));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number(date.slice(0, 4)) !== year || date > today || month < 1 || month > 12) continue;
+    const item = mapWatchTitle(row, 'series');
+    if (!item.title || !/^\d+$/.test(item.id) || seen.has(item.id)) continue;
+    seen.add(item.id);
+    groups[month - 1]?.items.push({ ...item, year: String(year), premiereDate: date });
+  }
+  for (const group of groups) group.items.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || b.premiereDate.localeCompare(a.premiereDate) || a.title.localeCompare(b.title));
   return groups;
 }

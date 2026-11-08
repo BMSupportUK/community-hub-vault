@@ -18,7 +18,7 @@ import whatToWatchBg from '@/assets/what-to-watch-bg.jpg.asset.json';
 export const Route = createFileRoute('/_authenticated/_approved/what-to-watch')({
   head: () => ({ meta: [
     { title: 'What to Watch Now — BM Support' },
-    { name: 'description', content: 'Cinema films, playlist picks and brand-new recommended series grouped by premiere month for the current year.' },
+    { name: 'description', content: 'Cinema films, playlist picks and new playlist series grouped by premiere year and month.' },
     { property: 'og:title', content: 'What to Watch Now — BM Support' },
     { property: 'og:description', content: 'Browse BM playlist picks and this year’s new series by premiere month, with posters, ratings and descriptions.' },
     { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' },
@@ -68,7 +68,7 @@ function NewSeriesSection({ onPick }: { onPick: (item: NewSeries) => void }) {
   const pick = (item: WatchTitle) => { if ('premiereDate' in item) onPick(item as NewSeries); };
   const chosen = month ? data?.months[month - 1] : null;
   return <div className="space-y-6">
-    <header className="space-y-1"><h2 className="font-display text-2xl font-bold">New series{data ? ` · ${data.year}` : ''}</h2><p className="text-sm text-muted-foreground">First-season premieres · Rated 7+ / 10 on TMDB · Playlist availability may vary</p></header>
+    <header className="space-y-1"><h2 className="font-display text-2xl font-bold">New series{data ? ` · ${data.year}` : ''}</h2><p className="text-sm text-muted-foreground">Series in your playlist, by the month they premiered</p></header>
     {data && <div className="space-y-2">
       <nav aria-label="New series year" className="flex flex-wrap items-center gap-1 rounded-lg border border-border/70 bg-card/85 p-2 backdrop-blur-md">
         <span className="flex items-center gap-2 pr-1 text-sm font-medium"><Calendar className="size-4 text-accent" />Year</span>
@@ -84,13 +84,12 @@ function NewSeriesSection({ onPick }: { onPick: (item: NewSeries) => void }) {
     {(isError || data?.error) && <div role="alert" className="space-y-3"><p className="text-sm">{data?.error || 'Could not load new series.'}</p><Button variant="outline" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
     {data && !data.error && month === null && data.months.map(group => <section key={group.month} aria-label={`${group.name} ${data.year}`} className="space-y-4 border-t border-border pt-5">
       <h3 className="font-display text-xl font-semibold">{group.name} <span className="text-muted-foreground text-sm font-normal">{data.year}{group.items.length ? ` · ${group.items.length} series` : ''}</span></h3>
-      {group.items.length ? <Grid items={group.items} onPick={pick} /> : <p className="text-sm text-muted-foreground">No rated new-series picks yet.</p>}
+      {group.items.length ? <Grid items={group.items} onPick={pick} /> : <p className="text-sm text-muted-foreground">No new series in the playlist for this month.</p>}
     </section>)}
     {data && !data.error && month !== null && <section aria-label={`${MONTH_NAMES[month - 1]} ${data.year}`} className="space-y-4 border-t border-border pt-5">
       <h3 className="font-display text-xl font-semibold">{MONTH_NAMES[month - 1]} <span className="text-muted-foreground text-sm font-normal">{data.year}{chosen?.items.length ? ` · ${chosen.items.length} series` : ''}</span></h3>
-      {chosen?.items.length ? <Grid items={chosen.items} onPick={pick} /> : <p className="text-sm text-muted-foreground">No rated new-series picks yet.</p>}
+      {chosen?.items.length ? <Grid items={chosen.items} onPick={pick} /> : <p className="text-sm text-muted-foreground">No new series in the playlist for this month.</p>}
     </section>}
-    <p className="text-xs text-muted-foreground">Ratings and premiere dates: TMDB. This section is not endorsed or certified by TMDB.</p>
   </div>;
 }
 function TitleDetails({ item }: { item: WatchTitle | NewSeries }) {
@@ -109,7 +108,7 @@ function TitleDetails({ item }: { item: WatchTitle | NewSeries }) {
       {'premiereDate' in item && <p className="text-xs text-muted-foreground">Premiered {new Date(`${item.premiereDate}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</p>}
       {isLoading ? <div aria-label="Loading description" className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-2/3" /></div> : <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.overview || data?.overview || data?.error || 'No description available.'}</p>}
       {data?.error && <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button>}
-      <SendToBoxButton kind={item.kind} itemId={'premiereDate' in item ? null : item.id} title={item.title} />
+      <SendToBoxButton kind={item.kind} itemId={item.id} title={item.title} />
     </div>
   </div>;
 }
