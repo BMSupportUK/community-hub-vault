@@ -1,0 +1,4 @@
+function cleanIds(value){if(!Array.isArray(value))return [];return [...new Set(value.filter(id=>typeof id==='string'&&id.length>0&&id.length<=200&&id!=='all'&&id!=='*'))].slice(0,5000);}
+function orderCategories(categories,saved){const rank=new Map(cleanIds(saved).map((id,i)=>[id,i]));return [...categories].sort((a,b)=>(rank.get(a.id)??Infinity)-(rank.get(b.id)??Infinity));}
+function moveCategory(categories,index,delta){const rows=[...categories],target=index+delta;if(index<0||index>=rows.length||target<0||target>=rows.length)return rows;[rows[index],rows[target]]=[rows[target],rows[index]];return rows;}
+module.exports={cleanIds,orderCategories,moveCategory};
