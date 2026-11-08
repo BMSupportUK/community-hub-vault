@@ -42,6 +42,7 @@ export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,v
  const perDay=Array.from({length:7},(_,d)=>inCat.filter(e=>ukDayIndex(e.start,now)===d).length);
  const q=lower(query).trim();
  const [focusedEvent,setFocusedEvent]=useState(initialEvent||null);
+ useEffect(()=>{if(!initialEvent)return;const event=(sports.events||[]).find(e=>String(e.start)+':'+e.title===initialEvent);if(event){setCat({sport:event.sport||null,sub:event.subcategory||null,guide:event.competition||null});setDay(ukDayIndex(event.start,Date.now()));}},[initialEvent,sports]);
  const cards=focusedEvent?upcoming.filter(e=>String(e.start)+':'+e.title===focusedEvent):q?upcoming.filter(e=>matchesSearch(e,q)):inCat.filter(e=>ukDayIndex(e.start,now)===day).slice().sort((a,b)=>ended(a)-ended(b));
  const current=cards[Math.min(sel,cards.length-1)];
  const rows=useMemo(()=>current&&items?sportsRows(current,items,sports.aliases||[],sports.unavailable||[]):[],[current,items,sports]);

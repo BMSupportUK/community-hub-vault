@@ -2025,7 +2025,11 @@ public class MainActivity extends Activity {
                         name.setText(hit.title); name.setTextSize(hit.selectable() ? 16 : 14); name.setTextColor(hit.selectable() ? TEXT : MUTED);
                         row.addView(name);
                         if (!hit.subtitle.isEmpty()) row.addView(text(hit.subtitle, 13, MUTED, false));
-                        if (hit.group.equals("Events") && hit.value != null) row.addView(text(new java.text.SimpleDateFormat("EEE d MMM HH:mm", java.util.Locale.UK).format(new java.util.Date(hit.value.optLong("start"))), 13, MUTED, false));
+                        if (hit.group.equals("Events") && hit.value != null) {
+                            java.text.SimpleDateFormat when = new java.text.SimpleDateFormat("EEE d MMM HH:mm", java.util.Locale.UK);
+                            when.setTimeZone(java.util.TimeZone.getTimeZone("Europe/London"));
+                            row.addView(text(when.format(new java.util.Date(hit.value.optLong("start"))), 13, MUTED, false));
+                        }
                         return row;
                     }, i -> {
                         LiveVoiceSearch.Row hit = rows.get(i);
