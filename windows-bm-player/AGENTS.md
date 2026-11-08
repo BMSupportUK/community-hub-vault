@@ -1,4 +1,5 @@
 # Windows BM Player rules
+- Sports Guide loading presentation covers both the guide request and channel catalog preparation; the shared renderer also serves Mac and clears failed requests instead of leaving an endless wait.
 - DAZN recovery is shared with Mac, using catalog-verified channel/category identity and Sports Guide event context; alternative choices never accept provider URLs from the renderer.
 - Windows and Mac share checkin.cjs for staggered website polling, jitter, busy-response backoff and server slowdown; keep stream/provider traffic outside this scheduler.
 - Film/series community votes use the unlock-gated main-process bridge; batch poster rating reads and keep shared BM averages separate from provider sort metadata.

@@ -1,4 +1,5 @@
 # tv-player rules
+- Sports listings loading presentation stays visible through both the guide fetch and playlist preparation, and clears on success or failure so it cannot leave an endless wait.
 - DAZN recovery uses verified channel/category identity, not numeric feed prefixes; its live-offset drift guard allows the larger cushion and same-event alternatives come from the selected Sports Guide card.
 - Film/whole-series votes use a separate device-token background queue; poster BM averages and counts are separate from provider ratings, with bounded batched reads and no progress bar moved to series posters.
 - IntroActivity is the launcher and plays the bundled CDN-sourced opening film once per cold launch; MainActivity remains the direct destination for playback/reminders so the intro never delays them.
