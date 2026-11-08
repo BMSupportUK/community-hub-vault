@@ -1059,7 +1059,7 @@ public class MainActivity extends Activity {
         applyFilter[0] = () -> {
             String q = liveFilter[0].trim().toLowerCase();
             List<Item> out = new ArrayList<>();
-            for (Item it : currentList) if (q.isEmpty() || it.name.toLowerCase().contains(q)) out.add(it);
+            for (Item it : currentList) if (q.isEmpty() || LiveSearch.matches(it.name, q)) out.add(it);
             items.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, out) {
                 @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
             });
@@ -1959,14 +1959,28 @@ public class MainActivity extends Activity {
                 List<Item> all = parseItems(kind, new JSONArray(cachedGet(kind, listActionFor(kind), "")), null);
                 String w = want.toLowerCase(java.util.Locale.UK);
                 List<Item> hits = new ArrayList<>();
-                for (Item it : all) { if (it.name != null && it.name.toLowerCase(java.util.Locale.UK).contains(w)) hits.add(it); if (hits.size() >= 200) break; }
+                for (Item it : all) if (it.name != null && (kind.equals("live") ? LiveSearch.matches(it.name, want) : it.name.toLowerCase(java.util.Locale.UK).contains(w))) hits.add(it);
+                java.util.Map<String, String> searchCategories = new java.util.HashMap<>();
+                if (kind.equals("live")) {
+                    JSONArray cats = new JSONArray(cachedGet("live", "get_live_categories", ""));
+                    for (int i = 0; i < cats.length(); i++) {
+                        JSONObject cat = cats.optJSONObject(i);
+                        if (cat != null) searchCategories.put(cat.optString("category_id"), cat.optString("category_name"));
+                    }
+                }
                 ui.post(() -> {
                     if (hits.isEmpty()) { Toast.makeText(this, "Nothing found for \"" + want + "\"", Toast.LENGTH_LONG).show(); showSearch(kind, ""); return; }
                     String[] names = new String[hits.size()];
                     for (int i = 0; i < names.length; i++) names[i] = hits.get(i).name;
-                    resultList(hits.size() + (hits.size() >= 200 ? "+" : "") + " results for \"" + want + "\"", hits.size(), i -> {
+                    resultList(hits.size() + " results for \"" + want + "\"", hits.size(), i -> {
                                 LinearLayout row = column();
                                 row.addView(text(names[i], 16, TEXT, false));
+                                if (kind.equals("live")) {
+                                    String category = hits.get(i).category;
+                                    String label = searchCategories.get(category);
+                                    if (label == null || label.isEmpty()) label = category != null && !category.matches("\\d+") ? category : "Uncategorised";
+                                    row.addView(text(label, 13, MUTED, false));
+                                }
                                 // Films show how much has been watched; series show it per episode on their own page.
                                 if (kind.equals("film")) row.addView(watchedBar(hits.get(i)));
                                 return row;

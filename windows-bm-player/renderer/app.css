@@ -42,6 +42,7 @@
 .lg-ch{flex:0 0 240px;width:240px;min-width:0;overflow:hidden;display:flex;align-items:stretch;background:var(--surface);border-right:1px solid var(--border)}
 .lg-ch>button:first-child{flex:1;min-width:0;text-align:left;background:transparent;border:0;border-radius:0;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .lg-ch b{color:var(--muted);margin-right:6px}.lg-ch.on{box-shadow:inset 4px 0 0 var(--accent)}
+.lg-channel-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lg-search-category{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:400;color:var(--muted);margin-top:3px}
 .lg-head .lg-ch{align-items:center;padding:0 12px;font-weight:700}
 .lg-times{flex:1;display:grid;grid-template-columns:repeat(4,1fr);align-items:center}.lg-times span{padding-left:8px;font-weight:600}
 .lg-line{flex:1;position:relative;overflow:hidden}
