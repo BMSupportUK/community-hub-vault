@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {matchChannel} from '../../src/lib/player-channel-match';
 import {orderBrowse} from '../playback-core.cjs';
@@ -144,12 +144,12 @@ createRoot(document.getElementById('root')).render(<><App/><Announcement/><Major
 const heroCache=new Map();
 /** Films/Series top panel (matches Android): backdrop, title, rating · year · length · genre, cast, director, plot. */
 function SeriesPage({series,ratingLabel,bar,back,actions,onPlay}){
- const item=series.item,[info,setInfo]=useState(null),[pos,setPos]=useState({}),first=useRef(null);
+ const item=series.item,[info,setInfo]=useState(null),[pos,setPos]=useState({}),top=useRef(null),scroll=useRef(null);
  useEffect(()=>{const key=item.kind+':'+item.id;if(heroCache.has(key)){setInfo(heroCache.get(key));return;}bm.details({kind:item.kind,id:item.id}).then(r=>{heroCache.set(key,r);setInfo(r);}).catch(()=>{});},[item.id]);
- useEffect(()=>{first.current?.focus();},[series]);
+ useLayoutEffect(()=>{top.current?.focus({preventScroll:true});if(scroll.current)scroll.current.scrollTop=0;},[item.id]);
  const seasons=Object.keys(series.episodes).sort((a,b)=>Number(a)-Number(b));
  const meta=[info?.rating&&info.rating!=='0'?'★ '+info.rating:'',info?.year,seasons.length+(seasons.length===1?' season':' seasons'),info?.genre].filter(Boolean).join('  •  ');
- return <main className="series-page">{(info?.backdrop||series.info.cover||item.poster)&&<img className="series-backdrop" src={info?.backdrop||series.info.cover||item.poster} alt=""/>}<div className="series-shade"/><div className="series-scroll"><button className="series-back" onClick={back}>← Series</button><div className="series-info"><h1>{item.name}</h1><p>{meta}</p><p className="muted">{ratingLabel(item)}</p>{info?.cast&&<p className="one-line"><span className="muted">Cast:</span> {info.cast}</p>}<p className="series-plot">{info?.plot||series.info.plot}</p>{actions}</div>{seasons.map((s,si)=>{const eps=series.episodes[s]||[];return <section className="season-row" key={s}><div className="season-head"><h2>Season {s}</h2><span>{(pos[s]||0)+1} / {eps.length}</span></div><div className="episode-strip">{eps.map((ep,i)=><button key={ep.id} ref={si===0&&i===0?first:undefined} className="episode-card" onFocus={e=>{setPos(p=>({...p,[s]:i}));e.currentTarget.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'});}} onClick={()=>onPlay(ep)}>{ep.poster||item.poster?<img src={ep.poster||item.poster} alt="" loading="lazy"/>:<div className="no-poster">🎬</div>}<div className="ep-name">E{ep.episode}. {ep.name}</div>{bar(ep)}</button>)}</div></section>;})}</div></main>;
+ return <main className="series-page">{(info?.backdrop||series.info.cover||item.poster)&&<img className="series-backdrop" src={info?.backdrop||series.info.cover||item.poster} alt=""/>}<div className="series-shade"/><div ref={scroll} className="series-scroll"><button ref={top} className="series-back" onClick={back}>← Series</button><div className="series-info"><h1>{item.name}</h1><p>{meta}</p><p className="muted">{ratingLabel(item)}</p>{info?.cast&&<p className="one-line"><span className="muted">Cast:</span> {info.cast}</p>}<p className="series-plot">{info?.plot||series.info.plot}</p>{actions}</div>{seasons.map(s=>{const eps=series.episodes[s]||[];return <section className="season-row" key={s}><div className="season-head"><h2>Season {s}</h2><span>{(pos[s]||0)+1} / {eps.length}</span></div><div className="episode-strip">{eps.map((ep,i)=><button key={ep.id} className="episode-card" onFocus={e=>{setPos(p=>({...p,[s]:i}));e.currentTarget.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'});}} onClick={()=>onPlay(ep)}>{ep.poster||item.poster?<img src={ep.poster||item.poster} alt="" loading="lazy"/>:<div className="no-poster">🎬</div>}<div className="ep-name">E{ep.episode}. {ep.name}</div>{bar(ep)}</button>)}</div></section>;})}</div></main>;
 }
 function MediaHero({item,ratingLabel}){
  const [info,setInfo]=useState(null);

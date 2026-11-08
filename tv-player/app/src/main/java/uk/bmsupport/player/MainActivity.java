@@ -1486,7 +1486,8 @@ public class MainActivity extends Activity {
         TextView plot = text("", 14, TEXT, false); plot.setMaxLines(3); plot.setEllipsize(android.text.TextUtils.TruncateAt.END);
         root.addView(plot, new LinearLayout.LayoutParams(w, -2));
         LinearLayout btns = row();
-        btns.addView(button(isSaved("fav", show) ? "★ Remove favourite" : "☆ Add favourite", v -> toggleSaved("fav", show)));
+        Button firstAction = button(isSaved("fav", show) ? "★ Remove favourite" : "☆ Add favourite", v -> toggleSaved("fav", show));
+        btns.addView(firstAction);
         btns.addView(button("☆ Vote", v -> showVote(show)));
         btns.addView(button("⚠ Report a problem", v -> showReport(show)));
         root.addView(btns);
@@ -1496,6 +1497,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-1, -2); slp.topMargin = dp(10);
         root.addView(seasonsBox, slp);
         setContentView(frame);
+        firstAction.requestFocus();
+        scroll.post(() -> scroll.scrollTo(0, 0));
         io.execute(() -> {
             try {
                 JSONObject r = new JSONObject(Net.get(api("get_series_info") + "&series_id=" + show.id));
@@ -1542,10 +1545,8 @@ public class MainActivity extends Activity {
                     plot.setText(story);
                     info.setVisibility(bySeason.isEmpty() ? View.VISIBLE : View.GONE);
                     if (bySeason.isEmpty()) info.setText("No episodes for this series.");
-                    boolean first = true;
                     for (java.util.Map.Entry<Integer, List<Item>> en : bySeason.entrySet()) {
-                        seasonsBox.addView(seasonRow(show, en.getKey(), en.getValue(), first));
-                        first = false;
+                        seasonsBox.addView(seasonRow(show, en.getKey(), en.getValue()));
                     }
                 });
             } catch (Exception ex) { ui.post(() -> info.setText("Couldn't load episodes.")); }
@@ -1553,7 +1554,7 @@ public class MainActivity extends Activity {
     }
 
     /** One season: heading, "n / total" counter, sideways row of episode picture cards (OK plays). */
-    private View seasonRow(Item show, int season, List<Item> eps, boolean focusFirst) {
+    private View seasonRow(Item show, int season, List<Item> eps) {
         LinearLayout box = column();
         LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
         head.addView(text("Season " + season, 19, TEXT, true));
@@ -1596,7 +1597,6 @@ public class MainActivity extends Activity {
             });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(cw, -2); lp.rightMargin = dp(12);
             strip.addView(card, lp);
-            if (focusFirst && i == 0) card.post(card::requestFocus);
         }
         box.addView(hs);
         return box;

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { Popcorn, Star, Calendar, Tv, RefreshCw } from 'lucide-react';
@@ -27,18 +27,20 @@ export const Route = createFileRoute('/_authenticated/_approved/what-to-watch')(
 function WhatToWatchPage() {
   const [selected, setSelected] = useState<WatchTitle | NewSeries | null>(null);
   const [tab, setTab] = useState('movies');
+  const pageRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => { pageRef.current?.scrollTo({ top: 0, behavior: 'instant' }); }, [tab]);
   const fetchPlaylist = useServerFn(getWatchPlaylist);
   const { data, refetch, isFetching, isLoading, isError } = useQuery({ queryKey: ['watch-playlist'], queryFn: () => fetchPlaylist(), staleTime: 60 * 60_000 });
   return (
-    <div className="flex-1 min-w-0 overflow-y-auto bg-background bg-cover bg-center bg-fixed relative" style={{ backgroundImage: `url(${whatToWatchBg.url})` }}>
+    <div ref={pageRef} className="flex-1 min-w-0 overflow-y-auto bg-background bg-cover bg-center bg-fixed relative" style={{ backgroundImage: `url(${whatToWatchBg.url})` }}>
       <div className="absolute inset-0 bg-background/75 pointer-events-none" aria-hidden />
       <main className="relative max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-6">
         <header className="flex items-center gap-3"><Popcorn className="size-7 text-primary-glow shrink-0" /><h1 className="font-display text-3xl font-bold">What to watch now</h1></header>
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid w-full max-w-2xl grid-cols-3 h-auto">
             <TabsTrigger value="movies" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Popcorn className="hidden sm:block size-4 shrink-0" />Cinema films</TabsTrigger>
-            <TabsTrigger value="series" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Tv className="hidden sm:block size-4 shrink-0" />Recommended series</TabsTrigger>
             <TabsTrigger value="new-series" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Calendar className="hidden sm:block size-4 shrink-0" />New series</TabsTrigger>
+            <TabsTrigger value="series" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Tv className="hidden sm:block size-4 shrink-0" />Recommended series</TabsTrigger>
           </TabsList>
           {(data?.error || isError) && tab !== 'new-series' && <div role="alert" className="mt-6 border border-destructive/40 bg-background/90 p-4 rounded-lg"><p className="text-sm">{data?.error || 'Could not load the playlist. Please try again.'}</p><Button variant="outline" className="mt-3" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
           {isLoading && tab !== 'new-series' && <div aria-label="Loading playlist" className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{Array.from({length:10}, (_,i) => <Skeleton key={i} className="aspect-[2/3] rounded-lg" />)}</div>}
