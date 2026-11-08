@@ -2136,6 +2136,13 @@
       "when": 1794150818601,
       "tag": "0304_clear_channel_health_on_ticket_resolution",
       "breakpoints": true
+    },
+    {
+      "idx": 305,
+      "version": "7",
+      "when": 1794169271628,
+      "tag": "0305_player_watch_requests",
+      "breakpoints": true
     }
   ]
 }
