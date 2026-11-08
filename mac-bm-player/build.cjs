@@ -7,6 +7,7 @@ const stage = '/tmp/mac-player-build/app';
 fs.rmSync(stage, { recursive: true, force: true });
 fs.mkdirSync(path.join(stage, 'dist'), { recursive: true });
 fs.mkdirSync(path.join(stage, 'electron'), { recursive: true });
+execFileSync('bun', ['build', path.join(shared,'sports-context.cjs'), '--target=node','--format=cjs','--outfile='+path.join(stage,'sports-context.cjs')], {stdio:'inherit'});
 execFileSync('lovable-assets', ['get', '--overwrite', '--file', path.join(root, '../src/assets/player-family-intro.mp4.asset.json'), '-o', path.join(stage, 'dist/player-intro.mp4')], { stdio: 'inherit' });
 execFileSync('bun', ['build', path.join(root, 'renderer/entry.jsx'), '--target=browser', '--minify', '--outfile=' + path.join(stage, 'dist/app.js')], { stdio: 'inherit' });
 fs.copyFileSync(path.join(root, 'package.json'), path.join(stage, 'package.json'));
