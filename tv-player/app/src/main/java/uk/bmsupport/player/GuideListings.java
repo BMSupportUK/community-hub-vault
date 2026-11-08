@@ -38,6 +38,17 @@ public final class GuideListings {
         return new ArrayList<>(byStart.values());
     }
 
+    /** Drops programmes that have already ended, so row 0 is "Now" (BM Support sends the last few hours too). */
+    public static JSONArray upcoming(JSONArray l, long now) {
+        if (l == null) return null;
+        JSONArray out = new JSONArray();
+        for (int i = 0; i < l.length(); i++) {
+            JSONObject e = l.optJSONObject(i);
+            if (e != null && e.optLong("stop_timestamp", 0) > now) out.put(e);
+        }
+        return out.length() > 0 ? out : null;
+    }
+
     /** True when the line-up only reaches "now" (or nothing), so the full day's table is worth fetching. */
     public static boolean tooShort(List<GuideGridView.Prog> l, long now, long window) {
         if (l == null || l.size() < 2) return true;
