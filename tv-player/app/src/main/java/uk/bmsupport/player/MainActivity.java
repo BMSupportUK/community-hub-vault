@@ -4066,6 +4066,7 @@ public class MainActivity extends Activity {
     private void renderSports(JSONObject r) {
         if (sportsList == null) return;
         sportsData = r;
+        sportsTicketFaults = r.optJSONArray("ticketFaults");
         defaultSportsCategory(r);
         JSONArray downNow = r.optJSONArray("unavailable");
         sportsVersion = r.optString("version") + "|" + (downNow == null ? "" : downNow.toString());
