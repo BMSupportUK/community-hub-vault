@@ -178,7 +178,7 @@ public class MainActivity extends Activity {
         checkForUpdate(false);
         sendLastCrash();
         startReminderCheck();
-        handleReminderIntent(getIntent());
+        handleReminderIntent(getIntent()); handleWatchIntent(getIntent());
     }
 
     // ---------- multi-screen (Multi Room = 2, Triple Room = 3) ----------
