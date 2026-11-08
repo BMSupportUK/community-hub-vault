@@ -8,7 +8,8 @@ export const EPG_SOURCE = "https://epgshare01.online/epgshare01/epg_ripper_";
 /** Playlist category prefix ("UK | Sky Sports" → "UK") → published guide feeds for that country. */
 export const COUNTRY_FEEDS: Record<string, string[]> = {
   UK: ["UK1"], IRE: ["IE1", "UK1"], IE: ["IE1", "UK1"], EPL: ["UK1"], EFL: ["UK1"],
-  US: ["US2", "US_SPORTS1", "US_LOCALS1"], CA: ["CA2"], AU: ["AU1"], NZ: ["NZ1"],
+  // US_LOCALS1 (60 MB, 4,000+ stations) is too big to import on a schedule; locals keep provider listings.
+  US: ["US2", "US_SPORTS1"], CA: ["CA2"], AU: ["AU1"], NZ: ["NZ1"],
   DE: ["DE1"], IT: ["IT1"], FR: ["FR1"], ES: ["ES1"], PT: ["PT1"], PL: ["PL1"], NL: ["NL1"],
   GR: ["GR1"], RO: ["RO1"], IN: ["IN1"], PK: ["PK1"], ZA: ["ZA1"], DK: ["DK1"], TR: ["TR1"],
   PH: ["PH1"], TH: ["TH1"], SE: ["SE1"], NO: ["NO1"], UKR: ["UA1"], CZ: ["CZ1"], BE: ["BE2"],
