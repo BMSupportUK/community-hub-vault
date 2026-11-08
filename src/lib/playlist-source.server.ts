@@ -8,9 +8,10 @@ type Stream = { name: string; category_id: string; stream_id?: string };
 import type { SportsProgramme } from "./sports-programme-end";
 import { createSharedCache } from "./player-sports-cache";
 
-let cache: { at: number; cats: Cat[]; streams: Stream[] } | null = null;
+type Catalogue = { at: number; cats: Cat[]; streams: Stream[] };
+let cache: Catalogue | null = null;
 const TTL = 10 * 60_000;
-const sharedCatalogue = createSharedCache<NonNullable<typeof cache>>(TTL);
+const sharedCatalogue = createSharedCache<Catalogue>(TTL);
 
 async function base(): Promise<string | null> {
   const user = process.env.PLAYLIST_USERNAME, pass = process.env.PLAYLIST_PASSWORD;
