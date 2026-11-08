@@ -1073,6 +1073,7 @@ public class MainActivity extends Activity {
         java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
             if (pos < 0 || pos >= catRows.size()) return;
             String[] c = catRows.get(pos);
+            if (kind.equals("live")) requestCategoryGuide(c[1]);
             if (c[0].equals(current[0])) { if (focusItems) items.requestFocus(); return; }
             current[0] = c[0];
             if (kind.equals("live")) liveCatId = c[0];
@@ -1329,6 +1330,16 @@ public class MainActivity extends Activity {
         long shifted = (epochSec + prefs.getInt("epg_shift", 0) * 3600L) * 1000L;
         String f = "12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm";
         return new java.text.SimpleDateFormat(f, java.util.Locale.UK).format(new java.util.Date(shifted));
+    }
+
+    /** Category demand never waits for or consumes the programme-fetch queue. */
+    private void requestCategoryGuide(String category) {
+        if (!EpgCategoryDemand.eligible(category)) return;
+        safeRun(connectionIo, () -> {
+            try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
+                    .put("action", "guide_category_open").put("device_token", prefs.getString("token", ""))
+                    .put("category", category.trim()).toString()); } catch (Exception ignored) { }
+        });
     }
 
     /** BM Support's listings for a live channel (real TV guide or Sports Guide events); null = use the provider's guide. */
@@ -3469,6 +3480,7 @@ public class MainActivity extends Activity {
         final int[] gen = { 0 };
         final String[] previewPending = { null };
         java.util.function.Consumer<String[]> applyCat = cat -> {
+            requestCategoryGuide(cat[1]);
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);

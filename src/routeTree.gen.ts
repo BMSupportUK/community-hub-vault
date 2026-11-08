@@ -192,6 +192,7 @@ import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/
 import { Route as ApiPublicHooksBoroTeamSheetRouteImport } from './routes/api/public/hooks/boro-team-sheet'
 import { Route as ApiPublicHooksChannelCheckRouteImport } from './routes/api/public/hooks/channel-check'
 import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/api/public/hooks/device-release-watch'
+import { Route as ApiPublicHooksEpgDemandRouteImport } from './routes/api/public/hooks/epg-demand'
 import { Route as ApiPublicHooksEpgImportRouteImport } from './routes/api/public/hooks/epg-import'
 import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
 import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
@@ -1270,6 +1271,11 @@ const ApiPublicHooksDeviceReleaseWatchRoute =
     path: '/api/public/hooks/device-release-watch',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEpgDemandRoute = ApiPublicHooksEpgDemandRouteImport.update({
+  id: '/api/public/hooks/epg-demand',
+  path: '/api/public/hooks/epg-demand',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksEpgImportRoute = ApiPublicHooksEpgImportRouteImport.update({
   id: '/api/public/hooks/epg-import',
   path: '/api/public/hooks/epg-import',
@@ -1662,6 +1668,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
+  '/api/public/hooks/epg-demand': typeof ApiPublicHooksEpgDemandRoute
   '/api/public/hooks/epg-import': typeof ApiPublicHooksEpgImportRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -1878,6 +1885,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
+  '/api/public/hooks/epg-demand': typeof ApiPublicHooksEpgDemandRoute
   '/api/public/hooks/epg-import': typeof ApiPublicHooksEpgImportRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -2100,6 +2108,7 @@ export interface FileRoutesById {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/channel-check': typeof ApiPublicHooksChannelCheckRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
+  '/api/public/hooks/epg-demand': typeof ApiPublicHooksEpgDemandRoute
   '/api/public/hooks/epg-import': typeof ApiPublicHooksEpgImportRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -2321,6 +2330,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
+    | '/api/public/hooks/epg-demand'
     | '/api/public/hooks/epg-import'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -2537,6 +2547,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
+    | '/api/public/hooks/epg-demand'
     | '/api/public/hooks/epg-import'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -2758,6 +2769,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/channel-check'
     | '/api/public/hooks/device-release-watch'
+    | '/api/public/hooks/epg-demand'
     | '/api/public/hooks/epg-import'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -2875,6 +2887,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBoroTeamSheetRoute: typeof ApiPublicHooksBoroTeamSheetRoute
   ApiPublicHooksChannelCheckRoute: typeof ApiPublicHooksChannelCheckRoute
   ApiPublicHooksDeviceReleaseWatchRoute: typeof ApiPublicHooksDeviceReleaseWatchRoute
+  ApiPublicHooksEpgDemandRoute: typeof ApiPublicHooksEpgDemandRoute
   ApiPublicHooksEpgImportRoute: typeof ApiPublicHooksEpgImportRoute
   ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksFantasySquadSyncRoute: typeof ApiPublicHooksFantasySquadSyncRoute
@@ -4188,6 +4201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksDeviceReleaseWatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/epg-demand': {
+      id: '/api/public/hooks/epg-demand'
+      path: '/api/public/hooks/epg-demand'
+      fullPath: '/api/public/hooks/epg-demand'
+      preLoaderRoute: typeof ApiPublicHooksEpgDemandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/epg-import': {
       id: '/api/public/hooks/epg-import'
       path: '/api/public/hooks/epg-import'
@@ -4924,6 +4944,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBoroTeamSheetRoute: ApiPublicHooksBoroTeamSheetRoute,
   ApiPublicHooksChannelCheckRoute: ApiPublicHooksChannelCheckRoute,
   ApiPublicHooksDeviceReleaseWatchRoute: ApiPublicHooksDeviceReleaseWatchRoute,
+  ApiPublicHooksEpgDemandRoute: ApiPublicHooksEpgDemandRoute,
   ApiPublicHooksEpgImportRoute: ApiPublicHooksEpgImportRoute,
   ApiPublicHooksFantasySquadRemindersRoute:
     ApiPublicHooksFantasySquadRemindersRoute,

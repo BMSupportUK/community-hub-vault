@@ -2787,6 +2787,7 @@ export type Database = {
           imported_at: string | null
           matched: number
           programmes: number
+          successful_at: string | null
         }
         Insert: {
           channels?: number
@@ -2795,6 +2796,7 @@ export type Database = {
           imported_at?: string | null
           matched?: number
           programmes?: number
+          successful_at?: string | null
         }
         Update: {
           channels?: number
@@ -2803,6 +2805,31 @@ export type Database = {
           imported_at?: string | null
           matched?: number
           programmes?: number
+          successful_at?: string | null
+        }
+        Relationships: []
+      }
+      epg_import_batches: {
+        Row: {
+          created_at: string
+          kind: string
+          part: number
+          payload: Json
+          run_id: string
+        }
+        Insert: {
+          created_at?: string
+          kind: string
+          part: number
+          payload: Json
+          run_id: string
+        }
+        Update: {
+          created_at?: string
+          kind?: string
+          part?: number
+          payload?: Json
+          run_id?: string
         }
         Relationships: []
       }
@@ -2830,6 +2857,39 @@ export type Database = {
           start_at?: string
           stop_at?: string
           title?: string
+        }
+        Relationships: []
+      }
+      epg_refresh_queue: {
+        Row: {
+          attempts: number
+          code: string
+          last_error: string | null
+          lease: string | null
+          lease_until: string | null
+          requested_at: string
+          retry_at: string
+          wake_hash: string | null
+        }
+        Insert: {
+          attempts?: number
+          code: string
+          last_error?: string | null
+          lease?: string | null
+          lease_until?: string | null
+          requested_at?: string
+          retry_at?: string
+          wake_hash?: string | null
+        }
+        Update: {
+          attempts?: number
+          code?: string
+          last_error?: string | null
+          lease?: string | null
+          lease_until?: string | null
+          requested_at?: string
+          retry_at?: string
+          wake_hash?: string | null
         }
         Relationships: []
       }
@@ -9450,6 +9510,7 @@ export type Database = {
         Returns: string
       }
       archive_old_closed_tickets: { Args: never; Returns: number }
+      arm_epg_retry: { Args: never; Returns: undefined }
       assign_customer_number: { Args: { _user_id: string }; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
       bm_inbox_action: {
@@ -9494,6 +9555,10 @@ export type Database = {
       claim_checkout_payment_lock: {
         Args: { p_order: string; p_seconds?: number }
         Returns: boolean
+      }
+      claim_epg_feed: {
+        Args: { p_code: string; p_wake?: string }
+        Returns: string
       }
       claim_invite_access: { Args: never; Returns: boolean }
       claim_tv_pair_code: {
@@ -9569,6 +9634,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      dispatch_epg_demand: { Args: never; Returns: number }
       email_is_account_holder: { Args: { _email: string }; Returns: boolean }
       enabler_pin_owner: {
         Args: {
@@ -9599,6 +9665,10 @@ export type Database = {
           password: string
           updated_at: string
         }[]
+      }
+      fail_epg_import: {
+        Args: { p_code: string; p_error: string; p_run: string }
+        Returns: undefined
       }
       fan_zone_active_ban: {
         Args: { _user_id: string }
@@ -9762,6 +9832,10 @@ export type Database = {
       }
       fantasy_score_gameweek: {
         Args: { _gameweek_id: string }
+        Returns: undefined
+      }
+      finish_epg_import: {
+        Args: { p_code: string; p_counts: Json; p_run: string }
         Returns: undefined
       }
       finish_ticket_remote_setup: {
@@ -10306,6 +10380,7 @@ export type Database = {
         Args: { _id: string; _kind: string }
         Returns: string
       }
+      request_epg_feeds: { Args: { p_codes: string[] }; Returns: number }
       request_my_order_password: {
         Args: { p_order_id: string }
         Returns: boolean
