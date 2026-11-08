@@ -2,11 +2,12 @@ import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Activity, ArrowLeft, ShieldAlert, CheckCircle2, Globe, KeyRound, Link2, Loader2, Megaphone, MonitorPlay, Save, Smartphone, Wifi, Wrench, XCircle } from "lucide-react";
+import { Activity, ArrowLeft, CalendarClock, ShieldAlert, CheckCircle2, Globe, KeyRound, Link2, Loader2, Megaphone, MonitorPlay, Save, Smartphone, Wifi, Wrench, XCircle } from "lucide-react";
 import { ConnectionLimitSection } from "@/components/app/PlayerConnectionLimitSection";
 import { WatchTimeSection } from "@/components/app/PlayerWatchTimeSection";
 import { BufferingSection } from "@/components/app/PlayerBufferingSection";
 import { PlayerChannelsStatusSection } from "@/components/app/PlayerChannelsStatusSection";
+import { PlayerGuideMatchingSection } from "@/components/app/PlayerGuideMatchingSection";
 import { PlayerAnnouncementsCard } from "@/components/app/PlayerAnnouncementsCard";
 import { PlayerMajorAnnouncementsCard } from "@/components/app/PlayerMajorAnnouncementsCard";
 import { toast } from "sonner";
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   ] }),
 });
 
-type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "buffering" | "channel-status" | "connection-limits" | "announcements" | "major-announcements" | "watch-time";
+type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "buffering" | "channel-status" | "guide-matching" | "connection-limits" | "announcements" | "major-announcements" | "watch-time";
 const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe; managementToo?: boolean }[] = [
   { key: "dns", label: "DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe },
   { key: "maintenance", label: "Maintenance", desc: "Take every BM Player app offline with a message.", icon: Wrench },
@@ -43,6 +44,7 @@ const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe;
   { key: "devices", label: "Linked devices", desc: "How many apps are linked on each device type.", icon: Smartphone },
   { key: "connection-limits", label: "Connection limit investigations", desc: "Logins seen over their connection limit.", icon: ShieldAlert },
   { key: "watch-time", label: "Viewing hours", desc: "Total hours watched in BM Player each week.", icon: MonitorPlay },
+  { key: "guide-matching", label: "TV guide matching", desc: "Which real TV guide each channel shows.", icon: CalendarClock },
   { key: "channel-status", label: "Channel status", desc: "Every channel with an Online / Offline status.", icon: Wifi },
   { key: "buffering", label: "Buffering", desc: "Channels and titles that stalled or froze most.", icon: Activity },
   { key: "announcements", label: "Announcements", desc: "Short message along the bottom of every BM Player.", icon: Megaphone, managementToo: true },
@@ -179,6 +181,7 @@ function AdminPlayerPageInner() {
       </section>}
       {section === "buffering" && <BufferingSection />}
       {section === "channel-status" && <PlayerChannelsStatusSection />}
+      {section === "guide-matching" && <PlayerGuideMatchingSection />}
       {section === "watch-time" && <WatchTimeSection />}
       {section === "connection-limits" && <ConnectionLimitSection />}
       {section === "logins" && <OffsitePlayerLogins />}
