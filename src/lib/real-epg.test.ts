@@ -25,7 +25,7 @@ describe("real guide channel matching", () => {
     expect(feedsFor("ESPN", "US | Sports")).toEqual(["US2", "US_SPORTS1"]);
     expect(feedsFor("TSN 1", "CA | Canadian")).toEqual(["CA2"]);
     expect(feedsFor("Sky Sports Main Event", "UK | Sky Sports")).toEqual(["UK1"]);
-    expect(feedsFor("beIN Sports 1", "FR | French Sport")).toEqual(["BEIN1", "FR1"]);
+    expect(feedsFor("beIN Sports 1", "FR | French Sport")).toEqual(["FR1"]);
     expect(feedsFor("Masters of Sex", "24/7 | Movies/Series")).toEqual([]);
   });
   test("24/7 quality tails are not event feeds, numbered event feeds keep their pipe", () => {

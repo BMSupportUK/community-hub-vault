@@ -15,8 +15,6 @@ export const COUNTRY_FEEDS: Record<string, string[]> = {
   PH: ["PH1"], TH: ["TH1"], SE: ["SE1"], NO: ["NO1"], UKR: ["UA1"], CZ: ["CZ1"], BE: ["BE2"],
   AT: ["AT1"], CH: ["CH1"], MX: ["MX1"], BR: ["BR1"], AR: ["AR1"], AE: ["AE1"], SA: ["SA1"],
 };
-/** beIN channels sit in many countries' categories; their own feed covers them. */
-export const BEIN_FEED = "BEIN1";
 
 const SKIP_CATEGORY = /^(24\/7|radio|for adults|todays live|vip)\b/i;
 
@@ -31,7 +29,6 @@ export function categoryCountry(category: string): string | null {
 export function feedsFor(name: string, category: string): string[] {
   if (SKIP_CATEGORY.test(category || "")) return [];
   const out: string[] = [];
-  if (/\bbe\s*in\b/i.test(name)) out.push(BEIN_FEED);
   const c = categoryCountry(category);
   if (c) out.push(...COUNTRY_FEEDS[c]);
   return [...new Set(out)];
