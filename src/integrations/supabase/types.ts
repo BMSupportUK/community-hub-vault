@@ -2761,6 +2761,24 @@ export type Database = {
         }
         Relationships: []
       }
+      epg_feed_channels: {
+        Row: {
+          epg_id: string
+          feed: string
+          name: string
+        }
+        Insert: {
+          epg_id: string
+          feed: string
+          name: string
+        }
+        Update: {
+          epg_id?: string
+          feed?: string
+          name?: string
+        }
+        Relationships: []
+      }
       epg_feeds: {
         Row: {
           channels: number
