@@ -520,7 +520,7 @@ public class PlayerActivity extends Activity {
                         ui.removeCallbacks(cleanPlay); ui.postDelayed(cleanPlay, ChannelHealth.CLEAN_MS);
                         if (!blackArmed) { blackArmed = true; ui.postDelayed(blackCheck, ChannelHealth.BLACK_MS); }
                     }
-                    ui.removeCallbacks(stallWatch);
+                    // The periodic watch stays armed across READY and subsequent buffering.
                     ui.removeCallbacks(reopenStream); reconnectPending = false; bufferWatch.reset();
                     if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
                 } else if (s == Player.STATE_ENDED && "live".equals(kind())) {
@@ -674,7 +674,6 @@ public class PlayerActivity extends Activity {
             return;
         }
         if (reconnectNote != null) reconnectNote.setVisibility(TextView.VISIBLE);
-        final long at = !"live".equals(kind()) && player.getDuration() > 0 ? lastPosition : 0;
         reconnectPending = true;
         bufferWatch.reset();
         ui.postDelayed(reopenStream, immediate && reconnects == 1 ? 0 : StreamRecovery.backoffMs(reconnects));
@@ -850,5 +849,5 @@ public class PlayerActivity extends Activity {
         if ("live".equals(kind()) && !everReady && !handedOver && !blackSent && isFinishing()
                 && android.os.SystemClock.elapsedRealtime() - openedAt >= ChannelHealth.GIVE_UP_MS)
             ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "failed");
-        ui.removeCallbacks(uncover); ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+        ui.removeCallbacks(uncover); ui.removeCallbacks(reopenStream); ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }
