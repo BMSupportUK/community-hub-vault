@@ -1,6 +1,7 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import {matchChannel} from '../../src/lib/player-channel-match';
 import {channelInCountry} from '../../src/lib/sports-channel-links';
+import eventSearch from '../event-search.cjs';
 
 // Sports guide (same layout as Android): day pills + website Category pop-up, one card per game, its channels beside it.
 const ukDate=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
@@ -10,17 +11,8 @@ export function inCategory(e,sport,sub,guide){return !sport||(e.sport===sport&&(
 /** Default category: the website's first one (Daily Sports) and its first sub-category. */
 export function defaultCategory(sports){const c=(sports&&sports.categories||[])[0];return c?{sport:c.name,sub:(c.subs||[])[0]||null,guide:null}:{sport:null,sub:null,guide:null};}
 const lower=s=>String(s||'').toLowerCase();
-const FILLER=new Set(['v','vs','versus','and','the','fc','afc','match','game','on','watch','show','me','find','play','a','for','please','tonight','today','now','live','is','it','what','where','channel','channels','sports','sport','guide']);
-const words=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(' ').filter(Boolean);
 /** Spoken or typed search, like Android: every word must start a word in the event text; 3+ words may miss one. "Moto GP" also finds "MotoGP". */
-export function matchesSearch(e,query){
- const want=words(query).filter(w=>!FILLER.has(w));if(!want.length)return false;
- const hw=words([e.title,e.competition,e.sport,e.subcategory,...(e.channels||[])].join(' '));
- const hay=' '+hw.join(' ')+' ',joined=' '+hw.join('')+' ';
- const has=w=>hay.includes(' '+w);
- let found=0;for(let i=0;i<want.length;i++){if(has(want[i]))found++;else if(i+1<want.length&&has(want[i]+want[i+1])){found+=2;i++;}else if(joined.includes(want[i]))found++;}
- return found>=want.length||(want.length>=3&&found>=want.length-1);
-}
+export const matchesSearch=eventSearch.matchesSearch;
 
 /** Channel rows for one game: guide channels, then sports passes, then each club's own channels. */
 export function sportsRows(e,items,aliases,down=[]){
@@ -39,7 +31,7 @@ export function sportsRows(e,items,aliases,down=[]){
  return rows;
 }
 
-export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,voice}){
+export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,voice,initialEvent}){
  const [cat,setCat]=useState(()=>defaultCategory(sports)),[day,setDay]=useState(0),[sel,setSel]=useState(0),[popup,setPopup]=useState(null),[items,setItems]=useState(null),[query,setQuery]=useState(''),[channelsLoading,setChannelsLoading]=useState(true),[channelsError,setChannelsError]=useState(false);
  const now=Date.now();
  useEffect(()=>{let live=true;loadChannels().then(r=>{if(!live)return;if(r&&Array.isArray(r.items)){setItems(r.items);setChannelsError(false);}else setChannelsError(true);}).catch(()=>{if(live)setChannelsError(true);}).finally(()=>{if(live)setChannelsLoading(false);});return()=>{live=false;};},[]);
@@ -49,18 +41,20 @@ export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,v
  const inCat=upcoming.filter(e=>inCategory(e,cat.sport,cat.sub,cat.guide));
  const perDay=Array.from({length:7},(_,d)=>inCat.filter(e=>ukDayIndex(e.start,now)===d).length);
  const q=lower(query).trim();
- const cards=q?upcoming.filter(e=>matchesSearch(e,q)):inCat.filter(e=>ukDayIndex(e.start,now)===day).slice().sort((a,b)=>ended(a)-ended(b));
+ const [focusedEvent,setFocusedEvent]=useState(initialEvent||null);
+ useEffect(()=>{if(!initialEvent)return;const event=(sports.events||[]).find(e=>String(e.start)+':'+e.title===initialEvent);if(event){setCat({sport:event.sport||null,sub:event.subcategory||null,guide:event.competition||null});setDay(ukDayIndex(event.start,Date.now()));}},[initialEvent,sports]);
+ const cards=focusedEvent?upcoming.filter(e=>String(e.start)+':'+e.title===focusedEvent):q?upcoming.filter(e=>matchesSearch(e,q)):inCat.filter(e=>ukDayIndex(e.start,now)===day).slice().sort((a,b)=>ended(a)-ended(b));
  const current=cards[Math.min(sel,cards.length-1)];
  const rows=useMemo(()=>current&&items?sportsRows(current,items,sports.aliases||[],sports.unavailable||[]):[],[current,items,sports]);
  const cats=(sports.categories&&sports.categories.length?sports.categories:[...new Set(upcoming.map(e=>e.sport))].map(name=>({name,subs:[]})));
  const count=(sport,sub,guide)=>upcoming.filter(e=>inCategory(e,sport,sub,guide)).length;
  const guidesOf=(sport,sub)=>(sports.guides||{})[sport+'|'+(sub||'')]||[];
- const pick=(sport,sub,guide=null)=>{setCat({sport,sub,guide});setDay(0);setSel(0);setPopup(null);};
+ const pick=(sport,sub,guide=null)=>{setFocusedEvent(null);setCat({sport,sub,guide});setDay(0);setSel(0);setPopup(null);};
  const label=!cat.sport?'Choose':[cat.sport,cat.sub,cat.guide].filter(Boolean).join(' › ');
  const dayName=d=>d===0?'Today':d===1?'Tomorrow':new Date(now+d*86400000).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',timeZone:'Europe/London'});
  return <main className="content sports-guide">
-  <div className="toolbar"><button onClick={onBack}>← Back</button><h2>Sports guide</h2><button onClick={()=>setPopup('main')}>☰ Category: {label}</button><input placeholder="Search events" aria-label="Search events" value={query} onChange={e=>{setQuery(e.target.value);setSel(0);}}/>{voice(t=>{setQuery(t);setSel(0);})}<button onClick={onRefresh}>⟳ Refresh</button></div>
-  {!q&&<div className="sports-days">{perDay.map((n,d)=><button key={d} className={d===day?'selected':n?'':'empty-day'} onClick={()=>{setDay(d);setSel(0);}}>{dayName(d)}{n?'  '+n:''}</button>)}</div>}
+  <div className="toolbar"><button onClick={onBack}>← Back</button><h2>Sports guide</h2><button onClick={()=>setPopup('main')}>☰ Category: {label}</button><input placeholder="Search events" aria-label="Search events" value={query} onChange={e=>{setFocusedEvent(null);setQuery(e.target.value);setSel(0);}}/>{voice(t=>{setFocusedEvent(null);setQuery(t);setSel(0);})}<button onClick={onRefresh}>⟳ Refresh</button></div>
+  {!q&&<div className="sports-days">{perDay.map((n,d)=><button key={d} className={d===day?'selected':n?'':'empty-day'} onClick={()=>{setFocusedEvent(null);setDay(d);setSel(0);}}>{dayName(d)}{n?'  '+n:''}</button>)}</div>}
   {(loading||channelsLoading)&&<p role="status" aria-live="polite" className="empty">Loading sports listings… please wait</p>}
   {loading&&!upcoming.length?null:<div className="sports-layout">
    <div className="sports-cards">{cards.length?cards.map((e,i)=>{const n=(e.channels||[]).length,done=ended(e),isLive=!done&&e.start<=now;return <button key={i} className={'sports-card'+(e===current?' selected':'')+(done?' finished':'')} onClick={()=>setSel(i)} onFocus={()=>setSel(i)}>
