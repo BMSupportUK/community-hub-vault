@@ -4,7 +4,9 @@ export type SportsProgramme = { title: string; start: number; end: number };
 /** Only continuous official broadcasters; numbered event feeds cannot establish programme completion. */
 export function isOfficialSportsChannel(name: string): boolean {
   const n = name.normalize("NFKD").toLowerCase();
-  return !isEventChannel(name) && !/replay|catch.?up|events? only/.test(n)
+  // Provider quality/trailing pipes are decoration, not an event-only marker.
+  const channel = name.replace(/(?:\s*\|\s*(?:fhd|hd|sd|uhd|4k|hevc|h265)?\s*)+$/i, "").trim();
+  return !isEventChannel(channel) && !/replay|catch.?up|events? only/.test(n)
     && /\b(?:sky sports|tnt sports|bt sport|eurosport|premier sports|espn|bein sports|fox sports|nbc sports|cbs sports|tsn|sportsnet|supersport|willow|ten sports|star sports|sony sports)\b/.test(n);
 }
 const words = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
