@@ -290,24 +290,11 @@ public class GuideGridView extends View {
         }
         return high;
     }
+    /** Sky-style fixed time scale: the window always fills the grid width, so boxes never move when listings arrive. */
     private void buildAxis(float ch, float gridW) {
-        String frame = windowStart + ":" + (int) gridW + ":" + channelsVersion;
-        if (!frame.equals(stickyFrame)) { stickyFrame = frame; stickyT = new long[0]; stickyW = new float[0]; axisKey = ""; }
-        String key = frame + ":" + progsVersion;
-        if (!key.equals(axisKey)) { axisKey = key; computeAxis(gridW); }
-        int n = axT.length - 1;
-        axX = new float[axT.length]; axX[0] = ch;
-        for (int i = 0; i < n; i++) axX[i + 1] = axX[i] + axisBase[i];
-        // A crowded hour scrolls instead of shrinking five-minute shows into slivers.
-        axisScroll = Math.max(0, Math.min(axisScroll, axX[n] - ch - gridW));
-        Prog selected = selected();
-        if (selected != null) {
-            float left = xAt(Math.max(windowStart, selected.st)) - ch;
-            float right = xAt(Math.min(windowStart + WINDOW, selected.en)) - ch;
-            if (left < axisScroll) axisScroll = left;
-            else if (right > axisScroll + gridW) axisScroll = Math.max(left, right - gridW);
-        }
-        for (int i = 0; i < axX.length; i++) axX[i] -= axisScroll;
+        axT = new long[]{windowStart, windowStart + WINDOW};
+        axX = new float[]{ch, ch + gridW};
+        axisScroll = 0;
     }
     /** Shared column widths from every loaded row (not just the visible ones), so the boxes stay put while moving up and down. */
     private void computeAxis(float gridW) {
@@ -462,7 +449,8 @@ public class GuideGridView extends View {
                 if (avail >= 14 * d) {
                     txt.setTextSize((phone ? 12 : 14) * d);
                     StaticLayout title = StaticLayout.Builder.obtain(t, 0, t.length(), txt, Math.max(1, (int) avail))
-                            .setAlignment(Layout.Alignment.ALIGN_NORMAL).setIncludePad(false).build();
+                            .setAlignment(Layout.Alignment.ALIGN_NORMAL).setIncludePad(false)
+                            .setMaxLines(2).setEllipsize(TextUtils.TruncateAt.END).build();
                     float titleHeight = rh - 22 * d;
                     float offset = 0;
                     if (p == sel && isFocused() && title.getHeight() > titleHeight) {
