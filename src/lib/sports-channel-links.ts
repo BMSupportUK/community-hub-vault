@@ -77,7 +77,10 @@ export function testChannelLinks(guideChannels: string[], playlist: string[], li
 export function resolveInCategory(channel: string, list: string[], links: ChannelLinks, aliases: ChannelAlias[] = []): string | null {
   if (!list.length) return null;
   const rewritten = applyChannelLinks(channel, links);
-  const allowed = list.filter((p) => channelInCountry(p, links.country));
+  // Live guides never resolve to a category's replay feeds ("NFL 03" is the live
+  // "NFL Sunday Ticket 03 |", not "NFL | Replay 03", which players then drop).
+  const wantsReplay = /\breplays?\b/i.test(channel);
+  const allowed = list.filter((p) => channelInCountry(p, links.country) && (wantsReplay || !/\breplays?\b/i.test(p)));
   // Provider display typography is not identity: DAZN uses modifier letters
   // and a superscript brand marker before its real two-digit feed number.
   // Keep original names in responses so existing apps match their playlists.

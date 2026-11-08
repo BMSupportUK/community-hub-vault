@@ -28,3 +28,11 @@ test("assigning a sports category retains the guide's country, numbering and swa
     category: "CA | DAZN", country: "CA", numbered: true, replace: [{ from: "DAZN", to: "Dazn CA" }],
   });
 });
+
+import { resolveInCategory as resolveLive } from "./sports-channel-links";
+test("NFL Sunday Ticket guide numbers pick the live feed, never the replay", () => {
+  const list = ["NFL | Replay 03", "NFL Sunday Ticket 02 |", "NFL Sunday Ticket 03 |", "NFL | Replay 02"];
+  expect(resolveLive("NFL 03", list, {})).toBe("NFL Sunday Ticket 03 |");
+  expect(resolveLive("NFL 02", list, {})).toBe("NFL Sunday Ticket 02 |");
+  expect(resolveLive("NFL Replay 03", list, {})).toBe("NFL | Replay 03");
+});
