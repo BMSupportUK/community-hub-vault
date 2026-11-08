@@ -127,7 +127,12 @@ public class PlayerActivity extends Activity {
                 .setTargetBufferBytes(StreamRecovery.bufferBytes(Runtime.getRuntime().maxMemory()))
                 .setPrioritizeTimeOverSizeThresholds(false).build();
         ExoPlayer x = new ExoPlayer.Builder(c, renderers)
-                .setMediaSourceFactory(new DefaultMediaSourceFactory(c, ex).setDataSourceFactory(http))
+                // Retry slow/missing provider segments in place instead of dropping the stream.
+                .setMediaSourceFactory(new DefaultMediaSourceFactory(c, ex).setDataSourceFactory(http)
+                        .setLoadErrorHandlingPolicy(new androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy(StreamRecovery.SEGMENT_RETRIES)))
+                // Live never races to the edge (empties the preload) and may ease slightly slower when the buffer runs low.
+                .setLivePlaybackSpeedControl(new androidx.media3.exoplayer.DefaultLivePlaybackSpeedControl.Builder()
+                        .setFallbackMinPlaybackSpeed(StreamRecovery.HLS_MIN_SPEED).setFallbackMaxPlaybackSpeed(StreamRecovery.HLS_MAX_SPEED).build())
                 .setLoadControl(load)
                 // Some TV boxes (SDMC/Amlogic) hang when a 4K decoder is let go; never block the screen waiting for it.
                 .setReleaseTimeoutMs(400).setDetachSurfaceTimeoutMs(400)
@@ -666,6 +671,10 @@ public class PlayerActivity extends Activity {
         // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
         if ("live".equals(kind()) && StreamRecovery.overrideLiveOffset(liveUrls[urlAt])) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
                 .setTargetOffsetMs(StreamRecovery.liveTargetMs(recoveryName())).setMinOffsetMs(StreamRecovery.liveTargetMs(recoveryName()) / 2).build()).build();
+        float[] sp = "live".equals(kind()) ? StreamRecovery.hlsLiveSpeeds(liveUrls[urlAt]) : null;
+        // HLS keeps the provider's hold-back (no offset) but may slow a touch rather than stall when segments arrive late.
+        if (sp != null) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
+                .setMinPlaybackSpeed(sp[0]).setMaxPlaybackSpeed(sp[1]).build()).build();
         player.setMediaItem(mi);
         player.setPlayWhenReady(true);
         player.prepare();
