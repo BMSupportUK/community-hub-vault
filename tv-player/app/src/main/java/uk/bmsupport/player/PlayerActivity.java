@@ -51,6 +51,7 @@ public class PlayerActivity extends Activity {
     private boolean subsChecked;
     private long resumePosition;
     private PlayerView view;
+    private android.widget.LinearLayout controlsRow;
     private long lastPressAt;
     /**
      * The player's own hide timer can't be trusted on live TV (a stream that is buffering or has
@@ -59,9 +60,11 @@ public class PlayerActivity extends Activity {
      */
     private final Runnable hideControls = new Runnable() {
         @Override public void run() {
-            if (view != null && view.isControllerFullyVisible()
-                    && InactivityPolicy.hideControls(lastPressAt, android.os.SystemClock.elapsedRealtime())) {
+            if (view != null && InactivityPolicy.hideControls(lastPressAt, android.os.SystemClock.elapsedRealtime())) {
                 view.hideController();
+                // These controls are siblings of PlayerView, not its controller. Hide them even
+                // when Media3 already considers its controller hidden or mid-animation.
+                if (controlsRow != null) controlsRow.setVisibility(android.view.View.GONE);
             }
             ui.postDelayed(this, 1000);
         }
@@ -298,6 +301,7 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
         blp.bottomMargin = ctrlBottom; blp.leftMargin = 24;
         final android.widget.LinearLayout ctrlRow = new android.widget.LinearLayout(this);
+        controlsRow = ctrlRow;
         ctrlRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         ctrlRow.addView(boostBtn);
         root.addView(ctrlRow, blp);
@@ -323,7 +327,11 @@ public class PlayerActivity extends Activity {
         // Catch up problems can't be fixed by us, so there is no report button on catch up.
         final boolean canReport = PlayerControls.canReport(kind());
         if (!canReport) reportBtn.setVisibility(android.view.View.GONE);
-        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(canReport ? vis : android.view.View.GONE); swapBtn.setVisibility(canSwap ? vis : android.view.View.GONE); });
+        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> {
+            ctrlRow.setVisibility(vis);
+            if (vis == android.view.View.VISIBLE) lastPressAt = android.os.SystemClock.elapsedRealtime();
+        });
+        ctrlRow.setVisibility(view.isControllerFullyVisible() ? android.view.View.VISIBLE : android.view.View.GONE);
         setContentView(root);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
