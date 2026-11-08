@@ -47,6 +47,9 @@ public class SportsGuideLayoutTest {
     @Test public void longPremierLeagueCategoryFitsShortLandscape() throws Exception { measureHeader(800, 360); }
 
     private android.widget.ListView eventList(MainActivity activity) throws Exception {
+        Field prefs = MainActivity.class.getDeclaredField("prefs");
+        prefs.setAccessible(true);
+        prefs.set(activity, activity.getSharedPreferences("bmplayer", 0));
         java.util.List<org.json.JSONObject> cards = new java.util.ArrayList<>();
         for (int i = 0; i < 12; i++) cards.add(new org.json.JSONObject()
                 .put("title", "Middlesbrough v Coventry City " + i)
