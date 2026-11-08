@@ -286,47 +286,10 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         lp.topMargin = 60;
         root.addView(banner, lp);
-        final android.widget.Button boostBtn = new android.widget.Button(this);
-        boostBtn.setAllCaps(false);
-        boostBtn.setText("🔊 Sound booster: " + SoundBoost.label(this));
-        focusBorder(boostBtn);
-        boostBtn.setOnClickListener(v -> {
-            String id = SoundBoost.next(SoundBoost.current(this));
-            SoundBoost.set(this, id);
-            boostBtn.setText("🔊 Sound booster: " + SoundBoost.label(this));
-            android.widget.Toast.makeText(this, "Sound booster: " + SoundBoost.label(this) + ("high".equals(id) ? "\n" + SoundBoost.HIGH_NOTE : ""), android.widget.Toast.LENGTH_SHORT).show();
-        });
-        // Sound booster and Report a problem sit bottom-left, opposite the player's settings cog, just above the time bar.
-        final int ctrlBottom = (int) (84 * getResources().getDisplayMetrics().density);
-        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
-        blp.bottomMargin = ctrlBottom; blp.leftMargin = 24;
-        final android.widget.LinearLayout ctrlRow = new android.widget.LinearLayout(this);
-        controlsRow = ctrlRow;
-        ctrlRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        ctrlRow.addView(boostBtn);
-        root.addView(ctrlRow, blp);
+        controlsRow = PlayerActionControls.add(this, root, () -> {}, this::showReport, () -> offerSwap(false));
+        final android.widget.LinearLayout ctrlRow = controlsRow;
         // Films and series always fill the screen (Zoom); live TV and catch up keep their own shape.
         if (PlayerControls.canSkip(kind())) { view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM); ui.postDelayed(barWatch, 3000); }
-        final android.widget.Button reportBtn = new android.widget.Button(this);
-        reportBtn.setAllCaps(false);
-        reportBtn.setText("⚠ Report a problem");
-        reportBtn.setOnClickListener(v -> showReport());
-        focusBorder(reportBtn);
-        android.widget.LinearLayout.LayoutParams reportLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
-        reportLp.leftMargin = (int) (12 * getResources().getDisplayMetrics().density);
-        ctrlRow.addView(reportBtn, reportLp);
-        final android.widget.Button swapBtn = new android.widget.Button(this);
-        swapBtn.setAllCaps(false); swapBtn.setText("⇄ Swap channel");
-        swapBtn.setOnClickListener(v -> offerSwap(false));
-        focusBorder(swapBtn);
-        final boolean canSwap = "live".equals(kind()) && !getIntent().hasExtra("catchup_prefix");
-        android.widget.LinearLayout.LayoutParams swapLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
-        swapLp.leftMargin = reportLp.leftMargin;
-        ctrlRow.addView(swapBtn, swapLp);
-        if (!canSwap) swapBtn.setVisibility(android.view.View.GONE);
-        // Catch up problems can't be fixed by us, so there is no report button on catch up.
-        final boolean canReport = PlayerControls.canReport(kind());
-        if (!canReport) reportBtn.setVisibility(android.view.View.GONE);
         view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> {
             ctrlRow.setVisibility(vis);
             if (vis == android.view.View.VISIBLE) lastPressAt = android.os.SystemClock.elapsedRealtime();
@@ -698,52 +661,7 @@ public class PlayerActivity extends Activity {
     }
 
     /** Report from inside the player: one plain pop-up that pans above the keypad (no resizing, which made phones flicker). */
-    private void showReport() {
-        String title = getIntent().getStringExtra("content_name");
-        if (title == null) title = "";
-        String rk = getIntent().getStringExtra("report_kind");
-        final String kind = rk != null ? rk : "live".equals(kind()) ? "live" : "film".equals(kind()) ? "film" : "series";
-        final String cat = getIntent().getStringExtra("report_category");
-        ReportBox rb = buildReportBox(this, title, kind, cat);
-        final android.widget.LinearLayout box = rb.box;
-        final android.widget.Button cancelBtn = rb.cancel;
-        final android.widget.Button sendBtn = rb.send;
-        final android.widget.EditText issue = rb.issue;
-        final String fTitle = title;
-        final android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this).setView(box).create();
-        cancelBtn.setOnClickListener(v -> dlg.dismiss());
-        issue.setOnEditorActionListener((tv, a, e) -> { if (a == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) { sendBtn.performClick(); return true; } return false; });
-        if (dlg.getWindow() != null) dlg.getWindow().setSoftInputMode(reportInputMode());
-        sendBtn.setOnClickListener(v -> {
-            String msg = issue.getText().toString().trim();
-            if (msg.length() < 3) { issue.setError("Please type a short description"); return; }
-            v.setEnabled(false);
-            final String token = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("token", "");
-            new Thread(() -> {
-                String err = null;
-                try {
-                    org.json.JSONObject b = new org.json.JSONObject().put("action", "report").put("device_token", token)
-                            .put("kind", kind).put("title", fTitle).put("issue", msg)
-                            .put("device", String.valueOf(getIntent().getStringExtra("report_device")))
-                            .put("version", String.valueOf(getIntent().getStringExtra("report_version")));
-                    if (cat != null && !cat.isEmpty()) b.put("category", cat);
-                    Net.postJson(Net.SITE + "/api/public/player", b.toString());
-                } catch (Exception e) {
-                    String m = String.valueOf(e.getMessage());
-                    int i = m.indexOf("\"error\":\"");
-                    err = i >= 0 ? m.substring(i + 9, Math.max(i + 9, m.indexOf('"', i + 9))) : "Couldn't send your report. Check your internet and try again.";
-                }
-                final String fe = err;
-                ui.post(() -> {
-                    if (isFinishing()) return;
-                    if (fe != null) { v.setEnabled(true); Toast.makeText(this, fe, Toast.LENGTH_LONG).show(); return; }
-                    dlg.dismiss();
-                    Toast.makeText(this, "Thanks – a support ticket has been opened. You'll find replies at bmsupport.uk/tickets", Toast.LENGTH_LONG).show();
-                });
-            }).start();
-        });
-        dlg.show();
-    }
+    private void showReport() { PlayerActionControls.report(this); }
 
     /** The pop-up pans above the keypad instead of resizing itself around it (resizing made phones flicker). */
     static int reportInputMode() {
@@ -831,30 +749,8 @@ public class PlayerActivity extends Activity {
     /** Swap channel: manual from the controls, or offered once by itself when the channel keeps buffering. */
     private void offerSwap(boolean auto) {
         if (isFinishing() || (auto && feedOffered)) return;
-        final org.json.JSONArray options = swapOptions();
-        if (options.length() == 0) {
-            if (!auto) android.widget.Toast.makeText(this, "No other versions of this channel found", android.widget.Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (auto) feedOffered = true;
-        String[] names = new String[options.length()];
-        for (int i = 0; i < names.length; i++) names[i] = options.optJSONObject(i).optString("label", options.optJSONObject(i).optString("name"));
-        new android.app.AlertDialog.Builder(this).setTitle(auto ? "This channel is struggling — swap to another?" : "Swap channel")
-            .setItems(names, (dialog, index) -> {
-                try {
-                    org.json.JSONObject selected = options.getJSONObject(index);
-                    if (selected.optBoolean("down")) { android.widget.Toast.makeText(this, "That channel is marked Not working — try another", android.widget.Toast.LENGTH_SHORT).show(); return; }
-                    org.json.JSONArray urls = selected.getJSONArray("urls");
-                    String[] next = new String[urls.length()]; for (int j = 0; j < next.length; j++) next[j] = urls.getString(j);
-                    BufferReporter.swap(this, getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), selected.getString("name"), auto ? "auto" : "manual", getIntent().getStringExtra("event_name"));
-                    android.content.Intent intent = new android.content.Intent(getIntent()); intent.removeExtra("carried");
-                    intent.setClass(this, PlayerActivity.class).putExtra("content_id", selected.getString("id")).putExtra("content_name", selected.getString("name"))
-                        .putExtra("recovery_name", selected.getString("recovery_name")).putExtra("urls", next).putExtra("url", next[0]);
-                    intent.removeExtra("sd_urls"); intent.removeExtra("sd_name");
-                    if (player != null) { player.release(); player = null; }
-                    startActivity(intent); finish();
-                } catch (Exception ignored) {}
-            }).setNegativeButton("Keep watching", null).show();
+        if (auto && swapOptions().length() > 0) feedOffered = true;
+        PlayerActionControls.swap(this, auto, () -> { if (player != null) { player.release(); player = null; } });
     }
 
     /** Adaptive (HLS/DASH) streams step down; single-quality streams are unaffected. */
