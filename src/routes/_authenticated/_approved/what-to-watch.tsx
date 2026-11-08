@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SendToBoxButton } from '@/components/watch/SendToBoxButton';
 import whatToWatchBg from '@/assets/what-to-watch-bg.jpg.asset.json';
@@ -73,14 +74,20 @@ function NewSeriesSection({ onPick, mode }: { onPick: (item: NewSeries) => void;
     <header className="space-y-1"><h2 className="font-display text-2xl font-bold">{mode === 'new' ? 'New series' : 'Recommended series'}{data ? ` · ${data.year}` : ''}</h2><p className="text-sm text-muted-foreground">{mode === 'new' ? 'This year’s series in your playlist, by the month they premiered' : 'Series from earlier years in your playlist, by year and month premiered'}</p></header>
     {data && <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
       <PopoverTrigger asChild><Button variant="outline" size="sm" aria-label="Choose year and month" className="gap-2"><Calendar className="size-4 text-accent" />{month ? `${MONTH_NAMES[month - 1]} ${data.year}` : `All months ${data.year}`}</Button></PopoverTrigger>
-      <PopoverContent align="start" className="w-72 space-y-3">
-        {mode === 'recommended' && <div><p className="mb-2 text-xs font-medium text-muted-foreground">Year</p><div className="grid grid-cols-3 gap-1">
-          {data.years.filter(y => y < data.currentYear).map(y => <Button variant="ghost" key={y} className={pill(y === data.year)} aria-pressed={y === data.year} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}
-        </div></div>}
-        <div><p className="mb-2 text-xs font-medium text-muted-foreground">Month</p><div className="grid grid-cols-3 gap-1">
-          <Button variant="ghost" className={`${pill(month === null)} col-span-3`} aria-pressed={month === null} onClick={() => { setMonth(null); setPickerOpen(false); }}>All months</Button>
-          {MONTH_NAMES.map((name, index) => { const value = index + 1; return <Button variant="ghost" key={name} className={pill(month === value)} aria-pressed={month === value} aria-label={name} disabled={data.year === data.currentYear && value > data.currentMonth} onClick={() => { setMonth(value); setPickerOpen(false); }}>{name.slice(0, 3)}</Button>; })}
-        </div></div>
+      <PopoverContent align="start" className="w-auto space-y-2 p-3">
+        <Button variant="ghost" className={`${pill(month === null)} w-full`} aria-pressed={month === null} onClick={() => { setMonth(null); setPickerOpen(false); }}>All months</Button>
+        <CalendarPicker
+          mode="single"
+          captionLayout="dropdown"
+          selected={month ? new Date(Date.UTC(data.year, month - 1, 1)) : undefined}
+          onSelect={(d) => { if (!d) return; const y = d.getUTCFullYear(); const m = d.getUTCMonth() + 1; if (y !== data.year) setYear(y); setMonth(m); setPickerOpen(false); }}
+          month={new Date(Date.UTC(data.year, (month ?? data.currentMonth) - 1, 1))}
+          onMonthChange={(d) => { const y = d.getUTCFullYear(); if (y !== data.year) { setYear(y); setMonth(null); } }}
+          startMonth={new Date(Date.UTC(mode === 'new' ? data.currentYear : Math.min(...data.years.filter(y => y < data.currentYear)), 0, 1))}
+          endMonth={new Date(Date.UTC(mode === 'new' ? data.currentYear : data.currentYear - 1, mode === 'new' ? data.currentMonth - 1 : 11, 1))}
+          initialFocus
+          className="pointer-events-auto"
+        />
       </PopoverContent>
     </Popover>}
     {isLoading && <div aria-label="Loading new series" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{Array.from({length:10}, (_,i) => <Skeleton key={i} className="aspect-[2/3] rounded-lg" />)}</div>}
