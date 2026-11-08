@@ -120,4 +120,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { isDazn, isCoupang, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { isDazn, isCoupang, isHeavyName, heavyFormat, isHeavy, rememberHeavy, loadHeavy, heavyList, HEAVY_MAX, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
