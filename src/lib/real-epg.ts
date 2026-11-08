@@ -192,7 +192,11 @@ export const EVENT_DEFAULT_MS = 3 * 3600_000;
 
 /** Ordinary TV EPG does not depend on building the complete sports feed. */
 export function needsSportsEvents(channel: string, official: boolean, eventOnly: boolean): boolean {
-  return !official && (eventOnly || /\b(coupang|dazn|ufc|fight\s*pass|bkfc|monomax|peacock|paramount|apple|mls|nba|nfl|nhl|rugby\s*pass|tennis|triller|hbo|max|ifollow)\b/i.test(channel));
+  if (official) return false;
+  if (eventOnly) return true;
+  // Only positively identified general TV/local stations skip sports. Unknown
+  // pass brands still receive overlays, preserving new guides and renamed feeds.
+  return !/^(?:UK\s*\|\s*)?(?:BBC\b|ITV\b|Channel [45]\b|Sky (?:Cinema|Atlantic|Comedy|Witness)\b|Discovery\b|Cartoon\b|Nickelodeon\b|Disney\b|CNN\b|ABC:|CBS:|FOX:|NBC:|PBS:|CW:)/i.test(channel);
 }
 
 /**

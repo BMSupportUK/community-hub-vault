@@ -46,7 +46,12 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
     let wantedIds: Set<string> | null = null;
     const matches = new Map<string, string>();
     const progs: { feed: string; epg_id: string; start_at: string; stop_at: string; title: string; descr: string }[] = [];
-    const { data: existing } = await db.from("epg_channel_map").select("channel_key, feed, epg_id, manual, disabled").in("channel_key", mine.map((t) => t.name.trim().toLowerCase()));
+    const existing: { channel_key: string; feed: string | null; epg_id: string | null; manual: boolean; disabled: boolean }[] = [];
+    for (let i = 0; i < mine.length; i += 100) {
+      const { data, error } = await db.from("epg_channel_map").select("channel_key, feed, epg_id, manual, disabled").in("channel_key", mine.slice(i, i + 100).map((t) => t.name.trim().toLowerCase()));
+      if (error) throw new Error(error.message);
+      existing.push(...(data ?? []));
+    }
     const prior = new Map((existing ?? []).map((r) => [r.channel_key, r]));
     const decide = () => {
       const idx = buildIndex(channels);
@@ -67,9 +72,10 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
     for await (const chunk of stream as unknown as AsyncIterable<string>) {
       reader.push(chunk, (c) => channels.push(c), (p) => {
         if (!wantedIds) decide();
-        if (!wantedIds!.has(p.channel) || !(p.stop > from && p.start < to) || !(p.stop > p.start)) return;
+        if (!wantedIds?.has(p.channel) || !(p.stop > from && p.start < to) || !(p.stop > p.start)) return;
+        if (progs.length >= 80000) throw new Error("Guide record limit exceeded; previous listings retained");
         progs.push({ feed: code, epg_id: p.channel, start_at: new Date(p.start).toISOString(), stop_at: new Date(p.stop).toISOString(), title: p.title.slice(0, 300) || "Programme", descr: p.desc.slice(0, 1000) });
-      });
+      }, (channel) => { if (!wantedIds) decide(); return wantedIds?.has(channel) ?? false; });
     }
     if (!wantedIds) decide();
     // Replace this feed's programmes and channel list.
@@ -105,6 +111,7 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
       if (error) throw new Error(error.message);
     }
     await db.from("epg_feeds").upsert({ code, imported_at: new Date().toISOString(), channels: channels.length, matched: matches.size, programmes: unique.length, error: null });
+    listingCache.clear();
     return { feed: code, channels: channels.length, matched: matches.size, programmes: unique.length };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -114,23 +121,34 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
   }
 }
 
-let mapCache: { at: number; map: Map<string, { feed: string; epg_id: string }> } | null = null;
-async function channelMap() {
-  if (mapCache && Date.now() - mapCache.at < 10 * 60_000) return mapCache.map;
-  const db = await admin();
-  const map = new Map<string, { feed: string; epg_id: string }>();
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await db.from("epg_channel_map").select("channel_key, feed, epg_id").not("epg_id", "is", null).eq("disabled", false).range(from, from + 999);
-    if (error) break;
-    for (const r of data ?? []) if (r.feed && r.epg_id) map.set(r.channel_key, { feed: r.feed, epg_id: r.epg_id });
-    if (!data || data.length < 1000) break;
-  }
-  mapCache = { at: Date.now(), map };
-  return map;
-}
-
 const listingCache = new Map<string, { at: number; rows: ListingRow[] | null }>();
 const LISTING_TTL = 15 * 60_000;
+const listingInflight = new Map<string, Promise<ListingRow[] | null>>();
+
+async function publishedListings(key: string, from: number, to: number, nowMs: number): Promise<ListingRow[] | null> {
+  const hit = listingCache.get(key);
+  if (hit && nowMs - hit.at < (hit.rows ? LISTING_TTL : 60000)) return hit.rows;
+  const pending = listingInflight.get(key);
+  if (pending) return pending;
+  const load = (async () => {
+    const db = await admin();
+    // One indexed channel lookup, not a paginated read of the entire map.
+    const { data: m, error: mapError } = await db.from("epg_channel_map").select("feed, epg_id").eq("channel_key", key).eq("disabled", false).maybeSingle();
+    if (mapError) throw new Error(mapError.message);
+    let rows: ListingRow[] | null = null;
+    if (m?.feed && m.epg_id) {
+      const { data, error } = await db.from("epg_programmes").select("start_at, stop_at, title, descr").eq("feed", m.feed).eq("epg_id", m.epg_id)
+        .gt("stop_at", new Date(from).toISOString()).lt("start_at", new Date(to).toISOString()).order("start_at").limit(120);
+      if (error) throw new Error(error.message);
+      rows = data?.length ? data.map((p) => toListing({ start: Date.parse(p.start_at), stop: Date.parse(p.stop_at), title: p.title, desc: p.descr })) : null;
+    }
+    listingCache.set(key, { at: nowMs, rows });
+    if (listingCache.size > 5000) { const oldest = listingCache.keys().next().value; if (oldest !== undefined) listingCache.delete(oldest); }
+    return rows;
+  })().finally(() => listingInflight.delete(key));
+  listingInflight.set(key, load);
+  return load;
+}
 
 type SportsEvent = { title: string; start: number; end?: number; channels: string[]; competition?: string };
 
@@ -150,27 +168,14 @@ export async function guideFor(channel: string, eventsOrLoad: SportsEvent[] | ((
   const from = nowMs - KEEP_BEFORE_MS, to = nowMs + KEEP_AHEAD_MS;
   const onGuide = events.some((e) => e.channels.some((c) => c.trim().toLowerCase() === key));
   if (isEventChannel(stripQualityTail(channel))) return { rows: eventListings(channel, events, from, to).map(toListing), source: "sports" };
-  const hit = listingCache.get(key);
-  let realRows: ListingRow[] | null = hit && nowMs - hit.at < LISTING_TTL ? hit.rows : null;
-  if (!hit || nowMs - hit.at >= LISTING_TTL) {
-    const m = (await channelMap()).get(key);
-    if (m) {
-      const db = await admin();
-      const { data } = await db.from("epg_programmes").select("start_at, stop_at, title, descr").eq("feed", m.feed).eq("epg_id", m.epg_id)
-        .gt("stop_at", new Date(from).toISOString()).lt("start_at", new Date(to).toISOString()).order("start_at").limit(120);
-      const progs = (data ?? []).map((p) => ({ start: Date.parse(p.start_at), stop: Date.parse(p.stop_at), title: p.title, desc: p.descr }));
-      realRows = progs.length ? progs.map(toListing) : null;
-    }
-    listingCache.set(key, { at: nowMs, rows: realRows });
-    if (listingCache.size > 5000) listingCache.delete(listingCache.keys().next().value!);
-  }
+  const realRows = await publishedListings(key, from, to, nowMs);
   // Sports Pass channels that also have a published guide: the Sports Guide event wins its slot.
   if (onGuide && !isOfficialSportsChannel(channel)) {
     const evs = eventListings(channel, events, from, to).filter((e) => e.title !== "No event scheduled");
     if (!realRows) return { rows: eventListings(channel, events, from, to).map(toListing), source: "sports" };
     const base = realRows.map((r) => ({ start: r.start_timestamp * 1000, stop: r.stop_timestamp * 1000, row: r }));
     const merged = overlayEvents(base.map((b) => ({ start: b.start, stop: b.stop, title: "", row: b.row as ListingRow | null })), evs.map((e) => ({ start: e.start, stop: e.stop, title: e.title, row: toListing(e) as ListingRow | null })));
-    return { rows: merged.map((m) => m.row!), source: "sports" };
+    return { rows: merged.flatMap((m) => m.row ? [m.row] : []), source: "sports" };
   }
   return realRows ? { rows: realRows, source: "real" } : { rows: null, source: "none" };
 }
