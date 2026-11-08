@@ -3906,6 +3906,7 @@ public class MainActivity extends Activity {
                 java.util.Set<String> ds = new java.util.HashSet<>();
                 if (down != null) for (int i = 0; i < down.length(); i++) ds.add(down.optString(i).toLowerCase(java.util.Locale.ROOT));
                 sportsDown = ds;
+                sportsTicketFaults = r.optJSONArray("ticketFaults");
                 // A channel gaining or losing its cross redraws the guide too.
                 String v = r.optString("version") + "|" + (down == null ? "" : down.toString());
                 ui.post(() -> {
@@ -4065,6 +4066,7 @@ public class MainActivity extends Activity {
     private void renderSports(JSONObject r) {
         if (sportsList == null) return;
         sportsData = r;
+        sportsTicketFaults = r.optJSONArray("ticketFaults");
         defaultSportsCategory(r);
         JSONArray downNow = r.optJSONArray("unavailable");
         sportsVersion = r.optString("version") + "|" + (downNow == null ? "" : downNow.toString());
@@ -4262,7 +4264,11 @@ public class MainActivity extends Activity {
 
     /** Channels the website currently marks not working (Sports Guide crosses). */
     static volatile java.util.Set<String> sportsDown = new java.util.HashSet<>();
+    static volatile JSONArray sportsTicketFaults;
     static String sportsRowLabel(JSONObject e, String guideName, String channel) {
+        if (ChannelHealth.ticketFault(e == null ? null : e.optJSONArray("ticketFaults"), guideName, channel)
+                || ChannelHealth.ticketFault(sportsTicketFaults, guideName, channel))
+            return "❌  " + channel + "  —  fault reported, staff are investigating. Try another channel";
         boolean down = ChannelHealth.crossed(e, guideName) || ChannelHealth.crossed(e, channel)
                 || sportsDown.contains(channel.toLowerCase(java.util.Locale.ROOT));
         if (!down) return "▶  " + channel;

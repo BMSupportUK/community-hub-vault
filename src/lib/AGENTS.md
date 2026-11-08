@@ -1,4 +1,5 @@
 # src/lib rules
+- Live-channel fault tickets use a device-verified transactional RPC and channel-key database lock; uncached active-ticket overlays clear on terminal status without changing independent health, chat or video.
 - EPG imports stream matched stations; US locals use station callsigns. EPG uses shared indexed fixture matching and single-flight catalogues without provider completion waits; sports cards retain those checks separately. Published-row caches never freeze event overlays.
 - Channel EPG uses provider listings except matched non-official sports/club feeds, which receive saved website fixtures through sportsFixtureEpg; country imports and category-refresh dispatch/claim functions remain disabled.
 - Buffering diagnostics store bounded device-reported format/decoder/event metadata; admin/management summaries filter before limiting and do not turn cause labels into definitive diagnoses.

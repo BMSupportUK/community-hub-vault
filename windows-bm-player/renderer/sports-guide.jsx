@@ -2,6 +2,7 @@ import React,{useEffect,useMemo,useState} from 'react';
 import {matchChannel} from '../../src/lib/player-channel-match';
 import {channelInCountry} from '../../src/lib/sports-channel-links';
 import eventSearch from '../event-search.cjs';
+import {faultChannelKey} from '../../src/lib/player-ticket-faults';
 
 // Sports guide (same layout as Android): day pills + website Category pop-up, one card per game, its channels beside it.
 const ukDate=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
@@ -17,6 +18,8 @@ export const matchesSearch=eventSearch.matchesSearch;
 /** Channel rows for one game: guide channels, then sports passes, then each club's own channels. */
 export function sportsRows(e,items,aliases,down=[]){
  const crossedSet=new Set([...(e.unavailable||[]),...down].map(lower)),isDown=(c,n)=>crossedSet.has(lower(c))||crossedSet.has(lower(n));
+ const faultSet=new Set((e.ticketFaults||[]).map(faultChannelKey));
+ const state=(c,n)=>{const fault=faultSet.has(faultChannelKey(c))||faultSet.has(faultChannelKey(n));return {fault,down:fault||isDown(c,n),early:!fault&&isDown(c,n)&&e.start>Date.now()};};
  const rows=[],seen=new Set(),names=items.map(i=>i.name),byName=new Map(items.map(i=>[i.name,i]));
  const where=lower([e.sport,e.subcategory,e.competition].join(' '));
  const clubs=!!e.teamChannels||where.includes('ifollow')||where.includes('scot');
@@ -25,9 +28,9 @@ export function sportsRows(e,items,aliases,down=[]){
  [['Channels',false],['Sports passes',true]].forEach(([heading,isPass])=>{
   const list=(e.channels||[]).filter(c=>pass.has(lower(c))===isPass&&!(clubs&&teamSet.has(lower(c))));
   if(!list.length)return;rows.push({heading});
-  for(const c of list){const cc=(e.channelCountry||{})[c];const m=matchChannel(c,names,aliases).filter(n=>channelInCountry(n,cc));if(!m.length)rows.push({missing:c});for(const n of m)if(!seen.has(n)){seen.add(n);rows.push({item:byName.get(n),down:isDown(c,n),early:isDown(c,n)&&e.start>Date.now()});}}
+  for(const c of list){const cc=(e.channelCountry||{})[c];const m=matchChannel(c,names,aliases).filter(n=>channelInCountry(n,cc));if(!m.length)rows.push({missing:c});for(const n of m)if(!seen.has(n)){seen.add(n);rows.push({item:byName.get(n),...state(c,n)});}}
  });
- if(clubs){rows.push({heading:'Club channels'});for(const t of teams){const words=lower(t).replace(/\b(fc|afc|the)\b/g,' ').split(/\s+/).filter(Boolean);const m=items.filter(i=>{const n=lower(i.name).split(/[^a-z0-9]+/);return words.length&&words.every(w=>n.includes(w));}).slice(0,15);if(!m.length)rows.push({missing:'No '+t+' channel in your list'});for(const i of m)if(!seen.has(i.name)){seen.add(i.name);rows.push({item:i});}}}
+  if(clubs){rows.push({heading:'Club channels'});for(const t of teams){const words=lower(t).replace(/\b(fc|afc|the)\b/g,' ').split(/\s+/).filter(Boolean);const m=items.filter(i=>{const n=lower(i.name).split(/[^a-z0-9]+/);return words.length&&words.every(w=>n.includes(w));}).slice(0,15);if(!m.length)rows.push({missing:'No '+t+' channel in your list'});for(const i of m)if(!seen.has(i.name)){seen.add(i.name);rows.push({item:i,...state(i.name,i.name)});}}}
  return rows;
 }
 
@@ -36,6 +39,7 @@ export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,v
  const now=Date.now();
  useEffect(()=>{let live=true;loadChannels().then(r=>{if(!live)return;if(r&&Array.isArray(r.items)){setItems(r.items);setChannelsError(false);}else setChannelsError(true);}).catch(()=>{if(live)setChannelsError(true);}).finally(()=>{if(live)setChannelsLoading(false);});return()=>{live=false;};},[]);
  useEffect(()=>{if(!cat.sport&&sports.categories&&sports.categories.length)setCat(defaultCategory(sports));},[sports]);
+ useEffect(()=>{const timer=setInterval(()=>onRefresh(),60000+Math.floor(Math.random()*10000));return()=>clearInterval(timer);},[onRefresh]);
  const ended=e=>(e.end||e.start+3*3600000)<=now;
  const upcoming=useMemo(()=>(sports.events||[]).filter(e=>(e.end||e.start+3*3600000)+2*3600000>now),[sports]);
  const inCat=upcoming.filter(e=>inCategory(e,cat.sport,cat.sub,cat.guide));
@@ -45,7 +49,7 @@ export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,v
  useEffect(()=>{if(!initialEvent)return;const event=(sports.events||[]).find(e=>String(e.start)+':'+e.title===initialEvent);if(event){setCat({sport:event.sport||null,sub:event.subcategory||null,guide:event.competition||null});setDay(ukDayIndex(event.start,Date.now()));}},[initialEvent,sports]);
  const cards=focusedEvent?upcoming.filter(e=>String(e.start)+':'+e.title===focusedEvent):q?upcoming.filter(e=>matchesSearch(e,q)):inCat.filter(e=>ukDayIndex(e.start,now)===day).slice().sort((a,b)=>ended(a)-ended(b));
  const current=cards[Math.min(sel,cards.length-1)];
- const rows=useMemo(()=>current&&items?sportsRows(current,items,sports.aliases||[],sports.unavailable||[]):[],[current,items,sports]);
+ const rows=useMemo(()=>current&&items?sportsRows({...current,ticketFaults:[...(current.ticketFaults||[]),...(sports.ticketFaults||[])]},items,sports.aliases||[],sports.unavailable||[]):[],[current,items,sports]);
  const cats=(sports.categories&&sports.categories.length?sports.categories:[...new Set(upcoming.map(e=>e.sport))].map(name=>({name,subs:[]})));
  const count=(sport,sub,guide)=>upcoming.filter(e=>inCategory(e,sport,sub,guide)).length;
  const guidesOf=(sport,sub)=>(sports.guides||{})[sport+'|'+(sub||'')]||[];
@@ -60,7 +64,7 @@ export function SportsGuide({sports,loading,onBack,onRefresh,loadChannels,play,v
    <div className="sports-cards">{cards.length?cards.map((e,i)=>{const n=(e.channels||[]).length,done=ended(e),isLive=!done&&e.start<=now;return <button key={i} className={'sports-card'+(e===current?' selected':'')+(done?' finished':'')} onClick={()=>setSel(i)} onFocus={()=>setSel(i)}>
      <span className={'sports-time'+(isLive?' live':'')+(done?' done':'')}>{done?'Finished':isLive?'LIVE':clock(e.start)}</span><span className="sports-name"><b>{e.title}</b><small>{e.competition}{e.subcategory?' · '+e.subcategory:''}</small></span><span className="sports-pill">{n} {n===1?'channel':'channels'}</span></button>;}):<p className="empty">No games here – pick another day or category.</p>}</div>
    <aside className="sports-panel">{current&&<><h3>{current.title}</h3><p className="muted">{ended(current)?'Finished':current.start<=now?'🔴 Live now':dayName(ukDayIndex(current.start,now))+' '+clock(current.start)} · {current.competition}</p>
-    {!items?<p className="muted">{channelsError?'Couldn’t load channels – reopen Sports guide to try again':'Finding channels…'}</p>:rows.map((r,i)=>r.heading?<div key={i} className="sports-heading">{r.heading}</div>:r.item?<button key={i} className={'sports-channel'+(r.down?' crossed':'')} onClick={()=>play(r.item,String(current.start)+':'+current.title)}><span>{r.down?(r.early?'⏳ ':'❌ '):''}{r.item.name}{r.down&&<small className="sports-down">{r.early?'Event hasn\'t started yet – this channel goes live nearer the start':'Not working right now – try another channel'}</small>}</span><span className="sports-play">▶ Play</span></button>:<div key={i} className="sports-channel off"><span>{r.missing}</span><span className="muted">Not in your channels</span></div>)}</>}</aside>
+    {!items?<p className="muted">{channelsError?'Couldn’t load channels – reopen Sports guide to try again':'Finding channels…'}</p>:rows.map((r,i)=>r.heading?<div key={i} className="sports-heading">{r.heading}</div>:r.item?<button key={i} className={'sports-channel'+(r.down?' crossed':'')} onClick={()=>play(r.item,String(current.start)+':'+current.title)}><span>{r.down?(r.early?'⏳ ':'❌ '):''}{r.item.name}{r.down&&<small className="sports-down">{r.fault?'Fault reported – staff are investigating. Try another channel':r.early?'Event hasn\'t started yet – this channel goes live nearer the start':'Not working right now – try another channel'}</small>}</span><span className="sports-play">▶ Play</span></button>:<div key={i} className="sports-channel off"><span>{r.missing}</span><span className="muted">Not in your channels</span></div>)}</>}</aside>
   </div>}
   {popup&&<div className="modal-backdrop" onClick={()=>setPopup(null)}><div className="modal" onClick={e=>e.stopPropagation()}>
    {popup==='main'?<><h2>Choose a category</h2><div className="modal-actions">{cats.map(c=><button key={c.name} className={cat.sport===c.name?'primary':''} onClick={()=>c.subs&&c.subs.length?setPopup(c):guidesOf(c.name,null).length>1?setPopup({guidesFor:c.name,sub:null,back:'main'}):pick(c.name,null)}>{c.name} ({count(c.name,null)}){(c.subs&&c.subs.length)||guidesOf(c.name,null).length>1?'  ›':''}</button>)}<button onClick={()=>setPopup(null)}>Close</button></div></>

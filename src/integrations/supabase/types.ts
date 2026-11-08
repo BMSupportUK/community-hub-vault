@@ -8274,6 +8274,8 @@ export type Database = {
           created_at: string
           id: string
           order_id: string | null
+          player_channel_key: string | null
+          player_channel_name: string | null
           priority: Database["public"]["Enums"]["ticket_priority"]
           remote_setup_pending: boolean
           remote_support: boolean
@@ -8290,6 +8292,8 @@ export type Database = {
           created_at?: string
           id?: string
           order_id?: string | null
+          player_channel_key?: string | null
+          player_channel_name?: string | null
           priority?: Database["public"]["Enums"]["ticket_priority"]
           remote_setup_pending?: boolean
           remote_support?: boolean
@@ -8306,6 +8310,8 @@ export type Database = {
           created_at?: string
           id?: string
           order_id?: string | null
+          player_channel_key?: string | null
+          player_channel_name?: string | null
           priority?: Database["public"]["Enums"]["ticket_priority"]
           remote_setup_pending?: boolean
           remote_support?: boolean
@@ -9597,6 +9603,17 @@ export type Database = {
           token: string
         }[]
       }
+      create_player_fault_ticket: {
+        Args: {
+          _category: string
+          _device: string
+          _device_id: string
+          _issue: string
+          _title: string
+          _version: string
+        }
+        Returns: Json
+      }
       customer_has_approved_member_role: {
         Args: { p_roles: Database["public"]["Enums"]["app_role"][] }
         Returns: boolean
@@ -10261,6 +10278,7 @@ export type Database = {
         Args: { p_key: string; p_stars: number; p_voter: string }
         Returns: undefined
       }
+      player_fault_channel_key: { Args: { _name: string }; Returns: string }
       player_watch_member_breakdown: {
         Args: { _user: string }
         Returns: {

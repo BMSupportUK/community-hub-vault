@@ -40,6 +40,20 @@ final class ChannelHealth {
     }
 
     /** A crossed channel before its event starts is usually just not live yet. */
+    static boolean ticketFault(org.json.JSONArray faults, String guideName, String channel) {
+        if (faults == null) return false;
+        String guide = faultKey(guideName), actual = faultKey(channel);
+        for (int i = 0; i < faults.length(); i++) {
+            String key = faultKey(faults.optString(i));
+            if (key.equals(guide) || key.equals(actual)) return true;
+        }
+        return false;
+    }
+    private static String faultKey(String name) {
+        return java.text.Normalizer.normalize(name == null ? "" : name, java.text.Normalizer.Form.NFKC)
+                .trim().replaceAll("\\s+", " ").toLowerCase(java.util.Locale.ROOT);
+    }
+
     static boolean beforeStart(org.json.JSONObject e, long nowMs) {
         return beforeStart(e == null ? 0 : e.optLong("start"), nowMs);
     }
