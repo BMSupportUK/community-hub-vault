@@ -79,6 +79,10 @@ function apply(data) {
     if (p instanceof Hls) { p.subtitleDisplay = data.on; p.subtitleTrack = data.on && p.subtitleTracks.length ? 0 : -1; }
     [...video.textTracks].forEach((x, i) => { x.mode = data.on && i === 0 ? 'showing' : 'disabled'; });
   }
+  else if (data.action === 'speed') video.playbackRate=data.rate;
+  else if (data.action === 'audioTrack') { const p=players.get(index);if(p instanceof Hls)p.audioTrack=data.id;else if(video.audioTracks)[...video.audioTracks].forEach((t,i)=>{t.enabled=i===data.id;}); }
+  else if (data.action === 'subtitleTrack') { const p=players.get(index);if(p instanceof Hls){p.subtitleDisplay=data.id>=0;p.subtitleTrack=data.id;}[...video.textTracks].forEach((t,i)=>{t.mode=i===data.id?'showing':'disabled';}); }
+  else if (data.action === 'subtitleSource') { video.querySelectorAll('track').forEach(t=>t.remove());if(data.src){const t=document.createElement('track');t.kind='subtitles';t.src=data.src;t.default=true;video.append(t);t.addEventListener('load',()=>{t.track.mode='showing';});} }
   else if (data.action === 'volume') setLoudness(index, video, data.volume);
 }
 
@@ -104,7 +108,7 @@ if (window.bm) {
       const duration = Number.isFinite(video.duration) ? video.duration : 0;
       const state = video.dataset.failed || video.error ? 7 : video.ended ? 6 : video.paused ? 4 : video.readyState < 3 ? 2 : 3;
       const p = players.get(index), subs = p instanceof Hls ? p.subtitleTracks.length : video.textTracks.length;
-      window.bm.videoStatus({ index, position: video.currentTime || 0, duration, state, seekable: duration > 0, subs, w: video.videoWidth || 0, h: video.videoHeight || 0 }).catch(() => {});
+      window.bm.videoStatus({ index, position: video.currentTime || 0, duration, state, seekable: duration > 0, subs,audioTracks:p instanceof Hls?p.audioTracks.map((t,i)=>({id:i,name:t.name||t.lang||'Audio '+(i+1)})):[...(video.audioTracks||[])].map((t,i)=>({id:i,name:t.label||t.language||'Audio '+(i+1)})),subtitleList:p instanceof Hls?p.subtitleTracks.map((t,i)=>({id:i,name:t.name||t.lang||'Subtitles '+(i+1)})):[...video.textTracks].map((t,i)=>({id:i,name:t.label||t.language||'Subtitles '+(i+1)})),audioId:p instanceof Hls?p.audioTrack:[...(video.audioTracks||[])].findIndex(t=>t.enabled),subtitleId:p instanceof Hls?p.subtitleTrack:[...video.textTracks].findIndex(t=>t.mode==='showing'), w: video.videoWidth || 0, h: video.videoHeight || 0 }).catch(() => {});
     }
   }, 1000);
 }
