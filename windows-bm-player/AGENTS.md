@@ -1,4 +1,5 @@
 # Windows BM Player rules
+- Upcoming EPG programme/title and reminder-icon actions open confirmation before any preview selection; title and icon are sibling buttons so mouse and keyboard actions never nest.
 - Channel EPG is read directly from the stored provider login; never call website guide/category-refresh endpoints. Windows and Mac share this path.
 - Sports Guide loading presentation covers both the guide request and channel catalog preparation; the shared renderer also serves Mac and clears failed requests instead of leaving an endless wait.
 - DAZN recovery is shared with Mac, using catalog-verified channel/category identity and Sports Guide event context; alternative choices never accept provider URLs from the renderer.

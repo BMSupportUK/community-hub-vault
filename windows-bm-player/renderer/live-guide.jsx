@@ -3,6 +3,7 @@ import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
 import checkin from '../checkin.cjs';
 import guideRefresh from '../guide-refresh.cjs';
+import guideActions from '../guide-action.cjs';
 
 // Live TV laid out like the Android/Amazon BM Player: preview top-left, programme info beside it with
 // Search TV / Voice search top right, a slim date row (◀ 24h / Now / 24h ▶ / Category pill) and the guide grid below.
@@ -39,9 +40,11 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  const catName=id=>categories.find(c=>c.id===id)?.name||'';
  const currentCat=category==='all'?'All':catName(category);
  function pick(ch,p){
-  if(!selected||selected.id!==ch.id){onPreview(ch);return;}
-  if(p&&p.start>now){onReminder(ch,p);return;}
-  if(p&&p.end<=now){if(ch.archive>0)onCatchup(ch);else toast('This programme has ended.');return;}
+  const action=guideActions.guideAction(ch,p,selected,Date.now());
+  if(action==='reminder'){onReminder(ch,p);return;}
+  if(action==='none')return;
+  if(action==='preview'){onPreview(ch);return;}
+  if(action==='ended'){if(ch.archive>0)onCatchup(ch);else toast('This programme has ended.');return;}
   onChoose(ch);
  }
  const live=shownProg&&shownProg.start<=now&&shownProg.end>now;
@@ -80,7 +83,10 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
     <div className={'lg-ch'+(selected?.id===ch.id?' on':'')}><button onClick={()=>pick(ch,null)} onFocus={()=>setFocus({channel:ch,programme:onAt(ch.id,now)})}><b>{n+1}</b> {ch.name}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>onCatchup(ch)}>🕘</button>}</div>
     <div className="lg-line">
      {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:(now-start)/WINDOW*100+'%'}}/>}
-     {list(ch.id).filter(p=>p.end>start&&p.start<start+WINDOW).map(p=>{const on=p.start<=now&&p.end>now;return <button key={p.id} className={'lg-prog'+(on&&selected?.id===ch.id?' on':'')} style={{left:Math.max(0,(p.start-start)/WINDOW*100)+'%',width:(Math.min(start+WINDOW,p.end)-Math.max(start,p.start))/WINDOW*100+'%'}} onFocus={()=>setFocus({channel:ch,programme:p})} onMouseEnter={()=>setFocus({channel:ch,programme:p})} onClick={()=>pick(ch,p)}>{reminders.some(r=>r.id===ch.id+':'+p.start)?'⏰ ':''}{p.title}<small>{clock(p.start)}</small></button>;})}
+     {list(ch.id).filter(p=>p.end>start&&p.start<start+WINDOW).map(p=>{const on=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=reminders.some(r=>r.id===ch.id+':'+p.start);return <div key={p.id} className={'lg-prog'+(on&&selected?.id===ch.id?' on':'')} style={{left:Math.max(0,(p.start-start)/WINDOW*100)+'%',width:(Math.min(start+WINDOW,p.end)-Math.max(start,p.start))/WINDOW*100+'%'}} onMouseEnter={()=>setFocus({channel:ch,programme:p})}>
+      <button className="lg-prog-title" onFocus={()=>setFocus({channel:ch,programme:p})} onClick={()=>pick(ch,p)}><span>{p.title}</span><small>{clock(p.start)}</small></button>
+      {eligible&&<button className={'lg-reminder'+(set?' set':'')} title={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-label={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-pressed={set} onFocus={()=>setFocus({channel:ch,programme:p})} onClick={()=>onReminder(ch,p)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>{set&&<path d="m8 10 3 3 5-5"/>}</svg></button>}
+     </div>;})}
      {guide[ch.id]&&!list(ch.id).some(p=>p.end>start&&p.start<start+WINDOW)&&<span className="lg-empty">No guide information for this time</span>}
      {!guide[ch.id]&&<span className="lg-empty">Loading programmes…</span>}
     </div>
