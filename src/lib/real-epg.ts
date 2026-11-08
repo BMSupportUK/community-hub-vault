@@ -186,7 +186,7 @@ export function toListing(p: { start: number; stop: number; title: string; desc?
   return { id: String(st), title: b64(p.title || "Programme"), description: b64(p.desc ?? ""), start_timestamp: st, stop_timestamp: Math.floor(p.stop / 1000) };
 }
 
-export const NO_EVENT = "No event scheduled";
+export const NO_EVENT = "No Event Scheduled";
 /** Without a real finish time, an event slot runs this long. */
 export const EVENT_DEFAULT_MS = 3 * 3600_000;
 
@@ -201,7 +201,7 @@ export function needsSportsEvents(channel: string, official: boolean, eventOnly:
 
 /**
  * Sports Pass / event-only channel listings from the website Sports Guide: one slot per event on
- * that channel, "No event scheduled" filling the gaps across [from, to).
+ * that channel, "No Event Scheduled" filling the gaps across [from, to).
  */
 export function eventListings(
   channel: string,
