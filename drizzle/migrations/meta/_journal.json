@@ -2108,6 +2108,13 @@
       "when": 1794138973869,
       "tag": "0300_epg_feed_channels",
       "breakpoints": true
+    },
+    {
+      "idx": 301,
+      "version": "7",
+      "when": 1794143456514,
+      "tag": "0301_epg_category_demand_atomic_publish",
+      "breakpoints": true
     }
   ]
 }
