@@ -1,0 +1,4 @@
+const {test,expect}=require('bun:test');
+const {categoryName}=require('../epg-category.cjs');
+test('category open uses catalogue name, not arbitrary renderer text',()=>{const c=[{id:'1',name:'UK | Entertainment'},{id:'2',name:'US | ABC Locals'}];expect(categoryName('1',c)).toBe('UK | Entertainment');expect(categoryName('2',c)).toBe('US | ABC Locals');expect(categoryName('UK | injected',c)).toBe(null);});
+test('All and unknown categories never request all guides',()=>{expect(categoryName('all',[{id:'all',name:'UK | All'}])).toBe(null);expect(categoryName('*',[])).toBe(null);expect(categoryName('favourites',[])).toBe(null);});

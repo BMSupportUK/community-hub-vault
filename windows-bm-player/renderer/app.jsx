@@ -33,6 +33,7 @@ function App(){
  const [selected,setSelected]=useState(null),[programmes,setProgrammes]=useState([]),[series,setSeries]=useState(null),[season,setSeason]=useState('1');
  const [sports,setSports]=useState({events:[],aliases:[],order:[]}),[sportsPath,setSportsPath]=useState([]),[guide,setGuide]=useState({}),[guideStart,setGuideStart]=useState(Math.floor(Date.now()/1800000)*1800000),[guideCategory,setGuideCategory]=useState('all'),[catchupView,setCatchupView]=useState(null),[guidePage,setGuidePage]=useState(0);
  const [multi,setMulti]=useState(1),[loading,setLoading]=useState(false),[issue,setIssue]=useState(''),[speed,setSpeed]=useState(null);
+ useEffect(()=>{if(!loading&&state?.unlocked&&kind==='live'&&!data.saved&&(view==='browse'||view==='guide'))bm.epgCategory?.(view==='guide'?guideCategory:category).catch(()=>{});},[view,kind,category,guideCategory,loading,state?.unlocked,data.saved]);
  const pane=useRef(null),channelPane=useRef(null),previewTimer=useRef(null),previewSequence=useRef(0);
  const [playingView,setPlayingView]=useState(false),[volume,setVolume]=useState(100);
  const [feed,setFeed]=useState({});

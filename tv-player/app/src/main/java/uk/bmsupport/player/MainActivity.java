@@ -1331,6 +1331,16 @@ public class MainActivity extends Activity {
         return new java.text.SimpleDateFormat(f, java.util.Locale.UK).format(new java.util.Date(shifted));
     }
 
+    /** Category demand never waits for or consumes the programme-fetch queue. */
+    private void requestCategoryGuide(String category) {
+        if (category == null || !category.trim().matches("^[A-Za-z]{2,4}\\s*\\|.*")) return;
+        safeRun(connectionIo, () -> {
+            try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
+                    .put("action", "guide_category_open").put("device_token", prefs.getString("token", ""))
+                    .put("category", category.trim()).toString()); } catch (Exception ignored) { }
+        });
+    }
+
     /** BM Support's listings for a live channel (real TV guide or Sports Guide events); null = use the provider's guide. */
     private JSONArray siteGuide(Item it) {
         try {
@@ -3469,6 +3479,7 @@ public class MainActivity extends Activity {
         final int[] gen = { 0 };
         final String[] previewPending = { null };
         java.util.function.Consumer<String[]> applyCat = cat -> {
+            requestCategoryGuide(cat[1]);
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
