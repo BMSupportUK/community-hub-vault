@@ -17,7 +17,9 @@ async function playlistTargets() {
   return all
     .filter((c) => !isEventChannel(stripQualityTail(c.name)) && !isReplayChannel(c.name, c.category))
     .map((c) => ({ ...c, feeds: feedsFor(c.name, c.category) }))
-    .filter((c) => c.feeds.length);
+    .filter((c) => c.feeds.length)
+    // Duplicate playlist names share one guide match (and one upsert row).
+    .filter((c, i, a) => a.findIndex((x) => x.name.trim().toLowerCase() === c.name.trim().toLowerCase()) === i);
 }
 
 /** Picks the stalest feed the playlist needs and imports it. */
@@ -80,7 +82,9 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
     await db.from("epg_feed_channels").delete().eq("feed", code);
     const nameOf = new Map(channels.map((c) => [c.id, c.names[0] ?? c.id]));
     const chRows = channels.map((c) => ({ feed: code, epg_id: c.id, name: (c.names[0] ?? c.id).slice(0, 200) }));
-    for (let i = 0; i < chRows.length; i += 1000) await db.from("epg_feed_channels").upsert(chRows.slice(i, i + 1000));
+    const chSeen = new Set<string>();
+    const chUnique = chRows.filter((r) => !chSeen.has(r.epg_id) && chSeen.add(r.epg_id));
+    for (let i = 0; i < chUnique.length; i += 1000) await db.from("epg_feed_channels").upsert(chUnique.slice(i, i + 1000));
     // Automatic matches: earlier feeds in a channel's list win over later ones; manual fixes are never touched.
     const mapRows = mine.flatMap((t) => {
       const key = t.name.trim().toLowerCase();
@@ -95,7 +99,10 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
       if (p && p.feed && p.feed !== code) return [];
       return [{ channel_key: key, channel_name: t.name, category: t.category, feed: null, epg_id: null, epg_name: null, updated_at: new Date().toISOString() }];
     });
-    for (let i = 0; i < mapRows.length; i += 1000) await db.from("epg_channel_map").upsert(mapRows.slice(i, i + 1000));
+    for (let i = 0; i < mapRows.length; i += 1000) {
+      const { error } = await db.from("epg_channel_map").upsert(mapRows.slice(i, i + 1000));
+      if (error) throw new Error(error.message);
+    }
     await db.from("epg_feeds").upsert({ code, imported_at: new Date().toISOString(), channels: channels.length, matched: matches.size, programmes: unique.length, error: null });
     return { feed: code, channels: channels.length, matched: matches.size, programmes: unique.length };
   } catch (e) {
