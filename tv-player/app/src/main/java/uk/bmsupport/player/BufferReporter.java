@@ -44,6 +44,18 @@ final class BufferReporter {
         } catch (Exception ignored) {}
     }
 
+    /** A customer swapped away from this channel; counted separately from stalls on the website. */
+    static void swap(Context c, String id, String name, String to, String reason, String event) {
+        try {
+            JSONObject e = new JSONObject().put("kind", "live").put("content_id", id == null ? "" : id).put("name", name == null ? "" : name)
+                .put("stall_ms", 0).put("reconnected", false).put("freeze", false).put("swapped_to", to == null ? "" : to.substring(0, Math.min(200, to.length())))
+                .put("swap_reason", reason).put("at", System.currentTimeMillis());
+            if (event != null) e.put("event_name", event.substring(0, Math.min(200, event.length())));
+            synchronized (queue) { if (queue.size() >= QUEUE_MAX) queue.remove(0); queue.add(e); }
+            flush(c);
+        } catch (Exception ignored) {}
+    }
+
     static int pending() { synchronized (queue) { return queue.size(); } }
 
     static List<JSONObject> take(int max) {

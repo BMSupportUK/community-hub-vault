@@ -309,10 +309,18 @@ public class PlayerActivity extends Activity {
         android.widget.LinearLayout.LayoutParams reportLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         reportLp.leftMargin = (int) (12 * getResources().getDisplayMetrics().density);
         ctrlRow.addView(reportBtn, reportLp);
+        final android.widget.Button swapBtn = new android.widget.Button(this);
+        swapBtn.setAllCaps(false); swapBtn.setText("⇄ Swap channel");
+        swapBtn.setOnClickListener(v -> offerSwap(false));
+        final boolean canSwap = "live".equals(kind()) && !getIntent().hasExtra("catchup_prefix");
+        android.widget.LinearLayout.LayoutParams swapLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        swapLp.leftMargin = reportLp.leftMargin;
+        ctrlRow.addView(swapBtn, swapLp);
+        if (!canSwap) swapBtn.setVisibility(android.view.View.GONE);
         // Catch up problems can't be fixed by us, so there is no report button on catch up.
         final boolean canReport = PlayerControls.canReport(kind());
         if (!canReport) reportBtn.setVisibility(android.view.View.GONE);
-        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(canReport ? vis : android.view.View.GONE); });
+        view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> { boostBtn.setVisibility(vis); reportBtn.setVisibility(canReport ? vis : android.view.View.GONE); swapBtn.setVisibility(canSwap ? vis : android.view.View.GONE); });
         setContentView(root);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
@@ -785,30 +793,41 @@ public class PlayerActivity extends Activity {
                 for (int i = 0; i < liveUrls.length; i++) if (other != null && liveUrls[i].endsWith("." + other)) { urlAt = i; ui.post(() -> { if (player != null) open(0); }); break; }
             }
         }
-        if (recent >= StreamRecovery.STALLS_TO_OFFER_SD) { if (StreamRecovery.isDazn(recoveryName())) offerFeed(); else offerSd(); }
+        if (recent >= ChannelSwap.AUTO_STALLS && swapOptions().length() > 0) offerSwap(true);
+        else if (recent >= StreamRecovery.STALLS_TO_OFFER_SD) offerSd();
     }
     private boolean daznFormatSwapped, feedOffered;
-    private void offerFeed() {
-        if (feedOffered || isFinishing()) return;
-        try {
-            org.json.JSONArray options = new org.json.JSONArray(getIntent().getStringExtra("event_alternatives") == null ? "[]" : getIntent().getStringExtra("event_alternatives"));
-            if (options.length() == 0) return;
-            feedOffered = true; String[] names = new String[options.length()];
-            for (int i = 0; i < names.length; i++) names[i] = options.getJSONObject(i).getString("name");
-            new android.app.AlertDialog.Builder(this).setTitle("Try another feed")
-                .setItems(names, (dialog, index) -> {
-                    try {
-                        org.json.JSONObject selected = options.getJSONObject(index); org.json.JSONArray urls = selected.getJSONArray("urls");
-                        String[] next = new String[urls.length()]; for (int j = 0; j < next.length; j++) next[j] = urls.getString(j);
-                        android.content.Intent intent = new android.content.Intent(getIntent()); intent.removeExtra("carried");
-                        intent.setClass(this, PlayerActivity.class).putExtra("content_id", selected.getString("id")).putExtra("content_name", selected.getString("name"))
-                            .putExtra("recovery_name", selected.getString("recovery_name")).putExtra("urls", next).putExtra("url", next[0]);
-                        intent.removeExtra("sd_urls"); intent.removeExtra("sd_name");
-                        if (player != null) { player.release(); player = null; }
-                        startActivity(intent); finish();
-                    } catch (Exception ignored) {}
-                }).setNegativeButton("Keep watching", null).show();
-        } catch (Exception ignored) {}
+    private org.json.JSONArray swapOptions() {
+        try { String raw = getIntent().getStringExtra("swap_options"); return new org.json.JSONArray(raw == null ? "[]" : raw); }
+        catch (Exception e) { return new org.json.JSONArray(); }
+    }
+    /** Swap channel: manual from the controls, or offered once by itself when the channel keeps buffering. */
+    private void offerSwap(boolean auto) {
+        if (isFinishing() || (auto && feedOffered)) return;
+        final org.json.JSONArray options = swapOptions();
+        if (options.length() == 0) {
+            if (!auto) android.widget.Toast.makeText(this, "No other versions of this channel found", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (auto) feedOffered = true;
+        String[] names = new String[options.length()];
+        for (int i = 0; i < names.length; i++) names[i] = options.optJSONObject(i).optString("label", options.optJSONObject(i).optString("name"));
+        new android.app.AlertDialog.Builder(this).setTitle(auto ? "This channel is struggling — swap to another?" : "Swap channel")
+            .setItems(names, (dialog, index) -> {
+                try {
+                    org.json.JSONObject selected = options.getJSONObject(index);
+                    if (selected.optBoolean("down")) { android.widget.Toast.makeText(this, "That channel is marked Not working — try another", android.widget.Toast.LENGTH_SHORT).show(); return; }
+                    org.json.JSONArray urls = selected.getJSONArray("urls");
+                    String[] next = new String[urls.length()]; for (int j = 0; j < next.length; j++) next[j] = urls.getString(j);
+                    BufferReporter.swap(this, getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), selected.getString("name"), auto ? "auto" : "manual", getIntent().getStringExtra("event_name"));
+                    android.content.Intent intent = new android.content.Intent(getIntent()); intent.removeExtra("carried");
+                    intent.setClass(this, PlayerActivity.class).putExtra("content_id", selected.getString("id")).putExtra("content_name", selected.getString("name"))
+                        .putExtra("recovery_name", selected.getString("recovery_name")).putExtra("urls", next).putExtra("url", next[0]);
+                    intent.removeExtra("sd_urls"); intent.removeExtra("sd_name");
+                    if (player != null) { player.release(); player = null; }
+                    startActivity(intent); finish();
+                } catch (Exception ignored) {}
+            }).setNegativeButton("Keep watching", null).show();
     }
 
     /** Adaptive (HLS/DASH) streams step down; single-quality streams are unaffected. */
