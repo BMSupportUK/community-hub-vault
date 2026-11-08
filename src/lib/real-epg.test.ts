@@ -1,6 +1,6 @@
 // @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { describe, expect, test } from "bun:test";
-import { buildIndex, matchChannel, xmltvTime, XmltvReader, feedsFor, eventListings, overlayEvents, stripQualityTail, NO_EVENT, type EpgChannel, type EpgProgramme } from "./real-epg";
+import { buildIndex, matchChannel, xmltvTime, XmltvReader, feedsFor, eventListings, overlayEvents, stripQualityTail, needsSportsEvents, NO_EVENT, type EpgChannel, type EpgProgramme } from "./real-epg";
 
 const uk = buildIndex([
   { id: "SkySpMainEvHD.uk", names: ["SkySpMainEvHD"] },
@@ -12,6 +12,23 @@ const uk = buildIndex([
 ]);
 
 describe("real guide channel matching", () => {
+  test("American local categories use local listings without changing national feeds", () => {
+    expect(feedsFor("ABC: Atlanta GA WSB-TV", "US | ABC Locals")).toEqual(["US_LOCALS1", "US2"]);
+    expect(feedsFor("ESPN", "US | Sports")).toEqual(["US2", "US_SPORTS1"]);
+  });
+  test("local callsigns anywhere in labels select the main station, never another city's network or subchannel", () => {
+    const idx = buildIndex([{ id: "WSB-DT2.us_locals1", names: ["WSB-DT2"] }, { id: "WSB-DT.us_locals1", names: ["WSB-DT"] }, { id: "KVUE-DT.us_locals1", names: ["KVUE-DT"] }]);
+    expect(matchChannel("abc: Atlanta GA wsb-tv", idx)).toBe("WSB-DT.us_locals1");
+    expect(matchChannel("ABC: Austin KVUE", idx)).toBe("KVUE-DT.us_locals1");
+    expect(matchChannel("ABC: Unknown City", idx)).toBe(null);
+  });
+  test("ordinary channels bypass sports builds but unknown passes keep website events", () => {
+    expect(needsSportsEvents("ABC: Atlanta GA WSB-TV", false, false)).toBe(false);
+    expect(needsSportsEvents("BBC One | FHD |", false, false)).toBe(false);
+    expect(needsSportsEvents("Sky Sports Main Event", true, false)).toBe(false);
+    expect(needsSportsEvents("Coupang | Event 1", false, true)).toBe(true);
+    expect(needsSportsEvents("A new sports pass", false, false)).toBe(true);
+  });
   test("playlist quality tags and guide abbreviations match the same channel", () => {
     expect(matchChannel("Sky Sports Main Event | FHD |", uk)).toBe("SkySpMainEvHD.uk");
     expect(matchChannel("Sky Sports Football | NowTV |", uk)).toBe("Sky.Sports.Football.HD.uk");
