@@ -42,3 +42,4 @@
 - Live TV EPG reads provider short/full-day tables except non-official sports/club feeds, which first request saved website fixtures; fixture responses never get overwritten by provider expansion. Country imports/category refresh stay retired.
 - StreamRecovery.cushioned covers DAZN, Coupang, heavy channel names and channels measured heavy on this device (saved in prefs, capped); the byte memory cap on the load control always stays in place.
 - Backup feed status uses BackupFeedStatus progress plus incomplete buffering, not VLC Buffering events alone; completed buffering, advancing playback and stream reopen clear the warning to avoid false stalls.
+- Backup live cache derives its fixed VLC network-cache target from the primary profile minimum via BackupBufferPolicy (not a guaranteed min/max buffer); BackupStallTracker emits one duration per real stall through BufferReporter, tagged backup in decoder, flushing periodically and on exit.
