@@ -13,10 +13,14 @@ const words = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f
 
 /** Exact event wording within a longer EPG title; never infer completion from a generic league/session name. */
 export function programmeMatchesEvent(eventTitle: string, programmeTitle: string): boolean {
-  if (!programmeTitle || /\b(?:replay|highlights?|preview|review|classic|post[ -]?match|half[ -]?time)\b/i.test(programmeTitle)) return false;
+  if (!programmeTitle || /\b(?:replay|repeat|highlights?|preview|review|classic|post[ -]?match|half[ -]?time|first half|second half|1st half|2nd half)\b/i.test(programmeTitle)) return false;
   if (/\b(?:prelims?|preliminary|undercard)\b/i.test(eventTitle) !== /\b(?:prelims?|preliminary|undercard)\b/i.test(programmeTitle)) return false;
-  const event = words(eventTitle.replace(/^[^:]+:\s*/, "")), programme = words(programmeTitle);
+  const clean = (title: string) => title.replace(/^(?:live\s*)?(?:football|soccer|boxing|snooker|efl|premier league|champions league)\s*:\s*/i, "");
+  const event = words(clean(eventTitle)), programme = words(programmeTitle);
   if (event.length < 2 || event.filter(w => w !== "v").length < 2) return false;
+  const sides = /\b(?:women|womens|ladies|u\d{2}|youth|reserves)\b/g;
+  if ((event.join(" ").match(sides) ?? []).join(" ") !== (programme.join(" ").match(sides) ?? []).join(" ")) return false;
+  if (!event.includes("v") && event.filter(w => !/^(?:f1|formula|one|1|motogp|race|sprint|practice|qualifying|grand|prix|live)$/.test(w)).length < 2) return false;
   const joined = ` ${programme.join(" ")} `;
   return joined.includes(` ${event.join(" ")} `);
 }
