@@ -38,7 +38,7 @@ function start(index) {
   // UHD memory cap (same idea as Android 3.52): played picture is dropped and saved picture is limited in MB, so 4K streams never fill the app's memory.
   const seconds = Math.max(2, Math.round(cmd.buffer / 1000));
   if (cmd.kind === 'hls' && Hls.isSupported()) {
-    const hls = new Hls({ enableWorker: false, maxBufferLength: Math.max(10, seconds * 3), maxBufferSize: 48 * 1024 * 1024, backBufferLength: 10, ...(cmd.live !== false ? { liveSyncDuration: seconds, liveMaxLatencyDuration: seconds + 20 } : {}) });
+    const hls = new Hls({ enableWorker: false, maxBufferLength: cmd.steady ? 40 : Math.max(10, seconds * 3), maxMaxBufferLength: cmd.steady ? 90 : 600, maxBufferSize: 48 * 1024 * 1024, backBufferLength: 10, ...(cmd.live !== false ? { liveSyncDuration: seconds, liveMaxLatencyDuration: seconds + 30 } : {}) });
     hls.on(Hls.Events.ERROR, (_e, d) => { if (d.fatal) fail(); });
     if (cmd.subtitles != null) {
       hls.subtitleDisplay = cmd.subtitles === true;

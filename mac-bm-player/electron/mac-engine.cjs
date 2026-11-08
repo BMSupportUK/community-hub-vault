@@ -134,11 +134,11 @@ class MacEngine {
     if (typeof ua === 'function') userAgent = ua;
   }
   send(data) { if (this.win && !this.win.isDestroyed()) this.win.webContents.send('player:event', { type: 'video', ...data }); }
-  play(index, url, { buffer = 3000, resume = 0, live = true, subtitles = null, fill = false } = {}) {
+  play(index, url, { buffer = 3000, resume = 0, live = true, subtitles = null, fill = false, steady = false } = {}) {
     const src = toProxy(url);
     this.sessions.set(index, { position: 0, duration: 0, state: 1, seekable: false });
     this.endBackup(index);
-    this.send({ action: 'play', index, src, kind: streamKind(url), buffer: Number(buffer) || 3000, resume: Number(resume) || 0, live: live !== false, subtitles, fill: !!fill });
+    this.send({ action: 'play', index, src, kind: streamKind(url), buffer: Number(buffer) || 3000, resume: Number(resume) || 0, live: live !== false, subtitles, fill: !!fill, steady });
   }
   backupReady() { return backupReady(); }
   /** Play through the backup engine; films, episodes and catch up keep their place (seeking restarts the conversion there). */

@@ -44,6 +44,7 @@ public class PlayerActivity extends Activity {
     /** IPTV panels often block unknown players, so identify as VLC like most IPTV apps. */
     static final String UA = "VLC/3.0.20 LibVLC/3.0.20";
     private ExoPlayer player;
+    private String activeDecoder = "media3/unknown";
     private final Handler ui = new Handler(Looper.getMainLooper());
     private String progressKey, seriesKey;
     private boolean playbackReady;
@@ -759,7 +760,7 @@ public class PlayerActivity extends Activity {
     private void reportBuffer(long ms, boolean reconnected, boolean freeze, String cause) {
         String u = liveUrls.length > urlAt ? liveUrls[urlAt] : "";
         String fmt = u.endsWith(".m3u8") ? "m3u8" : u.endsWith(".ts") ? "ts" : "direct";
-        String decoder = player != null && player.getVideoFormat() != null ? "media3/" + String.valueOf(player.getVideoFormat().sampleMimeType) : "media3";
+        String decoder = activeDecoder.substring(0, Math.min(120, activeDecoder.length()));
         BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, freeze, cause, fmt, decoder, StreamRecovery.isDazn(recoveryName()) ? "dazn" : null, getIntent().getStringExtra("event_name"));
     }
 
