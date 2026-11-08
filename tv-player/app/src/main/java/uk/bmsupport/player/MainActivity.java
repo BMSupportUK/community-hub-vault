@@ -428,7 +428,10 @@ public class MainActivity extends Activity {
             return true;
         }
         if ("sports".equals(screen) && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT && sportsChannelList != null && sportsChannelList.hasFocus()) {
-            if (e.getAction() == KeyEvent.ACTION_DOWN && sportsList != null) sportsList.requestFocus();
+            if (e.getAction() == KeyEvent.ACTION_DOWN && sportsList != null) {
+                sportsList.requestFocus();
+                sportsList.post(() -> revealSportsCard(sportsList));
+            }
             return true;
         }
         return PlayerApplication.closeAnnouncementOnBack(this, e) || super.dispatchKeyEvent(e);
@@ -3576,6 +3579,10 @@ public class MainActivity extends Activity {
         body.setBaselineAligned(false);
         ListView lv = list();
         lv.setTag("sports");
+        lv.setVerticalFadingEdgeEnabled(false);
+        lv.setOnFocusChangeListener((v, focused) -> {
+            if (focused) lv.post(() -> revealSportsCard(lv));
+        });
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.15f);
         lp.setMargins(0, 0, dp(12), 0);
         body.addView(lv, lp);
@@ -3950,7 +3957,10 @@ public class MainActivity extends Activity {
         int keep = sportsList.getSelectedItemPosition();
         sportsList.setAdapter(new SportsCardAdapter(cards, now));
         sportsList.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) { if (pos < cards.size()) fillSportsPanel(cards.get(pos), sportsChannelList.hasFocus()); }
+            @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+                if (pos < cards.size()) fillSportsPanel(cards.get(pos), sportsChannelList.hasFocus());
+                sportsList.post(() -> revealSportsCard(sportsList));
+            }
             @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
         });
         sportsList.setOnItemClickListener((p, v, pos, id) -> { if (pos < cards.size()) fillSportsPanel(cards.get(pos), true); });
@@ -3963,9 +3973,21 @@ public class MainActivity extends Activity {
             return;
         }
         int sel = keep >= 0 && keep < cards.size() ? keep : 0;
-        sportsList.setSelection(sel);
+        sportsList.setSelectionFromTop(sel, 0);
         fillSportsPanel(cards.get(sel), sportsChannelList.hasFocus());
         if (!sportsChannelList.hasFocus()) sportsList.requestFocus();
+    }
+
+    /** Android may retain a partial row on focus/refresh; keep the selected card inside its viewport. */
+    static void revealSportsCard(ListView list) {
+        if (list == null || list.getHeight() <= 0) return;
+        int position = list.getSelectedItemPosition();
+        View card = list.getSelectedView();
+        if (position < 0 || card == null) return;
+        int top = list.getPaddingTop(), bottom = list.getHeight() - list.getPaddingBottom();
+        if (card.getTop() < top || (card.getBottom() > bottom && card.getHeight() <= bottom - top)) {
+            list.setSelectionFromTop(position, 0);
+        }
     }
 
     /** One game card: big kick-off time (or LIVE), game name, competition, channel count pill. */

@@ -1,5 +1,6 @@
 # tv-player rules
 - Sports Guide opening/manual refresh uses its own status dialog through listings, catalogue and selected-channel matching; periodic refresh stays unobtrusive, and completion, failure or exit clears the dialog. Sports body/card rows disable baseline alignment to keep unequal columns inside their bounds.
+- Sports event selections restore at the padded list origin and reveal clipped selected cards after remote navigation/focus; viewport checks must use an attached scrolling list, not just detached row measurements.
 - DAZN recovery uses verified channel/category identity, not numeric feed prefixes; its live-offset drift guard allows the larger cushion and same-event alternatives come from the selected Sports Guide card.
 - Film/whole-series votes use a separate device-token background queue; poster BM averages and counts are separate from provider ratings, with bounded batched reads and no progress bar moved to series posters.
 - IntroActivity is the launcher and plays the bundled CDN-sourced opening film once per cold launch; MainActivity remains the direct destination for playback/reminders so the intro never delays them.
