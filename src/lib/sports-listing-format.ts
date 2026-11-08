@@ -580,7 +580,8 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
  * "Stan 01 : Singapore: Day 3 - WTA 500 start:2026-09-23 05:59:29 stop:...".
  */
 const PROVIDER_STAMP_RE = /\bstart:\s*(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?/i;
-const NAMED_PROVIDER_STAMP_HEAD_RE = /^([a-z][a-z0-9 +&'./-]*?)\s*:\s*(\d{1,3})\s+name\s*:\s*(.+)$/i;
+// Some provider exports insert a programme ID between the channel and name.
+const NAMED_PROVIDER_STAMP_HEAD_RE = /^([a-z][a-z0-9 +&'./-]*?)\s*:\s*(\d{1,3})(?:\s+\d+)?\s+name\s*:\s*(.+)$/i;
 const PROVIDER_CHANNEL_STAMP_HEAD_RE = /^([a-z][a-z0-9 +&'./-]*?\s+\d{1,3})\s*:\s*(.+)$/i;
 
 function detectStampedEvent(line: string, date: string | null): SportsListingEvent | null {
