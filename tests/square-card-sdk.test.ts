@@ -33,9 +33,9 @@ test('concurrent card opens share one environment-specific SDK load', async () =
 test('a downloaded SDK without Square can be reloaded instead of caching failure', async () => {
   const { scripts, windowMock } = browser();
   const failed = loadSquareCardSdk('production');
-  const rejection = expect(failed).rejects.toThrow('Square card entry did not load');
+  const rejection = failed.catch(error => error.message);
   scripts[0]?.onload?.();
-  await rejection;
+  expect(await rejection).toBe('Square card entry did not load');
   const retry = loadSquareCardSdk('production');
   expect(retry).not.toBe(failed);
   expect(scripts.length).toBe(2);
