@@ -28,7 +28,7 @@ public final class BackupFeedStatusTest {
         assertFalse(status.stalled(true, true, 2100));
     }
 
-    @Test public voidStartupPauseAndReopenNeverInheritAStall() {
+    @Test public void startupPauseAndReopenNeverInheritAStall() {
         BackupFeedStatus status = new BackupFeedStatus();
         status.reset(0); status.buffering(10);
         assertFalse(status.stalled(false, true, 4000));
