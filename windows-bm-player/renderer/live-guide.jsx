@@ -1,6 +1,8 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
+import checkin from '../checkin.cjs';
+import guideRefresh from '../guide-refresh.cjs';
 
 // Live TV laid out like the Android/Amazon BM Player: preview top-left, programme info beside it with
 // Search TV / Voice search top right, a slim date row (◀ 24h / Now / 24h ▶ / Category pill) and the guide grid below.
@@ -16,20 +18,24 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  const [catOpen,setCatOpen]=useState(false);
  const [searchOpen,setSearchOpen]=useState(false);
  const [guide,setGuide]=useState({});
- const asked=useRef(new Set()),grid=useRef(null);
+ const asked=useRef(new Map()),pending=useRef(new Set()),grid=useRef(null);
+ const epgRef=useRef(epg);epgRef.current=epg;
  const now=Date.now();
- async function load(ch){if(asked.current.has(ch.id))return;asked.current.add(ch.id);try{const p=await epg(ch.id);setGuide(g=>({...g,[ch.id]:p||[]}));}catch{setGuide(g=>({...g,[ch.id]:[]}));}}
+ async function load(ch,isActive){if(pending.current.has(ch.id)||!guideRefresh.due(asked.current.get(ch.id)))return;pending.current.add(ch.id);try{const p=await epgRef.current(ch.id);if(!isActive())return;asked.current.set(ch.id,Date.now());setGuide(g=>({...g,[ch.id]:p||[]}));}catch{/* Keep the last good line-up and retry on the next tick. */}finally{pending.current.delete(ch.id);}}
  // Fetch programmes only for rows that scroll into view, three at a time like the Android guide.
- useEffect(()=>{const root=grid.current;if(!root)return;const queue=[];let running=0;
-  const pump=()=>{while(running<3&&queue.length){const ch=queue.shift();running++;load(ch).finally(()=>{running--;pump();});}};
-  const io=new IntersectionObserver(rows=>{rows.forEach(r=>{if(r.isIntersecting){const ch=channels.find(c=>c.id===r.target.dataset.ch);if(ch&&!asked.current.has(ch.id))queue.push(ch);}});pump();},{root,rootMargin:'200px'});
-  root.querySelectorAll('[data-ch]').forEach(el=>io.observe(el));return()=>io.disconnect();},[channels]);
+ useEffect(()=>{const root=grid.current;if(!root)return;const queue=[],visible=new Set();let running=0,active=true;
+  const pump=()=>{while(active&&running<3&&queue.length){const ch=queue.shift();running++;load(ch,()=>active).finally(()=>{running--;pump();});}};
+  const enqueue=ch=>{if(ch&&!queue.some(q=>q.id===ch.id))queue.push(ch);};
+  const io=new IntersectionObserver(rows=>{rows.forEach(r=>{const id=r.target.dataset.ch;if(r.isIntersecting){visible.add(id);enqueue(channels.find(c=>String(c.id)===id));}else visible.delete(id);});pump();},{root,rootMargin:'200px'});
+  root.querySelectorAll('[data-ch]').forEach(el=>io.observe(el));
+  const cancel=checkin.every(async()=>{if(document.hidden)return;visible.forEach(id=>enqueue(channels.find(c=>String(c.id)===id)));pump();},()=>60000,60000+Math.random()*12000);
+  return()=>{active=false;queue.length=0;cancel();io.disconnect();};},[channels]);
  useEffect(()=>{grid.current?.scrollTo(0,0);setFocus(null);},[category]);
  const list=id=>guide[id]||[];
  const onAt=(id,t)=>list(id).find(p=>p.start<=t&&p.end>t);
  const nextAfter=(id,p)=>list(id).find(q=>q.start>=p.end);
  const shownCh=focus?.channel||selected;
- const shownProg=focus?.programme||(shownCh?onAt(shownCh.id,now):null);
+ const shownProg=(focus?.programme&&shownCh?list(shownCh.id).find(p=>p.id===focus.programme.id):null)||(shownCh?onAt(shownCh.id,now):null);
  const catName=id=>categories.find(c=>c.id===id)?.name||'';
  const currentCat=category==='all'?'All':catName(category);
  function pick(ch,p){
