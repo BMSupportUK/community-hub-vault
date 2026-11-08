@@ -37,7 +37,7 @@ export function feedsFor(name: string, category: string): string[] {
   return [...new Set(out)];
 }
 
-const QUALITY = /^(f?hd|uhd|sd|4k|8k|hevc|h\.?26[45]|raw|\d{2,3}\s*fps|vip|backup|alt|multi|nowtv|catchup backup|ᴴᴰ|ᶠᴴᴰ|ᵁᴴᴰ|ᴿᴬᵂ)$/i;
+const QUALITY = /^(f?hd|uhd|sd|4k|8k|hevc|h\.?26[45]|raw|\d{2,3}\s*fps|vip|backup|alt|multi|nowtv|catchupbackup|ᴴᴰ|ᶠᴴᴰ|ᵁᴴᴰ|ᴿᴬᵂ)$/i;
 
 /** Lower-case alphanumerics with quality/country tags removed; "+1" kept as "plus1". */
 export function normName(s: string): string {
