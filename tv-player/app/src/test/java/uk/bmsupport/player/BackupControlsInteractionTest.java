@@ -18,7 +18,7 @@ public class BackupControlsInteractionTest {
     void set(Object a,String key,Object v)throws Exception {Field f=a.getClass().getDeclaredField(key);f.setAccessible(true);f.set(a,v);}
     @Test public void idleBackupHidesBothControlLayers()throws Exception {
         BackupPlayerActivity a=Robolectric.buildActivity(BackupPlayerActivity.class).get();
-        PlayerControlView bar=new PlayerControlView(a); LinearLayout row=new LinearLayout(a);
+        PlayerControlView bar=new PlayerControlView(a); bar.setAnimationEnabled(false); LinearLayout row=new LinearLayout(a);
         set(a,"controller",bar);set(a,"controlsRow",row);set(a,"lastPressAt",SystemClock.elapsedRealtime()-4500);
         Field f=BackupPlayerActivity.class.getDeclaredField("hideControls");f.setAccessible(true);((Runnable)f.get(a)).run();
         assertEquals(View.GONE,row.getVisibility());assertFalse(bar.isVisible());
