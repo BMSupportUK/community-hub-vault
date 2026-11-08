@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Add saved per-device category ordering for Live TV, Movies and Series in BM Player settings across Android/Amazon, Windows and Mac; test reorder/reset persistence.
 - [x] Warm Square public assets on the secure-order password screen and reuse retryable SDK loads; replace country code entry with 249 named countries/territories. Real pending £65 order: wrong password blocked, hosted card ready in 3.16s after unlock/Card selection, Canada selected, phone fits. No payment submitted; website publication required.
 - [x] Released signed Android/Amazon 3.85: selected Sports Guide cards stay inside the padded list after scrolling, refresh and returning from channels. Attached-list clipping reproduction and correction pass; all 136 native checks pass and public APK matches byte-for-byte. Real-box appearance remains unverified because no device is attached.
 - [x] Released signed Android/Amazon 3.84: Sports Guide staged loading pop-up, non-baseline-aligned event layout, independent controls-row auto-hide; 134 checks pass and public APK matches byte-for-byte. Real-box appearance/playback remains unverified because no device is attached.
