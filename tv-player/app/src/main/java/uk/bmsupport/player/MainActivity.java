@@ -691,7 +691,7 @@ public class MainActivity extends Activity {
                 try {
                     Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "unlock")
                             .put("device_token", prefs.getString("token", "")).put("account_number", n).toString());
-                    ui.post(() -> { unlocked = true; ((PlayerApplication) getApplication()).refreshMajor(); hideKeyboard(in); getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN); showHome(); syncFavourites(null); FormatSync.pull(this); ProgressSync.pull(this, true, () -> { if ("home".equals(screen)) showHome(); }); });
+                    ui.post(() -> { unlocked = true; ((PlayerApplication) getApplication()).refreshMajor(); hideKeyboard(in); getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN); showHome(); syncFavourites(null); ProgressSync.pull(this, true, () -> { if ("home".equals(screen)) showHome(); }); });
                 } catch (Exception ex) {
                     String m = String.valueOf(ex.getMessage()), msg = "Couldn't check. Check the internet and try again.";
                     int i = m.indexOf('{');
@@ -804,8 +804,8 @@ public class MainActivity extends Activity {
                 String f = prefs.getString("format", "auto");
                 if (f.equals("ts")) return new String[]{base + ".ts"};
                 if (f.equals("hls")) return new String[]{base + ".m3u8"};
-                String pf = prefs.getString("fmt_pref:" + it.id, null);
-                return StreamRecovery.preferFormat(new String[]{base + ".ts", base + ".m3u8", d + "/" + u + "/" + p + "/" + it.id}, pf);
+                // Old learned ts/m3u8 swaps are ignored: always the playlist's own order.
+                return new String[]{base + ".ts", base + ".m3u8", d + "/" + u + "/" + p + "/" + it.id};
             }
             case "film": return new String[]{d + "/movie/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext)};
             default: return new String[]{d + "/series/" + u + "/" + p + "/" + it.id + "." + (it.ext.isEmpty() ? "mp4" : it.ext)};
