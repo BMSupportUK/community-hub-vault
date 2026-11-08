@@ -1,0 +1,5 @@
+const {test,expect}=require('bun:test');
+const {loadFixtureGuide}=require('../fixture-guide.cjs');
+test('Sports Pass fixtures replace provider placeholders',async()=>{let calls=0;const rows=[{title:'Fixture'}];const result=await loadFixtureGuide({name:'Coupang | Event 1'},async q=>{expect(q.channel).toBe('Coupang | Event 1');return {source:'sports',epg_listings:rows};},async()=>{calls++;return []});expect(result).toEqual(rows);expect(calls).toBe(0);});
+test('ordinary channel EPG stays with provider',async()=>{let calls=0;const result=await loadFixtureGuide({name:'BBC One'},async()=>{calls++;return {};},async()=>['Provider']);expect(result).toEqual(['Provider']);expect(calls).toBe(0);});
+test('unmatched and unavailable fixture sources fall back',async()=>{for(const site of [async()=>({source:'none',epg_listings:null}),async()=>{throw Error('Unavailable')}])expect(await loadFixtureGuide({name:'Celtic TV'},site,async()=>['Provider'])).toEqual(['Provider']);});
