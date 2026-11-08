@@ -21,3 +21,11 @@ test('a name that is not on the playlist finds nothing', () => {
 test('year suffixes are only stripped at the end of the name', () => {
   assert.equal(normalize('2001: A Space Odyssey'), '2001: a space odyssey');
 });
+
+const main = require('fs').readFileSync(require('path').join(__dirname, '../electron/main.cjs'), 'utf8');
+const app = require('fs').readFileSync(require('path').join(__dirname, '../renderer/app.jsx'), 'utf8');
+test('the app opens the title the website sent', () => {
+  assert.ok(/if\(r&&r\.watch\)openWatch\(r\.watch\)/.test(main), 'the check-in reply must hand the title over');
+  assert.ok(/send\(\{type:'watch',item\}\)/.test(main));
+  assert.ok(/if\(event\.type==='watch'\)choose\(event\.item\)/.test(app), 'the window must open the title');
+});
