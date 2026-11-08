@@ -24,7 +24,7 @@ export async function recordSquarePayment(db: any, payment: SquarePayment, locat
     const { postOrderPaymentReceivedNotice } = await import('./order-payment-notice.server');
     await postOrderPaymentReceivedNotice({ orderId: order.id, provider: 'Square', reference: payment.id, actorId: order.user_id });
   }
-  if (paid || ['FAILED', 'CANCELED'].includes(payment.status ?? '')) {
+  if (paid) {
     const { error: clearError } = await db.from('order_checkout_links').update({ square_attempt_key: null }).eq('order_id', order.id);
     if (clearError) throw new Error(clearError.message);
   }
@@ -45,7 +45,7 @@ export async function syncSquareCheckout(db: any, orderId: string, locationId: s
   for (let page = 0; page < 3; page++) {
     const query = new URLSearchParams({ location_id: locationId, begin_time: new Date(Date.now() - 86400000).toISOString(), sort_order: 'DESC', limit: '100', ...(cursor ? { cursor } : {}) });
     const result = await squareRequest(`/v2/payments?${query}`);
-    const payment = (result.payments ?? []).find((p: SquarePayment) => p.reference_id === orderId && ['COMPLETED', 'APPROVED', 'PENDING', 'FAILED', 'CANCELED'].includes(p.status ?? ''));
+    const payment = (result.payments ?? []).find((p: SquarePayment) => p.reference_id === orderId && ['COMPLETED', 'APPROVED', 'PENDING'].includes(p.status ?? ''));
     if (payment) return recordSquarePayment(db, payment, locationId);
     cursor = result.cursor ?? '';
     if (!cursor) break;
