@@ -7,6 +7,7 @@
 - Channel EPG uses fixture-guide.cjs with trusted catalogue names for saved website sports/club fixtures, then provider fallback; ordinary/official stations stay provider-direct. Never restore country imports/category-refresh. Windows and Mac share this path.
 - Sports Guide loading presentation covers both the guide request and channel catalog preparation; the shared renderer also serves Mac and clears failed requests instead of leaving an endless wait.
 - Sports-pass and high-bitrate recovery (DAZN, Coupang Play, heavy names and device-remembered measured heavy channels via stream-recovery.cjs cushioned) is shared with Mac, using catalog-verified channel/category identity and Sports Guide event context; alternative choices never accept provider URLs from the renderer.
+- Windows and Mac never switch or share ts/m3u8 because of buffering; live plays in playlist order, matching Android.
 - Windows and Mac share checkin.cjs for staggered website polling, jitter, busy-response backoff and server slowdown; keep stream/provider traffic outside this scheduler.
 - Film/series community votes use the unlock-gated main-process bridge; batch poster rating reads and keep shared BM averages separate from provider sort metadata.
 - The opening film is bundled offline and rendered before the main screen; the main window is maximised before being shown to avoid a small-window flash.
