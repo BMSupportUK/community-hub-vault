@@ -21,6 +21,22 @@ function setLoudness(index, video, volume) {
   }
   if (b && b.video === video) { b.gain.gain.value = Math.max(1, v); b.ctx.resume?.().catch(() => {}); }
 }
+// Live streams: when the loaded picture runs low, ease very slightly slower instead of freezing.
+const EASE = 0.97;
+const userRates = new Map();
+function setEase(index, video, slow) {
+  const base = userRates.get(index) || 1;
+  try { video.playbackRate = slow ? base * EASE : base; } catch {}
+}
+/** One pair of listeners per screen: slow while the buffer is empty, back to the chosen speed once it flows. */
+function easeWire(index, video) {
+  if (video._ease) return;
+  video._ease = true;
+  video.addEventListener('stalled', () => { const c = commands.get(index); if (c && c.live !== false) setEase(index, video, true); });
+  const back = () => setEase(index, video, false);
+  video.addEventListener('playing', back);
+  video.addEventListener('canplay', back);
+}
 function destroy(index) {
   const p = players.get(index);
   if (p) { try { p.destroy(); } catch {} players.delete(index); }
@@ -38,7 +54,9 @@ function start(index) {
   // UHD memory cap (same idea as Android 3.52): played picture is dropped and saved picture is limited in MB, so 4K streams never fill the app's memory.
   const seconds = Math.max(2, Math.round(cmd.buffer / 1000));
   if (cmd.kind === 'hls' && Hls.isSupported()) {
-    const hls = new Hls({ enableWorker: false, maxBufferLength: cmd.steady ? 40 : Math.max(10, seconds * 3), maxMaxBufferLength: cmd.steady ? 90 : 600, maxBufferSize: 48 * 1024 * 1024, backBufferLength: 10, ...(cmd.live !== false ? { liveSyncDuration: seconds, liveMaxLatencyDuration: seconds + 30 } : {}) });
+    // Live m3u8 keeps the provider's own hold-back: two segments back from the live edge. A fixed seconds
+    // offset parked playback at the oldest segment of short playlists, which then dropped out and looped.
+    const hls = new Hls({ enableWorker: false, maxBufferLength: cmd.steady ? 40 : Math.max(10, seconds * 3), maxMaxBufferLength: cmd.steady ? 90 : 600, maxBufferSize: 48 * 1024 * 1024, backBufferLength: 10, ...(cmd.live !== false ? { liveSyncDurationCount: 2, liveMaxLatencyDurationCount: 6 } : {}) });
     hls.on(Hls.Events.ERROR, (_e, d) => { if (d.fatal) fail(); });
     if (cmd.subtitles != null) {
       hls.subtitleDisplay = cmd.subtitles === true;
@@ -60,6 +78,8 @@ function start(index) {
     video.textTracks.addEventListener?.('addtrack', setText); video.addEventListener('loadedmetadata', setText, { once: true });
   }
   if (cmd.resume > 0) video.addEventListener('loadedmetadata', () => { try { video.currentTime = cmd.resume; } catch {} }, { once: true });
+  easeWire(index, video);
+  try { video.playbackRate = userRates.get(index) || 1; } catch {}
   video.style.objectFit = cmd.fill ? 'cover' : 'contain';
   video.style.transform = ''; video._bars = cmd.fill ? new BarTracker() : null;
   video.play().catch(() => {});
@@ -79,7 +99,7 @@ function apply(data) {
     if (p instanceof Hls) { p.subtitleDisplay = data.on; p.subtitleTrack = data.on && p.subtitleTracks.length ? 0 : -1; }
     [...video.textTracks].forEach((x, i) => { x.mode = data.on && i === 0 ? 'showing' : 'disabled'; });
   }
-  else if (data.action === 'speed') video.playbackRate=data.rate;
+  else if (data.action === 'speed') { userRates.set(index, data.rate); video.playbackRate = data.rate; }
   else if (data.action === 'audioTrack') { const p=players.get(index);if(p instanceof Hls)p.audioTrack=data.id;else if(video.audioTracks)[...video.audioTracks].forEach((t,i)=>{t.enabled=i===data.id;}); }
   else if (data.action === 'subtitleTrack') { const p=players.get(index);if(p instanceof Hls){p.subtitleDisplay=data.id>=0;p.subtitleTrack=data.id;}[...video.textTracks].forEach((t,i)=>{t.mode=i===data.id?'showing':'disabled';}); }
   else if (data.action === 'subtitleSource') { video.querySelectorAll('track').forEach(t=>t.remove());if(data.src){const t=document.createElement('track');t.kind='subtitles';t.src=data.src;t.default=true;video.append(t);t.addEventListener('load',()=>{t.track.mode='showing';});} }

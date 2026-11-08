@@ -56,6 +56,7 @@ function App(){
   if(event.type==='reminder')setModal({type:'reminder-alert',reminder:event.reminder});
   if(event.type==='playback')setState(s=>s?{...s,playing:(s.playing||[]).map(p=>p.index===event.index?{...p,position:event.position,duration:event.duration,paused:event.paused,seekable:event.seekable,backup:event.backup}:p)}:s);
   if(event.type==='feed')setFeed(f=>({...f,[event.index]:event.status}));
+  if(event.type==='watch')choose(event.item);
  });},[]);
  async function browse(nextKind,source,favourites=false){setKind(source?'live':nextKind);setCategory(source?'live':'all');setQuery('');setHeroItem(null);setSelected(null);setProgrammes([]);setView('browse');setLoading(true);setSort(state?.settings?.['sort_'+nextKind]||'added');if(source){setData({saved:true,favourites,categories:[{id:'live',name:'Live TV'},{id:'film',name:'Movies'},{id:'series',name:'Series'}],items:source.map(i=>({...i,category:i.kind==='live'?'live':i.kind==='film'?'film':'series'}))});setLoading(false);loadRatings(source);return;}const result=await act(()=>bm.catalog(nextKind));if(result){setData(result);loadRatings(result.items);}setLoading(false);pane.current?.scrollTo(0,0);}
  const categories=data.saved?data.categories:orderCategories(data.categories,state?.settings?.['category_order_'+kind]);

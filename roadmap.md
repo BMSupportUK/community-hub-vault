@@ -210,3 +210,5 @@
 - [x] Android 3.74 / Windows 0.4.29 / Mac 0.1.39: failed channel reported at first failure; offline before event start says "event hasn't started yet". Not tried on a real device.
 
 - [x] Real TV guide listings (UK/USA/Canada/overseas) + Sports Pass guides from Sports Guide — Android 3.86, Windows 0.4.33, Mac 0.1.43; needs website publish to switch on
+
+- [x] Windows 0.4.45 and Mac 0.1.55: live m3u8 keeps the provider hold-back (no fixed seconds offset), low buffers ease to 0.97 speed instead of freezing, and "Watch on my box" opens the website-picked film/series on the desktop. 110 desktop checks pass; both public downloads SHA-256 match the local builds (mac be643478..., win 36601a81...). Real Windows/Mac install and playback remain unverified without devices.
