@@ -14,7 +14,12 @@ const STABLE_RAISE_MS = 120000;
 /** Live channels keep at least this much cushion so short provider cut-outs play through. */
 const LIVE_BUFFER_MS = 12000;
 function isDazn(name) { return /\bdazn\b/i.test(String(name || '').normalize('NFKC')); }
-function profile(name) { return isDazn(name) ? { min:40000, max:90000, start:3000, rebuffer:6000, live:30000, reconnect:6000, swap:1 } : { live:LIVE_BUFFER_MS, reconnect:STALL_RECONNECT_MS, swap:2 }; }
+function isCoupang(name) { return /\bcoupang\b/i.test(String(name || '').normalize('NFKC')); }
+/** Sports-pass feeds (DAZN, Coupang Play) get the steadier large-buffer profile. */
+function cushioned(name) { return isDazn(name) || isCoupang(name); }
+/** Diagnostic tag for the admin buffering report. */
+function providerTag(name) { return isDazn(name) ? 'dazn' : isCoupang(name) ? 'coupang' : null; }
+function profile(name) { return cushioned(name) ? { min:40000, max:90000, start:3000, rebuffer:6000, live:30000, reconnect:6000, swap:1 } : { live:LIVE_BUFFER_MS, reconnect:STALL_RECONNECT_MS, swap:2 }; }
 function liveBufferMs(setting, name) { return Math.max(profile(name).live, bufferMs(setting)); }
 
 /** Play position not moving for 4s while "playing" means the picture froze. */
@@ -97,11 +102,11 @@ function tick(session, state, now, live) {
       if (!session.failed) { session.failed = true; out.failed = true; out.event = { ms: now - session.stallAt, reconnected: true }; }
       return out;
     }
-    const delay = isDazn(session.recoveryName || session.item?.name) && state === 6 ? 0 : backoffMs(session.reconnects);
+    const delay = cushioned(session.recoveryName || session.item?.name) && state === 6 ? 0 : backoffMs(session.reconnects);
     session.retryAt = now + delay + recovery.reconnect;
     out.reconnect = delay;
   }
   return out;
 }
 
-module.exports = { isDazn, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { isDazn, isCoupang, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
