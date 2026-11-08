@@ -24,7 +24,8 @@ public class LiveGuideNavigationTest {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         GuideGridView grid = grid(activity);
         long now = System.currentTimeMillis() / 1000;
-        GuideGridView.Prog programme = new GuideGridView.Prog("Upcoming match", now + 1800, now + 7200);
+        // Span the right-hand edge in both the phone (3h) and TV (2h) windows.
+        GuideGridView.Prog programme = new GuideGridView.Prog("Upcoming match", now + 1800, now + 14400);
         grid.setProgs(0, Arrays.asList(programme));
         final int[] reminders = {0}, previews = {0};
         grid.setListener(new GuideGridView.Listener() {
