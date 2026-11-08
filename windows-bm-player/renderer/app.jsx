@@ -4,6 +4,7 @@ import {matchChannel} from '../../src/lib/player-channel-match';
 import {orderBrowse} from '../playback-core.cjs';
 import {LEVELS as BOOST_LEVELS,HIGH_NOTE,level as boostLevel,next as nextBoost} from '../sound-boost.cjs';
 import {LABELS as FEED_LABELS} from '../feed-status.cjs';
+import {episodeTitle} from '../episode-title.cjs';
 import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
 import {LiveGuide} from './live-guide';
