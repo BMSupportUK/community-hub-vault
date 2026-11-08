@@ -34,6 +34,23 @@ export const Route = createFileRoute("/api/public/hooks/square-invoice")({
         }
 
         const invoice = payload?.data?.object?.invoice;
+        const paymentId = payload?.data?.object?.payment?.id;
+        if (typeof paymentId === 'string' && paymentId.length <= 192 && /^payment\.(created|updated)$/.test(String(payload?.type))) {
+          try {
+            const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+            const { squareRequest } = await import('@/lib/provider-invoices.server');
+            const payment = (await squareRequest(`/v2/payments/${encodeURIComponent(paymentId)}`)).payment;
+            if (typeof payment?.reference_id !== 'string' || !/^[a-f0-9-]{36}$/.test(payment.reference_id)) return new Response('ok');
+            const locationId = process.env['SQUARE_LOCATION_ID'];
+            if (!locationId) return new Response('Square location missing', { status: 500 });
+            const { recordSquarePayment } = await import('@/lib/square-checkout.server');
+            await recordSquarePayment(supabaseAdmin, payment, locationId);
+          } catch (error) {
+            console.error('[square-payment] confirmation failed', error);
+            return new Response('Payment confirmation failed', { status: 500 });
+          }
+          return new Response('ok');
+        }
         if (!invoice?.id) return new Response("ok");
 
         const { supabaseAdmin } = await import('@/integrations/supabase/client.server');

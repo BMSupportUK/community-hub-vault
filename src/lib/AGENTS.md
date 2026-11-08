@@ -25,7 +25,7 @@
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
 - Pre-account manual logins are order-private; claim moves them to customer credentials, the admin list's source of truth.
 - Signed-out checkout app logins use only token-gated SECURITY DEFINER reads, never the staff credentials view.
-- Square/Stripe payments use shared server invoice creation with verified order/token access; BM Support PDFs remain post-payment receipts.
+- Square checkout uses SDK-hosted card fields after order-token/password verification, durable unresolved-attempt keys and the shared payment lock; only provider-verified COMPLETED GBP payments matching order/amount/location mark paid, with webhook/poll/cron repair. Retire payable invoices before direct charging; Stripe invoice behaviour and BM Support post-payment PDFs remain unchanged.
 - Customer account switching verifies admin on the server, uses real customer sessions and an audit; admin return refresh tokens stay in a short-lived HttpOnly cookie and return checks current admin privileges.
 - Enabler confirmation status exposes only bound-reference expiry after ticket ownership or order-password verification; consumed TV checks and login PIN expiry never determine confirmation-entry availability.
 - Site-user manual orders use a role-gated atomic RPC that assigns explicit user ownership and payment notification; site identity and email come from a validated user ID, never email matching.

@@ -81,6 +81,14 @@ export async function reconcileUnpaidOrders(): Promise<{ scanned: number; repair
   for (const order of (orders ?? []) as UnpaidOrder[]) {
     const totalCents = Number(order.total_cents ?? 0);
     try {
+      const locationId = process.env['SQUARE_LOCATION_ID'];
+      if (locationId) {
+        try {
+          const { syncSquareCheckout } = await import('@/lib/square-checkout.server');
+          const square = await syncSquareCheckout(supabaseAdmin, order.id, locationId);
+          if (square.paid) { repaired++; continue; }
+        } catch (error) { console.error('[payment-reconcile] Square check failed', order.id, error); }
+      }
       const { data: payment } = await supabaseAdmin
         .from("order_payments")
         .select("provider,provider_payment_id,status,amount_cents,card_brand,last_4,receipt_url")

@@ -8,8 +8,7 @@ import { unlock } from "@/lib/checkout.server";
  */
 const creds = z.object({
   token: z.string().regex(/^[a-f0-9]{64}$/),
-  // Member (shop) orders unlock with the link alone, so the password is empty;
-  // unlock() still enforces it for manual orders.
+  // Every order is verified by unlock() using its token and entered password.
   password: z.string().max(64).default(""),
 });
 
@@ -44,6 +43,11 @@ async function guardAgainstDoublePayment(supabaseAdmin: any, orderId: string, me
   if (link?.payment_sent_at) {
     throw new Error("You've already told us a bank transfer was sent for this order. Please wait for us to confirm it, or message us in the chat before paying another way.");
   }
+  if (method !== 'square') {
+    const { data: attempt, error } = await supabaseAdmin.from('order_checkout_links').select('square_attempt_key').eq('order_id', orderId).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (attempt?.square_attempt_key) throw new Error('A card payment is awaiting confirmation. Do not pay another way.');
+  }
   const { data: p } = await supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", orderId).maybeSingle();
   const st = String(p?.status ?? "").toUpperCase();
   if (p && ["COMPLETED", "APPROVED", "FINISHED"].includes(st)) throw new Error("A payment has already been taken for this order.");
@@ -70,7 +74,8 @@ async function expireOpenStripeSession(supabaseAdmin: any, orderId: string) {
 }
 
 async function withPaymentLock<T>(supabaseAdmin: any, orderId: string, fn: () => Promise<T>): Promise<T> {
-  const { data: got } = await supabaseAdmin.rpc("claim_checkout_payment_lock", { p_order: orderId, p_seconds: 90 });
+  const { data: got, error } = await supabaseAdmin.rpc("claim_checkout_payment_lock", { p_order: orderId, p_seconds: 90 });
+  if (error) throw new Error(error.message);
   if (!got) throw new Error("A payment for this order is already in progress. Please wait a moment and refresh before trying again.");
   try { return await fn(); } finally {
     await supabaseAdmin.rpc("release_checkout_payment_lock", { p_order: orderId });
@@ -96,11 +101,12 @@ export const checkoutSquareConfig = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const u = await unlock(data.token, data.password);
     if (!u) throw new Error("Not authorized");
+    const order = await loadOrder(u.supabaseAdmin, u.link.order_id);
     const appId = process.env.SQUARE_APPLICATION_ID;
     const locationId = process.env.SQUARE_LOCATION_ID;
     if (!appId || !locationId) throw new Error("Card payments are not configured");
     const env = (process.env.SQUARE_ENVIRONMENT ?? "production").toLowerCase() === "sandbox" ? "sandbox" : "production";
-    return { applicationId: appId, locationId, environment: env as "sandbox" | "production" };
+    return { applicationId: appId, locationId, environment: env as "sandbox" | "production", amountCents: Number(order.total_cents) };
   });
 
 export const checkoutSquareCharge = createServerFn({ method: "POST" })
@@ -115,38 +121,21 @@ export const checkoutSquareCharge = createServerFn({ method: "POST" })
     return withPaymentLock(supabaseAdmin, link.order_id, async () => {
     const order = await guardAgainstDoublePayment(supabaseAdmin, link.order_id, "square");
     await expireOpenStripeSession(supabaseAdmin, order.id);
-    // Same card token → same key, so a resubmitted request can never charge twice.
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${order.id}:${data.sourceId}`));
-    const idem = "c" + Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 40);
-    const res = await fetch(`${sqBase()}/v2/payments`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Square-Version": "2024-10-17" },
-      body: JSON.stringify({
-        source_id: data.sourceId,
-        idempotency_key: idem,
-        amount_money: { amount: order.total_cents, currency: "GBP" },
-        location_id: locationId,
-        reference_id: order.id,
-        note: `Order ${order.order_ref ?? String(order.id).slice(0, 8)}`,
-        autocomplete: true,
-      }),
+    const { retireCheckoutInvoice, takeSquareCheckoutPayment } = await import('@/lib/square-checkout.server');
+    await retireCheckoutInvoice(supabaseAdmin, order.id);
+    return takeSquareCheckoutPayment(supabaseAdmin, order, data.sourceId, token, locationId, process.env['SQUARE_ENVIRONMENT'] ?? 'production');
     });
-    const body: any = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body?.errors?.[0]?.detail || "Card payment failed");
-    const payment = body?.payment;
-    if (!payment?.id || !["COMPLETED", "APPROVED"].includes(String(payment.status))) {
-      throw new Error(`Card payment status: ${payment?.status ?? "unknown"}`);
-    }
-    const cardBrand = payment?.card_details?.card?.card_brand ?? null;
-    const last4 = payment?.card_details?.card?.last_4 ?? null;
-    await supabaseAdmin.from("order_payments").upsert({
-      order_id: order.id, provider: "square", provider_payment_id: payment.id, square_payment_id: payment.id,
-      status: payment.status, amount_cents: order.total_cents, currency: "GBP",
-      card_brand: cardBrand, last_4: last4, receipt_url: null, created_by: order.user_id,
-    }, { onConflict: "order_id" });
-    await markPaid(supabaseAdmin, order, "Square", payment.id);
-    return { status: String(payment.status), cardBrand, last4, receiptUrl: null };
-    });
+  });
+
+export const checkoutSquareStatus = createServerFn({ method: 'POST' })
+  .inputValidator(d => creds.parse(d))
+  .handler(async ({ data }) => {
+    const u = await unlock(data.token, data.password);
+    if (!u) throw new Error('Not authorized');
+    const locationId = process.env['SQUARE_LOCATION_ID'];
+    if (!locationId) throw new Error('Square is not configured');
+    const { syncSquareCheckout } = await import('@/lib/square-checkout.server');
+    return syncSquareCheckout(u.supabaseAdmin, u.link.order_id, locationId);
   });
 
 /**

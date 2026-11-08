@@ -24,6 +24,7 @@ const db = {
 };
 mock.module('../src/integrations/supabase/client.server', () => ({ supabaseAdmin: db }));
 mock.module('../src/lib/provider-invoices.server', () => ({ syncProviderInvoice: async () => null }));
+mock.module('../src/lib/square-checkout.server', () => ({ syncSquareCheckout: async () => ({ paid: false, status: '' }) }));
 mock.module('../src/lib/order-payment-notice.server', () => ({ postOrderPaymentReceivedNotice: async (args: { orderId: string }) => { notices.push(args.orderId); } }));
 mock.module('../src/lib/stripe.server', () => ({ createStripeClient: (environment: string) => ({
   checkout: { sessions: { retrieve: async (id: string) => {

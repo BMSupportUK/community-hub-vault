@@ -1,0 +1,2 @@
+ALTER TABLE public.order_checkout_links ADD COLUMN IF NOT EXISTS square_attempt_key text;
+COMMENT ON COLUMN public.order_checkout_links.square_attempt_key IS 'Unresolved direct Square charge idempotency key; retained after ambiguous provider responses to prevent a second charge.';
