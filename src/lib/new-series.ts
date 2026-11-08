@@ -3,6 +3,20 @@ export type NewSeries = WatchTitle & { premiereDate: string };
 export type SeriesMonth = { month: number; name: string; items: NewSeries[] };
 export type DiscoverySeries = { id: number; name?: string; first_air_date?: string; overview?: string; poster_path?: string | null; vote_average?: number; vote_count?: number };
 export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+/** How many year pills the New series screen offers, counting the current year. */
+export const NEW_SERIES_YEARS_SHOWN = 6;
+/** Year pills run newest first: the current year, then the years before it. */
+export function newSeriesYears(currentYear: number, shown: number = NEW_SERIES_YEARS_SHOWN): number[] {
+  return Array.from({ length: Math.max(1, shown) }, (_, index) => currentYear - index);
+}
+/** Past years run to their last day; the current year stops at today so nothing un-aired is offered. */
+export function newSeriesCutoff(year: number, today: string): string {
+  return year < Number(today.slice(0, 4)) ? `${year}-12-31` : today;
+}
+/** Past years need all twelve month lookups; the current year only the months already reached. */
+export function newSeriesMonthCount(year: number, today: string): number {
+  return year < Number(today.slice(0, 4)) ? 12 : Number(today.slice(5, 7));
+}
 export function groupNewSeries(rows: DiscoverySeries[], today: string): SeriesMonth[] {
   const year = Number(today.slice(0, 4));
   const seen = new Set<number>();
