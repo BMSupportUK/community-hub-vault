@@ -1,3 +1,4 @@
+// @ts-nocheck — bun:test is used only by the test runner.
 import { describe, expect, test } from 'bun:test';
 import { boxIsOn, requestIsFresh } from './send-to-box';
 
