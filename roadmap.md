@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] What to watch: use playlist Cinema films and Recommended series, matching poster/rating cards and description pop-ups; verify real catalogue and both tabs.
 - [x] Cancel website channel EPG: no EPG cron jobs remain, database import/dispatch capabilities retired, HTTP import routes return 410, released-app guide requests return provider fallback, Android and shared Windows/Mac source reads provider directly; separate Sports Guide unchanged. Tests pass; website publication required for compatibility replies, no new player installers built or real-device check performed.
 - [x] Explain EPG credit usage: project-wide billing cannot isolate EPG; request rate supports 0.15 requested credits per 100,000 requests, excluding database compute, transfer and worker-day costs. No EPG monthly total claimed.
 - [x] Prepare country-on-demand EPG: category notices across players, durable per-feed coalescing and hashed wake capabilities, staged atomic publication and bounded queue retries. 99 tests pass; real AU import 2.67s, fresh/All categories queue nothing, duplicate claims blocked and failed publish retains rows; isolated desktop category selection verified.
