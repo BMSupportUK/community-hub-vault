@@ -68,7 +68,6 @@ async function poll(){
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
   if(changed){save();if(store.user&&gate.unlocked)await refresh();}
   if(store.user&&gate.unlocked)syncFavourites().catch(()=>{});
-  if(gate.unlocked)syncFormats().catch(()=>{});
   send({type:'state',state:publicState()});
  }catch(error){send({type:'notice',message:error.message});}finally{pollBusy=false;}
 }
@@ -149,7 +148,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
  if(catalog){const verified=catalog.items.find(c=>String(c.id)===String(item.id));if(!verified)throw new Error('Channel unavailable.');item={...verified};}
  const event=sportsSnapshot?.events?.find(e=>String(e.start)+':'+e.title===eventKey);
  const recoveryName=item.kind==='live'?item.name+' '+(item.categoryName||''):'';
- const baseUrls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto'),urls=item.kind==='live'?recovery.preferFormat(baseUrls,store.formatPref?.[item.id]):baseUrls;
+ const baseUrls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto'),urls=baseUrls;
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
  const startAt=resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0;
@@ -169,7 +168,7 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  if(recovery.advertJump(session,Number(s.w)||0,Number(s.h)||0,s.state,Date.now(),session.item.kind==='live')){try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:recovery.liveBufferMs(store.settings?.buffer,session.recoveryName),resume:0,maxHeight:session.maxHeight});applyAudio();}catch{}}
  if(rec.event)queueBuffer(session.item,rec.event,session);
  if(rec.lower)session.maxHeight=720;
- if(rec.event&&!session.formatSwapped&&recovery.recentStalls(session.stallTimes||[],Date.now())>=recovery.profile(session.recoveryName).swap){const other=session.item.kind==='live'&&session.urls.length>1?recovery.otherFormat(session.urls[session.urlIndex]):null;if(other){session.formatSwapped=true;store.formatPref={...(store.formatPref||{}),[session.item.id]:other};save();site({action:'format_set',content_id:String(session.item.id),fmt:other}).catch(()=>{});if(recovery.cushioned(session.recoveryName)){const next=session.urls.findIndex(u=>u.endsWith('.'+other));if(next>=0){session.urlIndex=next;engine.play(session.index,session.urls[next],{steady:recovery.cushioned(session.recoveryName),buffer:recovery.liveBufferMs(store.settings?.buffer,session.recoveryName),live:true,resume:0,maxHeight:session.maxHeight});applyAudio();}}}}
+ /* ts/m3u8 is never switched or shared because of buffering: playlist order only. */
  let swapped=false;if(rec.offerFeed&&sessions.length===1){const r=await swapOptions(session);if(r.items.length){swapped=true;send({type:'alternate-feed',auto:true,index:session.index,...r});}}
  if(rec.raise){session.maxHeight=0;if(/\.m3u8$/i.test(session.urls[session.urlIndex]||'')){try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:session.item.kind==='live'?0:session.position,maxHeight:0});applyAudio();}catch{}}}
  if(session.ready&&recovery.frozen(session,s.state,s.position,Date.now())){queueBuffer(session.item,{ms:recovery.FREEZE_MS,reconnected:true,freeze:true},session);const at=session.item.kind==='live'?0:session.position;try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}}
@@ -247,7 +246,7 @@ else{
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('swap',async index=>{const session=sessions.find(x=>x.index===Number(index));if(!session||session.item.kind!=='live'||session.catchup)return {items:[]};return swapOptions(session);});register('swapped',({index,to,reason}={})=>{const session=sessions.find(x=>x.index===Number(index));if(!session)return false;const item=session.item;bufferQueue.push({kind:'live',content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:0,reconnected:false,freeze:false,swapped_to:String(to||'').slice(0,200),swap_reason:reason==='auto'?'auto':'manual',...(session.event?.title?{event_name:String(session.event.title).slice(0,200)}:{}),at:Date.now()});flushBuffer();return true;});register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',kind=>{if(kind==='film'||kind==='series')syncProgress(false).catch(()=>{});return catalogue(kind);});register('epg',epg);register('catchup',catchup);register('sports',async()=>{sportsSnapshot=await site({action:'sports'});return sportsSnapshot;});
-  register('unlock',async number=>{await gate.unlock(number,site);syncFavourites().catch(()=>{});syncFormats().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
+  register('unlock',async number=>{await gate.unlock(number,site);syncFavourites().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();return publicState();});
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season,poster:String(p.info?.movie_image||'')}))]))};});
   electronSession.defaultSession.setPermissionRequestHandler((wc,perm,cb,details)=>cb(perm==='media'&&wc===win?.webContents&&(details?.mediaTypes||['audio']).every(t=>t==='audio')));
   electronSession.defaultSession.setPermissionCheckHandler((wc,perm)=>perm==='media'&&wc===win?.webContents);
