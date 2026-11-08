@@ -1,4 +1,5 @@
 # Windows BM Player rules
+- DAZN recovery is shared with Mac, using catalog-verified channel/category identity and Sports Guide event context; alternative choices never accept provider URLs from the renderer.
 - Windows and Mac share checkin.cjs for staggered website polling, jitter, busy-response backoff and server slowdown; keep stream/provider traffic outside this scheduler.
 - Film/series community votes use the unlock-gated main-process bridge; batch poster rating reads and keep shared BM averages separate from provider sort metadata.
 - The opening film is bundled offline and rendered before the main screen; the main window is maximised before being shown to avoid a small-window flash.
