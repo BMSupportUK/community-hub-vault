@@ -20,7 +20,8 @@ test('current year rolls forward automatically', () => {
   expect(groupNewSeries([series(1, '2026-02-03'), series(2, '2027-01-01')], '2027-01-02')[0].items.map(s => s.id)).toEqual(['2']);
 });
 test('year pills run newest first from the current year', () => {
-  expect(newSeriesYears(2026)).toEqual([2026, 2025, 2024, 2023, 2022, 2021]);
+  expect(newSeriesYears(2026, 6)).toEqual([2026, 2025, 2024, 2023, 2022, 2021]);
+  expect(newSeriesYears(2026)).toHaveLength(11);
 });
 test('a past year runs to its last day while the current year stops at today', () => {
   expect(newSeriesCutoff(2025, '2026-11-08')).toBe('2025-12-31');

@@ -45,11 +45,11 @@ function WhatToWatchPage() {
             <TabsTrigger value="new-series" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Calendar className="hidden sm:block size-4 shrink-0" />New series</TabsTrigger>
             <TabsTrigger value="series" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Tv className="hidden sm:block size-4 shrink-0" />Recommended series</TabsTrigger>
           </TabsList>
-          {(data?.error || isError) && tab !== 'new-series' && <div role="alert" className="mt-6 border border-destructive/40 bg-background/90 p-4 rounded-lg"><p className="text-sm">{data?.error || 'Could not load the playlist. Please try again.'}</p><Button variant="outline" className="mt-3" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
-          {isLoading && tab !== 'new-series' && <div aria-label="Loading playlist" className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{Array.from({length:10}, (_,i) => <Skeleton key={i} className="aspect-[2/3] rounded-lg" />)}</div>}
+          {(data?.error || isError) && tab === 'movies' && <div role="alert" className="mt-6 border border-destructive/40 bg-background/90 p-4 rounded-lg"><p className="text-sm">{data?.error || 'Could not load the playlist. Please try again.'}</p><Button variant="outline" className="mt-3" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
+          {isLoading && tab === 'movies' && <div aria-label="Loading playlist" className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{Array.from({length:10}, (_,i) => <Skeleton key={i} className="aspect-[2/3] rounded-lg" />)}</div>}
           <TabsContent value="movies" className="mt-6">{!isLoading && <Grid items={data?.movies ?? []} onPick={setSelected} />}</TabsContent>
-          <TabsContent value="series" className="mt-6">{!isLoading && <Grid items={data?.series ?? []} onPick={setSelected} />}</TabsContent>
-          <TabsContent value="new-series" className="mt-6"><NewSeriesSection onPick={setSelected} /></TabsContent>
+          <TabsContent value="series" className="mt-6"><NewSeriesSection mode="recommended" onPick={setSelected} /></TabsContent>
+          <TabsContent value="new-series" className="mt-6"><NewSeriesSection mode="new" onPick={setSelected} /></TabsContent>
         </Tabs>
       </main>
       <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null); }}>
@@ -60,23 +60,23 @@ function WhatToWatchPage() {
     </div>
   );
 }
-function NewSeriesSection({ onPick }: { onPick: (item: NewSeries) => void }) {
+function NewSeriesSection({ onPick, mode }: { onPick: (item: NewSeries) => void; mode: 'new' | 'recommended' }) {
   const fetchSeries = useServerFn(getNewSeries);
-  const [year, setYear] = useState<number | null>(null);
+  const [year, setYear] = useState<number | null>(mode === 'recommended' ? new Date().getUTCFullYear() - 1 : null);
   const [month, setMonth] = useState<number | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({ queryKey: ['new-series', year ?? 'current'], queryFn: () => fetchSeries({ data: year ? { year } : {} }), staleTime: 6 * 60 * 60_000 });
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({ queryKey: ['new-series', mode, year ?? 'current'], queryFn: () => fetchSeries({ data: year ? { year } : {} }), staleTime: 6 * 60 * 60_000 });
   const pill = (active: boolean) => `h-8 rounded-full px-3 text-sm ${active ? 'bg-primary text-primary-foreground shadow-soft' : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'}`;
   const pick = (item: WatchTitle) => { if ('premiereDate' in item) onPick(item as NewSeries); };
   const chosen = month ? data?.months[month - 1] : null;
   return <div className="space-y-6">
-    <header className="space-y-1"><h2 className="font-display text-2xl font-bold">New series{data ? ` · ${data.year}` : ''}</h2><p className="text-sm text-muted-foreground">Series in your playlist, by the month they premiered</p></header>
+    <header className="space-y-1"><h2 className="font-display text-2xl font-bold">{mode === 'new' ? 'New series' : 'Recommended series'}{data ? ` · ${data.year}` : ''}</h2><p className="text-sm text-muted-foreground">{mode === 'new' ? 'This year’s series in your playlist, by the month they premiered' : 'Series from earlier years in your playlist, by year and month premiered'}</p></header>
     {data && <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
       <PopoverTrigger asChild><Button variant="outline" size="sm" aria-label="Choose year and month" className="gap-2"><Calendar className="size-4 text-accent" />{month ? `${MONTH_NAMES[month - 1]} ${data.year}` : `All months ${data.year}`}</Button></PopoverTrigger>
       <PopoverContent align="start" className="w-72 space-y-3">
-        <div><p className="mb-2 text-xs font-medium text-muted-foreground">Year</p><div className="grid grid-cols-3 gap-1">
-          {data.years.map(y => <Button variant="ghost" key={y} className={pill(y === data.year)} aria-pressed={y === data.year} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}
-        </div></div>
+        {mode === 'recommended' && <div><p className="mb-2 text-xs font-medium text-muted-foreground">Year</p><div className="grid grid-cols-3 gap-1">
+          {data.years.filter(y => y < data.currentYear).map(y => <Button variant="ghost" key={y} className={pill(y === data.year)} aria-pressed={y === data.year} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}
+        </div></div>}
         <div><p className="mb-2 text-xs font-medium text-muted-foreground">Month</p><div className="grid grid-cols-3 gap-1">
           <Button variant="ghost" className={`${pill(month === null)} col-span-3`} aria-pressed={month === null} onClick={() => { setMonth(null); setPickerOpen(false); }}>All months</Button>
           {MONTH_NAMES.map((name, index) => { const value = index + 1; return <Button variant="ghost" key={name} className={pill(month === value)} aria-pressed={month === value} aria-label={name} disabled={data.year === data.currentYear && value > data.currentMonth} onClick={() => { setMonth(value); setPickerOpen(false); }}>{name.slice(0, 3)}</Button>; })}
