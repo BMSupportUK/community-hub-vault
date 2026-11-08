@@ -29,10 +29,35 @@ final class StreamRecovery {
         String n = java.text.Normalizer.normalize(name == null ? "" : name, java.text.Normalizer.Form.NFKC);
         return n.toLowerCase(java.util.Locale.ROOT).matches(".*\\bcoupang\\b.*");
     }
-    /** Sports-pass feeds (DAZN, Coupang Play) get the steadier large-buffer profile. */
-    static boolean cushioned(String name) { return isDazn(name) || isCoupang(name); }
+    /** Channel names that are heavy before playing: UHD/4K/2160, FHD, 1080p50/60, 50/60fps. */
+    static boolean isHeavyName(String name) {
+        String n = java.text.Normalizer.normalize(name == null ? "" : name, java.text.Normalizer.Form.NFKC).toLowerCase(java.util.Locale.ROOT);
+        return n.matches(".*(\\buhd\\b|\\b4k\\b|2160|\\bfhd\\b|1080p?\\s*(50|60)|\\b(50|60)\\s*fps\\b).*");
+    }
+    /** Measured heavy stream: 8 Mbps+, taller than 1080, or 1080 at 49fps+. */
+    static boolean isHeavyFormat(int width, int height, float fps, int bitrate) {
+        int h = Math.min(Math.max(width, 0), Math.max(height, 0)) > 0 ? Math.max(height, 0) : 0;
+        return bitrate >= 8_000_000 || h > 1088 || (h >= 1080 && fps >= 49f);
+    }
+    /** Channels this device has measured as heavy (loaded from prefs). */
+    static final java.util.Set<String> HEAVY = java.util.Collections.synchronizedSet(new java.util.LinkedHashSet<>());
+    static final int HEAVY_MAX = 500;
+    static String heavyKey(String name) { return name == null ? "" : java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFKC).trim().toLowerCase(java.util.Locale.ROOT); }
+    static boolean isHeavy(String name) { return isHeavyName(name) || (!heavyKey(name).isEmpty() && HEAVY.contains(heavyKey(name))); }
+    /** Adds a measured heavy channel; returns true when newly added. Oldest entries drop past the cap. */
+    static boolean rememberHeavy(String name) {
+        String k = heavyKey(name);
+        if (k.isEmpty() || isHeavyName(name)) return false;
+        synchronized (HEAVY) {
+            if (!HEAVY.add(k)) return false;
+            while (HEAVY.size() > HEAVY_MAX) { java.util.Iterator<String> it = HEAVY.iterator(); it.next(); it.remove(); }
+        }
+        return true;
+    }
+    /** Sports-pass feeds (DAZN, Coupang Play) and high-bitrate streams get the steadier large-buffer profile. */
+    static boolean cushioned(String name) { return isDazn(name) || isCoupang(name) || isHeavy(name); }
     /** Diagnostic tag for the admin buffering report. */
-    static String providerTag(String name) { return isDazn(name) ? "dazn" : isCoupang(name) ? "coupang" : null; }
+    static String providerTag(String name) { return isDazn(name) ? "dazn" : isCoupang(name) ? "coupang" : isHeavy(name) ? "high_bitrate" : null; }
     static long liveTargetMs(String name) { return cushioned(name) ? 30000 : LIVE_TARGET_MS; }
     static long stallReconnectMs(String name) { return cushioned(name) ? 6000 : STALL_RECONNECT_MS; }
     static int formatSwapStalls(String name) { return cushioned(name) ? 1 : 2; }

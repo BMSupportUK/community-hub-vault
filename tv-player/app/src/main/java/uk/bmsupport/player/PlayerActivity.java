@@ -339,6 +339,7 @@ public class PlayerActivity extends Activity {
         // Live channel opened from its playing preview: keep that stream instead of reconnecting.
         carried = getIntent().getBooleanExtra("carried", false) && !getIntent().hasExtra("catchup_prefix")
                 ? PreviewHandoff.take(getIntent().getStringExtra("content_id")) : null;
+        loadHeavy(this);
         player = carried != null ? carried : build(this, getIntent().hasExtra("catchup_prefix"), recoveryName());
         final int subs = getIntent().getIntExtra("subtitles", -1);
         if (subs == 0 || subs == 1) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
@@ -558,7 +559,12 @@ public class PlayerActivity extends Activity {
                     reconnect(StreamRecovery.cushioned(recoveryName()));
                 }
             }
-            @Override public void onVideoSizeChanged(VideoSize v) { if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime(); }
+            @Override public void onVideoSizeChanged(VideoSize v) {
+                if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime();
+                androidx.media3.common.Format f = player == null ? null : player.getVideoFormat();
+                if (f != null && "live".equals(kind()) && StreamRecovery.isHeavyFormat(f.width, f.height, f.frameRate, f.bitrate)
+                        && StreamRecovery.rememberHeavy(recoveryName())) saveHeavy(PlayerActivity.this);
+            }
             @Override public void onTracksChanged(androidx.media3.common.Tracks t) {
                 // 50fps UK sport judders on 60Hz Android boxes: ask the TV for a matching refresh rate.
                 for (androidx.media3.common.Tracks.Group g : t.getGroups())
@@ -781,6 +787,16 @@ public class PlayerActivity extends Activity {
     }
 
     private String kind() { String k = getIntent().getStringExtra("content_kind"); return k == null ? "live" : k; }
+    /** Measured high-bitrate channels, so they open with the large buffer next time. */
+    static void loadHeavy(Context c) {
+        if (!StreamRecovery.HEAVY.isEmpty()) return;
+        String saved = prefs(c).getString("heavy_channels", "");
+        for (String k : saved.split("\n")) if (!k.isEmpty()) StreamRecovery.HEAVY.add(k);
+    }
+    static void saveHeavy(Context c) {
+        synchronized (StreamRecovery.HEAVY) { prefs(c).edit().putString("heavy_channels", String.join("\n", StreamRecovery.HEAVY)).apply(); }
+    }
+
     private String recoveryName() { return "live".equals(kind()) ? getIntent().getStringExtra("recovery_name") == null ? getIntent().getStringExtra("content_name") : getIntent().getStringExtra("recovery_name") : ""; }
     private void reportBuffer(long ms, boolean reconnected, boolean freeze, String cause) {
         String u = liveUrls.length > urlAt ? liveUrls[urlAt] : "";
