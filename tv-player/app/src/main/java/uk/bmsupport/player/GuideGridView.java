@@ -6,6 +6,8 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.text.TextUtils;
 import android.text.TextPaint;
+import android.text.StaticLayout;
+import android.text.Layout;
 import android.view.KeyEvent;
 import android.view.View;
 
@@ -29,9 +31,9 @@ public class GuideGridView extends View {
         void onCatchup(int row);
     }
 
-    private static final long SLOT = 1800;
-    // Phones show a 3-hour window and slimmer rows so more of the guide fits; TVs keep 2 hours.
-    private long WINDOW = 7200;
+    private static final long SLOT = 900;
+    // A one-hour window gives programme names more width; header and touch use this same scale.
+    private long WINDOW = 3600;
     private boolean phone;
     private final List<String> names = new ArrayList<>();
     private final List<Boolean> catchup = new ArrayList<>();
@@ -45,12 +47,13 @@ public class GuideGridView extends View {
     private final float d;
     private int marqueeRow = -1;
     private long marqueeStarted;
+    private Prog titleMarqueeProg;
+    private long titleMarqueeStarted;
 
     public GuideGridView(Context c) {
         super(c);
         d = c.getResources().getDisplayMetrics().density;
         phone = c.getResources().getConfiguration().smallestScreenWidthDp < 600;
-        if (phone) WINDOW = 10800;
         setFocusable(true); setFocusableInTouchMode(true);
         resetTime();
     }
@@ -385,20 +388,25 @@ public class GuideGridView extends View {
                     c.drawArc(new RectF(cx - 2 * d, cy + 5 * d, cx + 2 * d, cy + 9 * d), 0, 180, false, bell);
                 }
                 if (avail >= 14 * d) {
-                    boolean narrow = box.width() < 90 * d;
-                    if (narrow) txt.setTextSize(12 * d);
-                    String shown = TextUtils.ellipsize(t, txt, avail, TextUtils.TruncateAt.END).toString();
-                    if (shown.length() <= 1 && t.length() > 1) shown = "…";
-                    String times = box.width() < 170 * d ? hhmm(p.st) : hhmm(p.st) + " – " + hhmm(en);
-                    float tw = txt.measureText(times);
-                    txt.setTextSize(11 * d); boolean fitsTimes = txt.measureText(times) <= avail;
-                    txt.setTextSize(narrow ? 12 * d : 14 * d);
-                    float ty = fitsTimes ? y + rh / 2 : y + rh / 2 + 5 * d;
-                    c.drawText(shown, box.left + pad, ty, txt);
-                    if (fitsTimes) {
-                        txt.setTextSize(11 * d); txt.setFakeBoldText(false); txt.setColor(0xFFCBD5E1);
-                        c.drawText(times, box.left + pad, y + rh / 2 + 16 * d, txt);
+                    txt.setTextSize((phone ? 12 : 14) * d);
+                    StaticLayout title = StaticLayout.Builder.obtain(t, 0, t.length(), txt, Math.max(1, (int) avail))
+                            .setAlignment(Layout.Alignment.ALIGN_NORMAL).setIncludePad(false).build();
+                    float titleHeight = rh - 22 * d;
+                    float offset = 0;
+                    if (p == sel && isFocused() && title.getHeight() > titleHeight) {
+                        if (titleMarqueeProg != p) { titleMarqueeProg = p; titleMarqueeStarted = android.os.SystemClock.uptimeMillis(); }
+                        offset = ChannelMarquee.offset(title.getHeight(), titleHeight, android.os.SystemClock.uptimeMillis() - titleMarqueeStarted, d);
+                        postInvalidateDelayed(33);
                     }
+                    c.save(); c.clipRect(box.left + pad, box.top + 3 * d, box.left + pad + avail, box.top + 3 * d + titleHeight);
+                    c.translate(box.left + pad, box.top + 3 * d - offset); title.draw(c); c.restore();
+                    String times = hhmm(p.st) + " – " + hhmm(en);
+                    txt.setTextSize(10 * d); txt.setFakeBoldText(false); txt.setColor(0xFFCBD5E1);
+                    // Keep both times intact, even on the shortest programme blocks.
+                    float timeWidth = txt.measureText(times);
+                    c.save(); c.translate(box.left + pad, box.bottom - 4 * d);
+                    if (timeWidth > avail) c.scale(avail / timeWidth, 1);
+                    c.drawText(times, 0, 0, txt); c.restore();
                 }
                 c.restore();
                 if (p == sel) drawRing(c, box);
