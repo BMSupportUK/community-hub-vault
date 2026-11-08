@@ -1,4 +1,5 @@
 import { EPG_SOURCE, stripQualityTail, XmltvReader, buildIndex, matchChannel, feedsFor, toListing, eventListings, overlayEvents, type EpgChannel, type ListingRow } from "./real-epg";
+import type { TablesInsert } from "@/integrations/supabase/types";
 
 /** Each feed is refreshed this often; one feed per scheduled run keeps every run small. */
 export const FEED_REFRESH_MS = 6 * 3600_000;

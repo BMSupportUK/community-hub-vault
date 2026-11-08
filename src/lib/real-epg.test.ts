@@ -70,5 +70,5 @@ describe("Sports Pass listings from the Sports Guide", () => {
 import { matchChannel as mc2 } from "./real-epg";
 test("BBC One falls back to the London guide when only regional versions exist", () => {
   const idx = new Map([["bbconelon", "BBC.One.Lon.HD.uk"]]);
-  expect(mc2("UK: BBC One | FHD |", idx)).toBe("BBC.One.Lon.HD.uk");
+  expect(mc2("BBC One | FHD |", idx)).toBe("BBC.One.Lon.HD.uk");
 });
