@@ -1,15 +1,20 @@
 import type { PlayerSportsEvent } from "@/lib/player-sports";
 import { isOfficialSportsChannel } from "./sports-programme-end";
+import { createSharedCache } from "./player-sports-cache";
+
+const fixtureCache = createSharedCache<Awaited<ReturnType<typeof buildFixtures>>>(60_000);
+/** Fast EPG fixtures share catalogue matching, without provider end-time reads. */
+export function buildSportsFixtures() { return fixtureCache(buildFixtures); }
 
 /** Builds the Sports Guide feed the BM Player apps receive (server-only, uses the admin client). */
-export async function buildSportsFeed() {
+async function buildFixtures() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [{ data: blogs }, { data: cats }, { data: st }] = await Promise.all([
     supabaseAdmin.from("sports_blogs").select("title, body, category_id, updated_at, sort_order, created_at, channel_links").eq("published", true).order("sort_order").order("created_at", { ascending: false }),
     supabaseAdmin.from("sports_categories").select("id, name, parent_id, sort_order").order("sort_order"),
     supabaseAdmin.from("player_settings").select("channel_aliases").eq("id", 1).maybeSingle(),
   ]);
-  const { playerSportsEvents, applyGuideEnds } = await import("@/lib/player-sports");
+  const { playerSportsEvents } = await import("@/lib/player-sports");
   const { readChannelLinks } = await import("@/lib/sports-channel-links");
   const catName = new Map((cats ?? []).map((c) => [c.id, c.name]));
   const parentOf = new Map((cats ?? []).map((c) => [c.id, c.parent_id]));
@@ -18,20 +23,18 @@ export async function buildSportsFeed() {
     return { title: b.title, body: b.body, category: b.category_id ? catName.get(b.category_id) ?? null : null, parent: pid ? catName.get(pid) ?? null : null, links: readChannelLinks(b.channel_links) };
   });
   const playlistCats = [...new Set(guideRows.map((g) => g.links.category).filter((c): c is string => !!c))];
-  const { playlistCategoryChannels, playlistGuideTimes, playlistAllChannels } = await import("@/lib/playlist-source.server");
-  const { pinLiveChannels, isReplayChannel } = await import("@/lib/sports-live-only");
+  const { playlistCategoryChannels, playlistAllChannels } = await import("@/lib/playlist-source.server");
+  const { createLiveChannelPinner, isReplayChannel } = await import("@/lib/sports-live-only");
   const aliasRows = Array.isArray(st?.channel_aliases) ? (st.channel_aliases as { from: string; to: string }[]) : [];
   const live = await playlistAllChannels().then((all) => all.filter((c) => !isReplayChannel(c.name, c.category)).map((c) => c.name)).catch(() => [] as string[]);
+  const pin = createLiveChannelPinner(live, aliasRows);
   const rawEvents = playerSportsEvents(guideRows, Date.now(), await playlistCategoryChannels(playlistCats)).map((e) => {
     if (!live.length) return e;
-    const channels = pinLiveChannels(e.channels, live, aliasRows);
-    const pass = (e.passChannels ?? []).map((c) => pinLiveChannels([c], live, aliasRows)[0]).filter((c): c is string => !!c && channels.includes(c));
+    const channels = pin(e.channels);
+    const pass = (e.passChannels ?? []).map((c) => pin([c])[0]).filter((c): c is string => !!c && channels.includes(c));
     return { ...e, channels, passChannels: pass };
   });
-  // Real end times from the TV guide for games that have started (estimate stays when a channel has no guide).
-  const nowMs = Date.now();
-  const startedChannels = rawEvents.filter((e) => e.start <= nowMs).flatMap((e) => e.channels.filter(isOfficialSportsChannel));
-  const events: PlayerSportsEvent[] = applyGuideEnds(rawEvents, await playlistGuideTimes(startedChannels), nowMs);
+  const events = rawEvents;
   const version = (blogs ?? []).reduce((m, b) => (b.updated_at > m ? b.updated_at : m), "") + ":" + events.map(e => `${e.start}:${e.end}:${e.endSource}`).join(",");
   // Guides follow the website order too (sort_order, newest first), after the category names.
   const order = Array.from(new Set([...(cats ?? []).map((c) => c.name), ...(blogs ?? []).map((b) => b.title)]));
@@ -46,6 +49,17 @@ export async function buildSportsFeed() {
     (guides[key] ??= []).includes(b.title) || guides[key].push(b.title);
   }
   return { version, events, order, categories, guides, aliases: Array.isArray(st?.channel_aliases) ? st.channel_aliases : [] };
+}
+
+/** Sports cards retain official programme-end completion, outside EPG loading. */
+export async function buildSportsFeed() {
+  const feed = await buildSportsFixtures();
+  const { applyGuideEnds } = await import("./player-sports");
+  const { playlistGuideTimes } = await import("./playlist-source.server");
+  const now = Date.now();
+  const channels = feed.events.filter((e) => e.start <= now).flatMap((e) => e.channels.filter(isOfficialSportsChannel));
+  const events: PlayerSportsEvent[] = applyGuideEnds(feed.events, await playlistGuideTimes(channels), now);
+  return { ...feed, events, version: feed.version + ":" + events.map((e) => `${e.start}:${e.end}:${e.endSource}`).join(",") };
 }
 
 type CrossData = { rows: import("@/lib/player-channel-health").HealthRow[]; stalls: { name: string; at: number }[]; at: number };
