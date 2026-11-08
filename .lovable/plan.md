@@ -6,8 +6,10 @@
 - A new "Guide matching" page in the admin dashboard lists channels with their matched real guide channel, lets you fix or untick any match, and shows which channels have no real listings.
 
 ## How it works
-1. BM Support downloads a free public UK/Ireland guide (XMLTV feed, plus US/Canada for DAZN CA/ESPN etc.) every 6 hours and stores 2 days of programmes.
-2. Each playlist channel is matched automatically by name (e.g. "UK | Sky Sports Main Event FHD" -> Sky Sports Main Event), ignoring quality/country tags. Event-only and Replay feeds are skipped. Your manual fixes always win.
+1. BM Support downloads free public guides every 6 hours and stores 2 days of programmes, one feed per country: UK & Ireland, USA, Canada, Australia, plus overseas feeds for the countries in your playlist (e.g. Spain, Germany, France, Italy, Portugal, Netherlands, Poland, Arabic/beIN, India). Only countries that actually have channels in the playlist are downloaded, to keep it light.
+2. Each playlist channel is matched automatically by name within its own country, using the playlist's country tag (e.g. "UK | Sky Sports Main Event FHD" -> UK Sky Sports Main Event, "US | ESPN" -> US ESPN, "CA | DAZN 1" -> Canada DAZN), so a US channel never picks up a UK channel's listings with the same name. Quality tags are ignored.
+   - US channels are shown in UK time like everything else (no Eastern/Pacific mix-ups).
+   - The admin page has a country filter and lets you add extra countries. Event-only and Replay feeds are skipped. Your manual fixes always win.
 3. Players ask BM Support for a channel's listings; it sends the real guide when matched, otherwise the provider's. Times are stored in UTC and shown in UK time, so clock changes never shift them.
 4. Sports Guide finish detection also uses the real guide, making "Finished" more accurate.
 
@@ -22,4 +24,5 @@
 - Tests: name normaliser/matcher, UTC->UK conversion across BST change, fallback when unmatched.
 
 ## Unconfirmed
-- Exact feed source chosen after checking coverage of Sky Sports/TNT/DAZN channels; some niche or foreign channels may have no real guide and keep provider listings.
+- Exact feed sources chosen after checking coverage per country (UK Sky/TNT, US networks/ESPN, Canada DAZN, overseas sports channels); some niche or foreign channels may have no real guide and keep provider listings.
+- `epg_channels` gains a `country` column; matcher keys on country + normalised name.
