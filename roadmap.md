@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Speed up individual EPG requests and add correctly matched American local-station listings; test with real local guide data.
 - [x] Prepare minute-based open EPG refresh for Android/Amazon and shared Windows/Mac. Real Coupang feed returns 23 events; mounted desktop row replaces an old fixture without reopening, 74 desktop tests pass. Android test cannot run (Java/SDK absent); no app releases made. With shared website cache, normal updates can take about two minutes, not instantaneous.
 - [ ] Release/test minute-refresh EPG apps; Android build blocked by missing Java/SDK, real-device checks blocked by no attached device; Windows/Mac packages not released.
 - [x] Add playlist loading and per-website-guide sports category assignments in BM Player's Sports guide channel matching; 158 categories loaded, draft assignment saved/read back/tested and restored, desktop/phone checked without overflow, five rule tests pass. Existing authenticated admin account used with presentation unlock restored; Staff PIN entry not retested. Website publication required.

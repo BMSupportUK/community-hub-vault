@@ -8,7 +8,6 @@ export const EPG_SOURCE = "https://epgshare01.online/epgshare01/epg_ripper_";
 /** Playlist category prefix ("UK | Sky Sports" → "UK") → published guide feeds for that country. */
 export const COUNTRY_FEEDS: Record<string, string[]> = {
   UK: ["UK1"], IRE: ["IE1", "UK1"], IE: ["IE1", "UK1"], EPL: ["UK1"], EFL: ["UK1"],
-  // US_LOCALS1 (60 MB, 4,000+ stations) is too big to import on a schedule; locals keep provider listings.
   US: ["US2", "US_SPORTS1"], CA: ["CA2"], AU: ["AU1"], NZ: ["NZ1"],
   DE: ["DE1"], IT: ["IT1"], FR: ["FR1"], ES: ["ES1"], PT: ["PT1"], PL: ["PL1"], NL: ["NL1"],
   GR: ["GR1"], RO: ["RO1"], IN: ["IN1"], PK: ["PK1"], ZA: ["ZA1"], DK: ["DK1"], TR: ["TR1"],
@@ -28,6 +27,7 @@ export function categoryCountry(category: string): string | null {
 /** Feeds to search for one playlist channel (most specific first). */
 export function feedsFor(name: string, category: string): string[] {
   if (SKIP_CATEGORY.test(category || "")) return [];
+  if (categoryCountry(category) === "US" && /\blocals?\b/i.test(category)) return ["US_LOCALS1", "US2"];
   const out: string[] = [];
   const c = categoryCountry(category);
   if (c) out.push(...COUNTRY_FEEDS[c]);
@@ -58,8 +58,9 @@ export function playlistCandidates(name: string, epgId?: string | null): string[
   if (parts.length > 1 && /^[A-Za-z]{2,3}$/.test(parts[0]) && COUNTRY_FEEDS[parts[0].toUpperCase()]) parts.shift();
   const out = [normName(parts.join(" ")), normName(parts[0] ?? "")];
   // US locals: "FOX: MI | Grand Rapids | WXMI" → the call sign.
-  const last = parts[parts.length - 1] ?? "";
-  if (/^[KW][A-Z]{2,3}(-?(TV|DT|LD|CD))?$/.test(last)) out.push(normName(last));
+  // Local station callsigns can appear anywhere, not just in a final pipe segment.
+  const calls = name.toUpperCase().match(/\b[KW][A-Z]{2,3}(?:-(?:TV|DT|LD|CD))?\b/g) ?? [];
+  for (const call of calls) out.unshift(normName(call.replace(/-(TV|DT)$/, "")), normName(call));
   if (epgId) out.push(normName(epgId));
   return [...new Set(out.filter((c) => c.length >= 2))];
 }
@@ -84,6 +85,14 @@ export function buildIndex(channels: EpgChannel[]): Map<string, string> {
   for (const c of channels) for (const n of [...c.names, c.id]) {
     const k = normName(n);
     if (k.length >= 2 && !idx.has(k)) idx.set(k, c.id);
+  }
+  // Main digital station aliases (WSB-TV in playlist, WSB-DT in XMLTV).
+  // Never alias numbered subchannels or low-power LD/CD stations to the main feed.
+  for (const c of channels) for (const name of c.names) {
+    if (/^[KW][A-Z]{2,3}-(DT|TV)$/i.test(name)) {
+      const key = normName(name.replace(/-(DT|TV)$/i, ""));
+      if (!idx.has(key)) idx.set(key, c.id);
+    }
   }
   return idx;
 }
@@ -124,7 +133,7 @@ export type EpgProgramme = { channel: string; start: number; stop: number; title
 export class XmltvReader {
   private buf = "";
   private progs = false;
-  push(chunk: string, onChannel: (c: EpgChannel) => void, onProgramme: (p: EpgProgramme) => void) {
+  push(chunk: string, onChannel: (c: EpgChannel) => void, onProgramme: (p: EpgProgramme) => void, wantsProgramme?: (channel: string) => boolean) {
     this.buf += chunk;
     let at = 0;
     for (;;) {
@@ -146,6 +155,7 @@ export class XmltvReader {
       if (isProg) {
         const ch = /channel="([^"]*)"/.exec(head)?.[1], st = /start="([^"]*)"/.exec(head)?.[1], sp = /stop="([^"]*)"/.exec(head)?.[1];
         if (!ch || !st || !sp) continue;
+        if (wantsProgramme && !wantsProgramme(xmlText(ch))) continue;
         onProgramme({
           channel: xmlText(ch), start: xmltvTime(st), stop: xmltvTime(sp),
           title: xmlText(/<title[^>]*>([\s\S]*?)<\/title>/.exec(el)?.[1] ?? ""),
@@ -179,6 +189,11 @@ export function toListing(p: { start: number; stop: number; title: string; desc?
 export const NO_EVENT = "No event scheduled";
 /** Without a real finish time, an event slot runs this long. */
 export const EVENT_DEFAULT_MS = 3 * 3600_000;
+
+/** Ordinary TV EPG does not depend on building the complete sports feed. */
+export function needsSportsEvents(channel: string, official: boolean, eventOnly: boolean): boolean {
+  return !official && (eventOnly || /\b(coupang|dazn|ufc|fight\s*pass|bkfc|monomax|peacock|paramount|apple|mls|nba|nfl|nhl|rugby\s*pass|tennis|triller|hbo|max|ifollow)\b/i.test(channel));
+}
 
 /**
  * Sports Pass / event-only channel listings from the website Sports Guide: one slot per event on

@@ -391,8 +391,10 @@ export const Route = createFileRoute("/api/public/player")({
           // Real published TV guide (or Sports Guide events for Sports Pass feeds); null = use the provider's guide.
           const { buildSportsFeed } = await import("@/lib/player-sports-feed.server");
           const { guideFor } = await import("@/lib/real-epg.server");
-          const payload = await sportsCache(buildSportsFeed).catch(() => ({ events: [] as unknown[] }));
-          const g = await guideFor(body.channel, payload.events as { title: string; start: number; end?: number; channels: string[]; competition?: string }[]).catch(() => ({ rows: null, source: "none" as const }));
+          const g = await guideFor(body.channel, async () => {
+            const payload = await sportsCache(buildSportsFeed);
+            return payload.events as { title: string; start: number; end?: number; channels: string[]; competition?: string }[];
+          }).catch(() => ({ rows: null, source: "none" as const }));
           return json({ epg_listings: g.rows, source: g.source });
         }
 

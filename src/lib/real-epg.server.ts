@@ -138,10 +138,15 @@ type SportsEvent = { title: string; start: number; end?: number; channels: strin
  * Listings for one Live TV channel: Sports Guide events for event-only/Sports Pass feeds,
  * the real published guide when matched, otherwise null (apps fall back to the provider).
  */
-export async function guideFor(channel: string, events: SportsEvent[], nowMs = Date.now()): Promise<{ rows: ListingRow[] | null; source: "sports" | "real" | "none" }> {
+export async function guideFor(channel: string, eventsOrLoad: SportsEvent[] | (() => Promise<SportsEvent[]>), nowMs = Date.now()): Promise<{ rows: ListingRow[] | null; source: "sports" | "real" | "none" }> {
   const key = channel.trim().toLowerCase();
   const { isEventChannel } = await import("./player-channel-health");
   const { isOfficialSportsChannel } = await import("./sports-programme-end");
+  // Continuous official broadcasters never overlay event listings: don't wait
+  // for a full sports build (playlist + provider EPG) to return BBC/Sky/ESPN rows.
+  const official = isOfficialSportsChannel(channel);
+  const { needsSportsEvents } = await import("./real-epg");
+  const events = Array.isArray(eventsOrLoad) ? eventsOrLoad : needsSportsEvents(channel, official, isEventChannel(stripQualityTail(channel))) ? await eventsOrLoad() : [];
   const from = nowMs - KEEP_BEFORE_MS, to = nowMs + KEEP_AHEAD_MS;
   const onGuide = events.some((e) => e.channels.some((c) => c.trim().toLowerCase() === key));
   if (isEventChannel(stripQualityTail(channel))) return { rows: eventListings(channel, events, from, to).map(toListing), source: "sports" };
