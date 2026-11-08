@@ -11,6 +11,7 @@ import type { NewSeries } from '@/lib/new-series';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SendToBoxButton } from '@/components/watch/SendToBoxButton';
 import whatToWatchBg from '@/assets/what-to-watch-bg.jpg.asset.json';
@@ -63,23 +64,25 @@ function NewSeriesSection({ onPick }: { onPick: (item: NewSeries) => void }) {
   const fetchSeries = useServerFn(getNewSeries);
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const { data, isLoading, isError, refetch, isFetching } = useQuery({ queryKey: ['new-series', year ?? 'current'], queryFn: () => fetchSeries({ data: year ? { year } : {} }), staleTime: 6 * 60 * 60_000 });
   const pill = (active: boolean) => `h-8 rounded-full px-3 text-sm ${active ? 'bg-primary text-primary-foreground shadow-soft' : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'}`;
   const pick = (item: WatchTitle) => { if ('premiereDate' in item) onPick(item as NewSeries); };
   const chosen = month ? data?.months[month - 1] : null;
   return <div className="space-y-6">
     <header className="space-y-1"><h2 className="font-display text-2xl font-bold">New series{data ? ` · ${data.year}` : ''}</h2><p className="text-sm text-muted-foreground">Series in your playlist, by the month they premiered</p></header>
-    {data && <div className="space-y-2">
-      <nav aria-label="New series year" className="flex flex-wrap items-center gap-1 rounded-lg border border-border/70 bg-card/85 p-2 backdrop-blur-md">
-        <span className="flex items-center gap-2 pr-1 text-sm font-medium"><Calendar className="size-4 text-accent" />Year</span>
-        {data.years.map(y => <Button variant="ghost" key={y} className={pill(y === data.year)} aria-pressed={y === data.year} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}
-      </nav>
-      <nav aria-label="New series month" className="flex flex-wrap items-center gap-1 rounded-lg border border-border/70 bg-card/85 p-2 backdrop-blur-md">
-        <span className="flex items-center gap-2 pr-1 text-sm font-medium"><Calendar className="size-4 text-accent" />Month</span>
-        <Button variant="ghost" className={pill(month === null)} aria-pressed={month === null} onClick={() => setMonth(null)}>All months</Button>
-        {MONTH_NAMES.map((name, index) => { const value = index + 1; return <Button variant="ghost" key={name} className={pill(month === value)} aria-pressed={month === value} disabled={data.year === data.currentYear && value > data.currentMonth} onClick={() => setMonth(value)}>{name}</Button>; })}
-      </nav>
-    </div>}
+    {data && <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+      <PopoverTrigger asChild><Button variant="outline" size="sm" aria-label="Choose year and month" className="gap-2"><Calendar className="size-4 text-accent" />{month ? `${MONTH_NAMES[month - 1]} ${data.year}` : `All months ${data.year}`}</Button></PopoverTrigger>
+      <PopoverContent align="start" className="w-72 space-y-3">
+        <div><p className="mb-2 text-xs font-medium text-muted-foreground">Year</p><div className="grid grid-cols-3 gap-1">
+          {data.years.map(y => <Button variant="ghost" key={y} className={pill(y === data.year)} aria-pressed={y === data.year} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}
+        </div></div>
+        <div><p className="mb-2 text-xs font-medium text-muted-foreground">Month</p><div className="grid grid-cols-3 gap-1">
+          <Button variant="ghost" className={`${pill(month === null)} col-span-3`} aria-pressed={month === null} onClick={() => { setMonth(null); setPickerOpen(false); }}>All months</Button>
+          {MONTH_NAMES.map((name, index) => { const value = index + 1; return <Button variant="ghost" key={name} className={pill(month === value)} aria-pressed={month === value} aria-label={name} disabled={data.year === data.currentYear && value > data.currentMonth} onClick={() => { setMonth(value); setPickerOpen(false); }}>{name.slice(0, 3)}</Button>; })}
+        </div></div>
+      </PopoverContent>
+    </Popover>}
     {isLoading && <div aria-label="Loading new series" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{Array.from({length:10}, (_,i) => <Skeleton key={i} className="aspect-[2/3] rounded-lg" />)}</div>}
     {(isError || data?.error) && <div role="alert" className="space-y-3"><p className="text-sm">{data?.error || 'Could not load new series.'}</p><Button variant="outline" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
     {data && !data.error && month === null && data.months.map(group => <section key={group.month} aria-label={`${group.name} ${data.year}`} className="space-y-4 border-t border-border pt-5">
