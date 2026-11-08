@@ -1744,6 +1744,7 @@ public class MainActivity extends Activity {
             intent.putExtra("event_name", retryEvent.optString("title")).putExtra("event_alternatives", alternatives.toString());
         }
         if ("live".equals(it.kind)) intent.putExtra("urls", streamUrls(it));
+        if ("live".equals(it.kind)) intent.putExtra("swap_options", swapOptions(it));
         if ("live".equals(it.kind) && liveChannels != null && StreamRecovery.isHdName(it.name)) {
             for (Item o : liveChannels) {
                 if (o != it && !o.id.equals(it.id) && o.norm().equals(it.norm()) && !StreamRecovery.isHdName(o.name)) {
@@ -2913,6 +2914,25 @@ public class MainActivity extends Activity {
             N_SPORTS = java.util.regex.Pattern.compile("\\bsports\\b"), N_ZERO = java.util.regex.Pattern.compile("\\b0+(\\d)"),
             N_COUPANG = java.util.regex.Pattern.compile("\\bcoupang\\s+play\\b"), N_SPACE = java.util.regex.Pattern.compile("\\s+");
     /** Mirrors src/lib/player-channel-match.ts normChannel. */
+    /** Swap channel list: same Sports Guide event first, then other versions (UHD/HD/SD…) of this channel. */
+    private String swapOptions(Item it) {
+        List<ChannelSwap.Option> event = new ArrayList<>(), variants = new ArrayList<>();
+        try {
+            if (retryEvent != null && liveChannels != null) {
+                List<String> labels = new ArrayList<>(); List<Item> targets = new ArrayList<>();
+                buildSportsRows(retryEvent, retryAliases == null ? new ArrayList<>() : retryAliases, liveChannels, labels, targets);
+                for (Item c : targets) if (c != null) event.add(new ChannelSwap.Option(c.id, c.name, c.name + " " + categoryName(c), streamUrls(c), true));
+            }
+            if (liveChannels != null && !it.norm().isEmpty())
+                for (Item o : liveChannels) if (o != null && o.norm().equals(it.norm())) variants.add(new ChannelSwap.Option(o.id, o.name, o.name + " " + categoryName(o), streamUrls(o), false));
+            JSONArray out = new JSONArray();
+            for (ChannelSwap.Option o : ChannelSwap.build(it.id, event, variants, sportsDown))
+                out.put(new JSONObject().put("id", o.id).put("name", o.name).put("recovery_name", o.recoveryName).put("down", o.down)
+                    .put("label", ChannelSwap.label(o)).put("urls", new JSONArray(java.util.Arrays.asList(o.urls))));
+            return out.toString();
+        } catch (Exception e) { return "[]"; }
+    }
+
     static String normChannel(String name) {
         String s = name.toLowerCase(java.util.Locale.ROOT);
         s = N_PUNCT.matcher(s).replaceAll(" ").replace("+", " plus ");

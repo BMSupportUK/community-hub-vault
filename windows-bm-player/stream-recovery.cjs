@@ -73,7 +73,7 @@ function tick(session, state, now, live) {
         session.stallTimes = [...(session.stallTimes || []), now].filter(t => now - t <= STALL_WINDOW_MS);
         const n = session.stallTimes.length;
         if (n >= STALLS_TO_LOWER && !session.lowered) { session.lowered = true; out.lower = true; }
-        if (isDazn(session.recoveryName || session.item?.name) && n >= 3 && live && !session.feedOffered) { session.feedOffered = true; out.offerFeed = true; }
+        if (n >= 3 && live && !session.feedOffered) { session.feedOffered = true; out.offerFeed = true; }
         if (n >= STALLS_TO_OFFER_SD && live && !session.sdOffered && isHdName(session.item?.name)) { session.sdOffered = true; out.offerSd = true; }
       }
     }

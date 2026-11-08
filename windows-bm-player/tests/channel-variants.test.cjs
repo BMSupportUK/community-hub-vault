@@ -1,0 +1,3 @@
+const {test,expect}=require('bun:test');const v=require('../channel-variants.cjs');
+test('quality versions of a channel match and other channels do not',()=>{const items=[{id:1,name:'UK: Sky Sports Main Event HD'},{id:2,name:'Sky Sports Main Event UHD'},{id:3,name:'Sky Sports Premier League HD'}];expect(v.variants(items[0],items).map(i=>i.id)).toEqual([2]);});
+test('swap list puts same-event feeds first and Not working last',()=>{const r=v.swapList({id:1},[{id:2,name:'DAZN CA 18'},{id:3,name:'DAZN CA 04'}],[{id:4,name:'DAZN CA 19 HD'},{id:3,name:'DAZN CA 04'}],['dazn ca 18']);expect(r.map(o=>o.id)).toEqual([3,4,2]);expect(r[2].down).toBe(true);expect(r[0].sameEvent).toBe(true);});

@@ -324,7 +324,7 @@ export const Route = createFileRoute("/api/public/player")({
           const rows = body.events.map((e) => ({
             device_id: device.id, user_id: device.user_id, platform: dev?.platform ?? null, app_version: body.version ?? dev?.app_version ?? null,
             kind: e.kind, content_id: e.content_id, content_name: e.name, stall_ms: e.stall_ms, reconnected: e.reconnected, is_freeze: e.freeze ?? false, cause: stallCause(e),
-            stream_format: e.stream_format ?? null, decoder: e.decoder ?? null, recovery_provider: e.recovery_provider ?? null, event_name: e.event_name ?? null,
+            stream_format: e.stream_format ?? null, decoder: e.decoder ?? null, recovery_provider: e.recovery_provider ?? null, event_name: e.event_name ?? null, swapped_to: e.swapped_to ?? null, swap_reason: e.swap_reason ?? null,
             occurred_at: new Date(eventTime(e.at, now)).toISOString(),
           }));
           const { error } = await supabaseAdmin.from("player_buffer_events").insert(rows);

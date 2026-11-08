@@ -5669,6 +5669,8 @@ export type Database = {
           recovery_provider: string | null
           stall_ms: number
           stream_format: string | null
+          swap_reason: string | null
+          swapped_to: string | null
           user_id: string | null
         }
         Insert: {
@@ -5689,6 +5691,8 @@ export type Database = {
           recovery_provider?: string | null
           stall_ms?: number
           stream_format?: string | null
+          swap_reason?: string | null
+          swapped_to?: string | null
           user_id?: string | null
         }
         Update: {
@@ -5709,6 +5713,8 @@ export type Database = {
           recovery_provider?: string | null
           stall_ms?: number
           stream_format?: string | null
+          swap_reason?: string | null
+          swapped_to?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -10033,6 +10039,7 @@ export type Database = {
           reconnects: number
           stalls: number
           stream_formats: string
+          swapped_away: number
           total_stall_seconds: number
         }[]
       }
