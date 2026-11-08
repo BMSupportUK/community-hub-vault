@@ -14,8 +14,8 @@ import java.util.TreeMap;
 public final class GuideListings {
     private GuideListings() {}
 
-    /** Minutes a cached channel line-up stays fresh before the guide asks again. */
-    public static final long REFRESH_SECS = 15 * 60;
+    /** Visible channel rows re-check website fixtures on the guide's minute tick. */
+    public static final long REFRESH_SECS = 60;
 
     public static List<GuideGridView.Prog> parse(JSONArray l, long now) {
         TreeMap<Long, GuideGridView.Prog> byStart = new TreeMap<>();

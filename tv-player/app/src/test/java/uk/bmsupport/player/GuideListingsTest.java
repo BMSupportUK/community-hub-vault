@@ -50,10 +50,11 @@ public class GuideListingsTest {
         assertFalse(GuideListings.stale(now - 60, today, now, 7200, tomorrowEnd, true));
     }
 
-    @Test public void lineUpGoesStaleAfterFifteenMinutes() {
+    @Test public void websiteFixturesRefreshAfterOneMinute() {
         long now = 100_000;
         List<GuideGridView.Prog> day = Arrays.asList(new GuideGridView.Prog("B", now, now + 20000));
-        assertFalse(GuideListings.stale(now - 60, day, now, 7200));
-        assertTrue(GuideListings.stale(now - 15 * 60, day, now, 7200));
+        assertEquals(60, GuideListings.REFRESH_SECS);
+        assertFalse(GuideListings.stale(now - 59, day, now, 7200));
+        assertTrue(GuideListings.stale(now - 60, day, now, 7200));
     }
 }
