@@ -1,3 +1,4 @@
+// @ts-nocheck — tests run with bun test.
 import { describe, expect, test } from "bun:test";
 import { needsProfileChoice, pickActiveProfile } from "./account-profiles";
 
