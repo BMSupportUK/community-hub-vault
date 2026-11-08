@@ -100,11 +100,11 @@ public class LiveGuideNavigationTest {
             public void onCatchup(int row) {}
         });
         java.util.List<GuideGridView.Prog> l = new ArrayList<>();
-        for (int i = 0; i < 12; i++) l.add(new GuideGridView.Prog("Show " + i, now - 600 + i * 3600L, now - 600 + (i + 1) * 3600L));
+        for (int i = 0; i < 12; i++) l.add(new GuideGridView.Prog("Show " + i, now - 600 + i * 1800L, now - 600 + (i + 1) * 1800L));
         grid.setProgs(0, l);
         touch(grid, MotionEvent.ACTION_DOWN, 900, 90);
-        touch(grid, MotionEvent.ACTION_MOVE, 300, 92);
-        touch(grid, MotionEvent.ACTION_UP, 300, 92);
+        touch(grid, MotionEvent.ACTION_MOVE, 180, 92);
+        touch(grid, MotionEvent.ACTION_UP, 180, 92);
         assertEquals(0, picks[0]);
         assertTrue(grid.selected().st > now);
         touch(grid, MotionEvent.ACTION_DOWN, 100, 90);
