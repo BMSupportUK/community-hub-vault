@@ -9,7 +9,6 @@ import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, eventTime, stallCause,
 
 // One sports-guide build per minute per server instance, however many apps ask.
 const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
-const fixtureCache = createSharedCache<{ events: unknown[] }>(60_000);
 
 /**
  * Endpoint for the BM Player apps (TV, phone, Windows). Apps have no website
@@ -393,7 +392,7 @@ export const Route = createFileRoute("/api/public/player")({
           const { buildSportsFeed } = await import("@/lib/player-sports-feed.server");
           const { guideFor } = await import("@/lib/real-epg.server");
           const g = await guideFor(body.channel, async () => {
-            const payload = await fixtureCache(() => buildSportsFeed({ programmeEnds: false }));
+            const payload = await sportsCache(buildSportsFeed);
             return payload.events as { title: string; start: number; end?: number; channels: string[]; competition?: string }[];
           }).catch(() => ({ rows: null, source: "none" as const }));
           return json({ epg_listings: g.rows, source: g.source });
