@@ -24,6 +24,16 @@ async function base(): Promise<string | null> {
   return `${dns}/player_api.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
 }
 
+/** Metadata-only catalogue reads; never expose URLs containing playlist credentials. */
+export async function playlistWatchRead(action: 'get_vod_categories' | 'get_series_categories' | 'get_vod_streams' | 'get_series' | 'get_vod_info', params: Record<string, string> = {}) {
+  const url = await base();
+  if (!url) throw new Error('Playlist unavailable');
+  const query = new URLSearchParams({ action, ...params });
+  const response = await fetch(`${url}&${query}`, { signal: AbortSignal.timeout(20_000) });
+  if (!response.ok) throw new Error('Playlist unavailable');
+  return response.json();
+}
+
 async function load() {
   return sharedCatalogue(loadCatalogue);
 }
