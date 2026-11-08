@@ -408,6 +408,12 @@ public class PlayerActivity extends Activity {
     private ExoPlayer carried;
     private long formatChangedAt = -100000;
     private boolean stallAdvert;
+    private final BufferRecoveryWatch bufferWatch = new BufferRecoveryWatch();
+    private boolean reconnectPending;
+    private final Runnable reopenStream = () -> {
+        reconnectPending = false;
+        if (player != null && !isFinishing()) open(!"live".equals(kind()) ? lastPosition : 0);
+    };
     private final Runnable advertJump = () -> {
         if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING) { formatChangedAt = -100000; player.seekToDefaultPosition(); player.prepare(); player.play(); }
     };
@@ -501,10 +507,11 @@ public class PlayerActivity extends Activity {
                     stallStartedAt = now;
                     showFeed(FeedStatus.label(blackSent, true));
                     ui.removeCallbacks(cleanPlay);
-                    ui.postDelayed(stallWatch, StreamRecovery.stallReconnectMs(recoveryName()));
+                    bufferWatch.reset();
                     // Advert switch: jump straight to the live point instead of waiting to catch up.
                     stallAdvert = "live".equals(kind()) && StreamRecovery.advertSwitch(now - formatChangedAt);
-                    if (stallAdvert) ui.postDelayed(advertJump, StreamRecovery.ADVERT_JUMP_MS);
+                    // A size change alone does not prove a broken stream. Let buffered video load
+                    // rather than seeking away from it during a normal advert/quality transition.
                 } else if (s == Player.STATE_READY) {
                     if (stallStartedAt > 0) onStallEnded(now - stallStartedAt, reconnects > 0);
                     everReady = true; stallStartedAt = 0; reconnects = 0; lastStableAt = now;
@@ -514,6 +521,7 @@ public class PlayerActivity extends Activity {
                         if (!blackArmed) { blackArmed = true; ui.postDelayed(blackCheck, ChannelHealth.BLACK_MS); }
                     }
                     ui.removeCallbacks(stallWatch);
+                    ui.removeCallbacks(reopenStream); reconnectPending = false; bufferWatch.reset();
                     if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
                 } else if (s == Player.STATE_ENDED && "live".equals(kind())) {
                     // Live never really ends: the provider dropped the stream (picture and sound stop
@@ -556,6 +564,7 @@ public class PlayerActivity extends Activity {
         } else open(0);
         ui.postDelayed(qualityRaise, StreamRecovery.STABLE_RAISE_MS);
         ui.postDelayed(antiFreeze, 1000);
+        ui.postDelayed(stallWatch, 1000);
     }
 
     // Sports Guide crosses: a live channel with no picture 10s after opening, or 2 clean minutes to clear a cross.
@@ -630,6 +639,7 @@ public class PlayerActivity extends Activity {
     }
 
     private void open(long at) {
+        bufferWatch.reset();
         MediaItem mi = item(liveUrls[urlAt]);
         // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
         if ("live".equals(kind())) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
@@ -640,13 +650,21 @@ public class PlayerActivity extends Activity {
         if (at > 0) player.seekTo(at);
     }
 
-    private final Runnable stallWatch = () -> { if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING) reconnect(); };
+    private final Runnable stallWatch = new Runnable() {
+        @Override public void run() {
+            if (player == null || isFinishing()) return;
+            if (!reconnectPending && bufferWatch.retry(android.os.SystemClock.elapsedRealtime(),
+                    player.getBufferedPosition(), StreamRecovery.stallReconnectMs(recoveryName()),
+                    player.getPlaybackState() == Player.STATE_BUFFERING, player.getPlayWhenReady())) reconnect();
+            ui.postDelayed(this, 1000);
+        }
+    };
 
     private void reconnect() {
         reconnect(false);
     }
     private void reconnect(boolean immediate) {
-        if (player == null || isFinishing()) return;
+        if (player == null || isFinishing() || reconnectPending) return;
         if (player.getDuration() > 0) lastPosition = Math.max(lastPosition, player.getCurrentPosition());
         reconnects++;
         if (StreamRecovery.giveUp(reconnects)) {
@@ -657,7 +675,9 @@ public class PlayerActivity extends Activity {
         }
         if (reconnectNote != null) reconnectNote.setVisibility(TextView.VISIBLE);
         final long at = !"live".equals(kind()) && player.getDuration() > 0 ? lastPosition : 0;
-        ui.postDelayed(() -> { if (player != null) open(at); }, immediate && reconnects == 1 ? 0 : StreamRecovery.backoffMs(reconnects));
+        reconnectPending = true;
+        bufferWatch.reset();
+        ui.postDelayed(reopenStream, immediate && reconnects == 1 ? 0 : StreamRecovery.backoffMs(reconnects));
     }
 
     /** Report from inside the player: one plain pop-up that pans above the keypad (no resizing, which made phones flicker). */
@@ -735,7 +755,7 @@ public class PlayerActivity extends Activity {
             rememberBetterFormat();
             if (StreamRecovery.cushioned(recoveryName()) && !daznFormatSwapped && liveUrls.length > 1) {
                 daznFormatSwapped = true; String other = StreamRecovery.otherFormat(liveUrls[urlAt]);
-                for (int i = 0; i < liveUrls.length; i++) if (other != null && liveUrls[i].endsWith("." + other)) { urlAt = i; ui.post(() -> { if (player != null) open(0); }); break; }
+                // Remember for the next failed connection/open; never throw away a recovered picture.
             }
         }
         if (recent >= ChannelSwap.AUTO_STALLS && swapOptions().length() > 0) offerSwap(true);

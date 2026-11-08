@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Fix Android buffering recovery that repeatedly discards video or leaves a reconnect unmonitored; validate regressions and prepare an update.
 - [ ] Inspect Dane J’s latest buffering and box version; report confirmed stalls without assuming the provider or player is at fault.
 - [ ] Match Windows/Mac main and backup controls to Android 3.99; verify both platform modes and release Windows 0.4.44 / Mac 0.1.54 with the existing fixed Sky-style guide.
 - [x] Released Android 3.99/210 with full backup controls and existing buffer/stall fixes; 185 tests pass, permanent signature matches 3.98, public download matches SHA-256.
