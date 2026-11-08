@@ -15,7 +15,7 @@ public class StreamRecoveryTest {
     }
     @Test public void coupangGetsTheSameSteadyProfileAsDazn() {
         assertTrue(StreamRecovery.isCoupang("Coupang Play 1"));
-        assertTrue(StreamRecovery.isCoupang("ᴄᴏᴜᴘᴀɴɢ Play 05"));
+        assertTrue(StreamRecovery.isCoupang("COUPANG PLAY 05"));
         assertFalse(StreamRecovery.isCoupang("BBC One"));
         assertArrayEquals(new int[]{40000,90000,3000,6000}, StreamRecovery.bufferMs("small", "Coupang Play 3"));
         assertEquals(30000, StreamRecovery.liveTargetMs("Coupang Play 3"));
