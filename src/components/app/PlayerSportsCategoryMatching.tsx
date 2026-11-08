@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, RefreshCw, Save, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -18,12 +19,17 @@ export function PlayerSportsCategoryMatching() {
   const loadCategories = useServerFn(listPlaylistCategories);
   const loadChannels = useServerFn(listPlaylistCategoryChannels);
   const [guides, setGuides] = useState<Guide[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const { data: playlist, isFetching: playlistBusy, error: playlistError, refetch: reloadPlaylist } = useQuery({
+    queryKey: ["player-sports-playlist-categories"],
+    queryFn: () => loadCategories(),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  const categories = playlist?.categories ?? [];
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [playlistBusy, setPlaylistBusy] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<{ id: string; category: string; channels: string[]; matches: Match[] } | null>(null);
@@ -40,10 +46,8 @@ export function PlayerSportsCategoryMatching() {
   }, []);
 
   async function fetchPlaylist() {
-    setPlaylistBusy(true); setError("");
-    try { setCategories((await loadCategories()).categories); }
-    catch (e) { setError(e instanceof Error ? e.message : "Could not load the playlist."); }
-    finally { setPlaylistBusy(false); }
+    setError("");
+    await reloadPlaylist();
   }
 
   const categoryFor = (g: Guide) => drafts[g.id] ?? readChannelLinks(g.channel_links).category ?? "";
@@ -77,7 +81,7 @@ export function PlayerSportsCategoryMatching() {
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 className="font-display text-lg font-semibold">Website guides → playlist sports categories</h2>
       <Button variant="outline" disabled={playlistBusy} onClick={() => void fetchPlaylist()}>
-        {playlistBusy ? <Loader2 className="animate-spin" /> : <RefreshCw />}{categories.length ? "Reload playlist" : "Load playlist"}
+        {playlistBusy ? <Loader2 className="animate-spin" /> : <RefreshCw />}{playlistBusy ? "Loading playlist…" : categories.length ? "Reload playlist" : "Retry playlist"}
       </Button>
     </div>
     <div className="grid gap-3 sm:grid-cols-2">
@@ -86,6 +90,7 @@ export function PlayerSportsCategoryMatching() {
     </div>
     {categories.length > 0 && <p className="text-xs text-muted-foreground">{categories.length} playlist categories loaded</p>}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+    {playlistError && <p role="alert" className="text-sm text-destructive">Could not load playlist categories. Please retry.</p>}
     {loading ? <Loader2 className="animate-spin" aria-label="Loading website guides" /> : <div className="divide-y divide-border">
       {guides.filter((g) => g.title.toLowerCase().includes(search.toLowerCase())).map((g) => {
         const category = categoryFor(g);
