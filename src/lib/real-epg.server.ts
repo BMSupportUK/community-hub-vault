@@ -87,7 +87,7 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
     const chUnique = chRows.filter((r) => !chSeen.has(r.epg_id) && chSeen.add(r.epg_id));
     for (let i = 0; i < chUnique.length; i += 1000) await db.from("epg_feed_channels").upsert(chUnique.slice(i, i + 1000));
     // Automatic matches: earlier feeds in a channel's list win over later ones; manual fixes are never touched.
-    const mapRows = mine.flatMap((t) => {
+    const mapRows = mine.flatMap((t): TablesInsert<"epg_channel_map">[] => {
       const key = t.name.trim().toLowerCase();
       const p = prior.get(key);
       if (p?.manual) return [];
@@ -101,7 +101,7 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
       return [{ channel_key: key, channel_name: t.name, category: t.category, feed: null, epg_id: null, epg_name: null, updated_at: new Date().toISOString() }];
     });
     for (let i = 0; i < mapRows.length; i += 1000) {
-      const { error } = await db.from("epg_channel_map").upsert(mapRows.slice(i, i + 1000) as TablesInsert<"epg_channel_map">[]);
+      const { error } = await db.from("epg_channel_map").upsert(mapRows.slice(i, i + 1000));
       if (error) throw new Error(error.message);
     }
     await db.from("epg_feeds").upsert({ code, imported_at: new Date().toISOString(), channels: channels.length, matched: matches.size, programmes: unique.length, error: null });
