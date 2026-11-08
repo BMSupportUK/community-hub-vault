@@ -17,25 +17,22 @@ public class LiveVoiceSearchTest {
     private JSONArray channels() throws Exception { return new JSONArray("[{\"stream_id\":\"12\",\"name\":\"NZ Sky Sport 1\",\"category_id\":\"nz\"},{\"stream_id\":\"13\",\"name\":\"Sky News\",\"category_id\":\"nz\"}]"); }
     private JSONObject event() throws Exception { return new JSONObject().put("title", "Middlesbrough v Derby").put("competition", "Championship").put("channels", new JSONArray().put("Sky Sports Football")).put("start", now).put("end", now + 3600000L); }
     @Test public void groupsPreservePayloadAndNzMatching() throws Exception {
-        List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories(), channels(), new JSONArray().put(event()), "Show me Sky Sports", now);
-        assertEquals(6, rows.size());
+        List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories(), channels(), "Show me Sky Sports");
+        assertEquals(4, rows.size());
         assertEquals("Categories", rows.get(0).group); assertFalse(rows.get(0).selectable());
         assertEquals("nz", rows.get(1).value.optString("category_id"));
         assertEquals("TV channels", rows.get(2).group); assertFalse(rows.get(2).selectable());
         assertEquals("12", rows.get(3).value.optString("stream_id"));
-        assertEquals("Events", rows.get(4).group); assertFalse(rows.get(4).selectable());
-        assertEquals("Middlesbrough v Derby", rows.get(5).value.optString("title"));
+        assertTrue(rows.stream().allMatch(r -> r.group.equals("Categories") || r.group.equals("TV channels")));
     }
-    @Test public void eventMatchingSupportsSpacedNamesAndExcludesFinished() throws Exception {
-        JSONObject gp = event().put("title", "MotoGP Valencia").put("channels", new JSONArray());
-        JSONObject ended = new JSONObject(gp.toString()).put("end", now);
-        List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories(), channels(), new JSONArray().put(gp).put(ended), "Moto GP", now);
-        assertEquals(1, rows.stream().filter(r -> r.selectable() && r.group.equals("Events")).count());
-        assertSame(gp, rows.get(rows.size() - 1).value);
+    @Test public void eventOnlyNameCannotProduceLiveTvResults() throws Exception {
+        List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories(), channels(), event().optString("title"));
+        assertEquals(4, rows.size());
+        assertTrue(rows.stream().noneMatch(LiveVoiceSearch.Row::selectable));
     }
     @Test public void fillerOnlyCannotSelectEntirePlaylist() throws Exception {
-        List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories(), channels(), new JSONArray().put(event()), "Please show me live TV channels", now);
-        assertEquals(6, rows.size());
+        List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories(), channels(), "Please show me live TV channels");
+        assertEquals(4, rows.size());
         assertTrue(rows.stream().noneMatch(LiveVoiceSearch.Row::selectable));
     }
 }
