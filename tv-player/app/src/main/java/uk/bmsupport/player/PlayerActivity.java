@@ -604,12 +604,23 @@ public class PlayerActivity extends Activity {
                 afTicks = 0; afLastFrames = -1;
                 reportBuffer(StreamRecovery.FREEZE_TICKS * 1000L, true, true, null);
                 if ("live".equals(kind())) { player.seekToDefaultPosition(); player.prepare(); player.play(); } else reconnect();
-            } else if (playing && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset(), recoveryName())) {
+            } else if (playing && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset(), defaultLiveOffset(), recoveryName())) {
                 player.seekToDefaultPosition();
             }
             ui.postDelayed(this, 1000);
         }
     };
+
+    /** The live offset the stream itself settled on (provider hold-back), 0 when unknown. */
+    private long defaultLiveOffset() {
+        try {
+            androidx.media3.common.Timeline t = player.getCurrentTimeline();
+            if (t.isEmpty()) return 0;
+            androidx.media3.common.Timeline.Window w = t.getWindow(player.getCurrentMediaItemIndex(), new androidx.media3.common.Timeline.Window());
+            long ms = w.liveConfiguration == null ? androidx.media3.common.C.TIME_UNSET : w.liveConfiguration.targetOffsetMs;
+            return ms == androidx.media3.common.C.TIME_UNSET ? 0 : ms;
+        } catch (RuntimeException e) { return 0; }
+    }
 
     /** Remember the other stream format for this channel after repeated stalls, so next time starts with it. */
     private void rememberBetterFormat() {
@@ -653,7 +664,7 @@ public class PlayerActivity extends Activity {
         bufferWatch.reset();
         MediaItem mi = item(liveUrls[urlAt]);
         // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
-        if ("live".equals(kind())) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
+        if ("live".equals(kind()) && StreamRecovery.overrideLiveOffset(liveUrls[urlAt])) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
                 .setTargetOffsetMs(StreamRecovery.liveTargetMs(recoveryName())).setMinOffsetMs(StreamRecovery.liveTargetMs(recoveryName()) / 2).build()).build();
         player.setMediaItem(mi);
         player.setPlayWhenReady(true);

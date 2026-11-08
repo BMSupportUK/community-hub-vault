@@ -60,8 +60,27 @@ final class StreamRecovery {
     static String providerTag(String name) { return isDazn(name) ? "dazn" : isCoupang(name) ? "coupang" : isHeavy(name) ? "high_bitrate" : null; }
     static long liveTargetMs(String name) { return cushioned(name) ? 30000 : LIVE_TARGET_MS; }
     static long stallReconnectMs(String name) { return cushioned(name) ? 6000 : STALL_RECONNECT_MS; }
-    static int formatSwapStalls(String name) { return cushioned(name) ? 1 : 2; }
+    /**
+     * Stalls in two minutes before the other format is tried/shared. One stall used to flip the
+     * channel ts↔m3u8 for every device, which made the feed thrash between formats.
+     */
+    static int formatSwapStalls(String name) { return 3; }
     static boolean drifted(long offset, String name) { return offset > (cushioned(name) ? 60000 : LIVE_DRIFT_MS); }
+    /**
+     * Drift measured from where the provider's playlist puts the live point (its hold-back), not
+     * from the edge, so a normal provider offset never triggers a buffer-flushing jump.
+     */
+    static boolean drifted(long offset, long defaultOffset, String name) {
+        return offset > Math.max(0, defaultOffset) + (cushioned(name) ? 60000 : LIVE_DRIFT_MS);
+    }
+    /**
+     * HLS live keeps the provider's own hold-back. Forcing a 12–30s offset on Xtream playlists
+     * (often only ~30s long) parked playback at the oldest segment, which then fell out of the
+     * playlist (behind live window) and flushed the buffer — the repeating stalls.
+     */
+    static boolean overrideLiveOffset(String url) {
+        return url == null || !url.toLowerCase(java.util.Locale.ROOT).contains(".m3u8");
+    }
     static int[] bufferMs(String id, String name) { return bufferMs(cushioned(name) ? "large" : id); }
 
     /** {minBuffer, maxBuffer, startPlayback, afterRebuffer} in milliseconds. */
