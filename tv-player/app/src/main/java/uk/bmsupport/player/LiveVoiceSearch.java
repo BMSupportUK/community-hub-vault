@@ -48,7 +48,7 @@ final class LiveVoiceSearch {
                     JSONArray names = value.optJSONArray("channels");
                     if (names != null) for (int j = 0; j < names.length(); j++) hay += " " + names.optString(j);
                 }
-                if (LiveSearch.matches(hay, query)) hits.add(new Row(group, title, subtitle, value));
+                if (group.equals("Events") ? SportsVoiceSearch.matches(hay, spoken) : LiveSearch.matches(hay, query)) hits.add(new Row(group, title, subtitle, value));
             }
             rows.add(new Row(group, group + " (" + hits.size() + ")", "", null));
             rows.addAll(hits);
