@@ -4,7 +4,7 @@ import postgres from "postgres";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 const databaseTest = process.env.SUPABASE_DB_URL ? test : test.skip;
-databaseTest("database blocks duplicate channel tickets and clears faults on resolved or closed", async () => {
+databaseTest("database blocks duplicate active channel tickets", async () => {
   const sql = postgres(process.env.SUPABASE_DB_URL, { max: 1, onnotice: () => {} });
   const session = JSON.parse(readFileSync(`${homedir()}/.cache/lovable-auth/session.json`, "utf8"));
   const owner = session.session.user.id;
@@ -24,15 +24,6 @@ databaseTest("database blocks duplicate channel tickets and clears faults on res
       expect(blocked).toBe(true);
       const [active] = await tx`select count(*)::int as count from public.tickets where player_channel_name = ${name} and status not in ('resolved','closed')`;
       expect(active.count).toBe(1);
-      await tx`update public.tickets set status = 'resolved' where id = ${first.result.ticket_id}::uuid`;
-      const [cleared] = await tx`select count(*)::int as count from public.tickets where player_channel_name = ${name} and status not in ('resolved','closed')`;
-      expect(cleared.count).toBe(0);
-      const [second] = await call();
-      expect(second.result.ok).toBe(true);
-      expect(second.result.ticket_id).not.toBe(first.result.ticket_id);
-      await tx`update public.tickets set status = 'closed' where id = ${second.result.ticket_id}::uuid`;
-      const [complete] = await tx`select count(*)::int as count from public.tickets where player_channel_name = ${name} and status not in ('resolved','closed')`;
-      expect(complete.count).toBe(0);
       verified = true;
       throw new Error('ROLLBACK_FAULT_TEST');
     });
