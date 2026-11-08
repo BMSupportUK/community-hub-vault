@@ -1,4 +1,5 @@
 # tv-player rules
+- Series detail entry focuses its top action; asynchronous episode insertion never steals focus or scrolls past the title, while deliberate remote navigation still reveals episodes.
 - Programme grid measures title-sized minimum spans on a shared expandable one-hour/quarter-hour axis; crowded hours scroll to the selected programme instead of compressing spans, and touch hit-testing uses that same axis. Start/end times stay separate and unscaled so widening never changes playback or reminder routing.
 - Live TV voice recognition and Fire TV dictation share category/channel-only LiveVoiceSearch grouping without sports requests; headers are disabled resultList rows and categories retain provider IDs. Sports Guide voice matching remains separate.
 - Sports Guide opening/manual refresh uses its own status dialog through listings, catalogue and selected-channel matching; periodic refresh stays unobtrusive, and completion, failure or exit clears the dialog. Sports body/card rows disable baseline alignment to keep unequal columns inside their bounds.

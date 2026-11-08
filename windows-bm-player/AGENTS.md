@@ -1,4 +1,5 @@
 # Windows BM Player rules
+- Shared series detail entry focuses its top Back control without scrolling and resets its own pane once per series identity; episode reveal runs only on user focus navigation.
 - Programme grid uses guide-axis.cjs for a shared expandable one-hour/quarter-hour axis; crowded hours scroll horizontally with sticky channels and focus reveals the whole programme, never compressing short spans. Wrapped titles and a separate start/end line keep box edges aligned with header times.
 - Live TV voice results group only provider category names and channel names independently of typed search, without sports requests; Sports Guide retains its separate event-search.cjs matching.
 - Upcoming EPG programme/title and reminder-icon actions open confirmation before any preview selection; title and icon are sibling buttons so mouse and keyboard actions never nest.
