@@ -3,9 +3,11 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 import org.json.JSONArray;
 import org.json.JSONObject;
 @RunWith(RobolectricTestRunner.class)
+@Config(sdk = 34, application = PlayerApplication.class)
 public class ChannelTicketFaultTest {
     @Test public void faultIdentityMatchesOnlyReportedChannel() throws Exception {
         JSONArray faults = new JSONArray().put(" SKY  Sports ");
