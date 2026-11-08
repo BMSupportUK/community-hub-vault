@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { DEMO_CHECKOUT_VIEW } from "@/lib/demo-data";
 import { usesCustomerOrderRemoteTabs } from "@/lib/order-remote-tabs";
 import { Button } from "@/components/ui/button";
+import { warmSquareCardEntry } from "@/lib/square-card-sdk";
 
 export const Route = createFileRoute("/pay/$token")({
   validateSearch: (search: Record<string, unknown>): { pw?: string } => ({
@@ -103,6 +104,7 @@ function PayPage() {
       setCheckingAccess(false);
       return;
     }
+    warmSquareCardEntry();
     // Require a fresh entry whenever the customer opens this order page.
     setPassword(null);
     setUnlocked(false);
