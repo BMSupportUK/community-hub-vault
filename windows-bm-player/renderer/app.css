@@ -36,7 +36,7 @@
 .lg-star{background:transparent;border:0;font-size:20px;padding:0 6px;min-height:0}.lg-cat{color:var(--muted);font-size:14px;max-width:220px;overflow:hidden;text-overflow:ellipsis}
 .lg-dates{display:flex;align-items:center;gap:8px;padding:8px 0 6px}.lg-dates strong{font-size:15px;margin-right:6px}
 .lg-dates .mini{padding:4px 10px;font-size:13px;min-height:0;border-radius:12px}.lg-step{margin-left:auto;display:flex;gap:6px}
-.lg-grid{flex:1;min-height:0;overflow-y:auto;border:1px solid var(--border);border-radius:8px}
+.lg-grid{scrollbar-gutter:stable;flex:1;min-height:0;overflow-y:auto;border:1px solid var(--border);border-radius:8px}
 .lg-row{display:flex;height:88px;border-bottom:1px solid var(--border)}
 .lg-head{position:sticky;top:0;z-index:2;height:36px;background:var(--raised)}
 .lg-ch{flex:0 0 240px;width:240px;min-width:0;overflow:hidden;display:flex;align-items:stretch;background:var(--surface);border-right:1px solid var(--border)}
@@ -53,7 +53,7 @@
 .lg-now{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:1;pointer-events:none}
 .lg-prog-title{justify-content:flex-start;gap:4px}.lg-prog-title span{width:100%;flex:1;min-height:0;white-space:normal;overflow-wrap:anywhere;overflow-y:auto;text-overflow:clip;line-height:1.25;scrollbar-width:thin}.lg-prog-title small{flex:none;white-space:normal;line-height:1.2}.lg-title{display:block;overflow:visible;overflow-wrap:anywhere}.lg-line,.lg-times{min-width:0}
 .lg-empty{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px}
-.lg-grid{overflow:auto}.lg-ch{position:sticky;left:0;z-index:2}.lg-prog-title small{white-space:nowrap}.lg-prog-title{flex:1 1 0}
+.lg-grid{scrollbar-gutter:stable;overflow:auto}.lg-ch{position:sticky;left:0;z-index:2}.lg-prog-title small{white-space:nowrap}.lg-prog-title{flex:1 1 0}
 .lg-scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:center;justify-content:center}
 .lg-cats{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;width:min(420px,90vw);max-height:80vh;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
 .lg-cats h3{margin:0}.lg-cat-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px}.lg-cat-list button{text-align:left}.lg-cat-list .selected{border:3px solid var(--accent);font-weight:700}
