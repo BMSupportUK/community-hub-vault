@@ -8,6 +8,7 @@ import { WatchTimeSection } from "@/components/app/PlayerWatchTimeSection";
 import { BufferingSection } from "@/components/app/PlayerBufferingSection";
 import { PlayerChannelsStatusSection } from "@/components/app/PlayerChannelsStatusSection";
 import { PlayerGuideMatchingSection } from "@/components/app/PlayerGuideMatchingSection";
+import { PlayerSportsCategoryMatching } from "@/components/app/PlayerSportsCategoryMatching";
 import { PlayerAnnouncementsCard } from "@/components/app/PlayerAnnouncementsCard";
 import { PlayerMajorAnnouncementsCard } from "@/components/app/PlayerMajorAnnouncementsCard";
 import { toast } from "sonner";
@@ -166,7 +167,8 @@ function AdminPlayerPageInner() {
         }}>{maintBusy ? <Loader2 className="animate-spin" /> : <Save />}Save maintenance</Button>
         <p className="text-xs text-muted-foreground">Open apps switch within about 15 seconds; others when they next open.</p>
       </section>}
-      {section === "channels" && <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
+      {section === "channels" && <PlayerSportsCategoryMatching />}
+      {section === "channels" && <section className="space-y-3 border-t border-border pt-5">
         <h2 className="font-display font-semibold">Sports guide channel matching</h2>
         <p className="text-sm text-muted-foreground">The app's Sports guide links each listed channel to the customer's playlist. If a channel shows "Not in your list", add a line: guide name = playlist name.</p>
         <Textarea aria-label="Channel matching" rows={5} placeholder={"Viaplay Sports 1 = Premier Sports 1\nSky Sports Racing = Sky Racing"} value={aliasText} onChange={(e) => setAliasText(e.target.value)} />
