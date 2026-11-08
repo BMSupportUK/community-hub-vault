@@ -300,10 +300,10 @@ export const Route = createFileRoute("/api/public/player")({
           const { count } = await supabaseAdmin.from("tickets").select("id", { count: "exact", head: true })
             .eq("user_id", device.user_id).like("subject", "BM Player:%").gte("created_at", new Date(Date.now() - 10 * 60_000).toISOString());
           if ((count ?? 0) >= 3) return json({ error: "You've just sent a few reports. Our staff will be with you shortly." }, 429);
-          const slug = body.kind === "live" ? "live-tv" : "movies-series";
+          const slug = "movies-series";
           const { data: cat } = await supabaseAdmin.from("ticket_categories").select("id").eq("slug", slug).maybeSingle();
           if (!cat) return json({ error: "Couldn't open a ticket. Try again." }, 503);
-          const label = body.kind === "live" ? "Channel" : body.kind === "film" ? "Film" : "Series";
+          const label = body.kind === "film" ? "Film" : "Series";
           const { data: t, error: tErr } = await supabaseAdmin.from("tickets")
             .insert({ user_id: device.user_id, subject: `BM Player: ${label} – ${body.title}`.slice(0, 200), category_id: cat.id, priority: "normal" })
             .select("id").single();

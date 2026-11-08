@@ -4263,6 +4263,10 @@ public class MainActivity extends Activity {
     /** Channels the website currently marks not working (Sports Guide crosses). */
     static volatile java.util.Set<String> sportsDown = new java.util.HashSet<>();
     static String sportsRowLabel(JSONObject e, String guideName, String channel) {
+        JSONArray faults = sportsJson == null ? null : sportsJson.optJSONArray("ticketFaults");
+        if (ChannelHealth.ticketFault(e == null ? null : e.optJSONArray("ticketFaults"), guideName, channel)
+                || ChannelHealth.ticketFault(faults, guideName, channel))
+            return "❌  " + channel + "  —  fault reported, staff are investigating. Try another channel";
         boolean down = ChannelHealth.crossed(e, guideName) || ChannelHealth.crossed(e, channel)
                 || sportsDown.contains(channel.toLowerCase(java.util.Locale.ROOT));
         if (!down) return "▶  " + channel;
