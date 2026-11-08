@@ -555,7 +555,7 @@ public class PlayerActivity extends Activity {
                     // Live never really ends: the provider dropped the stream (picture and sound stop
                     // with no buffering sign). Record it and reopen the channel at now.
                     reportBuffer(0, true, true, "provider_cut");
-                    reconnect(StreamRecovery.isDazn(recoveryName()));
+                    reconnect(StreamRecovery.cushioned(recoveryName()));
                 }
             }
             @Override public void onVideoSizeChanged(VideoSize v) { if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime(); }
@@ -786,7 +786,7 @@ public class PlayerActivity extends Activity {
         String u = liveUrls.length > urlAt ? liveUrls[urlAt] : "";
         String fmt = u.endsWith(".m3u8") ? "m3u8" : u.endsWith(".ts") ? "ts" : "direct";
         String decoder = activeDecoder.substring(0, Math.min(120, activeDecoder.length()));
-        BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, freeze, cause, fmt, decoder, StreamRecovery.isDazn(recoveryName()) ? "dazn" : null, getIntent().getStringExtra("event_name"));
+        BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, freeze, cause, fmt, decoder, StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
     }
 
     private void onStallEnded(long ms, boolean reconnected) {
@@ -799,7 +799,7 @@ public class PlayerActivity extends Activity {
         if (recent >= StreamRecovery.STALLS_TO_LOWER) lowerQuality();
         if (recent >= StreamRecovery.formatSwapStalls(recoveryName())) {
             rememberBetterFormat();
-            if (StreamRecovery.isDazn(recoveryName()) && !daznFormatSwapped && liveUrls.length > 1) {
+            if (StreamRecovery.cushioned(recoveryName()) && !daznFormatSwapped && liveUrls.length > 1) {
                 daznFormatSwapped = true; String other = StreamRecovery.otherFormat(liveUrls[urlAt]);
                 for (int i = 0; i < liveUrls.length; i++) if (other != null && liveUrls[i].endsWith("." + other)) { urlAt = i; ui.post(() -> { if (player != null) open(0); }); break; }
             }

@@ -102,11 +102,11 @@ function tick(session, state, now, live) {
       if (!session.failed) { session.failed = true; out.failed = true; out.event = { ms: now - session.stallAt, reconnected: true }; }
       return out;
     }
-    const delay = isDazn(session.recoveryName || session.item?.name) && state === 6 ? 0 : backoffMs(session.reconnects);
+    const delay = cushioned(session.recoveryName || session.item?.name) && state === 6 ? 0 : backoffMs(session.reconnects);
     session.retryAt = now + delay + recovery.reconnect;
     out.reconnect = delay;
   }
   return out;
 }
 
-module.exports = { isDazn, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { isDazn, isCoupang, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
