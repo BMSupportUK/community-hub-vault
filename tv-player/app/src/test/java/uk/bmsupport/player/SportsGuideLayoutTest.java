@@ -46,6 +46,60 @@ public class SportsGuideLayoutTest {
     @Test public void longPremierLeagueCategoryFitsTv() throws Exception { measureHeader(960, 540); }
     @Test public void longPremierLeagueCategoryFitsShortLandscape() throws Exception { measureHeader(800, 360); }
 
+    private android.widget.ListView eventList(MainActivity activity) throws Exception {
+        Field prefs = MainActivity.class.getDeclaredField("prefs");
+        prefs.setAccessible(true);
+        prefs.set(activity, activity.getSharedPreferences("bmplayer", 0));
+        java.util.List<org.json.JSONObject> cards = new java.util.ArrayList<>();
+        for (int i = 0; i < 12; i++) cards.add(new org.json.JSONObject()
+                .put("title", "Middlesbrough v Coventry City " + i)
+                .put("competition", "Championship").put("start", System.currentTimeMillis() + 60000)
+                .put("channels", new org.json.JSONArray().put("Sky Sports")));
+        Class<?> type = Class.forName("uk.bmsupport.player.MainActivity$SportsCardAdapter");
+        java.lang.reflect.Constructor<?> constructor = type.getDeclaredConstructors()[0];
+        constructor.setAccessible(true);
+        android.widget.ListView list = new android.widget.ListView(activity) {
+            @Override public boolean isInTouchMode() { return false; }
+        };
+        list.setPadding(6, 6, 6, 6);
+        list.setAdapter((android.widget.BaseAdapter) constructor.newInstance(activity, cards, System.currentTimeMillis()));
+        activity.setContentView(list);
+        list.requestFocus();
+        return list;
+    }
+
+    private void layoutList(android.widget.ListView list) {
+        list.measure(View.MeasureSpec.makeMeasureSpec(430, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(230, View.MeasureSpec.EXACTLY));
+        list.layout(0, 0, 430, 230);
+    }
+
+    @Test public void partiallyScrolledSelectedCardIsRevealedAtPaddedTop() throws Exception {
+        MainActivity a = Robolectric.buildActivity(MainActivity.class).get();
+        android.widget.ListView list = eventList(a);
+        list.setSelectionFromTop(4, -28);
+        layoutList(list);
+        assertEquals(4, list.getSelectedItemPosition());
+        assertTrue("reproduce a clipped selected event", list.getSelectedView().getTop() < list.getPaddingTop());
+        MainActivity.revealSportsCard(list);
+        layoutList(list);
+        assertEquals(4, list.getSelectedItemPosition());
+        assertEquals(list.getPaddingTop(), list.getSelectedView().getTop());
+        assertTrue(list.getSelectedView().getBottom() <= list.getHeight() - list.getPaddingBottom());
+    }
+
+    @Test public void fullyVisibleCardDoesNotResetListScroll() throws Exception {
+        MainActivity a = Robolectric.buildActivity(MainActivity.class).get();
+        android.widget.ListView list = eventList(a);
+        list.setSelectionFromTop(4, 20);
+        layoutList(list);
+        int top = list.getSelectedView().getTop();
+        MainActivity.revealSportsCard(list);
+        layoutList(list);
+        assertEquals(top, list.getSelectedView().getTop());
+        assertEquals(4, list.getSelectedItemPosition());
+    }
+
     @Test public void eventContentsStayInsideFirstRow() throws Exception {
         MainActivity a = Robolectric.buildActivity(MainActivity.class).get();
         Field prefs = MainActivity.class.getDeclaredField("prefs"); prefs.setAccessible(true);
