@@ -1,6 +1,17 @@
 // @ts-nocheck — bun:test is used only by the test runner.
 import { expect, test } from 'bun:test';
-import { watchCategoryIds, mapWatchTitle } from './watch-playlist';
+import { watchCategoryIds, mapWatchTitle, newestWatchRows } from './watch-playlist';
+test('Cinema films put the newest playlist addition first, regardless of release year', () => {
+  const rows = [{stream_id:1,name:'New release (2026)',added:'100'}, {stream_id:2,name:'Older film (1999)',added:'300'}, {stream_id:3,added:'200'}, {stream_id:4}];
+  expect(newestWatchRows(rows, 'movie').map(r => r.stream_id)).toEqual([2,3,1,4]);
+  expect(rows[0].stream_id).toBe(1);
+});
+test('Recommended series put the latest playlist timestamp first', () => {
+  expect(newestWatchRows([{series_id:1,last_modified:'100'}, {series_id:2,last_modified:'300'}, {series_id:3,last_modified:'invalid'}], 'series').map(r => r.series_id)).toEqual([2,1,3]);
+});
+test('playlist dates accept seconds, milliseconds and ISO dates with stable missing dates', () => {
+  expect(newestWatchRows([{stream_id:1,added:'2026-11-08T12:00:00Z'}, {stream_id:2,added:1794139201000}, {stream_id:3,added:1794139199}, {stream_id:4}, {stream_id:5}], 'movie').map(r => r.stream_id)).toEqual([2,1,3,4,5]);
+});
 test('films come only from Cinema, not Recommended Movies or live Cinema channels', () => {
   expect(watchCategoryIds([{category_id:452,category_name:'Cinema'},{category_id:661,category_name:'Recommended Movies'},{category_id:1,category_name:'Sky Cinema'}], 'movie')).toEqual(['452']);
 });

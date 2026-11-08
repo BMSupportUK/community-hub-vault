@@ -3,6 +3,17 @@ export type WatchTitle = {
   posterUrl: string | null; rating: number | null; overview: string;
 };
 export type WatchRow = Record<string, unknown>;
+export function newestWatchRows(rows: WatchRow[], kind: WatchTitle['kind']) {
+  function timestamp(row: WatchRow) {
+    const value = kind === 'movie' ? row.added : (row.added ?? row.last_modified);
+    if (value == null || value === '') return 0;
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) return numeric > 1e12 ? numeric : numeric * 1000;
+    const parsed = Date.parse(String(value));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return [...rows].sort((a, b) => timestamp(b) - timestamp(a));
+}
 export function watchCategoryIds(rows: WatchRow[], kind: WatchTitle['kind']) {
   const name = kind === 'movie' ? 'cinema' : 'recommended series';
   return rows.filter(r => String(r.category_name ?? '').trim().toLowerCase() === name).map(r => String(r.category_id));

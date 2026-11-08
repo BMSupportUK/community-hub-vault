@@ -1,5 +1,5 @@
 import { playlistWatchRead } from './playlist-source.server';
-import { mapWatchTitle, watchCategoryIds, type WatchTitle, type WatchRow } from './watch-playlist';
+import { mapWatchTitle, newestWatchRows, watchCategoryIds, type WatchTitle, type WatchRow } from './watch-playlist';
 import { createSharedCache } from './player-sports-cache';
 const cached = createSharedCache<{ movies: WatchTitle[]; series: WatchTitle[] }>(60 * 60_000);
 const details = new Map<string, { at: number; overview: string }>();
@@ -12,9 +12,9 @@ export async function watchPlaylist() {
       const groups = await Promise.all(ids.map(category_id => playlistWatchRead(kind === 'movie' ? 'get_vod_streams' : 'get_series', { category_id })));
       const rows = groups.flatMap(r => Array.isArray(r) ? r as WatchRow[] : []);
       const unique = new Map<string, WatchTitle>();
-      for (const row of rows) {
+      for (const row of newestWatchRows(rows, kind)) {
         const item = mapWatchTitle(row, kind);
-        if (item.title && /^\d+$/.test(item.id)) unique.set(item.id, item);
+        if (item.title && /^\d+$/.test(item.id) && !unique.has(item.id)) unique.set(item.id, item);
       }
       return [...unique.values()];
     }
