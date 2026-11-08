@@ -25,10 +25,25 @@ export function programmeMatchesEvent(eventTitle: string, programmeTitle: string
   return joined.includes(` ${event.join(" ")} `);
 }
 
-export function matchingProgrammeEnd(event: { title: string; start: number; channels: string[] }, listings: Map<string, SportsProgramme[]>): number | undefined {
+type ProgrammeEvent = { title: string; start: number; channels: string[]; competition?: string };
+
+/** Competition-only WBBL listings are safe only for an explicit live slot with one fixture near its start. */
+function womensBigBashSlot(event: ProgrammeEvent, programme: SportsProgramme, events: ProgrammeEvent[]): boolean {
+  const competition = (value: string) => value.toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const isWbbl = (value: string) => /\bwbbl\b/.test(value) || (/\bbig bash league\b/.test(value) && /\bwomens?\b/.test(value));
+  const label = competition(programme.title);
+  if (!/^live (?:womens big bash league|women big bash league|wbbl)$/.test(label)
+    || !isWbbl(competition(event.competition ?? ""))) return false;
+  const candidates = events.filter(e => isWbbl(competition(e.competition ?? ""))
+    && e.channels.some(c => event.channels.includes(c))
+    && e.start >= programme.start && e.start - programme.start <= 30 * 60_000);
+  return candidates.length === 1 && candidates[0] === event;
+}
+
+export function matchingProgrammeEnd(event: ProgrammeEvent, listings: Map<string, SportsProgramme[]>, events: ProgrammeEvent[] = [event]): number | undefined {
   const matches = event.channels.filter(isOfficialSportsChannel).flatMap(channel => listings.get(channel.toLowerCase()) ?? [])
     .filter(p => Number.isFinite(p.start) && Number.isFinite(p.end) && p.end > p.start && p.end - p.start <= 12 * 3600_000
       && p.start <= event.start + 30 * 60_000 && p.start >= event.start - 2 * 3600_000 && p.end > event.start
-      && programmeMatchesEvent(event.title, p.title));
+      && (programmeMatchesEvent(event.title, p.title) || womensBigBashSlot(event, p, events)));
   return matches.length ? Math.max(...matches.map(p => p.end)) : undefined;
 }
