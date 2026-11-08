@@ -2115,6 +2115,13 @@
       "when": 1794143456514,
       "tag": "0301_epg_category_demand_atomic_publish",
       "breakpoints": true
+    },
+    {
+      "idx": 302,
+      "version": "7",
+      "when": 1794143886676,
+      "tag": "0302_retire_country_epg_refresh",
+      "breakpoints": true
     }
   ]
 }

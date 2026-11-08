@@ -1,0 +1,10 @@
+CREATE OR REPLACE FUNCTION public.request_epg_feeds(p_codes text[]) RETURNS integer LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$ SELECT 0; $$;
+CREATE OR REPLACE FUNCTION public.dispatch_epg_demand() RETURNS integer LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$ SELECT 0; $$;
+CREATE OR REPLACE FUNCTION public.arm_epg_retry() RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN RETURN; END $$;
+CREATE OR REPLACE FUNCTION public.claim_epg_feed(p_code text,p_wake text DEFAULT NULL) RETURNS uuid LANGUAGE sql SECURITY DEFINER SET search_path=public AS $$ SELECT NULL::uuid; $$;
+CREATE OR REPLACE FUNCTION public.finish_epg_import(p_code text,p_run uuid,p_counts jsonb) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN RAISE EXCEPTION 'Country EPG service retired'; END $$;
+CREATE OR REPLACE FUNCTION public.fail_epg_import(p_code text,p_run uuid,p_error text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN RETURN; END $$;
+DO $$ BEGIN PERFORM cron.unschedule(jobid) FROM cron.job WHERE jobname IN ('real-epg-import','epg-demand-retry'); END $$;
+COMMENT ON TABLE public.epg_refresh_queue IS 'DEPRECATED: country EPG refresh cancelled; provider-only channel listings.';
+COMMENT ON TABLE public.epg_import_batches IS 'DEPRECATED: country EPG refresh cancelled; never publish staged imports.';
+COMMENT ON TABLE public.epg_programmes IS 'DEPRECATED: retained historical imports, not used by player channel guide.';
