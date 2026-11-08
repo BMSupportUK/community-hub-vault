@@ -1,4 +1,5 @@
 # Windows BM Player rules
+- Live TV voice results group provider categories/channels and published sports events independently of typed search; event selections focus the shared Sports Guide and retain its verified playback key. Pure event matching lives in event-search.cjs for reuse.
 - Upcoming EPG programme/title and reminder-icon actions open confirmation before any preview selection; title and icon are sibling buttons so mouse and keyboard actions never nest.
 - Channel EPG is read directly from the stored provider login; never call website guide/category-refresh endpoints. Windows and Mac share this path.
 - Sports Guide loading presentation covers both the guide request and channel catalog preparation; the shared renderer also serves Mac and clears failed requests instead of leaving an endless wait.

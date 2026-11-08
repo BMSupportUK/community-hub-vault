@@ -1,4 +1,5 @@
 # tv-player rules
+- Live TV voice recognition and Fire TV dictation share LiveVoiceSearch grouping; headers are disabled resultList rows, categories retain provider IDs and events reuse existing Sports Guide channel selection without opening a second stream.
 - Sports Guide opening/manual refresh uses its own status dialog through listings, catalogue and selected-channel matching; periodic refresh stays unobtrusive, and completion, failure or exit clears the dialog. Sports body/card rows disable baseline alignment to keep unequal columns inside their bounds.
 - Sports event selections restore at the padded list origin and reveal clipped selected cards after remote navigation/focus; viewport checks must use an attached scrolling list, not just detached row measurements.
 - DAZN recovery uses verified channel/category identity, not numeric feed prefixes; its live-offset drift guard allows the larger cushion and same-event alternatives come from the selected Sports Guide card.
