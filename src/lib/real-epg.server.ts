@@ -137,9 +137,7 @@ export async function guideFor(channel: string, events: SportsEvent[], nowMs = D
   const from = nowMs - KEEP_BEFORE_MS, to = nowMs + KEEP_AHEAD_MS;
   const onGuide = events.some((e) => e.channels.some((c) => c.trim().toLowerCase() === key));
   if (isEventChannel(channel)) return { rows: eventListings(channel, events, from, to).map(toListing), source: "sports" };
-  let real: { start: number; stop: number; title: string; desc: string }[] | null = null;
   const hit = listingCache.get(key);
-  if (hit && nowMs - hit.at < LISTING_TTL) real = hit.rows ? hit.rows.map((r) => ({ start: r.start_timestamp * 1000, stop: r.stop_timestamp * 1000, title: "", desc: "" })) : null;
   let realRows: ListingRow[] | null = hit && nowMs - hit.at < LISTING_TTL ? hit.rows : null;
   if (!hit || nowMs - hit.at >= LISTING_TTL) {
     const m = (await channelMap()).get(key);
@@ -149,7 +147,6 @@ export async function guideFor(channel: string, events: SportsEvent[], nowMs = D
         .gt("stop_at", new Date(from).toISOString()).lt("start_at", new Date(to).toISOString()).order("start_at").limit(120);
       const progs = (data ?? []).map((p) => ({ start: Date.parse(p.start_at), stop: Date.parse(p.stop_at), title: p.title, desc: p.descr }));
       realRows = progs.length ? progs.map(toListing) : null;
-      real = progs.length ? progs : null;
     }
     listingCache.set(key, { at: nowMs, rows: realRows });
     if (listingCache.size > 5000) listingCache.delete(listingCache.keys().next().value!);
@@ -162,6 +159,5 @@ export async function guideFor(channel: string, events: SportsEvent[], nowMs = D
     const merged = overlayEvents(base.map((b) => ({ start: b.start, stop: b.stop, title: "", row: b.row as ListingRow | null })), evs.map((e) => ({ start: e.start, stop: e.stop, title: e.title, row: toListing(e) as ListingRow | null })));
     return { rows: merged.map((m) => m.row!), source: "sports" };
   }
-  void real;
   return realRows ? { rows: realRows, source: "real" } : { rows: null, source: "none" };
 }
