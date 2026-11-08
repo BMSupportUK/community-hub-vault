@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Hash, UserRound, Check } from "lucide-react";
+import { Hash, UserRound, UsersRound, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import {
   needsProfileChoice,
   pickActiveProfile,
   readActiveProfileId,
+  requestProfileChooser,
   saveActiveProfile,
   wasProfileChosen,
 } from "@/lib/account-profiles";
