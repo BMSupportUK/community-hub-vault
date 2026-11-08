@@ -25,6 +25,6 @@ export const getNewSeries = createServerFn({ method: 'GET' })
         if (!response.ok) throw new Error(`Series discovery failed (${response.status})`);
         return (await response.json() as { results?: DiscoverySeries[] }).results ?? [];
       }));
-      return { year, years, currentYear, months: groupNewSeries(responses.flat(), cutoff), error: null as string | null };
-    } catch { return { year, years, currentYear, months: [] as SeriesMonth[], error: 'New series recommendations are unavailable. Please try again shortly.' }; }
+      return { year, years, currentYear, currentMonth, months: groupNewSeries(responses.flat(), cutoff), error: null as string | null };
+    } catch { return { year, years, currentYear, currentMonth, months: [] as SeriesMonth[], error: 'New series recommendations are unavailable. Please try again shortly.' }; }
   });
