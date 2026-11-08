@@ -4,7 +4,7 @@ export type SeriesMonth = { month: number; name: string; items: NewSeries[] };
 export type DiscoverySeries = { id: number; name?: string; first_air_date?: string; overview?: string; poster_path?: string | null; vote_average?: number; vote_count?: number };
 export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 /** How many year pills the New series screen offers, counting the current year. */
-export const NEW_SERIES_YEARS_SHOWN = 6;
+export const NEW_SERIES_YEARS_SHOWN = 11;
 /** Year pills run newest first: the current year, then the years before it. */
 export function newSeriesYears(currentYear: number, shown: number = NEW_SERIES_YEARS_SHOWN): number[] {
   return Array.from({ length: Math.max(1, shown) }, (_, index) => currentYear - index);
