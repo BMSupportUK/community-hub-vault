@@ -10,6 +10,7 @@ import {LiveGuide} from './live-guide';
 import {SportsGuide} from './sports-guide';
 import {CategoryOrderEditor} from './category-order';
 import {orderCategories} from '../category-order.cjs';
+import {filterLive} from '../live-search.cjs';
 const bm=window.bm;
 const stamp=value=>value?'Updated '+new Date(value).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Not updated yet';
 const clock=value=>new Date(value).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
@@ -51,7 +52,7 @@ function App(){
  });},[]);
  async function browse(nextKind,source,favourites=false){setKind(source?'live':nextKind);setCategory(source?'live':'all');setQuery('');setHeroItem(null);setSelected(null);setProgrammes([]);setView('browse');setLoading(true);setSort(state?.settings?.['sort_'+nextKind]||'added');if(source){setData({saved:true,favourites,categories:[{id:'live',name:'Live TV'},{id:'film',name:'Movies'},{id:'series',name:'Series'}],items:source.map(i=>({...i,category:i.kind==='live'?'live':i.kind==='film'?'film':'series'}))});setLoading(false);loadRatings(source);return;}const result=await act(()=>bm.catalog(nextKind));if(result){setData(result);loadRatings(result.items);}setLoading(false);pane.current?.scrollTo(0,0);}
  const categories=data.saved?data.categories:orderCategories(data.categories,state?.settings?.['category_order_'+kind]);
- const items=orderBrowse(data.items.filter(i=>(category==='all'||i.category===category)&&i.name.toLowerCase().includes(query.toLowerCase())),kind,sort);
+ const items=orderBrowse(kind==='live'&&!data.saved?filterLive(data.items,category,query):data.items.filter(i=>(category==='all'||i.category===category)&&i.name.toLowerCase().includes(query.toLowerCase())),kind,sort);
  async function preview(item){
   if(multi>1||playingView)return;
   const sequence=++previewSequence.current;setSelected(item);
