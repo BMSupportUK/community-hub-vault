@@ -13,7 +13,9 @@ const FREEZE_MS = 4000;
 const STABLE_RAISE_MS = 120000;
 /** Live channels keep at least this much cushion so short provider cut-outs play through. */
 const LIVE_BUFFER_MS = 12000;
-function liveBufferMs(setting) { return Math.max(LIVE_BUFFER_MS, bufferMs(setting)); }
+function isDazn(name) { return /\bdazn\b/i.test(String(name || '').normalize('NFKC')); }
+function profile(name) { return isDazn(name) ? { min:40000, max:90000, start:3000, rebuffer:6000, live:30000, reconnect:6000, swap:1 } : { live:LIVE_BUFFER_MS, reconnect:STALL_RECONNECT_MS, swap:2 }; }
+function liveBufferMs(setting, name) { return Math.max(profile(name).live, bufferMs(setting)); }
 
 /** Play position not moving for 4s while "playing" means the picture froze. */
 function frozen(session, state, position, now) {
@@ -71,6 +73,7 @@ function tick(session, state, now, live) {
         session.stallTimes = [...(session.stallTimes || []), now].filter(t => now - t <= STALL_WINDOW_MS);
         const n = session.stallTimes.length;
         if (n >= STALLS_TO_LOWER && !session.lowered) { session.lowered = true; out.lower = true; }
+        if (isDazn(session.recoveryName || session.item?.name) && n >= 3 && live && !session.feedOffered) { session.feedOffered = true; out.offerFeed = true; }
         if (n >= STALLS_TO_OFFER_SD && live && !session.sdOffered && isHdName(session.item?.name)) { session.sdOffered = true; out.offerSd = true; }
       }
     }
@@ -87,16 +90,18 @@ function tick(session, state, now, live) {
   const broken = state === 7 || state === 5 || (live && state === 6);
   if ((state === 1 || state === 2 || broken) && !session.stallAt) session.stallAt = now;
   if (session.retryAt && now < session.retryAt) return out;
-  if (broken || (session.stallAt && now - session.stallAt >= STALL_RECONNECT_MS && (!session.retryAt || now >= session.retryAt))) {
+  const recovery = profile(session.recoveryName || session.item?.name);
+  if (broken || (session.stallAt && now - session.stallAt >= recovery.reconnect && (!session.retryAt || now >= session.retryAt))) {
     session.reconnects = (session.reconnects || 0) + 1;
     if (giveUp(session.reconnects)) {
       if (!session.failed) { session.failed = true; out.failed = true; out.event = { ms: now - session.stallAt, reconnected: true }; }
       return out;
     }
-    session.retryAt = now + backoffMs(session.reconnects) + STALL_RECONNECT_MS;
-    out.reconnect = backoffMs(session.reconnects);
+    const delay = isDazn(session.recoveryName || session.item?.name) && state === 6 ? 0 : backoffMs(session.reconnects);
+    session.retryAt = now + delay + recovery.reconnect;
+    out.reconnect = delay;
   }
   return out;
 }
 
-module.exports = { advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { isDazn, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
