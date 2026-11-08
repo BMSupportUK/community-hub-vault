@@ -174,6 +174,9 @@ public class PlayerActivity extends Activity {
     private void startCatchup() {
         cuSegStart = getIntent().getLongExtra("catchup_start", 0);
         cuEnd = getIntent().getLongExtra("catchup_end", 0);
+        player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
+            @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
+        });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
                 if (s == Player.STATE_READY) cuRetries = 0;
