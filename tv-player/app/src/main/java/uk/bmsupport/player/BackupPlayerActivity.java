@@ -33,8 +33,17 @@ public final class BackupPlayerActivity extends Activity {
     private String[] urls;
     private int at;
     private boolean started;
+    private boolean paused;
     private long resume;
     private final BackupFeedStatus feedStatus = new BackupFeedStatus();
+    private final BackupStallTracker stallTracker = new BackupStallTracker();
+    private String activeDecoder = "backup:hardware";
+    private final Runnable reportTick = new Runnable() {
+        @Override public void run() {
+            BufferReporter.flush(BackupPlayerActivity.this);
+            ui.postDelayed(this, 60000);
+        }
+    };
     private final Runnable feedTick = new Runnable() {
         @Override public void run() {
             if (mp == null || isFinishing()) return;
@@ -46,7 +55,9 @@ public final class BackupPlayerActivity extends Activity {
 
     private void updateFeedNote() {
         if (mp == null || feedNote == null) return;
-        boolean stalled = isLive() && feedStatus.stalled(started, mp.isPlaying(), android.os.SystemClock.elapsedRealtime());
+        // VLC can stop reporting isPlaying during rebuffering; only an explicit user pause suppresses a stall.
+        boolean stalled = isLive() && feedStatus.stalled(started, !paused, android.os.SystemClock.elapsedRealtime());
+        reportStall(stallTracker.update(stalled, android.os.SystemClock.elapsedRealtime()), false);
         feedNote.setText(FeedStatus.BUFFERING);
         feedNote.setVisibility(stalled ? TextView.VISIBLE : TextView.GONE);
     }
@@ -76,7 +87,7 @@ public final class BackupPlayerActivity extends Activity {
         if (urls == null || urls.length == 0) urls = new String[]{getIntent().getStringExtra("url")};
         resume = getIntent().getLongExtra("resume_ms", 0);
         ArrayList<String> opts = new ArrayList<>();
-        opts.add("--network-caching=3000");
+        opts.add("--network-caching=" + BackupBufferPolicy.networkCacheMs(isLive(), PlayerActivity.prefs(this).getString("buffer", StreamRecovery.DEFAULT_BUFFER), recoveryName()));
         opts.add("--http-reconnect");
         vlc = new LibVLC(this, opts);
         mp = new MediaPlayer(vlc);
@@ -109,18 +120,37 @@ public final class BackupPlayerActivity extends Activity {
         });
         open();
         ui.post(feedTick);
+        ui.postDelayed(reportTick, 60000);
     }
 
     private boolean isLive() { return "live".equals(getIntent().getStringExtra("content_kind")) || getIntent().getStringExtra("content_kind") == null; }
 
+    private String recoveryName() {
+        String name = getIntent().getStringExtra("recovery_name");
+        return name == null ? getIntent().getStringExtra("content_name") : name;
+    }
+
+    private void reportStall(long duration, boolean reconnected) {
+        if (!isLive() || duration < StreamRecovery.MIN_REPORT_MS) return;
+        String url = urls != null && at < urls.length && urls[at] != null ? urls[at] : "";
+        String format = url.endsWith(".m3u8") ? "m3u8" : url.endsWith(".ts") ? "ts" : "direct";
+        BufferReporter.record(this, "live", getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"),
+                duration, reconnected, false, "network_drop", format, activeDecoder,
+                StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
+    }
+
     private void open() {
         if (mp == null) return;
+        reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), true);
+        started = false;
+        paused = false;
         feedStatus.reset(android.os.SystemClock.elapsedRealtime());
         feedNote.setVisibility(TextView.GONE);
         Media m = new Media(vlc, Uri.parse(urls[at]));
         boolean software = VideoDecodePolicy.preferSoftware("catchup".equals(getIntent().getStringExtra("content_kind")),
                 PlayerActivity.prefs(this).getString("decoder", "hardware"), getIntent().getStringExtra("content_name"));
         m.setHWDecoderEnabled(!software, false);
+        activeDecoder = software ? "backup:software" : "backup:hardware";
         mp.setMedia(m);
         m.release();
         mp.play();
@@ -143,7 +173,16 @@ public final class BackupPlayerActivity extends Activity {
         if (e.getAction() == KeyEvent.ACTION_DOWN && mp != null) {
             switch (e.getKeyCode()) {
                 case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                    if (mp.isPlaying()) mp.pause(); else mp.play(); return true;
+                    if (!paused) {
+                        reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), false);
+                        paused = true;
+                        mp.pause();
+                    } else {
+                        paused = false;
+                        feedStatus.playing(android.os.SystemClock.elapsedRealtime());
+                        mp.play();
+                    }
+                    updateFeedNote(); return true;
                 case KeyEvent.KEYCODE_DPAD_RIGHT: case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
                     if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind")) && mp.getLength() > 0) { mp.setTime(Math.min(mp.getLength(), mp.getTime() + 10000)); return true; } break;
                 case KeyEvent.KEYCODE_DPAD_LEFT: case KeyEvent.KEYCODE_MEDIA_REWIND:
@@ -175,6 +214,8 @@ public final class BackupPlayerActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), false);
+        BufferReporter.flush(this);
         ui.removeCallbacksAndMessages(null);
         ProgressSync.push(this, true);
         if (mp != null) { mp.stop(); mp.detachViews(); mp.release(); mp = null; }
