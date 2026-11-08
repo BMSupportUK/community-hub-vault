@@ -1974,7 +1974,11 @@ public class MainActivity extends Activity {
                     for (int i = 0; i < names.length; i++) names[i] = hits.get(i).name;
                     resultList(hits.size() + " results for \"" + want + "\"", hits.size(), i -> {
                                 LinearLayout row = column();
-                                row.addView(text(names[i], 16, TEXT, false));
+                                if (kind.equals("live")) {
+                                    ChannelNameView name = new ChannelNameView(this);
+                                    name.setText(names[i]); name.setTextSize(16); name.setTextColor(TEXT);
+                                    row.addView(name);
+                                } else row.addView(text(names[i], 16, TEXT, false));
                                 if (kind.equals("live")) {
                                     String category = hits.get(i).category;
                                     String label = searchCategories.get(category);
@@ -4760,6 +4764,14 @@ public class MainActivity extends Activity {
         lv.setSelector(sel);
         lv.setDrawSelectorOnTop(true);
         lv.setItemsCanFocus(false);
+        lv.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                for (int i = 0; i < parent.getChildCount(); i++) ChannelNameView.activate(parent.getChildAt(i), parent.getChildAt(i) == view);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {
+                for (int i = 0; i < parent.getChildCount(); i++) ChannelNameView.activate(parent.getChildAt(i), false);
+            }
+        });
         lv.setFocusable(true);
         lv.setDividerHeight(0);
         lv.setAdapter(new BaseAdapter() {

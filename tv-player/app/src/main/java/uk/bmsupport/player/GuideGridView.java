@@ -43,6 +43,8 @@ public class GuideGridView extends View {
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint txt = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final float d;
+    private int marqueeRow = -1;
+    private long marqueeStarted;
 
     public GuideGridView(Context c) {
         super(c);
@@ -323,7 +325,17 @@ public class GuideGridView extends View {
             txt.setColor(0xFFF1F5F9); txt.setTextSize(15 * d); txt.setFakeBoldText(selR);
             String label = (r + 1) + "  " + names.get(r);
             float clockW = hasCatchup(r) ? 26 * d : 0;
-            c.drawText(TextUtils.ellipsize(label, txt, ch - 16 * d - clockW, TextUtils.TruncateAt.END).toString(), 8 * d, y + rh / 2 + 5 * d, txt);
+            float available = ch - 16 * d - clockW;
+            if (selR && isFocused() && txt.measureText(label) > available) {
+                if (marqueeRow != r) { marqueeRow = r; marqueeStarted = android.os.SystemClock.uptimeMillis(); }
+                float offset = ChannelMarquee.offset(txt.measureText(label), available, android.os.SystemClock.uptimeMillis() - marqueeStarted, d);
+                c.save(); c.clipRect(8 * d, y, 8 * d + available, y + rh);
+                c.drawText(label, 8 * d - offset, y + rh / 2 + 5 * d, txt); c.restore();
+                postInvalidateDelayed(33);
+            } else {
+                if (selR) marqueeRow = -1;
+                c.drawText(TextUtils.ellipsize(label, txt, available, TextUtils.TruncateAt.END).toString(), 8 * d, y + rh / 2 + 5 * d, txt);
+            }
             if (clockW > 0 && selR && onClock) drawRing(c, new RectF(ch - clockW - 6 * d, y + 4 * d, ch - 2 * d, y + rh - 4 * d));
             if (clockW > 0) { txt.setTextSize(17 * d); c.drawText("🕘", ch - clockW - 2 * d, y + rh / 2 + 6 * d, txt); txt.setTextSize(15 * d); }
             txt.setFakeBoldText(false);

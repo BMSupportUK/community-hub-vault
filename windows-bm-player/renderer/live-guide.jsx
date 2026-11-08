@@ -4,6 +4,7 @@ import {VoiceButton} from './voice';
 import checkin from '../checkin.cjs';
 import guideRefresh from '../guide-refresh.cjs';
 import guideActions from '../guide-action.cjs';
+import {ChannelName} from './channel-name';
 
 // Live TV laid out like the Android/Amazon BM Player: preview top-left, programme info beside it with
 // Search TV / Voice search top right, a slim date row (◀ 24h / Now / 24h ▶ / Category pill) and the guide grid below.
@@ -80,7 +81,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
   <div className="lg-grid" ref={grid}>
    <div className="lg-row lg-head"><div className="lg-ch">{new Date(start).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div><div className="lg-times">{[0,1,2,3].map(i=><span key={i}>{clock(start+i*SLOT)}</span>)}</div></div>
    {channels.map((ch,n)=><div className="lg-row" key={ch.id} data-ch={ch.id}>
-    <div className={'lg-ch'+(selected?.id===ch.id?' on':'')}><button onClick={()=>pick(ch,null)} onFocus={()=>setFocus({channel:ch,programme:onAt(ch.id,now)})}><span className="lg-channel-name"><b>{n+1}</b> {ch.name}</span>{query.trim()&&<small className="lg-search-category" title={catName(ch.category)}>{catName(ch.category)||'Uncategorised'}</small>}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>onCatchup(ch)}>🕘</button>}</div>
+    <div className={'lg-ch'+(selected?.id===ch.id?' on':'')}><button onClick={()=>pick(ch,null)} onFocus={()=>setFocus({channel:ch,programme:onAt(ch.id,now)})}><ChannelName>{n+1+'  '+ch.name}</ChannelName>{query.trim()&&<small className="lg-search-category" title={catName(ch.category)}>{catName(ch.category)||'Uncategorised'}</small>}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>onCatchup(ch)}>🕘</button>}</div>
     <div className="lg-line">
      {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:(now-start)/WINDOW*100+'%'}}/>}
      {list(ch.id).filter(p=>p.end>start&&p.start<start+WINDOW).map(p=>{const on=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=reminders.some(r=>r.id===ch.id+':'+p.start);return <div key={p.id} className={'lg-prog'+(on&&selected?.id===ch.id?' on':'')} style={{left:Math.max(0,(p.start-start)/WINDOW*100)+'%',width:(Math.min(start+WINDOW,p.end)-Math.max(start,p.start))/WINDOW*100+'%'}} onMouseEnter={()=>setFocus({channel:ch,programme:p})}>
