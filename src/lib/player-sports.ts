@@ -2,6 +2,7 @@ import { applyChannelLinks, channelInCountry, resolveInCategory, type ChannelLin
 import { parseSportsListingBlock, isClubChannelGuide, fixtureTeams as clubNames } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 import { ukListingInstant } from "./import-time";
+import { matchingProgrammeEnd, type SportsProgramme } from "./sports-programme-end";
 
 /** `passChannels` lists which of `channels` came only from sports-pass guides (apps group them separately). */
 export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[]; teamChannels?: boolean; channelCountry?: Record<string, string>; end?: number; endSource?: "epg" | "estimate" };
@@ -194,7 +195,7 @@ export function playerSportsEvents(
   }
   return capPrelims(out
     .map(({ pass: _p, mainSet: _m, seriesKey: _k, ...ev }) => ({ ...ev, end: ev.start + (isPrelim(ev.title) ? PRELIM_MS : typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`)), endSource: "estimate" as const })))
-    .filter((ev) => ev.end! + FINISHED_KEEP_MS > nowMs)
+    .filter((ev) => (ev.end ?? Infinity) + FINISHED_KEEP_MS > nowMs)
     .sort((a, b) => a.start - b.start).slice(0, 400);
 }
 
@@ -227,13 +228,10 @@ export function typicalLengthMs(text: string): number {
 }
 
 /** Overwrite estimates with real TV-guide end times (keyed by channel name, lower-cased) and drop long-finished games. */
-export function applyGuideEnds(events: PlayerSportsEvent[], ends: Map<string, { start: number; end: number }[]>, nowMs = Date.now()): PlayerSportsEvent[] {
+export function applyGuideEnds(events: PlayerSportsEvent[], ends: Map<string, SportsProgramme[]>, nowMs = Date.now()): PlayerSportsEvent[] {
   return capPrelims(events.map((ev) => {
-    for (const c of ev.channels) {
-      const hit = ends.get(c.toLowerCase())?.find((p) => p.start <= ev.start + 30 * 60_000 && p.end > ev.start + 30 * 60_000);
-      if (hit) return { ...ev, end: hit.end, endSource: "epg" as const };
-    }
-    return ev;
+    const end = matchingProgrammeEnd(ev, ends);
+    return end == null ? ev : { ...ev, end, endSource: "epg" as const };
   })).filter((ev) => (ev.end ?? Infinity) + FINISHED_KEEP_MS > nowMs);
 }
 

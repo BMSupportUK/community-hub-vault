@@ -14,7 +14,7 @@ describe("finished sports games", () => {
   });
   test("a TV guide end time beats the estimate", () => {
     const start = Date.UTC(2026, 10, 7, 15);
-    const out = applyGuideEnds([ev(start, start + 2 * H)], new Map([["sky sports football", [{ start: start - 30 * 60_000, end: start + 2.5 * H }]]]), start);
+    const out = applyGuideEnds([ev(start, start + 2 * H)], new Map([["sky sports football", [{ title: "Live EFL: Derby v Bolton", start: start - 30 * 60_000, end: start + 2.5 * H }]]]), start);
     expect(out[0].end).toBe(start + 2.5 * H);
     expect(out[0].endSource).toBe("epg");
   });
