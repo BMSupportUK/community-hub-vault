@@ -21,7 +21,7 @@ function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSw
 function toBackup(session){
  if(session.backup||!engine?.useBackup)return false;
  const live=session.item.kind==='live';
- try{if(!engine.useBackup(session.index,session.urls[session.urlIndex]||session.urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),resume:live?0:session.position||0,live}))return false;}catch{return false;}
+ try{if(!engine.useBackup(session.index,session.urls[session.urlIndex]||session.urls[0],{steady:recovery.cushioned(session.recoveryName),buffer:live?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:live?0:session.position||0,live}))return false;}catch{return false;}
  Object.assign(session,{backup:true,ready:false,failed:false,since:Date.now(),stallAt:0,reconnects:0,retryAt:0,stallTimes:[],stillSince:0,lastPos:undefined,subCheck:false});
  applyAudio();send({type:'notice',message:'The main player couldn\'t play this, so the BM backup engine has taken over.'});
  return true;
@@ -42,7 +42,7 @@ function publicState(){
  return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,announcement:announcement&&announcement.id!==store.annClosed?announcement:null,major:gate.unlocked?major:[],majorSeen:store.majorSeen||[],
   expired:String(a.status||'').toLowerCase()==='expired'||(expiry>0&&expiry<Date.now()),expiry:expiry>0?expiry:null,status:a.status||'',
   maxConnections:Number(a.max_connections)||1,settings:gate.unlocked?store.settings||{}:{},favourites:gate.unlocked?store.favourites||[]:[],recent:gate.unlocked?store.recent||[]:[],
-  progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],refreshed:gate.unlocked?store.refreshed||{}:{},playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false}))};
+  progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],refreshed:gate.unlocked?store.refreshed||{}:{},playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false,backup:s.backup||false}))};
 }
 async function site(body){
  let response;try{response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});}catch(e){checkin.fail();throw e;}
@@ -155,7 +155,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
  const startAt=resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0;
  engine.setFill?.(index,['film','episode'].includes(item.kind));
  try{engine.play(index,urls[0],{steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
- catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{buffer:recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
+ catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
  const onBackup=engine.usingBackup(index);
  const session={index,item,event,recoveryName,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
  if(index===0)audible=0;applyAudio();
@@ -180,7 +180,7 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  // Like Android: subtitles start on; only ask (paused) when the film actually has some.
  if(session.subCheck&&s.state===3){const n=Number(engine.subtitleTracks?.(session.index))||0;if(n>0){session.subCheck=false;engine.pause(session.index,true);session.paused=true;send({type:'subtitles-found',index:session.index,item:session.item});}else if(Date.now()-session.since>25000)session.subCheck=false;}
  healthTick(session,s);
- persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable});}catch{}}}
+ persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable,backup:session.backup});}catch{}}}
 // Sports Guide crosses: tell the website a live channel failed, showed no picture after 10s, or played 2 clean minutes.
 function healthTick(session,s){if(session.item.kind!=='live')return;const now=Date.now(),name=String(session.item.name||'').slice(0,200);if(!name)return;
  const report=status=>site({action:'channel_health',name,status}).catch(()=>{});
@@ -261,7 +261,11 @@ else{
   ipcMain.handle('player:surface',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.layout(surfaceRows(value));return true;});
   register('control',value=>{
    const index=Number(value?.index),session=sessions.find(s=>s.index===index);if(!session||!engine)return false;
-   if(value.action==='pause'){session.paused=!session.paused;engine.pause(index,session.paused);}
+   if(value.action==='tracks')return engine.tracks(index);
+   if(value.action==='speed'&&[.5,.75,1,1.25,1.5,2].includes(value.rate))engine.speed(index,value.rate);
+   else if(value.action==='audioTrack'&&Number.isInteger(value.id)){engine.setAudioTrack(index,value.id);return engine.tracks(index);}
+   else if(value.action==='subtitleTrack'&&Number.isInteger(value.id)){engine.setSubtitleTrack(index,value.id);return engine.tracks(index);}
+   else if(value.action==='pause'){session.paused=!session.paused;engine.pause(index,session.paused);}
    else if(value.action==='seek'&&Number.isFinite(value.seconds))engine.seek(index,Math.max(0,Math.min(session.duration,value.seconds)));
    else if(value.action==='volume'&&Number.isFinite(value.volume)){userVolume=Math.max(0,Math.min(100,Math.round(value.volume)));audible=index;applyAudio();}
    else if(value.action==='boost'){store.settings={...store.settings,boost:boost.level(value.level).id};save();applyAudio();}
