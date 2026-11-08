@@ -13,6 +13,7 @@ const boost=require('../sound-boost.cjs');
 const recovery=require('../stream-recovery.cjs');
 const feedst=require('../feed-status.cjs');
 const checkin=require('../checkin.cjs');
+const categoryOrder=require('../category-order.cjs');
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
 function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w);}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
@@ -268,6 +269,7 @@ else{
   register('settings',async value=>{
    if(value?.logout){await stopAll();await site({action:'unlink'});gate.lock();store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
    else if(value?.clear){store.recent=[];store.progress={};save();}
+   else if(value?.categoryOrder){const {kind,ids}=value.categoryOrder;if(!['live','film','series'].includes(kind)||!Array.isArray(ids))throw new Error('Choose a category list.');store.settings={...store.settings,['category_order_'+kind]:categoryOrder.cleanIds(ids)};save();}
    else if(value){store.settings={...store.settings,...value};save();if('boost' in value)applyAudio();}
    return publicState();
   });
