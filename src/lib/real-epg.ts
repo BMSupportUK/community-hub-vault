@@ -37,16 +37,21 @@ export function feedsFor(name: string, category: string): string[] {
   return [...new Set(out)];
 }
 
-const QUALITY = /^(f?hd|uhd|sd|4k|8k|hevc|h\.?26[45]|raw|\d{2,3}\s*fps|vip|backup|alt|multi|ᴴᴰ|ᶠᴴᴰ|ᵁᴴᴰ|ᴿᴬᵂ)$/i;
+const QUALITY = /^(f?hd|uhd|sd|4k|8k|hevc|h\.?26[45]|raw|\d{2,3}\s*fps|vip|backup|alt|multi|nowtv|catchup backup|ᴴᴰ|ᶠᴴᴰ|ᵁᴴᴰ|ᴿᴬᵂ)$/i;
 
 /** Lower-case alphanumerics with quality/country tags removed; "+1" kept as "plus1". */
 export function normName(s: string): string {
   let n = (s || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   n = n.replace(/\.(uk|us|ca|au|ie|de|it|fr|es|pt|pl|nl|gr|ro|in|za|dk|tr|[a-z]{2})$/i, "");
-  n = n.replace(/\+\s*(\d)/g, " plus$1").replace(/&/g, " and ");
+  n = n.replace(/\+\s*(\d)/g, " plus$1").replace(/\+/g, " plus ").replace(/&/g, " and ");
   n = n.replace(/[._]/g, " ").replace(/\([^)]*\)|\[[^\]]*\]/g, " ");
-  const words = n.split(/[^a-z0-9]+/).filter((w) => w && !QUALITY.test(w));
-  return words.join("");
+  const words = n.split(/[^a-z0-9]+/).filter((w) => w && !QUALITY.test(w)).map((w) => (w === "sport" ? "sports" : w));
+  if (words.length > 1 && words[words.length - 1] === "uk") words.pop();
+  let j = words.join("");
+  // Guide abbreviations ("SkySpMainEvHD", "Cartoon Netwrk", "U and Dave").
+  j = j.replace(/(f|u)?hd$/, "").replace(/^uand(?=.)/, "").replace(/^skysp(?!orts)/, "skysports").replace(/^skysportspl$/, "skysportspremierleague")
+    .replace(/mainev(?!ent)/, "mainevent").replace(/fball/, "football").replace(/boxoff(?!ice)/, "boxoffice").replace(/(netwrk|net)$/, "network");
+  return j;
 }
 
 /** Name candidates for a playlist channel, best first ("BBC One | FHD |" → "bbcone"). */
