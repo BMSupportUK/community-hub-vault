@@ -64,7 +64,7 @@ public class GuideGridView extends View {
 
     public void setListener(Listener l) { listener = l; }
     public void setChannels(List<String> n, List<Boolean> cu) {
-        names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu); progs.clear();
+        names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu); progs.clear(); progsVersion++;
         selRow = 0; topRow = 0; lastRow = -1; lastProg = null; resetTime();
         invalidate(); post(this::changed);
     }
