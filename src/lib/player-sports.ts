@@ -230,7 +230,7 @@ export function typicalLengthMs(text: string): number {
 /** Overwrite estimates with real TV-guide end times (keyed by channel name, lower-cased) and drop long-finished games. */
 export function applyGuideEnds(events: PlayerSportsEvent[], ends: Map<string, SportsProgramme[]>, nowMs = Date.now()): PlayerSportsEvent[] {
   return capPrelims(events.map((ev) => {
-    const end = matchingProgrammeEnd(ev, ends);
+    const end = matchingProgrammeEnd(ev, ends, events);
     return end == null ? ev : { ...ev, end, endSource: "epg" as const };
   })).filter((ev) => (ev.end ?? Infinity) + FINISHED_KEEP_MS > nowMs);
 }
