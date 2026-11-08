@@ -116,7 +116,7 @@ public class PlayerActivity extends Activity {
             for (androidx.media3.exoplayer.mediacodec.MediaCodecInfo i : all) if (!i.softwareOnly) out.add(i);
             return out;
         });
-        int[] buf = StreamRecovery.bufferMs(p.getString("buffer", StreamRecovery.DEFAULT_BUFFER));
+        int[] buf = StreamRecovery.bufferMs(p.getString("buffer", StreamRecovery.DEFAULT_BUFFER), catchup ? null : channelName);
         DefaultLoadControl load = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(buf[0], buf[1], buf[2], buf[3])
                 // Memory cap: a 60s buffer of UHD (30–40 Mbps) would take hundreds of MB and get the app killed.
@@ -316,7 +316,7 @@ public class PlayerActivity extends Activity {
         // Live channel opened from its playing preview: keep that stream instead of reconnecting.
         carried = getIntent().getBooleanExtra("carried", false) && !getIntent().hasExtra("catchup_prefix")
                 ? PreviewHandoff.take(getIntent().getStringExtra("content_id")) : null;
-        player = carried != null ? carried : build(this, getIntent().hasExtra("catchup_prefix"), getIntent().getStringExtra("content_name"));
+        player = carried != null ? carried : build(this, getIntent().hasExtra("catchup_prefix"), recoveryName());
         final int subs = getIntent().getIntExtra("subtitles", -1);
         if (subs == 0 || subs == 1) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, subs == 0)
@@ -511,7 +511,7 @@ public class PlayerActivity extends Activity {
                     stallStartedAt = now;
                     showFeed(FeedStatus.label(blackSent, true));
                     ui.removeCallbacks(cleanPlay);
-                    ui.postDelayed(stallWatch, StreamRecovery.STALL_RECONNECT_MS);
+                    ui.postDelayed(stallWatch, StreamRecovery.stallReconnectMs(recoveryName()));
                     // Advert switch: jump straight to the live point instead of waiting to catch up.
                     stallAdvert = "live".equals(kind()) && StreamRecovery.advertSwitch(now - formatChangedAt);
                     if (stallAdvert) ui.postDelayed(advertJump, StreamRecovery.ADVERT_JUMP_MS);
@@ -528,8 +528,8 @@ public class PlayerActivity extends Activity {
                 } else if (s == Player.STATE_ENDED && "live".equals(kind())) {
                     // Live never really ends: the provider dropped the stream (picture and sound stop
                     // with no buffering sign). Record it and reopen the channel at now.
-                    BufferReporter.record(PlayerActivity.this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), 0, true, true, "provider_cut");
-                    reconnect();
+                    reportBuffer(0, true, true, "provider_cut");
+                    reconnect(StreamRecovery.isDazn(recoveryName()));
                 }
             }
             @Override public void onVideoSizeChanged(VideoSize v) { if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime(); }
@@ -587,9 +587,9 @@ public class PlayerActivity extends Activity {
             afLastFrames = frames;
             if (StreamRecovery.frozen(afTicks)) {
                 afTicks = 0; afLastFrames = -1;
-                BufferReporter.record(PlayerActivity.this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), StreamRecovery.FREEZE_TICKS * 1000L, true, true);
+                reportBuffer(StreamRecovery.FREEZE_TICKS * 1000L, true, true, null);
                 if ("live".equals(kind())) { player.seekToDefaultPosition(); player.prepare(); player.play(); } else reconnect();
-            } else if (playing && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset())) {
+            } else if (playing && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset(), recoveryName())) {
                 player.seekToDefaultPosition();
             }
             ui.postDelayed(this, 1000);
@@ -638,7 +638,7 @@ public class PlayerActivity extends Activity {
         MediaItem mi = item(liveUrls[urlAt]);
         // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
         if ("live".equals(kind())) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
-                .setTargetOffsetMs(StreamRecovery.LIVE_TARGET_MS).setMinOffsetMs(StreamRecovery.LIVE_TARGET_MS / 2).build()).build();
+                .setTargetOffsetMs(StreamRecovery.liveTargetMs(recoveryName())).setMinOffsetMs(StreamRecovery.liveTargetMs(recoveryName()) / 2).build()).build();
         player.setMediaItem(mi);
         player.setPlayWhenReady(true);
         player.prepare();
@@ -648,18 +648,21 @@ public class PlayerActivity extends Activity {
     private final Runnable stallWatch = () -> { if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING) reconnect(); };
 
     private void reconnect() {
+        reconnect(false);
+    }
+    private void reconnect(boolean immediate) {
         if (player == null || isFinishing()) return;
         if (player.getDuration() > 0) lastPosition = Math.max(lastPosition, player.getCurrentPosition());
         reconnects++;
         if (StreamRecovery.giveUp(reconnects)) {
             if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
-            BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), StreamRecovery.STALL_RECONNECT_MS, true, false, stallAdvert ? "advert_switch" : "network_drop");
+            reportBuffer(StreamRecovery.stallReconnectMs(recoveryName()), true, false, stallAdvert ? "advert_switch" : "network_drop");
             handToBackup();
             return;
         }
         if (reconnectNote != null) reconnectNote.setVisibility(TextView.VISIBLE);
-        final long at = player.getDuration() > 0 ? lastPosition : 0;
-        ui.postDelayed(() -> { if (player != null) open(at); }, StreamRecovery.backoffMs(reconnects));
+        final long at = !"live".equals(kind()) && player.getDuration() > 0 ? lastPosition : 0;
+        ui.postDelayed(() -> { if (player != null) open(at); }, immediate && reconnects == 1 ? 0 : StreamRecovery.backoffMs(reconnects));
     }
 
     /** Report from inside the player: one plain pop-up that pans above the keypad (no resizing, which made phones flicker). */
@@ -752,16 +755,53 @@ public class PlayerActivity extends Activity {
     }
 
     private String kind() { String k = getIntent().getStringExtra("content_kind"); return k == null ? "live" : k; }
+    private String recoveryName() { return "live".equals(kind()) ? getIntent().getStringExtra("recovery_name") == null ? getIntent().getStringExtra("content_name") : getIntent().getStringExtra("recovery_name") : ""; }
+    private void reportBuffer(long ms, boolean reconnected, boolean freeze, String cause) {
+        String u = liveUrls.length > urlAt ? liveUrls[urlAt] : "";
+        String fmt = u.endsWith(".m3u8") ? "m3u8" : u.endsWith(".ts") ? "ts" : "direct";
+        String decoder = player != null && player.getVideoFormat() != null ? "media3/" + String.valueOf(player.getVideoFormat().sampleMimeType) : "media3";
+        BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, freeze, cause, fmt, decoder, StreamRecovery.isDazn(recoveryName()) ? "dazn" : null, getIntent().getStringExtra("event_name"));
+    }
 
     private void onStallEnded(long ms, boolean reconnected) {
-        BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, false, stallAdvert ? "advert_switch" : "network_drop");
+        reportBuffer(ms, reconnected, false, stallAdvert ? "advert_switch" : "network_drop");
         stallAdvert = false;
         if (ms < StreamRecovery.MIN_REPORT_MS) return;
         long now = android.os.SystemClock.elapsedRealtime();
         stallTimes[stallCount % stallTimes.length] = now; stallCount++;
         int recent = StreamRecovery.recentStalls(stallTimes, Math.min(stallCount, stallTimes.length), now);
-        if (recent >= StreamRecovery.STALLS_TO_LOWER) { lowerQuality(); rememberBetterFormat(); }
-        if (recent >= StreamRecovery.STALLS_TO_OFFER_SD) offerSd();
+        if (recent >= StreamRecovery.STALLS_TO_LOWER) lowerQuality();
+        if (recent >= StreamRecovery.formatSwapStalls(recoveryName())) {
+            rememberBetterFormat();
+            if (StreamRecovery.isDazn(recoveryName()) && !daznFormatSwapped && liveUrls.length > 1) {
+                daznFormatSwapped = true; String other = StreamRecovery.otherFormat(liveUrls[urlAt]);
+                for (int i = 0; i < liveUrls.length; i++) if (other != null && liveUrls[i].endsWith("." + other)) { urlAt = i; ui.post(() -> { if (player != null) open(0); }); break; }
+            }
+        }
+        if (recent >= StreamRecovery.STALLS_TO_OFFER_SD) { if (StreamRecovery.isDazn(recoveryName())) offerFeed(); else offerSd(); }
+    }
+    private boolean daznFormatSwapped, feedOffered;
+    private void offerFeed() {
+        if (feedOffered || isFinishing()) return;
+        try {
+            org.json.JSONArray options = new org.json.JSONArray(getIntent().getStringExtra("event_alternatives") == null ? "[]" : getIntent().getStringExtra("event_alternatives"));
+            if (options.length() == 0) return;
+            feedOffered = true; String[] names = new String[options.length()];
+            for (int i = 0; i < names.length; i++) names[i] = options.getJSONObject(i).getString("name");
+            new android.app.AlertDialog.Builder(this).setTitle("Try another feed")
+                .setItems(names, (dialog, index) -> {
+                    try {
+                        org.json.JSONObject selected = options.getJSONObject(index); org.json.JSONArray urls = selected.getJSONArray("urls");
+                        String[] next = new String[urls.length()]; for (int j = 0; j < next.length; j++) next[j] = urls.getString(j);
+                        android.content.Intent intent = new android.content.Intent(getIntent()).removeExtra("carried");
+                        intent.setClass(this, PlayerActivity.class).putExtra("content_id", selected.getString("id")).putExtra("content_name", selected.getString("name"))
+                            .putExtra("recovery_name", selected.getString("recovery_name")).putExtra("urls", next).putExtra("url", next[0]);
+                        intent.removeExtra("sd_urls"); intent.removeExtra("sd_name");
+                        if (player != null) { player.release(); player = null; }
+                        startActivity(intent); finish();
+                    } catch (Exception ignored) {}
+                }).setNegativeButton("Keep watching", null).show();
+        } catch (Exception ignored) {}
     }
 
     /** Adaptive (HLS/DASH) streams step down; single-quality streams are unaffected. */

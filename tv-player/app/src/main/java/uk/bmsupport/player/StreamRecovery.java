@@ -21,6 +21,15 @@ final class StreamRecovery {
     static final long STABLE_RAISE_MS = 120000;
     /** Live plays this far behind the edge, a safety cushion for short cut-outs. */
     static final long LIVE_TARGET_MS = 12000;
+    static boolean isDazn(String name) {
+        String n = java.text.Normalizer.normalize(name == null ? "" : name, java.text.Normalizer.Form.NFKC);
+        return n.toLowerCase(java.util.Locale.ROOT).matches(".*\\bdazn\\b.*");
+    }
+    static long liveTargetMs(String name) { return isDazn(name) ? 30000 : LIVE_TARGET_MS; }
+    static long stallReconnectMs(String name) { return isDazn(name) ? 6000 : STALL_RECONNECT_MS; }
+    static int formatSwapStalls(String name) { return isDazn(name) ? 1 : 2; }
+    static boolean drifted(long offset, String name) { return offset > (isDazn(name) ? 60000 : LIVE_DRIFT_MS); }
+    static int[] bufferMs(String id, String name) { return bufferMs(isDazn(name) ? "large" : id); }
 
     /** {minBuffer, maxBuffer, startPlayback, afterRebuffer} in milliseconds. */
     static int[] bufferMs(String id) {

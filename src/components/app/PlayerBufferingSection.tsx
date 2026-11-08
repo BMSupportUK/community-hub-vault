@@ -10,11 +10,12 @@ import { bufferDateRange, type BufferPeriod } from "@/lib/player-buffer-date";
 
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
-type BufferRow = { kind: string; content_name: string; stalls: number; devices: number; reconnects: number; total_stall_seconds: number; last_at: string; provider_cuts: number; advert_switches: number; network_drops: number };
+type BufferRow = { kind: string; content_name: string; event_name?: string; stream_formats?: string; decoders?: string; stalls: number; devices: number; reconnects: number; total_stall_seconds: number; last_at: string; provider_cuts: number; advert_switches: number; network_drops: number };
 const KIND_LABEL: Record<string, string> = { live: "Live TV", film: "Film", series: "Series", catchup: "Catch up" };
 
 export function BufferingSection() {
   const [hours, setHours] = useState(24);
+  const [dazn, setDazn] = useState(false);
   const [period, setPeriod] = useState<BufferPeriod | null>(null);
   const [years, setYears] = useState<number[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -33,7 +34,7 @@ export function BufferingSection() {
   useEffect(() => {
     let stop = false;
     const load = async () => {
-      const { data, error: loadError } = await supabase.rpc("player_buffer_summary", period ? bufferDateRange(period) : { _hours: hours });
+      const { data, error: loadError } = await supabase.rpc("player_buffer_diagnostics", { _hours: hours, ...(period ? bufferDateRange(period) : {}), _dazn: dazn });
       if (!stop) {
         setError(loadError ? "Couldn't load buffering reports. Please try again." : "");
         setRows((data ?? []) as BufferRow[]);
@@ -42,11 +43,12 @@ export function BufferingSection() {
     setRows(null); void load();
     const poll = setInterval(load, 60_000);
     return () => { stop = true; clearInterval(poll); };
-  }, [hours, period]);
+  }, [hours, period, dazn]);
   return <div className="space-y-4"><NotWorkingSection /><section className="rounded-xl border border-border bg-surface p-5">
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <h2 className="flex items-center gap-2 text-lg font-semibold"><Activity className="size-5 text-primary" />Buffering</h2>
       <div className="flex flex-wrap items-center gap-2">
+        <Select value={dazn ? 'dazn' : 'all'} onValueChange={v => setDazn(v === 'dazn')}><SelectTrigger aria-label="Buffering channels" className="w-36"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All channels</SelectItem><SelectItem value="dazn">DAZN</SelectItem></SelectContent></Select>
         {[24, 168].map((h) => <Button key={h} size="sm" variant={!period && hours === h ? "default" : "outline"} onClick={() => { setHours(h); setPeriod(null); }}>{h === 24 ? "Last 24 hours" : "Last 7 days"}</Button>)}
         <Select value={period ? String(period.year) : ""} onValueChange={(value) => setPeriod({ year: Number(value) })}>
           <SelectTrigger aria-label="Buffering year" className="w-28"><SelectValue placeholder="Year" /></SelectTrigger>
@@ -74,8 +76,8 @@ export function BufferingSection() {
       ? <p className="text-sm text-muted-foreground">No buffering reported.</p>
       : <div className="overflow-x-auto"><table className="w-full text-sm">
         <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground"><tr><th className="p-3">Channel / title</th><th className="p-3">Devices</th><th className="p-3">Stalls</th><th className="p-3">Cause</th><th className="p-3 max-sm:hidden">Reconnects</th><th className="p-3 max-sm:hidden">Time stalled</th><th className="p-3">Last</th></tr></thead>
-        <tbody>{rows.map((r) => <tr key={r.kind + r.content_name} className="border-b border-border">
-          <td className="p-3"><div className="font-medium">{r.content_name || "Unknown"}</div><div className="text-xs text-muted-foreground">{KIND_LABEL[r.kind] ?? r.kind}</div></td>
+        <tbody>{rows.map((r) => <tr key={r.kind + r.content_name + (r.event_name ?? '')} className="border-b border-border">
+          <td className="p-3"><div className="font-medium">{r.content_name || "Unknown"}</div><div className="text-xs text-muted-foreground">{r.event_name || KIND_LABEL[r.kind] || r.kind}</div>{(r.stream_formats || r.decoders) && <div className="text-xs text-muted-foreground">{[r.stream_formats, r.decoders].filter(Boolean).join(' · ')}</div>}</td>
           <td className={`p-3 font-semibold ${r.devices >= 5 ? "text-warning" : ""}`}>{r.devices}</td>
           <td className="p-3">{r.stalls}</td>
           <td className="p-3 text-xs"><div className="flex flex-wrap gap-1">{([["Provider cut", r.provider_cuts], ["Advert switch", r.advert_switches], ["Network drop", r.network_drops]] as const).filter(([, n]) => n > 0).map(([label, n]) => <span key={label} className="whitespace-nowrap rounded-full border border-border px-2 py-0.5">{label} {n}</span>)}</div></td>

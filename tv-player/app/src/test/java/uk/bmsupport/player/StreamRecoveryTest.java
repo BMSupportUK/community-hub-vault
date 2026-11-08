@@ -5,6 +5,21 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class StreamRecoveryTest {
+    @Test public void daznSteadyProfileAndUnicodeNames() {
+        assertTrue(StreamRecovery.isDazn("ᴰᴬᶻᴺ ¹ 18 (CA | Main)"));
+        assertFalse(StreamRecovery.isDazn("19 | BKFC 96"));
+        assertArrayEquals(new int[]{40000,90000,3000,6000}, StreamRecovery.bufferMs("small", "DAZN CA 19"));
+        assertEquals(30000, StreamRecovery.liveTargetMs("DAZN CA 19"));
+        assertFalse(StreamRecovery.drifted(31000, "DAZN CA 19"));
+        assertTrue(StreamRecovery.drifted(61000, "DAZN CA 19"));
+    }
+    @Test public void daznRecoversAfterSixSecondsAndFirstStall() {
+        assertEquals(6000, StreamRecovery.stallReconnectMs("DAZN CA 19"));
+        assertEquals(1, StreamRecovery.formatSwapStalls("DAZN CA 19"));
+        assertEquals(12000, StreamRecovery.stallReconnectMs("Sky Sports"));
+        assertEquals(2, StreamRecovery.formatSwapStalls("Sky Sports"));
+        assertArrayEquals(StreamRecovery.bufferMs("normal"), StreamRecovery.bufferMs("normal", "BBC One"));
+    }
     @Test public void smoothIsDefaultAndBiggerThanNormal() {
         assertEquals("smooth", StreamRecovery.DEFAULT_BUFFER);
         assertEquals(30000, StreamRecovery.bufferMs(null)[0]);

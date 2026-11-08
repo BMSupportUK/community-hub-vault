@@ -2080,6 +2080,13 @@
       "when": 1794097035938,
       "tag": "0296_square_checkout_attempt",
       "breakpoints": true
+    },
+    {
+      "idx": 297,
+      "version": "7",
+      "when": 1794097824365,
+      "tag": "0297_player_buffer_diagnostics",
+      "breakpoints": true
     }
   ]
 }

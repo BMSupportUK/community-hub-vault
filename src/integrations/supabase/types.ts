@@ -5657,14 +5657,18 @@ export type Database = {
           content_id: string
           content_name: string
           created_at: string
+          decoder: string | null
           device_id: string
+          event_name: string | null
           id: string
           is_freeze: boolean
           kind: string
           occurred_at: string
           platform: string | null
           reconnected: boolean
+          recovery_provider: string | null
           stall_ms: number
+          stream_format: string | null
           user_id: string | null
         }
         Insert: {
@@ -5673,14 +5677,18 @@ export type Database = {
           content_id?: string
           content_name?: string
           created_at?: string
+          decoder?: string | null
           device_id: string
+          event_name?: string | null
           id?: string
           is_freeze?: boolean
           kind?: string
           occurred_at?: string
           platform?: string | null
           reconnected?: boolean
+          recovery_provider?: string | null
           stall_ms?: number
+          stream_format?: string | null
           user_id?: string | null
         }
         Update: {
@@ -5689,14 +5697,18 @@ export type Database = {
           content_id?: string
           content_name?: string
           created_at?: string
+          decoder?: string | null
           device_id?: string
+          event_name?: string | null
           id?: string
           is_freeze?: boolean
           kind?: string
           occurred_at?: string
           platform?: string | null
           reconnected?: boolean
+          recovery_provider?: string | null
           stall_ms?: number
+          stream_format?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -10006,6 +10018,24 @@ export type Database = {
         Returns: number
       }
       package_item_months: { Args: { p_name: string }; Returns: number }
+      player_buffer_diagnostics: {
+        Args: { _dazn?: boolean; _from?: string; _hours?: number; _to?: string }
+        Returns: {
+          advert_switches: number
+          content_name: string
+          decoders: string
+          devices: number
+          event_name: string
+          kind: string
+          last_at: string
+          network_drops: number
+          provider_cuts: number
+          reconnects: number
+          stalls: number
+          stream_formats: string
+          total_stall_seconds: number
+        }[]
+      }
       player_buffer_summary:
         | {
             Args: { _from: string; _to: string }

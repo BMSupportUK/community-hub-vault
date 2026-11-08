@@ -9,6 +9,10 @@ export const BufferEvent = z.object({
   reconnected: z.boolean().catch(false),
   freeze: z.boolean().optional().catch(false),
   cause: z.enum(["provider_cut", "advert_switch", "network_drop"]).optional().catch(undefined),
+  stream_format: z.enum(['ts', 'm3u8', 'direct']).optional().catch(undefined),
+  decoder: z.string().trim().max(120).optional().catch(undefined),
+  recovery_provider: z.enum(['dazn']).optional().catch(undefined),
+  event_name: z.string().trim().max(200).optional().catch(undefined),
   at: z.number().int().positive(),
 });
 export const BufferBatch = z.array(BufferEvent).min(1).max(20);
