@@ -151,6 +151,7 @@ public class MainActivity extends Activity {
     static final class Item {
         String kind, id, name, ext, category;
         String norm, poster = "", seriesId = "", url = ""; long added; double rating; int pos; int archiveDays; String catchupId = ""; long catchupStart, catchupEnd;
+        String epNum = "", epTitle = "";
         String norm() { if (norm == null) norm = normChannel(name == null ? "" : name); return norm; }
         Item(String kind, String id, String name, String ext, String category) {
             this.kind = kind; this.id = id; this.name = name; this.ext = ext; this.category = category;
@@ -1518,6 +1519,8 @@ public class MainActivity extends Activity {
                             String name = "E" + e.optString("episode_num") + ". " + e.optString("title");
                             Item ep = new Item("episode", e.optString("id"), name, e.optString("container_extension"), show.category);
                             ep.seriesId = show.id;
+                            ep.epNum = e.optString("episode_num", "").trim();
+                            ep.epTitle = e.optString("title", "").trim();
                             JSONObject ei = e.optJSONObject("info");
                             if (ei != null) ep.poster = ei.optString("movie_image");
                             l.add(ep);
@@ -1575,8 +1578,16 @@ public class MainActivity extends Activity {
             img.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER); img.setBackgroundColor(Color.rgb(20, 28, 48));
             card.addView(img, new LinearLayout.LayoutParams(-1, ch));
             loadPoster(img, ep.poster == null || ep.poster.isEmpty() ? show.poster : ep.poster);
-            TextView t = text(ep.name, 13, TEXT, false); t.setSingleLine(true); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            t.setPadding(dp(4), dp(4), dp(4), 0);
+            boolean numbered = ep.epNum != null && !ep.epNum.isEmpty();
+            if (numbered) {
+                TextView no = text("Episode " + ep.epNum, 11, MUTED, true);
+                no.setSingleLine(true); no.setPadding(dp(4), dp(4), dp(4), 0);
+                card.addView(no);
+            }
+            String epTitle = ep.epTitle == null || ep.epTitle.isEmpty() ? ep.name : ep.epTitle;
+            TextView t = text(epTitle, 13, TEXT, false);
+            t.setMaxLines(2); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            t.setPadding(dp(4), numbered ? 0 : dp(4), dp(4), 0);
             card.addView(t);
             LinearLayout wb = watchedBar(ep);
             if (wb != null) card.addView(wb);
