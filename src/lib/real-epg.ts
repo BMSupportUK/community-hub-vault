@@ -88,8 +88,13 @@ export function buildIndex(channels: EpgChannel[]): Map<string, string> {
   return idx;
 }
 
+/** Guides that only list regional/renamed versions: playlist name → guide name to use. */
+const NAME_ALIASES: Record<string, string> = { bbcone: "bbconelon", espn1: "espn", nbcsports: "nbcsports" };
+
 export function matchChannel(name: string, idx: Map<string, string>, epgId?: string | null): string | null {
-  for (const c of playlistCandidates(name, epgId)) { const id = idx.get(c); if (id) return id; }
+  const cands = playlistCandidates(name, epgId);
+  for (const c of cands) { const id = idx.get(c); if (id) return id; }
+  for (const c of cands) { const a = NAME_ALIASES[c]; const id = a ? idx.get(a) : undefined; if (id) return id; }
   return null;
 }
 
