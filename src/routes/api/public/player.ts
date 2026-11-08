@@ -50,6 +50,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
+  z.object({ action: z.literal('guide_category_open'), device_token: Token, category: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal("announcement"), device_token: Token }),
   z.object({ action: z.literal("channel_health"), device_token: Token, name: z.string().trim().min(1).max(200), status: z.enum(["failed", "black", "ok"]) }),
   z.object({ action: z.literal("formats"), device_token: Token }),
@@ -385,6 +386,11 @@ export const Route = createFileRoute("/api/public/player")({
           });
           if (error) return json({ error: "Could not report" }, 503);
           return json({ ok: true, reported: true });
+        }
+
+        if (body.action === 'guide_category_open') {
+          const { requestCategoryGuide } = await import('@/lib/real-epg.server');
+          return json(await requestCategoryGuide(body.category).catch(() => ({ queued: 0, retry: true })));
         }
 
         if (body.action === "guide") {

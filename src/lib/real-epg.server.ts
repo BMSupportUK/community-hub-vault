@@ -1,5 +1,7 @@
 import { EPG_SOURCE, stripQualityTail, XmltvReader, buildIndex, matchChannel, feedsFor, toListing, eventListings, overlayEvents, type EpgChannel, type ListingRow } from "./real-epg";
 import type { TablesInsert } from "@/integrations/supabase/types";
+import { categoryFeeds } from './epg-demand';
+import type { Json } from '@/integrations/supabase/types';
 
 /** Each feed is refreshed this often; one feed per scheduled run keeps every run small. */
 export const FEED_REFRESH_MS = 6 * 3600_000;
@@ -23,23 +25,32 @@ async function playlistTargets() {
     .filter((c, i, a) => a.findIndex((x) => x.name.trim().toLowerCase() === c.name.trim().toLowerCase()) === i);
 }
 
-/** Picks the stalest feed the playlist needs and imports it. */
+/** Legacy scheduled caller must never download countries without demand. */
 export async function importNextFeed(nowMs = Date.now()) {
   const db = await admin();
-  const targets = await playlistTargets();
-  const wanted = [...new Set(targets.flatMap((t) => t.feeds))];
-  const { data: rows } = await db.from("epg_feeds").select("code, imported_at");
-  const at = new Map((rows ?? []).map((r) => [r.code, r.imported_at ? Date.parse(r.imported_at) : 0]));
-  const due = wanted.filter((f) => nowMs - (at.get(f) ?? 0) >= FEED_REFRESH_MS).sort((a, b) => (at.get(a) ?? 0) - (at.get(b) ?? 0));
-  if (!due.length) return { skipped: "All guides fresh", feeds: wanted.length };
-  return importFeed(due[0], targets, nowMs);
+  const { error } = await db.rpc('dispatch_epg_demand');
+  if (error) throw new Error(error.message);
+  return { skipped: 'Demand only', at: nowMs };
 }
 
-export async function importFeed(code: string, targets?: Awaited<ReturnType<typeof playlistTargets>>, nowMs = Date.now()) {
+export async function requestCategoryGuide(category: string) {
+  const codes = categoryFeeds(category);
+  if (!codes.length) return { queued: 0 };
   const db = await admin();
-  targets ??= await playlistTargets();
-  const mine = targets.filter((t) => t.feeds.includes(code));
+  const { data, error } = await db.rpc('request_epg_feeds', { p_codes: codes });
+  if (error) throw new Error(error.message);
+  return { queued: data ?? 0 };
+}
+
+export async function importFeed(code: string, targets?: Awaited<ReturnType<typeof playlistTargets>>, nowMs = Date.now(), wake?: string) {
+  const db = await admin();
+  const { data: run, error: claimError } = await db.rpc('claim_epg_feed', { p_code: code, ...(wake ? { p_wake: wake } : {}) });
+  if (claimError) throw new Error(claimError.message);
+  if (!run) return { skipped: 'Already updating or invalid wake' };
   try {
+    targets ??= await playlistTargets();
+    const mine = targets.filter((t) => t.feeds.includes(code));
+    if (!mine.length) throw new Error('No playlist channels for this feed');
     const res = await fetch(`${EPG_SOURCE}${code}.xml.gz`, { signal: AbortSignal.timeout(50_000) });
     if (!res.ok || !res.body) throw new Error(`Guide download failed (${res.status})`);
     const channels: EpgChannel[] = [];
@@ -78,20 +89,22 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
       }, (channel) => { if (!wantedIds) decide(); return wantedIds?.has(channel) ?? false; });
     }
     if (!wantedIds) decide();
-    // Replace this feed's programmes and channel list.
-    await db.from("epg_programmes").delete().eq("feed", code);
+    // Stage a complete generation; publish it in one transaction only after every write succeeds.
     const seen = new Set<string>();
     const unique = progs.filter((p) => { const k = p.epg_id + p.start_at; if (seen.has(k)) return false; seen.add(k); return true; });
-    for (let i = 0; i < unique.length; i += 1000) {
-      const { error } = await db.from("epg_programmes").insert(unique.slice(i, i + 1000));
-      if (error) throw new Error(error.message);
-    }
-    await db.from("epg_feed_channels").delete().eq("feed", code);
+    if (!unique.length) throw new Error('Empty guide; previous programmes retained');
+    const stage = async (kind: string, rows: unknown[]) => {
+      for (let i = 0; i < rows.length; i += 1000) {
+        const { error } = await db.from('epg_import_batches').insert({ run_id: run, kind, part: i / 1000, payload: rows.slice(i, i + 1000) as Json });
+        if (error) throw new Error(error.message);
+      }
+    };
+    await stage('programmes', unique);
     const nameOf = new Map(channels.map((c) => [c.id, c.names[0] ?? c.id]));
     const chRows = channels.map((c) => ({ feed: code, epg_id: c.id, name: (c.names[0] ?? c.id).slice(0, 200) }));
     const chSeen = new Set<string>();
     const chUnique = chRows.filter((r) => !chSeen.has(r.epg_id) && chSeen.add(r.epg_id));
-    for (let i = 0; i < chUnique.length; i += 1000) await db.from("epg_feed_channels").upsert(chUnique.slice(i, i + 1000));
+    await stage('channels', chUnique);
     // Automatic matches: earlier feeds in a channel's list win over later ones; manual fixes are never touched.
     const mapRows = mine.flatMap((t): TablesInsert<"epg_channel_map">[] => {
       const key = t.name.trim().toLowerCase();
@@ -106,23 +119,20 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
       if (p && p.feed && p.feed !== code) return [];
       return [{ channel_key: key, channel_name: t.name, category: t.category, feed: null, epg_id: null, epg_name: null, updated_at: new Date().toISOString() }];
     });
-    for (let i = 0; i < mapRows.length; i += 1000) {
-      const { error } = await db.from("epg_channel_map").upsert(mapRows.slice(i, i + 1000));
-      if (error) throw new Error(error.message);
-    }
-    await db.from("epg_feeds").upsert({ code, imported_at: new Date().toISOString(), channels: channels.length, matched: matches.size, programmes: unique.length, error: null });
+    await stage('matches', mapRows);
+    const { error: publishError } = await db.rpc('finish_epg_import', { p_code: code, p_run: run, p_counts: { channels: channels.length, matched: matches.size, programmes: unique.length } });
+    if (publishError) throw new Error(publishError.message);
     listingCache.clear();
     return { feed: code, channels: channels.length, matched: matches.size, programmes: unique.length };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    // Count the attempt so one broken feed doesn't block the others.
-    await db.from("epg_feeds").upsert({ code, imported_at: new Date().toISOString(), error: msg.slice(0, 300) });
+    await db.rpc('fail_epg_import', { p_code: code, p_run: run, p_error: msg.slice(0, 300) });
     return { feed: code, error: msg };
   }
 }
 
 const listingCache = new Map<string, { at: number; rows: ListingRow[] | null }>();
-const LISTING_TTL = 15 * 60_000;
+const LISTING_TTL = 60_000;
 const listingInflight = new Map<string, Promise<ListingRow[] | null>>();
 
 async function publishedListings(key: string, from: number, to: number, nowMs: number): Promise<ListingRow[] | null> {
