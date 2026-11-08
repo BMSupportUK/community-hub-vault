@@ -35,7 +35,24 @@ final class LiveChannelDrawer extends LinearLayout {
     }
 
     void showChannels(List<String> names) {
-        channelList.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, names));
+        channelList.setAdapter(new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, names) {
+            @Override public View getView(int position, View recycled, ViewGroup parent) {
+                ChannelNameView label = recycled instanceof ChannelNameView ? (ChannelNameView) recycled : new ChannelNameView(getContext());
+                label.setText(getItem(position)); label.setTextSize(17);
+                int padding = (int) (12 * getResources().getDisplayMetrics().density);
+                label.setPadding(padding, padding, padding, padding);
+                label.setSelected(position == channelList.getSelectedItemPosition());
+                return label;
+            }
+        });
+        channelList.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                for (int i = 0; i < parent.getChildCount(); i++) ChannelNameView.activate(parent.getChildAt(i), parent.getChildAt(i) == view);
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                for (int i = 0; i < parent.getChildCount(); i++) ChannelNameView.activate(parent.getChildAt(i), false);
+            }
+        });
         categories.setVisibility(GONE);
         slideIn(channels);
         channelList.setSelection(0);

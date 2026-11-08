@@ -43,6 +43,7 @@
 .lg-ch>button:first-child{flex:1;min-width:0;text-align:left;background:transparent;border:0;border-radius:0;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .lg-ch b{color:var(--muted);margin-right:6px}.lg-ch.on{box-shadow:inset 4px 0 0 var(--accent)}
 .lg-channel-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lg-search-category{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:400;color:var(--muted);margin-top:3px}
+.channel-name-frame{display:block;overflow:hidden;white-space:nowrap;width:100%}.channel-name-text{display:block;width:max-content;min-width:100%;transform:translateX(0)}button:hover .overflowing .channel-name-text,button:focus .overflowing .channel-name-text,.lg-ch.on .overflowing .channel-name-text{animation:channel-name-scroll var(--channel-duration) linear infinite alternate}@keyframes channel-name-scroll{0%,20%{transform:translateX(0)}80%,100%{transform:translateX(var(--channel-overflow))}}@media(prefers-reduced-motion:reduce){.channel-name-text{animation:none!important}}
 .lg-head .lg-ch{align-items:center;padding:0 12px;font-weight:700}
 .lg-times{flex:1;display:grid;grid-template-columns:repeat(4,1fr);align-items:center}.lg-times span{padding-left:8px;font-weight:600}
 .lg-line{flex:1;position:relative;overflow:hidden}
