@@ -40,3 +40,4 @@
 - Screen, catch-up, guide, favourites, announcement and keypad rules live in `tv-player/app/src/main/java/uk/bmsupport/player/AGENTS.md`.
 - Background website check-ins (poll, announcements, sports refresh, buffering flush) go through Checkin.java / windows-bm-player/checkin.cjs: ±20% jitter, random start offset, doubling back-off to 5 min on 429/5xx/timeouts, Retry-After honoured, and the poll`s `slow` multiplier (player_settings.checkin_slowdown, 1–10) stretches every timer so load can be eased without an app release.
 - Live TV EPG reads provider short/full-day tables except non-official sports/club feeds, which first request saved website fixtures; fixture responses never get overwritten by provider expansion. Country imports/category refresh stay retired.
+- StreamRecovery.cushioned covers DAZN, Coupang, heavy channel names and channels measured heavy on this device (saved in prefs, capped); the byte memory cap on the load control always stays in place.
