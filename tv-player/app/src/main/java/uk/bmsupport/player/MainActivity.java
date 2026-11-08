@@ -1073,6 +1073,7 @@ public class MainActivity extends Activity {
         java.util.function.BiConsumer<Integer, Boolean> showCat = (pos, focusItems) -> {
             if (pos < 0 || pos >= catRows.size()) return;
             String[] c = catRows.get(pos);
+            if (kind.equals("live")) requestCategoryGuide(c[1]);
             if (c[0].equals(current[0])) { if (focusItems) items.requestFocus(); return; }
             current[0] = c[0];
             if (kind.equals("live")) liveCatId = c[0];
@@ -1333,7 +1334,7 @@ public class MainActivity extends Activity {
 
     /** Category demand never waits for or consumes the programme-fetch queue. */
     private void requestCategoryGuide(String category) {
-        if (category == null || !category.trim().matches("^[A-Za-z]{2,4}\\s*\\|.*")) return;
+        if (!EpgCategoryDemand.eligible(category)) return;
         safeRun(connectionIo, () -> {
             try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
                     .put("action", "guide_category_open").put("device_token", prefs.getString("token", ""))
