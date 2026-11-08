@@ -4,9 +4,34 @@ import { ExternalLink, Loader2, RefreshCw, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { checkoutProviderInvoice, orderProviderInvoice, refreshOrderProviderInvoice, refreshCheckoutProviderInvoice } from '@/lib/provider-invoices.functions';
 import { getStripeEnvironment } from '@/lib/stripe';
-export function ProviderInvoicePayment({ method, amountCents, orderId, token, password = '', onPaid }: {
+import { Link } from '@tanstack/react-router';
+import { SquareCardPayment } from './SquareCardPayment';
+import { getSquareCheckoutLink } from '@/lib/square-checkout-link.functions';
+type PaymentProps = {
  method: 'square' | 'stripe'; amountCents: number; orderId?: string; token?: string; password?: string; onPaid?: () => void | Promise<void>;
-}) {
+};
+export function ProviderInvoicePayment(props: PaymentProps) {
+ if (props.method === 'square') {
+  if (props.token) return <SquareCardPayment token={props.token} password={props.password ?? ''} onPaid={props.onPaid ?? (() => {})} />;
+  return <SquareCheckoutLink orderId={props.orderId} amountCents={props.amountCents} />;
+ }
+ return <InvoicePayment {...props} />;
+}
+function SquareCheckoutLink({ orderId, amountCents }: { orderId?: string; amountCents: number }) {
+ const getLink = useServerFn(getSquareCheckoutLink);
+ const [token, setToken] = useState<string | null>(null);
+ const [busy, setBusy] = useState(false);
+ const [error, setError] = useState<string | null>(null);
+ async function open() {
+  if (!orderId || busy) return;
+  setBusy(true); setError(null);
+  try { const link = await getLink({ data: { orderId } }); setToken(link.token); }
+  catch(e) { setError(e instanceof Error ? e.message : 'Could not open payment'); }
+  finally { setBusy(false); }
+ }
+ return <div className="space-y-3">{token ? <Button asChild className="w-full min-h-11"><Link to="/pay/$token" params={{ token }}>Open secure card payment</Link></Button> : <Button className="w-full min-h-11" disabled={busy || !orderId} onClick={() => void open()}>{busy && <Loader2 className="size-4 animate-spin"/>}Pay £{(amountCents / 100).toFixed(2)} by card</Button>}{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</div>;
+}
+function InvoicePayment({ method, amountCents, orderId, token, password = '', onPaid }: PaymentProps) {
  const guest = useServerFn(checkoutProviderInvoice);
  const member = useServerFn(orderProviderInvoice);
  const refresh = useServerFn(refreshOrderProviderInvoice);

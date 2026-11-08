@@ -43,6 +43,11 @@ async function guardAgainstDoublePayment(supabaseAdmin: any, orderId: string, me
   if (link?.payment_sent_at) {
     throw new Error("You've already told us a bank transfer was sent for this order. Please wait for us to confirm it, or message us in the chat before paying another way.");
   }
+  if (method !== 'square') {
+    const { data: attempt, error } = await supabaseAdmin.from('order_checkout_links').select('square_attempt_key').eq('order_id', orderId).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (attempt?.square_attempt_key) throw new Error('A card payment is awaiting confirmation. Do not pay another way.');
+  }
   const { data: p } = await supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", orderId).maybeSingle();
   const st = String(p?.status ?? "").toUpperCase();
   if (p && ["COMPLETED", "APPROVED", "FINISHED"].includes(st)) throw new Error("A payment has already been taken for this order.");
