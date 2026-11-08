@@ -286,6 +286,7 @@ public class PlayerActivity extends Activity {
         final android.widget.Button boostBtn = new android.widget.Button(this);
         boostBtn.setAllCaps(false);
         boostBtn.setText("🔊 Sound booster: " + SoundBoost.label(this));
+        focusBorder(boostBtn);
         boostBtn.setOnClickListener(v -> {
             String id = SoundBoost.next(SoundBoost.current(this));
             SoundBoost.set(this, id);
@@ -306,12 +307,14 @@ public class PlayerActivity extends Activity {
         reportBtn.setAllCaps(false);
         reportBtn.setText("⚠ Report a problem");
         reportBtn.setOnClickListener(v -> showReport());
+        focusBorder(reportBtn);
         android.widget.LinearLayout.LayoutParams reportLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         reportLp.leftMargin = (int) (12 * getResources().getDisplayMetrics().density);
         ctrlRow.addView(reportBtn, reportLp);
         final android.widget.Button swapBtn = new android.widget.Button(this);
         swapBtn.setAllCaps(false); swapBtn.setText("⇄ Swap channel");
         swapBtn.setOnClickListener(v -> offerSwap(false));
+        focusBorder(swapBtn);
         final boolean canSwap = "live".equals(kind()) && !getIntent().hasExtra("catchup_prefix");
         android.widget.LinearLayout.LayoutParams swapLp = new android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
         swapLp.leftMargin = reportLp.leftMargin;
