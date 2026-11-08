@@ -185,7 +185,7 @@ export async function guideFor(channel: string, eventsOrLoad: SportsEvent[] | ((
   const realRows = await publishedListings(key, from, to, nowMs);
   // Sports Pass channels that also have a published guide: the Sports Guide event wins its slot.
   if (onGuide && !isOfficialSportsChannel(channel)) {
-    const evs = eventListings(channel, events, from, to).filter((e) => e.title !== "No event scheduled");
+    const evs = eventListings(channel, events, from, to).filter((e) => e.title !== "No Event Scheduled");
     if (!realRows) return { rows: eventListings(channel, events, from, to).map(toListing), source: "sports" };
     const base = realRows.map((r) => ({ start: r.start_timestamp * 1000, stop: r.stop_timestamp * 1000, row: r }));
     const merged = overlayEvents(base.map((b) => ({ start: b.start, stop: b.stop, title: "", row: b.row as ListingRow | null })), evs.map((e) => ({ start: e.start, stop: e.stop, title: e.title, row: toListing(e) as ListingRow | null })));
