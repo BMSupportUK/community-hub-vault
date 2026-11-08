@@ -100,7 +100,7 @@ export async function importFeed(code: string, targets?: Awaited<ReturnType<type
       return [{ channel_key: key, channel_name: t.name, category: t.category, feed: null, epg_id: null, epg_name: null, updated_at: new Date().toISOString() }];
     });
     for (let i = 0; i < mapRows.length; i += 1000) {
-      const { error } = await db.from("epg_channel_map").upsert(mapRows.slice(i, i + 1000));
+      const { error } = await db.from("epg_channel_map").upsert(mapRows.slice(i, i + 1000) as TablesInsert<"epg_channel_map">[]);
       if (error) throw new Error(error.message);
     }
     await db.from("epg_feeds").upsert({ code, imported_at: new Date().toISOString(), channels: channels.length, matched: matches.size, programmes: unique.length, error: null });
