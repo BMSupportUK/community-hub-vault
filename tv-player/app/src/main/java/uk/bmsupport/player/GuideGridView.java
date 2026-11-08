@@ -68,7 +68,7 @@ public class GuideGridView extends View {
         selRow = 0; topRow = 0; lastRow = -1; lastProg = null; resetTime();
         invalidate(); post(this::changed);
     }
-    public void setProgs(int row, List<Prog> l) { progs.put(row, l); invalidate(); if (row == selRow) changed(); }
+    public void setProgs(int row, List<Prog> l) { progs.put(row, l); progsVersion++; invalidate(); if (row == selRow) changed(); }
     public boolean loaded(int row) { return progs.containsKey(row); }
     /** End of the time span currently on screen (moves forward with Day ▶ and sideways swipes). */
     public long windowEnd() { return windowStart + WINDOW; }
@@ -259,7 +259,18 @@ public class GuideGridView extends View {
     // so every row and the header use the same positions and short shows line up with their times.
     private long[] axT = new long[0]; private float[] axX = new float[0];
     private float axisScroll;
+    private int progsVersion; private String axisKey = "";
+    private float[] axisBase = new float[0];
+    private final java.util.Map<String, Float> widthCache = new java.util.HashMap<>();
     private float programmeWidth(Prog p, float gridW) {
+        String wk = p.title + "\u0000" + (int) gridW;
+        Float cached = widthCache.get(wk); if (cached != null) return cached;
+        float w = measureProgrammeWidth(p, gridW);
+        if (widthCache.size() > 4000) widthCache.clear();
+        widthCache.put(wk, w);
+        return w;
+    }
+    private float measureProgrammeWidth(Prog p, float gridW) {
         txt.setTextSize((phone ? 12 : 14) * d); txt.setFakeBoldText(true);
         float low = Math.min(180 * d, gridW), high = Math.max(low, gridW);
         // Measure the whole title, not its duration. Reserve a separate bell and time line.
@@ -272,13 +283,30 @@ public class GuideGridView extends View {
         return high;
     }
     private void buildAxis(float ch, float gridW) {
+        String key = windowStart + ":" + (int) gridW + ":" + progsVersion;
+        if (!key.equals(axisKey)) { axisKey = key; computeAxis(gridW); }
+        int n = axT.length - 1;
+        axX = new float[axT.length]; axX[0] = ch;
+        for (int i = 0; i < n; i++) axX[i + 1] = axX[i] + axisBase[i];
+        // A crowded hour scrolls instead of shrinking five-minute shows into slivers.
+        axisScroll = Math.max(0, Math.min(axisScroll, axX[n] - ch - gridW));
+        Prog selected = selected();
+        if (selected != null) {
+            float left = xAt(Math.max(windowStart, selected.st)) - ch;
+            float right = xAt(Math.min(windowStart + WINDOW, selected.en)) - ch;
+            if (left < axisScroll) axisScroll = left;
+            else if (right > axisScroll + gridW) axisScroll = Math.max(left, right - gridW);
+        }
+        for (int i = 0; i < axX.length; i++) axX[i] -= axisScroll;
+    }
+    /** Shared column widths from every loaded row (not just the visible ones), so the boxes stay put while moving up and down. */
+    private void computeAxis(float gridW) {
         java.util.TreeSet<Long> b = new java.util.TreeSet<>();
         long ws = windowStart, we = windowStart + WINDOW;
         b.add(ws); b.add(we);
         for (long t = ws; t < we; t += SLOT) b.add(t);
-        int v = visibleRows() + 1;
-        for (int i = 0; i < v && topRow + i < names.size(); i++) {
-            List<Prog> l = progs.get(topRow + i); if (l == null) continue;
+        for (List<Prog> l : progs.values()) {
+            if (l == null) continue;
             for (Prog p : l) {
                 long en = p.en > p.st ? p.en : p.st + SLOT;
                 if (p.st > ws && p.st < we) b.add(p.st);
@@ -289,8 +317,8 @@ public class GuideGridView extends View {
         int n = axT.length - 1; float[] w = new float[Math.max(n, 0)];
         float base = gridW / WINDOW;
         for (int i = 0; i < n; i++) w[i] = Math.max(64 * d, (axT[i + 1] - axT[i]) * base);
-        for (int i = 0; i < v && topRow + i < names.size(); i++) {
-            List<Prog> l = progs.get(topRow + i); if (l == null) continue;
+        for (List<Prog> l : progs.values()) {
+            if (l == null) continue;
             for (int pi = 0; pi < l.size(); pi++) {
                 Prog p = l.get(pi); long en = p.en > p.st ? p.en : p.st + SLOT;
                 if (pi + 1 < l.size() && l.get(pi + 1).st > p.st) en = Math.min(en, l.get(pi + 1).st);
@@ -303,18 +331,7 @@ public class GuideGridView extends View {
                     if (axT[j] >= st && axT[j + 1] <= en) w[j] += extra / count;
             }
         }
-        axX = new float[axT.length]; axX[0] = ch;
-        for (int i = 0; i < n; i++) axX[i + 1] = axX[i] + w[i];
-        // A crowded hour scrolls instead of shrinking five-minute shows into slivers.
-        axisScroll = Math.max(0, Math.min(axisScroll, axX[n] - ch - gridW));
-        Prog selected = selected();
-        if (selected != null) {
-            float left = xAt(Math.max(ws, selected.st)) - ch;
-            float right = xAt(Math.min(we, selected.en)) - ch;
-            if (left < axisScroll) axisScroll = left;
-            else if (right > axisScroll + gridW) axisScroll = Math.max(left, right - gridW);
-        }
-        for (int i = 0; i < axX.length; i++) axX[i] -= axisScroll;
+        axisBase = w;
     }
     private float xAt(long t) {
         if (axT.length < 2) return chW();
