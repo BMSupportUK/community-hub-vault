@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { checkoutCryptoInvoice } from '@/lib/checkout-pay.functions';
-import { ProviderInvoicePayment } from '@/components/checkout/ProviderInvoicePayment';
+import { SquareCardPayment } from '@/components/checkout/SquareCardPayment';
 export function CheckoutCardPayment({ token, password, method, amountCents, onPaid }: {
  token: string; password: string; method: 'square' | 'stripe' | 'crypto'; amountCents: number; onPaid: () => void | Promise<void>;
 }) {
  if (method === 'crypto') return <CryptoPay token={token} password={password} amountCents={amountCents}/>;
- // Card invoices always go through Square; Stripe is used only for open-banking Pay by bank.
- return <ProviderInvoicePayment key="square" token={token} password={password} method="square" amountCents={amountCents} onPaid={onPaid}/>;
+ return <SquareCardPayment key="square" token={token} password={password} onPaid={onPaid}/>;
 }
 
 function CryptoPay({ token, password, amountCents }: { token: string; password: string; amountCents: number }) {

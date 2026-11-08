@@ -101,6 +101,9 @@ export async function createProviderInvoice(db: any, orderId: string, requestedP
   if (lockError) throw new Error(lockError.message);
   if (!locked) throw new Error('Payment is being prepared. Please try again in a moment.');
   try {
+    const { data: checkout, error: checkoutError } = await db.from('order_checkout_links').select('square_attempt_key').eq('order_id', orderId).maybeSingle();
+    if (checkoutError) throw new Error(checkoutError.message);
+    if (checkout?.square_attempt_key) throw new Error('A direct card payment is awaiting confirmation. Do not create another invoice.');
     const existing = await syncProviderInvoice(db, orderId);
     const { data: order, error } = await db.from('orders').select('id,user_id,total_cents,shipping_name,email,paid_at,status').eq('id', orderId).single();
     if (error || !order) throw new Error('Order not found');
