@@ -1,4 +1,4 @@
-import { EPG_SOURCE, XmltvReader, buildIndex, matchChannel, feedsFor, toListing, eventListings, overlayEvents, type EpgChannel, type ListingRow } from "./real-epg";
+import { EPG_SOURCE, stripQualityTail, XmltvReader, buildIndex, matchChannel, feedsFor, toListing, eventListings, overlayEvents, type EpgChannel, type ListingRow } from "./real-epg";
 
 /** Each feed is refreshed this often; one feed per scheduled run keeps every run small. */
 export const FEED_REFRESH_MS = 6 * 3600_000;
@@ -15,7 +15,7 @@ async function playlistTargets() {
   const { isReplayChannel } = await import("./sports-live-only");
   const all = await playlistAllChannels();
   return all
-    .filter((c) => !isEventChannel(c.name) && !isReplayChannel(c.name, c.category))
+    .filter((c) => !isEventChannel(stripQualityTail(c.name)) && !isReplayChannel(c.name, c.category))
     .map((c) => ({ ...c, feeds: feedsFor(c.name, c.category) }))
     .filter((c) => c.feeds.length);
 }
@@ -136,7 +136,7 @@ export async function guideFor(channel: string, events: SportsEvent[], nowMs = D
   const { isOfficialSportsChannel } = await import("./sports-programme-end");
   const from = nowMs - KEEP_BEFORE_MS, to = nowMs + KEEP_AHEAD_MS;
   const onGuide = events.some((e) => e.channels.some((c) => c.trim().toLowerCase() === key));
-  if (isEventChannel(channel)) return { rows: eventListings(channel, events, from, to).map(toListing), source: "sports" };
+  if (isEventChannel(stripQualityTail(channel))) return { rows: eventListings(channel, events, from, to).map(toListing), source: "sports" };
   const hit = listingCache.get(key);
   let realRows: ListingRow[] | null = hit && nowMs - hit.at < LISTING_TTL ? hit.rows : null;
   if (!hit || nowMs - hit.at >= LISTING_TTL) {
