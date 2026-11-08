@@ -286,7 +286,7 @@ public final class BackupPlayerActivity extends Activity {
                 case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER:
                 case KeyEvent.KEYCODE_DPAD_LEFT: case KeyEvent.KEYCODE_DPAD_RIGHT:
                 case KeyEvent.KEYCODE_DPAD_UP: case KeyEvent.KEYCODE_DPAD_DOWN:
-                    if (controller != null && !controller.isVisible()) { showControls(); controller.requestPlayPauseFocus(); return true; }
+                    if (controller != null && !controller.isVisible()) { showControls(); controller.findViewById(androidx.media3.ui.R.id.exo_play_pause).requestFocus(); return true; }
                     break;
                 default: break;
             }
