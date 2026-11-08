@@ -4,36 +4,17 @@ import { CreditCard, Loader2, LockKeyhole, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { billingCountries } from '@/lib/billing-countries';
+import { loadSquareCardSdk, warmSquareCardEntry, type SquareCard } from '@/lib/square-card-sdk';
 import { checkoutSquareCharge, checkoutSquareConfig, checkoutSquareStatus } from '@/lib/checkout-pay.functions';
-
-type Card = {
-  attach: (selector: string) => Promise<void>;
-  destroy: () => Promise<void>;
-  tokenize: (details: Record<string, unknown>) => Promise<{ status: string; token?: string; errors?: { message?: string }[] }>;
-};
-type Square = { payments: (applicationId: string, locationId: string) => { card: () => Promise<Card> } };
-let sdkLoad: Promise<Square> | undefined;
-let sdkEnvironment = '';
-function loadSdk(environment: string): Promise<Square> {
-  const getSquare = () => (window as unknown as { Square?: Square }).Square;
-  if (sdkLoad && sdkEnvironment === environment) return sdkLoad;
-  sdkEnvironment = environment;
-  sdkLoad = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = environment === 'sandbox' ? 'https://sandbox.web.squarecdn.com/v1/square.js' : 'https://web.squarecdn.com/v1/square.js';
-    script.onload = () => { const square = getSquare(); if (square) resolve(square); else reject(new Error('Square card entry did not load')); };
-    script.onerror = () => { sdkLoad = undefined; script.remove(); reject(new Error('Could not load secure card entry. Please try again.')); };
-    document.head.appendChild(script);
-  });
-  return sdkLoad;
-}
 
 export function SquareCardPayment({ token, password, onPaid }: { token: string; password: string; onPaid: () => void | Promise<void> }) {
   const config = useServerFn(checkoutSquareConfig);
   const charge = useServerFn(checkoutSquareCharge);
   const checkStatus = useServerFn(checkoutSquareStatus);
   const id = `square-card-${useId().replace(/:/g, '')}`;
-  const card = useRef<Card | null>(null);
+  const card = useRef<SquareCard | null>(null);
   const source = useRef<string | null>(null);
   const inFlight = useRef(false);
   const callback = useRef(onPaid); callback.current = onPaid;
@@ -48,12 +29,15 @@ export function SquareCardPayment({ token, password, onPaid }: { token: string; 
   const [country, setCountry] = useState('GB');
   useEffect(() => {
     let active = true;
-    let attached: Card | null = null;
+    let attached: SquareCard | null = null;
     setReady(false); setError(null);
+    warmSquareCardEntry();
     void (async () => {
       try {
         const settings = await config({ data: { token, password } });
-        const sdk = await loadSdk(settings.environment);
+        if (!active) return;
+        setAmount(settings.amountCents);
+        const sdk = await loadSquareCardSdk(settings.environment);
         if (!active) return;
         attached = await sdk.payments(settings.applicationId, settings.locationId).card();
         if (!active) { await attached.destroy(); return; }
@@ -110,7 +94,7 @@ export function SquareCardPayment({ token, password, onPaid }: { token: string; 
       <div className="space-y-1"><Label htmlFor={`${id}-first`}>First name on card</Label><Input id={`${id}-first`} value={givenName} onChange={e => setGivenName(e.target.value)} autoComplete="cc-given-name" maxLength={100} required disabled={busy || pending} /></div>
       <div className="space-y-1"><Label htmlFor={`${id}-last`}>Last name on card</Label><Input id={`${id}-last`} value={familyName} onChange={e => setFamilyName(e.target.value)} autoComplete="cc-family-name" maxLength={100} required disabled={busy || pending} /></div>
     </div>
-    <div className="space-y-1"><Label htmlFor={`${id}-country`}>Billing country code</Label><Input id={`${id}-country`} value={country} onChange={e => setCountry(e.target.value.toUpperCase())} autoComplete="country" minLength={2} maxLength={2} pattern="[A-Z]{2}" required disabled={busy || pending} /></div>
+    <div className="space-y-1"><Label htmlFor={`${id}-country`}>Billing country</Label><Select value={country} onValueChange={setCountry} name="billing-country" required disabled={busy || pending}><SelectTrigger id={`${id}-country`} className="w-full"><SelectValue /></SelectTrigger><SelectContent>{billingCountries.map(c => <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>)}</SelectContent></Select></div>
     <div id={id} className="min-h-32 w-full rounded-md bg-card" />
     {!ready && !error && <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading secure card entry…</p>}
     <Button type="submit" className="min-h-11 w-full" disabled={!ready || busy || pending}>{busy ? <Loader2 className="size-4 animate-spin" /> : <LockKeyhole className="size-4" />}{pending ? 'Confirming payment…' : busy ? 'Processing…' : `Pay £${(amount / 100).toFixed(2)}`}</Button>
