@@ -36,9 +36,9 @@ function WhatToWatchPage() {
         <header className="flex items-center gap-3"><Popcorn className="size-7 text-primary-glow shrink-0" /><h1 className="font-display text-3xl font-bold">What to watch now</h1></header>
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid w-full max-w-2xl grid-cols-3 h-auto">
-            <TabsTrigger value="movies" className="gap-2"><Popcorn className="size-4" />Cinema films</TabsTrigger>
-            <TabsTrigger value="series" className="gap-2 whitespace-normal text-center"><Tv className="size-4 shrink-0" />Recommended series</TabsTrigger>
-            <TabsTrigger value="new-series" className="gap-2 whitespace-normal text-center"><Calendar className="size-4 shrink-0" />New series</TabsTrigger>
+            <TabsTrigger value="movies" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Popcorn className="hidden sm:block size-4 shrink-0" />Cinema films</TabsTrigger>
+            <TabsTrigger value="series" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Tv className="hidden sm:block size-4 shrink-0" />Recommended series</TabsTrigger>
+            <TabsTrigger value="new-series" className="gap-2 min-w-0 whitespace-normal text-center px-2 text-xs sm:text-sm"><Calendar className="hidden sm:block size-4 shrink-0" />New series</TabsTrigger>
           </TabsList>
           {(data?.error || isError) && tab !== 'new-series' && <div role="alert" className="mt-6 border border-destructive/40 bg-background/90 p-4 rounded-lg"><p className="text-sm">{data?.error || 'Could not load the playlist. Please try again.'}</p><Button variant="outline" className="mt-3" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
           {isLoading && tab !== 'new-series' && <div aria-label="Loading playlist" className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{Array.from({length:10}, (_,i) => <Skeleton key={i} className="aspect-[2/3] rounded-lg" />)}</div>}
