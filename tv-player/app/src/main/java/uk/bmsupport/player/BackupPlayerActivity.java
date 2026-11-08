@@ -34,6 +34,22 @@ public final class BackupPlayerActivity extends Activity {
     private int at;
     private boolean started;
     private long resume;
+    private final BackupFeedStatus feedStatus = new BackupFeedStatus();
+    private final Runnable feedTick = new Runnable() {
+        @Override public void run() {
+            if (mp == null || isFinishing()) return;
+            feedStatus.progress(mp.getTime(), android.os.SystemClock.elapsedRealtime());
+            updateFeedNote();
+            ui.postDelayed(this, 500);
+        }
+    };
+
+    private void updateFeedNote() {
+        if (mp == null || feedNote == null) return;
+        boolean stalled = isLive() && feedStatus.stalled(started, mp.isPlaying(), android.os.SystemClock.elapsedRealtime());
+        feedNote.setText(FeedStatus.BUFFERING);
+        feedNote.setVisibility(stalled ? TextView.VISIBLE : TextView.GONE);
+    }
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -72,11 +88,16 @@ public final class BackupPlayerActivity extends Activity {
                 case MediaPlayer.Event.Playing:
                     if (!started && resume > 0 && mp.getLength() > 0) mp.setTime(resume);
                     started = true;
+                    feedStatus.playing(android.os.SystemClock.elapsedRealtime());
                     feedNote.setVisibility(TextView.GONE);
                     break;
                 case MediaPlayer.Event.Buffering:
-                    // Once playing, a buffering tick means the feed stalled: say so on screen.
-                    if (started) { feedNote.setText(FeedStatus.BUFFERING); feedNote.setVisibility(TextView.VISIBLE); }
+                    feedStatus.buffering(ev.getBuffering());
+                    updateFeedNote();
+                    break;
+                case MediaPlayer.Event.TimeChanged:
+                    feedStatus.progress(ev.getTimeChanged(), android.os.SystemClock.elapsedRealtime());
+                    updateFeedNote();
                     break;
                 case MediaPlayer.Event.EncounteredError:
                     ui.post(this::next); break;
@@ -87,12 +108,15 @@ public final class BackupPlayerActivity extends Activity {
             }
         });
         open();
+        ui.post(feedTick);
     }
 
     private boolean isLive() { return "live".equals(getIntent().getStringExtra("content_kind")) || getIntent().getStringExtra("content_kind") == null; }
 
     private void open() {
         if (mp == null) return;
+        feedStatus.reset(android.os.SystemClock.elapsedRealtime());
+        feedNote.setVisibility(TextView.GONE);
         Media m = new Media(vlc, Uri.parse(urls[at]));
         boolean software = VideoDecodePolicy.preferSoftware("catchup".equals(getIntent().getStringExtra("content_kind")),
                 PlayerActivity.prefs(this).getString("decoder", "hardware"), getIntent().getStringExtra("content_name"));
