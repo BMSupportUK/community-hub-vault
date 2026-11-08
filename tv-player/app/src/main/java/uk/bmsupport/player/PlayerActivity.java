@@ -410,12 +410,23 @@ public class PlayerActivity extends Activity {
     private boolean stallAdvert;
     private final BufferRecoveryWatch bufferWatch = new BufferRecoveryWatch();
     private boolean reconnectPending;
+    private boolean reopenForBuffer;
+    private long reopenBufferedPosition;
+    private String pendingFormat;
     private final Runnable reopenStream = () -> {
         reconnectPending = false;
-        if (player != null && !isFinishing()) open(!"live".equals(kind()) ? lastPosition : 0);
-    };
-    private final Runnable advertJump = () -> {
-        if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING) { formatChangedAt = -100000; player.seekToDefaultPosition(); player.prepare(); player.play(); }
+        if (player == null || isFinishing()) return;
+        if (reopenForBuffer && (player.getPlaybackState() == Player.STATE_READY
+                || !player.getPlayWhenReady() || player.getBufferedPosition() > reopenBufferedPosition)) {
+            bufferWatch.reset();
+            if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+            return;
+        }
+        if (pendingFormat != null) {
+            for (int i=0;i<liveUrls.length;i++) if (liveUrls[i].endsWith("." + pendingFormat)) { urlAt=i; break; }
+            pendingFormat=null;
+        }
+        open(!"live".equals(kind()) ? lastPosition : 0);
     };
     private TextView reconnectNote;
     private TextView feedNote;
@@ -508,7 +519,7 @@ public class PlayerActivity extends Activity {
                     showFeed(FeedStatus.label(blackSent, true));
                     ui.removeCallbacks(cleanPlay);
                     bufferWatch.reset();
-                    // Advert switch: jump straight to the live point instead of waiting to catch up.
+                    // Classify the report without abandoning the existing buffer.
                     stallAdvert = "live".equals(kind()) && StreamRecovery.advertSwitch(now - formatChangedAt);
                     // A size change alone does not prove a broken stream. Let buffered video load
                     // rather than seeking away from it during a normal advert/quality transition.
@@ -653,9 +664,14 @@ public class PlayerActivity extends Activity {
     private final Runnable stallWatch = new Runnable() {
         @Override public void run() {
             if (player == null || isFinishing()) return;
-            if (!reconnectPending && bufferWatch.retry(android.os.SystemClock.elapsedRealtime(),
+            if (reconnectPending && reopenForBuffer && player.getBufferedPosition() > reopenBufferedPosition) {
+                ui.removeCallbacks(reopenStream); reconnectPending=false;
+                if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+            }
+            boolean retry = bufferWatch.retry(android.os.SystemClock.elapsedRealtime(),
                     player.getBufferedPosition(), StreamRecovery.stallReconnectMs(recoveryName()),
-                    player.getPlaybackState() == Player.STATE_BUFFERING, player.getPlayWhenReady())) reconnect();
+                    player.getPlaybackState() == Player.STATE_BUFFERING, player.getPlayWhenReady());
+            if (!reconnectPending && retry) reconnect();
             ui.postDelayed(this, 1000);
         }
     };
@@ -675,7 +691,8 @@ public class PlayerActivity extends Activity {
         }
         if (reconnectNote != null) reconnectNote.setVisibility(TextView.VISIBLE);
         reconnectPending = true;
-        bufferWatch.reset();
+        reopenForBuffer = player.getPlaybackState() == Player.STATE_BUFFERING;
+        reopenBufferedPosition = player.getBufferedPosition();
         ui.postDelayed(reopenStream, immediate && reconnects == 1 ? 0 : StreamRecovery.backoffMs(reconnects));
     }
 
@@ -753,7 +770,7 @@ public class PlayerActivity extends Activity {
         if (recent >= StreamRecovery.formatSwapStalls(recoveryName())) {
             rememberBetterFormat();
             if (StreamRecovery.cushioned(recoveryName()) && !daznFormatSwapped && liveUrls.length > 1) {
-                daznFormatSwapped = true; String other = StreamRecovery.otherFormat(liveUrls[urlAt]);
+                daznFormatSwapped = true; pendingFormat = StreamRecovery.otherFormat(liveUrls[urlAt]);
                 // Remember for the next failed connection/open; never throw away a recovered picture.
             }
         }

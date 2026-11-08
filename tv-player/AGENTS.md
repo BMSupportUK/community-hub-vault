@@ -1,4 +1,5 @@
 # tv-player rules
+- Primary recovery watches each connection continuously and only retries a non-progressing buffer; cancel queued reconnects on READY or resumed loading, preserve recovered video through advert/format changes, and apply learned format swaps only when a new connection is needed.
 - Series detail entry focuses its top action; asynchronous episode insertion never steals focus or scrolls past the title, while deliberate remote navigation still reveals episodes.
 - Programme grid (Android) uses a Sky-style fixed time scale: the 2h window always fills the grid width and never depends on listings, so boxes cannot move; titles cap at two ellipsized lines and the full name lives in the info panel. Start/end times stay unscaled for playback and reminder routing.
 - Live TV voice recognition and Fire TV dictation share category/channel-only LiveVoiceSearch grouping without sports requests; headers are disabled resultList rows and categories retain provider IDs. Sports Guide voice matching remains separate.
