@@ -258,6 +258,19 @@ public class GuideGridView extends View {
     // Short segments are given a readable minimum width and the rest share the remaining space,
     // so every row and the header use the same positions and short shows line up with their times.
     private long[] axT = new long[0]; private float[] axX = new float[0];
+    private float axisScroll;
+    private float programmeWidth(Prog p, float gridW) {
+        txt.setTextSize((phone ? 12 : 14) * d); txt.setFakeBoldText(true);
+        float low = Math.min(180 * d, gridW), high = Math.max(low, gridW);
+        // Measure the whole title, not its duration. Reserve a separate bell and time line.
+        for (int i = 0; i < 12; i++) {
+            float mid = (low + high) / 2;
+            StaticLayout layout = StaticLayout.Builder.obtain(p.title, 0, p.title.length(), txt,
+                    Math.max(1, (int) (mid - 44 * d))).setIncludePad(false).build();
+            if (layout.getHeight() <= rowH() - 28 * d) high = mid; else low = mid;
+        }
+        return high;
+    }
     private void buildAxis(float ch, float gridW) {
         java.util.TreeSet<Long> b = new java.util.TreeSet<>();
         long ws = windowStart, we = windowStart + WINDOW;
@@ -274,15 +287,34 @@ public class GuideGridView extends View {
         }
         axT = new long[b.size()]; int k = 0; for (long t : b) axT[k++] = t;
         int n = axT.length - 1; float[] w = new float[Math.max(n, 0)];
-        float minSeg = (phone ? 60 : 90) * d, fixed = 0; long rest = 0;
-        boolean[] small = new boolean[w.length];
         float base = gridW / WINDOW;
-        for (int i = 0; i < n; i++) { long dur = axT[i + 1] - axT[i]; if (dur * base < minSeg) { small[i] = true; fixed += minSeg; } else rest += dur; }
-        float left = Math.max(gridW * 0.3f, gridW - fixed);
-        float scaleSmall = fixed > gridW - gridW * 0.3f ? (gridW * 0.7f) / Math.max(1, fixed) : 1f;
-        for (int i = 0; i < n; i++) { long dur = axT[i + 1] - axT[i]; w[i] = small[i] ? minSeg * scaleSmall : (rest > 0 ? left * dur / (float) rest : 0); }
+        for (int i = 0; i < n; i++) w[i] = Math.max(64 * d, (axT[i + 1] - axT[i]) * base);
+        for (int i = 0; i < v && topRow + i < names.size(); i++) {
+            List<Prog> l = progs.get(topRow + i); if (l == null) continue;
+            for (int pi = 0; pi < l.size(); pi++) {
+                Prog p = l.get(pi); long en = p.en > p.st ? p.en : p.st + SLOT;
+                if (pi + 1 < l.size() && l.get(pi + 1).st > p.st) en = Math.min(en, l.get(pi + 1).st);
+                long st = Math.max(ws, p.st); en = Math.min(we, en);
+                if (en <= st) continue;
+                float span = 0; int count = 0;
+                for (int j = 0; j < n; j++) if (axT[j] >= st && axT[j + 1] <= en) { span += w[j]; count++; }
+                float extra = programmeWidth(p, gridW) + 4 - span;
+                if (extra > 0 && count > 0) for (int j = 0; j < n; j++)
+                    if (axT[j] >= st && axT[j + 1] <= en) w[j] += extra / count;
+            }
+        }
         axX = new float[axT.length]; axX[0] = ch;
         for (int i = 0; i < n; i++) axX[i + 1] = axX[i] + w[i];
+        // A crowded hour scrolls instead of shrinking five-minute shows into slivers.
+        axisScroll = Math.max(0, Math.min(axisScroll, axX[n] - ch - gridW));
+        Prog selected = selected();
+        if (selected != null) {
+            float left = xAt(Math.max(ws, selected.st)) - ch;
+            float right = xAt(Math.min(we, selected.en)) - ch;
+            if (left < axisScroll) axisScroll = left;
+            else if (right > axisScroll + gridW) axisScroll = Math.max(left, right - gridW);
+        }
+        for (int i = 0; i < axX.length; i++) axX[i] -= axisScroll;
     }
     private float xAt(long t) {
         if (axT.length < 2) return chW();
@@ -303,6 +335,8 @@ public class GuideGridView extends View {
         c.drawText(df.format(new java.util.Date(windowStart * 1000)), 10 * d, hh * 0.68f, txt);
         txt.setFakeBoldText(false);
         buildAxis(ch, gridW);
+        txt.setTextSize(15 * d); txt.setFakeBoldText(false);
+        c.save(); c.clipRect(ch, 0, W, hh);
         // Header marks: half-hours plus every programme start on the highlighted channel,
         // so a short show's start time sits right above its box.
         java.util.TreeSet<Long> marks = new java.util.TreeSet<>();
@@ -317,6 +351,7 @@ public class GuideGridView extends View {
             float w = txt.measureText(hhmm(t));
             if (x + 4 * d >= lastLabel) { txt.setColor(half ? 0xFFF1F5F9 : 0xFFFDE68A); c.drawText(hhmm(t), x + 4 * d, hh * 0.68f, txt); lastLabel = x + 4 * d + w + 6 * d; }
         }
+        c.restore();
         txt.setColor(0xFFF1F5F9);
         int v = visibleRows() + 1;
         for (int i = 0; i < v && topRow + i < names.size(); i++) {
@@ -405,7 +440,6 @@ public class GuideGridView extends View {
                     // Keep both times intact, even on the shortest programme blocks.
                     float timeWidth = txt.measureText(times);
                     c.save(); c.translate(box.left + pad, box.bottom - 4 * d);
-                    if (timeWidth > avail) c.scale(avail / timeWidth, 1);
                     c.drawText(times, 0, 0, txt); c.restore();
                 }
                 c.restore();
