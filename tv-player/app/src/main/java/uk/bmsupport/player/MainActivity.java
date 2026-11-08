@@ -1901,6 +1901,7 @@ public class MainActivity extends Activity {
             hideKeyboard(q);
             if (dlg[0] != null) dlg[0].dismiss();
             if ("sports".equals(kind)) { if (!"sports".equals(screen)) showSports(); sportsVoice(want); }
+            else if ("live".equals(kind)) runLiveVoiceSearch(want);
             else showSearch(kind, want);
         };
         q.setOnEditorActionListener((tv, a, ev) -> { go.run(); return true; });
@@ -1994,6 +1995,55 @@ public class MainActivity extends Activity {
             } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't search – try refreshing your playlist", Toast.LENGTH_LONG).show()); }
         });
     }
+    private int liveVoiceRequest;
+    private void runLiveVoiceSearch(String spoken) {
+        int request = ++liveVoiceRequest;
+        AlertDialog wait = new AlertDialog.Builder(this).setMessage("Searching categories, TV channels and events…")
+                .setNegativeButton("Cancel", (d, w) -> liveVoiceRequest++).create();
+        wait.setOnCancelListener(d -> liveVoiceRequest++); wait.show();
+        io.execute(() -> {
+            try {
+                JSONArray channels = new JSONArray(cachedGet("live", "get_live_streams", ""));
+                JSONArray categories = new JSONArray(cachedGet("live", "get_live_categories", ""));
+                JSONObject sports;
+                boolean failed = false;
+                try {
+                    sports = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
+                            .put("action", "sports").put("device_token", prefs.getString("token", "")).toString()));
+                } catch (Exception ex) { sports = new JSONObject(); failed = true; }
+                JSONObject eventData = sports;
+                boolean eventsFailed = failed;
+                List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories, channels, sports.optJSONArray("events"), spoken, System.currentTimeMillis());
+                ui.post(() -> {
+                    dismissQuietly(wait);
+                    if (request != liveVoiceRequest || isFinishing()) return;
+                    if (eventsFailed) Toast.makeText(this, "Couldn’t load events — search again to retry", Toast.LENGTH_LONG).show();
+                    resultList("Voice results for \"" + spoken + "\"", rows.size(), i -> {
+                        LiveVoiceSearch.Row hit = rows.get(i);
+                        LinearLayout row = column();
+                        ChannelNameView name = new ChannelNameView(this);
+                        name.setText(hit.title); name.setTextSize(hit.selectable() ? 16 : 14); name.setTextColor(hit.selectable() ? TEXT : MUTED);
+                        row.addView(name);
+                        if (!hit.subtitle.isEmpty()) row.addView(text(hit.subtitle, 13, MUTED, false));
+                        if (hit.group.equals("Events") && hit.value != null) row.addView(text(new java.text.SimpleDateFormat("EEE d MMM HH:mm", java.util.Locale.UK).format(new java.util.Date(hit.value.optLong("start"))), 13, MUTED, false));
+                        return row;
+                    }, i -> {
+                        LiveVoiceSearch.Row hit = rows.get(i);
+                        if (hit.value == null) return;
+                        if (hit.group.equals("Categories")) showTvGuide(hit.value.optString("category_id"), true);
+                        else if (hit.group.equals("TV channels")) open(liveItem(hit.value));
+                        else {
+                            List<String[]> aliases = new ArrayList<>();
+                            JSONArray al = eventData.optJSONArray("aliases");
+                            if (al != null) for (int j = 0; j < al.length(); j++) { JSONObject o = al.optJSONObject(j); if (o != null) aliases.add(new String[]{o.optString("from"), o.optString("to")}); }
+                            for (String[] alias : BUILT_IN_ALIASES) aliases.add(alias);
+                            pickSportsChannel(hit.value, aliases, false);
+                        }
+                    }, "🎤 Search again", () -> startVoice("live"), "Close", null, i -> rows.get(i).selectable());
+                });
+            } catch (Exception ex) { ui.post(() -> { dismissQuietly(wait); if (request == liveVoiceRequest) Toast.makeText(this, "Couldn’t search — try refreshing your playlist", Toast.LENGTH_LONG).show(); }); }
+        });
+    }
     private String vlcKey, vlcSeriesKey;
 
     /** VLC reports where the customer stopped, so VLC playback also keeps watched progress. */
@@ -2005,6 +2055,7 @@ public class MainActivity extends Activity {
             java.util.ArrayList<String> r = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
             if (r != null && !r.isEmpty()) {
                 if ("sports".equals(kind)) { if (!"sports".equals(screen)) showSports(); sportsVoice(r.get(0)); }
+                else if ("live".equals(kind)) runLiveVoiceSearch(r.get(0));
                 else showSearch(kind, r.get(0));
             }
             return;
@@ -4754,6 +4805,10 @@ public class MainActivity extends Activity {
      */
     private AlertDialog resultList(String title, int count, java.util.function.IntFunction<View> row, java.util.function.IntConsumer pick,
                                    String posLabel, Runnable pos, String negLabel, Runnable neg) {
+        return resultList(title, count, row, pick, posLabel, pos, negLabel, neg, i -> true);
+    }
+    private AlertDialog resultList(String title, int count, java.util.function.IntFunction<View> row, java.util.function.IntConsumer pick,
+                                   String posLabel, Runnable pos, String negLabel, Runnable neg, java.util.function.IntPredicate enabled) {
         ListView lv = list();
         GradientDrawable ring = new GradientDrawable(); ring.setColor(Color.TRANSPARENT); ring.setCornerRadius(dp(8)); ring.setStroke(dp(3), ACCENT);
         StateListDrawable sel = new StateListDrawable();
@@ -4776,6 +4831,8 @@ public class MainActivity extends Activity {
         lv.setDividerHeight(0);
         lv.setAdapter(new BaseAdapter() {
             @Override public int getCount() { return count; }
+            @Override public boolean areAllItemsEnabled() { return false; }
+            @Override public boolean isEnabled(int i) { return enabled.test(i); }
             @Override public Object getItem(int i) { return i; }
             @Override public long getItemId(int i) { return i; }
             @Override public View getView(int i, View cv, ViewGroup parent) {
@@ -4789,8 +4846,8 @@ public class MainActivity extends Activity {
         if (posLabel != null) b.setPositiveButton(posLabel, (d, w) -> { if (pos != null) pos.run(); });
         if (negLabel != null) b.setNegativeButton(negLabel, (d, w) -> { if (neg != null) neg.run(); });
         AlertDialog dlg = b.create();
-        lv.setOnItemClickListener((p, v, i, id) -> { dlg.dismiss(); pick.accept(i); });
-        dlg.setOnShowListener(d -> { lv.requestFocus(); lv.setSelection(0); });
+        lv.setOnItemClickListener((p, v, i, id) -> { if (enabled.test(i)) { dlg.dismiss(); pick.accept(i); } });
+        dlg.setOnShowListener(d -> { lv.requestFocus(); for (int i = 0; i < count; i++) if (enabled.test(i)) { lv.setSelection(i); break; } });
         dlg.show();
         return dlg;
     }
