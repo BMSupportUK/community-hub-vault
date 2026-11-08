@@ -888,7 +888,7 @@ public class MainActivity extends Activity {
         if (previewPoster != null) previewPoster.setVisibility(View.GONE);
         status.setText("Loading preview…");
         previewTask = () -> {
-            preview = PlayerActivity.build(this, false, it.name);
+            preview = PlayerActivity.build(this, false, it.name + " " + categoryName(it));
             previewView = view;
             view.setPlayer(preview);
             preview.addListener(previewListener = new androidx.media3.common.Player.Listener() {
@@ -1732,6 +1732,17 @@ public class MainActivity extends Activity {
                 .putExtra("content_kind", it.kind).putExtra("content_id", it.id).putExtra("content_name", it.name)
                 .putExtra("report_kind", savedKind(it)).putExtra("report_category", categoryName(it))
                 .putExtra("report_device", deviceLabel()).putExtra("report_version", appVersion());
+        intent.putExtra("recovery_name", it.name + " " + categoryName(it));
+        if ("live".equals(it.kind) && retryEvent != null && liveChannels != null) {
+            List<String> labels = new ArrayList<>(); List<Item> targets = new ArrayList<>();
+            buildSportsRows(retryEvent, retryAliases == null ? new ArrayList<>() : retryAliases, liveChannels, labels, targets);
+            JSONArray alternatives = new JSONArray();
+            for (Item candidate : targets) if (candidate != null && !candidate.id.equals(it.id)) {
+                try { alternatives.put(new JSONObject().put("id", candidate.id).put("name", candidate.name)
+                    .put("recovery_name", candidate.name + " " + categoryName(candidate)).put("urls", new JSONArray(java.util.Arrays.asList(streamUrls(candidate))))); } catch (Exception ignored) {}
+            }
+            intent.putExtra("event_name", retryEvent.optString("title")).putExtra("event_alternatives", alternatives.toString());
+        }
         if ("live".equals(it.kind)) intent.putExtra("urls", streamUrls(it));
         if ("live".equals(it.kind) && liveChannels != null && StreamRecovery.isHdName(it.name)) {
             for (Item o : liveChannels) {
