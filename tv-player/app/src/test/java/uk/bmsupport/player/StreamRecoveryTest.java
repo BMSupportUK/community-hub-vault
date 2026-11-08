@@ -13,6 +13,20 @@ public class StreamRecoveryTest {
         assertFalse(StreamRecovery.drifted(31000, "DAZN CA 19"));
         assertTrue(StreamRecovery.drifted(61000, "DAZN CA 19"));
     }
+    @Test public void coupangGetsTheSameSteadyProfileAsDazn() {
+        assertTrue(StreamRecovery.isCoupang("Coupang Play 1"));
+        assertTrue(StreamRecovery.isCoupang("ᴄᴏᴜᴘᴀɴɢ Play 05"));
+        assertFalse(StreamRecovery.isCoupang("BBC One"));
+        assertArrayEquals(new int[]{40000,90000,3000,6000}, StreamRecovery.bufferMs("small", "Coupang Play 3"));
+        assertEquals(30000, StreamRecovery.liveTargetMs("Coupang Play 3"));
+        assertEquals(6000, StreamRecovery.stallReconnectMs("Coupang Play 3"));
+        assertEquals(1, StreamRecovery.formatSwapStalls("Coupang Play 3"));
+        assertFalse(StreamRecovery.drifted(31000, "Coupang Play 3"));
+        assertTrue(StreamRecovery.drifted(61000, "Coupang Play 3"));
+        assertEquals("coupang", StreamRecovery.providerTag("Coupang Play 3"));
+        assertEquals("dazn", StreamRecovery.providerTag("DAZN CA 19"));
+        assertNull(StreamRecovery.providerTag("BBC One"));
+    }
     @Test public void daznRecoversAfterSixSecondsAndFirstStall() {
         assertEquals(6000, StreamRecovery.stallReconnectMs("DAZN CA 19"));
         assertEquals(1, StreamRecovery.formatSwapStalls("DAZN CA 19"));
