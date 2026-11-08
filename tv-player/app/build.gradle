@@ -11,8 +11,8 @@ android {
         applicationId "uk.bmsupport.player"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 206
-        versionName "3.95"
+        versionCode 207
+        versionName "3.96"
         // Android TV, Fire TV and phones are ARM; the backup engine's native libraries stay ARM-only to keep the download small.
         ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
     }

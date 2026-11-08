@@ -64,11 +64,17 @@ public class GuideGridView extends View {
 
     public void setListener(Listener l) { listener = l; }
     public void setChannels(List<String> n, List<Boolean> cu) {
-        names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu); progs.clear(); progsVersion++;
+        names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu); progs.clear(); progsVersion++; channelsVersion++;
         selRow = 0; topRow = 0; lastRow = -1; lastProg = null; resetTime();
         invalidate(); post(this::changed);
     }
-    public void setProgs(int row, List<Prog> l) { progs.put(row, l); progsVersion++; invalidate(); if (row == selRow) changed(); }
+    public void setProgs(int row, List<Prog> l) { if (sameProgs(progs.get(row), l)) { if (row == selRow) changed(); return; } progs.put(row, l); progsVersion++; invalidate(); if (row == selRow) changed(); }
+    /** A refresh that brings back identical listings must not redraw the axis. */
+    static boolean sameProgs(List<Prog> a, List<Prog> b) {
+        if (a == null || b == null || a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) { Prog x = a.get(i), y = b.get(i); if (x.st != y.st || x.en != y.en || !java.util.Objects.equals(x.title, y.title)) return false; }
+        return true;
+    }
     public boolean loaded(int row) { return progs.containsKey(row); }
     /** End of the time span currently on screen (moves forward with Day ▶ and sideways swipes). */
     public long windowEnd() { return windowStart + WINDOW; }
@@ -259,7 +265,9 @@ public class GuideGridView extends View {
     // so every row and the header use the same positions and short shows line up with their times.
     private long[] axT = new long[0]; private float[] axX = new float[0];
     private float axisScroll;
-    private int progsVersion; private String axisKey = "";
+    private int progsVersion, channelsVersion; private String axisKey = "";
+    // Widths only ever grow within one window/category, so repeated or reshuffled listings can never make boxes jump back and forth.
+    private String stickyFrame = ""; private long[] stickyT = new long[0]; private float[] stickyW = new float[0];
     private float[] axisBase = new float[0];
     private final java.util.Map<String, Float> widthCache = new java.util.HashMap<>();
     private float programmeWidth(Prog p, float gridW) {
@@ -283,7 +291,9 @@ public class GuideGridView extends View {
         return high;
     }
     private void buildAxis(float ch, float gridW) {
-        String key = windowStart + ":" + (int) gridW + ":" + progsVersion;
+        String frame = windowStart + ":" + (int) gridW + ":" + channelsVersion;
+        if (!frame.equals(stickyFrame)) { stickyFrame = frame; stickyT = new long[0]; stickyW = new float[0]; axisKey = ""; }
+        String key = frame + ":" + progsVersion;
         if (!key.equals(axisKey)) { axisKey = key; computeAxis(gridW); }
         int n = axT.length - 1;
         axX = new float[axT.length]; axX[0] = ch;
@@ -305,6 +315,7 @@ public class GuideGridView extends View {
         long ws = windowStart, we = windowStart + WINDOW;
         b.add(ws); b.add(we);
         for (long t = ws; t < we; t += SLOT) b.add(t);
+        for (long t : stickyT) b.add(t);
         for (List<Prog> l : progs.values()) {
             if (l == null) continue;
             for (Prog p : l) {
@@ -331,6 +342,15 @@ public class GuideGridView extends View {
                     if (axT[j] >= st && axT[j + 1] <= en) w[j] += extra / count;
             }
         }
+        for (int i = 0; i < n; i++) {
+            float prior = 0;
+            for (int j = 0; j + 1 < stickyT.length; j++) {
+                long a = Math.max(axT[i], stickyT[j]), z = Math.min(axT[i + 1], stickyT[j + 1]);
+                if (z > a) prior += stickyW[j] * (z - a) / (float) Math.max(1, stickyT[j + 1] - stickyT[j]);
+            }
+            w[i] = Math.max(w[i], prior);
+        }
+        stickyT = axT.clone(); stickyW = w.clone();
         axisBase = w;
     }
     private float xAt(long t) {
