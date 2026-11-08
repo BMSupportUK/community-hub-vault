@@ -389,19 +389,13 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         if (body.action === 'guide_category_open') {
-          const { requestCategoryGuide } = await import('@/lib/real-epg.server');
-          return json(await requestCategoryGuide(body.category).catch(() => ({ queued: 0, retry: true })));
+          const { retiredCategoryRefresh } = await import('@/lib/provider-epg-policy');
+          return json(retiredCategoryRefresh());
         }
 
         if (body.action === "guide") {
-          // Real published TV guide (or Sports Guide events for Sports Pass feeds); null = use the provider's guide.
-          const { buildSportsFixtures } = await import("@/lib/player-sports-feed.server");
-          const { guideFor } = await import("@/lib/real-epg.server");
-          const g = await guideFor(body.channel, async () => {
-            const payload = await buildSportsFixtures();
-            return payload.events as { title: string; start: number; end?: number; channels: string[]; competition?: string }[];
-          }).catch(() => ({ rows: null, source: "none" as const }));
-          return json({ epg_listings: g.rows, source: g.source });
+          const { providerGuideFallback } = await import('@/lib/provider-epg-policy');
+          return json(providerGuideFallback());
         }
 
         if (body.action === "sports") {

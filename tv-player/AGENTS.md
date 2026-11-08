@@ -36,4 +36,4 @@
 - Phones (shortest side under 500dp) shrink screen density via PhoneScale in attachBaseContext so the TV layout fits sideways; front/link/unlock screens also scroll.
 - Screen, catch-up, guide, favourites, announcement and keypad rules live in `tv-player/app/src/main/java/uk/bmsupport/player/AGENTS.md`.
 - Background website check-ins (poll, announcements, sports refresh, buffering flush) go through Checkin.java / windows-bm-player/checkin.cjs: ±20% jitter, random start offset, doubling back-off to 5 min on 429/5xx/timeouts, Retry-After honoured, and the poll`s `slow` multiplier (player_settings.checkin_slowdown, 1–10) stretches every timer so load can be eased without an app release.
-- Live TV guides: apps ask the device-token `guide` action first (real XMLTV via src/lib/real-epg*.ts, Sports Guide events for event-only feeds) and fall back to the provider guide on any empty/failed reply, so an unpublished website never blanks guides.
+- Live TV EPG reads the playlist provider directly, using its short/full-day tables; website guide imports and category refreshes are retired.
