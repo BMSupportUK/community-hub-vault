@@ -171,8 +171,6 @@ export const Route = createFileRoute("/api/public/player")({
               if (claimed?.some((c) => c.id === req.id)) watch = { kind: req.kind, id: req.item_id, title: req.title };
             }
           }
-          await supabaseAdmin.from("player_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id)
-            .lt("last_seen_at", new Date(Date.now() - 60_000).toISOString());
           return json({ watch, announcement: visible ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
         }
 
