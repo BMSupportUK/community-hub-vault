@@ -32,6 +32,10 @@ export const getCheckout = createServerFn({ method: "POST" })
     const { data: items } = await supabaseAdmin
       .from("order_items").select("product_name,quantity,unit_price_cents").eq("order_id", link.order_id);
     const method = String(order.manual_pay_method ?? "");
+    if (!order.paid_at && ['square', 'stripe', ''].includes(method) && process.env['SQUARE_LOCATION_ID']) {
+      const { syncSquareCheckout } = await import('@/lib/square-checkout.server');
+      await syncSquareCheckout(supabaseAdmin, link.order_id, process.env['SQUARE_LOCATION_ID']).catch(error => console.error('[square-checkout-sync]', error instanceof Error ? error.message : 'failed'));
+    }
     if (!order.paid_at && method === "stripe") {
       const { syncStripeSession } = await import("@/lib/checkout-pay.functions");
       await syncStripeSession(supabaseAdmin, link.order_id).catch(() => undefined);
@@ -43,7 +47,7 @@ export const getCheckout = createServerFn({ method: "POST" })
     const { syncProviderInvoice } = await import('@/lib/provider-invoices.server');
     await syncProviderInvoice(supabaseAdmin, link.order_id).catch(error => console.error('[checkout-invoice-sync]', link.order_id, error instanceof Error ? error.message : 'failed'));
     const invoice = null;
-    const { data: fresh } = await supabaseAdmin.from("orders").select("paid_at,completed_at").eq("id", link.order_id).maybeSingle();
+    const { data: fresh } = await supabaseAdmin.from("orders").select("paid_at,completed_at,status").eq("id", link.order_id).maybeSingle();
     let bank: null | { account_name: string | null; sort_code: string | null; account_number: string | null; iban: string | null; bic: string | null } = null;
     if (method === "wise") {
       const { data: b } = await supabaseAdmin.from("bank_transfer_details").select("account_name,sort_code,account_number,iban,bic").limit(1).maybeSingle();
@@ -92,7 +96,7 @@ export const getCheckout = createServerFn({ method: "POST" })
         existingUsername: ((order as any).existing_username as string | null) ?? null,
         discountCode: ((order as any).discount_code as string | null) ?? null,
         adultContent: ((order as any).wants_adult_content as boolean | null) ?? null,
-        status: String(order.status ?? ""),
+        status: String(fresh?.status ?? order.status ?? ""),
       },
       items: (items ?? []).map((i: any) => ({ name: String(i.product_name ?? "Item"), qty: Number(i.quantity ?? 1), unitCents: Number(i.unit_price_cents ?? 0) })),
       invoice,
