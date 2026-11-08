@@ -2725,6 +2725,114 @@ export type Database = {
           },
         ]
       }
+      epg_channel_map: {
+        Row: {
+          category: string
+          channel_key: string
+          channel_name: string
+          disabled: boolean
+          epg_id: string | null
+          epg_name: string | null
+          feed: string | null
+          manual: boolean
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          channel_key: string
+          channel_name: string
+          disabled?: boolean
+          epg_id?: string | null
+          epg_name?: string | null
+          feed?: string | null
+          manual?: boolean
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          channel_key?: string
+          channel_name?: string
+          disabled?: boolean
+          epg_id?: string | null
+          epg_name?: string | null
+          feed?: string | null
+          manual?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      epg_feed_channels: {
+        Row: {
+          epg_id: string
+          feed: string
+          name: string
+        }
+        Insert: {
+          epg_id: string
+          feed: string
+          name: string
+        }
+        Update: {
+          epg_id?: string
+          feed?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      epg_feeds: {
+        Row: {
+          channels: number
+          code: string
+          error: string | null
+          imported_at: string | null
+          matched: number
+          programmes: number
+        }
+        Insert: {
+          channels?: number
+          code: string
+          error?: string | null
+          imported_at?: string | null
+          matched?: number
+          programmes?: number
+        }
+        Update: {
+          channels?: number
+          code?: string
+          error?: string | null
+          imported_at?: string | null
+          matched?: number
+          programmes?: number
+        }
+        Relationships: []
+      }
+      epg_programmes: {
+        Row: {
+          descr: string
+          epg_id: string
+          feed: string
+          start_at: string
+          stop_at: string
+          title: string
+        }
+        Insert: {
+          descr?: string
+          epg_id: string
+          feed: string
+          start_at: string
+          stop_at: string
+          title: string
+        }
+        Update: {
+          descr?: string
+          epg_id?: string
+          feed?: string
+          start_at?: string
+          stop_at?: string
+          title?: string
+        }
+        Relationships: []
+      }
       fan_zone_appeal_messages: {
         Row: {
           appeal_id: string

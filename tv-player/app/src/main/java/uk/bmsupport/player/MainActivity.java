@@ -1331,12 +1331,23 @@ public class MainActivity extends Activity {
         return new java.text.SimpleDateFormat(f, java.util.Locale.UK).format(new java.util.Date(shifted));
     }
 
+    /** BM Support's listings for a live channel (real TV guide or Sports Guide events); null = use the provider's guide. */
+    private JSONArray siteGuide(Item it) {
+        try {
+            JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
+                    new JSONObject().put("action", "guide").put("device_token", prefs.getString("token", "")).put("channel", it.name).toString()));
+            JSONArray l = r.optJSONArray("epg_listings");
+            return l != null && l.length() > 0 ? l : null;
+        } catch (Exception e) { return null; }
+    }
+
     /** Header line gets "Now", the mini guide box gets now (with progress) plus the next programmes. */
     private void loadEpg(Item it, TextView out, TextView box) {
         if (box != null) box.setText("TV guide for " + it.name + "…");
         io.execute(() -> {
             try {
-                JSONArray l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=6")).optJSONArray("epg_listings");
+                JSONArray l = GuideListings.upcoming(siteGuide(it), System.currentTimeMillis() / 1000);
+                if (l == null) l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=6")).optJSONArray("epg_listings");
                 StringBuilder head = new StringBuilder(it.name), guide = new StringBuilder();
                 List<Object[]> progs = new ArrayList<>();
                 long nowSec = System.currentTimeMillis() / 1000;
@@ -3512,13 +3523,16 @@ public class MainActivity extends Activity {
                     long now = System.currentTimeMillis() / 1000;
                     List<GuideGridView.Prog> got = new ArrayList<>();
                     boolean ok = false, full0 = false;
-                    try {
+                    // Real published TV guide (or the Sports Guide for Sports Pass feeds) from BM Support first.
+                    JSONArray real = siteGuide(it);
+                    if (real != null) { got = GuideListings.parse(real, now); ok = true; full0 = true; }
+                    else try {
                         got = GuideListings.parse(new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings"), now);
                         ok = true;
                     } catch (Exception ignored) {}
                     // Some providers only send "now" in the short list; the full day's table has the rest.
                     // Day ▶ / swiping ahead needs programmes beyond the short list, so ask for the full table too.
-                    if (GuideListings.tooShort(got, now, Math.max(win, viewEnd - now))) try {
+                    if (real == null && GuideListings.tooShort(got, now, Math.max(win, viewEnd - now))) try {
                         List<GuideGridView.Prog> full = GuideListings.parse(new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + it.id)).optJSONArray("epg_listings"), now);
                         if (full.size() > got.size()) got = full;
                         ok = true; full0 = true;
