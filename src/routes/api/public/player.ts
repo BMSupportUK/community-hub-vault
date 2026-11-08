@@ -5,6 +5,7 @@ import { checkinSlowdown } from "@/lib/player-checkin";
 import { createSharedCache } from "@/lib/player-sports-cache";
 import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
 import { announcementReachesDevice } from "@/lib/player-announcement-audience";
+import { WATCH_REQUEST_TTL_MS } from "@/lib/send-to-box";
 import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, eventTime, stallCause, shouldAlert } from "@/lib/player-buffering";
 
 // One sports-guide build per minute per server instance, however many apps ask.
@@ -157,7 +158,22 @@ export const Route = createFileRoute("/api/public/player")({
           // announcements only reach apps that were already open when it was sent.
           const a = await currentAnnouncement(supabaseAdmin);
           const visible = a && announcementReachesDevice(a, device, Date.now());
-          return json({ announcement: visible ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
+          // "Watch on my box" from the website: hand over the newest fresh request once, then mark it collected.
+          let watch: { kind: string; id: string | null; title: string } | null = null;
+          if (device.user_id) {
+            const since = new Date(Date.now() - WATCH_REQUEST_TTL_MS).toISOString();
+            const { data: req } = await supabaseAdmin.from("player_watch_requests").select("id, kind, item_id, title")
+              .eq("device_id", device.id).is("delivered_at", null).gte("created_at", since)
+              .order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (req) {
+              const { data: claimed } = await supabaseAdmin.from("player_watch_requests").update({ delivered_at: new Date().toISOString() })
+                .eq("device_id", device.id).is("delivered_at", null).select("id");
+              if (claimed?.some((c) => c.id === req.id)) watch = { kind: req.kind, id: req.item_id, title: req.title };
+            }
+          }
+          await supabaseAdmin.from("player_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id)
+            .lt("last_seen_at", new Date(Date.now() - 60_000).toISOString());
+          return json({ watch, announcement: visible ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
         }
 
         if (body.action === "major_announcements") {
