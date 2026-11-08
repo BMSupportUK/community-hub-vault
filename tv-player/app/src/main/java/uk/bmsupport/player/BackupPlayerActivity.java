@@ -212,6 +212,7 @@ public final class BackupPlayerActivity extends Activity {
     private void selectTracks(androidx.media3.common.TrackSelectionParameters p) {
         if (mp == null) return;
         if (p.disabledTrackTypes.contains(androidx.media3.common.C.TRACK_TYPE_TEXT)) mp.setSpuTrack(-1);
+        if (p.disabledTrackTypes.contains(androidx.media3.common.C.TRACK_TYPE_AUDIO)) mp.setAudioTrack(-1);
         for (androidx.media3.common.TrackSelectionOverride override : p.overrides.values()) {
             if (override.trackIndices.isEmpty()) continue;
             String id = override.mediaTrackGroup.getFormat(override.trackIndices.get(0)).id;
@@ -286,7 +287,12 @@ public final class BackupPlayerActivity extends Activity {
                 case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER:
                 case KeyEvent.KEYCODE_DPAD_LEFT: case KeyEvent.KEYCODE_DPAD_RIGHT:
                 case KeyEvent.KEYCODE_DPAD_UP: case KeyEvent.KEYCODE_DPAD_DOWN:
-                    if (controller != null && !controller.isVisible()) { showControls(); controller.findViewById(androidx.media3.ui.R.id.exo_play_pause).requestFocus(); return true; }
+                    if (controller != null && !controller.isVisible()) {
+                        showControls();
+                        android.view.View play = controller.findViewById(androidx.media3.ui.R.id.exo_play_pause);
+                        if (play != null) play.requestFocus(); else controller.requestFocus();
+                        return true;
+                    }
                     break;
                 default: break;
             }
