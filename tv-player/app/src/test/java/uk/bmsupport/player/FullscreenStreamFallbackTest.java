@@ -43,10 +43,10 @@ public class FullscreenStreamFallbackTest {
         assertEquals(intent.getStringExtra("url"), intent.getStringArrayExtra("urls")[0]);
     }
 
-    @Test public void learnedHlsRemainsFirst() throws Exception {
+    @Test public void oldLearnedFormatIsIgnored() throws Exception {
         Intent intent = launch("auto", "m3u8", "");
         assertEquals(3, intent.getStringArrayExtra("urls").length);
-        assertTrue(intent.getStringArrayExtra("urls")[0].endsWith(".m3u8"));
+        assertTrue(intent.getStringArrayExtra("urls")[0].endsWith(".ts"));
     }
 
     @Test public void forcedTsDoesNotOverrideTheChosenFormat() throws Exception {
