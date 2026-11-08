@@ -6,6 +6,7 @@ import { Popcorn, Star, Calendar, Tv, RefreshCw } from 'lucide-react';
 import { getWatchPlaylist, getWatchDescription } from '@/lib/watch-playlist.functions';
 import type { WatchTitle } from '@/lib/watch-playlist';
 import { getNewSeries } from '@/lib/new-series.functions';
+import { MONTH_NAMES } from '@/lib/new-series';
 import type { NewSeries } from '@/lib/new-series';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -59,15 +60,35 @@ function WhatToWatchPage() {
 }
 function NewSeriesSection({ onPick }: { onPick: (item: NewSeries) => void }) {
   const fetchSeries = useServerFn(getNewSeries);
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({ queryKey: ['new-series-current-year'], queryFn: () => fetchSeries(), staleTime: 6 * 60 * 60_000 });
+  const [year, setYear] = useState<number | null>(null);
+  const [month, setMonth] = useState<number | null>(null);
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({ queryKey: ['new-series', year ?? 'current'], queryFn: () => fetchSeries({ data: year ? { year } : {} }), staleTime: 6 * 60 * 60_000 });
+  const pill = (active: boolean) => `h-8 rounded-full px-3 text-sm ${active ? 'bg-primary text-primary-foreground shadow-soft' : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'}`;
+  const pick = (item: WatchTitle) => { if ('premiereDate' in item) onPick(item as NewSeries); };
+  const chosen = month ? data?.months[month - 1] : null;
   return <div className="space-y-6">
     <header className="space-y-1"><h2 className="font-display text-2xl font-bold">New series{data ? ` · ${data.year}` : ''}</h2><p className="text-sm text-muted-foreground">First-season premieres · Rated 7+ / 10 on TMDB · Playlist availability may vary</p></header>
+    {data && <div className="space-y-2">
+      <nav aria-label="New series year" className="flex flex-wrap items-center gap-1 rounded-lg border border-border/70 bg-card/85 p-2 backdrop-blur-md">
+        <span className="flex items-center gap-2 pr-1 text-sm font-medium"><Calendar className="size-4 text-accent" />Year</span>
+        {data.years.map(y => <Button variant="ghost" key={y} className={pill(y === data.year)} aria-pressed={y === data.year} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}
+      </nav>
+      <nav aria-label="New series month" className="flex flex-wrap items-center gap-1 rounded-lg border border-border/70 bg-card/85 p-2 backdrop-blur-md">
+        <span className="flex items-center gap-2 pr-1 text-sm font-medium"><Calendar className="size-4 text-accent" />Month</span>
+        <Button variant="ghost" className={pill(month === null)} aria-pressed={month === null} onClick={() => setMonth(null)}>All months</Button>
+        {MONTH_NAMES.map((name, index) => { const value = index + 1; return <Button variant="ghost" key={name} className={pill(month === value)} aria-pressed={month === value} disabled={data.year === data.currentYear && value > data.currentMonth} onClick={() => setMonth(value)}>{name}</Button>; })}
+      </nav>
+    </div>}
     {isLoading && <div aria-label="Loading new series" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">{Array.from({length:10}, (_,i) => <Skeleton key={i} className="aspect-[2/3] rounded-lg" />)}</div>}
     {(isError || data?.error) && <div role="alert" className="space-y-3"><p className="text-sm">{data?.error || 'Could not load new series.'}</p><Button variant="outline" disabled={isFetching} onClick={() => refetch()}><RefreshCw className="size-4" />Try again</Button></div>}
-    {data?.months.map(group => <section key={group.month} aria-label={`${group.name} ${data.year}`} className="space-y-4 border-t border-border pt-5">
+    {data && !data.error && month === null && data.months.map(group => <section key={group.month} aria-label={`${group.name} ${data.year}`} className="space-y-4 border-t border-border pt-5">
       <h3 className="font-display text-xl font-semibold">{group.name} <span className="text-muted-foreground text-sm font-normal">{data.year}{group.items.length ? ` · ${group.items.length} series` : ''}</span></h3>
-      {group.items.length ? <Grid items={group.items} onPick={item => { if ('premiereDate' in item) onPick(item as NewSeries); }} /> : <p className="text-sm text-muted-foreground">No rated new-series picks yet.</p>}
+      {group.items.length ? <Grid items={group.items} onPick={pick} /> : <p className="text-sm text-muted-foreground">No rated new-series picks yet.</p>}
     </section>)}
+    {data && !data.error && month !== null && <section aria-label={`${MONTH_NAMES[month - 1]} ${data.year}`} className="space-y-4 border-t border-border pt-5">
+      <h3 className="font-display text-xl font-semibold">{MONTH_NAMES[month - 1]} <span className="text-muted-foreground text-sm font-normal">{data.year}{chosen?.items.length ? ` · ${chosen.items.length} series` : ''}</span></h3>
+      {chosen?.items.length ? <Grid items={chosen.items} onPick={pick} /> : <p className="text-sm text-muted-foreground">No rated new-series picks yet.</p>}
+    </section>}
     <p className="text-xs text-muted-foreground">Ratings and premiere dates: TMDB. This section is not endorsed or certified by TMDB.</p>
   </div>;
 }
