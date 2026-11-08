@@ -2,6 +2,7 @@ import { EPG_SOURCE, stripQualityTail, XmltvReader, buildIndex, matchChannel, fe
 import type { TablesInsert } from "@/integrations/supabase/types";
 import { categoryFeeds } from './epg-demand';
 import type { Json } from '@/integrations/supabase/types';
+import { countryEpgEnabled } from './provider-epg-policy';
 
 /** Each feed is refreshed this often; one feed per scheduled run keeps every run small. */
 export const FEED_REFRESH_MS = 6 * 3600_000;
@@ -27,6 +28,7 @@ async function playlistTargets() {
 
 /** Legacy scheduled caller must never download countries without demand. */
 export async function importNextFeed(nowMs = Date.now()) {
+  if (!countryEpgEnabled()) return { skipped: 'Country EPG retired', at: nowMs };
   const db = await admin();
   const { error } = await db.rpc('dispatch_epg_demand');
   if (error) throw new Error(error.message);
@@ -34,6 +36,7 @@ export async function importNextFeed(nowMs = Date.now()) {
 }
 
 export async function requestCategoryGuide(category: string) {
+  if (!countryEpgEnabled()) return { queued: 0 };
   const codes = categoryFeeds(category);
   if (!codes.length) return { queued: 0 };
   const db = await admin();
@@ -43,6 +46,7 @@ export async function requestCategoryGuide(category: string) {
 }
 
 export async function importFeed(code: string, targets?: Awaited<ReturnType<typeof playlistTargets>>, nowMs = Date.now(), wake?: string) {
+  if (!countryEpgEnabled()) return { skipped: 'Country EPG retired' };
   const db = await admin();
   const { data: run, error: claimError } = await db.rpc('claim_epg_feed', { p_code: code, ...(wake ? { p_wake: wake } : {}) });
   if (claimError) throw new Error(claimError.message);
