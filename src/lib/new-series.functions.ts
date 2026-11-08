@@ -1,6 +1,8 @@
 import { createServerFn } from '@tanstack/react-start';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
-import { groupNewSeries, newSeriesCutoff, newSeriesMonthCount, newSeriesYears, type DiscoverySeries, type SeriesMonth } from './new-series';
+import { groupPlaylistNewSeries, newSeriesCutoff, newSeriesYears, type SeriesMonth } from './new-series';
+import type { WatchRow } from './watch-playlist';
+let cache: { at: number; rows: WatchRow[]; adult: Set<string> } | null = null;
 export const getNewSeries = createServerFn({ method: 'GET' })
   .inputValidator((data: { year?: number }) => ({ year: Number.isInteger(data?.year) ? data.year : undefined }))
   .middleware([requireSupabaseAuth])
@@ -10,21 +12,14 @@ export const getNewSeries = createServerFn({ method: 'GET' })
     const years = newSeriesYears(currentYear);
     const currentMonth = Number(today.slice(5, 7));
     const year = data?.year && years.includes(data.year) ? data.year : currentYear;
-    const cutoff = newSeriesCutoff(year, today);
-    const key = process.env.TMDB_API_KEY;
     try {
-      if (!key) throw new Error('Series discovery is not configured');
-      const responses = await Promise.all(Array.from({ length: newSeriesMonthCount(year, today) }, async (_, index) => {
-        const month = String(index + 1).padStart(2, '0');
-        const last = new Date(Date.UTC(year, index + 1, 0)).toISOString().slice(0, 10);
-        const url = new URL('https://api.themoviedb.org/3/discover/tv');
-        url.search = new URLSearchParams({ language: 'en-GB', with_original_language: 'en', sort_by: 'vote_average.desc', 'first_air_date.gte': `${year}-${month}-01`, 'first_air_date.lte': last < cutoff ? last : cutoff, 'vote_average.gte': '7', 'vote_count.gte': '20', without_genres: '99,10763,10764,10766,10767', include_adult: 'false', page: '1' }).toString();
-        if (!key.startsWith('ey')) url.searchParams.set('api_key', key);
-        const options: RequestInit & { cf: { cacheTtl: number; cacheEverything: boolean } } = { headers: key.startsWith('ey') ? { Authorization: `Bearer ${key}` } : {}, signal: AbortSignal.timeout(15000), cf: { cacheTtl: 21600, cacheEverything: true } };
-        const response = await fetch(url, options);
-        if (!response.ok) throw new Error(`Series discovery failed (${response.status})`);
-        return (await response.json() as { results?: DiscoverySeries[] }).results ?? [];
-      }));
-      return { year, years, currentYear, currentMonth, months: groupNewSeries(responses.flat(), cutoff), error: null as string | null };
-    } catch { return { year, years, currentYear, currentMonth, months: [] as SeriesMonth[], error: 'New series recommendations are unavailable. Please try again shortly.' }; }
+      if (!cache || Date.now() - cache.at > 60 * 60_000) {
+        const { playlistWatchRead } = await import('./playlist-source.server');
+        const [categories, rows] = await Promise.all([playlistWatchRead('get_series_categories'), playlistWatchRead('get_series')]);
+        if (!Array.isArray(rows)) throw new Error('Playlist unavailable');
+        const adult = new Set((Array.isArray(categories) ? categories as WatchRow[] : []).filter(c => /adult|xxx|18\+/i.test(String(c.category_name ?? ''))).map(c => String(c.category_id)));
+        cache = { at: Date.now(), rows: rows as WatchRow[], adult };
+      }
+      return { year, years, currentYear, currentMonth, months: groupPlaylistNewSeries(cache.rows, newSeriesCutoff(year, today), cache.adult), error: null as string | null };
+    } catch { return { year, years, currentYear, currentMonth, months: [] as SeriesMonth[], error: 'The playlist is unavailable. Please try again shortly.' }; }
   });
