@@ -105,7 +105,9 @@ async function refreshInner(){
  send({type:'progress',message:'Playlists updated',percent:100});send({type:'catalogues'});return true;
 }
 async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||String(channel.id).length>80)throw new Error('Catch up isn\'t available on this channel.');const r=await provider('get_simple_data_table',{stream_id:String(channel.id)});return core.catchupProgrammes(r.epg_listings,Math.min(30,Number(channel.archive)));}
-async function epg(id){const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return core.programmes(r.epg_listings);}
+// Real published TV guide (or Sports Guide events for Sports Pass feeds) from BM Support first; provider guide otherwise.
+async function siteGuide(id){const live=cache.has('live')?await cache.get('live'):null;const ch=live&&(live.items||[]).find(c=>String(c.id)===String(id));if(!ch||!store.token)return null;try{const r=await site({action:'guide',channel:ch.name});return Array.isArray(r.epg_listings)&&r.epg_listings.length?core.programmes(r.epg_listings).filter(p=>p.end>Date.now()):null;}catch{return null;}}
+async function epg(id){const real=await siteGuide(id);if(real&&real.length)return real;const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return core.programmes(r.epg_listings);}
 function persistProgress(session){
  if(!['film','episode'].includes(session.item.kind)||!(session.duration>0))return;
  store.progress=store.progress||{};const k=key(session.item);store.progress[k]={position:session.position||0,duration:session.duration,at:Date.now()};
