@@ -33,6 +33,10 @@ class BackupSwitch {
   volume(i, v) { this.eng(i)?.volume(i, v); }
   subtitleTracks(i) { return this.eng(i)?.subtitleTracks?.(i) || 0; }
   setSubtitles(i, on) { this.eng(i)?.setSubtitles?.(i, on); }
+  tracks(i) { return this.eng(i)?.tracks?.(i) || {audio:[],subtitles:[]}; }
+  setAudioTrack(i,id) { this.eng(i)?.setAudioTrack?.(i,id); }
+  setSubtitleTrack(i,id) { this.eng(i)?.setSubtitleTrack?.(i,id); }
+  speed(i,rate) { this.eng(i)?.speed?.(i,rate); }
   report(v) { this.b?.report?.(v); if (this.p && this.p !== this.b) this.p.report?.(v); }
   layout(rows) { this.p?.layout?.(rows); }
   stop(i) {
