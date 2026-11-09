@@ -1,4 +1,4 @@
-import { CustomerNumberBadge } from "@/components/app/CustomerNumber";
+import { CustomerNumberBadge, LoginNumberList } from "@/components/app/CustomerNumber";
 import { ClientOnly, Link, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -426,6 +426,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
         <h3 className="font-display text-lg font-semibold">{group.label} <span className="text-sm text-muted-foreground">{groupRows.length}</span></h3>
         {!groupRows.length ? <p className="text-sm text-muted-foreground">No staff found.</p> : <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{groupRows.map((row) => <article key={row.id} className="min-w-0 space-y-3 rounded-lg border border-border bg-card/70 p-4">
           <header className="flex min-w-0 flex-col gap-2"><div className="flex min-w-0 flex-wrap items-center gap-2"><h4 className="break-words font-semibold">{row.username || (row.display_name?.includes('@') ? null : row.display_name) || 'Staff'}</h4><CustomerNumberBadge userId={row.id} /></div>{/* All card actions sit on one line; the row scrolls sideways instead of wrapping. */}<div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{hasAny(["admin"]) && user && <MemberCredentialsSection ownerId={row.id} ownerLabel={row.username || row.display_name || 'Staff'} currentUserId={user.id} />}{memberHeader(row.id)}</div></header>
+          <LoginNumberList ownerId={row.id} />
           {hasAny(["admin"]) && <Button variant="outline" size="sm" aria-label={`Edit staff details for ${row.username || "Staff"}`} onClick={() => { setEditingUsernameFor(null); setEditingEmailFor(null); setStaffEditingId(row.id); }}><Pencil className="size-4" />Edit details</Button>}
           {memberRoles(row.id)}{memberExtras(row.id)}{memberDetails(row.id)}
         </article>)}</div>}
