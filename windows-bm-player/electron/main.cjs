@@ -252,7 +252,7 @@ async function syncFavourites(){if(!store.user||!store.token||!gate.unlocked)ret
  if(!r.stored){if((store.favourites||[]).length)pushFavourites();store.favSynced=true;save();return;}
  if(!store.favSynced){const seen=new Set(r.items.map(i=>i.kind+'|'+i.id));const extra=(store.favourites||[]).filter(i=>!seen.has(i.kind+'|'+String(i.id)));store.favourites=[...r.items,...extra];store.favSynced=true;save();if(extra.length)pushFavourites();send({type:'state',state:publicState()});return;}
  if(JSON.stringify(r.items)!==JSON.stringify(store.favourites||[])){store.favourites=r.items;save();send({type:'state',state:publicState()});}}
-function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement','majorSeen'].includes(name)){gate.require();if(name!=='pinCheck'&&name!=='pinCreate'&&!pinPassed)throw new Error('Enter your PIN first.');}if(!promptedAt)lastInput=Date.now();return fn(value);});}
+function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement','majorSeen'].includes(name)){gate.require();if(name!=='pinCheck'&&name!=='pinCreate'&&name!=='usePinInstead'&&!pinPassed)throw new Error('Enter your PIN first.');}if(!promptedAt)lastInput=Date.now();return fn(value);});}
 if(!app.requestSingleInstanceLock())app.quit();
 else{
  app.on('second-instance',foreground);
