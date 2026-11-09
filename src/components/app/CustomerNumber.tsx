@@ -60,6 +60,19 @@ export function useLoginPlayerNumbers(ownerId: string | null | undefined) {
   return rows;
 }
 
+/** Every app login on an account with its BM Player number (used on staff cards). */
+export function LoginNumberList({ ownerId }: { ownerId: string }) {
+  const rows = useLoginPlayerNumbers(ownerId);
+  if (!rows.length) return null;
+  return <ul className="space-y-1.5" aria-label="App logins">{rows.map((r, i) => (
+    <li key={r.credential_id} className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
+      <span className="rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {i + 1}</span>
+      <span className="min-w-0 break-all">{r.login || "Login"}</span>
+      {r.number && <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary"><Hash className="size-3" aria-hidden="true" />{r.number}</span>}
+    </li>
+  ))}</ul>;
+}
+
 export function LoginNumberBadge({ ownerId, accountId, login }: { ownerId: string; accountId?: string; login?: string | null }) {
   const rows = useLoginPlayerNumbers(ownerId);
   const key = login?.trim().toLowerCase();
