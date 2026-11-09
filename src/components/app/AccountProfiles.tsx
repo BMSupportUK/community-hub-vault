@@ -34,24 +34,16 @@ export function useAccountProfiles() {
     if (!userId) { setProfiles([]); setLoaded(true); return; }
     let active = true;
     const load = async () => {
-      const [{ data: creds }, { data: nums }] = await Promise.all([
-        supabase
-          .from("app_credentials")
-          .select("id, account_number, account_type, app_login_name, expiry_at")
-          .eq("owner_id", userId)
-          .order("account_number", { ascending: true }),
-        supabase.rpc("login_player_numbers", { _owner: userId }),
-      ]);
+      const { data: rows } = await supabase.rpc("my_account_profiles");
       if (!active) return;
-      const numRows = (nums ?? []) as { credential_id: string; number: number | null }[];
       setProfiles(
-        ((creds ?? []) as { id: string; account_number: number; account_type: string | null; app_login_name: string | null; expiry_at: string | null }[]).map((c) => ({
+        ((rows ?? []) as { id: string; account_number: number; account_type: string | null; app_login_name: string | null; expiry_at: string | null; player_number: number | null }[]).map((c) => ({
           id: c.id,
           login: c.app_login_name,
           accountNumber: c.account_number,
           accountType: c.account_type,
           expiryAt: c.expiry_at,
-          playerNumber: numRows.find((r) => r.credential_id === c.id)?.number ?? null,
+          playerNumber: c.player_number,
         })),
       );
       setLoaded(true);
@@ -136,6 +128,7 @@ export function ProfileChooser() {
       else await switchProfile({ data: { profileId: p.id } });
       queryClient.clear();
       select(p.id);
+      window.dispatchEvent(new Event("bm-profile-data-changed"));
       await refreshRoles();
       setPassword(""); setMfaCode(""); setPasswordProfile(null);
       void navigate({ to: p.accountNumber === 1 && profileAccess?.canUseStaff ? "/staff-portal" : "/portal", replace: true });

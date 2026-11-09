@@ -38,7 +38,8 @@ export function SubscriptionExpiry() {
         () => load(),
       )
       .subscribe();
-    return () => { active = false; supabase.removeChannel(channel); };
+    window.addEventListener("bm-profile-data-changed", load);
+    return () => { active = false; supabase.removeChannel(channel); window.removeEventListener("bm-profile-data-changed", load); };
   }, [user]);
 
   const items = creds.filter((c) => c.expiry_at);

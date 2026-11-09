@@ -6065,6 +6065,7 @@ export type Database = {
           app_version: string | null
           connected_since: string | null
           created_at: string
+          credential_id: string | null
           geo_city: string | null
           geo_country: string | null
           geo_lat: number | null
@@ -6096,6 +6097,7 @@ export type Database = {
           app_version?: string | null
           connected_since?: string | null
           created_at?: string
+          credential_id?: string | null
           geo_city?: string | null
           geo_country?: string | null
           geo_lat?: number | null
@@ -6127,6 +6129,7 @@ export type Database = {
           app_version?: string | null
           connected_since?: string | null
           created_at?: string
+          credential_id?: string | null
           geo_city?: string | null
           geo_country?: string | null
           geo_lat?: number | null
@@ -9170,6 +9173,7 @@ export type Database = {
           completed_at: string | null
           completed_by: string | null
           created_at: string | null
+          credential_id: string | null
           customer_type: string | null
           discount_cents: number | null
           discount_code: string | null
@@ -9193,6 +9197,7 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string | null
+          credential_id?: string | null
           customer_type?: string | null
           discount_cents?: number | null
           discount_code?: string | null
@@ -9216,6 +9221,7 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string | null
+          credential_id?: string | null
           customer_type?: string | null
           discount_cents?: number | null
           discount_code?: string | null
@@ -9288,6 +9294,7 @@ export type Database = {
         Args: { _id: string; _scope: string }
         Returns: Json
       }
+      active_profile_credential: { Args: never; Returns: string }
       ad_event_stats: {
         Args: { _days?: number }
         Returns: {
@@ -10293,11 +10300,26 @@ export type Database = {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
         Returns: string
       }
+      my_account_profiles: {
+        Args: never
+        Returns: {
+          account_number: number
+          account_type: string
+          app_login_name: string
+          expiry_at: string
+          id: string
+          player_number: number
+        }[]
+      }
       my_profile_access: { Args: never; Returns: Json }
       next_free_customer_number: { Args: never; Returns: number }
       order_subscription_months: {
         Args: { p_order_id: string }
         Returns: number
+      }
+      owner_login_credential: {
+        Args: { _login: string; _owner: string }
+        Returns: string
       }
       package_item_months: { Args: { p_name: string }; Returns: number }
       player_buffer_diagnostics: {
