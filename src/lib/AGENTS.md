@@ -49,3 +49,4 @@
 - Category-linked guide channels never resolve to replay feeds unless the guide names a replay, so numbered event feeds (e.g. NFL Sunday Ticket) keep their live channel.
 - Account-number send: owner-checked remote_unlock_at; unlock screens poll `unlock_status` (one use, 2 min, counts as check-in).
 - BM Player login approval: unlock-screen `unlock_status` polls raise a 5-min owner request (bell + push); website pop-up approves via `decide_player_login` (no profile switch), which sets remote_unlock_at; number entry stays as backup.
+- Non-website BM Player logins: unlock_status raises a request with a hashed one-time 10-min token emailed to the offsite customer (/player-approve/$token via /api/public/player-approve); admin/management can approve in BM Player › logins via staff_decide_player_login.

@@ -278,6 +278,25 @@ export const Route = createFileRoute("/api/public/player")({
                 await supabaseAdmin.from("user_notifications").insert({ user_id: device.user_id, kind: "mention", title, body: msg, link_path: "/home", source_type: "player_login" } as any);
                 try { const { pushToUser } = await import("@/lib/fcm.server"); await pushToUser(device.user_id, { title, body: msg, data: { link: "/home" } }); } catch (e) { console.error("[player login push]", e); }
               }
+            } else if (device.offsite_customer_id) {
+              // No website account: email a one-time approval link; staff can also approve from the dashboard.
+              const since = new Date(Date.now() - 10 * 60_000).toISOString();
+              const { data: open } = await supabaseAdmin.from("player_login_approvals" as any).select("id").eq("device_id", device.id).gt("created_at", since).limit(1);
+              if (!open?.length) {
+                const raw = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+                const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw)))).map((b) => b.toString(16).padStart(2, "0")).join("");
+                await supabaseAdmin.from("player_login_approvals" as any).insert({ device_id: device.id, offsite_customer_id: device.offsite_customer_id, token_hash: hash });
+                const { data: oc } = await supabaseAdmin.from("player_offsite_customers").select("customer_name, email").eq("id", device.offsite_customer_id as string).maybeSingle();
+                if (oc?.email) {
+                  try {
+                    const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+                    await sendAndLogEmail(supabaseAdmin, "player-login-approval", oc.email, {
+                      templateData: { name: oc.customer_name, device: device.platform ?? "BM Player", approveUrl: `https://bmsupport.uk/player-approve/${raw}` },
+                      idempotencyKey: `player-login-${hash.slice(0, 24)}`,
+                    });
+                  } catch (e) { console.error("[player login email]", e); }
+                }
+              }
             }
             return json({ unlocked: false });
           }
