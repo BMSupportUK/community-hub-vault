@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
-const Body = z.object({ token: z.string().regex(/^[a-f0-9]{64}$/), approve: z.boolean().optional(), check: z.boolean().optional(), account_number: z.string().regex(/^\d{6}$/).optional() });
+const Body = z.object({ token: z.string().regex(/^[a-f0-9]{64}$/), approve: z.boolean().optional(), check: z.boolean().optional(), account_number: z.string().regex(/^\d{4,10}$/).optional() });
 
 async function sha256(s: string) {
   return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))).map((b) => b.toString(16).padStart(2, "0")).join("");
