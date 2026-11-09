@@ -723,6 +723,14 @@ public class MainActivity extends Activity {
         });
         left.addView(go);
         left.addView(status);
+        // Customers without a website account get a QR: scan it and type the account number to approve.
+        android.widget.ImageView qrView = new android.widget.ImageView(this);
+        qrView.setVisibility(View.GONE);
+        TextView qrText = text("No website account? Scan this with your phone and enter your account number.", 15, MUTED, false);
+        qrText.setVisibility(View.GONE);
+        left.addView(qrText);
+        left.addView(qrView, new LinearLayout.LayoutParams(dp(170), dp(170)));
+        unlockQr = qrView; unlockQrText = qrText; unlockQrUrl = "";
         LinearLayout pad = NumberPad.build(this, in, 6, CARD, ACCENT, TEXT, go::performClick);
         cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
         LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
@@ -738,19 +746,26 @@ public class MainActivity extends Activity {
         pollRemoteUnlock(go, status);
     }
 
+    private android.widget.ImageView unlockQr; private TextView unlockQrText; private String unlockQrUrl = "";
+
     /** The customer can press their account number on bmsupport.uk to unlock this screen. */
     private void pollRemoteUnlock(Button go, TextView status) {
         ui.postDelayed(() -> {
             if (!"unlock".equals(screen) || unlocked || isFinishing()) return;
             io.execute(() -> {
-                boolean ok = false;
+                boolean ok = false; String qrUrl = "";
                 try {
-                    ok = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "unlock_status")
-                            .put("device_token", prefs.getString("token", "")).toString())).optBoolean("unlocked", false);
+                    JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "unlock_status")
+                            .put("device_token", prefs.getString("token", "")).toString()));
+                    ok = r.optBoolean("unlocked", false); qrUrl = r.optString("qr_url", "");
                 } catch (Exception ignored) {}
-                final boolean done = ok;
+                final boolean done = ok; final String url = qrUrl;
                 ui.post(() -> {
                     if (!"unlock".equals(screen) || unlocked) return;
+                    if (unlockQr != null && url.startsWith("https://bmsupport.uk/") && !url.equals(unlockQrUrl)) {
+                        unlockQrUrl = url; unlockQr.setImageBitmap(qr(url, dp(170)));
+                        unlockQr.setVisibility(View.VISIBLE); unlockQrText.setVisibility(View.VISIBLE);
+                    }
                     if (done) { unlocked = true; ((PlayerApplication) getApplication()).refreshMajor(); showHome(); syncFavourites(null); ProgressSync.pull(this, true, () -> { if ("home".equals(screen)) showHome(); }); }
                     else pollRemoteUnlock(go, status);
                 });
