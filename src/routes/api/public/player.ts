@@ -263,7 +263,8 @@ export const Route = createFileRoute("/api/public/player")({
 
         if (body.action === "unlock_status") {
           // Set from the website subscription box; one use, valid for 2 minutes.
-          const { data: r } = await supabaseAdmin.from("player_devices").select("remote_unlock_at").eq("id", device.id).single();
+          // Polling the unlock screen counts as a check-in, so the website shows the box as On.
+          const { data: r } = await supabaseAdmin.from("player_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id).select("remote_unlock_at").single();
           const at = r?.remote_unlock_at ? Date.parse(r.remote_unlock_at) : 0;
           if (!at) return json({ unlocked: false });
           await supabaseAdmin.from("player_devices").update({ remote_unlock_at: null, unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
