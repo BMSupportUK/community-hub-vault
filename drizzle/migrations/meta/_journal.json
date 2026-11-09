@@ -2178,6 +2178,13 @@
       "when": 1794219462203,
       "tag": "0310_profile_role_bypass_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 311,
+      "version": "7",
+      "when": 1794220780024,
+      "tag": "0311_show_hidden_users_extra_profiles",
+      "breakpoints": true
     }
   ]
 }
