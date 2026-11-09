@@ -1,0 +1,1 @@
+ALTER TABLE public.player_devices ADD COLUMN IF NOT EXISTS remote_unlock_at timestamptz;

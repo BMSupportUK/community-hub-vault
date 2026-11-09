@@ -6079,6 +6079,7 @@ export type Database = {
           name: string
           offsite_customer_id: string | null
           platform: string
+          remote_unlock_at: string | null
           token_hash: string
           unlock_failures: number
           unlock_locked_until: string | null
@@ -6111,6 +6112,7 @@ export type Database = {
           name?: string
           offsite_customer_id?: string | null
           platform?: string
+          remote_unlock_at?: string | null
           token_hash: string
           unlock_failures?: number
           unlock_locked_until?: string | null
@@ -6143,6 +6145,7 @@ export type Database = {
           name?: string
           offsite_customer_id?: string | null
           platform?: string
+          remote_unlock_at?: string | null
           token_hash?: string
           unlock_failures?: number
           unlock_locked_until?: string | null
