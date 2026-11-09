@@ -76,6 +76,7 @@ interface MiniProfile {
 
 export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
   const { user, roles, signOut, hasAny, isFanZoneOnly } = useAuth();
+  const profilePortal = useProfilePortal();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [fanProfile, setFanProfile] = useState<{ fan_alias: string | null; fan_avatar_url: string | null } | null>(null);
@@ -200,7 +201,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
   // A customer profile on a staff account shows the ordinary customer picture.
-  const supportAvatar = !profilePortal.loading && !profilePortal.staff && isStaffPortalUser(roles)
+  const supportAvatar = !profilePortal.loading && !profilePortal.staff && (isStaffPortalUser(roles) || !!roleFlashMap.get(user.id))
     ? DEFAULT_AVATAR_URL
     : resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
   // Inside the Fan Zone: staff keep their badge picture, everyone else falls
