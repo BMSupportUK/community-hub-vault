@@ -20,7 +20,7 @@ public final class PlayerApplication extends Application implements Application.
     private final List<Activity> activities = new ArrayList<>();
     private Activity foreground;
     private AlertDialog prompt;
-    private long lastInput = SystemClock.elapsedRealtime(), promptedAt;
+    private long lastInput = SystemClock.elapsedRealtime(), promptedAt = -1;
     private boolean exiting;
     // Admin announcement shown along the bottom of whichever screen is open, refreshed every 15s.
     private final java.util.concurrent.ExecutorService annIo = java.util.concurrent.Executors.newSingleThreadExecutor();
@@ -61,18 +61,19 @@ public final class PlayerApplication extends Application implements Application.
     }
     private void tick() {
         long now = SystemClock.elapsedRealtime();
+        // The deadline belongs to the app, not a dialog/activity that Fire OS can destroy.
+        if (promptedAt >= 0 && InactivityPolicy.exit(promptedAt, now)) { exitToHome(); return; }
         if (prompt != null) {
-            if (InactivityPolicy.exit(promptedAt, now)) { exitToHome(); return; }
             prompt.setMessage("No activity for 3 hours. Continue viewing?\n\nThe app will close in "
                     + Math.max(0, (InactivityPolicy.RESPONSE_MS - (now - promptedAt) + 999) / 1000) + " seconds.");
             return;
         }
         Activity a = foreground;
         if (a == null || a.isFinishing() || !InactivityPolicy.prompt(lastInput, now)) return;
-        promptedAt = now;
+        if (promptedAt < 0) promptedAt = now;
         prompt = new AlertDialog.Builder(a).setTitle("Still watching?")
                 .setMessage("Continue viewing?")
-                .setPositiveButton("Continue viewing", (d, w) -> { prompt = null; lastInput = SystemClock.elapsedRealtime(); })
+                .setPositiveButton("Continue viewing", (d, w) -> { prompt = null; promptedAt = -1; lastInput = SystemClock.elapsedRealtime(); })
                 .setNegativeButton("Close app", (d, w) -> exitToHome())
                 .setCancelable(false).create();
         prompt.setOnShowListener(d -> { if (prompt != null) prompt.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus(); });
@@ -297,6 +298,8 @@ public final class PlayerApplication extends Application implements Application.
     }
     private void exitToHome() {
         exiting = true;
+        pinPassed = false;
+        promptedAt = -1;
         if (prompt != null) { prompt.dismiss(); prompt = null; }
         for (Activity activity : new ArrayList<>(activities)) activity.finishAndRemoveTask();
         getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putLong("np_since", 0).apply();
@@ -317,13 +320,12 @@ public final class PlayerApplication extends Application implements Application.
     private static int startedCount;
     /** True while any BM Player screen is on the display (not just alive in the background). */
     static boolean onScreen() { return startedCount > 0; }
-    private static long leftAt;
-    /** Away longer than this (Home pressed, app switched) means the PIN is asked again; short trips (voice search) don't. */
-    static final long PIN_AWAY_MS = 30_000;
+    // Defer one UI turn so moving between our own activities never counts as leaving the app.
+    private final Runnable lockBackground = () -> { if (startedCount == 0) pinPassed = false; };
     @Override public void onActivityStarted(Activity a) {
-        if (startedCount == 0 && leftAt > 0 && SystemClock.elapsedRealtime() - leftAt > PIN_AWAY_MS) pinPassed = false;
+        ui.removeCallbacks(lockBackground);
         startedCount++;
     }
-    @Override public void onActivityStopped(Activity a) { if (startedCount > 0 && --startedCount == 0) leftAt = SystemClock.elapsedRealtime(); }
+    @Override public void onActivityStopped(Activity a) { if (startedCount > 0 && --startedCount == 0) ui.post(lockBackground); }
     @Override public void onActivitySaveInstanceState(Activity a, Bundle b) {}
 }
