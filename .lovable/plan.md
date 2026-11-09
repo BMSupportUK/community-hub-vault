@@ -13,6 +13,11 @@ One website login can hold several app logins (for example Account 1, Account 2,
 - To move a box to a different app login, they press "Change login" next to the box. Nobody needs to re-enter a code.
 - Orders, packages and expiry dates stay with each app login, as they do now.
 
+### Boxes in different houses
+- The link works over the internet, so the box doesn't need to be near the person. Someone at the other house reads the code off the TV (by phone or text), and the account holder types it in from wherever they are.
+- While linking, the account holder gives the box a name such as "Mum's house - living room". My linked devices then groups the boxes by that name and shows which app login each one uses, whether it's On or Off, and when it was last used.
+- They can rename, change the login on, or remove any box from the website without visiting the house.
+
 ## Rules
 - Codes are single-use and run out after 10 minutes. The pop-up shows a new code automatically when the old one runs out.
 - A code can only link to the account of the person who enters it. Admins can link codes for non-website customers.
