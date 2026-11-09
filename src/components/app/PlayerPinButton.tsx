@@ -67,11 +67,7 @@ export function PlayerPinButton({ className }: { className?: string }) {
             <DialogTitle>How BM Player unlocks</DialogTitle>
             <DialogDescription>An authenticator app is required: BM Player asks for its 6-digit code once a day. Your 4-digit PIN is only a backup for when you can't get to the authenticator app.</DialogDescription>
           </DialogHeader>
-          <div role="radiogroup" aria-label="Unlock with" className="grid grid-cols-2 gap-2">
-            <Button type="button" role="radio" aria-checked={method === "pin" && !setup} variant={method === "pin" && !setup ? "default" : "outline"} disabled={busy || method === "totp"} onClick={() => setSetup(null)}>Backup PIN</Button>
-            <Button type="button" role="radio" aria-checked={method === "totp" || !!setup} variant={method === "totp" || setup ? "default" : "outline"} disabled={busy || method === "totp"} onClick={() => void beginTotp()}>Authenticator</Button>
-          </div>
-          {method === "pin" && !setup && <p className="text-sm text-destructive">Set up your authenticator: tap "Authenticator" above.</p>}
+          {method === "pin" && !setup && <Button type="button" className="w-full" disabled={busy} onClick={() => void beginTotp()}>Set up authenticator app</Button>}
           {setup ? <form onSubmit={finishTotp} className="space-y-3">
             <p className="text-sm text-muted-foreground">Scan this with Google Authenticator, Microsoft Authenticator or similar, then type the 6-digit code it shows.</p>
             <div className="mx-auto w-fit rounded-md bg-card p-2 [&_svg]:size-44" dangerouslySetInnerHTML={{ __html: setup.qrSvg }} />
