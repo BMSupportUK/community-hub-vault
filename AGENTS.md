@@ -4,7 +4,7 @@
 - Authorization, screen-password unlock, account switching and order/Enabler rules live in `src/lib/AGENTS.md`.
 - Public sports guides expose only validated dates, times, event names; cards flag local times on a different UK day.
 - Advert slots cycle only BM Support's own affiliate banners in random equal-time order, tracking views and clicks per banner; Member Home and the public landing are separate zones; Fan Zone adds Forum-enabled BM banners to its own.
-- Portal homes share one layout: hero image fills the left column; sidebar shows "Hey" + nameplate + role badge, welcome text, then Working Status (staff) or subscription box (members). Staff shows the status pills in the Staff Portal header, right side; members keep the pills in their sidebar.
+- Portal homes share one layout: hero image fills the left column; sidebar shows "Hey" + nameplate + role badge, welcome text, then Working Status (staff) or subscription box (members). Both portal headers show the status pills (clock, account number, switch profile, lock, 2FA, VPN) on the right side.
 - Portal Home headers hold alerts; bottom destinations share that header. Rail/editor share scoped saved ordering helpers; status by "Hey", pages in rail, phones use floating menu.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; mobile ticket headers cap+scroll to keep messages/composers.
 - Shared portal headers must wrap the route outlet in a remaining-height flex row; nested page layouts can return sibling columns and must not inherit the header's column direction. A page that renders its own bar must pick the bar of the portal its viewer belongs to, so staff never land on the customer bar.

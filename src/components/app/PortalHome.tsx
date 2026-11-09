@@ -134,7 +134,6 @@ export function PortalHome({ staff }: { staff: boolean }) {
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4 md:h-0 md:min-h-full">
                 {/* Right column — same order for both portals: icons, Hey + nameplate, welcome, then status/subscription. Staff pills live in the portal header. */}
                 <div className="flex min-h-0 min-w-0 flex-col gap-3 rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-4 text-white shadow-2xl md:flex-1 md:overflow-y-auto compact:gap-2 compact:p-2.5">
-                  {!isStaffAccount && <GreetingPills />}
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-1">
                     <span className="text-base font-bold text-amber-200 drop-shadow">Hey</span>
                     <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg">
