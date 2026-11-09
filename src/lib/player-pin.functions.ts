@@ -93,10 +93,13 @@ export const confirmPlayerTotp = createServerFn({ method: "POST" }).middleware([
     return { ok: true as const };
   });
 
-/** Switch back to the 4-digit PIN. */
-export const disablePlayerTotp = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  await supabaseAdmin.from("player_totp").delete().eq("owner_id", context.userId);
-  await supabaseAdmin.from("player_devices").update({ totp_passed_at: null }).eq("user_id", context.userId);
-  return { ok: true as const };
-});
+/** Admin/management only: turn a customer's authenticator off (e.g. lost phone) so their boxes use the PIN until it is set up again. */
+export const disablePlayerTotp = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ userId: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    await requireAdminOrManagement(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("player_totp").delete().eq("owner_id", data.userId);
+    await supabaseAdmin.from("player_devices").update({ totp_passed_at: null }).eq("user_id", data.userId);
+    return { ok: true as const };
+  });

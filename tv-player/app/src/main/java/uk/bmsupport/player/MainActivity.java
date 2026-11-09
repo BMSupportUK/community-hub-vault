@@ -787,6 +787,7 @@ public class MainActivity extends Activity {
                 required = r.optBoolean("required", false);
                 setup = r.optBoolean("needs_setup", false);
                 pinDigits = r.optInt("digits", 4) == 6 ? 6 : 4;
+                pinFallback = r.optBoolean("pin_fallback", false);
                 prefs.edit().putBoolean("pin_required", required).apply();
             } catch (Exception e) { required = prefs.getBoolean("pin_required", false); }
             final boolean need = required, create = setup;
@@ -800,6 +801,7 @@ public class MainActivity extends Activity {
 
     /** 4 = PIN; 6 = authenticator-app code (asked once a day, server decides). */
     private int pinDigits = 4;
+    private boolean pinFallback = false;
 
     /** create=true: first open, the customer chooses a PIN (typed twice; `first` holds the first entry). */
     private void showPin(boolean create, String first) {
@@ -854,7 +856,8 @@ public class MainActivity extends Activity {
         });
         left.addView(go);
         left.addView(status);
-        if (!create) left.addView(text(totp ? "Lost your phone? Switch back to a PIN on bmsupport.uk in your subscription box." : "Forgot your PIN? Set a new one on bmsupport.uk in your subscription box.", 14, MUTED, false));
+        if (totp && pinFallback) left.addView(button("Can't use my authenticator? Use PIN instead", v -> { pinDigits = 4; showPin(false, null); }));
+        if (!create) left.addView(text(totp ? "No authenticator or backup PIN? Contact BM Support." : "Forgot your PIN? Set a new one on bmsupport.uk in your subscription box.", 14, MUTED, false));
         LinearLayout pad = NumberPad.build(this, in, nd, CARD, ACCENT, TEXT, go::performClick);
         cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
         LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);

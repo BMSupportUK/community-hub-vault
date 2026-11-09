@@ -337,12 +337,13 @@ export const Route = createFileRoute("/api/public/player")({
           const { data: totp } = device.user_id
             ? await supabaseAdmin.from("player_totp").select("secret, enabled").eq("owner_id", device.user_id).maybeSingle()
             : { data: null };
-          if (totp?.enabled && totp.secret && body.action !== "pin_create") {
+          // A 4-digit entry is the PIN fallback for customers who can't reach their authenticator app; it never counts for the daily pass.
+          if (totp?.enabled && totp.secret && body.action !== "pin_create" && !(body.action === "pin_check" && /^\d{4}$/.test(body.pin))) {
             const { totpStillValid, totpMatches } = await import("@/lib/player-totp");
             const { data: dv } = await supabaseAdmin.from("player_devices").select("totp_passed_at, pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
             if (body.action === "pin_status") {
               const ok = totpStillValid(dv?.totp_passed_at);
-              return json({ required: !ok, needs_setup: false, method: "totp", digits: 6 });
+              return json({ required: !ok, needs_setup: false, method: "totp", digits: 6, pin_fallback: !!pinRow });
             }
             const waitT = (until: string) => `Too many wrong codes. Please wait ${Math.max(1, Math.ceil((Date.parse(until) - Date.now()) / 60_000))} minutes and try again.`;
             if (dv?.pin_locked_until && Date.parse(dv.pin_locked_until) > Date.now()) return json({ error: waitT(dv.pin_locked_until) }, 429);
