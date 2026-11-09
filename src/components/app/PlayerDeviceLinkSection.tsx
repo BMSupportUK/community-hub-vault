@@ -103,8 +103,11 @@ export function PlayerDeviceLinkSection() {
 
   return <section className="min-w-0 text-foreground">
     <div className="mx-auto max-w-5xl">
-      <h2 className="font-display text-2xl font-bold">Link Device</h2>
-      <p className="mt-1 text-sm text-muted-foreground">First time on a new device? Open BM Player and enter the 6-digit code it shows. Devices already linked stay signed in and just ask for your 4-digit PIN.</p>
+      <div className="rounded-2xl border border-primary/30 bg-background/40 p-6 shadow-2xl backdrop-blur-md">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-foreground"><Tv className="size-3.5" />BM Player</span>
+        <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">Link Device</h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">First time on a new device? Open BM Player and enter the 6-digit code it shows. Devices already linked stay signed in and just ask for your daily 2FA code.</p>
+      </div>
       {accounts.length > 1 && <Tabs value={selectedId ?? ""} onValueChange={(id) => { if (ownerId) setSelection({ ownerId, id }); setCode(""); setTarget(null); setError(""); }} className="mt-5">
         <TabsList className="h-auto w-full flex-wrap justify-start gap-2">
           {accounts.map((account) => <TabsTrigger key={account.id} value={account.id} disabled={busy} className="min-w-0 whitespace-normal text-left">
@@ -114,15 +117,16 @@ export function PlayerDeviceLinkSection() {
           </TabsTrigger>)}
         </TabsList>
       </Tabs>}
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <form onSubmit={submit} className="space-y-4 rounded-lg border border-border bg-surface/90 p-5">
+      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <form onSubmit={submit} className="space-y-5 rounded-2xl border border-primary/30 bg-background/55 p-6 shadow-2xl backdrop-blur-md">
           {target ? <div className="flex items-center justify-between rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">
             <span>Sending to <strong>{target.name}</strong></span>
             <Button type="button" variant="link" size="sm" onClick={() => setTarget(null)}>Use a code instead</Button>
           </div> : <div className="space-y-1.5">
-            <Label htmlFor="player-code">Link a new device — 6-digit code from the app</Label>
+            <Label htmlFor="player-code" className="text-base font-semibold">Link a new device</Label>
+            <p className="text-xs text-muted-foreground">Type the 6-digit code shown on your TV, phone or computer.</p>
             <Input id="player-code" inputMode="numeric" autoComplete="off" maxLength={6} value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} className="font-mono text-lg tracking-[0.4em]" />
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className="h-16 border-primary/40 bg-background/60 text-center font-mono text-3xl tracking-[0.6em]" />
           </div>}
           <fieldset className="min-w-0 space-y-3" disabled={busy}>
             <legend className="mb-2 text-sm font-semibold">{typeItIn ? "Your app login" : "Your saved app logins"}</legend>
@@ -141,7 +145,7 @@ export function PlayerDeviceLinkSection() {
                     onChange={(e) => setManual((m) => ({ ...m, password: e.target.value }))} />
                 </div>
               </div>
-              : accounts.filter((account) => account.id === selectedId).map((account) => <div key={account.id} className="flex min-w-0 items-start gap-3 py-3">
+              : accounts.filter((account) => account.id === selectedId).map((account) => <div key={account.id} className="flex min-w-0 items-start gap-3 rounded-xl border border-border bg-background/50 p-4">
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium">Account {account.account_number} · {account.account_type === "multi" ? "Multi-room" : account.account_type === "triple" ? "Triple-room" : "Single account"}</span>
                   <span className="block break-all font-mono text-sm">{account.app_login_name}</span>
@@ -149,11 +153,11 @@ export function PlayerDeviceLinkSection() {
                 </span>
               </div>)}
           </fieldset>
-          <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !login || (!target && code.length !== 6)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Link this device</Button>
+          <Button type="submit" size="lg" className="h-12 w-full text-base shadow-lg" disabled={busy || loadingAccounts || !login || (!target && code.length !== 6)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Link this device</Button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <p className="text-xs text-muted-foreground">You only do this once per device. Your login goes straight to the app and is then deleted from our side.</p>
         </form>
-        <aside className="rounded-lg border border-border bg-surface/90 p-5">
+        <aside className="rounded-2xl border border-primary/30 bg-background/55 p-6 shadow-2xl backdrop-blur-md">
           {/* Account number sits opposite the heading so it is readable at a glance. */}
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <h2 className="min-w-0 truncate font-display font-semibold">My linked devices</h2>
@@ -162,13 +166,17 @@ export function PlayerDeviceLinkSection() {
               <span className="font-mono text-base font-bold leading-none tracking-[0.1em]">{activeNumber}</span>
             </span> : null}
           </div>
-          {visibleDevices.length ? <ul className="mt-3 space-y-3">{visibleDevices.map((d) => <li key={d.id} className="flex items-center gap-3 rounded-md border border-border p-3">
-            {d.platform === "windows" || d.platform === "mac" ? <Laptop className="size-5 text-primary" /> : <Tv className="size-5 text-primary" />}
-            <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{readableName(d)}</div>
+          {visibleDevices.length ? <ul className="mt-3 space-y-3">{visibleDevices.map((d) => <li key={d.id} className="rounded-xl border border-border bg-background/50 p-3 transition-colors hover:border-primary/50">
+            <div className="flex items-center gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/20 text-primary">{d.platform === "windows" || d.platform === "mac" ? <Laptop className="size-5" /> : <Tv className="size-5" />}</span>
+            <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{readableName(d)}</div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className={`size-2 rounded-full ${isOn(d) ? "bg-success" : "bg-muted-foreground/50"}`} />{isOn(d) ? "On" : "Off"} · {platformLabel[d.platform] ?? d.platform}</div></div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
             <Button size="sm" disabled={busy} variant="secondary" title="Only needed if the app has lost its login" onClick={() => void sendToDevice(d)}>Resend login</Button>
             <Button size="sm" variant="outline" disabled={busy} title="This box isn't mine" onClick={() => void notMe(d)}>Not me</Button>
             <Button size="icon" variant="ghost" aria-label={`Remove ${d.name}`} onClick={() => void remove(d)}><Trash2 /></Button>
+            </div>
           </li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Open BM Player on your device and enter the 6-digit code it shows above.</p>}
         </aside>
       </div>
