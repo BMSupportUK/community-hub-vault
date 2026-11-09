@@ -10,7 +10,7 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 import { Clocks } from "@/components/app/Clocks";
 import { AccountNumberPill } from "@/components/app/AccountNumberPill";
 import { LockNowPill } from "@/components/app/ScreenLockProvider";
-import { SwitchProfilePill } from "@/components/app/AccountProfiles";
+import { SwitchProfilePill, useProfilePortal } from "@/components/app/AccountProfiles";
 import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 import { adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
 import { canOpenTvRemoteOverview } from "@/lib/tv-remote";
@@ -25,9 +25,10 @@ export function isStaffPortalPath(path: string) {
 /** Staff Portal tab bar: tickets, shifts and other staff tools in one place. */
 export function StaffPortalTabs() {
   const { roles } = useAuth();
+  const { staff } = useProfilePortal();
   const perms = usePagePermissions();
   const p = useLocation().pathname.replace(/\/$/, "");
-  if (!isStaffPortalUser(roles)) return null;
+  if (!staff || !isStaffPortalUser(roles)) return null;
   const item = "inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors";
   const cls = (to: string) => cn(item, p === to ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground");
   return (

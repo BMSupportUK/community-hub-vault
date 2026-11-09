@@ -30,7 +30,7 @@ import installHero from "@/assets/install-guides-bg.jpg";
 import { INSTALL_TAB_LABELS_KEY, INSTALL_TAB_ORDER_KEY, installTabLabel, resolveInstallTabLabels, resolveInstallTabOrder } from "@/lib/install-guide-tab-order";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
-import { isStaffPortalUser } from "@/lib/portal-home";
+import { useProfilePortal } from "@/components/app/AccountProfiles";
 import { DeviceInstallSetup, StaffInstallHelp, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
 import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
 import { PlayerDeviceLinkSection } from "@/components/app/PlayerDeviceLinkSection";
@@ -630,7 +630,7 @@ function InstallGuidesPage() {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-    {isStaffPortalUser(roles) ? <StaffPortalTabs /> : <PortalTabs active="guides" />}
+    <ProfileGuideHeader />
     <div className="flex h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background text-foreground md:overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 items-start md:h-full">
         <div className="min-h-0 min-w-0 flex-1 md:h-full">

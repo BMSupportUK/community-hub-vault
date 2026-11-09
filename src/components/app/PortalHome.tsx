@@ -16,7 +16,7 @@ import { TalkScreenShareButton } from "@/components/app/TalkScreenShareButton";
 import { formatRoleLabel } from "@/lib/role-label";
 import { Clocks } from "@/components/app/Clocks";
 import { LockNowPill } from "@/components/app/ScreenLockProvider";
-import { SwitchProfilePill } from "@/components/app/AccountProfiles";
+import { SwitchProfilePill, useAccountProfiles } from "@/components/app/AccountProfiles";
 import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 import { PortalCounters } from "@/components/app/PortalCounters";
 import { dayBand, greetingFor, ukHour } from "@/lib/greeting";
@@ -38,6 +38,7 @@ function GreetingPills() {
 
 export function PortalHome({ staff }: { staff: boolean }) {
   const { user, hasRole, hasAny, roles } = useAuth();
+  const { activeProfile } = useAccountProfiles();
   const isStaffAccount = staff;
   // Highest-priority staff role, used for the greeting line under the hero image.
   const STAFF_ROLE_PRIORITY: AppRole[] = ["admin", "management", "moderator", "staff"];
@@ -47,7 +48,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
   const [displayName, setDisplayName] = useState<string>(fallbackName);
   const [nameplateId, setNameplateId] = useState<string | null>(null);
   const [isStaffShiftActive, setIsStaffShiftActive] = useState(false);
-  const name = displayName;
+  const name = !staff && activeProfile?.accountNumber !== 1 ? (activeProfile?.login || displayName) : displayName;
   const [hour, setHour] = useState(() => ukHour());
   useEffect(() => {
     const id = window.setInterval(() => setHour(ukHour()), 60_000);
