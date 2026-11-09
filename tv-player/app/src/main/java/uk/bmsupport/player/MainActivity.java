@@ -809,7 +809,47 @@ public class MainActivity extends Activity {
     private void afterPin() { if (totpSetup) showTotpSetup(); else showHome(); }
 
     /** First visit: QR to scan into an authenticator app, buttons to get the app, then one 6-digit code to finish. */
+    /** First visit: family welcome picture with one button into the 2FA setup screen. */
     private void showTotpSetup() {
+        stopPreview(); stopMulti();
+        screen = "pin"; back = null;
+        LinearLayout p = new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL);
+        p.addView(logo());
+        p.addView(text("Welcome to BM Player", 28, TEXT, true));
+        p.addView(text("Keep your account safe. Set up 2-step verification once with an authenticator app on your phone \u2014 it only takes a minute.", 16, MUTED, false));
+        Button go = button("Set up 2FA  \u203A", v -> loadTotpSetup());
+        p.addView(go);
+        p.addView(text("\uD83D\uDD12 You'll scan a QR code with Google Authenticator or Microsoft Authenticator.", 14, MUTED, false));
+        setContentView(familyFrame(p));
+        go.requestFocus();
+    }
+
+    /** Family-watching-TV picture behind a frosted panel on the right (2FA welcome and daily code screens). */
+    private View familyFrame(LinearLayout panel) {
+        android.widget.FrameLayout f = new android.widget.FrameLayout(this);
+        f.setBackgroundColor(BG);
+        android.widget.ImageView bg = new android.widget.ImageView(this);
+        bg.setImageResource(R.drawable.family_tv); bg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        f.addView(bg, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        View shade = new View(this);
+        shade.setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0x00000000, 0x660B1220, 0xE60B1220}));
+        f.addView(shade, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        android.graphics.drawable.GradientDrawable card = new android.graphics.drawable.GradientDrawable();
+        card.setColor(0xD916213A); card.setCornerRadius(dp(20)); card.setStroke(dp(1), 0x33FFFFFF);
+        panel.setBackground(card);
+        panel.setPadding(dp(24), dp(20), dp(24), dp(20));
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.setFillViewport(true);
+        LinearLayout holder = new LinearLayout(this); holder.setGravity(Gravity.CENTER_VERTICAL);
+        holder.setPadding(dp(12), dp(16), dp(12), dp(16));
+        holder.addView(panel, new LinearLayout.LayoutParams(-1, -2));
+        sc.addView(holder, new android.widget.ScrollView.LayoutParams(-1, -1));
+        int w = Math.max(dp(360), (int) (getResources().getDisplayMetrics().widthPixels * 0.44f));
+        f.addView(sc, new android.widget.FrameLayout.LayoutParams(w, -1, Gravity.END));
+        return f;
+    }
+
+    private void loadTotpSetup() {
         stopPreview(); stopMulti();
         screen = "pin"; back = null;
         LinearLayout wait = column(); wait.setGravity(Gravity.CENTER);
@@ -826,7 +866,7 @@ public class MainActivity extends Activity {
                     if (fe != null && (fe.contains("409") || fe.contains("already set up"))) { totpSetup = false; PlayerApplication.pinPassed = true; showHome(); return; }
                     LinearLayout box = column(); box.setGravity(Gravity.CENTER); box.addView(logo());
                     box.addView(text("Couldn't load 2FA set up. Check the internet and try again.", 18, MUTED, false));
-                    box.addView(button("Try again", v -> showTotpSetup()));
+                    box.addView(button("Try again", v -> loadTotpSetup()));
                     setContentView(box); return;
                 }
                 buildTotpSetup(fr.optString("otpauth"), fr.optString("secret"), fr.optJSONObject("apps"));
@@ -920,8 +960,8 @@ public class MainActivity extends Activity {
         left.addView(logo());
         // PIN is retired: 6 = authenticator code, 8 = one-use backup code from Security settings on bmsupport.uk.
         final int nd = pinDigits == 8 ? 8 : 6; final boolean totp = nd == 6;
-        left.addView(text(totp ? "Enter your 2FA code" : "Enter a backup code", 26, TEXT, true));
-        left.addView(text(totp ? "Type the 6-digit BM Player code from your authenticator app. You'll be asked once a day."
+        left.addView(text(totp ? "Welcome back" : "Enter a backup code", 26, TEXT, true));
+        left.addView(text(totp ? "Enter today's 6-digit code from your authenticator app. You'll be asked once a day."
                 : "Type one of your 8-digit backup codes. Find them in Security settings on bmsupport.uk after entering your account password. Each code works once.", 16, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
@@ -984,14 +1024,12 @@ public class MainActivity extends Activity {
         }));
         left.addView(helpStatus);
         LinearLayout pad = NumberPad.build(this, in, nd, CARD, ACCENT, TEXT, go::performClick);
-        cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
-        LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        padLp.leftMargin = dp(24);
-        cols.addView(pad, padLp);
-        root.addView(cols);
+        LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(-1, -2);
+        padLp.topMargin = dp(8); padLp.bottomMargin = dp(8);
+        left.addView(pad, left.indexOfChild(go), padLp);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         hideKeyboard(in);
-        setContentView(scrollable(root));
+        setContentView(familyFrame(left));
         NumberPad.firstKey(pad).requestFocus();
     }
 
