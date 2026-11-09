@@ -29,12 +29,22 @@ public class AnnouncementTest {
         f.setAccessible(true); return (View) f.get(app());
     }
     private void show(String id) throws Exception {
+        PlayerApplication.pinPassed = true;
+        Field u = MainActivity.class.getDeclaredField("unlocked"); u.setAccessible(true); u.set(null, true);
         set("annId", id); set("annMsg", "Announcement test");
         Method m = PlayerApplication.class.getDeclaredMethod("showAnnouncement");
         m.setAccessible(true); m.invoke(app());
     }
     private Activity open() {
         return Robolectric.buildActivity(Activity.class).setup().get();
+    }
+    @Test public void hiddenBeforeSignInAnd2fa() throws Exception {
+        open();
+        Field u = MainActivity.class.getDeclaredField("unlocked"); u.setAccessible(true); u.set(null, false);
+        PlayerApplication.pinPassed = false;
+        set("annId", "locked-test"); set("annMsg", "x");
+        Method m = PlayerApplication.class.getDeclaredMethod("showAnnouncement"); m.setAccessible(true); m.invoke(app());
+        assertNull(banner());
     }
     @Test public void tapClosesAndDoesNotReplay() throws Exception {
         open(); show("tap-test");
