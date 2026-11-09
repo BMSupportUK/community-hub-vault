@@ -508,7 +508,10 @@ public class MainActivity extends Activity {
             return;
         }
         startPolling();
-        if (hasLogin()) showHome(); else showLink();
+        if (hasLogin()) {
+            if (rememberedUnlock()) showHome();
+            else showMessage("Checking your device link…", this::start);
+        } else showLink();
     }
 
     /** Never crash when a delayed task fires after the screen closed and its queue shut down. */
@@ -639,7 +642,13 @@ public class MainActivity extends Activity {
             if (c != null) { ed.putString("user", c.optString("username")).putString("pass", SecureLogin.seal(c.optString("password"))).putString("unlocked_for", prefs.getString("token", "")); unlocked = true; }
             ed.apply();
             boolean now = hasLogin();
-            if (c != null || had != now) ui.post(() -> {
+            // Older releases saved credentials without a sign-in marker. Only restore after the
+            // website authenticates this token and confirms it still belongs to a linked account.
+            boolean restored = !unlocked && !rememberedUnlock()
+                    && LinkedSignIn.canRestore(prefs.getString("token", ""), r.optBoolean("linked", false), now);
+            if (restored) { unlocked = true; rememberUnlock(); }
+            boolean needsAccount = !unlocked && now && !r.optBoolean("linked", false);
+            if (c != null || had != now || restored || needsAccount) ui.post(() -> {
                 if (c != null) Toast.makeText(this, "Login received from BM Support", Toast.LENGTH_LONG).show();
                 if (now) showHome(); else showLink();
             });
@@ -647,7 +656,11 @@ public class MainActivity extends Activity {
             if (String.valueOf(ex.getMessage()).contains("401")) {
                 // Removed from the website (or unused for 60 days): sign out completely.
                 prefs.edit().remove("token").remove("user").remove("pass").remove("unlocked_for").apply();
+                unlocked = false;
+                PlayerApplication.pinPassed = false;
                 ui.post(this::start);
+            } else if (!unlocked && hasLogin()) {
+                ui.post(() -> showMessage("Can't check your device link. Check the internet and try again.", this::start));
             }
         }
     }
