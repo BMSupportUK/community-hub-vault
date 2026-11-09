@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { confirmPlayerTotp, disablePlayerTotp, getMyPlayerPin, getMyPlayerUnlock, setMyPlayerPin, startPlayerTotp } from "@/lib/player-pin.functions";
+import { confirmPlayerTotp, getMyPlayerPin, getMyPlayerUnlock, setMyPlayerPin, startPlayerTotp } from "@/lib/player-pin.functions";
 
 /** Lets a customer set or change the 4-digit PIN BM Player asks for after its opening video. */
 export function PlayerPinButton({ className }: { className?: string }) {
@@ -20,7 +20,6 @@ export function PlayerPinButton({ className }: { className?: string }) {
   const unlockFn = useServerFn(getMyPlayerUnlock);
   const startFn = useServerFn(startPlayerTotp);
   const confirmFn = useServerFn(confirmPlayerTotp);
-  const offFn = useServerFn(disablePlayerTotp);
   const [method, setMethod] = useState<"pin" | "totp">("pin");
   const [setup, setSetup] = useState<{ secret: string; qrSvg: string } | null>(null);
   const [code, setCode] = useState("");
@@ -40,11 +39,6 @@ export function PlayerPinButton({ className }: { className?: string }) {
       setMethod("totp"); setSetup(null); setOpen(false);
       toast.success("Authenticator turned on. BM Player will ask for a code once a day instead of your PIN.");
     } catch { setError("Couldn't check that code. Try again."); } finally { setBusy(false); }
-  };
-  const usePin = async () => {
-    setBusy(true); setError("");
-    try { await offFn(); setMethod("pin"); setSetup(null); toast.success("BM Player will ask for your 4-digit PIN again."); }
-    catch { setError("Couldn't switch back. Try again."); } finally { setBusy(false); }
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -77,6 +71,7 @@ export function PlayerPinButton({ className }: { className?: string }) {
             <Button type="button" role="radio" aria-checked={method === "pin" && !setup} variant={method === "pin" && !setup ? "default" : "outline"} disabled={busy || method === "totp"} onClick={() => setSetup(null)}>Backup PIN</Button>
             <Button type="button" role="radio" aria-checked={method === "totp" || !!setup} variant={method === "totp" || setup ? "default" : "outline"} disabled={busy || method === "totp"} onClick={() => void beginTotp()}>Authenticator</Button>
           </div>
+          {method === "pin" && !setup && <p className="text-sm text-destructive">Set up your authenticator: tap "Authenticator" above.</p>}
           {setup ? <form onSubmit={finishTotp} className="space-y-3">
             <p className="text-sm text-muted-foreground">Scan this with Google Authenticator, Microsoft Authenticator or similar, then type the 6-digit code it shows.</p>
             <div className="mx-auto w-fit rounded-md bg-card p-2 [&_svg]:size-44" dangerouslySetInnerHTML={{ __html: setup.qrSvg }} />
@@ -86,8 +81,9 @@ export function PlayerPinButton({ className }: { className?: string }) {
             <Button type="submit" className="w-full" disabled={busy || code.length !== 6}>{busy ? "Checking…" : "Turn on authenticator"}</Button>
           </form> : method === "totp" ? <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Authenticator is on. Your boxes ask for the 6-digit BM Player code once a day. If you can't get to your authenticator app, choose "Use PIN instead" on the box and type your 4-digit backup PIN.</p>
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          </div> : <form onSubmit={submit} className="space-y-3">
+          </div> : null}
+          {!setup && <form onSubmit={submit} className="space-y-3">
+            <p className="text-sm font-semibold">{isSet ? "Change backup PIN" : "Set a backup PIN"}</p>
             <Input aria-label="New PIN" type="password" inputMode="numeric" autoComplete="new-password" placeholder="New PIN" value={pin} onChange={(e) => setPin(digits(e.target.value))} />
             <Input aria-label="Repeat PIN" type="password" inputMode="numeric" autoComplete="new-password" placeholder="Repeat PIN" value={again} onChange={(e) => setAgain(digits(e.target.value))} />
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
