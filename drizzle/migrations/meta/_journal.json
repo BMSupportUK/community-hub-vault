@@ -2248,6 +2248,13 @@
       "when": 1794229343438,
       "tag": "0320_credentials_own_profile_even_staff",
       "breakpoints": true
+    },
+    {
+      "idx": 321,
+      "version": "7",
+      "when": 1794229907358,
+      "tag": "0321_device_unlock_other_profile",
+      "breakpoints": true
     }
   ]
 }
