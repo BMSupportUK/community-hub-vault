@@ -2,6 +2,7 @@ import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {matchChannel} from '../../src/lib/player-channel-match';
 import {orderBrowse} from '../playback-core.cjs';
+import {forScreen as safeText} from '../safe-error.cjs';
 import {LEVELS as BOOST_LEVELS,HIGH_NOTE,level as boostLevel,next as nextBoost} from '../sound-boost.cjs';
 import {LABELS as FEED_LABELS} from '../feed-status.cjs';
 import {episodeTitle} from '../episode-title.cjs';
@@ -44,7 +45,7 @@ function App(){
  const [playingView,setPlayingView]=useState(false),[volume,setVolume]=useState(100);
  const [feed,setFeed]=useState({});
  const controlsShown=usePlayerControls(playingView,!!modal||inactive>0||!!progress);
- function toast(message){setNotice(message);setTimeout(()=>setNotice(''),7000);}
+ function toast(message){setNotice(safeText(message,'Something went wrong. Try again.'));setTimeout(()=>setNotice(''),7000);}
  async function act(fn){try{return await fn();}catch(error){toast(error.message);return null;}}
  useEffect(()=>{bm.state().then(setState);return bm.subscribe(event=>{
   if(event.type==='state')setState(event.state);
