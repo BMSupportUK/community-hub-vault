@@ -6,8 +6,8 @@ InstallDir "$LOCALAPPDATA\Programs\BM Player"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 !define MUI_ABORTWARNING
-!define MUI_ICON "../windows-tv-enabler/build.ico"
-!define MUI_UNICON "../windows-tv-enabler/build.ico"
+!define MUI_ICON "build.ico"
+!define MUI_UNICON "build.ico"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\BM Player.exe"
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -48,13 +48,14 @@ Section "BM Player"
   File /r "${APPDIR}\*.*"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\BM Player"
-  CreateShortcut "$SMPROGRAMS\BM Player\BM Player.lnk" "$INSTDIR\BM Player.exe"
+  CreateShortcut "$SMPROGRAMS\BM Player\BM Player.lnk" "$INSTDIR\BM Player.exe" "" "$INSTDIR\resources\app\build.ico"
   CreateShortcut "$SMPROGRAMS\BM Player\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
-  CreateShortcut "$DESKTOP\BM Player.lnk" "$INSTDIR\BM Player.exe"
+  CreateShortcut "$DESKTOP\BM Player.lnk" "$INSTDIR\BM Player.exe" "" "$INSTDIR\resources\app\build.ico"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayName" "BM Player"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayVersion" "0.4.58"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayVersion" "0.4.59"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "Publisher" "BM Support"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "UninstallString" '"$INSTDIR\Uninstall.exe"'
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\BMPlayer" "DisplayIcon" "$INSTDIR\resources\app\build.ico"
 SectionEnd
 Section "Uninstall"
   Delete "$DESKTOP\BM Player.lnk"
