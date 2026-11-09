@@ -27,3 +27,24 @@ test('a remembered approval reopens without asking again',()=>{
  const gate=createAccountGate();gate.restore();expect(gate.unlocked).toBe(true);expect(()=>gate.require()).not.toThrow();
  gate.lock();expect(gate.unlocked).toBe(false);
 });
+
+test('an older linked installation remembers sign-in after website verification',()=>{
+ const saved={token:'device-a',user:'saved-login',pass:'saved-password'};
+ const gate=createAccountGate();expect(gate.restoreLinked(saved,{linked:true})).toBe(true);
+ expect(saved.unlockedFor).toBe('device-a');expect(()=>gate.require()).not.toThrow();
+ const reopened=createAccountGate();if(saved.unlockedFor===saved.token)reopened.restore();
+ expect(()=>reopened.require()).not.toThrow();
+});
+test('unlinked or incomplete devices cannot restore sign-in',()=>{
+ for(const [saved,reply] of [
+  [{token:'device-a',user:'saved-login',pass:'saved-password'},{linked:false}],
+  [{token:'device-a',user:'saved-login',pass:'saved-password'},{}],
+  [{user:'saved-login',pass:'saved-password'},{linked:true}],
+  [{token:'device-a'},{linked:true}],
+  [{token:'device-a',user:'saved-login'},{linked:true}],
+ ]){const gate=createAccountGate();expect(gate.restoreLinked(saved,reply)).toBe(false);expect(()=>gate.require()).toThrow();}
+});
+test('a marker for another device cannot restore sign-in',()=>{
+ const gate=createAccountGate();const saved={token:'device-b',unlockedFor:'device-a',user:'saved-login',pass:'saved-password'};
+ expect(gate.restoreLinked(saved,{linked:true})).toBe(false);expect(saved.unlockedFor).toBe('device-a');expect(()=>gate.require()).toThrow();
+});
