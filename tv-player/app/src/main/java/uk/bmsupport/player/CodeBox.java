@@ -29,8 +29,8 @@ final class CodeBox {
             cell.setGravity(Gravity.CENTER);
             cell.setTextSize(30);
             cell.setTypeface(Typeface.DEFAULT_BOLD);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Math.round(44 * d), Math.round(58 * d));
-            int m = Math.round(5 * d);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Math.round((digits > 6 ? 34 : 42) * d), Math.round(48 * d));
+            int m = Math.round((digits > 6 ? 3 : 4) * d);
             lp.setMargins(m, 0, m, 0);
             cell.setLayoutParams(lp);
             box.addView(cell);
@@ -44,7 +44,7 @@ final class CodeBox {
                 paint(cells, s == null ? "" : s.toString(), accent, muted, text, card, d);
             }
         });
-        box.setPadding(0, Math.round(8 * d), 0, Math.round(8 * d));
+        box.setPadding(0, Math.round(4 * d), 0, Math.round(4 * d));
         return box;
     }
 

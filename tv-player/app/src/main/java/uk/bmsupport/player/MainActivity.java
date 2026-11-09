@@ -840,11 +840,11 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable card = new android.graphics.drawable.GradientDrawable();
         card.setColor(0xD916213A); card.setCornerRadius(dp(20)); card.setStroke(dp(1), 0x33FFFFFF);
         panel.setBackground(card);
-        panel.setPadding(dp(24), dp(20), dp(24), dp(20));
+        panel.setPadding(dp(22), dp(12), dp(22), dp(12));
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
         sc.setFillViewport(true);
         LinearLayout holder = new LinearLayout(this); holder.setGravity(Gravity.CENTER_VERTICAL);
-        holder.setPadding(dp(12), dp(16), dp(12), dp(16));
+        holder.setPadding(dp(12), dp(8), dp(12), dp(8));
         holder.addView(panel, new LinearLayout.LayoutParams(-1, -2));
         sc.addView(holder, new android.widget.ScrollView.LayoutParams(-1, -1));
         int w = Math.max(dp(360), (int) (getResources().getDisplayMetrics().widthPixels * 0.44f));
@@ -963,8 +963,8 @@ public class MainActivity extends Activity {
         // PIN is retired: 6 = authenticator code, 8 = one-use backup code from Security settings on bmsupport.uk.
         final int nd = pinDigits == 8 ? 8 : 6; final boolean totp = nd == 6;
         left.addView(text(totp ? "Welcome back" : "Enter a backup code", 22, TEXT, true));
-        left.addView(text(totp ? "Enter today's 6-digit code from your authenticator app. You'll be asked once a day."
-                : "Type one of your 8-digit backup codes. Find them in Security settings on bmsupport.uk after entering your account password. Each code works once.", 16, MUTED, false));
+        left.addView(text(totp ? "Enter today's 6-digit code from your authenticator app."
+                : "Type an 8-digit backup code from Security settings on bmsupport.uk. Each works once.", 16, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(nd) });
@@ -1011,10 +1011,10 @@ public class MainActivity extends Activity {
         left.addView(go);
         left.addView(status);
         LinearLayout helpRow = row();
-        String altLabel = totp ? "Use a backup code" : "Use authenticator code";
-        helpRow.addView(smallButton(altLabel, v -> { pinDigits = totp ? 8 : 6; showPin(false, null); }), smallWeight(altLabel));
-        TextView helpStatus = text("", 14, MUTED, false);
-        String lostLabel = "Lost authenticator? Email reset link";
+        String altLabel = totp ? "🔑  Backup code" : "📱  Authenticator";
+        helpRow.addView(smallButton(altLabel, v -> { pinDigits = totp ? 8 : 6; showPin(false, null); }), iconWeight());
+        final TextView helpStatus = status;
+        String lostLabel = "✉  Email reset";
         helpRow.addView(smallButton(lostLabel, v -> {
             helpStatus.setText("Sending…");
             io.execute(() -> {
@@ -1028,9 +1028,8 @@ public class MainActivity extends Activity {
                 }
                 final String fm = msg; ui.post(() -> helpStatus.setText(fm));
             });
-        }), smallWeight(lostLabel));
+        }), iconWeight());
         left.addView(helpRow);
-        left.addView(helpStatus);
         LinearLayout pad = NumberPad.build(this, in, nd, CARD, ACCENT, TEXT, go::performClick);
         LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(-1, -2);
         padLp.topMargin = dp(8); padLp.bottomMargin = dp(8);
@@ -4996,6 +4995,12 @@ public class MainActivity extends Activity {
      * Width share for a home-row button: each one gets room in proportion to how wide its label
      * actually is, so the long ones are not squeezed into the same box as "Settings".
      */
+    private LinearLayout.LayoutParams iconWeight() {
+        LinearLayout.LayoutParams lp = weight(1f, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dp(4), dp(4), dp(4), dp(0));
+        return lp;
+    }
+
     private LinearLayout.LayoutParams smallWeight(String label) {
         android.graphics.Paint p = new android.graphics.Paint();
         p.setTextSize(16 * getResources().getDisplayMetrics().scaledDensity);
