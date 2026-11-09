@@ -5,15 +5,15 @@ import { moveTab, resolveInstallTabOrder } from "./install-guide-tab-order";
 test("saved order is used and missing pills are appended", () => {
   const o = resolveInstallTabOrder(["guides", "bogus", "welcome"]);
   expect(o.slice(0, 3)).toEqual(["guides", "welcome", "setup"]);
-  expect(o.length).toBe(8);
+  expect(o.length).toBe(7);
 });
 
 test("phone and Windows setup remains hidden even in a saved order", () => {
   expect(resolveInstallTabOrder(["phone-windows-setup", "welcome"])).not.toContain("phone-windows-setup");
 });
 
-test("staff help remains available when an older saved order omits it", () => {
-  expect(resolveInstallTabOrder(["welcome", "setup", "guides"])).toContain("staff-help");
+test("Help from staff is retired, even in an older saved order", () => {
+  expect(resolveInstallTabOrder(["welcome", "staff-help", "setup", "guides"])).not.toContain("staff-help");
 });
 
 test("up/down arrows swap neighbours and stop at the ends", () => {

@@ -4,7 +4,6 @@ export const INSTALL_TABS = [
   { key: "welcome", label: "Welcome" },
   { key: "setup", label: "Setup Device | Direct To Device" },
   { key: "backup-apps", label: "Backup Apps" },
-  { key: "staff-help", label: "Help from staff" },
   { key: "ios-setup", label: "Apps For | iOS" },
   { key: "player-windows", label: "BM Player | Windows" },
   { key: "player-mac", label: "BM Player | Mac" },

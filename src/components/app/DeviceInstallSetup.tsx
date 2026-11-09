@@ -258,15 +258,6 @@ export function EnablerDownloadSidebar() {
   </div>;
 }
 
-/** Standalone staff-help tab reuses the existing ticket flow. */
-export function StaffInstallHelp() {
-  return <div className="w-full rounded-lg border border-border bg-surface/70 p-5 sm:p-7">
-    <h2 className="mb-4 flex items-center gap-2 font-display text-2xl font-bold text-foreground"><Headset className="size-6 text-primary" />Help from staff</h2>
-    <RemoteHelpSteps />
-    <div className="mt-5 xl:hidden"><EnablerDownloadSidebar /></div>
-  </div>;
-}
-
 /** "What are you setting up?" — device picker that leads into the matching setup. */
 export function DeviceInstallSetup({ alternative, device, onPick, section = "direct" }: {
   alternative?: ReactNode;
