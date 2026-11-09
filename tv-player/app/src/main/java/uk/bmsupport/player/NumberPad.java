@@ -76,8 +76,8 @@ final class NumberPad {
                 b.setContentDescription("del".equals(k) ? "Delete" : "ok".equals(k) ? "OK" : k);
                 b.setOnClickListener(v -> { if ("ok".equals(k)) { if (onDone != null) onDone.run(); } else press(field, k, max); });
                 b.setOnKeyListener(hw);
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, Math.round(48 * d), 1f);
-                int m = Math.round(4 * d); lp.setMargins(m, m, m, m);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, Math.round(42 * d), 1f);
+                int m = Math.round(3 * d); lp.setMargins(m, m, m, m);
                 row.addView(b, lp);
                 if (first == null) first = b;
             }
