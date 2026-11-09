@@ -22,3 +22,8 @@ test('approval QR shows only for bmsupport.uk links and clears once unlocked',as
  await gate.remote(async()=>({unlocked:false,qr_url:'https://bmsupport.uk/player-approve/ab',qr_svg:'<svg/>'}),()=>changes++);expect(gate.qr).toBe('<svg/>');expect(changes).toBe(1);
  await gate.remote(async()=>({unlocked:true}),()=>changes++);expect(gate.unlocked).toBe(true);expect(gate.qr).toBe('');
 });
+
+test('a remembered approval reopens without asking again',()=>{
+ const gate=createAccountGate();gate.restore();expect(gate.unlocked).toBe(true);expect(()=>gate.require()).not.toThrow();
+ gate.lock();expect(gate.unlocked).toBe(false);
+});
