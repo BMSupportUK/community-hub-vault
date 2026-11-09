@@ -350,7 +350,7 @@ export const Route = createFileRoute("/api/public/player")({
           const until = locked ? new Date(Date.now() + lockoutMinutes(level) * 60_000).toISOString() : null;
           await supabaseAdmin.from("player_devices").update({ pin_failures: locked ? 0 : fails, pin_locked_until: until, pin_lock_level: level }).eq("id", device.id);
           if (locked) {
-            await supabaseAdmin.from("player_security_events").insert({ kind: "pin_lockout", device_id: device.id, owner_id: device.user_id, login: device.iptv_username, detail: { level } });
+            await supabaseAdmin.from("player_security_events").insert({ kind: "lockout", device_id: device.id, owner_id: device.user_id, login: device.iptv_username, detail: { level, pin: true } });
             const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
             await notifyPlayerAdmins(supabaseAdmin, "BM Player PIN lockout", `A ${device.platform ?? "BM Player"} box${device.iptv_username ? ` on login ${device.iptv_username}` : ""} kept entering the wrong PIN and is locked for ${lockoutMinutes(level) >= 60 ? `${lockoutMinutes(level) / 60} hour(s)` : `${lockoutMinutes(level)} minutes`}.`);
           }
