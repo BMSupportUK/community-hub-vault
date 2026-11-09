@@ -676,10 +676,11 @@ public class MainActivity extends Activity {
     private void showLink() {
         unlocked = false; prefs.edit().remove("unlocked_for").apply();
         screen = "link"; back = null;
-        LinearLayout root = column();
-        root.setGravity(Gravity.CENTER);
+        LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
         root.addView(logo());
-        root.addView(text("Link this " + deviceLabel(), 30, TEXT, true));
+        root.addView(text("STEP 1 OF 2  \u2022  Link this device", 14, ACCENT, true));
+        root.addView(text("Welcome to BM Player", 28, TEXT, true));
+        root.addView(text("First, link this " + deviceLabel() + " to your BM Support account. Next you'll turn on 2FA.", 16, MUTED, false));
         TextView code = text("······", 64, ACCENT, true);
         code.setLetterSpacing(0.2f);
         root.addView(code);
@@ -688,7 +689,8 @@ public class MainActivity extends Activity {
         root.addView(status);
         Button again = button("New code", v -> showLink());
         root.addView(again);
-        setContentView(scrollable(root));
+        setContentView(familyFrame(root));
+        again.requestFocus();
         io.execute(() -> {
             try {
                 JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
@@ -815,8 +817,9 @@ public class MainActivity extends Activity {
         screen = "pin"; back = null;
         LinearLayout p = new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL);
         p.addView(logo());
-        p.addView(text("Welcome to BM Player", 28, TEXT, true));
-        p.addView(text("Keep your account safe. Set up 2-step verification once with an authenticator app on your phone \u2014 it only takes a minute.", 16, MUTED, false));
+        p.addView(text("STEP 2 OF 2  \u2022  Turn on 2FA", 14, ACCENT, true));
+        p.addView(text("Device linked \u2713", 28, TEXT, true));
+        p.addView(text("Now keep your account safe. Set up 2-step verification once with an authenticator app on your phone \u2014 it only takes a minute.", 16, MUTED, false));
         Button go = button("Set up 2FA  \u203A", v -> loadTotpSetup());
         p.addView(go);
         p.addView(text("\uD83D\uDD12 You'll scan a QR code with Google Authenticator or Microsoft Authenticator.", 14, MUTED, false));
