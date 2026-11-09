@@ -53,6 +53,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
   z.object({ action: z.literal("pin_status"), device_token: Token }),
+  z.object({ action: z.literal("pin_create"), device_token: Token, pin: z.string().trim().regex(/^\d{4}$/) }),
   z.object({ action: z.literal("pin_check"), device_token: Token, pin: z.string().trim().regex(/^\d{4}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
@@ -325,13 +326,27 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ unlocked: Date.now() - at <= 2 * 60_000 });
         }
 
-        if (body.action === "pin_status" || body.action === "pin_check") {
+        if (body.action === "pin_status" || body.action === "pin_check" || body.action === "pin_create") {
           if (!device.user_id && !device.offsite_customer_id) return json({ required: false });
           const pinQ = supabaseAdmin.from("player_pins").select("pin_hash, salt");
           const { data: pinRow } = device.user_id
             ? await pinQ.eq("owner_id", device.user_id).maybeSingle()
             : await pinQ.eq("offsite_customer_id", device.offsite_customer_id as string).maybeSingle();
-          if (body.action === "pin_status") return json({ required: !!pinRow });
+          // needs_setup: newer apps ask the customer to choose a PIN on first open; older apps only read `required`.
+          if (body.action === "pin_status") return json({ required: !!pinRow, needs_setup: !pinRow });
+          if (body.action === "pin_create") {
+            // First-open setup only: an existing PIN can only be changed on the website or by admin.
+            if (pinRow) return json({ error: "A PIN is already set. Change it on bmsupport.uk in your subscription box." }, 409);
+            const { weakPin, newSalt, hashPin } = await import("@/lib/player-pin");
+            if (weakPin(body.pin)) return json({ error: "That PIN is too easy to guess. Avoid 0000, 1234 and similar." }, 400);
+            const salt = newSalt();
+            const row = { salt, pin_hash: await hashPin(body.pin, salt), updated_at: new Date().toISOString() };
+            const { error } = device.user_id
+              ? await supabaseAdmin.from("player_pins").insert({ ...row, owner_id: device.user_id })
+              : await supabaseAdmin.from("player_pins").insert({ ...row, offsite_customer_id: device.offsite_customer_id as string });
+            if (error) return json({ error: "Couldn't save your PIN. Try again." }, 500);
+            return json({ ok: true });
+          }
           if (!pinRow) return json({ ok: true });
           const { data: pl } = await supabaseAdmin.from("player_devices").select("pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
           const wait = (until: string) => {
