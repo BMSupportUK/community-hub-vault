@@ -31,6 +31,19 @@ export function recentlySeen(lastSeenAt: string | null | undefined, now = Date.n
   return !!lastSeenAt && now - Date.parse(lastSeenAt) <= SEND_LOGIN_SEEN_MS;
 }
 
+/** SHA-256 of BM Support's permanent Android signing certificate. */
+export const BM_ANDROID_SIGNER = "55282dc68b2108392a5ec0e8fe5660da74b82d7f371c029a79f6037d0be39f62";
+/** Android apps too old to prove they're genuine still get logins until this date. */
+export const UNSIGNED_GRACE_END = Date.parse("2026-11-23T00:00:00Z");
+const ANDROID_PLATFORMS = new Set(["android", "firetv", "phone"]);
+
+/** "ok" = send logins; "fake" = altered copy; "update" = old app past the grace period. */
+export function appGenuine(platform: string | null | undefined, sig: string | null | undefined, now = Date.now()): "ok" | "fake" | "update" {
+  if (!platform || !ANDROID_PLATFORMS.has(platform)) return "ok";
+  if (sig) return sig.toLowerCase() === BM_ANDROID_SIGNER ? "ok" : "fake";
+  return now < UNSIGNED_GRACE_END ? "ok" : "update";
+}
+
 /** Another box on the same login, in a different country, seen within the window. */
 export function unusualPlace(
   here: string | null | undefined,

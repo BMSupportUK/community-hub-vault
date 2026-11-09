@@ -40,6 +40,7 @@ const Body = z.discriminatedUnion("action", [
     action: z.literal("poll"), device_token: Token,
     login: z.string().trim().max(120).optional(),
     version: z.string().trim().max(20).optional(),
+    sig: z.string().trim().max(128).optional(),
     watching: z.object({
       kind: z.string().transform((k) => k === "episode" ? "series" : k === "movie" ? "film" : ["live", "film", "series", "catchup"].includes(k) ? k : "live"),
       title: z.string().trim().max(200),
@@ -558,10 +559,13 @@ export const Route = createFileRoute("/api/public/player")({
           cf: (request as unknown as { cf?: Record<string, unknown> }).cf ?? null,
           headerCountry: request.headers.get("cf-ipcountry"),
         });
+        const { appGenuine } = await import("@/lib/player-security");
+        const genuine = appGenuine(device.platform, body.sig);
+        if (genuine === "fake") console.warn(`[player poll] altered app refused device=${device.id.slice(0, 8)}`);
         const [{ data: settings }, { data: pending }] = await Promise.all([
           supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message, checkin_slowdown").eq("id", 1).maybeSingle(),
-          // Logins only go to linked boxes, and never while held for the box limit.
-          device.user_id || device.offsite_customer_id
+          // Logins only go to linked, genuine apps, and never while held for the box limit.
+          (device.user_id || device.offsite_customer_id) && genuine === "ok"
             ? supabaseAdmin.from("player_pending_credentials").delete().eq("device_id", device.id).eq("held", false).select("username, password, created_at").maybeSingle()
             : Promise.resolve({ data: null }),
         ]);

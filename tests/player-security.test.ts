@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { boxLimitReached, isQuietBox, lockoutMinutes, recentlySeen, unusualPlace } from "../src/lib/player-security";
+import { appGenuine, BM_ANDROID_SIGNER, boxLimitReached, isQuietBox, lockoutMinutes, recentlySeen, unusualPlace } from "../src/lib/player-security";
 
 const now = Date.parse("2026-11-09T12:00:00Z");
 const ago = (ms: number) => new Date(now - ms).toISOString();
@@ -23,6 +23,13 @@ describe("player security", () => {
     expect(recentlySeen(ago(2 * 60_000), now)).toBe(true);
     expect(recentlySeen(ago(4 * 60_000), now)).toBe(false);
     expect(recentlySeen(null, now)).toBe(false);
+  });
+  test("only genuine Android apps get logins; old apps have until 23 Nov", () => {
+    expect(appGenuine("android", BM_ANDROID_SIGNER, now)).toBe("ok");
+    expect(appGenuine("firetv", "deadbeef", now)).toBe("fake");
+    expect(appGenuine("android", "", now)).toBe("ok");
+    expect(appGenuine("android", "", Date.parse("2026-11-24T00:00:00Z"))).toBe("update");
+    expect(appGenuine("windows", "", Date.parse("2026-12-01T00:00:00Z"))).toBe("ok");
   });
   test("same login in another country within 30 minutes is flagged", () => {
     expect(unusualPlace("GB", [{ geo_country: "ES", last_seen_at: ago(10 * 60_000) }], now)).toBe("ES");
