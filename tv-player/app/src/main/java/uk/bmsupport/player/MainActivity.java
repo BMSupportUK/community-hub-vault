@@ -786,6 +786,7 @@ public class MainActivity extends Activity {
                         .put("device_token", prefs.getString("token", "")).toString()));
                 required = r.optBoolean("required", false);
                 setup = r.optBoolean("needs_setup", false);
+                pinDigits = r.optInt("digits", 4) == 6 ? 6 : 4;
                 prefs.edit().putBoolean("pin_required", required).apply();
             } catch (Exception e) { required = prefs.getBoolean("pin_required", false); }
             final boolean need = required, create = setup;
@@ -796,6 +797,9 @@ public class MainActivity extends Activity {
             });
         });
     }
+
+    /** 4 = PIN; 6 = authenticator-app code (asked once a day, server decides). */
+    private int pinDigits = 4;
 
     /** create=true: first open, the customer chooses a PIN (typed twice; `first` holds the first entry). */
     private void showPin(boolean create, String first) {
@@ -808,21 +812,22 @@ public class MainActivity extends Activity {
         cols.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
         left.addView(logo());
-        left.addView(text(!create ? "Enter your PIN" : first == null ? "Choose a PIN" : "Repeat your PIN", 26, TEXT, true));
-        left.addView(text(!create ? "Type your 4-digit BM Player PIN to open the main menu."
+        final int nd = create ? 4 : pinDigits; final boolean totp = nd == 6;
+        left.addView(text(totp ? "Enter your authenticator code" : !create ? "Enter your PIN" : first == null ? "Choose a PIN" : "Repeat your PIN", 26, TEXT, true));
+        left.addView(text(totp ? "Type the 6-digit BM Player code from your authenticator app. You'll be asked once a day." : !create ? "Type your 4-digit BM Player PIN to open the main menu."
                 : first == null ? "Pick a 4-digit PIN. BM Player will ask for it each time it opens. It shows in your subscription box on bmsupport.uk."
                 : "Type the same 4 digits again to confirm.", 16, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-        in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(4) });
+        in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(nd) });
         in.setTextSize(36); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
-        in.setLetterSpacing(0.3f); in.setHint("••••"); in.setHintTextColor(MUTED);
+        in.setLetterSpacing(0.3f); in.setHint(totp ? "••••••" : "••••"); in.setHintTextColor(MUTED);
         in.setLayoutParams(new LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.WRAP_CONTENT));
         left.addView(in);
         TextView status = text("", 16, MUTED, false);
         Button go = button(create && first == null ? "Next" : create ? "Save PIN" : "Open BM Player", v -> {
             String n = in.getText().toString().trim();
-            if (!n.matches("\\d{4}")) { status.setText("Enter all 4 digits."); return; }
+            if (!n.matches("\\d{" + nd + "}")) { status.setText("Enter all " + nd + " digits."); return; }
             if (create && first == null) { hideKeyboard(in); showPin(true, n); return; }
             if (create && !n.equals(first)) { showPin(true, null); android.widget.Toast.makeText(this, "The PINs didn't match. Try again.", android.widget.Toast.LENGTH_LONG).show(); return; }
             status.setText(create ? "Saving…" : "Checking…");
@@ -849,8 +854,8 @@ public class MainActivity extends Activity {
         });
         left.addView(go);
         left.addView(status);
-        if (!create) left.addView(text("Forgot your PIN? Set a new one on bmsupport.uk in your subscription box.", 14, MUTED, false));
-        LinearLayout pad = NumberPad.build(this, in, 4, CARD, ACCENT, TEXT, go::performClick);
+        if (!create) left.addView(text(totp ? "Lost your phone? Switch back to a PIN on bmsupport.uk in your subscription box." : "Forgot your PIN? Set a new one on bmsupport.uk in your subscription box.", 14, MUTED, false));
+        LinearLayout pad = NumberPad.build(this, in, nd, CARD, ACCENT, TEXT, go::performClick);
         cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
         LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         padLp.leftMargin = dp(24);
