@@ -6065,6 +6065,7 @@ export type Database = {
           app_version: string | null
           connected_since: string | null
           created_at: string
+          credential_id: string | null
           geo_city: string | null
           geo_country: string | null
           geo_lat: number | null
@@ -6096,6 +6097,7 @@ export type Database = {
           app_version?: string | null
           connected_since?: string | null
           created_at?: string
+          credential_id?: string | null
           geo_city?: string | null
           geo_country?: string | null
           geo_lat?: number | null
@@ -6127,6 +6129,7 @@ export type Database = {
           app_version?: string | null
           connected_since?: string | null
           created_at?: string
+          credential_id?: string | null
           geo_city?: string | null
           geo_country?: string | null
           geo_lat?: number | null
@@ -9288,6 +9291,7 @@ export type Database = {
         Args: { _id: string; _scope: string }
         Returns: Json
       }
+      active_profile_credential: { Args: never; Returns: string }
       ad_event_stats: {
         Args: { _days?: number }
         Returns: {
@@ -10298,6 +10302,10 @@ export type Database = {
       order_subscription_months: {
         Args: { p_order_id: string }
         Returns: number
+      }
+      owner_login_credential: {
+        Args: { _login: string; _owner: string }
+        Returns: string
       }
       package_item_months: { Args: { p_name: string }; Returns: number }
       player_buffer_diagnostics: {

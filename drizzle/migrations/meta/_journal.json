@@ -2185,6 +2185,13 @@
       "when": 1794220780024,
       "tag": "0311_show_hidden_users_extra_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 312,
+      "version": "7",
+      "when": 1794222113700,
+      "tag": "0312_profile_owned_orders_devices",
+      "breakpoints": true
     }
   ]
 }
