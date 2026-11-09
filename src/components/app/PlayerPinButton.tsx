@@ -92,7 +92,7 @@ export function PlayerPinButton({ className }: { className?: string }) {
             <Input aria-label="Repeat PIN" type="password" inputMode="numeric" autoComplete="new-password" placeholder="Repeat PIN" value={again} onChange={(e) => setAgain(digits(e.target.value))} />
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={busy || pin.length !== 4 || again.length !== 4}>{busy ? "Saving…" : "Save PIN"}</Button>
-          </form>
+          </form>}
         </DialogContent>
       </Dialog>
     </>
