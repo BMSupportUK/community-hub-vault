@@ -647,8 +647,16 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Approved once per link: the box stays open until it is unlinked, signed out or its data is cleared. */
+    private void rememberUnlock() { prefs.edit().putString("unlocked_for", prefs.getString("token", "")).apply(); }
+    private boolean rememberedUnlock() {
+        String t = prefs.getString("token", "");
+        if (!t.isEmpty() && t.equals(prefs.getString("unlocked_for", ""))) { unlocked = true; return true; }
+        return false;
+    }
+
     private void showLink() {
-        unlocked = false;
+        unlocked = false; prefs.edit().remove("unlocked_for").apply();
         screen = "link"; back = null;
         LinearLayout root = column();
         root.setGravity(Gravity.CENTER);
@@ -711,7 +719,7 @@ public class MainActivity extends Activity {
                 try {
                     Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "unlock")
                             .put("device_token", prefs.getString("token", "")).put("account_number", n).toString());
-                    ui.post(() -> { unlocked = true; ((PlayerApplication) getApplication()).refreshMajor(); hideKeyboard(in); getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN); showHome(); syncFavourites(null); ProgressSync.pull(this, true, () -> { if ("home".equals(screen)) showHome(); }); });
+                    ui.post(() -> { unlocked = true; rememberUnlock(); ((PlayerApplication) getApplication()).refreshMajor(); hideKeyboard(in); getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN); showHome(); syncFavourites(null); ProgressSync.pull(this, true, () -> { if ("home".equals(screen)) showHome(); }); });
                 } catch (Exception ex) {
                     String m = String.valueOf(ex.getMessage()), msg = "Couldn't check. Check the internet and try again.";
                     int i = m.indexOf('{');
@@ -766,7 +774,7 @@ public class MainActivity extends Activity {
                         unlockQrUrl = url; unlockQr.setImageBitmap(qr(url, dp(170)));
                         unlockQr.setVisibility(View.VISIBLE); unlockQrText.setVisibility(View.VISIBLE);
                     }
-                    if (done) { unlocked = true; ((PlayerApplication) getApplication()).refreshMajor(); showHome(); syncFavourites(null); ProgressSync.pull(this, true, () -> { if ("home".equals(screen)) showHome(); }); }
+                    if (done) { unlocked = true; rememberUnlock(); ((PlayerApplication) getApplication()).refreshMajor(); showHome(); syncFavourites(null); ProgressSync.pull(this, true, () -> { if ("home".equals(screen)) showHome(); }); }
                     else pollRemoteUnlock(go, status);
                 });
             });
@@ -775,7 +783,7 @@ public class MainActivity extends Activity {
 
     private void showHome() {
         stopPreview(); stopMulti(); // never keep a channel playing behind the main menu
-        if (!unlocked) { showUnlock(); return; }
+        if (!unlocked && !rememberedUnlock()) { showUnlock(); return; }
         screen = "home"; back = null; drawnVersion = appVersion();
         LinearLayout root = column();
         LinearLayout top = row();
