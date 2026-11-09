@@ -2600,9 +2600,6 @@ public class MainActivity extends Activity {
             }).setNegativeButton("Cancel", null).show();
         }));
         boxes.add(settingBox("🔒", "Parental control", prefs.getString("pin", "").isEmpty() ? "Off" : adultUnlocked ? "Unlocked" : "On", v -> parentalControl()));
-        String[] autoL = {"Off", "Every time the app opens", "Once a day"}, autoV = {"off", "open", "daily"};
-        boxes.add(settingBox("🔄", "Automation", label("auto_refresh", "daily", autoL, autoV),
-                v -> choose("Update channels, films and series automatically", "auto_refresh", "daily", autoL, autoV)));
         boxes.add(settingBox("🔊", "Sound booster", SoundBoost.label(this), v ->
                 new AlertDialog.Builder(this).setTitle("Sound booster")
                         .setSingleChoiceItems(SoundBoost.LABELS, SoundBoost.index(SoundBoost.current(this)), (d, w) -> {
@@ -2892,19 +2889,12 @@ public class MainActivity extends Activity {
         return col;
     }
 
-    /** Front screen start-up: fetch any section that has no list yet, or is due under the Automation setting. */
+    /** Every startup refreshes all sections, regardless of previous refresh dates. */
     private void autoUpdatePlaylists() {
-        if (autoDone) return;
-        autoDone = true;
-        String auto = prefs.getString("auto_refresh", "daily");
-        List<String> due = new ArrayList<>();
-        for (String k : new String[]{"live", "film", "series"}) {
-            long last = prefs.getLong("refreshed_" + k, 0);
-            if (!hasFullList(k) || auto.equals("open") || (auto.equals("daily") && System.currentTimeMillis() - last > 86_400_000L)) due.add(k);
-        }
+        List<String> due = startupPlaylists.claim();
         if (!due.isEmpty()) updatePlaylists(due, true);
     }
-    private boolean autoDone;
+    private final StartupPlaylists startupPlaylists = new StartupPlaylists();
 
     // ---------- maintenance ----------
 

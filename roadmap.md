@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Always refresh Live TV, Movies and Series at BM Player startup across Android and shared Windows/Mac; preserve sign-in/PIN gates and test. App releases not yet requested.
 - [x] Explained Direct Installer link delivery: possible with a receiving linked BM app and new delivery/prompt support; unavailable on bare devices; Android installation confirmation remains required. No implementation requested or added.
 - [x] Released Windows 0.4.54: restore legacy linked sign-in after website verification, preserve launch PIN; 127 desktop tests pass, current public download version and full SHA-256 match. Real Windows reopening check remains unverified without the user's PC.
 - [x] Enforced session-bound customer-profile restrictions across role reads/helpers, staff-data policies, server-action allowlist and shared role-sensitive UI. Verified real Lumpy4Beat scope, direct admin RPC denial, staff page/action denial, refresh/second-tab persistence and wrong-password rejection; 13 tests pass, build OK. Website not republished.

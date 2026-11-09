@@ -8,6 +8,7 @@ const {pathToFileURL}=require('node:url');
 const {execFile}=require('node:child_process');
 const core=require('../core.cjs');
 const gate=require('../account-gate.cjs').createAccountGate();
+const startupRefresh=require('../startup-refresh.cjs').createStartupRefresh();
 const {surfaceRows}=require('../playback-core.cjs');
 const boost=require('../sound-boost.cjs');
 const recovery=require('../stream-recovery.cjs');
@@ -39,7 +40,8 @@ function send(data){ if(win&&!win.isDestroyed())win.webContents.send('player:eve
 function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,item.id);}
 let pinPassed=false,pinNeed=null;
 let pinSetup=false;
-async function checkPin(){if(pinPassed||!store.token)return;try{const r=await site({action:'pin_status'});pinSetup=!!r.needs_setup;pinNeed=!!r.required||pinSetup;store.pinRequired=pinNeed;try{save();}catch{}}catch{pinNeed=!!store.pinRequired;}if(!pinNeed)pinPassed=true;send({type:'state',state:publicState()});}
+function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed},()=>refresh().catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')}));}
+async function checkPin(){if(pinPassed||!store.token)return;try{const r=await site({action:'pin_status'});pinSetup=!!r.needs_setup;pinNeed=!!r.required||pinSetup;store.pinRequired=pinNeed;try{save();}catch{}}catch{pinNeed=!!store.pinRequired;}if(!pinNeed)pinPassed=true;send({type:'state',state:publicState()});refreshAtStartup();}
 function publicState(){
  const a=store.account||{};
  const expiry=Number(a.exp_date)*1000;
@@ -266,8 +268,8 @@ else{
   register('swap',async index=>{const session=sessions.find(x=>x.index===Number(index));if(!session||session.item.kind!=='live'||session.catchup)return {items:[]};return swapOptions(session);});register('swapped',({index,to,reason}={})=>{const session=sessions.find(x=>x.index===Number(index));if(!session)return false;const item=session.item;bufferQueue.push({kind:'live',content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:0,reconnected:false,freeze:false,swapped_to:String(to||'').slice(0,200),swap_reason:reason==='auto'?'auto':'manual',...(session.event?.title?{event_name:String(session.event.title).slice(0,200)}:{}),at:Date.now()});flushBuffer();return true;});register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',kind=>{if(kind==='film'||kind==='series')syncProgress(false).catch(()=>{});return catalogue(kind);});register('epg',epg);register('catchup',catchup);register('sports',async()=>{sportsSnapshot=await site({action:'sports'});return sportsSnapshot;});
   if(store.token&&store.unlockedFor===store.token){gate.restore();checkPin().catch(()=>{});}
   const afterUnlock=()=>{checkPin().catch(()=>{});if(store.token&&store.unlockedFor!==store.token){store.unlockedFor=store.token;try{save();}catch{}}syncFavourites().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Something went wrong. Try again.')}));connectionCheck();};
-  register('pinCreate',async pin=>{if(!/^\d{4}$/.test(String(pin||'')))throw new Error('Enter all 4 digits.');await site({action:'pin_create',pin:String(pin)});pinSetup=false;store.pinRequired=true;try{save();}catch{}pinPassed=true;return publicState();});
-  register('pinCheck',async pin=>{if(!/^\d{4}$/.test(String(pin||'')))throw new Error('Enter all 4 digits.');await site({action:'pin_check',pin:String(pin)});pinPassed=true;return publicState();});
+  register('pinCreate',async pin=>{if(!/^\d{4}$/.test(String(pin||'')))throw new Error('Enter all 4 digits.');await site({action:'pin_create',pin:String(pin)});pinSetup=false;store.pinRequired=true;try{save();}catch{}pinPassed=true;refreshAtStartup();return publicState();});
+  register('pinCheck',async pin=>{if(!/^\d{4}$/.test(String(pin||'')))throw new Error('Enter all 4 digits.');await site({action:'pin_check',pin:String(pin)});pinPassed=true;refreshAtStartup();return publicState();});
   register('unlock',async number=>{await gate.unlock(number,site);afterUnlock();return publicState();});
   let remoteBusy=false;setInterval(async()=>{if(remoteBusy||!store.user||!store.token||gate.unlocked)return;remoteBusy=true;try{if(await gate.remote(site,()=>send({type:'state',state:publicState()})))afterUnlock();}catch{}finally{remoteBusy=false;}},3000);
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season,poster:String(p.info?.movie_image||'')}))]))};});
