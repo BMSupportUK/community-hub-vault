@@ -54,6 +54,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
   z.object({ action: z.literal("pin_status"), device_token: Token }),
   z.object({ action: z.literal("totp_start"), device_token: Token }),
+  z.object({ action: z.literal("totp_reset_request"), device_token: Token }),
   z.object({ action: z.literal("totp_confirm"), device_token: Token, code: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("pin_create"), device_token: Token, pin: z.string().trim().regex(/^\d{4}$/) }),
   z.object({ action: z.literal("pin_check"), device_token: Token, pin: z.string().trim().regex(/^(\d{4}|\d{6}|\d{4}[- ]?\d{4})$/) }),
@@ -328,6 +329,29 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ unlocked: Date.now() - at <= 2 * 60_000 });
         }
 
+        // Lost authenticator (customers without a website account): email a one-off chat link that hands out a reset code.
+        if (body.action === "totp_reset_request") {
+          if (!device.offsite_customer_id) return json({ error: "Reset your 2FA on bmsupport.uk under Security settings, or contact BM Support." }, 400);
+          const { data: oc } = await supabaseAdmin.from("player_offsite_customers").select("customer_name, email").eq("id", device.offsite_customer_id).maybeSingle();
+          if (!oc?.email) return json({ error: "We don't have an email for you. Please contact BM Support." }, 400);
+          const since = new Date(Date.now() - 10 * 60_000).toISOString();
+          const { data: recent } = await supabaseAdmin.from("player_2fa_resets").select("id").eq("offsite_customer_id", device.offsite_customer_id).gt("created_at", since).limit(1);
+          if (recent?.length) return json({ ok: true, sent: true });
+          // Older unfinished links die when a new one is made, so only the newest address ever works.
+          await supabaseAdmin.from("player_2fa_resets").update({ status: "expired", closed_at: new Date().toISOString() }).eq("offsite_customer_id", device.offsite_customer_id).in("status", ["open", "code_issued"]);
+          const { newResetToken, sha256Hex } = await import("@/lib/player-2fa-reset");
+          const raw = newResetToken();
+          await supabaseAdmin.from("player_2fa_resets").insert({ offsite_customer_id: device.offsite_customer_id, device_id: device.id, token_hash: await sha256Hex(raw) });
+          try {
+            const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+            await sendAndLogEmail(supabaseAdmin, "player-2fa-reset-link", oc.email, {
+              templateData: { name: oc.customer_name, chatUrl: `https://bmsupport.uk/2fa-help/${raw}` },
+              idempotencyKey: `player-2fa-reset-${raw.slice(0, 24)}`,
+            });
+          } catch (e) { console.error("[2fa reset email]", e); return json({ error: "Couldn't send the email. Try again shortly." }, 500); }
+          return json({ ok: true, sent: true });
+        }
+
         // First-visit 2FA setup on the box itself: QR to scan into an authenticator app, then one code to confirm.
         if (body.action === "totp_start" || body.action === "totp_confirm") {
           if (!device.user_id && !device.offsite_customer_id) return json({ error: "Link this app first." }, 403);
@@ -383,6 +407,17 @@ export const Route = createFileRoute("/api/public/player")({
           if (dv?.pin_locked_until && Date.parse(dv.pin_locked_until) > Date.now()) return json({ error: waitT(dv.pin_locked_until) }, 429);
           const { useBackupCode } = await import("@/lib/player-backup-codes");
           const isBackup = !/^\d{6}$/.test(body.pin);
+          // 8 digits that aren't a backup code may be a 2FA reset code from the help chat: clears 2FA so the box sets it up again.
+          if (isBackup && device.offsite_customer_id) {
+            const { data: rs } = await supabaseAdmin.from("player_2fa_resets").select("id, code").eq("offsite_customer_id", device.offsite_customer_id).eq("status", "code_issued").gt("expires_at", new Date().toISOString()).limit(1).maybeSingle();
+            if (rs?.code && rs.code === body.pin.replace(/[\s-]/g, "")) {
+              await supabaseAdmin.from("player_totp").delete().eq("offsite_customer_id", device.offsite_customer_id);
+              await supabaseAdmin.from("player_backup_codes").delete().eq("offsite_customer_id", device.offsite_customer_id);
+              await supabaseAdmin.from("player_devices").update({ totp_passed_at: null, pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("offsite_customer_id", device.offsite_customer_id);
+              await supabaseAdmin.from("player_2fa_resets").update({ status: "reset", code: null }).eq("id", rs.id);
+              return json({ ok: true, reset: true });
+            }
+          }
           const ok = isBackup ? await useBackupCode(supabaseAdmin, key, body.pin) : await totpMatches(totp.secret, body.pin);
           if (ok) {
             await supabaseAdmin.from("player_devices").update({ totp_passed_at: new Date().toISOString(), pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("id", device.id);
