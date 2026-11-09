@@ -19,3 +19,4 @@
 - Search/voice, keypad, tab and Films/Series layout rules live in `tv-player/app/AGENTS.md`.
 - Opening full screen from a playing Live TV preview hands that same ExoPlayer over via PreviewHandoff (no reconnect, one decoder); anything else (other channel, not ready, VLC, catch up) opens fresh after releasing the preview.
 - Swap channel (Android ChannelSwap.java, desktop channel-variants.cjs, keep in step): live-only list of same Sports Guide event feeds, then same-name quality/country versions, Not working ones last and unselectable; offered automatically after 3 stalls in 2 min on any live channel; swaps post swap rows (swapped_to/swap_reason) that diagnostics count apart from stalls.
+- Announcement icon and bottom bar appear only via MainActivity.signedInScreen(): signed in, unlocked and past today's 2FA; never on link/account-number/2FA/expired/maintenance screens.
