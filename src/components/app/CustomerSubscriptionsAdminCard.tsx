@@ -135,7 +135,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
     setEditAccountId(selected?.id ?? "");
     setProductId(selected?.packageProductId ?? "");
     setPackageAccount(customer.accounts.length > 1 || ((customer as { ownerAccountCount?: number }).ownerAccountCount ?? 0) > 1 ? selected : null);
-    setRenewalAccount(customer.accounts.length > 1 ? selected : null);
+    setRenewalAccount(customer.accounts.length > 1 || ((customer as { ownerAccountCount?: number }).ownerAccountCount ?? 0) > 1 ? selected : null);
     setRenewedDate(renewalDay(customer.accounts.length > 1 ? selected?.renewedAt ?? null : customer.renewedAt));
     setLoginEditing(!customer.hasSiteAccount && selected ? { customer, account: selected } : null);
     setLoginName(selected?.login && selected.login !== customer.displayName ? selected.login : "");
