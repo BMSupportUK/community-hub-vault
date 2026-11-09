@@ -794,8 +794,8 @@ public class MainActivity extends Activity {
             final boolean need = required, create = setup;
             ui.post(() -> {
                 if (!"pin".equals(screen) || isFinishing()) return;
-                if (create) showPin(true, null);
-                else if (!need) { PlayerApplication.pinPassed = true; showHome(); } else showPin(false, null);
+                if (totpSetup) showTotpSetup();
+                else if (!need) { PlayerApplication.pinPassed = true; showHome(); } else { pinDigits = 6; showPin(false, null); }
             });
         });
     }
@@ -841,7 +841,7 @@ public class MainActivity extends Activity {
         LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
         left.addView(logo());
         left.addView(text("Set up 2FA", 26, TEXT, true));
-        left.addView(text("1. Scan this QR code with an authenticator app on your phone.\n2. Type the 6-digit code it shows.\nBM Player will ask for a code once a day.", 16, MUTED, false));
+        left.addView(text("1. Scan this QR code with an authenticator app on your phone.\n2. Type the 6-digit code it shows.\nBM Player will ask for a code once a day. 10 backup codes are then saved in Security settings on bmsupport.uk.", 16, MUTED, false));
         android.widget.ImageView q = new android.widget.ImageView(this);
         q.setImageBitmap(qr(otpauth, dp(180)));
         left.addView(q, new LinearLayout.LayoutParams(dp(180), dp(180)));
@@ -877,7 +877,7 @@ public class MainActivity extends Activity {
                 final String fe = err;
                 ui.post(() -> {
                     if (!"pin".equals(screen)) return;
-                    if (fe == null) { totpSetup = false; PlayerApplication.pinPassed = true; hideKeyboard(in); android.widget.Toast.makeText(this, "2FA is on.", android.widget.Toast.LENGTH_LONG).show(); showHome(); }
+                    if (fe == null) { totpSetup = false; PlayerApplication.pinPassed = true; hideKeyboard(in); android.widget.Toast.makeText(this, "2FA is on. Your 10 backup codes are in Security settings on bmsupport.uk.", android.widget.Toast.LENGTH_LONG).show(); showHome(); }
                     else { status.setText(fe); in.setText(""); }
                 });
             });
@@ -915,16 +915,16 @@ public class MainActivity extends Activity {
         cols.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
         left.addView(logo());
-        final int nd = create ? 4 : pinDigits; final boolean totp = nd == 6;
-        left.addView(text(totp ? "Enter your authenticator code" : !create ? "Enter your PIN" : first == null ? "Choose a PIN" : "Repeat your PIN", 26, TEXT, true));
-        left.addView(text(totp ? "Type the 6-digit BM Player code from your authenticator app. You'll be asked once a day." : !create ? "Type your 4-digit BM Player PIN to open the main menu."
-                : first == null ? "Pick a 4-digit PIN. BM Player will ask for it each time it opens. It shows in your subscription box on bmsupport.uk."
-                : "Type the same 4 digits again to confirm.", 16, MUTED, false));
+        // PIN is retired: 6 = authenticator code, 8 = one-use backup code from Security settings on bmsupport.uk.
+        final int nd = pinDigits == 8 ? 8 : 6; final boolean totp = nd == 6;
+        left.addView(text(totp ? "Enter your 2FA code" : "Enter a backup code", 26, TEXT, true));
+        left.addView(text(totp ? "Type the 6-digit BM Player code from your authenticator app. You'll be asked once a day."
+                : "Type one of your 8-digit backup codes. Find them in Security settings on bmsupport.uk after entering your account password. Each code works once.", 16, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(nd) });
         in.setTextSize(36); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
-        in.setLetterSpacing(0.3f); in.setHint(totp ? "••••••" : "••••"); in.setHintTextColor(MUTED);
+        in.setLetterSpacing(0.3f); in.setHint(totp ? "••••••" : "••••••••"); in.setHintTextColor(MUTED);
         in.setLayoutParams(new LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.WRAP_CONTENT));
         left.addView(in);
         TextView status = text("", 16, MUTED, false);
@@ -957,8 +957,8 @@ public class MainActivity extends Activity {
         });
         left.addView(go);
         left.addView(status);
-        if (totp && pinFallback) left.addView(button("Can't use my authenticator? Use PIN instead", v -> { pinDigits = 4; showPin(false, null); }));
-        if (!create) left.addView(text(totp ? "No authenticator or backup PIN? Contact BM Support." : "Forgot your PIN? Set a new one on bmsupport.uk in your subscription box.", 14, MUTED, false));
+        left.addView(button(totp ? "Can't use my authenticator? Use a backup code" : "Use my authenticator code", v -> { pinDigits = totp ? 8 : 6; showPin(false, null); }));
+        left.addView(text("No authenticator or backup codes? Contact BM Support.", 14, MUTED, false));
         LinearLayout pad = NumberPad.build(this, in, nd, CARD, ACCENT, TEXT, go::performClick);
         cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
         LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
