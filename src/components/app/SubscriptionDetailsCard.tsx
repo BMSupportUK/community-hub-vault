@@ -6,6 +6,7 @@ import { useAccountProfiles } from "@/components/app/AccountProfiles";
 import { requestProfileChooser } from "@/lib/account-profiles";
 import { cn } from "@/lib/utils";
 import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
+import { PlayerPinButton } from "@/components/app/PlayerPinButton";
 import { SendAccountNumber } from "@/components/app/SendAccountNumber";
 import { Nameplate } from "@/components/app/Nameplate";
 import { customerJoinedYear, customerYearsFromYear } from "@/lib/customer-joined-year";
@@ -188,6 +189,7 @@ export function SubscriptionDetailsCard({
               Account no. {loginNumbers.find((r) => r.credential_id === activeProfile?.id)?.number ?? customerNumber}
             </SendAccountNumber>
           )}
+          {hasCreds && <PlayerPinButton className={cn("rounded-full border border-white/30 bg-background/20 px-3 py-0.5 text-white hover:bg-background/40", compact ? "text-[10px]" : "mt-1 text-xs")} />}
           <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px]" : "text-xs mt-0.5")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
