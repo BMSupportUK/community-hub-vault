@@ -112,18 +112,32 @@ export function ProfileChooser() {
   const queryClient = useQueryClient();
   const [passwordProfile, setPasswordProfile] = useState<AccountProfile | null>(null);
   const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [needsMfa, setNeedsMfa] = useState(false);
+  useEffect(() => {
+    if (!passwordProfile) return;
+    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => setNeedsMfa(data?.nextLevel === "aal2" && data.currentLevel !== "aal2"));
+  }, [passwordProfile]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const commit = async (p: AccountProfile, restore = false) => {
     setBusy(true); setError("");
     try {
       await queryClient.cancelQueries();
+      if (restore && needsMfa) {
+        const { data: f } = await supabase.auth.mfa.listFactors();
+        const factor = f?.totp?.find((x) => x.status === "verified");
+        if (!factor) throw new Error("No two-factor app found on this account.");
+        const { error: mfaError } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: mfaCode.trim() });
+        if (mfaError) throw new Error("Incorrect two-factor code.");
+        setNeedsMfa(false);
+      }
       if (restore) await restoreStaff({ data: { profileId: p.id, password } });
       else await switchProfile({ data: { profileId: p.id } });
       queryClient.clear();
       select(p.id);
       await refreshRoles();
-      setPassword(""); setPasswordProfile(null);
+      setPassword(""); setMfaCode(""); setPasswordProfile(null);
       void navigate({ to: p.accountNumber === 1 && profileAccess?.canUseStaff ? "/staff-portal" : "/portal", replace: true });
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to switch profile."); }
     finally { setBusy(false); }
@@ -139,7 +153,11 @@ export function ProfileChooser() {
           <form className="mx-auto mt-6 flex max-w-sm flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void commit(passwordProfile, true); }}>
             <label htmlFor="staff-profile-password" className="font-semibold">Account password</label>
             <Input id="staff-profile-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus disabled={busy} />
-            <Button type="submit" disabled={busy || !password}>Return to staff profile</Button>
+            {needsMfa && (<>
+              <label htmlFor="staff-profile-mfa" className="font-semibold">Two-factor code</label>
+              <Input id="staff-profile-mfa" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="6-digit code from your authenticator app" value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))} disabled={busy} />
+            </>)}
+            <Button type="submit" disabled={busy || !password || (needsMfa && mfaCode.length !== 6)}>Return to staff profile</Button>
             <Button variant="outline" type="button" disabled={busy} onClick={() => { setPasswordProfile(null); setPassword(""); setError(""); }}>Cancel</Button>
           </form>
         )}
