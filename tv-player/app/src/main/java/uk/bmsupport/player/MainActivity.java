@@ -552,7 +552,7 @@ public class MainActivity extends Activity {
     /** Poll also reports what is on screen so admins see live connections. */
     private JSONObject pollBody() throws Exception {
         JSONObject b = new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", ""))
-                .put("login", prefs.getString("user", "")).put("version", appVersion());
+                .put("login", prefs.getString("user", "")).put("version", appVersion()).put("sig", appSignature());
         long since = prefs.getLong("np_since", 0);
         if (since > 0) b.put("watching", new JSONObject().put("kind", prefs.getString("np_kind", "live"))
                 .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
@@ -2404,6 +2404,23 @@ public class MainActivity extends Activity {
 
     /** External VLC is gone from the app: BM Player plays everything, with its built-in backup engine. */
     private boolean defaultVlc() { return false; }
+
+    /** SHA-256 of the app's signing certificate, so the website can refuse altered copies. */
+    private String appSignature() {
+        try {
+            android.content.pm.Signature[] sigs;
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
+                sigs = pi.signingInfo.getApkContentsSigners();
+            } else {
+                sigs = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES).signatures;
+            }
+            byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(sigs[0].toByteArray());
+            StringBuilder sb = new StringBuilder();
+            for (byte x : d) sb.append(String.format("%02x", x));
+            return sb.toString();
+        } catch (Exception e) { return ""; }
+    }
 
     private String appVersion() {
         try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return "?"; }
