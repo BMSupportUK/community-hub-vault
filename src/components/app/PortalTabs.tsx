@@ -12,6 +12,9 @@ import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { AccountNumberPill } from "@/components/app/AccountNumberPill";
 import { SwitchProfilePill } from "@/components/app/AccountProfiles";
+import { Clocks } from "@/components/app/Clocks";
+import { LockNowPill } from "@/components/app/ScreenLockProvider";
+import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 
 type Tab = "home" | "shop" | "orders" | "tickets" | "logins" | "guides" | "referrals" | "knowledge" | "settings";
 
@@ -39,9 +42,15 @@ export function PortalTabs({ active }: { active?: Tab }) {
         <Link to="/portal/settings" className={cn(item, current === "settings" ? on : off)}><Settings className="size-4" />Settings</Link>
       )}
       {!isStaff && !unlocked && <PortalUnlockButton />}
-      <AccountNumberPill />
-      <SwitchProfilePill />
       <PortalCountdown />
+      <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 p-1.5 shadow-lg backdrop-blur [&_span.hidden]:!inline">
+        <Clocks />
+        <AccountNumberPill />
+        <SwitchProfilePill />
+        <LockNowPill />
+        <TwoFactorPill />
+        <VpnPill />
+      </div>
     </nav>
   );
 }
