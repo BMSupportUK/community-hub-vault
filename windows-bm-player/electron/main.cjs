@@ -42,7 +42,7 @@ let pinPassed=false,pinNeed=null;
 let pinSetup=false,pinDigits=4,pinFallback=false,totpSetup=false,totpData=null;
 function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed},()=>refresh().catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')});}));}
 async function afterPin(){if(totpSetup){try{totpData=await site({action:'totp_start'});return publicState();}catch(e){if(!/already set up/i.test(String(e&&e.message)))throw e;totpSetup=false;}}pinPassed=true;refreshAtStartup();return publicState();}
-async function checkPin(){if(pinPassed||!store.token)return;try{const r=await site({action:'pin_status'});pinSetup=!!r.needs_setup;pinDigits=r.digits===6?6:4;pinFallback=!!r.pin_fallback;totpSetup=!!r.totp_setup;pinNeed=!!r.required||pinSetup;store.pinRequired=pinNeed;try{save();}catch{}}catch{pinNeed=!!store.pinRequired;}if(!pinNeed)pinPassed=true;send({type:'state',state:publicState()});refreshAtStartup();}
+async function checkPin(){if(pinPassed||!store.token)return;try{const r=await site({action:'pin_status'});pinSetup=false;pinDigits=6;pinFallback=true;totpSetup=!!r.totp_setup;pinNeed=!!r.required||totpSetup;if(totpSetup){try{await afterPin();}catch{}}store.pinRequired=pinNeed;try{save();}catch{}}catch{pinNeed=!!store.pinRequired;}if(!pinNeed)pinPassed=true;send({type:'state',state:publicState()});refreshAtStartup();}
 function publicState(){
  const a=store.account||{};
  const expiry=Number(a.exp_date)*1000;
@@ -272,8 +272,8 @@ else{
   register('pinCreate',async pin=>{if(!/^\d{4}$/.test(String(pin||'')))throw new Error('Enter all 4 digits.');await site({action:'pin_create',pin:String(pin)});pinSetup=false;store.pinRequired=true;try{save();}catch{}totpSetup=true;return afterPin();});
   register('totpStart',async()=>afterPin());
   register('totpConfirm',async code=>{if(!/^\d{6}$/.test(String(code||'')))throw new Error('Enter all 6 digits.');await site({action:'totp_confirm',code:String(code)});totpSetup=false;totpData=null;pinPassed=true;refreshAtStartup();return publicState();});
-  register('usePinInstead',async()=>{if(pinFallback)pinDigits=4;return publicState();});
-  register('pinCheck',async pin=>{if(!new RegExp('^\\d{'+pinDigits+'}$').test(String(pin||'')))throw new Error('Enter all '+pinDigits+' digits.');await site({action:'pin_check',pin:String(pin)});return afterPin();});
+  register('usePinInstead',async()=>{pinDigits=pinDigits===8?6:8;return publicState();});
+  register('pinCheck',async pin=>{pin=String(pin||'').replace(/[\s-]/g,'');if(!new RegExp('^\\d{'+pinDigits+'}$').test(pin))throw new Error('Enter all '+pinDigits+' digits.');await site({action:'pin_check',pin:String(pin)});return afterPin();});
   register('unlock',async number=>{await gate.unlock(number,site);afterUnlock();return publicState();});
   let remoteBusy=false;setInterval(async()=>{if(remoteBusy||!store.user||!store.token||gate.unlocked)return;remoteBusy=true;try{if(await gate.remote(site,()=>send({type:'state',state:publicState()})))afterUnlock();}catch{}finally{remoteBusy=false;}},3000);
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season,poster:String(p.info?.movie_image||'')}))]))};});
