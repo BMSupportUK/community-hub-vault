@@ -439,7 +439,12 @@ public class MainActivity extends Activity {
     }
 
     @Override public void onUserInteraction() { super.onUserInteraction(); PlayerApplication.interaction(this); }
-    boolean showsAnnouncementIcon() { return !"sports".equals(screen) && !"sports_channels".equals(screen); }
+    boolean showsAnnouncementIcon() { return signedInScreen() && !"sports".equals(screen) && !"sports_channels".equals(screen); }
+    /** Announcements (icon and bottom bar) only once signed in and past today's 2FA code. */
+    boolean signedInScreen() {
+        return PlayerApplication.pinPassed && screen != null && !"pin".equals(screen) && !"link".equals(screen)
+                && !"unlock".equals(screen) && !"expired".equals(screen) && !"maintenance".equals(screen);
+    }
     @Override public void onContentChanged() {
         super.onContentChanged();
         if (getApplication() instanceof PlayerApplication) ((PlayerApplication) getApplication()).refreshMajorIcon();

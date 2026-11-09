@@ -233,7 +233,9 @@ public final class PlayerApplication extends Application implements Application.
     private void showAnnouncement() {
         Activity a = foreground;
         String closed = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("ann_closed", "");
-        boolean want = annId != null && !annId.equals(closed) && a != null && !a.isFinishing();
+        boolean want = annId != null && !annId.equals(closed) && a != null && !a.isFinishing()
+                && (!(a instanceof MainActivity) || ((MainActivity) a).signedInScreen())
+                && PlayerApplication.pinPassed && MainActivity.isUnlocked();
         if (banner != null && (!want || banner.getContext() != a || !banner.getTag().equals(annId + annMsg))) {
             if (banner.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) banner.getParent()).removeView(banner);
             banner = null;
