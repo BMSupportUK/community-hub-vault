@@ -52,6 +52,8 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
+  z.object({ action: z.literal("pin_status"), device_token: Token }),
+  z.object({ action: z.literal("pin_check"), device_token: Token, pin: z.string().trim().regex(/^\d{4}$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('guide_category_open'), device_token: Token, category: z.string().trim().min(1).max(200) }),
@@ -321,6 +323,38 @@ export const Route = createFileRoute("/api/public/player")({
           }
           await supabaseAdmin.from("player_devices").update({ remote_unlock_at: null, unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
           return json({ unlocked: Date.now() - at <= 2 * 60_000 });
+        }
+
+        if (body.action === "pin_status" || body.action === "pin_check") {
+          if (!device.user_id && !device.offsite_customer_id) return json({ required: false });
+          const pinQ = supabaseAdmin.from("player_pins").select("pin_hash, salt");
+          const { data: pinRow } = device.user_id
+            ? await pinQ.eq("owner_id", device.user_id).maybeSingle()
+            : await pinQ.eq("offsite_customer_id", device.offsite_customer_id as string).maybeSingle();
+          if (body.action === "pin_status") return json({ required: !!pinRow });
+          if (!pinRow) return json({ ok: true });
+          const { data: pl } = await supabaseAdmin.from("player_devices").select("pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
+          const wait = (until: string) => {
+            const mins = Math.max(1, Math.ceil((Date.parse(until) - Date.now()) / 60_000));
+            return `Too many wrong PINs. Please wait ${mins >= 120 ? `${Math.ceil(mins / 60)} hours` : `${mins} minutes`} and try again.`;
+          };
+          if (pl?.pin_locked_until && Date.parse(pl.pin_locked_until) > Date.now()) return json({ error: wait(pl.pin_locked_until) }, 429);
+          const { pinMatches } = await import("@/lib/player-pin");
+          if (await pinMatches(body.pin, pinRow.salt, pinRow.pin_hash)) {
+            await supabaseAdmin.from("player_devices").update({ pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("id", device.id);
+            return json({ ok: true });
+          }
+          const fails = (pl?.pin_failures ?? 0) + 1;
+          const locked = fails >= WRONG_TRIES_PER_STEP;
+          const level = locked ? (pl?.pin_lock_level ?? 0) + 1 : (pl?.pin_lock_level ?? 0);
+          const until = locked ? new Date(Date.now() + lockoutMinutes(level) * 60_000).toISOString() : null;
+          await supabaseAdmin.from("player_devices").update({ pin_failures: locked ? 0 : fails, pin_locked_until: until, pin_lock_level: level }).eq("id", device.id);
+          if (locked) {
+            await supabaseAdmin.from("player_security_events").insert({ kind: "lockout", device_id: device.id, owner_id: device.user_id, login: device.iptv_username, detail: { level, pin: true } });
+            const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
+            await notifyPlayerAdmins(supabaseAdmin, "BM Player PIN lockout", `A ${device.platform ?? "BM Player"} box${device.iptv_username ? ` on login ${device.iptv_username}` : ""} kept entering the wrong PIN and is locked for ${lockoutMinutes(level) >= 60 ? `${lockoutMinutes(level) / 60} hour(s)` : `${lockoutMinutes(level)} minutes`}.`);
+          }
+          return json({ error: locked ? wait(until as string) : "That PIN isn't right. Forgot it? Set a new one on bmsupport.uk in your subscription box." }, locked ? 429 : 401);
         }
 
         if (body.action === "unlock") {

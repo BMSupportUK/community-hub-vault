@@ -225,6 +225,7 @@ public class MainActivity extends Activity {
             f.setBackground(focusBg(4));
             f.setPadding(dp(3), dp(3), dp(3), dp(3));
             androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
+            pv.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
             pv.setUseController(false); pv.setFocusable(false);
             pv.setShutterBackgroundColor(Color.BLACK);
             androidx.media3.exoplayer.ExoPlayer pl = PlayerActivity.build(this);
@@ -727,7 +728,7 @@ public class MainActivity extends Activity {
                     String m = String.valueOf(ex.getMessage()), msg = "Couldn't check. Check the internet and try again.";
                     int i = m.indexOf('{');
                     if (i >= 0) try { msg = new JSONObject(m.substring(i)).optString("error", msg); } catch (Exception ignored) {}
-                    final String shown = msg;
+                    final String shown = SafeError.forScreen(msg, "Couldn't check. Check the internet and try again.");
                     ui.post(() -> { status.setText(shown); in.setText(""); });
                 }
             });
@@ -755,6 +756,89 @@ public class MainActivity extends Activity {
         setContentView(sc);
         NumberPad.firstKey(pad).requestFocus();
         pollRemoteUnlock(go, status);
+    }
+
+    /** After the opening video: ask the customer's 4-digit PIN before the main menu, once per app open. */
+    private void checkPin() {
+        screen = "pin"; back = null;
+        LinearLayout wait = column();
+        wait.setGravity(Gravity.CENTER);
+        wait.addView(logo());
+        wait.addView(text("Loading…", 18, MUTED, false));
+        setContentView(wait);
+        io.execute(() -> {
+            boolean required;
+            try {
+                JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "pin_status")
+                        .put("device_token", prefs.getString("token", "")).toString()));
+                required = r.optBoolean("required", false);
+                prefs.edit().putBoolean("pin_required", required).apply();
+            } catch (Exception e) { required = prefs.getBoolean("pin_required", false); }
+            final boolean need = required;
+            ui.post(() -> {
+                if (!"pin".equals(screen) || isFinishing()) return;
+                if (!need) { PlayerApplication.pinPassed = true; showHome(); } else showPin();
+            });
+        });
+    }
+
+    private void showPin() {
+        stopPreview(); stopMulti();
+        screen = "pin"; back = null;
+        LinearLayout root = column();
+        root.setGravity(Gravity.TOP);
+        root.setPadding(dp(32), dp(16), dp(32), dp(16));
+        LinearLayout cols = row();
+        cols.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
+        left.addView(logo());
+        left.addView(text("Enter your PIN", 26, TEXT, true));
+        left.addView(text("Type your 4-digit BM Player PIN to open the main menu.", 16, MUTED, false));
+        EditText in = new EditText(this);
+        in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(4) });
+        in.setTextSize(36); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
+        in.setLetterSpacing(0.3f); in.setHint("••••"); in.setHintTextColor(MUTED);
+        in.setLayoutParams(new LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.WRAP_CONTENT));
+        left.addView(in);
+        TextView status = text("", 16, MUTED, false);
+        Button go = button("Open BM Player", v -> {
+            String n = in.getText().toString().trim();
+            if (!n.matches("\\d{4}")) { status.setText("Enter all 4 digits."); return; }
+            status.setText("Checking…");
+            io.execute(() -> {
+                String err = null;
+                try {
+                    Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "pin_check")
+                            .put("device_token", prefs.getString("token", "")).put("pin", n).toString());
+                } catch (Exception ex) {
+                    String m = String.valueOf(ex.getMessage());
+                    err = "Couldn't check. Check the internet and try again.";
+                    int i = m.indexOf('{');
+                    if (i >= 0) try { err = new JSONObject(m.substring(i)).optString("error", err); } catch (Exception ignored) {}
+                    err = SafeError.forScreen(err, "Couldn't check. Check the internet and try again.");
+                }
+                final String fe = err;
+                ui.post(() -> {
+                    if (!"pin".equals(screen)) return;
+                    if (fe == null) { PlayerApplication.pinPassed = true; hideKeyboard(in); showHome(); }
+                    else { status.setText(fe); in.setText(""); }
+                });
+            });
+        });
+        left.addView(go);
+        left.addView(status);
+        left.addView(text("Forgot your PIN? Set a new one on bmsupport.uk in your subscription box.", 14, MUTED, false));
+        LinearLayout pad = NumberPad.build(this, in, 4, CARD, ACCENT, TEXT, go::performClick);
+        cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
+        LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        padLp.leftMargin = dp(24);
+        cols.addView(pad, padLp);
+        root.addView(cols);
+        getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        hideKeyboard(in);
+        setContentView(scrollable(root));
+        NumberPad.firstKey(pad).requestFocus();
     }
 
     private android.widget.ImageView unlockQr; private TextView unlockQrText; private String unlockQrUrl = "";
@@ -787,6 +871,7 @@ public class MainActivity extends Activity {
     private void showHome() {
         stopPreview(); stopMulti(); // never keep a channel playing behind the main menu
         if (!unlocked && !rememberedUnlock()) { showUnlock(); return; }
+        if (!PlayerApplication.pinPassed) { checkPin(); return; }
         screen = "home"; back = null; drawnVersion = appVersion();
         LinearLayout root = column();
         LinearLayout top = row();
@@ -1058,6 +1143,7 @@ public class MainActivity extends Activity {
             side.setPadding(16, 0, 0, 0);
             side.addView(text("Preview", 18, TEXT, true));
             pv = new androidx.media3.ui.PlayerView(this);
+            pv.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
             pv.setUseController(false);
             pv.setBackgroundColor(Color.BLACK);
             pv.setFocusable(true);
@@ -2360,7 +2446,7 @@ public class MainActivity extends Activity {
                     int i = m.indexOf("\"error\":\"");
                     err = i >= 0 ? m.substring(i + 9, Math.max(i + 9, m.indexOf('"', i + 9))) : "Couldn't send your report. Check your internet and try again.";
                 }
-                final String fe = err;
+                final String fe = err == null ? null : SafeError.forScreen(err, "Couldn't send your report. Check your internet and try again.");
                 ui.post(() -> {
                     if (fe != null) { v.setEnabled(true); Toast.makeText(this, fe, Toast.LENGTH_LONG).show(); return; }
                     dlg.dismiss();
@@ -3441,6 +3527,7 @@ public class MainActivity extends Activity {
             boxInfo.addView(br, new LinearLayout.LayoutParams(fill, wrap));
         } else top.addView(info, weight(1.6f, ViewGroup.LayoutParams.WRAP_CONTENT));
         androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
+        pv.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
         pv.setUseController(false); pv.setBackgroundColor(Color.BLACK); pv.setFocusable(false);
         pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
         pv.setShutterBackgroundColor(Color.BLACK);
