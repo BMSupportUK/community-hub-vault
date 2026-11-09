@@ -5,6 +5,7 @@ import { ShieldCheck, ShieldOff, Loader2, KeyRound, ArrowLeft } from "lucide-rea
 import { supabase } from "@/integrations/supabase/client";
 import { ScreenLockSettingsCard } from "@/components/app/ScreenLockSettingsCard";
 import { FanZoneFriendsPrivacyCard } from "@/components/app/FanZoneFriendsPrivacyCard";
+import { PlayerBackupCodesCard } from "@/components/app/PlayerBackupCodesCard";
 
 
 
@@ -221,6 +222,8 @@ export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) 
             </div>
           </div>
         </div>
+
+        <PlayerBackupCodesCard />
 
         <div className="rounded-2xl border border-border bg-surface p-6 text-sm text-muted-foreground">
           <h3 className="font-display font-semibold text-foreground mb-2">Need your 2FA reset?</h3>
