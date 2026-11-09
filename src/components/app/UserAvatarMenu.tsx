@@ -44,6 +44,8 @@ import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
 import { isStaffPortalUser } from "@/lib/portal-home";
+import { useProfilePortal } from "@/components/app/AccountProfiles";
+import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { useInFanZoneChrome } from "@/lib/sports-guides-origin";
 import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 import { BORO_DEFAULT_AVATAR_URL } from "@/lib/boro-default-avatar";
@@ -74,6 +76,7 @@ interface MiniProfile {
 
 export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
   const { user, roles, signOut, hasAny, isFanZoneOnly } = useAuth();
+  const profilePortal = useProfilePortal();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [fanProfile, setFanProfile] = useState<{ fan_alias: string | null; fan_avatar_url: string | null } | null>(null);
@@ -197,7 +200,10 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const FLASH_PRIORITY: FlashRole[] = ["admin", "management", "moderator", "staff"];
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
-  const supportAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
+  // A customer profile on a staff account shows the ordinary customer picture.
+  const supportAvatar = !profilePortal.loading && !profilePortal.staff && (isStaffPortalUser(roles) || !!roleFlashMap.get(user.id))
+    ? DEFAULT_AVATAR_URL
+    : resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
   // Inside the Fan Zone: staff keep their badge picture, everyone else falls
   // back to the Boro Fan Zone default rather than their BM Support picture.
   const resolvedAvatar = inFanZone
