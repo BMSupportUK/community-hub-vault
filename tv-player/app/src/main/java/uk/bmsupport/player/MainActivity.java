@@ -858,7 +858,10 @@ public class MainActivity extends Activity {
         in.setTextSize(32); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
         in.setLetterSpacing(0.3f); in.setHint("••••••"); in.setHintTextColor(MUTED);
         in.setLayoutParams(new LinearLayout.LayoutParams(dp(240), ViewGroup.LayoutParams.WRAP_CONTENT));
+        // The box the customer reads is the CodeBox below; this field only holds what the keypad types.
+        in.setVisibility(View.GONE);
         left.addView(in);
+        left.addView(CodeBox.build(this, in, 6, CARD, ACCENT, TEXT, MUTED));
         TextView status = text("", 16, MUTED, false);
         Button go = button("Turn on 2FA", v -> {
             String n = in.getText().toString().trim();
@@ -926,7 +929,10 @@ public class MainActivity extends Activity {
         in.setTextSize(36); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
         in.setLetterSpacing(0.3f); in.setHint(totp ? "••••••" : "••••••••"); in.setHintTextColor(MUTED);
         in.setLayoutParams(new LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.WRAP_CONTENT));
+        // The box the customer reads is the CodeBox below; this field only holds what the keypad types.
+        in.setVisibility(View.GONE);
         left.addView(in);
+        left.addView(CodeBox.build(this, in, nd, CARD, ACCENT, TEXT, MUTED));
         TextView status = text("", 16, MUTED, false);
         Button go = button(create && first == null ? "Next" : create ? "Save PIN" : "Open BM Player", v -> {
             String n = in.getText().toString().trim();
