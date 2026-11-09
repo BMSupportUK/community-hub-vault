@@ -50,6 +50,7 @@ export function MembershipBox() {
         });
     };
     load();
+    window.addEventListener("bm-profile-data-changed", load);
     loadUsername();
     const channel = supabase
       .channel(`membership-box-${user.id}-${Math.random().toString(36).slice(2)}`)
@@ -60,6 +61,7 @@ export function MembershipBox() {
       );
     channel.subscribe();
     return () => {
+      window.removeEventListener("bm-profile-data-changed", load);
       active = false;
       supabase.removeChannel(channel);
     };

@@ -13,7 +13,12 @@ export function usePlayerDevices() {
       .eq("user_id", user.id).order("linked_at", { ascending: false });
     setDevices((data ?? []) as PlayerDevice[]);
   }, [user]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    const again = () => { void load(); };
+    window.addEventListener("bm-profile-data-changed", again);
+    return () => window.removeEventListener("bm-profile-data-changed", again);
+  }, [load]);
   return { devices, reload: load };
 }
 
