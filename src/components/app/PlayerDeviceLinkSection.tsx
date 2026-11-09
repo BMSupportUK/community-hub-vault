@@ -60,6 +60,21 @@ export function PlayerDeviceLinkSection() {
     finally { setBusy(false); }
   }
 
+  // Device Send goes straight to that device with the ticked login (or the only login).
+  async function sendToDevice(d: PlayerDevice) {
+    setError("");
+    const usable = accounts.filter((a) => a.app_login_name && a.password);
+    const pick = login ?? (usable.length === 1 ? selectedPlayerLogin(usable, usable[0].id) : null);
+    if (!pick) { setError(typeItIn ? "Enter your app login and password first." : "Tick the app login you want to send, then press Send on the device."); return; }
+    setBusy(true);
+    try {
+      await sendDevice({ data: { deviceId: d.id, ...pick } });
+      toast.success(`Sent to ${d.name}. It will sign in within a few seconds.`);
+      setSelection(null); setManual({ username: "", password: "" }); void reload();
+    } catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
+    finally { setBusy(false); }
+  }
+
   async function remove(d: PlayerDevice) {
     const { error } = await supabase.from("player_devices").delete().eq("id", d.id);
     if (error) toast.error(error.message); else { toast.success(`${d.name} removed`); void reload(); }
@@ -107,7 +122,7 @@ export function PlayerDeviceLinkSection() {
                 </span>
               </label>)}
           </fieldset>
-          <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !login}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Send to app</Button>
+          <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !login || (!target && code.length !== 6)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Send to code</Button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <p className="text-xs text-muted-foreground">Your login goes straight to the app once and is then deleted from our side.</p>
         </form>
@@ -124,7 +139,7 @@ export function PlayerDeviceLinkSection() {
             {d.platform === "windows" || d.platform === "mac" ? <Laptop className="size-5 text-primary" /> : <Tv className="size-5 text-primary" />}
             <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{d.name}</div>
               <div className="text-xs text-muted-foreground">{platformLabel[d.platform] ?? d.platform}</div></div>
-            <Button size="sm" onClick={() => setTarget(d)}>Send</Button>
+            <Button size="sm" disabled={busy} onClick={() => void sendToDevice(d)}>Send</Button>
             <Button size="icon" variant="ghost" aria-label={`Remove ${d.name}`} onClick={() => void remove(d)}><Trash2 /></Button>
           </li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Use a code from the app to link one.</p>}
         </aside>
