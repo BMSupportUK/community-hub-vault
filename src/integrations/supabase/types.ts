@@ -9638,6 +9638,10 @@ export type Database = {
         Returns: string
       }
       claim_invite_access: { Args: never; Returns: boolean }
+      claim_profile_password_attempt: {
+        Args: { _owner: string; _session: string }
+        Returns: boolean
+      }
       claim_tv_pair_code: {
         Args: {
           _code: string
@@ -10500,6 +10504,10 @@ export type Database = {
       restore_app_credentials_from_backup: {
         Args: { p_mode?: string; p_snapshot: Json }
         Returns: Json
+      }
+      restore_profile_staff_scope: {
+        Args: { _credential: string; _owner: string; _session: string }
+        Returns: boolean
       }
       revoke_account_enabler_pins: {
         Args: { _user_id: string }
