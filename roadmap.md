@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Make customer-profile permissions differ from staff permissions, including hidden tools and access checks.
+- [ ] Separate customer-profile permissions from staff access using verified profile sign-ins; require the account password to return to staff. Awaiting approval of the security implementation plan.
 - [x] Released Windows 0.4.46 / universal Mac 0.1.56 numbered-event EPG installers; 122 desktop tests pass and both live download SHA-256 hashes match. Real-device installation remains unverified; website publication requested separately.
 - [x] Selected primary staff profile opens Staff Portal; extra customer profile opens Customer Portal. Signed-in Lumpy4Beat → Customer Portal, refresh, Boromedia → Staff Portal verified without browser errors; eight rule tests pass. Account identity and permissions remain unchanged.
 - [x] Prepare numbered daily-event EPG across Android and shared Windows/Mac: feed number only on left, existing fixtures/provider listings first, UK-day title/time fallback when empty. 122 desktop checks and six isolated Java checks pass; desktop guide interaction visibly verified. No new player releases; full native guide integration and installed-device checks remain unverified without Android SDK/devices.
