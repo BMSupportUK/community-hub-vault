@@ -27,7 +27,7 @@ export function PlayerBackupCodesCard() {
   };
 
   return (
-    <section className="mt-6 rounded-2xl border border-border bg-surface p-6 space-y-4">
+    <section className="rounded-2xl border border-border bg-surface p-6 space-y-4">
       <div>
         <h2 className="font-display font-semibold text-lg">BM Player backup codes</h2>
         <p className="text-sm text-muted-foreground">If you can't get to your authenticator app, type one of these 8-digit codes on your box instead. Each code works once.</p>

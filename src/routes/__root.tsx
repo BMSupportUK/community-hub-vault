@@ -269,7 +269,12 @@ function RightClickGuard() {
   const isAdmin = hasRole("admin");
   useEffect(() => {
     if (isAdmin) return;
-    const block = (e: MouseEvent) => e.preventDefault();
+    const block = (e: MouseEvent) => {
+      // Typing boxes keep their normal menu so passwords and codes can be pasted (incl. phone long-press).
+      const t = e.target as Element | null;
+      if (t?.closest?.("input, textarea, [contenteditable=''], [contenteditable='true']")) return;
+      e.preventDefault();
+    };
     document.addEventListener("contextmenu", block);
     return () => document.removeEventListener("contextmenu", block);
   }, [isAdmin]);
