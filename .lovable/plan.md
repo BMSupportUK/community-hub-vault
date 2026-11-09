@@ -6,6 +6,9 @@
 3. The box links to that account straight away, gets its login and opens. It stays signed in, with no account number or approval needed again, until the customer logs out or clears the app's data.
 4. Customers without a website account read the code to staff, and an admin enters it in **BM Player › Link non-website customer** (already in the preview).
 
+## One person looking after several accounts
+Every account is now separate, so the code always links the box to whichever website account is signed in when the code is typed. Someone who manages several accounts signs in to the right one first, then enters the code. A line above the code box makes this clear: "This box will be linked to: <account name / number>". A box can't end up on the wrong account without the person seeing which account it's going to.
+
 ## Rules
 - Codes are single-use and run out after 10 minutes. The pop-up shows a new code automatically when the old one runs out.
 - A code can only link to the account of the person who enters it. Admins can link codes for non-website customers.
