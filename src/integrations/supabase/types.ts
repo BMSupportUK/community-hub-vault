@@ -10417,6 +10417,7 @@ export type Database = {
         Args: { _body: string; _password: string; _token: string }
         Returns: string
       }
+      profile_auth_session_id: { Args: never; Returns: string }
       prune_sports_blog_body: {
         Args: { _body: string; _id: string }
         Returns: undefined
