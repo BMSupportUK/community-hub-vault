@@ -6007,6 +6007,39 @@ export type Database = {
         }
         Relationships: []
       }
+      player_channel_subtitles: {
+        Row: {
+          channel_key: string
+          channel_name: string
+          checks: number
+          checks_with_subs: number
+          first_checked_at: string
+          has_subtitles: boolean
+          languages: string | null
+          last_checked_at: string
+        }
+        Insert: {
+          channel_key: string
+          channel_name: string
+          checks?: number
+          checks_with_subs?: number
+          first_checked_at?: string
+          has_subtitles?: boolean
+          languages?: string | null
+          last_checked_at?: string
+        }
+        Update: {
+          channel_key?: string
+          channel_name?: string
+          checks?: number
+          checks_with_subs?: number
+          first_checked_at?: string
+          has_subtitles?: boolean
+          languages?: string | null
+          last_checked_at?: string
+        }
+        Relationships: []
+      }
       player_connection_log: {
         Row: {
           app_version: string | null
