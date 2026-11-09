@@ -10,6 +10,7 @@ import { getCustomerDiscountFlags } from "@/lib/customer-discount-flags";
 import { getCustomerBankTransferFlags } from "@/lib/customer-bank-transfer-flags";
 import { referralBonusState } from "@/lib/customer-referral-bonus";
 import { toast } from "sonner";
+import { ProfileRolesEditor } from "@/components/app/ProfileRolesEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -308,6 +309,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
               <section key={a?.id ?? "none"} className={multi ? "space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-3" : "space-y-2.5"}>
                 {(multi || a) && <div className="flex flex-wrap items-center gap-2">{multi && <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {i + 1}</span>}{a && <LoginNumberBadge ownerId={c.userId} accountId={a.id} login={a.login} />}</div>}
                 <div className="flex items-center gap-1 break-all text-xs text-muted-foreground"><span className="font-semibold uppercase tracking-wide">App Login:</span> {a?.login || "No login details"}</div>
+                {canReward && a && (multi || ((c as { ownerAccountCount?: number }).ownerAccountCount ?? 0) > 1) && <ProfileRolesEditor ownerId={c.userId} accountId={a.id} />}
                 <dl className="space-y-2 text-sm">
                   <Detail label="Current package">{pkg}</Detail>
                   <div className="grid gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2.5 sm:grid-cols-2">
