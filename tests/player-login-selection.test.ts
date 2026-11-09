@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { manualPlayerLogin, selectedPlayerLogin, type SavedPlayerLogin } from "../src/components/app/player-login-selection";
+import { devicesForPlayerLogin, manualPlayerLogin, selectedPlayerLogin, type SavedPlayerLogin } from "../src/components/app/player-login-selection";
 
 const accounts: SavedPlayerLogin[] = [
   { id: "one", app_login_name: "first-login", password: "first-password", expiry_at: null, account_type: "single", account_number: 1 },
@@ -7,6 +7,17 @@ const accounts: SavedPlayerLogin[] = [
 ];
 
 describe("saved BM Player login selection", () => {
+  test("each login shows only devices stored against that account", () => {
+    const devices = [
+      { id: "first-box", credential_id: "one", iptv_username: "first-login" },
+      { id: "second-box", credential_id: "two", iptv_username: "second-login" },
+      { id: "legacy-second", credential_id: null, iptv_username: "second-login" },
+      { id: "unassigned", credential_id: null, iptv_username: null },
+      { id: "conflicting", credential_id: "one", iptv_username: "second-login" },
+    ];
+    expect(devicesForPlayerLogin(devices, accounts[1]).map((device) => device.id)).toEqual(["second-box", "legacy-second"]);
+    expect(devicesForPlayerLogin(devices, accounts[0]).map((device) => device.id)).toEqual(["first-box", "conflicting"]);
+  });
   test("sends only the ticked login when multiple logins exist", () => {
     expect(selectedPlayerLogin(accounts, "two")).toEqual({ username: "second-login", password: "second-password" });
   });

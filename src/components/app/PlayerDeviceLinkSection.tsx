@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { Checkbox } from "@/components/ui/checkbox";
-import { manualPlayerLogin, selectedPlayerLogin, type SavedPlayerLogin } from "./player-login-selection";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { devicesForPlayerLogin, manualPlayerLogin, selectedPlayerLogin, type SavedPlayerLogin } from "./player-login-selection";
 import { usePlayerDevices, type PlayerDevice } from "@/hooks/use-player-devices";
-import { useCustomerNumber } from "@/components/app/CustomerNumber";
+import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
 import { useServerFn } from "@tanstack/react-start";
 import { Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ export function PlayerDeviceLinkSection() {
   const { user } = useAuth();
   const ownerId = user?.id;
   const customerNumber = useCustomerNumber(ownerId);
+  const loginNumbers = useLoginPlayerNumbers(ownerId);
   const { data: accounts = [], isPending: loadingAccounts, isError: accountsFailed, refetch } = useQuery({
     queryKey: ["player-saved-logins", ownerId],
     enabled: Boolean(ownerId),
@@ -38,7 +39,10 @@ export function PlayerDeviceLinkSection() {
     gcTime: 0,
   });
   const [selection, setSelection] = useState<{ ownerId: string; id: string } | null>(null);
-  const selectedId = selection?.ownerId === ownerId ? selection?.id ?? null : null;
+  const selectedId = selection?.ownerId === ownerId && accounts.some((account) => account.id === selection.id) ? selection.id : accounts[0]?.id ?? null;
+  const activeAccount = accounts.find((account) => account.id === selectedId);
+  const activeNumber = activeAccount ? loginNumbers.find((row) => row.credential_id === activeAccount.id)?.number ?? (accounts.length === 1 ? customerNumber : null) : customerNumber;
+  const visibleDevices = activeAccount ? devicesForPlayerLogin(devices, activeAccount) : accounts.length === 0 ? devices : [];
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [target, setTarget] = useState<PlayerDevice | null>(null);
@@ -56,7 +60,7 @@ export function PlayerDeviceLinkSection() {
       const r = target ? await sendDevice({ data: { deviceId: target.id, ...login } }) : await sendCode({ data: { code, ...login } });
       if (r?.held) toast.info("This login is already on 3 boxes. BM Support will approve the new box shortly.");
       else toast.success("Sent! Your app will sign in within a few seconds.");
-      setCode(""); setSelection(null); setTarget(null); setManual({ username: "", password: "" }); void reload();
+      setCode(""); setTarget(null); setManual({ username: "", password: "" }); void reload();
     } catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setBusy(false); }
   }
@@ -72,7 +76,7 @@ export function PlayerDeviceLinkSection() {
       const r = await sendDevice({ data: { deviceId: d.id, ...pick } });
       if (r?.held) toast.info("This login is already on 3 boxes. BM Support will approve this box shortly.");
       else toast.success(`Sent to ${d.name}. It will sign in within a few seconds.`);
-      setSelection(null); setManual({ username: "", password: "" }); void reload();
+      setManual({ username: "", password: "" }); void reload();
     } catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setBusy(false); }
   }
@@ -92,6 +96,15 @@ export function PlayerDeviceLinkSection() {
     <div className="mx-auto max-w-5xl">
       <h2 className="font-display text-2xl font-bold">Link Device</h2>
       <p className="mt-1 text-sm text-muted-foreground">Enter the code shown on your TV, phone or PC to sign the BM Player app in.</p>
+      {accounts.length > 1 && <Tabs value={selectedId ?? ""} onValueChange={(id) => { if (ownerId) setSelection({ ownerId, id }); setCode(""); setTarget(null); setError(""); }} className="mt-5">
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-2">
+          {accounts.map((account) => <TabsTrigger key={account.id} value={account.id} disabled={busy} className="min-w-0 whitespace-normal text-left">
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1"><span className="break-all">{account.app_login_name || `Account ${account.account_number}`}</span>
+              {loginNumbers.find((row) => row.credential_id === account.id)?.number && <span className="font-mono">#{loginNumbers.find((row) => row.credential_id === account.id)?.number}</span>}
+            </span>
+          </TabsTrigger>)}
+        </TabsList>
+      </Tabs>}
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <form onSubmit={submit} className="space-y-4 rounded-lg border border-border bg-surface/90 p-5">
           {target ? <div className="flex items-center justify-between rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">
@@ -119,16 +132,13 @@ export function PlayerDeviceLinkSection() {
                     onChange={(e) => setManual((m) => ({ ...m, password: e.target.value }))} />
                 </div>
               </div>
-              : accounts.map((account) => <label key={account.id} className="flex min-w-0 cursor-pointer items-start gap-3 border-b border-border py-3 last:border-b-0">
-                <Checkbox className="mt-1" checked={selectedId === account.id} disabled={!account.app_login_name || !account.password}
-                  onCheckedChange={(checked) => { if (ownerId) setSelection(checked === true ? { ownerId, id: account.id } : null); }}
-                  aria-label={`Send Account ${account.account_number}: ${account.app_login_name}`} />
+              : accounts.filter((account) => account.id === selectedId).map((account) => <div key={account.id} className="flex min-w-0 items-start gap-3 py-3">
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium">Account {account.account_number} · {account.account_type === "multi" ? "Multi-room" : account.account_type === "triple" ? "Triple-room" : "Single account"}</span>
                   <span className="block break-all font-mono text-sm">{account.app_login_name}</span>
                   <span className="block text-xs text-muted-foreground">{account.expiry_at ? `Expiry: ${new Date(account.expiry_at).toLocaleDateString("en-GB")}` : "No expiry"}</span>
                 </span>
-              </label>)}
+              </div>)}
           </fieldset>
           <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !login || (!target && code.length !== 6)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Send to code</Button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
@@ -138,12 +148,12 @@ export function PlayerDeviceLinkSection() {
           {/* Account number sits opposite the heading so it is readable at a glance. */}
           <div className="flex flex-nowrap items-center justify-between gap-2">
             <h2 className="min-w-0 truncate font-display font-semibold">My linked devices</h2>
-            {customerNumber ? <span className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap rounded-full border border-primary/50 bg-primary/25 px-2.5 py-1 text-primary-foreground" title="BM Player account number">
+            {activeNumber ? <span className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap rounded-full border border-primary/50 bg-primary/25 px-2.5 py-1 text-primary-foreground" title="BM Player account number">
               <span className="text-[9px] font-semibold uppercase tracking-wide text-primary-foreground/70">Account no.</span>
-              <span className="font-mono text-base font-bold leading-none tracking-[0.1em]">{customerNumber}</span>
+              <span className="font-mono text-base font-bold leading-none tracking-[0.1em]">{activeNumber}</span>
             </span> : null}
           </div>
-          {devices.length ? <ul className="mt-3 space-y-3">{devices.map((d) => <li key={d.id} className="flex items-center gap-3 rounded-md border border-border p-3">
+          {visibleDevices.length ? <ul className="mt-3 space-y-3">{visibleDevices.map((d) => <li key={d.id} className="flex items-center gap-3 rounded-md border border-border p-3">
             {d.platform === "windows" || d.platform === "mac" ? <Laptop className="size-5 text-primary" /> : <Tv className="size-5 text-primary" />}
             <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{d.name}</div>
               <div className="text-xs text-muted-foreground">{platformLabel[d.platform] ?? d.platform}</div></div>
