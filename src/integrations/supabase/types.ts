@@ -5777,6 +5777,45 @@ export type Database = {
         }
         Relationships: []
       }
+      player_2fa_resets: {
+        Row: {
+          closed_at: string | null
+          code: string | null
+          created_at: string
+          device_id: string | null
+          expires_at: string
+          id: string
+          number_failures: number
+          offsite_customer_id: string
+          status: string
+          token_hash: string
+        }
+        Insert: {
+          closed_at?: string | null
+          code?: string | null
+          created_at?: string
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          number_failures?: number
+          offsite_customer_id: string
+          status?: string
+          token_hash: string
+        }
+        Update: {
+          closed_at?: string | null
+          code?: string | null
+          created_at?: string
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          number_failures?: number
+          offsite_customer_id?: string
+          status?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
       player_announcements: {
         Row: {
           active: boolean
