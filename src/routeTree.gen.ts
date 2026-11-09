@@ -131,6 +131,7 @@ import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_auth
 import { Route as AuthenticatedApprovedTvRemoteRouteImport } from './routes/_authenticated/_approved/tv-remote'
 import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
+import { Route as ApiPublic2faHelpRouteImport } from './routes/api/public/2fa-help'
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicDirectInstallApkRouteImport } from './routes/api/public/direct-install-apk'
@@ -929,6 +930,11 @@ const AuthenticatedApprovedWhatToWatchRoute =
     path: '/what-to-watch',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const ApiPublic2faHelpRoute = ApiPublic2faHelpRouteImport.update({
+  id: '/api/public/2fa-help',
+  path: '/api/public/2fa-help',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAndroidApkRoute = ApiPublicAndroidApkRouteImport.update({
   id: '/api/public/android-apk',
   path: '/api/public/android-apk',
@@ -1621,6 +1627,7 @@ export interface FileRoutesByFullPath {
   '/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/2fa-help': typeof ApiPublic2faHelpRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
@@ -1840,6 +1847,7 @@ export interface FileRoutesByTo {
   '/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/2fa-help': typeof ApiPublic2faHelpRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
@@ -2065,6 +2073,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/_authenticated/_approved/vpn': typeof AuthenticatedApprovedVpnRoute
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/2fa-help': typeof ApiPublic2faHelpRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
@@ -2289,6 +2298,7 @@ export interface FileRouteTypes {
     | '/tv-remote'
     | '/vpn'
     | '/what-to-watch'
+    | '/api/public/2fa-help'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/direct-install-apk'
@@ -2508,6 +2518,7 @@ export interface FileRouteTypes {
     | '/tv-remote'
     | '/vpn'
     | '/what-to-watch'
+    | '/api/public/2fa-help'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/direct-install-apk'
@@ -2732,6 +2743,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/tv-remote'
     | '/_authenticated/_approved/vpn'
     | '/_authenticated/_approved/what-to-watch'
+    | '/api/public/2fa-help'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/direct-install-apk'
@@ -2870,6 +2882,7 @@ export interface RootRouteChildren {
   PortalCodeRoute: typeof PortalCodeRoute
   VideoTokenRoute: typeof VideoTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
+  ApiPublic2faHelpRoute: typeof ApiPublic2faHelpRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicDirectInstallApkRoute: typeof ApiPublicDirectInstallApkRoute
@@ -3799,6 +3812,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/what-to-watch'
       preLoaderRoute: typeof AuthenticatedApprovedWhatToWatchRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/api/public/2fa-help': {
+      id: '/api/public/2fa-help'
+      path: '/api/public/2fa-help'
+      fullPath: '/api/public/2fa-help'
+      preLoaderRoute: typeof ApiPublic2faHelpRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/android-apk': {
       id: '/api/public/android-apk'
@@ -4941,6 +4961,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortalCodeRoute: PortalCodeRoute,
   VideoTokenRoute: VideoTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
+  ApiPublic2faHelpRoute: ApiPublic2faHelpRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicDirectInstallApkRoute: ApiPublicDirectInstallApkRoute,
