@@ -54,7 +54,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
   z.object({ action: z.literal("pin_status"), device_token: Token }),
   z.object({ action: z.literal("pin_create"), device_token: Token, pin: z.string().trim().regex(/^\d{4}$/) }),
-  z.object({ action: z.literal("pin_check"), device_token: Token, pin: z.string().trim().regex(/^\d{4}$/) }),
+  z.object({ action: z.literal("pin_check"), device_token: Token, pin: z.string().trim().regex(/^(\d{4}|\d{6})$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('guide_category_open'), device_token: Token, category: z.string().trim().min(1).max(200) }),
@@ -333,7 +333,31 @@ export const Route = createFileRoute("/api/public/player")({
             ? await pinQ.eq("owner_id", device.user_id).maybeSingle()
             : await pinQ.eq("offsite_customer_id", device.offsite_customer_id as string).maybeSingle();
           // needs_setup: newer apps ask the customer to choose a PIN on first open; older apps only read `required`.
-          if (body.action === "pin_status") return json({ required: !!pinRow, needs_setup: !pinRow });
+          // Authenticator-app unlock (account holders who turned it on): 6-digit code, asked once a day per box.
+          const { data: totp } = device.user_id
+            ? await supabaseAdmin.from("player_totp").select("secret, enabled").eq("owner_id", device.user_id).maybeSingle()
+            : { data: null };
+          if (totp?.enabled && totp.secret && body.action !== "pin_create") {
+            const { totpStillValid, totpMatches } = await import("@/lib/player-totp");
+            const { data: dv } = await supabaseAdmin.from("player_devices").select("totp_passed_at, pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
+            if (body.action === "pin_status") {
+              const ok = totpStillValid(dv?.totp_passed_at);
+              return json({ required: !ok, needs_setup: false, method: "totp", digits: 6 });
+            }
+            const waitT = (until: string) => `Too many wrong codes. Please wait ${Math.max(1, Math.ceil((Date.parse(until) - Date.now()) / 60_000))} minutes and try again.`;
+            if (dv?.pin_locked_until && Date.parse(dv.pin_locked_until) > Date.now()) return json({ error: waitT(dv.pin_locked_until) }, 429);
+            if (await totpMatches(totp.secret, body.pin)) {
+              await supabaseAdmin.from("player_devices").update({ totp_passed_at: new Date().toISOString(), pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("id", device.id);
+              return json({ ok: true });
+            }
+            const fails = (dv?.pin_failures ?? 0) + 1;
+            const locked = fails >= WRONG_TRIES_PER_STEP;
+            const level = locked ? (dv?.pin_lock_level ?? 0) + 1 : (dv?.pin_lock_level ?? 0);
+            const until = locked ? new Date(Date.now() + lockoutMinutes(level) * 60_000).toISOString() : null;
+            await supabaseAdmin.from("player_devices").update({ pin_failures: locked ? 0 : fails, pin_locked_until: until, pin_lock_level: level }).eq("id", device.id);
+            return json({ error: locked ? waitT(until as string) : "That code isn't right. Open your authenticator app and type the newest 6-digit BM Player code." }, locked ? 429 : 401);
+          }
+          if (body.action === "pin_status") return json({ required: !!pinRow, needs_setup: !pinRow, method: "pin", digits: 4 });
           if (body.action === "pin_create") {
             // First-open setup only: an existing PIN can only be changed on the website or by admin.
             if (pinRow) return json({ error: "A PIN is already set. Change it on bmsupport.uk in your subscription box." }, 409);
