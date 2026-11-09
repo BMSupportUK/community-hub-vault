@@ -935,10 +935,11 @@ public class MainActivity extends Activity {
             if (create && !n.equals(first)) { showPin(true, null); android.widget.Toast.makeText(this, "The PINs didn't match. Try again.", android.widget.Toast.LENGTH_LONG).show(); return; }
             status.setText(create ? "Saving…" : "Checking…");
             io.execute(() -> {
-                String err = null;
+                String err = null; boolean wasReset = false;
                 try {
-                    Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", create ? "pin_create" : "pin_check")
+                    String resp = Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", create ? "pin_create" : "pin_check")
                             .put("device_token", prefs.getString("token", "")).put("pin", n).toString());
+                    try { wasReset = new JSONObject(resp).optBoolean("reset", false); } catch (Exception ignored) {}
                 } catch (Exception ex) {
                     String m = String.valueOf(ex.getMessage());
                     err = "Couldn't check. Check the internet and try again.";
@@ -946,9 +947,11 @@ public class MainActivity extends Activity {
                     if (i >= 0) try { err = new JSONObject(m.substring(i)).optString("error", err); } catch (Exception ignored) {}
                     err = SafeError.forScreen(err, "Couldn't check. Check the internet and try again.");
                 }
-                final String fe = err;
+                final String fe = err; final boolean reset = wasReset;
                 ui.post(() -> {
                     if (!"pin".equals(screen)) return;
+                    // Reset code from the 2FA help chat: 2FA is cleared, so go straight to setting it up again.
+                    if (fe == null && reset) { hideKeyboard(in); pinDigits = 6; checkPin(); return; }
                     if (fe == null) { if (create) { prefs.edit().putBoolean("pin_required", true).apply(); totpSetup = true; } PlayerApplication.pinPassed = !totpSetup; hideKeyboard(in); afterPin(); }
                     else if (create) { showPin(true, null); android.widget.Toast.makeText(this, fe, android.widget.Toast.LENGTH_LONG).show(); }
                     else { status.setText(fe); in.setText(""); }
@@ -958,7 +961,22 @@ public class MainActivity extends Activity {
         left.addView(go);
         left.addView(status);
         left.addView(button(totp ? "Can't use my authenticator? Use a backup code" : "Use my authenticator code", v -> { pinDigits = totp ? 8 : 6; showPin(false, null); }));
-        left.addView(text("No authenticator or backup codes? Contact BM Support.", 14, MUTED, false));
+        TextView helpStatus = text("", 14, MUTED, false);
+        left.addView(button("Lost my authenticator? Email me a reset link", v -> {
+            helpStatus.setText("Sending…");
+            io.execute(() -> {
+                String msg = "Check your email for a link to the 2FA help chat. It gives you an 8-digit reset code to type here as a backup code.";
+                try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "totp_reset_request").put("device_token", prefs.getString("token", "")).toString()); }
+                catch (Exception ex) {
+                    String m = String.valueOf(ex.getMessage()); msg = "Couldn't send the email. Try again.";
+                    int i = m.indexOf('{');
+                    if (i >= 0) try { msg = new JSONObject(m.substring(i)).optString("error", msg); } catch (Exception ignored) {}
+                    msg = SafeError.forScreen(msg, "Couldn't send the email. Try again.");
+                }
+                final String fm = msg; ui.post(() -> helpStatus.setText(fm));
+            });
+        }));
+        left.addView(helpStatus);
         LinearLayout pad = NumberPad.build(this, in, nd, CARD, ACCENT, TEXT, go::performClick);
         cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
         LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);

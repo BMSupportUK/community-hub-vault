@@ -33,6 +33,7 @@ import { Route as PredictionsRouteImport } from './routes/predictions'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as R2faHelpTokenRouteImport } from './routes/2fa-help.$token'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
@@ -131,6 +132,7 @@ import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_auth
 import { Route as AuthenticatedApprovedTvRemoteRouteImport } from './routes/_authenticated/_approved/tv-remote'
 import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
+import { Route as ApiPublic2faHelpRouteImport } from './routes/api/public/2fa-help'
 import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicDirectInstallApkRouteImport } from './routes/api/public/direct-install-apk'
@@ -349,6 +351,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R2faHelpTokenRoute = R2faHelpTokenRouteImport.update({
+  id: '/2fa-help/$token',
+  path: '/2fa-help/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
@@ -929,6 +936,11 @@ const AuthenticatedApprovedWhatToWatchRoute =
     path: '/what-to-watch',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const ApiPublic2faHelpRoute = ApiPublic2faHelpRouteImport.update({
+  id: '/api/public/2fa-help',
+  path: '/api/public/2fa-help',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAndroidApkRoute = ApiPublicAndroidApkRouteImport.update({
   id: '/api/public/android-apk',
   path: '/api/public/android-apk',
@@ -1524,6 +1536,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/2fa-help/$token': typeof R2faHelpTokenRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
@@ -1621,6 +1634,7 @@ export interface FileRoutesByFullPath {
   '/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/2fa-help': typeof ApiPublic2faHelpRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
@@ -1745,6 +1759,7 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/2fa-help/$token': typeof R2faHelpTokenRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
@@ -1840,6 +1855,7 @@ export interface FileRoutesByTo {
   '/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/2fa-help': typeof ApiPublic2faHelpRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
@@ -1967,6 +1983,7 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/2fa-help/$token': typeof R2faHelpTokenRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
@@ -2065,6 +2082,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/tv-remote': typeof AuthenticatedApprovedTvRemoteRoute
   '/_authenticated/_approved/vpn': typeof AuthenticatedApprovedVpnRoute
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/2fa-help': typeof ApiPublic2faHelpRoute
   '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/direct-install-apk': typeof ApiPublicDirectInstallApkRoute
@@ -2192,6 +2210,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/reset-password'
     | '/signup'
+    | '/2fa-help/$token'
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
@@ -2289,6 +2308,7 @@ export interface FileRouteTypes {
     | '/tv-remote'
     | '/vpn'
     | '/what-to-watch'
+    | '/api/public/2fa-help'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/direct-install-apk'
@@ -2413,6 +2433,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/reset-password'
     | '/signup'
+    | '/2fa-help/$token'
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
@@ -2508,6 +2529,7 @@ export interface FileRouteTypes {
     | '/tv-remote'
     | '/vpn'
     | '/what-to-watch'
+    | '/api/public/2fa-help'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/direct-install-apk'
@@ -2634,6 +2656,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/reset-password'
     | '/signup'
+    | '/2fa-help/$token'
     | '/_authenticated/_approved'
     | '/_authenticated/banned'
     | '/_authenticated/fan-zone-pending'
@@ -2732,6 +2755,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/tv-remote'
     | '/_authenticated/_approved/vpn'
     | '/_authenticated/_approved/what-to-watch'
+    | '/api/public/2fa-help'
     | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/direct-install-apk'
@@ -2859,6 +2883,7 @@ export interface RootRouteChildren {
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  R2faHelpTokenRoute: typeof R2faHelpTokenRoute
   ATokenRoute: typeof ATokenRoute
   CheckoutAccountTokenRoute: typeof CheckoutAccountTokenRoute
   CheckoutInstallTokenRoute: typeof CheckoutInstallTokenRoute
@@ -2870,6 +2895,7 @@ export interface RootRouteChildren {
   PortalCodeRoute: typeof PortalCodeRoute
   VideoTokenRoute: typeof VideoTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
+  ApiPublic2faHelpRoute: typeof ApiPublic2faHelpRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicDirectInstallApkRoute: typeof ApiPublicDirectInstallApkRoute
@@ -3112,6 +3138,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/2fa-help/$token': {
+      id: '/2fa-help/$token'
+      path: '/2fa-help/$token'
+      fullPath: '/2fa-help/$token'
+      preLoaderRoute: typeof R2faHelpTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved': {
@@ -3799,6 +3832,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/what-to-watch'
       preLoaderRoute: typeof AuthenticatedApprovedWhatToWatchRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/api/public/2fa-help': {
+      id: '/api/public/2fa-help'
+      path: '/api/public/2fa-help'
+      fullPath: '/api/public/2fa-help'
+      preLoaderRoute: typeof ApiPublic2faHelpRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/android-apk': {
       id: '/api/public/android-apk'
@@ -4930,6 +4970,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  R2faHelpTokenRoute: R2faHelpTokenRoute,
   ATokenRoute: ATokenRoute,
   CheckoutAccountTokenRoute: CheckoutAccountTokenRoute,
   CheckoutInstallTokenRoute: CheckoutInstallTokenRoute,
@@ -4941,6 +4982,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortalCodeRoute: PortalCodeRoute,
   VideoTokenRoute: VideoTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
+  ApiPublic2faHelpRoute: ApiPublic2faHelpRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicDirectInstallApkRoute: ApiPublicDirectInstallApkRoute,
