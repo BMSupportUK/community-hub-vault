@@ -33,6 +33,7 @@ import { Route as PredictionsRouteImport } from './routes/predictions'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as R2faHelpTokenRouteImport } from './routes/2fa-help.$token'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
@@ -350,6 +351,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R2faHelpTokenRoute = R2faHelpTokenRouteImport.update({
+  id: '/2fa-help/$token',
+  path: '/2fa-help/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
@@ -1530,6 +1536,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/2fa-help/$token': typeof R2faHelpTokenRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
@@ -1752,6 +1759,7 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/2fa-help/$token': typeof R2faHelpTokenRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
@@ -1975,6 +1983,7 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/2fa-help/$token': typeof R2faHelpTokenRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
@@ -2201,6 +2210,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/reset-password'
     | '/signup'
+    | '/2fa-help/$token'
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
@@ -2423,6 +2433,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/reset-password'
     | '/signup'
+    | '/2fa-help/$token'
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
@@ -2645,6 +2656,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/reset-password'
     | '/signup'
+    | '/2fa-help/$token'
     | '/_authenticated/_approved'
     | '/_authenticated/banned'
     | '/_authenticated/fan-zone-pending'
@@ -2871,6 +2883,7 @@ export interface RootRouteChildren {
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  R2faHelpTokenRoute: typeof R2faHelpTokenRoute
   ATokenRoute: typeof ATokenRoute
   CheckoutAccountTokenRoute: typeof CheckoutAccountTokenRoute
   CheckoutInstallTokenRoute: typeof CheckoutInstallTokenRoute
@@ -3125,6 +3138,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/2fa-help/$token': {
+      id: '/2fa-help/$token'
+      path: '/2fa-help/$token'
+      fullPath: '/2fa-help/$token'
+      preLoaderRoute: typeof R2faHelpTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved': {
@@ -4950,6 +4970,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  R2faHelpTokenRoute: R2faHelpTokenRoute,
   ATokenRoute: ATokenRoute,
   CheckoutAccountTokenRoute: CheckoutAccountTokenRoute,
   CheckoutInstallTokenRoute: CheckoutInstallTokenRoute,

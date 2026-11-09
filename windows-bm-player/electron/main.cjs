@@ -253,7 +253,7 @@ async function syncFavourites(){if(!store.user||!store.token||!gate.unlocked)ret
  if(!r.stored){if((store.favourites||[]).length)pushFavourites();store.favSynced=true;save();return;}
  if(!store.favSynced){const seen=new Set(r.items.map(i=>i.kind+'|'+i.id));const extra=(store.favourites||[]).filter(i=>!seen.has(i.kind+'|'+String(i.id)));store.favourites=[...r.items,...extra];store.favSynced=true;save();if(extra.length)pushFavourites();send({type:'state',state:publicState()});return;}
  if(JSON.stringify(r.items)!==JSON.stringify(store.favourites||[])){store.favourites=r.items;save();send({type:'state',state:publicState()});}}
-function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement','majorSeen'].includes(name)){gate.require();if(name!=='pinCheck'&&name!=='pinCreate'&&name!=='usePinInstead'&&name!=='totpConfirm'&&name!=='totpStart'&&!pinPassed)throw new Error('Enter your PIN first.');}if(!promptedAt)lastInput=Date.now();return fn(value);});}
+function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement','majorSeen'].includes(name)){gate.require();if(name!=='pinCheck'&&name!=='pinCreate'&&name!=='usePinInstead'&&name!=='totpConfirm'&&name!=='totpStart'&&name!=='totpResetRequest'&&!pinPassed)throw new Error('Enter your PIN first.');}if(!promptedAt)lastInput=Date.now();return fn(value);});}
 if(!app.requestSingleInstanceLock())app.quit();
 else{
  app.on('second-instance',foreground);
@@ -273,7 +273,8 @@ else{
   register('totpStart',async()=>afterPin());
   register('totpConfirm',async code=>{if(!/^\d{6}$/.test(String(code||'')))throw new Error('Enter all 6 digits.');await site({action:'totp_confirm',code:String(code)});totpSetup=false;totpData=null;pinPassed=true;refreshAtStartup();return publicState();});
   register('usePinInstead',async()=>{pinDigits=pinDigits===8?6:8;return publicState();});
-  register('pinCheck',async pin=>{pin=String(pin||'').replace(/[\s-]/g,'');if(!new RegExp('^\\d{'+pinDigits+'}$').test(pin))throw new Error('Enter all '+pinDigits+' digits.');await site({action:'pin_check',pin:String(pin)});return afterPin();});
+  register('pinCheck',async pin=>{pin=String(pin||'').replace(/[\s-]/g,'');if(!new RegExp('^\\d{'+pinDigits+'}$').test(pin))throw new Error('Enter all '+pinDigits+' digits.');const res=await site({action:'pin_check',pin});if(res&&res.reset){pinDigits=6;pinNeed=null;await checkPin();return publicState();}return afterPin();});
+  register('totpResetRequest',async()=>{await site({action:'totp_reset_request'});return true;});
   register('unlock',async number=>{await gate.unlock(number,site);afterUnlock();return publicState();});
   let remoteBusy=false;setInterval(async()=>{if(remoteBusy||!store.user||!store.token||gate.unlocked)return;remoteBusy=true;try{if(await gate.remote(site,()=>send({type:'state',state:publicState()})))afterUnlock();}catch{}finally{remoteBusy=false;}},3000);
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season,poster:String(p.info?.movie_image||'')}))]))};});
