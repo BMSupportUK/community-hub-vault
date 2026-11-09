@@ -6,6 +6,8 @@ import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 import { sortRolesByPriority } from "@/lib/role-rank";
 import { leaveTalkChannelsOnSignOut } from "@/hooks/use-talk-channel-presence";
 import { setSoundSignedIn } from "@/lib/sound";
+import { ACTIVE_PROFILE_EVENT } from "@/lib/account-profiles";
+import type { ProfileAccess } from "@/lib/profile-access";
 
 export type AppRole =
   | "admin"
@@ -25,6 +27,7 @@ interface AuthCtx {
   user: User | null;
   session: Session | null;
   roles: AppRole[];
+  profileAccess: ProfileAccess | null;
   loading: boolean;
   hasRole: (r: AppRole) => boolean;
   hasAny: (rs: AppRole[]) => boolean;
@@ -47,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
+  const [profileAccess, setProfileAccess] = useState<ProfileAccess | null>(null);
   const activeUidRef = useRef<string | null>(null);
 
   const loadRoles = async (uid: string) => {
@@ -63,7 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error: claimErr } = await supabase.rpc("claim_checkout_access", { p_token: claimToken });
       if (!claimErr) window.localStorage.removeItem("bm-checkout-claim");
     }
-    const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+    const { data: accessData, error } = await supabase.rpc("my_profile_access");
+    const access = accessData as unknown as ProfileAccess | null;
+    const data = access?.roles.map((role) => ({ role })) ?? [];
     // If the query fails (transient network / RLS hiccup), keep the previously
     // loaded roles intact. Otherwise a refresh would clear roles, flip
     // `isPending` to true, and bounce admin/staff to /gate — i.e. an effective
@@ -79,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // A role request may finish after sign-out. Never let that stale response
     // restore an authenticated role state for a user whose session is gone.
     if (activeUidRef.current !== uid) return;
+    setProfileAccess(access);
     if (typeof window !== "undefined" && ["pending", uid].includes(window.sessionStorage.getItem("bm-referral-setup") ?? "")) {
       setTimeout(() => { if (activeUidRef.current === uid) void loadRoles(uid); }, 500);
       return;
@@ -126,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (!nextUid) {
         currentUid = null;
         setRoles([]);
+        setProfileAccess(null);
         setRolesLoaded(true);
       }
       // Same user (e.g. TOKEN_REFRESHED on tab refocus): do not reload roles —
@@ -171,6 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (document.visibilityState === "visible") void loadRoles(uid);
     };
     window.addEventListener("focus", onFocus);
+    window.addEventListener(ACTIVE_PROFILE_EVENT, onFocus);
     document.addEventListener("visibilitychange", onVis);
     const channel = supabase
       .channel(`user-roles-${uid}`)
@@ -185,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       window.clearInterval(interval);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener(ACTIVE_PROFILE_EVENT, onFocus);
       document.removeEventListener("visibilitychange", onVis);
       void supabase.removeChannel(channel);
     };
@@ -241,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         roles,
+        profileAccess,
         loading: loading || (!!user && !rolesLoaded),
         hasRole,
         hasAny,

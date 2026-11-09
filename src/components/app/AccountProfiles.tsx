@@ -5,6 +5,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
+import { selectAccountProfile, restoreStaffProfile } from "@/lib/profile-access.functions";
 import {
   ACTIVE_PROFILE_EVENT,
   type AccountProfile,
@@ -19,7 +23,7 @@ import {
 
 /** The signed-in customer's login profiles and the one currently selected. */
 export function useAccountProfiles() {
-  const { user } = useAuth();
+  const { user, profileAccess } = useAuth();
   const userId = user?.id ?? null;
   const [profiles, setProfiles] = useState<AccountProfile[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -70,7 +74,7 @@ export function useAccountProfiles() {
   }, [userId]);
 
   const select = useCallback((id: string) => { if (userId) saveActiveProfile(userId, id); }, [userId]);
-  const activeProfile = pickActiveProfile(profiles, savedId);
+  const activeProfile = pickActiveProfile(profiles, profileAccess?.profileId ?? savedId);
   return { userId, profiles, loaded, activeProfile, select, chooserOpen: loaded && needsProfileChoice(profiles.length, chosen) };
 }
 
@@ -101,14 +105,44 @@ export function SwitchProfilePill() {
 /** Full-screen "Choose your profile" screen for customers with more than one login. */
 export function ProfileChooser() {
   const { profiles, activeProfile, select, chooserOpen } = useAccountProfiles();
-  const { roles } = useAuth();
+  const { roles, profileAccess, refreshRoles } = useAuth();
   const navigate = useNavigate();
+  const switchProfile = useServerFn(selectAccountProfile);
+  const restoreStaff = useServerFn(restoreStaffProfile);
+  const queryClient = useQueryClient();
+  const [passwordProfile, setPasswordProfile] = useState<AccountProfile | null>(null);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const commit = async (p: AccountProfile, restore = false) => {
+    setBusy(true); setError("");
+    try {
+      await queryClient.cancelQueries();
+      if (restore) await restoreStaff({ data: { profileId: p.id, password } });
+      else await switchProfile({ data: { profileId: p.id } });
+      queryClient.clear();
+      select(p.id);
+      await refreshRoles();
+      setPassword(""); setPasswordProfile(null);
+      void navigate({ to: p.accountNumber === 1 && profileAccess?.canUseStaff ? "/staff-portal" : "/portal", replace: true });
+    } catch (e) { setError(e instanceof Error ? e.message : "Unable to switch profile."); }
+    finally { setBusy(false); }
+  };
   if (!chooserOpen) return null;
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="profile-chooser-title" className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-background/95 p-4 backdrop-blur-md">
       <div className="w-full max-w-3xl py-8 text-center">
         <h2 id="profile-chooser-title" className="font-display text-3xl font-bold md:text-4xl">Choose your profile</h2>
         <p className="mt-2 text-muted-foreground">You have {profiles.length} accounts. Pick one to see its details and account number.</p>
+        {error && <p role="alert" className="mt-3 text-destructive">{error}</p>}
+        {passwordProfile && (
+          <form className="mx-auto mt-6 flex max-w-sm flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void commit(passwordProfile, true); }}>
+            <label htmlFor="staff-profile-password" className="font-semibold">Account password</label>
+            <Input id="staff-profile-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus disabled={busy} />
+            <Button type="submit" disabled={busy || !password}>Return to staff profile</Button>
+            <Button variant="outline" type="button" disabled={busy} onClick={() => { setPasswordProfile(null); setPassword(""); setError(""); }}>Cancel</Button>
+          </form>
+        )}
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {profiles.map((p, i) => {
             const current = activeProfile?.id === p.id;
@@ -117,9 +151,10 @@ export function ProfileChooser() {
                 key={p.id}
                 type="button"
                 variant="ghost"
+                disabled={busy || !!passwordProfile}
                 onClick={() => {
-                  select(p.id);
-                  void navigate({ to: profileUsesStaffPortal(roles, p) ? "/staff-portal" : "/portal" });
+                  if (profileAccess?.restricted && profileAccess.canUseStaff && p.accountNumber === 1) { setPasswordProfile(p); setError(""); }
+                  else void commit(p);
                 }}
                 className={cn(
                   "group flex h-auto flex-col items-center gap-3 rounded-2xl border-2 bg-surface p-5 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50",
