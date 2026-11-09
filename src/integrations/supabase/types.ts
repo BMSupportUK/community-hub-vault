@@ -9727,6 +9727,16 @@ export type Database = {
         Args: { _login: string; _owner: string }
         Returns: number
       }
+      directory_extra_profiles: {
+        Args: never
+        Returns: {
+          account_number: number
+          app_login_name: string
+          created_at: string
+          credential_id: string
+          owner_id: string
+        }[]
+      }
       directory_member_roles: {
         Args: never
         Returns: {
