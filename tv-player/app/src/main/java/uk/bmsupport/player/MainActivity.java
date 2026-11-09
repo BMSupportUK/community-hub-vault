@@ -960,10 +960,9 @@ public class MainActivity extends Activity {
         LinearLayout cols = row();
         cols.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
-        left.addView(logo());
         // PIN is retired: 6 = authenticator code, 8 = one-use backup code from Security settings on bmsupport.uk.
         final int nd = pinDigits == 8 ? 8 : 6; final boolean totp = nd == 6;
-        left.addView(text(totp ? "Welcome back" : "Enter a backup code", 26, TEXT, true));
+        left.addView(text(totp ? "Welcome back" : "Enter a backup code", 22, TEXT, true));
         left.addView(text(totp ? "Enter today's 6-digit code from your authenticator app. You'll be asked once a day."
                 : "Type one of your 8-digit backup codes. Find them in Security settings on bmsupport.uk after entering your account password. Each code works once.", 16, MUTED, false));
         EditText in = new EditText(this);
@@ -1007,11 +1006,16 @@ public class MainActivity extends Activity {
                 });
             });
         });
+        // The keypad OK submits; no separate open button on screen.
+        go.setVisibility(View.GONE);
         left.addView(go);
         left.addView(status);
-        left.addView(button(totp ? "Can't use my authenticator? Use a backup code" : "Use my authenticator code", v -> { pinDigits = totp ? 8 : 6; showPin(false, null); }));
+        LinearLayout helpRow = row();
+        String altLabel = totp ? "Use a backup code" : "Use authenticator code";
+        helpRow.addView(smallButton(altLabel, v -> { pinDigits = totp ? 8 : 6; showPin(false, null); }), smallWeight(altLabel));
         TextView helpStatus = text("", 14, MUTED, false);
-        left.addView(button("Lost my authenticator? Email me a reset link", v -> {
+        String lostLabel = "Lost authenticator? Email reset link";
+        helpRow.addView(smallButton(lostLabel, v -> {
             helpStatus.setText("Sending…");
             io.execute(() -> {
                 String msg = "Check your email for a link to the 2FA help chat. It gives you an 8-digit reset code to type here as a backup code.";
@@ -1024,7 +1028,8 @@ public class MainActivity extends Activity {
                 }
                 final String fm = msg; ui.post(() -> helpStatus.setText(fm));
             });
-        }));
+        }), smallWeight(lostLabel));
+        left.addView(helpRow);
         left.addView(helpStatus);
         LinearLayout pad = NumberPad.build(this, in, nd, CARD, ACCENT, TEXT, go::performClick);
         LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(-1, -2);
