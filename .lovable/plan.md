@@ -7,7 +7,11 @@
 4. Customers without a website account read the code to staff, and an admin enters it in **BM Player › Link non-website customer** (already in the preview).
 
 ## One person looking after several accounts
-Every account is now separate, so the code always links the box to whichever website account is signed in when the code is typed. Someone who manages several accounts signs in to the right one first, then enters the code. A line above the code box makes this clear: "This box will be linked to: <account name / number>". A box can't end up on the wrong account without the person seeing which account it's going to.
+One website login can hold several app logins (for example Account 1, Account 2, Account 3). When the person types the box's code, they get a list of every app login saved under their website login, each with its name and account number, and they tick the one this box should use. That box then stays on that app login only.
+- With only one app login, it's picked for them automatically.
+- Each box shows which app login it uses in My linked devices, so a family's boxes don't get mixed up.
+- To move a box to a different app login, they press "Change login" next to the box. Nobody needs to re-enter a code.
+- Orders, packages and expiry dates stay with each app login, as they do now.
 
 ## Rules
 - Codes are single-use and run out after 10 minutes. The pop-up shows a new code automatically when the old one runs out.
