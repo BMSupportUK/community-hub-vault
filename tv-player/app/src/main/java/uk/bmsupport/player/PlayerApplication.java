@@ -13,6 +13,9 @@ import java.util.List;
 
 /** One inactivity timer across the app's menus, preview and built-in playback. */
 public final class PlayerApplication extends Application implements Application.ActivityLifecycleCallbacks {
+    /** True once the customer has entered their PIN (or has none) since the app opened. */
+    static volatile boolean pinPassed = false;
+
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final List<Activity> activities = new ArrayList<>();
     private Activity foreground;
