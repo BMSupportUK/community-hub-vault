@@ -131,7 +131,14 @@ interface RailItem {
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
-  const { user, isStaff, isPending, signOut, hasAny, roles, hasRole, isFanZoneOnly } = useAuth();
+  const { user, isPending, signOut, hasAny: hasAnyRole, roles: authRoles, hasRole: hasAuthRole, isFanZoneOnly } = useAuth();
+  // The side menu follows the selected profile: a customer profile gets the
+  // customer icon set even when the signed-in person is staff.
+  const { staff: isStaff } = useProfilePortal();
+  const roles: AppRole[] = isStaff ? authRoles : authRoles.filter((r) => !["admin", "management", "staff", "moderator"].includes(r));
+  const hasAny = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
+  const hasRole = (r: AppRole) => roles.includes(r);
+  void hasAnyRole; void hasAuthRole;
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   // The portal tab bars show the inbox/mentions/notification icons beside Home,
