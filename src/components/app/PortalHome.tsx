@@ -139,7 +139,7 @@ export function PortalHome({ staff }: { staff: boolean }) {
                     <span className="text-base font-bold text-amber-200 drop-shadow">Hey</span>
                     <div className="relative h-8 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg">
                       <Nameplate
-                        id={nameplateId}
+                        id={isStaffAccount ? nameplateId : null}
                         className="absolute inset-0"
                         fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
                       />
