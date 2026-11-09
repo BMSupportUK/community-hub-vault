@@ -142,7 +142,7 @@ public final class PlayerApplication extends Application implements Application.
         return n;
     }
     /** Top-right announcement icon on the app's own screens (never over full-screen video). */
-    void refreshMajorIcon() { showMajorIcon(); }
+    void refreshMajorIcon() { showMajorIcon(); showAnnouncement(); }
     private void showMajorIcon() {
         Activity a = foreground;
         boolean want = a instanceof MainActivity && ((MainActivity) a).showsAnnouncementIcon() && !a.isFinishing() && MainActivity.isUnlocked()
