@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { revealPlayerDnsWithPassword } from "@/lib/staff-pin.functions";
 import { OffsitePlayerLogins } from "@/components/app/OffsitePlayerLogins";
+import { OffsitePlayerLoginRequests } from "@/components/app/OffsitePlayerLoginRequests";
 import { savePlayerChannelAliases, savePlayerDns, savePlayerMaintenance, testPlayerDns } from "@/lib/player.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
@@ -186,7 +187,7 @@ function AdminPlayerPageInner() {
       {section === "guide-matching" && <PlayerGuideMatchingSection />}
       {section === "watch-time" && <WatchTimeSection />}
       {section === "connection-limits" && <ConnectionLimitSection />}
-      {section === "logins" && <OffsitePlayerLogins />}
+      {section === "logins" && <><OffsitePlayerLoginRequests /><OffsitePlayerLogins /></>}
       {section === "devices" && <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>
         <ul className="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
