@@ -1,8 +1,7 @@
 import { AppPickCards } from "@/components/app/AppDemos";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
-import { useNavigate } from "@tanstack/react-router";
-import { MonitorDown, ArrowLeft, ArrowRight, CheckCircle2, Download, Headset, KeyRound, Loader2, PlayCircle, Tv } from "lucide-react";
+import { MonitorDown, ArrowLeft, ArrowRight, CheckCircle2, Download, KeyRound, Loader2, PlayCircle, Tv } from "lucide-react";
 import { DirectInstallSteps } from "@/components/app/DirectInstallSteps";
 import { useAlternativeInstallEnabled } from "@/hooks/use-alternative-install";
 import { SetupStepVideo } from "@/components/app/SetupStepVideo";
@@ -14,73 +13,18 @@ import { WindowsEnablerDownload } from "@/components/app/WindowsEnablerDownload"
 import { EnablerPinBox } from "@/components/app/EnablerPinBox";
 import { revealEnablerPin, createAccountEnablerPin, getAccountEnablerPinStatus } from "@/lib/enabler-pin.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { useBusinessOpen } from "@/hooks/use-business-open";
 import { supabase } from "@/integrations/supabase/client";
-import { orderStaffHelpTicket } from "@/lib/order-remote-tabs";
 import { selfInstallHandoff, sha256Hex } from "@/lib/enabler-handoff";
 import { createEnablerHandoff } from "@/lib/enabler-handoff.functions";
 
-export type SetupDeviceKey = "amazon" | "android" | "direct" | "alternative" | "remote";
+export type SetupDeviceKey = "amazon" | "android" | "direct" | "alternative";
 
 const DEVICES: { key: SetupDeviceKey; label: string; note: string; icon: typeof Tv }[] = [
   { key: "direct", label: "BM Direct Install", note: "Install straight on the TV, no phone or PC", icon: MonitorDown },
   { key: "amazon", label: "Amazon Fire TV", note: "Fire Stick, Cube or Fire TV — installs using our Phone or Windows app", icon: Tv },
   { key: "android", label: "Android / Google TV", note: "Android boxes and Google TV — installs using our Phone or Windows app", icon: Tv },
   { key: "alternative", label: "Alternative Install methods", note: "Other ways to get the apps", icon: Download },
-  { key: "remote", label: "Help from staff", note: "Let staff install it with you by screen share", icon: Headset },
 ];
-
-const STAFF_HELP_SUBJECT = "Help installing the apps on my TV";
-const STAFF_HELP_MESSAGE = "Hi,\n\nI'd like a member of staff to install the BM apps on my TV for me by screen share. I'm following the Install Guides \"Help from staff\" steps and will complete the Remote setup in this ticket so you can connect.\n\nThank you!";
-
-/** Remote connection screen: staff help the customer install over a ticket-scoped screen share. */
-function RemoteHelpSteps() {
-  const open = useBusinessOpen();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [creating, setCreating] = useState(false);
-
-  const createTicket = async () => {
-    if (!user || creating) return;
-    setCreating(true);
-    try {
-      const { data: cat } = await supabase.from("ticket_categories").select("id").eq("slug", "general").maybeSingle();
-      if (!cat) throw new Error("Could not open the ticket. Please try again.");
-      const { data: t, error } = await supabase
-        .from("tickets")
-        .insert({ ...orderStaffHelpTicket(user.id, cat.id, null), subject: STAFF_HELP_SUBJECT })
-        .select("id")
-        .single();
-      if (error || !t) throw new Error(error?.message ?? "Could not open the ticket. Please try again.");
-      const { error: msgErr } = await supabase.from("ticket_messages").insert({
-        ticket_id: t.id, sender_id: user.id, content: STAFF_HELP_MESSAGE, is_internal: false,
-      });
-      if (msgErr) throw new Error(msgErr.message);
-      toast.success("Follow the steps to connect your TV");
-      await navigate({ to: "/tickets", search: { id: t.id, tab: "setup" } });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not open the ticket. Please try again.");
-      setCreating(false);
-    }
-  };
-
-  return <div className="space-y-4">
-    <p className="text-sm text-muted-foreground">Prefer not to do it yourself? Staff can connect to your TV by screen share and install everything for you while you watch.</p>
-    <p className="text-sm text-muted-foreground">Open remote setup below. Get your website code there and enter it in BM TV Enabler. Once your TV is ready and connected, your ticket goes to staff.</p>
-    <p className="text-sm text-muted-foreground">Staff only see your TV while you're connected, and you can end it at any time.</p>
-    {open ? (
-      <Button onClick={createTicket} disabled={creating}>
-        {creating ? <Loader2 className="size-4 animate-spin" /> : <Headset className="size-4" />}
-        {creating ? "Opening ticket…" : "Open a ticket for help"}
-      </Button>
-    ) : (
-      <div className="space-y-2">
-        <Button disabled><Headset className="size-4" />Open a ticket for help</Button>
-        <p className="text-sm text-muted-foreground">Our office is closed right now, so this is only available during office hours. Try again when we're open and the button will create the ticket for you.</p>
-      </div>
-    )}
-  </div>;
-}
 
 export const INSTALL_SETUP_DEVICE_KEY = "install-guides-device";
 
@@ -120,8 +64,8 @@ function AccountEnablerPin({ userId }: { userId: string }) {
   return <EnablerPinBox scopeKey={`account:${userId}`} create={create} status={status} reveal={() => revealFn({ data: {} })} />;
 }
 
-/** Self-install answers are passed to the app; staff help uses ticket remote setup. */
-function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaffHelp: () => void }) {
+/** Self-install answers are passed to the app; staff help goes through the paid order's help button. */
+function TvSteps({ device }: { device: "amazon" | "android" }) {
   const [current, setCurrent] = useState(0);
   const [view, setView] = useState<"steps" | "video">("steps");
   const [apps, setApps] = useState<{ name: string; path: string }[] | null>(null);
@@ -192,7 +136,6 @@ function TvSteps({ device, onStaffHelp }: { device: "amazon" | "android"; onStaf
         <Button role="tab" aria-selected={view === "steps"} size="sm" variant={view === "steps" ? "default" : "outline"} onClick={() => setView("steps")}>Steps</Button>
         <Button role="tab" aria-selected={view === "video"} size="sm" variant={view === "video" ? "default" : "outline"} onClick={() => setView("video")}><PlayCircle className="size-4" />Video tutorial</Button>
       </div>
-      <Button variant="outline" size="sm" disabled={busy} onClick={onStaffHelp}><Headset className="size-4" />I need staff help</Button>
     </div>
 
     {view === "video" && <section aria-label={`Video for step ${current + 1}`} className="space-y-3">
@@ -267,7 +210,7 @@ export function DeviceInstallSetup({ alternative, device, onPick, section = "dir
 }) {
   const showAlternative = useAlternativeInstallEnabled();
   const devices = DEVICES.filter((d) =>
-    (section === "enabler" ? ["amazon", "android", "remote"].includes(d.key) : ["direct", "alternative"].includes(d.key))
+    (section === "enabler" ? ["amazon", "android"].includes(d.key) : ["direct", "alternative"].includes(d.key))
     && (d.key !== "alternative" || showAlternative));
   const chosen = devices.find((d) => d.key === device);
   // The Direct tab goes straight into the wizard — the device choice moved to its own tabs.
@@ -296,12 +239,11 @@ export function DeviceInstallSetup({ alternative, device, onPick, section = "dir
       </> : <>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground"><chosen.icon className="size-6 text-primary" />{chosen.label}</h2>
-          <Button variant="outline" size="sm" onClick={() => onPick(null)}><ArrowLeft className="size-4" />{chosen.key === "remote" ? "Return to Self Install" : "Change device"}</Button>
+          <Button variant="outline" size="sm" onClick={() => onPick(null)}><ArrowLeft className="size-4" />Change device</Button>
         </div>
         {chosen.key === "amazon" || chosen.key === "android"
-          ? <TvSteps device={chosen.key} onStaffHelp={() => onPick("remote")} />
-          : chosen.key === "direct" ? <DirectInstallSteps />
-          : chosen.key === "remote" ? <><RemoteHelpSteps /><div className="mt-5 xl:hidden"><EnablerDownloadSidebar /></div></> : alternative}
+          ? <TvSteps device={chosen.key} />
+          : chosen.key === "direct" ? <DirectInstallSteps /> : alternative}
       </>}
     </div>
   </div>;
