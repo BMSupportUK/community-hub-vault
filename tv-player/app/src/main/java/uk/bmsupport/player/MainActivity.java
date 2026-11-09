@@ -517,7 +517,8 @@ public class MainActivity extends Activity {
     }
 
     private boolean hasLogin() {
-        return !prefs.getString("user", "").isEmpty() && !prefs.getString("dns", "").isEmpty();
+        // A login copied from another box can't be unlocked here, so it doesn't count.
+        return !prefs.getString("user", "").isEmpty() && !prefs.getString("dns", "").isEmpty() && !SecureLogin.password(prefs).isEmpty();
     }
 
     private void startPolling() {
@@ -551,7 +552,7 @@ public class MainActivity extends Activity {
     /** Poll also reports what is on screen so admins see live connections. */
     private JSONObject pollBody() throws Exception {
         JSONObject b = new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", ""))
-                .put("login", prefs.getString("user", "")).put("version", appVersion());
+                .put("login", prefs.getString("user", "")).put("version", appVersion()).put("sig", appSignature());
         long since = prefs.getLong("np_since", 0);
         if (since > 0) b.put("watching", new JSONObject().put("kind", prefs.getString("np_kind", "live"))
                 .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
@@ -634,7 +635,7 @@ public class MainActivity extends Activity {
             JSONObject c = r.optJSONObject("credentials");
             // A login sent from the website (link code or the owner's device list) is the account holder's own
             // action, so it counts as the sign-in: no account number needed until log out or cleared data.
-            if (c != null) { ed.putString("user", c.optString("username")).putString("pass", c.optString("password")).putString("unlocked_for", prefs.getString("token", "")); unlocked = true; }
+            if (c != null) { ed.putString("user", c.optString("username")).putString("pass", SecureLogin.seal(c.optString("password"))).putString("unlocked_for", prefs.getString("token", "")); unlocked = true; }
             ed.apply();
             boolean now = hasLogin();
             if (c != null || had != now) ui.post(() -> {
@@ -643,7 +644,8 @@ public class MainActivity extends Activity {
             });
         } catch (Exception ex) {
             if (String.valueOf(ex.getMessage()).contains("401")) {
-                prefs.edit().remove("token").apply();
+                // Removed from the website (or unused for 60 days): sign out completely.
+                prefs.edit().remove("token").remove("user").remove("pass").remove("unlocked_for").apply();
                 ui.post(this::start);
             }
         }
@@ -853,7 +855,7 @@ public class MainActivity extends Activity {
 
     private String api(String action) throws Exception {
         String u = URLEncoder.encode(prefs.getString("user", ""), "UTF-8");
-        String p = URLEncoder.encode(prefs.getString("pass", ""), "UTF-8");
+        String p = URLEncoder.encode(SecureLogin.password(prefs), "UTF-8");
         return prefs.getString("dns", "") + "/player_api.php?username=" + u + "&password=" + p + (action.isEmpty() ? "" : "&action=" + action);
     }
 
@@ -862,7 +864,7 @@ public class MainActivity extends Activity {
     /** Addresses to try in order. Live tries MPEG-TS first (what most panels serve), then HLS. */
     private String[] streamUrls(Item it) {
         if (it.url != null && !it.url.isEmpty()) return new String[]{it.url};
-        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = prefs.getString("pass", "");
+        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = SecureLogin.password(prefs);
         switch (it.kind) {
             case "live": {
                 String base = d + "/live/" + u + "/" + p + "/" + it.id;
@@ -1839,7 +1841,7 @@ public class MainActivity extends Activity {
         }
         if ("catchup".equals(it.kind) && it.catchupEnd > it.catchupStart) {
             // Providers often close timeshift streams early; the player reconnects from where it stopped.
-            intent.putExtra("catchup_prefix", prefs.getString("dns", "").replaceAll("/+$", "") + "/timeshift/" + prefs.getString("user", "") + "/" + prefs.getString("pass", "") + "/")
+            intent.putExtra("catchup_prefix", prefs.getString("dns", "").replaceAll("/+$", "") + "/timeshift/" + prefs.getString("user", "") + "/" + SecureLogin.password(prefs) + "/")
                     .putExtra("catchup_id", it.catchupId).putExtra("catchup_start", it.catchupStart).putExtra("catchup_end", it.catchupEnd)
                     .putExtra("catchup_tz", prefs.getString("server_tz", "Europe/London"));
         }
@@ -2402,6 +2404,23 @@ public class MainActivity extends Activity {
 
     /** External VLC is gone from the app: BM Player plays everything, with its built-in backup engine. */
     private boolean defaultVlc() { return false; }
+
+    /** SHA-256 of the app's signing certificate, so the website can refuse altered copies. */
+    private String appSignature() {
+        try {
+            android.content.pm.Signature[] sigs;
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
+                sigs = pi.signingInfo.getApkContentsSigners();
+            } else {
+                sigs = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES).signatures;
+            }
+            byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(sigs[0].toByteArray());
+            StringBuilder sb = new StringBuilder();
+            for (byte x : d) sb.append(String.format("%02x", x));
+            return sb.toString();
+        } catch (Exception e) { return ""; }
+    }
 
     private String appVersion() {
         try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return "?"; }
@@ -3219,7 +3238,7 @@ public class MainActivity extends Activity {
 
     /** Xtream timeshift address: /timeshift/user/pass/minutes/YYYY-MM-DD:HH-MM/stream.ts (provider time). */
     private String catchupUrl(Item ch, long st, long en) {
-        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = prefs.getString("pass", "");
+        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = SecureLogin.password(prefs);
         long mins = Math.max(1, ((en > st ? en : st + 3600) - st + 59) / 60);
         java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd:HH-mm", java.util.Locale.UK);
         f.setTimeZone(java.util.TimeZone.getTimeZone(prefs.getString("server_tz", "Europe/London")));

@@ -14,6 +14,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { adminRemovePlayerDevice } from "@/lib/player.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player-live")({
   component: AdminPlayerLivePage,
@@ -69,6 +72,20 @@ function CopyValue({ text }: { text: string }) {
   );
 }
 
+function RemoveBoxButton({ deviceId, onDone }: { deviceId: string; onDone: () => void }) {
+  const remove = useServerFn(adminRemovePlayerDevice);
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button variant="destructive" size="sm" className="mt-3" disabled={busy} onClick={async () => {
+      if (!window.confirm("Remove this box? It will be logged out and must be linked again.")) return;
+      setBusy(true);
+      try { await remove({ data: { deviceId } }); toast.success("Box removed. It logs out on its next check-in."); onDone(); }
+      catch (e) { toast.error(e instanceof Error ? e.message : "Could not remove the box."); }
+      finally { setBusy(false); }
+    }}>Remove box</Button>
+  );
+}
+
 function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row | null; names: Record<string, string>; now: number; onOpenChange: (open: boolean) => void }) {
   const place = [row?.geo_city, row?.geo_region, row?.geo_country].filter(Boolean).join(", ");
   const coords = row?.geo_lat != null && row?.geo_lon != null ? `${row.geo_lat.toFixed(4)}, ${row.geo_lon.toFixed(4)}` : null;
@@ -108,6 +125,7 @@ function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row |
                 <Field label="Unlock failures" value={String(row.unlock_failures ?? 0)} />
                 <Field label="Unlock locked until" value={row.unlock_locked_until ? when(row.unlock_locked_until) : "Not locked"} />
               </div>
+              <RemoveBoxButton deviceId={row.id} onDone={() => onOpenChange(false)} />
             </section>
 
             <section>

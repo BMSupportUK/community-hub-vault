@@ -12,13 +12,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
+import { notMePlayerDevice, sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
 
 const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC", mac: "Mac", web: "iPhone / iPad browser" };
 
 export function PlayerDeviceLinkSection() {
   const sendCode = useServerFn(sendLoginWithCode);
   const sendDevice = useServerFn(sendLoginToDevice);
+  const notMeFn = useServerFn(notMePlayerDevice);
   const { devices, reload } = usePlayerDevices();
   const { user } = useAuth();
   const ownerId = user?.id;
@@ -52,9 +53,9 @@ export function PlayerDeviceLinkSection() {
     if (!login) { setError(typeItIn ? "Enter your app login and password." : "Tick the app login you want to send."); return; }
     setBusy(true);
     try {
-      if (target) await sendDevice({ data: { deviceId: target.id, ...login } });
-      else await sendCode({ data: { code, ...login } });
-      toast.success("Sent! Your app will sign in within a few seconds.");
+      const r = target ? await sendDevice({ data: { deviceId: target.id, ...login } }) : await sendCode({ data: { code, ...login } });
+      if (r?.held) toast.info("This login is already on 3 boxes. BM Support will approve the new box shortly.");
+      else toast.success("Sent! Your app will sign in within a few seconds.");
       setCode(""); setSelection(null); setTarget(null); setManual({ username: "", password: "" }); void reload();
     } catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setBusy(false); }
@@ -68,11 +69,18 @@ export function PlayerDeviceLinkSection() {
     if (!pick) { setError(typeItIn ? "Enter your app login and password first." : "Tick the app login you want to send, then press Send on the device."); return; }
     setBusy(true);
     try {
-      await sendDevice({ data: { deviceId: d.id, ...pick } });
-      toast.success(`Sent to ${d.name}. It will sign in within a few seconds.`);
+      const r = await sendDevice({ data: { deviceId: d.id, ...pick } });
+      if (r?.held) toast.info("This login is already on 3 boxes. BM Support will approve this box shortly.");
+      else toast.success(`Sent to ${d.name}. It will sign in within a few seconds.`);
       setSelection(null); setManual({ username: "", password: "" }); void reload();
     } catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
     finally { setBusy(false); }
+  }
+
+  async function notMe(d: PlayerDevice) {
+    if (!window.confirm(`Remove ${d.name} and tell BM Support it isn't yours?`)) return;
+    try { await notMeFn({ data: { deviceId: d.id } }); toast.success(`${d.name} removed. BM Support has been told.`); void reload(); }
+    catch (err) { toast.error(err instanceof Error ? err.message : "Please try again."); }
   }
 
   async function remove(d: PlayerDevice) {
@@ -140,6 +148,7 @@ export function PlayerDeviceLinkSection() {
             <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{d.name}</div>
               <div className="text-xs text-muted-foreground">{platformLabel[d.platform] ?? d.platform}</div></div>
             <Button size="sm" disabled={busy} onClick={() => void sendToDevice(d)}>Send</Button>
+            <Button size="sm" variant="outline" disabled={busy} title="This box isn't mine" onClick={() => void notMe(d)}>Not me</Button>
             <Button size="icon" variant="ghost" aria-label={`Remove ${d.name}`} onClick={() => void remove(d)}><Trash2 /></Button>
           </li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Use a code from the app to link one.</p>}
         </aside>

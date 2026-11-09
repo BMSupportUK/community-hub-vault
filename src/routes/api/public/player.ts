@@ -40,6 +40,7 @@ const Body = z.discriminatedUnion("action", [
     action: z.literal("poll"), device_token: Token,
     login: z.string().trim().max(120).optional(),
     version: z.string().trim().max(20).optional(),
+    sig: z.string().trim().max(128).optional(),
     watching: z.object({
       kind: z.string().transform((k) => k === "episode" ? "series" : k === "movie" ? "film" : ["live", "film", "series", "catchup"].includes(k) ? k : "live"),
       title: z.string().trim().max(200),
@@ -150,9 +151,15 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, iptv_username, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, watching_preview, platform")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, iptv_username, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, watching_preview, platform, linked_at")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
+        // A linked box unused for 60 days is unlinked and must be linked again.
+        const { isQuietBox, lockoutMinutes, WRONG_TRIES_PER_STEP, unusualPlace } = await import("@/lib/player-security");
+        if ((device.user_id || device.offsite_customer_id) && isQuietBox(device.last_seen_at, device.linked_at)) {
+          await supabaseAdmin.from("player_devices").delete().eq("id", device.id);
+          return json({ error: "Unknown device" }, 401);
+        }
 
         if (body.action === "announcement") {
           // Apps ask every few seconds; one shared read per 10s keeps this cheap for any number of players.
@@ -318,25 +325,38 @@ export const Route = createFileRoute("/api/public/player")({
 
         if (body.action === "unlock") {
           if (!device.user_id && !device.offsite_customer_id) return json({ error: "Link this app to your BM Support account first." }, 403);
-          const { data: lock } = await supabaseAdmin.from("player_devices").select("unlock_failures, unlock_locked_until").eq("id", device.id).single();
+          const { data: lock } = await supabaseAdmin.from("player_devices").select("unlock_failures, unlock_locked_until, unlock_lock_level").eq("id", device.id).single();
+          const waitText = (until: string) => {
+            const mins = Math.max(1, Math.ceil((Date.parse(until) - Date.now()) / 60_000));
+            return `Too many wrong tries. Please wait ${mins >= 120 ? `${Math.ceil(mins / 60)} hours` : `${mins} minutes`} and try again.`;
+          };
           if (lock?.unlock_locked_until && new Date(lock.unlock_locked_until).getTime() > Date.now())
-            return json({ error: "Too many wrong tries. Please wait 15 minutes and try again." }, 429);
+            return json({ error: waitText(lock.unlock_locked_until) }, 429);
           // Each app login has its own number: a customer's second single-connection login unlocks with its own.
           const { data: cn } = device.user_id
             ? await supabaseAdmin.rpc("device_login_player_number", { _owner: device.user_id, _login: device.iptv_username ?? "" })
                 .then((r) => ({ data: r.data == null ? null : { number: r.data as number } }))
             : await supabaseAdmin.from("player_offsite_customers").select("number").eq("id", device.offsite_customer_id as string).maybeSingle();
           if (cn && String(cn.number) === body.account_number) {
-            await supabaseAdmin.from("player_devices").update({ unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
+            await supabaseAdmin.from("player_devices").update({ unlock_failures: 0, unlock_locked_until: null, unlock_lock_level: 0 }).eq("id", device.id);
             return json({ ok: true });
           }
           const fails = (lock?.unlock_failures ?? 0) + 1;
-          const locked = fails >= 5;
+          const locked = fails >= WRONG_TRIES_PER_STEP;
+          // Each further run of wrong tries locks longer: 15 minutes, then 1 hour, then 24 hours.
+          const level = locked ? (lock?.unlock_lock_level ?? 0) + 1 : (lock?.unlock_lock_level ?? 0);
+          const until = locked ? new Date(Date.now() + lockoutMinutes(level) * 60_000).toISOString() : null;
           await supabaseAdmin.from("player_devices").update({
             unlock_failures: locked ? 0 : fails,
-            unlock_locked_until: locked ? new Date(Date.now() + 15 * 60_000).toISOString() : null,
+            unlock_locked_until: until,
+            unlock_lock_level: level,
           }).eq("id", device.id);
-          return json({ error: locked ? "Too many wrong tries. Please wait 15 minutes and try again." : "That account number isn't right. You can find it in your subscription box on bmsupport.uk." }, locked ? 429 : 401);
+          if (locked && lockoutMinutes(level) >= 24 * 60) {
+            await supabaseAdmin.from("player_security_events").insert({ kind: "lockout", device_id: device.id, owner_id: device.user_id, login: device.iptv_username, detail: { level } });
+            const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
+            await notifyPlayerAdmins(supabaseAdmin, "BM Player locked for 24 hours", `A ${device.platform ?? "BM Player"} box${device.iptv_username ? ` on login ${device.iptv_username}` : ""} kept entering the wrong account number.`);
+          }
+          return json({ error: locked ? waitText(until as string) : "That account number isn't right. You can find it in your subscription box on bmsupport.uk." }, locked ? 429 : 401);
         }
 
         if (body.action === "voice") {
@@ -539,10 +559,33 @@ export const Route = createFileRoute("/api/public/player")({
           cf: (request as unknown as { cf?: Record<string, unknown> }).cf ?? null,
           headerCountry: request.headers.get("cf-ipcountry"),
         });
+        const { appGenuine } = await import("@/lib/player-security");
+        const genuine = appGenuine(device.platform, body.sig);
+        if (genuine === "fake") console.warn(`[player poll] altered app refused device=${device.id.slice(0, 8)}`);
         const [{ data: settings }, { data: pending }] = await Promise.all([
           supabaseAdmin.from("player_settings").select("dns, maintenance_enabled, maintenance_message, checkin_slowdown").eq("id", 1).maybeSingle(),
-          supabaseAdmin.from("player_pending_credentials").delete().eq("device_id", device.id).select("username, password, created_at").maybeSingle(),
+          // Logins only go to linked, genuine apps, and never while held for the box limit.
+          (device.user_id || device.offsite_customer_id) && genuine === "ok"
+            ? supabaseAdmin.from("player_pending_credentials").delete().eq("device_id", device.id).eq("held", false).select("username, password, created_at").maybeSingle()
+            : Promise.resolve({ data: null }),
         ]);
+        // Same login in another country within 30 minutes: warn admins (once per login every 6 hours).
+        const loginNow = body.login || device.iptv_username;
+        const here = (fields as { geo_country?: string | null }).geo_country ?? null;
+        if (loginNow && here && device.user_id) {
+          const { data: others } = await supabaseAdmin.from("player_devices").select("geo_country, last_seen_at")
+            .eq("iptv_username", loginNow).neq("id", device.id).gte("last_seen_at", new Date(now - 30 * 60_000).toISOString()).limit(20);
+          const away = unusualPlace(here, others ?? [], now);
+          if (away) {
+            const { count } = await supabaseAdmin.from("player_security_events").select("id", { count: "exact", head: true })
+              .eq("kind", "unusual_place").eq("login", loginNow).gte("created_at", new Date(now - 6 * 3600_000).toISOString());
+            if (!count) {
+              await supabaseAdmin.from("player_security_events").insert({ kind: "unusual_place", device_id: device.id, owner_id: device.user_id, login: loginNow, detail: { countries: [here, away] } });
+              const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
+              await notifyPlayerAdmins(supabaseAdmin, "Possible login sharing", `Login ${loginNow} is being used in ${here} and ${away} at the same time.`);
+            }
+          }
+        }
         // A poll that is about to hand the app its login must never wait on an
         // outside lookup; every later poll can pay for a fresh VPN verdict.
         if (!pending && needsVpnCheck({ ip, checkedAt: device.vpn_checked_at, status: device.vpn_status, now })) {

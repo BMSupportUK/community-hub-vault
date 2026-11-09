@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { revealPlayerDnsWithPassword } from "@/lib/staff-pin.functions";
 import { OffsitePlayerLogins } from "@/components/app/OffsitePlayerLogins";
 import { OffsitePlayerLoginRequests } from "@/components/app/OffsitePlayerLoginRequests";
+import { PlayerSecuritySection } from "@/components/app/PlayerSecuritySection";
 import { savePlayerChannelAliases, savePlayerDns, savePlayerMaintenance, testPlayerDns } from "@/lib/player.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
@@ -37,11 +38,12 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   ] }),
 });
 
-type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "buffering" | "channel-status" | "guide-matching" | "connection-limits" | "announcements" | "major-announcements" | "watch-time";
+type Section = "dns" | "maintenance" | "channels" | "logins" | "security" | "devices" | "buffering" | "channel-status" | "guide-matching" | "connection-limits" | "announcements" | "major-announcements" | "watch-time";
 const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe; managementToo?: boolean }[] = [
   { key: "dns", label: "DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe },
   { key: "maintenance", label: "Maintenance", desc: "Take every BM Player app offline with a message.", icon: Wrench },
   { key: "channels", label: "Sports guide channel matching", desc: "Link guide channel names to playlist names.", icon: Link2 },
+  { key: "security", label: "Security", desc: "Approve extra boxes and check sharing or lockout warnings.", icon: ShieldAlert, managementToo: true },
   { key: "logins", label: "Link non-website customer", desc: "Enter a BM Player link code and send the customer's app login.", icon: KeyRound },
   { key: "devices", label: "Linked devices", desc: "How many apps are linked on each device type.", icon: Smartphone },
   { key: "connection-limits", label: "Connection limit investigations", desc: "Logins seen over their connection limit.", icon: ShieldAlert },
@@ -187,6 +189,7 @@ function AdminPlayerPageInner() {
       {section === "guide-matching" && <PlayerGuideMatchingSection />}
       {section === "watch-time" && <WatchTimeSection />}
       {section === "connection-limits" && <ConnectionLimitSection />}
+      {section === "security" && <PlayerSecuritySection />}
       {section === "logins" && <><OffsitePlayerLoginRequests /><OffsitePlayerLogins /></>}
       {section === "devices" && <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>

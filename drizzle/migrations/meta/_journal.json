@@ -2276,6 +2276,13 @@
       "when": 1794236546533,
       "tag": "0324_player_device_nickname",
       "breakpoints": true
+    },
+    {
+      "idx": 325,
+      "version": "7",
+      "when": 1794244659925,
+      "tag": "0325_player_security",
+      "breakpoints": true
     }
   ]
 }
