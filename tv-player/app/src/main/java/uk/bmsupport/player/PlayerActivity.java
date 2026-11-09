@@ -269,6 +269,15 @@ public class PlayerActivity extends Activity {
         ui.postDelayed(this, 2000);
     } };
 
+    /** Re-opened straight into playback after being away: close it so the main screen asks the PIN first. */
+    @Override protected void onStart() {
+        super.onStart();
+        if (!PlayerApplication.pinPassed) {
+            startActivity(new android.content.Intent(this, MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP));
+            finish();
+        }
+    }
+
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
