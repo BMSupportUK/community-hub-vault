@@ -134,7 +134,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
   const selectEditAccount = (customer: Customer, selected: Account | null) => {
     setEditAccountId(selected?.id ?? "");
     setProductId(selected?.packageProductId ?? "");
-    setPackageAccount(customer.accounts.length > 1 ? selected : null);
+    setPackageAccount(customer.accounts.length > 1 || ((customer as { ownerAccountCount?: number }).ownerAccountCount ?? 0) > 1 ? selected : null);
     setRenewalAccount(customer.accounts.length > 1 ? selected : null);
     setRenewedDate(renewalDay(customer.accounts.length > 1 ? selected?.renewedAt ?? null : customer.renewedAt));
     setLoginEditing(!customer.hasSiteAccount && selected ? { customer, account: selected } : null);
