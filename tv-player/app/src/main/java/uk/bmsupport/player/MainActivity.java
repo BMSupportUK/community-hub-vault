@@ -848,9 +848,9 @@ public class MainActivity extends Activity {
         left.addView(text("Or type this key: " + secret, 13, MUTED, false));
         left.addView(text("No authenticator app? Get one:", 15, TEXT, true));
         LinearLayout storeRow = row();
-        String apple = apps == null ? "" : apps.optString("apple"), android = apps == null ? "" : apps.optString("android");
+        String apple = apps == null ? "" : apps.optString("apple"), playUrl = apps == null ? "" : apps.optString("android");
         storeRow.addView(button("iPhone (App Store)", v -> showStoreQr("Google Authenticator for iPhone", apple)));
-        storeRow.addView(button("Android (Play Store)", v -> showStoreQr("Google Authenticator for Android", android)));
+        storeRow.addView(button("Android (Play Store)", v -> showStoreQr("Google Authenticator for Android", playUrl)));
         left.addView(storeRow);
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER);
