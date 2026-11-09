@@ -180,6 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("focus", onFocus);
     window.addEventListener(ACTIVE_PROFILE_EVENT, onFocus);
+    window.addEventListener("storage", onFocus);
     document.addEventListener("visibilitychange", onVis);
     const channel = supabase
       .channel(`user-roles-${uid}`)
@@ -195,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearInterval(interval);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener(ACTIVE_PROFILE_EVENT, onFocus);
+      window.removeEventListener("storage", onFocus);
       document.removeEventListener("visibilitychange", onVis);
       void supabase.removeChannel(channel);
     };

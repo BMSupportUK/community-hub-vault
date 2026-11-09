@@ -32,6 +32,10 @@ export function customerActionAllowed(name: string): boolean {
   return CUSTOMER_ACTIONS.has(name);
 }
 
+export function staffPasswordReturnAllowed(ownerId: string, checkedId: string | undefined, error: unknown, hasVerifiedFactor: boolean, assurance: unknown): boolean {
+  return !!ownerId && ownerId === checkedId && !error && (!hasVerifiedFactor || assurance === "aal2");
+}
+
 export interface ProfileAccess {
   profileId: string | null;
   restricted: boolean;

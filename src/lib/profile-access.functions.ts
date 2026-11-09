@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { ProfileAccess } from "./profile-access";
+import { staffPasswordReturnAllowed } from "./profile-access";
 
 export const getProfileAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -41,7 +42,7 @@ export const restoreStaffProfile = createServerFn({ method: "POST" })
     const { data: checked, error } = await verifier.auth.signInWithPassword({ email: identity.user.email, password: data.password });
     if (checked.session) await verifier.auth.signOut({ scope: "local" });
     if (error || checked.user?.id !== context.userId) throw new Error("Incorrect account password.");
-    if (identity.user.factors?.some((f) => f.status === "verified") && context.claims.aal !== "aal2") throw new Error("Sign in again and complete two-factor verification to restore staff access.");
+    if (!staffPasswordReturnAllowed(context.userId, checked.user?.id, error, identity.user.factors?.some((f) => f.status === "verified") ?? false, context.claims.aal)) throw new Error("Sign in again and complete two-factor verification to restore staff access.");
     const { data: restored, error: restoreError } = await supabaseAdmin.rpc("restore_profile_staff_scope", { _session: sid, _owner: context.userId, _credential: data.profileId });
     if (restoreError || !restored) throw new Error("This account no longer has staff access.");
     return { success: true };
