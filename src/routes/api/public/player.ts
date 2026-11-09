@@ -49,6 +49,7 @@ const Body = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
+  z.object({ action: z.literal("unlock_status"), device_token: Token }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('guide_category_open'), device_token: Token, category: z.string().trim().min(1).max(200) }),
@@ -258,6 +259,15 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "unlink") {
           await supabaseAdmin.from("player_devices").delete().eq("id", device.id);
           return json({ ok: true });
+        }
+
+        if (body.action === "unlock_status") {
+          // Set from the website subscription box; one use, valid for 2 minutes.
+          const { data: r } = await supabaseAdmin.from("player_devices").select("remote_unlock_at").eq("id", device.id).single();
+          const at = r?.remote_unlock_at ? Date.parse(r.remote_unlock_at) : 0;
+          if (!at) return json({ unlocked: false });
+          await supabaseAdmin.from("player_devices").update({ remote_unlock_at: null, unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
+          return json({ unlocked: Date.now() - at <= 2 * 60_000 });
         }
 
         if (body.action === "unlock") {

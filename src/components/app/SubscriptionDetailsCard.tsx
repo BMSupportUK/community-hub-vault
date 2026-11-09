@@ -6,6 +6,7 @@ import { useAccountProfiles } from "@/components/app/AccountProfiles";
 import { requestProfileChooser } from "@/lib/account-profiles";
 import { cn } from "@/lib/utils";
 import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
+import { SendAccountNumber } from "@/components/app/SendAccountNumber";
 import { Nameplate } from "@/components/app/Nameplate";
 import { customerJoinedYear, customerYearsFromYear } from "@/lib/customer-joined-year";
 
@@ -183,9 +184,9 @@ export function SubscriptionDetailsCard({
             </div>
           )}
           {(loginNumbers.find((r) => r.credential_id === activeProfile?.id)?.number ?? customerNumber) && (
-            <p className={cn("rounded-full border border-white/30 bg-background/20 px-3 py-1 font-mono font-semibold tracking-wider text-white", fill ? "mt-1 text-sm md:text-lg" : compact ? "py-0.5 text-xs" : "mt-1 text-sm")}>
+            <SendAccountNumber className={cn("rounded-full border border-white/30 bg-background/20 px-3 py-1 font-mono font-semibold tracking-wider text-white hover:bg-background/40 disabled:opacity-60", fill ? "mt-1 text-sm md:text-lg" : compact ? "py-0.5 text-xs" : "mt-1 text-sm")}>
               Account no. {loginNumbers.find((r) => r.credential_id === activeProfile?.id)?.number ?? customerNumber}
-            </p>
+            </SendAccountNumber>
           )}
           <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px]" : "text-xs mt-0.5")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}

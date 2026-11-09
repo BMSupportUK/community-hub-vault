@@ -734,6 +734,27 @@ public class MainActivity extends Activity {
         android.widget.ScrollView sc = scrollable(root);
         setContentView(sc);
         NumberPad.firstKey(pad).requestFocus();
+        pollRemoteUnlock(go, status);
+    }
+
+    /** The customer can press their account number on bmsupport.uk to unlock this screen. */
+    private void pollRemoteUnlock(Button go, TextView status) {
+        ui.postDelayed(() -> {
+            if (!"unlock".equals(screen) || unlocked || isFinishing()) return;
+            io.execute(() -> {
+                boolean ok = false;
+                try {
+                    ok = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "unlock_status")
+                            .put("device_token", prefs.getString("token", "")).toString())).optBoolean("unlocked", false);
+                } catch (Exception ignored) {}
+                final boolean done = ok;
+                ui.post(() -> {
+                    if (!"unlock".equals(screen) || unlocked) return;
+                    if (done) { unlocked = true; ((PlayerApplication) getApplication()).refreshMajor(); showHome(); syncFavourites(null); ProgressSync.pull(this, true, () -> { if ("home".equals(screen)) showHome(); }); }
+                    else pollRemoteUnlock(go, status);
+                });
+            });
+        }, 3000);
     }
 
     private void showHome() {
