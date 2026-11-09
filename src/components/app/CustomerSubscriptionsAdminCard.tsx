@@ -294,14 +294,14 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
               {/* All card actions sit on one line; the row scrolls sideways instead of wrapping. */}
               <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {(canReward || viewCredentials) && user && <MemberCredentialsSection ownerId={c.userId} ownerLabel={name} currentUserId={user.id} showPinReset={c.hasSiteAccount} readOnly={!canReward} />}
-                {c.hasSiteAccount && memberHeader?.(c.userId)}
+                {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && memberHeader?.(c.userId)}
                 {c.hasSiteAccount && <CustomerAccountSwitchButton customerId={c.userId} name={name} />}
                 {c.hasSiteAccount && <CustomerPortalLinkButtons customerId={c.userId} name={name} />}
                 {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
                 {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
               </div>
             </header>
-            {c.hasSiteAccount && memberRoles?.(c.userId)}
+            {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && memberRoles?.(c.userId)}
             {lines.map((a, i) => {
               const renewedAt = multi && a ? a.renewedAt ?? null : c.renewedAt;
               const pkg = (multi && a ? a.package : c.package) || "Not recorded";
@@ -321,7 +321,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
             })}
             <div className="mt-1 h-1 w-full rounded-full bg-foreground/25" aria-hidden="true" />
             <dl className="space-y-2 pt-3 text-sm">
-              {c.hasSiteAccount && memberExtras?.(c.userId)}
+              {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && memberExtras?.(c.userId)}
               <div className="flex flex-wrap items-baseline gap-x-1.5">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Year joined:</span><span>{customerJoinedYear(c.firstSubscriptionAt) ?? "Not recorded"}</span>
                 <span className="text-muted-foreground">·</span>
@@ -335,7 +335,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
                 return pending && canReward ? <Button variant="outline" size="sm" className="h-7" disabled={!pending.referrerAccounts.length} title={!pending.referrerAccounts.length ? "Referrer has no saved subscription account" : `Order ${pending.ref ?? pending.orderId}`} onClick={() => { setReward(pending); setAccount(pending.referrerAccounts.length === 1 ? pending.referrerAccounts[0].id : ""); }}><Gift /> Add referral bonus</Button> : null;
               })()}</span></Detail>
             </dl>
-            {c.hasSiteAccount && memberDetails?.(c.userId)}
+            {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && memberDetails?.(c.userId)}
           </article>);
         })}</div>
       )}
