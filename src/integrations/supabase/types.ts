@@ -6077,6 +6077,7 @@ export type Database = {
           last_seen_at: string
           linked_at: string | null
           name: string
+          nickname: string | null
           offsite_customer_id: string | null
           platform: string
           remote_unlock_at: string | null
@@ -6110,6 +6111,7 @@ export type Database = {
           last_seen_at?: string
           linked_at?: string | null
           name?: string
+          nickname?: string | null
           offsite_customer_id?: string | null
           platform?: string
           remote_unlock_at?: string | null
@@ -6143,6 +6145,7 @@ export type Database = {
           last_seen_at?: string
           linked_at?: string | null
           name?: string
+          nickname?: string | null
           offsite_customer_id?: string | null
           platform?: string
           remote_unlock_at?: string | null

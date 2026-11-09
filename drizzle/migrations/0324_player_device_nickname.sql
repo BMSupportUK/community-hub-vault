@@ -1,0 +1,1 @@
+ALTER TABLE public.player_devices ADD COLUMN IF NOT EXISTS nickname text CHECK (nickname IS NULL OR char_length(nickname) <= 60);
