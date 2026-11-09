@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   ] }),
 });
 
-type Section = "dns" | "maintenance" | "channels" | "logins" | "devices" | "buffering" | "channel-status" | "guide-matching" | "connection-limits" | "announcements" | "major-announcements" | "watch-time";
+type Section = "dns" | "maintenance" | "channels" | "logins" | "security" | "devices" | "buffering" | "channel-status" | "guide-matching" | "connection-limits" | "announcements" | "major-announcements" | "watch-time";
 const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe; managementToo?: boolean }[] = [
   { key: "dns", label: "DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe },
   { key: "maintenance", label: "Maintenance", desc: "Take every BM Player app offline with a message.", icon: Wrench },
