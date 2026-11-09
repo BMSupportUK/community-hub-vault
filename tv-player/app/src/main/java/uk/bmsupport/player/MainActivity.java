@@ -517,7 +517,8 @@ public class MainActivity extends Activity {
     }
 
     private boolean hasLogin() {
-        return !prefs.getString("user", "").isEmpty() && !prefs.getString("dns", "").isEmpty();
+        // A login copied from another box can't be unlocked here, so it doesn't count.
+        return !prefs.getString("user", "").isEmpty() && !prefs.getString("dns", "").isEmpty() && !SecureLogin.password(prefs).isEmpty();
     }
 
     private void startPolling() {
@@ -643,7 +644,8 @@ public class MainActivity extends Activity {
             });
         } catch (Exception ex) {
             if (String.valueOf(ex.getMessage()).contains("401")) {
-                prefs.edit().remove("token").apply();
+                // Removed from the website (or unused for 60 days): sign out completely.
+                prefs.edit().remove("token").remove("user").remove("pass").remove("unlocked_for").apply();
                 ui.post(this::start);
             }
         }
