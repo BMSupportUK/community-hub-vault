@@ -541,6 +541,7 @@ public class PlayerActivity extends Activity {
                 } else if (s == Player.STATE_READY) {
                     if (stallStartedAt > 0) onStallEnded(now - stallStartedAt, reconnects > 0);
                     everReady = true; stallStartedAt = 0; reconnects = 0; lastStableAt = now;
+                    if (player != null) surveySubtitles(player.getCurrentTracks());
                     showFeed(FeedStatus.label(blackSent, false));
                     if ("live".equals(kind())) {
                         ui.removeCallbacks(cleanPlay); ui.postDelayed(cleanPlay, ChannelHealth.CLEAN_MS);
