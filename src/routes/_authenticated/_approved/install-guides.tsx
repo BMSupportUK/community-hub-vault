@@ -31,7 +31,7 @@ import { INSTALL_TAB_LABELS_KEY, INSTALL_TAB_ORDER_KEY, installTabLabel, resolve
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { useProfilePortal } from "@/components/app/AccountProfiles";
-import { DeviceInstallSetup, StaffInstallHelp, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
+import { DeviceInstallSetup, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
 import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
 import { WindowsPlayerDownload } from "@/components/app/WindowsPlayerDownload";
@@ -147,16 +147,13 @@ function InstallGuidesPage() {
   const { tab: tabParam, checkout: checkoutToken } = Route.useSearch();
   // Opening the guides screen always starts on the Welcome tab (deep links
   // with an explicit ?tab= still win); we never restore the last viewed tab.
-  const legacyTab = (t?: string) => (t === "enabler" || t === "phone-windows-setup" ? "staff-help" : t === "get-app" ? "setup" : t);
+  const legacyTab = (t?: string) => (t === "enabler" || t === "phone-windows-setup" || t === "staff-help" ? "setup" : t === "get-app" ? "setup" : t);
   const [tab, setTab] = useState<string>(() => legacyTab(tabParam) || "welcome");
   useEffect(() => {
     const nextTab = legacyTab(tabParam);
     if (nextTab) setTab(nextTab);
   }, [tabParam]);
-  // Only TV setup screens reserve a column for Enabler downloads.
-  // Guides and videos use the full available width without adverts.
   const [setupDevice, setSetupDevice] = useState<SetupDeviceKey | null>(() => readStoredSetupDevice());
-  const showEnablerDownloads = tab === "staff-help";
   const pickSetupDevice = (d: SetupDeviceKey | null) => {
     setSetupDevice(d);
     try {
@@ -724,12 +721,6 @@ function InstallGuidesPage() {
             </PhotoPanel>
           </TabsContent>
 
-          <TabsContent value="staff-help" className="mt-0 min-w-0">
-            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
-              <StaffInstallHelp />
-            </PhotoPanel>
-          </TabsContent>
-
           <TabsContent value="ios-setup" className="mt-0 min-w-0">
             <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
               <div className="w-fit max-w-full rounded-lg border border-border bg-surface/70 p-5 sm:p-6">
@@ -946,11 +937,7 @@ function InstallGuidesPage() {
         </Tabs>
       </div>
 
-      {showEnablerDownloads && (
-        <aside className="hidden xl:block w-full xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6 xl:w-[300px] 2xl:w-[540px]">
-          <EnablerDownloadSidebar />
-        </aside>
-      )}
+
       </div>
 
       {/* Guide viewer — the link is short-lived and view-only */}
