@@ -16,3 +16,11 @@ test('missing episode data still labels the card',()=>{
   expect(episodeTitle({})).toEqual({number:'',title:'Episode'});
   expect(episodeTitle(undefined)).toEqual({number:'',title:'Episode'});
 });
+
+const { test: t2, expect: e2 } = require('bun:test');
+const { episodeTitle: et } = require('../episode-title.cjs');
+t2('series name and S01E03 codes are removed from episode titles', () => {
+  e2(et({ episode: '3', name: 'Breaking Bad S01E03 - Pilot' }, 'Breaking Bad').title).toBe('Pilot');
+  e2(et({ episode: '3', name: 'Breaking Bad (2008) - S01 E03 - Pilot' }, 'Breaking Bad (2008)').title).toBe('Pilot');
+  e2(et({ episode: '1', name: 'S02E01 Grilled' }, 'Breaking Bad').title).toBe('Grilled');
+});
