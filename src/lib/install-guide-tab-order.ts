@@ -3,7 +3,6 @@ export const INSTALL_TAB_ORDER_KEY = "install_guides_tab_order";
 export const INSTALL_TABS = [
   { key: "welcome", label: "Welcome" },
   { key: "setup", label: "Setup Device | Direct To Device" },
-  { key: "link-device", label: "Link Device" },
   { key: "backup-apps", label: "Backup Apps" },
   { key: "staff-help", label: "Help from staff" },
   { key: "ios-setup", label: "Apps For | iOS" },
@@ -20,10 +19,10 @@ export function resolveInstallTabOrder(saved: unknown): InstallTabKey[] {
   const list = Array.isArray(saved) ? saved : [];
   const picked = list.filter((k, i): k is InstallTabKey => all.includes(k as InstallTabKey) && list.indexOf(k) === i);
   const order = [...picked, ...all.filter((k) => !picked.includes(k))];
-  // Older saved orders insert the new section beside device linking, not at the end.
+  // Older saved orders insert the new section after device setup, not at the end.
   if (!picked.includes("backup-apps")) {
     const withoutBackup: InstallTabKey[] = order.filter((k) => k !== "backup-apps");
-    withoutBackup.splice(withoutBackup.indexOf("link-device") + 1, 0, "backup-apps");
+    withoutBackup.splice(withoutBackup.indexOf("setup") + 1, 0, "backup-apps");
     return withoutBackup;
   }
   return order;

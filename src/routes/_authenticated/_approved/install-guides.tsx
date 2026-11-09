@@ -33,7 +33,6 @@ import { StaffPortalTabs } from "@/components/app/StaffPortalTabs";
 import { useProfilePortal } from "@/components/app/AccountProfiles";
 import { DeviceInstallSetup, StaffInstallHelp, EnablerDownloadSidebar, INSTALL_SETUP_DEVICE_KEY, readStoredSetupDevice, type SetupDeviceKey } from "@/components/app/DeviceInstallSetup";
 import { IosPurpleCard } from "@/components/app/IosPurplePlayerCard";
-import { PlayerDeviceLinkSection } from "@/components/app/PlayerDeviceLinkSection";
 import { DownloadLogAdmin } from "@/components/app/DownloadLogAdmin";
 import { WindowsPlayerDownload } from "@/components/app/WindowsPlayerDownload";
 import { MacPlayerDownload } from "@/components/app/MacPlayerDownload";
@@ -716,12 +715,6 @@ function InstallGuidesPage() {
                   </IllustratedHero>
                 }
               />
-            </PhotoPanel>
-          </TabsContent>
-
-          <TabsContent value="link-device" className="mt-0 min-w-0">
-            <PhotoPanel className="min-h-[60vh] lg:min-h-[70vh]">
-              <PlayerDeviceLinkSection />
             </PhotoPanel>
           </TabsContent>
 

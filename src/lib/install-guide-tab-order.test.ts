@@ -5,7 +5,7 @@ import { moveTab, resolveInstallTabOrder } from "./install-guide-tab-order";
 test("saved order is used and missing pills are appended", () => {
   const o = resolveInstallTabOrder(["guides", "bogus", "welcome"]);
   expect(o.slice(0, 3)).toEqual(["guides", "welcome", "setup"]);
-  expect(o.length).toBe(9);
+  expect(o.length).toBe(8);
 });
 
 test("phone and Windows setup remains hidden even in a saved order", () => {
@@ -24,10 +24,13 @@ test("up/down arrows swap neighbours and stop at the ends", () => {
 });
 
 import { installTabLabel, resolveInstallTabLabels } from "./install-guide-tab-order";
-test("Backup Apps follows Link Device in defaults and older saved orders", () => {
+test("Link Device is its own page, not an Install Guides pill", () => {
+  expect(resolveInstallTabOrder(["link-device", "welcome"])).not.toContain("link-device");
+});
+test("Backup Apps follows device setup in defaults and older saved orders", () => {
   for (const saved of [null, ["guides", "link-device", "welcome", "setup"]]) {
     const order = resolveInstallTabOrder(saved);
-    expect(order[order.indexOf("link-device") + 1]).toBe("backup-apps");
+    expect(order[order.indexOf("setup") + 1]).toBe("backup-apps");
   }
 });
 test("custom pill name replaces default; blank falls back", () => {
