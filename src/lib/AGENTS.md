@@ -48,3 +48,4 @@
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Category-linked guide channels never resolve to replay feeds unless the guide names a replay, so numbered event feeds (e.g. NFL Sunday Ticket) keep their live channel.
 - Account-number send: owner-checked remote_unlock_at; unlock screens poll `unlock_status` (one use, 2 min, counts as check-in).
+- BM Player login approval: unlock-screen `unlock_status` polls raise a 5-min owner request (bell + push); website pop-up approves via `decide_player_login` (may switch profile), which sets remote_unlock_at; number entry stays as backup.

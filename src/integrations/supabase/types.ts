@@ -6241,6 +6241,44 @@ export type Database = {
           },
         ]
       }
+      player_login_approvals: {
+        Row: {
+          created_at: string
+          credential_id: string | null
+          decided_at: string | null
+          device_id: string
+          id: string
+          owner_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          credential_id?: string | null
+          decided_at?: string | null
+          device_id: string
+          id?: string
+          owner_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string | null
+          decided_at?: string | null
+          device_id?: string
+          id?: string
+          owner_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_login_approvals_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "player_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_major_announcements: {
         Row: {
           active: boolean
@@ -9750,6 +9788,10 @@ export type Database = {
         Args: { _approve: boolean; _id: string }
         Returns: string
       }
+      decide_player_login: {
+        Args: { p_approve: boolean; p_credential: string; p_id: string }
+        Returns: string
+      }
       decide_shift_swap: {
         Args: { _approve: boolean; _id: string }
         Returns: string
@@ -10355,6 +10397,17 @@ export type Database = {
           expiry_at: string
           id: string
           player_number: number
+        }[]
+      }
+      my_player_login_requests: {
+        Args: never
+        Returns: {
+          created_at: string
+          current_login: string
+          device_id: string
+          device_name: string
+          id: string
+          platform: string
         }[]
       }
       my_profile_access: { Args: never; Returns: Json }

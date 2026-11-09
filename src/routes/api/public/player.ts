@@ -266,7 +266,21 @@ export const Route = createFileRoute("/api/public/player")({
           // Polling the unlock screen counts as a check-in, so the website shows the box as On.
           const { data: r } = await supabaseAdmin.from("player_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id).select("remote_unlock_at").single();
           const at = r?.remote_unlock_at ? Date.parse(r.remote_unlock_at) : 0;
-          if (!at) return json({ unlocked: false });
+          if (!at) {
+            // Ask the owner to approve this login on the website (one request per 5 minutes per box).
+            if (device.user_id) {
+              const since = new Date(Date.now() - 5 * 60_000).toISOString();
+              const { data: open } = await supabaseAdmin.from("player_login_approvals" as any).select("id").eq("device_id", device.id).gt("created_at", since).limit(1);
+              if (!open?.length) {
+                await supabaseAdmin.from("player_login_approvals" as any).insert({ device_id: device.id, owner_id: device.user_id });
+                const title = "Approve BM Player login";
+                const msg = "A BM Player app is asking to open on your account. Tap to approve or deny.";
+                await supabaseAdmin.from("user_notifications").insert({ user_id: device.user_id, kind: "mention", title, body: msg, link_path: "/home", source_type: "player_login" } as any);
+                try { const { pushToUser } = await import("@/lib/fcm.server"); await pushToUser(device.user_id, { title, body: msg, data: { link: "/home" } }); } catch (e) { console.error("[player login push]", e); }
+              }
+            }
+            return json({ unlocked: false });
+          }
           await supabaseAdmin.from("player_devices").update({ remote_unlock_at: null, unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
           return json({ unlocked: Date.now() - at <= 2 * 60_000 });
         }
