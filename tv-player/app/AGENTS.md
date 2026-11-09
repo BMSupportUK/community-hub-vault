@@ -20,3 +20,4 @@
 - Films/Series on every BM Player (Android MediaHero, desktop MediaHero in app.jsx): details panel on top (backdrop, rating · year · length · genre, cast, director, plot from get_vod_info/get_series_info, cached), Category pill beside Search/Voice at the top (no category column), Sort row, then a full-width poster grid under the category name.
 - Favourites and Recently watched open on Live TV / Movies / Series tabs (episodes count as Series) on Android, Windows and Mac; sports guide event rows keep a blank line between events.
 - Episode cards show their number on its own line and that episode's title beneath it, capped at two lines; never one clipped "E7. Title" line, and no invented number line when the provider supplies none.
+- The saved app password is sealed with an Android Keystore key (SecureLogin.java); a copied password that can't be opened counts as no login. Poll sends the signer SHA-256 as `sig`; a 401 clears token, login and unlock.

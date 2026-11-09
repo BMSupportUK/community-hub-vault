@@ -51,3 +51,4 @@
 - BM Player login approval: unlock-screen `unlock_status` polls raise a 5-min owner request (bell + push); website pop-up approves via `decide_player_login` (no profile switch), which sets remote_unlock_at; number entry stays as backup.
 - Non-website BM Player logins: unlock_status raises a request with a hashed one-time 10-min token emailed to the offsite customer (/player-approve/$token via /api/public/player-approve); admin/management can approve in BM Player › logins via staff_decide_player_login.
 - Offsite BM Player approval: QR/email link token = sha256(device token:request id), approving requires the account number (5 wrong = 15-min lock).
+- BM Player security rules live in src/lib/player-security.ts (box limit, quiet-box expiry, lockout steps, genuine signer, sharing window); website login sends go through player-security.server.ts queuePlayerLogin so the per-login box limit can hold logins for admin approval.

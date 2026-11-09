@@ -221,3 +221,4 @@
 
 - [x] BM Player: QR approval for non-account customers (scan + account number)
 - [x] BM Player: only ask to approve/unlock after log out or cleared data, not every open
+- [x] BM Player security: 3 boxes per login (4th waits for admin approval in BM Player › Security), logins only to linked boxes seen in 3 min, Not me / admin Remove box, 60-day quiet logout, new-box alerts, sharing warnings, 15m/1h/24h lockouts. Android 4.09/220 seals the password in the Keystore and proves its signature; unsigned old Android apps get logins until 23 Nov 2026. Windows/Mac already keep logins in the system keychain; no desktop genuine-app check.
