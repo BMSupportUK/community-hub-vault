@@ -35,11 +35,78 @@ export const sendLoginWithCode = createServerFn({ method: "POST" })
       .eq("code_hash", hash).is("used_at", null).select("device_id").maybeSingle();
     if (!claimed) throw new Error("That code has already been used. Get a new code on your screen.");
 
-    const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id").eq("id", claimed.device_id).maybeSingle();
+    const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, platform").eq("id", claimed.device_id).maybeSingle();
     if (!device) throw new Error("That device is no longer linked. Get a new code on your screen.");
     if (device.user_id && device.user_id !== context.userId) throw new Error("This device is linked to another account.");
-    await supabaseAdmin.from("player_devices").update({ user_id: context.userId, linked_at: new Date().toISOString() }).eq("id", device.id);
-    await supabaseAdmin.from("player_pending_credentials").upsert({ device_id: device.id, username: data.username, password: data.password, created_at: new Date().toISOString() });
+    const isNew = !device.user_id;
+    await supabaseAdmin.from("player_devices").update({ user_id: context.userId, linked_at: new Date().toISOString(), iptv_username: data.username }).eq("id", device.id);
+    const { queuePlayerLogin, notifyNewBox } = await import("@/lib/player-security.server");
+    const { held } = await queuePlayerLogin(supabaseAdmin, { deviceId: device.id, ownerId: context.userId, username: data.username, password: data.password });
+    if (isNew) await notifyNewBox(supabaseAdmin, context.userId, device.id, device.platform);
+    return { ok: true, held };
+  });
+
+/** Customer "Not me": remove a box at once and tell admins. The box logs out on its next check-in. */
+export const notMePlayerDevice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ deviceId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: own } = await context.supabase.from("player_devices").select("id, user_id, platform, iptv_username, geo_city, geo_country").eq("id", data.deviceId).maybeSingle();
+    if (!own || own.user_id !== context.userId) throw new Error("That device isn't linked to your account.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("player_devices").delete().eq("id", own.id);
+    await supabaseAdmin.from("player_security_events").insert({ kind: "removed_not_me", owner_id: context.userId, login: own.iptv_username, detail: { platform: own.platform, city: own.geo_city, country: own.geo_country } });
+    const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
+    await notifyPlayerAdmins(supabaseAdmin, "Customer removed a box: Not me", `A customer said a ${own.platform ?? "BM Player"} box${own.iptv_username ? ` on login ${own.iptv_username}` : ""} wasn't theirs. It has been removed.`);
+    return { ok: true };
+  });
+
+async function requireAdminOrManagement(context: { supabase: any; userId: string }) {
+  const [{ data: a }, { data: m }] = await Promise.all([
+    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "management" }),
+  ]);
+  if (!a && !m) throw new Error("Only admin and management can do this.");
+}
+
+/** Admin/management: remove any box. It logs out on its next check-in. */
+export const adminRemovePlayerDevice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ deviceId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdminOrManagement(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("player_devices").delete().eq("id", data.deviceId);
+    if (error) throw new Error("Could not remove that box.");
+    return { ok: true };
+  });
+
+/** Admin/management: approve or refuse a box held by the per-login box limit. */
+export const decidePlayerBoxLimit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ eventId: z.string().uuid(), approve: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdminOrManagement(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ev } = await supabaseAdmin.from("player_security_events").select("id, device_id, status, kind")
+      .eq("id", data.eventId).maybeSingle();
+    if (!ev || ev.kind !== "box_limit" || ev.status !== "open") throw new Error("That request has already been dealt with.");
+    if (ev.device_id) {
+      if (data.approve) await supabaseAdmin.from("player_pending_credentials").update({ held: false, created_at: new Date().toISOString() }).eq("device_id", ev.device_id);
+      else await supabaseAdmin.from("player_pending_credentials").delete().eq("device_id", ev.device_id);
+    }
+    await supabaseAdmin.from("player_security_events").update({ status: data.approve ? "approved" : "refused", decided_by: context.userId, decided_at: new Date().toISOString() }).eq("id", ev.id);
+    return { ok: true };
+  });
+
+/** Admin/management: close a warning once it has been looked at. */
+export const closePlayerSecurityEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ eventId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdminOrManagement(context);
+    const { error } = await context.supabase.from("player_security_events").update({ status: "closed", decided_by: context.userId, decided_at: new Date().toISOString() }).eq("id", data.eventId).neq("kind", "box_limit");
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
@@ -49,11 +116,14 @@ export const sendLoginToDevice = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ deviceId: z.string().uuid(), ...Creds }).parse(d))
   .handler(async ({ data, context }) => {
     // RLS-scoped read proves ownership before any privileged write.
-    const { data: own } = await context.supabase.from("player_devices").select("id, user_id").eq("id", data.deviceId).maybeSingle();
+    const { data: own } = await context.supabase.from("player_devices").select("id, user_id, last_seen_at").eq("id", data.deviceId).maybeSingle();
     if (!own || own.user_id !== context.userId) throw new Error("That device isn't linked to your account.");
+    const { recentlySeen } = await import("@/lib/player-security");
+    if (!recentlySeen(own.last_seen_at)) throw new Error("That box is off. Open BM Player on it, then try again.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("player_pending_credentials").upsert({ device_id: own.id, username: data.username, password: data.password, created_at: new Date().toISOString() });
-    return { ok: true };
+    const { queuePlayerLogin } = await import("@/lib/player-security.server");
+    const { held } = await queuePlayerLogin(supabaseAdmin, { deviceId: own.id, ownerId: context.userId, username: data.username, password: data.password });
+    return { ok: true, held };
   });
 
 /** Admin-only DNS read/write, through RLS. */
