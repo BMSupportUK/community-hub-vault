@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+const APPROVAL_REQUESTS_RETIRED = true;
 import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
 import { checkinSlowdown } from "@/lib/player-checkin";
 import { createSharedCache } from "@/lib/player-sports-cache";
@@ -266,6 +267,8 @@ export const Route = createFileRoute("/api/public/player")({
           // Polling the unlock screen counts as a check-in, so the website shows the box as On.
           const { data: r } = await supabaseAdmin.from("player_devices").update({ last_seen_at: new Date().toISOString() }).eq("id", device.id).select("remote_unlock_at").single();
           const at = r?.remote_unlock_at ? Date.parse(r.remote_unlock_at) : 0;
+          // Approval requests (website pop-up, email, QR) are retired: boxes unlock by account number only.
+          if (!at && APPROVAL_REQUESTS_RETIRED) return json({ unlocked: false });
           if (!at) {
             // Ask the owner to approve this login on the website (one request per 5 minutes per box).
             if (device.user_id) {

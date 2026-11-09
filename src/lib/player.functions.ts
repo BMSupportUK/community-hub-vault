@@ -16,10 +16,7 @@ const Creds = {
 /** Member enters the code their app shows plus a login; the device becomes theirs. */
 export const sendLoginWithCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({
-    code: z.string().regex(/^\s*\d{3}\s*\d{3}\s*$/), ...Creds,
-    credentialId: z.string().uuid().nullish(), nickname: z.string().trim().max(60).nullish(),
-  }).parse(d))
+  .inputValidator((d: unknown) => z.object({ code: z.string().regex(/^\s*\d{3}\s*\d{3}\s*$/), ...Creds }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const since = new Date(Date.now() - 3600_000).toISOString();
@@ -41,50 +38,20 @@ export const sendLoginWithCode = createServerFn({ method: "POST" })
     const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id").eq("id", claimed.device_id).maybeSingle();
     if (!device) throw new Error("That device is no longer linked. Get a new code on your screen.");
     if (device.user_id && device.user_id !== context.userId) throw new Error("This device is linked to another account.");
-    // A ticked saved login must belong to the caller (RLS-scoped read) before the box is tied to it.
-    let credentialId: string | null = null;
-    if (data.credentialId) {
-      const { data: cred } = await context.supabase.from("app_credentials").select("id, owner_id").eq("id", data.credentialId).maybeSingle();
-      if (!cred || cred.owner_id !== context.userId) throw new Error("That app login isn't on your account.");
-      credentialId = cred.id;
-    }
-    const now = new Date().toISOString();
-    // Linking by code is the customer's approval: remote_unlock_at opens the box's unlock screen once.
-    await supabaseAdmin.from("player_devices").update({
-      user_id: context.userId, linked_at: now, remote_unlock_at: now, iptv_username: data.username,
-      ...(credentialId ? { credential_id: credentialId } : {}),
-      ...(data.nickname ? { nickname: data.nickname } : {}),
-    }).eq("id", device.id);
-    await supabaseAdmin.from("player_pending_credentials").upsert({ device_id: device.id, username: data.username, password: data.password, created_at: now });
-    return { ok: true };
-  });
-
-/** Owner renames a linked box (e.g. "Mum's house - living room"). */
-export const renamePlayerDevice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ deviceId: z.string().uuid(), nickname: z.string().trim().max(60) }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { data: own } = await context.supabase.from("player_devices").select("id, user_id").eq("id", data.deviceId).maybeSingle();
-    if (!own || own.user_id !== context.userId) throw new Error("That device isn't linked to your account.");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("player_devices").update({ nickname: data.nickname || null }).eq("id", own.id);
+    await supabaseAdmin.from("player_devices").update({ user_id: context.userId, linked_at: new Date().toISOString() }).eq("id", device.id);
+    await supabaseAdmin.from("player_pending_credentials").upsert({ device_id: device.id, username: data.username, password: data.password, created_at: new Date().toISOString() });
     return { ok: true };
   });
 
 /** Send a login to one of the member's already-linked devices. */
 export const sendLoginToDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ deviceId: z.string().uuid(), ...Creds, credentialId: z.string().uuid().nullish() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ deviceId: z.string().uuid(), ...Creds }).parse(d))
   .handler(async ({ data, context }) => {
     // RLS-scoped read proves ownership before any privileged write.
     const { data: own } = await context.supabase.from("player_devices").select("id, user_id").eq("id", data.deviceId).maybeSingle();
     if (!own || own.user_id !== context.userId) throw new Error("That device isn't linked to your account.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    if (data.credentialId) {
-      const { data: cred } = await context.supabase.from("app_credentials").select("id, owner_id").eq("id", data.credentialId).maybeSingle();
-      if (!cred || cred.owner_id !== context.userId) throw new Error("That app login isn't on your account.");
-      await supabaseAdmin.from("player_devices").update({ credential_id: cred.id, iptv_username: data.username }).eq("id", own.id);
-    }
     await supabaseAdmin.from("player_pending_credentials").upsert({ device_id: own.id, username: data.username, password: data.password, created_at: new Date().toISOString() });
     return { ok: true };
   });
