@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Added per-login Link Device tabs with each credential's player number and scoped devices; six selection/grouping tests pass, build OK, signed-in single-login page verified.
+- [ ] Verify live multi-login tab switching; blocker: requesting account currently has only one saved login, so no live multi-login flow was exercised.
 - [x] Released signed Android/Fire TV 4.15/226: restore legacy saved sign-in only after authenticated poll confirms the link and readable local credentials; retain main-menu PIN. All 217 Android tests pass and live download SHA-256 matches. Real-box reopening remains unverified without an attached device.
 - [x] Prepared mandatory Live TV, Movies and Series startup refresh across Android and shared Windows/Mac, after sign-in/PIN with once-per-start guards; removed Android Off/daily override. Android 213 tests and desktop 129 tests pass. Not released; real-device startup/provider download remains unverified without attached devices.
 - [x] Explained Direct Installer link delivery: possible with a receiving linked BM app and new delivery/prompt support; unavailable on bare devices; Android installation confirmation remains required. No implementation requested or added.
