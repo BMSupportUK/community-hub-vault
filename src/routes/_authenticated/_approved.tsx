@@ -12,6 +12,7 @@ import { PortalLock } from "@/components/app/PortalLock";
 import { isPortalPath } from "@/lib/customer-portal";
 import { StaffPortalTabs, isStaffPortalPath } from "@/components/app/StaffPortalTabs";
 import { isStaffPortalUser } from "@/lib/portal-home";
+import { useProfilePortal } from "@/components/app/AccountProfiles";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { isPortalQuickLinkPath } from "@/components/app/portal-quick-links";
 
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/_authenticated/_approved")({
 
 function ApprovedLayout() {
   const { roles } = useAuth();
+  const { staff: staffPortalUser } = useProfilePortal();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const resolvedPath = useRouterState({ select: (r) => r.resolvedLocation?.pathname ?? r.location.pathname });
   const perms = usePagePermissions();
@@ -77,7 +79,6 @@ function ApprovedLayout() {
   const inner = portalGate ? <PortalLock><Outlet /></PortalLock> : <Outlet />;
   // Every BM Support page shares the portal header (pages that render their own
   // PortalTabs are skipped), so the rail never falls back to its icon copies.
-  const staffPortalUser = isStaffPortalUser(roles);
   const ownTabs = isPortalPath(path) && path !== "/shop" && path !== "/tickets";
   const threadPage = path.startsWith("/tickets/");
   const staffTabs = staffPortalUser && !threadPage && (!ownTabs || isStaffPortalPath(path) || isPortalQuickLinkPath(path));

@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { PortalHome } from "@/components/app/PortalHome";
 import { isStaffPortalUser } from "@/lib/portal-home";
+import { useProfilePortal } from "@/components/app/AccountProfiles";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff-portal")({
   component: StaffPortalPage,
@@ -18,8 +19,9 @@ export const Route = createFileRoute("/_authenticated/_approved/staff-portal")({
 });
 
 function StaffPortalPage() {
-  const { roles, loading } = useAuth();
+  const { roles } = useAuth();
+  const { staff, loading } = useProfilePortal();
   if (loading) return null;
-  if (!isStaffPortalUser(roles)) return <Navigate to="/portal" replace />;
+  if (!staff || !isStaffPortalUser(roles)) return <Navigate to="/portal" replace />;
   return <PortalHome staff />;
 }
