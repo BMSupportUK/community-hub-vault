@@ -18,5 +18,5 @@ for(const [name,url]of [['koffi','https://registry.npmjs.org/koffi/-/koffi-3.3.6
 }
 for(const [src,dest]of [['index.html','index.html'],['app.css','app.css']])fs.copyFileSync(path.join(root,'renderer',src),path.join(stage,'dist',dest));
 for(const [src,dest]of [['home_background.jpg','home.jpg'],['expired_art.jpg','expired.jpg'],['bm_logo.png','logo.png'],['preview_family.jpg','preview_family.jpg'],['family_tv.jpg','family_tv.jpg']])fs.copyFileSync(path.join(root,'../tv-player/app/src/main/res/drawable-nodpi',src),path.join(stage,'dist',dest));
-fs.copyFileSync(path.join(root,'../windows-tv-enabler/build.ico'),path.join(stage,'build.ico'));
+fs.copyFileSync(path.join(root,'build.ico'),path.join(stage,'build.ico'));
 console.log('Staged Windows renderer and shell. Extract checksum-verified official VLC 3.0.21 win64 to stage/tools, then package with @electron/packager 20.3.0, Electron 41.0.2, win32 x64, no-asar.');
