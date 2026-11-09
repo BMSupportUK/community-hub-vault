@@ -823,7 +823,7 @@ public class MainActivity extends Activity {
             ui.post(() -> {
                 if (!"pin".equals(screen) || isFinishing()) return;
                 if (fr == null) {
-                    if (fe != null && fe.contains("409")) { totpSetup = false; showHome(); return; }
+                    if (fe != null && fe.contains("409")) { totpSetup = false; PlayerApplication.pinPassed = true; showHome(); return; }
                     LinearLayout box = column(); box.setGravity(Gravity.CENTER); box.addView(logo());
                     box.addView(text("Couldn't load 2FA set up. Check the internet and try again.", 18, MUTED, false));
                     box.addView(button("Try again", v -> showTotpSetup()));
@@ -877,7 +877,7 @@ public class MainActivity extends Activity {
                 final String fe = err;
                 ui.post(() -> {
                     if (!"pin".equals(screen)) return;
-                    if (fe == null) { totpSetup = false; hideKeyboard(in); android.widget.Toast.makeText(this, "2FA is on.", android.widget.Toast.LENGTH_LONG).show(); showHome(); }
+                    if (fe == null) { totpSetup = false; PlayerApplication.pinPassed = true; hideKeyboard(in); android.widget.Toast.makeText(this, "2FA is on.", android.widget.Toast.LENGTH_LONG).show(); showHome(); }
                     else { status.setText(fe); in.setText(""); }
                 });
             });
@@ -949,7 +949,7 @@ public class MainActivity extends Activity {
                 final String fe = err;
                 ui.post(() -> {
                     if (!"pin".equals(screen)) return;
-                    if (fe == null) { PlayerApplication.pinPassed = true; if (create) { prefs.edit().putBoolean("pin_required", true).apply(); totpSetup = true; } hideKeyboard(in); afterPin(); }
+                    if (fe == null) { if (create) { prefs.edit().putBoolean("pin_required", true).apply(); totpSetup = true; } PlayerApplication.pinPassed = !totpSetup; hideKeyboard(in); afterPin(); }
                     else if (create) { showPin(true, null); android.widget.Toast.makeText(this, fe, android.widget.Toast.LENGTH_LONG).show(); }
                     else { status.setText(fe); in.setText(""); }
                 });
