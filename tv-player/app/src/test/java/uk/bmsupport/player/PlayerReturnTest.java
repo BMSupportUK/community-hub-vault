@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import java.lang.reflect.Field;
 import org.junit.Test;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
@@ -15,6 +16,11 @@ import static org.robolectric.Shadows.shadowOf;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk=34, application=PlayerApplication.class)
 public class PlayerReturnTest {
+    @Before public void resetActivityCount() throws Exception {
+        Field count = PlayerApplication.class.getDeclaredField("startedCount");
+        count.setAccessible(true); count.setInt(null, 0);
+        PlayerApplication.pinPassed = false;
+    }
     @Test public void homeTripImmediatelyRequiresPin() {
         Activity a = Robolectric.buildActivity(Activity.class).get();
         PlayerApplication app = (PlayerApplication) a.getApplication();
