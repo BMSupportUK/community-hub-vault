@@ -108,6 +108,7 @@ function MembersPage() {
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [extraProfiles, setExtraProfiles] = useState<{ credential_id: string; owner_id: string; app_login_name: string; account_number: number | null; created_at: string }[]>([]);
   const [tab, setTab] = useState<"online" | "offline">("online");
 
   const load = async () => {
@@ -126,6 +127,8 @@ function MembersPage() {
       supabase.rpc("directory_member_roles" as never),
     ]);
     setProfiles((ps as Profile[] | null) ?? []);
+    const { data: extras } = await supabase.rpc("directory_extra_profiles" as never);
+    setExtraProfiles(((extras as any[] | null) ?? []));
     const map: Record<string, string[]> = {};
     for (const r of [
       ...(((rs as RoleRow[] | null) ?? [])),
@@ -217,6 +220,10 @@ function MembersPage() {
   const onlineList = filtered.filter((p) => onlineUsers.has(p.id));
   const offlineList = filtered.filter((p) => !onlineUsers.has(p.id));
   const visible = tab === "online" ? onlineList : offlineList;
+  const extraMatches = extraProfiles.filter((e) => !q.trim() || e.app_login_name.toLowerCase().includes(q.toLowerCase()));
+  const extraOnline = extraMatches.filter((e) => onlineUsers.has(e.owner_id));
+  const extraOffline = extraMatches.filter((e) => !onlineUsers.has(e.owner_id));
+  const visibleExtras = tab === "online" ? extraOnline : extraOffline;
 
   // Members directory is for subscribers and staff only — plain members and
   // non-subscribers (expired) are sent back to /home.
@@ -247,7 +254,7 @@ function MembersPage() {
           <div className="flex items-center gap-3 text-sm">
             <div className="rounded-xl bg-white/10 backdrop-blur ring-1 ring-white/15 px-4 py-2">
               <div className="text-[11px] uppercase tracking-wider text-white/60">Members</div>
-              <div className="font-display font-bold text-2xl">{filtered.length}</div>
+              <div className="font-display font-bold text-2xl">{filtered.length + extraMatches.length}</div>
             </div>
           </div>
         </div>
@@ -268,8 +275,8 @@ function MembersPage() {
         </div>
         <div className="inline-flex rounded-lg bg-surface-2 border border-border p-1 self-start">
           {([
-            { key: "online" as const, label: "Online", count: onlineList.length },
-            { key: "offline" as const, label: "Offline", count: offlineList.length },
+            { key: "online" as const, label: "Online", count: onlineList.length + extraOnline.length },
+            { key: "offline" as const, label: "Offline", count: offlineList.length + extraOffline.length },
           ]).map((t) => (
             <button
               key={t.key}
@@ -293,7 +300,7 @@ function MembersPage() {
 
       {/* Grid */}
       <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {visible.length === 0 && (
+        {visible.length === 0 && visibleExtras.length === 0 && (
           <div className="col-span-full text-center text-muted-foreground py-20 text-sm">
             {tab === "online" ? "No members online right now." : "No offline members found."}
           </div>
@@ -391,6 +398,28 @@ function MembersPage() {
                 <div className="mt-auto pt-3 border-t border-border/60 text-[11px] text-muted-foreground flex items-center gap-1.5">
                   <Clock className="size-3" />
                   Joined {new Date(p.created_at).toLocaleDateString("en-GB")}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {visibleExtras.map((e) => {
+          const owner = profiles.find((p) => p.id === e.owner_id);
+          return (
+            <div key={e.credential_id} className="rounded-2xl bg-surface border border-border overflow-hidden flex flex-col">
+              <div className="h-16 bg-cover bg-center" style={{ backgroundImage: `url(${profileHeader})` }} aria-hidden />
+              <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
+                <img src={owner?.avatar_url || DEFAULT_AVATAR_URL} alt="" className="size-16 rounded-2xl object-cover ring-4 ring-surface" />
+                <div className="mt-3 font-semibold text-sm">{e.app_login_name}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Extra profile{e.account_number ? ` · Account ${e.account_number}` : ""}
+                </div>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  <span className={`text-[10px] uppercase tracking-wider rounded-full ring-1 px-2 py-0.5 ${ROLE_COLOR.subscriber ?? ROLE_COLOR.member}`}>Customer</span>
+                </div>
+                <div className="mt-auto pt-3 border-t border-border/60 text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="size-3" />
+                  Added {new Date(e.created_at).toLocaleDateString("en-GB")}
                 </div>
               </div>
             </div>
