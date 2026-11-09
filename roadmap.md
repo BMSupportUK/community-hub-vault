@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Answer whether a website button can send the Direct Installer link to an Android device; distinguish linked BM app devices from devices with no receiving app.
 - [ ] Windows 0.4.54: restore legacy linked sign-in after website verification, preserve launch PIN, test and release installer. Real Windows reopening check requires the user's PC.
 - [x] Enforced session-bound customer-profile restrictions across role reads/helpers, staff-data policies, server-action allowlist and shared role-sensitive UI. Verified real Lumpy4Beat scope, direct admin RPC denial, staff page/action denial, refresh/second-tab persistence and wrong-password rejection; 13 tests pass, build OK. Website not republished.
 - [ ] Verify successful password-gated return with the owner's real password and existing 2FA session; blocked: no owner password available for automated testing. No password or permanent role changed.
