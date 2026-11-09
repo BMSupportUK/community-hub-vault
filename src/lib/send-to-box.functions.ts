@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { z } from 'zod';
 import { SENDABLE_PLATFORMS, boxIsOn } from './send-to-box';
 
-const PLATFORM_LABEL: Record<string, string> = { android: 'Android box', firetv: 'Fire TV', phone: 'Phone' };
+const PLATFORM_LABEL: Record<string, string> = { android: 'Android box', firetv: 'Fire TV', phone: 'Phone', windows: 'Windows PC', mac: 'Mac' };
 
 /** The signed-in customer's own BM Player boxes, with whether each is on right now. */
 export const listMyBoxes = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
