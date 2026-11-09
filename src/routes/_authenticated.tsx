@@ -26,6 +26,7 @@ import { Capacitor } from "@capacitor/core";
 import { reportNativeInstall } from "@/lib/app-transfer.functions";
 import { ANDROID_RELEASE } from "@/lib/android-release";
 import { SupportNotificationScope } from "@/components/app/SupportNotificationScope";
+import { PlayerLoginApproval } from "@/components/app/PlayerLoginApproval";
 
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
@@ -335,6 +336,9 @@ function AuthLayout() {
           <SupportNotificationScope>
           <EarlyFinishAlert />
           </SupportNotificationScope>
+        </DeferUntilIdle>
+        <DeferUntilIdle>
+          <PlayerLoginApproval />
         </DeferUntilIdle>
         <DeferUntilIdle>
           <GpsCapture />
