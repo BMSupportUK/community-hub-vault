@@ -10,7 +10,10 @@ export const listMyBoxes = createServerFn({ method: 'GET' }).middleware([require
   const { data } = await context.supabase.from('player_devices').select('id, name, platform, last_seen_at')
     .eq('user_id', context.userId).in('platform', [...SENDABLE_PLATFORMS]).order('last_seen_at', { ascending: false, nullsFirst: false });
   const now = Date.now();
-  return (data ?? []).map(d => ({ id: d.id, name: d.name || 'BM Player', type: PLATFORM_LABEL[d.platform] ?? 'Box', on: boxIsOn(d.last_seen_at, now) }));
+  // Reinstalls leave a dead row per platform; only the newest of each platform can be the open app.
+  const seen = new Set<string>();
+  return (data ?? []).filter(d => { if (seen.has(d.platform)) return false; seen.add(d.platform); return true; })
+    .map(d => ({ id: d.id, name: d.name || 'BM Player', type: PLATFORM_LABEL[d.platform] ?? 'Box', on: boxIsOn(d.last_seen_at, now) }));
 });
 
 export const sendToBox = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
