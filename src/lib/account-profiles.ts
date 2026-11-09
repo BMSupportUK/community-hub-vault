@@ -49,3 +49,11 @@ export function requestProfileChooser(userId: string) {
 }
 
 export const ACTIVE_PROFILE_EVENT = EVENT;
+
+/** Portal presentation only: the primary login inherits the owner's staff portal.
+ * Extra logins are customer profiles. This never changes authenticated roles.
+ */
+export function profileUsesStaffPortal(roles: readonly string[], profile: { accountNumber: number } | null): boolean {
+  return roles.some((r) => ["admin", "management", "staff", "moderator"].includes(r))
+    && (!profile || profile.accountNumber === 1);
+}

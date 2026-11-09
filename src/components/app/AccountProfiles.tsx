@@ -3,11 +3,14 @@ import { Hash, UserRound, UsersRound, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import {
   ACTIVE_PROFILE_EVENT,
   type AccountProfile,
   needsProfileChoice,
   pickActiveProfile,
+  profileUsesStaffPortal,
   readActiveProfileId,
   requestProfileChooser,
   saveActiveProfile,
@@ -98,6 +101,8 @@ export function SwitchProfilePill() {
 /** Full-screen "Choose your profile" screen for customers with more than one login. */
 export function ProfileChooser() {
   const { profiles, activeProfile, select, chooserOpen } = useAccountProfiles();
+  const { roles } = useAuth();
+  const navigate = useNavigate();
   if (!chooserOpen) return null;
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="profile-chooser-title" className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-background/95 p-4 backdrop-blur-md">
@@ -108,12 +113,16 @@ export function ProfileChooser() {
           {profiles.map((p, i) => {
             const current = activeProfile?.id === p.id;
             return (
-              <button
+              <Button
                 key={p.id}
                 type="button"
-                onClick={() => select(p.id)}
+                variant="ghost"
+                onClick={() => {
+                  select(p.id);
+                  void navigate({ to: profileUsesStaffPortal(roles, p) ? "/staff-portal" : "/portal" });
+                }}
                 className={cn(
-                  "group flex flex-col items-center gap-3 rounded-2xl border-2 bg-surface p-5 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50",
+                  "group flex h-auto flex-col items-center gap-3 rounded-2xl border-2 bg-surface p-5 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50",
                   current ? "border-primary" : "border-border hover:border-primary/60",
                 )}
               >
@@ -128,11 +137,19 @@ export function ProfileChooser() {
                     <Hash className="size-3.5" aria-hidden="true" />{p.playerNumber}
                   </span>
                 )}
-              </button>
+              </Button>
             );
           })}
         </div>
       </div>
     </div>
   );
+}
+
+/** Separate from auth: presentation may hide staff tools, never grant privileges. */
+export function useProfilePortal() {
+  const auth = useAuth();
+  const { activeProfile, loaded } = useAccountProfiles();
+  const staff = profileUsesStaffPortal(auth.roles, activeProfile);
+  return { staff, loading: auth.loading || !loaded, activeProfile };
 }

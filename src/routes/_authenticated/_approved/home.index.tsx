@@ -1,6 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { portalHomePath } from "@/lib/portal-home";
+import { useProfilePortal } from "@/components/app/AccountProfiles";
 
 // Home now sends each person to their own portal (staff or customer).
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 });
 
 function HomeRedirect() {
-  const { roles, loading } = useAuth();
+  const { staff, loading } = useProfilePortal();
   if (loading) return null;
-  return <Navigate to={portalHomePath(roles)} replace />;
+  return <Navigate to={staff ? "/staff-portal" : "/portal"} replace />;
 }
