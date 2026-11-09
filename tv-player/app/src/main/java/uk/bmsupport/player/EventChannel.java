@@ -15,7 +15,7 @@ final class EventChannel {
   Calendar date=Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));date.setTimeInMillis(now*1000);
   date.set(Calendar.HOUR_OF_DAY,Integer.parseInt(t.group(1)));date.set(Calendar.MINUTE,Integer.parseInt(t.group(2)));date.set(Calendar.SECOND,0);date.set(Calendar.MILLISECOND,0);
   long start=date.getTimeInMillis()/1000;
-  // The label supplies no finish time: a half-hour display slot is not a confirmed duration.
-  return new GuideGridView.Prog(title,start,start+1800);
+  // Match saved fixtures' three-hour fallback when no finish time is supplied.
+  return new GuideGridView.Prog(title,start,start+10800);
  }
 }

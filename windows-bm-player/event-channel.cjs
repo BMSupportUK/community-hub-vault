@@ -12,7 +12,7 @@ function eventProgramme(name,now=Date.now()){
  let start=Date.UTC(Number(parts.year),Number(parts.month)-1,Number(parts.day),e.hour,e.minute);
  const ukHour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',hourCycle:'h23'}).format(start));
  start-=((ukHour-e.hour+24)%24)*3600000;
- // No end time is supplied in these labels: use a bounded display slot, not a claimed finish time.
- return {id:'event:'+start,title:e.title,desc:'',start,end:start+1800000};
+ // Match saved fixtures' three-hour fallback when the provider supplies no finish time.
+ return {id:'event:'+start,title:e.title,desc:'',start,end:start+10800000};
 }
 module.exports={eventChannel,channelLabel,eventProgramme};
