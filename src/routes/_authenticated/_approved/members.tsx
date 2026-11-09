@@ -220,7 +220,8 @@ function MembersPage() {
   const onlineList = filtered.filter((p) => onlineUsers.has(p.id));
   const offlineList = filtered.filter((p) => !onlineUsers.has(p.id));
   const visible = tab === "online" ? onlineList : offlineList;
-  const extraMatches = extraProfiles.filter((e) => !q.trim() || e.app_login_name.toLowerCase().includes(q.toLowerCase()));
+  // Extra profile cards retired: every login is its own site account.
+  const extraMatches: typeof extraProfiles = [];
   const extraOnline = extraMatches.filter((e) => onlineUsers.has(e.owner_id));
   const extraOffline = extraMatches.filter((e) => !onlineUsers.has(e.owner_id));
   const visibleExtras = tab === "online" ? extraOnline : extraOffline;

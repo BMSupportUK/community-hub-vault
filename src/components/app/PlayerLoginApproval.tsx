@@ -42,7 +42,7 @@ export function PlayerLoginApproval() {
   const decide = async (approve: boolean) => {
     if (!req) return;
     setBusy(true);
-    const { error } = await (supabase.rpc as any)("decide_player_login", { p_id: req.id, p_approve: approve, p_credential: approve ? pick : null });
+    const { error } = await (supabase.rpc as any)("decide_player_login", { p_id: req.id, p_approve: approve, p_credential: null });
     setBusy(false);
     if (error) toast.error(error.message);
     else toast.success(approve ? "Approved — BM Player will open in a few seconds." : "Login denied.");
@@ -61,7 +61,7 @@ export function PlayerLoginApproval() {
             {device} is asking to open on your account. Only approve if this is your box.
           </DialogDescription>
         </DialogHeader>
-        {profiles.length > 1 && (
+        {false && profiles.length > 1 && (
           <div className="space-y-2">
             <p className="text-sm font-medium">Open on which profile?</p>
             {profiles.map((p) => (

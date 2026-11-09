@@ -44,8 +44,8 @@
 - Sports Guide EPG completion uses titled matching programmes on continuous official sports broadcasters, the latest matching end across channels, and full-day EPG with bounded caching; unrelated/replay/event-only feeds retain estimates, and end-time changes alter the feed version.
 - Competition-only WBBL EPG completion requires an explicit Live women's competition label and exactly one same-channel women's fixture within 30 minutes of slot start; repeats and ambiguous slots retain estimates.
 - Every app login credential stores its own BM Player account number (first login keeps the customer's existing number); device unlock accepts only the number of the login that device uses.
-- Customer portal profiles: each app login is a profile; the chosen login is device-saved per user (account-profiles) and drives the subscription box and header account number, with a chooser shown once per session for 2+ logins.
+- Profile switching is retired (PROFILES_RETIRED in AccountProfiles): each customer login belongs to its own site account; chooser, switch pill, per-profile roles and extra directory cards stay hidden.
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Category-linked guide channels never resolve to replay feeds unless the guide names a replay, so numbered event feeds (e.g. NFL Sunday Ticket) keep their live channel.
 - Account-number send: owner-checked remote_unlock_at; unlock screens poll `unlock_status` (one use, 2 min, counts as check-in).
-- BM Player login approval: unlock-screen `unlock_status` polls raise a 5-min owner request (bell + push); website pop-up approves via `decide_player_login` (may switch profile), which sets remote_unlock_at; number entry stays as backup.
+- BM Player login approval: unlock-screen `unlock_status` polls raise a 5-min owner request (bell + push); website pop-up approves via `decide_player_login` (no profile switch), which sets remote_unlock_at; number entry stays as backup.

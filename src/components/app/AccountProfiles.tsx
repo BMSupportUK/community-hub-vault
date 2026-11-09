@@ -21,6 +21,8 @@ import {
   wasProfileChosen,
 } from "@/lib/account-profiles";
 
+const PROFILES_RETIRED = true;
+
 /** The signed-in customer's login profiles and the one currently selected. */
 export function useAccountProfiles() {
   const { user, profileAccess } = useAuth();
@@ -80,7 +82,8 @@ export const accountTypeLabel = (type: string | null) => {
 /** Header pill: reopen the profile chooser. Only shown when the customer has 2+ logins. */
 export function SwitchProfilePill() {
   const { userId, profiles, loaded } = useAccountProfiles();
-  if (!userId || !loaded || profiles.length < 2) return null;
+  // Profiles retired: every login is its own site account.
+  if (PROFILES_RETIRED || !userId || !loaded || profiles.length < 2) return null;
   return (
     <button
       type="button"
@@ -135,7 +138,7 @@ export function ProfileChooser() {
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to switch profile."); }
     finally { setBusy(false); }
   };
-  if (!chooserOpen) return null;
+  if (PROFILES_RETIRED || !chooserOpen) return null;
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="profile-chooser-title" className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-background/95 p-4 backdrop-blur-md">
       <div className="w-full max-w-3xl py-8 text-center">
