@@ -6085,6 +6085,7 @@ export type Database = {
           platform: string
           remote_unlock_at: string | null
           token_hash: string
+          totp_passed_at: string | null
           unlock_failures: number
           unlock_lock_level: number
           unlock_locked_until: string | null
@@ -6123,6 +6124,7 @@ export type Database = {
           platform?: string
           remote_unlock_at?: string | null
           token_hash: string
+          totp_passed_at?: string | null
           unlock_failures?: number
           unlock_lock_level?: number
           unlock_locked_until?: string | null
@@ -6161,6 +6163,7 @@ export type Database = {
           platform?: string
           remote_unlock_at?: string | null
           token_hash?: string
+          totp_passed_at?: string | null
           unlock_failures?: number
           unlock_lock_level?: number
           unlock_locked_until?: string | null
@@ -6543,6 +6546,30 @@ export type Database = {
           maintenance_message?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      player_totp: {
+        Row: {
+          enabled: boolean
+          owner_id: string
+          pending_secret: string | null
+          secret: string | null
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          owner_id: string
+          pending_secret?: string | null
+          secret?: string | null
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          owner_id?: string
+          pending_secret?: string | null
+          secret?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

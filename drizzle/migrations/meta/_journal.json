@@ -2297,6 +2297,13 @@
       "when": 1794245998400,
       "tag": "0327_player_pin_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 328,
+      "version": "7",
+      "when": 1794254105204,
+      "tag": "0328_migration",
+      "breakpoints": true
     }
   ]
 }
