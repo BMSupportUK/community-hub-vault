@@ -5818,6 +5818,33 @@ export type Database = {
           },
         ]
       }
+      player_backup_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          offsite_customer_id: string | null
+          owner_id: string | null
+          used_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          offsite_customer_id?: string | null
+          owner_id?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          offsite_customer_id?: string | null
+          owner_id?: string | null
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       player_buffer_events: {
         Row: {
           app_version: string | null
