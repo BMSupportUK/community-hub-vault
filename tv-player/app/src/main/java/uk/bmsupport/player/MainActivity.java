@@ -634,7 +634,7 @@ public class MainActivity extends Activity {
             JSONObject c = r.optJSONObject("credentials");
             // A login sent from the website (link code or the owner's device list) is the account holder's own
             // action, so it counts as the sign-in: no account number needed until log out or cleared data.
-            if (c != null) { ed.putString("user", c.optString("username")).putString("pass", c.optString("password")).putString("unlocked_for", prefs.getString("token", "")); unlocked = true; }
+            if (c != null) { ed.putString("user", c.optString("username")).putString("pass", SecureLogin.seal(c.optString("password"))).putString("unlocked_for", prefs.getString("token", "")); unlocked = true; }
             ed.apply();
             boolean now = hasLogin();
             if (c != null || had != now) ui.post(() -> {
@@ -853,7 +853,7 @@ public class MainActivity extends Activity {
 
     private String api(String action) throws Exception {
         String u = URLEncoder.encode(prefs.getString("user", ""), "UTF-8");
-        String p = URLEncoder.encode(prefs.getString("pass", ""), "UTF-8");
+        String p = URLEncoder.encode(SecureLogin.password(prefs), "UTF-8");
         return prefs.getString("dns", "") + "/player_api.php?username=" + u + "&password=" + p + (action.isEmpty() ? "" : "&action=" + action);
     }
 
@@ -862,7 +862,7 @@ public class MainActivity extends Activity {
     /** Addresses to try in order. Live tries MPEG-TS first (what most panels serve), then HLS. */
     private String[] streamUrls(Item it) {
         if (it.url != null && !it.url.isEmpty()) return new String[]{it.url};
-        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = prefs.getString("pass", "");
+        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = SecureLogin.password(prefs);
         switch (it.kind) {
             case "live": {
                 String base = d + "/live/" + u + "/" + p + "/" + it.id;
@@ -1839,7 +1839,7 @@ public class MainActivity extends Activity {
         }
         if ("catchup".equals(it.kind) && it.catchupEnd > it.catchupStart) {
             // Providers often close timeshift streams early; the player reconnects from where it stopped.
-            intent.putExtra("catchup_prefix", prefs.getString("dns", "").replaceAll("/+$", "") + "/timeshift/" + prefs.getString("user", "") + "/" + prefs.getString("pass", "") + "/")
+            intent.putExtra("catchup_prefix", prefs.getString("dns", "").replaceAll("/+$", "") + "/timeshift/" + prefs.getString("user", "") + "/" + SecureLogin.password(prefs) + "/")
                     .putExtra("catchup_id", it.catchupId).putExtra("catchup_start", it.catchupStart).putExtra("catchup_end", it.catchupEnd)
                     .putExtra("catchup_tz", prefs.getString("server_tz", "Europe/London"));
         }
@@ -3219,7 +3219,7 @@ public class MainActivity extends Activity {
 
     /** Xtream timeshift address: /timeshift/user/pass/minutes/YYYY-MM-DD:HH-MM/stream.ts (provider time). */
     private String catchupUrl(Item ch, long st, long en) {
-        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = prefs.getString("pass", "");
+        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = SecureLogin.password(prefs);
         long mins = Math.max(1, ((en > st ? en : st + 3600) - st + 59) / 60);
         java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd:HH-mm", java.util.Locale.UK);
         f.setTimeZone(java.util.TimeZone.getTimeZone(prefs.getString("server_tz", "Europe/London")));
