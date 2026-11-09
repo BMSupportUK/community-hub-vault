@@ -224,7 +224,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       window.removeEventListener(RAIL_ORDER_CHANGED, refresh);
       window.removeEventListener("focus", refresh);
     };
-  }, [inSheet]);
+    // Reload once the session is ready: signed-out reads return no saved order.
+  }, [inSheet, user?.id]);
 
   useEffect(() => {
     if (inSheet) return;
