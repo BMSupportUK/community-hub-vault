@@ -788,6 +788,7 @@ public class MainActivity extends Activity {
                 setup = r.optBoolean("needs_setup", false);
                 pinDigits = r.optInt("digits", 4) == 6 ? 6 : 4;
                 pinFallback = r.optBoolean("pin_fallback", false);
+                totpSetup = r.optBoolean("totp_setup", false);
                 prefs.edit().putBoolean("pin_required", required).apply();
             } catch (Exception e) { required = prefs.getBoolean("pin_required", false); }
             final boolean need = required, create = setup;
@@ -802,6 +803,106 @@ public class MainActivity extends Activity {
     /** 4 = PIN; 6 = authenticator-app code (asked once a day, server decides). */
     private int pinDigits = 4;
     private boolean pinFallback = false;
+    /** Server says this account has no authenticator yet: show the first-visit 2FA setup after the PIN. */
+    private boolean totpSetup = false;
+
+    private void afterPin() { if (totpSetup) showTotpSetup(); else showHome(); }
+
+    /** First visit: QR to scan into an authenticator app, buttons to get the app, then one 6-digit code to finish. */
+    private void showTotpSetup() {
+        stopPreview(); stopMulti();
+        screen = "pin"; back = null;
+        LinearLayout wait = column(); wait.setGravity(Gravity.CENTER);
+        wait.addView(logo()); wait.addView(text("Loading 2FA set up…", 18, MUTED, false));
+        setContentView(wait);
+        io.execute(() -> {
+            JSONObject r = null; String err = null;
+            try { r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "totp_start").put("device_token", prefs.getString("token", "")).toString())); }
+            catch (Exception ex) { err = String.valueOf(ex.getMessage()); }
+            final JSONObject fr = r; final String fe = err;
+            ui.post(() -> {
+                if (!"pin".equals(screen) || isFinishing()) return;
+                if (fr == null) {
+                    if (fe != null && fe.contains("409")) { totpSetup = false; showHome(); return; }
+                    LinearLayout box = column(); box.setGravity(Gravity.CENTER); box.addView(logo());
+                    box.addView(text("Couldn't load 2FA set up. Check the internet and try again.", 18, MUTED, false));
+                    box.addView(button("Try again", v -> showTotpSetup()));
+                    setContentView(box); return;
+                }
+                buildTotpSetup(fr.optString("otpauth"), fr.optString("secret"), fr.optJSONObject("apps"));
+            });
+        });
+    }
+
+    private void buildTotpSetup(String otpauth, String secret, JSONObject apps) {
+        LinearLayout root = column(); root.setGravity(Gravity.TOP);
+        root.setPadding(dp(32), dp(16), dp(32), dp(16));
+        LinearLayout cols = row(); cols.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
+        left.addView(logo());
+        left.addView(text("Set up 2FA", 26, TEXT, true));
+        left.addView(text("1. Scan this QR code with an authenticator app on your phone.\n2. Type the 6-digit code it shows.\nBM Player will ask for a code once a day.", 16, MUTED, false));
+        android.widget.ImageView q = new android.widget.ImageView(this);
+        q.setImageBitmap(qr(otpauth, dp(180)));
+        left.addView(q, new LinearLayout.LayoutParams(dp(180), dp(180)));
+        left.addView(text("Or type this key: " + secret, 13, MUTED, false));
+        left.addView(text("No authenticator app? Get one:", 15, TEXT, true));
+        LinearLayout storeRow = row();
+        String apple = apps == null ? "" : apps.optString("apple"), android = apps == null ? "" : apps.optString("android");
+        storeRow.addView(button("iPhone (App Store)", v -> showStoreQr("Google Authenticator for iPhone", apple)));
+        storeRow.addView(button("Android (Play Store)", v -> showStoreQr("Google Authenticator for Android", android)));
+        left.addView(storeRow);
+        EditText in = new EditText(this);
+        in.setInputType(InputType.TYPE_CLASS_NUMBER);
+        in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(6) });
+        in.setTextSize(32); in.setTextColor(ACCENT); in.setGravity(Gravity.CENTER);
+        in.setLetterSpacing(0.3f); in.setHint("••••••"); in.setHintTextColor(MUTED);
+        in.setLayoutParams(new LinearLayout.LayoutParams(dp(240), ViewGroup.LayoutParams.WRAP_CONTENT));
+        left.addView(in);
+        TextView status = text("", 16, MUTED, false);
+        Button go = button("Turn on 2FA", v -> {
+            String n = in.getText().toString().trim();
+            if (!n.matches("\\d{6}")) { status.setText("Enter all 6 digits."); return; }
+            status.setText("Checking…");
+            io.execute(() -> {
+                String err = null;
+                try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "totp_confirm").put("device_token", prefs.getString("token", "")).put("code", n).toString()); }
+                catch (Exception ex) {
+                    String m = String.valueOf(ex.getMessage());
+                    err = "Couldn't check. Check the internet and try again.";
+                    int i = m.indexOf('{');
+                    if (i >= 0) try { err = new JSONObject(m.substring(i)).optString("error", err); } catch (Exception ignored) {}
+                    err = SafeError.forScreen(err, "Couldn't check. Check the internet and try again.");
+                }
+                final String fe = err;
+                ui.post(() -> {
+                    if (!"pin".equals(screen)) return;
+                    if (fe == null) { totpSetup = false; hideKeyboard(in); android.widget.Toast.makeText(this, "2FA is on.", android.widget.Toast.LENGTH_LONG).show(); showHome(); }
+                    else { status.setText(fe); in.setText(""); }
+                });
+            });
+        });
+        left.addView(go); left.addView(status);
+        LinearLayout pad = NumberPad.build(this, in, 6, CARD, ACCENT, TEXT, go::performClick);
+        cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
+        LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        padLp.leftMargin = dp(24);
+        cols.addView(pad, padLp);
+        root.addView(cols);
+        hideKeyboard(in);
+        setContentView(scrollable(root));
+        NumberPad.firstKey(pad).requestFocus();
+    }
+
+    /** Pop-up QR code a phone can scan to download the authenticator app. */
+    private void showStoreQr(String title, String url) {
+        if (url == null || !(url.startsWith("https://apps.apple.com/") || url.startsWith("https://play.google.com/"))) return;
+        android.widget.ImageView q = new android.widget.ImageView(this);
+        q.setImageBitmap(qr(url, dp(240)));
+        q.setPadding(dp(16), dp(16), dp(16), dp(16));
+        new android.app.AlertDialog.Builder(this).setTitle(title).setMessage("Scan with your phone's camera to download it.")
+                .setView(q).setPositiveButton("Close", null).show();
+    }
 
     /** create=true: first open, the customer chooses a PIN (typed twice; `first` holds the first entry). */
     private void showPin(boolean create, String first) {
@@ -848,7 +949,7 @@ public class MainActivity extends Activity {
                 final String fe = err;
                 ui.post(() -> {
                     if (!"pin".equals(screen)) return;
-                    if (fe == null) { PlayerApplication.pinPassed = true; if (create) prefs.edit().putBoolean("pin_required", true).apply(); hideKeyboard(in); showHome(); }
+                    if (fe == null) { PlayerApplication.pinPassed = true; if (create) { prefs.edit().putBoolean("pin_required", true).apply(); totpSetup = true; } hideKeyboard(in); afterPin(); }
                     else if (create) { showPin(true, null); android.widget.Toast.makeText(this, fe, android.widget.Toast.LENGTH_LONG).show(); }
                     else { status.setText(fe); in.setText(""); }
                 });
