@@ -5,6 +5,7 @@ import { ShieldCheck, ShieldOff, Loader2, KeyRound, ArrowLeft } from "lucide-rea
 import { supabase } from "@/integrations/supabase/client";
 import { ScreenLockSettingsCard } from "@/components/app/ScreenLockSettingsCard";
 import { FanZoneFriendsPrivacyCard } from "@/components/app/FanZoneFriendsPrivacyCard";
+import { PlayerPinButton } from "@/components/app/PlayerPinButton";
 import { PlayerBackupCodesCard } from "@/components/app/PlayerBackupCodesCard";
 
 
@@ -12,7 +13,7 @@ import { PlayerBackupCodesCard } from "@/components/app/PlayerBackupCodesCard";
 type Factor = { id: string; status: string; friendly_name: string | null };
 
 export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) {
-  const [tab, setTab] = useState<"2fa" | "lock" | "privacy">("2fa");
+  const [tab, setTab] = useState<"2fa" | "player" | "lock" | "privacy">("2fa");
   const [loading, setLoading] = useState(true);
   const [factor, setFactor] = useState<Factor | null>(null);
 
@@ -122,9 +123,10 @@ export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) 
       </section>
 
       <div className="p-6 max-w-2xl mx-auto space-y-5">
-        <div className="inline-flex p-1 rounded-xl bg-surface-2 border border-border">
+        <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
           {([
             ["2fa", "Two-factor"],
+            ["player", "BM Player 2FA"],
             ["lock", "Screen lock"],
             ["privacy", "Privacy"],
           ] as const).map(([key, label]) => (
@@ -223,8 +225,6 @@ export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) 
           </div>
         </div>
 
-        <PlayerBackupCodesCard />
-
         <div className="rounded-2xl border border-border bg-surface p-6 text-sm text-muted-foreground">
           <h3 className="font-display font-semibold text-foreground mb-2">Need your 2FA reset?</h3>
           <p>
@@ -246,6 +246,17 @@ export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) 
           </Link>
         </div>
         </>
+        )}
+
+        {tab === "player" && (
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
+              <h2 className="font-display font-semibold text-lg">BM Player 2FA</h2>
+              <p className="text-sm text-muted-foreground">This is only for the BM Player apps on your TV box, phone, Windows or Mac. It is separate from the two-factor you use to sign in to this website.</p>
+              <PlayerPinButton />
+            </div>
+            <PlayerBackupCodesCard />
+          </div>
         )}
 
         {tab === "lock" && <ScreenLockSettingsCard />}
