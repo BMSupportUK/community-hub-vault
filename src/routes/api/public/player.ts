@@ -386,7 +386,6 @@ export const Route = createFileRoute("/api/public/player")({
           const ok = isBackup ? await useBackupCode(supabaseAdmin, key, body.pin) : await totpMatches(totp.secret, body.pin);
           if (ok) {
             await supabaseAdmin.from("player_devices").update({ totp_passed_at: new Date().toISOString(), pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("id", device.id);
-            if (isBackup) await supabaseAdmin.from("player_security_events").insert({ kind: "backup_code", device_id: device.id, owner_id: device.user_id, login: device.iptv_username, detail: {} });
             return json({ ok: true });
           }
           const fails = (dv?.pin_failures ?? 0) + 1;
