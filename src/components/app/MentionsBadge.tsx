@@ -115,6 +115,11 @@ export function MentionsBadge() {
     setItems([]);
   };
 
+  const markRead = async (m: MentionRow) => {
+    await supabase.from("user_notifications").delete().eq("id", m.id);
+    setItems((prev) => prev.filter((x) => x.id !== m.id));
+  };
+
   const openItem = async (m: MentionRow) => {
     await supabase.from("user_notifications").delete().eq("id", m.id);
     setItems((prev) => prev.filter((x) => x.id !== m.id));
@@ -168,6 +173,15 @@ export function MentionsBadge() {
                     {m.body && <div className="text-xs text-muted-foreground line-clamp-2">{m.body}</div>}
                     <div className="text-[10px] text-muted-foreground mt-0.5">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => markRead(m)}
+                    title="Mark as read"
+                    aria-label="Mark as read"
+                    className="size-7 shrink-0 rounded-full grid place-items-center bg-success/15 text-success hover:bg-success hover:text-background transition-colors"
+                  >
+                    <Check className="size-4" />
+                  </button>
                 </div>
                 {mentionNav(m) && (
                   <button
