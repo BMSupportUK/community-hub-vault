@@ -37,3 +37,9 @@ describe("player security", () => {
     expect(unusualPlace("GB", [{ geo_country: "GB", last_seen_at: ago(1000) }], now)).toBe(null);
   });
 });
+
+test("staff accounts are never held by the box limit", () => {
+  expect(boxLimitReached(3, true)).toBe(false);
+  expect(boxLimitReached(10, true)).toBe(false);
+  expect(boxLimitReached(3, false)).toBe(true);
+});
