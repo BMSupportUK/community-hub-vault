@@ -58,3 +58,45 @@ export const adminSetPlayerPin = createServerFn({ method: "POST" }).middleware([
     await supabaseAdmin.from("player_devices").update({ pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("user_id", data.userId);
     return { ok: true as const };
   });
+
+/** Customer's BM Player unlock method: PIN (every open) or authenticator app (once a day). */
+export const getMyPlayerUnlock = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("player_totp").select("enabled").eq("owner_id", context.userId).maybeSingle();
+  return { method: data?.enabled ? ("totp" as const) : ("pin" as const) };
+});
+
+/** Step 1 of turning on the authenticator: make a new secret and QR code (not active until confirmed). */
+export const startPlayerTotp = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const { newTotpSecret, totpUrl } = await import("@/lib/player-totp");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const secret = newTotpSecret();
+  const { data: p } = await supabaseAdmin.from("profiles").select("username").eq("id", context.userId).maybeSingle();
+  const { error } = await supabaseAdmin.from("player_totp").upsert({ owner_id: context.userId, pending_secret: secret, updated_at: new Date().toISOString() }, { onConflict: "owner_id" });
+  if (error) throw new Error("Couldn't start set up. Try again.");
+  const url = totpUrl(secret, (p as { username?: string } | null)?.username ?? "BM Support");
+  const QR = await import("qrcode");
+  return { secret, qrSvg: await QR.toString(url, { type: "svg", margin: 1, width: 200 }) };
+});
+
+/** Step 2: confirm a code from the app, then BM Player asks for authenticator codes instead of the PIN. */
+export const confirmPlayerTotp = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ code: z.string().regex(/^\d{6}$/) }))
+  .handler(async ({ data, context }) => {
+    const { totpMatches } = await import("@/lib/player-totp");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin.from("player_totp").select("pending_secret").eq("owner_id", context.userId).maybeSingle();
+    if (!row?.pending_secret) return { ok: false as const, error: "Start set up again." };
+    if (!(await totpMatches(row.pending_secret, data.code))) return { ok: false as const, error: "That code isn't right. Check the time on your phone and try the newest code." };
+    await supabaseAdmin.from("player_totp").update({ secret: row.pending_secret, pending_secret: null, enabled: true, updated_at: new Date().toISOString() }).eq("owner_id", context.userId);
+    await supabaseAdmin.from("player_devices").update({ totp_passed_at: null, pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("user_id", context.userId);
+    return { ok: true as const };
+  });
+
+/** Switch back to the 4-digit PIN. */
+export const disablePlayerTotp = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.from("player_totp").delete().eq("owner_id", context.userId);
+  await supabaseAdmin.from("player_devices").update({ totp_passed_at: null }).eq("user_id", context.userId);
+  return { ok: true as const };
+});
