@@ -6083,6 +6083,7 @@ export type Database = {
           remote_unlock_at: string | null
           token_hash: string
           unlock_failures: number
+          unlock_lock_level: number
           unlock_locked_until: string | null
           user_id: string | null
           vpn_checked_at: string | null
@@ -6117,6 +6118,7 @@ export type Database = {
           remote_unlock_at?: string | null
           token_hash: string
           unlock_failures?: number
+          unlock_lock_level?: number
           unlock_locked_until?: string | null
           user_id?: string | null
           vpn_checked_at?: string | null
@@ -6151,6 +6153,7 @@ export type Database = {
           remote_unlock_at?: string | null
           token_hash?: string
           unlock_failures?: number
+          unlock_lock_level?: number
           unlock_locked_until?: string | null
           user_id?: string | null
           vpn_checked_at?: string | null
@@ -6368,18 +6371,21 @@ export type Database = {
         Row: {
           created_at: string
           device_id: string
+          held: boolean
           password: string
           username: string
         }
         Insert: {
           created_at?: string
           device_id: string
+          held?: boolean
           password: string
           username: string
         }
         Update: {
           created_at?: string
           device_id?: string
+          held?: boolean
           password?: string
           username?: string
         }
@@ -6429,6 +6435,45 @@ export type Database = {
           stars?: number
           updated_at?: string
           voter_key?: string
+        }
+        Relationships: []
+      }
+      player_security_events: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          detail: Json
+          device_id: string | null
+          id: string
+          kind: string
+          login: string | null
+          owner_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          detail?: Json
+          device_id?: string | null
+          id?: string
+          kind: string
+          login?: string | null
+          owner_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          detail?: Json
+          device_id?: string | null
+          id?: string
+          kind?: string
+          login?: string | null
+          owner_id?: string | null
+          status?: string
         }
         Relationships: []
       }
