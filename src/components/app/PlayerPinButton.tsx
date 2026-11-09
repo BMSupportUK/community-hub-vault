@@ -65,16 +65,16 @@ export function PlayerPinButton({ className }: { className?: string }) {
   return (
     <>
       <button type="button" className={className} onClick={() => { setError(""); setOpen(true); }}>
-        {method === "totp" ? "Player unlock: authenticator · Change" : isSet ? "Player PIN: set · Change" : "Player PIN: not set · Set"}
+        {method === "totp" ? "Player 2FA: on · Backup PIN" : "Player 2FA: not set up · Set up now"}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>How BM Player unlocks</DialogTitle>
-            <DialogDescription>Choose a 4-digit PIN (asked every time the app opens) or an authenticator app code (asked once a day). It works on all your boxes.</DialogDescription>
+            <DialogDescription>An authenticator app is required: BM Player asks for its 6-digit code once a day. Your 4-digit PIN is only a backup for when you can't get to the authenticator app.</DialogDescription>
           </DialogHeader>
           <div role="radiogroup" aria-label="Unlock with" className="grid grid-cols-2 gap-2">
-            <Button type="button" role="radio" aria-checked={method === "pin" && !setup} variant={method === "pin" && !setup ? "default" : "outline"} disabled={busy} onClick={() => (method === "totp" ? void usePin() : setSetup(null))}>4-digit PIN</Button>
+            <Button type="button" role="radio" aria-checked={method === "pin" && !setup} variant={method === "pin" && !setup ? "default" : "outline"} disabled={busy || method === "totp"} onClick={() => setSetup(null)}>Backup PIN</Button>
             <Button type="button" role="radio" aria-checked={method === "totp" || !!setup} variant={method === "totp" || setup ? "default" : "outline"} disabled={busy || method === "totp"} onClick={() => void beginTotp()}>Authenticator</Button>
           </div>
           {setup ? <form onSubmit={finishTotp} className="space-y-3">
@@ -85,7 +85,7 @@ export function PlayerPinButton({ className }: { className?: string }) {
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={busy || code.length !== 6}>{busy ? "Checking…" : "Turn on authenticator"}</Button>
           </form> : method === "totp" ? <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Authenticator is on. Your boxes ask for the 6-digit BM Player code once a day. Tap "4-digit PIN" to switch back.</p>
+            <p className="text-sm text-muted-foreground">Authenticator is on. Your boxes ask for the 6-digit BM Player code once a day. If you can't get to your authenticator app, choose "Use PIN instead" on the box and type your 4-digit backup PIN.</p>
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           </div> : <form onSubmit={submit} className="space-y-3">
             <Input aria-label="New PIN" type="password" inputMode="numeric" autoComplete="new-password" placeholder="New PIN" value={pin} onChange={(e) => setPin(digits(e.target.value))} />
