@@ -1,6 +1,9 @@
 # Subtitles on Live TV (Android/Amazon, Windows, Mac)
 
-## What the customer gets
+## Step 1: check how many channels carry subtitles
+Before anything is built, test a sample of your Live TV channels (UK entertainment, news, sport, kids) and report how many actually send subtitles. If almost none do, we stop here and nothing is changed.
+
+## What the customer gets (only if enough channels carry them)
 - A **Subtitles** button in the Live TV player controls (next to the existing audio/track buttons).
 - Pressing it lists the subtitle tracks the channel actually sends (e.g. "English", "English CC"), plus **Off**.
 - Live TV starts with subtitles **off**; no pop-up question when changing channel (unlike films/episodes, which keep their current "subtitles found, keep them?" behaviour).
