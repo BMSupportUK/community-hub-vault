@@ -2192,6 +2192,13 @@
       "when": 1794222113700,
       "tag": "0312_profile_owned_orders_devices",
       "breakpoints": true
+    },
+    {
+      "idx": 313,
+      "version": "7",
+      "when": 1794222177015,
+      "tag": "0313_orders_view_profile_scope",
+      "breakpoints": true
     }
   ]
 }

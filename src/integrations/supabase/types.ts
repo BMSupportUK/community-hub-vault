@@ -9173,6 +9173,7 @@ export type Database = {
           completed_at: string | null
           completed_by: string | null
           created_at: string | null
+          credential_id: string | null
           customer_type: string | null
           discount_cents: number | null
           discount_code: string | null
@@ -9196,6 +9197,7 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string | null
+          credential_id?: string | null
           customer_type?: string | null
           discount_cents?: number | null
           discount_code?: string | null
@@ -9219,6 +9221,7 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string | null
+          credential_id?: string | null
           customer_type?: string | null
           discount_cents?: number | null
           discount_code?: string | null
