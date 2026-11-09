@@ -1,4 +1,6 @@
 # Roadmap
+- [ ] Release Windows/Mac numbered-event EPG installers and publish the website.
+- [ ] Switch the visible portal with the selected staff/customer profile, preserving verified account permissions.
 - [x] Prepare numbered daily-event EPG across Android and shared Windows/Mac: feed number only on left, existing fixtures/provider listings first, UK-day title/time fallback when empty. 122 desktop checks and six isolated Java checks pass; desktop guide interaction visibly verified. No new player releases; full native guide integration and installed-device checks remain unverified without Android SDK/devices.
 - [x] Released Android 4.00/211: progress-aware continuous stall supervision, cancellable/coalesced reconnects, no destructive advert seek or immediate recovered-picture format swap; 192 tests pass including scheduled fake-engine interactions, permanent signer matches 3.99, live full APK hash matches. Real-box improvement requires installing 4.00 and comparing subsequent stalls.
 - [x] Confirmed Dane J’s 3.99 main-player Coupang stall of 54,715ms at 18:34:58 UTC and 6,000ms advert-tagged stall at 18:35:40; no backup stall measurements in that check. These cause labels do not prove a physical network/provider outage.
