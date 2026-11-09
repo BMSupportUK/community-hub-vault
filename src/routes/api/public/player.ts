@@ -279,24 +279,33 @@ export const Route = createFileRoute("/api/public/player")({
                 try { const { pushToUser } = await import("@/lib/fcm.server"); await pushToUser(device.user_id, { title, body: msg, data: { link: "/home" } }); } catch (e) { console.error("[player login push]", e); }
               }
             } else if (device.offsite_customer_id) {
-              // No website account: email a one-time approval link; staff can also approve from the dashboard.
+              // No website account: a QR on the box (customer scans and types their account number),
+              // an emailed one-time link, or staff approval from the dashboard.
+              // The link token is derived from the device token + request id, so only this box can show it.
+              const sha = async (v: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v)))).map((b) => b.toString(16).padStart(2, "0")).join("");
               const since = new Date(Date.now() - 10 * 60_000).toISOString();
-              const { data: open } = await supabaseAdmin.from("player_login_approvals" as any).select("id").eq("device_id", device.id).gt("created_at", since).limit(1);
-              if (!open?.length) {
-                const raw = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
-                const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw)))).map((b) => b.toString(16).padStart(2, "0")).join("");
-                await supabaseAdmin.from("player_login_approvals" as any).insert({ device_id: device.id, offsite_customer_id: device.offsite_customer_id, token_hash: hash });
+              const { data: open } = await supabaseAdmin.from("player_login_approvals" as any).select("id").eq("device_id", device.id).eq("status", "pending").gt("created_at", since).order("created_at", { ascending: false }).limit(1) as any;
+              let id: string | undefined = open?.[0]?.id;
+              let raw = "";
+              if (!id) {
+                id = crypto.randomUUID();
+                raw = await sha(`${body.device_token}:${id}`);
+                await supabaseAdmin.from("player_login_approvals" as any).insert({ id, device_id: device.id, offsite_customer_id: device.offsite_customer_id, token_hash: await sha(raw) });
                 const { data: oc } = await supabaseAdmin.from("player_offsite_customers").select("customer_name, email").eq("id", device.offsite_customer_id as string).maybeSingle();
                 if (oc?.email) {
                   try {
                     const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
                     await sendAndLogEmail(supabaseAdmin, "player-login-approval", oc.email, {
                       templateData: { name: oc.customer_name, device: device.platform ?? "BM Player", approveUrl: `https://bmsupport.uk/player-approve/${raw}` },
-                      idempotencyKey: `player-login-${hash.slice(0, 24)}`,
+                      idempotencyKey: `player-login-${raw.slice(0, 24)}`,
                     });
                   } catch (e) { console.error("[player login email]", e); }
                 }
-              }
+              } else raw = await sha(`${body.device_token}:${id}`);
+              const qrUrl = `https://bmsupport.uk/player-approve/${raw}`;
+              let qrSvg: string | undefined;
+              try { const QR = await import("qrcode"); qrSvg = await QR.toString(qrUrl, { type: "svg", margin: 1, width: 240 }); } catch (e) { console.error("[player login qr]", e); }
+              return json({ unlocked: false, qr_url: qrUrl, qr_svg: qrSvg });
             }
             return json({ unlocked: false });
           }
