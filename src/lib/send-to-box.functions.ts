@@ -32,3 +32,16 @@ export const sendToBox = createServerFn({ method: 'POST' }).middleware([requireS
     if (error) return { ok: false, error: 'Could not send to your box. Please try again.' };
     return { ok: true, error: null as string | null };
   });
+
+/** Unlocks the customer's own box from the subscription box, as if they typed the account number on it. */
+export const sendAccountNumberToBox = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator(z.object({ deviceId: z.string().uuid() }))
+  .handler(async ({ data, context }) => {
+    const { data: own } = await context.supabase.from('player_devices').select('id, user_id, last_seen_at').eq('id', data.deviceId).maybeSingle();
+    if (!own || own.user_id !== context.userId) return { ok: false, error: 'That device is not on your account.' };
+    if (!boxIsOn(own.last_seen_at, Date.now())) return { ok: false, error: 'Your device is not on. Open BM Player on it, then try again.' };
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { error } = await supabaseAdmin.from('player_devices').update({ remote_unlock_at: new Date().toISOString() }).eq('id', own.id);
+    if (error) return { ok: false, error: 'Could not send to your device. Please try again.' };
+    return { ok: true, error: null as string | null };
+  });
