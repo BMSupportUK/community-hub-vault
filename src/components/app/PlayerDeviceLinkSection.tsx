@@ -39,7 +39,7 @@ export function PlayerDeviceLinkSection() {
     gcTime: 0,
   });
   const [selection, setSelection] = useState<{ ownerId: string; id: string } | null>(null);
-  const selectedId = selection?.ownerId === ownerId && accounts.some((account) => account.id === selection.id) ? selection.id : accounts[0]?.id ?? null;
+  const selectedId = selection && selection.ownerId === ownerId && accounts.some((account) => account.id === selection.id) ? selection.id : accounts[0]?.id ?? null;
   const activeAccount = accounts.find((account) => account.id === selectedId);
   const activeNumber = activeAccount ? loginNumbers.find((row) => row.credential_id === activeAccount.id)?.number ?? (accounts.length === 1 ? customerNumber : null) : customerNumber;
   const visibleDevices = activeAccount ? devicesForPlayerLogin(devices, activeAccount) : accounts.length === 0 ? devices : [];
