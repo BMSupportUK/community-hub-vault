@@ -16,3 +16,9 @@ test('only exactly six digits and confirmed success unlock',async()=>{
  await expect(gate.unlock('12345',async()=>{called=true;return{ok:true};})).rejects.toThrow();expect(called).toBe(false);
  await expect(gate.unlock('582649',async()=>({}))).rejects.toThrow();expect(gate.unlocked).toBe(false);
 });
+test('approval QR shows only for bmsupport.uk links and clears once unlocked',async()=>{
+ const gate=createAccountGate();let changes=0;
+ await gate.remote(async()=>({unlocked:false,qr_url:'https://evil.example/x',qr_svg:'<svg/>'}),()=>changes++);expect(gate.qr).toBe('');
+ await gate.remote(async()=>({unlocked:false,qr_url:'https://bmsupport.uk/player-approve/ab',qr_svg:'<svg/>'}),()=>changes++);expect(gate.qr).toBe('<svg/>');expect(changes).toBe(1);
+ await gate.remote(async()=>({unlocked:true}),()=>changes++);expect(gate.unlocked).toBe(true);expect(gate.qr).toBe('');
+});
