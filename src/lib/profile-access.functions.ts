@@ -25,8 +25,8 @@ export const restoreStaffProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ profileId: z.string().uuid(), password: z.string().min(1).max(4096) }).parse(input))
   .handler(async ({ data, context }) => {
-    const sid = context.claims.session_id;
-    if (typeof sid !== "string") throw new Error("Sign in again to restore staff access.");
+    const { data: sid, error: sessionError } = await context.supabase.rpc("profile_auth_session_id");
+    if (sessionError || typeof sid !== "string") throw new Error("Sign in again to restore staff access.");
     const { data: identity, error: identityError } = await context.supabase.auth.getUser();
     if (identityError || !identity.user?.email || identity.user.id !== context.userId) throw new Error("Sign in again.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
