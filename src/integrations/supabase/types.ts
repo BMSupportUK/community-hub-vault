@@ -6246,28 +6246,37 @@ export type Database = {
           created_at: string
           credential_id: string | null
           decided_at: string | null
+          decided_by: string | null
           device_id: string
           id: string
-          owner_id: string
+          offsite_customer_id: string | null
+          owner_id: string | null
           status: string
+          token_hash: string | null
         }
         Insert: {
           created_at?: string
           credential_id?: string | null
           decided_at?: string | null
+          decided_by?: string | null
           device_id: string
           id?: string
-          owner_id: string
+          offsite_customer_id?: string | null
+          owner_id?: string | null
           status?: string
+          token_hash?: string | null
         }
         Update: {
           created_at?: string
           credential_id?: string | null
           decided_at?: string | null
+          decided_by?: string | null
           device_id?: string
           id?: string
-          owner_id?: string
+          offsite_customer_id?: string | null
+          owner_id?: string | null
           status?: string
+          token_hash?: string | null
         }
         Relationships: [
           {
@@ -6275,6 +6284,13 @@ export type Database = {
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "player_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_login_approvals_offsite_customer_id_fkey"
+            columns: ["offsite_customer_id"]
+            isOneToOne: false
+            referencedRelation: "player_offsite_customers"
             referencedColumns: ["id"]
           },
         ]
@@ -10749,6 +10765,10 @@ export type Database = {
               expiry_at: string
             }[]
           }
+      staff_decide_player_login: {
+        Args: { p_approve: boolean; p_id: string }
+        Returns: string
+      }
       staff_default_nameplate_for_user: {
         Args: { _gender?: string; _user_id: string }
         Returns: string
@@ -10809,6 +10829,19 @@ export type Database = {
       staff_pin_set: {
         Args: { p_by: string; p_pin: string; p_user: string }
         Returns: undefined
+      }
+      staff_player_login_requests: {
+        Args: never
+        Returns: {
+          account_number: number
+          created_at: string
+          customer_name: string
+          device_id: string
+          device_name: string
+          has_email: boolean
+          id: string
+          platform: string
+        }[]
       }
       staff_set_order_credential_expiry: {
         Args: { p_credential_id: string; p_expiry: string; p_order_id: string }

@@ -2262,6 +2262,13 @@
       "when": 1794231219129,
       "tag": "0322_player_login_approvals",
       "breakpoints": true
+    },
+    {
+      "idx": 323,
+      "version": "7",
+      "when": 1794232606912,
+      "tag": "0323_offsite_player_login_approvals",
+      "breakpoints": true
     }
   ]
 }
