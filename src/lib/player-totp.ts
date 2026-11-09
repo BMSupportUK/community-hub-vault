@@ -43,10 +43,14 @@ export async function totpMatches(secret: string, code: string, now = Date.now()
 export const totpUrl = (secret: string, label: string) =>
   `otpauth://totp/${encodeURIComponent(`BM Player:${label}`)}?secret=${secret}&issuer=${encodeURIComponent("BM Player")}&digits=6&period=30`;
 
-/** Authenticator unlock is asked once per day per box. */
+/** Authenticator unlock is asked once per UK calendar day per box (resets at 00:00 Europe/London). */
 export const TOTP_REMEMBER_MS = 24 * 60 * 60_000;
-export const totpStillValid = (passedAt: string | null | undefined, now = Date.now()) =>
-  !!passedAt && now - Date.parse(passedAt) < TOTP_REMEMBER_MS;
+const ukDay = (ms: number) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms));
+export const totpStillValid = (passedAt: string | null | undefined, now = Date.now()) => {
+  if (!passedAt) return false;
+  const t = Date.parse(passedAt);
+  return Number.isFinite(t) && t <= now && ukDay(t) === ukDay(now);
+};
 
 /** Store pages for Google Authenticator, shown as QR codes so customers can install it on their phone. */
 export const AUTH_APP_APPLE = "https://apps.apple.com/app/google-authenticator/id388497461";
