@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogIn, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, ClipboardList, MonitorPlay, Popcorn, Crown, UserPlus, Lock } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
+import { useProfilePortal } from "@/components/app/AccountProfiles";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
@@ -131,7 +132,14 @@ interface RailItem {
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
-  const { user, isStaff, isPending, signOut, hasAny, roles, hasRole, isFanZoneOnly } = useAuth();
+  const { user, isPending, signOut, hasAny: hasAnyRole, roles: authRoles, hasRole: hasAuthRole, isFanZoneOnly } = useAuth();
+  // The side menu follows the selected profile: a customer profile gets the
+  // customer icon set even when the signed-in person is staff.
+  const { staff: isStaff } = useProfilePortal();
+  const roles: AppRole[] = isStaff ? authRoles : authRoles.filter((r) => !["admin", "management", "staff", "moderator"].includes(r));
+  const hasAny = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
+  const hasRole = (r: AppRole) => roles.includes(r);
+  void hasAnyRole; void hasAuthRole;
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   // The portal tab bars show the inbox/mentions/notification icons beside Home,
