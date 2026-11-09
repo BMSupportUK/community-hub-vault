@@ -823,7 +823,7 @@ public class MainActivity extends Activity {
             ui.post(() -> {
                 if (!"pin".equals(screen) || isFinishing()) return;
                 if (fr == null) {
-                    if (fe != null && fe.contains("409")) { totpSetup = false; PlayerApplication.pinPassed = true; showHome(); return; }
+                    if (fe != null && (fe.contains("409") || fe.contains("already set up"))) { totpSetup = false; PlayerApplication.pinPassed = true; showHome(); return; }
                     LinearLayout box = column(); box.setGravity(Gravity.CENTER); box.addView(logo());
                     box.addView(text("Couldn't load 2FA set up. Check the internet and try again.", 18, MUTED, false));
                     box.addView(button("Try again", v -> showTotpSetup()));
