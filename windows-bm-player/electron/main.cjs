@@ -40,7 +40,7 @@ function send(data){ if(win&&!win.isDestroyed())win.webContents.send('player:eve
 function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,item.id);}
 let pinPassed=false,pinNeed=null;
 let pinSetup=false;
-function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed},()=>refresh().catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')}));}
+function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed},()=>refresh().catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')});}));}
 async function checkPin(){if(pinPassed||!store.token)return;try{const r=await site({action:'pin_status'});pinSetup=!!r.needs_setup;pinNeed=!!r.required||pinSetup;store.pinRequired=pinNeed;try{save();}catch{}}catch{pinNeed=!!store.pinRequired;}if(!pinNeed)pinPassed=true;send({type:'state',state:publicState()});refreshAtStartup();}
 function publicState(){
  const a=store.account||{};
