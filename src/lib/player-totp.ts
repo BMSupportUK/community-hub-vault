@@ -47,3 +47,7 @@ export const totpUrl = (secret: string, label: string) =>
 export const TOTP_REMEMBER_MS = 24 * 60 * 60_000;
 export const totpStillValid = (passedAt: string | null | undefined, now = Date.now()) =>
   !!passedAt && now - Date.parse(passedAt) < TOTP_REMEMBER_MS;
+
+/** Store pages for Google Authenticator, shown as QR codes so customers can install it on their phone. */
+export const AUTH_APP_APPLE = "https://apps.apple.com/app/google-authenticator/id388497461";
+export const AUTH_APP_ANDROID = "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2";

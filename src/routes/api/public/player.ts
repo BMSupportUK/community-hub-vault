@@ -53,6 +53,8 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
   z.object({ action: z.literal("pin_status"), device_token: Token }),
+  z.object({ action: z.literal("totp_start"), device_token: Token }),
+  z.object({ action: z.literal("totp_confirm"), device_token: Token, code: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("pin_create"), device_token: Token, pin: z.string().trim().regex(/^\d{4}$/) }),
   z.object({ action: z.literal("pin_check"), device_token: Token, pin: z.string().trim().regex(/^(\d{4}|\d{6})$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
@@ -326,6 +328,34 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ unlocked: Date.now() - at <= 2 * 60_000 });
         }
 
+        // First-visit 2FA setup on the box itself: QR to scan into an authenticator app, then one code to confirm.
+        if (body.action === "totp_start" || body.action === "totp_confirm") {
+          if (!device.user_id && !device.offsite_customer_id) return json({ error: "Link this app first." }, 403);
+          const key = device.user_id ? { owner_id: device.user_id } : { offsite_customer_id: device.offsite_customer_id as string };
+          const col = device.user_id ? "owner_id" : "offsite_customer_id";
+          const val = (device.user_id ?? device.offsite_customer_id) as string;
+          const { data: cur } = await supabaseAdmin.from("player_totp").select("enabled, pending_secret").eq(col, val).maybeSingle();
+          if (cur?.enabled) return json({ error: "2FA is already set up on this account." }, 409);
+          const T = await import("@/lib/player-totp");
+          if (body.action === "totp_start") {
+            const secret = T.newTotpSecret();
+            const { error } = cur
+              ? await supabaseAdmin.from("player_totp").update({ pending_secret: secret, updated_at: new Date().toISOString() }).eq(col, val)
+              : await supabaseAdmin.from("player_totp").insert({ ...key, pending_secret: secret });
+            if (error) return json({ error: "Couldn't start 2FA set up. Try again." }, 500);
+            const url = T.totpUrl(secret, device.iptv_username ?? "BM Player");
+            const QR = await import("qrcode");
+            const svg = (u: string) => QR.toString(u, { type: "svg", margin: 1, width: 240 });
+            return json({ secret, otpauth: url, qr_svg: await svg(url),
+              apps: { apple: T.AUTH_APP_APPLE, android: T.AUTH_APP_ANDROID },
+              apple_qr_svg: await svg(T.AUTH_APP_APPLE), android_qr_svg: await svg(T.AUTH_APP_ANDROID) });
+          }
+          if (!cur?.pending_secret || !(await T.totpMatches(cur.pending_secret, body.code))) return json({ error: "That code isn't right. Type the newest 6-digit code from your authenticator app." }, 401);
+          await supabaseAdmin.from("player_totp").update({ secret: cur.pending_secret, pending_secret: null, enabled: true, updated_at: new Date().toISOString() }).eq(col, val);
+          await supabaseAdmin.from("player_devices").update({ totp_passed_at: new Date().toISOString() }).eq("id", device.id);
+          return json({ ok: true });
+        }
+
         if (body.action === "pin_status" || body.action === "pin_check" || body.action === "pin_create") {
           if (!device.user_id && !device.offsite_customer_id) return json({ required: false });
           const pinQ = supabaseAdmin.from("player_pins").select("pin_hash, salt");
@@ -336,7 +366,7 @@ export const Route = createFileRoute("/api/public/player")({
           // Authenticator-app unlock (account holders who turned it on): 6-digit code, asked once a day per box.
           const { data: totp } = device.user_id
             ? await supabaseAdmin.from("player_totp").select("secret, enabled").eq("owner_id", device.user_id).maybeSingle()
-            : { data: null };
+            : await supabaseAdmin.from("player_totp").select("secret, enabled").eq("offsite_customer_id", device.offsite_customer_id as string).maybeSingle();
           // A 4-digit entry is the PIN fallback for customers who can't reach their authenticator app; it never counts for the daily pass.
           if (totp?.enabled && totp.secret && body.action !== "pin_create" && !(body.action === "pin_check" && /^\d{4}$/.test(body.pin))) {
             const { totpStillValid, totpMatches } = await import("@/lib/player-totp");
@@ -358,7 +388,7 @@ export const Route = createFileRoute("/api/public/player")({
             await supabaseAdmin.from("player_devices").update({ pin_failures: locked ? 0 : fails, pin_locked_until: until, pin_lock_level: level }).eq("id", device.id);
             return json({ error: locked ? waitT(until as string) : "That code isn't right. Open your authenticator app and type the newest 6-digit BM Player code." }, locked ? 429 : 401);
           }
-          if (body.action === "pin_status") return json({ required: !!pinRow, needs_setup: !pinRow, method: "pin", digits: 4 });
+          if (body.action === "pin_status") return json({ required: !!pinRow, needs_setup: !pinRow, method: "pin", digits: 4, totp_setup: true });
           if (body.action === "pin_create") {
             // First-open setup only: an existing PIN can only be changed on the website or by admin.
             if (pinRow) return json({ error: "A PIN is already set. Change it on bmsupport.uk in your subscription box." }, 409);
