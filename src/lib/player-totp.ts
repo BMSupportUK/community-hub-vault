@@ -23,7 +23,7 @@ function decode(secret: string): Uint8Array {
 }
 
 export async function totpAt(secret: string, step: number): Promise<string> {
-  const key = await crypto.subtle.importKey("raw", decode(secret), { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+  const key = await crypto.subtle.importKey("raw", decode(secret) as Uint8Array<ArrayBuffer>, { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
   const msg = new ArrayBuffer(8);
   new DataView(msg).setBigUint64(0, BigInt(step));
   const h = new Uint8Array(await crypto.subtle.sign("HMAC", key, msg));
