@@ -10,10 +10,10 @@ public class LinkedSignInTest {
     @Test public void removedDeviceCannotRestore() {
         assertFalse(LinkedSignIn.canRestore("verified-device-token", false, true));
     }
-    @Test public voidLogoutOrClearedCredentialsCannotRestore() {
+    @Test public void logoutOrClearedCredentialsCannotRestore() {
         assertFalse(LinkedSignIn.canRestore("verified-device-token", true, false));
     }
-    @Test public voidClearedDeviceTokenCannotRestore() {
+    @Test public void clearedDeviceTokenCannotRestore() {
         assertFalse(LinkedSignIn.canRestore("", true, true));
     }
 }
