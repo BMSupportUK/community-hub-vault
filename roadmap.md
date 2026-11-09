@@ -1,6 +1,6 @@
 # Roadmap
-- [ ] Release Windows/Mac numbered-event EPG installers and publish the website.
-- [ ] Switch the visible portal with the selected staff/customer profile, preserving verified account permissions.
+- [x] Released Windows 0.4.46 / universal Mac 0.1.56 numbered-event EPG installers; 122 desktop tests pass and both live download SHA-256 hashes match. Real-device installation remains unverified; website publication requested separately.
+- [x] Selected primary staff profile opens Staff Portal; extra customer profile opens Customer Portal. Signed-in Lumpy4Beat → Customer Portal, refresh, Boromedia → Staff Portal verified without browser errors; eight rule tests pass. Account identity and permissions remain unchanged.
 - [x] Prepare numbered daily-event EPG across Android and shared Windows/Mac: feed number only on left, existing fixtures/provider listings first, UK-day title/time fallback when empty. 122 desktop checks and six isolated Java checks pass; desktop guide interaction visibly verified. No new player releases; full native guide integration and installed-device checks remain unverified without Android SDK/devices.
 - [x] Released Android 4.00/211: progress-aware continuous stall supervision, cancellable/coalesced reconnects, no destructive advert seek or immediate recovered-picture format swap; 192 tests pass including scheduled fake-engine interactions, permanent signer matches 3.99, live full APK hash matches. Real-box improvement requires installing 4.00 and comparing subsequent stalls.
 - [x] Confirmed Dane J’s 3.99 main-player Coupang stall of 54,715ms at 18:34:58 UTC and 6,000ms advert-tagged stall at 18:35:40; no backup stall measurements in that check. These cause labels do not prove a physical network/provider outage.
