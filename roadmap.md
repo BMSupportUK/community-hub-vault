@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Repair Android/Fire TV legacy saved sign-in so linked devices reach the PIN, test and release the signed update; real-box reopening requires an attached customer device.
 - [x] Prepared mandatory Live TV, Movies and Series startup refresh across Android and shared Windows/Mac, after sign-in/PIN with once-per-start guards; removed Android Off/daily override. Android 213 tests and desktop 129 tests pass. Not released; real-device startup/provider download remains unverified without attached devices.
 - [x] Explained Direct Installer link delivery: possible with a receiving linked BM app and new delivery/prompt support; unavailable on bare devices; Android installation confirmation remains required. No implementation requested or added.
 - [x] Released Windows 0.4.54: restore legacy linked sign-in after website verification, preserve launch PIN; 127 desktop tests pass, current public download version and full SHA-256 match. Real Windows reopening check remains unverified without the user's PC.
