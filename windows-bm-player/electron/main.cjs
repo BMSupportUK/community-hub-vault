@@ -74,7 +74,7 @@ async function poll(){
   if(gate.restoreLinked(store,r))changed=true;
   if(store.user&&gate.unlocked&&!pinPassed)await checkPin();
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
-  if(changed){save();if(store.user&&gate.unlocked)await refresh();}
+  if(changed){save();if(store.user&&gate.unlocked&&pinPassed)refreshAtStartup();}
   if(store.user&&gate.unlocked)syncFavourites().catch(()=>{});
   send({type:'state',state:publicState()});
  }catch(error){send({type:'notice',message:error.message});}finally{pollBusy=false;}
@@ -267,7 +267,7 @@ else{
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('swap',async index=>{const session=sessions.find(x=>x.index===Number(index));if(!session||session.item.kind!=='live'||session.catchup)return {items:[]};return swapOptions(session);});register('swapped',({index,to,reason}={})=>{const session=sessions.find(x=>x.index===Number(index));if(!session)return false;const item=session.item;bufferQueue.push({kind:'live',content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:0,reconnected:false,freeze:false,swapped_to:String(to||'').slice(0,200),swap_reason:reason==='auto'?'auto':'manual',...(session.event?.title?{event_name:String(session.event.title).slice(0,200)}:{}),at:Date.now()});flushBuffer();return true;});register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',kind=>{if(kind==='film'||kind==='series')syncProgress(false).catch(()=>{});return catalogue(kind);});register('epg',epg);register('catchup',catchup);register('sports',async()=>{sportsSnapshot=await site({action:'sports'});return sportsSnapshot;});
   if(store.token&&store.unlockedFor===store.token){gate.restore();checkPin().catch(()=>{});}
-  const afterUnlock=()=>{checkPin().catch(()=>{});if(store.token&&store.unlockedFor!==store.token){store.unlockedFor=store.token;try{save();}catch{}}syncFavourites().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Something went wrong. Try again.')}));connectionCheck();};
+  const afterUnlock=()=>{checkPin().catch(()=>{});if(store.token&&store.unlockedFor!==store.token){store.unlockedFor=store.token;try{save();}catch{}}syncFavourites().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refreshAtStartup();connectionCheck();};
   register('pinCreate',async pin=>{if(!/^\d{4}$/.test(String(pin||'')))throw new Error('Enter all 4 digits.');await site({action:'pin_create',pin:String(pin)});pinSetup=false;store.pinRequired=true;try{save();}catch{}pinPassed=true;refreshAtStartup();return publicState();});
   register('pinCheck',async pin=>{if(!/^\d{4}$/.test(String(pin||'')))throw new Error('Enter all 4 digits.');await site({action:'pin_check',pin:String(pin)});pinPassed=true;refreshAtStartup();return publicState();});
   register('unlock',async number=>{await gate.unlock(number,site);afterUnlock();return publicState();});
