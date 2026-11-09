@@ -6702,6 +6702,24 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_roles: {
+        Row: {
+          created_at: string
+          credential_id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          credential_id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       profile_session_access: {
         Row: {
           credential_id: string
@@ -9488,6 +9506,13 @@ export type Database = {
           username: string
         }[]
       }
+      admin_profile_roles: {
+        Args: { p_owner: string }
+        Returns: {
+          credential_id: string
+          role: string
+        }[]
+      }
       admin_reset_customer_portal: {
         Args: { p_user_id: string }
         Returns: string
@@ -9535,6 +9560,10 @@ export type Database = {
       admin_set_manual_registration: {
         Args: { p_order_id: string; p_skip: boolean }
         Returns: boolean
+      }
+      admin_set_profile_roles: {
+        Args: { p_credential: string; p_roles: string[] }
+        Returns: undefined
       }
       admin_upsert_signup_vpn: {
         Args: {
