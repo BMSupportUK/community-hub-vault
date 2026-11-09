@@ -2199,6 +2199,13 @@
       "when": 1794222177015,
       "tag": "0313_orders_view_profile_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 314,
+      "version": "7",
+      "when": 1794222209411,
+      "tag": "0314_credentials_profile_scope",
+      "breakpoints": true
     }
   ]
 }

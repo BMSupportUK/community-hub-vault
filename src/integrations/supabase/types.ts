@@ -10300,6 +10300,17 @@ export type Database = {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
         Returns: string
       }
+      my_account_profiles: {
+        Args: never
+        Returns: {
+          account_number: number
+          account_type: string
+          app_login_name: string
+          expiry_at: string
+          id: string
+          player_number: number
+        }[]
+      }
       my_profile_access: { Args: never; Returns: Json }
       next_free_customer_number: { Args: never; Returns: number }
       order_subscription_months: {
