@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { boxLimitReached, isQuietBox, lockoutMinutes, recentlySeen, unusualPlace } from "./player-security";
+import { boxLimitReached, isQuietBox, lockoutMinutes, recentlySeen, unusualPlace } from "../src/lib/player-security";
 
 const now = Date.parse("2026-11-09T12:00:00Z");
 const ago = (ms: number) => new Date(now - ms).toISOString();
