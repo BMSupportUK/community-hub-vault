@@ -647,7 +647,8 @@ public class MainActivity extends Activity {
             boolean restored = !unlocked && !rememberedUnlock()
                     && LinkedSignIn.canRestore(prefs.getString("token", ""), r.optBoolean("linked", false), now);
             if (restored) { unlocked = true; rememberUnlock(); }
-            if (c != null || had != now || restored || ("".equals(screen) && now)) ui.post(() -> {
+            boolean needsAccount = !unlocked && now && !r.optBoolean("linked", false);
+            if (c != null || had != now || restored || needsAccount) ui.post(() -> {
                 if (c != null) Toast.makeText(this, "Login received from BM Support", Toast.LENGTH_LONG).show();
                 if (now) showHome(); else showLink();
             });
