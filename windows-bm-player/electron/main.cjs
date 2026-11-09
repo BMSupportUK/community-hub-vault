@@ -65,7 +65,7 @@ async function poll(){
   checkin.setSlow(r.slow);maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
   let changed=false;
-  if(r.credentials){gate.lock();await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
+  if(r.credentials){gate.lock();store.unlockedFor=null;await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
   if(changed){save();if(store.user&&gate.unlocked)await refresh();}
   if(store.user&&gate.unlocked)syncFavourites().catch(()=>{});
@@ -259,7 +259,8 @@ else{
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
   win.webContents.on('before-input-event',()=>{if(!promptedAt)lastInput=Date.now();});
   register('swap',async index=>{const session=sessions.find(x=>x.index===Number(index));if(!session||session.item.kind!=='live'||session.catchup)return {items:[]};return swapOptions(session);});register('swapped',({index,to,reason}={})=>{const session=sessions.find(x=>x.index===Number(index));if(!session)return false;const item=session.item;bufferQueue.push({kind:'live',content_id:String(item.id||'').slice(0,200),name:String(item.name||'').slice(0,200),stall_ms:0,reconnected:false,freeze:false,swapped_to:String(to||'').slice(0,200),swap_reason:reason==='auto'?'auto':'manual',...(session.event?.title?{event_name:String(session.event.title).slice(0,200)}:{}),at:Date.now()});flushBuffer();return true;});register('state',()=>publicState());register('link',getCode);register('refresh',refresh);register('catalog',kind=>{if(kind==='film'||kind==='series')syncProgress(false).catch(()=>{});return catalogue(kind);});register('epg',epg);register('catchup',catchup);register('sports',async()=>{sportsSnapshot=await site({action:'sports'});return sportsSnapshot;});
-  const afterUnlock=()=>{syncFavourites().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();};
+  if(store.token&&store.unlockedFor===store.token)gate.restore();
+  const afterUnlock=()=>{if(store.token&&store.unlockedFor!==store.token){store.unlockedFor=store.token;try{save();}catch{}}syncFavourites().catch(()=>{});syncProgress().catch(()=>{});send({type:'state',state:publicState()});refresh().catch(e=>send({type:'notice',message:e.message}));connectionCheck();};
   register('unlock',async number=>{await gate.unlock(number,site);afterUnlock();return publicState();});
   let remoteBusy=false;setInterval(async()=>{if(remoteBusy||!store.user||!store.token||gate.unlocked)return;remoteBusy=true;try{if(await gate.remote(site,()=>send({type:'state',state:publicState()})))afterUnlock();}catch{}finally{remoteBusy=false;}},3000);
   register('series',async id=>{const r=await provider('get_series_info',{series_id:String(id)});return{info:{plot:String(r.info?.plot||'').slice(0,10000),cover:String(r.info?.cover||'')},episodes:Object.fromEntries(Object.entries(r.episodes||{}).map(([season,rows])=>[season,rows.map(p=>({...core.itemFromProvider('episode',p),name:p.title||'Episode '+p.episode_num,episode:p.episode_num,season,poster:String(p.info?.movie_image||'')}))]))};});
