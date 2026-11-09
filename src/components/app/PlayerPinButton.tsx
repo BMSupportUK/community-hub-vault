@@ -37,7 +37,7 @@ export function PlayerPinButton({ className }: { className?: string }) {
   return (
     <>
       <button type="button" className={className} onClick={() => { setError(""); setOpen(true); }}>
-        {isSet ? "Change player PIN" : "Set player PIN"}
+        {isSet ? "Player PIN: set · Change" : "Player PIN: not set · Set"}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
