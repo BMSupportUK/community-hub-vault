@@ -563,6 +563,7 @@ public class PlayerActivity extends Activity {
                         && StreamRecovery.rememberHeavy(recoveryName())) saveHeavy(PlayerActivity.this);
             }
             @Override public void onTracksChanged(androidx.media3.common.Tracks t) {
+                surveySubtitles(t);
                 // 50fps UK sport judders on 60Hz Android boxes: ask the TV for a matching refresh rate.
                 for (androidx.media3.common.Tracks.Group g : t.getGroups())
                     if (g.getType() == androidx.media3.common.C.TRACK_TYPE_VIDEO)
@@ -643,6 +644,29 @@ public class PlayerActivity extends Activity {
         if (!"live".equals(kind()) || id == null || liveUrls.length < 2) return;
         String other = StreamRecovery.otherFormat(liveUrls[urlAt]);
         if (other != null) { prefs(this).edit().putString("fmt_pref:" + id, other).apply(); FormatSync.push(this, id, other); }
+    }
+
+    private boolean subtitlesSurveyed;
+    /** Quietly tells BM Support whether this live channel carries subtitle tracks (once per play, nothing shown). */
+    private void surveySubtitles(androidx.media3.common.Tracks t) {
+        if (subtitlesSurveyed || !"live".equals(kind()) || !everReady) return;
+        boolean video = false; int text = 0; java.util.LinkedHashSet<String> langs = new java.util.LinkedHashSet<>();
+        for (androidx.media3.common.Tracks.Group g : t.getGroups()) {
+            if (g.getType() == androidx.media3.common.C.TRACK_TYPE_VIDEO) video = true;
+            if (g.getType() != androidx.media3.common.C.TRACK_TYPE_TEXT) continue;
+            text++; String l = g.getMediaTrackGroup().getFormat(0).language; if (l != null) langs.add(l);
+        }
+        if (!video) return; // tracks still arriving
+        subtitlesSurveyed = true;
+        final String token = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("token", "");
+        final String name = getIntent().getStringExtra("content_name");
+        if (token.isEmpty() || name == null || name.trim().isEmpty()) return;
+        final int count = text; final String languages = android.text.TextUtils.join(",", langs);
+        new Thread(() -> { try {
+            Net.postJson(Net.SITE + "/api/public/player", new org.json.JSONObject().put("action", "subtitle_check").put("device_token", token)
+                    .put("name", name.length() > 200 ? name.substring(0, 200) : name).put("tracks", Math.min(count, 50))
+                    .put("languages", languages.length() > 200 ? languages.substring(0, 200) : languages).toString());
+        } catch (Exception ignored) {} }).start();
     }
 
     private boolean handedOver, retriedStart;

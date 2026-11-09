@@ -62,6 +62,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('guide_category_open'), device_token: Token, category: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal("announcement"), device_token: Token }),
+  z.object({ action: z.literal("subtitle_check"), device_token: Token, name: z.string().trim().min(1).max(200), tracks: z.number().int().min(0).max(50), languages: z.string().max(200).optional() }),
   z.object({ action: z.literal("channel_health"), device_token: Token, name: z.string().trim().min(1).max(200), status: z.enum(["failed", "black", "ok"]) }),
   z.object({ action: z.literal("formats"), device_token: Token }),
   z.object({ action: z.literal("format_set"), device_token: Token, content_id: z.string().regex(/^[A-Za-z0-9._-]{1,80}$/), fmt: z.enum(["ts", "m3u8"]) }),
@@ -566,10 +567,9 @@ export const Route = createFileRoute("/api/public/player")({
 
         if (body.action === "subtitle_check") {
           // Quiet survey: does this live channel's stream carry subtitle tracks? Nothing shown to viewers.
-          const name = String(body.name ?? "").slice(0, 200).trim();
-          if (!name) return json({ ok: true });
-          const key = name.toLowerCase(); const has = Number(body.tracks ?? 0) > 0;
-          const langs = String(body.languages ?? "").slice(0, 200) || null;
+          const name = body.name;
+          const key = name.toLowerCase(); const has = body.tracks > 0;
+          const langs = body.languages || null;
           const { data: row } = await supabaseAdmin.from("player_channel_subtitles").select("checks, checks_with_subs, languages").eq("channel_key", key).maybeSingle();
           const { error } = await supabaseAdmin.from("player_channel_subtitles").upsert({
             channel_key: key, channel_name: name, has_subtitles: has || (row?.checks_with_subs ?? 0) > 0,
