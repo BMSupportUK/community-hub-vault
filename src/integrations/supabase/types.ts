@@ -9759,6 +9759,10 @@ export type Database = {
         Args: { _login: string; _owner: string }
         Returns: number
       }
+      device_switch_profile_by_number: {
+        Args: { _device: string; _number: string }
+        Returns: string
+      }
       directory_extra_profiles: {
         Args: never
         Returns: {
