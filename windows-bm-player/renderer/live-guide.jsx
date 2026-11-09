@@ -6,6 +6,7 @@ import guideRefresh from '../guide-refresh.cjs';
 import guideActions from '../guide-action.cjs';
 import {ChannelName} from './channel-name';
 import guideAxis from '../guide-axis.cjs';
+import {channelLabel,eventProgramme} from '../event-channel.cjs';
 
 // Live TV laid out like the Android/Amazon BM Player: preview top-left, programme info beside it with
 // Search TV / Voice search top right, a slim date row (◀ 24h / Now / 24h ▶ / Category pill) and the guide grid below.
@@ -38,7 +39,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
   const cancel=checkin.every(async()=>{if(document.hidden)return;visible.forEach(id=>enqueue(channels.find(c=>String(c.id)===id)));pump();},()=>60000,60000+Math.random()*12000);
   return()=>{active=false;queue.length=0;cancel();io.disconnect();};},[channels]);
  useEffect(()=>{grid.current?.scrollTo(0,0);setFocus(null);},[category]);
- const list=id=>guide[id]||[];
+ const list=id=>{const rows=guide[id]||[];if(rows.length)return rows;const event=eventProgramme(channels.find(ch=>ch.id===id)?.name,now);return event?[event]:[];};
  const onAt=(id,t)=>list(id).find(p=>p.start<=t&&p.end>t);
  const nextAfter=(id,p)=>list(id).find(q=>q.start>=p.end);
  const shownCh=focus?.channel||selected;
@@ -87,7 +88,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
   <div className="lg-grid" ref={grid}>
    <div className="lg-row lg-head" style={{width:axis.width+240}}><div className="lg-ch">{new Date(start).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div><div className="lg-times">{axis.times.slice(0,-1).map(t=><span key={t} style={{left:axis.x(t)}}>{clock(t)}</span>)}</div></div>
    {channels.map((ch,n)=><div className="lg-row" key={ch.id} data-ch={ch.id} style={{width:axis.width+240}}>
-    <div className={'lg-ch'+(selected?.id===ch.id?' on':'')}><button onClick={()=>pick(ch,null)} onFocus={()=>setFocus({channel:ch,programme:onAt(ch.id,now)})}><ChannelName>{n+1+'  '+ch.name}</ChannelName>{query.trim()&&<small className="lg-search-category" title={catName(ch.category)}>{catName(ch.category)||'Uncategorised'}</small>}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>onCatchup(ch)}>🕘</button>}</div>
+    <div className={'lg-ch'+(selected?.id===ch.id?' on':'')}><button onClick={()=>pick(ch,null)} onFocus={()=>setFocus({channel:ch,programme:onAt(ch.id,now)})}><ChannelName>{channelLabel(ch.name,n)}</ChannelName>{query.trim()&&<small className="lg-search-category" title={catName(ch.category)}>{catName(ch.category)||'Uncategorised'}</small>}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>onCatchup(ch)}>🕘</button>}</div>
     <div className="lg-line">
      {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:axis.x(now)}}/>}
      {list(ch.id).filter(p=>p.end>start&&p.start<start+WINDOW).map(p=>{const on=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=reminders.some(r=>r.id===ch.id+':'+p.start);return <div key={p.id} className={'lg-prog'+(on&&selected?.id===ch.id?' on':'')} style={{left:axis.x(Math.max(start,p.start)),width:axis.x(Math.min(start+WINDOW,p.end))-axis.x(Math.max(start,p.start))}} onMouseEnter={()=>setFocus({channel:ch,programme:p})}>
@@ -95,7 +96,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
       {eligible&&<button className={'lg-reminder'+(set?' set':'')} title={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-label={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-pressed={set} onFocus={e=>{e.currentTarget.parentElement?.scrollIntoView({block:'nearest',inline:'nearest'});setFocus({channel:ch,programme:p});}} onClick={()=>onReminder(ch,p)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>{set&&<path d="m8 10 3 3 5-5"/>}</svg></button>}
      </div>;})}
      {guide[ch.id]&&!list(ch.id).some(p=>p.end>start&&p.start<start+WINDOW)&&<span className="lg-empty">No guide information for this time</span>}
-     {!guide[ch.id]&&<span className="lg-empty">Loading programmes…</span>}
+     {!guide[ch.id]&&!list(ch.id).length&&<span className="lg-empty">Loading programmes…</span>}
     </div>
    </div>)}
    {!channels.length&&<p className="empty">No channels in {currentCat}.</p>}
