@@ -2220,6 +2220,13 @@
       "when": 1794224698633,
       "tag": "0316_hidden_owner_profile_count",
       "breakpoints": true
+    },
+    {
+      "idx": 317,
+      "version": "7",
+      "when": 1794225328369,
+      "tag": "0317_hidden_owner_keep_account_one_hidden",
+      "breakpoints": true
     }
   ]
 }
