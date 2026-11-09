@@ -225,6 +225,7 @@ public class MainActivity extends Activity {
             f.setBackground(focusBg(4));
             f.setPadding(dp(3), dp(3), dp(3), dp(3));
             androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
+            pv.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
             pv.setUseController(false); pv.setFocusable(false);
             pv.setShutterBackgroundColor(Color.BLACK);
             androidx.media3.exoplayer.ExoPlayer pl = PlayerActivity.build(this);
@@ -727,7 +728,7 @@ public class MainActivity extends Activity {
                     String m = String.valueOf(ex.getMessage()), msg = "Couldn't check. Check the internet and try again.";
                     int i = m.indexOf('{');
                     if (i >= 0) try { msg = new JSONObject(m.substring(i)).optString("error", msg); } catch (Exception ignored) {}
-                    final String shown = msg;
+                    final String shown = SafeError.forScreen(msg, "Couldn't check. Check the internet and try again.");
                     ui.post(() -> { status.setText(shown); in.setText(""); });
                 }
             });
@@ -1058,6 +1059,7 @@ public class MainActivity extends Activity {
             side.setPadding(16, 0, 0, 0);
             side.addView(text("Preview", 18, TEXT, true));
             pv = new androidx.media3.ui.PlayerView(this);
+            pv.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
             pv.setUseController(false);
             pv.setBackgroundColor(Color.BLACK);
             pv.setFocusable(true);
@@ -2360,7 +2362,7 @@ public class MainActivity extends Activity {
                     int i = m.indexOf("\"error\":\"");
                     err = i >= 0 ? m.substring(i + 9, Math.max(i + 9, m.indexOf('"', i + 9))) : "Couldn't send your report. Check your internet and try again.";
                 }
-                final String fe = err;
+                final String fe = err == null ? null : SafeError.forScreen(err, "Couldn't send your report. Check your internet and try again.");
                 ui.post(() -> {
                     if (fe != null) { v.setEnabled(true); Toast.makeText(this, fe, Toast.LENGTH_LONG).show(); return; }
                     dlg.dismiss();
@@ -3441,6 +3443,7 @@ public class MainActivity extends Activity {
             boxInfo.addView(br, new LinearLayout.LayoutParams(fill, wrap));
         } else top.addView(info, weight(1.6f, ViewGroup.LayoutParams.WRAP_CONTENT));
         androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
+        pv.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
         pv.setUseController(false); pv.setBackgroundColor(Color.BLACK); pv.setFocusable(false);
         pv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
         pv.setShutterBackgroundColor(Color.BLACK);

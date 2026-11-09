@@ -276,6 +276,7 @@ public class PlayerActivity extends Activity {
         // Films and episodes draw to a TextureView so baked-in black bars can be measured and zoomed past.
         view = PlayerControls.canSkip(kind()) ? (PlayerView) getLayoutInflater().inflate(R.layout.bm_player_texture, root, false) : new PlayerView(this);
         view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
+        view.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
         // Fast forward/rewind only where they work: films and series episodes, never live TV or catch up.
         view.setShowFastForwardButton(PlayerControls.canSkip(kind()));
         view.setShowRewindButton(PlayerControls.canSkip(kind()));
