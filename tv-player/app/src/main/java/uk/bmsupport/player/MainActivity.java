@@ -3616,6 +3616,10 @@ public class MainActivity extends Activity {
                         ok = true; full0 = true;
                     } catch (Exception ignored) {}
                     }
+                    if (got.isEmpty()) {
+                        GuideGridView.Prog event = EventChannel.programme(it.name, now);
+                        if (event != null) { got.add(event); ok = true; full0 = true; }
+                    }
                     final List<GuideGridView.Prog> res = got; final boolean fetched = ok, gotFull = full0;
                     ui.post(() -> {
                         requested.remove(it.id);

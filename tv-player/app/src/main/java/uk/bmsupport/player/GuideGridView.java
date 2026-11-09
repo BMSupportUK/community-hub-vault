@@ -385,7 +385,7 @@ public class GuideGridView extends View {
             fill.setColor(selR ? 0xFF1E2C4D : 0xFF16213A);
             c.drawRect(0, y + 1, ch - 2, y + rh - 1, fill);
             txt.setColor(0xFFF1F5F9); txt.setTextSize(15 * d); txt.setFakeBoldText(selR);
-            String label = (r + 1) + "  " + names.get(r);
+            String label = EventChannel.label(names.get(r), r);
             float clockW = hasCatchup(r) ? 26 * d : 0;
             float available = ch - 16 * d - clockW;
             if (selR && isFocused() && txt.measureText(label) > available) {
