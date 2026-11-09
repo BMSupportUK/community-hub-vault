@@ -6552,21 +6552,27 @@ export type Database = {
       player_totp: {
         Row: {
           enabled: boolean
-          owner_id: string
+          id: string
+          offsite_customer_id: string | null
+          owner_id: string | null
           pending_secret: string | null
           secret: string | null
           updated_at: string
         }
         Insert: {
           enabled?: boolean
-          owner_id: string
+          id?: string
+          offsite_customer_id?: string | null
+          owner_id?: string | null
           pending_secret?: string | null
           secret?: string | null
           updated_at?: string
         }
         Update: {
           enabled?: boolean
-          owner_id?: string
+          id?: string
+          offsite_customer_id?: string | null
+          owner_id?: string | null
           pending_secret?: string | null
           secret?: string | null
           updated_at?: string
