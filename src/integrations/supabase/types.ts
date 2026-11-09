@@ -6699,6 +6699,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_session_access: {
+        Row: {
+          credential_id: string
+          password_failures: number
+          password_window_at: string
+          restricted: boolean
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          credential_id: string
+          password_failures?: number
+          password_window_at?: string
+          restricted?: boolean
+          session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          credential_id?: string
+          password_failures?: number
+          password_window_at?: string
+          restricted?: boolean
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -9668,6 +9698,7 @@ export type Database = {
         Returns: boolean
       }
       customer_number_is_weak: { Args: { n: number }; Returns: boolean }
+      customer_profile_restricted: { Args: never; Returns: boolean }
       decide_cover_request: {
         Args: { _approve: boolean; _id: string }
         Returns: string
@@ -10258,6 +10289,7 @@ export type Database = {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
         Returns: string
       }
+      my_profile_access: { Args: never; Returns: Json }
       next_free_customer_number: { Args: never; Returns: number }
       order_subscription_months: {
         Args: { p_order_id: string }
@@ -10490,6 +10522,7 @@ export type Database = {
         Args: { _device: string; _steps: number[]; _ticket_id: string }
         Returns: undefined
       }
+      select_customer_profile: { Args: { _credential: string }; Returns: Json }
       set_my_fan_alias: {
         Args: { _alias: string; _avatar: string }
         Returns: undefined

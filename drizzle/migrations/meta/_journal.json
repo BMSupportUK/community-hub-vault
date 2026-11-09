@@ -2143,6 +2143,13 @@
       "when": 1794169271628,
       "tag": "0305_player_watch_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 306,
+      "version": "7",
+      "when": 1794218845417,
+      "tag": "0306_session_profile_permissions",
+      "breakpoints": true
     }
   ]
 }
