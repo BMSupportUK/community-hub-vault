@@ -2143,6 +2143,41 @@
       "when": 1794169271628,
       "tag": "0305_player_watch_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 306,
+      "version": "7",
+      "when": 1794218845417,
+      "tag": "0306_session_profile_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 307,
+      "version": "7",
+      "when": 1794218900644,
+      "tag": "0307_profile_password_return_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 308,
+      "version": "7",
+      "when": 1794219140405,
+      "tag": "0308_profile_scope_verified_token_fallback",
+      "breakpoints": true
+    },
+    {
+      "idx": 309,
+      "version": "7",
+      "when": 1794219372916,
+      "tag": "0309_profile_channel_permission_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 310,
+      "version": "7",
+      "when": 1794219462203,
+      "tag": "0310_profile_role_bypass_guards",
+      "breakpoints": true
     }
   ]
 }
