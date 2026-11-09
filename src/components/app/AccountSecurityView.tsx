@@ -123,7 +123,7 @@ export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) 
       </section>
 
       <div className="p-6 max-w-2xl mx-auto space-y-5">
-        <div className="inline-flex p-1 rounded-xl bg-surface-2 border border-border">
+        <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
           {([
             ["2fa", "Two-factor"],
             ["player", "BM Player 2FA"],
