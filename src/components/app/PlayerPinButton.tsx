@@ -1,30 +1,24 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { confirmPlayerTotp, getMyPlayerPin, getMyPlayerUnlock, setMyPlayerPin, startPlayerTotp } from "@/lib/player-pin.functions";
+import { confirmPlayerTotp, getMyPlayerUnlock, startPlayerTotp } from "@/lib/player-pin.functions";
 
-/** Lets a customer set or change the 4-digit PIN BM Player asks for after its opening video. */
+/** BM Player 2FA status in the subscription box, with set up for customers who haven't done it on the box yet. */
 export function PlayerPinButton({ className }: { className?: string }) {
-  const status = useServerFn(getMyPlayerPin);
-  const save = useServerFn(setMyPlayerPin);
-  const [isSet, setIsSet] = useState<boolean | null>(null);
-  const [open, setOpen] = useState(false);
-  const [pin, setPin] = useState("");
-  const [again, setAgain] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-
   const unlockFn = useServerFn(getMyPlayerUnlock);
   const startFn = useServerFn(startPlayerTotp);
   const confirmFn = useServerFn(confirmPlayerTotp);
-  const [method, setMethod] = useState<"pin" | "totp">("pin");
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [method, setMethod] = useState<"none" | "totp">("none");
   const [setup, setSetup] = useState<{ secret: string; qrSvg: string } | null>(null);
   const [code, setCode] = useState("");
 
-  useEffect(() => { status().then((r) => setIsSet(r.set)).catch(() => setIsSet(null)); }, [status]);
   useEffect(() => { unlockFn().then((r) => setMethod(r.method)).catch(() => {}); }, [unlockFn]);
 
   const beginTotp = async () => {
@@ -36,55 +30,35 @@ export function PlayerPinButton({ className }: { className?: string }) {
     try {
       const r = await confirmFn({ data: { code } });
       if (!r.ok) { setError(r.error); return; }
-      setMethod("totp"); setSetup(null); setOpen(false);
-      toast.success("Authenticator turned on. BM Player will ask for a code once a day instead of your PIN.");
+      setMethod("totp"); setSetup(null);
+      toast.success("2FA is on. Your 10 backup codes are in Security settings.");
     } catch { setError("Couldn't check that code. Try again."); } finally { setBusy(false); }
   };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pin !== again) { setError("The two PINs don't match."); return; }
-    setBusy(true); setError("");
-    try {
-      const r = await save({ data: { pin } });
-      if (!r.ok) { setError(r.error); return; }
-      toast.success("BM Player PIN saved. Your boxes will ask for it next time they open.");
-      setIsSet(true); setOpen(false); setPin(""); setAgain("");
-    } catch { setError("Couldn't save your PIN. Try again."); }
-    finally { setBusy(false); }
-  };
-
-  const digits = (v: string) => v.replace(/\D/g, "").slice(0, 4);
 
   return (
     <>
       <button type="button" className={className} onClick={() => { setError(""); setOpen(true); }}>
-        {method === "totp" ? "Player 2FA: on · Backup PIN" : "Player 2FA: not set up · Set up now"}
+        {method === "totp" ? "Player 2FA: on · Backup codes" : "Player 2FA: not set up · Set up now"}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>How BM Player unlocks</DialogTitle>
-            <DialogDescription>An authenticator app is required: BM Player asks for its 6-digit code once a day. Your 4-digit PIN is only a backup for when you can't get to the authenticator app.</DialogDescription>
+            <DialogTitle>BM Player 2FA</DialogTitle>
+            <DialogDescription>BM Player asks for the 6-digit code from your authenticator app once a day. If you can't get to the app, use one of your 10 backup codes instead.</DialogDescription>
           </DialogHeader>
-          {method === "pin" && !setup && <Button type="button" className="w-full" disabled={busy} onClick={() => void beginTotp()}>Set up authenticator app</Button>}
-          {setup ? <form onSubmit={finishTotp} className="space-y-3">
+          {method === "none" && !setup && <Button type="button" className="w-full" disabled={busy} onClick={() => void beginTotp()}>Set up authenticator app</Button>}
+          {setup && <form onSubmit={finishTotp} className="space-y-3">
             <p className="text-sm text-muted-foreground">Scan this with Google Authenticator, Microsoft Authenticator or similar, then type the 6-digit code it shows.</p>
             <div className="mx-auto w-fit rounded-md bg-card p-2 [&_svg]:size-44" dangerouslySetInnerHTML={{ __html: setup.qrSvg }} />
             <p className="break-all text-center font-mono text-xs text-muted-foreground">Or type this key: {setup.secret}</p>
             <Input aria-label="6-digit code" inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} />
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={busy || code.length !== 6}>{busy ? "Checking…" : "Turn on authenticator"}</Button>
-          </form> : method === "totp" ? <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Authenticator is on. Your boxes ask for the 6-digit BM Player code once a day. If you can't get to your authenticator app, choose "Use PIN instead" on the box and type your 4-digit backup PIN.</p>
-          </div> : null}
-          {!setup && <form onSubmit={submit} className="space-y-3">
-            <p className="text-sm font-semibold">{isSet ? "Change backup PIN" : "Set a backup PIN"}</p>
-            <Input aria-label="New PIN" type="password" inputMode="numeric" autoComplete="new-password" placeholder="New PIN" value={pin} onChange={(e) => setPin(digits(e.target.value))} />
-            <Input aria-label="Repeat PIN" type="password" inputMode="numeric" autoComplete="new-password" placeholder="Repeat PIN" value={again} onChange={(e) => setAgain(digits(e.target.value))} />
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={busy || pin.length !== 4 || again.length !== 4}>{busy ? "Saving…" : "Save PIN"}</Button>
           </form>}
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+          {method === "totp" && <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">2FA is on. Your 10 backup codes are kept in Security settings, locked until you confirm your account password.</p>
+            <Button asChild className="w-full"><Link to="/account-security" onClick={() => setOpen(false)}>View backup codes</Link></Button>
+          </div>}
         </DialogContent>
       </Dialog>
     </>
