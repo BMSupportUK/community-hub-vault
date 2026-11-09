@@ -48,6 +48,7 @@ import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesIdRouteImport } from './routes/guides.$id'
 import { Route as JobApplicationTokenRouteImport } from './routes/job-application.$token'
 import { Route as PayTokenRouteImport } from './routes/pay.$token'
+import { Route as PlayerApproveTokenRouteImport } from './routes/player-approve.$token'
 import { Route as PortalCodeRouteImport } from './routes/portal.$code'
 import { Route as VideoTokenRouteImport } from './routes/video.$token'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
@@ -145,6 +146,7 @@ import { Route as ApiPublicInstallScreenApkRouteImport } from './routes/api/publ
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as ApiPublicPlayerRouteImport } from './routes/api/public/player'
 import { Route as ApiPublicPlayerApkRouteImport } from './routes/api/public/player-apk'
+import { Route as ApiPublicPlayerApproveRouteImport } from './routes/api/public/player-approve'
 import { Route as ApiPublicPlayerMacRouteImport } from './routes/api/public/player-mac'
 import { Route as ApiPublicPlayerWindowsRouteImport } from './routes/api/public/player-windows'
 import { Route as ApiPublicRemoteHelperApkRouteImport } from './routes/api/public/remote-helper-apk'
@@ -422,6 +424,11 @@ const JobApplicationTokenRoute = JobApplicationTokenRouteImport.update({
 const PayTokenRoute = PayTokenRouteImport.update({
   id: '/pay/$token',
   path: '/pay/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlayerApproveTokenRoute = PlayerApproveTokenRouteImport.update({
+  id: '/player-approve/$token',
+  path: '/player-approve/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortalCodeRoute = PortalCodeRouteImport.update({
@@ -1004,6 +1011,11 @@ const ApiPublicPlayerApkRoute = ApiPublicPlayerApkRouteImport.update({
   path: '/api/public/player-apk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPlayerApproveRoute = ApiPublicPlayerApproveRouteImport.update({
+  id: '/api/public/player-approve',
+  path: '/api/public/player-approve',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPlayerMacRoute = ApiPublicPlayerMacRouteImport.update({
   id: '/api/public/player-mac',
   path: '/api/public/player-mac',
@@ -1524,6 +1536,7 @@ export interface FileRoutesByFullPath {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/player-approve/$token': typeof PlayerApproveTokenRoute
   '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
@@ -1623,6 +1636,7 @@ export interface FileRoutesByFullPath {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/player': typeof ApiPublicPlayerRoute
   '/api/public/player-apk': typeof ApiPublicPlayerApkRoute
+  '/api/public/player-approve': typeof ApiPublicPlayerApproveRoute
   '/api/public/player-mac': typeof ApiPublicPlayerMacRoute
   '/api/public/player-windows': typeof ApiPublicPlayerWindowsRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
@@ -1742,6 +1756,7 @@ export interface FileRoutesByTo {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/player-approve/$token': typeof PlayerApproveTokenRoute
   '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
   '/fan-zone': typeof FanZoneIndexRoute
@@ -1840,6 +1855,7 @@ export interface FileRoutesByTo {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/player': typeof ApiPublicPlayerRoute
   '/api/public/player-apk': typeof ApiPublicPlayerApkRoute
+  '/api/public/player-approve': typeof ApiPublicPlayerApproveRoute
   '/api/public/player-mac': typeof ApiPublicPlayerMacRoute
   '/api/public/player-windows': typeof ApiPublicPlayerWindowsRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
@@ -1964,6 +1980,7 @@ export interface FileRoutesById {
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
   '/pay/$token': typeof PayTokenRoute
+  '/player-approve/$token': typeof PlayerApproveTokenRoute
   '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
@@ -2063,6 +2080,7 @@ export interface FileRoutesById {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/player': typeof ApiPublicPlayerRoute
   '/api/public/player-apk': typeof ApiPublicPlayerApkRoute
+  '/api/public/player-approve': typeof ApiPublicPlayerApproveRoute
   '/api/public/player-mac': typeof ApiPublicPlayerMacRoute
   '/api/public/player-windows': typeof ApiPublicPlayerWindowsRoute
   '/api/public/remote-helper-apk': typeof ApiPublicRemoteHelperApkRoute
@@ -2186,6 +2204,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/player-approve/$token'
     | '/portal/$code'
     | '/video/$token'
     | '/fan-zone/'
@@ -2285,6 +2304,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/player'
     | '/api/public/player-apk'
+    | '/api/public/player-approve'
     | '/api/public/player-mac'
     | '/api/public/player-windows'
     | '/api/public/remote-helper-apk'
@@ -2404,6 +2424,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/player-approve/$token'
     | '/portal/$code'
     | '/video/$token'
     | '/fan-zone'
@@ -2502,6 +2523,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/player'
     | '/api/public/player-apk'
+    | '/api/public/player-approve'
     | '/api/public/player-mac'
     | '/api/public/player-windows'
     | '/api/public/remote-helper-apk'
@@ -2625,6 +2647,7 @@ export interface FileRouteTypes {
     | '/guides/$id'
     | '/job-application/$token'
     | '/pay/$token'
+    | '/player-approve/$token'
     | '/portal/$code'
     | '/video/$token'
     | '/fan-zone/'
@@ -2724,6 +2747,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/player'
     | '/api/public/player-apk'
+    | '/api/public/player-approve'
     | '/api/public/player-mac'
     | '/api/public/player-windows'
     | '/api/public/remote-helper-apk'
@@ -2842,6 +2866,7 @@ export interface RootRouteChildren {
   GuidesIdRoute: typeof GuidesIdRoute
   JobApplicationTokenRoute: typeof JobApplicationTokenRoute
   PayTokenRoute: typeof PayTokenRoute
+  PlayerApproveTokenRoute: typeof PlayerApproveTokenRoute
   PortalCodeRoute: typeof PortalCodeRoute
   VideoTokenRoute: typeof VideoTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
@@ -2860,6 +2885,7 @@ export interface RootRouteChildren {
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicPlayerRoute: typeof ApiPublicPlayerRoute
   ApiPublicPlayerApkRoute: typeof ApiPublicPlayerApkRoute
+  ApiPublicPlayerApproveRoute: typeof ApiPublicPlayerApproveRoute
   ApiPublicPlayerMacRoute: typeof ApiPublicPlayerMacRoute
   ApiPublicPlayerWindowsRoute: typeof ApiPublicPlayerWindowsRoute
   ApiPublicRemoteHelperApkRoute: typeof ApiPublicRemoteHelperApkRoute
@@ -3191,6 +3217,13 @@ declare module '@tanstack/react-router' {
       path: '/pay/$token'
       fullPath: '/pay/$token'
       preLoaderRoute: typeof PayTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/player-approve/$token': {
+      id: '/player-approve/$token'
+      path: '/player-approve/$token'
+      fullPath: '/player-approve/$token'
+      preLoaderRoute: typeof PlayerApproveTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portal/$code': {
@@ -3870,6 +3903,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/player-apk'
       fullPath: '/api/public/player-apk'
       preLoaderRoute: typeof ApiPublicPlayerApkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/player-approve': {
+      id: '/api/public/player-approve'
+      path: '/api/public/player-approve'
+      fullPath: '/api/public/player-approve'
+      preLoaderRoute: typeof ApiPublicPlayerApproveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/player-mac': {
@@ -4897,6 +4937,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesIdRoute: GuidesIdRoute,
   JobApplicationTokenRoute: JobApplicationTokenRoute,
   PayTokenRoute: PayTokenRoute,
+  PlayerApproveTokenRoute: PlayerApproveTokenRoute,
   PortalCodeRoute: PortalCodeRoute,
   VideoTokenRoute: VideoTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
@@ -4915,6 +4956,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicPlayerRoute: ApiPublicPlayerRoute,
   ApiPublicPlayerApkRoute: ApiPublicPlayerApkRoute,
+  ApiPublicPlayerApproveRoute: ApiPublicPlayerApproveRoute,
   ApiPublicPlayerMacRoute: ApiPublicPlayerMacRoute,
   ApiPublicPlayerWindowsRoute: ApiPublicPlayerWindowsRoute,
   ApiPublicRemoteHelperApkRoute: ApiPublicRemoteHelperApkRoute,
