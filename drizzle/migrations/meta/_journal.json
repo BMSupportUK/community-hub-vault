@@ -2283,6 +2283,13 @@
       "when": 1794244659925,
       "tag": "0325_player_security",
       "breakpoints": true
+    },
+    {
+      "idx": 326,
+      "version": "7",
+      "when": 1794245972821,
+      "tag": "0326_player_pin",
+      "breakpoints": true
     }
   ]
 }

@@ -6079,6 +6079,9 @@ export type Database = {
           name: string
           nickname: string | null
           offsite_customer_id: string | null
+          pin_failures: number
+          pin_lock_level: number
+          pin_locked_until: string | null
           platform: string
           remote_unlock_at: string | null
           token_hash: string
@@ -6114,6 +6117,9 @@ export type Database = {
           name?: string
           nickname?: string | null
           offsite_customer_id?: string | null
+          pin_failures?: number
+          pin_lock_level?: number
+          pin_locked_until?: string | null
           platform?: string
           remote_unlock_at?: string | null
           token_hash: string
@@ -6149,6 +6155,9 @@ export type Database = {
           name?: string
           nickname?: string | null
           offsite_customer_id?: string | null
+          pin_failures?: number
+          pin_lock_level?: number
+          pin_locked_until?: string | null
           platform?: string
           remote_unlock_at?: string | null
           token_hash?: string
@@ -6398,6 +6407,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_pins: {
+        Row: {
+          id: string
+          offsite_customer_id: string | null
+          owner_id: string | null
+          pin_hash: string
+          salt: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          offsite_customer_id?: string | null
+          owner_id?: string | null
+          pin_hash: string
+          salt: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          offsite_customer_id?: string | null
+          owner_id?: string | null
+          pin_hash?: string
+          salt?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       player_rating_totals: {
         Row: {
