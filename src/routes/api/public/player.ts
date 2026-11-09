@@ -56,7 +56,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("totp_start"), device_token: Token }),
   z.object({ action: z.literal("totp_confirm"), device_token: Token, code: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("pin_create"), device_token: Token, pin: z.string().trim().regex(/^\d{4}$/) }),
-  z.object({ action: z.literal("pin_check"), device_token: Token, pin: z.string().trim().regex(/^(\d{4}|\d{6})$/) }),
+  z.object({ action: z.literal("pin_check"), device_token: Token, pin: z.string().trim().regex(/^(\d{4}|\d{6}|\d{4}[- ]?\d{4})$/) }),
   z.object({ action: z.literal("sports"), device_token: Token }),
   z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('guide_category_open'), device_token: Token, category: z.string().trim().min(1).max(200) }),
@@ -353,78 +353,53 @@ export const Route = createFileRoute("/api/public/player")({
           if (!cur?.pending_secret || !(await T.totpMatches(cur.pending_secret, body.code))) return json({ error: "That code isn't right. Type the newest 6-digit code from your authenticator app." }, 401);
           await supabaseAdmin.from("player_totp").update({ secret: cur.pending_secret, pending_secret: null, enabled: true, updated_at: new Date().toISOString() }).eq(col, val);
           await supabaseAdmin.from("player_devices").update({ totp_passed_at: new Date().toISOString() }).eq("id", device.id);
-          return json({ ok: true });
+          const { issueBackupCodes } = await import("@/lib/player-backup-codes");
+          await issueBackupCodes(supabaseAdmin, key);
+          return json({ ok: true, backup_codes_saved: !!device.user_id });
         }
 
+        // The 4-digit PIN is retired: 2FA (authenticator app) is the only main-menu lock, once a day per box.
+        // Can't reach the authenticator? One of the 10 one-use backup codes (8 digits) opens it instead.
         if (body.action === "pin_status" || body.action === "pin_check" || body.action === "pin_create") {
           if (!device.user_id && !device.offsite_customer_id) return json({ required: false });
-          const pinQ = supabaseAdmin.from("player_pins").select("pin_hash, salt");
-          const { data: pinRow } = device.user_id
-            ? await pinQ.eq("owner_id", device.user_id).maybeSingle()
-            : await pinQ.eq("offsite_customer_id", device.offsite_customer_id as string).maybeSingle();
-          // needs_setup: newer apps ask the customer to choose a PIN on first open; older apps only read `required`.
-          // Authenticator-app unlock (account holders who turned it on): 6-digit code, asked once a day per box.
+          if (body.action === "pin_create") return json({ error: "PINs are no longer used. Set up 2FA instead." }, 410);
+          const key = device.user_id ? { owner_id: device.user_id } : { offsite_customer_id: device.offsite_customer_id as string };
           const { data: totp } = device.user_id
             ? await supabaseAdmin.from("player_totp").select("secret, enabled").eq("owner_id", device.user_id).maybeSingle()
             : await supabaseAdmin.from("player_totp").select("secret, enabled").eq("offsite_customer_id", device.offsite_customer_id as string).maybeSingle();
-          // A 4-digit entry is the PIN fallback for customers who can't reach their authenticator app; it never counts for the daily pass.
-          if (totp?.enabled && totp.secret && body.action !== "pin_create" && !(body.action === "pin_check" && /^\d{4}$/.test(body.pin))) {
-            const { totpStillValid, totpMatches } = await import("@/lib/player-totp");
-            const { data: dv } = await supabaseAdmin.from("player_devices").select("totp_passed_at, pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
-            if (body.action === "pin_status") {
-              const ok = totpStillValid(dv?.totp_passed_at);
-              return json({ required: !ok, needs_setup: false, method: "totp", digits: 6, pin_fallback: !!pinRow });
-            }
-            const waitT = (until: string) => `Too many wrong codes. Please wait ${Math.max(1, Math.ceil((Date.parse(until) - Date.now()) / 60_000))} minutes and try again.`;
-            if (dv?.pin_locked_until && Date.parse(dv.pin_locked_until) > Date.now()) return json({ error: waitT(dv.pin_locked_until) }, 429);
-            if (await totpMatches(totp.secret, body.pin)) {
-              await supabaseAdmin.from("player_devices").update({ totp_passed_at: new Date().toISOString(), pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("id", device.id);
-              return json({ ok: true });
-            }
-            const fails = (dv?.pin_failures ?? 0) + 1;
-            const locked = fails >= WRONG_TRIES_PER_STEP;
-            const level = locked ? (dv?.pin_lock_level ?? 0) + 1 : (dv?.pin_lock_level ?? 0);
-            const until = locked ? new Date(Date.now() + lockoutMinutes(level) * 60_000).toISOString() : null;
-            await supabaseAdmin.from("player_devices").update({ pin_failures: locked ? 0 : fails, pin_locked_until: until, pin_lock_level: level }).eq("id", device.id);
-            return json({ error: locked ? waitT(until as string) : "That code isn't right. Open your authenticator app and type the newest 6-digit BM Player code." }, locked ? 429 : 401);
+          const { totpStillValid, totpMatches } = await import("@/lib/player-totp");
+          const { data: dv } = await supabaseAdmin.from("player_devices").select("totp_passed_at, pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
+          if (!totp?.enabled || !totp.secret) {
+            if (body.action === "pin_status") return json({ required: false, needs_setup: false, method: "totp", digits: 6, pin_fallback: false, totp_setup: true });
+            return json({ error: "Set up 2FA first." }, 409);
           }
-          if (body.action === "pin_status") return json({ required: !!pinRow, needs_setup: !pinRow, method: "pin", digits: 4, totp_setup: true });
-          if (body.action === "pin_create") {
-            // First-open setup only: an existing PIN can only be changed on the website or by admin.
-            if (pinRow) return json({ error: "A PIN is already set. Change it on bmsupport.uk in your subscription box." }, 409);
-            const { weakPin, newSalt, hashPin } = await import("@/lib/player-pin");
-            if (weakPin(body.pin)) return json({ error: "That PIN is too easy to guess. Avoid 0000, 1234 and similar." }, 400);
-            const salt = newSalt();
-            const row = { salt, pin_hash: await hashPin(body.pin, salt), updated_at: new Date().toISOString() };
-            const { error } = device.user_id
-              ? await supabaseAdmin.from("player_pins").insert({ ...row, owner_id: device.user_id })
-              : await supabaseAdmin.from("player_pins").insert({ ...row, offsite_customer_id: device.offsite_customer_id as string });
-            if (error) return json({ error: "Couldn't save your PIN. Try again." }, 500);
-            return json({ ok: true });
+          if (body.action === "pin_status") {
+            return json({ required: !totpStillValid(dv?.totp_passed_at), needs_setup: false, method: "totp", digits: 6, pin_fallback: false, backup_codes: true });
           }
-          if (!pinRow) return json({ ok: true });
-          const { data: pl } = await supabaseAdmin.from("player_devices").select("pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
-          const wait = (until: string) => {
+          const waitT = (until: string) => {
             const mins = Math.max(1, Math.ceil((Date.parse(until) - Date.now()) / 60_000));
-            return `Too many wrong PINs. Please wait ${mins >= 120 ? `${Math.ceil(mins / 60)} hours` : `${mins} minutes`} and try again.`;
+            return `Too many wrong codes. Please wait ${mins >= 120 ? `${Math.ceil(mins / 60)} hours` : `${mins} minutes`} and try again.`;
           };
-          if (pl?.pin_locked_until && Date.parse(pl.pin_locked_until) > Date.now()) return json({ error: wait(pl.pin_locked_until) }, 429);
-          const { pinMatches } = await import("@/lib/player-pin");
-          if (await pinMatches(body.pin, pinRow.salt, pinRow.pin_hash)) {
-            await supabaseAdmin.from("player_devices").update({ pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("id", device.id);
+          if (dv?.pin_locked_until && Date.parse(dv.pin_locked_until) > Date.now()) return json({ error: waitT(dv.pin_locked_until) }, 429);
+          const { useBackupCode } = await import("@/lib/player-backup-codes");
+          const isBackup = !/^\d{6}$/.test(body.pin);
+          const ok = isBackup ? await useBackupCode(supabaseAdmin, key, body.pin) : await totpMatches(totp.secret, body.pin);
+          if (ok) {
+            await supabaseAdmin.from("player_devices").update({ totp_passed_at: new Date().toISOString(), pin_failures: 0, pin_locked_until: null, pin_lock_level: 0 }).eq("id", device.id);
+            if (isBackup) await supabaseAdmin.from("player_security_events").insert({ kind: "backup_code", device_id: device.id, owner_id: device.user_id, login: device.iptv_username, detail: {} });
             return json({ ok: true });
           }
-          const fails = (pl?.pin_failures ?? 0) + 1;
+          const fails = (dv?.pin_failures ?? 0) + 1;
           const locked = fails >= WRONG_TRIES_PER_STEP;
-          const level = locked ? (pl?.pin_lock_level ?? 0) + 1 : (pl?.pin_lock_level ?? 0);
+          const level = locked ? (dv?.pin_lock_level ?? 0) + 1 : (dv?.pin_lock_level ?? 0);
           const until = locked ? new Date(Date.now() + lockoutMinutes(level) * 60_000).toISOString() : null;
           await supabaseAdmin.from("player_devices").update({ pin_failures: locked ? 0 : fails, pin_locked_until: until, pin_lock_level: level }).eq("id", device.id);
           if (locked) {
-            await supabaseAdmin.from("player_security_events").insert({ kind: "lockout", device_id: device.id, owner_id: device.user_id, login: device.iptv_username, detail: { level, pin: true } });
+            await supabaseAdmin.from("player_security_events").insert({ kind: "lockout", device_id: device.id, owner_id: device.user_id, login: device.iptv_username, detail: { level, totp: true } });
             const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
-            await notifyPlayerAdmins(supabaseAdmin, "BM Player PIN lockout", `A ${device.platform ?? "BM Player"} box${device.iptv_username ? ` on login ${device.iptv_username}` : ""} kept entering the wrong PIN and is locked for ${lockoutMinutes(level) >= 60 ? `${lockoutMinutes(level) / 60} hour(s)` : `${lockoutMinutes(level)} minutes`}.`);
+            await notifyPlayerAdmins(supabaseAdmin, "BM Player 2FA lockout", `A ${device.platform ?? "BM Player"} box${device.iptv_username ? ` on login ${device.iptv_username}` : ""} kept entering wrong 2FA codes and is locked for ${lockoutMinutes(level) >= 60 ? `${lockoutMinutes(level) / 60} hour(s)` : `${lockoutMinutes(level)} minutes`}.`);
           }
-          return json({ error: locked ? wait(until as string) : "That PIN isn't right. Forgot it? Set a new one on bmsupport.uk in your subscription box." }, locked ? 429 : 401);
+          return json({ error: locked ? waitT(until as string) : isBackup ? "That backup code isn't right or has already been used." : "That code isn't right. Open your authenticator app and type the newest 6-digit BM Player code." }, locked ? 429 : 401);
         }
 
         if (body.action === "unlock") {
