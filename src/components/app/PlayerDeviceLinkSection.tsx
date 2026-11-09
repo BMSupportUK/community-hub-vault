@@ -16,6 +16,15 @@ import { notMePlayerDevice, sendLoginToDevice, sendLoginWithCode } from "@/lib/p
 
 const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC", mac: "Mac", web: "iPhone / iPad browser" };
 
+// Readable device name: fall back to the device type when the stored name is a model code or blank.
+function readableName(d: PlayerDevice) {
+  const kind = platformLabel[d.platform] ?? "BM Player device";
+  const n = (d.name ?? "").trim();
+  if (!n || /^[A-Z0-9_-]{2,}$/.test(n) || /^[0-9a-f-]{12,}$/i.test(n) || n.toLowerCase() === d.platform) return kind;
+  return n;
+}
+const isOn = (d: PlayerDevice) => Date.now() - new Date(d.last_seen_at).getTime() < 3 * 60_000;
+
 export function PlayerDeviceLinkSection() {
   const sendCode = useServerFn(sendLoginWithCode);
   const sendDevice = useServerFn(sendLoginToDevice);
@@ -95,7 +104,7 @@ export function PlayerDeviceLinkSection() {
   return <section className="min-w-0 text-foreground">
     <div className="mx-auto max-w-5xl">
       <h2 className="font-display text-2xl font-bold">Link Device</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Enter the code shown on your TV, phone or PC to sign the BM Player app in.</p>
+      <p className="mt-1 text-sm text-muted-foreground">First time on a new device? Open BM Player and enter the 6-digit code it shows. Devices already linked stay signed in and just ask for your 4-digit PIN.</p>
       {accounts.length > 1 && <Tabs value={selectedId ?? ""} onValueChange={(id) => { if (ownerId) setSelection({ ownerId, id }); setCode(""); setTarget(null); setError(""); }} className="mt-5">
         <TabsList className="h-auto w-full flex-wrap justify-start gap-2">
           {accounts.map((account) => <TabsTrigger key={account.id} value={account.id} disabled={busy} className="min-w-0 whitespace-normal text-left">
@@ -111,7 +120,7 @@ export function PlayerDeviceLinkSection() {
             <span>Sending to <strong>{target.name}</strong></span>
             <Button type="button" variant="link" size="sm" onClick={() => setTarget(null)}>Use a code instead</Button>
           </div> : <div className="space-y-1.5">
-            <Label htmlFor="player-code">6-digit code on your screen</Label>
+            <Label htmlFor="player-code">Link a new device — 6-digit code from the app</Label>
             <Input id="player-code" inputMode="numeric" autoComplete="off" maxLength={6} value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} className="font-mono text-lg tracking-[0.4em]" />
           </div>}
@@ -140,9 +149,9 @@ export function PlayerDeviceLinkSection() {
                 </span>
               </div>)}
           </fieldset>
-          <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !login || (!target && code.length !== 6)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Send to code</Button>
+          <Button type="submit" className="w-full" disabled={busy || loadingAccounts || !login || (!target && code.length !== 6)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Link this device</Button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <p className="text-xs text-muted-foreground">Your login goes straight to the app once and is then deleted from our side.</p>
+          <p className="text-xs text-muted-foreground">You only do this once per device. Your login goes straight to the app and is then deleted from our side.</p>
         </form>
         <aside className="rounded-lg border border-border bg-surface/90 p-5">
           {/* Account number sits opposite the heading so it is readable at a glance. */}
@@ -155,12 +164,12 @@ export function PlayerDeviceLinkSection() {
           </div>
           {visibleDevices.length ? <ul className="mt-3 space-y-3">{visibleDevices.map((d) => <li key={d.id} className="flex items-center gap-3 rounded-md border border-border p-3">
             {d.platform === "windows" || d.platform === "mac" ? <Laptop className="size-5 text-primary" /> : <Tv className="size-5 text-primary" />}
-            <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{d.name}</div>
-              <div className="text-xs text-muted-foreground">{platformLabel[d.platform] ?? d.platform}</div></div>
-            <Button size="sm" disabled={busy} onClick={() => void sendToDevice(d)}>Send</Button>
+            <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{readableName(d)}</div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className={`size-2 rounded-full ${isOn(d) ? "bg-success" : "bg-muted-foreground/50"}`} />{isOn(d) ? "On" : "Off"} · {platformLabel[d.platform] ?? d.platform}</div></div>
+            <Button size="sm" disabled={busy} variant="secondary" title="Only needed if the app has lost its login" onClick={() => void sendToDevice(d)}>Resend login</Button>
             <Button size="sm" variant="outline" disabled={busy} title="This box isn't mine" onClick={() => void notMe(d)}>Not me</Button>
             <Button size="icon" variant="ghost" aria-label={`Remove ${d.name}`} onClick={() => void remove(d)}><Trash2 /></Button>
-          </li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Use a code from the app to link one.</p>}
+          </li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Open BM Player on your device and enter the 6-digit code it shows above.</p>}
         </aside>
       </div>
     </div>
