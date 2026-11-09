@@ -404,12 +404,11 @@ function MembersPage() {
           );
         })}
         {visibleExtras.map((e) => {
-          const owner = profiles.find((p) => p.id === e.owner_id);
           return (
             <div key={e.credential_id} className="rounded-2xl bg-surface border border-border overflow-hidden flex flex-col">
               <div className="h-16 bg-cover bg-center" style={{ backgroundImage: `url(${profileHeader})` }} aria-hidden />
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
-                <img src={owner?.avatar_url || DEFAULT_AVATAR_URL} alt="" className="size-16 rounded-2xl object-cover ring-4 ring-surface" />
+                <img src={DEFAULT_AVATAR_URL} alt="" className="size-16 rounded-2xl object-cover ring-4 ring-surface" />
                 <div className="mt-3 font-semibold text-sm">{e.app_login_name}</div>
                 <div className="text-[11px] text-muted-foreground">
                   Extra profile{e.account_number ? ` · Account ${e.account_number}` : ""}
