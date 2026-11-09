@@ -2171,6 +2171,13 @@
       "when": 1794219372916,
       "tag": "0309_profile_channel_permission_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 310,
+      "version": "7",
+      "when": 1794219462203,
+      "tag": "0310_profile_role_bypass_guards",
+      "breakpoints": true
     }
   ]
 }
