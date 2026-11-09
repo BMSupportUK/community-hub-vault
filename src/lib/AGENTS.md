@@ -47,3 +47,4 @@
 - Customer portal profiles: each app login is a profile; the chosen login is device-saved per user (account-profiles) and drives the subscription box and header account number, with a chooser shown once per session for 2+ logins.
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Category-linked guide channels never resolve to replay feeds unless the guide names a replay, so numbered event feeds (e.g. NFL Sunday Ticket) keep their live channel.
+- Account-number send: owner-checked remote_unlock_at; unlock screens poll `unlock_status` (one use, 2 min, counts as check-in).
