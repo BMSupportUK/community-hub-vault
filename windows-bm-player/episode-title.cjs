@@ -12,12 +12,13 @@ function cleanEpisodeName(title, series) {
 function episodeTitle(ep, series) {
   const row = ep && typeof ep === 'object' ? ep : {};
   let number = String(row.episode ?? '').trim();
-  let title = cleanEpisodeName(String(row.name ?? '').trim().replace(/^E\s*\d+\s*[.:-]\s*/i, ''), series);
+  let title = String(row.name ?? '').trim().replace(/^E\s*\d+\s*[.:-]\s*/i, '');
   const placeholder = title.match(/^episode\s*\.?\s*(\d*)$/i);
   if (placeholder) {
     if (!number && placeholder[1]) number = placeholder[1];
     title = '';
   }
+  title = cleanEpisodeName(title, series);
   if (!number && !title) title = 'Episode';
   return { number, title };
 }
