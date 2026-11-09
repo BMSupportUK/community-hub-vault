@@ -564,6 +564,22 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ ok: true, recorded: rows.length });
         }
 
+        if (body.action === "subtitle_check") {
+          // Quiet survey: does this live channel's stream carry subtitle tracks? Nothing shown to viewers.
+          const name = String(body.name ?? "").slice(0, 200).trim();
+          if (!name) return json({ ok: true });
+          const key = name.toLowerCase(); const has = Number(body.tracks ?? 0) > 0;
+          const langs = String(body.languages ?? "").slice(0, 200) || null;
+          const { data: row } = await supabaseAdmin.from("player_channel_subtitles").select("checks, checks_with_subs, languages").eq("channel_key", key).maybeSingle();
+          const { error } = await supabaseAdmin.from("player_channel_subtitles").upsert({
+            channel_key: key, channel_name: name, has_subtitles: has || (row?.checks_with_subs ?? 0) > 0,
+            languages: langs ?? row?.languages ?? null, checks: (row?.checks ?? 0) + 1,
+            checks_with_subs: (row?.checks_with_subs ?? 0) + (has ? 1 : 0), last_checked_at: new Date().toISOString(),
+          });
+          if (error) return json({ error: "Could not record" }, 503);
+          return json({ ok: true });
+        }
+
         if (body.action === "channel_health") {
           // Live channel failed / black screen / played cleanly for 2 minutes on this device.
           const key = body.name.toLowerCase(); const nowIso = new Date().toISOString();
