@@ -4,10 +4,10 @@ import { PlayerDeviceLinkSection } from "@/components/app/PlayerDeviceLinkSectio
 export const Route = createFileRoute("/_authenticated/_approved/send-to-app")({
   component: SendToAppPage,
   head: () => ({ meta: [
-    { title: "Send login to BM Player | BM Support" },
-    { name: "description", content: "Enter the code on your TV or PC to send your username and password to the BM Player app." },
-    { property: "og:title", content: "Send login to BM Player | BM Support" },
-    { property: "og:description", content: "Enter the code on your TV or PC to send your login to the BM Player app." },
+    { title: "Link Device | BM Support" },
+    { name: "description", content: "Enter the code shown on your BM Player to link that device to your account." },
+    { property: "og:title", content: "Link Device | BM Support" },
+    { property: "og:description", content: "Enter the code shown on your BM Player to link that device to your account." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex, nofollow" },
   ] }),
 });
