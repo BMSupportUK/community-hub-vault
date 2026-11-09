@@ -17,5 +17,5 @@ for (const file of ['main.cjs', 'preload.cjs']) fs.copyFileSync(path.join(shared
 fs.copyFileSync(path.join(root, 'electron/mac-engine.cjs'), path.join(stage, 'electron/mac-engine.cjs'));
 fs.copyFileSync(path.join(root, 'renderer/index.html'), path.join(stage, 'dist/index.html'));
 fs.copyFileSync(path.join(shared, 'renderer/app.css'), path.join(stage, 'dist/app.css'));
-for (const [src, dest] of [['home_background.jpg', 'home.jpg'], ['expired_art.jpg', 'expired.jpg'], ['bm_logo.png', 'logo.png'], ['preview_family.jpg', 'preview_family.jpg']]) fs.copyFileSync(path.join(root, '../tv-player/app/src/main/res/drawable-nodpi', src), path.join(stage, 'dist', dest));
+for (const [src, dest] of [['home_background.jpg', 'home.jpg'], ['expired_art.jpg', 'expired.jpg'], ['bm_logo.png', 'logo.png'], ['preview_family.jpg', 'preview_family.jpg'], ['family_tv.jpg', 'family_tv.jpg']]) fs.copyFileSync(path.join(root, '../tv-player/app/src/main/res/drawable-nodpi', src), path.join(stage, 'dist', dest));
 console.log('Staged Mac app at ' + stage + '. Package with @electron/packager --platform=darwin, then ad-hoc sign with rcodesign and zip.');
