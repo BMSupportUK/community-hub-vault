@@ -317,7 +317,13 @@ public final class PlayerApplication extends Application implements Application.
     private static int startedCount;
     /** True while any BM Player screen is on the display (not just alive in the background). */
     static boolean onScreen() { return startedCount > 0; }
-    @Override public void onActivityStarted(Activity a) { startedCount++; }
-    @Override public void onActivityStopped(Activity a) { if (startedCount > 0) startedCount--; }
+    private static long leftAt;
+    /** Away longer than this (Home pressed, app switched) means the PIN is asked again; short trips (voice search) don't. */
+    static final long PIN_AWAY_MS = 30_000;
+    @Override public void onActivityStarted(Activity a) {
+        if (startedCount == 0 && leftAt > 0 && SystemClock.elapsedRealtime() - leftAt > PIN_AWAY_MS) pinPassed = false;
+        startedCount++;
+    }
+    @Override public void onActivityStopped(Activity a) { if (startedCount > 0 && --startedCount == 0) leftAt = SystemClock.elapsedRealtime(); }
     @Override public void onActivitySaveInstanceState(Activity a, Bundle b) {}
 }

@@ -4498,6 +4498,8 @@ public class MainActivity extends Activity {
         // Positions watched on another device show here too (throttled to every 30s).
         if (unlocked && hasLogin()) ProgressSync.pull(this, false, () -> { if ("home".equals(screen)) showHome(); });
         refreshVersionScreens();
+        // Re-opened after being away: ask the PIN again before showing any screen.
+        if (!PlayerApplication.pinPassed && unlocked && hasLogin() && !java.util.Arrays.asList("pin", "link", "unlock", "expired", "maintenance", "").contains(screen)) { stopPreview(); stopMulti(); checkPin(); return; }
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
         if ("sports".equals(screen) && retryEvent != null) { retryEvent = null; if (sportsChannelList != null) sportsChannelList.requestFocus(); }
         else if ("sports_channels".equals(screen) && retryEvent != null) {
