@@ -699,9 +699,8 @@ public class MainActivity extends Activity {
         cols.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
         left.addView(logo());
-        left.addView(text("Approve this login", 26, TEXT, true));
-        left.addView(text("We've sent an approval request to bmsupport.uk (or your email). Approve it and BM Player opens by itself.", 16, MUTED, false));
-        left.addView(text("Or enter your 6-digit account number from the subscription box:", 16, MUTED, false));
+        left.addView(text("Enter your account number", 26, TEXT, true));
+        left.addView(text("Type the 6-digit account number from your subscription box. You only need to do this again if you log out or clear the app's data.", 16, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(6) });
