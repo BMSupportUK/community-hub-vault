@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/player-approve/$token")({
   head: () => ({
@@ -22,17 +23,21 @@ function ApprovePage() {
   const [state, setState] = useState<"loading" | "ready" | "approved" | "denied" | "error">("loading");
   const [device, setDevice] = useState("BM Player");
   const [msg, setMsg] = useState("");
+  const [needsNumber, setNeedsNumber] = useState(false);
+  const [number, setNumber] = useState("");
+  const [wrong, setWrong] = useState("");
   const call = (body: Record<string, unknown>) =>
     fetch("/api/public/player-approve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, ...body }) })
-      .then(async (r) => ({ ok: r.ok, j: await r.json().catch(() => ({})) }));
+      .then(async (r) => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) }));
   useEffect(() => {
     void call({ check: true }).then(({ ok, j }) => {
-      if (ok) { setDevice(j.device); setState("ready"); } else { setMsg(j.error ?? "This link isn't valid."); setState("error"); }
+      if (ok) { setDevice(j.device); setNeedsNumber(!!j.needs_number); setState("ready"); } else { setMsg(j.error ?? "This link isn't valid."); setState("error"); }
     });
   }, [token]);
   const decide = async (approve: boolean) => {
     setState("loading");
-    const { ok, j } = await call({ approve });
+    const { ok, j, status } = await call(approve && needsNumber ? { approve, account_number: number } : { approve });
+    if (!ok && status === 401) { setWrong(j.error ?? "That account number isn't right."); setState("ready"); return; }
     if (ok) setState(approve ? "approved" : "denied"); else { setMsg(j.error ?? "Something went wrong."); setState("error"); }
   };
   return (
@@ -42,9 +47,17 @@ function ApprovePage() {
         {state === "loading" && <p className="text-muted-foreground">Checking…</p>}
         {state === "ready" && (<>
           <p className="text-muted-foreground">A BM Player app ({device}) is asking to open on your account. Only approve if this is your box.</p>
+          {needsNumber && (
+            <div className="space-y-2 text-left">
+              <label htmlFor="acct" className="text-sm font-medium">Enter your 6-digit account number</label>
+              <Input id="acct" inputMode="numeric" autoComplete="off" maxLength={6} value={number}
+                onChange={(e) => { setNumber(e.target.value.replace(/\D/g, "").slice(0, 6)); setWrong(""); }} className="text-center text-xl tracking-[0.4em]" />
+              {wrong && <p className="text-sm text-destructive">{wrong}</p>}
+            </div>
+          )}
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={() => decide(false)}>Deny</Button>
-            <Button onClick={() => decide(true)}>Approve</Button>
+            <Button onClick={() => decide(true)} disabled={needsNumber && number.length !== 6}>Approve</Button>
           </div>
         </>)}
         {state === "approved" && <p>Approved. BM Player will open in a few seconds.</p>}
