@@ -44,6 +44,7 @@ import { template as manualCredentialsAccess } from './manual-credentials-access
 
 import { template as customerPortalLink } from './customer-portal-link'
 import { template as playerLoginApproval } from './player-login-approval'
+import { template as player2faResetLink } from './player-2fa-reset-link'
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'manual-credentials-access': manualCredentialsAccess,
   'twofa-reset-admin': twofaResetAdmin,
@@ -71,4 +72,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
 'temporary-password': temporaryPassword,
   'manual-account-login': manualAccountLogin,
   'player-login-approval': playerLoginApproval,
+  'player-2fa-reset-link': player2faResetLink,
 }
