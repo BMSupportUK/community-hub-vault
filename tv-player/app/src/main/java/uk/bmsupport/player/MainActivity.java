@@ -632,7 +632,9 @@ public class MainActivity extends Activity {
             boolean had = hasLogin();
             SharedPreferences.Editor ed = prefs.edit().putString("dns", r.optString("dns", ""));
             JSONObject c = r.optJSONObject("credentials");
-            if (c != null) ed.putString("user", c.optString("username")).putString("pass", c.optString("password"));
+            // A login sent from the website (link code or the owner's device list) is the account holder's own
+            // action, so it counts as the sign-in: no account number needed until log out or cleared data.
+            if (c != null) { ed.putString("user", c.optString("username")).putString("pass", c.optString("password")).putString("unlocked_for", prefs.getString("token", "")); unlocked = true; }
             ed.apply();
             boolean now = hasLogin();
             if (c != null || had != now) ui.post(() -> {
@@ -665,7 +667,7 @@ public class MainActivity extends Activity {
         TextView code = text("······", 64, ACCENT, true);
         code.setLetterSpacing(0.2f);
         root.addView(code);
-        root.addView(text("On your phone or computer go to bmsupport.uk/send-to-app,\nsign in and enter this code. Your login will appear here automatically.", 18, MUTED, false));
+        root.addView(text("On your phone or computer go to bmsupport.uk/send-to-app,\nsign in and enter this code to link this device to your account.", 18, MUTED, false));
         TextView status = text("", 16, MUTED, false);
         root.addView(status);
         Button again = button("New code", v -> showLink());
