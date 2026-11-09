@@ -287,7 +287,8 @@ export const Route = createFileRoute("/api/public/player")({
           }
           // Another of the owner's own logins: unlock and hand the app that profile's login.
           if (device.user_id) {
-            const { data: switched } = await supabaseAdmin.rpc("device_switch_profile_by_number", { _device: device.id, _number: body.account_number });
+            const { data: switched, error: switchErr } = await supabaseAdmin.rpc("device_switch_profile_by_number", { _device: device.id, _number: body.account_number });
+            if (switchErr) console.error("[unlock switch]", switchErr.message);
             if (switched) return json({ ok: true, switched_login: switched });
           }
           const fails = (lock?.unlock_failures ?? 0) + 1;
