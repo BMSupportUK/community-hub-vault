@@ -840,11 +840,11 @@ public class MainActivity extends Activity {
         android.graphics.drawable.GradientDrawable card = new android.graphics.drawable.GradientDrawable();
         card.setColor(0xD916213A); card.setCornerRadius(dp(20)); card.setStroke(dp(1), 0x33FFFFFF);
         panel.setBackground(card);
-        panel.setPadding(dp(24), dp(20), dp(24), dp(20));
+        panel.setPadding(dp(22), dp(12), dp(22), dp(12));
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
         sc.setFillViewport(true);
         LinearLayout holder = new LinearLayout(this); holder.setGravity(Gravity.CENTER_VERTICAL);
-        holder.setPadding(dp(12), dp(16), dp(12), dp(16));
+        holder.setPadding(dp(12), dp(8), dp(12), dp(8));
         holder.addView(panel, new LinearLayout.LayoutParams(-1, -2));
         sc.addView(holder, new android.widget.ScrollView.LayoutParams(-1, -1));
         int w = Math.max(dp(360), (int) (getResources().getDisplayMetrics().widthPixels * 0.44f));
