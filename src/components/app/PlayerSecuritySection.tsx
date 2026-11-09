@@ -44,7 +44,7 @@ export function PlayerSecuritySection() {
   return (
     <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
       <h2 className="font-display text-lg font-semibold">Security</h2>
-      <p className="text-sm text-muted-foreground">Each app login can run on 3 boxes. A 4th waits here for approval. Sharing and lockout warnings also show here.</p>
+      <p className="text-sm text-muted-foreground">Each customer app login can run on 3 boxes. A 4th waits here for approval. Staff accounts have no box limit. Sharing and lockout warnings also show here.</p>
       {isPending ? <Loader2 className="size-5 animate-spin text-muted-foreground" /> : !data.length ? <p className="text-sm text-muted-foreground">Nothing needs attention.</p> : (
         <ul className="divide-y divide-border">
           {data.map((e) => (

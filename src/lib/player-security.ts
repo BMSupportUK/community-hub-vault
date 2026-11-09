@@ -17,8 +17,9 @@ export function lockoutMinutes(level: number): number {
   return 24 * 60;
 }
 
-export function boxLimitReached(otherBoxesOnLogin: number): boolean {
-  return otherBoxesOnLogin >= MAX_BOXES_PER_LOGIN;
+export function boxLimitReached(otherBoxesOnLogin: number, ownerIsStaff = false): boolean {
+  // Staff accounts can link as many boxes as they need.
+  return !ownerIsStaff && otherBoxesOnLogin >= MAX_BOXES_PER_LOGIN;
 }
 
 export function isQuietBox(lastSeenAt: string | null | undefined, linkedAt: string | null | undefined, now = Date.now()): boolean {
