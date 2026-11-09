@@ -65,7 +65,7 @@ async function poll(){
   checkin.setSlow(r.slow);maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
   let changed=false;
-  if(r.credentials){gate.lock();store.unlockedFor=null;await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
+  if(r.credentials){gate.restore();store.unlockedFor=store.token;await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
   if(changed){save();if(store.user&&gate.unlocked)await refresh();}
   if(store.user&&gate.unlocked)syncFavourites().catch(()=>{});
