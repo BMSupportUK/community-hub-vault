@@ -1,3 +1,4 @@
+// @ts-nocheck — tests run with bun test, matching the project's test convention.
 import { expect, test } from "bun:test";
 import { customerActionAllowed } from "./profile-access";
 
