@@ -275,8 +275,8 @@ export const Route = createFileRoute("/api/public/player")({
                 await supabaseAdmin.from("player_login_approvals" as any).insert({ device_id: device.id, owner_id: device.user_id });
                 const title = "Approve BM Player login";
                 const msg = "A BM Player app is asking to open on your account. Tap to approve or deny.";
-                await supabaseAdmin.from("user_notifications").insert({ user_id: device.user_id, kind: "mention", title, body: msg, link_path: "/my-devices", source_type: "player_login" } as any);
-                try { const { pushToUser } = await import("@/lib/fcm.server"); await pushToUser(device.user_id, { title, body: msg, data: { link: "/my-devices" } }); } catch (e) { console.error("[player login push]", e); }
+                await supabaseAdmin.from("user_notifications").insert({ user_id: device.user_id, kind: "mention", title, body: msg, link_path: "/home", source_type: "player_login" } as any);
+                try { const { pushToUser } = await import("@/lib/fcm.server"); await pushToUser(device.user_id, { title, body: msg, data: { link: "/home" } }); } catch (e) { console.error("[player login push]", e); }
               }
             }
             return json({ unlocked: false });
