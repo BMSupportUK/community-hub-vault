@@ -767,22 +767,25 @@ public class MainActivity extends Activity {
         wait.addView(text("Loading…", 18, MUTED, false));
         setContentView(wait);
         io.execute(() -> {
-            boolean required;
+            boolean required; boolean setup = false;
             try {
                 JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "pin_status")
                         .put("device_token", prefs.getString("token", "")).toString()));
                 required = r.optBoolean("required", false);
+                setup = r.optBoolean("needs_setup", false);
                 prefs.edit().putBoolean("pin_required", required).apply();
             } catch (Exception e) { required = prefs.getBoolean("pin_required", false); }
-            final boolean need = required;
+            final boolean need = required, create = setup;
             ui.post(() -> {
                 if (!"pin".equals(screen) || isFinishing()) return;
-                if (!need) { PlayerApplication.pinPassed = true; showHome(); } else showPin();
+                if (create) showPin(true, null);
+                else if (!need) { PlayerApplication.pinPassed = true; showHome(); } else showPin(false, null);
             });
         });
     }
 
-    private void showPin() {
+    /** create=true: first open, the customer chooses a PIN (typed twice; `first` holds the first entry). */
+    private void showPin(boolean create, String first) {
         stopPreview(); stopMulti();
         screen = "pin"; back = null;
         LinearLayout root = column();
@@ -792,8 +795,10 @@ public class MainActivity extends Activity {
         cols.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
         left.addView(logo());
-        left.addView(text("Enter your PIN", 26, TEXT, true));
-        left.addView(text("Type your 4-digit BM Player PIN to open the main menu.", 16, MUTED, false));
+        left.addView(text(!create ? "Enter your PIN" : first == null ? "Choose a PIN" : "Repeat your PIN", 26, TEXT, true));
+        left.addView(text(!create ? "Type your 4-digit BM Player PIN to open the main menu."
+                : first == null ? "Pick a 4-digit PIN. BM Player will ask for it each time it opens. It shows in your subscription box on bmsupport.uk."
+                : "Type the same 4 digits again to confirm.", 16, MUTED, false));
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(4) });
@@ -802,14 +807,16 @@ public class MainActivity extends Activity {
         in.setLayoutParams(new LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.WRAP_CONTENT));
         left.addView(in);
         TextView status = text("", 16, MUTED, false);
-        Button go = button("Open BM Player", v -> {
+        Button go = button(create && first == null ? "Next" : create ? "Save PIN" : "Open BM Player", v -> {
             String n = in.getText().toString().trim();
             if (!n.matches("\\d{4}")) { status.setText("Enter all 4 digits."); return; }
-            status.setText("Checking…");
+            if (create && first == null) { hideKeyboard(in); showPin(true, n); return; }
+            if (create && !n.equals(first)) { showPin(true, null); android.widget.Toast.makeText(this, "The PINs didn't match. Try again.", android.widget.Toast.LENGTH_LONG).show(); return; }
+            status.setText(create ? "Saving…" : "Checking…");
             io.execute(() -> {
                 String err = null;
                 try {
-                    Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "pin_check")
+                    Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", create ? "pin_create" : "pin_check")
                             .put("device_token", prefs.getString("token", "")).put("pin", n).toString());
                 } catch (Exception ex) {
                     String m = String.valueOf(ex.getMessage());
@@ -821,14 +828,15 @@ public class MainActivity extends Activity {
                 final String fe = err;
                 ui.post(() -> {
                     if (!"pin".equals(screen)) return;
-                    if (fe == null) { PlayerApplication.pinPassed = true; hideKeyboard(in); showHome(); }
+                    if (fe == null) { PlayerApplication.pinPassed = true; if (create) prefs.edit().putBoolean("pin_required", true).apply(); hideKeyboard(in); showHome(); }
+                    else if (create) { showPin(true, null); android.widget.Toast.makeText(this, fe, android.widget.Toast.LENGTH_LONG).show(); }
                     else { status.setText(fe); in.setText(""); }
                 });
             });
         });
         left.addView(go);
         left.addView(status);
-        left.addView(text("Forgot your PIN? Set a new one on bmsupport.uk in your subscription box.", 14, MUTED, false));
+        if (!create) left.addView(text("Forgot your PIN? Set a new one on bmsupport.uk in your subscription box.", 14, MUTED, false));
         LinearLayout pad = NumberPad.build(this, in, 4, CARD, ACCENT, TEXT, go::performClick);
         cols.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.1f));
         LinearLayout.LayoutParams padLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
