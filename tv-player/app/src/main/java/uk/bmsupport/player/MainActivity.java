@@ -1746,7 +1746,8 @@ public class MainActivity extends Activity {
                 no.setSingleLine(true); no.setPadding(dp(4), dp(4), dp(4), 0);
                 card.addView(no);
             }
-            String epTitle = ep.epTitle == null || ep.epTitle.isEmpty() ? ep.name : ep.epTitle;
+            String epTitle = EpisodeName.clean(ep.epTitle, show.name);
+            if (epTitle.isEmpty()) epTitle = numbered ? "" : (ep.epTitle == null || ep.epTitle.isEmpty() ? ep.name : ep.epTitle);
             TextView t = text(epTitle, 13, TEXT, false);
             t.setMaxLines(2); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             t.setPadding(dp(4), numbered ? 0 : dp(4), dp(4), 0);
@@ -2268,9 +2269,10 @@ public class MainActivity extends Activity {
         bar.setMax(100); bar.setProgress(WatchProgress.percent(position, duration));
         bar.setProgressTintList(android.content.res.ColorStateList.valueOf(ACCENT));
         box.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(6)));
-        String label = duration > 0 ? WatchProgress.percent(position, duration) + "% watched" : "";
+        boolean done = WatchProgress.finished(position, duration);
+        String label = done ? "\u2713 Watched" : WatchProgress.percent(position, duration) + "% watched";
         if ("series".equals(it.kind) && duration > 0) label = "Last episode · " + label;
-        box.addView(text(label, 12, MUTED, false));
+        box.addView(text(label, 12, done ? Color.rgb(83, 212, 163) : MUTED, done));
         return box;
     }
 
