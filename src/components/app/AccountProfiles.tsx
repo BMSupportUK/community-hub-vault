@@ -21,8 +21,6 @@ import {
   wasProfileChosen,
 } from "@/lib/account-profiles";
 
-const PROFILES_RETIRED = true;
-
 /** The signed-in customer's login profiles and the one currently selected. */
 export function useAccountProfiles() {
   const { user, profileAccess } = useAuth();
@@ -82,18 +80,19 @@ export const accountTypeLabel = (type: string | null) => {
 /** Header pill: reopen the profile chooser. Only shown when the customer has 2+ logins. */
 export function SwitchProfilePill() {
   const { userId, profiles, loaded } = useAccountProfiles();
-  // Profiles retired: every login is its own site account.
-  if (PROFILES_RETIRED || !userId || !loaded || profiles.length < 2) return null;
+  if (!userId || !loaded || profiles.length < 2) return null;
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="sm"
       onClick={() => requestProfileChooser(userId)}
       title="Switch profile"
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-violet-500/15 border border-violet-500/40 text-violet-300 text-[11px] font-semibold hover:bg-violet-500/25 transition-colors"
+      className="h-auto gap-1.5 rounded-full border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
     >
       <UsersRound className="size-3.5" />
-      <span className="hidden xl:inline">Switch profile</span>
-    </button>
+      <span>Switch profile</span>
+    </Button>
   );
 }
 
@@ -138,7 +137,7 @@ export function ProfileChooser() {
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to switch profile."); }
     finally { setBusy(false); }
   };
-  if (PROFILES_RETIRED || !chooserOpen) return null;
+  if (!chooserOpen) return null;
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="profile-chooser-title" className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-background/95 p-4 backdrop-blur-md">
       <div className="w-full max-w-3xl py-8 text-center">

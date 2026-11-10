@@ -1,11 +1,25 @@
 // @ts-nocheck — tests run with bun test.
 import { describe, expect, test } from "bun:test";
-import { needsProfileChoice, pickActiveProfile, profileUsesStaffPortal } from "./account-profiles";
+import { needsProfileChoice, pickActiveProfile, profileUsesStaffPortal, requestProfileChooser, saveActiveProfile, wasProfileChosen } from "./account-profiles";
 
 const a = { id: "a" };
 const b = { id: "b" };
 
 describe("account profiles", () => {
+  test("switching reopens the chooser after a profile was already chosen", () => {
+    const originals = { localStorage: globalThis.localStorage, sessionStorage: globalThis.sessionStorage, window: globalThis.window };
+    const storage = () => { const values = new Map(); return { getItem: (k) => values.get(k) ?? null, setItem: (k, v) => values.set(k, v), removeItem: (k) => values.delete(k) }; };
+    try {
+      globalThis.localStorage = storage();
+      globalThis.sessionStorage = storage();
+      globalThis.window = { dispatchEvent: () => true };
+      saveActiveProfile("owner", "b");
+      expect(wasProfileChosen("owner")).toBe(true);
+      requestProfileChooser("owner");
+      expect(needsProfileChoice(2, wasProfileChosen("owner"))).toBe(true);
+      expect(wasProfileChosen("other-owner")).toBe(false);
+    } finally { Object.assign(globalThis, originals); }
+  });
   test("staff primary profile opens staff portal", () => {
     expect(profileUsesStaffPortal(["admin"], { accountNumber: 1 })).toBe(true);
   });
