@@ -280,6 +280,7 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        StreamClaim.attach(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
         // Films and episodes draw to a TextureView so baked-in black bars can be measured and zoomed past.
@@ -912,6 +913,7 @@ public class PlayerActivity extends Activity {
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
     @Override protected void onDestroy() {
+        StreamClaim.detach(this);
         // Viewer gave up on a live channel that never showed a picture: tell the Sports Guide so it gets crossed.
         if ("live".equals(kind()) && !everReady && !handedOver && !blackSent && isFinishing()
                 && android.os.SystemClock.elapsedRealtime() - openedAt >= ChannelHealth.GIVE_UP_MS)

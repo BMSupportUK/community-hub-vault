@@ -79,6 +79,7 @@ public final class BackupPlayerActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        StreamClaim.attach(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -325,6 +326,7 @@ public final class BackupPlayerActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        StreamClaim.detach(this);
         reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), false);
         BufferReporter.flush(this);
         ui.removeCallbacksAndMessages(null);

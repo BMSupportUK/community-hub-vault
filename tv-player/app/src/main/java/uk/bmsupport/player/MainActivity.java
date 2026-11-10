@@ -170,6 +170,11 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        StreamClaim.onMainTaken = () -> {
+            stopPreview(); stopMulti();
+            if (!isFinishing()) new AlertDialog.Builder(this).setTitle("Playback moved")
+                    .setMessage("Another device on your login chose to watch, so it stopped here.").setPositiveButton("OK", null).show();
+        };
         PlayerActivity.loadHeavy(this);
         prefs = getSharedPreferences("bmplayer", MODE_PRIVATE);
         if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
@@ -1193,6 +1198,15 @@ public class MainActivity extends Activity {
         return true;
     }
 
+    private boolean claimPass, previewClaimed;
+    /** Another device on this login is watching: offer to move playback here. */
+    private void askTakeover(Item it, String who, Runnable go) {
+        int max = Math.max(1, prefs.getInt("max_cons", 1));
+        new AlertDialog.Builder(this).setTitle("Your login is already watching")
+                .setMessage(who + " Your login only allows " + max + (max == 1 ? " connection" : " connections") + ", so both can't play at once.")
+                .setPositiveButton("Watch here instead", (d, w) -> StreamClaim.check(this, it.kind, it.name, true, (b, x) -> go.run()))
+                .setNegativeButton("Cancel", null).show();
+    }
     private void stopPreview() {
         if (previewTask != null) ui.removeCallbacks(previewTask);
         previewTask = null;
@@ -1254,6 +1268,17 @@ public class MainActivity extends Activity {
         if (previewPoster != null) previewPoster.setVisibility(View.GONE);
         status.setText("Loading preview…");
         previewTask = () -> {
+            if (!previewClaimed) {
+                Runnable again = previewTask;
+                StreamClaim.check(this, it.kind, it.name, false, (busy, who) -> {
+                    if (previewTask != again) return;
+                    if (!busy) { previewClaimed = true; again.run(); return; }
+                    status.setText("Your login is watching on another device");
+                    askTakeover(it, who, () -> { if (previewTask == again) { previewClaimed = true; again.run(); } });
+                });
+                return;
+            }
+            previewClaimed = false;
             preview = PlayerActivity.build(this, false, it.name + " " + categoryName(it));
             previewView = view;
             view.setPlayer(preview);
@@ -2072,6 +2097,14 @@ public class MainActivity extends Activity {
     }
 
     private void beginPlayback(Item it, boolean vlc, long position, boolean subtitles) {
+        if (!vlc && !claimPass) {
+            StreamClaim.check(this, it.kind, it.name, false, (busy, who) -> {
+                if (!busy) { claimPass = true; beginPlayback(it, false, position, subtitles); return; }
+                askTakeover(it, who, () -> { claimPass = true; beginPlayback(it, false, position, subtitles); });
+            });
+            return;
+        }
+        claimPass = false;
         // Adult-category items are never kept in recently watched, for safety.
         if (!isAdultCategory(it.category) && !"catchup".equals(it.kind)) remember("recent", it);
         String url = streamUrl(it);

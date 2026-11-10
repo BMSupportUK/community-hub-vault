@@ -100,6 +100,7 @@ public final class PlayerApplication extends Application implements Application.
                         new org.json.JSONObject().put("action", "announcement").put("device_token", token).toString()));
                 org.json.JSONObject w = r.optJSONObject("watch");
                 if (w != null) { final org.json.JSONObject fw = w; ui.post(() -> openWatch(fw)); }
+                if (r.optBoolean("stop_stream", false)) ui.post(StreamClaim::taken);
                 org.json.JSONObject a = r.optJSONObject("announcement");
                 // Only apps already open when it was sent show it; anyone opening later never sees it.
                 if (a != null && SystemClock.elapsedRealtime() - a.optLong("age_ms", 0) < startedAt) a = null;
