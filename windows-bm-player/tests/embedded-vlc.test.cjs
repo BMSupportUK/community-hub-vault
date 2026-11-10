@@ -11,6 +11,8 @@ test('embedded playback owns its video window and releases playback before destr
    if(name==='libvlc_media_player_get_time')return 120000;
    if(name==='libvlc_media_player_get_length')return 600000;
    if(name==='libvlc_media_player_is_seekable')return 1;
+   if(name==='libvlc_media_player_get_media')return 2n;
+   if(name==='libvlc_media_get_stats'){values[1].writeInt32LE(250,32);return 1;}
    return 0;
   };
  }})};
@@ -23,6 +25,8 @@ test('embedded playback owns its video window and releases playback before destr
   engine.layout([{index:0,x:0.5,y:0.1,width:0.5,height:0.5,visible:true}]);
   expect(calls.find(c=>c.name==='SetWindowPos').values.slice(2,6)).toEqual([640,90,640,450]);
   expect(engine.status(0).position).toBe(120);
+  expect(engine.status(0).videoFrames).toBe(250);
+  expect(engine.status(0).nativeVideo).toBe(true);
   engine.pause(0,true);engine.seek(0,200);engine.close();
   const names=calls.map(c=>c.name);
   expect(names.indexOf('libvlc_media_player_release')).toBeLessThan(names.indexOf('DestroyWindow'));

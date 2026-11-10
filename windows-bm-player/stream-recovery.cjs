@@ -34,7 +34,17 @@ function profile(name) { return cushioned(name) ? { min:40000, max:90000, start:
 function liveBufferMs(setting, name) { return Math.max(profile(name).live, bufferMs(setting)); }
 
 /** Play position not moving for 4s while "playing" means the picture froze. */
-function frozen(session, state, position, now) {
+function frozen(session, state, position, now, status = {}) {
+  if (status.nativeVideo && session.item?.kind === 'live') {
+    const frames = status.videoFrames;
+    if (state !== 3 || !Number.isFinite(frames) || frames <= 0) { session.pictureStillSince = 0; session.lastVideoFrames = undefined; return false; }
+    if (frames !== session.lastVideoFrames) { session.lastVideoFrames = frames; session.pictureStillSince = now; return false; }
+    if (!session.pictureStillSince) session.pictureStillSince = now;
+    // Let the configured live cushion recover before destroying the connection.
+    const wait = profile(session.recoveryName || session.item?.name).live;
+    if (now - session.pictureStillSince >= wait) { session.pictureStillSince = now; return true; }
+    return false;
+  }
   if (state !== 3) { session.stillSince = 0; session.lastPos = position; return false; }
   if (session.lastPos === undefined || Math.abs(position - session.lastPos) > 0.05) { session.lastPos = position; session.stillSince = now; return false; }
   if (!session.stillSince) session.stillSince = now;

@@ -24,6 +24,23 @@ test('position stuck 4s while playing is a freeze; paused or moving is not',()=>
  const p={};r.frozen(p,4,10,0);assert.equal(r.frozen(p,4,10,9000),false);
  const m={};r.frozen(m,3,1,0);assert.equal(r.frozen(m,3,5,5000),false);
 });
+test('BBC One FHD native live pictures advancing with a zero clock never trigger five-second restarts',()=>{
+ const s={item:{kind:'live',name:'BBC One | FHD |'}},start=100000;
+ for(let t=0;t<=120000;t+=1000)expect(r.frozen(s,3,0,start+t,{nativeVideo:true,videoFrames:1+t/20})).toBe(false);
+});
+test('native live missing picture counters never fall back to an unreliable zero clock',()=>{
+ const s={item:{kind:'live',name:'BBC One | FHD |'}};
+ expect(r.frozen(s,3,0,100000,{nativeVideo:true})).toBe(false);
+ expect(r.frozen(s,3,0,160000,{nativeVideo:true})).toBe(false);
+});
+test('genuinely stuck FHD native pictures wait for the 30-second cushion and reset on progress',()=>{
+ const s={item:{kind:'live',name:'BBC One | FHD |'}},v={nativeVideo:true,videoFrames:50};
+ expect(r.frozen(s,3,0,100000,v)).toBe(false);
+ expect(r.frozen(s,3,0,129999,v)).toBe(false);
+ expect(r.frozen(s,3,0,130000,v)).toBe(true);
+ expect(r.frozen(s,3,0,131000,{...v,videoFrames:51})).toBe(false);
+ expect(r.frozen(s,3,0,135000,{...v,videoFrames:51})).toBe(false);
+});
 test('remembered format goes first',()=>{assert.deepEqual(r.preferFormat(['a.ts','a.m3u8','a'],'m3u8'),['a.m3u8','a.ts','a']);assert.equal(r.otherFormat('x.ts'),'m3u8');});
 
 test('full quality returns after 2 minutes with no stalls', () => {

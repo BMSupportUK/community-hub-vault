@@ -31,3 +31,4 @@
 
 - EPG listings and single-flight reads live in the signed-in App cache, not the disposable guide; login changes clear it and stale rows remain visible during quiet refresh.
 - Windows demanding live feeds use hardware-auto decoding; MonoMax, catch-up and unrelated feeds keep software protection. Native surfaces retain the verified decode context on reconnect to avoid reverting demanding feeds to CPU-only decoding.
+- Native live freeze recovery uses displayed-picture counters, never the MPEG-TS playback clock, and waits for the live cushion; VLC can display moving pictures while its live clock remains zero.
