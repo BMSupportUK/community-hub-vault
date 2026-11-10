@@ -2,7 +2,6 @@ import React,{useEffect,useRef,useState} from 'react';
 import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
 import checkin from '../checkin.cjs';
-import guideRefresh from '../guide-refresh.cjs';
 import guideActions from '../guide-action.cjs';
 import {ChannelName} from './channel-name';
 import guideAxis from '../guide-axis.cjs';
@@ -16,20 +15,20 @@ const clock=v=>new Date(v).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-
 const slotOf=t=>Math.floor(t/SLOT)*SLOT;
 let tapAt=0;
 
-export function LiveGuide({onFull,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg}){
+export function LiveGuide({onFull,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg,cache}){
  const [start,setStart]=useState(slotOf(Date.now()));
  const [focus,setFocus]=useState(null); // {channel, programme}
  const [catOpen,setCatOpen]=useState(false);
  const [searchOpen,setSearchOpen]=useState(false);
- const [guide,setGuide]=useState({});
- const asked=useRef(new Map()),pending=useRef(new Set()),grid=useRef(null);
+ const [guide,setGuide]=useState(()=>Object.fromEntries(channels.flatMap(ch=>{const rows=cache.peek(ch.id);return rows===undefined?[]:[[ch.id,rows]];})));
+ const pending=useRef(new Set()),grid=useRef(null);
  const [gridWidth,setGridWidth]=useState(800);
  useEffect(()=>{const root=grid.current;if(!root)return;
  const measure=()=>setGridWidth(Math.max(220,root.clientWidth-240));
  measure();const resize=new ResizeObserver(measure);resize.observe(root);return()=>resize.disconnect();},[]);
  const epgRef=useRef(epg);epgRef.current=epg;
  const now=Date.now();
- async function load(ch,isActive){if(pending.current.has(ch.id)||!guideRefresh.due(asked.current.get(ch.id)))return;pending.current.add(ch.id);try{const p=await epgRef.current(ch.id);if(!isActive())return;asked.current.set(ch.id,Date.now());setGuide(g=>({...g,[ch.id]:p||[]}));}catch{/* Keep the last good line-up and retry on the next tick. */}finally{pending.current.delete(ch.id);}}
+ async function load(ch,isActive){const saved=cache.peek(ch.id);if(saved!==undefined&&isActive())setGuide(g=>g[ch.id]===saved?g:{...g,[ch.id]:saved});if(pending.current.has(ch.id)||!cache.due(ch.id))return;pending.current.add(ch.id);try{const p=await epgRef.current(ch.id);if(!isActive())return;setGuide(g=>({...g,[ch.id]:p||[]}));}catch{/* Keep the last good line-up and retry on the next tick. */}finally{pending.current.delete(ch.id);}}
  // Fetch programmes only for rows that scroll into view, three at a time like the Android guide.
  useEffect(()=>{const root=grid.current;if(!root)return;const queue=[],visible=new Set();let running=0,active=true;
   const pump=()=>{while(active&&running<3&&queue.length){const ch=queue.shift();running++;load(ch,()=>active).finally(()=>{running--;pump();});}};
