@@ -678,36 +678,80 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    /** First sign-in: ask whether the customer has a BM Support website account. */
     private void showLink() {
         unlocked = false; prefs.edit().remove("unlocked_for").apply();
         screen = "link"; back = null;
         LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
-        root.addView(logo());
-        root.addView(text("STEP 1 OF 2  \u2022  Link this device", 14, ACCENT, true));
-        root.addView(text("Welcome to BM Player", 28, TEXT, true));
-        root.addView(text("First, link this " + deviceLabel() + " to your BM Support account. Next you'll turn on 2FA.", 16, MUTED, false));
-        TextView code = text("······", 64, ACCENT, true);
-        code.setLetterSpacing(0.2f);
-        root.addView(code);
-        root.addView(text("On your phone or computer go to bmsupport.uk/send-to-app,\nsign in and enter this code to link this device to your account.", 18, MUTED, false));
-        TextView status = text("", 16, MUTED, false);
-        root.addView(status);
-        Button again = button("New code", v -> showLink());
-        root.addView(again);
+        root.addView(text("Welcome to BM Player", 26, TEXT, true));
+        if (prefs.getString("dns", "").isEmpty() && !prefs.getString("user", "").isEmpty()) {
+            root.addView(text("Login received \u2014 waiting for the server address from BM Support.", 16, MUTED, false));
+            setContentView(familyFrame(root)); return;
+        }
+        root.addView(text("Do you have a BM Support website account?", 18, TEXT, false));
+        LinearLayout r = row();
+        Button yes = button("Yes", v -> showSigninCode(true, null));
+        Button no = button("No", v -> showSigninCode(false, null));
+        r.addView(yes); r.addView(no);
+        root.addView(r);
         setContentView(familyFrame(root));
-        again.requestFocus();
-        io.execute(() -> {
+        yes.requestFocus();
+    }
+
+    /** Type the 6-digit sign-in code. Website account: code from Link Device page. No account: QR opens a help chat that shows the code. */
+    private void showSigninCode(boolean website, Bitmap qrImg) {
+        screen = "link"; back = this::showLink;
+        LinearLayout p = new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL);
+        p.addView(text(website ? "Enter your sign-in code" : "Scan to get your code", 22, TEXT, true));
+        p.addView(text(website ? "On bmsupport.uk open Link Device and press Show my sign-in code."
+                : "Scan with your phone. Enter your account number and email, then type the code here.", 14, MUTED, false));
+        android.widget.ImageView qv = new android.widget.ImageView(this);
+        if (!website) { if (qrImg != null) qv.setImageBitmap(qrImg); p.addView(qv, new LinearLayout.LayoutParams(dp(150), dp(150))); }
+        EditText in = new EditText(this);
+        in.setInputType(InputType.TYPE_CLASS_NUMBER);
+        in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(6) });
+        in.setVisibility(View.GONE);
+        NumberPad.detachSystemKeyboard(in);
+        p.addView(in);
+        p.addView(CodeBox.build(this, in, 6, CARD, ACCENT, TEXT, MUTED));
+        TextView status = text(website || qrImg != null ? "" : "Making your QR code\u2026", 14, MUTED, false);
+        Runnable submit = () -> {
+            String n = in.getText().toString().trim();
+            if (!n.matches("\\d{6}")) { status.setText("Enter all 6 digits."); return; }
+            status.setText("Checking\u2026");
+            io.execute(() -> {
+                try {
+                    Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "signin_code")
+                            .put("device_token", prefs.getString("token", "")).put("code", n).toString());
+                    ui.post(() -> {
+                        unlocked = true; rememberUnlock(); PlayerApplication.pinPassed = true;
+                        status.setText(website ? "Signed in \u2713 Getting your login\u2026" : "Signed in \u2713 BM Support will send your login to this box shortly.");
+                        safeRun(io, this::pollOnce);
+                    });
+                } catch (Exception ex) {
+                    String m = String.valueOf(ex.getMessage()), msg = "Couldn't check. Check the internet and try again.";
+                    int i = m.indexOf('{');
+                    if (i >= 0) try { msg = new JSONObject(m.substring(i)).optString("error", msg); } catch (Exception ignored) {}
+                    final String shown = SafeError.forScreen(msg, "Couldn't check. Check the internet and try again.");
+                    ui.post(() -> { status.setText(shown); in.setText(""); });
+                }
+            });
+        };
+        LinearLayout pad = NumberPad.build(this, in, 6, CARD, ACCENT, TEXT, submit);
+        p.addView(pad);
+        p.addView(status);
+        Button backBtn = button("\u2039 Back", v -> showLink());
+        p.addView(backBtn);
+        setContentView(familyFrame(p));
+        View first = NumberPad.firstKey(pad); if (first != null) first.requestFocus();
+        if (!website && qrImg == null) io.execute(() -> {
             try {
                 JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
-                        new JSONObject().put("action", "code").put("device_token", prefs.getString("token", "")).toString()));
-                String c = r.getString("code");
-                ui.post(() -> { code.setText(c.substring(0, 3) + " " + c.substring(3)); status.setText("Code lasts 10 minutes"); });
-            } catch (Exception ex) {
-                ui.post(() -> status.setText("Couldn't get a code. Press New code to try again."));
-            }
+                        new JSONObject().put("action", "signin_chat").put("device_token", prefs.getString("token", "")).toString()));
+                Bitmap b = qr(r.getString("url"), dp(150));
+                ui.post(() -> { if ("link".equals(screen)) { qv.setImageBitmap(b); status.setText("The QR code works once."); } });
+            } catch (Exception ex) { ui.post(() -> status.setText("Couldn't make a QR code. Press Back and try again.")); }
         });
-        if (prefs.getString("dns", "").isEmpty() && !prefs.getString("user", "").isEmpty())
-            status.setText("Login received — waiting for the server address from BM Support.");
     }
 
     // ---------- home ----------

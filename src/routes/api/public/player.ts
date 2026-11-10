@@ -53,6 +53,8 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
   z.object({ action: z.literal("pin_status"), device_token: Token }),
+  z.object({ action: z.literal("signin_chat"), device_token: Token }),
+  z.object({ action: z.literal("signin_code"), device_token: Token, code: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("totp_start"), device_token: Token }),
   z.object({ action: z.literal("totp_reset_request"), device_token: Token }),
   z.object({ action: z.literal("totp_confirm"), device_token: Token, code: z.string().trim().regex(/^\d{6}$/) }),
@@ -385,21 +387,67 @@ export const Route = createFileRoute("/api/public/player")({
 
         // The 4-digit PIN is retired: 2FA (authenticator app) is the only main-menu lock, once a day per box.
         // Can't reach the authenticator? One of the 10 one-use backup codes (8 digits) opens it instead.
-        if (body.action === "pin_status" || body.action === "pin_check" || body.action === "pin_create") {
+        // 2FA is retired: boxes sign in once (website code or the QR help chat) and are never asked again.
+        if (body.action === "pin_status") return json({ required: false, needs_setup: false, totp_setup: false });
+
+        // No website account: a QR on the box opens a one-off chat that checks account number + email
+        // and shows a 6-digit code (10 minutes). Each new chat retires the box's older ones.
+        if (body.action === "signin_chat") {
+          await supabaseAdmin.from("player_signin_chats").update({ status: "expired", code: null, closed_at: new Date().toISOString() }).eq("device_id", device.id).in("status", ["open", "code_issued"]);
+          const raw = randomHex(32);
+          const { error } = await supabaseAdmin.from("player_signin_chats").insert({ device_id: device.id, token_hash: await sha256Hex(raw) });
+          if (error) return json({ error: "Couldn't make a QR code. Try again." }, 500);
+          const url = `https://bmsupport.uk/player-signin/${raw}`;
+          const QR = await import("qrcode");
+          return json({ url, qr_svg: await QR.toString(url, { type: "svg", margin: 1, width: 240 }) });
+        }
+
+        if (body.action === "signin_code") {
+          const { data: lk } = await supabaseAdmin.from("player_devices").select("unlock_failures, unlock_locked_until, unlock_lock_level").eq("id", device.id).single();
+          if (lk?.unlock_locked_until && Date.parse(lk.unlock_locked_until) > Date.now()) return json({ error: "Too many wrong codes. Please wait and try again." }, 429);
+          const nowIso = new Date().toISOString();
+          // 1) Code from the box's own help chat (no website account).
+          const { data: chat } = await supabaseAdmin.from("player_signin_chats").select("id, code, offsite_customer_id").eq("device_id", device.id).eq("status", "code_issued").gt("code_expires_at", nowIso).limit(1).maybeSingle();
+          if (chat?.code && chat.code === body.code && chat.offsite_customer_id) {
+            await supabaseAdmin.from("player_signin_chats").update({ status: "done", code: null, closed_at: nowIso }).eq("id", chat.id);
+            const { data: oc } = await supabaseAdmin.from("player_offsite_customers").select("iptv_username, customer_name").eq("id", chat.offsite_customer_id).maybeSingle();
+            await supabaseAdmin.from("player_devices").update({ offsite_customer_id: chat.offsite_customer_id, linked_at: nowIso, iptv_username: oc?.iptv_username ?? null, unlock_failures: 0, unlock_locked_until: null, totp_passed_at: nowIso }).eq("id", device.id);
+            try {
+              const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
+              await notifyPlayerAdmins(supabaseAdmin, "BM Player signed in by help chat", `${oc?.customer_name ?? "A customer"} signed a ${device.platform ?? "BM Player"} box in${oc?.iptv_username ? ` (login ${oc.iptv_username})` : ""}. If the box has no login yet, send it from the dashboard.`);
+            } catch (e) { console.error("[signin chat notify]", e); }
+            return json({ ok: true, linked: true });
+          }
+          // 2) Code shown on the website's Link Device page.
+          const hash = await sha256Hex(body.code);
+          const { data: sc } = await supabaseAdmin.from("player_signin_codes").update({ used_at: nowIso }).eq("code_hash", hash).is("used_at", null).gt("expires_at", nowIso).select("owner_id, username, password").maybeSingle();
+          if (sc) {
+            if (device.user_id && device.user_id !== sc.owner_id) return json({ error: "This box is linked to another account." }, 409);
+            const isNew = !device.user_id;
+            await supabaseAdmin.from("player_devices").update({ user_id: sc.owner_id, linked_at: nowIso, iptv_username: sc.username, unlock_failures: 0, unlock_locked_until: null, totp_passed_at: nowIso }).eq("id", device.id);
+            const { queuePlayerLogin, notifyNewBox } = await import("@/lib/player-security.server");
+            const { held } = await queuePlayerLogin(supabaseAdmin, { deviceId: device.id, ownerId: sc.owner_id, username: sc.username, password: sc.password });
+            if (isNew) await notifyNewBox(supabaseAdmin, sc.owner_id, device.id, device.platform);
+            return json({ ok: true, linked: true, held });
+          }
+          const fails = (lk?.unlock_failures ?? 0) + 1;
+          const locked = fails >= WRONG_TRIES_PER_STEP;
+          const level = locked ? (lk?.unlock_lock_level ?? 0) + 1 : (lk?.unlock_lock_level ?? 0);
+          await supabaseAdmin.from("player_devices").update({ unlock_failures: locked ? 0 : fails, unlock_locked_until: locked ? new Date(Date.now() + lockoutMinutes(level) * 60_000).toISOString() : null, unlock_lock_level: level }).eq("id", device.id);
+          return json({ error: locked ? `Too many wrong codes. Please wait ${lockoutMinutes(level)} minutes.` : "That code is wrong or has run out. Get a new one and try again." }, locked ? 429 : 401);
+        }
+
+        if (body.action === "pin_check" || body.action === "pin_create") {
           if (!device.user_id && !device.offsite_customer_id) return json({ required: false });
           if (body.action === "pin_create") return json({ error: "PINs are no longer used. Set up 2FA instead." }, 410);
           const key = device.user_id ? { owner_id: device.user_id } : { offsite_customer_id: device.offsite_customer_id as string };
           const { data: totp } = device.user_id
             ? await supabaseAdmin.from("player_totp").select("secret, enabled").eq("owner_id", device.user_id).maybeSingle()
             : await supabaseAdmin.from("player_totp").select("secret, enabled").eq("offsite_customer_id", device.offsite_customer_id as string).maybeSingle();
-          const { totpStillValid, totpMatches } = await import("@/lib/player-totp");
+          const { totpMatches } = await import("@/lib/player-totp");
           const { data: dv } = await supabaseAdmin.from("player_devices").select("totp_passed_at, pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
           if (!totp?.enabled || !totp.secret) {
-            if (body.action === "pin_status") return json({ required: false, needs_setup: false, method: "totp", digits: 6, pin_fallback: false, totp_setup: true });
             return json({ error: "Set up 2FA first." }, 409);
-          }
-          if (body.action === "pin_status") {
-            return json({ required: !totpStillValid(dv?.totp_passed_at), needs_setup: false, method: "totp", digits: 6, pin_fallback: false, backup_codes: true });
           }
           const waitT = (until: string) => {
             const mins = Math.max(1, Math.ceil((Date.parse(until) - Date.now()) / 60_000));

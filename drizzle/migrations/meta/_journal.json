@@ -2332,6 +2332,13 @@
       "when": 1794265434676,
       "tag": "0332_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 333,
+      "version": "7",
+      "when": 1794272538687,
+      "tag": "0333_player_signin_codes_and_chats",
+      "breakpoints": true
     }
   ]
 }
