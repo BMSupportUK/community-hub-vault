@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Preserve desktop EPG across playback/guide return with shared login-scoped cache, quiet minute refresh, single-flight requests and failed-refresh retention; test return flow before completion.
 - [x] Preserve supplied sports listing end times in shared BM Player EPG and Sports Guide feed; import/save/read-back, midnight/ET conversion, merge and completion tests added. Website publication required; physical players unavailable for end-to-end checks.
 - [x] Released Windows 0.4.64 and universal Mac 0.1.73 with corrected device-link screens; 137 desktop tests pass, both public download hashes match, Mac integrity and Intel/Apple Silicon binaries verified. Physical installation/linking unavailable without attached Windows/Mac devices.
 - [x] Fixed admin credential deletion silently skipping other profiles via owner-scoped admin/management RPC with affected-row confirmation and profile-change event. Four deletion/refresh tests pass; build OK. Full dashboard click-through remains blocked by account-password/staff-PIN gate; no customer records deleted during testing.

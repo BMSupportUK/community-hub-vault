@@ -16,6 +16,7 @@ import {SportsGuide} from './sports-guide';
 import {CategoryOrderEditor} from './category-order';
 import {orderCategories} from '../category-order.cjs';
 import {filterLive} from '../live-search.cjs';
+import {createGuideCache} from '../guide-refresh.cjs';
 const bm=window.bm;
 const stamp=value=>value?'Updated '+new Date(value).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Not updated yet';
 const clock=value=>new Date(value).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
@@ -25,6 +26,10 @@ let previewTapAt=0;
 const previewTaps=()=>{const t=Date.now();if(t-previewTapAt<500){previewTapAt=0;return true;}previewTapAt=t;return false;};
 function App(){
  const [intro,setIntro]=useState(true);
+ const epgCache=useRef(null);if(!epgCache.current)epgCache.current=createGuideCache();
+ const epgScope=useRef(null);
+ function receiveState(next){const scope=next?.linked&&!next.locked?next.user:null;if(scope!==epgScope.current){epgCache.current.clear();epgScope.current=scope;}setState(next);}
+ const cachedEpg=id=>epgCache.current.load(id,key=>bm.epg(key));
  const [ratings,setRatings]=useState({}),[voteBusy,setVoteBusy]=useState(false);
  const ratingKey=item=>item.kind+':'+item.name;
  function mergeRatings(rows){setRatings(old=>({...old,...Object.fromEntries(rows.map(r=>[r.kind+':'+r.title,r]))}));}
@@ -46,8 +51,8 @@ function App(){
  const controlsShown=usePlayerControls(playingView,!!modal||inactive>0||!!progress);
  function toast(message){setNotice(safeText(message,'Something went wrong. Try again.'));setTimeout(()=>setNotice(''),7000);}
  async function act(fn){try{return await fn();}catch(error){toast(error.message);return null;}}
- useEffect(()=>{bm.state().then(setState);return bm.subscribe(event=>{
-  if(event.type==='state')setState(event.state);
+ useEffect(()=>{bm.state().then(receiveState);return bm.subscribe(event=>{
+  if(event.type==='state')receiveState(event.state);
   if(event.type==='notice')toast(event.message);
   if(event.type==='alternate-feed')setModal({type:'alternate-feed',auto:!!event.auto,index:event.index,items:event.items,eventKey:event.eventKey});
   if(event.type==='progress')setProgress(event.percent<100?event:null);
@@ -64,7 +69,7 @@ function App(){
  async function preview(item){
   if(multi>1||playingView)return;
   const sequence=++previewSequence.current;setSelected(item);
-  const p=await act(()=>bm.epg(item.id));if(sequence!==previewSequence.current)return;setProgrammes(p||[]);
+  const p=await act(()=>cachedEpg(item.id));if(sequence!==previewSequence.current)return;setProgrammes(p||[]);
   if(state?.playing?.[0]?.item.id!==item.id)await act(()=>bm.play({item,screens:1}));
  }
  function highlight(item){clearTimeout(previewTimer.current);previewTimer.current=setTimeout(()=>preview(item),250);}
