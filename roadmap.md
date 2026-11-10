@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Windows/Mac legacy locked logins show app-displayed device linking rather than account-number entry; cached 2FA gates retired. Shared Mac entry confirmed, both renderer modes verified and 131 desktop tests pass. Not packaged/released.
 - [x] Released Android/Amazon 4.30/241, Windows 0.4.63 and universal Mac 0.1.72 with verified-sign-in playlist gating; 226 native and 136 desktop tests pass, permanent APK signer and both Mac architectures verified, all three live download hashes match. Real-device installation/playback unavailable without attached devices.
 - [x] Android/Amazon startup and playlist queue require verified device link plus completed sign-in; Windows/Mac shared startup, refresh and provider reads use the same fresh-link gate. Native startup tests and desktop regressions pass. Not packaged/released; physical-device checks unavailable.
 - [x] Removed Link Device account tabs; active profile scopes login, account number and devices with form reset on switching. Removed obsolete Player 2FA from admin customer/staff cards; 19 tests pass, build OK. Unlocked page verification remains blocked by the account-password lock noted below.

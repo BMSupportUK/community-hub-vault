@@ -15,7 +15,7 @@ function createAccountGate(){
     (saved.unlockedFor&&saved.unlockedFor!==saved.token))return false;
    saved.unlockedFor=saved.token;unlocked=true;qr='';return true;
   },
-  require(){if(!unlocked)throw new Error('Enter your 6-digit account number first.');},
+  require(){if(!unlocked)throw new Error('Link this device on bmsupport.uk first.');},
   // Website subscription-box send: the server already checked ownership.
   async remote(verify,onQr){if(unlocked)return false;const r=await verify({action:'unlock_status'});const next=typeof r?.qr_svg==='string'&&r.qr_svg.startsWith('<svg')&&String(r.qr_url||'').startsWith('https://bmsupport.uk/')?r.qr_svg:'';if(next!==qr){qr=next;onQr?.();}if(r?.unlocked===true){unlocked=true;return true;}return false;},
   async unlock(number,verify){

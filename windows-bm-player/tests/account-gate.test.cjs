@@ -48,3 +48,10 @@ test('a marker for another device cannot restore sign-in',()=>{
  const gate=createAccountGate();const saved={token:'device-b',unlockedFor:'device-a',user:'saved-login',pass:'saved-password'};
  expect(gate.restoreLinked(saved,{linked:true})).toBe(false);expect(saved.unlockedFor).toBe('device-a');expect(()=>gate.require()).toThrow();
 });
+
+test('website-verified device linking signs in without entering an account number',()=>{
+ const gate=createAccountGate();const saved={token:'linked-device',user:'website-login',pass:'saved-password'};
+ expect(gate.restoreLinked(saved,{linked:true})).toBe(true);
+ expect(gate.unlocked).toBe(true);expect(saved.unlockedFor).toBe('linked-device');
+ expect(()=>gate.require()).not.toThrow();
+});
