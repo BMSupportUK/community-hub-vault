@@ -155,6 +155,8 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
  if(publicState().expired)throw new Error('Your subscription has expired. Visit BM Support to renew.');
  const allowed=Math.min(3,Number(store.account?.max_connections)||1);
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
+ // Preview → full screen on the same live channel keeps the running stream and its filled buffer.
+ if(screens===1&&sessions.length===1&&item?.kind==='live'&&sessions[0].item.kind==='live'&&String(sessions[0].item.id)===String(item.id)&&!sessions[0].failed){lastInput=Date.now();promptedAt=0;send({type:'state',state:publicState()});return true;}
  if(screens===1||sessions.length>=screens)await stopAll();
  const catalog=item.kind==='live'?await catalogue('live'):null;
  if(catalog){const verified=catalog.items.find(c=>String(c.id)===String(item.id));if(!verified)throw new Error('Channel unavailable.');item={...verified};}
