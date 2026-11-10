@@ -2353,6 +2353,13 @@
       "when": 1794301061713,
       "tag": "0335_player_owner_all_saved_logins",
       "breakpoints": true
+    },
+    {
+      "idx": 336,
+      "version": "7",
+      "when": 1794304548394,
+      "tag": "0336_admin_delete_customer_credential",
+      "breakpoints": true
     }
   ]
 }

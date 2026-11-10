@@ -9811,6 +9811,10 @@ export type Database = {
       admin_customer_subscription_list: { Args: never; Returns: Json }
       admin_customer_subscriptions: { Args: never; Returns: Json }
       admin_customer_subscriptions_with_tenure: { Args: never; Returns: Json }
+      admin_delete_customer_credential: {
+        Args: { p_credential: string; p_owner: string }
+        Returns: boolean
+      }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }
       admin_ensure_customer_number: { Args: { _id: string }; Returns: number }
       admin_get_user_location_history: {
