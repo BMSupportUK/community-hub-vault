@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Build, verify and release Android/Amazon 4.29, Windows 0.4.62 and Mac 0.1.71 with restored device-code linking.
 - [x] Restored app-displayed linking codes on Android/Amazon and shared Windows/Mac; removed sign-in QR and website-generated code card. Desktop code/refresh visually verified at 1280 and 950×477; 129 desktop and 22 website tests pass.
 - [ ] Package and release the restored linking screens; native compilation and real-device successful linking remain unverified because Android SDK/JDK and attached devices are unavailable.
 - [x] Released Android/Amazon 4.16/227: PIN resets on every background return without a 30-second exemption; three-hour warning closes after one unanswered minute and retains its deadline across dialog destruction. All 220 native tests plus six timing checks pass, permanent signature and live customer-download SHA-256 verified. Physical Fire TV return/PIN entry and full unattended playback remain unverified without an attached box.
