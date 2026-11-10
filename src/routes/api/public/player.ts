@@ -444,14 +444,10 @@ export const Route = createFileRoute("/api/public/player")({
           const { data: totp } = device.user_id
             ? await supabaseAdmin.from("player_totp").select("secret, enabled").eq("owner_id", device.user_id).maybeSingle()
             : await supabaseAdmin.from("player_totp").select("secret, enabled").eq("offsite_customer_id", device.offsite_customer_id as string).maybeSingle();
-          const { totpStillValid, totpMatches } = await import("@/lib/player-totp");
+          const { totpMatches } = await import("@/lib/player-totp");
           const { data: dv } = await supabaseAdmin.from("player_devices").select("totp_passed_at, pin_failures, pin_locked_until, pin_lock_level").eq("id", device.id).single();
           if (!totp?.enabled || !totp.secret) {
-            if (body.action === "pin_status") return json({ required: false, needs_setup: false, method: "totp", digits: 6, pin_fallback: false, totp_setup: true });
             return json({ error: "Set up 2FA first." }, 409);
-          }
-          if (body.action === "pin_status") {
-            return json({ required: !totpStillValid(dv?.totp_passed_at), needs_setup: false, method: "totp", digits: 6, pin_fallback: false, backup_codes: true });
           }
           const waitT = (until: string) => {
             const mins = Math.max(1, Math.ceil((Date.parse(until) - Date.now()) / 60_000));
