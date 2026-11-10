@@ -61,9 +61,10 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  return <div className="lg">
   <div className="lg-top">
    <div className="lg-preview" role="button" title={selected?'Double-click for full screen':undefined} onClick={()=>{if(!selected){toast('Click a channel to preview it');return;}const t=Date.now();if(t-tapAt<500){tapAt=0;onFull(selected);}else tapAt=t;}}>
-    {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen}/>{feedLabel&&<div role="status" className="feed-pill preview-feed">{feedLabel}</div>}:<div className="preview-placeholder"><img src="preview_family.jpg" alt="Family on a sofa watching TV, one pointing a remote at the screen"/></div>}
+    {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen}/>:<div className="preview-placeholder"><img src="preview_family.jpg" alt="Family on a sofa watching TV, one pointing a remote at the screen"/></div>}
    </div>
    <div className="lg-info">
+    {feedLabel&&<div role="status" className="feed-pill preview-feed">{feedLabel}</div>}
     <div className="lg-pills">
      {searchOpen&&<input autoFocus aria-label="Search TV" placeholder="Search channels" value={query} onChange={e=>onQuery(e.target.value)}/>}
      <button className="pill" onClick={()=>{setSearchOpen(o=>!o);if(searchOpen)onQuery('');}}>🔍 Search TV</button>
