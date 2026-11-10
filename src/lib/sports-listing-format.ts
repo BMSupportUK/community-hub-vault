@@ -3,6 +3,8 @@ import { parseClockTime, parseListingDate, sourceTimeToUk, sourceTimeToUkParts, 
 export type SportsListingEvent = {
   date: string | null;
   time: string;
+  endTime?: string;
+  endDate?: string | null;
   title: string;
   channels: string[];
 };
@@ -707,6 +709,8 @@ function detectAtSlotEvent(line: string, date: string | null): SportsListingEven
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const range = line.match(new RegExp(`^(${TIME_WITH_ZONE_SOURCE})\\s*(?:until|till|to|[-–—])\\s*(${TIME_WITH_ZONE_SOURCE})\\s*$`, "i"));
+  if (range) return { date, time: normalizeTime(range[1]), endTime: normalizeTime(range[2]), title: "", channels: [] };
   const cymru = line.match(CYMRU_CHANNEL_FIXTURE_RE);
   if (cymru?.[1] && cymru[2] && cymru[3] && cymru[4] && cymru[5]) {
     const parsedDate = parseListingDate(cymru[4]);
@@ -832,9 +836,11 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 
   const span = line.match(DATE_TIME_SPAN_RE);
   if (span && span[1] && span[2]) {
+    const finish = line.match(new RegExp(`(?:until|till|to|[-–—])\\s+(?:(${DATE_SOURCE})\\s+)?(${TIME_WITH_ZONE_SOURCE})`, "i"));
     return {
       date: span[1],
       time: normalizeTime(span[2]),
+      ...(finish ? { endDate: finish[1] ?? null, endTime: normalizeTime(finish[2]) } : {}),
       title: "",
       channels: span[3] ? splitChannelLine(span[3]) : [],
     };
@@ -1503,6 +1509,12 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   let lastChannelWasPlain: string | null = null;
   for (let li = 0; li < lines.length; li++) {
     const line = lines[li];
+    const finish = line.match(new RegExp(`^End:\\s*(?:(${DATE_SOURCE})\\s+)?(${TIME_WITH_ZONE_SOURCE})\\s*$`, "i"));
+    if (finish && current) {
+      current.endDate = finish[1] ?? null;
+      current.endTime = normalizeTime(finish[2]);
+      continue;
+    }
     const listingDate = listingDateFromLine(line);
     if (listingDate) {
       flush();
@@ -1781,7 +1793,21 @@ function convertEventsToUk(events: SportsListingEvent[], input: ListingInput): S
       const day = parseListingDate(date);
       if (day) nextDate = formatListingDate(new Date(Date.UTC(day.y, day.m, day.d + parts.dayShift)));
     }
-    return { ...event, time: parts.time, date: nextDate };
+    let endFields = {};
+    if (event.endTime) {
+      const endDate = event.endDate ?? date;
+      const endZone = UK_LABELLED_TIME_RE.test(event.endTime) ? "gmt" : ET_LABELLED_TIME_RE.test(event.endTime) ? "et" : zone;
+      const finish = sourceTimeToUkParts(event.endTime, endDate ?? undefined, endZone, input.nowMs);
+      const day = parseListingDate(endDate);
+      if (finish && day) {
+        let shift = finish.dayShift;
+        const startClock = parseClockTime(event.time), endClock = parseClockTime(event.endTime);
+        if (!event.endDate && startClock && endClock && endClock.hour * 60 + endClock.minute < startClock.hour * 60 + startClock.minute) shift++;
+        const endDay = new Date(Date.UTC(day.y, day.m, day.d + shift));
+        endFields = { endTime: finish.time, endDate: `${String(endDay.getUTCDate()).padStart(2, "0")}/${String(endDay.getUTCMonth() + 1).padStart(2, "0")}/${endDay.getUTCFullYear()}` };
+      }
+    }
+    return { ...event, ...endFields, time: parts.time, date: nextDate };
   });
 }
 
@@ -1845,6 +1871,7 @@ export function formatSportsListingEvents(events: SportsListingEvent[], input: L
 
     out.push(eventTimeForOutput(event, input));
     out.push(event.title);
+    if (event.endTime) out.push(`End: ${event.endDate ? `${event.endDate} ` : ""}${event.endTime}`);
     // Parsed rows own their channels. The block-level list is only a fallback
     // for legacy single-event queue items; applying it globally corrupts a
     // merged multi-channel post even though its preview is correct.

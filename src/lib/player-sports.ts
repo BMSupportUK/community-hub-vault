@@ -5,7 +5,7 @@ import { ukListingInstant } from "./import-time";
 import { matchingProgrammeEnd, type SportsProgramme } from "./sports-programme-end";
 
 /** `passChannels` lists which of `channels` came only from sports-pass guides (apps group them separately). */
-export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[]; teamChannels?: boolean; channelCountry?: Record<string, string>; end?: number; endSource?: "epg" | "estimate" };
+export type PlayerSportsEvent = { sport: string; subcategory: string; competition: string; title: string; date: string | null; time: string; start: number; channels: string[]; passChannels: string[]; teamChannels?: boolean; channelCountry?: Record<string, string>; end?: number; endSource?: "epg" | "estimate" | "guide" };
 
 /** "EFL : CHAMPIONSHIP: Derby County v Bolton" → "Derby County v Bolton"; keeps mixed-case prefixes ("UFC Fight Night Preview Show: …"). */
 export function cardTitle(title: string): string {
@@ -133,6 +133,9 @@ export function playerSportsEvents(
       if (!safePublicEventTitle(e)) continue;
       const start = ukListingInstant(e.date, e.time);
       if (start == null || start < nowMs - WINDOW_BACK || start > nowMs + WINDOW_AHEAD) continue;
+      let suppliedEnd = e.endTime ? ukListingInstant(e.endDate ?? e.date, e.endTime) : null;
+      if (suppliedEnd != null && !e.endDate && suppliedEnd < start) suppliedEnd += 86400_000;
+      if (suppliedEnd != null && (suppliedEnd <= start || suppliedEnd - start > 24 * 3600_000)) suppliedEnd = null;
       const links = g.links ?? {};
       const catList = links.category ? categoryChannels?.get(links.category.toLowerCase()) : undefined;
       // Older stored club guides may still carry only the placeholder. Add club names
@@ -161,6 +164,7 @@ export function playerSportsEvents(
       const key = seriesKey(onboardIdentity, context);
       const existing = out.find((c) => Math.abs(c.start - start) <= SAME_GAME_MS && (sameFixture(c.title, e.title, `${c.sport} ${c.subcategory} ${c.competition}`, context) || sameSeriesEvent(c.seriesKey, key)));
       const target = existing ?? ev;
+      const guideEnd = Math.max(target.endSource === "guide" ? target.end ?? 0 : 0, suppliedEnd ?? 0);
       const prevKey = existing?.seriesKey ?? null;
       if (!pass) for (const c of channels) target.mainSet.add(c.toLowerCase());
       // Club-feed guides (iFollow, Scottish) list the two clubs; apps then find each club's own channels.
@@ -172,6 +176,7 @@ export function playerSportsEvents(
         Object.assign(existing, { ...ev, mainSet: keep });
         merged = [...channels, ...old];
       } else merged = [...target.channels, ...channels];
+      if (guideEnd > target.start) { target.end = guideEnd; target.endSource = "guide"; }
       const seen = new Set<string>();
       target.channels = merged.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, MAX_CHANNELS);
       target.passChannels = target.channels.filter((c) => !target.mainSet.has(c.toLowerCase()));
@@ -194,7 +199,7 @@ export function playerSportsEvents(
     }
   }
   return capPrelims(out
-    .map(({ pass: _p, mainSet: _m, seriesKey: _k, ...ev }) => ({ ...ev, end: ev.start + (isPrelim(ev.title) ? PRELIM_MS : typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`)), endSource: "estimate" as const })))
+    .map(({ pass: _p, mainSet: _m, seriesKey: _k, ...ev }) => ev.endSource === "guide" ? ev : ({ ...ev, end: ev.start + (isPrelim(ev.title) ? PRELIM_MS : typicalLengthMs(`${ev.sport} ${ev.subcategory} ${ev.competition} ${ev.title}`)), endSource: "estimate" as const })))
     .filter((ev) => (ev.end ?? Infinity) + FINISHED_KEEP_MS > nowMs)
     .sort((a, b) => a.start - b.start).slice(0, 400);
 }
@@ -206,7 +211,7 @@ const PRELIM_MS = 3 * H;
 /** Prelims finish when their main card starts (or 3h without one), so their card shows Finished on time. */
 export function capPrelims<T extends PlayerSportsEvent>(events: T[]): T[] {
   return events.map((ev) => {
-    if (!isPrelim(ev.title)) return ev;
+    if (!isPrelim(ev.title) || ev.endSource === "guide") return ev;
     const main = events.find((m) => m !== ev && !isPrelim(m.title) && m.start > ev.start && m.start - ev.start <= 6 * H
       && (sameFixture(ev.title, m.title) || (seriesKey(ev.title) != null && seriesKey(ev.title) === seriesKey(m.title))));
     const cap = main ? main.start : ev.start + PRELIM_MS;
@@ -230,6 +235,7 @@ export function typicalLengthMs(text: string): number {
 /** Overwrite estimates with real TV-guide end times (keyed by channel name, lower-cased) and drop long-finished games. */
 export function applyGuideEnds(events: PlayerSportsEvent[], ends: Map<string, SportsProgramme[]>, nowMs = Date.now()): PlayerSportsEvent[] {
   return capPrelims(events.map((ev) => {
+    if (ev.endSource === "guide") return ev;
     const end = matchingProgrammeEnd(ev, ends, events);
     return end == null ? ev : { ...ev, end, endSource: "epg" as const };
   })).filter((ev) => (ev.end ?? Infinity) + FINISHED_KEEP_MS > nowMs);
