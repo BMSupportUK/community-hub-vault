@@ -6,9 +6,11 @@ function feedStatus(session, s) {
   const now = Date.now();
   if (!session.backup && s.state === 3 && now - session.since > 10000 && !(Number(s.w) > 0)) return 'black';
   if (s.state === 2 && session.ready) return 'buffering';
+  // First picture not shown yet: small "Loading channel…" indicator until it appears.
+  if (!session.backup && s.state !== 7 && s.state !== 5 && !(Number(s.videoFrames) > 0) && !(Number(s.w) > 0)) return 'loading';
   return null;
 }
 
-const LABELS = { black: 'No picture', buffering: 'Buffering…' };
+const LABELS = { black: 'No picture', buffering: 'Buffering…', loading: 'Loading channel…' };
 
 module.exports = { feedStatus, LABELS };
