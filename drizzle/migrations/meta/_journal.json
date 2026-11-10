@@ -2339,6 +2339,13 @@
       "when": 1794272538687,
       "tag": "0333_player_signin_codes_and_chats",
       "breakpoints": true
+    },
+    {
+      "idx": 334,
+      "version": "7",
+      "when": 1794300912287,
+      "tag": "0334_admin_customer_card_credentials",
+      "breakpoints": true
     }
   ]
 }
