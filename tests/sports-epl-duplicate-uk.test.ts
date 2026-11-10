@@ -17,7 +17,7 @@ test("today's EPL post keeps four fixtures with three separate channel sections 
   const forest = events.filter(e => e.title === "Nottingham Forest v Manchester City");
   expect(forest.map(e => e.channels)).toEqual([
     ["Nottingham Forest EPL ˢᴰ", "Manchester City EPL ˢᴰ"],
-    ["Fubo Sports", "Now HK 1", "MonoMax"],
+    ["Fubo Sports", "Stan Sport", "Now HK 1", "MonoMax"],
     ["Sky Sports Premier League UK", "Sky Sports Main Event", "Sky Sports 8 NZ", "Supersport Premier League", "NBC US"],
   ]);
 });
