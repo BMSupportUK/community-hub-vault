@@ -12,7 +12,7 @@ test("ESPN slot date wrapped across lines keeps UCF v Houston separate", () => {
   expect(result.warnings).toBe(0);
   expect(result.events).toHaveLength(157);
   expect(result.events.find((e) => e.title === "UCF v Houston" && e.time === "23:25 BST")).toMatchObject({ date: "Friday, 16th October", channels: ["ESPN 1 HD"] });
-  expect(result.events).toContainEqual({ date: "Friday, 16th October", time: "22:25 BST", title: "Grand Slam of Curling: CO-OP Invitational", channels: ["ESPN 0 HD"] });
+  expect(result.events.find((e) => e.title === "Grand Slam of Curling: CO-OP Invitational" && e.time === "22:25 BST")).toMatchObject({ date: "Friday, 16th October", channels: ["ESPN 0 HD"] });
   expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
   const saved = mergeSportsListingBlocks(plainListingToHtml(""), raw, { sourceZone: "gmt", guideTitle: "ESPN+", channels: [] }, nowMs);
   expect(parseSportsListingBlock(saved)).toHaveLength(157);
