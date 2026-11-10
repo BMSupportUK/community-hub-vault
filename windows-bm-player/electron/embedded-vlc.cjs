@@ -21,7 +21,9 @@ class EmbeddedVlc {
   this.dll=this.k.load(path.join(root,'libvlc.dll'));
   const api={new:['void *',['int','const char **']],release:['void',['void *']],media_new_location:['void *',['void *','str']],media_add_option:['void',['void *','str']],media_release:['void',['void *']],media_player_new:['void *',['void *']],media_player_release:['void',['void *']],media_player_set_media:['void',['void *','void *']],media_player_set_hwnd:['void',['void *','void *']],media_player_play:['int',['void *']],media_player_stop:['void',['void *']],media_player_set_pause:['void',['void *','int']],media_player_get_state:['int',['void *']],media_player_get_time:['int64',['void *']],media_player_get_length:['int64',['void *']],media_player_set_time:['void',['void *','int64']],media_player_is_seekable:['int',['void *']],audio_set_volume:['int',['void *','int']],media_player_set_rate:['int',['void *','float']],audio_get_track:['int',['void *']],audio_set_track:['int',['void *','int']],audio_get_track_description:['void *',['void *']],video_get_spu:['int',['void *']],video_take_snapshot:['int',['void *','uint','str','uint','uint']],video_get_size:['int',['void *','uint','_Out_ uint *','_Out_ uint *']],video_set_mouse_input:['void',['void *','uint']],video_set_key_input:['void',['void *','uint']],video_get_spu_count:['int',['void *']],video_set_spu:['int',['void *','int']],video_get_spu_description:['void *',['void *']],track_description_list_release:['void',['void *']]};
   this.api=Object.fromEntries(Object.entries(api).map(([name,[ret,args]])=>[name,this.dll.func('libvlc_'+name,ret,args)]));
-  const args=['--ignore-config','--no-video-title-show','--no-osd','--no-stats','--quiet'];
+  this.api.media_player_get_media=this.dll.func('libvlc_media_player_get_media','void *',['void *']);
+  this.api.media_get_stats=this.dll.func('libvlc_media_get_stats','int',['void *','void *']);
+  const args=['--ignore-config','--no-video-title-show','--no-osd','--stats','--quiet'];
   this.instance=this.api.new(args.length,args);
   if(!this.instance)throw new Error('The included playback engine could not initialise.');
   const buffer=win.getNativeWindowHandle();this.parent=buffer.length===8?buffer.readBigUInt64LE():BigInt(buffer.readUInt32LE());
@@ -72,7 +74,9 @@ class EmbeddedVlc {
  }
  /** Black-bar zoom removed: any live re-sizing of the picture caused a duplicate frame on Windows. */
  checkBars(){}
- status(index){const s=this.surfaces.get(index);if(!s)return null;return{position:Math.max(0,Number(this.api.media_player_get_time(s.player))/1000),duration:Math.max(0,Number(this.api.media_player_get_length(s.player))/1000),state:this.api.media_player_get_state(s.player),seekable:!!this.api.media_player_is_seekable(s.player),...this.size(s.player)};}
+ status(index){const s=this.surfaces.get(index);if(!s)return null;return{position:Math.max(0,Number(this.api.media_player_get_time(s.player))/1000),duration:Math.max(0,Number(this.api.media_player_get_length(s.player))/1000),state:this.api.media_player_get_state(s.player),seekable:!!this.api.media_player_is_seekable(s.player),nativeVideo:true,...this.pictureProgress(s.player),...this.size(s.player)};}
+ /** VLC 3's live MPEG-TS clock may stay at zero while pictures advance. */
+ pictureProgress(player){try{const media=this.api.media_player_get_media(player);if(!media)return{};const stats=Buffer.alloc(60);if(!this.api.media_get_stats(media,stats))return{};return{videoFrames:stats.readInt32LE(32)};}catch{return{};}}
  size(player){try{const w=[0],h=[0];if(this.api.video_get_size(player,0,w,h)===0)return{w:w[0]||0,h:h[0]||0};}catch{}return{};}
  pause(index,paused){const s=this.surfaces.get(index);if(s)this.api.media_player_set_pause(s.player,paused?1:0);}
  seek(index,seconds){const s=this.surfaces.get(index);if(s&&this.api.media_player_is_seekable(s.player))this.api.media_player_set_time(s.player,Math.round(seconds*1000));}
