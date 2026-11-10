@@ -20,6 +20,8 @@ export const Route = createFileRoute("/api/public/player-signin")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Retired: every customer now needs a website account and links through Link Device.
+        if (request) return new Response(JSON.stringify({ error: "This link is no longer used. Make a free account at bmsupport.uk and use the Link Device page." }), { status: 410, headers: { "content-type": "application/json", "cache-control": "no-store" } });
         const p = Body.safeParse(await request.json().catch(() => null));
         if (!p.success) return json({ error: "Check the details and try again." }, 400);
         const { token, step, number, email } = p.data;
