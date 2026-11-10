@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Correct Windows FHD CPU-only decoding with scoped hardware-auto selection, preserve corruption safeguards on reconnect, and test native option wiring; new installer and physical playback not yet verified.
 - [x] Preserve Windows/Mac EPG across guide unmount/playback return with shared login-scoped cache, quiet minute refresh, single-flight requests and failed-refresh retention; 135 desktop tests pass. Isolated full-player check did not reach playback; physical playback return remains unverified without a Windows/Mac device. Installers not released.
 - [x] Preserve supplied sports listing end times in shared BM Player EPG and Sports Guide feed; import/save/read-back, midnight/ET conversion, merge and completion tests added. Website publication required; physical players unavailable for end-to-end checks.
 - [x] Released Windows 0.4.64 and universal Mac 0.1.73 with corrected device-link screens; 137 desktop tests pass, both public download hashes match, Mac integrity and Intel/Apple Silicon binaries verified. Physical installation/linking unavailable without attached Windows/Mac devices.
