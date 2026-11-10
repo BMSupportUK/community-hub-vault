@@ -7,6 +7,13 @@ const accounts: SavedPlayerLogin[] = [
 ];
 
 describe("saved BM Player login selection", () => {
+  test("active second profile links its own login, never the first account", () => {
+    const profileId = "two";
+    const visible = accounts.filter((account) => account.id === profileId);
+    expect(visible.map((account) => account.id)).toEqual(["two"]);
+    expect(selectedPlayerLogin(visible, profileId)).toEqual({ username: "second-login", password: "second-password" });
+    expect(selectedPlayerLogin(visible, "one")).toBeNull();
+  });
   test("each login shows only devices stored against that account", () => {
     const devices = [
       { id: "first-box", credential_id: "one", iptv_username: "first-login" },
