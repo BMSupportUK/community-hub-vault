@@ -1,6 +1,7 @@
 # src/lib rules
 - Live-channel fault tickets use a device-verified transactional RPC and channel-key database lock; terminal transitions advance the health-clear boundary for earlier failures/stalls without deleting history or suppressing later failures, while active-ticket overlays stay outside caches and chat/video remain unchanged.
 - EPG imports stream matched stations; US locals use station callsigns. EPG uses shared indexed fixture matching and single-flight catalogues without provider completion waits; sports cards retain those checks separately. Published-row caches never freeze event overlays.
+- Sports card end-time eligibility uses acceptsSportsProgrammeEnd, allowing titled DAZN/Peacock provider slots without changing official-channel classification or fixture EPG overlays.
 - Channel EPG uses provider listings except matched non-official sports/club feeds, which receive saved website fixtures through sportsFixtureEpg; country imports and category-refresh dispatch/claim functions remain disabled.
 - Center Ice EPG shares fixtures between main NHL Center Ice and NHL Set 2 labels only when their stable pre-pipe feed numbers match; the EPG overlay never rewrites Sports Guide channel/playback routing.
 - Buffering diagnostics store bounded device-reported format/decoder/event metadata; admin/management summaries filter before limiting and do not turn cause labels into definitive diagnoses.

@@ -14,10 +14,27 @@ test("unrelated, replay and split-half programmes retain scheduled fallback",()=
   expect(applyGuideEnds([event],new Map([["sky sports football",[{title,start,end:start+H}]]]),start)[0].end).toBe(start+2*H);
  }
 });
-test("event-only channels cannot finish a card and later official coverage wins",()=>{
+test("later matching coverage wins across DAZN and official channels",()=>{
  const listings=new Map([["dazn ca 18",[{title:event.title,start,end:start+H}]],["sky sports football",[{title:event.title,start,end:start+2*H}]],["tnt sports 1",[{title:event.title,start,end:start+2.5*H}]]]);
  expect(applyGuideEnds([event],listings,start)[0].end).toBe(start+2.5*H);
  expect(isOfficialSportsChannel("DAZN CA 18")).toBe(false);expect(isOfficialSportsChannel("Sky Sports Main Event HD")).toBe(true);
+});
+test("DAZN accepts its matching EPG end and marks the event finished",()=>{
+ const e={...event,channels:["ᴰᴬᶻᴺ ¹ 18 (CA | Main)"]};
+ const result=applyGuideEnds([e],new Map([[e.channels[0].toLowerCase(),[{title:event.title,start,end:start+105*60_000}]]]),start+106*60_000)[0];
+ expect(result.end).toBe(start+105*60_000);expect(result.endSource).toBe("epg");expect(sportsEventState(result,start+106*60_000)).toBe("finished");
+});
+test("Peacock accepts its matching EPG end on an events-only feed",()=>{
+ const e={...event,channels:["Peacock 2 | (Events Only)"]};
+ const result=applyGuideEnds([e],new Map([[e.channels[0].toLowerCase(),[{title:event.title,start,end:start+110*60_000}]]]),start)[0];
+ expect(result.end).toBe(start+110*60_000);expect(result.endSource).toBe("epg");
+});
+test("DAZN and Peacock reject unrelated or replay listings and retain estimates",()=>{
+ for(const channel of ["DAZN CA 18","Peacock 2 | (Events Only)","DAZN Replay","Peacock Catch Up"]){
+  const e={...event,channels:[channel]};
+  const title=/replay|catch/i.test(channel)?event.title:"Other teams v Opponents";
+  expect(applyGuideEnds([e],new Map([[channel.toLowerCase(),[{title,start,end:start+H}]]]),start)[0].end).toBe(start+2*H);
+ }
 });
 test("generic race sessions, different editions and main cards cannot finish another event",()=>{
  expect(programmeMatchesEvent("F1 Race","F1 Race")).toBe(false);

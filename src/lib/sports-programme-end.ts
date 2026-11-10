@@ -9,6 +9,12 @@ export function isOfficialSportsChannel(name: string): boolean {
   return !isEventChannel(channel) && !/replay|catch.?up|events? only/.test(n)
     && /\b(?:sky sports|tnt sports|bt sport|eurosport|premier sports|espn|bein sports|fox sports|nbc sports|cbs sports|tsn|sportsnet|supersport|willow|ten sports|star sports|sony sports)\b/.test(n);
 }
+/** DAZN and Peacock event feeds also supply usable, titled provider EPG slots. */
+export function acceptsSportsProgrammeEnd(name: string): boolean {
+  const normalized = name.normalize("NFKD").toLowerCase();
+  return isOfficialSportsChannel(name) || (!/replay|catch.?up/.test(normalized)
+    && /\b(?:dazn|peacock)\b/.test(normalized));
+}
 const words = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   .replace(/\b(?:live|coverage|football|soccer|boxing|mma|snooker|fc|afc|the)\b/g, " ")
   .replace(/\b(?:vs?\.?|versus)\b|@/g, " v ").replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
@@ -43,7 +49,7 @@ function womensBigBashSlot(event: ProgrammeEvent, programme: SportsProgramme, ev
 }
 
 export function matchingProgrammeEnd(event: ProgrammeEvent, listings: Map<string, SportsProgramme[]>, events: ProgrammeEvent[] = [event]): number | undefined {
-  const matches = event.channels.filter(isOfficialSportsChannel).flatMap(channel => listings.get(channel.toLowerCase()) ?? [])
+  const matches = event.channels.filter(acceptsSportsProgrammeEnd).flatMap(channel => listings.get(channel.toLowerCase()) ?? [])
     .filter(p => Number.isFinite(p.start) && Number.isFinite(p.end) && p.end > p.start && p.end - p.start <= 12 * 3600_000
       && p.start <= event.start + 30 * 60_000 && p.start >= event.start - 2 * 3600_000 && p.end > event.start
       && (programmeMatchesEvent(event.title, p.title) || womensBigBashSlot(event, p, events)));
