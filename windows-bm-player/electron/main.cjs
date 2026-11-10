@@ -42,7 +42,7 @@ let pinPassed=false,pinNeed=null,linkVerified=false;
 let pinSetup=false,pinDigits=4,pinFallback=false,totpSetup=false,totpData=null;
 function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed,linkVerified},()=>refresh().catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')});}));}
 async function afterPin(){if(totpSetup){try{totpData=await site({action:'totp_start'});return publicState();}catch(e){if(!/already set up/i.test(String(e&&e.message)))throw e;totpSetup=false;}}pinPassed=true;refreshAtStartup();return publicState();}
-async function checkPin(){if(pinPassed||!store.token)return;try{const r=await site({action:'pin_status'});pinSetup=false;pinDigits=6;pinFallback=true;totpSetup=!!r.totp_setup;pinNeed=!!r.required||totpSetup;if(totpSetup){try{await afterPin();}catch{}}store.pinRequired=pinNeed;try{save();}catch{}}catch{pinNeed=!!store.pinRequired;}if(!pinNeed)pinPassed=true;send({type:'state',state:publicState()});refreshAtStartup();}
+async function checkPin(){pinSetup=false;totpSetup=false;totpData=null;pinNeed=false;pinPassed=true;store.pinRequired=false;send({type:'state',state:publicState()});refreshAtStartup();}
 function publicState(){
  const a=store.account||{};
  const expiry=Number(a.exp_date)*1000;
