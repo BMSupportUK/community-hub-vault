@@ -15,7 +15,7 @@ const clock=v=>new Date(v).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-
 const slotOf=t=>Math.floor(t/SLOT)*SLOT;
 let tapAt=0;
 
-export function LiveGuide({onFull,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg,cache}){
+export function LiveGuide({onFull,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg,cache,feedLabel}){
  const [start,setStart]=useState(slotOf(Date.now()));
  const [focus,setFocus]=useState(null); // {channel, programme}
  const [catOpen,setCatOpen]=useState(false);
@@ -61,7 +61,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  return <div className="lg">
   <div className="lg-top">
    <div className="lg-preview" role="button" title={selected?'Double-click for full screen':undefined} onClick={()=>{if(!selected){toast('Click a channel to preview it');return;}const t=Date.now();if(t-tapAt<500){tapAt=0;onFull(selected);}else tapAt=t;}}>
-    {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen}/>:<div className="preview-placeholder"><img src="preview_family.jpg" alt="Family on a sofa watching TV, one pointing a remote at the screen"/></div>}
+    {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen}/>{feedLabel&&<div role="status" className="feed-pill preview-feed">{feedLabel}</div>}:<div className="preview-placeholder"><img src="preview_family.jpg" alt="Family on a sofa watching TV, one pointing a remote at the screen"/></div>}
    </div>
    <div className="lg-info">
     <div className="lg-pills">
