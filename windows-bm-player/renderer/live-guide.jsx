@@ -2,7 +2,6 @@ import React,{useEffect,useRef,useState} from 'react';
 import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
 import checkin from '../checkin.cjs';
-import guideRefresh from '../guide-refresh.cjs';
 import guideActions from '../guide-action.cjs';
 import {ChannelName} from './channel-name';
 import guideAxis from '../guide-axis.cjs';
@@ -22,7 +21,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
  const [catOpen,setCatOpen]=useState(false);
  const [searchOpen,setSearchOpen]=useState(false);
  const [guide,setGuide]=useState(()=>Object.fromEntries(channels.flatMap(ch=>{const rows=cache.peek(ch.id);return rows===undefined?[]:[[ch.id,rows]];})));
- const asked=useRef(new Map()),pending=useRef(new Set()),grid=useRef(null);
+ const pending=useRef(new Set()),grid=useRef(null);
  const [gridWidth,setGridWidth]=useState(800);
  useEffect(()=>{const root=grid.current;if(!root)return;
  const measure=()=>setGridWidth(Math.max(220,root.clientWidth-240));
