@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Restored app-displayed linking codes on Android/Amazon and shared Windows/Mac; removed sign-in QR and website-generated code card. Desktop code/refresh visually verified at 1280 and 950×477; 129 desktop and 22 website tests pass.
+- [ ] Package and release the restored linking screens; native compilation and real-device successful linking remain unverified because Android SDK/JDK and attached devices are unavailable.
 - [x] Released Android/Amazon 4.16/227: PIN resets on every background return without a 30-second exemption; three-hour warning closes after one unanswered minute and retains its deadline across dialog destruction. All 220 native tests plus six timing checks pass, permanent signature and live customer-download SHA-256 verified. Physical Fire TV return/PIN entry and full unattended playback remain unverified without an attached box.
 - [x] Added per-login Link Device tabs with each credential's player number and scoped devices; six selection/grouping tests pass, build OK, signed-in single-login page verified.
 - [ ] Verify live multi-login tab switching; blocker: requesting account currently has only one saved login, so no live multi-login flow was exercised.
