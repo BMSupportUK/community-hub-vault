@@ -34,3 +34,4 @@
 - Native live freeze recovery uses displayed-picture counters, never the MPEG-TS playback clock, and waits for the live cushion; VLC can display moving pictures while its live clock remains zero.
 - Live feed pill also shows "Loading channel…" until the first picture is displayed (frame counter or video size), then clears; later stalls use Buffering… so the last picture stays visible.
 - Preview → full screen on the same live channel reuses the running session (main.cjs play) so the filled buffer isn't rebuilt; feed pills sit outside native video surfaces because HWNDs cover HTML.
+- Cushioned live feeds (UHD/FHD/DAZN/Coupang) let a buffering pause refill for 20s before reconnecting; a reconnect throws away the 30s cushion, so short pauses must not trigger one. Ended/errored streams still reconnect at once.

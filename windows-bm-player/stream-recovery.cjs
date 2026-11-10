@@ -32,7 +32,7 @@ function heavyList() { return [...HEAVY]; }
 function cushioned(name) { return isDazn(name) || isCoupang(name) || isHeavy(name); }
 /** Diagnostic tag for the admin buffering report. */
 function providerTag(name) { return isDazn(name) ? 'dazn' : isCoupang(name) ? 'coupang' : isHeavy(name) ? 'high_bitrate' : null; }
-function profile(name) { return cushioned(name) ? { min:40000, max:90000, start:3000, rebuffer:6000, live:30000, reconnect:6000, swap:1 } : { live:LIVE_BUFFER_MS, reconnect:STALL_RECONNECT_MS, swap:2 }; }
+function profile(name) { return cushioned(name) ? { min:40000, max:90000, start:3000, rebuffer:6000, live:30000, reconnect:20000, swap:1 } : { live:LIVE_BUFFER_MS, reconnect:STALL_RECONNECT_MS, swap:2 }; }
 function liveBufferMs(setting, name) { return Math.max(profile(name).live, bufferMs(setting)); }
 
 /** Play position not moving for 4s while "playing" means the picture froze. */
