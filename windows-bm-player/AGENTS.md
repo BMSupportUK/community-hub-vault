@@ -33,3 +33,4 @@
 - Windows demanding live feeds use hardware-auto decoding; MonoMax, catch-up and unrelated feeds keep software protection. Native surfaces retain the verified decode context on reconnect to avoid reverting demanding feeds to CPU-only decoding.
 - Native live freeze recovery uses displayed-picture counters, never the MPEG-TS playback clock, and waits for the live cushion; VLC can display moving pictures while its live clock remains zero.
 - Live feed pill also shows "Loading channel…" until the first picture is displayed (frame counter or video size), then clears; later stalls use Buffering… so the last picture stays visible.
+- Preview → full screen on the same live channel reuses the running session (main.cjs play) so the filled buffer isn't rebuilt; feed pills sit outside native video surfaces because HWNDs cover HTML.
