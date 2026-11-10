@@ -52,10 +52,11 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, s
 
   const remove = async (id: string) => {
     if (!confirm("Delete this credential?")) return;
-    const { error } = await supabase.from("app_credentials").delete().eq("id", id);
+    const { data, error } = await supabase.rpc("admin_delete_customer_credential", { p_owner: ownerId, p_credential: id });
     if (error) return toast.error(error.message);
-    toast.success("Deleted");
-    void load();
+    if (data !== true) return toast.error("The login could not be deleted.");
+    toast.success("Login account removed");
+    await load();
     window.dispatchEvent(new Event(CUSTOMER_LIST_CHANGED));
   };
 
