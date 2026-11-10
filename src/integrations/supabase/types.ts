@@ -10800,6 +10800,17 @@ export type Database = {
         Returns: undefined
       }
       player_fault_channel_key: { Args: { _name: string }; Returns: string }
+      player_owner_saved_logins: {
+        Args: never
+        Returns: {
+          account_number: number
+          account_type: string
+          app_login_name: string
+          expiry_at: string
+          id: string
+          password: string
+        }[]
+      }
       player_watch_member_breakdown: {
         Args: { _user: string }
         Returns: {

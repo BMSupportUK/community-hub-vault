@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Link Device reads all owner logins through an owner-only RPC; real signed-in tab switching verified Boromedia/976687 with its devices and test/815546 with no devices, app-generated code instructions only; 10 tests pass.
 - [x] Customer-card credentials use a dedicated admin/management RPC and refresh on open; live tests verify Dane J's newly saved second login and reject anonymous reads. Ordinary profile visibility unchanged.
 - [ ] Visually verify the updated customer credential dialog; blocker: dashboard requires the user's account password and staff PIN.
 - [x] Built and released Android/Amazon 4.29/240, Windows 0.4.62 and universal Mac 0.1.71 with restored device-code linking; 225 native and 135 desktop tests pass, permanent APK signature verified, all three public downloads match release SHA-256.
