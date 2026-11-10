@@ -106,11 +106,12 @@ export function PlayerDeviceLinkSection() {
         <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">Link Device</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">Open BM Player to get your 6-digit linking code. Select your account tab here, enter the app’s code below and press Link this device. Linked devices stay signed in.</p>
       </div>
-      {accounts.length > 1 && <Tabs value={selectedId ?? ""} onValueChange={(id) => { if (ownerId) setSelection({ ownerId, id }); setCode(""); setTarget(null); setError(""); }} className="mt-5">
+      {accounts.length > 0 && <Tabs value={selectedId ?? ""} onValueChange={(id) => { if (ownerId) setSelection({ ownerId, id }); setCode(""); setTarget(null); setError(""); }} className="mt-5">
         <TabsList className="h-auto w-full flex-wrap justify-start gap-2">
           {accounts.map((account) => <TabsTrigger key={account.id} value={account.id} disabled={busy} className="min-w-0 whitespace-normal text-left">
-            <span className="flex flex-wrap items-center gap-x-2 gap-y-1"><span className="break-all">Account {account.account_number} · {account.app_login_name || "App login"}</span>
-              {loginNumbers.find((row) => row.credential_id === account.id)?.number && <span className="font-mono">#{loginNumbers.find((row) => row.credential_id === account.id)?.number}</span>}
+            <span className="flex min-w-0 flex-col gap-1">
+              <span className="font-mono font-semibold">Account {loginNumbers.find((row) => row.credential_id === account.id)?.number ?? (accounts.length === 1 ? customerNumber : null) ?? "…"}</span>
+              <span className="break-all text-xs text-muted-foreground">{account.app_login_name || "App login"}</span>
             </span>
           </TabsTrigger>)}
         </TabsList>
