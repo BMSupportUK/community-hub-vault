@@ -1,5 +1,5 @@
 import type { PlayerSportsEvent } from "@/lib/player-sports";
-import { isOfficialSportsChannel } from "./sports-programme-end";
+import { acceptsSportsProgrammeEnd } from "./sports-programme-end";
 import { createSharedCache } from "./player-sports-cache";
 
 const fixtureCache = createSharedCache<Awaited<ReturnType<typeof buildFixtures>>>(60_000);
@@ -57,7 +57,7 @@ export async function buildSportsFeed() {
   const { applyGuideEnds } = await import("./player-sports");
   const { playlistGuideTimes } = await import("./playlist-source.server");
   const now = Date.now();
-  const channels = feed.events.filter((e) => e.start <= now).flatMap((e) => e.channels.filter(isOfficialSportsChannel));
+  const channels = feed.events.filter((e) => e.start <= now).flatMap((e) => e.channels.filter(acceptsSportsProgrammeEnd));
   const events: PlayerSportsEvent[] = applyGuideEnds(feed.events, await playlistGuideTimes(channels), now);
   return { ...feed, events, version: feed.version + ":" + events.map((e) => `${e.start}:${e.end}:${e.endSource}`).join(",") };
 }
