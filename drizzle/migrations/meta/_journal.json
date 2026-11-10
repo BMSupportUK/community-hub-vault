@@ -2346,6 +2346,13 @@
       "when": 1794300912287,
       "tag": "0334_admin_customer_card_credentials",
       "breakpoints": true
+    },
+    {
+      "idx": 335,
+      "version": "7",
+      "when": 1794301061713,
+      "tag": "0335_player_owner_all_saved_logins",
+      "breakpoints": true
     }
   ]
 }
