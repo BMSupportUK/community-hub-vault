@@ -62,7 +62,7 @@ async function getCode(){if(!store.token){const r=await site({action:'register',
 let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||'')}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
 let announcement=null,annBusy=false;const STARTED_AT=Date.now();
-async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}if(r&&r.watch)openWatch(r.watch).catch(()=>{});}catch{}finally{annBusy=false;}}
+async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}if(r&&r.watch)openWatch(r.watch).catch(()=>{});if(r&&r.stop_stream&&sessions.length){stopAll().catch(()=>{}).finally(()=>send({type:'stream-taken'}));}}catch{}finally{annBusy=false;}}
 async function poll(){
  if(pollBusy||!store.token)return;pollBusy=true;
  try{
@@ -148,7 +148,7 @@ async function stopAll(){
  if(awake!==null){powerSaveBlocker.stop(awake);awake=null;}
  send({type:'state',state:publicState()});
 }
-async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
+async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,takeover=false}){
  if(item?.kind==='catchup'&&!(Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start&&item.end<=Date.now()))throw new Error('Choose a programme that has finished.');
  if(!item||!['live','film','episode','catchup'].includes(item.kind)||String(item.id).length>80)throw new Error('Choose a playable item.');
  if(maintenance)throw new Error(maintenance);
@@ -157,6 +157,8 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
  // Preview → full screen on the same live channel keeps the running stream and its filled buffer.
  if(screens===1&&sessions.length===1&&item?.kind==='live'&&sessions[0].item.kind==='live'&&String(sessions[0].item.id)===String(item.id)&&!sessions[0].failed){lastInput=Date.now();promptedAt=0;send({type:'state',state:publicState()});return true;}
+ // One login, limited connections: ask before taking the stream from another device on the same login.
+ if(store.token&&store.user&&!sessions.length){let claim=null;try{claim=await site({action:'stream_claim',login:store.user,max:allowed,takeover:!!takeover,kind:item.kind==='episode'?'series':item.kind,title:String(item.name||'Channel').slice(0,200)});}catch{}if(claim&&claim.busy)return{busy:Array.isArray(claim.devices)?claim.devices.slice(0,5):[]};}
  if(screens===1||sessions.length>=screens)await stopAll();
  const catalog=item.kind==='live'?await catalogue('live'):null;
  if(catalog){const verified=catalog.items.find(c=>String(c.id)===String(item.id));if(!verified)throw new Error('Channel unavailable.');item={...verified};}
@@ -289,7 +291,7 @@ else{
   register('voice',async v=>{const audio=String(v?.audio||'');if(!['audio/wav','audio/webm'].includes(v?.mime)||audio.length<100||audio.length>1700000||!/^[A-Za-z0-9+/=]+$/.test(audio))throw new Error('That recording could not be used. Try again.');const r=await site({action:'voice',audio,mime:v.mime});return String(r.text||'');});
   register('ratings',items=>{if(!Array.isArray(items)||!items.length||items.length>200)throw new Error('Choose titles to rate.');return site({action:'ratings',items:items.map(r=>({kind:r.kind,title:String(r.title||'').slice(0,300)}))});});
   register('vote',v=>{if(!['film','series'].includes(v?.kind)||!Number.isInteger(v?.stars)||v.stars<1||v.stars>5)throw new Error('Choose 1–5 stars.');return site({action:'vote',kind:v.kind,title:String(v.title||'').slice(0,300),stars:v.stars});});
-  register('details',async v=>{const id=String(v?.id||'');if(!['film','series'].includes(v?.kind)||!/^[A-Za-z0-9._-]{1,80}$/.test(id))throw new Error('Choose a title.');const r=v.kind==='series'?await provider('get_series_info',{series_id:id}):await provider('get_vod_info',{vod_id:id});const i=r?.info||{};const s=x=>String(x||'').slice(0,2000);const bd=Array.isArray(i.backdrop_path)?i.backdrop_path[0]:'';return{plot:s(i.plot||i.description),cast:s(i.cast||i.actors),director:s(i.director),genre:s(i.genre),year:s(i.releasedate||i.releaseDate).slice(0,4),duration:s(i.duration),rating:s(i.rating),backdrop:/^https?:\/\//.test(String(bd||''))?String(bd):''};});register('play',play);register('stop',stopAll);
+  register('details',async v=>{const id=String(v?.id||'');if(!['film','series'].includes(v?.kind)||!/^[A-Za-z0-9._-]{1,80}$/.test(id))throw new Error('Choose a title.');const r=v.kind==='series'?await provider('get_series_info',{series_id:id}):await provider('get_vod_info',{vod_id:id});const i=r?.info||{};const s=x=>String(x||'').slice(0,2000);const bd=Array.isArray(i.backdrop_path)?i.backdrop_path[0]:'';return{plot:s(i.plot||i.description),cast:s(i.cast||i.actors),director:s(i.director),genre:s(i.genre),year:s(i.releasedate||i.releaseDate).slice(0,4),duration:s(i.duration),rating:s(i.rating),backdrop:/^https?:\/\//.test(String(bd||''))?String(bd):''};});register('play',play);register('stop',async()=>{await stopAll();if(store.token)site({action:'stream_release'}).catch(()=>{});return true;});
   require('./mac-engine.cjs').handleProtocol(protocol);
   ipcMain.handle('player:videoStatus',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.report?.(value);return true;});
   ipcMain.handle('player:surface',(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');engine?.layout(surfaceRows(value));return true;});

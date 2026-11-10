@@ -1,0 +1,2 @@
+ALTER TABLE public.player_devices ADD COLUMN IF NOT EXISTS stream_claimed_at timestamptz, ADD COLUMN IF NOT EXISTS stream_stop_at timestamptz;
+COMMENT ON COLUMN public.player_devices.stream_stop_at IS 'Set when another device on the same login took over playback; the app stops and clears it.';

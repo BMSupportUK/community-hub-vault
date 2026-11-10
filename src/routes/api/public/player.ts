@@ -64,6 +64,13 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("guide"), device_token: Token, channel: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal('guide_category_open'), device_token: Token, category: z.string().trim().min(1).max(200) }),
   z.object({ action: z.literal("announcement"), device_token: Token }),
+  z.object({
+    action: z.literal("stream_claim"), device_token: Token,
+    login: z.string().trim().min(1).max(120), max: z.number().int().min(1).max(100),
+    takeover: z.boolean().optional(),
+    kind: z.enum(["live", "film", "series", "catchup"]), title: z.string().trim().min(1).max(200),
+  }),
+  z.object({ action: z.literal("stream_release"), device_token: Token }),
   z.object({ action: z.literal("subtitle_check"), device_token: Token, name: z.string().trim().min(1).max(200), tracks: z.number().int().min(0).max(50), languages: z.string().max(200).optional() }),
   z.object({ action: z.literal("channel_health"), device_token: Token, name: z.string().trim().min(1).max(200), status: z.enum(["failed", "black", "ok"]) }),
   z.object({ action: z.literal("formats"), device_token: Token }),
@@ -189,7 +196,38 @@ export const Route = createFileRoute("/api/public/player")({
               if (claimed?.some((c) => c.id === req.id)) watch = { kind: req.kind, id: req.item_id, title: req.title };
             }
           }
-          return json({ watch, announcement: visible ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
+          // Another device on this login took over: tell this one to stop once.
+          let stop_stream = false;
+          const { data: stopRow } = await supabaseAdmin.from("player_devices").select("stream_stop_at").eq("id", device.id).maybeSingle();
+          if (stopRow?.stream_stop_at) {
+            stop_stream = true;
+            await supabaseAdmin.from("player_devices").update({ stream_stop_at: null }).eq("id", device.id);
+          }
+          return json({ watch, stop_stream, announcement: visible ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
+        }
+
+        if (body.action === "stream_claim" || body.action === "stream_release") {
+          const nowIso = new Date().toISOString();
+          if (body.action === "stream_release") {
+            await supabaseAdmin.from("player_devices").update({ watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false, stream_claimed_at: null }).eq("id", device.id);
+            return json({ ok: true });
+          }
+          const { streamClash } = await import("@/lib/player-stream-claim");
+          const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title")
+            .eq("iptv_username", body.login).neq("id", device.id).limit(50);
+          const clash = streamClash(others ?? [], device.id, body.max);
+          if (clash.length && !body.takeover) {
+            return json({ busy: true, devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title })) });
+          }
+          if (clash.length) {
+            await supabaseAdmin.from("player_devices").update({ stream_stop_at: nowIso, watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false })
+              .in("id", clash.map((d) => d.id));
+          }
+          await supabaseAdmin.from("player_devices").update({
+            iptv_username: body.login, last_seen_at: nowIso, stream_claimed_at: nowIso, stream_stop_at: null,
+            watching_kind: body.kind === "catchup" ? "live" : body.kind, watching_title: body.title, watching_since: device.watching_kind ? device.watching_since : nowIso,
+          }).eq("id", device.id);
+          return json({ ok: true, took_over: clash.length });
         }
 
         if (body.action === "major_announcements") {

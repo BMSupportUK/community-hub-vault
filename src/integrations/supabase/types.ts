@@ -6183,6 +6183,8 @@ export type Database = {
           pin_locked_until: string | null
           platform: string
           remote_unlock_at: string | null
+          stream_claimed_at: string | null
+          stream_stop_at: string | null
           token_hash: string
           totp_passed_at: string | null
           unlock_failures: number
@@ -6222,6 +6224,8 @@ export type Database = {
           pin_locked_until?: string | null
           platform?: string
           remote_unlock_at?: string | null
+          stream_claimed_at?: string | null
+          stream_stop_at?: string | null
           token_hash: string
           totp_passed_at?: string | null
           unlock_failures?: number
@@ -6261,6 +6265,8 @@ export type Database = {
           pin_locked_until?: string | null
           platform?: string
           remote_unlock_at?: string | null
+          stream_claimed_at?: string | null
+          stream_stop_at?: string | null
           token_hash?: string
           totp_passed_at?: string | null
           unlock_failures?: number
