@@ -40,6 +40,6 @@
 - Site-user manual orders use a role-gated atomic RPC that assigns explicit user ownership and payment notification; site identity and email come from a validated user ID, never email matching.
 - Ticket/order Connect atomically consumes only an unlinked, never-requested Enabler-delivered session; reference redemption cannot revive consumed checks, preventing connection reuse and duplicate staff alerts.
 - Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
-- Profile switching is retired (PROFILES_RETIRED in AccountProfiles): each customer login belongs to its own site account; chooser, switch pill, per-profile roles and extra directory cards stay hidden.
+- Accounts with multiple saved logins expose the shared profile chooser and switch pill; selection uses the existing authenticated profile scope so each login retains separate details and returning to staff requires password verification.
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Sports Guide feed, player approval and installer-code rules: `src/routes/api/public/AGENTS.md`.
