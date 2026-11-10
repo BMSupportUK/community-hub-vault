@@ -96,19 +96,23 @@ export function resolveInCategory(channel: string, list: string[], links: Channe
   const normalized = allowed.map(canonical);
   const found = matchChannel(canonical(rewritten), normalized, aliases);
   if (found.length) return allowed[normalized.indexOf(found[0])];
-  const m = /(?:^|\s)(\d{1,4})\s*$/.exec(normChannel(canonical(rewritten)));
+  // Short codes glue letters to the number ("WF01" = Womens Football 01).
+  const m = /(?:^|\s|[a-z])(\d{1,4})\s*$/.exec(normChannel(canonical(rewritten)));
   if (!m) return allowed.length === 1 ? allowed[0] : null;
   const n = Number(m[1]);
   // Only the feed label before | supplies its number, never a programme's
   // year, episode, start time or 4K suffix. Mixed categories need brand parity.
   const family = (name: string) => normChannel(name.replace(/(?:^|\s)\d{1,4}(?=\s|$)/g, " "))
     .replace(/\b(?:event|match)\b/g, "").replace(/\s+/g, "").replace(/tv$/, "");
-  const wantedFamily = family(rewritten);
+  const wantedFamily = family(rewritten.replace(/(\d{1,4})\s*$/, " $1"));
+  // Initials stand for a feed brand: "WF" → "Womens Football", never "FA Player".
+  const initials = (name: string) => normChannel(name.replace(/(?:^|\s)\d{1,4}(?=\s|$)/g, " ")).split(/\s+/).filter(Boolean).map((w) => w[0]).join("");
   const candidates = allowed.filter((p) => {
     const number = /(?:^|\s)(\d{1,4})(?:\s|$)/.exec(label(p));
     return number != null && Number(number[1]) === n;
   });
-  const sameFamily = candidates.filter((p) => family(label(p)) === wantedFamily);
+  const sameFamily = candidates.filter((p) => family(label(p)) === wantedFamily
+    || (wantedFamily.length >= 2 && wantedFamily.length <= 4 && initials(label(p)) === wantedFamily));
   if (sameFamily.length) return sameFamily[0];
   // Renamed single-brand categories (e.g. Cymru) can still resolve by number;
   // conflicting brands with the same number are never guessed.
