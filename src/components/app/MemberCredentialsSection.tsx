@@ -37,17 +37,18 @@ export function MemberCredentialsSection({ ownerId, ownerLabel, currentUserId, s
   const resetPinFn = useServerFn(resetUserVaultPin);
 
   const load = async () => {
-    const { data, error } = await supabase
-      .from("app_credentials")
-      .select("*")
-      .eq("owner_id", ownerId)
-      .order("account_number", { ascending: true });
+    const { data, error } = await supabase.rpc("admin_customer_card_credentials", { p_owner: ownerId });
     if (error) return toast.error("Credentials could not be loaded.");
     setCreds((data ?? []) as CredentialRow[]);
     setLoaded(true);
   };
 
-  useEffect(() => { if (open && !loaded) void load(); }, [open, loaded]);
+  useEffect(() => {
+    if (!open) return;
+    setLoaded(false);
+    setRevealed({});
+    void load();
+  }, [open, ownerId]);
 
   const remove = async (id: string) => {
     if (!confirm("Delete this credential?")) return;

@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Verify the admin customer credential card lists new saved logins without widening ordinary profile visibility.
 - [x] Built and released Android/Amazon 4.29/240, Windows 0.4.62 and universal Mac 0.1.71 with restored device-code linking; 225 native and 135 desktop tests pass, permanent APK signature verified, all three public downloads match release SHA-256.
 - [x] Restored app-displayed linking codes on Android/Amazon and shared Windows/Mac; removed sign-in QR and website-generated code card. Desktop code/refresh visually verified at 1280 and 950×477; 129 desktop and 22 website tests pass.
 - [x] Packaged and released the restored linking screens on all three platforms; physical-device linking remains unverified without attached customer devices.
