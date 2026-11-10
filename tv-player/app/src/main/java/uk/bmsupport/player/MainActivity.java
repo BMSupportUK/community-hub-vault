@@ -706,7 +706,7 @@ public class MainActivity extends Activity {
                 }
             });
         };
-        root.addView(button("New code", refresh));
+        root.addView(button("New code", v -> refresh.run()));
         root.addView(text("No website account? Create one at bmsupport.uk/signup", 14, MUTED, false));
         setContentView(familyFrame(root));
         refresh.run();
