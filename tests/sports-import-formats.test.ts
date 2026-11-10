@@ -498,7 +498,7 @@ describe("Dated bold post headings", () => {
       "MOTOCROSS OF NATIONS: Race 2",
       "MOTOCROSS OF NATIONS: Race 3",
     ]);
-    expect(events[0]).toMatchObject({ time: "12:00pm UK", channels: ["UK: TNT Sports 4", "Australia: Stan Sport"] });
+    expect(events[0]).toMatchObject({ time: "12:00pm UK", channels: ["UK: TNT Sports 4"] });
     const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 4, 9), "Motorsport");
     expect(r.events).toHaveLength(4);
     expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);

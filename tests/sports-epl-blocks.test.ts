@@ -19,7 +19,7 @@ MonoMax`;
   expect(result.events).toHaveLength(1);
   const event = result.events[0];
   if (!event) throw new Error("Missing Leeds fixture");
-  expect(event.channels).toEqual(["Stan Sport", "Fubo Sports 4", "Now HK 1", "Now HK 2", "Now 4K", "Hub Premier 4", "MonoMax"]);
+  expect(event.channels).toEqual(["Fubo Sports 4", "Now HK 1", "Now HK 2", "Now 4K", "Hub Premier 4", "MonoMax"]);
   expect(parseSportsListingBlock(cardRawForEplEvent(event))[0]?.channels).toEqual(event.channels);
   const saved = cardRawForEplEvent(event).replace("Now 4K", "4K");
   expect(parseSportsListingBlock(saved)[0]?.channels).toEqual(event.channels);
@@ -36,7 +36,7 @@ test("Split into single events breaks Premier League fixtures into one block per
   expect(arsenal.every((e) => e.time.startsWith("12:30"))).toBe(true);
   expect(arsenal.map((e) => e.channels)).toEqual([
     ["Arsenal EPL ˢᴰ", "Leeds United EPL ˢᴰ"],
-    ["Stan Sport", "Now HK 1", "Hub Premier 1", "MonoMax"],
+    ["Now HK 1", "Hub Premier 1", "MonoMax"],
     ["TNT Sport 1", "Supersport Premier League"],
   ]);
 });

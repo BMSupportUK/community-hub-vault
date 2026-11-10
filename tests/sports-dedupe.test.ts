@@ -39,13 +39,13 @@ test("different fixtures in the same slot and channel both stay", () => {
 });
 
 test("same event on same channel re-posted a few minutes apart is kept once", () => {
-  const html = toHtml(["Saturday, 17th October","","10:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport","","10:05 BST","Melbourne Storm v Penrith Panthers","Stan Sport"]);
+  const html = toHtml(["Saturday, 17th October","","10:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport 01","","10:05 BST","Melbourne Storm v Penrith Panthers","Stan Sport 01"]);
   const out = dedupeSportsListingHtml(html);
   expect(out).not.toBeNull();
   expect(parseSportsListingBlock(out!)).toHaveLength(1);
 });
 
 test("same event on same channel hours apart stays as two entries", () => {
-  const html = toHtml(["Saturday, 17th October","","10:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport","","15:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport"]);
+  const html = toHtml(["Saturday, 17th October","","10:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport 01","","15:00 BST","Melbourne Storm v Penrith Panthers","Stan Sport 01"]);
   expect(dedupeSportsListingHtml(html)).toBeNull();
 });
