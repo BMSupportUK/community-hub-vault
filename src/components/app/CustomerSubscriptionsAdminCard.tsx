@@ -1,5 +1,4 @@
 import { CustomerNumberBadge, LoginNumberBadge } from "@/components/app/CustomerNumber";
-import { AdminPlayerPin } from "@/components/app/AdminPlayerPin";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { customerListGroup, type CustomerListGroup } from "@/lib/customer-list-group";
 import { subscribeCustomerListRefresh } from "@/lib/customer-list-refresh";
@@ -286,7 +285,6 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <h3 className="break-words font-semibold">{name}</h3>
                 {!(c as { ownerAccountCount?: number }).ownerAccountCount && <CustomerNumberBadge userId={c.userId} manual={!c.hasSiteAccount} />}
-                {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && <AdminPlayerPin userId={c.userId} />}
                 {bankTransferUserIds.has(c.userId) && <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-[10px] font-bold leading-none text-primary" title="Bank transfer set up" aria-label="Bank transfer set up">£</span>}
                 {discountUserIds.has(c.userId) && <span className="inline-flex shrink-0" title="Discount code added" aria-label="Discount code added"><BadgeCheck className="size-4 text-success" aria-hidden="true" /></span>}
                 <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
