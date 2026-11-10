@@ -657,13 +657,10 @@ export const Route = createFileRoute("/api/public/player")({
           const { providerGuideFallback } = await import('@/lib/provider-epg-policy');
           const { isOfficialSportsChannel } = await import('@/lib/sports-programme-end');
           const { needsSportsEvents } = await import('@/lib/real-epg');
+          if (!needsSportsEvents(body.channel, isOfficialSportsChannel(body.channel), false)) return json(providerGuideFallback());
           const { buildSportsFixtures } = await import('@/lib/player-sports-feed.server');
-          const { sportsFixtureEpg, sportsOverlayEpg } = await import('@/lib/sports-fixture-epg');
-          const feed = await buildSportsFixtures().catch(() => null);
-          if (!feed) return json(providerGuideFallback());
-          // Channels a Sports Guide links to (incl. via its matched playlist category) always
-          // carry those events; official/general ones keep provider programmes around them.
-          if (!needsSportsEvents(body.channel, isOfficialSportsChannel(body.channel), false)) return json(sportsOverlayEpg(body.channel, feed.events));
+          const { sportsFixtureEpg } = await import('@/lib/sports-fixture-epg');
+          const feed = await buildSportsFixtures();
           return json(sportsFixtureEpg(body.channel, feed.events));
         }
 
