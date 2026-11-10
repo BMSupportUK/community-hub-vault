@@ -38,9 +38,9 @@ const cache=new Map(),pending=new Map();
 function save(){ if(!safeStorage.isEncryptionAvailable())throw new Error(PLATFORM.name+' credential protection unavailable.'); fs.writeFileSync(file,safeStorage.encryptString(JSON.stringify(store))); }
 function send(data){ if(win&&!win.isDestroyed())win.webContents.send('player:event',data); }
 function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,item.id);}
-let pinPassed=false,pinNeed=null;
+let pinPassed=false,pinNeed=null,linkVerified=false;
 let pinSetup=false,pinDigits=4,pinFallback=false,totpSetup=false,totpData=null;
-function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed},()=>refresh().catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')});}));}
+function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed,linkVerified},()=>refresh().catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')});}));}
 async function afterPin(){if(totpSetup){try{totpData=await site({action:'totp_start'});return publicState();}catch(e){if(!/already set up/i.test(String(e&&e.message)))throw e;totpSetup=false;}}pinPassed=true;refreshAtStartup();return publicState();}
 async function checkPin(){if(pinPassed||!store.token)return;try{const r=await site({action:'pin_status'});pinSetup=false;pinDigits=6;pinFallback=true;totpSetup=!!r.totp_setup;pinNeed=!!r.required||totpSetup;if(totpSetup){try{await afterPin();}catch{}}store.pinRequired=pinNeed;try{save();}catch{}}catch{pinNeed=!!store.pinRequired;}if(!pinNeed)pinPassed=true;send({type:'state',state:publicState()});refreshAtStartup();}
 function publicState(){
@@ -55,7 +55,7 @@ async function site(body){
  let response;try{response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});}catch(e){checkin.fail();throw e;}
  if(response.status===429||response.status>=500)checkin.fail(response.headers.get('retry-after'));else checkin.ok();
  let data;try{data=await response.json();}catch{throw new Error('BM Support is unavailable. Try again shortly.');}
- if(!response.ok){if(response.status===401&&body.action!=='unlock'){gate.lock();store.token=null;store.user=null;store.pass=null;save();}throw new Error(data.error||'BM Support request failed.');}
+ if(!response.ok){if(response.status===401&&body.action!=='unlock'){linkVerified=false;gate.lock();store.token=null;store.user=null;store.pass=null;save();}throw new Error(data.error||'BM Support request failed.');}
  return data;
 }
 async function getCode(){if(!store.token){const r=await site({action:'register',platform:PLATFORM.id,name:'BM Player '+PLATFORM.name});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
@@ -68,6 +68,7 @@ async function poll(){
  try{
   const session=sessions[0];
   const r=await site({action:'poll',login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
+  linkVerified=r.linked===true||!!r.credentials;
   checkin.setSlow(r.slow);maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
   let changed=false;
@@ -77,11 +78,12 @@ async function poll(){
   if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
   if(changed){save();if(store.user&&gate.unlocked&&pinPassed)refreshAtStartup();}
   if(store.user&&gate.unlocked)syncFavourites().catch(()=>{});
-  send({type:'state',state:publicState()});
+  send({type:'state',state:publicState()});refreshAtStartup();
  }catch(error){send({type:'notice',message:error.message});}finally{pollBusy=false;}
 }
 async function provider(action='',extra={}){
  gate.require();
+ if(!linkVerified||!pinPassed||maintenance)throw new Error('Wait for BM Player to finish signing in.');
  if(!store.user||!store.dns)throw new Error('Link the app to your account first.');
  const url=new URL('/player_api.php',store.dns);url.searchParams.set('username',store.user);url.searchParams.set('password',store.pass);
  if(action)url.searchParams.set('action',action);
@@ -104,6 +106,7 @@ async function catalogue(kind){
  })();pending.set(kind,task);try{return await task;}finally{pending.delete(kind);}
 }
 async function refresh(){
+ if(!store.user||!gate.unlocked||!pinPassed||!linkVerified||maintenance)return false;
  if(refreshPromise)return refreshPromise;
  refreshPromise=refreshInner();try{return await refreshPromise;}finally{refreshPromise=null;}
 }
