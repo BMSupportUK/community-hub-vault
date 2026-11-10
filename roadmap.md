@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Build, sign, upload and release Android/Amazon 4.31/242, Windows 0.4.65 and universal Mac 0.1.74 with current guide fixes; verify public downloads. Physical installation/playback requires attached devices.
 - [x] Correct Windows FHD CPU-only decoding with scoped hardware-auto selection and retained MonoMax/catch-up safeguards on reconnect; 139 desktop tests pass including native option wiring. Installer not released; actual FHD playback remains unverified without a Windows device.
 - [x] Preserve Windows/Mac EPG across guide unmount/playback return with shared login-scoped cache, quiet minute refresh, single-flight requests and failed-refresh retention; 135 desktop tests pass. Isolated full-player check did not reach playback; physical playback return remains unverified without a Windows/Mac device. Installers not released.
 - [x] Preserve supplied sports listing end times in shared BM Player EPG and Sports Guide feed; import/save/read-back, midnight/ET conversion, merge and completion tests added. Website publication required; physical players unavailable for end-to-end checks.
