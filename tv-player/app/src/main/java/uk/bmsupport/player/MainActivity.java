@@ -514,7 +514,7 @@ public class MainActivity extends Activity {
         }
         startPolling();
         if (hasLogin()) {
-            if (rememberedUnlock()) showHome();
+            if (rememberedUnlock() && linkVerified) showHome();
             else showMessage("Checking your device link…", this::start);
         } else showLink();
     }
@@ -639,6 +639,8 @@ public class MainActivity extends Activity {
             maintenance = down;
             if (down) { String msg = mt.optString("message"); ui.post(() -> showMaintenance(msg)); return; }
             if (wasDown) ui.post(() -> { screen = ""; if (hasLogin()) showHome(); else showLink(); });
+            boolean verifiedBefore = linkVerified;
+            linkVerified = r.optBoolean("linked", false) || r.optJSONObject("credentials") != null;
             boolean had = hasLogin();
             SharedPreferences.Editor ed = prefs.edit().putString("dns", r.optString("dns", ""));
             JSONObject c = r.optJSONObject("credentials");
@@ -653,7 +655,7 @@ public class MainActivity extends Activity {
                     && LinkedSignIn.canRestore(prefs.getString("token", ""), r.optBoolean("linked", false), now);
             if (restored) { unlocked = true; rememberUnlock(); }
             boolean needsAccount = !unlocked && now && !r.optBoolean("linked", false);
-            if (c != null || had != now || restored || needsAccount) ui.post(() -> {
+            if (c != null || had != now || restored || needsAccount || (!verifiedBefore && linkVerified)) ui.post(() -> {
                 if (c != null) Toast.makeText(this, "Login received from BM Support", Toast.LENGTH_LONG).show();
                 if (now) showHome(); else showLink();
             });
@@ -661,6 +663,7 @@ public class MainActivity extends Activity {
             if (String.valueOf(ex.getMessage()).contains("401")) {
                 // Removed from the website (or unused for 60 days): sign out completely.
                 prefs.edit().remove("token").remove("user").remove("pass").remove("unlocked_for").apply();
+                linkVerified = false;
                 unlocked = false;
                 PlayerApplication.pinPassed = false;
                 ui.post(this::start);
@@ -2974,6 +2977,7 @@ public class MainActivity extends Activity {
 
     /** Downloads categories + full lists for the given sections; keeps the old lists until the new ones arrive. */
     private void updatePlaylists(List<String> kinds, boolean popup) {
+        if (!linkVerified || !hasLogin() || !unlocked || !PlayerApplication.pinPassed || maintenance) return;
         List<String> todo = new ArrayList<>();
         for (String k : kinds) if (plQueued.add(k)) todo.add(k);
         if (todo.isEmpty()) { if (popup && playlistsUpdating()) showPlaylistDialog(); return; }
@@ -3089,10 +3093,11 @@ public class MainActivity extends Activity {
 
     /** Every startup refreshes all sections, regardless of previous refresh dates. */
     private void autoUpdatePlaylists() {
-        List<String> due = startupPlaylists.claim();
+        List<String> due = startupPlaylists.claim(linkVerified && hasLogin() && unlocked && PlayerApplication.pinPassed && !maintenance);
         if (!due.isEmpty()) updatePlaylists(due, true);
     }
     private final StartupPlaylists startupPlaylists = new StartupPlaylists();
+    private volatile boolean linkVerified;
 
     // ---------- maintenance ----------
 
