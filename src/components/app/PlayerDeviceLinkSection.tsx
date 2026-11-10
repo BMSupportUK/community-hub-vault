@@ -52,8 +52,8 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
   });
   const selectedId = profileId;
   const activeAccount = accounts.find((account) => account.id === selectedId);
-  const activeNumber = activeAccount ? loginNumbers.find((row) => row.credential_id === activeAccount.id)?.number ?? (accounts.length === 1 ? customerNumber : null) : customerNumber;
-  const visibleDevices = activeAccount ? devicesForPlayerLogin(devices, activeAccount) : accounts.length === 0 ? devices : [];
+  const activeNumber = activeAccount ? loginNumbers.find((row) => row.credential_id === activeAccount.id)?.number ?? (activeAccount.account_number === 1 ? customerNumber : null) : !profileId ? customerNumber : null;
+  const visibleDevices = activeAccount ? devicesForPlayerLogin(devices, activeAccount) : [];
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [target, setTarget] = useState<PlayerDevice | null>(null);
