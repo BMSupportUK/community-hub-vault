@@ -28,3 +28,5 @@
 - Every desktop screen mirrors the Android/Amazon app: same navy palette and accent focus ring, home header search pills, tile + separate Refresh button, Sports/Multi-screen/Favourites/Recently watched/Settings row, Films/Series poster screen with Category pill and ⇅ Sort icon after Voice search, film details shown on click, series page with backdrop and one episode row per season; change Android and desktop together.
 - Episode cards split the number and title with episode-title.cjs so the number sits on its own line and the title wraps to two lines; provider placeholder names never duplicate the number line.
 - BM backup engine (Windows and Mac): backup-switch.cjs moves a screen, once per play, from the main player (Windows libVLC / Mac <video>) to bundled ffmpeg converting to H.264/AAC MPEG-TS on `bmstream://backup-<token>` played by mac-video.jsx; triggered by exhausted reconnects/URLs or a failed start; ffmpeg ships in `tools/ffmpeg` (Mac: `app.asar.unpacked`, universal, signed).
+
+- EPG listings and single-flight reads live in the signed-in App cache, not the disposable guide; login changes clear it and stale rows remain visible during quiet refresh.
