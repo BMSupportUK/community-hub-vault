@@ -392,33 +392,14 @@ export const Route = createFileRoute("/api/public/player")({
 
         // No website account: a QR on the box opens a one-off chat that checks account number + email
         // and shows a 6-digit code (10 minutes). Each new chat retires the box's older ones.
-        if (body.action === "signin_chat") {
-          await supabaseAdmin.from("player_signin_chats").update({ status: "expired", code: null, closed_at: new Date().toISOString() }).eq("device_id", device.id).in("status", ["open", "code_issued"]);
-          const raw = randomHex(32);
-          const { error } = await supabaseAdmin.from("player_signin_chats").insert({ device_id: device.id, token_hash: await sha256Hex(raw) });
-          if (error) return json({ error: "Couldn't make a QR code. Try again." }, 500);
-          const url = `https://bmsupport.uk/player-signin/${raw}`;
-          const QR = await import("qrcode");
-          return json({ url, qr_svg: await QR.toString(url, { type: "svg", margin: 1, width: 240 }) });
-        }
+        // Everyone needs a website account now: the no-account help chat is switched off.
+        if (body.action === "signin_chat") return json({ error: "Make a free account at bmsupport.uk, then use the code on the Link Device page." }, 410);
 
         if (body.action === "signin_code") {
           const { data: lk } = await supabaseAdmin.from("player_devices").select("unlock_failures, unlock_locked_until, unlock_lock_level").eq("id", device.id).single();
           if (lk?.unlock_locked_until && Date.parse(lk.unlock_locked_until) > Date.now()) return json({ error: "Too many wrong codes. Please wait and try again." }, 429);
           const nowIso = new Date().toISOString();
-          // 1) Code from the box's own help chat (no website account).
-          const { data: chat } = await supabaseAdmin.from("player_signin_chats").select("id, code, offsite_customer_id").eq("device_id", device.id).eq("status", "code_issued").gt("code_expires_at", nowIso).limit(1).maybeSingle();
-          if (chat?.code && chat.code === body.code && chat.offsite_customer_id) {
-            await supabaseAdmin.from("player_signin_chats").update({ status: "done", code: null, closed_at: nowIso }).eq("id", chat.id);
-            const { data: oc } = await supabaseAdmin.from("player_offsite_customers").select("iptv_username, customer_name").eq("id", chat.offsite_customer_id).maybeSingle();
-            await supabaseAdmin.from("player_devices").update({ offsite_customer_id: chat.offsite_customer_id, linked_at: nowIso, iptv_username: oc?.iptv_username ?? null, unlock_failures: 0, unlock_locked_until: null, totp_passed_at: nowIso }).eq("id", device.id);
-            try {
-              const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
-              await notifyPlayerAdmins(supabaseAdmin, "BM Player signed in by help chat", `${oc?.customer_name ?? "A customer"} signed a ${device.platform ?? "BM Player"} box in${oc?.iptv_username ? ` (login ${oc.iptv_username})` : ""}. If the box has no login yet, send it from the dashboard.`);
-            } catch (e) { console.error("[signin chat notify]", e); }
-            return json({ ok: true, linked: true });
-          }
-          // 2) Code shown on the website's Link Device page.
+          // Code shown on the website's Link Device page.
           const hash = await sha256Hex(body.code);
           const { data: sc } = await supabaseAdmin.from("player_signin_codes").update({ used_at: nowIso }).eq("code_hash", hash).is("used_at", null).gt("expires_at", nowIso).select("owner_id, username, password").maybeSingle();
           if (sc) {

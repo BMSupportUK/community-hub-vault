@@ -199,19 +199,18 @@ function TotpSetup({data,version,platformName,onDone}){
 }
 /** First sign-in: website account → code from Link Device page; no account → QR help chat that shows a code. */
 function SigninScreen({bm,platformName}){
-  const [mode,setMode]=React.useState(null);const [code,setCode]=React.useState('');const [qr,setQr]=React.useState(null);const [msg,setMsg]=React.useState('');const [busy,setBusy]=React.useState(false);
+  const [mode,setMode]=React.useState('site');const [code,setCode]=React.useState('');const [qr,setQr]=React.useState(null);const [msg,setMsg]=React.useState('');const [busy,setBusy]=React.useState(false);
   React.useEffect(()=>{if(mode!=='chat')return;setQr(null);setMsg('Making your QR code…');bm.signinChat().then(r=>{setQr(r.qr_svg);setMsg('The QR code works once.');}).catch(()=>setMsg("Couldn't make a QR code. Go back and try again."));},[mode]);
   const go=async c=>{if(!/^\d{6}$/.test(c)){setMsg('Enter all 6 digits.');return;}setBusy(true);setMsg('Checking…');try{await bm.signinCode(c);setMsg(mode==='site'?'Signed in ✓ Getting your login…':'Signed in ✓ BM Support will send your login shortly.');}catch(e){setMsg(String(e&&e.message||'').replace(/^.*?Error:\s*/,'')||"Couldn't check. Try again.");setCode('');}finally{setBusy(false);}};
   const press=k=>{if(k==='⌫')setCode(c=>c.slice(0,-1));else if(k==='OK')go(code);else setCode(c=>(c+k).slice(0,6));};
   if(!mode)return <main className="family-screen"><section className="family-panel compact"><h1>Welcome to BM Player</h1><p className="muted">Do you have a BM Support website account?</p><div className="help-row"><button className="primary" autoFocus onClick={()=>setMode('site')}>Yes</button><button onClick={()=>setMode('chat')}>No</button></div></section></main>;
   return <main className="family-screen"><section className="family-panel compact">
     <h1>{mode==='site'?'Enter your sign-in code':'Scan to get your code'}</h1>
-    <p className="muted">{mode==='site'?'On bmsupport.uk open Link Device and press Show my sign-in code.':'Scan with your phone. Enter your account number and email, then type the code here.'}</p>
+    <p className="muted">You need a BM Support website account. No account? Make one free at bmsupport.uk/signup. Then open Link Device and press Show my sign-in code.</p>
     {mode==='chat'&&qr&&<div style={{width:150,height:150,background:'#fff',padding:4,borderRadius:8}} dangerouslySetInnerHTML={{__html:qr}}/>}
     <input className="code-hidden" aria-label="Sign-in code" autoFocus inputMode="numeric" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} onKeyDown={e=>{if(e.key==='Enter')go(code);}}/>
     <div className="code-boxes" aria-hidden="true">{Array.from({length:6},(_,i)=><span key={i} className={i===code.length?'next':''}>{code[i]||''}</span>)}</div>
     <div className="keypad">{['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map(k=><button key={k} disabled={busy} onClick={()=>press(k)}>{k}</button>)}</div>
     <p className="status-line">{msg}</p>
-    <button onClick={()=>{setMode(null);setCode('');setMsg('');}}>‹ Back</button>
   </section></main>;
 }

@@ -688,25 +688,20 @@ public class MainActivity extends Activity {
             root.addView(text("Login received \u2014 waiting for the server address from BM Support.", 16, MUTED, false));
             setContentView(familyFrame(root)); return;
         }
-        root.addView(text("Do you have a BM Support website account?", 18, TEXT, false));
-        LinearLayout r = row();
-        Button yes = button("Yes", v -> showSigninCode(true, null));
-        Button no = button("No", v -> showSigninCode(false, null));
-        r.addView(yes); r.addView(no);
-        root.addView(r);
-        setContentView(familyFrame(root));
-        yes.requestFocus();
+        // Everyone needs a website account: the box is always linked through the Link Device page.
+        Bitmap signup = null;
+        try { signup = qr("https://bmsupport.uk/signup", dp(130)); } catch (Exception ignored) {}
+        showSigninCode(true, signup);
     }
 
     /** Type the 6-digit sign-in code. Website account: code from Link Device page. No account: QR opens a help chat that shows the code. */
     private void showSigninCode(boolean website, Bitmap qrImg) {
-        screen = "link"; back = this::showLink;
+        screen = "link"; back = null;
         LinearLayout p = new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL);
-        p.addView(text(website ? "Enter your sign-in code" : "Scan to get your code", 22, TEXT, true));
-        p.addView(text(website ? "On bmsupport.uk open Link Device and press Show my sign-in code."
-                : "Scan with your phone. Enter your account number and email, then type the code here.", 14, MUTED, false));
+        p.addView(text("Enter your sign-in code", 22, TEXT, true));
+        p.addView(text("You need a BM Support website account. No account? Scan to make one free. Then on bmsupport.uk open Link Device and press Show my sign-in code.", 14, MUTED, false));
         android.widget.ImageView qv = new android.widget.ImageView(this);
-        if (!website) { if (qrImg != null) qv.setImageBitmap(qrImg); p.addView(qv, new LinearLayout.LayoutParams(dp(150), dp(150))); }
+        if (qrImg != null) { qv.setImageBitmap(qrImg); p.addView(qv, new LinearLayout.LayoutParams(dp(130), dp(130))); }
         EditText in = new EditText(this);
         in.setInputType(InputType.TYPE_CLASS_NUMBER);
         in.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(6) });
@@ -740,18 +735,8 @@ public class MainActivity extends Activity {
         LinearLayout pad = NumberPad.build(this, in, 6, CARD, ACCENT, TEXT, submit);
         p.addView(pad);
         p.addView(status);
-        Button backBtn = button("\u2039 Back", v -> showLink());
-        p.addView(backBtn);
         setContentView(familyFrame(p));
         View first = NumberPad.firstKey(pad); if (first != null) first.requestFocus();
-        if (!website && qrImg == null) io.execute(() -> {
-            try {
-                JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
-                        new JSONObject().put("action", "signin_chat").put("device_token", prefs.getString("token", "")).toString()));
-                Bitmap b = qr(r.getString("url"), dp(150));
-                ui.post(() -> { if ("link".equals(screen)) { qv.setImageBitmap(b); status.setText("The QR code works once."); } });
-            } catch (Exception ex) { ui.post(() -> status.setText("Couldn't make a QR code. Press Back and try again.")); }
-        });
     }
 
     // ---------- home ----------
