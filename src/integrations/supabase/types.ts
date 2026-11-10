@@ -6648,6 +6648,81 @@ export type Database = {
         }
         Relationships: []
       }
+      player_signin_chats: {
+        Row: {
+          closed_at: string | null
+          code: string | null
+          code_expires_at: string | null
+          created_at: string
+          device_id: string
+          expires_at: string
+          failures: number
+          id: string
+          offsite_customer_id: string | null
+          status: string
+          token_hash: string
+        }
+        Insert: {
+          closed_at?: string | null
+          code?: string | null
+          code_expires_at?: string | null
+          created_at?: string
+          device_id: string
+          expires_at?: string
+          failures?: number
+          id?: string
+          offsite_customer_id?: string | null
+          status?: string
+          token_hash: string
+        }
+        Update: {
+          closed_at?: string | null
+          code?: string | null
+          code_expires_at?: string | null
+          created_at?: string
+          device_id?: string
+          expires_at?: string
+          failures?: number
+          id?: string
+          offsite_customer_id?: string | null
+          status?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
+      player_signin_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          owner_id: string
+          password: string
+          used_at: string | null
+          username: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          owner_id: string
+          password: string
+          used_at?: string | null
+          username: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          owner_id?: string
+          password?: string
+          used_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       player_totp: {
         Row: {
           enabled: boolean
