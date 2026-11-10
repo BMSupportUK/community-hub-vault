@@ -1,4 +1,4 @@
-import { eventListings, toListing } from './real-epg';
+import { eventListings, toListing, NO_EVENT } from './real-epg';
 import { providerGuideFallback } from './provider-epg-policy';
 export type FixtureEpgEvent = { title: string; start: number; end?: number; channels: string[]; competition?: string };
 /** Center Ice has two playlist sets for the same numbered fixtures. Only the stable
@@ -19,4 +19,13 @@ export function sportsFixtureEpg(channel: string, events: FixtureEpgEvent[], now
   });
   if (!fixtures.some(e => e.channels.some(c => c.trim().toLowerCase() === key))) return providerGuideFallback();
   return { epg_listings: eventListings(channel, fixtures, now - 3 * 3600_000, now + 36 * 3600_000).map(toListing), source: 'sports' as const };
+}
+/** Official/general channels matched to a Sports Guide (e.g. via its playlist category):
+ * event slots only, no "No Event Scheduled" gaps — apps overlay them on the provider guide. */
+export function sportsOverlayEpg(channel: string, events: FixtureEpgEvent[], now = Date.now()) {
+  const key = channel.trim().toLowerCase();
+  const mine = events.filter(e => e.channels.some(c => c.trim().toLowerCase() === key));
+  if (!mine.length) return providerGuideFallback();
+  const rows = eventListings(channel, mine, now - 3 * 3600_000, now + 36 * 3600_000).filter(r => r.title !== NO_EVENT).map(toListing);
+  return rows.length ? { epg_listings: rows, source: 'sports_overlay' as const } : providerGuideFallback();
 }
