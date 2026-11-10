@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAccountProfiles } from "./AccountProfiles";
 import { devicesForPlayerLogin, manualPlayerLogin, selectedPlayerLogin, type SavedPlayerLogin } from "./player-login-selection";
 import { usePlayerDevices, type PlayerDevice } from "@/hooks/use-player-devices";
 import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
@@ -26,6 +26,11 @@ function readableName(d: PlayerDevice) {
 const isOn = (d: PlayerDevice) => Date.now() - new Date(d.last_seen_at).getTime() < 3 * 60_000;
 
 export function PlayerDeviceLinkSection() {
+  const { userId, activeProfile, loaded } = useAccountProfiles();
+  return <ProfileDeviceLinkSection key={`${userId}:${activeProfile?.id ?? "none"}`} profileId={activeProfile?.id ?? null} profileLoaded={loaded} />;
+}
+
+function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: string | null; profileLoaded: boolean }) {
   const sendCode = useServerFn(sendLoginWithCode);
   const sendDevice = useServerFn(sendLoginToDevice);
   const notMeFn = useServerFn(notMePlayerDevice);
@@ -35,21 +40,20 @@ export function PlayerDeviceLinkSection() {
   const customerNumber = useCustomerNumber(ownerId);
   const loginNumbers = useLoginPlayerNumbers(ownerId);
   const { data: accounts = [], isPending: loadingAccounts, isError: accountsFailed, refetch } = useQuery({
-    queryKey: ["player-saved-logins", ownerId],
-    enabled: Boolean(ownerId),
+    queryKey: ["player-saved-logins", ownerId, profileId],
+    enabled: Boolean(ownerId) && profileLoaded,
     queryFn: async () => {
       if (!ownerId) return [];
       const { data, error } = await supabase.rpc("player_owner_saved_logins");
       if (error) throw error;
-      return (data ?? []) as SavedPlayerLogin[];
+      return ((data ?? []) as SavedPlayerLogin[]).filter((account) => account.id === profileId);
     },
     gcTime: 0,
   });
-  const [selection, setSelection] = useState<{ ownerId: string; id: string } | null>(null);
-  const selectedId = selection && selection.ownerId === ownerId && accounts.some((account) => account.id === selection.id) ? selection.id : accounts[0]?.id ?? null;
+  const selectedId = profileId;
   const activeAccount = accounts.find((account) => account.id === selectedId);
-  const activeNumber = activeAccount ? loginNumbers.find((row) => row.credential_id === activeAccount.id)?.number ?? (accounts.length === 1 ? customerNumber : null) : customerNumber;
-  const visibleDevices = activeAccount ? devicesForPlayerLogin(devices, activeAccount) : accounts.length === 0 ? devices : [];
+  const activeNumber = activeAccount ? loginNumbers.find((row) => row.credential_id === activeAccount.id)?.number ?? (activeAccount.account_number === 1 ? customerNumber : null) : !profileId ? customerNumber : null;
+  const visibleDevices = activeAccount ? devicesForPlayerLogin(devices, activeAccount) : [];
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [target, setTarget] = useState<PlayerDevice | null>(null);
@@ -61,7 +65,7 @@ export function PlayerDeviceLinkSection() {
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
     if (!target && !/^\d{6}$/.test(code)) { setError("Enter the 6-digit code shown on your screen."); return; }
-    if (!login) { setError(typeItIn ? "Enter your app login and password." : "Select the account tab you want to link."); return; }
+    if (!login) { setError(typeItIn ? "Enter your app login and password." : "Your selected profile has no saved app login available."); return; }
     setBusy(true);
     try {
       const r = target ? await sendDevice({ data: { deviceId: target.id, ...login } }) : await sendCode({ data: { code, ...login } });
@@ -77,7 +81,7 @@ export function PlayerDeviceLinkSection() {
     setError("");
     const usable = accounts.filter((a) => a.app_login_name && a.password);
     const pick = login ?? (usable.length === 1 ? selectedPlayerLogin(usable, usable[0].id) : null);
-    if (!pick) { setError(typeItIn ? "Enter your app login and password first." : "Select the account tab, then press Resend login on the device."); return; }
+    if (!pick) { setError(typeItIn ? "Enter your app login and password first." : "Your selected profile has no saved app login available."); return; }
     setBusy(true);
     try {
       const r = await sendDevice({ data: { deviceId: d.id, ...pick } });
@@ -104,18 +108,8 @@ export function PlayerDeviceLinkSection() {
       <div className="rounded-2xl border border-primary/30 bg-background/40 p-6 shadow-2xl backdrop-blur-md">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-foreground"><Tv className="size-3.5" />BM Player</span>
         <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">Link Device</h2>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">Open BM Player to get your 6-digit linking code. Select your account tab here, enter the app’s code below and press Link this device. Linked devices stay signed in.</p>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">Open BM Player to get your 6-digit linking code. Enter the app’s code below and press Link this device. Linked devices stay signed in.</p>
       </div>
-      {accounts.length > 0 && <Tabs value={selectedId ?? ""} onValueChange={(id) => { if (ownerId) setSelection({ ownerId, id }); setCode(""); setTarget(null); setError(""); }} className="mt-5">
-        <TabsList className="h-auto w-full flex-wrap justify-start gap-2">
-          {accounts.map((account) => <TabsTrigger key={account.id} value={account.id} disabled={busy} className="min-w-0 whitespace-normal text-left">
-            <span className="flex min-w-0 flex-col gap-1">
-              <span className="font-mono font-semibold">Account {loginNumbers.find((row) => row.credential_id === account.id)?.number ?? (accounts.length === 1 ? customerNumber : null) ?? "…"}</span>
-              <span className="break-all text-xs text-muted-foreground">{account.app_login_name || "App login"}</span>
-            </span>
-          </TabsTrigger>)}
-        </TabsList>
-      </Tabs>}
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <form onSubmit={submit} className="space-y-5 rounded-2xl border border-primary/30 bg-background/55 p-6 shadow-2xl backdrop-blur-md">
           {target ? <div className="flex items-center justify-between rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">
@@ -128,7 +122,7 @@ export function PlayerDeviceLinkSection() {
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className="h-16 border-primary/40 bg-background/60 text-center font-mono text-3xl tracking-[0.6em]" />
           </div>}
           <fieldset className="min-w-0 space-y-3" disabled={busy}>
-            <legend className="mb-2 text-sm font-semibold">{typeItIn ? "Your app login" : "Your saved app logins"}</legend>
+            <legend className="mb-2 text-sm font-semibold">{typeItIn ? "Your app login" : "Your saved app login"}</legend>
             {loadingAccounts ? <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading your logins…</p>
               : accountsFailed ? <div role="alert" className="text-sm text-destructive">Your logins could not be loaded. <Button type="button" variant="link" size="sm" onClick={() => void refetch()}>Try again</Button></div>
               : typeItIn ? <div className="space-y-3">

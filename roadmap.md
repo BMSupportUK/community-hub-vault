@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Removed Link Device account tabs; active profile scopes login, account number and devices with form reset on switching. Removed obsolete Player 2FA from admin customer/staff cards; 19 tests pass, build OK. Unlocked page verification remains blocked by the account-password lock noted below.
 - [x] Restored the multi-login profile chooser and header switch pill; 12 profile-selection/access tests pass and signed-in chooser visibly shows both account numbers at 950×477.
 - [ ] Verify profile selection through the unlocked portal; blocker: the account-password screen lock prevents completing the browser flow.
 - [x] Link Device reads all owner logins through an owner-only RPC; real signed-in tab switching verified Boromedia/976687 with its devices and test/815546 with no devices, app-generated code instructions only; 10 tests pass.
