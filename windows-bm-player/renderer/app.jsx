@@ -208,8 +208,8 @@ function SigninScreen({bm,platformName}){
     <h1>{mode==='site'?'Enter your sign-in code':'Scan to get your code'}</h1>
     <p className="muted">{mode==='site'?'On bmsupport.uk open Link Device and press Show my sign-in code.':'Scan with your phone. Enter your account number and email, then type the code here.'}</p>
     {mode==='chat'&&qr&&<div style={{width:150,height:150,background:'#fff',padding:4,borderRadius:8}} dangerouslySetInnerHTML={{__html:qr}}/>}
-    <input className="code-input" style={{position:'absolute',opacity:0,pointerEvents:'none'}} autoFocus inputMode="numeric" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} onKeyDown={e=>{if(e.key==='Enter')go(code);}}/>
-    <div className="code-boxes">{Array.from({length:6},(_,i)=><span key={i} className={'code-box'+(i===code.length?' next':'')}>{code[i]||''}</span>)}</div>
+    <input className="code-hidden" aria-label="Sign-in code" autoFocus inputMode="numeric" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} onKeyDown={e=>{if(e.key==='Enter')go(code);}}/>
+    <div className="code-boxes" aria-hidden="true">{Array.from({length:6},(_,i)=><span key={i} className={i===code.length?'next':''}>{code[i]||''}</span>)}</div>
     <div className="keypad">{['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map(k=><button key={k} disabled={busy} onClick={()=>press(k)}>{k}</button>)}</div>
     <p className="status-line">{msg}</p>
     <button onClick={()=>{setMode(null);setCode('');setMsg('');}}>‹ Back</button>
