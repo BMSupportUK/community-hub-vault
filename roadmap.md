@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Block Android/Amazon and Windows/Mac playlist updates until this launch's device link is verified; run regressions. New app releases not requested.
+- [x] Android/Amazon startup and playlist queue require verified device link plus completed sign-in; Windows/Mac shared startup, refresh and provider reads use the same fresh-link gate. Native startup tests and desktop regressions pass. Not packaged/released; physical-device checks unavailable.
 - [x] Removed Link Device account tabs; active profile scopes login, account number and devices with form reset on switching. Removed obsolete Player 2FA from admin customer/staff cards; 19 tests pass, build OK. Unlocked page verification remains blocked by the account-password lock noted below.
 - [x] Restored the multi-login profile chooser and header switch pill; 12 profile-selection/access tests pass and signed-in chooser visibly shows both account numbers at 950×477.
 - [ ] Verify profile selection through the unlocked portal; blocker: the account-password screen lock prevents completing the browser flow.
