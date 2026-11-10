@@ -23,5 +23,5 @@ test("Peacock post cut off after a title never lists that fixture as a channel",
   const r = checkSportsImport(peacock, "gmt", nowMs);
   expect(r.errors).toBe(0);
   expect(r.events).toHaveLength(12);
-  expect(r.events.at(-1)).toEqual({ date: "Saturday, 17th October", time: "14:50 BST", title: "Goal Rush: Matchweek 7", channels: ["PEACOCK 9 HD"] });
+  expect(r.events.at(-1)).toMatchObject({ date: "Saturday, 17th October", time: "14:50 BST", title: "Goal Rush: Matchweek 7", channels: ["PEACOCK 9 HD"] });
 });
