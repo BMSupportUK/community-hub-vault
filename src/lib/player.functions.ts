@@ -13,6 +13,23 @@ const Creds = {
   password: z.string().min(1).max(200),
 };
 
+/** Member asks for a 6-digit sign-in code (10 minutes, one use) to type into BM Player, bound to the chosen login. */
+export const createPlayerSigninCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object(Creds).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Only one live code per account: a new one retires the old.
+    await supabaseAdmin.from("player_signin_codes").delete().eq("owner_id", context.userId).is("used_at", null);
+    for (let i = 0; i < 5; i++) {
+      const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
+      const expires = new Date(Date.now() + 10 * 60_000).toISOString();
+      const { error } = await supabaseAdmin.from("player_signin_codes").insert({ code_hash: await sha256Hex(code), owner_id: context.userId, username: data.username, password: data.password, expires_at: expires });
+      if (!error) return { code, expiresAt: expires };
+    }
+    throw new Error("Couldn't make a code. Try again.");
+  });
+
 /** Member enters the code their app shows plus a login; the device becomes theirs. */
 export const sendLoginWithCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
