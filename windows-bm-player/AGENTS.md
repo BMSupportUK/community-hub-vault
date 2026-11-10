@@ -30,3 +30,4 @@
 - BM backup engine (Windows and Mac): backup-switch.cjs moves a screen, once per play, from the main player (Windows libVLC / Mac <video>) to bundled ffmpeg converting to H.264/AAC MPEG-TS on `bmstream://backup-<token>` played by mac-video.jsx; triggered by exhausted reconnects/URLs or a failed start; ffmpeg ships in `tools/ffmpeg` (Mac: `app.asar.unpacked`, universal, signed).
 
 - EPG listings and single-flight reads live in the signed-in App cache, not the disposable guide; login changes clear it and stale rows remain visible during quiet refresh.
+- Windows demanding live feeds use hardware-auto decoding; MonoMax, catch-up and unrelated feeds keep software protection. Native surfaces retain the verified decode context on reconnect to avoid reverting demanding feeds to CPU-only decoding.

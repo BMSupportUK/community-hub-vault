@@ -165,7 +165,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null}){
  const index=sessions.length,watched=store.progress?.[key(item)];
  const startAt=resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0;
  engine.setFill?.(index,['film','episode'].includes(item.kind));
- try{engine.play(index,urls[0],{steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
+ try{engine.play(index,urls[0],{kind:item.kind,name:item.name,steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
  catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
  const onBackup=engine.usingBackup(index);
  const session={index,item,event,recoveryName,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);

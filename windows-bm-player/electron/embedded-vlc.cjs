@@ -1,6 +1,7 @@
 const path=require('node:path');
 const os=require('node:os');
 const fs=require('node:fs');
+const {decodeOptions}=require('../video-decode-policy.cjs');
 
 /** Native surfaces belong to BM Player, never a separately launched VLC process. */
 class EmbeddedVlc {
@@ -36,15 +37,17 @@ class EmbeddedVlc {
   this.api.video_set_mouse_input(player,0);this.api.video_set_key_input(player,0);
   const s={hwnd,player};this.surfaces.set(index,s);return s;
  }
- play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,fill=false}={}){
+ play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,fill=false,kind,name}={}){
   const s=this.surface(index);s.fill=!!fill;this.api.media_player_stop(s.player);
+  if(kind!==undefined)s.decodeContext={kind,name};
   const media=this.api.media_new_location(this.instance,url);
   if(!media)throw new Error('This stream could not be opened.');
   try{
    this.api.media_add_option(media,':network-caching='+Math.max(500,Math.min(Number(buffer)===30000?30000:15000,Number(buffer)||3000)));
    this.api.media_add_option(media,':http-user-agent=VLC/3.0.21 LibVLC/3.0.21');
-   // Software decoding: Windows hardware decoders paint smeared colour blocks when a live feed (e.g. MonoMax) joins mid-picture or drops packets.
-   this.api.media_add_option(media,':avcodec-hw=none');
+   // Demanding live channels use available hardware with VLC's software fallback;
+   // recordings and MonoMax retain their corruption workaround, including retries.
+   for(const option of decodeOptions(s.decodeContext))this.api.media_add_option(media,option);
    if(maxHeight>0)this.api.media_add_option(media,':adaptive-maxheight='+Math.floor(maxHeight));
    if(subtitles===false)this.api.media_add_option(media,':no-spu');
    if(subtitles===true)this.api.media_add_option(media,':sub-track=0');
