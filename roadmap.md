@@ -1,5 +1,6 @@
 # Roadmap
-- [ ] Restore multi-login profile switching and verify the chooser and authenticated selection; retain existing profile separation and password-gated staff return.
+- [x] Restored the multi-login profile chooser and header switch pill; 12 profile-selection/access tests pass and signed-in chooser visibly shows both account numbers at 950×477.
+- [ ] Verify profile selection through the unlocked portal; blocker: the account-password screen lock prevents completing the browser flow.
 - [x] Link Device reads all owner logins through an owner-only RPC; real signed-in tab switching verified Boromedia/976687 with its devices and test/815546 with no devices, app-generated code instructions only; 10 tests pass.
 - [x] Customer-card credentials use a dedicated admin/management RPC and refresh on open; live tests verify Dane J's newly saved second login and reject anonymous reads. Ordinary profile visibility unchanged.
 - [ ] Visually verify the updated customer credential dialog; blocker: dashboard requires the user's account password and staff PIN.
