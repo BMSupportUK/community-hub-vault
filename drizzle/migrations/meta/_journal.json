@@ -2360,6 +2360,13 @@
       "when": 1794304548394,
       "tag": "0336_admin_delete_customer_credential",
       "breakpoints": true
+    },
+    {
+      "idx": 337,
+      "version": "7",
+      "when": 1794331546270,
+      "tag": "0337_customer_card_credentials_staff_read",
+      "breakpoints": true
     }
   ]
 }

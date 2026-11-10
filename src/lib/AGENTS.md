@@ -7,7 +7,7 @@
 - Buffering diagnostics store bounded device-reported format/decoder/event metadata; admin/management summaries filter before limiting and do not turn cause labels into definitive diagnoses.
 - Player viewing history records credited prior-poll playback under the verified device owner and session; admin/management-only reads return member totals, kind breakdowns and the latest 7 UK days of activities grouped per day, never account credentials or emails.
 - Customers staff-detail forms reuse member username/email updates; handlers read target roles and require admin for staff targets while preserving management edits for non-staff customers.
-- Customer-card credential dialogs read through the admin/management-only admin_customer_card_credentials RPC and reload on open; ordinary profile-scoped credential reads stay unchanged.
+- Customer-card credential dialogs read through the admin/management/staff (staff read-only) admin_customer_card_credentials RPC and reload on open; ordinary profile-scoped credential reads stay unchanged.
 - Customer-card credential deletion uses an admin/management-only owner-and-credential RPC with a confirmed affected row and profile change event; profile-filtered views must never silently skip deletion or report false success.
 - Link Device uses the shared active profile, filters owner-only player_owner_saved_logins to its credential ID and resets form state on profile changes; no independent account tabs or fallback to another profile's login.
 - Member email editors validate the full address before sending and show inline errors; never silently strip extra words into a different address.
