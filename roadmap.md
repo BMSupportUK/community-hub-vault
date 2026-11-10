@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Package and release Windows 0.4.64 and universal Mac 0.1.73 with corrected device-link screens; verify public downloads.
 - [x] Fixed admin credential deletion silently skipping other profiles via owner-scoped admin/management RPC with affected-row confirmation and profile-change event. Four deletion/refresh tests pass; build OK. Full dashboard click-through remains blocked by account-password/staff-PIN gate; no customer records deleted during testing.
 - [x] Windows/Mac legacy locked logins show app-displayed device linking rather than account-number entry; cached 2FA gates retired. Shared Mac entry confirmed, both renderer modes verified and 131 desktop tests pass. Not packaged/released.
 - [x] Released Android/Amazon 4.30/241, Windows 0.4.63 and universal Mac 0.1.72 with verified-sign-in playlist gating; 226 native and 136 desktop tests pass, permanent APK signer and both Mac architectures verified, all three live download hashes match. Real-device installation/playback unavailable without attached devices.
