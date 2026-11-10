@@ -354,6 +354,7 @@ const SPORTS_PASS_NAME_RE =
   /^(?:(?:UK|IRE|US|USA)\s+)?(?:coupang(?:\s+play)?|setanta(?:\s+sports)?|(?:sky|tnt|dazn|peacock|rugby(?:\s+(?:league|union))?|nfl(?:\s+game)?|nba(?:\s+league)?|nhl|mlb|season|sports?)\s+pass|rugby\s*pass|rpass|dazn|espn\s*(?:\+|plus)|peacock|fa\s+player|nfl\s+game\s+pass|nba\s+league\s+pass|flo\s*sports|triller(?:\s+tv)?|stan|fox\s+sports\s+pass)(?:\s+hd)?$/i;
 export function isBareSportsPassChannel(channel: string): boolean {
   const c = channel.replace(/\s+/g, " ").trim();
+  if (!/\d/.test(c) && /^(?:[^:]+:\s*)?(?:(?:UK|IRE|US|USA|AU|AUS|Australia)\s+)?stan\b/i.test(c)) return true;
   return !/\d/.test(c) && SPORTS_PASS_NAME_RE.test(c);
 }
 
