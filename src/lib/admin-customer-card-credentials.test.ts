@@ -23,3 +23,18 @@ liveTest("anonymous visitors cannot read customer card credentials", async () =>
   expect(error).not.toBeNull();
   expect(data).toBeNull();
 });
+liveTest("Link Device returns both owner logins for separate account tabs", async () => {
+  const client = createClient(url, key, { auth: { persistSession: false } });
+  const { session: credentials } = JSON.parse(session);
+  await client.auth.setSession(credentials);
+  const { data, error } = await client.rpc("player_owner_saved_logins");
+  expect(error).toBeNull();
+  expect(data.map(row => row.app_login_name)).toEqual(["Boromedia", "test"]);
+  expect(data.map(row => row.account_number)).toEqual([1, 2]);
+});
+liveTest("anonymous visitors cannot read owner player logins", async () => {
+  const client = createClient(url, key, { auth: { persistSession: false } });
+  const { data, error } = await client.rpc("player_owner_saved_logins");
+  expect(error).not.toBeNull();
+  expect(data).toBeNull();
+});

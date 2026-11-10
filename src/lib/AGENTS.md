@@ -8,6 +8,7 @@
 - Player viewing history records credited prior-poll playback under the verified device owner and session; admin/management-only reads return member totals, kind breakdowns and the latest 7 UK days of activities grouped per day, never account credentials or emails.
 - Customers staff-detail forms reuse member username/email updates; handlers read target roles and require admin for staff targets while preserving management edits for non-staff customers.
 - Customer-card credential dialogs read through the admin/management-only admin_customer_card_credentials RPC and reload on open; ordinary profile-scoped credential reads stay unchanged.
+- Link Device reads every authenticated owner's login through player_owner_saved_logins (no owner parameter); selected tabs scope credentials, device lists and numbers without changing ordinary profile reads.
 - Member email editors validate the full address before sending and show inline errors; never silently strip extra words into a different address.
 - BM Player votes derive the voter from the verified linked device owner and are final once cast (one per owner per title, across devices); film/series title keys normalize case, Unicode and whitespace while retaining years, with atomic per-owner upserts and separate totals that never expose voter lists.
 - BM Player connection investigation reports are device-token submissions of provider-observed counts, admin-readable only; never treat those client observations as verified enforcement or automatic account suspension.

@@ -39,9 +39,7 @@ export function PlayerDeviceLinkSection() {
     enabled: Boolean(ownerId),
     queryFn: async () => {
       if (!ownerId) return [];
-      const { data, error } = await supabase.from("app_credentials")
-        .select("id,app_login_name,password,expiry_at,account_type,account_number")
-        .eq("owner_id", ownerId).order("account_number", { ascending: true });
+      const { data, error } = await supabase.rpc("player_owner_saved_logins");
       if (error) throw error;
       return (data ?? []) as SavedPlayerLogin[];
     },
@@ -63,7 +61,7 @@ export function PlayerDeviceLinkSection() {
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
     if (!target && !/^\d{6}$/.test(code)) { setError("Enter the 6-digit code shown on your screen."); return; }
-    if (!login) { setError(typeItIn ? "Enter your app login and password." : "Tick the app login you want to send."); return; }
+    if (!login) { setError(typeItIn ? "Enter your app login and password." : "Select the account tab you want to link."); return; }
     setBusy(true);
     try {
       const r = target ? await sendDevice({ data: { deviceId: target.id, ...login } }) : await sendCode({ data: { code, ...login } });
@@ -79,7 +77,7 @@ export function PlayerDeviceLinkSection() {
     setError("");
     const usable = accounts.filter((a) => a.app_login_name && a.password);
     const pick = login ?? (usable.length === 1 ? selectedPlayerLogin(usable, usable[0].id) : null);
-    if (!pick) { setError(typeItIn ? "Enter your app login and password first." : "Tick the app login you want to send, then press Send on the device."); return; }
+    if (!pick) { setError(typeItIn ? "Enter your app login and password first." : "Select the account tab, then press Resend login on the device."); return; }
     setBusy(true);
     try {
       const r = await sendDevice({ data: { deviceId: d.id, ...pick } });
@@ -106,12 +104,12 @@ export function PlayerDeviceLinkSection() {
       <div className="rounded-2xl border border-primary/30 bg-background/40 p-6 shadow-2xl backdrop-blur-md">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-foreground"><Tv className="size-3.5" />BM Player</span>
         <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">Link Device</h2>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">Enter the 6-digit linking code displayed by BM Player, choose your app login below, then press Link this device. Linked devices stay signed in.</p>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">Open BM Player to get your 6-digit linking code. Select your account tab here, enter the app’s code below and press Link this device. Linked devices stay signed in.</p>
       </div>
       {accounts.length > 1 && <Tabs value={selectedId ?? ""} onValueChange={(id) => { if (ownerId) setSelection({ ownerId, id }); setCode(""); setTarget(null); setError(""); }} className="mt-5">
         <TabsList className="h-auto w-full flex-wrap justify-start gap-2">
           {accounts.map((account) => <TabsTrigger key={account.id} value={account.id} disabled={busy} className="min-w-0 whitespace-normal text-left">
-            <span className="flex flex-wrap items-center gap-x-2 gap-y-1"><span className="break-all">{account.app_login_name || `Account ${account.account_number}`}</span>
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1"><span className="break-all">Account {account.account_number} · {account.app_login_name || "App login"}</span>
               {loginNumbers.find((row) => row.credential_id === account.id)?.number && <span className="font-mono">#{loginNumbers.find((row) => row.credential_id === account.id)?.number}</span>}
             </span>
           </TabsTrigger>)}
@@ -155,7 +153,7 @@ export function PlayerDeviceLinkSection() {
           </fieldset>
           <Button type="submit" size="lg" className="h-12 w-full text-base shadow-lg" disabled={busy || loadingAccounts || !login || (!target && code.length !== 6)}>{busy ? <Loader2 className="animate-spin" /> : <Send />}Link this device</Button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <p className="text-xs text-muted-foreground">You only do this once per device. Your login goes straight to the app and is then deleted from our side.</p>
+          <p className="text-xs text-muted-foreground">Link once per device. Your saved account stays here; only the temporary login delivery is deleted after the app receives it.</p>
         </form>
         <aside className="rounded-2xl border border-primary/30 bg-background/55 p-6 shadow-2xl backdrop-blur-md">
           {/* Account number sits opposite the heading so it is readable at a glance. */}
