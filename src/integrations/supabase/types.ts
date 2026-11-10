@@ -9783,6 +9783,22 @@ export type Database = {
         }
         Returns: string
       }
+      admin_customer_card_credentials: {
+        Args: { p_owner: string }
+        Returns: {
+          account_number: number
+          account_type: string
+          app_login_name: string
+          created_at: string
+          created_by: string
+          expiry_at: string
+          id: string
+          notes: string
+          owner_id: string
+          password: string
+          updated_at: string
+        }[]
+      }
       admin_customer_is_hidden: {
         Args: { p_display_name: string; p_user_id: string; p_username: string }
         Returns: boolean
