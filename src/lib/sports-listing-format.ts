@@ -709,6 +709,8 @@ function detectAtSlotEvent(line: string, date: string | null): SportsListingEven
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const range = line.match(new RegExp(`^(${TIME_WITH_ZONE_SOURCE})\\s*(?:until|till|to|[-–—])\\s*(${TIME_WITH_ZONE_SOURCE})\\s*$`, "i"));
+  if (range) return { date, time: normalizeTime(range[1]), endTime: normalizeTime(range[2]), title: "", channels: [] };
   const cymru = line.match(CYMRU_CHANNEL_FIXTURE_RE);
   if (cymru?.[1] && cymru[2] && cymru[3] && cymru[4] && cymru[5]) {
     const parsedDate = parseListingDate(cymru[4]);

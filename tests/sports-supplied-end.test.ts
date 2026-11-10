@@ -9,6 +9,11 @@ const end = Date.parse("2026-11-10T22:47:00Z");
 const raw = "Derby v Bolton\n- 10-11-2026 8:00 PM until 10-11-2026 10:47 PM - MonoMax 11";
 const guide = (body: string) => ({ title: "MonoMax", category: "Sports Passes", body });
 
+test("ordinary time ranges use the supplied end and roll across midnight", () => {
+  const events = playerSportsEvents([guide("Tuesday, 10th November\n23:00 GMT - 01:15 GMT\nDerby v Bolton\nMonoMax 11")], now);
+  expect(events[0].end).toBe(Date.parse("2026-11-11T01:15:00Z"));
+});
+
 test("any guide's supplied end survives import and feeds both player guides", () => {
   const saved = formatSportsListingBlock({ raw, sourceZone: "gmt", nowMs: now });
   expect(saved).not.toBeNull();
