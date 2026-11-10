@@ -43,4 +43,4 @@
 - Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
 - Accounts with multiple saved logins expose the shared profile chooser and switch pill; selection uses the existing authenticated profile scope so each login retains separate details and returning to staff requires password verification.
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
-- Sports Guide feed, player approval and installer-code rules: `src/routes/api/public/AGENTS.md`.
+- Sports Guide feed, player approval and installer-code rules: `src/routes/api/public/AGENTS.md`.- Player EPG  action: channels a Sports Guide links to (incl. via its matched playlist category) always get its events; official/general stations receive event-only `sports_overlay` slots so apps keep provider programmes around them.
