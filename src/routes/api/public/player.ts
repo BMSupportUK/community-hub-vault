@@ -298,7 +298,101 @@ export const Route = createFileRoute("/api/public/player")({
                 try { const { pushToUser } = await import("@/lib/fcm.server"); await pushToUser(device.user_id, { title, body: msg, data: { link: "/home" } }); } catch (e) { console.error("[player login push]", e); }
               }
             } else if (device.offsite_customer_id) {
-              // Everyone needs a website account now: the no-account help chat is switched off.
+              // No website account: a QR on the box (customer scans and types their account number),
+              // an emailed one-time link, or staff approval from the dashboard.
+              // The link token is derived from the device token + request id, so only this box can show it.
+              const sha = async (v: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v)))).map((b) => b.toString(16).padStart(2, "0")).join("");
+              const since = new Date(Date.now() - 10 * 60_000).toISOString();
+              const { data: open } = await supabaseAdmin.from("player_login_approvals" as any).select("id").eq("device_id", device.id).eq("status", "pending").gt("created_at", since).order("created_at", { ascending: false }).limit(1) as any;
+              let id: string | undefined = open?.[0]?.id;
+              let raw = "";
+              if (!id) {
+                id = crypto.randomUUID();
+                raw = await sha(`${body.device_token}:${id}`);
+                await supabaseAdmin.from("player_login_approvals" as any).insert({ id, device_id: device.id, offsite_customer_id: device.offsite_customer_id, token_hash: await sha(raw) });
+                const { data: oc } = await supabaseAdmin.from("player_offsite_customers").select("customer_name, email").eq("id", device.offsite_customer_id as string).maybeSingle();
+                if (oc?.email) {
+                  try {
+                    const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+                    await sendAndLogEmail(supabaseAdmin, "player-login-approval", oc.email, {
+                      templateData: { name: oc.customer_name, device: device.platform ?? "BM Player", approveUrl: `https://bmsupport.uk/player-approve/${raw}` },
+                      idempotencyKey: `player-login-${raw.slice(0, 24)}`,
+                    });
+                  } catch (e) { console.error("[player login email]", e); }
+                }
+              } else raw = await sha(`${body.device_token}:${id}`);
+              const qrUrl = `https://bmsupport.uk/player-approve/${raw}`;
+              let qrSvg: string | undefined;
+              try { const QR = await import("qrcode"); qrSvg = await QR.toString(qrUrl, { type: "svg", margin: 1, width: 240 }); } catch (e) { console.error("[player login qr]", e); }
+              return json({ unlocked: false, qr_url: qrUrl, qr_svg: qrSvg });
+            }
+            return json({ unlocked: false });
+          }
+          await supabaseAdmin.from("player_devices").update({ remote_unlock_at: null, unlock_failures: 0, unlock_locked_until: null }).eq("id", device.id);
+          return json({ unlocked: Date.now() - at <= 2 * 60_000 });
+        }
+
+        // Lost authenticator (customers without a website account): email a one-off chat link that hands out a reset code.
+        if (body.action === "totp_reset_request") {
+          if (!device.offsite_customer_id) return json({ error: "Reset your 2FA on bmsupport.uk under Security settings, or contact BM Support." }, 400);
+          const { data: oc } = await supabaseAdmin.from("player_offsite_customers").select("customer_name, email").eq("id", device.offsite_customer_id).maybeSingle();
+          if (!oc?.email) return json({ error: "We don't have an email for you. Please contact BM Support." }, 400);
+          const since = new Date(Date.now() - 10 * 60_000).toISOString();
+          const { data: recent } = await supabaseAdmin.from("player_2fa_resets").select("id").eq("offsite_customer_id", device.offsite_customer_id).gt("created_at", since).limit(1);
+          if (recent?.length) return json({ ok: true, sent: true });
+          // Older unfinished links die when a new one is made, so only the newest address ever works.
+          await supabaseAdmin.from("player_2fa_resets").update({ status: "expired", closed_at: new Date().toISOString() }).eq("offsite_customer_id", device.offsite_customer_id).in("status", ["open", "code_issued"]);
+          const { newResetToken, sha256Hex } = await import("@/lib/player-2fa-reset");
+          const raw = newResetToken();
+          await supabaseAdmin.from("player_2fa_resets").insert({ offsite_customer_id: device.offsite_customer_id, device_id: device.id, token_hash: await sha256Hex(raw) });
+          try {
+            const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+            await sendAndLogEmail(supabaseAdmin, "player-2fa-reset-link", oc.email, {
+              templateData: { name: oc.customer_name, chatUrl: `https://bmsupport.uk/2fa-help/${raw}` },
+              idempotencyKey: `player-2fa-reset-${raw.slice(0, 24)}`,
+            });
+          } catch (e) { console.error("[2fa reset email]", e); return json({ error: "Couldn't send the email. Try again shortly." }, 500); }
+          return json({ ok: true, sent: true });
+        }
+
+        // First-visit 2FA setup on the box itself: QR to scan into an authenticator app, then one code to confirm.
+        if (body.action === "totp_start" || body.action === "totp_confirm") {
+          if (!device.user_id && !device.offsite_customer_id) return json({ error: "Link this app first." }, 403);
+          const key = device.user_id ? { owner_id: device.user_id } : { offsite_customer_id: device.offsite_customer_id as string };
+          const col = device.user_id ? "owner_id" : "offsite_customer_id";
+          const val = (device.user_id ?? device.offsite_customer_id) as string;
+          const { data: cur } = await supabaseAdmin.from("player_totp").select("enabled, pending_secret").eq(col, val).maybeSingle();
+          if (cur?.enabled) return json({ error: "2FA is already set up on this account." }, 409);
+          const T = await import("@/lib/player-totp");
+          if (body.action === "totp_start") {
+            const secret = T.newTotpSecret();
+            const { error } = cur
+              ? await supabaseAdmin.from("player_totp").update({ pending_secret: secret, updated_at: new Date().toISOString() }).eq(col, val)
+              : await supabaseAdmin.from("player_totp").insert({ ...key, pending_secret: secret });
+            if (error) return json({ error: "Couldn't start 2FA set up. Try again." }, 500);
+            const url = T.totpUrl(secret, device.iptv_username ?? "BM Player");
+            const QR = await import("qrcode");
+            const svg = (u: string) => QR.toString(u, { type: "svg", margin: 1, width: 240 });
+            return json({ secret, otpauth: url, qr_svg: await svg(url),
+              apps: { apple: T.AUTH_APP_APPLE, android: T.AUTH_APP_ANDROID },
+              apple_qr_svg: await svg(T.AUTH_APP_APPLE), android_qr_svg: await svg(T.AUTH_APP_ANDROID) });
+          }
+          if (!cur?.pending_secret || !(await T.totpMatches(cur.pending_secret, body.code))) return json({ error: "That code isn't right. Type the newest 6-digit code from your authenticator app." }, 401);
+          await supabaseAdmin.from("player_totp").update({ secret: cur.pending_secret, pending_secret: null, enabled: true, updated_at: new Date().toISOString() }).eq(col, val);
+          await supabaseAdmin.from("player_devices").update({ totp_passed_at: new Date().toISOString() }).eq("id", device.id);
+          const { issueBackupCodes } = await import("@/lib/player-backup-codes");
+          await issueBackupCodes(supabaseAdmin, key);
+          return json({ ok: true, backup_codes_saved: !!device.user_id });
+        }
+
+        // The 4-digit PIN is retired: 2FA (authenticator app) is the only main-menu lock, once a day per box.
+        // Can't reach the authenticator? One of the 10 one-use backup codes (8 digits) opens it instead.
+        // 2FA is retired: boxes sign in once (website code or the QR help chat) and are never asked again.
+        if (body.action === "pin_status") return json({ required: false, needs_setup: false, totp_setup: false });
+
+        // No website account: a QR on the box opens a one-off chat that checks account number + email
+        // and shows a 6-digit code (10 minutes). Each new chat retires the box's older ones.
+        // Everyone needs a website account now: the no-account help chat is switched off.
         if (body.action === "signin_chat") return json({ error: "Make a free account at bmsupport.uk, then use the code on the Link Device page." }, 410);
 
         if (body.action === "signin_code") {
