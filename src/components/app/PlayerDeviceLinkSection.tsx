@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createPlayerSigninCode, notMePlayerDevice, sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
+import { notMePlayerDevice, sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
 
 const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC", mac: "Mac", web: "iPhone / iPad browser" };
 
@@ -29,10 +29,6 @@ export function PlayerDeviceLinkSection() {
   const sendCode = useServerFn(sendLoginWithCode);
   const sendDevice = useServerFn(sendLoginToDevice);
   const notMeFn = useServerFn(notMePlayerDevice);
-  const makeSigninCode = useServerFn(createPlayerSigninCode);
-  const [signin, setSignin] = useState<{ code: string; expiresAt: number } | null>(null);
-  const [nowTick, setNowTick] = useState(Date.now());
-  useEffect(() => { if (!signin) return; const t = setInterval(() => setNowTick(Date.now()), 1000); return () => clearInterval(t); }, [signin]);
   const { devices, reload } = usePlayerDevices();
   const { user } = useAuth();
   const ownerId = user?.id;
@@ -94,16 +90,6 @@ export function PlayerDeviceLinkSection() {
     finally { setBusy(false); }
   }
 
-  async function showSigninCode() {
-    setError("");
-    if (!login) { setError(typeItIn ? "Enter your app login and password first." : "Tick the app login for this device first."); return; }
-    setBusy(true);
-    try { const r = await makeSigninCode({ data: login }); setSignin({ code: r.code, expiresAt: Date.parse(r.expiresAt) }); }
-    catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
-    finally { setBusy(false); }
-  }
-  const signinLeft = signin ? Math.max(0, Math.ceil((signin.expiresAt - nowTick) / 1000)) : 0;
-
   async function notMe(d: PlayerDevice) {
     if (!window.confirm(`Remove ${d.name} and tell BM Support it isn't yours?`)) return;
     try { await notMeFn({ data: { deviceId: d.id } }); toast.success(`${d.name} removed. BM Support has been told.`); void reload(); }
@@ -120,7 +106,7 @@ export function PlayerDeviceLinkSection() {
       <div className="rounded-2xl border border-primary/30 bg-background/40 p-6 shadow-2xl backdrop-blur-md">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-foreground"><Tv className="size-3.5" />BM Player</span>
         <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">Link Device</h2>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">Signing in a new device? Choose the app login below, press Show my sign-in code, then type that code into BM Player. Linked devices stay signed in.</p>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">Enter the 6-digit linking code displayed by BM Player, choose your app login below, then press Link this device. Linked devices stay signed in.</p>
       </div>
       {accounts.length > 1 && <Tabs value={selectedId ?? ""} onValueChange={(id) => { if (ownerId) setSelection({ ownerId, id }); setCode(""); setTarget(null); setError(""); }} className="mt-5">
         <TabsList className="h-auto w-full flex-wrap justify-start gap-2">
@@ -131,22 +117,13 @@ export function PlayerDeviceLinkSection() {
           </TabsTrigger>)}
         </TabsList>
       </Tabs>}
-      <div className="mt-6 rounded-2xl border border-primary/40 bg-background/55 p-6 shadow-2xl backdrop-blur-md">
-        <h3 className="text-base font-semibold">Your BM Player sign-in code</h3>
-        <p className="mt-1 text-sm text-muted-foreground">In BM Player answer <strong>Yes</strong> to “Do you have a BM Support website account?” and type this code. It works once and lasts 10 minutes. It signs in with the app login ticked below.</p>
-        {signin && signinLeft > 0 ? <div className="mt-4 flex flex-wrap items-center gap-4">
-          <span aria-label="Sign-in code" className="rounded-xl border border-primary/50 bg-primary/15 px-6 py-3 font-mono text-4xl font-bold tracking-[0.3em]">{signin.code.slice(0, 3)} {signin.code.slice(3)}</span>
-          <span className="text-sm text-muted-foreground">Runs out in {Math.floor(signinLeft / 60)}:{String(signinLeft % 60).padStart(2, "0")}</span>
-          <Button type="button" variant="outline" disabled={busy} onClick={() => void showSigninCode()}>New code</Button>
-        </div> : <Button type="button" className="mt-4" disabled={busy || loadingAccounts} onClick={() => void showSigninCode()}>{busy ? <Loader2 className="animate-spin" /> : null}Show my sign-in code</Button>}
-      </div>
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <form onSubmit={submit} className="space-y-5 rounded-2xl border border-primary/30 bg-background/55 p-6 shadow-2xl backdrop-blur-md">
           {target ? <div className="flex items-center justify-between rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">
             <span>Sending to <strong>{target.name}</strong></span>
             <Button type="button" variant="link" size="sm" onClick={() => setTarget(null)}>Use a code instead</Button>
           </div> : <div className="space-y-1.5">
-            <Label htmlFor="player-code" className="text-base font-semibold">Older BM Player showing a code?</Label>
+            <Label htmlFor="player-code" className="text-base font-semibold">Device linking code</Label>
             <p className="text-xs text-muted-foreground">Type the 6-digit code shown on your TV, phone or computer.</p>
             <Input id="player-code" inputMode="numeric" autoComplete="off" maxLength={6} value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" className="h-16 border-primary/40 bg-background/60 text-center font-mono text-3xl tracking-[0.6em]" />
