@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Preserve all supplied sports listing end times in BM Player EPG and Sports Guide, with import/read-back and completion tests.
 - [x] Released Windows 0.4.64 and universal Mac 0.1.73 with corrected device-link screens; 137 desktop tests pass, both public download hashes match, Mac integrity and Intel/Apple Silicon binaries verified. Physical installation/linking unavailable without attached Windows/Mac devices.
 - [x] Fixed admin credential deletion silently skipping other profiles via owner-scoped admin/management RPC with affected-row confirmation and profile-change event. Four deletion/refresh tests pass; build OK. Full dashboard click-through remains blocked by account-password/staff-PIN gate; no customer records deleted during testing.
 - [x] Windows/Mac legacy locked logins show app-displayed device linking rather than account-number entry; cached 2FA gates retired. Shared Mac entry confirmed, both renderer modes verified and 131 desktop tests pass. Not packaged/released.
