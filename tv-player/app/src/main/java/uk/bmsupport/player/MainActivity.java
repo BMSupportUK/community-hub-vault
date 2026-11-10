@@ -1696,16 +1696,17 @@ public class MainActivity extends Activity {
     }
 
     /** Header line gets "Now", the mini guide box gets now (with progress) plus the next programmes. */
-    private JSONArray fixtureListings(Item it) {
-        return FixtureGuide.listings(it.name, () -> new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
+    private JSONObject fixtureListings(Item it) {
+        return FixtureGuide.fetch(it.name, () -> new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
                 new JSONObject().put("action", "guide").put("device_token", prefs.getString("token", "")).put("channel", it.name).toString())));
     }
     private void loadEpg(Item it, TextView out, TextView box) {
         if (box != null) box.setText("TV guide for " + it.name + "…");
         io.execute(() -> {
             try {
-                JSONArray l = fixtureListings(it);
-                if (l == null) l = new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=6")).optJSONArray("epg_listings");
+                JSONObject fr = fixtureListings(it);
+                JSONArray l = FixtureGuide.authoritative(fr);
+                if (l == null) l = FixtureGuide.overlay(fr, new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=6")).optJSONArray("epg_listings"));
                 StringBuilder head = new StringBuilder(it.name), guide = new StringBuilder();
                 List<Object[]> progs = new ArrayList<>();
                 long nowSec = System.currentTimeMillis() / 1000;
@@ -3955,18 +3956,19 @@ public class MainActivity extends Activity {
                     long now = System.currentTimeMillis() / 1000;
                     List<GuideGridView.Prog> got = new ArrayList<>();
                     boolean ok = false, full0 = false;
-                    JSONArray fixtures = fixtureListings(it);
+                    JSONObject fr = fixtureListings(it);
+                    JSONArray fixtures = FixtureGuide.authoritative(fr);
                     if (fixtures != null) { got = GuideListings.parse(fixtures, now); ok = true; full0 = true; }
                     // Ordinary and unmatched channels retain provider short/full-day EPG.
                     if (fixtures == null) {
                     try {
-                        got = GuideListings.parse(new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings"), now);
+                        got = GuideListings.parse(FixtureGuide.overlay(fr, new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings")), now);
                         ok = true;
                     } catch (Exception ignored) {}
                     // Some providers only send "now" in the short list; the full day's table has the rest.
                     // Day ▶ / swiping ahead needs programmes beyond the short list, so ask for the full table too.
                     if (GuideListings.tooShort(got, now, Math.max(win, viewEnd - now))) try {
-                        List<GuideGridView.Prog> full = GuideListings.parse(new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + it.id)).optJSONArray("epg_listings"), now);
+                        List<GuideGridView.Prog> full = GuideListings.parse(FixtureGuide.overlay(fr, new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + it.id)).optJSONArray("epg_listings")), now);
                         if (full.size() > got.size()) got = full;
                         ok = true; full0 = true;
                     } catch (Exception ignored) {}
