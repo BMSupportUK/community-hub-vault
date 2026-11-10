@@ -12,7 +12,9 @@ const FREEZE_MS = 4000;
 /** Full quality returns after this long with no stalls (same as Android). */
 const STABLE_RAISE_MS = 120000;
 /** Live channels keep at least this much cushion so short provider cut-outs play through. */
-const LIVE_BUFFER_MS = 12000;
+const LIVE_BUFFER_MS = 5000;
+/** Ordinary live pictures get this long to recover before a restart, independent of the shorter start wait. */
+const LIVE_FREEZE_WAIT_MS = 12000;
 function isDazn(name) { return /\bdazn\b/i.test(String(name || '').normalize('NFKC')); }
 function isCoupang(name) { return /\bcoupang\b/i.test(String(name || '').normalize('NFKC')); }
 /** Heavy before playing: UHD/4K/2160, FHD, 1080p50/60, 50/60fps (same rule as Android). */
@@ -41,7 +43,7 @@ function frozen(session, state, position, now, status = {}) {
     if (frames !== session.lastVideoFrames) { session.lastVideoFrames = frames; session.pictureStillSince = now; return false; }
     if (!session.pictureStillSince) session.pictureStillSince = now;
     // Let the configured live cushion recover before destroying the connection.
-    const wait = profile(session.recoveryName || session.item?.name).live;
+    const wait = Math.max(LIVE_FREEZE_WAIT_MS, profile(session.recoveryName || session.item?.name).live);
     if (now - session.pictureStillSince >= wait) { session.pictureStillSince = now; return true; }
     return false;
   }

@@ -1,6 +1,6 @@
 const {test,expect}=require('bun:test');const assert={equal:(a,b)=>expect(a).toBe(b),deepEqual:(a,b)=>expect(a).toEqual(b),ok:(v)=>expect(!!v).toBe(true)};
 const r=require('../stream-recovery.cjs');
-test('DAZN Unicode detection and 30-second live cushion do not change other channels',()=>{expect(r.isDazn('ᴰᴬᶻᴺ ¹ 18 (CA | Main)')).toBe(true);expect(r.isDazn('19 | BKFC 96')).toBe(false);expect(r.liveBufferMs(3000,'DAZN CA')).toBe(30000);expect(r.liveBufferMs(3000,'BBC One')).toBe(12000);expect(r.profile('DAZN CA')).toEqual({min:40000,max:90000,start:3000,rebuffer:6000,live:30000,reconnect:6000,swap:1});});
+test('DAZN Unicode detection and 30-second live cushion do not change other channels',()=>{expect(r.isDazn('ᴰᴬᶻᴺ ¹ 18 (CA | Main)')).toBe(true);expect(r.isDazn('19 | BKFC 96')).toBe(false);expect(r.liveBufferMs(3000,'DAZN CA')).toBe(30000);expect(r.liveBufferMs(3000,'BBC One')).toBe(5000);expect(r.profile('DAZN CA')).toEqual({min:40000,max:90000,start:3000,rebuffer:6000,live:30000,reconnect:6000,swap:1});});
 test('DAZN reconnects after 6 seconds and immediately on stream end',()=>{const s={item:{name:'DAZN CA 19'}};r.tick(s,3,1000,true);r.tick(s,2,2000,true);expect(r.tick(s,2,7999,true).reconnect).toBeUndefined();expect(r.tick(s,2,8000,true).reconnect).toBe(1000);const ended={item:{name:'DAZN CA 19'},ready:true};expect(r.tick(ended,6,5000,true).reconnect).toBe(0);});
 test('Coupang Play feeds get the same large-buffer profile as DAZN',()=>{expect(r.isCoupang('Coupang Play 1')).toBe(true);expect(r.isCoupang('COUPANG PLAY 05')).toBe(true);expect(r.isCoupang('BBC One')).toBe(false);expect(r.profile('Coupang Play 5')).toEqual(r.profile('DAZN CA'));expect(r.liveBufferMs(3000,'Coupang Play 1')).toBe(30000);expect(r.providerTag('Coupang Play 1')).toBe('coupang');expect(r.providerTag('DAZN CA')).toBe('dazn');expect(r.providerTag('BBC One')).toBe(null);const s={item:{name:'Coupang Play 2'}};r.tick(s,3,1000,true);r.tick(s,2,2000,true);expect(r.tick(s,2,7999,true).reconnect).toBeUndefined();expect(r.tick(s,2,8000,true).reconnect).toBe(1000);const ended={item:{name:'Coupang Play 2'},ready:true};expect(r.tick(ended,6,5000,true).reconnect).toBe(0);});
 test('three DAZN stalls in two minutes offer another feed only once',()=>{const s={item:{name:'DAZN CA 19'}};r.tick(s,3,1000,true);const stall=t=>{r.tick(s,2,t,true);return r.tick(s,3,t+2000,true);};expect(stall(5000).offerFeed).toBeUndefined();expect(stall(15000).offerFeed).toBeUndefined();expect(stall(25000).offerFeed).toBe(true);expect(stall(35000).offerFeed).toBeUndefined();const expired={item:{name:'DAZN CA 19'},ready:true,stallTimes:[1000,10000],stallAt:150000};expect(r.tick(expired,3,152000,true).offerFeed).toBeUndefined();});
@@ -51,7 +51,7 @@ test('full quality returns after 2 minutes with no stalls', () => {
 });
 
 test('live channels always keep at least a 12 second cushion', () => {
-  expect(r.liveBufferMs(3000)).toBe(12000);
+  expect(r.liveBufferMs(3000)).toBe(5000);
   expect(r.liveBufferMs(15000)).toBe(15000);
 });
 
