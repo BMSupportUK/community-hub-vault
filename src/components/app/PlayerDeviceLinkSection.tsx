@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { notMePlayerDevice, sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
+import { notMePlayerDevice, requestPlayerHomeMove, sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
 
 const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC", mac: "Mac", web: "iPhone / iPad browser" };
 
@@ -34,6 +34,7 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
   const sendCode = useServerFn(sendLoginWithCode);
   const sendDevice = useServerFn(sendLoginToDevice);
   const notMeFn = useServerFn(notMePlayerDevice);
+  const moveFn = useServerFn(requestPlayerHomeMove);
   const { devices, reload } = usePlayerDevices();
   const { user } = useAuth();
   const ownerId = user?.id;
@@ -171,6 +172,13 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
             <Button size="icon" variant="ghost" aria-label={`Remove ${d.name}`} onClick={() => void remove(d)}><Trash2 /></Button>
             </div>
           </li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Open BM Player on your device and enter the 6-digit code it shows above.</p>}
+          {activeAccount && /multi|triple/i.test(activeAccount.account_type ?? "") && visibleDevices.length ? <div className="mt-4 rounded-xl border border-border bg-background/50 p-3 text-xs text-muted-foreground">
+            <p>Multi Room and Triple Room work in one home plus one phone. Only one device can watch away from home at a time, and nothing at home plays while it does.</p>
+            <Button size="sm" variant="outline" className="mt-2" disabled={busy} onClick={async () => {
+              try { const r = await moveFn({ data: { login: activeAccount.app_login_name } }); toast.success(r.already ? "Your move request is already with BM Support." : "Sent. BM Support will approve your new home."); }
+              catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); }
+            }}>I've moved / new broadband</Button>
+          </div> : null}
         </aside>
       </div>
     </div>

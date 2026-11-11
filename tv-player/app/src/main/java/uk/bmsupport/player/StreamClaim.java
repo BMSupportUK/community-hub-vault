@@ -24,7 +24,7 @@ final class StreamClaim {
         int max = Math.max(1, p.getInt("max_cons", 1));
         if (token.isEmpty() || user.isEmpty()) { r.done(false, ""); return; }
         IO.execute(() -> {
-            boolean busy = false; String who = "";
+            boolean busy = false; String who = ""; boolean refused = false; String msg = "";
             try {
                 JSONObject res = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
                         .put("action", "stream_claim").put("device_token", token).put("login", user).put("max", max)
@@ -33,8 +33,13 @@ final class StreamClaim {
                 final String warn = res.isNull("warning") ? "" : res.optString("warning", "");
                 if (!warn.isEmpty()) UI.post(() -> warnHousehold(warn));
                 who = describe(res.optJSONArray("devices"));
+                refused = res.optBoolean("refused", false);
+                msg = res.isNull("message") ? "" : res.optString("message", "");
+                if (busy && !msg.isEmpty()) who = msg;
             } catch (Throwable ignored) {}
             final boolean b = busy; final String w = who;
+            // Not allowed at all (second phone, home-only block): explain and never start playback.
+            if (busy && refused) { final String m = msg.isEmpty() ? "This device can't watch on this login right now." : msg; UI.post(() -> refuse(m)); return; }
             UI.post(() -> r.done(b, w));
         });
     }
@@ -62,6 +67,13 @@ final class StreamClaim {
         if (a == null) a = host;
         if (a == null || a.isFinishing()) return;
         try { new android.app.AlertDialog.Builder(a).setTitle("Multi Room rule").setMessage(message).setPositiveButton("OK", null).show(); }
+        catch (Throwable ignored) { android.widget.Toast.makeText(a, message, android.widget.Toast.LENGTH_LONG).show(); }
+    }
+
+    static void refuse(String message) {
+        Activity a = host;
+        if (a == null || a.isFinishing()) return;
+        try { new android.app.AlertDialog.Builder(a).setTitle("Can't play here").setMessage(message).setPositiveButton("OK", null).show(); }
         catch (Throwable ignored) { android.widget.Toast.makeText(a, message, android.widget.Toast.LENGTH_LONG).show(); }
     }
 

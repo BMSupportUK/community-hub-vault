@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { closePlayerSecurityEvent, decidePlayerBoxLimit, setPlayerLoginHome } from "@/lib/player.functions";
+import { approvePlayerHomeMove, clearPlayerLoginStrikes, closePlayerSecurityEvent, decidePlayerBoxLimit, setPlayerLoginHome } from "@/lib/player.functions";
 
 type Ev = { id: string; kind: string; login: string | null; detail: Record<string, unknown>; status: string; created_at: string };
 
@@ -13,9 +13,11 @@ const TITLE: Record<string, string> = {
   unusual_place: "Possible login sharing",
   lockout: "Box locked for 24 hours (wrong account numbers)",
   removed_not_me: "Customer removed a box: Not me",
-  household_away: "Multi Room box away from home",
-  household_mobile: "Second phone on mobile data",
-  household_vpn: "Multi Room box on a VPN",
+  household_away: "Strike: Multi Room login watched in two places",
+  household_mobile: "Second phone refused (one mobile per account)",
+  household_vpn: "Multi Room box on a VPN (old report)",
+  household_blocked: "Multi Room login blocked to home only (3 strikes in 7 days)",
+  household_move: "Customer says they've moved / new broadband",
 };
 
 function detailText(e: Ev) {
@@ -26,6 +28,8 @@ function detailText(e: Ev) {
   if (e.kind.startsWith("household_")) {
     const d = e.detail as Record<string, string | number | null>;
     const where = d.country ? ` Seen around ${d.city ? d.city + ", " : ""}${d.country}.` : "";
+    if (e.kind === "household_move") return `Login ${e.login ?? "?"} asked to move home. Approving lets the next box that plays set the new home.`;
+    if (e.kind === "household_blocked") return `Login ${e.login ?? "?"} can now only play at home until you clear its strikes.`;
     if (e.kind === "household_vpn") return `${d.device ?? "Box"} on login ${e.login ?? "?"} is using a VPN${d.vpn_provider ? ` (${d.vpn_provider})` : ""}. Its real location can't be seen.`;
     return `${d.device ?? "Box"} on login ${e.login ?? "?"} is on internet ${d.ip ?? "?"}, home is ${d.home_ip ?? "not set"}.${where}`;
   }
@@ -37,6 +41,8 @@ export function PlayerSecuritySection() {
   const decide = useServerFn(decidePlayerBoxLimit);
   const close = useServerFn(closePlayerSecurityEvent);
   const setHome = useServerFn(setPlayerLoginHome);
+  const clearStrikes = useServerFn(clearPlayerLoginStrikes);
+  const approveMove = useServerFn(approvePlayerHomeMove);
   const { data = [], isPending, refetch } = useQuery({
     queryKey: ["player-security-events"],
     refetchInterval: 10_000,
@@ -54,7 +60,7 @@ export function PlayerSecuritySection() {
   return (
     <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
       <h2 className="font-display text-lg font-semibold">Security</h2>
-      <p className="text-sm text-muted-foreground">Each customer app login can run on 3 boxes. A 4th waits here for approval. Staff accounts have no box limit. Sharing and lockout warnings also show here. Multi Room and Triple Room logins must stay in one home (the first box linked sets it) plus one phone on mobile data.</p>
+      <p className="text-sm text-muted-foreground">Each customer app login can run on 3 boxes. A 4th waits here for approval. Staff accounts have no box limit. Sharing and lockout warnings also show here. Multi Room and Triple Room logins stay in one home (the first box linked sets it) plus one phone. Only one device can watch away from home at a time, and nothing at home plays while a holiday box watches. 3 strikes in 7 days blocks a login to home only. VPNs are allowed while watching.</p>
       {isPending ? <Loader2 className="size-5 animate-spin text-muted-foreground" /> : !data.length ? <p className="text-sm text-muted-foreground">Nothing needs attention.</p> : (
         <ul className="divide-y divide-border">
           {data.map((e) => (
@@ -68,7 +74,13 @@ export function PlayerSecuritySection() {
                 <Button size="sm" variant="outline" onClick={() => act(() => decide({ data: { eventId: e.id, approve: false } }), "Refused. The login was not sent.")}>Refuse</Button>
               </> : e.kind === "household_away" ? <>
                 <Button size="sm" onClick={() => act(() => setHome({ data: { eventId: e.id } }), "Saved as the new home connection.")}>Make this home</Button>
+                <Button size="sm" variant="outline" onClick={() => act(() => clearStrikes({ data: { eventId: e.id } }), "Strikes cleared.")}>Clear strikes</Button>
                 <Button size="sm" variant="outline" onClick={() => act(() => close({ data: { eventId: e.id } }), "Marked as checked.")}>Checked</Button>
+              </> : e.kind === "household_blocked" ? <>
+                <Button size="sm" onClick={() => act(() => clearStrikes({ data: { eventId: e.id } }), "Unblocked and strikes cleared.")}>Unblock</Button>
+              </> : e.kind === "household_move" ? <>
+                <Button size="sm" onClick={() => act(() => approveMove({ data: { eventId: e.id } }), "Approved. The next box that plays sets the new home.")}>Approve move</Button>
+                <Button size="sm" variant="outline" onClick={() => act(() => close({ data: { eventId: e.id } }), "Refused.")}>Refuse</Button>
               </> : <Button size="sm" variant="outline" onClick={() => act(() => close({ data: { eventId: e.id } }), "Marked as checked.")}>Checked</Button>}
             </li>
           ))}
