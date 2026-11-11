@@ -12,3 +12,7 @@ test("app-reported number is the last fallback", () => {
   expect(pickConnections(null, null, 2)).toBe(2);
   expect(pickConnections(0, null, null)).toBe(null);
 });
+test("a Multi Room package keeps 2 connections when the provider reports 1", () => {
+  expect(pickConnections(1, 2, null)).toBe(2);
+  expect(pickConnections(1, 3, 1)).toBe(3);
+});

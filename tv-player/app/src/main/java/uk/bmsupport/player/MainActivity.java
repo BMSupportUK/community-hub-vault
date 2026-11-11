@@ -696,6 +696,9 @@ public class MainActivity extends Activity {
             if (c != null || had != now || restored || needsAccount || (!verifiedBefore && linkVerified)) ui.post(() -> {
                 if (c != null) Toast.makeText(this, "Login received from BM Support", Toast.LENGTH_LONG).show();
                 if (now && "linkcheck".equals(screen) && linkVerified) linkConfirmed();
+                // Freshly linked with the code: show the family "device is linked" screen and its Go to home button too.
+                else if (now && "link".equals(screen)) { showLinkCheck(); linkConfirmed(); }
+                else if ("linkok".equals(screen) && now) { /* stay until Go to home screen is pressed */ }
                 else if (now) showHome(); else showLink();
             });
         } catch (Exception ex) {
