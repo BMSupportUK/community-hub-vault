@@ -88,7 +88,7 @@ export function SwitchProfilePill() {
       size="sm"
       onClick={() => requestProfileChooser(userId)}
       title="Switch profile"
-      className="h-auto gap-1.5 rounded-full border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
+      className="h-auto gap-1.5 rounded-full border-primary bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground shadow hover:bg-primary/90"
     >
       <UsersRound className="size-3.5" />
       <span>Switch profile</span>
