@@ -891,6 +891,10 @@ public class MainActivity extends Activity {
         p.addView(linkCheckMsg);
         linkCheckPanel = p;
         setContentView(familyFrame(p));
+        // Ask the website straight away instead of waiting for the next timed check-in.
+        safeRun(io, this::pollOnce);
+        // Never strand the customer: after 10s with a saved login, offer the button anyway; an unlinked box is still signed out by the background check.
+        ui.postDelayed(() -> { if ("linkcheck".equals(screen) && hasLogin()) linkConfirmed(); }, 10000);
     }
     private void linkConfirmed() {
         if (linkCheckMsg == null || linkCheckPanel == null) { showHome(); return; }
@@ -1195,9 +1199,10 @@ public class MainActivity extends Activity {
                 line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
                 String[] rooms = roomsInfo();
                 int pkg = rooms[1].isEmpty() ? 0 : Integer.parseInt(rooms[1]);
-                // The website package (1/2/3) wins; if that check misses (busy/offline), keep the last known package, never the provider's own number.
+                // The provider account info (same number as Account information) wins; the website package and the last saved number are only fallbacks.
                 int saved = prefs.getInt("max_cons", 0);
-                int cons = pkg >= 1 && pkg <= 3 ? pkg : saved >= 1 && saved <= 3 ? saved : info.optInt("max_connections", 1);
+                int provider = 0; try { provider = Integer.parseInt(info.optString("max_connections", "0").trim()); } catch (Exception ignored) {}
+                int cons = provider >= 1 ? provider : pkg >= 1 && pkg <= 3 ? pkg : saved >= 1 ? saved : 1;
                 line += " · " + cons + (cons == 1 ? " connection" : " connections");
                 if (cons >= 2) line += rooms[0];
                 String l = line;
@@ -4844,7 +4849,7 @@ public class MainActivity extends Activity {
         if (unlocked && hasLogin()) ProgressSync.pull(this, false, () -> { if ("home".equals(screen)) showHome(); });
         refreshVersionScreens();
         // Re-opened after being away: ask the PIN again before showing any screen.
-        if (!PlayerApplication.pinPassed && unlocked && hasLogin() && !java.util.Arrays.asList("pin", "link", "unlock", "expired", "maintenance", "").contains(screen)) { stopPreview(); stopMulti(); checkPin(); return; }
+        if (!PlayerApplication.pinPassed && unlocked && hasLogin() && !java.util.Arrays.asList("pin", "link", "linkcheck", "linkok", "unlock", "expired", "maintenance", "").contains(screen)) { stopPreview(); stopMulti(); checkPin(); return; }
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
         if ("sports".equals(screen) && retryEvent != null) { retryEvent = null; if (sportsChannelList != null) sportsChannelList.requestFocus(); }
         else if ("sports_channels".equals(screen) && retryEvent != null) {
