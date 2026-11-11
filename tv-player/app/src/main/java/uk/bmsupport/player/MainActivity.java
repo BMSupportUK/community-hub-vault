@@ -190,8 +190,13 @@ public class MainActivity extends Activity {
     // ---------- multi-screen (Multi Room = 2, Triple Room = 3) ----------
     private final List<androidx.media3.exoplayer.ExoPlayer> multiPlayers = new ArrayList<>();
     private final java.util.Set<Integer> multiPicked = new java.util.HashSet<>();
+    // Channel on each multi-screen pane, so the website lists every screen's channel, not just one.
+    private final String[] multiNames = new String[3];
     private void stopMulti() {
         multiPicked.clear();
+        boolean had = false;
+        for (int i = 0; i < multiNames.length; i++) { if (multiNames[i] != null) had = true; multiNames[i] = null; }
+        if (had) clearNowPlaying();
         for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) p.release();
         multiPlayers.clear();
         updateKeepScreenOn();
@@ -251,7 +256,11 @@ public class MainActivity extends Activity {
                 if (!has) return;
                 for (int k = 0; k < multiPlayers.size(); k++) multiPlayers.get(k).setVolume(k == n ? 1f : 0f);
             });
-            f.setOnClickListener(v -> pickMultiChannel(n, labels[n]));
+            // A tap (phones never move focus on touch) or OK also moves the sound to this screen.
+            f.setOnClickListener(v -> {
+                for (int k = 0; k < multiPlayers.size(); k++) multiPlayers.get(k).setVolume(k == n ? 1f : 0f);
+                pickMultiChannel(n, labels[n]);
+            });
         }
         if (screens == 1) {
             root.addView(panes[0], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -316,20 +325,45 @@ public class MainActivity extends Activity {
                 Runnable go = () -> {
                     if (n >= multiPlayers.size()) return;
                     label.setText("");
+                    multiNames[n] = it.name;
+                    reportMultiPlaying();
                     PlayerActivity.playWithFallback(multiPlayers.get(n), streamUrls(it),
                             () -> ui.post(() -> label.setText(it.name + "\nCouldn't play – press OK to pick another")));
                 };
-                StreamClaim.check(this, "live", it.name, false, want, (busy, who) -> {
+                String names = multiTitle(n, it.name);
+                StreamClaim.check(this, "live", names, false, want, (busy, who) -> {
                     if (!busy) { go.run(); return; }
                     multiPicked.remove(n);
                     label.setText("Screens maxed – press OK to try again");
                     new AlertDialog.Builder(this).setTitle("Number of screens is already maxed")
                             .setMessage(who)
-                            .setPositiveButton("Watch here instead", (d, w) -> StreamClaim.check(this, "live", it.name, true, want, (b2, x) -> { multiPicked.add(n); go.run(); }))
+                            .setPositiveButton("Watch here instead", (d, w) -> StreamClaim.check(this, "live", names, true, want, (b2, x) -> { multiPicked.add(n); go.run(); }))
                             .setNegativeButton("Cancel", null).show();
                 });
             }, null, null, "Back", () -> pickMultiChannel(n, label));
         }, null, null, "Cancel", null);
+    }
+
+    /** "BBC One · Sky Sports 1": every pane's channel, with pane n about to show name. */
+    private String multiTitle(int n, String name) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < multiNames.length; i++) {
+            String v = i == n ? name : multiNames[i];
+            if (v == null || v.isEmpty()) continue;
+            if (b.length() > 0) b.append(" · ");
+            b.append(v);
+        }
+        String t = b.toString();
+        return t.length() > 200 ? t.substring(0, 200) : t;
+    }
+
+    /** Poll reports all multi-screen channels so other rooms see both names. */
+    private void reportMultiPlaying() {
+        long since = prefs.getLong("np_since", 0);
+        prefs.edit().putString("np_kind", "live").putString("np_title", multiTitle(-1, null)).putString("np_cat", "")
+                .putString("np_player", "BM Player").putLong("np_since", since > 0 ? since : System.currentTimeMillis())
+                .putBoolean("np_preview", false).apply();
+        io.execute(this::pollOnce);
     }
 
     /** Channel name with "Now: title" underneath, filled in quietly as rows come into view. */

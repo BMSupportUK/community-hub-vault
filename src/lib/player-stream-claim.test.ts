@@ -25,7 +25,7 @@ test("multi room (2) with nobody else watching allows 2 screens on one box", () 
   expect(streamClash([], "me", 2, now, 2)).toEqual([]);
 });
 test("who's watching lists only other live rooms", () => {
-  expect(roomsWatching([pc("a", true), pc("me", true), pc("b", false)], "me", now)).toEqual([{ name: "BM Player Windows", platform: "windows", title: "BBC Two | FHD" }]);
+  expect(roomsWatching([pc("a", true), pc("me", true), pc("b", false)], "me", now)).toEqual([{ name: "BM Player Windows", platform: "windows", title: "BBC Two | FHD", screens: 1 }]);
 });
 
 import { streamClash as clash2, maxedMessage } from "./player-stream-claim";
@@ -35,4 +35,8 @@ test("a box watching 2 screens fills a 2-connection login", () => {
   expect(clash2([box], "b", 2, now, 1).length).toBe(1);
   expect(clash2([{ ...box, watching_screens: 1 }], "b", 2, now, 1).length).toBe(0);
   expect(maxedMessage([box], 2)).toContain("watching 2 screens");
+});
+test("the maxed message names every channel a multi-screen box is watching", () => {
+  const box = { id: "a", name: "Fire TV", platform: "firetv", last_seen_at: new Date().toISOString(), watching_kind: "live", watching_title: "BBC One · Sky Sports 1", watching_screens: 2 };
+  expect(maxedMessage([box], 2)).toContain("Fire TV is watching 2 screens (BBC One · Sky Sports 1)");
 });

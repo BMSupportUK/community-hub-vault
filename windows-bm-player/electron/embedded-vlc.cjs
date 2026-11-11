@@ -59,7 +59,8 @@ class EmbeddedVlc {
    this.api.media_player_set_media(s.player,media);
   }finally{this.api.media_release(media);}
   if(this.api.media_player_play(s.player)<0)throw new Error('This stream could not start.');
-  this.volume(index,index===0?100:0);
+  // A reconnect or swap on a screen keeps its sound choice; only a brand-new screen starts silent (screen 1 audible).
+  this.volume(index,s.wantVolume!=null?s.wantVolume:index===0?100:0);
  }
  layout(rows){
   const rect=Buffer.alloc(16);if(!this.client(this.parent,rect))return;

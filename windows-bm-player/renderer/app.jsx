@@ -26,7 +26,7 @@ const resumable=p=>p?.position>0&&p?.duration>0&&p.position<p.duration*.95;
 let previewTapAt=0;
 const previewTaps=()=>{const t=Date.now();if(t-previewTapAt<500){previewTapAt=0;return true;}previewTapAt=t;return false;};
 function App(){
- const [intro,setIntro]=useState(true);
+ const [intro,setIntro]=useState(true),[linkGo,setLinkGo]=useState(false);
  const epgCache=useRef(null);if(!epgCache.current)epgCache.current=createGuideCache();
  const epgScope=useRef(null);
  function receiveState(next){const scope=next?.linked&&!next.locked?next.user:null;if(scope!==epgScope.current){saveGuide();epgCache.current.clear();epgScope.current=scope;if(scope)try{epgCache.current.restore(JSON.parse(localStorage.getItem(guideKey(scope))||'null'));}catch{}}setState(next);}
@@ -110,10 +110,11 @@ async function preloadGuide(){let ids=[];try{ids=((await bm.catalog('live'))?.it
  async function openGuide(){setView('guide');setLoading(true);const d=await act(()=>bm.catalog('live'));if(d){setData(d);const first=d.items.slice(0,15);for(let at=0;at<first.length;at+=3){await Promise.all(first.slice(at,at+3).map(async c=>{const p=await act(()=>cachedEpg(c.id));if(p)setGuide(g=>({...g,[c.id]:p}));}));}}setLoading(false);}
  async function reminder(item,p){const old=state.reminders.find(r=>r.id===`${item.id}:${p.start}`);setModal({type:'reminder-confirm',item,p,old});}
  async function changeReminder(m){if(m.old){const s=await act(()=>bm.reminder({remove:true,id:m.old.id}));if(s)setState(s);}else{const s=await act(()=>bm.reminder({...m.p,item:m.item}));if(s)setState(s);}setModal(null);}
- const inApp=!intro&&!!state&&!!state.linked&&!state.locked&&!!state.signedIn;useEffect(()=>{setInApp(inApp);},[inApp]);
+ const inApp=!intro&&linkGo&&!!state&&!!state.linked&&!state.locked&&!!state.signedIn;useEffect(()=>{setInApp(inApp);},[inApp]);
  if(intro)return <main className="opening"><video src="player-intro.mp4" autoPlay playsInline onEnded={()=>setIntro(false)} onError={()=>setIntro(false)} aria-label="BM Player family opening intro"/></main>;
  if(!state)return <main className="link-screen"><img src="logo.png" width="90"/><h1>BM Player</h1><p>Connecting…</p></main>;
  if(!state.linked||state.locked)return <SigninScreen bm={bm} platformName={state.platformName} code={state.code}/>;
+ if(!linkGo)return <LinkCheckScreen verified={!!state.linkVerified} platformName={state.platformName} onGo={()=>setLinkGo(true)}/>;
  const now=Date.now(),hidden=!!modal||!!voiceResults||inactive>0||!!progress,playing=state.playing||[];
  const header=<header className="bar"><img src="logo.png" alt="BM Support"/><span className="brand">BM Player</span><span className="version">v{state.version}</span><span className="testing">{state.platformName||'Windows'}</span><div className="spacer"/>{view==='home'&&<><button className="pill" onClick={()=>browse('live')}>🔍 Search TV</button><button className="pill" onClick={()=>browse('film')}>🔍 Search Movies</button><button className="pill" onClick={()=>browse('series')}>🔍 Search Series</button></>}{view!=='home'&&<button onClick={()=>{setPlayingView(false);setView('home');setModal(null);bm.stop();}}>⌂ Home</button>}{view!=='home'&&<button onClick={()=>{setPlayingView(false);setView('settings');bm.stop();}}>⚙ Settings</button>}<button aria-label="Close app" title="Close app" onClick={()=>setModal({type:'exit'})}>×</button></header>;
  if(state.maintenance)return <div className="app">{header}<main className="link-screen"><h1>Down for maintenance</h1><p>{state.maintenance}</p><button onClick={()=>bm.exit()}>Close</button></main></div>;
@@ -221,6 +222,18 @@ function TotpSetup({data,version,platformName,onDone}){
   <span className="version">v{version} · {platformName||'Windows'}</span></main>;
 }
 /** Display the device code for entry on the website; polling delivers its login. */
+// After the opening film: family picture while the website confirms this device's link, then the customer presses Go to home screen.
+function LinkCheckScreen({verified,platformName,onGo}){
+  const [slow,setSlow]=React.useState(false);
+  React.useEffect(()=>{const t=setTimeout(()=>setSlow(true),10000);return()=>clearTimeout(t);},[]);
+  const ready=verified||slow;
+  return <main className="family-screen"><section className="family-panel compact">
+    <h1>Welcome to BM Player</h1>
+    <p className="status-line">{verified?'✅ Your device is linked':slow?'⏳ Still checking your linked device… please wait':'⏳ Checking your linked device… please wait'}</p>
+    {ready&&<button className="primary" autoFocus onClick={onGo}>Go to home screen</button>}
+    <span className="version">{platformName}</span>
+  </section></main>;
+}
 function SigninScreen({bm,platformName,code}){
   const [msg,setMsg]=React.useState('');
   const [busy,setBusy]=React.useState(false);

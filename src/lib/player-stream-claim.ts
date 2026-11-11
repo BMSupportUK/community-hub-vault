@@ -26,7 +26,7 @@ export function maxedMessage(active: OtherDevice[], max: number): string {
   const allowed = Math.max(1, Math.floor(max) || 1);
   const who = active.slice(0, 3).map((d) => {
     const n = Math.max(1, Math.floor(d.watching_screens ?? 1) || 1);
-    return (d.name || "Another device") + (n > 1 ? ` is watching ${n} screens` : d.watching_title ? ` is watching ${d.watching_title}` : " is watching");
+    return (d.name || "Another device") + (n > 1 ? ` is watching ${n} screens${d.watching_title ? ` (${d.watching_title})` : ""}` : d.watching_title ? ` is watching ${d.watching_title}` : " is watching");
   }).join(", ");
   return `All ${allowed} ${allowed === 1 ? "connection" : "connections"} on this login are in use: ${who}. The number of screens is already maxed.`;
 }
