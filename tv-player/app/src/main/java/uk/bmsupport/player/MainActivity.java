@@ -272,6 +272,8 @@ public class MainActivity extends Activity {
 
     private List<String[]> multiCats;
     private final java.util.Map<String, String> multiNow = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String, TextView> multiViews = new java.util.HashMap<>();
+    private final java.util.concurrent.ExecutorService multiIo = java.util.concurrent.Executors.newFixedThreadPool(4);
     private final java.util.Set<String> multiAsked = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
 
     /** Multi-screen picker: category, then channels with what's on now – no full guide grid, so it opens fast. */
@@ -317,7 +319,8 @@ public class MainActivity extends Activity {
         TextView t = text(it.name + "\n" + multiNowLine(it.id), 17, TEXT, false);
         t.setMaxLines(2); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
         t.setTag(it.id);
-        if (!multiNow.containsKey(it.id) && multiAsked.add(it.id)) guideIo.execute(() -> {
+        multiViews.put(it.id, t); // rows are rebuilt while scrolling; the listing goes to the row on screen now
+        if (!multiNow.containsKey(it.id) && multiAsked.add(it.id)) multiIo.execute(() -> {
             String line = "";
             try {
                 long now = System.currentTimeMillis() / 1000;
@@ -326,7 +329,7 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {}
             multiNow.put(it.id, line);
             final String l2 = line;
-            ui.post(() -> { if (it.id.equals(t.getTag())) t.setText(it.name + "\n" + (l2.isEmpty() ? "No listing" : "Now: " + l2)); });
+            ui.post(() -> { TextView v = multiViews.get(it.id); if (v != null && it.id.equals(v.getTag())) v.setText(it.name + "\n" + (l2.isEmpty() ? "No listing" : "Now: " + l2)); });
         });
         return t;
     }
@@ -1158,7 +1161,9 @@ public class MainActivity extends Activity {
                 line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
                 String[] rooms = roomsInfo();
                 int pkg = rooms[1].isEmpty() ? 0 : Integer.parseInt(rooms[1]);
-                int cons = pkg >= 1 && pkg <= 3 ? pkg : info.optInt("max_connections", 1);
+                // The website package (1/2/3) wins; if that check misses (busy/offline), keep the last known package, never the provider's own number.
+                int saved = prefs.getInt("max_cons", 0);
+                int cons = pkg >= 1 && pkg <= 3 ? pkg : saved >= 1 && saved <= 3 ? saved : info.optInt("max_connections", 1);
                 line += " · " + cons + (cons == 1 ? " connection" : " connections");
                 if (cons >= 2) line += rooms[0];
                 String l = line;
