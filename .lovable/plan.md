@@ -26,8 +26,9 @@ Today a Multi/Triple Room login gets a warning and an admin report when a box wa
 - A customer can tap "I've moved / new broadband" on Link Device; an admin approves it.
 
 ## 6. VPNs
-- Linking already needs the VPN off (staff exempt).
-- While watching, a Multi/Triple Room box on a VPN gets reported (as now) and counts as a strike when another box is watching from home at the same time.
+- Watching with a VPN on is allowed: no warning, no report, no strike (we recommend a VPN to protect customers). The current VPN watching reports are removed.
+- A box on a VPN keeps the home or away status it last had without one, so it cannot be used to dodge the holiday rule.
+- Linking a box still needs the VPN off (staff exempt), so we always know its real home.
 
 ## 7. Admin view
 - The customer card and Security show a sharing history per login: home connection, devices, strikes, and current block state.
@@ -36,6 +37,7 @@ Today a Multi/Triple Room login gets a warning and an admin report when a box wa
 - New Android/Amazon, Windows and Mac versions to show the "home only" block message. Older versions are still blocked by the website (the box gets no stream permission), but show the general "already watching" message.
 
 ## Technical details
+- Remove the household VPN report and admin alert; VPN check-ins reuse the device last non-VPN location.
 - New `player_login_strikes` table (service-role only) and `blocked_away_until` on `player_login_homes`.
 - Poll handler runs `householdVerdict` per check-in; a "simultaneous different IP" rule is added to `src/lib/player-household.ts` with tests (2 houses at once = strike, 3 strikes/7 days = block, all boxes moving together = home update, phone on mobile allowed).
 - `stream_claim` returns `blocked: "away"` when blocked away from home; apps show the message and don't play.
