@@ -40,7 +40,7 @@ function send(data){ if(win&&!win.isDestroyed())win.webContents.send('player:eve
 function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,item.id);}
 let pinPassed=false,pinNeed=null,linkVerified=false;
 let pinSetup=false,pinDigits=4,pinFallback=false,totpSetup=false,totpData=null;
-function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed,linkVerified},()=>refresh().catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')});}));}
+function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.user,unlocked:gate.unlocked,pinPassed,linkVerified},()=>refresh(true).catch(e=>{send({type:'progress',message:'Could not update playlists. Try Refresh again.',percent:100});send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Could not update playlists. Try again.')});}));}
 async function afterPin(){if(totpSetup){try{totpData=await site({action:'totp_start'});return publicState();}catch(e){if(!/already set up/i.test(String(e&&e.message)))throw e;totpSetup=false;}}pinPassed=true;refreshAtStartup();return publicState();}
 async function checkPin(){pinSetup=false;totpSetup=false;totpData=null;pinNeed=false;pinPassed=true;store.pinRequired=false;send({type:'state',state:publicState()});refreshAtStartup();}
 function publicState(){
@@ -109,15 +109,15 @@ async function catalogue(kind){
  const result={categories:cats,items};cache.set(kind,result);store.refreshed={...(store.refreshed||{}),[kind]:Date.now()};save();send({type:'state',state:publicState()});return result;
  })();pending.set(kind,task);try{return await task;}finally{pending.delete(kind);}
 }
-async function refresh(){
+async function refresh(startup=false){
  if(!store.user||!gate.unlocked||!pinPassed||!linkVerified||maintenance)return false;
  if(refreshPromise)return refreshPromise;
- refreshPromise=refreshInner();try{return await refreshPromise;}finally{refreshPromise=null;}
+ refreshPromise=refreshInner(startup);try{return await refreshPromise;}finally{refreshPromise=null;}
 }
-async function refreshInner(){
- const kinds=['live','film','series'];let step=0;
- for(const kind of kinds){send({type:'progress',message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*100)});cache.delete(kind);await catalogue(kind);step++;}
- send({type:'progress',message:'Playlists updated',percent:100});send({type:'catalogues'});return true;
+async function refreshInner(startup){
+ const kinds=['live','film','series'];let step=0;const span=startup?60:100;
+ for(const kind of kinds){send({type:'progress',locked:startup,message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*span)});cache.delete(kind);await catalogue(kind);step++;}
+ if(startup){send({type:'catalogues',guide:true});return true;}send({type:'progress',message:'Playlists updated',percent:100});send({type:'catalogues'});return true;
 }
 async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||String(channel.id).length>80)throw new Error('Catch up isn\'t available on this channel.');const r=await provider('get_simple_data_table',{stream_id:String(channel.id)});return core.catchupProgrammes(r.epg_listings,Math.min(30,Number(channel.archive)));}
 // Resolve trusted catalogue names; only saved sports fixtures override provider EPG.
