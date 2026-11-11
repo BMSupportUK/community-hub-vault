@@ -727,7 +727,11 @@ public class MainActivity extends Activity {
                 PlayerApplication.pinPassed = false;
                 ui.post(this::start);
             } else if (!unlocked && hasLogin()) {
-                ui.post(() -> showMessage("Can't check your device link. Check the internet and try again.", this::start));
+                // Stay on the family picture: say it's still checking and let the next check-in (or the 10s Go to home button) carry on.
+                ui.post(() -> {
+                    if ("linkcheck".equals(screen) || "linkok".equals(screen)) { if ("linkcheck".equals(screen) && linkCheckMsg != null) linkCheckMsg.setText("\u23F3 Still checking your linked device… please wait"); }
+                    else showLinkCheck();
+                });
             }
         }
     }
