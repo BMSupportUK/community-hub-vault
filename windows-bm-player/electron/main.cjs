@@ -151,12 +151,13 @@ async function stopAll(){
  if(awake!==null){powerSaveBlocker.stop(awake);awake=null;}
  send({type:'state',state:publicState()});
 }
+let pkgConnections=null;
 async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,takeover=false}){
  if(item?.kind==='catchup'&&!(Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start&&item.end<=Date.now()))throw new Error('Choose a programme that has finished.');
  if(!item||!['live','film','episode','catchup'].includes(item.kind)||String(item.id).length>80)throw new Error('Choose a playable item.');
  if(maintenance)throw new Error(maintenance);
  if(publicState().expired)throw new Error('Your subscription has expired. Visit BM Support to renew.');
- const allowed=Math.min(3,Number(store.account?.max_connections)||1);
+ const allowed=Math.min(3,pkgConnections||Number(store.account?.max_connections)||1);
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
  // Preview → full screen on the same live channel keeps the running stream and its filled buffer.
  if(screens===1&&sessions.length===1&&item?.kind==='live'&&sessions[0].item.kind==='live'&&String(sessions[0].item.id)===String(item.id)&&!sessions[0].failed){lastInput=Date.now();promptedAt=0;send({type:'state',state:publicState()});return true;}
@@ -319,7 +320,7 @@ else{
    else if(value){store.settings={...store.settings,...value};save();if('boost' in value)applyAudio();}
    return publicState();
   });
-  register('rooms',async()=>{if(!store.token||!store.user||!linkVerified)return {rooms:[],connections:null};try{const r=await site({action:'rooms',login:store.user});const c=Number(r.connections);return {connections:c>=1&&c<=3?c:null,rooms:Array.isArray(r.rooms)?r.rooms.slice(0,5).map(d=>({name:String(d.name||'BM Player').slice(0,60),title:d.title?String(d.title).slice(0,120):''})):[]};}catch{return {rooms:[],connections:null};}});
+  register('rooms',async()=>{if(!store.token||!store.user||!linkVerified)return {rooms:[],connections:null};try{const r=await site({action:'rooms',login:store.user});const c=Number(r.connections);pkgConnections=c>=1&&c<=3?c:pkgConnections;return {connections:c>=1&&c<=3?c:null,rooms:Array.isArray(r.rooms)?r.rooms.slice(0,5).map(d=>({name:String(d.name||'BM Player').slice(0,60),title:d.title?String(d.title).slice(0,120):''})):[]};}catch{return {rooms:[],connections:null};}});
   register('majorSeen',id=>{const seen=new Set(store.majorSeen||[]);seen.add(String(id||''));store.majorSeen=[...seen].slice(-200);save();return publicState();});
   register('closeAnnouncement',id=>{store.annClosed=String(id||'');save();return publicState();});
   register('favourite',item=>{store.favourites=store.favourites||[];const at=store.favourites.findIndex(i=>i.id===item.id&&i.kind===item.kind);if(at<0)store.favourites.push(item);else store.favourites.splice(at,1);save();pushFavourites();return publicState();});
