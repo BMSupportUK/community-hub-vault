@@ -247,7 +247,8 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
   const withNoRenewal = (list: Customer[]) => list.map((c) => {
     const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
     const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
-    return { ...c, noRenewal: customerShowsNoRenewal(hasRecordedYear, years) };
+    // A paid renewal or upgrade always shows its date, even for a customer whose first subscription is under a year old.
+    return { ...c, noRenewal: customerShowsNoRenewal(hasRecordedYear, years) && !c.renewedAt && !c.accounts.some((x) => x.renewedAt) };
   });
   const shown = sortCustomers(withNoRenewal(tab === "single" ? singleRows : tab === "multi" ? multiRows : tab === "setup" ? setupRows : manualRows), sortBy, sortDir);
   const Detail = ({ label, children, action }: { label: string; children: ReactNode; action?: ReactNode }) => (
@@ -312,7 +313,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
                   <Detail label="Current package">{pkg}</Detail>
                   <div className="grid gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2.5 sm:grid-cols-2">
                     {hasRecordedYear && <Detail label="Subscription expires">{a ? date(a.expiresAt) : "Not recorded"}</Detail>}
-                    <Detail label="Last renewed subscription">{showNoRenewal ? "No Renewal Yet" : date(renewedAt)}</Detail>
+                    <Detail label="Last renewed subscription">{showNoRenewal && !renewedAt ? "No Renewal Yet" : date(renewedAt)}</Detail>
                   </div>
                 </dl>
               </section>);
