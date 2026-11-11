@@ -59,7 +59,7 @@ function App(){
   if(event.type==='notice')toast(event.message);
   if(event.type==='household-warning'){setModal({type:'household',message:event.message});}
   if(event.type==='stream-taken'){setPlayingView(false);setModal({type:'stream-taken'});}
-  if(event.type==='unlinked'){setPlayingView(false);setMulti(1);setView('home');setModal({type:'unlinked'});}
+  if(event.type==='unlinked'){catalogs.current={};setPlayingView(false);setMulti(1);setView('home');setModal({type:'unlinked'});}
   if(event.type==='alternate-feed')setModal({type:'alternate-feed',auto:!!event.auto,index:event.index,items:event.items,eventKey:event.eventKey});
   if(event.type==='progress')setProgress(event.percent<100?event:null);
   if(event.type==='inactive')setInactive(event.seconds);
@@ -69,7 +69,8 @@ function App(){
   if(event.type==='feed')setFeed(f=>({...f,[event.index]:event.status}));
   if(event.type==='watch')choose(event.item);
  });},[]);
- async function browse(nextKind,source,favourites=false){setKind(source?'live':nextKind);setCategory(source?'live':'all');setQuery('');setHeroItem(null);setSelected(null);setProgrammes([]);setView('browse');setLoading(true);setSort(state?.settings?.['sort_'+nextKind]||'added');if(source){setData({saved:true,favourites,categories:[{id:'live',name:'Live TV'},{id:'film',name:'Movies'},{id:'series',name:'Series'}],items:source.map(i=>({...i,category:i.kind==='live'?'live':i.kind==='film'?'film':'series'}))});setLoading(false);loadRatings(source);return;}const result=await act(()=>bm.catalog(nextKind));if(result){setData(result);loadRatings(result.items);}setLoading(false);pane.current?.scrollTo(0,0);}
+ const catalogs=useRef({});
+ async function browse(nextKind,source,favourites=false){setKind(source?'live':nextKind);setCategory(source?'live':'all');setQuery('');setHeroItem(null);setSelected(null);setProgrammes([]);setView('browse');setLoading(true);setSort(state?.settings?.['sort_'+nextKind]||'added');if(source){setData({saved:true,favourites,categories:[{id:'live',name:'Live TV'},{id:'film',name:'Movies'},{id:'series',name:'Series'}],items:source.map(i=>({...i,category:i.kind==='live'?'live':i.kind==='film'?'film':'series'}))});setLoading(false);loadRatings(source);return;}const stamp=state?.refreshed?.[nextKind]||0,kept=catalogs.current[nextKind];if(kept&&kept.stamp===stamp&&kept.user===state?.user){setData(kept.data);setLoading(false);pane.current?.scrollTo(0,0);return;}const result=await act(()=>bm.catalog(nextKind));if(result){catalogs.current[nextKind]={stamp:state?.refreshed?.[nextKind]||stamp,user:state?.user,data:result};setData(result);loadRatings(result.items);}setLoading(false);pane.current?.scrollTo(0,0);}
  const categories=data.saved?data.categories:orderCategories(data.categories,state?.settings?.['category_order_'+kind]);
  const items=orderBrowse(kind==='live'&&!data.saved?filterLive(data.items,category,query):data.items.filter(i=>(category==='all'||i.category===category)&&i.name.toLowerCase().includes(query.toLowerCase())),kind,sort);
  async function preview(item){
