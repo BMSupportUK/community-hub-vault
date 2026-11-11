@@ -23,4 +23,13 @@ test('login change clears cached listings and ignores previous login requests',a
  let finish;const cache=createGuideCache();const old=cache.load('7',()=>new Promise(resolve=>{finish=resolve;}));await Promise.resolve();
  cache.clear();const rows=[{title:'New login'}];await cache.load('7',async()=>rows);finish([{title:'Other login'}]);await old;
  expect(cache.peek('7')).toBe(rows);
+});test('saved guide shows on next open and still refreshes when seen',async()=>{
+ let now=1000;const a=createGuideCache(()=>now);await a.load('7',async()=>[{title:'Old',start:0,end:500},{title:'News',start:500,end:9000000}]);
+ const saved=JSON.parse(JSON.stringify(a.snapshot()));
+ const b=createGuideCache(()=>now);expect(b.restore(saved)).toBe(1);
+ expect(b.peek('7').map(p=>p.title)).toEqual(['News']);expect(b.due('7')).toBe(true);
+});
+test('a guide saved over 12 hours ago is not shown',()=>{
+ let now=0;const a=createGuideCache(()=>now);const saved={saved:0,rows:{'7':[{title:'X',start:0,end:99e9}]}};
+ now=12*3600000+1;const b=createGuideCache(()=>now);expect(b.restore(saved)).toBe(0);expect(b.peek('7')).toBeUndefined();
 });

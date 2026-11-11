@@ -1,6 +1,6 @@
 'use strict';
 // Visible EPG rows get a fresh website answer each minute, not once per mount.
-const REFRESH_MS=60000;
+const REFRESH_MS=60000,MAX_SAVED_MS=12*3600000;
 function due(fetchedAt,now=Date.now()){return fetchedAt==null||now-fetchedAt>=REFRESH_MS;}
 // Owned by the signed-in App, not by a guide that unmounts during playback.
 function createGuideCache(clock=Date.now){
@@ -23,6 +23,9 @@ function createGuideCache(clock=Date.now){
     .finally(()=>{if(pending.get(key)===job)pending.delete(key);});
    pending.set(key,job);return job;
   },
+  // Saved rows show at once on the next open but carry no fetch time, so they refresh quietly when seen.
+  snapshot(now=clock()){const out={};for(const [id,v] of rows){const list=v.list.filter(p=>Number(p.end||p.start)>now);if(list.length)out[id]=list;}return {saved:now,rows:out};},
+  restore(saved,now=clock()){if(!saved||typeof saved!=='object'||now-Number(saved.saved||0)>MAX_SAVED_MS)return 0;let n=0;for(const [id,list] of Object.entries(saved.rows||{})){if(!Array.isArray(list)||rows.has(id))continue;const left=list.filter(p=>p&&Number(p.end||p.start)>now);if(left.length){rows.set(id,{list:left});n++;}}return n;},
   clear(){generation++;rows.clear();pending.clear();attempts.clear();}
  };
 }

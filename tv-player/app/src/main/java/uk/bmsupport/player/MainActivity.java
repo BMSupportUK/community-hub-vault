@@ -1347,7 +1347,7 @@ public class MainActivity extends Activity {
         ui.postDelayed(previewTask, 700);
     }
 
-    @Override protected void onPause() { super.onPause(); stopPreview(); if ("multi".equals(screen)) { stopMulti(); showHome(); } }
+    @Override protected void onPause() { super.onPause(); saveGuide(); stopPreview(); if ("multi".equals(screen)) { stopMulti(); showHome(); } }
 
     private String liveCatId = "*";
 
@@ -3716,6 +3716,32 @@ public class MainActivity extends Activity {
     };
     private final java.util.Map<String, Long> guideFetchedAt = new java.util.HashMap<>();
     private final java.util.Set<String> guideFullFetched = new java.util.HashSet<>();
+    private final java.util.Map<String, Long> guideCoveredTo = new java.util.HashMap<>();
+    private String guideScope = null;
+    private java.io.File guideFile() {
+        String scope = prefs.getString("dns", "").replaceAll("/+$", "") + "\n" + prefs.getString("user", "");
+        return new java.io.File(new java.io.File(getCacheDir(), "guide"), Integer.toHexString(scope.hashCode()) + ".json");
+    }
+    /** Saved listings show straight away; with no fetch time they still refresh quietly when the row is seen. */
+    private void restoreGuide() {
+        String scope = guideFile().getName();
+        if (scope.equals(guideScope)) return;
+        guideScope = scope;
+        guideCache.clear(); guideFetchedAt.clear(); guideFullFetched.clear(); guideCoveredTo.clear();
+        try {
+            java.io.File f = guideFile();
+            if (!f.exists()) return;
+            String text = new String(java.nio.file.Files.readAllBytes(f.toPath()), "UTF-8");
+            guideCache.putAll(GuideStore.decode(text, System.currentTimeMillis() / 1000));
+        } catch (Exception ignored) {}
+    }
+    private void saveGuide() {
+        if (guideScope == null || guideCache.isEmpty()) return;
+        final String text = GuideStore.encode(new java.util.LinkedHashMap<>(guideCache), System.currentTimeMillis() / 1000);
+        final java.io.File f = guideFile();
+        if (!f.getName().equals(guideScope) || text.isEmpty()) return;
+        guideIo.execute(() -> { try { f.getParentFile().mkdirs(); java.nio.file.Files.write(f.toPath(), text.getBytes("UTF-8")); } catch (Exception ignored) {} });
+    }
     private long guideWindowSecs() { return getResources().getConfiguration().smallestScreenWidthDp < 600 ? 10800 : 7200; }
 
     /** Channels down the left, time across the top; OK on a programme on now watches it, on a future one sets/removes a reminder. */
@@ -3727,6 +3753,7 @@ public class MainActivity extends Activity {
     private void showTvGuide(String startCat, boolean live) {
         screen = "tvguide"; back = this::showHome;
         stopPreview();
+        restoreGuide();
         LinearLayout root = column();
         LinearLayout head = row();
         // Phones reserve the guide for View EPG; TV boxes keep their always-visible grid.
@@ -4029,7 +4056,9 @@ public class MainActivity extends Activity {
                 long nowS = System.currentTimeMillis() / 1000, win = guideWindowSecs();
                 Long at = guideFetchedAt.get(it.id);
                 long viewEnd = Math.max(nowS + win, grid.windowEnd());
-                boolean fresh = c != null && at != null && !GuideListings.stale(at, c, nowS, win, viewEnd, guideFullFetched.contains(it.id));
+                Long covered = guideCoveredTo.get(it.id);
+                boolean fresh = c != null && at != null && (!GuideListings.stale(at, c, nowS, win, viewEnd, guideFullFetched.contains(it.id))
+                        || (!c.isEmpty() && covered != null && viewEnd <= covered && nowS - at < GuideListings.REFRESH_SECS));
                 if (c != null) { if (!grid.loaded(r)) grid.setProgs(r, c); if (fresh) return; }
                 if (!requested.add(it.id)) return;
                 final int g = gen[0];
@@ -4047,7 +4076,8 @@ public class MainActivity extends Activity {
                     } catch (Exception ignored) {}
                     // Some providers only send "now" in the short list; the full day's table has the rest.
                     // Day ▶ / swiping ahead needs programmes beyond the short list, so ask for the full table too.
-                    if (GuideListings.tooShort(got, now, Math.max(win, viewEnd - now))) try {
+                    // The whole day is a big download: only ask for it when the short list is empty or the guide was moved ahead.
+                    if (GuideListings.needsFull(got, now, win, viewEnd)) try {
                         List<GuideGridView.Prog> full = GuideListings.parse(new JSONObject(Net.get(api("get_simple_data_table") + "&stream_id=" + it.id)).optJSONArray("epg_listings"), now);
                         if (full.size() > got.size()) got = full;
                         ok = true; full0 = true;
@@ -4063,6 +4093,7 @@ public class MainActivity extends Activity {
                         if (!fetched) return;
                         List<GuideGridView.Prog> got2 = res;
                         guideFetchedAt.put(it.id, System.currentTimeMillis() / 1000);
+                        guideCoveredTo.put(it.id, Math.max(System.currentTimeMillis() / 1000 + win, viewEnd));
                         if (gotFull) guideFullFetched.add(it.id); else guideFullFetched.remove(it.id);
                         guideCache.put(it.id, got2);
                         if (g == gen[0] && "tvguide".equals(screen)) grid.setProgs(r, got2);

@@ -29,7 +29,10 @@ function App(){
  const [intro,setIntro]=useState(true);
  const epgCache=useRef(null);if(!epgCache.current)epgCache.current=createGuideCache();
  const epgScope=useRef(null);
- function receiveState(next){const scope=next?.linked&&!next.locked?next.user:null;if(scope!==epgScope.current){epgCache.current.clear();epgScope.current=scope;}setState(next);}
+ function receiveState(next){const scope=next?.linked&&!next.locked?next.user:null;if(scope!==epgScope.current){saveGuide();epgCache.current.clear();epgScope.current=scope;if(scope)try{epgCache.current.restore(JSON.parse(localStorage.getItem(guideKey(scope))||'null'));}catch{}}setState(next);}
+ function guideKey(scope){let h=0;for(const c of String(scope))h=(h*31+c.charCodeAt(0))|0;return 'bm-guide-'+(h>>>0).toString(16);}
+ function saveGuide(){const scope=epgScope.current;if(!scope)return;try{localStorage.setItem(guideKey(scope),JSON.stringify(epgCache.current.snapshot()));}catch{}}
+ useEffect(()=>{const t=setInterval(saveGuide,120000);window.addEventListener('beforeunload',saveGuide);return()=>{clearInterval(t);window.removeEventListener('beforeunload',saveGuide);};},[]);
  const cachedEpg=id=>epgCache.current.load(id,key=>bm.epg(key));
  const [ratings,setRatings]=useState({}),[voteBusy,setVoteBusy]=useState(false);
  const ratingKey=item=>item.kind+':'+item.name;
@@ -60,7 +63,7 @@ function App(){
   if(event.type==='notice')toast(event.message);
   if(event.type==='household-warning'){setModal({type:'household',message:event.message});}
   if(event.type==='stream-taken'){setPlayingView(false);setModal({type:'stream-taken'});}
-  if(event.type==='unlinked'){catalogs.current={};setPlayingView(false);setMulti(1);setView('home');setModal({type:'unlinked'});}
+  if(event.type==='unlinked'){catalogs.current={};epgScope.current=null;epgCache.current.clear();try{Object.keys(localStorage).filter(k=>k.startsWith('bm-guide-')).forEach(k=>localStorage.removeItem(k));}catch{}setPlayingView(false);setMulti(1);setView('home');setModal({type:'unlinked'});}
   if(event.type==='alternate-feed')setModal({type:'alternate-feed',auto:!!event.auto,index:event.index,items:event.items,eventKey:event.eventKey});
   if(event.type==='progress')setProgress(event.percent<100?event:null);
   if(event.type==='inactive')setInactive(event.seconds);

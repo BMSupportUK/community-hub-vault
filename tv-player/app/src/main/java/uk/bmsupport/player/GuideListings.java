@@ -57,6 +57,12 @@ public final class GuideListings {
         return end < now + window;
     }
 
+    /** Full-day table only when the short list gave nothing, or the guide has been moved past the opening window and the list stops short. */
+    public static boolean needsFull(List<GuideGridView.Prog> l, long now, long window, long viewEnd) {
+        if (l == null || l.isEmpty()) return true;
+        return viewEnd > now + window && tooShort(l, now, viewEnd - now);
+    }
+
     /** True when a cached line-up is too old or has run out, so the guide should fetch again. */
     public static boolean stale(long fetchedAt, List<GuideGridView.Prog> l, long now, long window) {
         return stale(fetchedAt, l, now, window, now + window, false);
