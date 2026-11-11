@@ -848,12 +848,19 @@ public class MainActivity extends Activity {
 
     /** After the opening video: ask the customer's 4-digit PIN before the main menu, once per app open. */
     private void checkPin() {
+        // Never a plain logo "Loading…" screen: keep (or show) the family linked-device picture while this quick check runs.
+        boolean onFamily = ("linkcheck".equals(screen) || "linkok".equals(screen)) && linkCheckMsg != null;
         screen = "pin"; back = null;
-        LinearLayout wait = column();
-        wait.setGravity(Gravity.CENTER);
-        wait.addView(logo());
-        wait.addView(text("Loading…", 18, MUTED, false));
-        setContentView(wait);
+        if (onFamily) {
+            linkCheckMsg.setText("\u2705 Your device is linked");
+            for (int i = linkCheckPanel.getChildCount() - 1; i >= 0; i--) if (linkCheckPanel.getChildAt(i) instanceof Button) linkCheckPanel.removeViewAt(i);
+        } else {
+            LinearLayout p = column(); p.setGravity(Gravity.CENTER_HORIZONTAL);
+            p.addView(logo());
+            p.addView(text("Welcome to BM Player", 24, TEXT, true));
+            p.addView(text("\u2705 Your device is linked", 18, MUTED, false));
+            setContentView(familyFrame(p));
+        }
         io.execute(() -> {
             boolean required; boolean setup = false;
             try {
