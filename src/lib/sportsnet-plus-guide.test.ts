@@ -1,3 +1,4 @@
+// @ts-nocheck — tests run with bun test.
 import { expect, test } from "bun:test";
 import { isOfficialSportsChannel } from "./sports-programme-end";
 const { fixtureCandidate } = require("../../windows-bm-player/fixture-guide.cjs");
