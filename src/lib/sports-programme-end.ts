@@ -7,7 +7,7 @@ export function isOfficialSportsChannel(name: string): boolean {
   // Provider quality/trailing pipes are decoration, not an event-only marker.
   const channel = name.replace(/(?:\s*\|\s*(?:fhd|hd|sd|uhd|4k|hevc|h265)?\s*)+$/i, "").trim();
   return !isEventChannel(channel) && !/replay|catch.?up|events? only/.test(n)
-    && /\b(?:sky sports|tnt sports|bt sport|eurosport|premier sports|espn|bein sports|fox sports|nbc sports|cbs sports|tsn|sportsnet|supersport|willow|ten sports|star sports|sony sports)\b/.test(n);
+    && /\b(?:sky sports|tnt sports|bt sport|eurosport|premier sports|espn|bein sports|fox sports|nbc sports|cbs sports|tsn|sportsnet(?!\s*(?:\+|plus))|supersport|willow|ten sports|star sports|sony sports)\b/.test(n);
 }
 /** DAZN and Peacock event feeds also supply usable, titled provider EPG slots. */
 export function acceptsSportsProgrammeEnd(name: string): boolean {
