@@ -168,7 +168,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, iptv_username, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, watching_preview, platform, linked_at")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, iptv_username, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, watching_preview, platform, linked_at, name, geo_city, geo_country")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
         // A linked box unused for 60 days is unlinked and must be linked again.
@@ -236,11 +236,47 @@ export const Route = createFileRoute("/api/public/player")({
             await supabaseAdmin.from("player_devices").update({ stream_stop_at: nowIso, watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false })
               .in("id", clash.map((d) => d.id));
           }
+          // Multi/Triple Room: one home internet connection plus one phone on mobile data.
+          let warning: string | null = null;
+          let claimIp: string | null = null, claimMobile = false;
+          if ((pkgMax ?? 1) >= 2 && device.user_id) {
+            try {
+              const { isPublicIp, checkDeviceVpn, lookupMobile } = await import("@/lib/player-vpn");
+              const { householdVerdict } = await import("@/lib/player-household");
+              const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+              if (ip && isPublicIp(ip)) {
+                claimIp = ip;
+                const [vpn, mobile, { data: home }, { data: mob }] = await Promise.all([
+                  checkDeviceVpn(ip), lookupMobile(ip),
+                  supabaseAdmin.from("player_login_homes").select("home_ip").eq("login", body.login).maybeSingle(),
+                  supabaseAdmin.from("player_devices").select("id, last_seen_at, watching_kind, claim_mobile").eq("iptv_username", body.login).neq("id", device.id).eq("claim_mobile", true).not("watching_kind", "is", null).gte("last_seen_at", new Date(Date.now() - 3 * 60_000).toISOString()).limit(10),
+                ]);
+                claimMobile = mobile === true;
+                const v = householdVerdict({ connections: pkgMax ?? 1, homeIp: home?.home_ip ?? null, ip, mobile: claimMobile, vpn: vpn.vpn_status === "yes", otherMobileWatching: (mob ?? []).filter((d) => !clash.some((c) => c.id === d.id)).length });
+                if (v.setHome) await supabaseAdmin.from("player_login_homes").upsert({ login: body.login, home_ip: ip }, { onConflict: "login", ignoreDuplicates: true });
+                warning = v.warn;
+                if (v.kind !== "ok") {
+                  const kind = v.kind === "vpn" ? "household_vpn" : v.kind === "second_mobile" ? "household_mobile" : "household_away";
+                  const { count } = await supabaseAdmin.from("player_security_events").select("id", { count: "exact", head: true })
+                    .eq("kind", kind).eq("login", body.login).eq("device_id", device.id).gte("created_at", new Date(Date.now() - 6 * 3600_000).toISOString());
+                  if (!count) {
+                    const city = device.geo_city ?? null, country = device.geo_country ?? null;
+                    await supabaseAdmin.from("player_security_events").insert({ kind, device_id: device.id, owner_id: device.user_id, login: body.login,
+                      detail: { device: device.name ?? device.platform, platform: device.platform, ip, home_ip: home?.home_ip ?? null, city, country, vpn_provider: vpn.vpn_provider ?? null, connections: pkgMax } });
+                    const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
+                    const what = v.kind === "vpn" ? "is watching through a VPN, so its real location is hidden" : v.kind === "second_mobile" ? "is a second phone watching on mobile data" : "is watching away from the home internet connection";
+                    await notifyPlayerAdmins(supabaseAdmin, "Multi Room rule", `A box on login ${body.login} ${what}.`);
+                  }
+                }
+              }
+            } catch (e) { console.warn("[stream_claim] household check failed", e); }
+          }
           await supabaseAdmin.from("player_devices").update({
+            claim_ip: claimIp, claim_mobile: claimMobile,
             iptv_username: body.login, last_seen_at: nowIso, stream_claimed_at: nowIso, stream_stop_at: null,
             watching_kind: body.kind === "catchup" ? "live" : body.kind, watching_title: body.title, watching_since: device.watching_kind ? device.watching_since : nowIso,
           }).eq("id", device.id);
-          return json({ ok: true, took_over: clash.length });
+          return json({ ok: true, took_over: clash.length, warning });
         }
 
         if (body.action === "major_announcements") {

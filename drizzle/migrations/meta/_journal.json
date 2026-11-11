@@ -2381,6 +2381,20 @@
       "when": 1794389614735,
       "tag": "0339_player_login_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 340,
+      "version": "7",
+      "when": 1794390225194,
+      "tag": "0340_player_login_homes",
+      "breakpoints": true
+    },
+    {
+      "idx": 341,
+      "version": "7",
+      "when": 1794390275735,
+      "tag": "0341_player_devices_household",
+      "breakpoints": true
     }
   ]
 }

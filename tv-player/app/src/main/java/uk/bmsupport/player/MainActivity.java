@@ -170,6 +170,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        StreamClaim.host = this;
         StreamClaim.onMainTaken = () -> {
             stopPreview(); stopMulti();
             if (!isFinishing()) new AlertDialog.Builder(this).setTitle("Playback moved")

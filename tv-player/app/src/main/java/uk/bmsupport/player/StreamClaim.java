@@ -30,6 +30,8 @@ final class StreamClaim {
                         .put("action", "stream_claim").put("device_token", token).put("login", user).put("max", max)
                         .put("takeover", takeover).put("kind", apiKind(kind)).put("title", title == null || title.isEmpty() ? "Channel" : title.length() > 200 ? title.substring(0, 200) : title).toString()));
                 busy = res.optBoolean("busy", false);
+                final String warn = res.isNull("warning") ? "" : res.optString("warning", "");
+                if (!warn.isEmpty()) UI.post(() -> warnHousehold(warn));
                 who = describe(res.optJSONArray("devices"));
             } catch (Throwable ignored) {}
             final boolean b = busy; final String w = who;
@@ -50,6 +52,17 @@ final class StreamClaim {
             s.append(name.isEmpty() ? "Another device" : name).append(title.isEmpty() ? " is watching" : " is watching " + title).append('.');
         }
         return s.length() == 0 ? "Another device is watching on this login." : s.toString();
+    }
+
+    static Activity host;
+    /** Multi Room rule: shown over whatever screen is open; playback carries on. */
+    static void warnHousehold(String message) {
+        Activity a = null;
+        for (Activity p : PLAYERS) if (p != null && !p.isFinishing()) a = p;
+        if (a == null) a = host;
+        if (a == null || a.isFinishing()) return;
+        try { new android.app.AlertDialog.Builder(a).setTitle("Multi Room rule").setMessage(message).setPositiveButton("OK", null).show(); }
+        catch (Throwable ignored) { android.widget.Toast.makeText(a, message, android.widget.Toast.LENGTH_LONG).show(); }
     }
 
     static void attach(Activity a) { PLAYERS.add(a); }

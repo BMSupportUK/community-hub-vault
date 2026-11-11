@@ -1,0 +1,1 @@
+ALTER TABLE public.player_devices ADD COLUMN IF NOT EXISTS claim_ip text, ADD COLUMN IF NOT EXISTS claim_mobile boolean NOT NULL DEFAULT false;

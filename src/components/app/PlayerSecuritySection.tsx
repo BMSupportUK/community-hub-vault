@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { closePlayerSecurityEvent, decidePlayerBoxLimit } from "@/lib/player.functions";
+import { closePlayerSecurityEvent, decidePlayerBoxLimit, setPlayerLoginHome } from "@/lib/player.functions";
 
 type Ev = { id: string; kind: string; login: string | null; detail: Record<string, unknown>; status: string; created_at: string };
 
@@ -13,6 +13,9 @@ const TITLE: Record<string, string> = {
   unusual_place: "Possible login sharing",
   lockout: "Box locked for 24 hours (wrong account numbers)",
   removed_not_me: "Customer removed a box: Not me",
+  household_away: "Multi Room box away from home",
+  household_mobile: "Second phone on mobile data",
+  household_vpn: "Multi Room box on a VPN",
 };
 
 function detailText(e: Ev) {
@@ -20,6 +23,12 @@ function detailText(e: Ev) {
   if (e.kind === "unusual_place") return `Login ${e.login ?? "?"} used in ${(e.detail.countries as string[] | undefined)?.join(" and ") ?? "two countries"} at the same time.`;
   if (e.kind === "lockout") return `Login ${e.login ?? "not set"}.`;
   if (e.kind === "removed_not_me") return `${String(e.detail.platform ?? "Box")}${e.login ? ` on login ${e.login}` : ""}${e.detail.country ? `, last seen in ${String(e.detail.city ?? "")} ${String(e.detail.country)}` : ""}.`;
+  if (e.kind.startsWith("household_")) {
+    const d = e.detail as Record<string, string | number | null>;
+    const where = d.country ? ` Seen around ${d.city ? d.city + ", " : ""}${d.country}.` : "";
+    if (e.kind === "household_vpn") return `${d.device ?? "Box"} on login ${e.login ?? "?"} is using a VPN${d.vpn_provider ? ` (${d.vpn_provider})` : ""}. Its real location can't be seen.`;
+    return `${d.device ?? "Box"} on login ${e.login ?? "?"} is on internet ${d.ip ?? "?"}, home is ${d.home_ip ?? "not set"}.${where}`;
+  }
   return "";
 }
 
@@ -27,6 +36,7 @@ function detailText(e: Ev) {
 export function PlayerSecuritySection() {
   const decide = useServerFn(decidePlayerBoxLimit);
   const close = useServerFn(closePlayerSecurityEvent);
+  const setHome = useServerFn(setPlayerLoginHome);
   const { data = [], isPending, refetch } = useQuery({
     queryKey: ["player-security-events"],
     refetchInterval: 10_000,
@@ -44,7 +54,7 @@ export function PlayerSecuritySection() {
   return (
     <section className="space-y-3 rounded-xl border border-border bg-surface p-5">
       <h2 className="font-display text-lg font-semibold">Security</h2>
-      <p className="text-sm text-muted-foreground">Each customer app login can run on 3 boxes. A 4th waits here for approval. Staff accounts have no box limit. Sharing and lockout warnings also show here.</p>
+      <p className="text-sm text-muted-foreground">Each customer app login can run on 3 boxes. A 4th waits here for approval. Staff accounts have no box limit. Sharing and lockout warnings also show here. Multi Room and Triple Room logins must stay in one home (the first box linked sets it) plus one phone on mobile data.</p>
       {isPending ? <Loader2 className="size-5 animate-spin text-muted-foreground" /> : !data.length ? <p className="text-sm text-muted-foreground">Nothing needs attention.</p> : (
         <ul className="divide-y divide-border">
           {data.map((e) => (
@@ -56,6 +66,9 @@ export function PlayerSecuritySection() {
               {e.kind === "box_limit" ? <>
                 <Button size="sm" onClick={() => act(() => decide({ data: { eventId: e.id, approve: true } }), "Approved. The box gets its login on its next check-in.")}>Approve</Button>
                 <Button size="sm" variant="outline" onClick={() => act(() => decide({ data: { eventId: e.id, approve: false } }), "Refused. The login was not sent.")}>Refuse</Button>
+              </> : e.kind === "household_away" ? <>
+                <Button size="sm" onClick={() => act(() => setHome({ data: { eventId: e.id } }), "Saved as the new home connection.")}>Make this home</Button>
+                <Button size="sm" variant="outline" onClick={() => act(() => close({ data: { eventId: e.id } }), "Marked as checked.")}>Checked</Button>
               </> : <Button size="sm" variant="outline" onClick={() => act(() => close({ data: { eventId: e.id } }), "Marked as checked.")}>Checked</Button>}
             </li>
           ))}

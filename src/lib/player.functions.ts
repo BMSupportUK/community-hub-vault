@@ -127,6 +127,21 @@ export const closePlayerSecurityEvent = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Admin/management: a Multi Room box moved house legitimately (e.g. new broadband), so its internet becomes the home. */
+export const setPlayerLoginHome = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ eventId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdminOrManagement(context);
+    const { data: ev } = await context.supabase.from("player_security_events").select("id, kind, login, detail").eq("id", data.eventId).maybeSingle();
+    const ip = (ev?.detail as { ip?: string } | null)?.ip;
+    if (!ev || ev.kind !== "household_away" || !ev.login || !ip) throw new Error("This report can't set a home.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("player_login_homes").upsert({ login: ev.login, home_ip: ip, set_at: new Date().toISOString(), set_by: context.userId }, { onConflict: "login" });
+    await context.supabase.from("player_security_events").update({ status: "closed", decided_by: context.userId, decided_at: new Date().toISOString() }).eq("id", ev.id);
+    return { ok: true };
+  });
+
 /** Send a login to one of the member's already-linked devices. */
 export const sendLoginToDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

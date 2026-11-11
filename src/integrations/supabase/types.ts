@@ -6162,6 +6162,8 @@ export type Database = {
       player_devices: {
         Row: {
           app_version: string | null
+          claim_ip: string | null
+          claim_mobile: boolean
           connected_since: string | null
           created_at: string
           credential_id: string | null
@@ -6203,6 +6205,8 @@ export type Database = {
         }
         Insert: {
           app_version?: string | null
+          claim_ip?: string | null
+          claim_mobile?: boolean
           connected_since?: string | null
           created_at?: string
           credential_id?: string | null
@@ -6244,6 +6248,8 @@ export type Database = {
         }
         Update: {
           app_version?: string | null
+          claim_ip?: string | null
+          claim_mobile?: boolean
           connected_since?: string | null
           created_at?: string
           credential_id?: string | null
@@ -6417,6 +6423,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_login_homes: {
+        Row: {
+          home_ip: string
+          login: string
+          set_at: string
+          set_by: string | null
+        }
+        Insert: {
+          home_ip: string
+          login: string
+          set_at?: string
+          set_by?: string | null
+        }
+        Update: {
+          home_ip?: string
+          login?: string
+          set_at?: string
+          set_by?: string | null
+        }
+        Relationships: []
       }
       player_major_announcements: {
         Row: {

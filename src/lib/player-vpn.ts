@@ -155,3 +155,21 @@ export function clearVpnCache() {
   cache.clear();
   inflight.clear();
 }
+
+const mobileCache = new Map<string, { at: number; mobile: boolean | null }>();
+/** Whether an IP belongs to a mobile-data network (ipapi.is), cached 6 hours; null when unknown. */
+export async function lookupMobile(ip: string, now = Date.now()): Promise<boolean | null> {
+  const hit = mobileCache.get(ip);
+  if (hit && now - hit.at < (hit.mobile === null ? VPN_RETRY_TTL_MS : VPN_CHECK_TTL_MS)) return hit.mobile;
+  let mobile: boolean | null = null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), LOOKUP_TIMEOUT_MS);
+    const res = await fetch(`https://api.ipapi.is/?q=${encodeURIComponent(ip)}`, { signal: ctrl.signal, headers: { Accept: "application/json" } });
+    clearTimeout(t);
+    if (res.ok) { const e = (await res.json()) as Record<string, unknown>; if (typeof e.is_mobile === "boolean") mobile = e.is_mobile; }
+  } catch { /* unknown */ }
+  if (mobileCache.size >= CACHE_LIMIT) mobileCache.clear();
+  mobileCache.set(ip, { at: now, mobile });
+  return mobile;
+}
