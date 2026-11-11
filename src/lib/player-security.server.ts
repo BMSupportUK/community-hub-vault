@@ -26,7 +26,8 @@ export async function queuePlayerLogin(admin: Admin, opts: { deviceId: string; o
   // Staff accounts are never held by the box limit.
   const { data: staffRole } = await admin.from("user_roles").select("role")
     .eq("user_id", opts.ownerId).in("role", ["admin", "management", "staff", "moderator"]).limit(1);
-  const held = boxLimitReached(count ?? 0, !!staffRole?.length);
+  const { data: connections } = await admin.rpc("player_login_connections", { p_login: opts.username });
+  const held = boxLimitReached(count ?? 0, !!staffRole?.length, connections as number | null);
   await admin.from("player_pending_credentials").upsert({ device_id: opts.deviceId, username: opts.username, password: opts.password, created_at: new Date().toISOString(), held });
   if (held) {
     await admin.from("player_security_events").insert({ kind: "box_limit", device_id: opts.deviceId, owner_id: opts.ownerId, login: opts.username, detail: { boxes: count } });

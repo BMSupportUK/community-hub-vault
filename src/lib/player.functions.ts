@@ -152,6 +152,54 @@ export const setPlayerLoginHome = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Admin/management: wipe a Multi Room login's strikes and lift its home-only block. */
+export const clearPlayerLoginStrikes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ eventId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdminOrManagement(context);
+    const { data: ev } = await context.supabase.from("player_security_events").select("id, login").eq("id", data.eventId).maybeSingle();
+    if (!ev?.login) throw new Error("This report has no login.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const now = new Date().toISOString();
+    await supabaseAdmin.from("player_login_homes").update({ blocked_away_until: null }).eq("login", ev.login);
+    await supabaseAdmin.from("player_security_events").update({ status: "cleared", decided_by: context.userId, decided_at: now }).eq("login", ev.login).in("kind", ["household_away", "household_blocked"]);
+    return { ok: true };
+  });
+
+/** Admin/management: approve a customer's "I've moved / new broadband" request; the next box to play sets the new home. */
+export const approvePlayerHomeMove = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ eventId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdminOrManagement(context);
+    const { data: ev } = await context.supabase.from("player_security_events").select("id, kind, login").eq("id", data.eventId).maybeSingle();
+    if (!ev?.login || ev.kind !== "household_move") throw new Error("This report isn't a move request.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("player_login_homes").update({ home_ip: "", move_requested_at: null, set_by: context.userId }).eq("login", ev.login);
+    await context.supabase.from("player_security_events").update({ status: "closed", decided_by: context.userId, decided_at: new Date().toISOString() }).eq("id", ev.id);
+    return { ok: true };
+  });
+
+/** Customer: "I've moved / new broadband" for one of their own Multi Room logins. */
+export const requestPlayerHomeMove = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ login: z.string().min(1).max(200) }).parse(d))
+  .handler(async ({ data, context }) => {
+    // RLS-scoped read proves the customer owns a box on this login.
+    const { data: own } = await context.supabase.from("player_devices").select("id").eq("iptv_username", data.login).eq("user_id", context.userId).limit(1);
+    if (!own?.length) throw new Error("That login isn't on one of your boxes.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: home } = await supabaseAdmin.from("player_login_homes").select("move_requested_at").eq("login", data.login).maybeSingle();
+    if (home?.move_requested_at) return { ok: true, already: true };
+    if (home) await supabaseAdmin.from("player_login_homes").update({ move_requested_at: new Date().toISOString() }).eq("login", data.login);
+    else await supabaseAdmin.from("player_login_homes").insert({ login: data.login, home_ip: "", move_requested_at: new Date().toISOString() });
+    await supabaseAdmin.from("player_security_events").insert({ kind: "household_move", owner_id: context.userId, login: data.login, detail: {} });
+    const { notifyPlayerAdmins } = await import("@/lib/player-security.server");
+    await notifyPlayerAdmins(supabaseAdmin, "Multi Room move", `Login ${data.login} says they've moved or changed broadband.`);
+    return { ok: true, already: false };
+  });
+
 /** Send a login to one of the member's already-linked devices. */
 export const sendLoginToDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

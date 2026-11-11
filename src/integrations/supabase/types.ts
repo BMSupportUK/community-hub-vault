@@ -6162,6 +6162,7 @@ export type Database = {
       player_devices: {
         Row: {
           app_version: string | null
+          claim_away: boolean
           claim_ip: string | null
           claim_mobile: boolean
           connected_since: string | null
@@ -6205,6 +6206,7 @@ export type Database = {
         }
         Insert: {
           app_version?: string | null
+          claim_away?: boolean
           claim_ip?: string | null
           claim_mobile?: boolean
           connected_since?: string | null
@@ -6248,6 +6250,7 @@ export type Database = {
         }
         Update: {
           app_version?: string | null
+          claim_away?: boolean
           claim_ip?: string | null
           claim_mobile?: boolean
           connected_since?: string | null
@@ -6426,20 +6429,29 @@ export type Database = {
       }
       player_login_homes: {
         Row: {
+          blocked_away_until: string | null
           home_ip: string
           login: string
+          mobile_device_id: string | null
+          move_requested_at: string | null
           set_at: string
           set_by: string | null
         }
         Insert: {
+          blocked_away_until?: string | null
           home_ip: string
           login: string
+          mobile_device_id?: string | null
+          move_requested_at?: string | null
           set_at?: string
           set_by?: string | null
         }
         Update: {
+          blocked_away_until?: string | null
           home_ip?: string
           login?: string
+          mobile_device_id?: string | null
+          move_requested_at?: string | null
           set_at?: string
           set_by?: string | null
         }

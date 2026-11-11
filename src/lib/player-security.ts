@@ -17,9 +17,14 @@ export function lockoutMinutes(level: number): number {
   return 24 * 60;
 }
 
-export function boxLimitReached(otherBoxesOnLogin: number, ownerIsStaff = false): boolean {
+/** Boxes a login may use: Multi Room 2 + 1 phone, Triple Room 3 + 1 phone, otherwise the standard limit. */
+export function boxAllowance(connections: number | null | undefined): number {
+  return connections && connections >= 2 ? connections + 1 : MAX_BOXES_PER_LOGIN;
+}
+
+export function boxLimitReached(otherBoxesOnLogin: number, ownerIsStaff = false, connections?: number | null): boolean {
   // Staff accounts can link as many boxes as they need.
-  return !ownerIsStaff && otherBoxesOnLogin >= MAX_BOXES_PER_LOGIN;
+  return !ownerIsStaff && otherBoxesOnLogin >= boxAllowance(connections);
 }
 
 export function isQuietBox(lastSeenAt: string | null | undefined, linkedAt: string | null | undefined, now = Date.now()): boolean {

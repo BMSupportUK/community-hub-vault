@@ -1,0 +1,2 @@
+ALTER TABLE public.player_login_homes ADD COLUMN IF NOT EXISTS blocked_away_until timestamptz, ADD COLUMN IF NOT EXISTS mobile_device_id uuid, ADD COLUMN IF NOT EXISTS move_requested_at timestamptz;
+ALTER TABLE public.player_devices ADD COLUMN IF NOT EXISTS claim_away boolean NOT NULL DEFAULT false;
