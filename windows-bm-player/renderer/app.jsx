@@ -96,6 +96,7 @@ function App(){
  async function openGuide(){setView('guide');setLoading(true);const d=await act(()=>bm.catalog('live'));if(d){setData(d);const first=d.items.slice(0,15);for(let at=0;at<first.length;at+=3){await Promise.all(first.slice(at,at+3).map(async c=>{const p=await act(()=>cachedEpg(c.id));if(p)setGuide(g=>({...g,[c.id]:p}));}));}}setLoading(false);}
  async function reminder(item,p){const old=state.reminders.find(r=>r.id===`${item.id}:${p.start}`);setModal({type:'reminder-confirm',item,p,old});}
  async function changeReminder(m){if(m.old){const s=await act(()=>bm.reminder({remove:true,id:m.old.id}));if(s)setState(s);}else{const s=await act(()=>bm.reminder({...m.p,item:m.item}));if(s)setState(s);}setModal(null);}
+ const inApp=!intro&&!!state&&!!state.linked&&!state.locked&&!!state.signedIn;useEffect(()=>{setInApp(inApp);},[inApp]);
  if(intro)return <main className="opening"><video src="player-intro.mp4" autoPlay playsInline onEnded={()=>setIntro(false)} onError={()=>setIntro(false)} aria-label="BM Player family opening intro"/></main>;
  if(!state)return <main className="link-screen"><img src="logo.png" width="90"/><h1>BM Player</h1><p>Connecting…</p></main>;
  if(!state.linked||state.locked)return <SigninScreen bm={bm} platformName={state.platformName} code={state.code}/>;
@@ -135,17 +136,18 @@ view==='browse'?<main className={'browse '+(kind==='live'?'live-browse':'')}><as
  </div>;
 }
 function Announcement(){
- const [a,setA]=useState(null);
+ const [a0,setA]=useState(null);const inApp=useInApp();const a=inApp?a0:null;
  useEffect(()=>{bm.state().then(s=>setA(s.announcement||null));return bm.subscribe(e=>{if(e.type==='state')setA(e.state.announcement||null);});},[]);
  useEffect(()=>{document.body.classList.toggle('has-ann',!!a);},[a]);
  if(!a)return null;
  return <div className="announcement" role="status"><span>📢 {a.message}</span><button aria-label="Close announcement" onClick={()=>bm.closeAnnouncement(a.id).then(s=>setA(s.announcement||null))}>✕</button></div>;
 }
 function MajorAnnouncements(){
+ const inApp=useInApp();
  const [st,setSt]=useState({major:[],majorSeen:[]});const [open,setOpen]=useState(false);const [item,setItem]=useState(null);
  useEffect(()=>{bm.state().then(s=>setSt(s));return bm.subscribe(e=>{if(e.type==='state')setSt(e.state);});},[]);
  const list=st.major||[],seen=new Set(st.majorSeen||[]);const unread=list.filter(i=>!seen.has(i.id)).length;
- if(st.locked||!st.linked||!st.signedIn)return null;
+ if(!inApp||st.locked||!st.linked||!st.signedIn)return null;
  const view=i=>{setItem(i);if(!seen.has(i.id))bm.majorSeen(i.id).then(setSt);};
  const when=d=>{const t=new Date(d);return isNaN(t)?'':t.toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});};
  return <>
@@ -156,6 +158,9 @@ function MajorAnnouncements(){
   </div></div>}
  </>;
 }
+// Announcements wait until the app itself is on screen (after the opening film and sign-in).
+function useInApp(){const [ok,setOk]=useState(!!window.__bmInApp);useEffect(()=>{const f=()=>setOk(!!window.__bmInApp);window.addEventListener('bm-inapp',f);return()=>window.removeEventListener('bm-inapp',f);},[]);return ok;}
+function setInApp(v){if(!!window.__bmInApp!==v){window.__bmInApp=v;window.dispatchEvent(new Event('bm-inapp'));}}
 createRoot(document.getElementById('root')).render(<><App/><Announcement/><MajorAnnouncements/></>);
 const heroCache=new Map();
 /** Films/Series top panel (matches Android): backdrop, title, rating · year · length · genre, cast, director, plot. */
