@@ -550,8 +550,10 @@ public class MainActivity extends Activity {
         }
         startPolling();
         if (hasLogin()) {
-            if (rememberedUnlock() && linkVerified) showHome();
-            else showLinkCheck();
+            // Every open shows the family link check; an already-confirmed link adds the Go to home button straight away.
+            rememberedUnlock();
+            showLinkCheck();
+            if (linkVerified) linkConfirmed();
         } else showLink();
     }
 
