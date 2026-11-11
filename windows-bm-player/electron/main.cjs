@@ -31,7 +31,7 @@ function toBackup(session){
 const SITE='https://bmsupport.uk';
 let win,store={},file,lastInput=Date.now(),promptedAt=0,excessSince=0,excessReported=false,linkCode='',maintenance=null;
 let sportsSnapshot=null;
-let sessions=[],awake=null,pollBusy=false,checkBusy=false,engine=null;
+let sessions=[],awake=null,pollBusy=false,pollStarted=0,checkBusy=false,engine=null;
 let lastSystemIdle=0,refreshPromise=null;
 const page=path.join(__dirname,'../dist/index.html');
 const cache=new Map(),pending=new Map();
@@ -60,14 +60,15 @@ async function site(body){
 }
 // Unlinked on the website: stop every screen, forget the login and show a fresh link code.
 let unlinking=false;
-async function unlinked(){if(unlinking)return;unlinking=true;try{await stopAll().catch(()=>{});pinPassed=false;store.account=null;cache.clear();linkCode=null;save();send({type:'unlinked'});send({type:'state',state:publicState()});await getCode().catch(()=>{});}finally{unlinking=false;}}
+async function unlinked(){if(unlinking)return;unlinking=true;try{await stopAll().catch(()=>{});pinPassed=false;store.account=null;cache.clear();linkCode=null;save();send({type:'unlinked'});send({type:'state',state:publicState()});await getCode().catch(()=>{});pollBusy=false;poll().catch(()=>{});}finally{unlinking=false;}}
 async function getCode(){if(!store.token){const r=await site({action:'register',platform:PLATFORM.id,name:'BM Player '+PLATFORM.name});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
 let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||'')}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
 let announcement=null,annBusy=false;const STARTED_AT=Date.now();
 async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}if(r&&r.watch)openWatch(r.watch).catch(()=>{});if(r&&r.stop_stream&&sessions.length){stopAll().catch(()=>{}).finally(()=>send({type:'stream-taken'}));}}catch{}finally{annBusy=false;}}
 async function poll(){
- if(pollBusy||!store.token)return;pollBusy=true;
+ // A stuck check (e.g. a stop that never returns) must never stop the box from picking up its link.
+ if(!store.token||(pollBusy&&Date.now()-pollStarted<45000))return;pollBusy=true;pollStarted=Date.now();
  try{
   const session=sessions[0];
   const r=await site({action:'poll',login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
