@@ -77,7 +77,8 @@ class EmbeddedVlc {
  }
  /** Index of the visible screen just clicked with the left mouse button, or null. */
  clickedPane(){if(!this.keyState||this.surfaces.size<2)return null;try{
-  const down=(this.keyState(0x01)&0x8000)!==0,was=this.mouseDown;this.mouseDown=down;if(!down||was)return null;
+  // Low bit = pressed since the last poll, so a quick click between 60ms polls is never missed.
+  const st=this.keyState(0x01),down=(st&0x8000)!==0,was=this.mouseDown;this.mouseDown=down;if(!((st&1)||(down&&!was)))return null;
   const pt=Buffer.alloc(8);if(!this.cursor(pt))return null;const x=pt.readInt32LE(0),y=pt.readInt32LE(4);
   for(const [index,s]of this.surfaces){if(!this.visible(s.hwnd))continue;const r=Buffer.alloc(16);if(!this.winRect(s.hwnd,r))continue;if(x>=r.readInt32LE(0)&&x<r.readInt32LE(8)&&y>=r.readInt32LE(4)&&y<r.readInt32LE(12))return index;}
  }catch{}return null;}

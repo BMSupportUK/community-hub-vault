@@ -178,7 +178,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,ta
  catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
  const onBackup=engine.usingBackup(index);
  const session={index,item,event,recoveryName,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
- if(index===0)audible=0;applyAudio();
+ if(index===0)audible=0;applyAudio();send({type:"audible",index:audible});
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
  lastInput=Date.now();promptedAt=0;poll();send({type:'state',state:publicState()});return true;
@@ -311,7 +311,7 @@ else{
    else if(value.action==='volume'&&Number.isFinite(value.volume)){userVolume=Math.max(0,Math.min(100,Math.round(value.volume)));audible=index;applyAudio();}
    else if(value.action==='boost'){store.settings={...store.settings,boost:boost.level(value.level).id};save();applyAudio();}
    else if(value.action==='subtitles'){engine.setSubtitles?.(index,value.on===true);session.paused=false;engine.pause(index,false);}
-   else if(value.action==='audio'){audible=index;applyAudio();}
+   else if(value.action==='audio'){audible=index;applyAudio();send({type:'audible',index});}
    send({type:'state',state:publicState()});return true;
   });
   register('settings',async value=>{
