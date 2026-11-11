@@ -319,7 +319,7 @@ else{
    else if(value){store.settings={...store.settings,...value};save();if('boost' in value)applyAudio();}
    return publicState();
   });
-  register('rooms',async()=>{if(!store.token||!store.user||!linkVerified)return [];try{const r=await site({action:'rooms',login:store.user});return Array.isArray(r.rooms)?r.rooms.slice(0,5).map(d=>({name:String(d.name||'BM Player').slice(0,60),title:d.title?String(d.title).slice(0,120):''})):[];}catch{return [];}});
+  register('rooms',async()=>{if(!store.token||!store.user||!linkVerified)return {rooms:[],connections:null};try{const r=await site({action:'rooms',login:store.user});const c=Number(r.connections);return {connections:c>=1&&c<=3?c:null,rooms:Array.isArray(r.rooms)?r.rooms.slice(0,5).map(d=>({name:String(d.name||'BM Player').slice(0,60),title:d.title?String(d.title).slice(0,120):''})):[]};}catch{return {rooms:[],connections:null};}});
   register('majorSeen',id=>{const seen=new Set(store.majorSeen||[]);seen.add(String(id||''));store.majorSeen=[...seen].slice(-200);save();return publicState();});
   register('closeAnnouncement',id=>{store.annClosed=String(id||'');save();return publicState();});
   register('favourite',item=>{store.favourites=store.favourites||[];const at=store.favourites.findIndex(i=>i.id===item.id&&i.kind===item.kind);if(at<0)store.favourites.push(item);else store.favourites.splice(at,1);save();pushFavourites();return publicState();});

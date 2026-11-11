@@ -1134,9 +1134,11 @@ public class MainActivity extends Activity {
                 String line = "Signed in as " + prefs.getString("user", "") + (status.isEmpty() ? "" : " · " + status);
                 java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK);
                 line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
-                int cons = info.optInt("max_connections", 1);
+                String[] rooms = roomsInfo();
+                int pkg = rooms[1].isEmpty() ? 0 : Integer.parseInt(rooms[1]);
+                int cons = pkg >= 1 && pkg <= 3 ? pkg : info.optInt("max_connections", 1);
                 line += " · " + cons + (cons == 1 ? " connection" : " connections");
-                if (cons >= 2) line += roomsLine();
+                if (cons >= 2) line += rooms[0];
                 String l = line;
                 prefs.edit().putInt("max_cons", cons).apply();
                 ui.post(() -> {
@@ -1153,12 +1155,15 @@ public class MainActivity extends Activity {
     }
 
     /** Multi Room / Triple Room: other boxes on this login that are watching now (blank if none or offline). */
-    private String roomsLine() {
+    /** [who's watching line, package connections (Single 1, Multi Room 2, Triple Room 3) or ""]. */
+    private String[] roomsInfo() {
         try {
             JSONObject res = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
                     .put("action", "rooms").put("device_token", prefs.getString("token", "")).put("login", prefs.getString("user", "")).toString()));
+            int c = res.optInt("connections", 0);
+            String pkg = c >= 1 && c <= 3 ? String.valueOf(c) : "";
             org.json.JSONArray rooms = res.optJSONArray("rooms");
-            if (rooms == null || rooms.length() == 0) return "";
+            if (rooms == null || rooms.length() == 0) return new String[]{"", pkg};
             StringBuilder b = new StringBuilder("\nAlso watching on your login: ");
             for (int i = 0; i < rooms.length() && i < 5; i++) {
                 JSONObject r = rooms.optJSONObject(i); if (r == null) continue;
@@ -1166,8 +1171,8 @@ public class MainActivity extends Activity {
                 if (i > 0) b.append(" · ");
                 b.append(r.optString("name", "BM Player")).append(t.isEmpty() ? "" : " – " + t);
             }
-            return b.toString();
-        } catch (Throwable e) { return ""; }
+            return new String[]{b.toString(), pkg};
+        } catch (Throwable e) { return new String[]{"", ""}; }
     }
 
     // ---------- browse ----------

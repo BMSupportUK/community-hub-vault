@@ -209,11 +209,13 @@ export const Route = createFileRoute("/api/public/player")({
 
         if (body.action === "rooms") {
           // Main-menu "who's watching": other devices on this same provider login, only for a linked box.
-          if ((!device.user_id && !device.offsite_customer_id) || device.iptv_username !== body.login) return json({ rooms: [] });
+          if ((!device.user_id && !device.offsite_customer_id) || device.iptv_username !== body.login) return json({ rooms: [], connections: null });
           const { roomsWatching } = await import("@/lib/player-stream-claim");
           const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title")
             .eq("iptv_username", body.login).neq("id", device.id).limit(50);
-          return json({ rooms: roomsWatching(others ?? [], device.id) });
+          // Connections come from the package: Single 1, Multi Room 2, Triple Room 3.
+          const { data: connections } = await supabaseAdmin.rpc("player_login_connections", { p_login: body.login });
+          return json({ rooms: roomsWatching(others ?? [], device.id), connections: connections ?? null });
         }
 
         if (body.action === "stream_claim" || body.action === "stream_release") {
@@ -225,7 +227,8 @@ export const Route = createFileRoute("/api/public/player")({
           const { streamClash } = await import("@/lib/player-stream-claim");
           const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title")
             .eq("iptv_username", body.login).neq("id", device.id).limit(50);
-          const clash = streamClash(others ?? [], device.id, body.max, Date.now(), body.screens ?? 1);
+          const { data: pkgMax } = await supabaseAdmin.rpc("player_login_connections", { p_login: body.login });
+          const clash = streamClash(others ?? [], device.id, pkgMax ?? body.max, Date.now(), body.screens ?? 1);
           if (clash.length && !body.takeover) {
             return json({ busy: true, devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title })) });
           }
