@@ -34,3 +34,4 @@ dist-ssr
 # Android app build output
 **/build/
 tv-remote-helper/local.properties
+tv-player/releases/

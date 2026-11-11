@@ -3,9 +3,14 @@ package uk.bmsupport.player;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import java.util.*;
 
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 34)
 public class GuideStoreTest {
     @Test public void savedGuideDropsFinishedProgrammes() {
         Map<String, List<GuideGridView.Prog>> m = new LinkedHashMap<>();
