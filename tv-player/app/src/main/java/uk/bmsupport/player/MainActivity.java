@@ -1134,8 +1134,10 @@ public class MainActivity extends Activity {
                 String line = "Signed in as " + prefs.getString("user", "") + (status.isEmpty() ? "" : " · " + status);
                 java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK);
                 line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
-                String l = line;
                 int cons = info.optInt("max_connections", 1);
+                line += " · " + cons + (cons == 1 ? " connection" : " connections");
+                if (cons >= 2) line += roomsLine();
+                String l = line;
                 prefs.edit().putInt("max_cons", cons).apply();
                 ui.post(() -> {
                     account.setText(l);
@@ -1148,6 +1150,24 @@ public class MainActivity extends Activity {
                 });
             } catch (Exception ignored) {}
         });
+    }
+
+    /** Multi Room / Triple Room: other boxes on this login that are watching now (blank if none or offline). */
+    private String roomsLine() {
+        try {
+            JSONObject res = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
+                    .put("action", "rooms").put("device_token", prefs.getString("token", "")).put("login", prefs.getString("user", "")).toString()));
+            org.json.JSONArray rooms = res.optJSONArray("rooms");
+            if (rooms == null || rooms.length() == 0) return "";
+            StringBuilder b = new StringBuilder("\nAlso watching on your login: ");
+            for (int i = 0; i < rooms.length() && i < 5; i++) {
+                JSONObject r = rooms.optJSONObject(i); if (r == null) continue;
+                String t = r.isNull("title") ? "" : r.optString("title", "");
+                if (i > 0) b.append(" · ");
+                b.append(r.optString("name", "BM Player")).append(t.isEmpty() ? "" : " – " + t);
+            }
+            return b.toString();
+        } catch (Throwable e) { return ""; }
     }
 
     // ---------- browse ----------
@@ -1323,6 +1343,8 @@ public class MainActivity extends Activity {
         head.addView(text(title, 26, TEXT, true));
         head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
+        int maxCons = Math.min(3, prefs.getInt("max_cons", 1));
+        if (kind.equals("live") && maxCons >= 2) head.addView(headerPill("🖥 Multi-screen (" + maxCons + ")", v -> chooseMultiScreens(maxCons)));
         // Films/Series: the Category pill sits at the top beside the searches (no category column).
         final Button catPill = kind.equals("live") ? null : headerPill("☰ Category: All", v -> {});
         if (catPill != null) head.addView(catPill);

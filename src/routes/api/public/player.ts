@@ -67,10 +67,11 @@ const Body = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("stream_claim"), device_token: Token,
     login: z.string().trim().min(1).max(120), max: z.number().int().min(1).max(100),
-    takeover: z.boolean().optional(),
+    takeover: z.boolean().optional(), screens: z.number().int().min(1).max(3).optional(),
     kind: z.enum(["live", "film", "series", "catchup"]), title: z.string().trim().min(1).max(200),
   }),
   z.object({ action: z.literal("stream_release"), device_token: Token }),
+  z.object({ action: z.literal("rooms"), device_token: Token, login: z.string().trim().min(1).max(120) }),
   z.object({ action: z.literal("subtitle_check"), device_token: Token, name: z.string().trim().min(1).max(200), tracks: z.number().int().min(0).max(50), languages: z.string().max(200).optional() }),
   z.object({ action: z.literal("channel_health"), device_token: Token, name: z.string().trim().min(1).max(200), status: z.enum(["failed", "black", "ok"]) }),
   z.object({ action: z.literal("formats"), device_token: Token }),
@@ -206,6 +207,15 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ watch, stop_stream, announcement: visible ? { id: a.id, message: a.message, age_ms: Math.max(0, Date.now() - a.sent_at) } : null });
         }
 
+        if (body.action === "rooms") {
+          // Main-menu "who's watching": other devices on this same provider login, only for a linked box.
+          if ((!device.user_id && !device.offsite_customer_id) || device.iptv_username !== body.login) return json({ rooms: [] });
+          const { roomsWatching } = await import("@/lib/player-stream-claim");
+          const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title")
+            .eq("iptv_username", body.login).neq("id", device.id).limit(50);
+          return json({ rooms: roomsWatching(others ?? [], device.id) });
+        }
+
         if (body.action === "stream_claim" || body.action === "stream_release") {
           const nowIso = new Date().toISOString();
           if (body.action === "stream_release") {
@@ -215,7 +225,7 @@ export const Route = createFileRoute("/api/public/player")({
           const { streamClash } = await import("@/lib/player-stream-claim");
           const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title")
             .eq("iptv_username", body.login).neq("id", device.id).limit(50);
-          const clash = streamClash(others ?? [], device.id, body.max);
+          const clash = streamClash(others ?? [], device.id, body.max, Date.now(), body.screens ?? 1);
           if (clash.length && !body.takeover) {
             return json({ busy: true, devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title })) });
           }

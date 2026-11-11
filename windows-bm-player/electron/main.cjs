@@ -55,9 +55,12 @@ async function site(body){
  let response;try{response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});}catch(e){checkin.fail();throw e;}
  if(response.status===429||response.status>=500)checkin.fail(response.headers.get('retry-after'));else checkin.ok();
  let data;try{data=await response.json();}catch{throw new Error('BM Support is unavailable. Try again shortly.');}
- if(!response.ok){if(response.status===401&&body.action!=='unlock'){linkVerified=false;gate.lock();store.token=null;store.user=null;store.pass=null;save();}throw new Error(data.error||'BM Support request failed.');}
+ if(!response.ok){if(response.status===401&&body.action!=='unlock'){linkVerified=false;gate.lock();store.token=null;store.user=null;store.pass=null;save();setImmediate(()=>unlinked().catch(()=>{}));}throw new Error(data.error||'BM Support request failed.');}
  return data;
 }
+// Unlinked on the website: stop every screen, forget the login and show a fresh link code.
+let unlinking=false;
+async function unlinked(){if(unlinking)return;unlinking=true;try{await stopAll().catch(()=>{});pinPassed=false;store.account=null;cache.clear();linkCode=null;save();send({type:'unlinked'});send({type:'state',state:publicState()});await getCode().catch(()=>{});}finally{unlinking=false;}}
 async function getCode(){if(!store.token){const r=await site({action:'register',platform:PLATFORM.id,name:'BM Player '+PLATFORM.name});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
 let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||'')}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
@@ -158,7 +161,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,ta
  // Preview → full screen on the same live channel keeps the running stream and its filled buffer.
  if(screens===1&&sessions.length===1&&item?.kind==='live'&&sessions[0].item.kind==='live'&&String(sessions[0].item.id)===String(item.id)&&!sessions[0].failed){lastInput=Date.now();promptedAt=0;send({type:'state',state:publicState()});return true;}
  // One login, limited connections: ask before taking the stream from another device on the same login.
- if(store.token&&store.user&&!sessions.length){let claim=null;try{claim=await site({action:'stream_claim',login:store.user,max:allowed,takeover:!!takeover,kind:item.kind==='episode'?'series':item.kind,title:String(item.name||'Channel').slice(0,200)});}catch{}if(claim&&claim.busy)return{busy:Array.isArray(claim.devices)?claim.devices.slice(0,5):[]};}
+ if(store.token&&store.user&&!sessions.length){let claim=null;try{claim=await site({action:'stream_claim',login:store.user,max:allowed,screens,takeover:!!takeover,kind:item.kind==='episode'?'series':item.kind,title:String(item.name||'Channel').slice(0,200)});}catch{}if(claim&&claim.busy)return{busy:Array.isArray(claim.devices)?claim.devices.slice(0,5):[]};}
  if(screens===1||sessions.length>=screens)await stopAll();
  const catalog=item.kind==='live'?await catalogue('live'):null;
  if(catalog){const verified=catalog.items.find(c=>String(c.id)===String(item.id));if(!verified)throw new Error('Channel unavailable.');item={...verified};}
@@ -316,6 +319,7 @@ else{
    else if(value){store.settings={...store.settings,...value};save();if('boost' in value)applyAudio();}
    return publicState();
   });
+  register('rooms',async()=>{if(!store.token||!store.user||!linkVerified)return [];try{const r=await site({action:'rooms',login:store.user});return Array.isArray(r.rooms)?r.rooms.slice(0,5).map(d=>({name:String(d.name||'BM Player').slice(0,60),title:d.title?String(d.title).slice(0,120):''})):[];}catch{return [];}});
   register('majorSeen',id=>{const seen=new Set(store.majorSeen||[]);seen.add(String(id||''));store.majorSeen=[...seen].slice(-200);save();return publicState();});
   register('closeAnnouncement',id=>{store.annClosed=String(id||'');save();return publicState();});
   register('favourite',item=>{store.favourites=store.favourites||[];const at=store.favourites.findIndex(i=>i.id===item.id&&i.kind===item.kind);if(at<0)store.favourites.push(item);else store.favourites.splice(at,1);save();pushFavourites();return publicState();});

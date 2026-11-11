@@ -8,9 +8,15 @@ export function activeStreams(others: OtherDevice[], selfId: string, now = Date.
   return others.filter((d) => d.id !== selfId && !!d.watching_kind && isLive(d.last_seen_at, now));
 }
 
-/** Busy when the other devices already use every connection the login allows. */
-export function streamClash(others: OtherDevice[], selfId: string, max: number, now = Date.now()) {
+/** Busy when the other devices plus the screens this device wants would go over the login's connections (Multi Room / Triple Room share automatically). */
+export function streamClash(others: OtherDevice[], selfId: string, max: number, now = Date.now(), screens = 1) {
   const active = activeStreams(others, selfId, now);
   const allowed = Math.max(1, Math.floor(max) || 1);
-  return active.length >= allowed ? active : [];
+  const want = Math.max(1, Math.min(allowed, Math.floor(screens) || 1));
+  return active.length + want > allowed ? active : [];
+}
+
+/** "Who's watching" list for the main menu: other rooms on this login, no ids or tokens. */
+export function roomsWatching(others: OtherDevice[], selfId: string, now = Date.now()) {
+  return activeStreams(others, selfId, now).slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title }));
 }

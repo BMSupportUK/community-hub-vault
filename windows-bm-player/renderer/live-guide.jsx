@@ -15,7 +15,7 @@ const clock=v=>new Date(v).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-
 const slotOf=t=>Math.floor(t/SLOT)*SLOT;
 let tapAt=0;
 
-export function LiveGuide({onFull,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg,cache,feedLabel}){
+export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg,cache,feedLabel}){
  const [start,setStart]=useState(slotOf(Date.now()));
  const [focus,setFocus]=useState(null); // {channel, programme}
  const [catOpen,setCatOpen]=useState(false);
@@ -69,6 +69,7 @@ export function LiveGuide({onFull,channels,categories,category,onCategory,allCou
      {searchOpen&&<input autoFocus aria-label="Search TV" placeholder="Search channels" value={query} onChange={e=>onQuery(e.target.value)}/>}
      <button className="pill" onClick={()=>{setSearchOpen(o=>!o);if(searchOpen)onQuery('');}}>🔍 Search TV</button>
      <VoiceButton onText={onVoice} onError={toast}/>
+     {maxScreens>=2&&onMulti&&<button className="pill" onClick={onMulti}>🖥 Multi-screen ({maxScreens})</button>}
     </div>
     <h2 className="lg-title">{shownProg?.title||shownCh?.name||'Click a channel to preview'}</h2>
     {shownProg&&<div className="lg-time">{clock(shownProg.start)} – {clock(shownProg.end)}{left&&<>  ·  {left}</>}</div>}
