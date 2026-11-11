@@ -18,6 +18,8 @@ class EmbeddedVlc {
   this.show=this.user.func('__stdcall','ShowWindow','bool',['void *','int']);
   this.destroy=this.user.func('__stdcall','DestroyWindow','bool',['void *']);
   this.client=this.user.func('__stdcall','GetClientRect','bool',['void *','void *']);
+  // Clicks on a picture land in VLC's own window, never the page, so the main process reads them natively to move the sound.
+  try{this.keyState=this.user.func('__stdcall','GetAsyncKeyState','short',['int']);this.cursor=this.user.func('__stdcall','GetCursorPos','bool',['void *']);this.winRect=this.user.func('__stdcall','GetWindowRect','bool',['void *','void *']);this.visible=this.user.func('__stdcall','IsWindowVisible','bool',['void *']);}catch{}
   this.dll=this.k.load(path.join(root,'libvlc.dll'));
   const api={new:['void *',['int','const char **']],release:['void',['void *']],media_new_location:['void *',['void *','str']],media_add_option:['void',['void *','str']],media_release:['void',['void *']],media_player_new:['void *',['void *']],media_player_release:['void',['void *']],media_player_set_media:['void',['void *','void *']],media_player_set_hwnd:['void',['void *','void *']],media_player_play:['int',['void *']],media_player_stop:['void',['void *']],media_player_set_pause:['void',['void *','int']],media_player_get_state:['int',['void *']],media_player_get_time:['int64',['void *']],media_player_get_length:['int64',['void *']],media_player_set_time:['void',['void *','int64']],media_player_is_seekable:['int',['void *']],audio_set_volume:['int',['void *','int']],audio_set_mute:['void',['void *','int']],audio_get_volume:['int',['void *']],media_player_set_rate:['int',['void *','float']],audio_get_track:['int',['void *']],audio_set_track:['int',['void *','int']],audio_get_track_description:['void *',['void *']],video_get_spu:['int',['void *']],video_take_snapshot:['int',['void *','uint','str','uint','uint']],video_get_size:['int',['void *','uint','_Out_ uint *','_Out_ uint *']],video_set_mouse_input:['void',['void *','uint']],video_set_key_input:['void',['void *','uint']],video_get_spu_count:['int',['void *']],video_set_spu:['int',['void *','int']],video_get_spu_description:['void *',['void *']],track_description_list_release:['void',['void *']]};
   this.api=Object.fromEntries(Object.entries(api).map(([name,[ret,args]])=>[name,this.dll.func('libvlc_'+name,ret,args)]));
@@ -72,6 +74,12 @@ class EmbeddedVlc {
   }
   for(const [index,s]of this.surfaces)if(!shown.has(index))this.show(s.hwnd,0);
  }
+ /** Index of the visible screen just clicked with the left mouse button, or null. */
+ clickedPane(){if(!this.keyState||this.surfaces.size<2)return null;try{
+  const down=(this.keyState(0x01)&0x8000)!==0,was=this.mouseDown;this.mouseDown=down;if(!down||was)return null;
+  const pt=Buffer.alloc(8);if(!this.cursor(pt))return null;const x=pt.readInt32LE(0),y=pt.readInt32LE(4);
+  for(const [index,s]of this.surfaces){if(!this.visible(s.hwnd))continue;const r=Buffer.alloc(16);if(!this.winRect(s.hwnd,r))continue;if(x>=r.readInt32LE(0)&&x<r.readInt32LE(8)&&y>=r.readInt32LE(4)&&y<r.readInt32LE(12))return index;}
+ }catch{}return null;}
  /** Black-bar zoom removed: any live re-sizing of the picture caused a duplicate frame on Windows. */
  checkBars(){}
  status(index){const s=this.surfaces.get(index);if(!s)return null;this.applyVolume(s);return{position:Math.max(0,Number(this.api.media_player_get_time(s.player))/1000),duration:Math.max(0,Number(this.api.media_player_get_length(s.player))/1000),state:this.api.media_player_get_state(s.player),seekable:!!this.api.media_player_is_seekable(s.player),nativeVideo:true,...this.pictureProgress(s.player),...this.size(s.player)};}
