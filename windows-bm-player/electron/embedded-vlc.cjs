@@ -37,7 +37,7 @@ class EmbeddedVlc {
   if(!player){this.destroy(hwnd);throw new Error('The included player could not start.');}
   this.api.media_player_set_hwnd(player,hwnd);
   this.api.video_set_mouse_input(player,0);this.api.video_set_key_input(player,0);
-  const s={hwnd,player};this.surfaces.set(index,s);return s;
+  const s={hwnd,player,index};this.surfaces.set(index,s);return s;
  }
  play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,fill=false,kind,name}={}){
   const s=this.surface(index);s.fill=!!fill;this.api.media_player_stop(s.player);
@@ -80,19 +80,26 @@ class EmbeddedVlc {
  size(player){try{const w=[0],h=[0];if(this.api.video_get_size(player,0,w,h)===0)return{w:w[0]||0,h:h[0]||0};}catch{}return{};}
  pause(index,paused){const s=this.surfaces.get(index);if(s)this.api.media_player_set_pause(s.player,paused?1:0);}
  seek(index,seconds){const s=this.surfaces.get(index);if(s&&this.api.media_player_is_seekable(s.player))this.api.media_player_set_time(s.player,Math.round(seconds*1000));}
- // libVLC ignores volume before its audio output exists and resets it on each new media, so the wanted level is kept and re-applied from status(); silent screens are muted, not just set to 0.
- volume(index,value){const s=this.surfaces.get(index);if(!s)return;s.wantVolume=value;this.applyVolume(s);}
- applyVolume(s){if(s.wantVolume==null)return;try{const mute=s.wantVolume<=0?1:0;this.api.audio_set_mute(s.player,mute);if(!mute&&this.api.audio_get_volume(s.player)!==s.wantVolume)this.api.audio_set_volume(s.player,s.wantVolume);}catch{}}
+ // Windows libVLC 3 (WASAPI) shares one volume/mute for every player in the app, so muting a quiet screen silenced or un-silenced the others and they fought.
+ // Quiet screens therefore switch their sound track off (each player owns that) and never touch volume/mute; only the chosen screen sets them.
+ // libVLC also ignores this before the stream's sound exists and resets it on new media, so a short timer re-applies it.
+ volume(index,value){const s=this.surfaces.get(index);if(!s)return;s.wantVolume=value;this.applyVolume(s);this.keepAudio();}
+ applyVolume(s){if(s.wantVolume==null)return;try{
+  if(s.wantVolume<=0){if(this.api.audio_get_track(s.player)!==-1)this.api.audio_set_track(s.player,-1);return;}
+  if(this.api.audio_get_track(s.player)===-1){const ids=this.trackRows(s.index,'audio').map(t=>t.id);const id=ids.includes(s.audioId)?s.audioId:ids[0];if(id!=null)this.api.audio_set_track(s.player,id);}
+  this.api.audio_set_mute(s.player,0);if(this.api.audio_get_volume(s.player)!==s.wantVolume)this.api.audio_set_volume(s.player,s.wantVolume);
+ }catch{}}
+ keepAudio(){if(this.audioTimer)return;this.audioTimer=setInterval(()=>{if(!this.surfaces.size){clearInterval(this.audioTimer);this.audioTimer=null;return;}for(const s of this.surfaces.values())this.applyVolume(s);},400);this.audioTimer.unref?.();}
  /** Real subtitle track ids (VLC's list also holds a "Disable" entry with id -1). */
  spuIds(index){const s=this.surfaces.get(index);if(!s)return[];if(!this.desc)this.desc=this.k.struct('BMTrackDescription',{i_id:'int',psz_name:'char *',p_next:'void *'});const head=this.api.video_get_spu_description(s.player);if(!head)return[];const ids=[];try{let p=head;for(let n=0;p&&n<64;n++){const d=this.k.decode(p,this.desc);if(d.i_id!==-1)ids.push(d.i_id);p=d.p_next;}}finally{this.api.track_description_list_release(head);}return ids;}
  subtitleTracks(index){return this.spuIds(index).length;}
  setSubtitles(index,on){const s=this.surfaces.get(index);if(!s)return;const ids=on?this.spuIds(index):[];this.api.video_set_spu(s.player,on&&ids.length?ids[0]:-1);}
  trackRows(index,type){const s=this.surfaces.get(index);if(!s)return[];if(!this.desc)this.desc=this.k.struct('BMTrackDescription',{i_id:'int',psz_name:'char *',p_next:'void *'});const head=(type==='audio'?this.api.audio_get_track_description:this.api.video_get_spu_description)(s.player);if(!head)return[];const rows=[];try{let p=head;for(let n=0;p&&n<64;n++){const d=this.k.decode(p,this.desc);if(d.i_id!==-1)rows.push({id:d.i_id,name:d.psz_name?String(this.k.decode(d.psz_name,'char',-1)):type+' '+(rows.length+1)});p=d.p_next;}}finally{this.api.track_description_list_release(head);}return rows;}
  tracks(index){const s=this.surfaces.get(index);return{audio:this.trackRows(index,'audio'),subtitles:this.trackRows(index,'subtitles'),audioId:s?this.api.audio_get_track(s.player):-1,subtitleId:s?this.api.video_get_spu(s.player):-1};}
- setAudioTrack(index,id){const s=this.surfaces.get(index);if(s&&this.trackRows(index,'audio').some(t=>t.id===id))this.api.audio_set_track(s.player,id);}
+ setAudioTrack(index,id){const s=this.surfaces.get(index);if(s&&this.trackRows(index,'audio').some(t=>t.id===id)){s.audioId=id;if(!(s.wantVolume<=0))this.api.audio_set_track(s.player,id);}}
  setSubtitleTrack(index,id){const s=this.surfaces.get(index);if(s&&(id===-1||this.trackRows(index,'subtitles').some(t=>t.id===id)))this.api.video_set_spu(s.player,id);}
  speed(index,rate){const s=this.surfaces.get(index);if(s)this.api.media_player_set_rate(s.player,rate);}
  stop(index){const s=this.surfaces.get(index);if(!s)return;this.api.media_player_stop(s.player);this.api.media_player_release(s.player);this.destroy(s.hwnd);this.surfaces.delete(index);}
- close(){for(const index of [...this.surfaces.keys()])this.stop(index);if(this.instance){this.api.release(this.instance);this.instance=null;}}
+ close(){if(this.audioTimer){clearInterval(this.audioTimer);this.audioTimer=null;}for(const index of [...this.surfaces.keys()])this.stop(index);if(this.instance){this.api.release(this.instance);this.instance=null;}}
 }
 module.exports={EmbeddedVlc};

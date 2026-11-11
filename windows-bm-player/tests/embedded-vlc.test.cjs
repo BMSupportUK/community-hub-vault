@@ -33,3 +33,27 @@ test('embedded playback owns its video window and releases playback before destr
   expect(names.indexOf('DestroyWindow')).toBeLessThan(names.lastIndexOf('libvlc_release'));
  }finally{if(old===undefined)delete process.env.VLC_PLUGIN_PATH;else process.env.VLC_PLUGIN_PATH=old;}
 });
+test('quiet multi-screen panes switch their sound track off and never touch the shared Windows volume or mute',()=>{
+ const calls=[];const track={};
+ const koffi={load:()=>({func:(...args)=>{
+  const name=args[0]==='__stdcall'?args[1]:args[0];
+  return (...values)=>{
+   calls.push({name,values});
+   if(name==='GetClientRect'){values[1].writeInt32LE(1280,8);values[1].writeInt32LE(900,12);return true;}
+   if(name==='libvlc_media_player_new'){return BigInt(calls.filter(c=>c.name==='libvlc_media_player_new').length+10);}
+   if(['libvlc_new','libvlc_media_new_location','CreateWindowExW'].includes(name))return 1n;
+   if(name==='libvlc_audio_get_track')return track[values[0]]??1;
+   if(name==='libvlc_audio_set_track'){track[values[0]]=values[1];return 0;}
+   return 0;
+  };
+ }})};
+ const handle=Buffer.alloc(8);handle.writeBigUInt64LE(42n);
+ const engine=new EmbeddedVlc({getNativeWindowHandle:()=>handle},{koffi,root:'/tmp/test-vlc'});
+ engine.play(0,'https://example.invalid/a.ts',{});
+ engine.play(1,'https://example.invalid/b.ts',{});
+ const quiet=engine.surfaces.get(1).player,loud=engine.surfaces.get(0).player;
+ expect(track[quiet]).toBe(-1);
+ expect(calls.some(c=>['libvlc_audio_set_mute','libvlc_audio_set_volume'].includes(c.name)&&c.values[0]===quiet)).toBe(false);
+ expect(calls.some(c=>c.name==='libvlc_audio_set_mute'&&c.values[0]===loud&&c.values[1]===0)).toBe(true);
+ engine.close();
+});
