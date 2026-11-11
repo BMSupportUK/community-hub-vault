@@ -1,7 +1,7 @@
 /** One login, limited connections: decides whether a new stream on this device clashes with other devices on the same login. */
 import { isLive } from "./player-live";
 
-export type OtherDevice = { id: string; name: string | null; platform: string | null; last_seen_at: string | null; watching_kind: string | null; watching_title: string | null };
+export type OtherDevice = { id: string; name: string | null; platform: string | null; last_seen_at: string | null; watching_kind: string | null; watching_title: string | null; watching_screens?: number | null };
 
 /** Devices on the same login that are watching right now. */
 export function activeStreams(others: OtherDevice[], selfId: string, now = Date.now()): OtherDevice[] {
@@ -13,7 +13,22 @@ export function streamClash(others: OtherDevice[], selfId: string, max: number, 
   const active = activeStreams(others, selfId, now);
   const allowed = Math.max(1, Math.floor(max) || 1);
   const want = Math.max(1, Math.min(allowed, Math.floor(screens) || 1));
-  return active.length + want > allowed ? active : [];
+  return screensInUse(active) + want > allowed ? active : [];
+}
+
+/** Screens the other devices are using (a Multi-screen app counts every screen it plays). */
+export function screensInUse(active: OtherDevice[]): number {
+  return active.reduce((n, d) => n + Math.max(1, Math.min(3, Math.floor(d.watching_screens ?? 1) || 1)), 0);
+}
+
+/** "All 2 connections on this login are in use: BM Player – Fire TV is watching 2 screens." */
+export function maxedMessage(active: OtherDevice[], max: number): string {
+  const allowed = Math.max(1, Math.floor(max) || 1);
+  const who = active.slice(0, 3).map((d) => {
+    const n = Math.max(1, Math.floor(d.watching_screens ?? 1) || 1);
+    return (d.name || "Another device") + (n > 1 ? ` is watching ${n} screens` : d.watching_title ? ` is watching ${d.watching_title}` : " is watching");
+  }).join(", ");
+  return `All ${allowed} ${allowed === 1 ? "connection" : "connections"} on this login are in use: ${who}. The number of screens is already maxed.`;
 }
 
 /** "Who's watching" list for the main menu: other rooms on this login, no ids or tokens. */

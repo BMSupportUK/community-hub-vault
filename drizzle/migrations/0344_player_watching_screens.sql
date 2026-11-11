@@ -1,0 +1,1 @@
+ALTER TABLE public.player_devices ADD COLUMN IF NOT EXISTS watching_screens smallint NOT NULL DEFAULT 1;

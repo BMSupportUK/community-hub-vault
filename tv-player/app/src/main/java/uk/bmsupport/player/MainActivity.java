@@ -189,7 +189,9 @@ public class MainActivity extends Activity {
 
     // ---------- multi-screen (Multi Room = 2, Triple Room = 3) ----------
     private final List<androidx.media3.exoplayer.ExoPlayer> multiPlayers = new ArrayList<>();
+    private final java.util.Set<Integer> multiPicked = new java.util.HashSet<>();
     private void stopMulti() {
+        multiPicked.clear();
         for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) p.release();
         multiPlayers.clear();
         updateKeepScreenOn();
@@ -308,9 +310,24 @@ public class MainActivity extends Activity {
             resultList(cats.get(i)[1], chs.size(), r -> multiRow(chs.get(r)), r -> {
                 Item it = chs.get(r);
                 if (n >= multiPlayers.size()) return;
-                label.setText("");
-                PlayerActivity.playWithFallback(multiPlayers.get(n), streamUrls(it),
-                        () -> ui.post(() -> label.setText(it.name + "\nCouldn't play – press OK to pick another")));
+                multiPicked.add(n);
+                int want = multiPicked.size();
+                label.setText("Checking connections…");
+                Runnable go = () -> {
+                    if (n >= multiPlayers.size()) return;
+                    label.setText("");
+                    PlayerActivity.playWithFallback(multiPlayers.get(n), streamUrls(it),
+                            () -> ui.post(() -> label.setText(it.name + "\nCouldn't play – press OK to pick another")));
+                };
+                StreamClaim.check(this, "live", it.name, false, want, (busy, who) -> {
+                    if (!busy) { go.run(); return; }
+                    multiPicked.remove(n);
+                    label.setText("Screens maxed – press OK to try again");
+                    new AlertDialog.Builder(this).setTitle("Number of screens is already maxed")
+                            .setMessage(who)
+                            .setPositiveButton("Watch here instead", (d, w) -> StreamClaim.check(this, "live", it.name, true, want, (b2, x) -> { multiPicked.add(n); go.run(); }))
+                            .setNegativeButton("Cancel", null).show();
+                });
             }, null, null, "Back", () -> pickMultiChannel(n, label));
         }, null, null, "Cancel", null);
     }

@@ -2409,6 +2409,13 @@
       "when": 1794421457348,
       "tag": "0343_player_login_provider_password",
       "breakpoints": true
+    },
+    {
+      "idx": 344,
+      "version": "7",
+      "when": 1794426061420,
+      "tag": "0344_player_watching_screens",
+      "breakpoints": true
     }
   ]
 }

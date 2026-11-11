@@ -6201,6 +6201,7 @@ export type Database = {
           watching_kind: string | null
           watching_player: string | null
           watching_preview: boolean
+          watching_screens: number
           watching_since: string | null
           watching_title: string | null
         }
@@ -6245,6 +6246,7 @@ export type Database = {
           watching_kind?: string | null
           watching_player?: string | null
           watching_preview?: boolean
+          watching_screens?: number
           watching_since?: string | null
           watching_title?: string | null
         }
@@ -6289,6 +6291,7 @@ export type Database = {
           watching_kind?: string | null
           watching_player?: string | null
           watching_preview?: boolean
+          watching_screens?: number
           watching_since?: string | null
           watching_title?: string | null
         }

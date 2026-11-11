@@ -225,14 +225,14 @@ export const Route = createFileRoute("/api/public/player")({
             await supabaseAdmin.from("player_devices").update({ watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false, stream_claimed_at: null }).eq("id", device.id);
             return json({ ok: true });
           }
-          const { streamClash } = await import("@/lib/player-stream-claim");
-          const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title")
+          const { streamClash, maxedMessage } = await import("@/lib/player-stream-claim");
+          const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title, watching_screens")
             .eq("iptv_username", body.login).neq("id", device.id).limit(50);
           const { loginConnections } = await import("@/lib/player-connections.server");
           const pkgMax = await loginConnections(supabaseAdmin, body.login, body.max);
           const clash = streamClash(others ?? [], device.id, pkgMax ?? body.max, Date.now(), body.screens ?? 1);
           if (clash.length && !body.takeover) {
-            return json({ busy: true, devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title })) });
+            return json({ busy: true, message: maxedMessage(clash, pkgMax ?? body.max), devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title, screens: d.watching_screens ?? 1 })) });
           }
           if (clash.length) {
             await supabaseAdmin.from("player_devices").update({ stream_stop_at: nowIso, watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false })
@@ -296,6 +296,7 @@ export const Route = createFileRoute("/api/public/player")({
           await supabaseAdmin.from("player_devices").update({
             claim_ip: claimIp, claim_mobile: claimMobile, claim_away: claimAway,
             iptv_username: body.login, last_seen_at: nowIso, stream_claimed_at: nowIso, stream_stop_at: null,
+            watching_screens: Math.max(1, Math.min(3, body.screens ?? 1)),
             watching_kind: body.kind === "catchup" ? "live" : body.kind, watching_title: body.title, watching_since: device.watching_kind ? device.watching_since : nowIso,
           }).eq("id", device.id);
           return json({ ok: true, took_over: clash.length, warning });

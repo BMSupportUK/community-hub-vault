@@ -18,7 +18,10 @@ final class StreamClaim {
     private StreamClaim() {}
 
     /** Fails open: if the website can't be reached, playback carries on as before. */
-    static void check(Context c, String kind, String title, boolean takeover, Result r) {
+    static void check(Context c, String kind, String title, boolean takeover, Result r) { check(c, kind, title, takeover, 1, r); }
+
+    /** screens = how many screens this app will be playing (Multi-screen counts each one). */
+    static void check(Context c, String kind, String title, boolean takeover, int screens, Result r) {
         android.content.SharedPreferences p = c.getSharedPreferences("bmplayer", Context.MODE_PRIVATE);
         String token = p.getString("token", ""), user = p.getString("user", "");
         int max = Math.max(1, p.getInt("max_cons", 1));
@@ -28,7 +31,7 @@ final class StreamClaim {
             try {
                 JSONObject res = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
                         .put("action", "stream_claim").put("device_token", token).put("login", user).put("max", max)
-                        .put("takeover", takeover).put("kind", apiKind(kind)).put("title", title == null || title.isEmpty() ? "Channel" : title.length() > 200 ? title.substring(0, 200) : title).toString()));
+                        .put("takeover", takeover).put("screens", Math.max(1, Math.min(3, screens))).put("kind", apiKind(kind)).put("title", title == null || title.isEmpty() ? "Channel" : title.length() > 200 ? title.substring(0, 200) : title).toString()));
                 busy = res.optBoolean("busy", false);
                 final String warn = res.isNull("warning") ? "" : res.optString("warning", "");
                 if (!warn.isEmpty()) UI.post(() -> warnHousehold(warn));
