@@ -14,7 +14,7 @@ const players = new Map();
 const boosters = new Map();
 function setLoudness(index, video, volume) {
   const v = Math.max(0, Math.min(250, Number(volume) || 0)) / 100;
-  video.volume = Math.min(1, v);
+  video.volume = Math.min(1, v); video.muted = v <= 0;
   let b = boosters.get(index);
   if (v > 1 && (!b || b.video !== video)) {
     try { const ctx = new AudioContext(); const gain = ctx.createGain(); ctx.createMediaElementSource(video).connect(gain).connect(ctx.destination); b = { ctx, gain, video }; boosters.set(index, b); } catch { b = null; }
