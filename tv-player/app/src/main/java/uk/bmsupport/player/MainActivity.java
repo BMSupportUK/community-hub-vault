@@ -207,13 +207,11 @@ public class MainActivity extends Activity {
 
     /** Asks how many screens to open, so one channel can fill the whole screen. */
     private void chooseMultiScreens(int max) {
-        List<String> opts = new ArrayList<>();
-        opts.add("1 screen – full size");
-        if (max >= 2) opts.add("2 screens – side by side");
-        if (max >= 3) opts.add("3 screens – one big, two small");
-        String[] names = opts.toArray(new String[0]);
+        // One screen is just the normal TV guide, so Multi-screen only offers 2 or 3.
+        if (max < 3) { showMultiScreen(2); return; }
+        String[] names = {"2 screens – side by side", "3 screens – one big, two small"};
         new AlertDialog.Builder(this).setTitle("Multi-screen – how many?")
-                .setItems(names, (d, w) -> showMultiScreen(w + 1)).setNegativeButton("Cancel", null).show();
+                .setItems(names, (d, w) -> showMultiScreen(w + 2)).setNegativeButton("Cancel", null).show();
     }
 
     private void showMultiScreen(int screens) {
@@ -272,8 +270,11 @@ public class MainActivity extends Activity {
 
     private List<String[]> multiCats;
     private final java.util.Map<String, String> multiNow = new java.util.concurrent.ConcurrentHashMap<>();
-    private final java.util.Map<String, TextView> multiViews = new java.util.HashMap<>();
-    private final java.util.concurrent.ExecutorService multiIo = java.util.concurrent.Executors.newFixedThreadPool(4);
+    // Every row built for a channel (ListView also builds throwaway rows to measure the list), so the listing reaches the one on screen.
+    private final java.util.Map<String, java.util.Set<TextView>> multiViews = new java.util.HashMap<>();
+    // Newest rows first: rows scrolled past wait, so the channels on screen fill in straight away.
+    private final java.util.concurrent.ExecutorService multiIo = new java.util.concurrent.ThreadPoolExecutor(6, 6, 30, java.util.concurrent.TimeUnit.SECONDS,
+            new java.util.concurrent.LinkedBlockingDeque<Runnable>() { @Override public boolean offer(Runnable r) { return offerFirst(r); } });
     private final java.util.Set<String> multiAsked = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
 
     /** Multi-screen picker: category, then channels with what's on now – no full guide grid, so it opens fast. */
@@ -319,7 +320,9 @@ public class MainActivity extends Activity {
         TextView t = text(it.name + "\n" + multiNowLine(it.id), 17, TEXT, false);
         t.setMaxLines(2); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
         t.setTag(it.id);
-        multiViews.put(it.id, t); // rows are rebuilt while scrolling; the listing goes to the row on screen now
+        java.util.Set<TextView> rows = multiViews.get(it.id);
+        if (rows == null) { rows = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>()); multiViews.put(it.id, rows); }
+        rows.add(t);
         if (!multiNow.containsKey(it.id) && multiAsked.add(it.id)) multiIo.execute(() -> {
             String line = "";
             try {
@@ -329,7 +332,10 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {}
             multiNow.put(it.id, line);
             final String l2 = line;
-            ui.post(() -> { TextView v = multiViews.get(it.id); if (v != null && it.id.equals(v.getTag())) v.setText(it.name + "\n" + (l2.isEmpty() ? "No listing" : "Now: " + l2)); });
+            ui.post(() -> {
+                java.util.Set<TextView> vs = multiViews.get(it.id);
+                if (vs != null) for (TextView v : new ArrayList<>(vs)) if (v != null && it.id.equals(v.getTag())) v.setText(it.name + "\n" + (l2.isEmpty() ? "No listing" : "Now: " + l2));
+            });
         });
         return t;
     }
