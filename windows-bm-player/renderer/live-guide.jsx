@@ -29,9 +29,9 @@ export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,categ
  const epgRef=useRef(epg);epgRef.current=epg;
  const now=Date.now();
  async function load(ch,isActive){const saved=cache.peek(ch.id);if(saved!==undefined&&isActive())setGuide(g=>g[ch.id]===saved?g:{...g,[ch.id]:saved});if(pending.current.has(ch.id)||!cache.due(ch.id))return;pending.current.add(ch.id);try{const p=await epgRef.current(ch.id);if(!isActive())return;setGuide(g=>({...g,[ch.id]:p||[]}));}catch{/* Keep the last good line-up and retry on the next tick. */}finally{pending.current.delete(ch.id);}}
- // Fetch programmes only for rows that scroll into view, three at a time like the Android guide.
+ // Fetch programmes only for rows that scroll into view, six at a time.
  useEffect(()=>{const root=grid.current;if(!root)return;const queue=[],visible=new Set();let running=0,active=true;
-  const pump=()=>{while(active&&running<3&&queue.length){const ch=queue.shift();running++;load(ch,()=>active).finally(()=>{running--;pump();});}};
+  const pump=()=>{while(active&&running<6&&queue.length){const ch=queue.shift();running++;load(ch,()=>active).finally(()=>{running--;pump();});}};
   const enqueue=ch=>{if(ch&&!queue.some(q=>q.id===ch.id))queue.push(ch);};
   const io=new IntersectionObserver(rows=>{rows.forEach(r=>{const id=r.target.dataset.ch;if(r.isIntersecting){visible.add(id);enqueue(channels.find(c=>String(c.id)===id));}else visible.delete(id);});pump();},{root,rootMargin:'200px'});
   root.querySelectorAll('[data-ch]').forEach(el=>io.observe(el));
