@@ -10850,6 +10850,10 @@ export type Database = {
       }
       player_fault_channel_key: { Args: { _name: string }; Returns: string }
       player_login_connections: { Args: { p_login: string }; Returns: number }
+      player_login_provider_password: {
+        Args: { p_login: string }
+        Returns: string
+      }
       player_owner_saved_logins: {
         Args: never
         Returns: {

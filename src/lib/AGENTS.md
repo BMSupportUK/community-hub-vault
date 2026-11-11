@@ -37,3 +37,4 @@
 - Accounts with multiple saved logins expose the shared profile chooser and switch pill; selection uses the existing authenticated profile scope so each login retains separate details and returning to staff requires password verification.
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Sports import and guide rules live in `src/routes/api/public/AGENTS.md`.
+- BM Player connection counts come from the provider (DNS player_api max_connections with the saved login, via player-connections.server.ts), falling back to the website package then the app-reported number; one helper serves rooms, stream claims and the box limit.
