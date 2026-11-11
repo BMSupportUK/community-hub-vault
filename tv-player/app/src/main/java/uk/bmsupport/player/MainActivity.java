@@ -927,7 +927,8 @@ public class MainActivity extends Activity {
     private void linkConfirmed() {
         if (linkCheckMsg == null || linkCheckPanel == null) { showHome(); return; }
         linkCheckMsg.setText("\u2705 Your device is linked");
-        Button go = button("Go to home screen", v -> showHome());
+        // The website already confirmed the link: straight to home, no second check.
+        Button go = button("Go to home screen", v -> { PlayerApplication.pinPassed = true; showHome(); });
         linkCheckPanel.addView(go);
         go.requestFocus();
         screen = "linkok";
