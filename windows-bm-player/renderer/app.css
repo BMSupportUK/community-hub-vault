@@ -139,3 +139,7 @@ select{color-scheme:dark}select option,select optgroup{background:var(--surface)
 .family-panel.compact .keypad{gap:6px}.family-panel.compact .keypad button{padding:10px 0}.code-boxes.eight{gap:5px}.code-boxes.eight span{max-width:44px;height:52px;font-size:24px}
 .status-line{min-height:1.2em;font-size:14px;opacity:.85}.help-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.help-row button{white-space:nowrap;padding:10px 8px;font-size:15px}
 .watch-panes .empty-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:2px dashed var(--border);border-radius:12px;min-height:200px}
+.multi-picker{height:calc(100vh - 72px);display:flex;flex-direction:column;padding:12px 20px 8px;gap:10px}.mp-head{display:flex;align-items:center;gap:16px}.mp-head h2{margin:0}
+.mp-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(12rem,18rem) 1fr;gap:14px}.mp-cats,.mp-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px}
+.mp-cats button{text-align:left;flex:none}.mp-cats .selected{border-color:var(--accent);background:var(--raised);font-weight:700}
+.mp-row{flex:none;text-align:left;display:flex;flex-direction:column;gap:4px}.mp-row small{opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

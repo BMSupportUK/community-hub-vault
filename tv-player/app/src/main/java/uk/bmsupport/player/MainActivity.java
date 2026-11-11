@@ -270,46 +270,67 @@ public class MainActivity extends Activity {
         Toast.makeText(this, "Sound plays from the highlighted screen. Press OK on a screen to change its channel.", Toast.LENGTH_LONG).show();
     }
 
+    private List<String[]> multiCats;
+    private final java.util.Map<String, String> multiNow = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Set<String> multiAsked = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+
+    /** Multi-screen picker: category, then channels with what's on now – no full guide grid, so it opens fast. */
     private void pickMultiChannel(int n, TextView label) {
-        if (liveChannels == null) {
+        if (liveChannels == null || multiCats == null) {
             final AlertDialog wait = findingDialog();
             io.execute(() -> {
                 try {
-                    JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
-                    List<Item> l = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
-                    liveChannels = l;
-                    ui.post(() -> pickMultiChannel(n, label));
-                } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't load your channels", Toast.LENGTH_LONG).show()); }
+                    if (liveChannels == null) {
+                        JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
+                        List<Item> l = new ArrayList<>();
+                        for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
+                        liveChannels = l;
+                    }
+                    JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
+                    List<String[]> rows = new ArrayList<>();
+                    rows.add(new String[]{"*", "All channels"});
+                    for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); String id = o.optString("category_id"); if (!hideAdult(id)) rows.add(new String[]{id, o.optString("category_name")}); }
+                    multiCats = rows;
+                    ui.post(() -> { try { wait.dismiss(); } catch (Exception ignored) {} pickMultiChannel(n, label); });
+                } catch (Exception ex) { ui.post(() -> { try { wait.dismiss(); } catch (Exception ignored) {} Toast.makeText(this, "Couldn't load your channels", Toast.LENGTH_LONG).show(); }); }
             });
             return;
         }
-        android.widget.EditText q = new android.widget.EditText(this);
-        q.setSingleLine(true); q.setHint("Type part of a channel name");
-        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Screen " + (n + 1) + " – find a channel").setView(q)
-                .setPositiveButton("Search", (d, w) -> {
-                    String want = normChannel(q.getText().toString());
-                    List<Item> hits = new ArrayList<>();
-                    for (Item it : liveChannels) {
-                        if (hideAdult(it.category)) continue;
-                        if (want.isEmpty() || it.norm().contains(want)) hits.add(it);
-                        if (hits.size() >= 80) break;
-                    }
-                    if (hits.isEmpty()) { Toast.makeText(this, "No channels found", Toast.LENGTH_SHORT).show(); return; }
-                    String[] names = new String[hits.size()];
-                    for (int i = 0; i < names.length; i++) names[i] = hits.get(i).name;
-                    new AlertDialog.Builder(this).setTitle("Pick a channel").setItems(names, (d2, w2) -> {
-                        Item it = hits.get(w2);
-                        if (n >= multiPlayers.size()) return;
-                        label.setText("");
-                        PlayerActivity.playWithFallback(multiPlayers.get(n), streamUrls(it),
-                                () -> ui.post(() -> label.setText(it.name + "\nCouldn't play – press OK to pick another")));
-                    }).show();
-                }).setNegativeButton("Cancel", null).create();
-        keepEntryVisible(dlg, q);
-        dlg.show();
-
+        final List<String[]> cats = multiCats;
+        resultList("Screen " + (n + 1) + " – pick a category", cats.size(), i -> text(cats.get(i)[1], 18, TEXT, false), i -> {
+            String cat = cats.get(i)[0];
+            List<Item> chs = new ArrayList<>();
+            for (Item it : liveChannels) if (!hideAdult(it.category) && ("*".equals(cat) || cat.equals(it.category))) chs.add(it);
+            if (chs.isEmpty()) { Toast.makeText(this, "No channels in " + cats.get(i)[1], Toast.LENGTH_SHORT).show(); return; }
+            resultList(cats.get(i)[1], chs.size(), r -> multiRow(chs.get(r)), r -> {
+                Item it = chs.get(r);
+                if (n >= multiPlayers.size()) return;
+                label.setText("");
+                PlayerActivity.playWithFallback(multiPlayers.get(n), streamUrls(it),
+                        () -> ui.post(() -> label.setText(it.name + "\nCouldn't play – press OK to pick another")));
+            }, null, null, "Back", () -> pickMultiChannel(n, label));
+        }, null, null, "Cancel", null);
     }
+
+    /** Channel name with "Now: title" underneath, filled in quietly as rows come into view. */
+    private View multiRow(Item it) {
+        TextView t = text(it.name + "\n" + multiNowLine(it.id), 17, TEXT, false);
+        t.setMaxLines(2); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        t.setTag(it.id);
+        if (!multiNow.containsKey(it.id) && multiAsked.add(it.id)) guideIo.execute(() -> {
+            String line = "";
+            try {
+                long now = System.currentTimeMillis() / 1000;
+                List<GuideGridView.Prog> ps = GuideListings.parse(new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=2")).optJSONArray("epg_listings"), now);
+                for (GuideGridView.Prog p : ps) if (p.st <= now && p.en > now) { line = p.title + "  " + clock(p.st) + "–" + clock(p.en); break; }
+            } catch (Exception ignored) {}
+            multiNow.put(it.id, line);
+            final String l2 = line;
+            ui.post(() -> { if (it.id.equals(t.getTag())) t.setText(it.name + "\n" + (l2.isEmpty() ? "No listing" : "Now: " + l2)); });
+        });
+        return t;
+    }
+    private String multiNowLine(String id) { String l = multiNow.get(id); return l == null ? "Loading what's on…" : l.isEmpty() ? "No listing" : "Now: " + l; }
 
     // ---------- programme reminders ----------
     private Item epgItem; private List<Object[]> epgProgs = new ArrayList<>();
