@@ -602,6 +602,8 @@ public class MainActivity extends Activity {
         startPolling();
         if (hasLogin()) {
             // Every open shows the family link check; an already-confirmed link adds the Go to home button straight away.
+            // Back from the background (or Android rebuilt the screen) without a full exit: straight home, no link screen.
+            if (PlayerApplication.pinPassed && rememberedUnlock()) { unlocked = true; showHome(); return; }
             rememberedUnlock();
             showLinkCheck();
             if (linkVerified) linkConfirmed();
@@ -1240,6 +1242,9 @@ public class MainActivity extends Activity {
         small.addView(smallButton("★ Favourites", v -> showSaved("fav", "Favourites")), smallWeight("★ Favourites"));
         small.addView(smallButton("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), smallWeight("⟲ Recently watched"));
         small.addView(smallButton("⚙ Settings", v -> showSettings()), smallWeight("⚙ Settings"));
+        // Multi Room / Triple Room: show Multi-screen at once from the last account-info number so it never vanishes while (or if) the check is slow.
+        int knownCons = prefs.getInt("max_cons", 0);
+        if (knownCons >= 2) addMultiButton(small, knownCons);
         root.addView(small);
         setContentView(withHomeBackground(root));
         tiles.getChildAt(0).requestFocus();
@@ -1260,11 +1265,12 @@ public class MainActivity extends Activity {
                 String line = "Signed in as " + prefs.getString("user", "") + (status.isEmpty() ? "" : " · " + status);
                 java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK);
                 line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
-                String[] rooms = roomsInfo();
-                int pkg = rooms[1].isEmpty() ? 0 : Integer.parseInt(rooms[1]);
-                // The provider account info (same number as Account information) wins; the website package and the last saved number are only fallbacks.
+                // The provider account info (same number as Settings > Account information) wins; the website package and the last saved number are only fallbacks.
                 int saved = prefs.getInt("max_cons", 0);
-                int provider = 0; try { provider = Integer.parseInt(info.optString("max_connections", "0").trim()); } catch (Exception ignored) {}
+                int provider = 0; try { provider = (int) Double.parseDouble(info.optString("max_connections", "0").trim()); } catch (Exception ignored) {}
+                if (provider >= 2) { int pc = provider; prefs.edit().putInt("max_cons", pc).apply(); ui.post(() -> addMultiButton(small, pc)); }
+                String[] rooms = roomsInfo();
+                int pkg = 0; try { pkg = rooms[1].isEmpty() ? 0 : Integer.parseInt(rooms[1]); } catch (Exception ignored) {}
                 int cons = provider >= 1 ? provider : pkg >= 1 && pkg <= 3 ? pkg : saved >= 1 ? saved : 1;
                 line += " · " + cons + (cons == 1 ? " connection" : " connections");
                 if (cons >= 2) line += rooms[0];
@@ -1274,15 +1280,19 @@ public class MainActivity extends Activity {
                 ui.post(() -> {
                     account.setText(l);
                     if (cons >= 2) liveRooms(account, base);
-                    if (cons >= 2 && small.findViewWithTag("multi") == null) {
-                        String ml = "🖥 Multi-screen (" + Math.min(cons, 3) + ")";
-                        Button mb = smallButton(ml, v -> chooseMultiScreens(Math.min(cons, 3)));
-                        mb.setTag("multi");
-                        small.addView(mb, 1, smallWeight(ml));
-                    }
+                    if (cons >= 2) addMultiButton(small, cons);
                 });
             } catch (Exception ignored) {}
         });
+    }
+
+    private void addMultiButton(LinearLayout small, int cons) {
+        if (small.findViewWithTag("multi") != null) return;
+        int n = Math.min(cons, 3);
+        String ml = "🖥 Multi-screen (" + n + ")";
+        Button mb = smallButton(ml, v -> chooseMultiScreens(Math.min(3, Math.max(2, prefs.getInt("max_cons", n)))));
+        mb.setTag("multi");
+        small.addView(mb, Math.min(1, small.getChildCount()), smallWeight(ml));
     }
 
     /** Multi Room / Triple Room: other boxes on this login that are watching now (blank if none or offline). */
@@ -3496,6 +3506,8 @@ public class MainActivity extends Activity {
             try {
                 JSONObject info = new JSONObject(Net.get(api(""))).optJSONObject("user_info");
                 if (info == null) throw new Exception();
+                // Same number the home screen and Multi-screen use.
+                try { int mc = (int) Double.parseDouble(info.optString("max_connections", "0").trim()); if (mc >= 1) prefs.edit().putInt("max_cons", mc).apply(); } catch (Exception ignored) {}
                 String exp = info.optString("exp_date", "");
                 String ends = exp.isEmpty() || "null".equals(exp) ? "No expiry" :
                         new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK).format(new java.util.Date(Long.parseLong(exp) * 1000));

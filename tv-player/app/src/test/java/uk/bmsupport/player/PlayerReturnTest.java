@@ -21,13 +21,14 @@ public class PlayerReturnTest {
         count.setAccessible(true); count.setInt(null, 0);
         PlayerApplication.pinPassed = false;
     }
-    @Test public void homeTripImmediatelyRequiresPin() {
+    @Test public void backgroundReturnSkipsLinkCheck() {
         Activity a = Robolectric.buildActivity(Activity.class).get();
         PlayerApplication app = (PlayerApplication) a.getApplication();
         app.onActivityStarted(a); PlayerApplication.pinPassed = true;
         app.onActivityStopped(a); shadowOf(Looper.getMainLooper()).idle();
         app.onActivityStarted(a);
-        assertFalse(PlayerApplication.pinPassed);
+        // Re-opened from the background without exiting: no linked-device screen again.
+        assertTrue(PlayerApplication.pinPassed);
         app.onActivityStopped(a);
     }
     @Test public void internalActivityTransitionKeepsPin() {

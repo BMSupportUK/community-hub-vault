@@ -324,7 +324,8 @@ public final class PlayerApplication extends Application implements Application.
     /** True while any BM Player screen is on the display (not just alive in the background). */
     static boolean onScreen() { return startedCount > 0; }
     // Defer one UI turn so moving between our own activities never counts as leaving the app.
-    private final Runnable lockBackground = () -> { if (startedCount == 0) pinPassed = false; };
+    // Backgrounding is not exiting: the linked-device check stays passed until the app really closes (process ends / exit).
+    private final Runnable lockBackground = () -> { };
     @Override public void onActivityStarted(Activity a) {
         ui.removeCallbacks(lockBackground);
         startedCount++;
