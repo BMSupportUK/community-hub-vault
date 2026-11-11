@@ -18,7 +18,6 @@ import {CategoryOrderEditor} from './category-order';
 import {orderCategories} from '../category-order.cjs';
 import {filterLive} from '../live-search.cjs';
 import {createGuideCache} from '../guide-refresh.cjs';
-const GUIDE_WAIT_MS=30000;
 const bm=window.bm;
 const stamp=value=>value?'Updated '+new Date(value).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Not updated yet';
 const clock=value=>new Date(value).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
@@ -39,9 +38,9 @@ function App(){
 async function preloadGuide(){let ids=[];try{ids=((await bm.catalog('live'))?.items||[]).map(c=>c.id).filter(id=>epgCache.current.due(id));}catch{}
  const started=Date.now(),total=ids.length;let done=0,next=0,open=true;
  const show=()=>{if(open)setProgress({locked:true,message:'Loading TV guide… please wait',percent:Math.min(99,60+Math.round(done/Math.max(1,total)*39))});};show();
- const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await cachedEpg(id);}catch{}done++;if(open&&Date.now()-started>=GUIDE_WAIT_MS){open=false;setProgress(null);}else show();}};
+ const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await cachedEpg(id);}catch{}done++;show();}};
  const all=Promise.all(Array.from({length:8},worker)).then(()=>saveGuide());
- await Promise.race([all,new Promise(r=>setTimeout(r,GUIDE_WAIT_MS))]);open=false;setProgress(null);saveGuide();}
+ await all;open=false;setProgress(null);saveGuide();}
  const [ratings,setRatings]=useState({}),[voteBusy,setVoteBusy]=useState(false);
  const ratingKey=item=>item.kind+':'+item.name;
  function mergeRatings(rows){setRatings(old=>({...old,...Object.fromEntries(rows.map(r=>[r.kind+':'+r.title,r]))}));}
