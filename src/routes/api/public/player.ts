@@ -780,6 +780,13 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         if (body.action === "code") {
+          // Remember the box's internet so linking can refuse a VPN (true location for sharing checks).
+          const codeIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+          if (codeIp) {
+            const { isPublicIp, checkDeviceVpn } = await import("@/lib/player-vpn");
+            const vpnFields = isPublicIp(codeIp) ? await checkDeviceVpn(codeIp).catch(() => ({})) : {};
+            await supabaseAdmin.from("player_devices").update({ last_ip: codeIp.slice(0, 64), ...vpnFields }).eq("id", device.id);
+          }
           await supabaseAdmin.from("player_link_codes").delete().eq("device_id", device.id);
           for (let i = 0; i < 5; i++) {
             const code = randomCode();

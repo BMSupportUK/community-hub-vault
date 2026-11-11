@@ -47,6 +47,16 @@ export const sendLoginWithCode = createServerFn({ method: "POST" })
       await supabaseAdmin.from("player_link_attempts").insert({ user_id: context.userId });
       throw new Error("That code is wrong or has expired. Check the code on your screen.");
     }
+    // VPN must be off on the box so we see its true location; staff are exempt. Checked before the code is used up.
+    const { data: isStaff } = await context.supabase.rpc("has_any_role", { _user_id: context.userId, _roles: ["admin", "management", "staff", "moderator"] });
+    if (!isStaff) {
+      const { data: box } = await supabaseAdmin.from("player_devices").select("last_ip").eq("id", row!.device_id).maybeSingle();
+      const { isPublicIp, checkDeviceVpn } = await import("@/lib/player-vpn");
+      if (box?.last_ip && isPublicIp(box.last_ip)) {
+        const v = await checkDeviceVpn(box.last_ip).catch(() => null);
+        if (v?.vpn_status === "yes") throw new Error("Turn off the VPN on your box before linking it, then try the same code again. We need the box's real location.");
+      }
+    }
     // Single use: only the first claimant flips used_at.
     const { data: claimed } = await supabaseAdmin.from("player_link_codes").update({ used_at: new Date().toISOString() })
       .eq("code_hash", hash).is("used_at", null).select("device_id").maybeSingle();
