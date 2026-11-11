@@ -33,5 +33,5 @@ export function maxedMessage(active: OtherDevice[], max: number): string {
 
 /** "Who's watching" list for the main menu: other rooms on this login, no ids or tokens. */
 export function roomsWatching(others: OtherDevice[], selfId: string, now = Date.now()) {
-  return activeStreams(others, selfId, now).slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title }));
+  return activeStreams(others, selfId, now).slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title, screens: Math.max(1, Math.floor(d.watching_screens ?? 1) || 1) }));
 }

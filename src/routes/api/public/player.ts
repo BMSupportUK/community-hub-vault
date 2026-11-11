@@ -211,7 +211,7 @@ export const Route = createFileRoute("/api/public/player")({
           // Main-menu "who's watching": other devices on this same provider login, only for a linked box.
           if ((!device.user_id && !device.offsite_customer_id) || device.iptv_username !== body.login) return json({ rooms: [], connections: null });
           const { roomsWatching } = await import("@/lib/player-stream-claim");
-          const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title")
+          const { data: others } = await supabaseAdmin.from("player_devices").select("id, name, platform, last_seen_at, watching_kind, watching_title, watching_screens")
             .eq("iptv_username", body.login).neq("id", device.id).limit(50);
           // Connections come from the provider (DNS + login), then the package.
           const { loginConnections } = await import("@/lib/player-connections.server");

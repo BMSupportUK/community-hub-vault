@@ -1235,8 +1235,10 @@ public class MainActivity extends Activity {
                 if (cons >= 2) line += rooms[0];
                 String l = line;
                 prefs.edit().putInt("max_cons", cons).apply();
+                String base = line.substring(0, line.length() - (cons >= 2 ? rooms[0].length() : 0));
                 ui.post(() -> {
                     account.setText(l);
+                    if (cons >= 2) liveRooms(account, base);
                     if (cons >= 2 && small.findViewWithTag("multi") == null) {
                         String ml = "🖥 Multi-screen (" + Math.min(cons, 3) + ")";
                         Button mb = smallButton(ml, v -> chooseMultiScreens(Math.min(cons, 3)));
@@ -1250,6 +1252,17 @@ public class MainActivity extends Activity {
 
     /** Multi Room / Triple Room: other boxes on this login that are watching now (blank if none or offline). */
     /** [who's watching line, package connections (Single 1, Multi Room 2, Triple Room 3) or ""]. */
+    /** "Also watching on your login" refreshes every 5s while this home screen is showing. */
+    private void liveRooms(TextView account, String base) {
+        ui.postDelayed(() -> {
+            if (!"home".equals(screen) || !account.isAttachedToWindow()) return;
+            safeRun(io, () -> {
+                String[] r = roomsInfo();
+                ui.post(() -> { if ("home".equals(screen) && account.isAttachedToWindow()) { account.setText(base + r[0]); liveRooms(account, base); } });
+            });
+        }, 5000);
+    }
+
     private String[] roomsInfo() {
         try {
             JSONObject res = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
@@ -1263,7 +1276,8 @@ public class MainActivity extends Activity {
                 JSONObject r = rooms.optJSONObject(i); if (r == null) continue;
                 String t = r.isNull("title") ? "" : r.optString("title", "");
                 if (i > 0) b.append(" · ");
-                b.append(r.optString("name", "BM Player")).append(t.isEmpty() ? "" : " – " + t);
+                int sc = r.optInt("screens", 1);
+                b.append(r.optString("name", "BM Player")).append(sc > 1 ? " (" + sc + " screens)" : "").append(t.isEmpty() ? "" : " – " + t);
             }
             return new String[]{b.toString(), pkg};
         } catch (Throwable e) { return new String[]{"", ""}; }
