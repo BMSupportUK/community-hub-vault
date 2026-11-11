@@ -35,6 +35,8 @@ function App(){
  useEffect(()=>{const t=setInterval(saveGuide,120000);window.addEventListener('beforeunload',saveGuide);return()=>{clearInterval(t);window.removeEventListener('beforeunload',saveGuide);};},[]);
  const cachedEpg=id=>epgCache.current.load(id,key=>bm.epg(key));
 // Startup: load the TV guide with the playlists behind a locked screen; after 30s let the customer in and finish quietly.
+// Startup/refresh already downloaded the playlists: hold them here so opening Live TV, Films or Series never shows "Loading playlist…" again.
+async function keepCatalogues(){const user=stateRef.current?.user;for(const k of ['live','film','series']){try{const d=await bm.catalog(k);if(d)catalogs.current[k]={preloaded:true,stamp:stateRef.current?.refreshed?.[k]||0,user,data:d};}catch{}}}
 async function preloadGuide(){let ids=[];try{ids=((await bm.catalog('live'))?.items||[]).map(c=>c.id).filter(id=>epgCache.current.due(id));}catch{}
  const started=Date.now(),total=ids.length;let done=0,next=0,open=true;
  const show=()=>{if(open)setProgress({locked:true,message:'Loading TV guide… please wait',percent:Math.min(99,60+Math.round(done/Math.max(1,total)*39))});};show();
@@ -50,6 +52,7 @@ async function preloadGuide(){let ids=[];try{ids=((await bm.catalog('live'))?.it
  async function vote(item,stars){if(voteBusy)return;setVoteBusy(true);const r=await act(()=>bm.vote({kind:item.kind,title:item.name,stars}));if(r){mergeRatings(r.ratings);setModal(null);toast('Your '+stars+'-star vote is saved.');}else{setModal(null);loadRatings([item],true);}setVoteBusy(false);}
  useEffect(()=>{const timer=setTimeout(()=>setIntro(false),8000);return()=>clearTimeout(timer);},[]);
  const [state,setState]=useState(null),[view,setView]=useState('home'),[notice,setNotice]=useState(''),[modal,setModal]=useState(null),[progress,setProgress]=useState(null),[inactive,setInactive]=useState(0);
+ const stateRef=useRef(null);stateRef.current=state;
  const [kind,setKind]=useState('live'),[data,setData]=useState({categories:[],items:[]}),[category,setCategory]=useState('all'),[query,setQuery]=useState(''),[sort,setSort]=useState('added'),[heroItem,setHeroItem]=useState(null);
  const [selected,setSelected]=useState(null),[programmes,setProgrammes]=useState([]),[series,setSeries]=useState(null),[season,setSeason]=useState('1');
  const [sports,setSports]=useState({events:[],aliases:[],order:[]}),[sportsPath,setSportsPath]=useState([]),[guide,setGuide]=useState({}),[guideStart,setGuideStart]=useState(Math.floor(Date.now()/1800000)*1800000),[guideCategory,setGuideCategory]=useState('all'),[catchupView,setCatchupView]=useState(null),[guidePage,setGuidePage]=useState(0);
@@ -73,7 +76,7 @@ async function preloadGuide(){let ids=[];try{ids=((await bm.catalog('live'))?.it
   if(event.type==='unlinked'){catalogs.current={};epgScope.current=null;epgCache.current.clear();try{Object.keys(localStorage).filter(k=>k.startsWith('bm-guide-')).forEach(k=>localStorage.removeItem(k));}catch{}setPlayingView(false);setMulti(1);setView('home');setModal({type:'unlinked'});}
   if(event.type==='alternate-feed')setModal({type:'alternate-feed',auto:!!event.auto,index:event.index,items:event.items,eventKey:event.eventKey});
   if(event.type==='progress')setProgress(event.percent<100?event:null);
-  if(event.type==='catalogues'&&event.guide)void preloadGuide();
+  if(event.type==='catalogues')void keepCatalogues().then(()=>{if(event.guide)return preloadGuide();});
   if(event.type==='inactive')setInactive(event.seconds);
   if(event.type==='subtitles-found')setModal({type:'subs-found',index:event.index,item:event.item});
   if(event.type==='reminder')setModal({type:'reminder-alert',reminder:event.reminder});
@@ -82,7 +85,7 @@ async function preloadGuide(){let ids=[];try{ids=((await bm.catalog('live'))?.it
   if(event.type==='watch')choose(event.item);
  });},[]);
  const catalogs=useRef({});
- async function browse(nextKind,source,favourites=false){setKind(source?'live':nextKind);setCategory(source?'live':'all');setQuery('');setHeroItem(null);setSelected(null);setProgrammes([]);setView('browse');setLoading(true);setSort(state?.settings?.['sort_'+nextKind]||'added');if(source){setData({saved:true,favourites,categories:[{id:'live',name:'Live TV'},{id:'film',name:'Movies'},{id:'series',name:'Series'}],items:source.map(i=>({...i,category:i.kind==='live'?'live':i.kind==='film'?'film':'series'}))});setLoading(false);loadRatings(source);return;}const stamp=state?.refreshed?.[nextKind]||0,kept=catalogs.current[nextKind];if(kept&&kept.stamp===stamp&&kept.user===state?.user){setData(kept.data);setLoading(false);pane.current?.scrollTo(0,0);return;}const result=await act(()=>bm.catalog(nextKind));if(result){catalogs.current[nextKind]={stamp:state?.refreshed?.[nextKind]||stamp,user:state?.user,data:result};setData(result);loadRatings(result.items);}setLoading(false);pane.current?.scrollTo(0,0);}
+ async function browse(nextKind,source,favourites=false){setKind(source?'live':nextKind);setCategory(source?'live':'all');setQuery('');setHeroItem(null);setSelected(null);setProgrammes([]);setView('browse');setLoading(true);setSort(state?.settings?.['sort_'+nextKind]||'added');if(source){setData({saved:true,favourites,categories:[{id:'live',name:'Live TV'},{id:'film',name:'Movies'},{id:'series',name:'Series'}],items:source.map(i=>({...i,category:i.kind==='live'?'live':i.kind==='film'?'film':'series'}))});setLoading(false);loadRatings(source);return;}const stamp=state?.refreshed?.[nextKind]||0,kept=catalogs.current[nextKind];if(kept&&(kept.preloaded||kept.stamp===stamp)&&kept.user===state?.user){setData(kept.data);setLoading(false);pane.current?.scrollTo(0,0);return;}const result=await act(()=>bm.catalog(nextKind));if(result){catalogs.current[nextKind]={stamp:state?.refreshed?.[nextKind]||stamp,user:state?.user,data:result};setData(result);loadRatings(result.items);}setLoading(false);pane.current?.scrollTo(0,0);}
  const categories=data.saved?data.categories:orderCategories(data.categories,state?.settings?.['category_order_'+kind]);
  const items=orderBrowse(kind==='live'&&!data.saved?filterLive(data.items,category,query):data.items.filter(i=>(category==='all'||i.category===category)&&i.name.toLowerCase().includes(query.toLowerCase())),kind,sort);
  async function preview(item){
