@@ -3,7 +3,6 @@
 - EPG imports stream matched stations; US locals use station callsigns. EPG uses shared indexed fixture matching and single-flight catalogues without provider completion waits; sports cards retain those checks separately. Published-row caches never freeze event overlays.
 - Saved sports listing end times are authoritative in shared fixture EPG and Sports Guide events; preserve them through import, merging and completion without provider overwrites or prelim estimates. Provider-derived completion remains separate.
 - Channel EPG uses provider listings except Sports Pass/event feeds (never official main channels), which receive saved website fixtures through sportsFixtureEpg; country imports and category-refresh dispatch/claim functions remain disabled.
-- Center Ice EPG shares fixtures between main NHL Center Ice and NHL Set 2 labels only when their stable pre-pipe feed numbers match; the EPG overlay never rewrites Sports Guide channel/playback routing.
 - Buffering diagnostics store bounded device-reported format/decoder/event metadata; admin/management summaries filter before limiting and do not turn cause labels into definitive diagnoses.
 - Player viewing history records credited prior-poll playback under the verified device owner and session; admin/management-only reads return member totals, kind breakdowns and the latest 7 UK days of activities grouped per day, never account credentials or emails.
 - Customers staff-detail forms reuse member username/email updates; handlers read target roles and require admin for staff targets while preserving management edits for non-staff customers.
@@ -23,12 +22,6 @@
 - Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.
 - Order staff-help tickets start pending remote setup; their existing ticket layout notifies staff after confirmation, while self-install links retain paid-order guide access.
 - Ticket setup stages are presentation-only, derived from scoped ticket checks and available website codes; code creation advances instructions but never proves redemption or TV readiness.
-
-- Sports guides keep publication status; headings prefix events, not channels; document scrolling; channels only beneath Available channels; BM loads through hydration/router pending.
-- UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
-- NHL Center Ice treats its listing clock as ET and converts to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use stated UK times.
-- Sports formats need split/safety/read-back tests; normalize dual-clock typos before title pairing; DAZN inline slots stay separate, qualifiers extend titles.
-- Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Every customer checkout requires the entered order password, including signed-in shop owners; paid, non-cancelled orders can open published guides through the same credentials.
 - Customer password-request notifications use an owner-only RPC and contain no credentials; copy actions retrieve the password separately.
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
@@ -43,3 +36,4 @@
 - Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
 - Accounts with multiple saved logins expose the shared profile chooser and switch pill; selection uses the existing authenticated profile scope so each login retains separate details and returning to staff requires password verification.
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
+- Sports import and guide rules live in `src/routes/api/public/AGENTS.md`.

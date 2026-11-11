@@ -13,3 +13,9 @@
 - Enabler refresh exposes only a capability-verified reference-use boolean alongside task state, allowing both apps to unlock new references without revealing ticket/order IDs or changing the original scope.
 - Dashboard-issued installer codes verify admin/management server-side and bind a website code to an app-kind-specific PIN via admin_issue_id; these PINs cannot redeem customer codes or cross installer kinds. Validate selected apps against current available TV builds before issuance.
 - Multi/Triple Room household rule lives in src/lib/player-household.ts and runs inside the device-token stream_claim: package connections come from the login's credential account type; each claim stores the device's home/away state so one away slot and home-vs-away exclusion are enforced (busy+takeover or refused); VPN claims keep the last non-VPN state so VPNs stay allowed; strikes are household_away events and blocks live on player_login_homes.
+- Center Ice EPG shares fixtures between main NHL Center Ice and NHL Set 2 labels only when their stable pre-pipe feed numbers match; the EPG overlay never rewrites Sports Guide channel/playback routing.
+- Sports guides keep publication status; headings prefix events, not channels; document scrolling; channels only beneath Available channels; BM loads through hydration/router pending.
+- UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
+- NHL Center Ice treats its listing clock as ET and converts to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use stated UK times.
+- Sports formats need split/safety/read-back tests; normalize dual-clock typos before title pairing; DAZN inline slots stay separate, qualifiers extend titles.
+- Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
