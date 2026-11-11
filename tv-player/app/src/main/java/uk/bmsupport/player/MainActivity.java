@@ -551,7 +551,7 @@ public class MainActivity extends Activity {
         startPolling();
         if (hasLogin()) {
             if (rememberedUnlock() && linkVerified) showHome();
-            else showMessage("Checking your device link…", this::start);
+            else showLinkCheck();
         } else showLink();
     }
 
@@ -693,7 +693,8 @@ public class MainActivity extends Activity {
             boolean needsAccount = !unlocked && now && !r.optBoolean("linked", false);
             if (c != null || had != now || restored || needsAccount || (!verifiedBefore && linkVerified)) ui.post(() -> {
                 if (c != null) Toast.makeText(this, "Login received from BM Support", Toast.LENGTH_LONG).show();
-                if (now) showHome(); else showLink();
+                if (now && "linkcheck".equals(screen) && linkVerified) linkConfirmed();
+                else if (now) showHome(); else showLink();
             });
         } catch (Exception ex) {
             if (String.valueOf(ex.getMessage()).contains("401")) {
@@ -871,6 +872,28 @@ public class MainActivity extends Activity {
         p.addView(text("\uD83D\uDD12 You'll scan a QR code with Google Authenticator or Microsoft Authenticator.", 14, MUTED, false));
         setContentView(familyFrame(p));
         go.requestFocus();
+    }
+
+    private TextView linkCheckMsg; private LinearLayout linkCheckPanel;
+    /** Opening check: family picture with "Checking your linked device…"; a Go to home button appears once the website confirms. */
+    private void showLinkCheck() {
+        stopPreview(); stopMulti();
+        screen = "linkcheck"; back = null;
+        LinearLayout p = column(); p.setGravity(Gravity.CENTER_HORIZONTAL);
+        p.addView(logo());
+        p.addView(text("Welcome to BM Player", 24, TEXT, true));
+        linkCheckMsg = text("\u23F3 Checking your linked device… please wait", 18, MUTED, false);
+        p.addView(linkCheckMsg);
+        linkCheckPanel = p;
+        setContentView(familyFrame(p));
+    }
+    private void linkConfirmed() {
+        if (linkCheckMsg == null || linkCheckPanel == null) { showHome(); return; }
+        linkCheckMsg.setText("\u2705 Your device is linked");
+        Button go = button("Go to home screen", v -> showHome());
+        linkCheckPanel.addView(go);
+        go.requestFocus();
+        screen = "linkok";
     }
 
     /** Family-watching-TV picture behind a frosted panel on the right (2FA welcome and daily code screens). */
