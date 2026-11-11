@@ -138,3 +138,4 @@ select{color-scheme:dark}select option,select optgroup{background:var(--surface)
 .family-panel.compact{gap:8px;padding:20px 24px;max-height:calc(100vh - 24px)}.family-panel.compact h1{font-size:28px;margin:0}.family-panel.compact p{margin:0}
 .family-panel.compact .keypad{gap:6px}.family-panel.compact .keypad button{padding:10px 0}.code-boxes.eight{gap:5px}.code-boxes.eight span{max-width:44px;height:52px;font-size:24px}
 .status-line{min-height:1.2em;font-size:14px;opacity:.85}.help-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.help-row button{white-space:nowrap;padding:10px 8px;font-size:15px}
+.watch-panes .empty-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:2px dashed var(--border);border-radius:12px;min-height:200px}
