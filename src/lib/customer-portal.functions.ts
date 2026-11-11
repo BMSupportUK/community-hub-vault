@@ -106,6 +106,19 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
       });
     }
     const accounts = [...byLogin.values()];
+    // Connections come from the provider itself (DNS player_api user_info.max_connections).
+    const { data: ps } = await supabaseAdmin.from("player_settings").select("dns").eq("id", 1).maybeSingle();
+    const { normaliseDns } = await import("@/lib/player-link");
+    const dns = normaliseDns(ps?.dns ?? "");
+    if (dns) await Promise.all(accounts.map(async (a) => {
+      if (!a.login || !a.password) return;
+      try {
+        const r = await fetch(`${dns}/player_api.php?username=${encodeURIComponent(a.login)}&password=${encodeURIComponent(a.password)}`, { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) return;
+        const n = Number((await r.json())?.user_info?.max_connections);
+        if (Number.isFinite(n) && n > 0) a.connections = n;
+      } catch { /* provider unreachable: card falls back to the package name */ }
+    }));
     const qdCodes = (qd ?? []).map((q) => ({ id: String(q.id), label: String(q.label), code: String(q.code), notes: q.notes ? String(q.notes) : null }));
     return { mustChange: false as const, accounts, qdCodes, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
