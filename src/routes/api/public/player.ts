@@ -230,7 +230,7 @@ export const Route = createFileRoute("/api/public/player")({
             .eq("iptv_username", body.login).neq("id", device.id).limit(50);
           const { loginConnections } = await import("@/lib/player-connections.server");
           const pkgMax = await loginConnections(supabaseAdmin, body.login, body.max);
-          const clash = streamClash(others ?? [], device.id, pkgMax, Date.now(), body.screens ?? 1);
+          const clash = streamClash(others ?? [], device.id, pkgMax ?? body.max, Date.now(), body.screens ?? 1);
           if (clash.length && !body.takeover) {
             return json({ busy: true, devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title })) });
           }

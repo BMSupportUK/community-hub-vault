@@ -1,3 +1,4 @@
+// @ts-nocheck — tests run with bun test.
 import { expect, test } from "bun:test";
 import { pickConnections } from "./player-connections";
 
