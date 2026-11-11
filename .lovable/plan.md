@@ -5,11 +5,13 @@ Today a Multi/Triple Room login gets a warning and an admin report when a box wa
 ## 1. Box allowance per package
 - Each login can only have a set number of linked boxes: Multi Room 2 boxes + 1 phone, Triple Room 3 boxes + 1 phone (Single keeps its current rule).
 - Any extra box waits for admin approval in Security, like the current 4th-box approval.
-- Only one phone per login counts as "the mobile". A second phone needs approval.
+- Only one mobile connection per account, ever. A second phone cannot be linked or play.
 
 ## 2. Home check all the time, not just when a channel starts
 - Every check-in from a box (about once a minute) is compared with the home internet, so moving a box mid-viewing is caught too.
-- The phone is the only device allowed away from home, and only on mobile data.
+- Only ONE device per account may watch away from home at a time (the phone on mobile data, or a box taken on holiday).
+- Holiday rule: while that away device is watching, nothing on the home internet can play. Home boxes show "Your login is being watched away from home" with "Watch here instead", which stops the away device. The account is never used in two places at once.
+- A second away device trying to play is refused straight away.
 
 ## 3. Strongest sharing signal: two houses at once
 - If two non-mobile boxes on the same login are watching **at the same time from different internet connections**, that's a strike straight away. One house can't be in two places.
