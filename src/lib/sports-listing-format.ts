@@ -478,6 +478,9 @@ export function isLikelyChannelLabel(value: string): boolean {
     if (parts.length > 1) return parts.every((p) => isLikelyChannelLabel(p));
   }
   if (!text || text.length > 70) return false;
+  // The colon-row parser emits compact provider codes (WF01, NFL15).
+  // Keep these as channels when looking above the next event's clock.
+  if (/^[A-Za-z]{1,6}\d{1,3}$/i.test(text)) return true;
   if (/^(?:ufc\s*)?fight\s*pass$/i.test(text)) return true;
   if (/\b(?:v|vs|versus)\b/i.test(text)) return false;
   if (/\b(?:league|cup|trophy|championship|premier|serie|liga|bundesliga)\b/i.test(text) && !/\d/.test(text)) return false;
