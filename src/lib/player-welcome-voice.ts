@@ -1,5 +1,5 @@
 /** Spoken welcome for the BM Player linked-device screen: a British female voice greeting the customer by username. */
-export const WELCOME_VOICE_VERSION = "v1";
+export const WELCOME_VOICE_VERSION = "v2";
 const recent = new Map<string, number>();
 
 /** Greeting text; names are trimmed to letters, numbers and simple punctuation so nothing odd is spoken. */
@@ -23,15 +23,17 @@ export async function welcomeCacheKey(text: string) {
   return `welcome/${[...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("")}.wav`;
 }
 
-/** Makes the WAV clip through Lovable AI text-to-speech (Gemini, female "Kore" voice, steered to a UK accent). */
+/** Makes the WAV clip through Lovable AI text-to-speech (OpenAI, female "shimmer" voice, steered to a British accent). */
 export async function synthWelcome(text: string, apiKey: string) {
   const res = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3.1-flash-tts-preview",
-      contents: [{ role: "user", parts: [{ text: `Say warmly and cheerfully, as a friendly young British woman with a clear southern English accent: ${text}` }] }],
-      generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } } },
+      model: "openai/gpt-4o-mini-tts",
+      voice: "shimmer",
+      input: text,
+      instructions: "Speak warmly and cheerfully with a natural British English accent.",
+      response_format: "wav",
       stream_format: "audio",
     }),
   });
