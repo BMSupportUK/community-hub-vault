@@ -14,8 +14,6 @@ import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/p
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
-import { AdminEnablerCodes } from "@/components/app/AdminEnablerCodes";
-import { AlternativeInstallToggle } from "@/components/app/AlternativeInstallToggle";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 // GoCardless switch (PayByBankProviderCard) hidden until the account is verified.
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
@@ -608,7 +606,6 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop, art: toolArtDesign },
     { tabKey: "rail-order", label: "Side icon rail", desc: "Staff and customer icon orders.", icon: LayoutGrid, art: toolArtDesign, adminOnly: true },
     { tabKey: "tv-sessions", label: "TV Remote sessions", desc: "Live TV sessions and session history.", icon: MonitorPlay, art: toolArtDevices, adminOnly: true },
-    { tabKey: "enabler-codes", label: "Installer PIN & website codes", desc: "Reference name, device and selected apps for BM Direct Install or BM TV Enabler.", icon: KeyRound, art: toolArtDevices, adminOnly: true, managementToo: true },
     { to: "/admin-app-transfers", label: "App transfers", desc: "Send apps straight to customers' devices and keep track of every transfer by week.", icon: Smartphone, art: toolArtDevices },
     { tabKey: "faqs", label: "FAQ boxes", desc: "Add, edit, delete and re-order the boxes on the public FAQ page.", icon: CircleHelp, art: toolArtDocs },
     { tabKey: "install-pills", label: "Install Guides pills", desc: "Change the order of the pills on Install Guides with up and down arrows.", icon: LayoutGrid, art: toolArtDesign, adminOnly: true },
@@ -734,8 +731,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
       ) : tab === "rail-order" && isAdminOnly ? (
         <RailOrderEditor />
       ) : tab === "enabler-codes" && canSeePins && !isFz ? (
-        <div className="space-y-4"><AlternativeInstallToggle />
-        <AdminEnablerCodes /></div>
+        <Navigate to="/admin-player" search={{ section: "installer-codes" }} replace />
       ) : tab === "tv-sessions" && isAdminOnly && !isFz ? (
         <TvRemoteSessions onBack={() => {
           setTab("tools");

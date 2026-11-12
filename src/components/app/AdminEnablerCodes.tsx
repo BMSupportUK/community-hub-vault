@@ -146,7 +146,7 @@ export function AdminEnablerCodes() {
           {issued && (
             <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
               <p className="text-sm">For <b>{issued.name}</b> · {INSTALLER_LABEL[issued.installer]}</p>
-              <p className="text-sm text-muted-foreground">App login PIN expires {fmt(issued.pinExpiresAt)} ({issued.installer === "direct" ? "30 minutes" : "24 hours"}). Website code expires {fmt(issued.expiresAt)}. Shown once only.</p>
+              <p className="text-sm text-muted-foreground">{issued.installer === "direct" ? 'App login PIN stays valid until the customer presses “All done”.' : `App login PIN expires ${fmt(issued.pinExpiresAt)} (24 hours).`} Website code expires {fmt(issued.expiresAt)} (24 hours). Shown once only.</p>
               {([["App PIN", issued.pin], ["Website code", issued.code]] as const).map(([label, v]) => (
                 <div key={label} className="flex items-center justify-between gap-3">
                   <span className="text-sm text-muted-foreground">{label}</span>
