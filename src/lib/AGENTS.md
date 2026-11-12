@@ -43,3 +43,4 @@
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Sports import and guide rules live in `src/routes/api/public/AGENTS.md`.
 - BM Player connection counts take the larger of the provider (DNS player_api max_connections with the saved login, via player-connections.server.ts) and the website package, because providers can under-report Multi/Triple Room logins; the app-reported number is only a last resort.
+- Hook routes wrap handlers in `withCron` (cron-auth.server.ts; jobs send vault `x-cron-secret`); DB-trigger push hooks claim a once-only `scheduled_alert_log` key for fresh items.

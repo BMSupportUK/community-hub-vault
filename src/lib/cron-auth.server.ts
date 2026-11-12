@@ -1,5 +1,6 @@
 /** Shared guard for scheduled/background hook routes: only callers holding CRON_SECRET get through. */
-type Handler = (ctx: { request: Request } & Record<string, unknown>) => unknown;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Handler = (ctx: any) => any;
 
 export function cronDenied(request: Request): Response | null {
   const expected = process.env.CRON_SECRET;
