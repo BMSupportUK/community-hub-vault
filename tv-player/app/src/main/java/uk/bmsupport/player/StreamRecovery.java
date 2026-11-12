@@ -124,6 +124,11 @@ final class StreamRecovery {
     /** An advert switch: the picture size/format changed moments before the stall. */
     static final long ADVERT_WINDOW_MS = 4000, ADVERT_JUMP_MS = 800;
     static boolean advertSwitch(long sinceFormatChange) { return sinceFormatChange >= 0 && sinceFormatChange <= ADVERT_WINDOW_MS; }
+    /** After a programme/advert switch the player keeps its buffer this long before treating a stall or still picture as a fault. */
+    static final long ADVERT_GRACE_MS = 10000;
+    static boolean inAdvertGrace(long sinceFormatChange) { return sinceFormatChange >= 0 && sinceFormatChange <= ADVERT_GRACE_MS; }
+    /** Stuck-buffer reconnect wait: a stall that began at an advert switch gets the extra grace on top of the normal wait. */
+    static long advertStallTimeout(long base, boolean advertStall) { return advertStall ? base + ADVERT_GRACE_MS : base; }
 
     static String[] preferFormat(String[] urls, String pref) {
         if (pref == null || urls == null || urls.length < 2) return urls;

@@ -184,6 +184,9 @@ public class PlayerActivity extends Activity {
         cuEnd = getIntent().getLongExtra("catchup_end", 0);
         player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
+            // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
+            @Override public void onAudioInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
+            @Override public void onVideoInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
         });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
@@ -526,6 +529,9 @@ public class PlayerActivity extends Activity {
         });
         player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
+            // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
+            @Override public void onAudioInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
+            @Override public void onVideoInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
         });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
@@ -558,8 +564,12 @@ public class PlayerActivity extends Activity {
                     reconnect(StreamRecovery.cushioned(recoveryName()));
                 }
             }
+            @Override public void onPositionDiscontinuity(Player.PositionInfo o, Player.PositionInfo n, int reason) {
+                // A clock jump in the stream (typical at an advert break) is a switch, not a seek by the viewer.
+                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION || reason == Player.DISCONTINUITY_REASON_INTERNAL) markSwitch();
+            }
             @Override public void onVideoSizeChanged(VideoSize v) {
-                if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime();
+                markSwitch();
                 androidx.media3.common.Format f = player == null ? null : player.getVideoFormat();
                 if (f != null && "live".equals(kind()) && StreamRecovery.isHeavyFormat(f.width, f.height, f.frameRate, f.bitrate)
                         && StreamRecovery.rememberHeavy(recoveryName())) saveHeavy(PlayerActivity.this);
@@ -610,13 +620,17 @@ public class PlayerActivity extends Activity {
 
     // Anti-freeze: picture stuck while "playing" (sound carries on) or live drifting far behind now.
     private int afLastFrames = -1, afTicks;
+    private void markSwitch() { if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime(); }
+    private boolean advertGrace() { return "live".equals(kind()) && StreamRecovery.inAdvertGrace(android.os.SystemClock.elapsedRealtime() - formatChangedAt); }
+
     private final Runnable antiFreeze = new Runnable() {
         @Override public void run() {
             if (player == null) return;
             boolean playing = player.isPlaying() && player.getPlaybackState() == Player.STATE_READY;
             androidx.media3.exoplayer.DecoderCounters c = player.getVideoDecoderCounters();
             int frames = c == null ? -1 : c.renderedOutputBufferCount;
-            if (playing && frames >= 0 && frames == afLastFrames) afTicks++; else afTicks = 0;
+            // The short black/still gap between programme and adverts is not a freeze.
+            if (playing && frames >= 0 && frames == afLastFrames && !advertGrace()) afTicks++; else afTicks = 0;
             afLastFrames = frames;
             if (StreamRecovery.frozen(afTicks)) {
                 afTicks = 0; afLastFrames = -1;
@@ -725,7 +739,7 @@ public class PlayerActivity extends Activity {
                 if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
             }
             boolean retry = bufferWatch.retry(android.os.SystemClock.elapsedRealtime(),
-                    player.getBufferedPosition(), StreamRecovery.stallReconnectMs(recoveryName()),
+                    player.getBufferedPosition(), StreamRecovery.advertStallTimeout(StreamRecovery.stallReconnectMs(recoveryName()), stallAdvert),
                     player.getPlaybackState() == Player.STATE_BUFFERING, player.getPlayWhenReady());
             if (!reconnectPending && retry) reconnect();
             ui.postDelayed(this, 1000);

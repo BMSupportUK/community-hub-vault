@@ -94,4 +94,14 @@ public class StreamRecoveryTest {
         org.junit.Assert.assertTrue(StreamRecovery.advertSwitch(1500));
         org.junit.Assert.assertFalse(StreamRecovery.advertSwitch(9000));
     }
+
+    @org.junit.Test public void advertStallWaitsTenSecondsLonger() {
+        org.junit.Assert.assertEquals(22000, StreamRecovery.advertStallTimeout(12000, true));
+        org.junit.Assert.assertEquals(12000, StreamRecovery.advertStallTimeout(12000, false));
+    }
+    @org.junit.Test public void advertGraceLastsTenSeconds() {
+        org.junit.Assert.assertTrue(StreamRecovery.inAdvertGrace(9500));
+        org.junit.Assert.assertFalse(StreamRecovery.inAdvertGrace(11000));
+        org.junit.Assert.assertFalse(StreamRecovery.inAdvertGrace(-1));
+    }
 }
