@@ -71,6 +71,7 @@
 - `tv-enabler/` rules (PIN gate, Helper install path, ADB client parity) live in `tv-enabler/AGENTS.md`.
 - PlayerDeviceLinkSection serves both link pages; Windows EXE releases have their own logged endpoint.
 - iFollow/Scottish club-guide saves and player reads add both club-feed names without replacing supplied TV broadcasters, preserving older stored guides on read.
+- Scheduled/background hook routes wrap their handlers in `withCron` (`src/lib/cron-auth.server.ts`) and cron jobs send `x-cron-secret` from the vault; DB-trigger push hooks instead claim a once-only `scheduled_alert_log` key for fresh items.
 - Account numbers: `customer_numbers` rows are assigned on profile creation and can never be updated or deleted, so a 6-digit number is never reissued (withdrawn ones stay in `customer_numbers_retired`; `customer_number_is_weak` rejects simple patterns); read only through `get_customer_number` (self or staff roles).
 - Bottom-screen player announcement targets are nullable profile IDs; filter after the shared cache against verified device ownership, never client-supplied identity, keeping existing app payloads unchanged.
 - Buffering calendar filters use half-open UK calendar ranges through role-checked summary RPCs, preserving existing rolling-hour reports and private event access.
