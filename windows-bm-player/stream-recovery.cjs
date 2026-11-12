@@ -42,6 +42,7 @@ function frozen(session, state, position, now, status = {}) {
     if (state !== 3 || !Number.isFinite(frames) || frames <= 0) { session.pictureStillSince = 0; session.lastVideoFrames = undefined; return false; }
     if (frames !== session.lastVideoFrames) { session.lastVideoFrames = frames; session.pictureStillSince = now; return false; }
     if (!session.pictureStillSince) session.pictureStillSince = now;
+    if (inAdvertGrace(session, now)) return false;
     // Let the configured live cushion recover before destroying the connection.
     const wait = Math.max(LIVE_FREEZE_WAIT_MS, profile(session.recoveryName || session.item?.name).live);
     if (now - session.pictureStillSince >= wait) { session.pictureStillSince = now; return true; }
@@ -80,15 +81,17 @@ function isHdName(name) { return /\b(hd|fhd|uhd|4k|1080p?|720p?)\b/i.test(String
  */
 // Advert switch: the provider changes the picture size at a Sky advert break and the stream stalls straight after.
 const ADVERT_WINDOW_MS = 4000, ADVERT_JUMP_MS = 800;
+/** After a programme/advert switch the buffer is kept this long before a stall or still picture counts as a fault. */
+const ADVERT_GRACE_MS = 10000;
+function inAdvertGrace(session, now) { return !!session.sizeAt && now - session.sizeAt >= 0 && now - session.sizeAt <= ADVERT_GRACE_MS; }
+// Never reopens the stream: a switch is waited out with the buffer kept (matches Android). Always returns false.
 function advertJump(session, w, h, state, now, live) {
   if (w > 0 && h > 0) { const key = w + 'x' + h; if (session.size && session.size !== key) session.sizeAt = now; session.size = key; }
-  if (state === 3 || state === 4) { session.advertJumped = false; return false; }
-  if (!live || !session.ready || !session.stallAt || session.advertJumped || !session.sizeAt) return false;
+  if (state === 3 || state === 4) return false;
+  if (!live || !session.ready || !session.stallAt || !session.sizeAt) return false;
   if (session.stallAt - session.sizeAt > ADVERT_WINDOW_MS || session.stallAt < session.sizeAt - 1000) return false;
   session.advertStall = true;
-  if (now - session.stallAt < ADVERT_JUMP_MS) return false;
-  session.advertJumped = true;
-  return true;
+  return false;
 }
 
 function tick(session, state, now, live) {
@@ -119,7 +122,7 @@ function tick(session, state, now, live) {
   if ((state === 1 || state === 2 || broken) && !session.stallAt) session.stallAt = now;
   if (session.retryAt && now < session.retryAt) return out;
   const recovery = profile(session.recoveryName || session.item?.name);
-  if (broken || (session.stallAt && now - session.stallAt >= recovery.reconnect && (!session.retryAt || now >= session.retryAt))) {
+  if (broken || (session.stallAt && now - session.stallAt >= recovery.reconnect + (session.advertStall ? ADVERT_GRACE_MS : 0) && (!session.retryAt || now >= session.retryAt))) {
     session.reconnects = (session.reconnects || 0) + 1;
     if (giveUp(session.reconnects)) {
       if (!session.failed) { session.failed = true; out.failed = true; out.event = { ms: now - session.stallAt, reconnected: true }; }
@@ -132,4 +135,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { isDazn, isCoupang, isHeavyName, heavyFormat, isHeavy, rememberHeavy, loadHeavy, heavyList, HEAVY_MAX, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { isDazn, isCoupang, isHeavyName, heavyFormat, isHeavy, rememberHeavy, loadHeavy, heavyList, HEAVY_MAX, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, ADVERT_GRACE_MS, inAdvertGrace, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };

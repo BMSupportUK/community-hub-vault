@@ -45,3 +45,4 @@
 - Startup/refresh 'catalogues' events copy all three playlists into the renderer's catalogs cache (preloaded), so opening Live TV/Films/Series never re-requests or shows Loading playlist after startup.
 - Multi-screen sound changes only on an explicit click/tap or volume change on a pane (never on focus, which the controls watchdog moves); clicks on native pictures use GetAsyncKeyState's pressed-since-last-poll bit, and main.cjs announces the pane via an 'audible' event so the renderer draws its accent border. Multi-screen starts from the front screen only, never a Live TV header pill.
 - Full screen goes through the main-process `fullscreen` IPC (BrowserWindow.setFullScreen); DOM requestFullscreen is blocked by the media-only permission handler.
+- A live picture-size change (advert/kick-off feed switch) never reopens the stream: for 10s a still picture is not a freeze and a stall waits the normal reconnect time plus 10s, matching Android.
