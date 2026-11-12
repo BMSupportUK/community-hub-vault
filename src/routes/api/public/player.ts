@@ -7,7 +7,7 @@ import { createSharedCache } from "@/lib/player-sports-cache";
 import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
 import { announcementReachesDevice } from "@/lib/player-announcement-audience";
 import { WATCH_REQUEST_TTL_MS } from "@/lib/send-to-box";
-import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, eventTime, stallCause, shouldAlert } from "@/lib/player-buffering";
+import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, FeedSwitchBatch, dedupeSwitches, eventTime, stallCause, shouldAlert } from "@/lib/player-buffering";
 
 // One sports-guide build per minute per server instance, however many apps ask.
 const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
@@ -110,6 +110,7 @@ const Body = z.discriminatedUnion("action", [
     version: z.string().trim().max(20).optional(),
   }),
   z.object({ action: z.literal("buffering"), device_token: Token, version: z.string().trim().max(20).optional(), events: BufferBatch }),
+  z.object({ action: z.literal("feed_switches"), device_token: Token, switches: FeedSwitchBatch }),
   z.object({
     action: z.literal("report"), device_token: Token,
     kind: z.enum(["live", "film", "series"]),
@@ -697,6 +698,17 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ formats: Object.fromEntries((data ?? []).map((r) => [r.content_id, r.fmt])) });
         }
 
+        if (body.action === "feed_switches") {
+          const now = Date.now();
+          const rows = dedupeSwitches(body.switches).map((x) => ({
+            device_id: device.id, content_id: x.content_id, content_name: x.name, category: x.category ?? null,
+            switch_type: x.type, stalled: x.stalled ?? false, occurred_at: new Date(eventTime(x.at, now)).toISOString(),
+          }));
+          const { error } = await supabaseAdmin.from("player_feed_switches").insert(rows);
+          if (error) return json({ error: "Could not record" }, 503);
+          if (Math.random() < 0.02) await supabaseAdmin.from("player_feed_switches").delete().lt("occurred_at", new Date(now - 30 * 86_400_000).toISOString());
+          return json({ ok: true });
+        }
         if (body.action === "buffering") {
           const now = Date.now();
           const { data: dev } = await supabaseAdmin.from("player_devices").select("platform, app_version").eq("id", device.id).maybeSingle();

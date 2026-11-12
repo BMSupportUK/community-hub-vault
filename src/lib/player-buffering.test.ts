@@ -19,3 +19,15 @@ describe("player buffering", () => {
     expect(eventTime(now + 60_000, now)).toBe(now);
   });
 });
+
+import { FeedSwitchBatch as __FSB, dedupeSwitches as __dd } from "./player-buffering";
+test("feed switch batch caps at 50 and rejects unknown types", () => {
+  const one = { type: "sound", content_id: "1", name: "BBC One", at: 1 };
+  expect(__FSB.safeParse(Array(50).fill(one)).success).toBe(true);
+  expect(__FSB.safeParse(Array(51).fill(one)).success).toBe(false);
+  expect(__FSB.safeParse([{ ...one, type: "colour" }]).success).toBe(false);
+});
+test("same channel and type counted once per 30 seconds", () => {
+  const s = (type: string, at: number) => ({ type, content_id: "1", name: "X", at });
+  expect(__dd([s("picture", 0), s("picture", 29_999), s("picture", 30_000), s("sound", 1)]).length).toBe(3);
+});

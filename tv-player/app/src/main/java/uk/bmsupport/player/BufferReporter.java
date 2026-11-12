@@ -56,6 +56,32 @@ final class BufferReporter {
         } catch (Exception ignored) {}
     }
 
+    // ---------- feed switches (picture/sound/timing changes, provider restarts) for the admin report ----------
+    static final long SWITCH_DEDUPE_MS = 30_000;
+    private static final List<JSONObject> switches = new ArrayList<>();
+    private static final java.util.Map<String, Long> switchSeen = new java.util.HashMap<>();
+    /** True when this switch is new enough to count (same channel + type once per 30 seconds). */
+    static boolean countSwitch(String key, long now) {
+        synchronized (switchSeen) {
+            Long prev = switchSeen.get(key);
+            if (prev != null && now - prev < SWITCH_DEDUPE_MS) return false;
+            if (switchSeen.size() > 500) switchSeen.clear();
+            switchSeen.put(key, now);
+            return true;
+        }
+    }
+    static void feedSwitch(Context c, String id, String name, String category, String type, boolean stalled) {
+        long now = System.currentTimeMillis();
+        if (!countSwitch(type + "|" + (id == null || id.isEmpty() ? name : id), now)) return;
+        try {
+            JSONObject e = new JSONObject().put("type", type).put("content_id", id == null ? "" : id).put("name", name == null ? "" : name).put("stalled", stalled).put("at", now);
+            if (category != null && !category.isEmpty()) e.put("category", category.substring(0, Math.min(200, category.length())));
+            int size;
+            synchronized (switches) { if (switches.size() >= 50) switches.remove(0); switches.add(e); size = switches.size(); }
+            if (size >= 20) flush(c);
+        } catch (Exception ignored) {}
+    }
+
     static int pending() { synchronized (queue) { return queue.size(); } }
 
     static List<JSONObject> take(int max) {
@@ -69,6 +95,15 @@ final class BufferReporter {
     static void flush(Context c) {
         final Context app = c.getApplicationContext();
         final List<JSONObject> batch = take(BATCH);
+        final List<JSONObject> sw;
+        synchronized (switches) { sw = new ArrayList<>(switches); switches.clear(); }
+        if (!sw.isEmpty()) new Thread(() -> {
+            try {
+                JSONObject body = new JSONObject().put("action", "feed_switches")
+                        .put("device_token", PlayerActivity.prefs(app).getString("token", "")).put("switches", new JSONArray(sw));
+                Net.postJson(Net.SITE + "/api/public/player", body.toString());
+            } catch (Exception ignored) {}
+        }).start();
         if (batch.isEmpty()) return;
         new Thread(() -> {
             try {

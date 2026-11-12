@@ -6326,6 +6326,42 @@ export type Database = {
         }
         Relationships: []
       }
+      player_feed_switches: {
+        Row: {
+          category: string | null
+          content_id: string
+          content_name: string
+          created_at: string
+          device_id: string
+          id: string
+          occurred_at: string
+          stalled: boolean
+          switch_type: string
+        }
+        Insert: {
+          category?: string | null
+          content_id?: string
+          content_name?: string
+          created_at?: string
+          device_id: string
+          id?: string
+          occurred_at?: string
+          stalled?: boolean
+          switch_type: string
+        }
+        Update: {
+          category?: string | null
+          content_id?: string
+          content_name?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+          occurred_at?: string
+          stalled?: boolean
+          switch_type?: string
+        }
+        Relationships: []
+      }
       player_link_attempts: {
         Row: {
           created_at: string
@@ -9865,6 +9901,22 @@ export type Database = {
       }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }
       admin_ensure_customer_number: { Args: { _id: string }; Returns: number }
+      admin_feed_switch_summary: {
+        Args: { p_hours?: number }
+        Returns: {
+          category: string
+          content_name: string
+          devices: number
+          frame_rate: number
+          last_at: string
+          picture: number
+          provider_restart: number
+          sound: number
+          stalled: number
+          switches: number
+          timing: number
+        }[]
+      }
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
         Returns: {

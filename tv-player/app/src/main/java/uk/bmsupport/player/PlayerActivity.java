@@ -332,6 +332,7 @@ public class PlayerActivity extends Activity {
         progressKey = getIntent().getStringExtra("progress_key");
         seriesKey = getIntent().getStringExtra("series_key");
         resumePosition = getIntent().getLongExtra("resume_ms", 0);
+        view.setKeepContentOnPlayerReset(true); // the last picture stays up while a dropped live stream reopens
         view.setPlayer(player);
         final boolean is4kDevice = device4k(this);
         player.addListener(new Player.Listener() {
@@ -440,7 +441,7 @@ public class PlayerActivity extends Activity {
         if (reopenForBuffer && (player.getPlaybackState() == Player.STATE_READY
                 || !player.getPlayWhenReady() || player.getBufferedPosition() > reopenBufferedPosition)) {
             bufferWatch.reset();
-            if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+            { ui.removeCallbacks(this.showReconnectNote); if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE); }
             return;
         }
         if (pendingFormat != null) {
@@ -531,8 +532,8 @@ public class PlayerActivity extends Activity {
         player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
             // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
-            @Override public void onAudioInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
-            @Override public void onVideoInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
+            @Override public void onAudioInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch("sound"); }
+            @Override public void onVideoInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch("picture"); }
         });
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
@@ -557,20 +558,22 @@ public class PlayerActivity extends Activity {
                     }
                     // The periodic watch stays armed across READY and subsequent buffering.
                     ui.removeCallbacks(reopenStream); reconnectPending = false; bufferWatch.reset();
-                    if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+                    { ui.removeCallbacks(showReconnectNote); if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE); }
                 } else if (s == Player.STATE_ENDED && "live".equals(kind())) {
                     // Live never really ends: the provider dropped the stream (picture and sound stop
                     // with no buffering sign). Record it and reopen the channel at now.
                     reportBuffer(0, true, true, "provider_cut");
-                    reconnect(StreamRecovery.cushioned(recoveryName()));
+                    noteSwitch("provider_restart");
+                    // A provider restart usually comes straight back on the same address: reopen at once on every channel.
+                    reconnect(true);
                 }
             }
             @Override public void onPositionDiscontinuity(Player.PositionInfo o, Player.PositionInfo n, int reason) {
                 // A clock jump in the stream (typical at an advert break) is a switch, not a seek by the viewer.
-                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION || reason == Player.DISCONTINUITY_REASON_INTERNAL) markSwitch();
+                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION || reason == Player.DISCONTINUITY_REASON_INTERNAL) markSwitch("timing");
             }
             @Override public void onVideoSizeChanged(VideoSize v) {
-                markSwitch();
+                markSwitch("picture");
                 androidx.media3.common.Format f = player == null ? null : player.getVideoFormat();
                 if (f != null && "live".equals(kind()) && StreamRecovery.isHeavyFormat(f.width, f.height, f.frameRate, f.bitrate)
                         && StreamRecovery.rememberHeavy(recoveryName())) saveHeavy(PlayerActivity.this);
@@ -582,7 +585,7 @@ public class PlayerActivity extends Activity {
                 for (androidx.media3.common.Tracks.Group g : t.getGroups())
                     if (g.getType() == androidx.media3.common.C.TRACK_TYPE_AUDIO)
                         for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i)) { androidx.media3.common.Format af = g.getTrackFormat(i); audioKey = af.sampleMimeType + "/" + af.channelCount + "/" + af.sampleRate; }
-                if (audioKey != null) { if (lastAudioKey != null && !audioKey.equals(lastAudioKey)) markSwitch(); lastAudioKey = audioKey; }
+                if (audioKey != null) { if (lastAudioKey != null && !audioKey.equals(lastAudioKey)) markSwitch("sound"); lastAudioKey = audioKey; }
                 // 50fps UK sport judders on 60Hz Android boxes: ask the TV for a matching refresh rate.
                 for (androidx.media3.common.Tracks.Group g : t.getGroups())
                     if (g.getType() == androidx.media3.common.C.TRACK_TYPE_VIDEO)
@@ -627,7 +630,13 @@ public class PlayerActivity extends Activity {
 
     // Anti-freeze: picture stuck while "playing" (sound carries on) or live drifting far behind now.
     private int afLastFrames = -1, afTicks;
-    private void markSwitch() { if (everReady) formatChangedAt = android.os.SystemClock.elapsedRealtime(); }
+    private void markSwitch() { markSwitch("picture"); }
+    private void markSwitch(String type) { if (everReady) { formatChangedAt = android.os.SystemClock.elapsedRealtime(); noteSwitch(type); } }
+    /** Feed switch for the admin report (live only; one per type every 30s per channel). */
+    private void noteSwitch(String type) {
+        if (!"live".equals(kind())) return;
+        BufferReporter.feedSwitch(this, getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), getIntent().getStringExtra("category_name"), type, stallAdvert);
+    }
     private boolean advertGrace() { return "live".equals(kind()) && StreamRecovery.inAdvertGrace(android.os.SystemClock.elapsedRealtime() - formatChangedAt); }
 
     private final Runnable antiFreeze = new Runnable() {
@@ -743,7 +752,7 @@ public class PlayerActivity extends Activity {
             if (player == null || isFinishing()) return;
             if (reconnectPending && reopenForBuffer && player.getBufferedPosition() > reopenBufferedPosition) {
                 ui.removeCallbacks(reopenStream); reconnectPending=false;
-                if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+                { ui.removeCallbacks(showReconnectNote); if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE); }
             }
             boolean retry = bufferWatch.retry(android.os.SystemClock.elapsedRealtime(),
                     player.getBufferedPosition(), StreamRecovery.advertStallTimeout(StreamRecovery.stallReconnectMs(recoveryName()), stallAdvert),
@@ -753,6 +762,9 @@ public class PlayerActivity extends Activity {
         }
     };
 
+    private final Runnable showReconnectNote = () -> {
+        if (reconnectNote != null && player != null && player.getPlaybackState() != Player.STATE_READY) reconnectNote.setVisibility(TextView.VISIBLE);
+    };
     private void reconnect() {
         reconnect(false);
     }
@@ -761,12 +773,13 @@ public class PlayerActivity extends Activity {
         if (player.getDuration() > 0) lastPosition = Math.max(lastPosition, player.getCurrentPosition());
         reconnects++;
         if (StreamRecovery.giveUp(reconnects)) {
-            if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE);
+            { ui.removeCallbacks(showReconnectNote); if (reconnectNote != null) reconnectNote.setVisibility(TextView.GONE); }
             reportBuffer(StreamRecovery.stallReconnectMs(recoveryName()), true, false, stallAdvert ? "advert_switch" : "network_drop");
             handToBackup();
             return;
         }
-        if (reconnectNote != null) reconnectNote.setVisibility(TextView.VISIBLE);
+        // Only show the reconnecting note if the stream isn't back within 3 seconds.
+        ui.removeCallbacks(showReconnectNote); ui.postDelayed(showReconnectNote, 3000);
         reconnectPending = true;
         reopenForBuffer = player.getPlaybackState() == Player.STATE_BUFFERING;
         reopenBufferedPosition = player.getBufferedPosition();

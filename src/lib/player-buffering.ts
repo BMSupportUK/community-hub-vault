@@ -40,3 +40,26 @@ export function eventTime(at: number, now: number): number {
 export function shouldAlert(distinctDevices: number): boolean {
   return distinctDevices >= ALERT_DEVICES;
 }
+
+/** One feed switch (picture/sound/timing/frame-rate change or provider restart) seen on a live channel. */
+export const SWITCH_TYPES = ["picture", "sound", "timing", "frame_rate", "provider_restart"] as const;
+export const FeedSwitch = z.object({
+  type: z.enum(SWITCH_TYPES),
+  content_id: z.string().trim().max(200).catch(""),
+  name: z.string().trim().max(200).catch(""),
+  category: z.string().trim().max(200).optional().catch(undefined),
+  stalled: z.boolean().optional().catch(false),
+  at: z.number().int().positive(),
+});
+export const FeedSwitchBatch = z.array(FeedSwitch).min(1).max(50);
+/** A device counts one channel's switch of one type at most once per window. */
+export const SWITCH_DEDUPE_MS = 30_000;
+export function dedupeSwitches<T extends { type: string; content_id: string; name: string; at: number }>(list: T[]): T[] {
+  const last = new Map<string, number>(); const out: T[] = [];
+  for (const s of [...list].sort((a, b) => a.at - b.at)) {
+    const key = s.type + "|" + (s.content_id || s.name); const prev = last.get(key);
+    if (prev !== undefined && s.at - prev < SWITCH_DEDUPE_MS) continue;
+    last.set(key, s.at); out.push(s);
+  }
+  return out;
+}

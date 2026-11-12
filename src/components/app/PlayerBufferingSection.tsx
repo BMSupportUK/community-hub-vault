@@ -44,7 +44,7 @@ export function BufferingSection() {
     const poll = setInterval(load, 60_000);
     return () => { stop = true; clearInterval(poll); };
   }, [hours, period, dazn]);
-  return <div className="space-y-4"><NotWorkingSection /><section className="rounded-xl border border-border bg-surface p-5">
+  return <div className="space-y-4"><NotWorkingSection /><FeedSwitchesSection /><section className="rounded-xl border border-border bg-surface p-5">
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <h2 className="flex items-center gap-2 text-lg font-semibold"><Activity className="size-5 text-primary" />Buffering</h2>
       <div className="flex flex-wrap items-center gap-2">
@@ -122,5 +122,43 @@ function NotWorkingSection() {
         <div><div className="font-medium">{r.channel_name}</div><div className="text-xs text-muted-foreground">{r.problem ?? "Keeps cutting out"} · {r.problem_source === "check" ? "Website check" : `${r.reporters} player report${r.reporters === 1 ? "" : "s"}`} · {r.last_problem_at ? when(r.last_problem_at) : ""}</div></div>
         {isAdmin && <Button size="sm" variant="outline" onClick={() => void clear(r.channel_key)}>Clear</Button>}
       </li>)}</ul>}
+  </section>;
+}
+
+type SwitchRow = { content_name: string; category: string | null; switches: number; picture: number; sound: number; timing: number; frame_rate: number; provider_restart: number; stalled: number; devices: number; last_at: string };
+const SWITCH_LABELS = [["Picture", "picture"], ["Sound", "sound"], ["Timing", "timing"], ["Frame rate", "frame_rate"], ["Provider restart", "provider_restart"]] as const;
+
+/** Channels whose feed changes picture, sound or timing most often, including switches the player rode through. */
+function FeedSwitchesSection() {
+  const [hours, setHours] = useState(24);
+  const [rows, setRows] = useState<SwitchRow[] | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let stop = false;
+    const load = async () => {
+      const { data, error: e } = await supabase.rpc("admin_feed_switch_summary", { p_hours: hours });
+      if (stop) return;
+      setError(e ? "Couldn't load feed switches. Please try again." : "");
+      setRows((data ?? []) as SwitchRow[]);
+    };
+    setRows(null); void load();
+    const poll = setInterval(load, 60_000);
+    return () => { stop = true; clearInterval(poll); };
+  }, [hours]);
+  return <section className="rounded-xl border border-border bg-surface p-5">
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h2 className="flex items-center gap-2 text-lg font-semibold"><Activity className="size-5 text-primary" />Feed switches</h2>
+      <div className="flex flex-wrap gap-2">{[[24, "Last 24 hours"], [168, "Last 7 days"], [720, "Last 30 days"]].map(([h, label]) => <Button key={h} size="sm" variant={hours === h ? "default" : "outline"} onClick={() => setHours(h as number)}>{label}</Button>)}</div>
+    </div>
+    <p className="mb-3 text-sm text-muted-foreground">Picture, sound or timing changes and provider restarts on live channels, including ones the player rode through without stopping.</p>
+    {error && <p className="text-sm text-destructive">{error}</p>}
+    {rows === null ? <p className="text-sm text-muted-foreground">Loading…</p> : rows.length === 0 ? <p className="text-sm text-muted-foreground">No feed switches reported in this period.</p> :
+      <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="p-3">Channel</th><th className="p-3">Switches</th><th className="p-3">Type</th><th className="p-3">Became a stall</th><th className="p-3">Devices</th><th className="p-3">Last</th></tr></thead>
+        <tbody>{rows.map((r) => <tr key={r.content_name} className="border-b border-border/50">
+          <td className="p-3"><div className="font-medium">{r.content_name || "Unknown channel"}</div>{r.category && <div className="text-xs text-muted-foreground">{r.category}</div>}</td>
+          <td className="p-3 font-semibold">{r.switches}</td>
+          <td className="p-3 text-xs"><div className="flex flex-wrap gap-1">{SWITCH_LABELS.filter(([, k]) => r[k] > 0).map(([label, k]) => <span key={k} className="whitespace-nowrap rounded-full border border-border px-2 py-0.5">{label} {r[k]}</span>)}</div></td>
+          <td className="p-3">{r.stalled}</td><td className="p-3">{r.devices}</td><td className="p-3 whitespace-nowrap text-xs">{when(r.last_at)}</td>
+        </tr>)}</tbody></table></div>}
   </section>;
 }

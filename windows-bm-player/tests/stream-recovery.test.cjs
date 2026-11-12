@@ -69,3 +69,7 @@ test('clock jump back starts advert grace with no size change',()=>{const s={rea
 test('clock leaping ahead of real time starts grace',()=>{const s={ready:true};r.feedChange(s,{position:100},0);assert.equal(r.feedChange(s,{position:130},1000),true);});
 test('normal clock progress and zero live clock are not feed changes',()=>{const s={ready:true};r.feedChange(s,{position:100},0);assert.equal(r.feedChange(s,{position:101},1000),false);assert.equal(r.feedChange(s,{position:0},2000),false);assert.equal(r.inAdvertGrace(s,2000),false);});
 test('frame rate change starts grace',()=>{const s={ready:true};r.feedChange(s,{fps:50},0);assert.equal(r.feedChange(s,{fps:25},1000),true);});
+
+test('provider restart reopens at once on an ordinary channel and is logged',()=>{const s={ready:true,item:{name:'BBC One'},recoveryName:'BBC One'};const out=r.tick(s,6,1000,true);assert.equal(out.reconnect,0);assert.equal(out.cause,'provider_cut');assert.equal(s.switchLog[0].type,'provider_restart');});
+test('switch log counts one type per 30s',()=>{const s={};assert.equal(r.noteSwitch(s,'sound',0),true);assert.equal(r.noteSwitch(s,'sound',29999),false);assert.equal(r.noteSwitch(s,'sound',30000),true);assert.equal(r.noteSwitch(s,'picture',1),true);assert.equal(s.switchLog.length,3);});
+test('picture size change while playing logs a picture switch',()=>{const s={ready:true};r.advertJump(s,1920,1080,3,0,true);r.advertJump(s,1280,720,3,1000,true);assert.equal(s.switchLog[0].type,'picture');});
