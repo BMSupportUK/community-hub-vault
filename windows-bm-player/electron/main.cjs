@@ -293,6 +293,8 @@ else{
   electronSession.defaultSession.setPermissionRequestHandler((wc,perm,cb,details)=>cb(perm==='media'&&wc===win?.webContents&&(details?.mediaTypes||['audio']).every(t=>t==='audio')));
   electronSession.defaultSession.setPermissionCheckHandler((wc,perm)=>perm==='media'&&wc===win?.webContents);
   register('micAccess',async()=>{if(MAC&&systemPreferences.getMediaAccessStatus('microphone')!=='granted')return systemPreferences.askForMediaAccess('microphone');return true;});
+  // Spoken ElevenLabs welcome on the linked-device screen; the voice key stays on the website.
+  register('welcomeVoice',async()=>{const r=await site({action:'welcome_voice'});const audio=String(r?.audio||'');if(r?.mime!=='audio/mpeg'||!/^[A-Za-z0-9+/=]+$/.test(audio))return null;return {audio,mime:'audio/mpeg'};});
   register('voice',async v=>{const audio=String(v?.audio||'');if(!['audio/wav','audio/webm'].includes(v?.mime)||audio.length<100||audio.length>1700000||!/^[A-Za-z0-9+/=]+$/.test(audio))throw new Error('That recording could not be used. Try again.');const r=await site({action:'voice',audio,mime:v.mime});return String(r.text||'');});
   register('ratings',items=>{if(!Array.isArray(items)||!items.length||items.length>200)throw new Error('Choose titles to rate.');return site({action:'ratings',items:items.map(r=>({kind:r.kind,title:String(r.title||'').slice(0,300)}))});});
   register('vote',v=>{if(!['film','series'].includes(v?.kind)||!Number.isInteger(v?.stars)||v.stars<1||v.stars>5)throw new Error('Choose 1–5 stars.');return site({action:'vote',kind:v.kind,title:String(v.title||'').slice(0,300),stars:v.stars});});

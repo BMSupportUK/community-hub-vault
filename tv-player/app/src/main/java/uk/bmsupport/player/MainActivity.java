@@ -960,6 +960,33 @@ public class MainActivity extends Activity {
         // Never strand the customer: after 10s with a saved login, offer the button anyway; an unlinked box is still signed out by the background check.
         ui.postDelayed(() -> { if ("linkcheck".equals(screen) && hasLogin()) linkConfirmed(); }, 10000);
     }
+    private static boolean welcomed = false;
+    /** Speaks the ElevenLabs welcome (made on the website, so no voice key is in the app) once per app start. */
+    private void speakWelcome() {
+        if (welcomed) return;
+        welcomed = true;
+        safeRun(io, () -> {
+            try {
+                JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "welcome_voice")
+                        .put("device_token", prefs.getString("token", "")).toString()));
+                if (!"audio/mpeg".equals(r.optString("mime"))) return;
+                byte[] bytes = Base64.decode(r.optString("audio", ""), Base64.DEFAULT);
+                if (bytes.length < 1000) return;
+                java.io.File f = new java.io.File(getCacheDir(), "welcome.mp3");
+                try (java.io.FileOutputStream o = new java.io.FileOutputStream(f)) { o.write(bytes); }
+                ui.post(() -> {
+                    try {
+                        android.media.MediaPlayer mp = new android.media.MediaPlayer();
+                        mp.setDataSource(f.getAbsolutePath());
+                        mp.setOnCompletionListener(android.media.MediaPlayer::release);
+                        mp.setOnErrorListener((x, w, e) -> { x.release(); return true; });
+                        mp.prepare();
+                        mp.start();
+                    } catch (Exception ignored) {}
+                });
+            } catch (Exception ignored) {}
+        });
+    }
     private void linkConfirmed() {
         if (linkCheckMsg == null || linkCheckPanel == null) { showHome(); return; }
         linkCheckMsg.setText("\u2705 Your device is linked");
@@ -968,6 +995,7 @@ public class MainActivity extends Activity {
         linkCheckPanel.addView(go);
         go.requestFocus();
         screen = "linkok";
+        speakWelcome();
     }
 
     /** Family-watching-TV picture behind a frosted panel on the right (2FA welcome and daily code screens). */

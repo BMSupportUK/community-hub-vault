@@ -120,7 +120,7 @@ async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[
  if(intro)return <main className="opening"><video src="player-intro.mp4" autoPlay playsInline onEnded={()=>setIntro(false)} onError={()=>setIntro(false)} aria-label="BM Player family opening intro"/></main>;
  if(!state)return <main className="link-screen"><img src="logo.png" width="90"/><h1>BM Player</h1><p>Connecting…</p></main>;
  if(!state.linked||state.locked)return <SigninScreen bm={bm} platformName={state.platformName} code={state.code}/>;
- if(!linkGo)return <LinkCheckScreen verified={!!state.linkVerified} platformName={state.platformName} onGo={()=>setLinkGo(true)}/>;
+ if(!linkGo)return <LinkCheckScreen bm={bm} verified={!!state.linkVerified} platformName={state.platformName} onGo={()=>setLinkGo(true)}/>;
  const now=Date.now(),hidden=!!modal||!!voiceResults||inactive>0||!!progress,playing=state.playing||[];
  const header=<header className="bar"><img src="logo.png" alt="BM Support"/><span className="brand">BM Player</span><span className="version">v{state.version}</span><span className="testing">{state.platformName||'Windows'}</span><div className="spacer"/>{view==='home'&&<><button className="pill" onClick={()=>browse('live')}>🔍 Search TV</button><button className="pill" onClick={()=>browse('film')}>🔍 Search Movies</button><button className="pill" onClick={()=>browse('series')}>🔍 Search Series</button></>}{view!=='home'&&<button onClick={()=>{setPlayingView(false);setView('home');setModal(null);bm.stop();}}>⌂ Home</button>}{view!=='home'&&<button onClick={()=>{setPlayingView(false);setView('settings');bm.stop();}}>⚙ Settings</button>}<button aria-label="Close app" title="Close app" onClick={()=>setModal({type:'exit'})}>×</button></header>;
  if(state.maintenance)return <div className="app">{header}<main className="link-screen"><h1>Down for maintenance</h1><p>{state.maintenance}</p><button onClick={()=>bm.exit()}>Close</button></main></div>;
@@ -229,10 +229,12 @@ function TotpSetup({data,version,platformName,onDone}){
 }
 /** Display the device code for entry on the website; polling delivers its login. */
 // After the opening film: family picture while the website confirms this device's link, then the customer presses Go to home screen.
-function LinkCheckScreen({verified,platformName,onGo}){
+function LinkCheckScreen({bm,verified,platformName,onGo}){
   const [slow,setSlow]=React.useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setSlow(true),10000);return()=>clearTimeout(t);},[]);
   const ready=verified||slow;
+  // Speak the welcome once per app start, as soon as the website confirms the link.
+  React.useEffect(()=>{if(!verified||window.__bmWelcomed||!bm?.welcomeVoice)return;window.__bmWelcomed=true;bm.welcomeVoice().then(v=>{if(!v)return;const b=atob(v.audio),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const url=URL.createObjectURL(new Blob([u],{type:v.mime}));const a=new Audio(url);a.onended=()=>URL.revokeObjectURL(url);a.play().catch(()=>{});}).catch(()=>{});},[verified]);
   return <main className="family-screen"><section className="family-panel compact">
     <h1>Welcome to BM Player</h1>
     <p className="status-line">{verified?'✅ Your device is linked':slow?'⏳ Still checking your linked device… please wait':'⏳ Checking your linked device… please wait'}</p>
