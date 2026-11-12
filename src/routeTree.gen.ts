@@ -42,6 +42,7 @@ import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as CheckoutAccountTokenRouteImport } from './routes/checkout-account.$token'
 import { Route as CheckoutInstallTokenRouteImport } from './routes/checkout-install.$token'
 import { Route as DiCodeRouteImport } from './routes/di.$code'
+import { Route as DlWin24RouteImport } from './routes/dl/win24'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as FanZoneJobsRouteImport } from './routes/fan-zone.jobs'
@@ -398,6 +399,11 @@ const CheckoutInstallTokenRoute = CheckoutInstallTokenRouteImport.update({
 const DiCodeRoute = DiCodeRouteImport.update({
   id: '/di/$code',
   path: '/di/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DlWin24Route = DlWin24RouteImport.update({
+  id: '/dl/win24',
+  path: '/dl/win24',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FanZoneIndexRoute = FanZoneIndexRouteImport.update({
@@ -1556,6 +1562,7 @@ export interface FileRoutesByFullPath {
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/di/$code': typeof DiCodeRoute
+  '/dl/win24': typeof DlWin24Route
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
@@ -1781,6 +1788,7 @@ export interface FileRoutesByTo {
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/di/$code': typeof DiCodeRoute
+  '/dl/win24': typeof DlWin24Route
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
   '/job-application/$token': typeof JobApplicationTokenRoute
@@ -2008,6 +2016,7 @@ export interface FileRoutesById {
   '/checkout-account/$token': typeof CheckoutAccountTokenRoute
   '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/di/$code': typeof DiCodeRoute
+  '/dl/win24': typeof DlWin24Route
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/jobs': typeof FanZoneJobsRoute
   '/guides/$id': typeof GuidesIdRoute
@@ -2236,6 +2245,7 @@ export interface FileRouteTypes {
     | '/checkout-account/$token'
     | '/checkout-install/$token'
     | '/di/$code'
+    | '/dl/win24'
     | '/fan-zone/$board'
     | '/fan-zone/jobs'
     | '/guides/$id'
@@ -2461,6 +2471,7 @@ export interface FileRouteTypes {
     | '/checkout-account/$token'
     | '/checkout-install/$token'
     | '/di/$code'
+    | '/dl/win24'
     | '/fan-zone/jobs'
     | '/guides/$id'
     | '/job-application/$token'
@@ -2687,6 +2698,7 @@ export interface FileRouteTypes {
     | '/checkout-account/$token'
     | '/checkout-install/$token'
     | '/di/$code'
+    | '/dl/win24'
     | '/fan-zone/$board'
     | '/fan-zone/jobs'
     | '/guides/$id'
@@ -2912,6 +2924,7 @@ export interface RootRouteChildren {
   CheckoutAccountTokenRoute: typeof CheckoutAccountTokenRoute
   CheckoutInstallTokenRoute: typeof CheckoutInstallTokenRoute
   DiCodeRoute: typeof DiCodeRoute
+  DlWin24Route: typeof DlWin24Route
   GuidesIdRoute: typeof GuidesIdRoute
   JobApplicationTokenRoute: typeof JobApplicationTokenRoute
   PayTokenRoute: typeof PayTokenRoute
@@ -3227,6 +3240,13 @@ declare module '@tanstack/react-router' {
       path: '/di/$code'
       fullPath: '/di/$code'
       preLoaderRoute: typeof DiCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dl/win24': {
+      id: '/dl/win24'
+      path: '/dl/win24'
+      fullPath: '/dl/win24'
+      preLoaderRoute: typeof DlWin24RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fan-zone/': {
@@ -5015,6 +5035,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutAccountTokenRoute: CheckoutAccountTokenRoute,
   CheckoutInstallTokenRoute: CheckoutInstallTokenRoute,
   DiCodeRoute: DiCodeRoute,
+  DlWin24Route: DlWin24Route,
   GuidesIdRoute: GuidesIdRoute,
   JobApplicationTokenRoute: JobApplicationTokenRoute,
   PayTokenRoute: PayTokenRoute,
