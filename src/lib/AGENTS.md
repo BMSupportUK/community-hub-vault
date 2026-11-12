@@ -4,6 +4,7 @@
 - EPG imports stream matched stations; US locals use station callsigns. EPG uses shared indexed fixture matching and single-flight catalogues without provider completion waits; sports cards retain those checks separately. Published-row caches never freeze event overlays.
 - Saved sports listing end times are authoritative in shared fixture EPG and Sports Guide events; preserve them through import, merging and completion without provider overwrites or prelim estimates. Provider-derived completion remains separate.
 - Sports listing short provider codes remain channels across parsing, merging and read-back; never borrow a previous channel as the next event title.
+- Imports and manual guide saves share fail-closed listing validation; reject numbered channel titles and any title/channel/end-time change on canonical read-back.
 - Channel EPG uses provider listings except Sports Pass/event feeds (never official main channels), which receive saved website fixtures through sportsFixtureEpg; country imports and category-refresh dispatch/claim functions remain disabled.
 - Buffering diagnostics store bounded device-reported format/decoder/event metadata; admin/management summaries filter before limiting and do not turn cause labels into definitive diagnoses.
 - Player viewing history records credited prior-poll playback under the verified device owner and session; admin/management-only reads return member totals, kind breakdowns and the latest 7 UK days of activities grouped per day, never account credentials or emails.

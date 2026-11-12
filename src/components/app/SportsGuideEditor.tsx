@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { toast } from "sonner";
 import { pruneExpiredGuideEvents } from "@/lib/prune-expired-guide-events";
+import { assertStableSportsListing } from "@/lib/public-guide-safety";
 import {
   dedupeSportsListingHtml,
   formatSportsListingBlock,
@@ -493,9 +494,11 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       if (!containsRichContent) {
         const events = parseSportsListingBlock(payload.body);
         if (events.length > 0) {
-          payload.body = plainListingToHtml(
+          const formatted = plainListingToHtml(
             formatSportsListingEvents(sortSportsListingEvents(events), { channels: [] }),
           );
+          assertStableSportsListing(sortSportsListingEvents(events), formatted);
+          payload.body = formatted;
         }
       }
       // Every save (draft or published) also clears repeat entries with the
@@ -507,6 +510,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       }
       const clubs = clubChannelListingHtml(payload.body, payload.title);
       if (clubs !== null) payload.body = clubs;
+      if (!containsRichContent) assertStableSportsListing(parseSportsListingBlock(payload.body), payload.body);
     }
     if (!editing.id) {
       // Append to the end of the chosen category so the admin-defined order is preserved.
