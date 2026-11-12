@@ -1,0 +1,13 @@
+# BM apps: scramble our own code, leave third-party libraries intact.
+-keepattributes Signature,*Annotation*,InnerClasses,EnclosingMethod,SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+-keep class androidx.media3.** { *; }
+-keep class org.videolan.** { *; }
+-keep class org.jellyfin.** { *; }
+-keep class org.webrtc.** { *; }
+-keep class dadb.** { *; }
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-keep class com.google.zxing.** { *; }
+-keepclasseswithmembernames class * { native <methods>; }
+-dontwarn **
