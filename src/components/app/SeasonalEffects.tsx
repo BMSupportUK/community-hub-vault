@@ -12,7 +12,7 @@ import { getSeason, type Season } from "@/lib/seasonal-theme";
 const seasonalArt: Record<Season, string> = { halloween: halloweenArt, christmas: christmasArt, bonfire: bonfireArt, easter: easterArt, "st-george": stGeorgeArt, "new-year": newYearArt, "st-patrick": stPatrickArt };
 
 /** Decorative, non-interactive seasonal overlay for Talk channels. */
-export function SeasonalEffects() {
+export function SeasonalEffects({ seasonOnly = false }: { seasonOnly?: boolean } = {}) {
   const [season, setSeason] = useState<Season | null>(null);
   useEffect(() => {
     setSeason(getSeason());
@@ -32,6 +32,7 @@ export function SeasonalEffects() {
   }, [season]);
 
   const art = season ? seasonalArt[season] : supportArt;
+  if (!season && seasonOnly) return null;
 
   return (
     <div aria-hidden className={`seasonal-fx${season ? ` seasonal-fx--${season}` : " seasonal-fx--default"}`}>
