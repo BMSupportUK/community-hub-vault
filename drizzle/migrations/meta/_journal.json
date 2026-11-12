@@ -2416,6 +2416,13 @@
       "when": 1794426061420,
       "tag": "0344_player_watching_screens",
       "breakpoints": true
+    },
+    {
+      "idx": 345,
+      "version": "7",
+      "when": 1794473103384,
+      "tag": "0345_direct_pin_completion_lifetime",
+      "breakpoints": true
     }
   ]
 }

@@ -9,7 +9,7 @@ import { DIRECT_PROGRESS_TTL_MS } from "@/lib/direct-install";
  */
 const headers = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "content-type, x-enabler-token", "cache-control": "no-store" };
 const STAGE_COLUMN = { signed_in: "signed_in_at", permission: "permission_at", code: "code_at", completed: "completed_at" } as const;
-const Body = z.object({ stage: z.enum(["signed_in", "permission", "code", "completed"]) });
+const Body = z.object({ stage: z.enum(["signed_in", "permission", "code", "completed", "finished"]) });
 
 export const Route = createFileRoute("/api/public/direct-install-progress")({
   server: { handlers: {
@@ -24,6 +24,10 @@ export const Route = createFileRoute("/api/public/direct-install-progress")({
       if (!dt?.pin_id) return Response.json({ error: "Please sign in again." }, { status: 401, headers });
       const { data: pin } = await db.from("enabler_login_pins").select("user_id, ticket_id, kind, revoked_at, admin_issue_id").eq("id", dt.pin_id).maybeSingle();
       if (pin?.kind !== "direct" || pin.revoked_at) return Response.json({ error: "Please sign in again." }, { status: 401, headers });
+      if (body.data.stage === "finished") {
+        const { error } = await db.from("enabler_login_pins").update({ revoked_at: new Date().toISOString() }).eq("id", dt.pin_id).eq("kind", "direct");
+        return Response.json(error ? { error: "Couldn't finish setup. Please try All done again." } : { ok: true }, { status: error ? 503 : 200, headers });
+      }
       let owner: string | null = pin?.user_id ?? null;
       if (!owner && pin?.ticket_id) {
         const { data: t } = await db.from("tickets").select("user_id").eq("id", pin.ticket_id).maybeSingle();

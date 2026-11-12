@@ -1,6 +1,6 @@
 # tv-direct-install rules
-- This app runs on the TV and is install-only: Android PackageInstaller (never self-ADB), own 30-min Direct Install PIN + install website codes (support codes refused via installOnly), downloaded only through expiring per-customer `/di/$code` links.
-- Direct Install has its own PINs (`enabler_login_pins.kind='direct'`, 30 min, generated on the website wizard's PIN step); enabler-login matches PIN kind to the app so Enabler and Direct Install PINs never cross.
+- This app runs on the TV and is install-only: Android PackageInstaller (never self-ADB), completion-bound Direct Install PIN + install website codes (support codes refused via installOnly), downloaded only through expiring per-customer `/di/$code` links.
+- Direct Install PINs use a compatibility future timestamp, with All done posting finished before clearing local sign-in; server revocation expires all associated device tokens atomically so other saved sessions cannot outlive the PIN. Enabler PIN kinds remain separate.
 - Amazon developer-activation fallback checks the TV's developer/ADB settings separately from install permission, so already-enabled Developer options never repeat the About-screen activation.
 - Keypad clearance: PIN and website-code screens never open the system keyboard; they type through the in-app NumberPad beside the box (sideways phones leave no room above a system keyboard), and short screens compact the header so box and pad fit together.
 - Self-update: the PIN screen has an "Update app" button that checks /api/public/direct-install-apk (current build wins over shared timestamps) and updates in place through the existing PackageInstaller session — no FileProvider, no PIN needed.

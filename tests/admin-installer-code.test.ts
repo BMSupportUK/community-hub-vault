@@ -6,7 +6,7 @@ const valid = { name: "Demo TV", device: "amazon", purpose: "install", installer
 test("a reference name is required", () => { expect(adminInstallerCodeSchema.safeParse({ ...valid, name: " " }).success).toBe(false); expect(adminInstallerCodeSchema.parse(valid).name).toBe("Demo TV"); });
 test("a device selection is required", () => { expect(adminInstallerCodeSchema.safeParse({ ...valid, device: null }).success).toBe(false); expect(adminInstallerCodeSchema.parse({ ...valid, device: "android" }).device).toBe("android"); });
 test("at least one installer app must be chosen", () => { expect(adminInstallerCodeSchema.safeParse({ ...valid, appPaths: [] }).success).toBe(false); expect(adminInstallerCodeSchema.parse(valid).appPaths).toEqual(valid.appPaths); });
-test("Direct Install PINs last 30 minutes independently of Enabler PINs", () => { expect(adminInstallerPinTtl("direct")).toBe(30 * 60 * 1000); expect(adminInstallerPinTtl("enabler")).toBe(24 * 60 * 60 * 1000); });
+test("Direct Install PINs have no short timer and Enabler PINs remain 24 hours", () => { expect(adminInstallerPinTtl("direct")).toBeGreaterThan(100 * 365 * 24 * 60 * 60 * 1000); expect(adminInstallerPinTtl("enabler")).toBe(24 * 60 * 60 * 1000); });
 test("Direct Install cannot issue screen sharing", () => { expect(adminInstallerCodeSchema.safeParse({ ...valid, purpose: "support" }).success).toBe(false); });
 test("only admin and management can request installer codes", async () => {
   for (const role of ["admin", "management", "staff", "member"]) {

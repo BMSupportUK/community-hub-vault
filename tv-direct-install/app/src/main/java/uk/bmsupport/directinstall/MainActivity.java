@@ -64,7 +64,6 @@ public class MainActivity extends Activity {
     private TextView ver;
     private View keypadField;
     private final android.os.Handler timer = new android.os.Handler(android.os.Looper.getMainLooper());
-    private static final long SESSION_MS = 3600_000L;
     private final LinkedBlockingQueue<Integer> results = new LinkedBlockingQueue<>();
     private volatile boolean busy; private volatile int lastCode;
     private Set<String> pendingPaths; private boolean waitingPermission;
@@ -190,11 +189,9 @@ public class MainActivity extends Activity {
         ver.setLayoutParams(p); ver.bringToFront();
     }
 
-    /** Automatic sign-out one hour after signing in (waits if an install is running). */
+    /** Saved sign-in lasts until All done; the website verifies it on resume. */
     private final Runnable sessionCheck = new Runnable() {
         @Override public void run() {
-            long at = prefs.getLong("signed_at", 0);
-            if (at > 0 && !busy && System.currentTimeMillis() - at >= SESSION_MS) signOut("You were signed out after 1 hour. Type your PIN to sign in again.");
             timer.postDelayed(this, 15_000);
         }
     };
@@ -232,7 +229,7 @@ public class MainActivity extends Activity {
     }
 
     private void showPin(String error) {
-        header("Sign in", "Type your BM Direct Install PIN. Generate it on bmsupport.uk › Install Guides › BM Direct Install, step 4. It lasts 30 minutes.");
+        header("Sign in", "Type your BM Direct Install PIN from bmsupport.uk › Install Guides › BM Direct Install, step 4. It stays valid until you press All done after installing.");
         EditText pin = input("6-digit PIN", 6);
         LinearLayout left = entryColumn();
         left.addView(pin, inputLp());
@@ -246,10 +243,8 @@ public class MainActivity extends Activity {
             new Thread(() -> {
                 try {
                     JSONObject body = new JSONObject().put("pin", p).put("app", "direct-" + appVersion());
-                    String saved = prefs.getString("token", "");
-                    if (validToken()) body.put("token", saved); // keep this TV's existing device link
                     JSONObject j = post("enabler-login", body, false);
-                    prefs.edit().putString("token", j.getString("token")).putLong("exp", Math.min(j.optLong("expiresAtMs", Long.MAX_VALUE), System.currentTimeMillis() + SESSION_MS)).putLong("signed_at", System.currentTimeMillis()).commit();
+                    prefs.edit().putString("token", j.getString("token")).putLong("exp", j.optLong("expiresAtMs", Long.MAX_VALUE)).putLong("signed_at", System.currentTimeMillis()).commit();
                     report("signed_in");
                     runOnUiThread(this::afterSignIn);
                 } catch (Exception e) { String m = lastCode == 429 ? "Too many wrong PINs from this connection. Wait 15 minutes, then try again." : e.getMessage(); runOnUiThread(() -> showPin(m)); }
@@ -556,8 +551,18 @@ public class MainActivity extends Activity {
         for (String n : done) box.addView(text("\u2714  " + n, 19, FG, false), lp(dp(6)));
         for (String n : failed) box.addView(text("\u2716  " + n + " — not installed", 19, ACCENT, false), lp(dp(6)));
         if (!failed.isEmpty()) box.addView(text("Make a new code on the website to try the missing apps again.", 16, MUTED, false), lp(dp(10)));
-        Button close = button("Close", ACCENT); box.addView(close, btnLp());
-        close.setOnClickListener(v -> { clearSignIn(); setWaiting(false, null); finishAndRemoveTask(); });
+        Button close = button("All done", ACCENT); box.addView(close, btnLp());
+        close.setOnClickListener(v -> {
+            close.setEnabled(false); busy = true;
+            new Thread(() -> {
+                try {
+                    post("direct-install-progress", new JSONObject().put("stage", "finished"), true);
+                    runOnUiThread(() -> { clearSignIn(); setWaiting(false, null); finishAndRemoveTask(); });
+                } catch (Exception e) {
+                    runOnUiThread(() -> { busy = false; close.setEnabled(true); android.widget.Toast.makeText(this, "Couldn't finish setup. Check your internet and press All done again.", android.widget.Toast.LENGTH_LONG).show(); });
+                }
+            }).start();
+        });
         Button again = button("Enter another code", CARD); box.addView(again, btnLp());
         again.setOnClickListener(v -> showCode(null));
         close.requestFocus();

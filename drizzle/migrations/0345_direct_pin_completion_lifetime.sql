@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION public.direct_pin_lifetime() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NEW.kind='direct' THEN IF NEW.revoked_at IS NULL THEN NEW.expires_at := '9999-12-31 23:59:59+00'::timestamptz; ELSE UPDATE public.enabler_device_tokens SET expires_at=LEAST(expires_at,NEW.revoked_at) WHERE pin_id=NEW.id; END IF; END IF; RETURN NEW; END $$;
+REVOKE ALL ON FUNCTION public.direct_pin_lifetime() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER direct_pin_lifetime BEFORE INSERT OR UPDATE ON public.enabler_login_pins FOR EACH ROW EXECUTE FUNCTION public.direct_pin_lifetime();
+COMMENT ON FUNCTION public.direct_pin_lifetime() IS 'Direct Install PINs have a compatibility expiry and retire associated tokens on explicit revocation; Enabler PINs unchanged.';

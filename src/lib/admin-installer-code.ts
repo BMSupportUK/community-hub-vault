@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ADMIN_ISSUE_TTL_MS } from "./enabler-handoff";
-import { DIRECT_PIN_TTL_MS } from "./direct-install";
+import { DIRECT_PIN_EXPIRES_AT } from "./direct-install";
 
 export const adminInstallerCodeSchema = z.object({
   name: z.string().trim().min(1, "Type the person's reference name.").max(120),
@@ -14,7 +14,7 @@ export const adminInstallerCodeSchema = z.object({
 });
 
 export function adminInstallerPinTtl(installer: "direct" | "enabler") {
-  return installer === "direct" ? DIRECT_PIN_TTL_MS : ADMIN_ISSUE_TTL_MS;
+  return installer === "direct" ? Date.parse(DIRECT_PIN_EXPIRES_AT) - Date.now() : ADMIN_ISSUE_TTL_MS;
 }
 
 export async function requireAdminInstallerAccess(sb: { rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" | "management" }) => PromiseLike<{ data: boolean | null; error?: unknown }> }, userId: string) {

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { makePin, pinHash } from "@/lib/enabler-pin";
-import { DIRECT_PIN_TTL_MS } from "@/lib/direct-install";
+import { DIRECT_PIN_EXPIRES_AT } from "@/lib/direct-install";
 import { decryptPin, encryptPin } from "@/lib/enabler-pin-crypto.server";
 
 const key = () => process.env["ENABLER_PIN_ENCRYPTION_KEY"] ?? "";
@@ -20,7 +20,7 @@ export const getDirectInstallPin = createServerFn({ method: "POST" })
     return { expires_at: row.expires_at as string | null, ...(pin ? { pin } : {}) };
   });
 
-/** Generate a new 30-minute Direct Install PIN; any earlier Direct Install PIN stops working. */
+/** Generate a completion-bound PIN; explicitly replacing it retires the old PIN. */
 export const createDirectInstallPin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -29,7 +29,7 @@ export const createDirectInstallPin = createServerFn({ method: "POST" })
       .eq("user_id", context.userId).eq("kind", "direct").is("revoked_at", null);
     for (let i = 0; i < 8; i++) {
       const pin = makePin();
-      const expires_at = new Date(Date.now() + DIRECT_PIN_TTL_MS).toISOString();
+      const expires_at = DIRECT_PIN_EXPIRES_AT;
       const { error } = await db.from("enabler_login_pins").insert({
         user_id: context.userId, kind: "direct", pin_hash: await pinHash(pin), pin_encrypted: await encryptPin(pin, key()), expires_at,
       });

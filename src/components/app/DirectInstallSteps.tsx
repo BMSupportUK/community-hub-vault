@@ -189,7 +189,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
 
     {step === 3 && <section className="space-y-3">
       <h3 className="text-lg font-semibold text-foreground">Step 4 · Sign in with your PIN</h3>
-      <p className="text-sm text-muted-foreground">Press <strong className="text-foreground">Generate PIN</strong>, then <strong className="text-foreground">Reveal</strong> and type it into BM Direct Install on your TV. This PIN is only for BM Direct Install and lasts 30 minutes.</p>
+      <p className="text-sm text-muted-foreground">Press <strong className="text-foreground">Generate PIN</strong>, then <strong className="text-foreground">Reveal</strong> and type it into BM Direct Install on your TV. This PIN stays valid until you press All done after installing.</p>
       <DirectPin />
       {!done[3] && <Waiting text="Waiting for BM Direct Install to sign in…" />}
       <WizardNav onBack={() => setStep(answered === "yes" ? 0 : 2)} onNext={() => finish(3)} nextLabel="Next step" />
@@ -265,7 +265,7 @@ function WizardNav({ onBack, onNext, nextLabel, nextDisabled }: { onBack: () => 
   </div>;
 }
 
-/** BM Direct Install's own 30-minute PIN: Generate makes a new one, Reveal shows it. */
+/** Completion-bound PIN; Reveal never replaces it. */
 function DirectPin() {
   const getFn = useServerFn(getDirectInstallPin);
   const createFn = useServerFn(createDirectInstallPin);
@@ -281,13 +281,12 @@ function DirectPin() {
   const run = async (fn: () => Promise<void>) => { setBusy(true); try { await fn(); } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't get your PIN."); } finally { setBusy(false); } };
   const generate = () => run(async () => { const r = await createFn(); setExpires(r.expires_at); setPin(null); });
   const reveal = () => run(async () => { const r = await getFn({ data: { reveal: true } }); setExpires(r.expires_at); setPin("pin" in r && r.pin ? r.pin : null); });
-  const mins = Math.floor(left / 60000), secs = Math.floor((left % 60000) / 1000);
   return <div className="space-y-3 rounded-lg border border-border bg-card p-4">
     <div className="flex items-center gap-2 text-sm font-medium text-foreground"><KeyRound className="h-4 w-4" /> BM Direct Install PIN</div>
     {active
       ? <p className="font-mono text-3xl tracking-[0.4em] text-foreground">{pin ?? "••••••"}</p>
       : <p className="text-sm text-muted-foreground">No PIN yet{expires ? " — your last one has run out" : ""}. Press Generate PIN.</p>}
-    {active && <p className="text-xs text-muted-foreground">Works for {mins}:{String(secs).padStart(2, "0")} more. After that you'll need a new PIN.</p>}
+    {active && <p className="text-xs text-muted-foreground">Valid until you press All done on your TV. New PIN cancels this PIN and its saved sign-in.</p>}
     <div className="flex flex-wrap gap-2">
       <Button onClick={generate} disabled={busy} variant={active ? "outline" : "default"}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} {active ? "New PIN" : "Generate PIN"}</Button>
       {active && <Button onClick={reveal} disabled={busy || !!pin} variant="secondary">Reveal PIN</Button>}

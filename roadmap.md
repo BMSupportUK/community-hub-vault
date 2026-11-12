@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Direct Install PIN lifetime and revocation-trigger changes applied; website and All done app changes saved. Ten website tests pass.
+- [ ] Release updated Direct Install app and verify All done on a TV; blocked: Android SDK and connected TV unavailable. Website publication also required for finished action.
 - [x] Fix IPv6 household comparisons for current claims, home moves and saved peer states; 40 household/connection/VPN checks pass and build OK. Website publication required; real IPv6 TV playback not available to verify here. Existing strike history unchanged.
 - [x] Built, tested and released Android/Amazon 4.38/249, Windows 0.4.77 and universal Mac 0.1.85 with all current player fixes; 232 Android and 152 desktop tests pass. Physical installation/playback requires real customer devices.
 - [x] Released Android/Amazon 4.33/244, Windows 0.4.69, Mac 0.1.77: unlink sign-out (Windows/Mac), auto-shared Multi/Triple Room connections with multi-screen counted, who's watching + connection count on main menu, Live TV Multi-screen button. 229 Android, 144 desktop, 7 claim tests pass; downloads hash-verified. Needs website publish for rooms/screens; real devices unverified.

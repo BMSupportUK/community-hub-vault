@@ -38,7 +38,7 @@ export const Route = createFileRoute("/api/public/enabler-login")({
         const { data: row } = await db.from("enabler_login_pins").select("id, expires_at, revoked_at").eq("pin_hash", await pinHash(parsed.data.pin!)).eq("kind", pinKindForApp(parsed.data.app)).maybeSingle();
         if (!row || !pinUsable(row)) {
           await db.from("tv_helper_diagnostics").insert({ ip_hash: ipHash, helper_version: parsed.data.app ?? null, step: "enabler_pin_fail", message: "bad pin" });
-          return json({ error: pinKindForApp(parsed.data.app) === "direct" ? "PIN not recognised. Generate a BM Direct Install PIN on bmsupport.uk › Install Guides — it lasts 30 minutes." : "PIN not recognised. Check the PIN on your ticket or order — it lasts 24 hours." }, 401);
+          return json({ error: pinKindForApp(parsed.data.app) === "direct" ? "PIN not recognised. Check your current BM Direct Install PIN on bmsupport.uk › Install Guides. It stops working after All done or when replaced." : "PIN not recognised. Check the PIN on your ticket or order — it lasts 24 hours." }, 401);
         }
         const raw = new Uint8Array(32); crypto.getRandomValues(raw);
         const token = [...raw].map((b) => b.toString(16).padStart(2, "0")).join("");
