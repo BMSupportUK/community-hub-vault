@@ -1,4 +1,5 @@
 # src/lib rules
+- Inbox bulk deletion reads authoritative state before clearing selection; reported messages remain protected and empty conversation rows are hidden, while received messages are never deleted by the other participant.
 - Live-channel fault tickets use a device-verified transactional RPC and channel-key database lock; terminal transitions advance the health-clear boundary for earlier failures/stalls without deleting history or suppressing later failures, while active-ticket overlays stay outside caches and chat/video remain unchanged.
 - EPG imports stream matched stations; US locals use station callsigns. EPG uses shared indexed fixture matching and single-flight catalogues without provider completion waits; sports cards retain those checks separately. Published-row caches never freeze event overlays.
 - Saved sports listing end times are authoritative in shared fixture EPG and Sports Guide events; preserve them through import, merging and completion without provider overwrites or prelim estimates. Provider-derived completion remains separate.

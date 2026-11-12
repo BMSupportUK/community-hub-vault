@@ -2,6 +2,7 @@ import { useEffect, useId } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { visibleInboxThreads } from "./inbox-delete-result";
 
 export const INBOX_ROLES = ["admin", "management", "staff", "moderator", "subscriber", "nonsubscriber"];
 export type InboxMember = { id: string; name: string; username: string | null; avatar: string | null; plate: string | null; roles?: string[] };
@@ -10,6 +11,13 @@ export const isInboxStaff = (m: InboxMember) => (m.roles ?? []).some(r => INBOX_
 export type InboxMessage = { id: string; sender_id: string; body: string; created_at: string; edited_at: string | null; deleted_at: string | null };
 export type InboxState = { members: InboxMember[]; threads: { id: string; other_id: string; last_body: string | null; last_at: string | null; unread: number }[]; messages: InboxMessage[]; unread: number };
 
+export async function readInboxState(thread?: string): Promise<InboxState> {
+  const { data, error } = await supabase.rpc("bm_inbox_state", thread ? { _thread: thread } : {});
+  if (error) throw error;
+  const state = data as unknown as InboxState;
+  return { ...state, threads: visibleInboxThreads(state.threads) };
+}
+
 export function useBmInbox(thread?: string) {
   const instanceId = useId();
   const { user, roles } = useAuth();
@@ -17,11 +25,7 @@ export function useBmInbox(thread?: string) {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["bm-inbox", user?.id, thread ?? null], enabled,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("bm_inbox_state", thread ? { _thread: thread } : {});
-      if (error) throw error;
-      return data as unknown as InboxState;
-    }, refetchInterval: 15000,
+    queryFn: () => readInboxState(thread), refetchInterval: 15000,
   });
   useEffect(() => {
     if (!enabled || !user) return;

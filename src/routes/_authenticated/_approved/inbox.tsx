@@ -4,7 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, CheckSquare, Flag, LoaderCircle, MessagesSquare, Pencil, Plus, Search, Send, ShieldCheck, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { inboxAction, inboxDeleteMany, isInboxStaff, useBmInbox, type InboxMember, type InboxMessage } from "@/lib/bm-inbox";
+import { inboxAction, inboxDeleteMany, isInboxStaff, readInboxState, useBmInbox, type InboxMember, type InboxMessage } from "@/lib/bm-inbox";
+import { inboxDeletionResult } from "@/lib/inbox-delete-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,13 +47,24 @@ function InboxPage() {
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmBulk, setConfirmBulk] = useState<"selected" | "all">();
+  useEffect(() => {
+    setSelecting(false); setSelected(new Set()); setConfirmBulk(undefined);
+  }, [thread, user?.id]);
   async function bulkDelete(scope: "selected" | "all") {
+    const ids = [...selected];
+    if (scope === "selected" && ids.length === 0) return;
     setBusy(true);
     try {
-      const removed = await inboxDeleteMany(scope === "selected" ? [...selected] : undefined);
-      await refresh();
-      setSelecting(false); setSelected(new Set()); setConfirmBulk(undefined);
-      toast.success(removed === 0 ? "Nothing to delete — reported messages are kept." : `Deleted ${removed} message${removed === 1 ? "" : "s"}.`);
+      const removed = await inboxDeleteMany(scope === "selected" ? ids : undefined);
+      // Read the result directly rather than trusting a background cache refresh.
+      const fresh = await readInboxState(thread);
+      cache.setQueryData(["bm-inbox", user?.id, thread ?? null], fresh);
+      const result = inboxDeletionResult(ids, fresh.messages.map((message) => message.id));
+      setSelected(new Set(result.kept)); setSelecting(result.kept.length > 0); setConfirmBulk(undefined);
+      if (!fresh.threads.some((conversation) => conversation.id === thread)) setThread(undefined);
+      void refresh();
+      if (removed === 0 || result.kept.length > 0) toast.info(`${removed} deleted. Messages that have been reported are kept.`);
+      else toast.success(`Deleted ${removed} message${removed === 1 ? "" : "s"}.`);
     } catch { toast.error("Could not delete those messages. Please try again."); }
     finally { setBusy(false); }
   }
