@@ -10,7 +10,7 @@
  *   that login from playing away from home (phone excepted) until an admin clears it.
  * - If every other box has moved to the same new connection, home moves with them (new broadband).
  */
-export type HouseholdOther = { id: string; away: boolean; mobile: boolean };
+export type HouseholdOther = { id: string; away: boolean; mobile: boolean; ip?: string | null };
 export type HouseholdCheck = {
   connections: number;
   deviceId: string;
@@ -49,6 +49,34 @@ export const MSG_HOME_WAITS = "Your login is being watched away from home. Nothi
 export const STRIKES_TO_BLOCK = 3;
 export const STRIKE_WINDOW_MS = 7 * 86_400_000;
 
+/** IPv6 devices share a /64, not a host address. IPv4 still identifies one public address. */
+function householdNetwork(ip: string): string | null {
+  if (!ip.includes(":")) return /^(?:\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split(".").every((n) => Number(n) <= 255) ? `v4:${ip}` : null;
+  try {
+    // The standard URL parser validates and canonicalizes compressed, expanded and mapped IPv6.
+    const host = new URL(`http://[${ip}]/`).hostname.slice(1, -1);
+    const [left = "", right = ""] = host.split("::");
+    const start = left ? left.split(":") : [];
+    const end = right ? right.split(":") : [];
+    const words = host.includes("::") ? [...start, ...Array(8 - start.length - end.length).fill("0"), ...end] : start;
+    const values = words.map((word) => parseInt(word, 16));
+    if (values.length !== 8 || values.some((word) => !Number.isFinite(word))) return null;
+    // IPv4-mapped addresses must not turn every IPv4 customer into one /64 household.
+    if (values.slice(0, 5).every((word) => word === 0) && values[5] === 0xffff) {
+      const high = values[6], low = values[7];
+      if (high === undefined || low === undefined) return null;
+      return `v4:${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`;
+    }
+    return `v6:${values.slice(0, 4).join(":")}`;
+  } catch { return null; }
+}
+
+function sameHouseholdNetwork(a: string | null, b: string | null): boolean {
+  if (!a || !b) return false;
+  const network = householdNetwork(a);
+  return network !== null && network === householdNetwork(b);
+}
+
 export function householdVerdict(c: HouseholdCheck): HouseholdVerdict {
   const v: HouseholdVerdict = { kind: "ok", away: false, setHome: false, newHome: null, takeMobileSlot: false, refuse: false, stopIds: [], strike: false, message: null };
   if (c.connections < 2) return v;
@@ -58,9 +86,13 @@ export function householdVerdict(c: HouseholdCheck): HouseholdVerdict {
   }
   if (c.vpn || !c.ip) v.away = c.lastAway;
   else if (!c.homeIp) { v.away = c.mobile; v.setHome = !c.mobile; }
-  else v.away = c.ip !== c.homeIp;
-  if (v.away && !c.vpn && !c.mobile && c.ip && c.otherBoxIps.length > 0 && c.otherBoxIps.every((x) => x === c.ip)) { v.away = false; v.newHome = c.ip; }
-  const awayOthers = c.watching.filter((d) => d.away), homeOthers = c.watching.filter((d) => !d.away);
+  else v.away = !sameHouseholdNetwork(c.ip, c.homeIp);
+  if (v.away && !c.vpn && !c.mobile && c.ip && c.otherBoxIps.length > 0 && c.otherBoxIps.every((x) => sameHouseholdNetwork(x, c.ip))) { v.away = false; v.newHome = c.ip; }
+  // Re-evaluate saved non-mobile peer addresses so old false-away flags cannot block home TVs.
+  // VPN peers keep their last non-VPN claim_ip; mobile peers retain the separate away-slot rule.
+  const homeIp = v.newHome ?? c.homeIp;
+  const isAway = (d: HouseholdOther) => !d.mobile && d.ip && homeIp ? !sameHouseholdNetwork(d.ip, homeIp) : d.away;
+  const awayOthers = c.watching.filter(isAway), homeOthers = c.watching.filter((d) => !isAway(d));
   if (v.away) {
     if (c.blockedAway && !c.mobile) return { ...v, kind: "blocked", refuse: true, message: MSG_BLOCKED };
     if (awayOthers.length) return { ...v, kind: "away_slot", stopIds: awayOthers.map((d) => d.id), message: MSG_AWAY_SLOT };

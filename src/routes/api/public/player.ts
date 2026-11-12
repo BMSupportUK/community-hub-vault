@@ -257,7 +257,7 @@ export const Route = createFileRoute("/api/public/player")({
                 const isMobile = onVpn ? claimMobile : mobile === true;
                 const stopping = new Set(clash.map((c) => c.id));
                 const watching = (peers ?? []).filter((d) => d.watching_kind && d.last_seen_at && d.last_seen_at >= fresh && !stopping.has(d.id))
-                  .map((d) => ({ id: d.id, away: !!d.claim_away, mobile: !!d.claim_mobile }));
+                  .map((d) => ({ id: d.id, away: !!d.claim_away, mobile: !!d.claim_mobile, ip: d.claim_ip }));
                 const otherBoxIps = (peers ?? []).filter((d) => !d.claim_mobile && d.claim_ip).map((d) => d.claim_ip as string);
                 const blockedAway = !!home?.blocked_away_until && Date.parse(home.blocked_away_until) > Date.now();
                 const v = householdVerdict({ connections: pkgMax ?? 1, deviceId: device.id, homeIp: home?.home_ip || null, ip, mobile: isMobile, vpn: onVpn,
