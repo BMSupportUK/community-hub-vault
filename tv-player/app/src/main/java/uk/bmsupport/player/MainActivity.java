@@ -962,40 +962,46 @@ public class MainActivity extends Activity {
     }
     private static boolean welcomed = false;
     /** Speaks the ElevenLabs welcome (made on the website, so no voice key is in the app) once per app start. */
-    private void speakWelcome() {
-        if (welcomed) return;
+    private void speakWelcome(Runnable done) {
+        final boolean[] fired = {false};
+        Runnable once = () -> { if (fired[0]) return; fired[0] = true; done.run(); };
+        if (welcomed) { once.run(); return; }
         welcomed = true;
+        ui.postDelayed(once, 25000); // never strand the customer if the voice stalls
         safeRun(io, () -> {
             try {
                 JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "welcome_voice")
                         .put("device_token", prefs.getString("token", "")).toString()));
-                if (!"audio/mpeg".equals(r.optString("mime"))) return;
+                if (!"audio/mpeg".equals(r.optString("mime"))) { ui.post(once); return; }
                 byte[] bytes = Base64.decode(r.optString("audio", ""), Base64.DEFAULT);
-                if (bytes.length < 1000) return;
+                if (bytes.length < 1000) { ui.post(once); return; }
                 java.io.File f = new java.io.File(getCacheDir(), "welcome.mp3");
                 try (java.io.FileOutputStream o = new java.io.FileOutputStream(f)) { o.write(bytes); }
                 ui.post(() -> {
                     try {
                         android.media.MediaPlayer mp = new android.media.MediaPlayer();
                         mp.setDataSource(f.getAbsolutePath());
-                        mp.setOnCompletionListener(android.media.MediaPlayer::release);
-                        mp.setOnErrorListener((x, w, e) -> { x.release(); return true; });
+                        mp.setOnCompletionListener(x -> { x.release(); once.run(); });
+                        mp.setOnErrorListener((x, w, e) -> { x.release(); once.run(); return true; });
                         mp.prepare();
                         mp.start();
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) { once.run(); }
                 });
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) { ui.post(once); }
         });
     }
     private void linkConfirmed() {
         if (linkCheckMsg == null || linkCheckPanel == null) { showHome(); return; }
+        if ("linkok".equals(screen)) return;
         linkCheckMsg.setText("\u2705 Your device is linked");
-        // The website already confirmed the link: straight to home, no second check.
-        Button go = button("Go to home screen", v -> { PlayerApplication.pinPassed = true; showHome(); });
-        linkCheckPanel.addView(go);
-        go.requestFocus();
         screen = "linkok";
-        speakWelcome();
+        // The welcome plays in full before the button appears, so nobody skips past it.
+        speakWelcome(() -> {
+            if (!"linkok".equals(screen) || linkCheckPanel == null) return;
+            Button go = button("Go to home screen", v -> { PlayerApplication.pinPassed = true; showHome(); });
+            linkCheckPanel.addView(go);
+            go.requestFocus();
+        });
     }
 
     /** Family-watching-TV picture behind a frosted panel on the right (2FA welcome and daily code screens). */

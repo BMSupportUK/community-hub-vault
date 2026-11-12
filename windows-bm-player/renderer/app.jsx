@@ -68,7 +68,7 @@ async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[
  const [playingView,setPlayingView]=useState(false),[volume,setVolume]=useState(100);
  const [feed,setFeed]=useState({});
  const controlsShown=usePlayerControls(playingView,!!modal||inactive>0||!!progress);
- const [isFs,setIsFs]=React.useState(!!document.fullscreenElement);const toggleFs=React.useCallback(()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen(),[]);React.useEffect(()=>{const f=()=>setIsFs(!!document.fullscreenElement);document.addEventListener('fullscreenchange',f);return()=>document.removeEventListener('fullscreenchange',f);},[]);React.useEffect(()=>{if(!playingView)return;const k=e=>{if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(e.target?.tagName||'')){e.preventDefault();toggleFs();}};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k);},[playingView,toggleFs]);
+ const [isFs,setIsFs]=React.useState(!!document.fullscreenElement);const toggleFs=React.useCallback(()=>{bm.fullscreen?.('toggle').then(v=>setIsFs(!!v)).catch(()=>{});},[]);React.useEffect(()=>{const f=()=>bm.fullscreen?.('query').then(v=>setIsFs(!!v)).catch(()=>{});window.addEventListener('resize',f);return()=>window.removeEventListener('resize',f);},[]);React.useEffect(()=>{if(!playingView)return;const k=e=>{if(e.key==='Escape'&&isFs){bm.fullscreen?.('off').then(v=>setIsFs(!!v));return;}if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(e.target?.tagName||'')){e.preventDefault();toggleFs();}};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k);},[playingView,toggleFs,isFs]);
  function toast(message){setNotice(safeText(message,'Something went wrong. Try again.'));setTimeout(()=>setNotice(''),7000);}
  async function act(fn){try{return await fn();}catch(error){toast(error.message);return null;}}
  useEffect(()=>{bm.state().then(receiveState);return bm.subscribe(event=>{
@@ -233,9 +233,11 @@ function TotpSetup({data,version,platformName,onDone}){
 function LinkCheckScreen({bm,verified,platformName,onGo}){
   const [slow,setSlow]=React.useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setSlow(true),10000);return()=>clearTimeout(t);},[]);
-  const ready=verified||slow;
+  const [spoken,setSpoken]=React.useState(false);
+  React.useEffect(()=>{if(!verified)return;const t=setTimeout(()=>setSpoken(true),25000);return()=>clearTimeout(t);},[verified]);
+  const ready=(verified&&spoken)||(!verified&&slow);
   // Speak the welcome once per app start, as soon as the website confirms the link.
-  React.useEffect(()=>{if(!verified||window.__bmWelcomed||!bm?.welcomeVoice)return;window.__bmWelcomed=true;bm.welcomeVoice().then(v=>{if(!v)return;const b=atob(v.audio),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const url=URL.createObjectURL(new Blob([u],{type:v.mime}));const a=new Audio(url);a.onended=()=>URL.revokeObjectURL(url);a.play().catch(()=>{});}).catch(()=>{});},[verified]);
+  React.useEffect(()=>{if(!verified)return;if(window.__bmWelcomed||!bm?.welcomeVoice){setSpoken(true);return;}window.__bmWelcomed=true;const done=()=>setSpoken(true);bm.welcomeVoice().then(v=>{if(!v)return done();const b=atob(v.audio),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const url=URL.createObjectURL(new Blob([u],{type:v.mime}));const a=new Audio(url);a.onended=()=>{URL.revokeObjectURL(url);done();};a.onerror=done;a.play().catch(done);}).catch(done);},[verified]);
   return <main className="family-screen"><section className="family-panel compact">
     <h1>Welcome to BM Player</h1>
     <p className="status-line">{verified?'✅ Your device is linked':slow?'⏳ Still checking your linked device… please wait':'⏳ Checking your linked device… please wait'}</p>
