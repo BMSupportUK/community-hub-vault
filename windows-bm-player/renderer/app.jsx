@@ -33,14 +33,14 @@ function App(){
  function guideKey(scope){let h=0;for(const c of String(scope))h=(h*31+c.charCodeAt(0))|0;return 'bm-guide-'+(h>>>0).toString(16);}
  function saveGuide(){const scope=epgScope.current;if(!scope)return;try{localStorage.setItem(guideKey(scope),JSON.stringify(epgCache.current.snapshot()));}catch{}}
  useEffect(()=>{const t=setInterval(saveGuide,120000);window.addEventListener('beforeunload',saveGuide);return()=>{clearInterval(t);window.removeEventListener('beforeunload',saveGuide);};},[]);
- const cachedEpg=id=>epgCache.current.load(id,key=>bm.epg(key));
-// Startup: load the TV guide with the playlists behind a locked screen; after 30s let the customer in and finish quietly.
+ const cachedEpg=id=>Promise.resolve(epgCache.current.peek(id)||[]);
+// Startup and manual refresh load every guide row behind the locked screen, without a time limit.
 // Startup/refresh already downloaded the playlists: hold them here so opening Live TV, Films or Series never shows "Loading playlist…" again.
 async function keepCatalogues(){const user=stateRef.current?.user;for(const k of ['live','film','series']){try{const d=await bm.catalog(k);if(d)catalogs.current[k]={preloaded:true,stamp:stateRef.current?.refreshed?.[k]||0,user,data:d};}catch{}}}
-async function preloadGuide(){let ids=[];try{ids=((await bm.catalog('live'))?.items||[]).map(c=>c.id).filter(id=>epgCache.current.due(id));}catch{}
- const started=Date.now(),total=ids.length;let done=0,next=0,open=true;
+async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[...new Set((catalogs.current.live?.data?.items||[]).map(c=>c.id))];}catch{}
+ const total=ids.length;let done=0,next=0,open=true;
  const show=()=>{if(open)setProgress({locked:true,message:'Loading TV guide… please wait',percent:Math.min(99,60+Math.round(done/Math.max(1,total)*39))});};show();
- const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await cachedEpg(id);}catch{}done++;show();}};
+ const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await epgCache.current.load(id,key=>bm.epg(key));}catch{}done++;show();}};
  const all=Promise.all(Array.from({length:8},worker)).then(()=>saveGuide());
  await all;open=false;setProgress(null);saveGuide();}
  const [ratings,setRatings]=useState({}),[voteBusy,setVoteBusy]=useState(false);

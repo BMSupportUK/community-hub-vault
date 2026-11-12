@@ -115,9 +115,9 @@ async function refresh(startup=false){
  refreshPromise=refreshInner(startup);try{return await refreshPromise;}finally{refreshPromise=null;}
 }
 async function refreshInner(startup){
- const kinds=['live','film','series'];let step=0;const span=startup?60:100;
- for(const kind of kinds){send({type:'progress',locked:startup,message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*span)});cache.delete(kind);await catalogue(kind);step++;}
- if(startup){send({type:'catalogues',guide:true});return true;}send({type:'progress',message:'Playlists updated',percent:100});send({type:'catalogues'});return true;
+ const kinds=['live','film','series'];let step=0;const span=60;
+ for(const kind of kinds){send({type:'progress',locked:true,message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*span)});cache.delete(kind);await catalogue(kind);step++;}
+ send({type:'catalogues',guide:true});return true;
 }
 async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||String(channel.id).length>80)throw new Error('Catch up isn\'t available on this channel.');const r=await provider('get_simple_data_table',{stream_id:String(channel.id)});return core.catchupProgrammes(r.epg_listings,Math.min(30,Number(channel.archive)));}
 // Resolve trusted catalogue names; only saved sports fixtures override provider EPG.
