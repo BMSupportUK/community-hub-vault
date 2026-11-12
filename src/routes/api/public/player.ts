@@ -625,13 +625,13 @@ export const Route = createFileRoute("/api/public/player")({
           const text = W.welcomeText(username);
           const path = await W.welcomeCacheKey(text);
           const cached = await supabaseAdmin.storage.from("player-voice").download(path);
-          if (cached.data) return json({ audio: W.toBase64(new Uint8Array(await cached.data.arrayBuffer())), mime: "audio/wav" });
-          const key = process.env.LOVABLE_API_KEY;
+          if (cached.data) return json({ audio: W.toBase64(new Uint8Array(await cached.data.arrayBuffer())), mime: "audio/mpeg" });
+          const key = process.env.ELEVENLABS_API_KEY;
           if (!key) return json({ error: "Voice isn't set up." }, 503);
           const r = await W.synthWelcome(text, key);
           if (!r.ok) return json({ error: "Voice isn't available right now." }, r.status === 429 ? 429 : r.status === 402 || r.status === 403 ? r.status : 503);
-          await supabaseAdmin.storage.from("player-voice").upload(path, r.bytes, { contentType: "audio/wav", upsert: true });
-          return json({ audio: W.toBase64(r.bytes), mime: "audio/wav" });
+          await supabaseAdmin.storage.from("player-voice").upload(path, r.bytes, { contentType: "audio/mpeg", upsert: true });
+          return json({ audio: W.toBase64(r.bytes), mime: "audio/mpeg" });
         }
 
         if (body.action === "voice") {

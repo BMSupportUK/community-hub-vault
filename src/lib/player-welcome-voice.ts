@@ -1,5 +1,5 @@
 /** Spoken welcome for the BM Player linked-device screen: a British female voice greeting the customer by username. */
-export const WELCOME_VOICE_VERSION = "v2";
+export const WELCOME_VOICE_VERSION = "v3";
 const recent = new Map<string, number>();
 
 /** Greeting text; names are trimmed to letters, numbers and simple punctuation so nothing odd is spoken. */
@@ -20,22 +20,15 @@ export function welcomeAllowed(deviceId: string, now = Date.now()) {
 
 export async function welcomeCacheKey(text: string) {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${WELCOME_VOICE_VERSION}|${text}`));
-  return `welcome/${[...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("")}.wav`;
+  return `welcome/${[...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("")}.mp3`;
 }
 
-/** Makes the WAV clip through Lovable AI text-to-speech (OpenAI, female "shimmer" voice, steered to a British accent). */
+/** Makes the MP3 clip through ElevenLabs (British female voice "Alice"). */
 export async function synthWelcome(text: string, apiKey: string) {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
+  const res = await fetch("https://api.elevenlabs.io/v1/text-to-speech/Xb7hH8MSUJpSbSDYk0k2?output_format=mp3_44100_128", {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "openai/gpt-4o-mini-tts",
-      voice: "shimmer",
-      input: text,
-      instructions: "Speak warmly and cheerfully with a natural British English accent.",
-      response_format: "wav",
-      stream_format: "audio",
-    }),
+    headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.4, use_speaker_boost: true } }),
   });
   if (!res.ok) return { ok: false as const, status: res.status };
   const bytes = new Uint8Array(await res.arrayBuffer());
