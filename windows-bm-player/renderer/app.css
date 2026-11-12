@@ -146,3 +146,5 @@ select{color-scheme:dark}select option,select optgroup{background:var(--surface)
 
 .watch-panes section.audible-pane{outline:4px solid var(--accent);outline-offset:-4px;padding:6px;border-radius:6px}
 .mp-row:focus,.mp-row:hover{outline:3px solid var(--accent);outline-offset:-3px}
+
+.app:has(.watch-screen.is-fullscreen)>.bar{display:none}.watch-screen.is-fullscreen{height:100vh}.watch-screen.is-fullscreen.controls-hidden{padding:0;gap:0;cursor:none}.watch-screen.is-fullscreen.controls-hidden .watch-heading,.watch-screen.is-fullscreen.controls-hidden .playback-controls{display:none}.watch-screen.is-fullscreen.controls-hidden .watch-panes{gap:0}
