@@ -78,12 +78,23 @@ function PortalLoginsPage() {
 function ProfileLoginsPage() {
   const read = useServerFn(readPortalCredentials);
   const requestReset = useServerFn(requestPortalPinReset);
+  const [checkingAccess, setCheckingAccess] = useState(true), [adminAccess, setAdminAccess] = useState(false);
   const [pin, setPin] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [resetBusy, setResetBusy] = useState(false), [resetDone, setResetDone] = useState(false);
   const [accounts, setAccounts] = useState<ManualCredential[] | null>(null), [qdCodes, setQdCodes] = useState<QdCode[]>([]), [expiresAt, setExpiresAt] = useState<number | null>(null), [now, setNow] = useState(() => Date.now());
   useEffect(() => { if (!expiresAt) return; const t = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(t); }, [expiresAt]);
   const remaining = expiresAt ? Math.max(0, expiresAt - now) : 0;
-  useEffect(() => { if (expiresAt && remaining === 0) { setAccounts(null); setExpiresAt(null); setError("Your 10-minute viewing time has ended. Enter your PIN again to view your logins."); } }, [expiresAt, remaining]);
+  useEffect(() => {
+    let active = true;
+    void read({ data: {} }).then((result) => {
+      if (!active || result.pinRequired) return;
+      setAdminAccess(true); setAccounts(result.accounts); setQdCodes(result.qdCodes);
+      setExpiresAt(new Date(result.expiresAt).getTime()); setNow(Date.now());
+    }).catch((err) => { if (active) setError(err instanceof Error ? err.message : "Please try again."); })
+      .finally(() => { if (active) setCheckingAccess(false); });
+    return () => { active = false; };
+  }, [read]);
+  useEffect(() => { if (expiresAt && remaining === 0) { setAccounts(null); setExpiresAt(null); setError(adminAccess ? "Your viewing time has ended. Open your logins again." : "Your 10-minute viewing time has ended. Enter your PIN again to view your logins."); } }, [expiresAt, remaining, adminAccess]);
   const [tempPin, setTempPin] = useState<string | null>(null), [newPin, setNewPin] = useState(""), [newPin2, setNewPin2] = useState("");
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setError("");
@@ -91,9 +102,10 @@ function ProfileLoginsPage() {
     if (tempPin) {
       if (!/^\d{6}$/.test(newPin)) { setError("Your new PIN must be 6 digits."); return; }
       if (newPin !== newPin2) { setError("The two new PINs don't match."); return; }
-    } else if (!/^\d{6}$/.test(pin)) { setError("Enter your 6-digit PIN."); return; }
+    } else if (!adminAccess && !/^\d{6}$/.test(pin)) { setError("Enter your 6-digit PIN."); return; }
     setBusy(true);
-    try { const r = await read({ data: tempPin ? { pin: tempPin, newPin } : { pin } });
+    try { const r = await read({ data: adminAccess ? {} : tempPin ? { pin: tempPin, newPin } : { pin } });
+      if (r.pinRequired) { setAdminAccess(false); setError("Enter your 6-digit PIN."); return; }
       if (r.mustChange) { setTempPin(pin); toast.info("That was a temporary PIN. Please choose your own new PIN."); return; }
       if (tempPin) { toast.success("Your new PIN is saved."); setTempPin(null); setNewPin(""); setNewPin2(""); } setAccounts(r.accounts); setQdCodes(r.qdCodes); setExpiresAt(new Date(r.expiresAt).getTime()); setNow(Date.now()); if (r.created) toast.success("Your PIN is saved. Use it next time to view your logins."); }
     catch (err) { setError(err instanceof Error ? err.message : "Please try again."); }
@@ -107,8 +119,10 @@ function ProfileLoginsPage() {
     <div className="relative z-10"><PortalTabs active="logins" /></div>
     <main className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8"><div className="mx-auto max-w-5xl rounded-2xl border border-border bg-background/80 p-4 backdrop-blur sm:p-6">
       <h1 className="mb-1 font-display text-2xl font-bold">My App Logins</h1>
-      <p className="mb-6 text-sm text-muted-foreground">Your TV app usernames and passwords. Enter your PIN to show them for 10 minutes.</p>
-      {!accounts && tempPin ? <form onSubmit={submit} className="max-w-sm space-y-4 rounded-xl border border-border bg-surface p-5">
+      <p className="mb-6 text-sm text-muted-foreground">{adminAccess ? "Your TV app usernames and passwords." : "Your TV app usernames and passwords. Enter your PIN to show them for 10 minutes."}</p>
+      {checkingAccess ? <div role="status" className="flex items-center gap-2 text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading logins…</div>
+      : !accounts && adminAccess ? <form onSubmit={submit}><Button type="submit" disabled={busy}>{busy ? <Loader2 className="animate-spin" /> : <KeyRound />}Show my logins</Button></form>
+      : !accounts && tempPin ? <form onSubmit={submit} className="max-w-sm space-y-4 rounded-xl border border-border bg-surface p-5">
         <div className="flex items-center gap-2 font-semibold"><KeyRound className="size-4 text-primary" />Choose your new PIN</div>
         <p className="text-xs text-muted-foreground">The PIN we sent you was temporary. Pick your own 6-digit PIN to see your logins — the temporary one stops working.</p>
         <input aria-label="New 6-digit PIN" type="password" inputMode="numeric" autoComplete="off" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))} className="w-full rounded-md border border-border bg-surface-2 px-3 py-3 text-center font-mono text-lg tracking-[0.5em]" />

@@ -58,13 +58,19 @@ export const redeemPortalCode = createServerFn({ method: "POST" })
     return { tokenHash: link.properties.hashed_token, expiresAt };
   });
 
-/** Signed-in: show the customer's own app logins after their 6-digit PIN. First use sets the PIN. */
+/** Owner-scoped logins: PIN required unless a live admin switch is verified server-side. */
 export const readPortalCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ pin: z.string().regex(/^\d{6}$/, "Enter a 6-digit PIN."), newPin: z.string().regex(/^\d{6}$/, "Your new PIN must be 6 digits.").optional() }).strict().parse(input))
+  .inputValidator((input) => z.object({ pin: z.string().regex(/^\d{6}$/, "Enter a 6-digit PIN.").optional(), newPin: z.string().regex(/^\d{6}$/, "Your new PIN must be 6 digits.").optional() }).strict().parse(input))
   .handler(async ({ data, context }) => {
     setResponseHeader("cache-control", "no-store");
+    const { hasPortalAdminAccess } = await import("@/lib/portal-admin-access.server");
+    const adminAccess = await hasPortalAdminAccess(context.userId);
+    if (!adminAccess && !data.pin) return { pinRequired: true as const, mustChange: false as const, accounts: [], qdCodes: [], created: false, expiresAt: new Date().toISOString() };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let created = false;
+    if (!adminAccess) {
+    if (!data.pin) throw new Error("Enter your 6-digit PIN.");
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(context.userId);
     const email = user.user?.email?.trim().toLowerCase();
     if (!email) throw new Error("Your account has no email saved.");
@@ -78,13 +84,15 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
     const { data: flag } = await supabaseAdmin.from("manual_credential_access").select("pin_must_change").eq("email_key", key).maybeSingle();
     if (flag?.pin_must_change) {
       // A PIN sent in a ticket is temporary: logins stay hidden until the customer picks their own.
-      if (!data.newPin) return { mustChange: true as const, accounts: [], qdCodes: [], created: false, expiresAt: new Date().toISOString() };
+      if (!data.newPin) return { pinRequired: false as const, mustChange: true as const, accounts: [], qdCodes: [], created: false, expiresAt: new Date().toISOString() };
       if (data.newPin === data.pin) throw new Error("Choose a new PIN that is different from the one we sent you.");
       const newSalt = hex(crypto.getRandomValues(new Uint8Array(24)));
       const { error: upErr } = await supabaseAdmin.from("manual_credential_access")
         .update({ pin_hash: await hashPin(data.newPin, newSalt), pin_salt: newSalt, pin_must_change: false, pin_attempts: 0, pin_locked_until: null })
         .eq("email_key", key);
       if (upErr) throw new Error("We couldn't save your new PIN. Please try again.");
+    }
+    created = result === "created";
     }
     const [{ data: profileId, error: profileError }, { data: saved, error: savedError }, { data: qd }] = await Promise.all([
       context.supabase.rpc("active_profile_credential"),
@@ -107,7 +115,7 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
       } catch { /* provider unreachable: card falls back to the package name */ }
     }));
     const qdCodes = (qd ?? []).map((q) => ({ id: String(q.id), label: String(q.label), code: String(q.code), notes: q.notes ? String(q.notes) : null }));
-    return { mustChange: false as const, accounts, qdCodes, created: result === "created", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
+    return { pinRequired: false as const, mustChange: false as const, accounts, qdCodes, created, expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
 
 /** Signed-in customer: reset their own app-logins PIN and alert staff. The next PIN they enter becomes the new one. */
