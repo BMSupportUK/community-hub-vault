@@ -201,7 +201,7 @@ export const requestFantasyGuestPinReset = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!entrant) return { ok: true };
 
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
     const codeSalt = makeSalt(8);
     const codeHash = `${codeSalt}:${hashPin(code, codeSalt)}`;
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();

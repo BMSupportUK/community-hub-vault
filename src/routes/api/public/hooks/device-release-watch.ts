@@ -1,3 +1,4 @@
+import { withCron } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { watchForDeviceReleases } from "@/lib/device-release-watch.server";
 
@@ -5,7 +6,7 @@ import { watchForDeviceReleases } from "@/lib/device-release-watch.server";
 // Called weekly by pg_cron with `apikey` header set to the project anon key.
 export const Route = createFileRoute("/api/public/hooks/device-release-watch")({
   server: {
-    handlers: {
+    handlers: withCron({
       POST: async () => {
         try {
           const result = await watchForDeviceReleases();
@@ -17,6 +18,6 @@ export const Route = createFileRoute("/api/public/hooks/device-release-watch")({
           );
         }
       },
-    },
+    }),
   },
 });

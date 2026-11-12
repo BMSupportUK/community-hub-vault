@@ -22,9 +22,9 @@ function parseStorageUrl(url: string): { bucket: string; path: string } | null {
 export const getGuideVideoUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { ref: string; blogId?: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const ref = (data.ref ?? "").trim();
-    if (!ref) return { url: null as string | null };
+    if (!ref || ref.length > 1000) return { url: null as string | null };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -36,13 +36,27 @@ export const getGuideVideoUrl = createServerFn({ method: "POST" })
       return signed?.signedUrl ?? null;
     };
 
+    const safePath = (path: string) => !!path && !path.includes("..") && !path.startsWith("/");
+
     if (ref.startsWith(SECURE_PREFIX)) {
-      return { url: await sign(ref.slice(SECURE_PREFIX.length)) };
+      const path = ref.slice(SECURE_PREFIX.length);
+      return { url: safePath(path) ? await sign(path) : null };
     }
 
     const parsed = parseStorageUrl(ref);
     if (parsed) {
-      if (parsed.bucket === SECURE_BUCKET) return { url: await sign(parsed.path) };
+      if (parsed.bucket === SECURE_BUCKET) return { url: safePath(parsed.path) ? await sign(parsed.path) : null };
+
+      // Moving a legacy file is only allowed for a guide the caller can see
+      // (checked under their own access rules) that really points at this file.
+      if (!data.blogId || !safePath(parsed.path)) return { url: null as string | null };
+      const { data: blog } = await context.supabase
+        .from("install_blogs")
+        .select("id, video_url, video_steps")
+        .eq("id", data.blogId)
+        .maybeSingle();
+      const linked = !!blog && (blog.video_url === ref || JSON.stringify(blog.video_steps ?? []).includes(JSON.stringify(ref)));
+      if (!linked) return { url: null as string | null };
 
       // Legacy public-bucket video: move it behind the private bucket.
       const target = `migrated/${parsed.path}`;

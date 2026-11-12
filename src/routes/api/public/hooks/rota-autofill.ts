@@ -1,3 +1,4 @@
+import { withCron } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -38,7 +39,7 @@ type Row = {
 
 export const Route = createFileRoute("/api/public/hooks/rota-autofill")({
   server: {
-    handlers: {
+    handlers: withCron({
       POST: async () => {
         const start = mondayOf(new Date());
         const dates: Date[] = [];
@@ -136,6 +137,6 @@ export const Route = createFileRoute("/api/public/hooks/rota-autofill")({
           { headers: { "Content-Type": "application/json" } },
         );
       },
-    },
+    }),
   },
 });

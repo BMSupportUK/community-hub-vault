@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { pruneStaleSportsListingHtml } from "./sports-listing-format";
 import { pruneExpiredGuideEvents } from "./prune-expired-guide-events";
 
@@ -10,7 +11,7 @@ let lastSweepAt = 0;
  * Clears guide entries 10 hours after their start time so yesterday's
  * listings disappear on their own, with no editor tidying up by hand.
  */
-export const pruneStaleSportsGuides = createServerFn({ method: "POST" }).handler(async () => {
+export const pruneStaleSportsGuides = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async () => {
   const now = Date.now();
   if (now - lastSweepAt < SWEEP_INTERVAL_MS) return { cleared: 0, skipped: true };
   lastSweepAt = now;

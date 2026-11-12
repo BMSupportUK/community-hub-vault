@@ -300,7 +300,7 @@ export const requestGuestPinReset = createServerFn({ method: "POST" })
     }
 
     // 6-digit code, valid 30 min. Store only a hash.
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
     const codeSalt = randomBytes(8).toString("hex");
     const codeHash = `${codeSalt}:${hashPin(code, codeSalt)}`;
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();

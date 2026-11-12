@@ -1,3 +1,4 @@
+import { withCron } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 
 async function run(ignoreWindow: boolean, rebuild = false) {
@@ -11,12 +12,12 @@ async function run(ignoreWindow: boolean, rebuild = false) {
 
 export const Route = createFileRoute("/api/public/hooks/boro-match-events")({
   server: {
-    handlers: {
+    handlers: withCron({
       GET: async ({ request }) => {
         const params = new URL(request.url).searchParams;
         return Response.json(await run(params.get("force") === "1", params.get("rebuild") === "1"));
       },
       POST: async () => Response.json(await run(false)),
-    },
+    }),
   },
 });

@@ -1,3 +1,4 @@
+import { withCron } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 
 const SETTING_KEY = "fantasy_squad_sync_last_run";
@@ -51,11 +52,11 @@ async function run(force: boolean) {
 
 export const Route = createFileRoute("/api/public/hooks/fantasy-squad-sync")({
   server: {
-    handlers: {
+    handlers: withCron({
       GET: async ({ request }) =>
         Response.json(await run(new URL(request.url).searchParams.get("force") === "1")),
       POST: async ({ request }) =>
         Response.json(await run(new URL(request.url).searchParams.get("force") === "1")),
-    },
+    }),
   },
 });

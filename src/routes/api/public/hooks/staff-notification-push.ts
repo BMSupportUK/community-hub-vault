@@ -63,11 +63,12 @@ export const Route = createFileRoute("/api/public/hooks/staff-notification-push"
 
         const { data: row, error } = await supabaseAdmin
           .from("staff_notifications")
-          .select("id, kind, title, body, link_path, entity_id")
+          .select("id, kind, title, body, link_path, entity_id, created_at")
           .eq("id", body.id)
           .maybeSingle();
         if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
         if (!row) return Response.json({ ok: true, skipped: "row not found" });
+        if (new Date((row as { created_at: string }).created_at).getTime() < Date.now() - 10 * 60 * 1000) return Response.json({ ok: true, skipped: "stale" });
 
         const r = row as {
           id: string;
@@ -77,6 +78,12 @@ export const Route = createFileRoute("/api/public/hooks/staff-notification-push"
           link_path: string | null;
           entity_id: string | null;
         };
+
+        // Each alert goes out once, and only for a brand-new item, so outside calls can't repeat or fake it.
+        const { error: claimErr } = await supabaseAdmin
+          .from("scheduled_alert_log")
+          .insert({ alert_key: `staff_push:${r.id}`, user_id: r.id } as never);
+        if (claimErr) return Response.json({ ok: true, skipped: "already sent" });
 
         const roles = rolesForKind(r.kind);
         const title = `${titlePrefix(r.kind)}${r.title || "Staff notification"}`.slice(0, 200);

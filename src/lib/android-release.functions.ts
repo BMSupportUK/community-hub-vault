@@ -9,7 +9,11 @@ import { ANDROID_RELEASE } from "@/lib/android-release";
  */
 export const announceAndroidRelease = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    // Only staff app shells send the notice; ordinary members can't trigger it.
+    const { data: mine } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const staffRoles = ["admin", "management", "staff", "moderator"];
+    if (!(mine ?? []).some((r: { role: string }) => staffRoles.includes(String(r.role)))) return { ok: false as const };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const alertKey = `android_release:${ANDROID_RELEASE.versionName}`;
 

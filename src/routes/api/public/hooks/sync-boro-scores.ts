@@ -1,3 +1,4 @@
+import { withCron } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 import type { BoroFixtureRow } from "@/lib/boro-live-scores.server";
 
@@ -204,9 +205,9 @@ async function runSync() {
 
 export const Route = createFileRoute("/api/public/hooks/sync-boro-scores")({
   server: {
-    handlers: {
+    handlers: withCron({
       GET: async () => Response.json(await runSync()),
       POST: async () => Response.json(await runSync()),
-    },
+    }),
   },
 });

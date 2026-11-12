@@ -10,10 +10,11 @@ const SIGNED_URL_SECONDS = 300;
 export const openGuide = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { blogId: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: blog } = await supabaseAdmin
+    // Read under the caller's own access rules so drafts stay staff-only.
+    const { data: blog } = await context.supabase
       .from("install_blogs")
       .select("id, title, body, file_path, file_name, file_mime, pdf_url")
       .eq("id", data.blogId)

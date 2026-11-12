@@ -55,7 +55,7 @@ function FaqPage() {
 
   return (
     <div className={`bg-background flex flex-col ${lockable ? "fixed inset-0 overflow-hidden" : "min-h-dvh"}`}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c") }} />
 
       <LandingHeader />
 

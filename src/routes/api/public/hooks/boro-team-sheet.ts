@@ -1,3 +1,4 @@
+import { withCron } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 
 async function run(ignoreWindow: boolean) {
@@ -11,10 +12,10 @@ async function run(ignoreWindow: boolean) {
 
 export const Route = createFileRoute("/api/public/hooks/boro-team-sheet")({
   server: {
-    handlers: {
+    handlers: withCron({
       GET: async ({ request }) =>
         Response.json(await run(new URL(request.url).searchParams.get("force") === "1")),
       POST: async () => Response.json(await run(false)),
-    },
+    }),
   },
 });

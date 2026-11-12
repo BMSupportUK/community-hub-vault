@@ -318,7 +318,8 @@ export const sendIncidentPush = createServerFn({ method: "POST" })
       message: z.string().max(500).optional(),
     }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await requireIncidentManager(context.userId);
     return sendIncidentNotification(data);
   });
 

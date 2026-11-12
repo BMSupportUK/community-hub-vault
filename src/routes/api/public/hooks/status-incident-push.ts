@@ -32,13 +32,23 @@ export const Route = createFileRoute("/api/public/hooks/status-incident-push")({
 
         const { data: row, error } = await supabaseAdmin
           .from("status_incidents")
-          .select("id, title, description")
+          .select("id, title, description, status, created_at")
           .eq("id", body.id)
           .maybeSingle();
         if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
         if (!row) return Response.json({ ok: true, skipped: "row not found" });
+        const st = row as { status: string; created_at: string };
+        if (body.kind === "resolved" ? st.status !== "completed" : new Date(st.created_at).getTime() < Date.now() - 10 * 60 * 1000) {
+          return Response.json({ ok: true, skipped: "not current" });
+        }
 
         const r = row as { id: string; title: string | null; description: string | null };
+        // Each alert goes out once, and only for a brand-new item, so outside calls can't repeat or fake it.
+        const { error: claimErr } = await supabaseAdmin
+          .from("scheduled_alert_log")
+          .insert({ alert_key: `incident_push:${r.id}:${body.kind}`, user_id: r.id } as never);
+        if (claimErr) return Response.json({ ok: true, skipped: "already sent" });
+
 
         const title =
           body.kind === "created"

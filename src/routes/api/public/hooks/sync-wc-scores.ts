@@ -1,3 +1,4 @@
+import { withCron } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 import type { WcLiveFixtureRow } from "@/lib/wc-live-scores.server";
 
@@ -139,9 +140,9 @@ async function syncScores() {
 
 export const Route = createFileRoute("/api/public/hooks/sync-wc-scores")({
   server: {
-    handlers: {
+    handlers: withCron({
       GET: async () => Response.json(await syncScores()),
       POST: async () => Response.json(await syncScores()),
-    },
+    }),
   },
 });

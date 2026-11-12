@@ -378,7 +378,7 @@ function ProfilePage() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     for (let i = 0; i < 5; i++) {
       let code = "";
-      for (let j = 0; j < 8; j++) code += chars[Math.floor(Math.random() * chars.length)];
+      for (let j = 0; j < 8; j++) code += chars[crypto.getRandomValues(new Uint32Array(1))[0] % chars.length];
       const { error } = await supabase.from("invites").insert({ code, created_by: viewer.id });
       if (!error) {
         toast.success(`Invite code ${code} created`);

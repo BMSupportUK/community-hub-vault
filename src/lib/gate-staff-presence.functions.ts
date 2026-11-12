@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export interface GateStaffPresenceEntry {
   user_id: string;
@@ -9,7 +10,7 @@ export interface GateStaffPresenceEntry {
   on_shift: boolean;
 }
 
-export const getGateStaffPresence = createServerFn({ method: "GET" }).handler(
+export const getGateStaffPresence = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(
   async (): Promise<GateStaffPresenceEntry[]> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -32,10 +33,8 @@ export const getGateStaffPresence = createServerFn({ method: "GET" }).handler(
         .from("profiles")
         .select("id,username,display_name,avatar_url,last_seen_at")
         .in("id", ids),
-      supabaseAdmin
-        .from("shifts")
-        .select("user_id")
-        .is("clock_out", null),
+      // Shift status stays private; only "online" is shared.
+      Promise.resolve({ data: [] as { user_id: string }[] }),
     ]);
 
     const onShift = new Set((shifts ?? []).map((s) => s.user_id));

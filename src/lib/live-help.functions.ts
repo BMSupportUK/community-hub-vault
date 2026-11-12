@@ -298,6 +298,15 @@ export const sendLiveHelpWhatsAppInvite = createServerFn({ method: "POST" })
       throw new Error("WhatsApp isn't connected to BM Support yet — connect it first, or send the customer their secure page link another way.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Only message customers who have an open live-help request on this order.
+    const { data: open } = await supabaseAdmin
+      .from("order_support_sessions")
+      .select("id")
+      .eq("order_id", data.orderId)
+      .in("status", ["waiting", "live"])
+      .gte("requested_at", new Date(Date.now() - SESSION_TTL_MS).toISOString())
+      .limit(1);
+    if (!open?.length) throw new Error("This customer hasn't asked for live help on this order");
     const { data: link } = await supabaseAdmin
       .from("order_checkout_links")
       .select("token")
