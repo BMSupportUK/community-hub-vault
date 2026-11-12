@@ -2423,6 +2423,13 @@
       "when": 1794473103384,
       "tag": "0345_direct_pin_completion_lifetime",
       "breakpoints": true
+    },
+    {
+      "idx": 346,
+      "version": "7",
+      "when": 1794477123083,
+      "tag": "0346_inbox_participant_delete",
+      "breakpoints": true
     }
   ]
 }

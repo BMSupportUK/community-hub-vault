@@ -10052,6 +10052,10 @@ export type Database = {
         Returns: boolean
       }
       bm_inbox_delete_many: { Args: { _ids?: string[] }; Returns: number }
+      bm_inbox_delete_messages: {
+        Args: { _ids?: string[]; _thread: string }
+        Returns: Json
+      }
       bm_inbox_my_privacy: { Args: never; Returns: string }
       bm_inbox_review: {
         Args: { _id?: string; _status?: string }
