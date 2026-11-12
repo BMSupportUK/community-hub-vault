@@ -84,6 +84,21 @@ const ADVERT_WINDOW_MS = 4000, ADVERT_JUMP_MS = 800;
 /** After a programme/advert switch the buffer is kept this long before a stall or still picture counts as a fault. */
 const ADVERT_GRACE_MS = 10000;
 function inAdvertGrace(session, now) { return !!session.sizeAt && now - session.sizeAt >= 0 && now - session.sizeAt <= ADVERT_GRACE_MS; }
+/** Feed change without a picture-size change: the stream clock jumps (back, or well ahead of real time) or the frame rate changes.
+ *  Starts the same advert grace as a size change. VLC's live clock can sit at 0, so a zero reading is ignored. */
+function feedChange(session, s, now) {
+  const pos = Number(s && s.position) || 0, fps = Math.round(Number(s && s.fps) || 0);
+  let changed = false;
+  if (pos > 0 && session.clockPos > 0 && session.clockAt != null) {
+    const moved = pos - session.clockPos, real = (now - session.clockAt) / 1000;
+    if (moved < -1 || moved > real + 5) changed = true;
+  }
+  if (fps > 0 && session.fpsSeen > 0 && fps !== session.fpsSeen) changed = true;
+  if (pos > 0) { session.clockPos = pos; session.clockAt = now; }
+  if (fps > 0) session.fpsSeen = fps;
+  if (changed && session.ready) session.sizeAt = now;
+  return changed && !!session.ready;
+}
 // Never reopens the stream: a switch is waited out with the buffer kept (matches Android). Always returns false.
 function advertJump(session, w, h, state, now, live) {
   if (w > 0 && h > 0) { const key = w + 'x' + h; if (session.size && session.size !== key) session.sizeAt = now; session.size = key; }
@@ -135,4 +150,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { isDazn, isCoupang, isHeavyName, heavyFormat, isHeavy, rememberHeavy, loadHeavy, heavyList, HEAVY_MAX, cushioned, providerTag, profile, advertJump, ADVERT_WINDOW_MS, ADVERT_GRACE_MS, inAdvertGrace, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { isDazn, isCoupang, isHeavyName, heavyFormat, isHeavy, rememberHeavy, loadHeavy, heavyList, HEAVY_MAX, cushioned, providerTag, profile, advertJump, feedChange, ADVERT_WINDOW_MS, ADVERT_GRACE_MS, inAdvertGrace, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };

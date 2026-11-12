@@ -427,6 +427,7 @@ public class PlayerActivity extends Activity {
     private ExoPlayer carried;
     private long formatChangedAt = -100000;
     private boolean stallAdvert;
+    private String lastAudioKey;
     private final BufferRecoveryWatch bufferWatch = new BufferRecoveryWatch();
     private boolean reconnectPending;
     private boolean reopenForBuffer;
@@ -576,6 +577,12 @@ public class PlayerActivity extends Activity {
             }
             @Override public void onTracksChanged(androidx.media3.common.Tracks t) {
                 surveySubtitles(t);
+                // Sound format change at a break (e.g. stereo to surround) is a feed switch too.
+                String audioKey = null;
+                for (androidx.media3.common.Tracks.Group g : t.getGroups())
+                    if (g.getType() == androidx.media3.common.C.TRACK_TYPE_AUDIO)
+                        for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i)) { androidx.media3.common.Format af = g.getTrackFormat(i); audioKey = af.sampleMimeType + "/" + af.channelCount + "/" + af.sampleRate; }
+                if (audioKey != null) { if (lastAudioKey != null && !audioKey.equals(lastAudioKey)) markSwitch(); lastAudioKey = audioKey; }
                 // 50fps UK sport judders on 60Hz Android boxes: ask the TV for a matching refresh rate.
                 for (androidx.media3.common.Tracks.Group g : t.getGroups())
                     if (g.getType() == androidx.media3.common.C.TRACK_TYPE_VIDEO)

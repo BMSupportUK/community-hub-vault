@@ -198,6 +198,7 @@ async function openWatch(w){
 async function updatePlayback(){for(const session of [...sessions]){try{const s=engine?.status(session.index);if(!s)continue;Object.assign(session,s);session.paused=s.state===4;
  const rec=recovery.tick(session,s.state,Date.now(),session.item.kind==='live');
  if(session.item.kind==='live'&&recovery.heavyFormat(Number(s.w)||0,Number(s.h)||0,Number(s.fps)||0,Number(s.bitrate)||0)&&recovery.rememberHeavy(session.recoveryName)){store.heavyChannels=recovery.heavyList();try{save();}catch{}}
+ if(session.item.kind==='live')recovery.feedChange(session,s,Date.now());
  if(recovery.advertJump(session,Number(s.w)||0,Number(s.h)||0,s.state,Date.now(),session.item.kind==='live')){try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:recovery.liveBufferMs(store.settings?.buffer,session.recoveryName),resume:0,maxHeight:session.maxHeight});applyAudio();}catch{}}
  if(rec.event)queueBuffer(session.item,rec.event,session);
  if(rec.lower)session.maxHeight=720;
