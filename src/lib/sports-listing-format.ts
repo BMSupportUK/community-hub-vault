@@ -2285,3 +2285,20 @@ export function clubChannelListingHtml(html: string | null | undefined, guideTit
   const out = plainListingToHtml(formatSportsListingEvents(sortSportsListingEvents(renamed), { channels: [] }));
   return out === html ? null : out;
 }
+
+/**
+ * Guide cards show a summary line ("Thursday, 12th November · 12:00 GMT")
+ * built from the first listing at import time. Hand edits to the body used to
+ * leave that line stale. Refresh it from the saved body's first listing when
+ * the summary looks auto-generated (empty, contains the date·time separator,
+ * or itself parses as a listing); staff-typed custom summaries are kept.
+ */
+export function refreshAutoGuideExcerpt(excerpt: string | null | undefined, body: string | null | undefined): string | null {
+  if (!body) return excerpt ?? null;
+  const first = sortSportsListingEvents(parseSportsListingBlock(body))[0];
+  if (!first?.time) return excerpt ?? null;
+  const trimmed = excerpt?.trim() ?? "";
+  const looksAuto = !trimmed || trimmed.includes("·") || parseSportsListingBlock(`<div>${trimmed}</div>`).length > 0;
+  if (!looksAuto) return excerpt ?? null;
+  return `${first.date ? first.date + " · " : ""}${first.time}`;
+}

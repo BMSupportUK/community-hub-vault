@@ -22,6 +22,7 @@ import {
   parseSportsListingBlock,
   clubChannelListingHtml,
   plainListingToHtml,
+  refreshAutoGuideExcerpt,
   sortSportsListingEvents,
 } from "@/lib/sports-listing-format";
 
@@ -511,6 +512,13 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       const clubs = clubChannelListingHtml(payload.body, payload.title);
       if (clubs !== null) payload.body = clubs;
       if (!containsRichContent) assertStableSportsListing(parseSportsListingBlock(payload.body), payload.body);
+      // Auto-generated card summaries ("Wednesday, 23rd September · 09:00
+      // BST") go stale when the body is edited by hand. Refresh them from the
+      // first listing so the card never shows an old date; staff-typed custom
+      // summaries are left alone.
+      if (!containsRichContent) {
+        payload.excerpt = refreshAutoGuideExcerpt(payload.excerpt, payload.body);
+      }
     }
     if (!editing.id) {
       // Append to the end of the chosen category so the admin-defined order is preserved.
