@@ -13,6 +13,9 @@ import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
 import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
 import { BmSplash } from "@/components/app/BmSplash";
 import { ScreenLockKeepAliveContext } from "@/components/app/ScreenLockKeepAlive";
+import { useServerFn } from "@tanstack/react-start";
+import { getScreenLockAdminAccess } from "@/lib/screen-lock-admin.functions";
+import { screenLockAdminBypass } from "@/lib/screen-lock-admin";
 
 
 export interface ScreenLockSettings {
@@ -31,6 +34,36 @@ export function lockScreenNow() {
 }
 
 export function ScreenLockProvider({ children, lockedExtras }: { children: ReactNode; lockedExtras?: ReactNode }) {
+  const { user } = useAuth();
+  const verify = useServerFn(getScreenLockAdminAccess);
+  const [checked, setChecked] = useState<string | null>(null);
+  const [grant, setGrant] = useState<{ userId: string; expiresAt: string | null } | null>(null);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!user) { setChecked(null); setGrant(null); return; }
+    let active = true;
+    const refresh = async () => {
+      try { const result = await verify(); if (active) setGrant(result); }
+      catch { if (active) setGrant(null); }
+      finally { if (active) setChecked(user.id); }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 30000);
+    window.addEventListener("bm-customer-switch-status", refresh);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener("bm-customer-switch-status", refresh); };
+  }, [user?.id, verify]);
+  useEffect(() => {
+    if (!grant?.expiresAt) return;
+    const timer = window.setTimeout(() => tick(n => n + 1), Math.max(0, Date.parse(grant.expiresAt) - Date.now()));
+    return () => window.clearTimeout(timer);
+  }, [grant]);
+  if (user && checked !== user.id) return <BmSplash />;
+  // Do not mount lock settings, idle writes or cross-tab unlock broadcasts for a switched admin.
+  if (user && screenLockAdminBypass(grant, user.id)) return <>{children}</>;
+  return <NormalScreenLockProvider key={user?.id} lockedExtras={lockedExtras}>{children}</NormalScreenLockProvider>;
+}
+
+function NormalScreenLockProvider({ children, lockedExtras }: { children: ReactNode; lockedExtras?: ReactNode }) {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const [settings, setSettings] = useState<ScreenLockSettings | null>(null);
