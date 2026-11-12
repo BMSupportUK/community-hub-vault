@@ -12,6 +12,8 @@ import { sendLoginToDevice } from "@/lib/player.functions";
 import { usePlayerDevices } from "@/hooks/use-player-devices";
 import { Link } from "@tanstack/react-router";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
+import { useAccountProfiles } from "@/components/app/AccountProfiles";
+import { useAuth } from "@/hooks/use-auth";
 
 type QdCode = { id: string; label: string; code: string; notes: string | null };
 
@@ -42,7 +44,8 @@ function AppInformationPanel({ codes }: { codes: QdCode[] }) {
 }
 
 function SendToPlayerPanel({ accounts }: { accounts: ManualCredential[] }) {
-  const { devices } = usePlayerDevices();
+  const { devices: ownerDevices } = usePlayerDevices();
+  const devices = ownerDevices.filter((device) => accounts.some((account) => account.id === device.credential_id));
   const send = useServerFn(sendLoginToDevice);
   const usable = accounts.filter((a) => a.login && a.password);
   const [acc, setAcc] = useState(usable[0]?.id ?? ""), [dev, setDev] = useState(""), [busy, setBusy] = useState(false);
@@ -56,9 +59,9 @@ function SendToPlayerPanel({ accounts }: { accounts: ManualCredential[] }) {
       <select aria-label="Device" value={dev} onChange={(e) => setDev(e.target.value)} className="rounded-md border border-border bg-surface-2 px-3 py-2 text-sm">
         {devices.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
       <Button size="sm" disabled={busy || !dev} onClick={async () => {
-        const a = usable.find((x) => x.id === acc); if (!a) return;
+        const a = usable.find((x) => x.id === acc); if (!a?.login || !a.password) return;
         setBusy(true);
-        try { await send({ data: { deviceId: dev, username: a.login!, password: a.password! } }); toast.success("Sent! Your app will sign in within a few seconds."); }
+        try { await send({ data: { deviceId: dev, username: a.login, password: a.password } }); toast.success("Sent! Your app will sign in within a few seconds."); }
         catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); } finally { setBusy(false); }
       }}>{busy ? <Loader2 className="animate-spin" /> : null}Send to my device</Button>
     </div> : <p className="mt-2 text-xs text-muted-foreground">No linked devices yet. <Link to="/send-to-app" className="text-primary hover:underline">Link one with the code on your screen</Link>.</p>}
@@ -66,6 +69,13 @@ function SendToPlayerPanel({ accounts }: { accounts: ManualCredential[] }) {
 }
 
 function PortalLoginsPage() {
+  const { user } = useAuth();
+  const { activeProfile, loaded } = useAccountProfiles();
+  if (!user || !loaded) return null;
+  return <ProfileLoginsPage key={`${user.id}:${activeProfile?.id ?? "none"}`} />;
+}
+
+function ProfileLoginsPage() {
   const read = useServerFn(readPortalCredentials);
   const requestReset = useServerFn(requestPortalPinReset);
   const [pin, setPin] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");

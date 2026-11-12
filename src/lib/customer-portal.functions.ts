@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { ManualCredential } from "@/lib/manual-credentials-schema";
 import { portalCodeSchema, portalLoginCodeSchema } from "@/lib/customer-portal";
+import { portalProfileCredentials } from "@/lib/portal-profile-credentials";
 
 const hex = (bytes: ArrayBuffer | Uint8Array) => Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, "0")).join("");
 const hash = async (value: string) => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
@@ -85,27 +86,13 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
         .eq("email_key", key);
       if (upErr) throw new Error("We couldn't save your new PIN. Please try again.");
     }
-    const [{ data: site }, { data: manual }, { data: qd }] = await Promise.all([
-      supabaseAdmin.rpc("portal_credentials_for_user", { p_user_id: context.userId }),
-      supabaseAdmin.rpc("manual_credentials_for_email", { p_email: email }),
+    const [{ data: profileId, error: profileError }, { data: saved, error: savedError }, { data: qd }] = await Promise.all([
+      context.supabase.rpc("active_profile_credential"),
+      context.supabase.rpc("player_owner_saved_logins"),
       supabaseAdmin.from("qd_dns_codes").select("id,label,code,notes").order("label"),
     ]);
-    // Every source is read so one failing still shows the others; the same login appears once,
-    // keeping the copy that has a password and the latest expiry.
-    const byLogin = new Map<string, ManualCredential>();
-    for (const a of [...((site as unknown as ManualCredential[]) ?? []), ...((manual as unknown as ManualCredential[]) ?? [])]) {
-      const key = (a.login ?? "").trim().toLowerCase() || `id:${a.id}`;
-      const prev = byLogin.get(key);
-      if (!prev) { byLogin.set(key, a); continue; }
-      byLogin.set(key, {
-        ...prev,
-        password: prev.password || a.password,
-        expiresAt: [prev.expiresAt, a.expiresAt].filter(Boolean).sort().pop() ?? null,
-        name: prev.name || a.name,
-        accountType: prev.accountType || a.accountType,
-      });
-    }
-    const accounts = [...byLogin.values()];
+    if (profileError || savedError) throw new Error("Unable to verify your selected account. Please reopen Service Credentials.");
+    const accounts: ManualCredential[] = portalProfileCredentials(saved ?? [], profileId);
     // Connections come from the provider itself (DNS player_api user_info.max_connections).
     const { data: ps } = await supabaseAdmin.from("player_settings").select("dns").eq("id", 1).maybeSingle();
     const { normaliseDns } = await import("@/lib/player-link");
