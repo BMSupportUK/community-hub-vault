@@ -181,7 +181,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
       {link && <div className="space-y-1 rounded-lg border border-primary/40 bg-primary/5 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type this into Downloader</p>
         <p className="select-all break-all font-mono text-3xl font-bold text-primary">{shown}</p>
-        <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} (30 minutes).</p>
+        <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} (24 hours).</p>
       </div>}
       {!done[2] && <Waiting text="Waiting for your TV to download BM Direct Install…" />}
       <WizardNav onBack={() => setStep(1)} onNext={() => finish(2)} nextLabel="Next step" nextDisabled={!tv} />

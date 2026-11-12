@@ -2,8 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { DIRECT_LINK_TTL_MS, directInstallUrl, directLinkUsable, makeDirectCode, normalizeDirectCode } from "@/lib/direct-install";
 
 describe("BM Direct Install secure links", () => {
-  test("links last 30 minutes", () => {
-    expect(DIRECT_LINK_TTL_MS).toBe(30 * 60 * 1000);
+  test("Downloader links last 24 hours", () => {
+    expect(DIRECT_LINK_TTL_MS).toBe(24 * 60 * 60 * 1000);
+    const issued = Date.parse("2026-11-12T09:43:00Z");
+    const row = { expires_at: new Date(issued + DIRECT_LINK_TTL_MS).toISOString() };
+    expect(directLinkUsable(row, Date.parse("2026-11-13T09:42:59Z"))).toBe(true);
+    expect(directLinkUsable(row, Date.parse("2026-11-13T09:43:00Z"))).toBe(false);
   });
   test("an expired link no longer works", () => {
     const now = Date.parse("2026-10-30T22:00:00Z");

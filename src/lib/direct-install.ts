@@ -1,5 +1,5 @@
 /** BM Direct Install secure download links: short, easy-to-type codes for Downloader on the TV. */
-export const DIRECT_LINK_TTL_MS = 30 * 60 * 1000;
+export const DIRECT_LINK_TTL_MS = 24 * 60 * 60 * 1000;
 /** Compatibility expiry for clients requiring a timestamp; All done revokes the PIN. */
 export const DIRECT_PIN_EXPIRES_AT = "9999-12-31T23:59:59.000Z";
 /** TV progress and website reads use the same active-run window. */

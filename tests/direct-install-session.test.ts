@@ -20,6 +20,12 @@ function database() {
 }
 
 describe("Direct Install setup sessions", () => {
+  test("issued Downloader expiry is stored and returned exactly 24 hours later", async () => {
+    const { db, rows } = database();
+    const session = await beginDirectInstallSession(db, "customer", true, Date.parse("2026-11-12T09:43:00Z"));
+    expect(session.expiresAt).toBe("2026-11-13T09:43:00.000Z");
+    expect(rows[0].expires_at).toBe("2026-11-13T09:43:00.000Z");
+  });
   test("already-installed starts a fresh run without issuing a download link", async () => {
     const { db, rows } = database();
     const old = await beginDirectInstallSession(db, "customer", true);
