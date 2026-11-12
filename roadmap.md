@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Member subscription card uses shared profile details and exact selected login; removed Player 2FA pill/security tab and retired old help screen. Nine regression tests pass; build OK. Signed-in visual verification unavailable while preview remains on its loading overlay; website publication still required.
 - [x] Direct Install PIN lifetime and revocation-trigger changes applied; website and All done app changes saved. Ten website tests pass.
 - [x] Built and released permanently signed Direct Install 2.1/12; three Android tests and ten website tests pass, live APK hash matches the tested package.
 - [ ] Verify All done on a TV after website publication; blocker: no connected TV and the live website still needs the finished action published.

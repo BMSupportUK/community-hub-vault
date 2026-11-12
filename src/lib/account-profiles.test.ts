@@ -1,11 +1,18 @@
 // @ts-nocheck — tests run with bun test.
 import { describe, expect, test } from "bun:test";
-import { needsProfileChoice, pickActiveProfile, profileUsesStaffPortal, requestProfileChooser, saveActiveProfile, wasProfileChosen } from "./account-profiles";
+import { needsProfileChoice, pickActiveProfile, profileUsesStaffPortal, requestProfileChooser, saveActiveProfile, wasProfileChosen, selectedSubscription } from "./account-profiles";
 
 const a = { id: "a" };
 const b = { id: "b" };
 
 describe("account profiles", () => {
+  test("member card shows Coordinated4Audience rather than the original Wobbly8Garden login", () => {
+    const rows = [{ id: "first", login: "Wobbly8Garden" }, { id: "second", login: "Coordinated4Audience" }];
+    expect(selectedSubscription(rows, "second")?.login).toBe("Coordinated4Audience");
+  });
+  test("missing selected subscription never falls back to the original login", () => {
+    expect(selectedSubscription([{ id: "first", login: "Wobbly8Garden" }], "second")).toBeNull();
+  });
   test("switching reopens the chooser after a profile was already chosen", () => {
     const originals = { localStorage: globalThis.localStorage, sessionStorage: globalThis.sessionStorage, window: globalThis.window };
     const storage = () => { const values = new Map(); return { getItem: (k) => values.get(k) ?? null, setItem: (k, v) => values.set(k, v), removeItem: (k) => values.delete(k) }; };

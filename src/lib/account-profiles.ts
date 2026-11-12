@@ -22,6 +22,11 @@ export function pickActiveProfile<T extends { id: string }>(profiles: T[], saved
   return profiles.find((p) => p.id === savedId) ?? profiles[0];
 }
 
+/** A subscription must never substitute another login for the selected profile. */
+export function selectedSubscription<T extends { id: string }>(rows: T[], profileId: string | null): T | null {
+  return profileId ? rows.find((row) => row.id === profileId) ?? null : null;
+}
+
 /** The chooser opens only for customers with 2+ logins who haven't picked this session. */
 export function needsProfileChoice(profileCount: number, chosenThisSession: boolean): boolean {
   return profileCount > 1 && !chosenThisSession;

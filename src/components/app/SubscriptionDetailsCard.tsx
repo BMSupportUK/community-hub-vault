@@ -3,10 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock, Users } from "lucide-react";
 import { useAccountProfiles } from "@/components/app/AccountProfiles";
-import { requestProfileChooser } from "@/lib/account-profiles";
+import { requestProfileChooser, selectedSubscription } from "@/lib/account-profiles";
 import { cn } from "@/lib/utils";
 import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
-import { PlayerPinButton } from "@/components/app/PlayerPinButton";
 import { SendAccountNumber } from "@/components/app/SendAccountNumber";
 import { Nameplate } from "@/components/app/Nameplate";
 import { customerJoinedYear, customerYearsFromYear } from "@/lib/customer-joined-year";
@@ -16,7 +15,6 @@ interface CredRow {
   account_number: number;
   account_type: string | null;
   app_login_name: string | null;
-  password: string | null;
   expiry_at: string | null;
 }
 
@@ -33,20 +31,23 @@ export function SubscriptionDetailsCard({
   fill?: boolean;
 }) {
   const { user } = useAuth();
-  const [creds, setCreds] = useState<CredRow[]>([]);
-  const [loaded, setLoaded] = useState(false);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const [nameplateId, setNameplateId] = useState<string | null>(null);
   const [joinedYear, setJoinedYear] = useState<number | null>(null);
   const [joinedRecorded, setJoinedRecorded] = useState<boolean | null>(null);
-  const { activeProfile } = useAccountProfiles();
+  const { activeProfile, profiles, loaded } = useAccountProfiles();
+  const creds: CredRow[] = profiles.map((profile) => ({
+    id: profile.id,
+    account_number: profile.accountNumber,
+    account_type: profile.accountType,
+    app_login_name: profile.login,
+    expiry_at: profile.expiryAt,
+  }));
   const customerNumber = useCustomerNumber(user?.id);
   const loginNumbers = useLoginPlayerNumbers(user?.id);
 
   useEffect(() => {
     if (!user) {
-      setCreds([]);
-      setLoaded(true);
       setCustomerName(null);
       return;
     }
@@ -71,38 +72,8 @@ export function SubscriptionDetailsCard({
         setJoinedYear(customerJoinedYear((data?.first_subscription_date ?? null) as string | null));
         setJoinedRecorded(Boolean(data?.first_subscription_date));
       });
-    const load = () => {
-      supabase
-        .from("app_credentials")
-        .select("id, account_number, account_type, app_login_name, password, expiry_at")
-        .eq("owner_id", user.id)
-        .order("account_number", { ascending: true })
-        .then(({ data }) => {
-          if (!active) return;
-          const rows = (data as CredRow[] | null) ?? [];
-          const nowTs = Date.now();
-          rows.sort((a, b) => {
-            const aExpired = a.expiry_at ? new Date(a.expiry_at).getTime() < nowTs : false;
-            const bExpired = b.expiry_at ? new Date(b.expiry_at).getTime() < nowTs : false;
-            if (aExpired !== bExpired) return aExpired ? 1 : -1;
-            return a.account_number - b.account_number;
-          });
-          setCreds(rows);
-          setLoaded(true);
-        });
-    };
-    load();
-    const channel = supabase
-      .channel(`home-subscription-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "credential_change_events", filter: `owner_id=eq.${user.id}` },
-        () => load(),
-      )
-      .subscribe();
     return () => {
       active = false;
-      supabase.removeChannel(channel);
     };
   }, [user]);
 
@@ -189,7 +160,6 @@ export function SubscriptionDetailsCard({
               Account no. {loginNumbers.find((r) => r.credential_id === activeProfile?.id)?.number ?? customerNumber}
             </SendAccountNumber>
           )}
-          {hasCreds && <PlayerPinButton className={cn("rounded-full border border-white/30 bg-background/20 px-3 py-0.5 text-white hover:bg-background/40", compact ? "text-[10px]" : "mt-1 text-xs")} />}
           <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px]" : "text-xs mt-0.5")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
@@ -198,7 +168,8 @@ export function SubscriptionDetailsCard({
 
       {/* Account expiry — one at a time with next button */}
       {hasCreds && (() => {
-        const c = creds.find((r) => r.id === activeProfile?.id) ?? creds[0];
+        const c = selectedSubscription(creds, activeProfile?.id ?? null);
+        if (!c) return null;
         const t = c.expiry_at ? new Date(c.expiry_at).getTime() : null;
         const expired = t !== null && t < now;
         const expSoon = t !== null && !expired && t - now < 7 * 86400_000;
