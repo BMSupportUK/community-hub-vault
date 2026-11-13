@@ -1257,6 +1257,17 @@ public class MainActivity extends Activity {
         top.addView(text("  BM Player", 28, TEXT, true));
         top.addView(text("   v" + appVersion(), 16, MUTED, false));
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        if (FrameRateMatch.isAndroidTv(this)) {
+            final boolean on = FrameRateMatch.chosen50(this);
+            Button hz = headerPill(on ? "📺 50Hz: On" : "📺 50Hz: Off", v -> {
+                boolean now = !FrameRateMatch.chosen50(this);
+                FrameRateMatch.setChosen50(this, now);
+                Toast.makeText(this, now ? "Switching your TV to 50Hz… the screen may go black for a few seconds." : "50Hz switched off — your TV goes back to its normal setting.", Toast.LENGTH_LONG).show();
+                showHome();
+            });
+            hz.setContentDescription(on ? "50Hz is on, press to switch off" : "Switch TV to 50Hz");
+            top.addView(hz);
+        }
         top.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
         top.addView(headerPill("🔍 Search Movies", v -> showSearch("film", "")));
         top.addView(headerPill("🔍 Search Series", v -> showSearch("series", "")));

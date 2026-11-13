@@ -43,7 +43,7 @@ public class IntroActivity extends Activity {
         preparingDisplay = true;
         handler.removeCallbacks(next);
         if (video != null) video.stopPlayback();
-        if (!FrameRateMatch.isAndroidTv(this) || !FrameRateMatch.wouldSwitch(this, 50f)) {
+        if (true) { // no automatic 50Hz prompt any more: the home screen has a 50Hz button
             FrameRateMatch.prefer50(this);
             openPlayer();
             return;
