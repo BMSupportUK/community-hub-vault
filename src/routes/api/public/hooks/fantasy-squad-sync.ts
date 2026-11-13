@@ -1,4 +1,4 @@
-import { withCron } from "@/lib/cron-auth.server";
+import { cronDenied } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 
 const SETTING_KEY = "fantasy_squad_sync_last_run";
@@ -50,13 +50,24 @@ async function run(force: boolean) {
   return { ...squad, injuries, xTransfers };
 }
 
+// Browsers may trigger the throttled refresh (club data is public); only cron
+// callers holding the secret may force an immediate re-sync.
+async function handle({ request }: { request: Request }) {
+  const force = new URL(request.url).searchParams.get("force") === "1";
+  if (force) {
+    const denied = cronDenied(request);
+    if (denied) return denied;
+  }
+  const result = await run(force);
+  if (cronDenied(request)) {
+    const r = result as { skipped?: string; added?: string[]; departed?: string[] };
+    return Response.json({ ok: true, skipped: r.skipped, added: r.added ?? [], departed: r.departed ?? [] });
+  }
+  return Response.json(result);
+}
+
 export const Route = createFileRoute("/api/public/hooks/fantasy-squad-sync")({
   server: {
-    handlers: withCron({
-      GET: async ({ request }) =>
-        Response.json(await run(new URL(request.url).searchParams.get("force") === "1")),
-      POST: async ({ request }) =>
-        Response.json(await run(new URL(request.url).searchParams.get("force") === "1")),
-    }),
+    handlers: { GET: handle, POST: handle },
   },
 });
