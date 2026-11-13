@@ -2113,7 +2113,8 @@ public class MainActivity extends Activity {
             }).show();
             return;
         }
-        String[] opts = "film".equals(it.kind) ? new String[]{"Play", fav, "☆ Vote"} : new String[]{"Play", fav};
+        String playLabel = "live".equals(it.kind) ? "Full Screen" : "Play";
+        String[] opts = "film".equals(it.kind) ? new String[]{playLabel, fav, "☆ Vote"} : new String[]{playLabel, fav};
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
