@@ -1603,6 +1603,7 @@ public class MainActivity extends Activity {
         if (previewTask != null) ui.removeCallbacks(previewTask);
         previewTask = null;
         if (preview != null) { preview.release(); preview = null; }
+        if (vlcPreview != null) { vlcPreview.release(); vlcPreview = null; }
         if (!stageCarried) { hideStage(); freshStage(); }
         if (previewWatch != null) { ui.removeCallbacks(previewWatch); previewWatch = null; }
         previewFrozen = false;
@@ -1616,6 +1617,7 @@ public class MainActivity extends Activity {
         previewStopped();
     }
     private boolean previewCounted;
+    private VlcPreview vlcPreview;
 
     // ---- Stuck video chip guard -----------------------------------------------------------------
     // Some MediaTek boxes leave the video chip frozen on the last picture after a channel with a
@@ -1728,6 +1730,17 @@ public class MainActivity extends Activity {
                 return;
             }
             previewClaimed = false;
+            // The preview plays in the built-in backup engine, the same engine full-screen live TV uses.
+            previewView = view;
+            vlcPreview = new VlcPreview(this, view, streamUrls(it), new VlcPreview.Listener() {
+                @Override public void playing() {
+                    status.setText(fullScreenHint());
+                    if (!previewCounted) { previewCounted = true; setNowPlaying(it, false, true); }
+                    previewStarted();
+                }
+                @Override public void failed() { status.setText("Preview unavailable – press OK to play full screen"); }
+            });
+            if (vlcPreview != null) return;
             preview = PlayerActivity.build(this, false, it.name + " " + categoryName(it));
             previewView = view;
             view.setPlayer(preview);
@@ -2583,6 +2596,8 @@ public class MainActivity extends Activity {
     }
 
     private void startPlayback(Item it, boolean vlc, long position) {
+        // Free the backup-engine preview connection before full screen opens its own.
+        if (vlcPreview != null) stopPreview();
         // No question up front: the built-in player asks only when the film or episode really has subtitles.
         beginPlayback(it, vlc, position, false);
     }

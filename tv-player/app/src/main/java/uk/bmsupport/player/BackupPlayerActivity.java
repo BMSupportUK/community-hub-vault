@@ -98,6 +98,7 @@ public final class BackupPlayerActivity extends Activity {
         root.addView(feedNote, new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END));
         installControls(root);
         setContentView(root);
+        liveDrawer = new LiveDrawerOverlay(this, root, getIntent().getStringExtra("content_id"));
         ui.postDelayed(() -> note.setVisibility(TextView.GONE), 4000);
 
         urls = getIntent().getStringArrayExtra("urls");
@@ -298,9 +299,24 @@ public final class BackupPlayerActivity extends Activity {
         ui.postDelayed(this::open, started ? 2000 : 300);
     }
 
+    private LiveDrawerOverlay liveDrawer;
+
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         if (PlayerApplication.closeAnnouncementOnBack(this, e)) return true;
         PlayerApplication.interaction(this);
+        // Live TV on a box: Left with the controls hidden slides the guide's categories over the picture;
+        // Back or Left slides them away again.
+        if (e.getAction() == KeyEvent.ACTION_DOWN && liveDrawer != null) {
+            int k = e.getKeyCode();
+            if (liveDrawer.shown && (k == KeyEvent.KEYCODE_BACK || k == KeyEvent.KEYCODE_DPAD_LEFT)) {
+                // Left inside the channel list still belongs to the drawer's own "back to categories".
+                if (k == KeyEvent.KEYCODE_BACK) { liveDrawer.hide(); return true; }
+            } else if (!liveDrawer.shown && k == KeyEvent.KEYCODE_DPAD_LEFT && isLive() && !getIntent().hasExtra("catchup_prefix")
+                    && LiveDrawerData.ready() && LiveDrawerOverlay.tvBox(this) && (controller == null || !controller.isVisible())) {
+                liveDrawer.show(); return true;
+            }
+            if (liveDrawer.shown) return super.dispatchKeyEvent(e);
+        }
         if (e.getAction() == KeyEvent.ACTION_DOWN && mp != null) {
             switch (e.getKeyCode()) {
                 case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: setPlaying(paused); showControls(); return true;
