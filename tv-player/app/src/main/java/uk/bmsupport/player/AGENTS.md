@@ -23,3 +23,4 @@
 - Sports Guide previews a channel in its own preview box first (OK previews, OK again on the same channel carries it full screen), reusing the Live TV stage/hand-back so neither direction reconnects.
 - Stuck video chip guard: every Live TV preview channel change drops the stage SurfaceView for a fresh one; a preview whose rendered-frame count stops for 3s while READY restarts itself (max 3 per channel) and a frozen preview is never carried to full screen.
 - The home-screen 50Hz button also resets video: it releases the preview and any carried/hand-back players and drops the stage surface before the display mode changes.
+- Never call streamUrls() (unseals the Keystore login, a binder call) per channel on the main thread; resolve addresses only for the channel being played. Bulk calls caused ANRs on Google TV Streamer.
