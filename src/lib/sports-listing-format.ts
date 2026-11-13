@@ -468,6 +468,9 @@ export function mismatchedSportsListingHeading(raw: string | null | undefined, g
   return null;
 }
 
+const BROADCAST_REGION_ROW_RE =
+  /^(?:UK|GB|Ireland|IRE|ROI|USA?|United States|Canada|CAN|Australia|AUS|New Zealand|NZ|India|South Africa|SA|MENA|Middle East|Africa|Asia|Europe|Germany|France|Spain|Italy|Portugal|Netherlands|Brazil|Mexico|Japan|Worldwide|International)\s*:\s*\S/i;
+
 export function isLikelyChannelLabel(value: string): boolean {
   const text = value.replace(/\s+/g, " ").trim();
   // Saved guides join several channels with " | ". Judge each part on its own
@@ -483,6 +486,11 @@ export function isLikelyChannelLabel(value: string): boolean {
   if (/^[A-Za-z]{1,6}\d{1,3}(?:\s+(?:HD|UHD|FHD|4K))?$/i.test(text)) return true;
   if (/^(?:ufc\s*)?fight\s*pass$/i.test(text)) return true;
   if (/\b(?:v|vs|versus)\b/i.test(text)) return false;
+  // "OTHER SPORT" posts name each broadcaster by country:
+  // "Ireland: Virgin One", "India: Star Sports 1", "Australia: Fox Cricket 501 (12pm UK)".
+  // A country followed by a colon is always a channel row, never an event,
+  // otherwise the channel is read as the next event's title on re-save.
+  if (BROADCAST_REGION_ROW_RE.test(text)) return true;
   if (/\b(?:league|cup|trophy|championship|premier|serie|liga|bundesliga)\b/i.test(text) && !/\d/.test(text)) return false;
   // Provider feeds frequently use an unfamiliar name followed by a channel
   // number ("Coupang 1", "MonoMax 7", "Ten 2"). Treat that compact shape as
