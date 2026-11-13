@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Fix manual-customer checkout email errors and exclude paid orders from the email picker; reproduced missing email-column error for MANUAL-595281, live RPC now prepares successfully, 13 tests pass and build OK. Actual button/send check blocked by dashboard password/staff PIN; no email sent during testing.
+
 - [x] Add optional existing-customer expiry to manual customer creation and show it on the customer card; five tests pass, expiry storage/list verified and build OK. Full signed-in form check blocked by profile/password/staff PIN gates; publishing needed.
 
 - [x] Add manual customers without creating accounts; save email and provide an explicit customer-card secure-checkout email action. Account creation remains at checkout completion; five tests pass and build OK. Signed-in end-to-end email check blocked by dashboard password/staff PIN; publishing needed.
