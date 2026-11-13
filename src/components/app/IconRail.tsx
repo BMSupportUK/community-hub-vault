@@ -253,7 +253,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         "relative w-[88px] flex-col items-center py-4 gap-3 overflow-hidden",
         "bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_36%,var(--rail)),var(--rail)_42%,color-mix(in_oklab,var(--primary-glow)_22%,var(--surface-2)))]",
         "shadow-[inset_-1px_0_0_color-mix(in_oklab,var(--primary-glow)_55%,transparent),18px_0_46px_-28px_color-mix(in_oklab,var(--primary)_90%,transparent)]",
-        "before:content-[''] before:absolute before:inset-y-4 before:left-2 before:w-1 before:rounded-full before:bg-gradient-primary before:shadow-glow before:pointer-events-none",
         inSheet
           ? "flex h-full"
           : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
@@ -410,7 +409,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       "relative w-[88px] flex-col items-center py-4 gap-2 overflow-hidden",
       "bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_36%,var(--rail)),var(--rail)_42%,color-mix(in_oklab,var(--primary-glow)_22%,var(--surface-2)))]",
       "shadow-[inset_-1px_0_0_color-mix(in_oklab,var(--primary-glow)_55%,transparent),18px_0_46px_-28px_color-mix(in_oklab,var(--primary)_90%,transparent)]",
-      "before:content-[''] before:absolute before:inset-y-4 before:left-2 before:w-1 before:rounded-full before:bg-gradient-primary before:shadow-glow before:pointer-events-none",
       "after:content-[''] after:absolute after:inset-x-3 after:top-3 after:h-24 after:rounded-full after:bg-primary-glow/20 after:blur-2xl after:pointer-events-none",
       inSheet
         ? "flex h-full"
