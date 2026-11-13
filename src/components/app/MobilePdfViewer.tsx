@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { PDFPageProxy } from "pdfjs-dist";
 
 const pdfWorkerUrl = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
@@ -30,18 +31,20 @@ function PdfPage({ page, width }: { page: PDFPageProxy; width: number }) {
   return <canvas ref={canvasRef} className="block max-w-full bg-white shadow-md" />;
 }
 
-export function MobilePdfViewer({ url, title }: { url: string; title: string }) {
+export function MobilePdfViewer({ url, data, title, paginated = false }: { url?: string; data?: Uint8Array; title: string; paginated?: boolean }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [pages, setPages] = useState<PDFPageProxy[]>([]);
   const [width, setWidth] = useState(0);
   const [error, setError] = useState(false);
+  const [pageNumber, setPageNumber] = useState(1);
 
   useEffect(() => {
+    setPages([]); setError(false); setPageNumber(1);
     let cancelled = false;
     let loadingTask: ReturnType<typeof import("pdfjs-dist")["getDocument"]> | null = null;
     void import("pdfjs-dist").then(async (pdfjs) => {
       pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-      loadingTask = pdfjs.getDocument({ url });
+      loadingTask = pdfjs.getDocument(data ? { data: data.slice() } : { url });
       try {
         const loaded = await loadingTask.promise;
         if (cancelled) return;
@@ -57,7 +60,7 @@ export function MobilePdfViewer({ url, title }: { url: string; title: string }) 
       cancelled = true;
       void loadingTask?.destroy();
     };
-  }, [url]);
+  }, [url, data]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -70,7 +73,12 @@ export function MobilePdfViewer({ url, title }: { url: string; title: string }) 
   }, []);
 
   return (
-    <div ref={containerRef} aria-label={`${title} document`} className="h-full min-h-0 w-full overflow-y-auto rounded-lg bg-muted p-1">
+    <div ref={containerRef} aria-label={`${title} document`} className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-lg bg-muted p-1">
+      {paginated && pages.length > 0 && <div className="flex shrink-0 items-center justify-center gap-4 border-b border-border bg-card p-2">
+        <Button size="icon" variant="ghost" aria-label="Previous page" title="Previous page" disabled={pageNumber === 1} onClick={() => setPageNumber((n) => n - 1)}><ChevronLeft /></Button>
+        <span className="min-w-24 text-center text-sm text-foreground" aria-live="polite">Page {pageNumber} of {pages.length}</span>
+        <Button size="icon" variant="ghost" aria-label="Next page" title="Next page" disabled={pageNumber === pages.length} onClick={() => setPageNumber((n) => n + 1)}><ChevronRight /></Button>
+      </div>}
       {error ? (
         <div className="grid min-h-48 place-items-center px-4 text-center text-sm text-muted-foreground">
           This guide could not be displayed. Please close it and try again.
@@ -80,8 +88,8 @@ export function MobilePdfViewer({ url, title }: { url: string; title: string }) 
           <Loader2 className="size-6 animate-spin" />
         </div>
       ) : (
-        <div className="flex min-w-0 flex-col items-center gap-2">
-          {pages.map((page, index) => <PdfPage key={index} page={page} width={width - 8} />)}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center gap-2 overflow-y-auto">
+          {(paginated ? pages.slice(pageNumber - 1, pageNumber) : pages).map((page) => <PdfPage key={page.pageNumber} page={page} width={width - 8} />)}
         </div>
       )}
     </div>

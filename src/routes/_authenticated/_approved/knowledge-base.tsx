@@ -23,6 +23,7 @@ import { PortalTabs } from "@/components/app/PortalTabs";
 import kbHero from "@/assets/knowledge-base-hero.jpg";
 import kbReadingBackground from "@/assets/knowledge-base-reading.jpg";
 import { KB_FRONT_CATEGORY_ID, knowledgeFrontGuides, knowledgeCategoryOrder, isLockedKnowledgeGuide, isLockedKnowledgeCategory } from "@/lib/knowledge-base-front-page";
+import { PlayerUserGuideReader } from "@/components/app/PlayerUserGuideReader";
 
 export const Route = createFileRoute("/_authenticated/_approved/knowledge-base")({
   head: () => ({
@@ -441,7 +442,7 @@ function KnowledgeBasePage() {
                 </div>
                 {reading.excerpt && <p className="mt-4 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">{reading.excerpt}</p>}
               </div>
-              {reading.body ? (
+              {isLockedKnowledgeGuide(reading.id) ? <PlayerUserGuideReader key={reading.id} articleId={reading.id} title={reading.title} /> : reading.body ? (
                 <article className="prose prose-invert max-w-none text-foreground/90 leading-relaxed [&_.video-embed]:relative [&_.video-embed]:aspect-video [&_.video-embed]:h-auto [&_.video-embed]:w-full [&_.video-embed]:overflow-hidden [&_.video-embed]:rounded-lg [&_.video-embed]:[padding-bottom:0!important] [&_.video-embed_iframe]:absolute [&_.video-embed_iframe]:inset-0 [&_.video-embed_iframe]:size-full [&_iframe]:max-w-full [&_video]:block [&_video]:aspect-video [&_video]:h-auto [&_video]:max-h-none [&_video]:w-full [&_video]:max-w-full [&_video]:rounded-lg [&_video]:bg-card [&_video]:object-contain"
                   ref={(el) => {
                     if (!el) return;
