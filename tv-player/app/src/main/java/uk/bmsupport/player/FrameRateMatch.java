@@ -71,6 +71,11 @@ final class FrameRateMatch {
     /** Cover stays up after the rate is known only when the TV is actually switching. */
     static long uncoverDelay(boolean switched) { return switched ? SETTLE_MS : 0; }
 
+    /** How long the "switching to 50Hz" note stays up (covers the TV's blank and a moment after). */
+    static final long NOTE_MS = 5000;
+    static int noteHz(float fps) { int r = Math.round(fps); return r > 0 && r <= 30 ? r * 2 : r; }
+    static String noteText(float fps) { return "Switching your TV to " + noteHz(fps) + "Hz for a smoother picture…"; }
+
     static void reset(Activity a) {
         if (skip() || a == null) return;
         try {

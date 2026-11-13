@@ -286,6 +286,7 @@ public class PlayerActivity extends Activity {
         StreamClaim.attach(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
+        rootView = root;
         // Films and episodes draw to a TextureView so baked-in black bars can be measured and zoomed past.
         view = PlayerControls.canSkip(kind()) ? (PlayerView) getLayoutInflater().inflate(R.layout.bm_player_texture, root, false) : new PlayerView(this);
         view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
@@ -489,10 +490,24 @@ public class PlayerActivity extends Activity {
         ui.removeCallbacks(uncover);
         ui.postDelayed(uncover, Math.max(0, rateSettleAt - android.os.SystemClock.elapsedRealtime()));
     }
+    /** The TV goes black for a moment while it changes refresh rate: say so, so it doesn't look like a fault. */
+    private void showRateNote(float fps) {
+        if (rootView == null) return;
+        TextView note = new TextView(this);
+        note.setText(FrameRateMatch.noteText(fps));
+        note.setTextSize(20); note.setTypeface(Typeface.DEFAULT_BOLD); note.setTextColor(0xFFFFFFFF);
+        note.setBackgroundColor(0xCC000000); note.setPadding(36, 16, 36, 16);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        lp.topMargin = 60;
+        rootView.addView(note, lp);
+        ui.postDelayed(() -> { if (note.getParent() != null) rootView.removeView(note); }, FrameRateMatch.NOTE_MS);
+    }
+    private FrameLayout rootView;
     private void rateKnown(float fps) {
         String id = getIntent().getStringExtra("content_id");
         if (fps > 0 && id != null) prefs(this).edit().putFloat("fps:" + id, fps).apply();
         boolean switched = fps > 0 && FrameRateMatch.apply(this, fps);
+        if (switched) showRateNote(fps);
         rateSettleAt = android.os.SystemClock.elapsedRealtime() + FrameRateMatch.uncoverDelay(switched);
         rateDone = true; maybeUncover();
     }
@@ -522,7 +537,7 @@ public class PlayerActivity extends Activity {
             // Channel played before: switch the TV now, while the stream is still connecting.
             String id = getIntent().getStringExtra("content_id");
             float known = id == null ? 0 : prefs(this).getFloat("fps:" + id, 0);
-            if (known > 0) FrameRateMatch.apply(this, known);
+            if (known > 0 && FrameRateMatch.apply(this, known)) showRateNote(known);
         }
         // Never hold sound back long after the picture: the frame-rate wait gives up after MAX_HOLD_MS.
         ui.postDelayed(() -> { rateDone = true; maybeUncover(); }, FrameRateMatch.MAX_HOLD_MS);
