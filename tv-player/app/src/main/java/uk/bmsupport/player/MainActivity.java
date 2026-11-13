@@ -1421,13 +1421,15 @@ public class MainActivity extends Activity {
 
     /** Hands the playing preview to full screen (no reconnect); false when it can't be carried over. */
     private boolean carryPreview(Item it) {
-        boolean ready = preview != null && preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY;
+        // A frozen preview is never carried: full screen opens fresh with its own decoder instead.
+        boolean ready = preview != null && !previewFrozen && preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY;
         if (!PreviewHandoff.canCarry(it.kind, previewItem == null ? null : previewItem.id, it.id, ready)) return false;
         androidx.media3.exoplayer.ExoPlayer p = preview;
         if (previewListener != null) p.removeListener(previewListener);
         if (previewFallback != null) p.removeListener(previewFallback);
         // The preview picture stays attached until full screen takes it, so the video never sits without a screen.
         preview = null; previewListener = null; previewFallback = null;
+        if (previewWatch != null) { ui.removeCallbacks(previewWatch); previewWatch = null; }
         PreviewHandoff.offer(p, it.id);
         return true;
     }
@@ -1539,7 +1541,7 @@ public class MainActivity extends Activity {
             }
             @Override public void onPlayerError(androidx.media3.common.PlaybackException e) { if (preview != null) { preview.seekToDefaultPosition(); preview.prepare(); preview.play(); } }
         });
-        if (status != null) status.setText(fullScreenHint());
+        if (status != null) { status.setText(fullScreenHint()); watchPreview(it, previewView, status); }
         previewCounted = true; setNowPlaying(it, false, true);
         previewStarted();
     }
@@ -1557,7 +1559,9 @@ public class MainActivity extends Activity {
         if (previewTask != null) ui.removeCallbacks(previewTask);
         previewTask = null;
         if (preview != null) { preview.release(); preview = null; }
-        if (!stageCarried) hideStage();
+        if (!stageCarried) { hideStage(); freshStage(); }
+        if (previewWatch != null) { ui.removeCallbacks(previewWatch); previewWatch = null; }
+        previewFrozen = false;
         if (previewPoster != null) previewPoster.setVisibility(View.VISIBLE);
         // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
         // Only clear the note while it still belongs to the preview: real playback (or VLC) started
@@ -1568,6 +1572,53 @@ public class MainActivity extends Activity {
         previewStopped();
     }
     private boolean previewCounted;
+
+    // ---- Stuck video chip guard -----------------------------------------------------------------
+    // Some MediaTek boxes leave the video chip frozen on the last picture after a channel with a
+    // different picture format (e.g. HEVC cinema feeds), and every channel after it stays frozen.
+    // Each channel change gets a brand-new video surface, and a preview whose picture stops moving
+    // for 3s while playing is torn down and reopened from scratch (new player, new surface).
+    private Runnable previewWatch;
+    private boolean previewFrozen;
+    private int previewRestarts;
+
+    /** Drops the stage surface so the next channel's decoder starts on a clean one. */
+    private void freshStage() {
+        if (stage == null) return;
+        try { if (stage.getParent() != null) ((android.view.ViewGroup) stage.getParent()).removeView(stage); } catch (RuntimeException ignored) {}
+        stage = null;
+    }
+
+    static long renderedFrames(androidx.media3.exoplayer.ExoPlayer p) {
+        androidx.media3.exoplayer.DecoderCounters c = p == null ? null : p.getVideoDecoderCounters();
+        if (c == null) return -1;
+        c.ensureUpdated();
+        return c.renderedOutputBufferCount;
+    }
+
+    private void watchPreview(Item it, androidx.media3.ui.PlayerView view, TextView status) {
+        final long[] last = {-1, android.os.SystemClock.elapsedRealtime()};
+        previewWatch = new Runnable() { @Override public void run() {
+            androidx.media3.exoplayer.ExoPlayer p = preview;
+            if (p == null || previewWatch != this) return;
+            long now = android.os.SystemClock.elapsedRealtime(), n = renderedFrames(p);
+            boolean playing = p.getPlaybackState() == androidx.media3.common.Player.STATE_READY && p.getPlayWhenReady();
+            if (!playing || n != last[0]) { last[0] = n; last[1] = now; previewFrozen = false; }
+            else if (now - last[1] >= 3000 && n > 0) {
+                previewFrozen = true;
+                if (previewRestarts < 3) {
+                    previewRestarts++;
+                    status.setText("Picture stuck – restarting the video…");
+                    previewWatch = null;
+                    previewClaimed = true; // same channel, already claimed
+                    schedulePreview(it, view, status);
+                    return;
+                }
+            }
+            ui.postDelayed(this, 1000);
+        }};
+        ui.postDelayed(previewWatch, 1000);
+    }
 
     private Button boxCatPill; // TV box Live TV: category pill after the day jumps
     private Button previewMenuButton; // phone Live TV: the button under the selected category
@@ -1610,6 +1661,7 @@ public class MainActivity extends Activity {
 
 
     private void schedulePreview(Item it, androidx.media3.ui.PlayerView view, TextView status) {
+        if (previewItem == null || !it.id.equals(previewItem.id)) previewRestarts = 0;
         stopPreview();
         previewItem = it; previewStatus = status;
         if (previewPoster != null) previewPoster.setVisibility(View.GONE);
@@ -1644,6 +1696,7 @@ public class MainActivity extends Activity {
             });
             previewFallback = PlayerActivity.playWithFallback(preview, streamUrls(it),
                     () -> status.setText("Preview unavailable – press OK to play full screen"));
+            watchPreview(it, view, status);
         };
         ui.postDelayed(previewTask, 700);
     }
