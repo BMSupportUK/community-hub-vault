@@ -1650,6 +1650,12 @@ public class MainActivity extends Activity {
             if (!playing || n != last[0]) { last[0] = n; last[1] = now; previewFrozen = false; }
             else if (now - last[1] >= 3000 && n > 0) {
                 previewFrozen = true;
+                // Jammed hardware chip within the first pictures: remember the channel so the restart
+                // (and full screen later) decodes it in software instead of freezing again.
+                if (!StuckChipMemory.stuck(MainActivity.this, it.name) && StuckChipMemory.chipJammed(true, (int) n)) {
+                    StuckChipMemory.mark(MainActivity.this, it.name);
+                    previewRestarts = 0;
+                }
                 if (previewRestarts < 3) {
                     previewRestarts++;
                     status.setText("Picture stuck – restarting the video…");
