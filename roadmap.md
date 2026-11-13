@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Built and released Android/Fire TV 4.82: Left opens categories from any Live TV guide row/time without scrolling to the header; 244 tests pass, permanent signer verified and live APK byte-identical. Real-box interaction unverified: no connected device.
+
 - [x] Released Android/Fire TV 4.71: removed full-screen rate measurement and switching, disabled Media3 surface rate requests; startup confirmation unchanged. All 14 targeted tests pass, permanent signer and exact live APK verified; real-TV playback unverified (no connected box).
 
 - [x] Release Android/Fire TV 4.70: keep 50Hz OK button inside TV-safe bounds with scrollable message and density-correct button sizing; 13 existing tests pass, permanent signer and live APK verified. Real-TV visual check remains unverified.

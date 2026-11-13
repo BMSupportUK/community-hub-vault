@@ -4318,7 +4318,7 @@ public class MainActivity extends Activity {
             grid.setVisibility(View.GONE);
         }
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        // TV boxes: Left on the remote at "now" slides the categories out.
+        // TV boxes: Left on any row opens categories, even while viewing a later programme/day.
 
         dayBack[0] = () -> grid.shiftDay(-1);
         dayFwd[0] = () -> grid.shiftDay(1);
@@ -4350,7 +4350,7 @@ public class MainActivity extends Activity {
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         panel.addView(button("Close", v -> hidePanel()));
         LinearLayout content = root;
-        // TV boxes: no left-edge tab — categories open only from the Category pill after the day jumps.
+        // TV boxes: no left-edge tab — use the Category pill or Left from any guide row.
         if (live && !boxLive) {
             content = row();
             // Edge tab like the website's "Order chat" side button: stuck to the left edge, vertically centred, vertical label.
@@ -4430,6 +4430,9 @@ public class MainActivity extends Activity {
             if (channelDrawer != null) channelDrawer.showCategories();
             showPanel();
             catList.requestFocus();
+        });
+        if (boxLive) grid.setOnCategories(() -> {
+            if (!panelOpen()) catBtn.performClick();
         });
         catList.setOnItemClickListener((d, w, pos, id) -> {
             if (pos >= catRows.size()) return;

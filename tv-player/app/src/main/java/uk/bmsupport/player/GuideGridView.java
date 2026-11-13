@@ -158,6 +158,11 @@ public class GuideGridView extends View {
             case KeyEvent.KEYCODE_PAGE_DOWN: case KeyEvent.KEYCODE_CHANNEL_DOWN: moveRow(visibleRows()); return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT: if (onClock) { onClock = false; invalidate(); return true; } moveTime(true); return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:
+                // TV/Fire TV: categories are reachable from every row and time, without scrolling up.
+                if (categories != null) {
+                    if (e.getRepeatCount() == 0) { onClock = false; invalidate(); categories.run(); }
+                    return true;
+                }
                 // Already at "now": the next press left only highlights the catch up clock; OK opens it.
                 if (onClock) { if (leftEdge != null) { onClock = false; invalidate(); leftEdge.run(); } return true; }
                 if (selTime <= now() + 1 && windowStart <= minStart() && hasCatchup(selRow)) { onClock = true; invalidate(); return true; }
@@ -173,6 +178,8 @@ public class GuideGridView extends View {
     }
 
     private boolean onClock;
+    private Runnable categories;
+    public void setOnCategories(Runnable r) { categories = r; }
     private Runnable leftEdge;
     /** Called when Left is pressed with nowhere further left to go (TV boxes open the categories). */
     public void setOnLeftEdge(Runnable r) { leftEdge = r; }

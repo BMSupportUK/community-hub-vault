@@ -20,6 +20,48 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 34, qualifiers = "w960dp-h540dp-mdpi")
 public class LiveGuideNavigationTest {
+    @Test public void leftOpensCategoriesFromEveryChannelRowWithoutChangingSelection() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        GuideGridView grid = grid(activity);
+        final int[] opens = {0};
+        grid.setOnCategories(() -> opens[0]++);
+        for (int row = 0; row < 20; row++) {
+            grid.selectChannel(row);
+            assertTrue(grid.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT,
+                    new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT)));
+            assertEquals(row + 1, opens[0]);
+            assertEquals(row, grid.selectedRow());
+        }
+    }
+
+    @Test public void leftOpensCategoriesOnFutureDayAndCatchupChannelWithoutMovingTime() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        GuideGridView grid = grid(activity);
+        grid.setChannels(Arrays.asList("BBC One", "ITV"), Arrays.asList(true, true));
+        grid.selectChannel(1);
+        final int[] opens = {0};
+        grid.setOnCategories(() -> opens[0]++);
+        grid.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT));
+        assertEquals(1, opens[0]);
+        grid.shiftDay(1);
+        long end = grid.windowEnd();
+        grid.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT));
+        assertEquals(2, opens[0]);
+        assertEquals(1, grid.selectedRow());
+        assertEquals(end, grid.windowEnd());
+        grid.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT, new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, 1));
+        assertEquals(2, opens[0]);
+    }
+
+    @Test public void phoneWithoutCategoriesShortcutKeepsLeftTimeNavigation() {
+        Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        GuideGridView grid = grid(activity);
+        grid.shiftDay(1);
+        long end = grid.windowEnd();
+        grid.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT));
+        assertTrue(grid.windowEnd() < end);
+    }
+
     @Test public void upcomingReminderSelectionWorksBeforeAnyPreviewAndRemoteMatchesTouch() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         GuideGridView grid = grid(activity);
