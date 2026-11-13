@@ -332,9 +332,6 @@ function ReadPage() {
                 </div>
               </div>
             </div>
-            {blog.excerpt && (
-              <p className="text-base text-purple-100/80 italic line-clamp-2">{blog.excerpt}</p>
-            )}
             {blog.body && (
               <div ref={stageRef}>
                 <div className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-3 pb-3">
