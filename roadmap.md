@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Release Android/Fire TV 4.70: keep 50Hz OK button inside TV-safe bounds with scrollable message and density-correct button sizing; 13 existing tests pass, permanent signer and live APK verified. Real-TV visual check remains unverified.
+
 - [x] Release Android/Fire TV 4.69: picture with OK confirmation explaining smoother 50Hz playback and a few seconds of black screen; switch only after OK, then immediately enter linked-device check without a second warning. All 13 tests pass; permanent signer and exact live download verified. Real-TV visual check remains unverified.
 
 - [x] Release Android/Fire TV 4.68: opening video first, then visible 50Hz switch, then device-link screen; 13 display/startup tests pass, permanent signer and exact live APK verified. Real-TV picture/switch check remains unverified.
