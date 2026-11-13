@@ -4650,6 +4650,10 @@ public class MainActivity extends Activity {
                 ui.post(() -> {
                     if (!"tvguide".equals(screen)) return;
                     catRows.clear(); catRows.addAll(rows);
+                    // The full-screen player's Left drawer shows these same categories and channels.
+                    List<LiveDrawerData.Channel> drawerChannels = new ArrayList<>();
+                    for (Item it : liveChannels) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, categoryName(it), streamUrls(it)));
+                    LiveDrawerData.set(rows, drawerChannels);
                     String[] start = rows.get(0);
                     if (startCat != null) for (String[] r : rows) if (r[0].equals(startCat)) { start = r; break; }
                     applyCat.accept(start);
@@ -5307,6 +5311,10 @@ public class MainActivity extends Activity {
         super.onResume();
         // Only clear when nothing in this screen is still playing (a running preview keeps counting).
         if (preview == null) clearNowPlaying();
+        // A channel picked from the full-screen player's Left drawer opens like any guide pick.
+        final String drawerPick = LiveDrawerData.pendingPick; LiveDrawerData.pendingPick = null;
+        if (drawerPick != null && liveChannels != null)
+            for (Item it : liveChannels) if (drawerPick.equals(it.id)) { final Item ch = it; ui.postDelayed(() -> startPlayback(ch, false, 0), 300); break; }
         if (hasLogin()) io.execute(() -> safeRun(io, this::pollOnce));
         // Positions watched on another device show here too (throttled to every 30s).
         if (unlocked && hasLogin()) ProgressSync.pull(this, false, () -> { if ("home".equals(screen)) showHome(); });

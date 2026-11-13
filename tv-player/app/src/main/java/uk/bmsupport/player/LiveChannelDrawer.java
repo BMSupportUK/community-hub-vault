@@ -34,7 +34,9 @@ final class LiveChannelDrawer extends LinearLayout {
         addView(channels, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
     }
 
-    void showChannels(List<String> names) {
+    void showChannels(List<String> names) { showChannels(names, 0); }
+
+    void showChannels(List<String> names, int selected) {
         channelList.setAdapter(new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, names) {
             @Override public View getView(int position, View recycled, ViewGroup parent) {
                 ChannelNameView label = recycled instanceof ChannelNameView ? (ChannelNameView) recycled : new ChannelNameView(getContext());
@@ -55,7 +57,7 @@ final class LiveChannelDrawer extends LinearLayout {
         });
         categories.setVisibility(GONE);
         slideIn(channels);
-        channelList.setSelection(0);
+        channelList.setSelection(Math.max(0, Math.min(selected, names.size() - 1)));
         channelList.requestFocus();
     }
 

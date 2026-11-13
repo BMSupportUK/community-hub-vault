@@ -15,8 +15,11 @@ import android.os.Looper;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,6 +56,11 @@ public class PlayerActivity extends Activity {
     private PlayerView view;
     private android.widget.LinearLayout controlsRow;
     private long lastPressAt;
+    // The category drawer that slides over the playing picture (Left on a TV remote).
+    private FrameLayout rootView;
+    private View drawerScrim;
+    private LinearLayout drawerPanel;
+    private boolean drawerShown;
     /**
      * The player's own hide timer can't be trusted on live TV (a stream that is buffering or has
      * no known length never counts as "playing", so it never hides the controls). This checks once
@@ -345,6 +353,7 @@ public class PlayerActivity extends Activity {
         });
         ctrlRow.setVisibility(view.isControllerFullyVisible() ? android.view.View.VISIBLE : android.view.View.GONE);
         setContentView(root);
+        rootView = root;
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         ui.postDelayed(hideControls, 1000);
 
@@ -997,11 +1006,118 @@ public class PlayerActivity extends Activity {
     }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE && player != null) {
+        // While the category drawer is over the picture, Back or Left slides it away again.
+        if (drawerShown && (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_DPAD_LEFT)) {
+            hideLiveDrawer();
+            return true;
+        }
+        // Left while watching live TV on a box slides the category drawer in over the playing picture.
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && liveDrawerAvailable()) {
+            showLiveDrawer();
+            return true;
+        }
+         if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE && player != null) {
             player.setPlayWhenReady(!player.getPlayWhenReady());
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    /** Live TV on a TV box, controls hidden, with the guide's categories loaded: Left opens the drawer. */
+    private boolean liveDrawerAvailable() {
+        if (drawerShown || !"live".equals(kind()) || getIntent().hasExtra("catchup_prefix") || !LiveDrawerData.ready()) return false;
+        // While the controls are up, Left keeps its usual job of moving between the buttons.
+        if (view != null && view.isControllerFullyVisible()) return false;
+        return "Amazon".equalsIgnoreCase(Build.MANUFACTURER)
+                || getPackageManager().hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK);
+    }
+
+    /** Slides the guide's category/channel drawer in from the left, over the playing picture. */
+    private void showLiveDrawer() {
+        if (rootView == null || drawerShown || !LiveDrawerData.ready()) return;
+        drawerShown = true;
+        final float d = getResources().getDisplayMetrics().density;
+        final int w = (int) (300 * d);
+        drawerScrim = new View(this);
+        drawerScrim.setBackgroundColor(0x99000000);
+        drawerScrim.setClickable(true);
+        drawerScrim.setOnClickListener(v -> hideLiveDrawer());
+        rootView.addView(drawerScrim, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+
+        drawerPanel = new LinearLayout(this);
+        drawerPanel.setOrientation(LinearLayout.VERTICAL);
+        drawerPanel.setBackgroundColor(0xFF0B1220);
+        drawerPanel.setPadding((int) (18 * d), (int) (24 * d), (int) (18 * d), (int) (16 * d));
+        TextView title = new TextView(this);
+        title.setText("Categories");
+        title.setTextSize(22);
+        title.setTextColor(0xFFFFFFFF);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        title.setPadding(0, (int) (6 * d), 0, (int) (6 * d));
+        drawerPanel.addView(title);
+
+        final java.util.List<String[]> cats = LiveDrawerData.categories();
+        final String currentId = getIntent().getStringExtra("content_id");
+        final LiveDrawerData.Channel current = LiveDrawerData.find(currentId);
+        final ListView catList = new ListView(this);
+        catList.setDivider(new android.graphics.drawable.ColorDrawable(0x1FFFFFFF));
+        catList.setDividerHeight(1);
+        catList.setFocusable(true);
+        java.util.List<String> catNames = new java.util.ArrayList<>();
+        for (String[] c : cats) catNames.add((current != null && c[0].equals(current.categoryId) ? "✓ " : "") + c[1]);
+        catList.setAdapter(new android.widget.ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, catNames) {
+            @Override public View getView(int position, View recycled, android.view.ViewGroup parent) {
+                ChannelNameView label = recycled instanceof ChannelNameView ? (ChannelNameView) recycled : new ChannelNameView(PlayerActivity.this);
+                label.setText(getItem(position)); label.setTextSize(17); label.setTextColor(0xFFFFFFFF);
+                int padding = (int) (12 * d);
+                label.setPadding(padding, padding, padding, padding);
+                return label;
+            }
+        });
+        // The channels of the category being browsed, so the pick callback knows which one was chosen.
+        final java.util.List<LiveDrawerData.Channel>[] shown = new java.util.List[1];
+        final LiveChannelDrawer drawer = new LiveChannelDrawer(this, catList, pos -> {
+            if (shown[0] == null || pos < 0 || pos >= shown[0].size()) return;
+            LiveDrawerData.Channel ch = shown[0].get(pos);
+            if (currentId != null && currentId.equals(ch.id)) { hideLiveDrawer(); return; }
+            // The main screen opens it through the normal playback path; this screen hands the
+            // current stream back to the guide preview on the way out, so there is no black gap.
+            LiveDrawerData.pendingPick = ch.id;
+            finish();
+        });
+        drawerPanel.addView(drawer, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        catList.setOnItemClickListener((p, v, pos, id) -> {
+            if (pos >= cats.size()) return;
+            shown[0] = LiveDrawerData.channelsIn(cats.get(pos)[0]);
+            java.util.List<String> names = new java.util.ArrayList<>();
+            int sel = 0;
+            for (int i = 0; i < shown[0].size(); i++) {
+                names.add(shown[0].get(i).name);
+                if (currentId != null && currentId.equals(shown[0].get(i).id)) sel = i;
+            }
+            drawer.showChannels(names, sel);
+        });
+        android.widget.Button close = new android.widget.Button(this);
+        close.setText("Close");
+        close.setOnClickListener(v -> hideLiveDrawer());
+        drawerPanel.addView(close);
+
+        drawerPanel.setTranslationX(-w);
+        rootView.addView(drawerPanel, new FrameLayout.LayoutParams(w, FrameLayout.LayoutParams.MATCH_PARENT));
+        drawerPanel.animate().translationX(0f).setDuration(220).start();
+        catList.requestFocus();
+    }
+
+    /** Slides the category drawer back out to the left; the picture never stopped playing. */
+    private void hideLiveDrawer() {
+        if (!drawerShown) return;
+        drawerShown = false;
+        if (drawerScrim != null && rootView != null) { rootView.removeView(drawerScrim); drawerScrim = null; }
+        if (drawerPanel != null && rootView != null) {
+            final LinearLayout p = drawerPanel; drawerPanel = null;
+            p.animate().translationX(-p.getWidth()).setDuration(180)
+                    .withEndAction(() -> { if (rootView != null) rootView.removeView(p); }).start();
+        }
     }
 
     @Override public boolean dispatchKeyEvent(android.view.KeyEvent e) {
