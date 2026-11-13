@@ -82,6 +82,17 @@ final class FrameRateMatch {
     static int noteHz(float fps) { int r = Math.round(fps); return r > 0 && r <= 30 ? r * 2 : r; }
     static String noteText(float fps) { return "Switching your TV to " + noteHz(fps) + "Hz for a smoother picture…"; }
 
+    /**
+     * TV boxes start every BM Player screen at 50Hz (same resolution) so UK 50/25fps channels never
+     * need a switch, and its black blank, when they go full screen. Phones and Fire TV are left alone.
+     */
+    static void prefer50(Activity a) {
+        if (a == null || skip()) return;
+        android.app.UiModeManager ui = (android.app.UiModeManager) a.getSystemService(android.content.Context.UI_MODE_SERVICE);
+        if (ui == null || ui.getCurrentModeType() != android.content.res.Configuration.UI_MODE_TYPE_TELEVISION) return;
+        apply(a, 50f);
+    }
+
     static void reset(Activity a) {
         if (skip() || a == null) return;
         try {

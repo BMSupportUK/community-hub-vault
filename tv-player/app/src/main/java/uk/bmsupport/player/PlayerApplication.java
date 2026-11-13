@@ -311,7 +311,7 @@ public final class PlayerApplication extends Application implements Application.
         // Make sure the app really closes even if a screen refused to finish: end the process shortly after.
         ui.postDelayed(() -> android.os.Process.killProcess(android.os.Process.myPid()), 1500);
     }
-    @Override public void onActivityCreated(Activity a, Bundle b) { if (exiting) { exiting = false; lastInput = SystemClock.elapsedRealtime(); } activities.add(a); }
+    @Override public void onActivityCreated(Activity a, Bundle b) { if (exiting) { exiting = false; lastInput = SystemClock.elapsedRealtime(); } activities.add(a); FrameRateMatch.prefer50(a); }
     @Override public void onActivityResumed(Activity a) { foreground = a; showAnnouncement(); showMajorIcon(); }
     @Override public void onActivityPaused(Activity a) { if (foreground == a) foreground = null; }
     @Override public void onActivityDestroyed(Activity a) {
