@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import kbHero from "@/assets/knowledge-base-hero.jpg";
 import kbReadingBackground from "@/assets/knowledge-base-reading.jpg";
+import { KB_FRONT_CATEGORY_ID, knowledgeFrontGuides, knowledgeCategoryOrder, isLockedKnowledgeGuide, isLockedKnowledgeCategory } from "@/lib/knowledge-base-front-page";
 
 export const Route = createFileRoute("/_authenticated/_approved/knowledge-base")({
   head: () => ({
@@ -97,15 +98,11 @@ function StarRating({
 function KnowledgeBasePage() {
   const { isMod, user } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<string>(() => {
-    try { return sessionStorage.getItem(KB_TAB_KEY) || "guides"; } catch { return "welcome"; }
-  });
+  const [tab, setTab] = useState<string>("guides");
   const [welcome, setWelcome] = useState<Welcome>({ title: "", body: "" });
   const [welcomeDraft, setWelcomeDraft] = useState<Welcome | null>(null);
   const [savingWelcome, setSavingWelcome] = useState(false);
-  const [activeCat, setActiveCat] = useState<string | null>(() => {
-    try { return sessionStorage.getItem(KB_CAT_KEY); } catch { return null; }
-  });
+  const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [reading, setReading] = useState<Article | null>(() => {
@@ -179,7 +176,7 @@ function KnowledgeBasePage() {
     refetchOnReconnect: false,
   });
 
-  const categories = kbQuery.data?.categories ?? [];
+  const categories = useMemo(() => knowledgeCategoryOrder(kbQuery.data?.categories ?? []), [kbQuery.data?.categories]);
   const articles = kbQuery.data?.articles ?? [];
   const ratings = kbQuery.data?.ratings ?? [];
   const loading = kbQuery.isLoading;
@@ -193,9 +190,6 @@ function KnowledgeBasePage() {
       body: w?.body ?? "Search our guides or browse by category to find answers fast.",
     });
   }, [kbQuery.data?.welcome]);
-  useEffect(() => {
-    if (categories.length && !activeCat) setActiveCat(categories[0].id);
-  }, [categories, activeCat]);
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
@@ -238,6 +232,7 @@ function KnowledgeBasePage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    if (!q && !activeCat) return knowledgeFrontGuides(articles).filter((a) => isMod || a.published);
     return articles
       .filter((a) => {
         if (!q && activeCat && a.category_id !== activeCat) return false;
@@ -252,7 +247,7 @@ function KnowledgeBasePage() {
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.title.localeCompare(b.title));
   }, [articles, activeCat, search, isMod]);
 
-  const activeCategory = categories.find((c) => c.id === activeCat) ?? null;
+  const activeCategory = categories.find((c) => c.id === (activeCat ?? KB_FRONT_CATEGORY_ID)) ?? null;
 
   // ---------- Article CRUD ----------
   const openNewArticle = () => {
@@ -287,6 +282,7 @@ function KnowledgeBasePage() {
 
   const saveArticle = async () => {
     if (!editing) return;
+    if (isLockedKnowledgeGuide(editing.id)) return toast.error("This front-page guide is locked");
     if (!editing.title.trim() || !editing.category_id) return toast.error("Title and category are required");
     const slug = editing.slug?.trim() || slugify(editing.title);
     const payload = {
@@ -311,6 +307,7 @@ function KnowledgeBasePage() {
   };
 
   const deleteArticle = async (id: string) => {
+    if (isLockedKnowledgeGuide(id)) return toast.error("This front-page guide is locked");
     if (!confirm("Delete this article?")) return;
     const { error } = await supabase.from("kb_articles").delete().eq("id", id);
     if (error) return toast.error(error.message);
@@ -327,6 +324,7 @@ function KnowledgeBasePage() {
 
   const saveCategory = async () => {
     if (!editingCat) return;
+    if (isLockedKnowledgeCategory(editingCat.id)) return toast.error("This category is locked");
     if (!editingCat.name.trim()) return toast.error("Name is required");
     const slug = editingCat.slug?.trim() || slugify(editingCat.name);
     const payload = { name: editingCat.name.trim(), slug, icon: editingCat.icon || "BookOpen", sort_order: editingCat.sort_order };
@@ -340,6 +338,7 @@ function KnowledgeBasePage() {
   };
 
   const deleteCategory = async (id: string) => {
+    if (isLockedKnowledgeCategory(id)) return toast.error("This category is locked");
     const n = counts[id] ?? 0;
     if (n > 0 && !confirm(`This category has ${n} article(s). Delete it and ALL of its articles?`)) return;
     if (n === 0 && !confirm("Delete this category?")) return;
@@ -352,6 +351,7 @@ function KnowledgeBasePage() {
 
   // ---------- Reorder ----------
   const reorderCategories = async (fromId: string, toId: string) => {
+    if (isLockedKnowledgeCategory(fromId) || isLockedKnowledgeCategory(toId)) return;
     if (fromId === toId) return;
     const list = [...categories];
     const fi = list.findIndex((c) => c.id === fromId);
@@ -361,12 +361,13 @@ function KnowledgeBasePage() {
     list.splice(ti, 0, moved);
     const updated = list.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
     queryClient.setQueryData<typeof kbQuery.data>(["kb-data"], (prev) => prev ? { ...prev, categories: updated } : prev);
-    await Promise.all(updated.map((c) =>
+    await Promise.all(updated.filter((c) => !isLockedKnowledgeCategory(c.id)).map((c) =>
       supabase.from("kb_categories").update({ sort_order: c.sort_order }).eq("id", c.id)
     ));
   };
 
   const reorderArticles = async (fromId: string, toId: string) => {
+    if (isLockedKnowledgeGuide(fromId) || isLockedKnowledgeGuide(toId)) return;
     if (fromId === toId || !activeCat) return;
     const inCat = articles.filter((a) => a.category_id === activeCat).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.title.localeCompare(b.title));
     const others = articles.filter((a) => a.category_id !== activeCat);
@@ -377,7 +378,7 @@ function KnowledgeBasePage() {
     inCat.splice(ti, 0, moved);
     const updated = inCat.map((a, i) => ({ ...a, sort_order: (i + 1) * 10 }));
     queryClient.setQueryData<typeof kbQuery.data>(["kb-data"], (prev) => prev ? { ...prev, articles: [...others, ...updated] } : prev);
-    await Promise.all(updated.map((a) =>
+    await Promise.all(updated.filter((a) => !isLockedKnowledgeGuide(a.id)).map((a) =>
       supabase.from("kb_articles").update({ sort_order: a.sort_order }).eq("id", a.id)
     ));
   };
@@ -452,7 +453,7 @@ function KnowledgeBasePage() {
                 />
               ) : <p className="text-muted-foreground">No content yet.</p>}
               <div className="mt-8 xl:hidden">{ratingPanel}</div>
-              {isMod && (
+              {isMod && !isLockedKnowledgeGuide(reading.id) && (
                 <div className="mt-8 flex gap-2 border-t border-border pt-4">
                   <Button variant="secondary" onClick={() => { focusArticleId.current = reading.id; setEditing(reading); setReading(null); }}><Pencil className="mr-1.5 size-4" /> Edit</Button>
                   <Button variant="destructive" onClick={() => deleteArticle(reading.id)}><Trash2 className="mr-1.5 size-4" /> Delete</Button>
@@ -558,7 +559,7 @@ function KnowledgeBasePage() {
               <div className="grid grid-cols-2 gap-3 pb-2">
                 {categories.map((c, index) => {
                   const Icon = categoryIcons[index % categoryIcons.length];
-                  const active = c.id === activeCat && !search;
+                  const active = c.id === (activeCat ?? KB_FRONT_CATEGORY_ID) && !search;
                   return (
                     <Button key={c.id} variant="ghost" aria-pressed={active} onClick={() => { setSearch(""); setActiveCat(c.id); }} className={cn("h-32 min-w-0 w-full flex-col items-start justify-between rounded-lg border p-3 text-left whitespace-normal", categoryTones[index % categoryTones.length], active && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
                       <span className="grid size-10 place-items-center rounded-lg bg-background/35"><Icon className="size-5" /></span>
@@ -601,7 +602,7 @@ function KnowledgeBasePage() {
                       const hasVideo = /<(?:video|iframe)\b/i.test(a.body ?? "");
                       const stats = ratingStats[a.id];
                       return (
-                        <article key={a.id} data-article-id={a.id} draggable={isMod} onDragStart={() => { dragArtId.current = a.id; }} onDragOver={(e) => { if (isMod) e.preventDefault(); }} onDrop={(e) => { if (!isMod) return; e.preventDefault(); if (dragArtId.current) reorderArticles(dragArtId.current, a.id); dragArtId.current = null; }} className="group flex min-h-32 gap-3 rounded-xl border border-border bg-card p-3 hover:border-primary/45">
+                        <article key={a.id} data-article-id={a.id} draggable={isMod && !isLockedKnowledgeGuide(a.id)} onDragStart={() => { dragArtId.current = a.id; }} onDragOver={(e) => { if (isMod) e.preventDefault(); }} onDrop={(e) => { if (!isMod) return; e.preventDefault(); if (dragArtId.current) reorderArticles(dragArtId.current, a.id); dragArtId.current = null; }} className="group flex min-h-32 gap-3 rounded-xl border border-border bg-card p-3 hover:border-primary/45">
                           <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-surface-2 sm:size-28">
                             {a.image_url ? <img src={a.image_url} alt="" className="size-full object-cover" /> : <div className="grid size-full place-items-center text-primary">{hasVideo ? <PlayCircle className="size-9" /> : <BookOpen className="size-9" />}</div>}
                           </div>
@@ -610,7 +611,7 @@ function KnowledgeBasePage() {
                             <h3 className="mt-1 line-clamp-2 font-display font-bold leading-snug">{a.title}</h3>
                             <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                               <Button variant="link" onClick={() => openArticle(a)} className="h-auto p-0 text-primary">{hasVideo ? "Watch guide" : "Read guide"}<ChevronRight className="ml-1 size-3.5" /></Button>
-                              {isMod && <div className="flex gap-1"><Button size="icon" variant="ghost" aria-label="Edit article" onClick={() => { focusArticleId.current = a.id; setEditing(a); }} className="size-8"><Pencil className="size-3.5" /></Button><Button size="icon" variant="ghost" aria-label="Delete article" onClick={() => deleteArticle(a.id)} className="size-8 text-destructive"><Trash2 className="size-3.5" /></Button></div>}
+                              {isMod && !isLockedKnowledgeGuide(a.id) && <div className="flex gap-1"><Button size="icon" variant="ghost" aria-label="Edit article" onClick={() => { focusArticleId.current = a.id; setEditing(a); }} className="size-8"><Pencil className="size-3.5" /></Button><Button size="icon" variant="ghost" aria-label="Delete article" onClick={() => deleteArticle(a.id)} className="size-8 text-destructive"><Trash2 className="size-3.5" /></Button></div>}
                             </div>
                           </div>
                         </article>
@@ -625,13 +626,13 @@ function KnowledgeBasePage() {
           <section className="mt-7">
             <div className="mb-4 flex items-center justify-between"><h2 className="font-display text-xl font-bold">Manage categories</h2><Button onClick={openNewCategory}><FolderPlus className="mr-1.5 size-4" /> New category</Button></div>
             <div className="divide-y divide-border border-y border-border">
-              {categories.map((c) => <div key={c.id} draggable onDragStart={() => { dragCatId.current = c.id; }} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (dragCatId.current) reorderCategories(dragCatId.current, c.id); dragCatId.current = null; }} className="flex items-center gap-3 py-3"><GripVertical className="size-4 cursor-grab text-muted-foreground" /><div className="min-w-0 flex-1"><p className="font-medium">{c.name}</p><p className="text-xs text-muted-foreground">{counts[c.id] ?? 0} articles</p></div><Button size="icon" variant="ghost" aria-label="Edit category" onClick={() => { setEditingCat(c); setShowCatEditor(true); }}><Pencil className="size-4" /></Button><Button size="icon" variant="ghost" aria-label="Delete category" onClick={() => deleteCategory(c.id)} className="text-destructive"><Trash2 className="size-4" /></Button></div>)}
+              {categories.map((c) => <div key={c.id} draggable={!isLockedKnowledgeCategory(c.id)} onDragStart={() => { dragCatId.current = c.id; }} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (dragCatId.current) reorderCategories(dragCatId.current, c.id); dragCatId.current = null; }} className="flex items-center gap-3 py-3">{!isLockedKnowledgeCategory(c.id) && <GripVertical className="size-4 cursor-grab text-muted-foreground" />}<div className="min-w-0 flex-1"><p className="font-medium">{c.name}</p><p className="text-xs text-muted-foreground">{counts[c.id] ?? 0} articles</p></div>{!isLockedKnowledgeCategory(c.id) && <><Button size="icon" variant="ghost" aria-label="Edit category" onClick={() => { setEditingCat(c); setShowCatEditor(true); }}><Pencil className="size-4" /></Button><Button size="icon" variant="ghost" aria-label="Delete category" onClick={() => deleteCategory(c.id)} className="text-destructive"><Trash2 className="size-4" /></Button></>}</div>)}
             </div>
           </section>
         )}
       </div>
 
-      <KnowledgeBottomNav onGuides={() => { setTab("guides"); window.scrollTo({ top: 0, behavior: "smooth" }); }} onSearch={() => searchRef.current?.focus()} />
+      <KnowledgeBottomNav onGuides={() => { setTab("guides"); setActiveCat(null); setSearch(""); window.scrollTo({ top: 0, behavior: "smooth" }); }} onSearch={() => searchRef.current?.focus()} />
       {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
       <Dialog open={showCatEditor} onOpenChange={(o) => { if (!o) { setShowCatEditor(false); setEditingCat(null); } }}>
         <DialogContent><DialogHeader><DialogTitle>{editingCat?.id ? "Edit category" : "New category"}</DialogTitle></DialogHeader>{editingCat && <div className="space-y-3"><Label>Name</Label><Input value={editingCat.name} onChange={(e) => setEditingCat({ ...editingCat, name: e.target.value })} /><Label>Slug (optional)</Label><Input value={editingCat.slug} placeholder="auto" onChange={(e) => setEditingCat({ ...editingCat, slug: e.target.value })} /></div>}<DialogFooter><Button variant="outline" onClick={() => { setShowCatEditor(false); setEditingCat(null); }}>Cancel</Button><Button onClick={saveCategory}>Save</Button></DialogFooter></DialogContent>

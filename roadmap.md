@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Preserve and lock the screenshot's Knowledge Base front page and four guides; signed-in desktop, guide opening, search and rejected article/category edits verified; four regression checks pass. Frontend changes need publishing. Mobile inspection showed existing portal header overflow, outside this request.
+
 - [x] Re-restored Peacock Rinkside and UFC press-conference channels lost again before the cleanup fix went live; DAZN Thursday channels unknown (need user).
 - [x] Restore UFC's missing channel and finish; fixed shared End-row cleanup, verified signed-in read-back and 11 tests (cleanup fix needs publishing).
 

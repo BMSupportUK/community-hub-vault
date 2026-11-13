@@ -2437,6 +2437,13 @@
       "when": 1794515507869,
       "tag": "0347_player_feed_switches",
       "breakpoints": true
+    },
+    {
+      "idx": 348,
+      "version": "7",
+      "when": 1794562551862,
+      "tag": "0348_lock_knowledge_base_front_page",
+      "breakpoints": true
     }
   ]
 }
