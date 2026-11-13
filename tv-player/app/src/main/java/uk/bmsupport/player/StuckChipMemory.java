@@ -4,8 +4,8 @@ import android.content.Context;
 
 /**
  * Channels whose feed jams this box's hardware video chip within its first pictures (picture frozen,
- * sound playing) are remembered on the device and decoded in software by the first player from then
- * on. Learned from what the chip does on each channel, never from a list of names.
+ * sound playing) are remembered on the device and open in the built-in backup engine from then on
+ * (software decoding ran full HD in slow motion). Learned from what the chip does on each channel, never from a list of names.
  */
 final class StuckChipMemory {
     static final int EARLY_STALL_FRAMES = 60, CAP = 200;
