@@ -37,27 +37,20 @@ public class IntroDisplayTest {
         }
     }
 
-    @Test public void switchWaitsForOkThenLinkOpensWithoutSecondWarning() {
+    @Test public void noAutomatic50HzAndHomeButtonChoiceSwitches() {
         try (var controller = Robolectric.buildActivity(RootIntro.class)) {
             controller.create();
             IntroActivity activity = controller.get();
             Shadows.shadowOf((android.app.UiModeManager) activity.getSystemService(Activity.UI_MODE_SERVICE))
                 .setCurrentModeType(android.content.res.Configuration.UI_MODE_TYPE_TELEVISION);
             assertTrue(FrameRateMatch.isAndroidTv(activity));
-            assertEquals(0, activity.getWindow().getAttributes().preferredDisplayModeId);
             ReflectionHelpers.callInstanceMethod(activity, "afterVideo");
             assertEquals(0, activity.getWindow().getAttributes().preferredDisplayModeId);
-            assertNull(Shadows.shadowOf(activity).peekNextStartedActivity());
-            Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(10));
-            assertEquals(0, activity.getWindow().getAttributes().preferredDisplayModeId);
-            assertNull(Shadows.shadowOf(activity).peekNextStartedActivity());
-            android.view.View ok = activity.getWindow().getDecorView().findFocus();
-            assertTrue(ok instanceof android.widget.Button);
-            assertTrue(ok.performClick());
-            assertEquals(2, activity.getWindow().getAttributes().preferredDisplayModeId);
             assertEquals(MainActivity.class.getName(), Shadows.shadowOf(activity).getNextStartedActivity().getComponent().getClassName());
-            Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(2000));
-            assertNull(Shadows.shadowOf(activity).getNextStartedActivity());
+            FrameRateMatch.setChosen50(activity, true);
+            assertEquals(2, activity.getWindow().getAttributes().preferredDisplayModeId);
+            FrameRateMatch.setChosen50(activity, false);
+            assertEquals(0, activity.getWindow().getAttributes().preferredDisplayModeId);
         }
     }
 }
