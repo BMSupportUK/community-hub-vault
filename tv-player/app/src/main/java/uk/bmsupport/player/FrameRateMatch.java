@@ -24,6 +24,13 @@ final class FrameRateMatch {
         return best;
     }
 
+    /** A new window must pin an already-matching mode too, or Android can restore its default. */
+    static int windowMode(float fps, float[] rates, int[] widths, int[] heights, int current) {
+        if (current < 0 || current >= rates.length || !(fps >= 20 && fps <= 61)) return -1;
+        if (fits(fps, rates[current])) return current;
+        return pick(fps, rates, widths, heights, widths[current], heights[current], rates[current]);
+    }
+
     /** Frame rate from consecutive presentation times (µs), snapped to broadcast rates; -1 if unclear. */
     static float measure(long[] us) {
         long[] d = new long[us.length - 1];
@@ -58,15 +65,20 @@ final class FrameRateMatch {
             Display.Mode cur = d.getMode();
             Display.Mode[] modes = d.getSupportedModes();
             float[] rates = new float[modes.length]; int[] w = new int[modes.length], h = new int[modes.length];
-            for (int i = 0; i < modes.length; i++) { rates[i] = modes[i].getRefreshRate(); w[i] = modes[i].getPhysicalWidth(); h[i] = modes[i].getPhysicalHeight(); }
-            int i = pick(fps, rates, w, h, cur.getPhysicalWidth(), cur.getPhysicalHeight(), cur.getRefreshRate());
+            int current = -1;
+            for (int i = 0; i < modes.length; i++) {
+                rates[i] = modes[i].getRefreshRate(); w[i] = modes[i].getPhysicalWidth(); h[i] = modes[i].getPhysicalHeight();
+                if (modes[i].getModeId() == cur.getModeId()) current = i;
+            }
+            int i = windowMode(fps, rates, w, h, current);
             if (i < 0) return false;
             WindowManager.LayoutParams lp = a.getWindow().getAttributes();
             if (lp.preferredDisplayModeId == modes[i].getModeId()) return false;
-            if (!doIt) return true;
+            boolean switching = modes[i].getModeId() != cur.getModeId();
+            if (!doIt) return switching;
             lp.preferredDisplayModeId = modes[i].getModeId();
             a.getWindow().setAttributes(lp);
-            return true;
+            return switching;
         } catch (Exception ignored) { return false; }
     }
 

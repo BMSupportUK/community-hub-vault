@@ -11,6 +11,19 @@ public class FrameRateMatchTest {
     @Test public void ukSportOn60HzSwitchesTo50() { assertEquals(1, FrameRateMatch.pick(50f, rates, w, h, 1920, 1080, 60f)); }
     @Test public void interlaced25fpsAlsoPicks50() { assertEquals(1, FrameRateMatch.pick(25f, rates, w, h, 1920, 1080, 60f)); }
     @Test public void alreadyMatchingStays() { assertEquals(-1, FrameRateMatch.pick(50f, rates, w, h, 1920, 1080, 50f)); }
+    @Test public void everyNewWindowPins50EvenWhenAlreadyAt50() {
+        assertEquals(1, FrameRateMatch.windowMode(50f, rates, w, h, 0));
+        assertEquals(1, FrameRateMatch.windowMode(50f, rates, w, h, 1));
+        assertEquals(1, FrameRateMatch.windowMode(25f, rates, w, h, 1));
+    }
+    @Test public void sixtyHzContentStillChangesFrom50() {
+        assertEquals(2, FrameRateMatch.windowMode(60f, rates, w, h, 1));
+        assertEquals(59.94f, rates[FrameRateMatch.windowMode(60f, rates, w, h, 1)], 0.001f);
+    }
+    @Test public void windowPinNeverChangesResolutionOrUsesUnknownFps() {
+        assertEquals(-1, FrameRateMatch.windowMode(50f, rates, w, h, 5));
+        assertEquals(-1, FrameRateMatch.windowMode(-1f, rates, w, h, 1));
+    }
     @Test public void usContentKeeps5994() { assertEquals(-1, FrameRateMatch.pick(29.97f, rates, w, h, 1920, 1080, 59.94f)); }
     @Test public void unknownRateDoesNothing() { assertEquals(-1, FrameRateMatch.pick(-1f, rates, w, h, 1920, 1080, 60f)); }
     @Test public void measures50fpsFromFrameTimes() {
