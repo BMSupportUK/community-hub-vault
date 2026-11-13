@@ -564,8 +564,9 @@ public class PlayerActivity extends Activity {
                     // with no buffering sign). Record it and reopen the channel at now.
                     reportBuffer(0, true, true, "provider_cut");
                     noteSwitch("provider_restart");
-                    // A provider restart usually comes straight back on the same address: reopen at once on every channel.
-                    reconnect(true);
+                    // Inside an advert switch the feed needs its cushion back (4.56 behaviour) or it keeps
+                    // buffering into the break; a plain provider restart outside adverts reopens at once.
+                    reconnect(advertGrace() ? StreamRecovery.cushioned(recoveryName()) : true);
                 }
             }
             @Override public void onPositionDiscontinuity(Player.PositionInfo o, Player.PositionInfo n, int reason) {
