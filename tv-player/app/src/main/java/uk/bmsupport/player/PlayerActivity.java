@@ -106,7 +106,18 @@ public class PlayerActivity extends Activity {
                 .setTsExtractorFlags(VideoDecodePolicy.cleanKeyframes(catchup, channelName) ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
                         : DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
         boolean sw = VideoDecodePolicy.preferSoftware(catchup, p.getString("decoder", "hardware"), channelName);
-        DefaultRenderersFactory renderers = new DefaultRenderersFactory(c)
+        DefaultRenderersFactory renderers = new DefaultRenderersFactory(c) {
+            // High-level H.264 feeds decode in low-latency mode (HighLevelAvcRenderer); same for all channels.
+            @Override protected void buildVideoRenderers(Context ctx, int mode, androidx.media3.exoplayer.mediacodec.MediaCodecSelector sel,
+                    boolean fallback, Handler h, androidx.media3.exoplayer.video.VideoRendererEventListener l, long joining,
+                    java.util.ArrayList<androidx.media3.exoplayer.Renderer> out) {
+                int start = out.size();
+                super.buildVideoRenderers(ctx, mode, sel, fallback, h, l, joining, out);
+                for (int i = start; i < out.size(); i++) if (out.get(i).getClass() == androidx.media3.exoplayer.video.MediaCodecVideoRenderer.class) {
+                    out.set(i, new HighLevelAvcRenderer(ctx, sel, joining, fallback, h, l, MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY)); break;
+                }
+            }
+        }
                 .setEnableDecoderFallback(true)
                 .setExtensionRendererMode(sw ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
                         : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);

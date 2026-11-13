@@ -23,4 +23,11 @@ public class VideoDecodePolicyTest {
         assertFalse(VideoDecodePolicy.preferSoftware(false, "hardware", "Sky Sports UHD"));
         assertFalse(VideoDecodePolicy.cleanKeyframes(false, "Sky Sports UHD"));
     }
+    @Test public void highLevelH264DecodesLowLatencyWhateverTheChannel() {
+        assertTrue(VideoDecodePolicy.lowLatencyDecode("avc1.640033"));
+        assertTrue(VideoDecodePolicy.lowLatencyDecode("avc1.640032"));
+        assertFalse(VideoDecodePolicy.lowLatencyDecode("avc1.640028"));
+        assertFalse(VideoDecodePolicy.lowLatencyDecode("hvc1.2.4.L153"));
+        assertFalse(VideoDecodePolicy.lowLatencyDecode(null));
+    }
 }

@@ -21,4 +21,14 @@ final class VideoDecodePolicy {
         return " " + (f.codecs == null ? f.sampleMimeType : f.codecs) + " " + f.width + "x" + f.height
                 + (f.frameRate > 0 ? "@" + Math.round(f.frameRate) : "");
     }
+    /** H.264 tagged level 5.0 or above (avc1.PPCCLL with LL >= 0x32): decode in low-latency mode. */
+    static boolean lowLatencyDecode(String codecs) {
+        if (codecs == null) return false;
+        for (String c : codecs.split(",")) {
+            c = c.trim().toLowerCase(java.util.Locale.ROOT);
+            if (!(c.startsWith("avc1.") || c.startsWith("avc3.")) || c.length() < 11) continue;
+            try { if (Integer.parseInt(c.substring(9, 11), 16) >= 0x32) return true; } catch (NumberFormatException ignored) { }
+        }
+        return false;
+    }
 }
