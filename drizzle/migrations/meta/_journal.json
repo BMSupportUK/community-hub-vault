@@ -2458,6 +2458,13 @@
       "when": 1794566204386,
       "tag": "0350_manual_customer_initial_expiry",
       "breakpoints": true
+    },
+    {
+      "idx": 351,
+      "version": "7",
+      "when": 1794568004311,
+      "tag": "0351_manual_order_expiry_date",
+      "breakpoints": true
     }
   ]
 }

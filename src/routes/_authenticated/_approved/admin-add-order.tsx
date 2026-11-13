@@ -235,7 +235,7 @@ function AddOrderPage() {
                   <CalendarIcon className="mr-2 size-4" />
                   {format(orderDate, "d MMMM yyyy")}
                   {format(orderDate, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd") && (
-                    <span className="ml-2 text-xs text-muted-foreground">(backdated)</span>
+                    <span className="ml-2 text-xs text-muted-foreground">({orderDate < new Date() ? "backdated" : "expiry date"})</span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -244,13 +244,12 @@ function AddOrderPage() {
                   mode="single"
                   selected={orderDate}
                   onSelect={(d) => { if (d) { setOrderDate(d); setCalendarOpen(false); } }}
-                  disabled={{ after: new Date() }}
                   initialFocus
                   className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
-            <p className="text-xs text-muted-foreground">Defaults to today — pick an earlier date to backdate the order.</p>
+            <p className="text-xs text-muted-foreground">Existing customers default to the date their service expires; new customers default to today. Pick another date to override.</p>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
             <div className="flex items-center gap-3 flex-wrap">
@@ -291,7 +290,10 @@ function AddOrderPage() {
                   return <div key={customer.userId} className="border-b border-border pb-3 space-y-2">
                     <Button variant={selected ? "secondary" : "ghost"} aria-pressed={selected} className="h-auto w-full justify-start gap-2 whitespace-normal px-2 py-2 text-left" onClick={() => {
                       setCustomerId(customer.userId);
-                      setRenewalAccountId(customer.accounts.length === 1 ? customer.accounts[0].id : "");
+                      const onlyAccount = customer.accounts.length === 1 ? customer.accounts[0] : null;
+                      setRenewalAccountId(onlyAccount?.id ?? "");
+                      // Existing customers: the order date follows the expiring service, not today.
+                      if (onlyAccount?.expiresAt) setOrderDate(new Date(onlyAccount.expiresAt));
                       setCustName(customer.username || customer.displayName || "");
                       setAppliedCode(code ?? null);
                     }}>
@@ -300,6 +302,7 @@ function AddOrderPage() {
                     </Button>
                     {selected && customer.accounts.length > 1 && customer.accounts.map((account, index) => <Button key={account.id} variant={renewalAccountId === account.id ? "default" : "outline"} aria-pressed={renewalAccountId === account.id} className="h-auto w-full justify-start whitespace-normal px-3 py-2 text-left" onClick={() => {
                       setCustomerId(customer.userId); setRenewalAccountId(account.id);
+                      if (account.expiresAt) setOrderDate(new Date(account.expiresAt));
                     }}>
                       <span className="min-w-0 space-y-1">
                         <span className="block break-words">Account {index + 1}: {account.login}</span>
