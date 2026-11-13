@@ -105,7 +105,8 @@ public class PlayerActivity extends Activity {
                 // smeared picture phones showed when decoding began from a partial frame.
                 .setTsExtractorFlags(VideoDecodePolicy.cleanKeyframes(catchup, channelName) ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
                         : DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
-        boolean sw = VideoDecodePolicy.preferSoftware(catchup, p.getString("decoder", "hardware"), channelName);
+        boolean sw = VideoDecodePolicy.preferSoftware(catchup, p.getString("decoder", "hardware"), channelName)
+                || (!catchup && StuckChipMemory.stuck(c, channelName));
         final HighLevelAvcRenderer[] keep = new HighLevelAvcRenderer[1];
         DefaultRenderersFactory renderers = new DefaultRenderersFactory(c) {
             // High-level H.264 feeds decode in low-latency mode (HighLevelAvcRenderer); same for all channels.
@@ -678,6 +679,9 @@ public class PlayerActivity extends Activity {
         if (LiveFreezeRecovery.useBackup(getIntent().getIntExtra("freeze_restarts", 0))) {
             handToBackup(); return;
         }
+        androidx.media3.exoplayer.DecoderCounters jc = player.getVideoDecoderCounters();
+        if (StuckChipMemory.chipJammed(!activeDecoder.startsWith("c2.android") && !activeDecoder.startsWith("OMX.google"),
+                jc == null ? -1 : jc.renderedOutputBufferCount)) StuckChipMemory.mark(this, recoveryName());
         // A fresh opaque playback screen also replaces a carried guide-stage surface. Never hand
         // the frozen decoder back to the guide, and never open a second provider connection first.
         android.content.Intent next = freshFreezeIntent(getIntent(), urlAt).setClass(this, PlayerActivity.class);
