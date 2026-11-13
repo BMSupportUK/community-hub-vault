@@ -1278,7 +1278,7 @@ public class MainActivity extends Activity {
         small.addView(smallButton("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), smallWeight("⟲ Recently watched"));
         small.addView(smallButton("⚙ Settings", v -> showSettings()), smallWeight("⚙ Settings"));
         // Multi Room / Triple Room: show Multi-screen at once from the last account-info number so it never vanishes while (or if) the check is slow.
-        int knownCons = prefs.getInt("max_cons", 0);
+        int knownCons = consPref(0);
         if (knownCons >= 2) addMultiButton(small, knownCons);
         root.addView(small);
         setContentView(withHomeBackground(root));
@@ -1301,8 +1301,8 @@ public class MainActivity extends Activity {
                 java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK);
                 line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
                 // The provider account info (same number as Settings > Account information) wins; the website package and the last saved number are only fallbacks.
-                int saved = prefs.getInt("max_cons", 0);
-                int provider = 0; try { provider = (int) Double.parseDouble(info.optString("max_connections", "0").trim()); } catch (Exception ignored) {}
+                int saved = consPref(0);
+                int provider = Connections.real(info.optString("max_connections", "0"));
                 if (provider >= 2) { int pc = provider; prefs.edit().putInt("max_cons", pc).apply(); ui.post(() -> addMultiButton(small, pc)); }
                 String[] rooms = roomsInfo();
                 int pkg = 0; try { pkg = rooms[1].isEmpty() ? 0 : Integer.parseInt(rooms[1]); } catch (Exception ignored) {}
@@ -1321,11 +1321,14 @@ public class MainActivity extends Activity {
         });
     }
 
+    /** Saved connection count, ignoring a nonsense number a provider once sent (anything outside 1-3). */
+    private int consPref(int fallback) { int v = Connections.real(String.valueOf(prefs.getInt("max_cons", 0))); return v >= 1 ? v : fallback; }
+
     private void addMultiButton(LinearLayout small, int cons) {
         if (small.findViewWithTag("multi") != null) return;
         int n = Math.min(cons, 3);
         String ml = "🖥 Multi-screen (" + n + ")";
-        Button mb = smallButton(ml, v -> chooseMultiScreens(Math.min(3, Math.max(2, prefs.getInt("max_cons", n)))));
+        Button mb = smallButton(ml, v -> chooseMultiScreens(Math.min(3, Math.max(2, consPref(n)))));
         mb.setTag("multi");
         small.addView(mb, Math.min(1, small.getChildCount()), smallWeight(ml));
     }
@@ -1414,7 +1417,7 @@ public class MainActivity extends Activity {
     private boolean claimPass, previewClaimed;
     /** Another device on this login is watching: offer to move playback here. */
     private void askTakeover(Item it, String who, Runnable go) {
-        int max = Math.max(1, prefs.getInt("max_cons", 1));
+        int max = Math.max(1, consPref(1));
         new AlertDialog.Builder(this).setTitle("Your login is already watching")
                 .setMessage(who + " Your login only allows " + max + (max == 1 ? " connection" : " connections") + ", so both can't play at once.")
                 .setPositiveButton("Watch here instead", (d, w) -> StreamClaim.check(this, it.kind, it.name, true, (b, x) -> go.run()))
@@ -1536,7 +1539,7 @@ public class MainActivity extends Activity {
         head.addView(text(title, 26, TEXT, true));
         head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
-        int maxCons = Math.min(3, prefs.getInt("max_cons", 1));
+        int maxCons = Math.min(3, consPref(1));
         if (kind.equals("live") && maxCons >= 2) head.addView(headerPill("🖥 Multi-screen (" + maxCons + ")", v -> chooseMultiScreens(maxCons)));
         // Films/Series: the Category pill sits at the top beside the searches (no category column).
         final Button catPill = kind.equals("live") ? null : headerPill("☰ Category: All", v -> {});
@@ -3551,12 +3554,12 @@ public class MainActivity extends Activity {
                 JSONObject info = new JSONObject(Net.get(api(""))).optJSONObject("user_info");
                 if (info == null) throw new Exception();
                 // Same number the home screen and Multi-screen use.
-                try { int mc = (int) Double.parseDouble(info.optString("max_connections", "0").trim()); if (mc >= 1) prefs.edit().putInt("max_cons", mc).apply(); } catch (Exception ignored) {}
+                int mc = Connections.real(info.optString("max_connections", "0")); if (mc >= 1) prefs.edit().putInt("max_cons", mc).apply();
                 String exp = info.optString("exp_date", "");
                 String ends = exp.isEmpty() || "null".equals(exp) ? "No expiry" :
                         new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK).format(new java.util.Date(Long.parseLong(exp) * 1000));
                 String msg = "Username: " + info.optString("username") + "\nStatus: " + info.optString("status")
-                        + "\nExpires: " + ends + "\nConnections: " + info.optString("active_cons", "0") + " of " + info.optString("max_connections", "?")
+                        + "\nExpires: " + ends + "\nConnections: " + info.optString("active_cons", "0") + " of " + Connections.label(info.optString("max_connections", "?"))
                         + "\nDevice: " + deviceLabel() + "\nApp version: " + appVersion();
                 ui.post(() -> dlg.setMessage(msg));
             } catch (Exception e) { ui.post(() -> dlg.setMessage("Couldn't load your account. Check your login.")); }

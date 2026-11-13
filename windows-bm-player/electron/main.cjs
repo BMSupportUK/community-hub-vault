@@ -48,7 +48,7 @@ function publicState(){
  const expiry=Number(a.exp_date)*1000;
  return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,pinLocked:!!store.user&&gate.unlocked&&!pinPassed&&pinNeed===true,pinSetup:!!store.user&&gate.unlocked&&!pinPassed&&pinSetup,pinDigits,pinFallback,totpSetup:!!store.user&&gate.unlocked&&!pinPassed&&totpSetup&&!!totpData,totpData:totpSetup?totpData:null,pinChecking:!!store.user&&gate.unlocked&&!pinPassed&&pinNeed===null,unlockQr:gate.qr,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,announcement:store.user&&gate.unlocked&&pinPassed&&announcement&&announcement.id!==store.annClosed?announcement:null,major:store.user&&gate.unlocked&&pinPassed?major:[],signedIn:!!store.user&&gate.unlocked&&pinPassed,majorSeen:store.majorSeen||[],
   expired:String(a.status||'').toLowerCase()==='expired'||(expiry>0&&expiry<Date.now()),expiry:expiry>0?expiry:null,status:a.status||'',
-  maxConnections:Number(a.max_connections)||1,providerConnections:Number(a.max_connections)||null,settings:gate.unlocked?store.settings||{}:{},favourites:gate.unlocked?store.favourites||[]:[],recent:gate.unlocked?store.recent||[]:[],
+  maxConnections:realCons(a.max_connections)||1,providerConnections:realCons(a.max_connections),settings:gate.unlocked?store.settings||{}:{},favourites:gate.unlocked?store.favourites||[]:[],recent:gate.unlocked?store.recent||[]:[],
   progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],refreshed:gate.unlocked?store.refreshed||{}:{},linkVerified,playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false,backup:s.backup||false}))};
 }
 async function site(body){
@@ -153,12 +153,14 @@ async function stopAll(){
  send({type:'state',state:publicState()});
 }
 let pkgConnections=null;
+// Packages are 1-3 connections; a provider's huge "unlimited" placeholder (e.g. 315368056) is not a real count.
+function realCons(v){const n=Number(v);return Number.isFinite(n)&&n>=1&&n<=3?Math.floor(n):null;}
 async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,takeover=false}){
  if(item?.kind==='catchup'&&!(Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start&&item.end<=Date.now()))throw new Error('Choose a programme that has finished.');
  if(!item||!['live','film','episode','catchup'].includes(item.kind)||String(item.id).length>80)throw new Error('Choose a playable item.');
  if(maintenance)throw new Error(maintenance);
  if(publicState().expired)throw new Error('Your subscription has expired. Visit BM Support to renew.');
- const allowed=Math.min(3,Number(store.account?.max_connections)||pkgConnections||1);
+ const allowed=Math.min(3,realCons(store.account?.max_connections)||pkgConnections||1);
  if(screens<1||screens>allowed)throw new Error('This exceeds your subscription connections.');
  // Preview → full screen on the same live channel keeps the running stream and its filled buffer.
  if(screens===1&&sessions.length===1&&item?.kind==='live'&&sessions[0].item.kind==='live'&&String(sessions[0].item.id)===String(item.id)&&!sessions[0].failed){lastInput=Date.now();promptedAt=0;send({type:'state',state:publicState()});return true;}

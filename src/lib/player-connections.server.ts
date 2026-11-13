@@ -23,8 +23,8 @@ async function providerConnections(admin: Admin, login: string): Promise<number 
     if (dns && typeof password === "string" && password) {
       const r = await fetch(`${dns}/player_api.php?username=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`, { signal: AbortSignal.timeout(6000) });
       if (r.ok) {
-        const v = Number((await r.json())?.user_info?.max_connections);
-        if (Number.isFinite(v) && v > 0) n = v;
+        const { realConnections } = await import("@/lib/player-connections");
+        n = realConnections((await r.json())?.user_info?.max_connections);
       }
     }
   } catch { /* provider unreachable: fall back to the package */ }

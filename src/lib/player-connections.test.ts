@@ -16,3 +16,7 @@ test("a Multi Room package keeps 2 connections when the provider reports 1", () 
   expect(pickConnections(1, 2, null)).toBe(2);
   expect(pickConnections(1, 3, 1)).toBe(3);
 });
+test("a provider's huge 'unlimited' number is ignored, so the package decides", () => {
+  expect(pickConnections(315368056, 1, null)).toBe(1);
+  expect(pickConnections(315368056, null, null)).toBe(null);
+});
