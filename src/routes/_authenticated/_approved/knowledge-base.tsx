@@ -409,7 +409,7 @@ function KnowledgeBasePage() {
   };
 
   // ---------- Reading view ----------
-  if (reading) {
+  if (reading && !isLockedKnowledgeGuide(reading.id)) {
     const stats = ratingStats[reading.id];
     const mine = myRatingFor(reading.id);
     const categoryName = categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base";
@@ -634,6 +634,17 @@ function KnowledgeBasePage() {
       </div>
 
       <KnowledgeBottomNav onGuides={() => { setTab("guides"); setActiveCat(null); setSearch(""); window.scrollTo({ top: 0, behavior: "smooth" }); }} onSearch={() => searchRef.current?.focus()} />
+      <Dialog open={!!reading && isLockedKnowledgeGuide(reading.id)} onOpenChange={(o) => { if (!o) { setReading(null); scrollBackToArticle(); } }}>
+        <DialogContent className="flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-5xl flex-col overflow-hidden p-3 sm:h-[90vh] sm:p-6">
+          {reading && <>
+            <DialogHeader><DialogTitle className="font-display text-2xl flex flex-wrap items-center gap-3">
+              <Button variant="ghost" size="sm" className="shrink-0 gap-1.5 text-muted-foreground hover:text-foreground md:hidden" onClick={() => { setReading(null); scrollBackToArticle(); }}><ArrowLeft className="size-4" /> Back</Button>
+              <span className="min-w-0 flex-1">{reading.title}</span>
+            </DialogTitle></DialogHeader>
+            <PlayerUserGuideReader key={reading.id} articleId={reading.id} title={reading.title} />
+          </>}
+        </DialogContent>
+      </Dialog>
       {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
       <Dialog open={showCatEditor} onOpenChange={(o) => { if (!o) { setShowCatEditor(false); setEditingCat(null); } }}>
         <DialogContent><DialogHeader><DialogTitle>{editingCat?.id ? "Edit category" : "New category"}</DialogTitle></DialogHeader>{editingCat && <div className="space-y-3"><Label>Name</Label><Input value={editingCat.name} onChange={(e) => setEditingCat({ ...editingCat, name: e.target.value })} /><Label>Slug (optional)</Label><Input value={editingCat.slug} placeholder="auto" onChange={(e) => setEditingCat({ ...editingCat, slug: e.target.value })} /></div>}<DialogFooter><Button variant="outline" onClick={() => { setShowCatEditor(false); setEditingCat(null); }}>Cancel</Button><Button onClick={saveCategory}>Save</Button></DialogFooter></DialogContent>

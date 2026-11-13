@@ -7,20 +7,24 @@ import { Button } from "@/components/ui/button";
 
 export function PlayerUserGuideReader({ articleId, title }: { articleId: string; title: string }) {
   const open = useServerFn(openPlayerUserGuide);
-  const [data, setData] = useState<Uint8Array | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let cancelled = false;
-    setData(null); setError(false);
+    let objectUrl: string | null = null;
+    setUrl(null); setError(false);
     void open({ data: { articleId } }).then((result) => {
-      if (!cancelled) setData(Uint8Array.from(atob(result.pdf), (c) => c.charCodeAt(0)));
+      if (cancelled) return;
+      const bytes = Uint8Array.from(atob(result.pdf), (c) => c.charCodeAt(0));
+      objectUrl = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      setUrl(objectUrl);
     }).catch(() => { if (!cancelled) setError(true); });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [articleId, attempt, open]);
-  return <section aria-label="Protected PDF guide" className="h-[75dvh] min-h-80 w-full min-w-0" onContextMenu={(e) => e.preventDefault()}>
+  return <section aria-label="Protected PDF guide" className="flex min-h-0 flex-1 w-full min-w-0 flex-col" onContextMenu={(e) => e.preventDefault()}>
     {error ? <div className="flex h-full flex-col items-center justify-center gap-4 text-muted-foreground"><p>This guide could not be opened.</p><Button variant="outline" onClick={() => setAttempt((n) => n + 1)}><RotateCw /> Try again</Button></div>
-      : data ? <MobilePdfViewer data={data} title={title} paginated />
+      : url ? <><div className="min-h-0 flex-1 md:hidden"><MobilePdfViewer url={url} title={title} /></div><iframe src={`${url}#toolbar=0&navpanes=0`} title={title} className="hidden min-h-0 flex-1 w-full rounded-lg border border-border bg-card md:block" /></>
       : <div className="grid h-full place-items-center text-muted-foreground"><Loader2 className="size-6 animate-spin" aria-label="Opening guide" /></div>}
   </section>;
 }
