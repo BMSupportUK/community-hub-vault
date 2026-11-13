@@ -106,22 +106,7 @@ public class PlayerActivity extends Activity {
                 .setTsExtractorFlags(VideoDecodePolicy.cleanKeyframes(catchup, channelName) ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
                         : DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
         boolean sw = VideoDecodePolicy.preferSoftware(catchup, p.getString("decoder", "hardware"), channelName);
-        final KeepFramesRenderer[] keep = new KeepFramesRenderer[1];
-        DefaultRenderersFactory renderers = new DefaultRenderersFactory(c) {
-            // Hardware live/films: the stock video renderer is swapped for one that never freezes on
-            // a late frame waiting for a keyframe (KeepFramesRenderer). Catch up keeps stock behaviour.
-            @Override protected void buildVideoRenderers(Context ctx, int mode, androidx.media3.exoplayer.mediacodec.MediaCodecSelector sel,
-                    boolean fallback, Handler h, androidx.media3.exoplayer.video.VideoRendererEventListener l, long joining,
-                    java.util.ArrayList<androidx.media3.exoplayer.Renderer> out) {
-                int start = out.size();
-                super.buildVideoRenderers(ctx, mode, sel, fallback, h, l, joining, out);
-                if (catchup) return;
-                for (int i = start; i < out.size(); i++) if (out.get(i).getClass() == androidx.media3.exoplayer.video.MediaCodecVideoRenderer.class) {
-                    keep[0] = new KeepFramesRenderer(ctx, sel, joining, fallback, h, l, MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY);
-                    out.set(i, keep[0]); break;
-                }
-            }
-        }
+        DefaultRenderersFactory renderers = new DefaultRenderersFactory(c)
                 .setEnableDecoderFallback(true)
                 .setExtensionRendererMode(sw ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
                         : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
@@ -155,12 +140,9 @@ public class PlayerActivity extends Activity {
         // Startup owns the display rate; video surfaces must not request content-driven switches.
         x.setVideoChangeFrameRateStrategy(androidx.media3.common.C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF);
         SoundBoost.attach(c, x);
-        if (keep[0] != null) synchronized (KEEP) { KEEP.put(x, keep[0]); }
         return x;
     }
 
-    private static final java.util.Map<ExoPlayer, KeepFramesRenderer> KEEP = new java.util.WeakHashMap<>();
-    static KeepFramesRenderer keepFrames(ExoPlayer x) { synchronized (KEEP) { return KEEP.get(x); } }
 
     static MediaItem item(String url) {
         MediaItem.Builder b = new MediaItem.Builder().setUri(Uri.parse(url));
@@ -900,9 +882,10 @@ public class PlayerActivity extends Activity {
     private void reportBuffer(long ms, boolean reconnected, boolean freeze, String cause) {
         String u = liveUrls.length > urlAt ? liveUrls[urlAt] : "";
         String fmt = u.endsWith(".m3u8") ? "m3u8" : u.endsWith(".ts") ? "ts" : "direct";
-        KeepFramesRenderer k = player == null ? null : keepFrames(player);
         androidx.media3.exoplayer.DecoderCounters dc = player == null ? null : player.getVideoDecoderCounters();
-        String d = activeDecoder + (k == null ? "" : k.stats()) + (dc == null ? "" : " r" + dc.renderedOutputBufferCount + " d" + dc.droppedBufferCount);
+        androidx.media3.common.Format vf = player == null ? null : player.getVideoFormat();
+        String d = activeDecoder + (dc == null ? "" : " r" + dc.renderedOutputBufferCount + " d" + dc.droppedBufferCount
+                + " q" + dc.queuedInputBufferCount + " s" + dc.skippedInputBufferCount) + VideoDecodePolicy.describe(vf);
         String decoder = d.substring(0, Math.min(120, d.length()));
         BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, freeze, cause, fmt, decoder, StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
     }

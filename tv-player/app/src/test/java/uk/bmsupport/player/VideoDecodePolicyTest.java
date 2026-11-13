@@ -4,9 +4,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class VideoDecodePolicyTest {
-    @Test public void moviePremiereWaitsForCleanKeyframeWithoutForcingSoftware() {
-        assertTrue(VideoDecodePolicy.cleanKeyframes(false, "Movie Premiere ᴴᴰ"));
-        assertTrue(VideoDecodePolicy.cleanKeyframes(false, "UK | Movie Premiere HD"));
+    @Test public void moviePremiereAcceptsBothPictureMarkersOnHardware() {
+        assertFalse(VideoDecodePolicy.cleanKeyframes(false, "Movie Premiere ᴴᴰ"));
+        assertFalse(VideoDecodePolicy.cleanKeyframes(false, "UK | Movie Premiere HD"));
         assertFalse(VideoDecodePolicy.preferSoftware(false, "hardware", "Movie Premiere ᴴᴰ"));
         assertFalse(VideoDecodePolicy.cleanKeyframes(false, "BBC One | FHD |"));
         assertFalse(VideoDecodePolicy.cleanKeyframes(false, "Movie Extra HD"));

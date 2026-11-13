@@ -9,10 +9,16 @@ final class VideoDecodePolicy {
         return catchup || "software".equals(decoder);
     }
     static boolean cleanKeyframes(boolean catchup, String name) {
-        return catchup || affectedChannel(name) || moviePremiere(name);
+        return catchup || affectedChannel(name);
     }
     static boolean moviePremiere(String name) {
         return name != null && name.toLowerCase(java.util.Locale.ROOT)
                 .replaceAll("[^a-z0-9]", "").contains("moviepremiere");
+    }
+    /** Short picture-format tag for freeze reports, e.g. " avc1.640028 1920x1080@25". */
+    static String describe(androidx.media3.common.Format f) {
+        if (f == null) return " fmt?";
+        return " " + (f.codecs == null ? f.sampleMimeType : f.codecs) + " " + f.width + "x" + f.height
+                + (f.frameRate > 0 ? "@" + Math.round(f.frameRate) : "");
     }
 }
