@@ -6,6 +6,7 @@ import { resetUserMfa } from "@/lib/mfa.functions";
 import { createUserManually, requestCustomerPasswordReset } from "@/lib/temp-password.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 /** Admin dashboard (Members & Role Management) only: Reset 2FA + Email new password. */
 export function MemberSecurityActions({ userId, name }: { userId: string; name: string }) {
@@ -89,6 +90,8 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [existingCustomer, setExistingCustomer] = useState(false);
+  const [expiryDate, setExpiryDate] = useState("");
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,10 +101,10 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
     }
     setBusy(true);
     try {
-      await create({ data: { email: email.trim(), name: name.trim() } });
+      await create({ data: { email: email.trim(), name: name.trim(), existingCustomer, expiryDate: existingCustomer ? expiryDate : "" } });
       toast.success("Manual customer added. No website account created or email sent.");
       window.dispatchEvent(new Event("bm-customer-list-changed"));
-      setOpen(false); setEmail(""); setName("");
+      setOpen(false); setEmail(""); setName(""); setExistingCustomer(false); setExpiryDate("");
       onCreated?.();
     } catch (err: any) {
       toast.error(err?.message ?? "Couldn't create the account");
@@ -126,6 +129,13 @@ export function AddUserButton({ onCreated }: { onCreated?: () => void }) {
             <label className="block text-xs font-medium text-muted-foreground">Email (optional)
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
             </label>
+            <label className="flex items-center gap-2 text-sm" htmlFor="manual-existing-customer">
+              <Checkbox id="manual-existing-customer" checked={existingCustomer} onCheckedChange={(checked) => setExistingCustomer(checked === true)} />
+              Existing customer
+            </label>
+            {existingCustomer && <label className="block text-xs font-medium text-muted-foreground">Subscription expiry (optional)
+              <input aria-label="Subscription expiry" type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} className={input} />
+            </label>}
             <div className="flex gap-2 pt-1">
               <Button type="submit" disabled={busy} className="flex-1 h-11">
                 {busy ? "Adding…" : "Add to customer list"}

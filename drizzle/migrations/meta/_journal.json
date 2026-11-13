@@ -2451,6 +2451,13 @@
       "when": 1794565496860,
       "tag": "0349_manual_customer_email_checkout",
       "breakpoints": true
+    },
+    {
+      "idx": 350,
+      "version": "7",
+      "when": 1794566204386,
+      "tag": "0350_manual_customer_initial_expiry",
+      "breakpoints": true
     }
   ]
 }

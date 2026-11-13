@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Add optional existing-customer expiry to manual customer creation and show it on the customer card; five tests pass, expiry storage/list verified and build OK. Full signed-in form check blocked by profile/password/staff PIN gates; publishing needed.
+
 - [x] Add manual customers without creating accounts; save email and provide an explicit customer-card secure-checkout email action. Account creation remains at checkout completion; five tests pass and build OK. Signed-in end-to-end email check blocked by dashboard password/staff PIN; publishing needed.
 
 - [x] Give each Multiple accounts login its own card, expanding after customer sorting to keep owners adjacent; preserve original customer/account editing and other tabs. Six checks pass and build OK. Full dashboard visual check blocked by password/staff PIN gate; publishing needed.

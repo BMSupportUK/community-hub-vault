@@ -4912,6 +4912,7 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          subscription_expiry_date: string | null
         }
         Insert: {
           created_at?: string
@@ -4919,6 +4920,7 @@ export type Database = {
           email?: string | null
           id?: string
           name: string
+          subscription_expiry_date?: string | null
         }
         Update: {
           created_at?: string
@@ -4926,6 +4928,7 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          subscription_expiry_date?: string | null
         }
         Relationships: []
       }

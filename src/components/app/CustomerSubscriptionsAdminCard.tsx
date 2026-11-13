@@ -26,7 +26,7 @@ import { ManualCheckoutEmailButton } from "@/components/app/ManualCheckoutEmailB
 
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
-type Customer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; manualSetupPending?: boolean; accounts: Account[]; package: string | null; packageAllocated: boolean; renewedAt: string | null; renewedDateAdjusted: boolean; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
+type Customer = { userId: string; username: string | null; displayName: string | null; hasSiteAccount: boolean; manualExpiryDate?: string | null; manualSetupPending?: boolean; accounts: Account[]; package: string | null; packageAllocated: boolean; renewedAt: string | null; renewedDateAdjusted: boolean; firstSubscriptionAt: string | null; customerYears: number | null; firstSubscriptionAdjusted: boolean; referrerName: string | null; rewards: Reward[] };
 type ManualOrder = { id: string; ref: string; name: string; createdAt: string; paidAt: string | null; customerId: string; accountId: string | null; kind: string };
 const date = customerDate;
 
@@ -315,7 +315,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
                 <dl className="space-y-2 text-sm">
                   <Detail label="Current package">{pkg}</Detail>
                   <div className="grid gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2.5 sm:grid-cols-2">
-                    {hasRecordedYear && <Detail label="Subscription expires">{a ? date(a.expiresAt) : "Not recorded"}</Detail>}
+                    {hasRecordedYear && <Detail label="Subscription expires">{a ? date(a.expiresAt) : date(c.manualExpiryDate ?? null)}</Detail>}
                     <Detail label="Last renewed subscription">{showNoRenewal && !renewedAt ? "No Renewal Yet" : date(renewedAt)}</Detail>
                   </div>
                 </dl>
