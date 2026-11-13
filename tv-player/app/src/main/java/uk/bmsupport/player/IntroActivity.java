@@ -14,7 +14,8 @@ public class IntroActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private VideoView video;
     private boolean opened;
-    private final Runnable next = this::openPlayer;
+    private boolean preparingDisplay;
+    private final Runnable next = this::afterVideo;
 
     @Override protected void onCreate(Bundle saved) {
         super.onCreate(saved);
@@ -32,13 +33,42 @@ public class IntroActivity extends Activity {
             handler.removeCallbacks(next);
             handler.postDelayed(next, 5500);
         });
-        video.setOnCompletionListener(player -> openPlayer());
-        video.setOnErrorListener((player, what, extra) -> { openPlayer(); return true; });
+        video.setOnCompletionListener(player -> afterVideo());
+        video.setOnErrorListener((player, what, extra) -> { afterVideo(); return true; });
         handler.postDelayed(next, 8000);
     }
 
+    private void afterVideo() {
+        if (opened || preparingDisplay || isFinishing()) return;
+        preparingDisplay = true;
+        handler.removeCallbacks(next);
+        if (video != null) video.stopPlayback();
+        if (!FrameRateMatch.isAndroidTv(this) || !FrameRateMatch.wouldSwitch(this, 50f)) {
+            FrameRateMatch.prefer50(this);
+            openPlayer();
+            return;
+        }
+        FrameLayout root = new FrameLayout(this);
+        android.widget.ImageView art = new android.widget.ImageView(this);
+        art.setImageResource(R.drawable.channel_loading);
+        art.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        root.addView(art, new FrameLayout.LayoutParams(-1, -1));
+        android.widget.TextView note = new android.widget.TextView(this);
+        note.setText(FrameRateMatch.noteText(50f));
+        note.setTextSize(24); note.setTextColor(android.graphics.Color.WHITE);
+        note.setBackgroundColor(0xDD000000); note.setGravity(android.view.Gravity.CENTER);
+        note.setPadding(32, 24, 32, 24);
+        root.addView(note, new FrameLayout.LayoutParams(-1, -2, android.view.Gravity.BOTTOM));
+        setContentView(root);
+        handler.postDelayed(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            FrameRateMatch.prefer50(this);
+            handler.postDelayed(this::openPlayer, FrameRateMatch.SETTLE_MS);
+        }, FrameRateMatch.NOTE_LEAD_MS);
+    }
+
     private void openPlayer() {
-        if (opened || isFinishing()) return;
+        if (opened || isFinishing() || isDestroyed()) return;
         opened = true;
         handler.removeCallbacks(next);
         if (video != null) video.stopPlayback();
@@ -53,11 +83,11 @@ public class IntroActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
-        if (video != null && !opened) video.start();
+        if (video != null && !opened && !preparingDisplay) video.start();
     }
 
     @Override protected void onDestroy() {
-        handler.removeCallbacks(next);
+        handler.removeCallbacksAndMessages(null);
         if (video != null) video.stopPlayback();
         super.onDestroy();
     }

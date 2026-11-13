@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Release Android/Fire TV 4.68: opening video first, then visible 50Hz switch, then device-link screen; 13 display/startup tests pass, permanent signer and exact live APK verified. Real-TV picture/switch check remains unverified.
+
 - [x] Correct all four BM Player PDF guides: remove account-number entry and clarify choosing the app login during device linking. Regenerated and uploaded all four private PDFs; authenticated read-back matches exactly and public access is blocked. All 15 pages visually inspected: existing sparse install pages remain unchanged, no clipping or overlap. Five guide checks pass and build OK. Full card-opening recheck blocked by profile selection; hidden legacy article bodies remain front-page-locked and are not rendered for these guides.
 
 - [x] Fix zero-value manual-order notifications using the finished transaction total; live deferred trigger verified, Matty Brown alert repaired to £60.00 and Alex Shimmin to £65.00, saved amounts read back, six regression tests pass and build OK. Dashboard visual check not performed; no real orders created during testing.

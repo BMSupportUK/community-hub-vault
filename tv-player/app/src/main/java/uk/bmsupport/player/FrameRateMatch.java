@@ -99,10 +99,14 @@ final class FrameRateMatch {
      * need a switch, and its black blank, when they go full screen. Phones and Fire TV are left alone.
      */
     static void prefer50(Activity a) {
-        if (a == null || skip()) return;
-        android.app.UiModeManager ui = (android.app.UiModeManager) a.getSystemService(android.content.Context.UI_MODE_SERVICE);
-        if (ui == null || ui.getCurrentModeType() != android.content.res.Configuration.UI_MODE_TYPE_TELEVISION) return;
+        if (!isAndroidTv(a)) return;
         apply(a, 50f);
+    }
+
+    static boolean isAndroidTv(Activity a) {
+        if (a == null || skip()) return false;
+        android.app.UiModeManager ui = (android.app.UiModeManager) a.getSystemService(android.content.Context.UI_MODE_SERVICE);
+        return ui != null && ui.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION;
     }
 
     static void reset(Activity a) {
