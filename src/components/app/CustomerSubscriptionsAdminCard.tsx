@@ -21,6 +21,7 @@ import { MemberCredentialsSection, RestoreCredentialsBackupButton } from "@/comp
 import { useAuth } from "@/hooks/use-auth";
 import { CustomerAccountSwitchButton } from "@/components/app/CustomerAccountSwitch";
 import { CustomerPortalLinkButtons } from "@/components/app/CustomerPortalLinkButtons";
+import { customerAccountCards } from "@/lib/customer-account-cards";
 
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
@@ -273,15 +274,15 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
         </TabsList>
       </Tabs>
       {tab === "staff" && staffList ? staffList(search) : error ? <p role="alert" className="text-destructive">{error}</p> : loading ? <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin" /></div> : !shown.length ? <p className="py-8 text-muted-foreground">No customers found.</p> : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{shown.map((c) => {
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{customerAccountCards(shown, tab === "multi").map(({ customer: c, accountId, accountIndex, key }) => {
           const years = customerYearsFromYear(customerJoinedYear(c.firstSubscriptionAt));
           const hasRecordedYear = customerHasRecordedYear(c.firstSubscriptionAt) || !c.hasSiteAccount;
           const showNoRenewal = customerShowsNoRenewal(hasRecordedYear, years);
           const multi = c.accounts.length > 1;
-          const lines: (Account | null)[] = c.accounts.length ? c.accounts : [null];
+          const lines: (Account | null)[] = accountId ? c.accounts.filter((a) => a.id === accountId) : c.accounts.length ? c.accounts : [null];
           const name = c.username || c.displayName || "Not recorded";
           return (
-          <article key={c.userId} className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-card/70 p-4">
+          <article key={key} data-customer-owner={c.userId} data-account-id={accountId ?? undefined} className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card/70 p-4">
             <header className="flex min-w-0 flex-col gap-2">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <h3 className="break-words font-semibold">{name}</h3>
@@ -297,7 +298,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
                 {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && memberHeader?.(c.userId)}
                 {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && <CustomerAccountSwitchButton customerId={c.userId} name={name} />}
                 {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && <CustomerPortalLinkButtons customerId={c.userId} name={name} />}
-                {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => void openCustomerEditor(c)}><Pencil className="size-4" /></Button>}
+                {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => { void openCustomerEditor(c); if (accountId) selectEditAccount(c, c.accounts.find((a) => a.id === accountId) ?? null); }}><Pencil className="size-4" /></Button>}
                 {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
               </div>
             </header>
@@ -306,8 +307,8 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
               const renewedAt = multi && a ? a.renewedAt ?? null : c.renewedAt;
               const pkg = (multi && a ? a.package : c.package) || "Not recorded";
               return (
-              <section key={a?.id ?? "none"} className={multi ? "space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-3" : "space-y-2.5"}>
-                {(multi || a) && <div className="flex flex-wrap items-center gap-2">{multi && <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {i + 1}</span>}{a && <LoginNumberBadge ownerId={c.userId} accountId={a.id} login={a.login} />}</div>}
+              <section key={a?.id ?? "none"} className={multi && !accountId ? "space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-3" : "space-y-2.5"}>
+                {(multi || a) && <div className="flex flex-wrap items-center gap-2">{multi && <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">Account {(accountIndex ?? i) + 1}</span>}{a && <LoginNumberBadge ownerId={c.userId} accountId={a.id} login={a.login} />}</div>}
                 <div className="flex items-center gap-1 break-all text-xs text-muted-foreground"><span className="font-semibold uppercase tracking-wide">App Login:</span> {a?.login || "No login details"}</div>
                 <dl className="space-y-2 text-sm">
                   <Detail label="Current package">{pkg}</Detail>

@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Give each Multiple accounts login its own card, expanding after customer sorting to keep owners adjacent; preserve original customer/account editing and other tabs. Six checks pass and build OK. Full dashboard visual check blocked by password/staff PIN gate; publishing needed.
+
 - [x] Match Knowledge Base player PDF opening to Install Guides: modal over unchanged cards, desktop toolbar-hidden PDF and mobile scrolling pages. All four signed-in desktop opens, mobile pages and return to cards verified; five guide checks pass. Website changes need publishing.
 
 - [x] Create four illustrated multi-page BM Player PDFs in private storage and open them in a paged reader without download controls; front-page cards preserved. All four signed-in opens/page turns and blocked public PDF access verified; 10 tests pass. Visual PDF QA reduced sparse pages and enlarged text; final pages show no clipping or overlaps. Website changes need publishing.
