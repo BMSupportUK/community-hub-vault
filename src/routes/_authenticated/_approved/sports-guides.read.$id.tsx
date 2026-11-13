@@ -125,6 +125,10 @@ function ReadPage() {
     if (typeof document === "undefined") return [];
     const wrap = document.createElement("div");
     wrap.innerHTML = sanitizeRichHtml(blog.body);
+    // End times are used silently to close events; never show them to readers.
+    wrap.querySelectorAll<HTMLElement>("div, p").forEach((el) => {
+      if (/^\s*End:\s*\S/i.test(el.textContent ?? "") && !el.querySelector("div, p")) el.remove();
+    });
     // Link-only notes should show a compact clickable bubble styled like the
     // channel chips, not a full-width preview card.
     wrap.querySelectorAll<HTMLElement>("[data-link-preview]").forEach((el) => {
