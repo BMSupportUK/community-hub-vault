@@ -31,4 +31,10 @@ final class VideoDecodePolicy {
         }
         return false;
     }
+    /** MediaTek boxes get synchronous decoder feeding (chosen by chip, never by channel). */
+    static boolean synchronousFeed(String hardware, String soc) {
+        String h = (hardware == null ? "" : hardware) + " " + (soc == null ? "" : soc);
+        h = h.toLowerCase(java.util.Locale.ROOT);
+        return h.contains("mediatek") || h.matches(".*\\bmt\\d{4}.*") || h.contains(" mtk");
+    }
 }

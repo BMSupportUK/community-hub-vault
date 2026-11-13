@@ -30,4 +30,10 @@ public class VideoDecodePolicyTest {
         assertFalse(VideoDecodePolicy.lowLatencyDecode("hvc1.2.4.L153"));
         assertFalse(VideoDecodePolicy.lowLatencyDecode(null));
     }
+    @Test public void mediaTekBoxesFeedTheVideoChipSynchronously() {
+        assertTrue(VideoDecodePolicy.synchronousFeed("mt8696", "Mediatek"));
+        assertTrue(VideoDecodePolicy.synchronousFeed("mt5895", ""));
+        assertFalse(VideoDecodePolicy.synchronousFeed("amlogic", "Amlogic"));
+        assertFalse(VideoDecodePolicy.synchronousFeed(null, null));
+    }
 }

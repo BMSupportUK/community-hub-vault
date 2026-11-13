@@ -121,6 +121,10 @@ public class PlayerActivity extends Activity {
                 .setEnableDecoderFallback(true)
                 .setExtensionRendererMode(sw ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
                         : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
+        // MediaTek video chips stall after a few dozen frames when Media3 feeds them asynchronously
+        // (picture frozen, sound playing); the backup engine feeds the same chip synchronously and plays.
+        if (VideoDecodePolicy.synchronousFeed(android.os.Build.HARDWARE, android.os.Build.VERSION.SDK_INT >= 31 ? android.os.Build.SOC_MANUFACTURER : ""))
+            renderers.forceDisableMediaCodecAsynchronousQueueing();
         // Catch up on phones: hardware decoders smear timeshift recordings into blocks, so prefer the
         // phone's software (backup) decoder, falling back to hardware if none exists.
         if (sw) renderers.setMediaCodecSelector((mime, secure, tunneling) -> {
