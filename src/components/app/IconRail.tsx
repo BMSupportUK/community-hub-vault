@@ -430,7 +430,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         if (i.key?.startsWith("portal:")) {
           const searchTab = (i.search as { tab?: string } | undefined)?.tab;
           const curTab = (searchState as { tab?: string }).tab ?? null;
-          const pActive = i.to === "/home/$channel" ? path.startsWith("/home/") : i.to === "/admin" ? path.startsWith("/admin") && (searchTab ?? null) === (curTab ?? null) : path.startsWith(i.to);
+          const pActive = i.to === "/home/$channel" ? path.startsWith("/home/") : i.to === "/admin" ? path.startsWith("/admin") && (searchTab ?? null) === (curTab ?? null) : (path === i.to || path.startsWith(i.to + "/"));
           return (
             <div key={i.key} {...dragProps(i.key)}>
               <RailIcon to={i.to} label={i.label} Icon={i.icon} active={pActive} draggable={isAdmin} badge={i.badge} badgeVariant={i.badgeVariant} search={i.search} params={i.params} extra={i.extra} />
@@ -442,7 +442,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
             ? path === "/home"
             : i.to === "/home/$channel"
               ? path.startsWith("/home/")
-              : path.startsWith(i.to);
+              : path === i.to || path.startsWith(i.to + "/");
         if (i.unlock) {
           return (
             <div key={i.to} className="relative z-10 shrink-0">
