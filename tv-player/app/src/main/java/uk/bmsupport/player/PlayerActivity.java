@@ -851,6 +851,7 @@ public class PlayerActivity extends Activity {
     }
 
     private void onStallEnded(long ms, boolean reconnected) {
+        boolean dropOut = !stallAdvert;
         reportBuffer(ms, reconnected, false, stallAdvert ? "advert_switch" : "network_drop");
         stallAdvert = false;
         if (ms < StreamRecovery.MIN_REPORT_MS) return;
@@ -858,6 +859,9 @@ public class PlayerActivity extends Activity {
         stallTimes[stallCount % stallTimes.length] = now; stallCount++;
         int recent = StreamRecovery.recentStalls(stallTimes, Math.min(stallCount, stallTimes.length), now);
         if (recent >= StreamRecovery.STALLS_TO_LOWER) lowerQuality();
+        // A channel whose connection keeps dropping is remembered on this box, so it opens with the
+        // large cushion from then on and short dropouts pass without the picture stopping.
+        if (dropOut && recent >= StreamRecovery.STALLS_TO_LOWER && StreamRecovery.rememberHeavy(recoveryName())) saveHeavy(this);
         // Stream type (ts/m3u8) is never switched or shared because of buffering: channels
         // always play in the playlist's own order, like other IPTV apps.
         if (recent >= ChannelSwap.AUTO_STALLS && swapOptions().length() > 0) offerSwap(true);
