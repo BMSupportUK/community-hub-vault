@@ -5221,7 +5221,7 @@ public class MainActivity extends Activity {
                     if (it == null) Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show();
                     else {
                         sportsReturnChannelId = it.id; retryEvent = e; retryAliases = aliases;
-                        if (sportsPreviewView != null && previewItem != null && it.id.equals(previewItem.id) && preview != null) play(it, defaultVlc());
+                        if (sportsPreviewView != null && previewItem != null && it.id.equals(previewItem.id) && (preview != null || vlcPreview != null)) play(it, defaultVlc());
                         else if (sportsPreviewView != null) schedulePreview(it, sportsPreviewView, sportsPreviewStatus);
                         else play(it, defaultVlc());
                     }

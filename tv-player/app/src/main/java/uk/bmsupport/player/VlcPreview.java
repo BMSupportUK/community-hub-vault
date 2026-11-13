@@ -24,7 +24,7 @@ final class VlcPreview {
     VlcPreview(Context c, ViewGroup host, String[] urls, Listener l) {
         this.host = host; this.urls = urls;
         ArrayList<String> opts = new ArrayList<>();
-        opts.add("--network-caching=" + BackupBufferPolicy.networkCacheMs(true, PlayerActivity.prefs(c).getString("buffer", StreamRecovery.DEFAULT_BUFFER), ""));
+        opts.add("--network-caching=" + BackupBufferPolicy.previewCacheMs());
         opts.add("--http-reconnect");
         opts.add("--no-audio-time-stretch");
         vlc = new LibVLC(c, opts);
