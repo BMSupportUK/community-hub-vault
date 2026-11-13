@@ -212,6 +212,15 @@ public class MainActivity extends Activity {
     }
 
     /** Asks how many screens to open, so one channel can fill the whole screen. */
+    /** Home screen keeps one Search pill; the pop-up offers typed and voice search for each section. */
+    private void chooseHomeSearch() {
+        String[] names = {"🔍 Search TV", "🔍 Search Movies", "🔍 Search Series", "🎤 Voice search TV", "🎤 Voice search Movies", "🎤 Voice search Series"};
+        String[] kinds = {"live", "film", "series"};
+        new AlertDialog.Builder(this).setTitle("Search")
+                .setItems(names, (d, w) -> { if (w < 3) showSearch(kinds[w], ""); else startVoice(kinds[w - 3]); })
+                .setNegativeButton("Cancel", null).show();
+    }
+
     private void chooseMultiScreens(int max) {
         // One screen is just the normal TV guide, so Multi-screen only offers 2 or 3.
         if (max < 3) { showMultiScreen(2); return; }
@@ -1268,9 +1277,7 @@ public class MainActivity extends Activity {
             hz.setContentDescription(on ? "50Hz is on, press to switch off" : "Switch TV to 50Hz");
             top.addView(hz);
         }
-        top.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
-        top.addView(headerPill("🔍 Search Movies", v -> showSearch("film", "")));
-        top.addView(headerPill("🔍 Search Series", v -> showSearch("series", "")));
+        top.addView(headerPill("🔍 Search", v -> chooseHomeSearch()));
         top.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0); // the 📣 icon has its own corner
         root.addView(top);
         TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
