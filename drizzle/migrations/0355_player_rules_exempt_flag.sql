@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS player_rules_exempt boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.profiles.player_rules_exempt IS 'Owner test accounts: bypass BM Player VPN link gate, box limit, connection clash and household rules, same as staff.';

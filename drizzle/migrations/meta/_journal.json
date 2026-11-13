@@ -2486,6 +2486,13 @@
       "when": 1794570649515,
       "tag": "0354_order_notification_final_total",
       "breakpoints": true
+    },
+    {
+      "idx": 355,
+      "version": "7",
+      "when": 1794603687185,
+      "tag": "0355_player_rules_exempt_flag",
+      "breakpoints": true
     }
   ]
 }

@@ -47,9 +47,10 @@ export const sendLoginWithCode = createServerFn({ method: "POST" })
       await supabaseAdmin.from("player_link_attempts").insert({ user_id: context.userId });
       throw new Error("That code is wrong or has expired. Check the code on your screen.");
     }
-    // VPN must be off on the box so we see its true location; staff are exempt. Checked before the code is used up.
+    // VPN must be off on the box so we see its true location; staff and owner-flagged test accounts are exempt. Checked before the code is used up.
     const { data: isStaff } = await context.supabase.rpc("has_any_role", { _user_id: context.userId, _roles: ["admin", "management", "staff", "moderator"] });
-    if (!isStaff) {
+    const { data: exemptProfile } = await supabaseAdmin.from("profiles").select("player_rules_exempt").eq("id", context.userId).maybeSingle();
+    if (!isStaff && !exemptProfile?.player_rules_exempt) {
       const { data: box } = await supabaseAdmin.from("player_devices").select("last_ip").eq("id", row!.device_id).maybeSingle();
       const { isPublicIp, checkDeviceVpn } = await import("@/lib/player-vpn");
       if (box?.last_ip && isPublicIp(box.last_ip)) {

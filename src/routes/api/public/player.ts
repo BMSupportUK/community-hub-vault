@@ -232,7 +232,13 @@ export const Route = createFileRoute("/api/public/player")({
             .eq("iptv_username", body.login).neq("id", device.id).limit(50);
           const { loginConnections } = await import("@/lib/player-connections.server");
           const pkgMax = await loginConnections(supabaseAdmin, body.login, body.max);
-          const clash = streamClash(others ?? [], device.id, pkgMax ?? body.max, Date.now(), body.screens ?? 1);
+          // Staff-level exemption: owner-flagged test accounts skip the clash and household rules.
+          let rulesExempt = false;
+          if (device.user_id) {
+            const { data: exemptProfile } = await supabaseAdmin.from("profiles").select("player_rules_exempt").eq("id", device.user_id).maybeSingle();
+            rulesExempt = !!exemptProfile?.player_rules_exempt;
+          }
+          const clash = rulesExempt ? [] : streamClash(others ?? [], device.id, pkgMax ?? body.max, Date.now(), body.screens ?? 1);
           if (clash.length && !body.takeover) {
             return json({ busy: true, message: maxedMessage(clash, pkgMax ?? body.max), devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title, screens: d.watching_screens ?? 1 })) });
           }
@@ -243,7 +249,7 @@ export const Route = createFileRoute("/api/public/player")({
           // Multi/Triple Room household rule (src/lib/player-household.ts).
           let warning: string | null = null;
           let claimIp: string | null = device.claim_ip ?? null, claimMobile = !!device.claim_mobile, claimAway = !!device.claim_away;
-          if ((pkgMax ?? 1) >= 2 && device.user_id) {
+          if ((pkgMax ?? 1) >= 2 && device.user_id && !rulesExempt) {
             try {
               const { isPublicIp, checkDeviceVpn, lookupMobile } = await import("@/lib/player-vpn");
               const { householdVerdict, shouldBlock, STRIKE_WINDOW_MS } = await import("@/lib/player-household");

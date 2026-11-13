@@ -7201,6 +7201,7 @@ export type Database = {
           is_private: boolean
           last_seen_at: string | null
           new_content_baseline_at: string | null
+          player_rules_exempt: boolean
           preferred_theme: string | null
           sports_blogs_baseline_at: string | null
           staff_gender: string
@@ -7221,6 +7222,7 @@ export type Database = {
           is_private?: boolean
           last_seen_at?: string | null
           new_content_baseline_at?: string | null
+          player_rules_exempt?: boolean
           preferred_theme?: string | null
           sports_blogs_baseline_at?: string | null
           staff_gender?: string
@@ -7241,6 +7243,7 @@ export type Database = {
           is_private?: boolean
           last_seen_at?: string | null
           new_content_baseline_at?: string | null
+          player_rules_exempt?: boolean
           preferred_theme?: string | null
           sports_blogs_baseline_at?: string | null
           staff_gender?: string
