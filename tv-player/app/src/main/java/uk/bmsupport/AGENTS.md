@@ -18,3 +18,4 @@
 - Live channels (except catch up and MonoMax) accept non-IDR keyframes so feeds that never send IDR frames still show picture; freeze reports carry rendered/dropped/queued/skipped decoder counts and the video codec/size/rate.
 - Main-player hardware video opens H.264 level 5.0+ feeds (by codecs string, never channel name) in MediaCodec low-latency mode via HighLevelAvcRenderer, because MediaTek decoders otherwise hold a 16-frame buffer and freeze the picture with sound playing.
 - MediaTek boxes (Build.HARDWARE/SOC_MANUFACTURER) disable Media3 asynchronous MediaCodec queueing for the main player, because async feeding stalls their video chip after a few dozen frames while libVLC on the same chip plays.
+- HighLevelAvcRenderer learns a video timing shift when a decoded picture is held >400 ms early for 300 ms while playing (feeds stamped ahead of their sound), cleared on seek/reopen; freeze reports append early/shift ms.

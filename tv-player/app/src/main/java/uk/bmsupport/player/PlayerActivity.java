@@ -106,6 +106,7 @@ public class PlayerActivity extends Activity {
                 .setTsExtractorFlags(VideoDecodePolicy.cleanKeyframes(catchup, channelName) ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
                         : DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
         boolean sw = VideoDecodePolicy.preferSoftware(catchup, p.getString("decoder", "hardware"), channelName);
+        final HighLevelAvcRenderer[] keep = new HighLevelAvcRenderer[1];
         DefaultRenderersFactory renderers = new DefaultRenderersFactory(c) {
             // High-level H.264 feeds decode in low-latency mode (HighLevelAvcRenderer); same for all channels.
             @Override protected void buildVideoRenderers(Context ctx, int mode, androidx.media3.exoplayer.mediacodec.MediaCodecSelector sel,
@@ -114,7 +115,8 @@ public class PlayerActivity extends Activity {
                 int start = out.size();
                 super.buildVideoRenderers(ctx, mode, sel, fallback, h, l, joining, out);
                 for (int i = start; i < out.size(); i++) if (out.get(i).getClass() == androidx.media3.exoplayer.video.MediaCodecVideoRenderer.class) {
-                    out.set(i, new HighLevelAvcRenderer(ctx, sel, joining, fallback, h, l, MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY)); break;
+                    keep[0] = new HighLevelAvcRenderer(ctx, sel, joining, fallback, h, l, MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY);
+                    out.set(i, keep[0]); break;
                 }
             }
         }
@@ -155,9 +157,13 @@ public class PlayerActivity extends Activity {
         // Startup owns the display rate; video surfaces must not request content-driven switches.
         x.setVideoChangeFrameRateStrategy(androidx.media3.common.C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF);
         SoundBoost.attach(c, x);
+        if (keep[0] != null) synchronized (VIDEO) { VIDEO.put(x, keep[0]); }
         return x;
     }
 
+
+    private static final java.util.Map<ExoPlayer, HighLevelAvcRenderer> VIDEO = new java.util.WeakHashMap<>();
+    static HighLevelAvcRenderer videoRenderer(ExoPlayer x) { synchronized (VIDEO) { return VIDEO.get(x); } }
 
     static MediaItem item(String url) {
         MediaItem.Builder b = new MediaItem.Builder().setUri(Uri.parse(url));
@@ -900,7 +906,8 @@ public class PlayerActivity extends Activity {
         androidx.media3.exoplayer.DecoderCounters dc = player == null ? null : player.getVideoDecoderCounters();
         androidx.media3.common.Format vf = player == null ? null : player.getVideoFormat();
         String d = activeDecoder + (dc == null ? "" : " r" + dc.renderedOutputBufferCount + " d" + dc.droppedBufferCount
-                + " q" + dc.queuedInputBufferCount + " s" + dc.skippedInputBufferCount) + VideoDecodePolicy.describe(vf);
+                + " q" + dc.queuedInputBufferCount + " s" + dc.skippedInputBufferCount) + VideoDecodePolicy.describe(vf)
+                + (player != null && videoRenderer(player) != null ? videoRenderer(player).stats() : "");
         String decoder = d.substring(0, Math.min(120, d.length()));
         BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, freeze, cause, fmt, decoder, StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
     }
