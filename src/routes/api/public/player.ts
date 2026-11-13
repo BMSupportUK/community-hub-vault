@@ -54,7 +54,6 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
   z.object({ action: z.literal("pin_status"), device_token: Token }),
   z.object({ action: z.literal("signin_chat"), device_token: Token }),
-  z.object({ action: z.literal("welcome_voice"), device_token: Token }),
   z.object({ action: z.literal("signin_code"), device_token: Token, code: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("totp_start"), device_token: Token }),
   z.object({ action: z.literal("totp_reset_request"), device_token: Token }),
@@ -618,27 +617,6 @@ export const Route = createFileRoute("/api/public/player")({
             await notifyPlayerAdmins(supabaseAdmin, "BM Player locked for 24 hours", `A ${device.platform ?? "BM Player"} box${device.iptv_username ? ` on login ${device.iptv_username}` : ""} kept entering the wrong account number.`);
           }
           return json({ error: locked ? waitText(until as string) : "That account number isn't right. You can find it in your subscription box on bmsupport.uk." }, locked ? 429 : 401);
-        }
-
-        if (body.action === "welcome_voice") {
-          if (!device.user_id && !device.offsite_customer_id) return json({ error: "Link this app first." }, 403);
-          const W = await import("@/lib/player-welcome-voice");
-          if (!W.welcomeAllowed(device.id)) return json({ error: "Already welcomed." }, 429);
-          let username: string | null = null;
-          if (device.user_id) {
-            const { data: prof } = await supabaseAdmin.from("profiles").select("username").eq("id", device.user_id).maybeSingle();
-            username = (prof as { username?: string | null } | null)?.username ?? null;
-          }
-          const text = W.welcomeText(username);
-          const path = await W.welcomeCacheKey(text);
-          const cached = await supabaseAdmin.storage.from("player-voice").download(path);
-          if (cached.data) return json({ audio: W.toBase64(new Uint8Array(await cached.data.arrayBuffer())), mime: "audio/mpeg" });
-          const key = process.env.ELEVENLABS_API_KEY;
-          if (!key) return json({ error: "Voice isn't set up." }, 503);
-          const r = await W.synthWelcome(text, key);
-          if (!r.ok) return json({ error: "Voice isn't available right now." }, r.status === 429 ? 429 : r.status === 402 || r.status === 403 ? r.status : 503);
-          await supabaseAdmin.storage.from("player-voice").upload(path, r.bytes, { contentType: "audio/mpeg", upsert: true });
-          return json({ audio: W.toBase64(r.bytes), mime: "audio/mpeg" });
         }
 
         if (body.action === "voice") {

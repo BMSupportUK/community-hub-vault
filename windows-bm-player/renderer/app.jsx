@@ -233,11 +233,7 @@ function TotpSetup({data,version,platformName,onDone}){
 function LinkCheckScreen({bm,verified,platformName,onGo}){
   const [slow,setSlow]=React.useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setSlow(true),10000);return()=>clearTimeout(t);},[]);
-  const [spoken,setSpoken]=React.useState(false);
-  React.useEffect(()=>{if(!verified)return;const t=setTimeout(()=>setSpoken(true),25000);return()=>clearTimeout(t);},[verified]);
-  const ready=(verified&&spoken)||(!verified&&slow);
-  // Speak the welcome once per app start, as soon as the website confirms the link.
-  React.useEffect(()=>{if(!verified)return;if(window.__bmWelcomed||!bm?.welcomeVoice){setSpoken(true);return;}window.__bmWelcomed=true;const done=()=>setSpoken(true);bm.welcomeVoice().then(v=>{if(!v)return done();const b=atob(v.audio),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const url=URL.createObjectURL(new Blob([u],{type:v.mime}));const a=new Audio(url);a.onended=()=>{URL.revokeObjectURL(url);done();};a.onerror=done;a.play().catch(done);}).catch(done);},[verified]);
+  const ready=verified||slow;
   return <main className="family-screen"><section className="family-panel compact">
     <h1>Welcome to BM Player</h1>
     <p className="status-line">{verified?'✅ Your device is linked':slow?'⏳ Still checking your linked device… please wait':'⏳ Checking your linked device… please wait'}</p>
