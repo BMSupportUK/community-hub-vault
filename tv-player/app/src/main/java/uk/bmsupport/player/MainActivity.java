@@ -1539,7 +1539,7 @@ public class MainActivity extends Activity {
             }
             @Override public void onPlayerError(androidx.media3.common.PlaybackException e) { if (preview != null) { preview.seekToDefaultPosition(); preview.prepare(); preview.play(); } }
         });
-        if (status != null) status.setText("Press OK twice for full screen");
+        if (status != null) status.setText(fullScreenHint());
         previewCounted = true; setNowPlaying(it, false, true);
         previewStarted();
     }
@@ -1633,7 +1633,7 @@ public class MainActivity extends Activity {
             preview.addListener(previewListener = new androidx.media3.common.Player.Listener() {
                 @Override public void onPlaybackStateChanged(int s) {
                     if (s == androidx.media3.common.Player.STATE_READY) {
-                        status.setText("Press OK twice for full screen");
+                        status.setText(fullScreenHint());
                         if (!previewCounted) { previewCounted = true; setNowPlaying(it, false, true); }
                         previewStarted();
                     } else if (s == androidx.media3.common.Player.STATE_ENDED && preview != null) {
@@ -4565,6 +4565,33 @@ public class MainActivity extends Activity {
         GradientDrawable pbg = new GradientDrawable(); pbg.setColor(CARD); pbg.setCornerRadius(dp(12));
         panel.setBackground(pbg);
         panel.setPadding(dp(14), dp(10), dp(14), dp(10));
+        // Preview box: OK on a channel previews it here; OK again grows that same picture to full
+        // screen (TV boxes) and Back shrinks it back, so there is no black gap either way.
+        androidx.media3.ui.PlayerView spv = new androidx.media3.ui.PlayerView(this);
+        spv.setErrorMessageProvider(er -> android.util.Pair.create(0, SafeError.PLAYBACK));
+        spv.setUseController(false);
+        spv.setBackgroundColor(Color.BLACK);
+        spv.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL);
+        spv.setShutterBackgroundColor(Color.BLACK);
+        android.widget.FrameLayout spFrame = new android.widget.FrameLayout(this);
+        spFrame.addView(spv, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        android.widget.ImageView spImg = new android.widget.ImageView(this);
+        spImg.setImageResource(R.drawable.preview_family);
+        spImg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        android.widget.FrameLayout spPoster = new android.widget.FrameLayout(this);
+        spPoster.addView(spImg, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        spFrame.addView(spPoster, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        previewPoster = spPoster; previewItem = null;
+        panel.addView(spFrame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(160)));
+        spFrame.addOnLayoutChangeListener((v, l, t, r, b2, ol, ot, or, ob) -> {
+            int h = (r - l) * 9 / 16;
+            if (panel.getHeight() > 0) h = Math.min(h, panel.getHeight() * 2 / 5);
+            if (h > 0 && Math.abs(v.getHeight() - h) > 2) { ViewGroup.LayoutParams vlp = v.getLayoutParams(); vlp.height = h; v.post(() -> v.setLayoutParams(vlp)); }
+        });
+        sportsPreviewStatus = text("Press OK on a channel to preview it · OK again for full screen", 13, MUTED, false);
+        sportsPreviewStatus.setSingleLine(true); sportsPreviewStatus.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        panel.addView(sportsPreviewStatus);
+        sportsPreviewView = spv;
         sportsPanelTitle = text("", 19, TEXT, true);
         sportsPanelTitle.setMaxLines(2); sportsPanelTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
         sportsPanelSub = text("", 13, MUTED, false);
@@ -4617,6 +4644,9 @@ public class MainActivity extends Activity {
     private Button sportsCatPill; private LinearLayout sportsDays;
     private TextView sportsPanelTitle, sportsPanelSub; private ListView sportsChannelList;
     private String sportsReturnChannelId;
+    private androidx.media3.ui.PlayerView sportsPreviewView;
+    private TextView sportsPreviewStatus;
+    private String fullScreenHint() { return "sports".equals(screen) ? "Press OK on the channel again for full screen" : "Press OK twice for full screen"; }
     /** Chosen website main category / sub-category (null = all) and day (0 = today). */
     private String sportsSport, sportsSub, sportsGuide; private int sportsDay;
     private List<String[]> sportsAliases = new ArrayList<>();
@@ -5039,7 +5069,12 @@ public class MainActivity extends Activity {
                     Item it = t.get(w);
                     if (it == null && !l.get(w).startsWith("✕")) return;
                     if (it == null) Toast.makeText(this, "That channel isn't in your playlist – try another or search", Toast.LENGTH_SHORT).show();
-                    else { sportsReturnChannelId = it.id; retryEvent = e; retryAliases = aliases; play(it, defaultVlc()); }
+                    else {
+                        sportsReturnChannelId = it.id; retryEvent = e; retryAliases = aliases;
+                        if (sportsPreviewView != null && previewItem != null && it.id.equals(previewItem.id) && preview != null) play(it, defaultVlc());
+                        else if (sportsPreviewView != null) schedulePreview(it, sportsPreviewView, sportsPreviewStatus);
+                        else play(it, defaultVlc());
+                    }
                 });
                 if (focus) {
                     int restore = keepChannel >= 0 && keepChannel < t.size() && t.get(keepChannel) != null ? keepChannel : firstPlayable(t);

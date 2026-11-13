@@ -19,3 +19,4 @@
 - Search/voice, keypad, tab and Films/Series layout rules live in `tv-player/app/AGENTS.md`.
 - TV boxes draw the live preview on one window-decor SurfaceView "stage" over the preview box; opening full screen from it grows the stage to the screen under the see-through PlayerStageActivity (PlayerView with no surface) and Back hands the player back and shrinks it, because changing surface restarts many boxes' decoders (black). Phones and non-carried opens keep PreviewHandoff + PreviewSnapshot into the normal PlayerActivity.
 - Announcement icon and bottom bar appear only via MainActivity.signedInScreen(): signed in, unlocked and past today's 2FA; never on link/account-number/2FA/expired/maintenance screens.
+- Sports Guide previews a channel in its own preview box first (OK previews, OK again on the same channel carries it full screen), reusing the Live TV stage/hand-back so neither direction reconnects.
