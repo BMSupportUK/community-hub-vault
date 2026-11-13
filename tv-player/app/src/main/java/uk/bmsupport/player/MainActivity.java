@@ -2118,7 +2118,7 @@ public class MainActivity extends Activity {
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
-        new AlertDialog.Builder(this).setCustomTitle(filmDetails(it)).setItems(opts, (d, w) -> {
+        new AlertDialog.Builder(this).setCustomTitle("live".equals(it.kind) ? channelDetails(it) : filmDetails(it)).setItems(opts, (d, w) -> {
             if (cast && w == castAt) castToTv(it);
             else if (w == 0) play(it, defaultVlc());
             else if (w == 1) toggleSaved("fav", it);
@@ -2127,6 +2127,20 @@ public class MainActivity extends Activity {
     }
 
     /** Film details shown above the play options: backdrop, rating · year · length · genre, cast, director, plot. */
+    /** Live channel menu header: channel name plus what's on now and up next (no film rating/vote line). */
+    private View channelDetails(Item it) {
+        LinearLayout c = new LinearLayout(this); c.setOrientation(LinearLayout.VERTICAL);
+        c.setPadding(dp(16), dp(12), dp(16), dp(4));
+        TextView name = new TextView(this); name.setText(it.name); name.setTextColor(Color.WHITE);
+        name.setTextSize(20); name.setTypeface(null, android.graphics.Typeface.BOLD); name.setSingleLine(true);
+        name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        TextView guide = new TextView(this); guide.setTextColor(Color.LTGRAY); guide.setTextSize(15);
+        guide.setPadding(0, dp(6), 0, 0);
+        c.addView(name); c.addView(guide);
+        loadEpg(it, name, guide);
+        return c;
+    }
+
     private View filmDetails(Item it) {
         MediaHero h = new MediaHero(); h.show(it);
         h.view.setPadding(dp(8), dp(8), dp(8), dp(4));
