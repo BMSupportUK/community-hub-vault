@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Correct manual-order customer labels (Orders and Profit & costs) and remove order creation from the customer-card email dialog; verified MANUAL-595281's saved customer is Alex Shimmin, six tests pass and build OK. Full dashboard check blocked by password/staff PIN; website changes need publishing.
+
 - [x] Fix manual-customer checkout email errors and exclude paid orders from the email picker; reproduced missing email-column error for MANUAL-595281, live RPC now prepares successfully, 13 tests pass and build OK. Actual button/send check blocked by dashboard password/staff PIN; no email sent during testing.
 
 - [x] Add optional existing-customer expiry to manual customer creation and show it on the customer card; five tests pass, expiry storage/list verified and build OK. Full signed-in form check blocked by profile/password/staff PIN gates; publishing needed.

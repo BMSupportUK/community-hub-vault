@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-type NamedOrder = { user_id?: string | null; shipping_name?: string | null; existing_username?: string | null };
+export { orderCustomerName } from './order-customer-label';
 
 /** Site usernames for order owners, keyed by user id. */
 export async function fetchOrderUserNames(userIds: (string | null | undefined)[]) {
@@ -16,7 +16,3 @@ export async function fetchOrderUserNames(userIds: (string | null | undefined)[]
   return names;
 }
 
-/** Orders show the buyer's site username first; the typed checkout name is only a fallback. */
-export function orderCustomerName(order: NamedOrder, names: Record<string, string>) {
-  return (order.user_id && names[order.user_id]) || order.shipping_name || order.existing_username || "—";
-}
