@@ -288,8 +288,13 @@ public class PlayerActivity extends Activity {
         StreamClaim.attach(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
+        final boolean stage = this instanceof PlayerStageActivity;
+        // A see-through window can't fix its orientation on Android 8.0; the guide beneath is already sideways.
+        if (stage && android.os.Build.VERSION.SDK_INT != 26) setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         // Films and episodes draw to a TextureView so baked-in black bars can be measured and zoomed past.
-        view = PlayerControls.canSkip(kind()) ? (PlayerView) getLayoutInflater().inflate(R.layout.bm_player_texture, root, false) : new PlayerView(this);
+        // Stage: the guide's own picture is already full screen underneath; this view only adds the controls.
+        view = stage ? (PlayerView) getLayoutInflater().inflate(R.layout.bm_player_stage, root, false)
+                : PlayerControls.canSkip(kind()) ? (PlayerView) getLayoutInflater().inflate(R.layout.bm_player_texture, root, false) : new PlayerView(this);
         view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
         view.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
         // Fast forward/rewind only where they work: films and series episodes, never live TV or catch up.
@@ -336,7 +341,7 @@ public class PlayerActivity extends Activity {
         resumePosition = getIntent().getLongExtra("resume_ms", 0);
         view.setKeepContentOnPlayerReset(true); // the last picture stays up while a dropped live stream reopens
         view.setPlayer(player);
-        Bitmap still = carried != null ? PreviewSnapshot.take() : null;
+        Bitmap still = carried != null && !stage ? PreviewSnapshot.take() : null;
         if (still != null) {
             final android.widget.ImageView cover = new android.widget.ImageView(this);
             cover.setImageBitmap(still);

@@ -1415,16 +1415,103 @@ public class MainActivity extends Activity {
     }
 
     private TextView previewStatus;
+
+    // ---- Video stage (TV boxes) ----------------------------------------------------------------
+    // One SurfaceView on the window decor, laid over the preview box. Full screen grows it to the
+    // whole screen under a see-through PlayerStageActivity, and Back shrinks it again: the video
+    // never changes surface, which on many boxes restarts the decoder and shows black.
+    private android.view.SurfaceView stage;
+    private View stageBox;
+    private boolean stageFull, stageCarried;
+    private androidx.media3.exoplayer.ExoPlayer stagePlayer;
+    private final View.OnLayoutChangeListener stageFollow = (v, l, t, r, b, ol, ot, or, ob) -> placeStage();
+    private androidx.media3.common.Player.Listener stageSize;
+
+    private boolean stageDevice() {
+        android.app.UiModeManager m = (android.app.UiModeManager) getSystemService(UI_MODE_SERVICE);
+        return m != null && m.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION;
+    }
+
+    private boolean stageHolds(androidx.media3.exoplayer.ExoPlayer p) {
+        return p != null && stage != null && stage.getParent() != null && stage.getVisibility() == View.VISIBLE && stageBox != null;
+    }
+
+    private void onStage(androidx.media3.exoplayer.ExoPlayer p, androidx.media3.ui.PlayerView box) {
+        if (!stageDevice() || p == null || box == null) return;
+        try {
+            android.widget.FrameLayout decor = (android.widget.FrameLayout) getWindow().getDecorView();
+            if (stage == null) stage = new android.view.SurfaceView(this);
+            if (stage.getParent() != decor) {
+                if (stage.getParent() != null) ((android.view.ViewGroup) stage.getParent()).removeView(stage);
+                decor.addView(stage, new android.widget.FrameLayout.LayoutParams(1, 1));
+            }
+            if (stageBox != null) stageBox.removeOnLayoutChangeListener(stageFollow);
+            stageBox = box;
+            box.addOnLayoutChangeListener(stageFollow);
+            if (box.getVideoSurfaceView() != null) box.getVideoSurfaceView().setVisibility(View.GONE);
+            stage.setVisibility(View.VISIBLE);
+            p.setVideoSurfaceHolder(stage.getHolder()); stagePlayer = p;
+            if (stageSize != null) p.removeListener(stageSize);
+            p.addListener(stageSize = new androidx.media3.common.Player.Listener() {
+                @Override public void onVideoSizeChanged(androidx.media3.common.VideoSize s) { placeStage(); }
+            });
+            placeStage();
+        } catch (RuntimeException e) { hideStage(); }
+    }
+
+    private void hideStage() {
+        if (stageBox != null) {
+            stageBox.removeOnLayoutChangeListener(stageFollow);
+            if (stageBox instanceof androidx.media3.ui.PlayerView && ((androidx.media3.ui.PlayerView) stageBox).getVideoSurfaceView() != null)
+                ((androidx.media3.ui.PlayerView) stageBox).getVideoSurfaceView().setVisibility(View.VISIBLE);
+        }
+        stageBox = null; stagePlayer = null;
+        if (stage != null) stage.setVisibility(View.GONE);
+    }
+
+    /** Fits the picture's shape inside the preview box, or the whole screen when full. */
+    private void placeStage() {
+        if (stage == null || stage.getParent() == null || stage.getVisibility() != View.VISIBLE) return;
+        View decor = getWindow().getDecorView();
+        int bx, by, bw, bh;
+        if (stageFull || stageBox == null) { bx = 0; by = 0; bw = decor.getWidth(); bh = decor.getHeight(); }
+        else {
+            int[] at = new int[2]; stageBox.getLocationInWindow(at);
+            bx = at[0]; by = at[1]; bw = stageBox.getWidth(); bh = stageBox.getHeight();
+        }
+        if (bw <= 0 || bh <= 0) return;
+        float ratio = 16f / 9f;
+        androidx.media3.exoplayer.ExoPlayer p = stagePlayer;
+        if (p != null) {
+            androidx.media3.common.VideoSize v = p.getVideoSize();
+            if (v.width > 0 && v.height > 0) ratio = v.width * v.pixelWidthHeightRatio / v.height;
+        }
+        int w = bw, h = Math.round(bw / ratio);
+        if (h > bh) { h = bh; w = Math.round(bh * ratio); }
+        android.widget.FrameLayout.LayoutParams lp = (android.widget.FrameLayout.LayoutParams) stage.getLayoutParams();
+        int x = bx + (bw - w) / 2, y = by + (bh - h) / 2;
+        if (lp.width == w && lp.height == h && lp.leftMargin == x && lp.topMargin == y) return;
+        lp.width = w; lp.height = h; lp.leftMargin = x; lp.topMargin = y; lp.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
+        stage.setLayoutParams(lp);
+    }
     /** Back from full screen: the same channel keeps playing in the guide preview, without reconnecting. */
     private void takeBackPreview() {
         boolean onGuide = previewView != null && previewItem != null && "live".equals(previewItem.kind) && preview == null;
         androidx.media3.exoplayer.ExoPlayer p = onGuide ? PreviewHandoff.takeBack(previewItem.id) : null;
-        if (p == null) { PreviewHandoff.dropBack(); return; }
+        boolean wasStage = stageCarried;
+        stageCarried = false; stageFull = false;
+        if (p == null) { PreviewHandoff.dropBack(); hideStage(); return; }
         if (previewTask != null) ui.removeCallbacks(previewTask);
         previewTask = null;
         preview = p;
-        previewView.setPlayer(null);
-        previewView.setPlayer(p);
+        if (wasStage && stage != null && stage.getParent() != null) {
+            // Still on the stage: just shrink the same picture back into the preview box.
+            p.setVideoSurfaceHolder(stage.getHolder()); stagePlayer = p; stageBox = previewView; placeStage();
+        } else {
+            previewView.setPlayer(null);
+            previewView.setPlayer(p);
+            onStage(p, previewView);
+        }
         if (previewPoster != null) previewPoster.setVisibility(View.GONE);
         final Item it = previewItem;
         final TextView status = previewStatus;
@@ -1452,6 +1539,7 @@ public class MainActivity extends Activity {
         if (previewTask != null) ui.removeCallbacks(previewTask);
         previewTask = null;
         if (preview != null) { preview.release(); preview = null; }
+        if (!stageCarried) hideStage();
         if (previewPoster != null) previewPoster.setVisibility(View.VISIBLE);
         // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
         // Only clear the note while it still belongs to the preview: real playback (or VLC) started
@@ -1523,6 +1611,7 @@ public class MainActivity extends Activity {
             preview = PlayerActivity.build(this, false, it.name + " " + categoryName(it));
             previewView = view;
             view.setPlayer(preview);
+            onStage(preview, view); // TV boxes: picture on the window-level stage so full screen never moves it
             preview.addListener(previewListener = new androidx.media3.common.Player.Listener() {
                 @Override public void onPlaybackStateChanged(int s) {
                     if (s == androidx.media3.common.Player.STATE_READY) {
@@ -2426,6 +2515,18 @@ public class MainActivity extends Activity {
         // UHD channels need the device's only 4K decoder, and a still-held preview makes full screen fail.
         // The playing preview of this same channel goes full screen as it is: no reconnect, no second load.
         // A still of the preview covers the moment the box's decoder moves to the full-screen picture.
+        if (stageHolds(preview) && PreviewHandoff.canCarry(it.kind, previewItem == null ? null : previewItem.id, it.id,
+                preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY)) {
+            // The same picture grows to fill the screen and the controls open over it, see-through:
+            // the video never changes window, so the box's video chip never restarts (no black).
+            stageFull = true; stageCarried = true; placeStage();
+            if (carryPreview(it)) {
+                intent.setClass(this, PlayerStageActivity.class).putExtra("carried", true);
+                stopPreview(); stopMulti(); startActivity(intent); overridePendingTransition(0, 0);
+                return;
+            }
+            stageFull = false; stageCarried = false; hideStage();
+        }
         if (preview != null && previewView != null && PreviewHandoff.canCarry(it.kind, previewItem == null ? null : previewItem.id, it.id,
                 preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY)) {
             PreviewSnapshot.capture(previewView.getVideoSurfaceView(), ui, () -> {
