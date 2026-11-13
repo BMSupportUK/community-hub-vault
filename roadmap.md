@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Correct all four BM Player PDF guides: remove account-number entry and clarify choosing the app login during device linking. Regenerated and uploaded all four private PDFs; authenticated read-back matches exactly and public access is blocked. All 15 pages visually inspected: existing sparse install pages remain unchanged, no clipping or overlap. Five guide checks pass and build OK. Full card-opening recheck blocked by profile selection; hidden legacy article bodies remain front-page-locked and are not rendered for these guides.
+
 - [x] Fix zero-value manual-order notifications using the finished transaction total; live deferred trigger verified, Matty Brown alert repaired to £60.00 and Alex Shimmin to £65.00, saved amounts read back, six regression tests pass and build OK. Dashboard visual check not performed; no real orders created during testing.
 
 - [x] Correct manual-order customer labels (Orders and Profit & costs) and remove order creation from the customer-card email dialog; verified MANUAL-595281's saved customer is Alex Shimmin, six tests pass and build OK. Full dashboard check blocked by password/staff PIN; website changes need publishing.
