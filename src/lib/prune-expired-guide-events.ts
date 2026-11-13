@@ -82,6 +82,12 @@ export function pruneExpiredGuideEvents(
 
   for (const line of lines) {
     if (!line) continue;
+    // A saved finish belongs to the open event, together with the channel
+    // beneath it. It must never create a second independently expired block.
+    if (event.length && /^End:\s*/i.test(line)) {
+      event.push(line);
+      continue;
+    }
     if (isGuideDateHeading(line)) {
       closeEvent();
       if (current.heading !== null || current.events.length) groups.push(current);
