@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Diagnosed an endless seek-on-frozen-decoder recovery loop (10 Movie Premiere freezes/minute, BBC no reports); built signed 4.85 with Movie Premiere clean-keyframe startup, same-feed fresh decoder/surface retries then in-app backup. All 256 Android tests pass, including the stage recovery flow; permanent signer matches public 4.84. 50Hz unchanged; installer saved, public update not switched.
+- [ ] Verify Movie Premiere on Virgin Media with 4.85; blocked by updated real-box access. Upstream feed/ISP cause remains unproven because no raw stream or decoder errors are available.
+
 - [x] Released signed BM Player 4.84 through the public updater: live info returns 4.84, downloaded APK is byte-identical to the tested build and permanent BM signer verified (versionCode 295).
 - [ ] Confirm GJ installed and ran 4.84; blocked by no connected box and no new check-in (last reported 4.78 at 21:22 UTC on 13 Nov). Tester must use Settings › Update app and reopen BM Player.
 

@@ -514,6 +514,7 @@ public class PlayerActivity extends Activity {
 
     private void startWithRecovery(String[] urls) {
         liveUrls = urls;
+        urlAt = Math.max(0, Math.min(urls.length - 1, getIntent().getIntExtra("freeze_url_index", 0)));
         listenA(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
             // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
@@ -634,13 +635,38 @@ public class PlayerActivity extends Activity {
             if (StreamRecovery.frozen(afTicks)) {
                 afTicks = 0; afLastFrames = -1;
                 reportBuffer(StreamRecovery.FREEZE_TICKS * 1000L, true, true, null);
-                if ("live".equals(kind())) { player.seekToDefaultPosition(); player.prepare(); player.play(); } else reconnect();
+                if ("live".equals(kind())) { recoverFrozenLive(); return; } else reconnect();
             } else if (playing && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset(), defaultLiveOffset(), recoveryName())) {
                 player.seekToDefaultPosition();
             }
             ui.postDelayed(this, 1000);
         }
     };
+
+    static android.content.Intent freshFreezeIntent(android.content.Intent original, int urlIndex) {
+        android.content.Intent next = new android.content.Intent(original);
+        next.removeExtra("carried");
+        next.putExtra("freeze_url_index", urlIndex);
+        next.putExtra("freeze_restarts", original.getIntExtra("freeze_restarts", 0) + 1);
+        return next;
+    }
+
+    private void recoverFrozenLive() {
+        if (player == null || handedOver || isFinishing()) return;
+        if (LiveFreezeRecovery.useBackup(getIntent().getIntExtra("freeze_restarts", 0))) {
+            handToBackup(); return;
+        }
+        // A fresh opaque playback screen also replaces a carried guide-stage surface. Never hand
+        // the frozen decoder back to the guide, and never open a second provider connection first.
+        android.content.Intent next = freshFreezeIntent(getIntent(), urlAt).setClass(this, PlayerActivity.class);
+        handedOver = true;
+        ui.removeCallbacks(reopenStream); reconnectPending = false;
+        for (Player.Listener l : mine) player.removeListener(l);
+        for (androidx.media3.exoplayer.analytics.AnalyticsListener l : mineA) player.removeAnalyticsListener(l);
+        player.release(); player = null;
+        startActivity(next);
+        finish();
+    }
 
     /** The live offset the stream itself settled on (provider hold-back), 0 when unknown. */
     private long defaultLiveOffset() {
