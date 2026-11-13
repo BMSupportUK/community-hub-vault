@@ -105,12 +105,12 @@ final class FrameRateMatch {
     }
 
     /** The customer's own choice from the home-screen 50Hz button; never switched automatically. */
-    static boolean chosen50(Activity a) {
-        return a.getSharedPreferences("bmplayer", android.content.Context.MODE_PRIVATE).getBoolean("tv_50hz", false);
-    }
+    // Kept only while the app is running: every fresh start opens at the TV's normal setting.
+    private static boolean on50;
+    static boolean chosen50(Activity a) { return on50; }
 
     static void setChosen50(Activity a, boolean on) {
-        a.getSharedPreferences("bmplayer", android.content.Context.MODE_PRIVATE).edit().putBoolean("tv_50hz", on).apply();
+        on50 = on;
         if (on) apply(a, 50f); else reset(a);
     }
 

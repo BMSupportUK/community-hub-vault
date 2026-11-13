@@ -33,5 +33,5 @@
 - Linked-device spoken welcome: apps request device-token `welcome_voice` once per app start after the link is confirmed; the website makes and caches the MP3 with ElevenLabs, so no voice key ships in an app.
 - Release builds scramble our own code: Android apps use R8 (`minifyEnabled true`, `proguard-rules.pro` keeps third-party libraries); Windows/Mac release steps run javascript-obfuscator over the staged `.cjs` and renderer bundle (never the repo source) and then re-check every module still loads. Keep the R8 mapping file privately for crash traces.
 
-- Display mode changes happen only when the customer presses the home-screen 50Hz button (saved choice, re-pinned on each screen); never automatically at startup or playback, and playback keeps Media3 surface rate requests disabled.
+- Display mode changes happen only when the customer presses the home-screen 50Hz button (choice lasts only while the app runs, re-pinned on each screen); never automatically at startup or playback, and playback keeps Media3 surface rate requests disabled.
 - Live preview and full screen share one player both ways via PreviewHandoff: the preview view stays attached until full screen takes the surface, and Back from a live channel hands the clean player (screen listeners removed) back to the guide preview, so neither direction reconnects.
