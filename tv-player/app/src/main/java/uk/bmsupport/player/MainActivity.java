@@ -1804,7 +1804,7 @@ public class MainActivity extends Activity {
         if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
         int maxCons = Math.min(3, consPref(1));
         if (kind.equals("live") && maxCons >= 2) head.addView(headerPill("🖥 Multi-screen (" + maxCons + ")", v -> chooseMultiScreens(maxCons)));
-        // Films/Series: the Category pill sits at the top beside the searches (no category column).
+        // Films/Series: Category pill and row-edge Left both open the same sliding drawer.
         final Button catPill = kind.equals("live") ? null : headerPill("☰ Category: All", v -> {});
         if (catPill != null) head.addView(catPill);
         head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
@@ -1825,6 +1825,10 @@ public class MainActivity extends Activity {
         ListView cats = list();
         final boolean posters = !kind.equals("live");
         final AbsListView items = posters ? posterGrid() : list();
+        final Runnable openCategories = () -> {
+            showPanel();
+            cats.requestFocus();
+        };
         final List<Item> shown = new ArrayList<>();
         final String[] sortKey = { prefs.getString("sort_" + kind, "added") };
         final Runnable[] applySort = new Runnable[1];
@@ -1914,7 +1918,25 @@ public class MainActivity extends Activity {
         final androidx.media3.ui.PlayerView previewView = pv;
         final TextView previewStatus = pvStatus, previewEpg = pvEpg;
         root.addView(panes, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        setContentView(root);
+        if (posters) {
+            LinearLayout panel = new LinearLayout(this);
+            panel.setOrientation(LinearLayout.VERTICAL);
+            panel.setBackgroundColor(CARD);
+            panel.setPadding(dp(18), dp(24), dp(18), dp(16));
+            panel.addView(text("Categories", 22, TEXT, true));
+            panel.addView(cats, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+            panel.addView(button("Close", v -> { hidePanel(); items.requestFocus(); }));
+            LinearLayout content = root;
+            if (isPhone()) {
+                content = row(); content.setPadding(0, 0, 0, 0);
+                content.addView(button("☰", v -> openCategories.run()), new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.MATCH_PARENT));
+                content.getChildAt(0).setContentDescription("Categories");
+                content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+            }
+            setContentView(sideDrawer(content, panel));
+            if (catPill != null) catPill.setOnClickListener(v -> openCategories.run());
+            MediaCategoryNavigation.bind((android.widget.GridView) items, openCategories);
+        } else setContentView(root);
 
         // Whole section is loaded once (from the saved list) and split by category locally,
         // so "All" shows straight away and every category opens instantly.
@@ -1968,7 +1990,8 @@ public class MainActivity extends Activity {
                     if (!c[0].equals(current[0])) return;
                     items.setSelection(0);
                     if (items instanceof ListView) ((ListView) items).setSelectionFromTop(0, 0);
-                    if (posters && catPill != null) catPill.requestFocus(); // Films/Series open on the Category pill
+                    if (posters && focusItems) items.requestFocus();
+                    else if (posters && catPill != null) catPill.requestFocus();
                     else if (focusItems) items.requestFocus();
                 });
                 if (!kind.equals("live")) {
@@ -2026,10 +2049,8 @@ public class MainActivity extends Activity {
                     all.clear(); all.addAll(everything);
                     cats.setAdapter(adapter(names));
                     cats.setSelection(0);
-                    showCat.accept(0, posters);
+                    showCat.accept(0, false);
                     if (!posters) cats.requestFocus();
-                    if (catPill != null) catPill.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle("Category")
-                            .setItems(names.toArray(new String[0]), (d, w) -> showCat.accept(w, true)).show());
                 });
             } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
         });
@@ -2075,6 +2096,7 @@ public class MainActivity extends Activity {
         final Runnable[] pendingCat = new Runnable[1];
         cats.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (posters) return; // Drawer navigation does not change category until OK/tap.
                 if (pendingCat[0] != null) ui.removeCallbacks(pendingCat[0]);
                 pendingCat[0] = () -> showCat.accept(pos, false);
                 ui.postDelayed(pendingCat[0], 250);
@@ -2083,6 +2105,7 @@ public class MainActivity extends Activity {
         });
         cats.setOnItemClickListener((p, v, pos, id) -> {
             if (pendingCat[0] != null) ui.removeCallbacks(pendingCat[0]);
+            if (posters) hidePanel();
             showCat.accept(pos, true);
         });
 

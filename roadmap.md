@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Built signed Android/Fire TV 4.84: Films and Series use sliding category drawers, Left opens from any poster row's left edge while normal across-row navigation remains, phones have a left-side Categories control, and OK/tap selects and returns to posters. All 252 Android tests pass. APK saved without switching public update; real-box testing unavailable (no connected device).
+
 - [x] Built signed Android/Fire TV 4.83 with pane-local Multi-screen black-picture recovery: fresh decoder/surface after 10s black or 4s frozen while READY, maximum three restarts, channel/audio preserved, stale callbacks rejected. All 250 Android tests pass including pane replacement; APK saved without switching the public update. Real-box playback unverified: no connected device.
 
 - [x] Built and released Android/Fire TV 4.82: Left opens categories from any Live TV guide row/time without scrolling to the header; 244 tests pass, permanent signer verified and live APK byte-identical. Real-box interaction unverified: no connected device.
