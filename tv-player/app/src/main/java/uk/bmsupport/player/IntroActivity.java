@@ -53,18 +53,34 @@ public class IntroActivity extends Activity {
         art.setImageResource(R.drawable.channel_loading);
         art.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
         root.addView(art, new FrameLayout.LayoutParams(-1, -1));
+        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        box.setGravity(android.view.Gravity.CENTER);
+        box.setBackgroundColor(0xDD000000);
+        box.setPadding(32, 24, 32, 24);
         android.widget.TextView note = new android.widget.TextView(this);
-        note.setText(FrameRateMatch.noteText(50f));
-        note.setTextSize(24); note.setTextColor(android.graphics.Color.WHITE);
-        note.setBackgroundColor(0xDD000000); note.setGravity(android.view.Gravity.CENTER);
-        note.setPadding(32, 24, 32, 24);
-        root.addView(note, new FrameLayout.LayoutParams(-1, -2, android.view.Gravity.BOTTOM));
+        note.setText("Switch your TV to 50Hz\n\nThis helps your TV show smoother streaming and motion.\n\nA black screen will appear for a few seconds while your TV switches.\n\nPress OK to switch and continue.");
+        note.setTextSize(22); note.setTextColor(android.graphics.Color.WHITE);
+        note.setGravity(android.view.Gravity.CENTER);
+        box.addView(note, new android.widget.LinearLayout.LayoutParams(-1, -2));
+        android.widget.Button ok = new android.widget.Button(this);
+        ok.setText("OK");
+        ok.setContentDescription("OK, switch TV to 50Hz");
+        ok.setTextSize(22);
+        android.widget.LinearLayout.LayoutParams buttonLayout = new android.widget.LinearLayout.LayoutParams(240, 72);
+        buttonLayout.topMargin = 16;
+        box.addView(ok, buttonLayout);
+        FrameLayout.LayoutParams boxLayout = new FrameLayout.LayoutParams(-1, -2, android.view.Gravity.BOTTOM);
+        boxLayout.setMargins(32, 16, 32, 24);
+        root.addView(box, boxLayout);
         setContentView(root);
-        handler.postDelayed(() -> {
-            if (isFinishing() || isDestroyed()) return;
+        ok.setOnClickListener(v -> {
+            if (opened || isFinishing() || isDestroyed()) return;
+            ok.setEnabled(false);
             FrameRateMatch.prefer50(this);
             openPlayer();
-        }, FrameRateMatch.NOTE_LEAD_MS);
+        });
+        ok.requestFocus();
     }
 
     private void openPlayer() {
