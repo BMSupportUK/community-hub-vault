@@ -2397,6 +2397,15 @@ public class MainActivity extends Activity {
         // Free the preview's decoder and provider connection before the full-screen player opens:
         // UHD channels need the device's only 4K decoder, and a still-held preview makes full screen fail.
         // The playing preview of this same channel goes full screen as it is: no reconnect, no second load.
+        // A still of the preview covers the moment the box's decoder moves to the full-screen picture.
+        if (preview != null && previewView != null && PreviewHandoff.canCarry(it.kind, previewItem == null ? null : previewItem.id, it.id,
+                preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY)) {
+            PreviewSnapshot.capture(previewView.getVideoSurfaceView(), ui, () -> {
+                if (carryPreview(it)) { intent.putExtra("carried", true); stopPreview(); stopMulti(); startActivity(intent); }
+                else { PreviewSnapshot.clear(); stopPreview(); stopMulti(); ui.postDelayed(() -> startActivity(intent), 600); }
+            });
+            return;
+        }
         if (carryPreview(it)) { intent.putExtra("carried", true); stopPreview(); stopMulti(); startActivity(intent); return; }
         boolean hadPreview = preview != null;
         stopPreview(); stopMulti();

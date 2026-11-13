@@ -334,6 +334,16 @@ public class PlayerActivity extends Activity {
         resumePosition = getIntent().getLongExtra("resume_ms", 0);
         view.setKeepContentOnPlayerReset(true); // the last picture stays up while a dropped live stream reopens
         view.setPlayer(player);
+        Bitmap still = carried != null ? PreviewSnapshot.take() : null;
+        if (still != null) {
+            final android.widget.ImageView cover = new android.widget.ImageView(this);
+            cover.setImageBitmap(still);
+            cover.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+            root.addView(cover, 1);
+            final Runnable lift = () -> { if (cover.getParent() != null) root.removeView(cover); };
+            player.addListener(new Player.Listener() { @Override public void onRenderedFirstFrame() { ui.post(lift); } });
+            ui.postDelayed(lift, PreviewSnapshot.MAX_COVER_MS);
+        } else PreviewSnapshot.clear();
         final boolean is4kDevice = device4k(this);
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int state) {

@@ -17,5 +17,5 @@
 - Report a problem lives on the built-in player screen (bottom-left button beside Sound booster, shown with the controls, ADJUST_PAN pop-up, no keepEntryVisible resizing which flickered phones); play menus never carry it — the series page keeps its own button.
 - Playback-engine rules (anti-freeze and live cushion, favourites sync, sound booster, guide listings, DLNA cast, backup hand-over, player controls, EPG time shift, swap channel, shared-login takeover) live in `tv-player/app/src/main/java/uk/bmsupport/AGENTS.md`.
 - Search/voice, keypad, tab and Films/Series layout rules live in `tv-player/app/AGENTS.md`.
-- Opening full screen from a playing Live TV preview hands that same ExoPlayer over via PreviewHandoff (no reconnect, one decoder); anything else (other channel, not ready, VLC, catch up) opens fresh after releasing the preview.
+- Opening full screen from a playing Live TV preview hands that same ExoPlayer over via PreviewHandoff (no reconnect, one decoder) with a PreviewSnapshot still covering the surface move until the first new frame; anything else (other channel, not ready, VLC, catch up) opens fresh after releasing the preview.
 - Announcement icon and bottom bar appear only via MainActivity.signedInScreen(): signed in, unlocked and past today's 2FA; never on link/account-number/2FA/expired/maintenance screens.
