@@ -137,6 +137,8 @@ public class PlayerActivity extends Activity {
                 // Some TV boxes (SDMC/Amlogic) hang when a 4K decoder is let go; never block the screen waiting for it.
                 .setReleaseTimeoutMs(400).setDetachSurfaceTimeoutMs(400)
                 .build();
+        // Startup owns the display rate; video surfaces must not request content-driven switches.
+        x.setVideoChangeFrameRateStrategy(androidx.media3.common.C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF);
         SoundBoost.attach(c, x);
         return x;
     }
@@ -286,7 +288,6 @@ public class PlayerActivity extends Activity {
         StreamClaim.attach(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
-        rootView = root;
         // Films and episodes draw to a TextureView so baked-in black bars can be measured and zoomed past.
         view = PlayerControls.canSkip(kind()) ? (PlayerView) getLayoutInflater().inflate(R.layout.bm_player_texture, root, false) : new PlayerView(this);
         view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
@@ -424,7 +425,7 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         flp.rightMargin = 32; flp.topMargin = 32;
         root.addView(feedNote, flp);
-        coverUntilRateKnown(root);
+        coverUntilFirstFrame(root);
         startWithRecovery(urls);
         ui.postDelayed(saveTick, 5000);
     }
@@ -470,54 +471,19 @@ public class PlayerActivity extends Activity {
         feedNote.setVisibility(TextView.VISIBLE);
     }
 
-    private volatile boolean rateMatched;
-    private final long[] frameTimes = new long[31];
-    private int frameCount;
-
-    // 50Hz switch before the picture: the TV goes black while it changes mode, so the picture (and sound)
-    // stay covered until the frame rate is known and the TV has settled, giving one blank at the start.
-    private android.view.View rateCover;
-    private boolean uncovered, firstFrame, rateDone;
-    private long rateSettleAt;
+    // Startup owns the refresh rate. Fresh playback only waits for its first picture.
+    private android.view.View loadingCover;
+    private boolean uncovered, firstFrame;
     private final Runnable uncover = () -> {
         if (uncovered) return; uncovered = true;
-        if (rateCover != null) rateCover.setVisibility(android.view.View.GONE);
+        if (loadingCover != null) loadingCover.setVisibility(android.view.View.GONE);
         if (player != null) player.setVolume(1f);
     };
-    /** Lift the "Channel Loading" picture once a frame has rendered and any 50Hz switch has settled. */
     private void maybeUncover() {
-        if (uncovered || !firstFrame || !rateDone) return;
-        ui.removeCallbacks(uncover);
-        ui.postDelayed(uncover, Math.max(0, rateSettleAt - android.os.SystemClock.elapsedRealtime()));
+        if (uncovered || !firstFrame) return;
+        ui.post(uncover);
     }
-    /** The TV goes black for a moment while it changes refresh rate: say so, so it doesn't look like a fault. */
-    private void showRateNote(float fps) {
-        if (rootView == null) return;
-        TextView note = new TextView(this);
-        note.setText(FrameRateMatch.noteText(fps));
-        note.setTextSize(20); note.setTypeface(Typeface.DEFAULT_BOLD); note.setTextColor(0xFFFFFFFF);
-        note.setBackgroundColor(0xCC000000); note.setPadding(36, 16, 36, 16);
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        lp.topMargin = 60;
-        rootView.addView(note, lp);
-        ui.postDelayed(() -> { if (note.getParent() != null) rootView.removeView(note); }, FrameRateMatch.NOTE_MS + FrameRateMatch.NOTE_LEAD_MS);
-    }
-    private FrameLayout rootView;
-    /** Shows the switch note first, then changes the TV's refresh rate 1.5s later so the note is seen before the blank. */
-    private boolean switchWithNote(float fps) {
-        if (!FrameRateMatch.wouldSwitch(this, fps)) return false;
-        showRateNote(fps);
-        ui.postDelayed(() -> { if (!isFinishing() && !isDestroyed()) FrameRateMatch.apply(this, fps); }, FrameRateMatch.NOTE_LEAD_MS);
-        return true;
-    }
-    private void rateKnown(float fps) {
-        String id = getIntent().getStringExtra("content_id");
-        if (fps > 0 && id != null) prefs(this).edit().putFloat("fps:" + id, fps).apply();
-        boolean switched = fps > 0 && switchWithNote(fps);
-        rateSettleAt = android.os.SystemClock.elapsedRealtime() + FrameRateMatch.uncoverDelay(switched) + (switched ? FrameRateMatch.NOTE_LEAD_MS : 0);
-        rateDone = true; maybeUncover();
-    }
-    private void coverUntilRateKnown(FrameLayout root) {
+    private void coverUntilFirstFrame(FrameLayout root) {
         if (carried != null) { uncovered = true; return; }
         // Loading picture: family watching TV with popcorn and "Channel Loading" (sound muted underneath).
         FrameLayout cover = new FrameLayout(this);
@@ -534,32 +500,15 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams mlp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         mlp.bottomMargin = 90;
         cover.addView(msg, mlp);
-        rateCover = cover;
+        loadingCover = cover;
         root.addView(cover, 1, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         player.setVolume(0f);
         player.addListener(new Player.Listener() { @Override public void onRenderedFirstFrame() { firstFrame = true; maybeUncover(); } });
-        if (FrameRateMatch.skip()) rateDone = true;
-        else {
-            // Channel played before: switch the TV now, while the stream is still connecting.
-            String id = getIntent().getStringExtra("content_id");
-            float known = id == null ? 0 : prefs(this).getFloat("fps:" + id, 0);
-            if (known > 0) switchWithNote(known);
-        }
-        // Never hold sound back long after the picture: the frame-rate wait gives up after MAX_HOLD_MS.
-        ui.postDelayed(() -> { rateDone = true; maybeUncover(); }, FrameRateMatch.MAX_HOLD_MS);
+
     }
 
     private void startWithRecovery(String[] urls) {
         liveUrls = urls;
-        // TS streams rarely state their frame rate: measure it from the first decoded frames instead.
-        player.setVideoFrameMetadataListener((presentationUs, releaseNs, format, mediaFormat) -> {
-            if (rateMatched || frameCount >= frameTimes.length) return;
-            frameTimes[frameCount++] = presentationUs;
-            if (frameCount < frameTimes.length) return;
-            float fps = FrameRateMatch.measure(frameTimes);
-            rateMatched = true;
-            ui.post(() -> rateKnown(fps));
-        });
         player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
             // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
@@ -618,10 +567,7 @@ public class PlayerActivity extends Activity {
                     if (g.getType() == androidx.media3.common.C.TRACK_TYPE_AUDIO)
                         for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i)) { androidx.media3.common.Format af = g.getTrackFormat(i); audioKey = af.sampleMimeType + "/" + af.channelCount + "/" + af.sampleRate; }
                 if (audioKey != null) { if (lastAudioKey != null && !audioKey.equals(lastAudioKey)) markSwitch("sound"); lastAudioKey = audioKey; }
-                // 50fps UK sport judders on 60Hz Android boxes: ask the TV for a matching refresh rate.
-                for (androidx.media3.common.Tracks.Group g : t.getGroups())
-                    if (g.getType() == androidx.media3.common.C.TRACK_TYPE_VIDEO)
-                        for (int i = 0; i < g.length; i++) if (g.isTrackSelected(i) && g.getTrackFormat(i).frameRate > 0) { rateMatched = true; rateKnown(g.getTrackFormat(i).frameRate); return; }
+
             }
             @Override public void onPlayerError(PlaybackException e) {
                 if (e.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) { player.seekToDefaultPosition(); player.prepare(); return; }

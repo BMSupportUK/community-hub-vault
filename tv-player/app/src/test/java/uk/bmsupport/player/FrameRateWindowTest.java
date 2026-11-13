@@ -40,4 +40,17 @@ public class FrameRateWindowTest {
             }
         }
     }
+    @Test public void previewAndFullScreenEngineNeverRequestAContentRateSwitch() {
+        try (var controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            androidx.media3.exoplayer.ExoPlayer player = PlayerActivity.build(activity);
+            try {
+                assertEquals(androidx.media3.common.C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF,
+                        player.getVideoChangeFrameRateStrategy());
+                FrameRateMatch.apply(activity, 50f);
+                assertEquals(1, activity.getWindow().getAttributes().preferredDisplayModeId);
+            } finally { player.release(); }
+        }
+    }
+
 }
