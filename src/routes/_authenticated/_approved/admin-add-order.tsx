@@ -66,6 +66,7 @@ function AddOrderPage() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [customersLoading, setCustomersLoading] = useState(true);
   const [customerCodes, setCustomerCodes] = useState<Record<string, CustomerDiscountCode>>({});
+  const [customerEmails, setCustomerEmails] = useState<Record<string, string>>({});
   const [appliedCode, setAppliedCode] = useState<CustomerDiscountCode | null>(null);
   const [siteUser, setSiteUser] = useState<OrderSiteUser | null>(null);
 
@@ -93,6 +94,12 @@ function AddOrderPage() {
         : { data: [] };
       setCustomerCodes(pickCustomerDiscountCodes(data as never, (links ?? []) as never));
     })();
+    // Saved contact emails, so picking a manual customer fills the email box.
+    void supabase.rpc("admin_manual_customer_emails").then(({ data }) => {
+      const map: Record<string, string> = {};
+      for (const row of (data ?? []) as unknown as { id: string; email: string }[]) map[row.id] = row.email;
+      setCustomerEmails(map);
+    });
   }, [user?.id]);
 
   if (!canSelectOrderSiteUser(roles)) return <Navigate to="/admin" />;
@@ -295,6 +302,7 @@ function AddOrderPage() {
                       // Existing customers: the order date follows the expiring service, not today.
                       if (onlyAccount?.expiresAt) setOrderDate(new Date(onlyAccount.expiresAt));
                       setCustName(customer.username || customer.displayName || "");
+                      if (customerEmails[customer.userId]) setEmail(customerEmails[customer.userId]);
                       setAppliedCode(code ?? null);
                     }}>
                       <span className="min-w-0 flex-1 break-words">{label}</span>

@@ -9974,6 +9974,7 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: Json
       }
+      admin_manual_customer_emails: { Args: never; Returns: Json }
       admin_manual_customer_orders: { Args: never; Returns: Json }
       admin_mark_manual_order_paid: {
         Args: { p_order_id: string }
