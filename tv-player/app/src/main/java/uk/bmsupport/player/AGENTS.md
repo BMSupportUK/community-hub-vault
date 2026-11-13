@@ -21,3 +21,4 @@
 - Announcement icon and bottom bar appear only via MainActivity.signedInScreen(): signed in, unlocked and past today's 2FA; never on link/account-number/2FA/expired/maintenance screens.
 - Sports Guide previews a channel in its own preview box first (OK previews, OK again on the same channel carries it full screen), reusing the Live TV stage/hand-back so neither direction reconnects.
 - Stuck video chip guard: every Live TV preview channel change drops the stage SurfaceView for a fresh one; a preview whose rendered-frame count stops for 3s while READY restarts itself (max 3 per channel) and a frozen preview is never carried to full screen.
+- The home-screen 50Hz button also resets video: it releases the preview and any carried/hand-back players and drops the stage surface before the display mode changes.

@@ -1270,6 +1270,10 @@ public class MainActivity extends Activity {
             final boolean on = FrameRateMatch.chosen50(this);
             Button hz = headerPill(on ? "📺 50Hz: On" : "📺 50Hz: Off", v -> {
                 boolean now = !FrameRateMatch.chosen50(this);
+                // Reset the video chip with the display switch: release any held player and drop the
+                // video surface, so no stuck decoder or picture survives into the next channel.
+                stopPreview(); PreviewHandoff.drop(); PreviewHandoff.dropBack();
+                stageCarried = false; stageFull = false; hideStage(); freshStage();
                 FrameRateMatch.setChosen50(this, now);
                 Toast.makeText(this, now ? "Switching your TV to 50Hz… the screen may go black for a few seconds." : "50Hz switched off — your TV goes back to its normal setting.", Toast.LENGTH_LONG).show();
                 showHome();
