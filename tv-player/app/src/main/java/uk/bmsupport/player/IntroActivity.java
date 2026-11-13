@@ -63,7 +63,7 @@ public class IntroActivity extends Activity {
         handler.postDelayed(() -> {
             if (isFinishing() || isDestroyed()) return;
             FrameRateMatch.prefer50(this);
-            handler.postDelayed(this::openPlayer, FrameRateMatch.SETTLE_MS);
+            openPlayer();
         }, FrameRateMatch.NOTE_LEAD_MS);
     }
 

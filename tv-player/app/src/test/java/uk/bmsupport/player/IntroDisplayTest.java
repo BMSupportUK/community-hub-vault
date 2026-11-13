@@ -37,7 +37,7 @@ public class IntroDisplayTest {
         }
     }
 
-    @Test public void filmEndsBeforeFiftyHzAndLinkWaitsForSwitch() {
+    @Test public void linkOpensImmediatelyAfterTheAdvanceSwitchWarning() {
         try (var controller = Robolectric.buildActivity(RootIntro.class)) {
             controller.create();
             IntroActivity activity = controller.get();
@@ -52,9 +52,8 @@ public class IntroDisplayTest {
             assertEquals(0, activity.getWindow().getAttributes().preferredDisplayModeId);
             Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1));
             assertEquals(2, activity.getWindow().getAttributes().preferredDisplayModeId);
-            assertNull(Shadows.shadowOf(activity).peekNextStartedActivity());
-            Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(2000));
             assertEquals(MainActivity.class.getName(), Shadows.shadowOf(activity).getNextStartedActivity().getComponent().getClassName());
+            Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(2000));
             assertNull(Shadows.shadowOf(activity).getNextStartedActivity());
         }
     }
