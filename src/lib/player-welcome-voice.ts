@@ -1,10 +1,23 @@
 /** Spoken welcome for the BM Player linked-device screen: a British female voice greeting the customer by username. */
-export const WELCOME_VOICE_VERSION = "v3";
+export const WELCOME_VOICE_VERSION = "v4";
 const recent = new Map<string, number>();
+
+/** Turns a typed username into something a voice reads naturally: separators become pauses, camelCase and letter/number runs split into words. */
+export function spokenName(username: string | null | undefined) {
+  return (username ?? "")
+    .replace(/[^\p{L}\p{N} ._'-]/gu, "")
+    .replace(/[_.'-]+/g, " ")
+    .replace(/(\p{Ll})(\p{Lu})/gu, "$1 $2")
+    .replace(/(\p{L})(\p{N})/gu, "$1 $2")
+    .replace(/(\p{N})(\p{L})/gu, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 40);
+}
 
 /** Greeting text; names are trimmed to letters, numbers and simple punctuation so nothing odd is spoken. */
 export function welcomeText(username: string | null | undefined) {
-  const name = (username ?? "").replace(/[^\p{L}\p{N} ._'-]/gu, "").trim().slice(0, 40);
+  const name = spokenName(username);
   return name
     ? `Welcome to BM Player, ${name}. Your device is linked. Enjoy watching.`
     : "Welcome to BM Player. Your device is linked. Enjoy watching.";
