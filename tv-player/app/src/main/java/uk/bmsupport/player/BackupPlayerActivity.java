@@ -183,13 +183,27 @@ public final class BackupPlayerActivity extends Activity {
         root.addView(controller, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
         controlsRow = PlayerActionControls.add(this, root, this::applyBoost,
                 () -> PlayerActionControls.report(this),
-                () -> PlayerActionControls.swap(this, false, () -> { if (mp != null) mp.stop(); }));
+                () -> PlayerActionControls.swap(this, false, () -> { if (mp != null) mp.stop(); }),
+                this::chooseSubtitles);
         controller.addVisibilityListener(visibility -> {
             controlsRow.setVisibility(visibility);
             if (visibility == android.view.View.VISIBLE) lastPressAt = android.os.SystemClock.elapsedRealtime();
         });
         root.setOnClickListener(v -> showControls());
         controller.show();
+    }
+
+    private void chooseSubtitles() {
+        if (mp == null) return;
+        MediaPlayer.TrackDescription[] spu = mp.getSpuTracks();
+        final java.util.List<Integer> ids = new java.util.ArrayList<>(); java.util.List<String> names = new java.util.ArrayList<>();
+        int current = mp.getSpuTrack(), selected = -1;
+        if (spu != null) for (MediaPlayer.TrackDescription t : spu) {
+            if (t.id < 0) continue;
+            if (t.id == current) selected = names.size();
+            ids.add(t.id); names.add(PlayerActionControls.trackName(t.name, null, names.size() + 1));
+        }
+        PlayerActionControls.pickSubtitles(this, names, selected, which -> { if (mp != null) mp.setSpuTrack(which < 0 ? -1 : ids.get(which)); });
     }
 
     private androidx.media3.common.Tracks backupTracks() {

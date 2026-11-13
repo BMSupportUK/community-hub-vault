@@ -312,7 +312,7 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         lp.topMargin = 60;
         root.addView(banner, lp);
-        controlsRow = PlayerActionControls.add(this, root, () -> {}, this::showReport, () -> offerSwap(false));
+        controlsRow = PlayerActionControls.add(this, root, () -> {}, this::showReport, () -> offerSwap(false), this::chooseSubtitles);
         final android.widget.LinearLayout ctrlRow = controlsRow;
         // Films and series always fill the screen (Zoom); live TV and catch up keep their own shape.
         if (PlayerControls.canSkip(kind())) { view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM); ui.postDelayed(barWatch, 3000); }
@@ -387,7 +387,7 @@ public class PlayerActivity extends Activity {
                     // Subtitles exist and are on: only now ask whether to turn them off.
                     player.pause();
                     new android.app.AlertDialog.Builder(PlayerActivity.this).setTitle("Subtitles")
-                            .setMessage("This has subtitles and they're on. Do you want to keep them?")
+                            .setMessage("This has subtitles and they're on. Do you want to keep them?\n\nYou can change or switch them off any time with the 💬 Subtitles button.")
                             .setPositiveButton("Keep subtitles on", (d, w) -> player.play())
                             .setNegativeButton("Turn subtitles off", (d, w) -> {
                                 player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
@@ -659,6 +659,33 @@ public class PlayerActivity extends Activity {
         if (!"live".equals(kind()) || id == null || liveUrls.length < 2) return;
         String other = StreamRecovery.otherFormat(liveUrls[urlAt]);
         if (other != null) { prefs(this).edit().putString("fmt_pref:" + id, other).apply(); FormatSync.push(this, id, other); }
+    }
+
+    private void chooseSubtitles() {
+        if (player == null) return;
+        final java.util.List<androidx.media3.common.TrackGroup> groups = new java.util.ArrayList<>();
+        final java.util.List<Integer> indices = new java.util.ArrayList<>();
+        java.util.List<String> names = new java.util.ArrayList<>(); int selected = -1;
+        boolean off = player.getTrackSelectionParameters().disabledTrackTypes.contains(androidx.media3.common.C.TRACK_TYPE_TEXT);
+        for (androidx.media3.common.Tracks.Group g : player.getCurrentTracks().getGroups()) {
+            if (g.getType() != androidx.media3.common.C.TRACK_TYPE_TEXT) continue;
+            for (int i = 0; i < g.length; i++) {
+                if (!g.isTrackSupported(i)) continue;
+                androidx.media3.common.Format f = g.getTrackFormat(i);
+                if (!off && g.isTrackSelected(i)) selected = names.size();
+                groups.add(g.getMediaTrackGroup()); indices.add(i);
+                names.add(PlayerActionControls.trackName(f.label, f.language, names.size() + 1));
+            }
+        }
+        PlayerActionControls.pickSubtitles(this, names, selected, which -> {
+            if (player == null) return;
+            androidx.media3.common.TrackSelectionParameters.Builder b = player.getTrackSelectionParameters().buildUpon()
+                    .clearOverridesOfType(androidx.media3.common.C.TRACK_TYPE_TEXT);
+            if (which < 0) b.setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, true);
+            else b.setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, false)
+                    .setOverrideForType(new androidx.media3.common.TrackSelectionOverride(groups.get(which), indices.get(which)));
+            player.setTrackSelectionParameters(b.build());
+        });
     }
 
     private boolean subtitlesSurveyed;

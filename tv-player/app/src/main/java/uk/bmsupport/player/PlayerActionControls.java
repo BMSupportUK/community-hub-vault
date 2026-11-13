@@ -16,6 +16,10 @@ final class PlayerActionControls {
     private PlayerActionControls() {}
     static String kind(Activity a) { String k = a.getIntent().getStringExtra("content_kind"); return k == null ? "live" : k; }
     static LinearLayout add(Activity a, FrameLayout root, Runnable boostChanged, Runnable report, Runnable swap) {
+        return add(a, root, boostChanged, report, swap, null);
+    }
+    /** Films and episodes get a Subtitles button so viewers can switch them off or pick another track at any time. */
+    static LinearLayout add(Activity a, FrameLayout root, Runnable boostChanged, Runnable report, Runnable swap, Runnable subtitles) {
         LinearLayout row = new LinearLayout(a); row.setOrientation(LinearLayout.HORIZONTAL);
         Button boost = button(a, "🔊 Sound booster: " + SoundBoost.label(a));
         boost.setOnClickListener(v -> {
@@ -26,14 +30,30 @@ final class PlayerActionControls {
         row.addView(boost);
         Button reportButton = button(a, "⚠ Report a problem"); reportButton.setOnClickListener(v -> report.run());
         Button swapButton = button(a, "⇄ Swap channel"); swapButton.setOnClickListener(v -> swap.run());
-        for (Button b : new Button[]{reportButton, swapButton}) {
+        Button subsButton = button(a, "💬 Subtitles"); subsButton.setOnClickListener(v -> { if (subtitles != null) subtitles.run(); });
+        for (Button b : new Button[]{reportButton, swapButton, subsButton}) {
             LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2); p.leftMargin = (int)(12 * a.getResources().getDisplayMetrics().density); row.addView(b, p);
         }
+        subsButton.setVisibility(subtitles != null && !"live".equals(kind(a)) ? View.VISIBLE : View.GONE);
         reportButton.setVisibility(PlayerControls.canReport(kind(a)) ? View.VISIBLE : View.GONE);
         swapButton.setVisibility("live".equals(kind(a)) && !a.getIntent().hasExtra("catchup_prefix") ? View.VISIBLE : View.GONE);
         FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
         p.bottomMargin = (int)(84 * a.getResources().getDisplayMetrics().density); p.leftMargin = 24;
         root.addView(row, p); return row;
+    }
+    /** names = available subtitle tracks; selected = index in names, or -1 when off; choose gets -1 for Off. */
+    static void pickSubtitles(Activity a, java.util.List<String> names, int selected, java.util.function.IntConsumer choose) {
+        if (names.isEmpty()) { Toast.makeText(a, "This film or episode has no subtitles from your provider", Toast.LENGTH_LONG).show(); return; }
+        String[] items = new String[names.size() + 1]; items[0] = "Off";
+        for (int i = 0; i < names.size(); i++) items[i + 1] = names.get(i);
+        new AlertDialog.Builder(a).setTitle("Subtitles").setSingleChoiceItems(items, selected + 1, (d, which) -> { choose.accept(which - 1); d.dismiss(); })
+            .setNegativeButton("Close", null).show();
+    }
+    static String trackName(String label, String lang, int n) {
+        String l = label != null && !label.trim().isEmpty() ? label.trim() : null;
+        String g = lang != null && !lang.isEmpty() && !"und".equals(lang) ? new java.util.Locale(lang).getDisplayLanguage(java.util.Locale.UK) : null;
+        if (l != null && g != null && !l.toLowerCase(java.util.Locale.ROOT).contains(g.toLowerCase(java.util.Locale.ROOT))) return l + " (" + g + ")";
+        if (l != null) return l; if (g != null) return g; return "Subtitles " + n;
     }
     static Button button(Activity a, String text) {
         Button b = new Button(a); b.setAllCaps(false); b.setText(text);
