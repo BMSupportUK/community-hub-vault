@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { CustomerAccountSwitchButton } from "@/components/app/CustomerAccountSwitch";
 import { CustomerPortalLinkButtons } from "@/components/app/CustomerPortalLinkButtons";
 import { customerAccountCards } from "@/lib/customer-account-cards";
+import { ManualCheckoutEmailButton } from "@/components/app/ManualCheckoutEmailButton";
 
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
@@ -300,6 +301,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
                 {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && <CustomerPortalLinkButtons customerId={c.userId} name={name} />}
                 {canReward && <Button variant="ghost" size="icon" className="ml-auto shrink-0" title="Edit customer" aria-label={`Edit customer ${name}`} onClick={() => { void openCustomerEditor(c); if (accountId) selectEditAccount(c, c.accounts.find((a) => a.id === accountId) ?? null); }}><Pencil className="size-4" /></Button>}
                 {canReward && !c.hasSiteAccount && <Button variant="ghost" size="icon" className="shrink-0" title="Group manual orders" aria-label={`Group manual orders for ${c.displayName || c.username || "customer"}`} onClick={() => void openGrouping(c)}><Link2 className="size-4" /></Button>}
+                {canReward && !c.hasSiteAccount && <ManualCheckoutEmailButton customerId={c.userId} name={name} />}
               </div>
             </header>
             {c.hasSiteAccount && !(c as { ownerAccountCount?: number }).ownerAccountCount && memberRoles?.(c.userId)}

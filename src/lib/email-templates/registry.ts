@@ -41,11 +41,13 @@ import { template as jobApplicationReceived } from './job-application-received'
 import { template as temporaryPassword } from './temporary-password'
 import { template as manualAccountLogin } from './manual-account-login'
 import { template as manualCredentialsAccess } from './manual-credentials-access'
+import { template as manualCheckout } from './manual-checkout'
 
 import { template as customerPortalLink } from './customer-portal-link'
 import { template as playerLoginApproval } from './player-login-approval'
 import { template as player2faResetLink } from './player-2fa-reset-link'
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'manual-checkout': manualCheckout,
   'manual-credentials-access': manualCredentialsAccess,
   'twofa-reset-admin': twofaResetAdmin,
   'twofa-reset-user': twofaResetUser,

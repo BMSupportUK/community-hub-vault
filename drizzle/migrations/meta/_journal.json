@@ -2444,6 +2444,13 @@
       "when": 1794562551862,
       "tag": "0348_lock_knowledge_base_front_page",
       "breakpoints": true
+    },
+    {
+      "idx": 349,
+      "version": "7",
+      "when": 1794565496860,
+      "tag": "0349_manual_customer_email_checkout",
+      "breakpoints": true
     }
   ]
 }

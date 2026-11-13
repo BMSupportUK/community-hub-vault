@@ -1,0 +1,8 @@
+import React from 'react';
+import { Body, Button, Container, Head, Heading, Html, Preview, Text } from '@react-email/components';
+import type { TemplateEntry } from './registry';
+
+function ManualCheckout({ name, orderRef, checkoutUrl, password }: { name?: string; orderRef?: string; checkoutUrl?: string; password?: string }) {
+  return <Html lang="en"><Head /><Preview>Your secure BM Support checkout</Preview><Body style={{ backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }}><Container style={{ padding: '32px', maxWidth: '560px' }}><Heading>BM Support · Your secure checkout</Heading><Text>Hello {name || 'there'},</Text><Text>Your order{orderRef ? ` ${orderRef}` : ''} is ready. Open your secure checkout and enter the order password below.</Text><Text style={{ fontFamily: 'monospace', fontSize: '22px', overflowWrap: 'anywhere' }}>{password || '—'}</Text><Button href={checkoutUrl} style={{ backgroundColor: '#7434b8', color: '#ffffff', padding: '12px 20px', borderRadius: '6px' }}>Open secure checkout</Button><Text>You can create your BM Support account at the end of checkout. This password opens your order; it is not a website account password. Keep this email private.</Text></Container></Body></Html>;
+}
+export const template = { component: ManualCheckout, subject: 'Your BM Support secure checkout', displayName: 'Manual customer secure checkout', previewData: { name: 'Jane', orderRef: 'Example order', password: 'Example order password', checkoutUrl: 'https://bmsupport.uk' } } satisfies TemplateEntry;

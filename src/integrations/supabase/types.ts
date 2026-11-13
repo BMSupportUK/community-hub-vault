@@ -4909,18 +4909,21 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          email: string | null
           id: string
           name: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          email?: string | null
           id?: string
           name: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          email?: string | null
           id?: string
           name?: string
         }
@@ -9960,6 +9963,14 @@ export type Database = {
         }[]
       }
       admin_manual_credentials: { Args: never; Returns: Json }
+      admin_manual_customer_checkout_email: {
+        Args: { p_customer_id: string; p_order_id: string }
+        Returns: Json
+      }
+      admin_manual_customer_checkout_options: {
+        Args: { p_customer_id: string }
+        Returns: Json
+      }
       admin_manual_customer_orders: { Args: never; Returns: Json }
       admin_mark_manual_order_paid: {
         Args: { p_order_id: string }

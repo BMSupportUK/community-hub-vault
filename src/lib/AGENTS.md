@@ -38,3 +38,4 @@
 - Accounts with multiple saved logins expose the shared profile chooser and switch pill; selection uses the existing authenticated profile scope so each login retains separate details and returning to staff requires password verification.
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Sports import and guide rules live in `src/routes/api/public/AGENTS.md`.
+- Manual customer creation saves contact-only rows; checkout emails use an authenticated role-checked RPC to bind an explicit order and resolve its saved recipient, preventing premature Auth accounts and arbitrary-recipient sends.
