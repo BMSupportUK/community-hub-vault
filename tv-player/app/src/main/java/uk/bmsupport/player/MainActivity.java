@@ -181,7 +181,6 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         start();
-        checkForUpdate(false);
         sendLastCrash();
         startReminderCheck();
         handleReminderIntent(getIntent()); handleWatchIntent(getIntent());
@@ -1249,6 +1248,8 @@ public class MainActivity extends Activity {
         if (!unlocked && !rememberedUnlock()) { showUnlock(); return; }
         if (!PlayerApplication.pinPassed) { checkPin(); return; }
         screen = "home"; back = null; drawnVersion = appVersion();
+        // Update check waits until the app is fully in (linked, unlocked, past the link screen), once per app start.
+        if (!updateChecked) { updateChecked = true; checkForUpdate(false); }
         LinearLayout root = column();
         LinearLayout top = row();
         top.setGravity(Gravity.CENTER_VERTICAL);
@@ -3554,6 +3555,9 @@ public class MainActivity extends Activity {
     }
 
     // ---------- self update ----------
+
+    /** The automatic update check runs once per app start, only after the home screen is reached. */
+    private boolean updateChecked;
 
     private static int[] parts(String v) {
         String[] s = v.replaceAll("[^0-9.]", "").split("\\.");
