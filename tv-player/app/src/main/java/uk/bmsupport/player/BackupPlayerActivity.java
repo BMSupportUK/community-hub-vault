@@ -282,6 +282,14 @@ public final class BackupPlayerActivity extends Activity {
     private void next() {
         if (mp == null || isFinishing()) return;
         if (++errors > urls.length * 3) {
+            if (isLive() && getIntent().getBooleanExtra("backup_first", false)) {
+                // Backup engine played first and gave up: try the main player once before failing.
+                android.content.Intent i = new android.content.Intent(getIntent()).setClass(this, PlayerActivity.class)
+                        .putExtra("primary_fallback", true);
+                i.removeExtra("backup_first");
+                i.removeExtra("carried");
+                startActivity(i); finish(); return;
+            }
             if (isLive()) ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "failed");
             Toast.makeText(this, "This stream couldn't be played by either player. Try again later or report a problem.", Toast.LENGTH_LONG).show();
             finish(); return;

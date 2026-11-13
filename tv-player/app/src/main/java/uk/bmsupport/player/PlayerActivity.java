@@ -544,11 +544,18 @@ public class PlayerActivity extends Activity {
 
     }
 
+    /** Live TV starts in the backup engine unless it is catch up or the backup engine already gave up. */
+    static boolean backupFirst(String kind, boolean catchup, boolean primaryFallback) {
+        return "live".equals(kind) && !catchup && !primaryFallback;
+    }
+
     private void startWithRecovery(String[] urls) {
         liveUrls = urls;
         urlAt = Math.max(0, Math.min(urls.length - 1, getIntent().getIntExtra("freeze_url_index", 0)));
         // A channel that has jammed this box's video chip opens straight in the built-in backup engine.
-        if ("live".equals(kind()) && !getIntent().hasExtra("catchup_prefix") && StuckChipMemory.stuck(this, recoveryName())) {
+        // Live TV plays in the built-in backup engine first (tolerant like other IPTV apps); this player
+        // is its fallback, reopened with "primary_fallback" when the backup engine gives up.
+        if (backupFirst(kind(), getIntent().hasExtra("catchup_prefix"), getIntent().getBooleanExtra("primary_fallback", false))) {
             ui.post(this::handToBackup); return;
         }
         listenA(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
@@ -799,9 +806,10 @@ public class PlayerActivity extends Activity {
         if (!"catchup".equals(kind()) && !everReady) ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "failed");
         long pos = player != null && player.getDuration() > 0 ? Math.max(lastPosition, player.getCurrentPosition()) : resumePosition;
         if (player != null) { player.release(); player = null; }
-        Toast.makeText(this, "Switching to BM Player's backup engine…", Toast.LENGTH_SHORT).show();
+        if (everReady || getIntent().getBooleanExtra("primary_fallback", false) || !"live".equals(kind())) Toast.makeText(this, "Switching to BM Player's backup engine…", Toast.LENGTH_SHORT).show();
         android.content.Intent i = new android.content.Intent(getIntent()).setClass(this, BackupPlayerActivity.class)
-                .putExtra("urls", liveUrls).putExtra("resume_ms", pos);
+                .putExtra("urls", liveUrls).putExtra("resume_ms", pos)
+                .putExtra("backup_first", backupFirst(kind(), getIntent().hasExtra("catchup_prefix"), getIntent().getBooleanExtra("primary_fallback", false)));
         startActivity(i);
         finish();
     }
