@@ -2479,6 +2479,13 @@
       "when": 1794569076878,
       "tag": "0353_manual_checkout_email_payment_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 354,
+      "version": "7",
+      "when": 1794570649515,
+      "tag": "0354_order_notification_final_total",
+      "breakpoints": true
     }
   ]
 }
