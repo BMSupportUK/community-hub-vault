@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Released signed BM Player 4.84 through the public updater: live info returns 4.84, downloaded APK is byte-identical to the tested build and permanent BM signer verified (versionCode 295).
+- [ ] Confirm GJ installed and ran 4.84; blocked by no connected box and no new check-in (last reported 4.78 at 21:22 UTC on 13 Nov). Tester must use Settings › Update app and reopen BM Player.
+
 - [x] Built signed Android/Fire TV 4.84: Films and Series use sliding category drawers, Left opens from any poster row's left edge while normal across-row navigation remains, phones have a left-side Categories control, and OK/tap selects and returns to posters. All 252 Android tests pass. APK saved without switching public update; real-box testing unavailable (no connected device).
 
 - [x] Built signed Android/Fire TV 4.83 with pane-local Multi-screen black-picture recovery: fresh decoder/surface after 10s black or 4s frozen while READY, maximum three restarts, channel/audio preserved, stale callbacks rejected. All 250 Android tests pass including pane replacement; APK saved without switching the public update. Real-box playback unverified: no connected device.
