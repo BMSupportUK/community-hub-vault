@@ -1408,10 +1408,35 @@ public class MainActivity extends Activity {
         androidx.media3.exoplayer.ExoPlayer p = preview;
         if (previewListener != null) p.removeListener(previewListener);
         if (previewFallback != null) p.removeListener(previewFallback);
-        if (previewView != null) previewView.setPlayer(null);
+        // The preview picture stays attached until full screen takes it, so the video never sits without a screen.
         preview = null; previewListener = null; previewFallback = null;
         PreviewHandoff.offer(p, it.id);
         return true;
+    }
+
+    private TextView previewStatus;
+    /** Back from full screen: the same channel keeps playing in the guide preview, without reconnecting. */
+    private void takeBackPreview() {
+        boolean onGuide = previewView != null && previewItem != null && "live".equals(previewItem.kind) && preview == null;
+        androidx.media3.exoplayer.ExoPlayer p = onGuide ? PreviewHandoff.takeBack(previewItem.id) : null;
+        if (p == null) { PreviewHandoff.dropBack(); return; }
+        if (previewTask != null) ui.removeCallbacks(previewTask);
+        previewTask = null;
+        preview = p;
+        previewView.setPlayer(null);
+        previewView.setPlayer(p);
+        if (previewPoster != null) previewPoster.setVisibility(View.GONE);
+        final Item it = previewItem;
+        final TextView status = previewStatus;
+        p.addListener(previewListener = new androidx.media3.common.Player.Listener() {
+            @Override public void onPlaybackStateChanged(int s) {
+                if (s == androidx.media3.common.Player.STATE_ENDED && preview != null) { preview.seekToDefaultPosition(); preview.prepare(); preview.play(); }
+            }
+            @Override public void onPlayerError(androidx.media3.common.PlaybackException e) { if (preview != null) { preview.seekToDefaultPosition(); preview.prepare(); preview.play(); } }
+        });
+        if (status != null) status.setText("Press OK twice for full screen");
+        previewCounted = true; setNowPlaying(it, false, true);
+        previewStarted();
     }
 
     private boolean claimPass, previewClaimed;
@@ -1480,7 +1505,7 @@ public class MainActivity extends Activity {
 
     private void schedulePreview(Item it, androidx.media3.ui.PlayerView view, TextView status) {
         stopPreview();
-        previewItem = it;
+        previewItem = it; previewStatus = status;
         if (previewPoster != null) previewPoster.setVisibility(View.GONE);
         status.setText("Loading preview…");
         previewTask = () -> {
@@ -4979,6 +5004,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onResume() {
         PreviewHandoff.drop(); // a hand-off nobody claimed must not keep the decoder or provider connection
+        takeBackPreview();
         resetShiftAfterClockChange();
         super.onResume();
         // Only clear when nothing in this screen is still playing (a running preview keeps counting).

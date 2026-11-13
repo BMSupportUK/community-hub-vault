@@ -184,13 +184,13 @@ public class PlayerActivity extends Activity {
     private void startCatchup() {
         cuSegStart = getIntent().getLongExtra("catchup_start", 0);
         cuEnd = getIntent().getLongExtra("catchup_end", 0);
-        player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
+        listenA(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
             // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
             @Override public void onAudioInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
             @Override public void onVideoInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
         });
-        player.addListener(new Player.Listener() {
+        listen(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
                 if (s == Player.STATE_READY) cuRetries = 0;
                 if (s == Player.STATE_ENDED) catchupResume();
@@ -343,11 +343,11 @@ public class PlayerActivity extends Activity {
             cover.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
             root.addView(cover, 1);
             final Runnable lift = () -> { if (cover.getParent() != null) root.removeView(cover); };
-            player.addListener(new Player.Listener() { @Override public void onRenderedFirstFrame() { ui.post(lift); } });
+            listen(new Player.Listener() { @Override public void onRenderedFirstFrame() { ui.post(lift); } });
             ui.postDelayed(lift, PreviewSnapshot.MAX_COVER_MS);
         } else PreviewSnapshot.clear();
         final boolean is4kDevice = device4k(this);
-        player.addListener(new Player.Listener() {
+        listen(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int state) {
                 if (state == Player.STATE_READY) {
                     playbackReady = true;
@@ -503,19 +503,19 @@ public class PlayerActivity extends Activity {
         loadingCover = cover;
         root.addView(cover, 1, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         player.setVolume(0f);
-        player.addListener(new Player.Listener() { @Override public void onRenderedFirstFrame() { firstFrame = true; maybeUncover(); } });
+        listen(new Player.Listener() { @Override public void onRenderedFirstFrame() { firstFrame = true; maybeUncover(); } });
 
     }
 
     private void startWithRecovery(String[] urls) {
         liveUrls = urls;
-        player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
+        listenA(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
             // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
             @Override public void onAudioInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch("sound"); }
             @Override public void onVideoInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch("picture"); }
         });
-        player.addListener(new Player.Listener() {
+        listen(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int s) {
                 long now = android.os.SystemClock.elapsedRealtime();
                 if (s == Player.STATE_BUFFERING && everReady && stallStartedAt == 0) {
@@ -925,6 +925,30 @@ public class PlayerActivity extends Activity {
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         PlayerApplication.interaction(this);
     }
+
+
+    // Every listener this screen puts on the player, so a live channel can be handed back to the guide preview clean.
+    private final java.util.List<Player.Listener> mine = new java.util.ArrayList<>();
+    private final java.util.List<androidx.media3.exoplayer.analytics.AnalyticsListener> mineA = new java.util.ArrayList<>();
+    private void listen(Player.Listener l) { mine.add(l); player.addListener(l); }
+    private void listenA(androidx.media3.exoplayer.analytics.AnalyticsListener l) { mineA.add(l); player.addAnalyticsListener(l); }
+
+    /** Backing out of a live channel keeps it playing for the guide preview: no reconnect, no rebuffer. */
+    private void handBackToGuide() {
+        if (player == null || handedOver || !everReady || !"live".equals(kind()) || getIntent().hasExtra("catchup_prefix")) return;
+        int st = player.getPlaybackState();
+        if (st != Player.STATE_READY && st != Player.STATE_BUFFERING) return;
+        String id = getIntent().getStringExtra("content_id");
+        if (id == null) return;
+        for (Player.Listener l : mine) player.removeListener(l);
+        for (androidx.media3.exoplayer.analytics.AnalyticsListener l : mineA) player.removeAnalyticsListener(l);
+        mine.clear(); mineA.clear();
+        player.setVolume(1f);
+        ExoPlayer p = player; player = null;
+        PreviewHandoff.offerBack(p, id);
+    }
+
+    @Override protected void onPause() { if (isFinishing()) handBackToGuide(); super.onPause(); }
 
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 

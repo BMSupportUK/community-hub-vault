@@ -37,6 +37,26 @@ final class PreviewHandoff {
         return heldId != null && heldId.equals(wantedId) && now - heldAt <= MAX_AGE_MS;
     }
 
+    private static ExoPlayer back; private static String backId; private static long backAt;
+
+    /** Full screen hands its live channel back to the guide preview when the viewer presses Back. */
+    static synchronized void offerBack(ExoPlayer p, String contentId) {
+        dropBack();
+        back = p; backId = contentId; backAt = android.os.SystemClock.elapsedRealtime();
+    }
+
+    /** The handed-back player when the guide is still showing that channel's preview, else null (and released). */
+    static synchronized ExoPlayer takeBack(String contentId) {
+        ExoPlayer p = claimable(backId, contentId, backAt, android.os.SystemClock.elapsedRealtime()) ? back : null;
+        if (p == null) dropBack(); else { back = null; backId = null; }
+        return p;
+    }
+
+    static synchronized void dropBack() {
+        if (back != null) { try { back.release(); } catch (RuntimeException ignored) {} }
+        back = null; backId = null;
+    }
+
     static synchronized void drop() {
         if (player != null) { try { player.release(); } catch (RuntimeException ignored) {} }
         player = null; id = null;

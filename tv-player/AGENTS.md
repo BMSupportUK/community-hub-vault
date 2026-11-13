@@ -34,3 +34,4 @@
 - Release builds scramble our own code: Android apps use R8 (`minifyEnabled true`, `proguard-rules.pro` keeps third-party libraries); Windows/Mac release steps run javascript-obfuscator over the staged `.cjs` and renderer bundle (never the repo source) and then re-check every module still loads. Keep the R8 mapping file privately for crash traces.
 
 - Display changes belong to startup only; playback removes rate measurement and disables Media3 surface rate requests to prevent preview/full-screen re-switches.
+- Live preview and full screen share one player both ways via PreviewHandoff: the preview view stays attached until full screen takes the surface, and Back from a live channel hands the clean player (screen listeners removed) back to the guide preview, so neither direction reconnects.
