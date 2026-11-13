@@ -46,7 +46,12 @@ final class FrameRateMatch {
     }
 
     /** Asks for a matching mode; true when the TV is being switched (it goes black for a moment). */
-    static boolean apply(Activity a, float fps) {
+    static boolean apply(Activity a, float fps) { return apply(a, fps, true); }
+    /** True when apply would switch the TV, without switching it yet. */
+    static boolean wouldSwitch(Activity a, float fps) { return apply(a, fps, false); }
+    /** How long the switch note is on screen before the TV is asked to change (it then goes black). */
+    static final long NOTE_LEAD_MS = 1500;
+    private static boolean apply(Activity a, float fps, boolean doIt) {
         if (skip() || a == null) return false;
         try {
             Display d = a.getWindowManager().getDefaultDisplay();
@@ -58,6 +63,7 @@ final class FrameRateMatch {
             if (i < 0) return false;
             WindowManager.LayoutParams lp = a.getWindow().getAttributes();
             if (lp.preferredDisplayModeId == modes[i].getModeId()) return false;
+            if (!doIt) return true;
             lp.preferredDisplayModeId = modes[i].getModeId();
             a.getWindow().setAttributes(lp);
             return true;

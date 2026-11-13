@@ -500,15 +500,21 @@ public class PlayerActivity extends Activity {
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         lp.topMargin = 60;
         rootView.addView(note, lp);
-        ui.postDelayed(() -> { if (note.getParent() != null) rootView.removeView(note); }, FrameRateMatch.NOTE_MS);
+        ui.postDelayed(() -> { if (note.getParent() != null) rootView.removeView(note); }, FrameRateMatch.NOTE_MS + FrameRateMatch.NOTE_LEAD_MS);
     }
     private FrameLayout rootView;
+    /** Shows the switch note first, then changes the TV's refresh rate 1.5s later so the note is seen before the blank. */
+    private boolean switchWithNote(float fps) {
+        if (!FrameRateMatch.wouldSwitch(this, fps)) return false;
+        showRateNote(fps);
+        ui.postDelayed(() -> { if (!isFinishing() && !isDestroyed()) FrameRateMatch.apply(this, fps); }, FrameRateMatch.NOTE_LEAD_MS);
+        return true;
+    }
     private void rateKnown(float fps) {
         String id = getIntent().getStringExtra("content_id");
         if (fps > 0 && id != null) prefs(this).edit().putFloat("fps:" + id, fps).apply();
-        boolean switched = fps > 0 && FrameRateMatch.apply(this, fps);
-        if (switched) showRateNote(fps);
-        rateSettleAt = android.os.SystemClock.elapsedRealtime() + FrameRateMatch.uncoverDelay(switched);
+        boolean switched = fps > 0 && switchWithNote(fps);
+        rateSettleAt = android.os.SystemClock.elapsedRealtime() + FrameRateMatch.uncoverDelay(switched) + (switched ? FrameRateMatch.NOTE_LEAD_MS : 0);
         rateDone = true; maybeUncover();
     }
     private void coverUntilRateKnown(FrameLayout root) {
@@ -537,7 +543,7 @@ public class PlayerActivity extends Activity {
             // Channel played before: switch the TV now, while the stream is still connecting.
             String id = getIntent().getStringExtra("content_id");
             float known = id == null ? 0 : prefs(this).getFloat("fps:" + id, 0);
-            if (known > 0 && FrameRateMatch.apply(this, known)) showRateNote(known);
+            if (known > 0) switchWithNote(known);
         }
         // Never hold sound back long after the picture: the frame-rate wait gives up after MAX_HOLD_MS.
         ui.postDelayed(() -> { rateDone = true; maybeUncover(); }, FrameRateMatch.MAX_HOLD_MS);
