@@ -4667,7 +4667,9 @@ public class MainActivity extends Activity {
                     catRows.clear(); catRows.addAll(rows);
                     // The full-screen player's Left drawer shows these same categories and channels.
                     List<LiveDrawerData.Channel> drawerChannels = new ArrayList<>();
-                    for (Item it : liveChannels) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, categoryName(it), null));
+                    java.util.Map<String, String> catNames = new java.util.HashMap<>();
+                    for (String[] r : rows) catNames.put(r[0], r[1]);
+                    for (Item it : liveChannels) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, catNames.get(it.category), null));
                     LiveDrawerData.set(rows, drawerChannels);
                     String[] start = rows.get(0);
                     if (startCat != null) for (String[] r : rows) if (r[0].equals(startCat)) { start = r; break; }
