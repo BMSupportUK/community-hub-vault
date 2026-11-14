@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Released Windows 0.4.99 and universal Mac 0.1.102 with protected catch-up skip code; 171 desktop tests pass. Public metadata and byte-identical downloads verified: Windows SHA-256 6d57c6152ac760a9b675d4f52b76fea67df66dc7e1e21af2ef8a2b5325ea8164; Mac SHA-256 871a99b2941d1b23a23fd42f2959c879e1b09af53b46a296b188e1b08d0e2bf4. Mac ad-hoc signing completed; native Apple validation and real playback unavailable in Linux.
+
 - [x] Added shared Windows/Mac catch-up two-minute forward skip, one-minute corrections and encrypted login/channel start memory; 171 desktop tests pass, including actual main-process command execution. Public downloads unchanged.
 - [ ] Verify Windows/Mac catch-up against real recordings; blocked by no running authenticated desktop player in this sandbox.
 
