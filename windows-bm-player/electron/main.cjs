@@ -15,6 +15,7 @@ const recovery=require('../stream-recovery.cjs');
 const feedst=require('../feed-status.cjs');
 const checkin=require('../checkin.cjs');
 const categoryOrder=require('../category-order.cjs');
+const catchupStart=require('../catchup-start.cjs');
 const watchreq=require('../watch-request.cjs');
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
@@ -171,7 +172,9 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,ta
  if(catalog){const verified=catalog.items.find(c=>String(c.id)===String(item.id));if(!verified)throw new Error('Channel unavailable.');item={...verified};}
  const event=sportsSnapshot?.events?.find(e=>String(e.start)+':'+e.title===eventKey);
  const recoveryName=item.kind==='live'?item.name+' '+(item.categoryName||''):'';
- const baseUrls=core.streamUrls(store.dns,store.user,store.pass,item,store.settings?.format||'auto'),urls=baseUrls;
+ const catchupMinutes=item.kind==='catchup'?catchupStart.offset(store.catchupStarts,key({kind:'live',id:item.id})):0;
+ const streamItem=item.kind==='catchup'?catchupStart.recording(item,catchupMinutes):item;
+ const baseUrls=core.streamUrls(store.dns,store.user,store.pass,streamItem,store.settings?.format||'auto'),urls=baseUrls;
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
  const startAt=resume&&watched&&core.resume(watched.position,watched.duration)?watched.position:0;
@@ -179,7 +182,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,ta
  try{engine.play(index,urls[0],{kind:item.kind,name:item.name,steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
  catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
  const onBackup=engine.usingBackup(index);
- const session={index,item,event,recoveryName,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
+ const session={index,item,event,recoveryName,catchupBase:catchupMinutes*60,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
  if(index===0)audible=0;applyAudio();send({type:"audible",index:audible});
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
@@ -209,7 +212,7 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  let swapped=false;if(rec.offerFeed&&sessions.length===1){const r=await swapOptions(session);if(r.items.length){swapped=true;send({type:'alternate-feed',auto:true,index:session.index,...r});}}
  if(rec.raise){session.maxHeight=0;if(/\.m3u8$/i.test(session.urls[session.urlIndex]||'')){try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:session.item.kind==='live'?0:session.position,maxHeight:0});applyAudio();}catch{}}}
  if(session.ready&&recovery.frozen(session,s.state,s.position,Date.now(),s)){queueBuffer(session.item,{ms:s.nativeVideo&&session.item.kind==='live'?recovery.profile(session.recoveryName).live:recovery.FREEZE_MS,reconnected:true,freeze:true},session);const at=session.item.kind==='live'?0:session.position;try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}}
- if(rec.reconnect!==undefined){const at=session.item.kind==='live'?0:session.position;setTimeout(()=>{if(sessions.includes(session)&&session.state!==3)send({type:'notice',message:'Reconnecting…'});},3000);setTimeout(()=>{if(!sessions.includes(session)||!engine)return;try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}},rec.reconnect);}
+ if(rec.reconnect!==undefined){const at=session.item.kind==='live'?0:session.position,generation=session.catchupGeneration;setTimeout(()=>{if(sessions.includes(session)&&session.catchupGeneration===generation&&session.state!==3)send({type:'notice',message:'Reconnecting…'});},3000);setTimeout(()=>{if(!sessions.includes(session)||!engine||session.catchupGeneration!==generation)return;try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:session.item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,session.recoveryName):recovery.bufferMs(store.settings?.buffer),resume:at,maxHeight:session.maxHeight});applyAudio();}catch{}},rec.reconnect);}
  if(rec.offerSd&&!swapped)send({type:'notice',message:'This HD channel keeps buffering on your connection. Try the SD version of the channel for smoother playback.'});
  if(rec.failed&&!toBackup(session))send({type:'notice',message:'This stream keeps dropping and couldn\'t reconnect. Try again or report the issue.'});
  if(!session.ready&&(s.state===7||s.state===5)&&Date.now()-session.since>15000){if(session.urlIndex+1<session.urls.length){session.urlIndex++;session.since=Date.now();engine.play(session.index,session.urls[session.urlIndex],{buffer:recovery.bufferMs(store.settings?.buffer)});}else if(!session.failed&&!toBackup(session)){session.failed=true;send({type:'notice',message:'This stream could not play. Try another channel or report the issue.'});}}
@@ -315,6 +318,15 @@ else{
    else if(value.action==='audioTrack'&&Number.isInteger(value.id)){engine.setAudioTrack(index,value.id);return engine.tracks(index);}
    else if(value.action==='subtitleTrack'&&Number.isInteger(value.id)){engine.setSubtitleTrack(index,value.id);return engine.tracks(index);}
    else if(value.action==='pause'){session.paused=!session.paused;engine.pause(index,session.paused);}
+   else if(value.action==='catchupSkip'&&session.item.kind==='catchup'&&[-60,60,120].includes(value.delta)){
+    const minutes=catchupStart.target(session.catchupBase,session.position,value.delta,session.item);
+    const item=catchupStart.recording(session.item,minutes);
+    const urls=core.streamUrls(store.dns,store.user,store.pass,item);
+    engine.stop(index);
+    engine.play(index,urls[0],{kind:'catchup',name:session.item.name,live:false,resume:0,buffer:recovery.bufferMs(store.settings?.buffer)});
+    Object.assign(session,{urls,urlIndex:0,catchupGeneration:(session.catchupGeneration||0)+1,catchupBase:(item.start-session.item.start)/1000,position:0,duration:0,paused:false,ready:false,failed:false,since:Date.now(),stallAt:0,reconnects:0,retryAt:0,stallTimes:[],stillSince:0,lastPos:undefined});
+    store.catchupStarts={...store.catchupStarts,[key({kind:'live',id:session.item.id})]:catchupStart.learned(minutes)};save();applyAudio();
+   }
    else if(value.action==='seek'&&Number.isFinite(value.seconds))engine.seek(index,Math.max(0,Math.min(session.duration,value.seconds)));
    else if(value.action==='volume'&&Number.isFinite(value.volume)){userVolume=Math.max(0,Math.min(100,Math.round(value.volume)));audible=index;applyAudio();}
    else if(value.action==='boost'){store.settings={...store.settings,boost:boost.level(value.level).id};save();applyAudio();}

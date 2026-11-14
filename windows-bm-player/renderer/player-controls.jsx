@@ -7,6 +7,7 @@ export function PlayerControls({p,bm,actions,volume,onVolume}){
  const command=(action,value={})=>bm.control({index:p.index,action,...value});
  return <div className="playback-controls">
  <div className="transport-controls">
+ {p.item.kind==='catchup'&&<><button aria-label="Back one minute" title="Back one minute" onClick={()=>command('catchupSkip',{delta:-60})}>↶ 1 min</button><button title="Old show still on? Skip ahead 2 min" onClick={()=>command('catchupSkip',{delta:120})}>⏭ Skip ahead 2 min</button><button aria-label="Forward one minute" title="Forward one minute" onClick={()=>command('catchupSkip',{delta:60})}>1 min ↷</button></>}
  {controls.canSkip(p.item.kind)&&<button aria-label="Rewind 10 seconds" title="Rewind 10 seconds" disabled={!p.seekable} onClick={()=>command('seek',{seconds:controls.skipPosition(p.position,p.duration,-10)})}>↶ 10</button>}
  <button aria-label={p.paused?'Resume playback':'Pause playback'} onClick={()=>command('pause')}>{p.paused?'▶':'Ⅱ'}</button>
  {controls.canSkip(p.item.kind)&&<button aria-label="Forward 10 seconds" title="Forward 10 seconds" disabled={!p.seekable} onClick={()=>command('seek',{seconds:controls.skipPosition(p.position,p.duration,10)})}>10 ↷</button>}
