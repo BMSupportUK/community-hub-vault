@@ -27,7 +27,7 @@ final class PlayerActionControls {
             boost.setText("🔊 Sound booster: " + SoundBoost.label(a));
             Toast.makeText(a, "Sound booster: " + SoundBoost.label(a) + ("high".equals(id) ? "\n" + SoundBoost.HIGH_NOTE : ""), Toast.LENGTH_SHORT).show();
         });
-        row.addView(boost);
+        if (!SoundBoost.fixed()) row.addView(boost);
         Button reportButton = button(a, "⚠ Report a problem"); reportButton.setOnClickListener(v -> report.run());
         Button swapButton = button(a, "⇄ Swap channel"); swapButton.setOnClickListener(v -> swap.run());
         Button subsButton = button(a, "💬 Subtitles"); subsButton.setOnClickListener(v -> { if (subtitles != null) subtitles.run(); });

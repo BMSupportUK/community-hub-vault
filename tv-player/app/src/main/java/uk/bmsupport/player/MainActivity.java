@@ -2654,7 +2654,7 @@ public class MainActivity extends Activity {
             vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
             // Some Android boxes can't hardware-decode provider recordings; VLC's software decoder plays them.
             if ("catchup".equals(it.kind)) i.putExtra("disable_hardware", true);
-            if (!"off".equals(SoundBoost.current(this))) Toast.makeText(this, "Sound booster doesn't work in VLC – use VLC's own volume.", Toast.LENGTH_LONG).show();
+            if (!SoundBoost.fixed() && !"off".equals(SoundBoost.current(this))) Toast.makeText(this, "Sound booster doesn't work in VLC – use VLC's own volume.", Toast.LENGTH_LONG).show();
             vlcCatchup = "catchup".equals(it.kind) ? it : null; vlcStarted = android.os.SystemClock.elapsedRealtime();
             // Live: VLC gets the channel's next address and software decoding on each retry, then BM Player takes over.
             if ("live".equals(it.kind)) {
@@ -3550,7 +3550,7 @@ public class MainActivity extends Activity {
                 prefs.edit().putInt("epg_shift", w - 12).putInt("epg_shift_offset", deviceOffsetMins()).apply(); d.dismiss(); showSettings();
             }).setNegativeButton("Cancel", null).show();
         }));
-        boxes.add(settingBox("🔊", "Sound booster", SoundBoost.label(this), v ->
+        if (!SoundBoost.fixed()) boxes.add(settingBox("🔊", "Sound booster", SoundBoost.label(this), v ->
                 new AlertDialog.Builder(this).setTitle("Sound booster")
                         .setSingleChoiceItems(SoundBoost.LABELS, SoundBoost.index(SoundBoost.current(this)), (d, w) -> {
                             SoundBoost.set(this, SoundBoost.IDS[w]); d.dismiss();
