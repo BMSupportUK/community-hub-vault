@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Fire TV voice entry bypasses Amazon speech activities and clears keyboard-blocking flags after the search dialog opens; 16 focused Android tests pass. No new installer released.
+- [ ] Verify microphone dictation stays inside BM Player on Fire TV; blocked by no connected physical Fire TV. Keyboard focus alone does not prove Amazon remote dictation works.
+
 - [x] Correct guide categories/preview stacking without stopping or reattaching its stream; both VlcStage interaction tests pass. Installer rebuild/release is not included in this fix.
 
 - [x] Built and retained BM-signed Android 5.35 (346) with genuine on-request download/upload reporting; all 323 tests pass. Signer matches permanent BM key; installer SHA-256 7472744819e86cb5d3e6d2e67e55ed87850eb7424fa177a1939803b76a568ece. Public download unchanged.

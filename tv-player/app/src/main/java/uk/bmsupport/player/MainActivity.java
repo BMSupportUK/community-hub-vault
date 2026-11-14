@@ -2838,7 +2838,7 @@ public class MainActivity extends Activity {
         voiceKind = kind;
         boolean has = false;
         try { has = i.resolveActivity(getPackageManager()) != null; } catch (Exception ignored) {}
-        if (has) {
+        if (VoiceEntry.useSpeechActivity(Build.MANUFACTURER, has)) {
             try { startActivityForResult(i, VOICE_REQUEST); return; } catch (Exception ignored) {}
         }
         voiceKind = null;
@@ -2927,10 +2927,10 @@ public class MainActivity extends Activity {
     }
 
 
-    /** Fire TV has no speech service for sideloaded apps, but its keyboard takes dictation from the remote's mic button. */
+    /** Request keyboard dictation; never launch Alexa's global search on Fire TV. */
     private void voiceDictation(String kind) {
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16), dp(8), dp(16), 0);
-        box.addView(text("🎤 Wait for the on-screen keyboard to open, then press and hold the microphone button on your remote, say what you're looking for, and let go. If the keyboard closes, press OK on the box below to open it again.", 16, TEXT, false));
+        box.addView(text("Search words", 16, TEXT, false));
         android.widget.EditText q = new android.widget.EditText(this);
         q.setSingleLine(true); q.setHint("Your words appear here");
         q.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
@@ -2938,7 +2938,7 @@ public class MainActivity extends Activity {
         AlertDialog[] dlg = new AlertDialog[1];
         Runnable go = () -> {
             String want = q.getText().toString().trim();
-            if (want.length() < 2) { Toast.makeText(this, "Hold the mic button and speak, or type", Toast.LENGTH_SHORT).show(); return; }
+            if (want.length() < 2) { Toast.makeText(this, "Enter at least two letters", Toast.LENGTH_SHORT).show(); return; }
             hideKeyboard(q);
             if (dlg[0] != null) dlg[0].dismiss();
             if ("sports".equals(kind)) { if (!"sports".equals(screen)) showSports(); sportsVoice(want); }
@@ -2950,20 +2950,16 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Search", null).setNegativeButton("Cancel", null).create();
         dlg[0].setOnShowListener(d -> {
             dlg[0].getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> go.run());
-            // Fire TV only routes the mic to dictation while its own keyboard is open on a focused box,
-            // otherwise Alexa takes the press and searches the whole device. Force the keyboard open.
-            q.setFocusable(true); q.setFocusableInTouchMode(true);
-            Runnable openKb = () -> {
-                q.requestFocus();
-                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                if (imm != null && dlg[0].isShowing()) imm.showSoftInput(q, 0);
-            };
+            // AlertDialog detects text editors during show(), before this callback. Clear its
+            // IME-blocking flags and request input only after the field is attached.
+            Runnable openKb = () -> VoiceEntry.openKeyboard(dlg[0], q);
+            q.post(openKb);
             q.postDelayed(openKb, 300);
         });
         if (dlg[0].getWindow() != null) dlg[0].getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
         // Close the keyboard whenever the voice box goes, so it never stays stuck on screen.
         dlg[0].setOnDismissListener(d -> hideKeyboard(q));
-        q.setOnClickListener(v -> openKbNow(q));
+        q.setOnClickListener(v -> VoiceEntry.openKeyboard(dlg[0], q));
         keepEntryVisible(dlg[0], q);
         dlg[0].show();
 
