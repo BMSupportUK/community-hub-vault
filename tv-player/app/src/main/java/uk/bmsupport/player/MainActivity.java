@@ -4344,8 +4344,9 @@ public class MainActivity extends Activity {
         LinearLayout btns = row();
         Button catBtn = button(live ? "☰ Categories: All" : "Category: All", v -> {});
         btns.addView(catBtn);
-        // Live TV: categories open from the side Channels button, not from the Now/Day row.
-        if (live) catBtn.setVisibility(View.GONE);
+        // TV boxes use the Category pill after the day jumps (and Left from any row); phones keep
+        // the Categories pill in the View EPG pop-up bar as their category control.
+        if (boxLive) catBtn.setVisibility(View.GONE);
         btns.addView(button("Now", v -> {}));
         btns.addView(button("◀ Day", v -> {}));
         btns.addView(button("Day ▶", v -> {}));
@@ -4448,6 +4449,11 @@ public class MainActivity extends Activity {
             // Category pill straight after the day jumps: opens the category list; picking one loads its guide.
             boxCatPill = miniPill("☰ Category: All", "Choose a category", () -> catBtn.performClick());
             dr.addView(boxCatPill);
+            // Bold stand-out hint: Left on the remote lists the categories from any guide row.
+            TextView leftHint = text("◀ Press Left on your remote to list the categories", 15, ACCENT, true);
+            leftHint.setSingleLine(true);
+            leftHint.setPadding(dp(10), 0, 0, 0);
+            dr.addView(leftHint);
             root.addView(dr);
         }
         GuideGridView grid = new GuideGridView(this);
@@ -4505,55 +4511,9 @@ public class MainActivity extends Activity {
         panel.addView(channelDrawer != null ? channelDrawer : catList,
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         panel.addView(button("Close", v -> hidePanel()));
-        LinearLayout content = root;
-        // Persistent category affordance on phones and TV boxes; Left still opens from any guide row.
-        if (live) {
-            content = row();
-            // Edge tab like the website's "Order chat" side button: stuck to the left edge, vertically centred, vertical label.
-            LinearLayout rail = new LinearLayout(this);
-            rail.setOrientation(LinearLayout.VERTICAL);
-            rail.setGravity(Gravity.CENTER_VERTICAL);
-            rail.setBackgroundColor(BG);
-            LinearLayout tab = new LinearLayout(this);
-            tab.setOrientation(LinearLayout.VERTICAL);
-            tab.setGravity(Gravity.CENTER_HORIZONTAL);
-            tab.setPadding(dp(14), dp(28), dp(14), dp(28));
-            tab.setFocusable(true);
-            tab.setClickable(true);
-            GradientDrawable tabOn = new GradientDrawable(); tabOn.setColor(ACCENT);
-            tabOn.setCornerRadii(new float[]{0,0,dp(14),dp(14),dp(14),dp(14),0,0});
-            tabOn.setStroke(dp(3), TEXT);
-            GradientDrawable tabOff = new GradientDrawable(); tabOff.setColor(ACCENT);
-            tabOff.setCornerRadii(new float[]{0,0,dp(14),dp(14),dp(14),dp(14),0,0});
-            StateListDrawable tabBg = new StateListDrawable();
-            tabBg.addState(new int[]{android.R.attr.state_focused}, tabOn);
-            tabBg.addState(new int[]{android.R.attr.state_pressed}, tabOn);
-            tabBg.addState(new int[]{}, tabOff);
-            tab.setBackground(tabBg);
-            TextView icon = new TextView(this);
-            icon.setText("☰"); icon.setTextColor(TEXT); icon.setTextSize(18); icon.setGravity(Gravity.CENTER);
-            tab.addView(icon);
-            TextView vlabel = new TextView(this) {
-                @Override protected void onMeasure(int w, int h) { super.onMeasure(h, w); setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth()); }
-                @Override protected void onDraw(android.graphics.Canvas c) { c.save(); c.translate(0, getHeight()); c.rotate(-90); c.translate(getCompoundPaddingLeft(), getExtendedPaddingTop()); getLayout().draw(c); c.restore(); }
-            };
-            vlabel.setText("Categories"); vlabel.setTextColor(TEXT); vlabel.setTextSize(15);
-            vlabel.setTypeface(Typeface.DEFAULT_BOLD); vlabel.setSingleLine(true);
-            LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            vlp.topMargin = dp(8);
-            tab.addView(vlabel, vlp);
-            // Open as soon as a finger lands (no wait for lift/tap-slop) and let the whole edge strip act as the button.
-            final long[] lastOpen = { 0 };
-            Runnable openTab = () -> { long t = android.os.SystemClock.uptimeMillis(); if (t - lastOpen[0] < 400) return; lastOpen[0] = t; catBtn.performClick(); };
-            tab.setOnClickListener(v -> openTab.run());
-            View.OnTouchListener instant = (v, e) -> { if (e.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) { tab.setPressed(true); openTab.run(); } else if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP || e.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL) tab.setPressed(false); return true; };
-            tab.setOnTouchListener(instant);
-            rail.setOnTouchListener(instant);
-            rail.addView(tab, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            content.addView(rail, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
-        }
-        FrameLayout guideScreen = sideDrawer(content, panel);
+        // No persistent edge tab: the guide fills the width, and a bold hint beside the Category
+        // pill tells remote users that Left from any guide row lists the categories.
+        FrameLayout guideScreen = sideDrawer(root, panel);
         if ("phone".equals(platform())) GuideSafeArea.apply(guideScreen);
         setContentView(guideScreen);
         btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });

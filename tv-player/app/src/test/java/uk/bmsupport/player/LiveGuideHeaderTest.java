@@ -182,6 +182,53 @@ public class LiveGuideHeaderTest {
         assertNotNull(org.robolectric.shadows.ShadowToast.getTextOfLatestToast());
     }
 
+    /** No persistent left-edge Categories tab: the guide's root column sits straight in the drawer frame. */
+    @Test public void thereIsNoLeftEdgeCategoriesTabEatingGuideWidth() throws Exception {
+        MainActivity a = open();
+        openLiveGuide(a);
+        LinearLayout root = rootOf(a);
+        assertTrue("the guide root must sit directly in the drawer frame, not beside an edge-tab rail",
+                root.getParent() instanceof android.widget.FrameLayout);
+    }
+
+    /** TV boxes: a bold stand-out hint beside the Category pill says Left lists the categories. */
+    @Test public void theBoxCategoryPillCarriesThePressLeftHint() throws Exception {
+        MainActivity a = open();
+        org.robolectric.Shadows.shadowOf(a.getPackageManager()).setSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK, true);
+        openLiveGuide(a);
+        List<View> texts = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), android.widget.TextView.class, texts);
+        android.widget.TextView hint = null;
+        for (View t : texts) if ("◀ Press Left on your remote to list the categories".equals(((android.widget.TextView) t).getText().toString())) hint = (android.widget.TextView) t;
+        assertNotNull("the box guide must tell remote users that Left lists the categories", hint);
+        assertTrue("the hint must be bold so it stands out", hint.getTypeface() != null);
+        View parent = (View) hint.getParent();
+        List<View> siblings = new ArrayList<>();
+        collect(parent, Button.class, siblings);
+        boolean pillThere = false;
+        for (View b : siblings) if (text(b).startsWith("☰ Category:")) pillThere = true;
+        assertTrue("the hint must sit beside the Category pill", pillThere);
+    }
+
+    /** Phones have no remote: their Categories pill stays in the View EPG pop-up bar. */
+    @Test public void phonesKeepTheCategoriesPillInTheBiggerGuideBar() throws Exception {
+        MainActivity a = open();
+        openLiveGuide(a);
+        List<View> pills = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), Button.class, pills);
+        View bigBar = null, categories = null;
+        for (View p : pills) {
+            if (text(p).equals("✕ Close")) bigBar = (View) p.getParent();
+            if (text(p).startsWith("☰ Categories:")) categories = p;
+        }
+        assertNotNull("the phone guide must keep a Categories control", categories);
+        assertNotNull(bigBar);
+        View parent = (View) categories.getParent();
+        assertTrue("the phone Categories pill must live in the View EPG pop-up bar",
+                parent == bigBar || parent.getParent() == bigBar);
+        assertEquals("the phone Categories pill must be visible", View.VISIBLE, categories.getVisibility());
+    }
+
     /** Once the preview is actually on, the button's job changes to bringing up the channel's play menu. */
     @Test public void theButtonBecomesThePlayMenuOnceThePreviewKicksIn() throws Exception {
         MainActivity a = open();

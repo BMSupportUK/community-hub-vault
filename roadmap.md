@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Built, signed and publicly released 5.07 (versionCode 318): Live TV left-edge Categories tab removed; bold "Press Left on your remote to list the categories" hint beside the box Category pill; phones keep the Categories pill in the View EPG bar. All Android tests pass; public updater serves 5.07 and the download matches the signed APK.
+- [ ] Real-box check of the 5.07 guide layout (hint beside Category pill, no edge tab); blocked by no connected device.
+
 - [x] Made 5.05 the public BM Player download: uploaded first, switched current build, public updater returns 5.05 and downloaded APK SHA-256 matches versionCode 316; 285 tests with zero failures/errors.
 - [x] Built permanent-BM-signed 5.06 (317), retained APK asset: compact play menu, parental control first in Settings with in-app PIN pad, category row actions preserve the chosen identity; canceling PIN replacement preserves protection. All 288 Android tests pass.
 - [x] Released 5.06 publicly: updater returns 5.06, public APK matches the tested build SHA-256, permanent BM signer and versionCode 317 verified; 288 tests pass.
