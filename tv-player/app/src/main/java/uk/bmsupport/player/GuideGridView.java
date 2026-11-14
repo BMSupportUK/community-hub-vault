@@ -159,7 +159,8 @@ public class GuideGridView extends View {
             case KeyEvent.KEYCODE_DPAD_RIGHT: if (onClock) { onClock = false; invalidate(); return true; } moveTime(true); return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 // TV/Fire TV: categories are reachable from every row and time, without scrolling up.
-                if (categories != null) {
+                // On a future programme, Left steps back to the previous listing first.
+                if (categories != null && !(selTime > now() + 1 || windowStart > minStart())) {
                     if (e.getRepeatCount() == 0) { onClock = false; invalidate(); categories.run(); }
                     return true;
                 }

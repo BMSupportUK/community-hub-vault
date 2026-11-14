@@ -34,7 +34,7 @@ public class LiveGuideNavigationTest {
         }
     }
 
-    @Test public void leftOpensCategoriesOnFutureDayAndCatchupChannelWithoutMovingTime() {
+    @Test public void leftOnFutureProgrammeStepsBackInsteadOfOpeningCategories() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
         GuideGridView grid = grid(activity);
         grid.setChannels(Arrays.asList("BBC One", "ITV"), Arrays.asList(true, true));
@@ -46,11 +46,9 @@ public class LiveGuideNavigationTest {
         grid.shiftDay(1);
         long end = grid.windowEnd();
         grid.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT));
-        assertEquals(2, opens[0]);
+        assertEquals(1, opens[0]);
         assertEquals(1, grid.selectedRow());
-        assertEquals(end, grid.windowEnd());
-        grid.onKeyDown(KeyEvent.KEYCODE_DPAD_LEFT, new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, 1));
-        assertEquals(2, opens[0]);
+        assertTrue(grid.windowEnd() < end);
     }
 
     @Test public void phoneWithoutCategoriesShortcutKeepsLeftTimeNavigation() {

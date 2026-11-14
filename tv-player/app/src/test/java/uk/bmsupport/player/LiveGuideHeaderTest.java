@@ -220,7 +220,6 @@ public class LiveGuideHeaderTest {
         for (int i = 0; i < 30; i++) names.add("Channel " + i);
         grid.setChannels(names, java.util.Collections.nCopies(30, false));
         grid.selectChannel(17);
-        grid.shiftDay(1);
         long end = grid.windowEnd();
         Field top = GuideGridView.class.getDeclaredField("topRow"); top.setAccessible(true);
         int scroll = top.getInt(grid);
