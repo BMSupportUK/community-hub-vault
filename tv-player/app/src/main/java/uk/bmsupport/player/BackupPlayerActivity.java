@@ -189,7 +189,7 @@ public class BackupPlayerActivity extends Activity {
     private boolean staleCatchupEvent() { return !started && android.os.SystemClock.elapsedRealtime() - cuOpenedAt < 3000; }
     private long cuReached() { return started ? cuSegStart + Math.max(0, mp == null ? 0 : mp.getTime()) / 1000 : cuSegStart; }
     private void catchupOpenAt(long start) {
-        cuSegStart = start; urls[0] = cuUrl(); at = 0; cuOpenedAt = android.os.SystemClock.elapsedRealtime();
+        cuSegStart = start; urls[0] = cuUrl(); at = 0; started = false; resume = 0; cuOpenedAt = android.os.SystemClock.elapsedRealtime();
         try { mp.stop(); } catch (Exception ignored) {}
         open();
     }
@@ -211,7 +211,8 @@ public class BackupPlayerActivity extends Activity {
             i.removeExtra("backup_first");
             startActivity(i); finish(); return;
         }
-        long restart = reached - Math.floorMod(reached, 60L);
+        // Never step back: rounding down replayed the same opening minute again and again.
+        long restart = reached + Math.floorMod(60L - Math.floorMod(reached, 60L), 60L);
         ui.postDelayed(() -> catchupOpenAt(restart), cuRetries > 1 ? 2000 : 300);
     }
     /**
