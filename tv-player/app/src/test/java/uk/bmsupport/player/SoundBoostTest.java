@@ -35,6 +35,6 @@ public class SoundBoostTest {
     }
     @Test public void boxVolumeIsRaisedOnlyWhenBoosterIsOn() {
         org.junit.Assert.assertFalse(SoundBoost.raisesDeviceVolume("off"));
-        for (String level : new String[]{"low", "medium", "high", "max"}) org.junit.Assert.assertTrue(SoundBoost.raisesDeviceVolume(level));
+        for (String level : new String[]{"low", "medium", "high", "max"}) org.junit.Assert.assertFalse(SoundBoost.raisesDeviceVolume(level));
     }
 }

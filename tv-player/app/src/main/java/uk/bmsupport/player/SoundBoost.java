@@ -50,10 +50,11 @@ final class SoundBoost {
     private static int users; private static int savedVolume = -1;
     static synchronized void hold(Context app) { users++; deviceVolume(app); }
     static synchronized void unhold(Context app) { if (users > 0) users--; if (users == 0) restoreVolume(app); }
-    static boolean raisesDeviceVolume(String id) { return gainFor(id) > 0; }
+    static boolean raisesDeviceVolume(String id) { return false; }
     private static synchronized void deviceVolume(Context app) {
-        if (users == 0) return;
-        if (!raisesDeviceVolume(current(app))) { restoreVolume(app); return; }
+        // 5.23: never touch the box's own volume again (forcing it to full was far too loud). Only undo an earlier raise.
+        restoreVolume(app);
+        if (true) return;
         try {
             AudioManager am = (AudioManager) app.getSystemService(Context.AUDIO_SERVICE);
             if (am == null || am.isVolumeFixed()) return;
