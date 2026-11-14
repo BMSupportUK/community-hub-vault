@@ -1,0 +1,1 @@
+- Direct Install step buttons and Next share directStepAccess derived from the active run reports; navigation never creates completion, so unconfirmed steps cannot be skipped while earlier confirmed instructions remain accessible.

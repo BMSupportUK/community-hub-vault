@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Website Direct Install blocks future step buttons and Next until active-run confirmation; completed steps stay accessible. Seven navigation/PIN tests pass; website build OK.
+- [ ] Full signed-in Direct Install navigation check: initial future-step disabled state observed, but account/profile changes interrupted subsequent browser navigation; complete flow remains unverified.
+
 - [x] Android 5.05 startup waits for the update check; Update now blocks playlists through download/install, Later/no update/offline check permits refresh. All 285 tests pass and permanent BM signed build retained; not publicly released.
 - [ ] Real-box verification of 5.05 startup update/install order; blocked by no connected device.
 

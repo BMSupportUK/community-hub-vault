@@ -10,6 +10,7 @@ import { selfInstallHandoff } from "@/lib/enabler-handoff";
 import { createDirectInstallPin, getDirectInstallPin } from "@/lib/direct-install-pin.functions";
 import { createDirectInstallLink, getDirectInstallProgress, startDirectInstallSession } from "@/lib/direct-install.functions";
 import { nextDirectStep } from "@/lib/direct-install";
+import { directStepAccess } from "./direct-install-navigation";
 
 const STEP_TITLES = ["Already installed?", "Secure download link", "Install with Downloader", "Sign in with your PIN", "Allow unknown apps", "Website code & install"];
 type Progress = Awaited<ReturnType<typeof getDirectInstallProgress>>;
@@ -30,7 +31,6 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
   const [answered, setAnswered] = useState<"yes" | "no" | null>(null);
-  const [manual, setManual] = useState<boolean[]>([false, false, false, false, false, false]);
   const [progress, setProgress] = useState<Progress>(null);
   const [tv, setTv] = useState<"amazon" | "android" | null>(null);
   const [showVideo, setShowVideo] = useState(false);
@@ -45,9 +45,11 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
   }, [progressFn, sessionId]);
 
   const fromTv = reported(progress, !!link);
-  const done = fromTv.map((v, i) => v || manual[i]);
+  const done = [...fromTv];
   if (answered) done[0] = true;
   const completed = !!progress?.completed_at;
+  const accessible = directStepAccess(fromTv, answered, completed);
+  const navigate = (i: number) => { if (!busy && accessible[i]) setStep(i); };
 
   // Jump forward only when the TV itself reports a step finished — never just because a link exists.
   // Auto-advance as soon as the TV reports the next step (e.g. unknown apps allowed → straight to the code step).
@@ -57,7 +59,6 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
     setSessionId(null);
     setLink(null);
     setProgress(null);
-    setManual([false, false, false, false, false, false]);
     lastReports.current = "";
     setAnswered(null);
     setTv(null);
@@ -77,7 +78,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
       const l = await linkFn();
       currentSession.current = l.sessionId;
       setSessionId(l.sessionId);
-      setLink(l); setProgress(null); setManual([false, false, false, false, false, false]);
+      setLink(l); setProgress(null);
       setStep(2); // show the link on step 3 — that's what goes into Downloader
     } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't make a download link."); }
     finally { setBusy(false); }
@@ -91,7 +92,6 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
       setSessionId(run.sessionId);
       setLink(null);
       setProgress(null);
-      setManual([false, false, false, false, false, false]);
       lastReports.current = "";
       setAnswered("yes");
       setStep(3);
@@ -99,7 +99,6 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
     finally { setBusy(false); }
   };
 
-  const finish = (i: number) => { setManual((d) => d.map((v, j) => (j === i ? true : v))); setStep(Math.min(i + 1, 5)); };
   const shown = link?.url.replace(/^https:\/\//, "");
   const Waiting = ({ text }: { text: string }) => <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" />{text}</p>;
 
@@ -119,12 +118,12 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
         if (answered === "yes" && (i === 1 || i === 2)) return null;
         const complete = done[i] || completed;
         const current = !completed && i === step;
-        return <li key={t}><button type="button" onClick={() => setStep(i)} className="flex items-center gap-2">
+        return <li key={t}><Button type="button" variant="ghost" disabled={busy || !accessible[i]} onClick={() => navigate(i)} className="h-auto gap-2 p-0">
           <span className={`flex size-7 items-center justify-center rounded-full border text-xs font-bold ${complete ? "border-green-600 bg-green-600 text-white" : current ? "border-primary bg-primary text-primary-foreground" : "border-border bg-muted text-muted-foreground"}`}>
             {complete ? <Check className="size-4" /> : i + 1}
           </span>
           <span className={`text-sm ${current ? "font-semibold text-foreground" : complete ? "text-foreground" : "text-muted-foreground"}`}>{t}</span>
-        </button></li>;
+        </Button></li>;
       })}
     </ol>
 
@@ -184,7 +183,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
         <p className="text-xs text-muted-foreground">Only works for you, until {new Date(link.expiresAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} (24 hours).</p>
       </div>}
       {!done[2] && <Waiting text="Waiting for your TV to download BM Direct Install…" />}
-      <WizardNav onBack={() => setStep(1)} onNext={() => finish(2)} nextLabel="Next step" nextDisabled={!tv} />
+      <WizardNav onBack={() => navigate(1)} onNext={() => navigate(3)} nextLabel="Next step" nextDisabled={!tv || !accessible[3] || busy} />
     </section>}
 
     {step === 3 && <section className="space-y-3">
@@ -192,7 +191,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
       <p className="text-sm text-muted-foreground">Press <strong className="text-foreground">Generate PIN</strong>, then <strong className="text-foreground">Reveal</strong> and type it into BM Direct Install on your TV. This PIN stays valid until you press All done after installing.</p>
       <DirectPin />
       {!done[3] && <Waiting text="Waiting for BM Direct Install to sign in…" />}
-      <WizardNav onBack={() => setStep(answered === "yes" ? 0 : 2)} onNext={() => finish(3)} nextLabel="Next step" />
+      <WizardNav onBack={() => navigate(answered === "yes" ? 0 : 2)} onNext={() => navigate(4)} nextLabel="Next step" nextDisabled={!accessible[4] || busy} />
     </section>}
 
     {step === 4 && <section className="space-y-3">
@@ -213,7 +212,7 @@ export function DirectInstallSteps(_props: { pin?: ReactNode } = {}) {
         <li>Press <strong className="text-foreground">Back</strong> to return to BM Direct Install.</li>
       </ol>}
       {!done[4] && <Waiting text="Waiting for your TV to allow BM Direct Install…" />}
-      <WizardNav onBack={() => setStep(3)} onNext={() => finish(4)} nextLabel="Next step" />
+      <WizardNav onBack={() => navigate(3)} onNext={() => navigate(5)} nextLabel="Next step" nextDisabled={!accessible[5] || busy} />
     </section>}
 
     {step === 5 && <section className="space-y-3">
