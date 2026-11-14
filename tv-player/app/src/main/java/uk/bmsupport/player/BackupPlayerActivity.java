@@ -114,6 +114,7 @@ public final class BackupPlayerActivity extends Activity {
         ArrayList<String> opts = new ArrayList<>();
         opts.add("--network-caching=" + BackupBufferPolicy.networkCacheMs(isLive(), PlayerActivity.prefs(this).getString("buffer", StreamRecovery.DEFAULT_BUFFER), recoveryName()));
         opts.add("--http-reconnect");
+        vlcBoost = SoundBoost.vlc(this, opts);
         vlc = new LibVLC(this, opts);
         mp = new MediaPlayer(vlc);
         mp.attachViews(layout, null, false, false);
@@ -205,13 +206,16 @@ public final class BackupPlayerActivity extends Activity {
         ui.postDelayed(() -> { if (b.getParent() != null) root.removeView(b); }, 20000);
     }
 
+    private SoundBoost.Vlc vlcBoost;
+
     private void applyBoost() {
         if (mp == null) return;
         try {
             // VLC's flat equalizer attenuates PCM by 0.25 (-12 dB) before its pre-amp.
             // Use AudioTrack's direct gain path instead, without that cancellation.
             mp.setEqualizer(null);
-            mp.setVolume(SoundBoost.vlcVolumeFor(SoundBoost.current(this), false));
+            vlcBoost.apply(SoundBoost.gainFor(SoundBoost.current(this)));
+            mp.setVolume(SoundBoost.vlcVolume(vlcBoost.enhanced(), SoundBoost.current(this), false));
         } catch (Exception ignored) {}
     }
 
@@ -481,6 +485,7 @@ public final class BackupPlayerActivity extends Activity {
         ProgressSync.push(this, true);
         if (mp != null) { mp.stop(); mp.detachViews(); mp.release(); mp = null; }
         if (vlc != null) { vlc.release(); vlc = null; }
+        if (vlcBoost != null) { vlcBoost.release(); vlcBoost = null; }
         super.onDestroy();
     }
 }

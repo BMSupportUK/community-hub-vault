@@ -10,11 +10,19 @@ public class SoundBoostTest {
         assertEquals(600, SoundBoost.gainFor("low"));
         assertEquals(1200, SoundBoost.gainFor("medium"));
         assertEquals(1800, SoundBoost.gainFor("high"));
+        assertEquals(2400, SoundBoost.gainFor("max"));
+    }
+    @Test public void unsetLevelStartsAtMedium() { assertEquals("medium", SoundBoost.DEFAULT); }
+    @Test public void enhancedLiveEngineStaysAtUnitySoPeaksAreLimitedNotClipped() {
+        for (String level : SoundBoost.IDS) assertEquals(100, SoundBoost.vlcVolume(true, level, false));
+        assertEquals(0, SoundBoost.vlcVolume(true, "max", true));
+        assertEquals(200, SoundBoost.vlcVolume(false, "max", false));
     }
     @Test public void unknownLevelIsOff() { assertEquals(0, SoundBoost.gainFor("loud")); assertEquals(0, SoundBoost.gainFor(null)); }
     @Test public void buttonCycles() {
         assertEquals("low", SoundBoost.next("off"));
-        assertEquals("off", SoundBoost.next("high"));
+        assertEquals("max", SoundBoost.next("high"));
+        assertEquals("off", SoundBoost.next("max"));
     }
     @Test public void liveGainHasNoEqualizerAttenuation() {
         assertEquals(100, SoundBoost.vlcVolumeFor("off", false));

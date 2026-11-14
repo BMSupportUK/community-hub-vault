@@ -41,13 +41,15 @@ final class VlcPreview {
 
     void setMuted(boolean m) { muted = m; applyVolume(); }
     boolean isPlaying() { return playing && !released; }
-    private void applyVolume() { if (mp != null && !released) mp.setVolume(SoundBoost.vlcVolumeFor(SoundBoost.current(ctx), muted)); }
+    private void applyVolume() { if (mp != null && !released) mp.setVolume(SoundBoost.vlcVolume(boost != null && boost.enhanced(), SoundBoost.current(ctx), muted)); }
+    private SoundBoost.Vlc boost;
 
     /** Same direct gain as full-screen live TV, retaining the pane's mute state. */
     void applyBoost() {
         if (mp == null || released) return;
         try {
             mp.setEqualizer(null);
+            if (boost != null) boost.apply(SoundBoost.gainFor(SoundBoost.current(ctx)));
             applyVolume();
         } catch (Exception ignored) {}
     }
@@ -61,6 +63,7 @@ final class VlcPreview {
         opts.add("--network-caching=" + BackupBufferPolicy.previewCacheMs());
         opts.add("--http-reconnect");
         opts.add("--no-audio-time-stretch");
+        boost = SoundBoost.vlc(c, opts);
         vlc = new LibVLC(c, opts);
         mp = new MediaPlayer(vlc);
         layout = new VLCVideoLayout(c);
@@ -92,6 +95,7 @@ final class VlcPreview {
         released = true;
         ui.removeCallbacksAndMessages(null);
         try { mp.stop(); mp.detachViews(); mp.release(); vlc.release(); } catch (RuntimeException ignored) {}
+        if (boost != null) boost.release();
         if (host != null && layout != null) host.removeView(layout);
         mp = null; vlc = null; layout = null; host = null;
     }
