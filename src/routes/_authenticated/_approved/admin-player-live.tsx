@@ -89,19 +89,11 @@ function RemoveBoxButton({ deviceId, onDone }: { deviceId: string; onDone: () =>
 
 function mbps(k: number | null | undefined) { return k ? `${(k / 1000).toFixed(k < 10000 ? 1 : 0)} Mbps` : "—"; }
 
-/** Five-bar connection strength from the latest download speed and ping. */
+/** Whether the player has sent a speed/ping reading yet. No quality rating: the
+ *  numbers are traffic used, not available line speed, so a label would mislead. */
 function ConnectionBars({ down, ping }: { down: number | null; ping: number | null }) {
   if (!down && !ping) return <span className="text-xs text-muted-foreground">Waiting</span>;
-  let n = !down ? 1 : down >= 15000 ? 5 : down >= 8000 ? 4 : down >= 4000 ? 3 : down >= 1500 ? 2 : 1;
-  if (ping != null && ping > 800) n = Math.min(n, 2); else if (ping != null && ping > 400) n = Math.min(n, 3);
-  const tone = n >= 4 ? "bg-success" : n === 3 ? "bg-warning" : "bg-destructive";
-  const label = ["", "Poor", "Weak", "Fair", "Good", "Excellent"][n];
-  return (
-    <div className="flex items-center gap-2" title={label}>
-      <div className="flex items-end gap-0.5">{[1, 2, 3, 4, 5].map((i) => <span key={i} className={`w-1.5 rounded-sm ${i <= n ? tone : "bg-muted"}`} style={{ height: 4 + i * 3 }} />)}</div>
-      <span className="text-xs">{label}</span>
-    </div>
-  );
+  return <span className="text-xs text-muted-foreground">Live readings</span>;
 }
 
 function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row | null; names: Record<string, string>; now: number; onOpenChange: (open: boolean) => void }) {
@@ -137,7 +129,6 @@ function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row |
             <section>
               <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Connection</h3>
               <div className="grid gap-x-6 sm:grid-cols-2">
-                <Field label="Status" value={<ConnectionBars down={row.net_down_kbps} ping={row.net_ping_ms} />} />
                 <Field label="Download" value={mbps(row.net_down_kbps)} />
                 <Field label="Upload" value={mbps(row.net_up_kbps)} />
                 <Field label="Ping" value={row.net_ping_ms ? `${row.net_ping_ms} ms` : "—"} />
