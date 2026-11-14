@@ -33,4 +33,8 @@ public class SoundBoostTest {
     @Test public void multiScreenMuteAlwaysOverridesBoost() {
         for (String level : SoundBoost.IDS) assertEquals(0, SoundBoost.vlcVolumeFor(level, true));
     }
+    @Test public void boxVolumeIsRaisedOnlyWhenBoosterIsOn() {
+        org.junit.Assert.assertFalse(SoundBoost.raisesDeviceVolume("off"));
+        for (String level : new String[]{"low", "medium", "high", "max"}) org.junit.Assert.assertTrue(SoundBoost.raisesDeviceVolume(level));
+    }
 }
