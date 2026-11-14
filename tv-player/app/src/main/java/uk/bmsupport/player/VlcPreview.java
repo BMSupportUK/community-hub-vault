@@ -20,16 +20,27 @@ final class VlcPreview {
     private String[] urls;
     private int at, errors;
     private boolean released, playing, muted;
+    private final Context ctx;
 
     void setMuted(boolean m) { muted = m; applyVolume(); }
     boolean isPlaying() { return playing && !released; }
     private void applyVolume() { if (mp != null && !released) mp.setVolume(muted ? 0 : 100); }
 
+    /** Same sound booster pre-amp as full-screen live TV; re-run when the level changes. */
+    void applyBoost() {
+        if (mp == null || released) return;
+        try {
+            MediaPlayer.Equalizer eq = MediaPlayer.Equalizer.create();
+            eq.setPreAmp(SoundBoost.gainFor(SoundBoost.current(ctx)) / 100f);
+            mp.setEqualizer(eq);
+        } catch (Exception ignored) {}
+    }
+
     VlcPreview(Context c, ViewGroup host, String[] urls, Listener l) { this(c, host, -1, urls, l); }
 
     /** index: where the picture goes in host (-1 = on top), so Multi-screen labels stay above it. */
     VlcPreview(Context c, ViewGroup host, int index, String[] urls, Listener l) {
-        this.host = host; this.urls = urls;
+        this.ctx = c.getApplicationContext(); this.host = host; this.urls = urls;
         ArrayList<String> opts = new ArrayList<>();
         opts.add("--network-caching=" + BackupBufferPolicy.previewCacheMs());
         opts.add("--http-reconnect");
@@ -41,7 +52,7 @@ final class VlcPreview {
         mp.attachViews(layout, null, false, false);
         mp.setEventListener(ev -> {
             if (released) return;
-            if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released) { applyVolume(); playing = true; l.playing(); } });
+            if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released) { applyVolume(); applyBoost(); playing = true; l.playing(); } });
             else if (ev.type == MediaPlayer.Event.EncounteredError || ev.type == MediaPlayer.Event.EndReached) ui.post(() -> {
                 if (released) return;
                 if (++errors > urls.length * 3) { l.failed(); return; }
@@ -55,7 +66,7 @@ final class VlcPreview {
     private void open() {
         if (released || urls == null || urls.length == 0) return;
         Media m = new Media(vlc, android.net.Uri.parse(urls[at]));
-        mp.setMedia(m); m.release(); mp.play();
+        mp.setMedia(m); m.release(); applyBoost(); mp.play();
     }
 
     void release() {
