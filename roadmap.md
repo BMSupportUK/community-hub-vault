@@ -2,7 +2,8 @@
 
 - [x] Made 5.05 the public BM Player download: uploaded first, switched current build, public updater returns 5.05 and downloaded APK SHA-256 matches versionCode 316; 285 tests with zero failures/errors.
 - [x] Built permanent-BM-signed 5.06 (317), retained APK asset: compact play menu, parental control first in Settings with in-app PIN pad, category row actions preserve the chosen identity; canceling PIN replacement preserves protection. All 288 Android tests pass.
-- [ ] Physical Amazon box verification of 5.06 pop-up, PIN and category controls; blocked by no connected box. Public download remains 5.05 until release requested.
+- [x] Released 5.06 publicly: updater returns 5.06, public APK matches the tested build SHA-256, permanent BM signer and versionCode 317 verified; 288 tests pass.
+- [ ] Install and verify 5.06 pop-up, PIN and category controls on the Amazon box; blocked by no connected box (ADB device list empty).
 
 - [x] Website Direct Install blocks future step buttons and Next until active-run confirmation; completed steps stay accessible. Seven navigation/PIN tests pass; website build OK.
 - [ ] Full signed-in Direct Install navigation check: initial future-step disabled state observed, but account/profile changes interrupted subsequent browser navigation; complete flow remains unverified.
