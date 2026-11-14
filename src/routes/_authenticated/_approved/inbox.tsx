@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState, type ClipboardEvent } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, CheckSquare, Flag, LoaderCircle, MessagesSquare, Pencil, Plus, Search, Send, ShieldCheck, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { inboxAction, inboxDeleteMany, isInboxStaff, readInboxState, useBmInbox, type InboxMember, type InboxMessage } from "@/lib/bm-inbox";
+import { INBOX_IMAGE_MAX_BYTES, inboxAction, inboxDeleteMany, inboxImageUrl, isInboxStaff, readInboxState, sendInboxImage, uploadInboxImage, useBmInbox, type InboxMember, type InboxMessage } from "@/lib/bm-inbox";
 import { inboxDeletionResult } from "@/lib/inbox-delete-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,12 @@ function Identity({ member }: { member?: InboxMember }) {
   </div>;
 }
 
+function InboxImage({ path }: { path: string }) {
+  const { data: url } = useQuery({ queryKey: ["inbox-image", path], queryFn: () => inboxImageUrl(path), staleTime: 50 * 60 * 1000 });
+  if (!url) return <div className="flex h-32 w-48 items-center justify-center rounded-md bg-muted"><LoaderCircle className="size-5 animate-spin text-muted-foreground" /></div>;
+  return <a href={url} target="_blank" rel="noreferrer" title="Open full size"><img src={url} alt="Sent photo" className="max-h-64 max-w-full rounded-md object-contain" /></a>;
+}
+
 function InboxPage() {
   const { user, hasAny } = useAuth();
   const [thread, setThread] = useState<string>();
@@ -39,6 +45,7 @@ function InboxPage() {
   const draftRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({ value: draft, onChange: setDraft, textareaRef: draftRef, canBroadcast: false });
   const [busy, setBusy] = useState(false);
+  const [sendingImage, setSendingImage] = useState(false);
   const [edit, setEdit] = useState<InboxMessage>();
   const [editBody, setEditBody] = useState("");
   const [report, setReport] = useState<InboxMessage>();
@@ -69,6 +76,19 @@ function InboxPage() {
       else toast.success(`Deleted ${removed} message${removed === 1 ? "" : "s"}.`);
     } catch { toast.error("Could not delete those messages. Please try again."); }
     finally { setBusy(false); }
+  }
+  async function pasteImage(e: ClipboardEvent) {
+    const file = [...(e.clipboardData?.files ?? [])].find(f => f.type.startsWith("image/"));
+    if (!file || !thread || !user) return;
+    e.preventDefault();
+    if (file.size > INBOX_IMAGE_MAX_BYTES) { toast.error("Photos must be under 8 MB."); return; }
+    setSendingImage(true);
+    try {
+      const path = await uploadInboxImage(thread, user.id, file);
+      await sendInboxImage(thread, path);
+      await refresh();
+    } catch { toast.error("Could not send that photo. Please try again."); }
+    finally { setSendingImage(false); }
   }
   const bottom = useRef<HTMLDivElement>(null);
   const current = data?.threads.find(t => t.id === thread);
@@ -120,8 +140,8 @@ function InboxPage() {
             <Button size="sm" variant="outline" disabled={busy} onClick={() => setConfirmBulk("all")}><Trash2 className="mr-2 size-4" />Delete conversation</Button>
             <Button size="sm" variant="ghost" onClick={() => { setSelecting(false); setSelected(new Set()); }}><X className="mr-2 size-4" />Cancel</Button>
           </> : <Button size="sm" variant="outline" onClick={() => { setSelecting(true); setSelected(new Set()); }}><CheckSquare className="mr-2 size-4" />Select</Button>}</div></div>
-          <div className="flex h-[52dvh] min-h-[280px] flex-col gap-5 overflow-y-auto p-4 md:p-6" aria-label="Conversation messages">{data?.messages.length === 0 && <p className="m-auto text-muted-foreground">No messages yet.</p>}{data?.messages.map(message => { const own = message.sender_id === user?.id; const picked = selected.has(message.id); return <article key={message.id} className={`flex max-w-[90%] flex-col gap-2 ${own ? "self-end" : "self-start"}`}><Identity member={data.members.find(m => m.id === message.sender_id)} /><div className={`rounded-lg px-4 py-3 ${own ? "bg-primary text-primary-foreground" : "border border-border bg-background/95 text-foreground"} ${picked ? "ring-2 ring-destructive" : ""}`}><p className="whitespace-pre-wrap break-words text-sm">{message.deleted_at ? "Message deleted" : <MentionText content={message.body} />}</p></div><div className="flex items-center gap-1 rounded-md bg-background/85 px-2 text-xs text-muted-foreground"><time>{new Date(message.created_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</time>{message.edited_at && !message.deleted_at && <span>· edited</span>}{!message.deleted_at && (selecting ? (<Button size="icon" variant="ghost" className="size-7" aria-label={picked ? "Deselect message" : "Select message"} title={picked ? "Deselect message" : "Select message"} onClick={() => setSelected(prev => { const next = new Set(prev); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; })}>{picked ? <CheckSquare className="size-4 text-destructive" /> : <Square className="size-4" />}</Button>) : own ? <><Button size="icon" variant="ghost" className="size-7" aria-label="Edit message" title="Edit message" onClick={() => { setEdit(message); setEditBody(message.body); }}><Pencil className="size-3" /></Button><Button size="icon" variant="ghost" className="size-7" aria-label="Delete message" title="Delete message" onClick={() => setDeleting(message)}><Trash2 className="size-3" /></Button></> : <><Button size="icon" variant="ghost" className="size-7" aria-label="Delete message" title="Delete message" onClick={() => setDeleting(message)}><Trash2 className="size-3" /></Button><Button size="icon" variant="ghost" className="size-7" aria-label="Report message" title="Report message" onClick={() => { setReport(message); setReason(""); }}><Flag className="size-3" /></Button></>)}</div></article>; })}<div ref={bottom} /></div>
-          <form className="mt-auto flex items-end gap-3 border-t border-border bg-background/90 p-4" onSubmit={async e => { e.preventDefault(); if (!draft.trim() || busy) return; if (await act("send", thread, draft)) setDraft(""); }}><div className="relative flex-1">{mention.dropdown}<Textarea ref={draftRef} aria-label="Message" placeholder="Write a message… (@ to tag)" maxLength={4000} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { mention.onKeyDown(e); }} className="min-h-20 w-full resize-none" /></div><Button size="icon" type="submit" aria-label="Send message" title="Send message" disabled={busy || !draft.trim()}>{busy ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}</Button></form>
+          <div className="flex h-[52dvh] min-h-[280px] flex-col gap-5 overflow-y-auto p-4 md:p-6" aria-label="Conversation messages">{data?.messages.length === 0 && <p className="m-auto text-muted-foreground">No messages yet.</p>}{data?.messages.map(message => { const own = message.sender_id === user?.id; const picked = selected.has(message.id); return <article key={message.id} className={`flex max-w-[90%] flex-col gap-2 ${own ? "self-end" : "self-start"}`}><Identity member={data.members.find(m => m.id === message.sender_id)} /><div className={`rounded-lg px-4 py-3 ${own ? "bg-primary text-primary-foreground" : "border border-border bg-background/95 text-foreground"} ${picked ? "ring-2 ring-destructive" : ""}`}>{!message.deleted_at && message.image_path && <InboxImage path={message.image_path} />}{(message.deleted_at || message.body) && <p className="whitespace-pre-wrap break-words text-sm">{message.deleted_at ? "Message deleted" : <MentionText content={message.body} />}</p>}</div><div className="flex items-center gap-1 rounded-md bg-background/85 px-2 text-xs text-muted-foreground"><time>{new Date(message.created_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</time>{message.edited_at && !message.deleted_at && <span>· edited</span>}{!message.deleted_at && (selecting ? (<Button size="icon" variant="ghost" className="size-7" aria-label={picked ? "Deselect message" : "Select message"} title={picked ? "Deselect message" : "Select message"} onClick={() => setSelected(prev => { const next = new Set(prev); if (next.has(message.id)) next.delete(message.id); else next.add(message.id); return next; })}>{picked ? <CheckSquare className="size-4 text-destructive" /> : <Square className="size-4" />}</Button>) : own ? <><Button size="icon" variant="ghost" className="size-7" aria-label="Edit message" title="Edit message" onClick={() => { setEdit(message); setEditBody(message.body); }}><Pencil className="size-3" /></Button><Button size="icon" variant="ghost" className="size-7" aria-label="Delete message" title="Delete message" onClick={() => setDeleting(message)}><Trash2 className="size-3" /></Button></> : <><Button size="icon" variant="ghost" className="size-7" aria-label="Delete message" title="Delete message" onClick={() => setDeleting(message)}><Trash2 className="size-3" /></Button><Button size="icon" variant="ghost" className="size-7" aria-label="Report message" title="Report message" onClick={() => { setReport(message); setReason(""); }}><Flag className="size-3" /></Button></>)}</div></article>; })}<div ref={bottom} /></div>
+          <form className="mt-auto flex items-end gap-3 border-t border-border bg-background/90 p-4" onSubmit={async e => { e.preventDefault(); if (!draft.trim() || busy) return; if (await act("send", thread, draft)) setDraft(""); }}><div className="relative flex-1">{mention.dropdown}<Textarea ref={draftRef} aria-label="Message" placeholder="Write a message… (@ to tag, paste a photo)" maxLength={4000} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { mention.onKeyDown(e); }} onPaste={e => { void pasteImage(e); }} className="min-h-20 w-full resize-none" />{sendingImage && <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground"><LoaderCircle className="size-3 animate-spin" />Sending photo…</p>}</div><Button size="icon" type="submit" aria-label="Send message" title="Send message" disabled={busy || sendingImage || !draft.trim()}>{busy ? <LoaderCircle className="size-4 animate-spin" /> : <Send className="size-4" />}</Button></form>
         </>}
       </main>
     </div>

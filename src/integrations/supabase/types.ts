@@ -701,6 +701,7 @@ export type Database = {
           deleted_at: string | null
           edited_at: string | null
           id: string
+          image_path: string | null
           sender_id: string
           thread_id: string
         }
@@ -710,6 +711,7 @@ export type Database = {
           deleted_at?: string | null
           edited_at?: string | null
           id?: string
+          image_path?: string | null
           sender_id: string
           thread_id: string
         }
@@ -719,6 +721,7 @@ export type Database = {
           deleted_at?: string | null
           edited_at?: string | null
           id?: string
+          image_path?: string | null
           sender_id?: string
           thread_id?: string
         }
@@ -10126,10 +10129,15 @@ export type Database = {
         Args: { _ids?: string[]; _thread: string }
         Returns: Json
       }
+      bm_inbox_image_allowed: { Args: { _path: string }; Returns: boolean }
       bm_inbox_my_privacy: { Args: never; Returns: string }
       bm_inbox_review: {
         Args: { _id?: string; _status?: string }
         Returns: Json
+      }
+      bm_inbox_send_image: {
+        Args: { _caption?: string; _path: string; _thread: string }
+        Returns: string
       }
       bm_inbox_set_privacy: { Args: { _value: string }; Returns: string }
       bm_inbox_state: { Args: { _thread?: string }; Returns: Json }

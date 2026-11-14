@@ -1,0 +1,2 @@
+ALTER TABLE public.bm_inbox_messages DROP CONSTRAINT bm_inbox_messages_body_check;
+ALTER TABLE public.bm_inbox_messages ADD CONSTRAINT bm_inbox_messages_body_check CHECK (char_length(body) <= 4000 AND (char_length(body) >= 1 OR image_path IS NOT NULL));
