@@ -192,6 +192,9 @@ public class MainActivity extends Activity {
     private final androidx.media3.ui.PlayerView[] multiVideoViews = new androidx.media3.ui.PlayerView[3];
     private final TextView[] multiLabels = new TextView[3];
     private final Runnable[] multiWatches = new Runnable[3];
+    // Multi-screen channels play in the built-in backup engine like full-screen live TV; the Media3 panes stay idle.
+    private final VlcPreview[] multiVlc = new VlcPreview[3];
+    private void multiVolume() { for (int k = 0; k < multiVlc.length; k++) if (multiVlc[k] != null) multiVlc[k].setMuted(k != multiAudioPane); }
     private final int[] multiSelections = new int[3];
     private int multiSession, multiAudioPane;
     private final java.util.Set<Integer> multiPicked = new java.util.HashSet<>();
@@ -202,6 +205,7 @@ public class MainActivity extends Activity {
         for (int i = 0; i < multiWatches.length; i++) {
             if (multiWatches[i] != null) ui.removeCallbacks(multiWatches[i]);
             multiWatches[i] = null;
+            if (multiVlc[i] != null) { multiVlc[i].release(); multiVlc[i] = null; }
             if (multiVideoViews[i] != null) multiVideoViews[i].setPlayer(null);
             multiVideoViews[i] = null; multiPanes[i] = null; multiLabels[i] = null;
         }
@@ -217,6 +221,7 @@ public class MainActivity extends Activity {
     /** Something playing in this screen (preview box or a multi-screen pane) keeps the phone screen awake. */
     void updateKeepScreenOn() {
         boolean playing = previewPlaying;
+        for (VlcPreview v : multiVlc) if (v != null && v.isPlaying()) playing = true;
         for (androidx.media3.exoplayer.ExoPlayer p : multiPlayers) {
             if (p.getPlaybackState() == androidx.media3.common.Player.STATE_READY && p.getPlayWhenReady()) { playing = true; break; }
         }
@@ -278,12 +283,12 @@ public class MainActivity extends Activity {
             f.setOnFocusChangeListener((v, has) -> {
                 if (!has) return;
                 multiAudioPane = n;
-                for (int k = 0; k < multiPlayers.size(); k++) multiPlayers.get(k).setVolume(k == n ? 1f : 0f);
+                for (int k = 0; k < multiPlayers.size(); k++) multiPlayers.get(k).setVolume(k == n ? 1f : 0f); multiVolume();
             });
             // A tap (phones never move focus on touch) or OK also moves the sound to this screen.
             f.setOnClickListener(v -> {
                 multiAudioPane = n;
-                for (int k = 0; k < multiPlayers.size(); k++) multiPlayers.get(k).setVolume(k == n ? 1f : 0f);
+                for (int k = 0; k < multiPlayers.size(); k++) multiPlayers.get(k).setVolume(k == n ? 1f : 0f); multiVolume();
                 pickMultiChannel(n, labels[n]);
             });
         }
@@ -376,54 +381,20 @@ public class MainActivity extends Activity {
     }
 
     private void startMultiChannel(int n, Item it, int session, int selection) {
-        if (multiWatches[n] != null) ui.removeCallbacks(multiWatches[n]);
-        MultiScreenRecovery recovery = new MultiScreenRecovery(
-                () -> reopenMultiPane(n, it, session, selection, true),
-                () -> {
-                    if (multiCurrent(n, session) && multiSelections[n] == selection) {
-                        multiLabels[n].setText(it.name + "\nNo picture – press OK to pick another channel");
-                        multiWatches[n] = null;
-                    }
-                });
-        reopenMultiPane(n, it, session, selection, false);
-        Runnable watch = new Runnable() { @Override public void run() {
-            if (!multiCurrent(n, session) || multiSelections[n] != selection || multiWatches[n] != this) return;
-            androidx.media3.exoplayer.ExoPlayer player = multiPlayers.get(n);
-            recovery.sample(android.os.SystemClock.elapsedRealtime(),
-                    player.getPlaybackState() == androidx.media3.common.Player.STATE_READY && player.getPlayWhenReady(),
-                    renderedFrames(player));
-            if (multiWatches[n] == this) ui.postDelayed(this, 1000);
-        }};
-        multiWatches[n] = watch;
-        ui.postDelayed(watch, 1000);
-    }
-
-    /** Release the decoder AND remove its old surface; never reset the other panes. */
-    private void reopenMultiPane(int n, Item it, int session, int selection, boolean recovering) {
+        if (multiWatches[n] != null) { ui.removeCallbacks(multiWatches[n]); multiWatches[n] = null; }
+        if (multiVlc[n] != null) { multiVlc[n].release(); multiVlc[n] = null; }
         if (!multiCurrent(n, session) || multiSelections[n] != selection) return;
         TextView label = multiLabels[n];
-        label.setText(recovering ? "Picture stuck – restarting the video…" : "Channel Loading…");
-        androidx.media3.ui.PlayerView oldView = multiVideoViews[n];
-        oldView.setPlayer(null);
-        multiPlayers.get(n).release();
-        multiPanes[n].removeView(oldView);
-        androidx.media3.ui.PlayerView view = new androidx.media3.ui.PlayerView(this);
-        view.setUseController(false); view.setFocusable(false);
-        view.setShutterBackgroundColor(Color.BLACK);
-        view.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
-        multiPanes[n].addView(view, 0, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        androidx.media3.exoplayer.ExoPlayer player = PlayerActivity.build(this, false, it.name);
-        player.setVolume(n == multiAudioPane ? 1f : 0f);
-        multiVideoViews[n] = view; multiPlayers.set(n, player); view.setPlayer(player);
-        player.addListener(new androidx.media3.common.Player.Listener() {
-            private boolean current() { return multiCurrent(n, session) && multiSelections[n] == selection && multiPlayers.get(n) == player; }
-            @Override public void onPlaybackStateChanged(int state) { updateKeepScreenOn(); }
-            @Override public void onRenderedFirstFrame() { if (current()) label.setText(""); }
+        label.setText("Channel Loading…");
+        // Picture sits just above the idle Media3 view and below the label.
+        VlcPreview[] self = new VlcPreview[1];
+        self[0] = new VlcPreview(this, multiPanes[n], 1, streamUrls(it), new VlcPreview.Listener() {
+            private boolean current() { return multiCurrent(n, session) && multiSelections[n] == selection && multiVlc[n] == self[0]; }
+            @Override public void playing() { if (current()) { label.setText(""); updateKeepScreenOn(); } }
+            @Override public void failed() { if (current()) label.setText(it.name + "\nCouldn't play – press OK to pick another"); }
         });
-        PlayerActivity.playWithFallback(player, streamUrls(it), () -> ui.post(() -> {
-            if (!multiCurrent(n, session) || multiSelections[n] != selection || multiPlayers.get(n) != player) return;
-            label.setText(it.name + "\nCouldn't play – press OK to pick another");
-        }));
+        multiVlc[n] = self[0];
+        self[0].setMuted(n != multiAudioPane);
     }
 
     /** "BBC One · Sky Sports 1": every pane's channel, with pane n about to show name. */

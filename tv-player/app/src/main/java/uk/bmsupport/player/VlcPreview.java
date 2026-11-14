@@ -19,9 +19,16 @@ final class VlcPreview {
     private ViewGroup host;
     private String[] urls;
     private int at, errors;
-    private boolean released;
+    private boolean released, playing, muted;
 
-    VlcPreview(Context c, ViewGroup host, String[] urls, Listener l) {
+    void setMuted(boolean m) { muted = m; applyVolume(); }
+    boolean isPlaying() { return playing && !released; }
+    private void applyVolume() { if (mp != null && !released) mp.setVolume(muted ? 0 : 100); }
+
+    VlcPreview(Context c, ViewGroup host, String[] urls, Listener l) { this(c, host, -1, urls, l); }
+
+    /** index: where the picture goes in host (-1 = on top), so Multi-screen labels stay above it. */
+    VlcPreview(Context c, ViewGroup host, int index, String[] urls, Listener l) {
         this.host = host; this.urls = urls;
         ArrayList<String> opts = new ArrayList<>();
         opts.add("--network-caching=" + BackupBufferPolicy.previewCacheMs());
@@ -30,11 +37,11 @@ final class VlcPreview {
         vlc = new LibVLC(c, opts);
         mp = new MediaPlayer(vlc);
         layout = new VLCVideoLayout(c);
-        host.addView(layout, new FrameLayout.LayoutParams(-1, -1));
+        host.addView(layout, index, new FrameLayout.LayoutParams(-1, -1));
         mp.attachViews(layout, null, false, false);
         mp.setEventListener(ev -> {
             if (released) return;
-            if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released) l.playing(); });
+            if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released) { applyVolume(); playing = true; l.playing(); } });
             else if (ev.type == MediaPlayer.Event.EncounteredError || ev.type == MediaPlayer.Event.EndReached) ui.post(() -> {
                 if (released) return;
                 if (++errors > urls.length * 3) { l.failed(); return; }
