@@ -100,6 +100,10 @@ public class GuideGridView extends View {
         return null;
     }
     public Prog selected() { return progAt(selRow, selTime); }
+    /** True while the selection sits at "now", where Left opens the categories (future listings step back instead). */
+    public boolean atNow() { return !(selTime > now() + 1 || windowStart > minStart()); }
+    private Runnable nowListener;
+    public void setNowListener(Runnable r) { nowListener = r; }
 
     private float rowH() { return (phone ? 50 : 64) * d; }
     private float headH() { return 36 * d; }
@@ -120,6 +124,7 @@ public class GuideGridView extends View {
     private int visibleRows() { return Math.max(1, (int) ((getHeight() - headH()) / rowH())); }
 
     private void changed() {
+        if (nowListener != null) nowListener.run();
         if (listener == null || names.isEmpty()) return;
         int v = visibleRows();
         for (int r = Math.max(0, topRow - 3); r < Math.min(names.size(), topRow + v + 10); r++) listener.needEpg(r);

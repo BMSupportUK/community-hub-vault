@@ -210,6 +210,25 @@ public class LiveGuideHeaderTest {
         assertTrue("the hint must sit beside the Category pill", pillThere);
     }
 
+    /** The Press Left hint only applies at "now"; on future listings Left steps back, so it hides. */
+    @Test public void thePressLeftHintHidesOnFutureProgrammes() throws Exception {
+        MainActivity a = open();
+        org.robolectric.Shadows.shadowOf(a.getPackageManager()).setSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK, true);
+        openLiveGuide(a);
+        List<View> texts = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), android.widget.TextView.class, texts);
+        View hint = null;
+        for (View t : texts) if ("◀ Press Left on your remote to list the categories".equals(((android.widget.TextView) t).getText().toString())) hint = t;
+        assertNotNull("the box guide must carry the Press Left hint", hint);
+        List<View> grids = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), GuideGridView.class, grids);
+        GuideGridView grid = (GuideGridView) grids.get(0);
+        grid.shiftDay(1);
+        assertEquals("on future listings Left steps back, so the hint must hide", View.GONE, hint.getVisibility());
+        grid.jumpNow();
+        assertEquals("back at the on-now programme the hint returns", View.VISIBLE, hint.getVisibility());
+    }
+
     /** Phones have no remote: their Categories pill stays in the View EPG pop-up bar. */
     @Test public void closingBoxCategoriesReturnsToThePreviousGuideRowAndTime() throws Exception {
         MainActivity a = open();

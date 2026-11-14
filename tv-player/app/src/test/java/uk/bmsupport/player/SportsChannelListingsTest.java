@@ -28,17 +28,17 @@ public class SportsChannelListingsTest {
         assertEquals(2, MainActivity.populatedSportsDay(new int[]{0, 0, 3, 0, 1, 0, 0}, 0));
         assertEquals(4, MainActivity.populatedSportsDay(new int[]{0, 0, 3, 0, 1, 0, 0}, 4));
     }
-    @Test public void announcementIconHiddenOnlyOnSportsScreens() throws Exception {
+    @Test public void announcementIconShowsOnlyOnTheHomeScreen() throws Exception {
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).get();
         java.lang.reflect.Field screen = MainActivity.class.getDeclaredField("screen"); screen.setAccessible(true);
         PlayerApplication.pinPassed = false;
         for (String locked : new String[]{"pin", "link", "unlock", "home"}) { screen.set(activity, locked); assertFalse(activity.showsAnnouncementIcon()); }
         PlayerApplication.pinPassed = true;
         for (String locked : new String[]{"pin", "link", "unlock"}) { screen.set(activity, locked); assertFalse(activity.showsAnnouncementIcon()); }
-        screen.set(activity, "sports"); assertFalse(activity.showsAnnouncementIcon());
-        screen.set(activity, "sports_channels"); assertFalse(activity.showsAnnouncementIcon());
+        for (String other : new String[]{"sports", "sports_channels", "guide", "tvguide", "browse", "settings", "catchup", "multi"}) {
+            screen.set(activity, other); assertFalse("the announcement icon belongs on the home screen only, not " + other, activity.showsAnnouncementIcon());
+        }
         screen.set(activity, "home"); assertTrue(activity.showsAnnouncementIcon());
-        screen.set(activity, "guide"); assertTrue(activity.showsAnnouncementIcon());
         PlayerApplication.pinPassed = false;
     }
     @Test public void rightEntersChannelsAndLeftReturnsToFixture() throws Exception {

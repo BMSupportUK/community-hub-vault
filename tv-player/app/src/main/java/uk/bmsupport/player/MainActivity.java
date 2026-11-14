@@ -579,7 +579,7 @@ public class MainActivity extends Activity {
     }
 
     @Override public void onUserInteraction() { super.onUserInteraction(); PlayerApplication.interaction(this); }
-    boolean showsAnnouncementIcon() { return signedInScreen() && !"sports".equals(screen) && !"sports_channels".equals(screen); }
+    boolean showsAnnouncementIcon() { return signedInScreen() && "home".equals(screen); }
     /** Announcements (icon and bottom bar) only once signed in and past today's 2FA code. */
     boolean signedInScreen() {
         return PlayerApplication.pinPassed && screen != null && !"pin".equals(screen) && !"link".equals(screen)
@@ -4441,6 +4441,7 @@ public class MainActivity extends Activity {
         if (boxLive) top.addView(boxInfo, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         root.addView(top);
         final Runnable[] dayBack = { null }, dayNow = { null }, dayFwd = { null };
+        final TextView[] leftHint = { null };
         if (boxLive) {
             dateLbl.setText(new java.text.SimpleDateFormat("EEE, d MMM, " + ("12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm"), java.util.Locale.UK).format(new java.util.Date()));
             dateLbl.setTextSize(15); dateLbl.setTextColor(TEXT); dateLbl.setPadding(0, 0, dp(10), 0);
@@ -4456,14 +4457,20 @@ public class MainActivity extends Activity {
             boxCatPill.setClickable(false);
             boxCatPill.setFocusable(false);
             dr.addView(boxCatPill);
-            // Bold stand-out hint: Left on the remote lists the categories from any guide row.
-            TextView leftHint = text("◀ Press Left on your remote to list the categories", 15, ACCENT, true);
-            leftHint.setSingleLine(true);
-            leftHint.setPadding(dp(10), 0, 0, 0);
-            dr.addView(leftHint);
+            // Bold stand-out hint: Left on the remote lists the categories from the on-now programme.
+            leftHint[0] = text("◀ Press Left on your remote to list the categories", 15, ACCENT, true);
+            leftHint[0].setSingleLine(true);
+            leftHint[0].setPadding(dp(10), 0, 0, 0);
+            dr.addView(leftHint[0]);
             root.addView(dr);
         }
         GuideGridView grid = new GuideGridView(this);
+        // The Press Left hint only applies on the programme that is on now; on future listings
+        // Left steps back instead, so the hint hides there.
+        if (leftHint[0] != null) {
+            final TextView lh = leftHint[0];
+            grid.setNowListener(() -> lh.setVisibility(grid.atNow() ? View.VISIBLE : View.GONE));
+        }
         // Phones: "Bigger guide" hides the preview and header so the guide fills the screen.
         LinearLayout bigBar = row(); bigBar.setGravity(Gravity.CENTER_VERTICAL);
         TextView guideTitle = text("TV guide", 20, TEXT, true);
@@ -4487,7 +4494,7 @@ public class MainActivity extends Activity {
             grid.setVisibility(View.GONE);
         }
         root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        // TV boxes: Left on any row opens categories, even while viewing a later programme/day.
+        // TV boxes: Left on the on-now programme opens categories; on future listings it steps back.
 
         dayBack[0] = () -> grid.shiftDay(-1);
         dayFwd[0] = () -> grid.shiftDay(1);
