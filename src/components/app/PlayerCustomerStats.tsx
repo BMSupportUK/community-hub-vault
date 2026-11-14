@@ -16,7 +16,7 @@ class StatsError extends Component<{ children: ReactNode }, { failed: boolean }>
 }
 
 export function PlayerCustomerStats({ userId }: { userId: string }) {
- return <section className="mt-8 space-y-4 border-t border-border pt-6"><h2 className="font-display text-xl font-bold">BM Player · Customer stats</h2><p className="text-xs text-muted-foreground">Last 7 days · UK dates and times</p><StatsError><Suspense fallback={<p className="text-sm text-muted-foreground">Loading customer stats…</p>}><Stats userId={userId} /></Suspense></StatsError></section>;
+ return <section className="space-y-4 pt-4"><h2 className="font-display text-xl font-bold">BM Player · Customer stats</h2><p className="text-xs text-muted-foreground">Last 7 days · UK dates and times</p><StatsError><Suspense fallback={<p className="text-sm text-muted-foreground">Loading customer stats…</p>}><Stats userId={userId} /></Suspense></StatsError></section>;
 }
 function Stats({ userId }: { userId: string }) {
  const days = customerStatsDays();
