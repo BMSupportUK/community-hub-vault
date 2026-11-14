@@ -2267,6 +2267,9 @@ public class MainActivity extends Activity {
         }
         String playLabel = "live".equals(it.kind) ? "Full Screen" : "Play";
         String[] opts = "film".equals(it.kind) ? new String[]{playLabel, fav, "☆ Vote"} : new String[]{playLabel, fav};
+        final int catchupAt = "live".equals(it.kind) && it.archiveDays > 0 ? opts.length : -1;
+        if (catchupAt >= 0) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[catchupAt] = "🕘 Catch up"; }
+        final String returnCategory = liveCatId;
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
@@ -2275,6 +2278,7 @@ public class MainActivity extends Activity {
         opts = appendExternalOptions(opts, external);
         compactDialog(new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
             if (w >= externalAt) playExternal(it, external.get(w - externalAt), 0);
+            else if (w == catchupAt) showCatchup(it, () -> showTvGuide(returnCategory, true));
             else if (cast && w == castAt) castToTv(it);
             else if (w == 0) play(it, defaultVlc());
             else if (w == 1) toggleSaved("fav", it);
@@ -4640,7 +4644,7 @@ public class MainActivity extends Activity {
                         progTime.setText(clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : "") + (left.isEmpty() ? "" : "  ·  " + left));
                         boxBar.setVisibility(live2 ? View.VISIBLE : View.GONE);
                         if (live2) boxBar.setProgress((int) ((now - p.st) * 100 / Math.max(1, p.en - p.st)));
-                        boxDesc.setText(p.desc == null || p.desc.isEmpty() ? (ch.archiveDays > 0 && on ? "Press ◀ for Catch up" : "") : p.desc);
+                        boxDesc.setText(p.desc == null || p.desc.isEmpty() ? (ch.archiveDays > 0 && on ? "Catch up available in the play menu" : "") : p.desc);
                         GuideGridView.Prog nx = null;
                         List<GuideGridView.Prog> lst = guideCache.get(ch.id);
                         if (lst != null) for (GuideGridView.Prog q : lst) if (q.st >= (p.en > 0 ? p.en : p.st + 1)) { nx = q; break; }
@@ -4652,7 +4656,7 @@ public class MainActivity extends Activity {
                         dateLbl.setText(new java.text.SimpleDateFormat("EEE, d MMM, " + ("12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm"), java.util.Locale.UK).format(new java.util.Date()));
                     } else
                     progTime.setText(ch.name + "  ·  " + clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : "")
-                            + (ch.archiveDays > 0 && on ? "   ·  🕘 ◀ for Catch up" : "")
+                            + (ch.archiveDays > 0 && on ? (live ? "   ·  🕘 Catch up in play menu" : "   ·  🕘 ◀ for Catch up") : "")
                             + (on ? "   ·  On now – OK to watch" : MainActivity.this.hasReminder(ch.id, p.st) ? "   ·  ⏰ Reminder set – OK to remove" : "   ·  OK to set a reminder"));
                 }
                 if (live) return; // Live TV never starts a preview on highlight.

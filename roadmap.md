@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Added Catch up to supported Live TV channels' play pop-ups, opening the existing archive and returning to the chosen category; rebuilt BM-signed 5.08 with 295 passing tests and retained its updated APK. Public download unchanged; real-box playback check blocked by no connected device.
+
 - [x] Built and BM-signed 5.08 (319): closing Live TV categories restores previous EPG row/time/scroll and focus; selecting the same category preserves position; box Category pill is display-only. All 293 Android tests pass; APK retained, public download unchanged.
 - [ ] Real-box check of 5.08 category closing and display-only label; blocked by no connected device.
 

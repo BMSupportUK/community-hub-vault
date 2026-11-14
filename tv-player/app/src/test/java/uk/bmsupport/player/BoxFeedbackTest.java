@@ -60,6 +60,32 @@ public class BoxFeedbackTest {
         assertEquals("3",CategoryOrder.apply(rows,prefs.getString(CategoryOrder.key(prefs,"live"),"[]")).get(1)[0]);
         assertEquals(2,CategoryOrder.visible(rows,CategoryOrder.hidden(prefs,"live")).size());
     }
+    @Test public void supportedLiveChannelMenuOpensThatChannelsCatchup() throws Exception {
+        MainActivity a=activity();
+        MainActivity.Item channel=new MainActivity.Item("live","42","BBC One","ts","news");
+        channel.archiveDays=7;
+        Method open=MainActivity.class.getDeclaredMethod("open",MainActivity.Item.class);open.setAccessible(true);open.invoke(a,channel);
+        ListView menu=ShadowAlertDialog.getLatestAlertDialog().getListView();
+        int catchup=-1;
+        for(int i=0;i<menu.getCount();i++)if("🕘 Catch up".equals(menu.getItemAtPosition(i).toString()))catchup=i;
+        assertTrue(catchup>=0);
+        menu.performItemClick(null,catchup,catchup);
+        Field screen=MainActivity.class.getDeclaredField("screen");screen.setAccessible(true);
+        assertEquals("catchup",screen.get(a));
+        assertTrue(a.getWindow().getDecorView().findViewById(android.R.id.content) instanceof ViewGroup);
+    }
+    @Test public void channelsWithoutArchiveAndFilmsDoNotOfferCatchup() throws Exception {
+        MainActivity a=activity();
+        Method open=MainActivity.class.getDeclaredMethod("open",MainActivity.Item.class);open.setAccessible(true);
+        for(String kind:new String[]{"live","film"}) {
+            MainActivity.Item item=new MainActivity.Item(kind,"43","No archive","ts","news");
+            item.archiveDays="film".equals(kind)?7:0;
+            open.invoke(a,item);
+            ListView menu=ShadowAlertDialog.getLatestAlertDialog().getListView();
+            for(int i=0;i<menu.getCount();i++)assertNotEquals("🕘 Catch up",menu.getItemAtPosition(i).toString());
+            ShadowAlertDialog.getLatestAlertDialog().dismiss();
+        }
+    }
     @Test public void parentalPinCanBeSetWithRemotePadAndNoSystemKeyboard() throws Exception {
         MainActivity a=activity();call(a,"parentalControl");AlertDialog d=ShadowAlertDialog.getLatestAlertDialog();
         View decor=d.getWindow().getDecorView(); EditText e=entry(decor);assertNotNull(e);assertFalse(e.getShowSoftInputOnFocus());
