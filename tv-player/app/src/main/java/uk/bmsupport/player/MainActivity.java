@@ -3733,6 +3733,10 @@ public class MainActivity extends Activity {
         if (!due.isEmpty()) updatePlaylists(due, true);
     }
     private final StartupPlaylists startupPlaylists = new StartupPlaylists();
+    private void finishStartupUpdateCheck() {
+        startupPlaylists.allowAfterUpdate();
+        if (!isFinishing() && !isDestroyed()) autoUpdatePlaylists();
+    }
     private volatile boolean linkVerified;
 
     // ---------- maintenance ----------
@@ -3972,13 +3976,16 @@ public class MainActivity extends Activity {
                         new AlertDialog.Builder(this).setTitle("Update available – version " + latest)
                                 .setMessage((o.optString("notes").isEmpty() ? "" : o.optString("notes") + "\n\n") + "You have version " + appVersion() + ".")
                                 .setPositiveButton("Update now", (d, w) -> downloadUpdate())
-                                .setNegativeButton("Later", null).show();
-                    } else if (manual) {
-                        Toast.makeText(this, "You have the latest version (" + appVersion() + ")", Toast.LENGTH_LONG).show();
+                                .setNegativeButton("Later", (d, w) -> { if (!manual) finishStartupUpdateCheck(); })
+                                .setOnCancelListener(d -> { if (!manual) finishStartupUpdateCheck(); }).show();
+                    } else {
+                        if (manual) Toast.makeText(this, "You have the latest version (" + appVersion() + ")", Toast.LENGTH_LONG).show();
+                        else finishStartupUpdateCheck();
                     }
                 });
             } catch (Exception e) {
                 if (manual) ui.post(() -> Toast.makeText(this, "Couldn't check for updates. Try again later.", Toast.LENGTH_LONG).show());
+                else ui.post(this::finishStartupUpdateCheck);
             }
         });
     }

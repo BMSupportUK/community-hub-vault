@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Android 5.05 startup waits for the update check; Update now blocks playlists through download/install, Later/no update/offline check permits refresh. All 285 tests pass and permanent BM signed build retained; not publicly released.
+- [ ] Real-box verification of 5.05 startup update/install order; blocked by no connected device.
+
 - [x] Android tester feedback built as 5.04: visible Live categories tab, long Back for current preview, hide/show category navigation (All/search keep content), clearer buffers/settings, optional configured external players with BM Player first.
 - [x] All 284 Android tests pass; release builds and permanent BM signer verified; APK retained as an asset.
 - [x] Released 5.04 publicly on request: uploaded to app-builds first, then made current; bmsupport.uk public updater reports 5.04 and downloaded APK hash/signature match the tested build.
