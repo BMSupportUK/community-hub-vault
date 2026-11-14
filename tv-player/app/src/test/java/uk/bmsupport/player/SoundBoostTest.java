@@ -16,4 +16,13 @@ public class SoundBoostTest {
         assertEquals("low", SoundBoost.next("off"));
         assertEquals("off", SoundBoost.next("high"));
     }
+    @Test public void liveGainHasNoEqualizerAttenuation() {
+        assertEquals(100, SoundBoost.vlcVolumeFor("off", false));
+        assertEquals(126, SoundBoost.vlcVolumeFor("low", false));
+        assertEquals(158, SoundBoost.vlcVolumeFor("medium", false));
+        assertEquals(200, SoundBoost.vlcVolumeFor("high", false));
+    }
+    @Test public void multiScreenMuteAlwaysOverridesBoost() {
+        for (String level : SoundBoost.IDS) assertEquals(0, SoundBoost.vlcVolumeFor(level, true));
+    }
 }

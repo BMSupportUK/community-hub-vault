@@ -117,6 +117,15 @@ public class PlayerActivity extends Activity {
         boolean sw = VideoDecodePolicy.preferSoftware(catchup, p.getString("decoder", "hardware"), channelName);
         final HighLevelAvcRenderer[] keep = new HighLevelAvcRenderer[1];
         DefaultRenderersFactory renderers = new DefaultRenderersFactory(c) {
+            @Override protected androidx.media3.exoplayer.audio.AudioSink buildAudioSink(
+                    Context ctx, boolean floatOutput, boolean playbackParams) {
+                // Decode to PCM so Dolby passthrough cannot bypass the session's loudness effect.
+                // Keep this path stable when the viewer changes booster level during playback.
+                return new androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(ctx)
+                        .setAudioCapabilities(androidx.media3.exoplayer.audio.AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES)
+                        .setEnableFloatOutput(false)
+                        .setEnableAudioTrackPlaybackParams(playbackParams).build();
+            }
             // High-level H.264 feeds decode in low-latency mode (HighLevelAvcRenderer); same for all channels.
             @Override protected void buildVideoRenderers(Context ctx, int mode, androidx.media3.exoplayer.mediacodec.MediaCodecSelector sel,
                     boolean fallback, Handler h, androidx.media3.exoplayer.video.VideoRendererEventListener l, long joining,

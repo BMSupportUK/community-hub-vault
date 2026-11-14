@@ -14,7 +14,7 @@ import java.util.WeakHashMap;
 final class SoundBoost {
     static final String KEY = "sound_boost";
     static final String[] IDS = {"off", "low", "medium", "high"};
-    static final String[] LABELS = {"Off", "Low (+50%)", "Medium (+100%)", "High (+150%)"};
+    static final String[] LABELS = {"Off", "Low (+6 dB)", "Medium (+12 dB)", "High (+18 dB)"};
     static final int[] GAIN_MB = {0, 600, 1200, 1800};
     static final String HIGH_NOTE = "Very loud — may distort on small speakers.";
     private static final Map<ExoPlayer, Holder> live = Collections.synchronizedMap(new WeakHashMap<>());
@@ -23,6 +23,11 @@ final class SoundBoost {
 
     static int index(String id) { for (int i = 0; i < IDS.length; i++) if (IDS[i].equals(id)) return i; return 0; }
     static int gainFor(String id) { return GAIN_MB[index(id)]; }
+    /** Android libVLC cubes volume above 100%; invert that curve to match our dB levels. */
+    static int vlcVolumeFor(String id, boolean muted) {
+        if (muted) return 0;
+        return Math.min(200, (int) Math.round(100 * Math.pow(10, gainFor(id) / 6000.0)));
+    }
     static String next(String id) { return IDS[(index(id) + 1) % IDS.length]; }
     static String current(Context c) { return IDS[index(PlayerActivity.prefs(c).getString(KEY, "off"))]; }
     static String label(Context c) { return LABELS[index(current(c))]; }

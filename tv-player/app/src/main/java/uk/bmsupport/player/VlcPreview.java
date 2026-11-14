@@ -41,21 +41,14 @@ final class VlcPreview {
 
     void setMuted(boolean m) { muted = m; applyVolume(); }
     boolean isPlaying() { return playing && !released; }
-    private void applyVolume() { if (mp != null && !released) mp.setVolume(muted ? 0 : 100); }
+    private void applyVolume() { if (mp != null && !released) mp.setVolume(SoundBoost.vlcVolumeFor(SoundBoost.current(ctx), muted)); }
 
-    /** Same sound booster pre-amp as full-screen live TV; re-run when the level changes. */
+    /** Same direct gain as full-screen live TV, retaining the pane's mute state. */
     void applyBoost() {
         if (mp == null || released) return;
         try {
-            int gainMb = SoundBoost.gainFor(SoundBoost.current(ctx));
-            if (gainMb <= 0) {
-                // No boost: detach the equalizer so libVLC keeps the box's louder hardware/DSP audio path.
-                mp.setEqualizer(null);
-                return;
-            }
-            MediaPlayer.Equalizer eq = MediaPlayer.Equalizer.create();
-            eq.setPreAmp(gainMb / 100f);
-            mp.setEqualizer(eq);
+            mp.setEqualizer(null);
+            applyVolume();
         } catch (Exception ignored) {}
     }
 

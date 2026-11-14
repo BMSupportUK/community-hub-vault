@@ -208,16 +208,10 @@ public final class BackupPlayerActivity extends Activity {
     private void applyBoost() {
         if (mp == null) return;
         try {
-            int gainMb = SoundBoost.gainFor(SoundBoost.current(this));
-            if (gainMb <= 0) {
-                // No boost: detach the equalizer entirely. An attached (even flat) equalizer forces
-                // libVLC onto its software audio path, bypassing the box's louder hardware/DSP output.
-                mp.setEqualizer(null);
-                return;
-            }
-            MediaPlayer.Equalizer equalizer = MediaPlayer.Equalizer.create();
-            equalizer.setPreAmp(gainMb / 100f);
-            mp.setEqualizer(equalizer);
+            // VLC's flat equalizer attenuates PCM by 0.25 (-12 dB) before its pre-amp.
+            // Use AudioTrack's direct gain path instead, without that cancellation.
+            mp.setEqualizer(null);
+            mp.setVolume(SoundBoost.vlcVolumeFor(SoundBoost.current(this), false));
         } catch (Exception ignored) {}
     }
 
