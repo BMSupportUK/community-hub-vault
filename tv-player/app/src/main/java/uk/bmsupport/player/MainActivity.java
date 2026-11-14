@@ -1324,20 +1324,16 @@ public class MainActivity extends Activity {
         root.addView(account);
 
         LinearLayout tiles = row();
-        tiles.setPadding(0, dp(12), 0, dp(8));
+        tiles.setPadding(0, dp(20), 0, dp(12));
         tiles.addView(tileWithRefresh("Live TV", "📺", "live"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         tiles.addView(tileWithRefresh("Films", "🎬", "film"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         tiles.addView(tileWithRefresh("Series", "🎞", "series"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(tiles);
 
-        // Favourites and Recently watched are cards of their own, sitting side by side under the main tiles.
-        LinearLayout savedCards = row();
-        savedCards.addView(homeCard("Favourites", "★", v -> showSaved("fav", "Favourites")), weight(1, dp(88)));
-        savedCards.addView(homeCard("Recently watched", "⟲", v -> showSaved("recent", "Recently watched")), weight(1, dp(88)));
-        root.addView(savedCards);
-
         LinearLayout small = row();
         small.addView(smallButton("🏆 Sports guide", v -> askSportsMode()), smallWeight("🏆 Sports guide"));
+        small.addView(smallButton("★ Favourites", v -> showSaved("fav", "Favourites")), smallWeight("★ Favourites"));
+        small.addView(smallButton("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), smallWeight("⟲ Recently watched"));
         small.addView(smallButton("⚙ Settings", v -> showSettings()), smallWeight("⚙ Settings"));
         // Multi Room / Triple Room: show Multi-screen at once from the last account-info number so it never vanishes while (or if) the check is slow.
         int knownCons = consPref(0);
@@ -3211,9 +3207,16 @@ public class MainActivity extends Activity {
         for (Item it : all) if (savedKind(it).equals(tab)) list.add(it);
         final List<Item> shown = list;
         if (shown.isEmpty()) root.addView(text("Nothing here yet.", 18, MUTED, false));
-        ListView lv = list();
-        lv.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, shown) {
-            @Override public View getView(int i, View cv, ViewGroup parent) { return styleRow(super.getView(i, cv, parent)); }
+        // Saved items show as cards sitting side by side inside each tab.
+        android.widget.GridView lv = new android.widget.GridView(this);
+        lv.setNumColumns(isPhone() ? 2 : 4);
+        lv.setHorizontalSpacing(dp(10)); lv.setVerticalSpacing(dp(10));
+        lv.setPadding(0, dp(8), 0, dp(8)); lv.setClipToPadding(false);
+        lv.setSelector(new android.graphics.drawable.ColorDrawable(0));
+        lv.setDrawSelectorOnTop(false);
+        final String icon = tab.equals("live") ? "📺" : tab.equals("film") ? "🎬" : "🎞";
+        lv.setAdapter(new ArrayAdapter<Item>(this, 0, shown) {
+            @Override public View getView(int i, View cv, ViewGroup parent) { return savedCard(shown.get(i), icon); }
         });
         lv.setOnItemClickListener((p, v, pos, id) -> {
             Item it = shown.get(pos);
@@ -3225,6 +3228,25 @@ public class MainActivity extends Activity {
     }
 
     private final java.util.Map<String, String> savedTab = new java.util.HashMap<>();
+
+    /** One Favourites / Recently watched card: icon over the name, at most two lines. */
+    View savedCard(Item it, String icon) {
+        LinearLayout t = column();
+        t.setGravity(Gravity.CENTER);
+        StateListDrawable bg = focusBg(16);
+        GradientDrawable ring = new GradientDrawable(); ring.setColor(CARD); ring.setCornerRadius(dp(16)); ring.setStroke(dp(3), ACCENT);
+        StateListDrawable sel = new StateListDrawable();
+        sel.addState(new int[]{android.R.attr.state_selected}, ring);
+        sel.addState(new int[]{}, bg);
+        t.setBackground(sel);
+        t.setPadding(dp(10), dp(12), dp(10), dp(12));
+        t.setMinimumHeight(dp(110));
+        TextView ic = text(icon, 28, TEXT, false); ic.setGravity(Gravity.CENTER);
+        TextView lb = text(it.name, 16, TEXT, true); lb.setGravity(Gravity.CENTER);
+        lb.setMaxLines(2); lb.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        t.addView(ic); t.addView(lb);
+        return t;
+    }
 
     private static String savedKind(Item it) { return it.kind.equals("live") ? "live" : it.kind.equals("film") ? "film" : "series"; }
 
@@ -5771,26 +5793,6 @@ public class MainActivity extends Activity {
         t.setOnClickListener(l);
         TextView ic = text(icon, 48, TEXT, false); ic.setGravity(Gravity.CENTER);
         TextView lb = text(label, 24, TEXT, true); lb.setGravity(Gravity.CENTER);
-        t.addView(ic); t.addView(lb);
-        return t;
-    }
-
-    /**
-     * Compact home card (Favourites / Recently watched): same card look as the main tiles but
-     * shorter, so a pair of them sits side by side under the tiles without pushing the button
-     * row off the screen. The label always stays on one line.
-     */
-    private View homeCard(String label, String icon, View.OnClickListener l) {
-        LinearLayout t = column();
-        t.setGravity(Gravity.CENTER);
-        t.setBackground(focusBg(20));
-        t.setFocusable(true); t.setClickable(true);
-        t.setOnClickListener(l);
-        TextView ic = text(icon, 30, TEXT, false); ic.setGravity(Gravity.CENTER);
-        ic.setPadding(0, 0, 0, 0);
-        TextView lb = text(label, 17, TEXT, true); lb.setGravity(Gravity.CENTER);
-        lb.setSingleLine(true);
-        lb.setPadding(0, 0, 0, 0);
         t.addView(ic); t.addView(lb);
         return t;
     }

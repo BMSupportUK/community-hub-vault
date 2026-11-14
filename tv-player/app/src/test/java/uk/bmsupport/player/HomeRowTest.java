@@ -5,7 +5,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -32,9 +31,11 @@ import static org.robolectric.Shadows.shadowOf;
 public class HomeRowTest {
 
     private static final String[] PLAIN = {
-            "\uD83D\uDCC5 TV guide", "\uD83C\uDFC6 Sports guide", "\u2699 Settings"};
+            "\uD83D\uDCC5 TV guide", "\uD83C\uDFC6 Sports guide", "\u2605 Favourites",
+            "\u27F2 Recently watched", "\u2699 Settings"};
     private static final String[] WITH_MULTI = {
-            "\uD83D\uDCC5 TV guide", "\uD83D\uDDA5 Multi-screen (3)", "\uD83C\uDFC6 Sports guide", "\u2699 Settings"};
+            "\uD83D\uDCC5 TV guide", "\uD83D\uDDA5 Multi-screen (3)", "\uD83C\uDFC6 Sports guide",
+            "\u2605 Favourites", "\u27F2 Recently watched", "\u2699 Settings"};
 
     private LinearLayout buildRow(MainActivity activity, String[] labels, int widthDp, boolean newWay)
             throws Exception {
@@ -95,55 +96,19 @@ public class HomeRowTest {
     @Test
     public void longestLabelGetsTheWidestBox() throws Exception {
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).get();
-        LinearLayout row = buildRow(activity, WITH_MULTI, 960, true);
+        LinearLayout row = buildRow(activity, PLAIN, 960, true);
         int widest = 0;
         for (int i = 0; i < row.getChildCount(); i++) {
             if (row.getChildAt(i).getWidth() > row.getChildAt(widest).getWidth()) widest = i;
         }
-        assertEquals("\uD83D\uDDA5 Multi-screen (3)", WITH_MULTI[widest]);
+        assertEquals("\u27F2 Recently watched", PLAIN[widest]);
 
-        LinearLayout equal = buildRow(activity, WITH_MULTI, 960, false);
-        String longLabel = "\uD83D\uDDA5 Multi-screen (3)";
+        LinearLayout equal = buildRow(activity, PLAIN, 960, false);
+        String longLabel = "\u27F2 Recently watched";
         assertTrue("Long name gets more room than equal weights gave it",
                 boxOf(row, longLabel) > boxOf(equal, longLabel));
         assertTrue("Short name keeps a smaller box",
                 boxOf(row, longLabel) > boxOf(row, "\u2699 Settings"));
-    }
-
-    /** Favourites and Recently watched are cards now: focusable, clickable, one-line labels, side by side. */
-    @Test
-    public void savedCardsSitSideBySide() throws Exception {
-        MainActivity activity = Robolectric.buildActivity(MainActivity.class).get();
-        Method homeCard = MainActivity.class.getDeclaredMethod("homeCard", String.class, String.class, View.OnClickListener.class);
-        Method weight = MainActivity.class.getDeclaredMethod("weight", float.class, int.class);
-        homeCard.setAccessible(true);
-        weight.setAccessible(true);
-
-        View fav = (View) homeCard.invoke(activity, "Favourites", "\u2605", (View.OnClickListener) v -> {});
-        View recent = (View) homeCard.invoke(activity, "Recently watched", "\u27F2", (View.OnClickListener) v -> {});
-        for (View card : new View[]{fav, recent}) {
-            assertTrue("Card takes remote focus", card.isFocusable());
-            assertTrue("Card responds to OK", card.isClickable());
-        }
-
-        LinearLayout row = new LinearLayout(activity);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.addView(fav, (LinearLayout.LayoutParams) weight.invoke(activity, 1f, 88));
-        row.addView(recent, (LinearLayout.LayoutParams) weight.invoke(activity, 1f, 88));
-        int width = (int) (960 * activity.getResources().getDisplayMetrics().density);
-        row.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-        row.layout(0, 0, width, row.getMeasuredHeight());
-        assertEquals("The two cards share the row evenly", fav.getWidth(), recent.getWidth());
-        assertTrue("Favourites sits left of Recently watched", fav.getRight() <= recent.getLeft());
-
-        TextView label = null;
-        for (int i = 0; i < ((ViewGroup) recent).getChildCount(); i++) {
-            View child = ((ViewGroup) recent).getChildAt(i);
-            if (child instanceof TextView && "Recently watched".equals(((TextView) child).getText().toString())) label = (TextView) child;
-        }
-        assertTrue("Card carries its name", label != null);
-        assertEquals("Card name stays on one line", 1, label.getLineCount());
     }
 
     /** The header search pills must not sit flush against each other. */
