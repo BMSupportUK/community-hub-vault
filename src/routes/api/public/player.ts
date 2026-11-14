@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { broadbandFields, hasBroadbandTest } from "@/lib/player-network-test";
 const APPROVAL_REQUESTS_RETIRED = true;
 import { LINK_CODE_TTL_MS, PENDING_CREDENTIAL_TTL_MS } from "@/lib/player-link";
 import { checkinSlowdown } from "@/lib/player-checkin";
@@ -42,6 +43,7 @@ const Body = z.discriminatedUnion("action", [
     version: z.string().trim().max(20).optional(),
     sig: z.string().trim().max(128).optional(),
     speed_kbps: z.number().int().min(0).max(2000000).optional(),
+    broadband_test: z.object({ down: z.number().int().positive().max(2000000), up: z.number().int().positive().max(2000000), measured_at: z.number().int().positive(), method: z.literal("cloudflare-adaptive-v1") }).optional(),
     up_kbps: z.number().int().min(0).max(2000000).optional(),
     ping_ms: z.number().int().min(0).max(60000).optional(),
     bitrate_kbps: z.number().int().min(0).max(200000).optional(),
@@ -888,9 +890,12 @@ export const Route = createFileRoute("/api/public/player")({
         if (!pending && needsVpnCheck({ ip, checkedAt: device.vpn_checked_at, status: device.vpn_status, now })) {
           Object.assign(fields, await checkDeviceVpn(ip as string));
         }
-        if (body.speed_kbps != null || body.up_kbps != null || body.ping_ms != null) Object.assign(fields, {
-          net_down_kbps: body.speed_kbps ?? null, net_up_kbps: body.up_kbps ?? null, net_ping_ms: body.ping_ms ?? null,
-          net_measured_at: new Date(now).toISOString() });
+        const tested = broadbandFields(body.broadband_test, now);
+        if (tested) Object.assign(fields, tested);
+        else if (hasBroadbandTest(device.platform, body.version ?? null)) Object.assign(fields, {
+          net_down_kbps: null, net_up_kbps: null, net_measured_at: null,
+        });
+        if (body.ping_ms != null) Object.assign(fields, { net_ping_ms: body.ping_ms });
         await supabaseAdmin.from("player_devices").update(fields).eq("id", device.id);
         // Weekly viewing hours: credit the gap since the last check-in to what was playing then.
         // Live TV previews are never credited — only real playback counts.

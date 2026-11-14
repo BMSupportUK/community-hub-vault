@@ -1,5 +1,9 @@
 # Roadmap
 
+- [x] Replace Live connections traffic estimates with on-request bounded adaptive broadband tests on Android/shared Windows-Mac; preserve actual timestamps and separate stream TCP connection time. Old speeds hidden until genuine tests arrive.
+- [x] Prepare Android 5.35 and desktop 0.4.102/0.1.105 code; Android release compiles, all 323 Android tests and desktop regressions pass. Real Cloudflare transfers completed from sandbox (not customer's broadband); no public downloads switched.
+- [ ] Verify updated tests on a signed-in physical player and release installers; blocked by no connected player and no public-release request.
+
 - [x] Add current BM Player title/category to customer subscription cards with a shared 15-second refresh, excluding previews and matching each subscription's credential.
 
 - [x] Separate customer charts and IP/location rows into Viewing stats, alongside a Connection information tab containing playback logs; seven daily tabs remain within Viewing stats.

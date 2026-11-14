@@ -15,6 +15,7 @@ const boost=require('../sound-boost.cjs');
 const recovery=require('../stream-recovery.cjs');
 const feedst=require('../feed-status.cjs');
 const checkin=require('../checkin.cjs');
+const broadband=require('../network-test.cjs');
 const categoryOrder=require('../category-order.cjs');
 const catchupStart=require('../catchup-start.cjs');
 const watchreq=require('../watch-request.cjs');
@@ -68,23 +69,17 @@ let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||'')}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
 let announcement=null,annBusy=false;const STARTED_AT=Date.now();
 async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}if(r&&r.watch)openWatch(r.watch).catch(()=>{});if(r&&r.stop_stream&&sessions.length){stopAll().catch(()=>{}).finally(()=>send({type:'stream-taken'}));}}catch{}finally{annBusy=false;}}
-// Live connections speeds: a small download/upload check at most every 15 minutes while watching.
-let lastPing=0;const net={down:0,up:0,at:0,busy:false};
-// Ping times a fresh connection to the playing stream's own server, not our website.
+// Broadband capacity only comes from the explicit Settings speed test.
+let lastPing=0, broadbandResult=null, broadbandBusy=false;
+// Separate TCP connection time to the stream server.
 function streamPing(url){return new Promise(res=>{try{const u=new URL(url);const port=Number(u.port)||(u.protocol==='https:'?443:80);const t=Date.now();const s=nodeNet.connect({host:u.hostname,port,timeout:5000},()=>{s.destroy();res(Math.min(60000,Date.now()-t));});s.on('error',()=>{s.destroy();res(0);});s.on('timeout',()=>{s.destroy();res(0);});}catch{res(0);}});}
-async function netCheck(){if(net.busy||Date.now()-net.at<900000)return;net.busy=true;try{
- let t=Date.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=2000000',{signal:AbortSignal.timeout(20000)});const bytes=(await r.arrayBuffer()).byteLength;const down=Math.round(bytes*8/Math.max(1,Date.now()-t));
- t=Date.now();await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Uint8Array(1000000),signal:AbortSignal.timeout(20000)});const up=Math.round(8000000/Math.max(1,Date.now()-t));
- net.down=Math.min(2000000,down);net.up=Math.min(2000000,up);net.at=Date.now();
-}catch{}finally{net.busy=false;}}
 async function poll(){
  // A stuck check (e.g. a stop that never returns) must never stop the box from picking up its link.
  if(!store.token||(pollBusy&&Date.now()-pollStarted<45000))return;pollBusy=true;pollStarted=Date.now();
  try{
   const session=sessions[0];
-  if(session)netCheck();
   lastPing=session?await streamPing(session.urls?.[session.urlIndex]||session.urls?.[0]):0;
-  const r=await site({action:'poll',...(session&&net.at?{speed_kbps:net.down,up_kbps:net.up}:{}),...(session&&lastPing?{ping_ms:lastPing}:{}),login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:sessions.map(x=>x.item.name).filter(Boolean).join(' · ').slice(0,200)||session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
+  const r=await site({action:'poll',...(broadbandResult?{broadband_test:broadbandResult}:{}),...(session&&lastPing?{ping_ms:lastPing}:{}),login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:sessions.map(x=>x.item.name).filter(Boolean).join(' · ').slice(0,200)||session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
   linkVerified=r.linked===true||!!r.credentials;
   checkin.setSlow(r.slow);maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
@@ -361,7 +356,12 @@ else{
   register('reminder',value=>{store.reminders=store.reminders||[];if(value.remove)store.reminders=store.reminders.filter(r=>r.id!==value.id);else{if(value.start<=Date.now())throw new Error('Reminders are only for programmes that have not started.');store.reminders.push({...value,id:String(value.item.id)+':'+value.start,notified:false});}save();return publicState();});
   register('continue',()=>{lastInput=Date.now();promptedAt=0;send({type:'inactive',seconds:0});return true;});register('exit',async()=>{await stopAll();app.quit();});
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));
-  register('speed',async()=>{const start=Date.now();await fetch('https://speed.cloudflare.com/__down?bytes=100',{signal:AbortSignal.timeout(10000)});const ping=Date.now()-start;const down=Date.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{signal:AbortSignal.timeout(20000)});const bytes=(await r.arrayBuffer()).byteLength;const download=bytes*8/(Date.now()-down)/1000;const up=Date.now();await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Uint8Array(3000000),signal:AbortSignal.timeout(20000)});return{ping,download,upload:3000000*8/(Date.now()-up)/1000};});
+  register('speed',async()=>{
+    if(broadbandBusy)throw new Error('A speed test is already running.');
+    const choice=await dialog.showMessageBox(win,{type:'question',buttons:['Cancel','Test'],defaultId:0,cancelId:0,title:'Broadband speed test',message:'Test against Cloudflare?',detail:'This can use up to 456 MB of data and may affect playback while testing.'});
+    if(choice.response!==1)return null;
+    broadbandBusy=true;try{broadbandResult=await broadband.run();poll().catch(()=>{});return{ping:broadbandResult.ping,download:broadbandResult.down/1000,upload:broadbandResult.up/1000};}finally{broadbandBusy=false;}
+  });
   await win.loadFile(page);
   if(!store.user)getCode().catch(e=>send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Something went wrong. Try again.')}));else{poll();}
   checkin.every(poll,()=>store.user?60000:5000,store.user?60000*Math.random():5000);checkin.every(fetchAnnouncement,()=>15000,15000*Math.random());checkin.every(fetchMajor,()=>60000,15000*Math.random());setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(()=>{const i=engine?.p?.clickedPane?.();if(i!=null&&!(win&&!win.isDestroyed()&&win.isFocused()&&!win.isMinimized()))return;if(i!=null&&sessions.some(x=>x.index===i)){audible=i;applyAudio();send({type:'audible',index:i});}},60);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();

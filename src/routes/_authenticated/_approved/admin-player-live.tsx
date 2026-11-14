@@ -1,3 +1,4 @@
+import { hasBroadbandTest } from "@/lib/player-network-test";
 import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
 import { PlayerDeviceMessageDialog } from "@/components/app/PlayerDeviceMessageDialog";
 import { MessageSquare } from "lucide-react";
@@ -89,17 +90,16 @@ function RemoveBoxButton({ deviceId, onDone }: { deviceId: string; onDone: () =>
 
 function mbps(k: number | null | undefined) { return k ? `${(k / 1000).toFixed(k < 10000 ? 1 : 0)} Mbps` : "—"; }
 
-/** Whether the player has sent a speed/ping reading yet. No quality rating: the
- *  numbers are traffic used, not available line speed, so a label would mislead. */
-function ConnectionBars({ down, ping }: { down: number | null; ping: number | null }) {
-  if (!down && !ping) return <span className="text-xs text-muted-foreground">Waiting</span>;
-  return <span className="text-xs text-muted-foreground">Live readings</span>;
+/** Explicit broadband tests only; no inferred quality rating. */
+function ConnectionBars({ down }: { down: number | null }) {
+  if (!down) return <span className="text-xs text-muted-foreground">Waiting</span>;
+  return <span className="text-xs text-muted-foreground">Broadband test · Cloudflare</span>;
 }
 
 function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row | null; names: Record<string, string>; now: number; onOpenChange: (open: boolean) => void }) {
   const place = [row?.geo_city, row?.geo_region, row?.geo_country].filter(Boolean).join(", ");
   const coords = row?.geo_lat != null && row?.geo_lon != null ? `${row.geo_lat.toFixed(4)}, ${row.geo_lon.toFixed(4)}` : null;
-  const map = coords ? `https://www.google.com/maps?q=${row!.geo_lat},${row!.geo_lon}` : place ? `https://www.google.com/maps?q=${encodeURIComponent(place)}` : null;
+  const map = coords ? `https://www.google.com/maps?q=${row?.geo_lat},${row?.geo_lon}` : place ? `https://www.google.com/maps?q=${encodeURIComponent(place)}` : null;
   const vpn = row?.vpn_status === "yes" ? "Yes" : row?.vpn_status === "no" ? "No" : "Not checked";
 
   return (
@@ -129,10 +129,10 @@ function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row |
             <section>
               <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Connection</h3>
               <div className="grid gap-x-6 sm:grid-cols-2">
-                <Field label="Download" value={mbps(row.net_down_kbps)} />
-                <Field label="Upload" value={mbps(row.net_up_kbps)} />
-                <Field label="Ping" value={row.net_ping_ms ? `${row.net_ping_ms} ms` : "—"} />
-                <Field label="Measured" value={row.net_measured_at ? when(row.net_measured_at) : "—"} />
+                <Field label="Download" value={mbps(hasBroadbandTest(row.platform, row.app_version) ? row.net_down_kbps : null)} />
+                <Field label="Upload" value={mbps(hasBroadbandTest(row.platform, row.app_version) ? row.net_up_kbps : null)} />
+                <Field label="Stream server connection" value={row.net_ping_ms ? `${row.net_ping_ms} ms` : "—"} />
+                <Field label="Measured" value={hasBroadbandTest(row.platform, row.app_version) && row.net_measured_at ? when(row.net_measured_at) : "—"} />
               </div>
             </section>
 
@@ -272,7 +272,7 @@ function AdminPlayerLivePageInner() {
                   <td className="p-3">{r.watching_title
                     ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Movie" : r.watching_kind === "catchup" ? "Catch up" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div></div></div>
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>
-                  <td className="p-3"><ConnectionBars down={r.net_down_kbps} ping={r.net_ping_ms} /><div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">↓ {mbps(r.net_down_kbps)} · ↑ {mbps(r.net_up_kbps)} · {r.net_ping_ms ? `${r.net_ping_ms} ms` : "—"}</div></td>
+                  <td className="p-3"><ConnectionBars down={hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null} /><div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">↓ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null)} · ↑ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_up_kbps : null)} · Stream {r.net_ping_ms ? `${r.net_ping_ms} ms` : "—"}</div></td>
                   <td className="p-3 font-mono tabular-nums">{r.watching_since ? formatElapsed(r.watching_since, now) : "—"}</td>
                   <td className="p-3 font-mono tabular-nums max-sm:hidden">{formatElapsed(r.connected_since ?? r.last_seen_at, now)}</td>
                   <td className="p-3"><div className="flex gap-1.5">

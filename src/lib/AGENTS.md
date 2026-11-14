@@ -40,3 +40,4 @@
 - Manual customer creation saves contact-only rows; checkout emails use an authenticated role-checked RPC to bind an explicit order and resolve its saved recipient, preventing premature Auth accounts and arbitrary-recipient sends.
 - Enabler rules (login PIN issuance/status and confirmation status) live in `src/routes/api/public/AGENTS.md`.
 - Viewing-stats connection strength: apps send speed_kbps on poll; record_player_watch_speed accumulates onto today's daily stats row; bands live in connectionStrength (src/lib/player-customer-stats.ts).
+- Live-connection broadband capacity uses user-requested bounded adaptive Cloudflare tests (BroadbandTest.java / shared network-test.cjs), never traffic counters; the player API preserves actual test time separately from stream TCP ping and clears legacy estimates until a genuine test arrives.
