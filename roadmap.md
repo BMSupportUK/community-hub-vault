@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Built and retained BM-signed Android 5.35 (346) with genuine on-request download/upload reporting; all 323 tests pass. Signer matches permanent BM key; installer SHA-256 7472744819e86cb5d3e6d2e67e55ed87850eb7424fa177a1939803b76a568ece. Public download unchanged.
+
 - [x] Replace Live connections traffic estimates with on-request bounded adaptive broadband tests on Android/shared Windows-Mac; preserve actual timestamps and separate stream TCP connection time. Old speeds hidden until genuine tests arrive.
 - [x] Prepare Android 5.35 and desktop 0.4.102/0.1.105 code; Android release compiles, all 323 Android tests and desktop regressions pass. Real Cloudflare transfers completed from sandbox (not customer's broadband); no public downloads switched.
 - [ ] Verify updated tests on a signed-in physical player and release installers; blocked by no connected player and no public-release request.
