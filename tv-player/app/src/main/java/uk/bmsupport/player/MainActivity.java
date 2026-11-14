@@ -2648,8 +2648,6 @@ public class MainActivity extends Activity {
     }
 
     private void startPlayback(Item it, boolean vlc, long position) {
-        // Free the backup-engine preview connection before full screen opens its own.
-        if (vlcPreview != null) stopPreview();
         // No question up front: the built-in player asks only when the film or episode really has subtitles.
         beginPlayback(it, vlc, position, false);
     }
@@ -2742,6 +2740,18 @@ public class MainActivity extends Activity {
         // UHD channels need the device's only 4K decoder, and a still-held preview makes full screen fail.
         // The playing preview of this same channel goes full screen as it is: no reconnect, no second load.
         // A still of the preview covers the moment the box's decoder moves to the full-screen picture.
+        if (!vlc && vlcPreview != null && PreviewHandoff.canCarry(it.kind,
+                previewItem == null ? null : previewItem.id, it.id, vlcPreview.isPlaying())) {
+            VlcPreview.Session session = vlcPreview.takeSession();
+            if (session != null) {
+                vlcPreview = null;
+                VlcPreview.forward.offer(session, it.id, android.os.SystemClock.elapsedRealtime());
+                intent.setClass(this, BackupPlayerActivity.class).putExtra("vlc_carried", true);
+                stopPreview(); stopMulti(); startActivity(intent);
+                ui.postDelayed(VlcPreview.forward::drop, VlcHandoff.MAX_AGE_MS);
+                return;
+            }
+        }
         if (stageHolds(preview) && PreviewHandoff.canCarry(it.kind, previewItem == null ? null : previewItem.id, it.id,
                 preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY)) {
             // The same picture grows to fill the screen and the controls open over it, see-through:
@@ -5510,10 +5520,29 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         PreviewHandoff.drop(); // a hand-off nobody claimed must not keep the decoder or provider connection
         takeBackPreview();
+        VlcPreview.forward.drop();
+        VlcPreview.Session returned = VlcPreview.backward.take(previewItem == null ? null : previewItem.id,
+                android.os.SystemClock.elapsedRealtime());
+        if (returned != null) {
+            if (previewView == null || previewItem == null || LiveDrawerData.pendingPick != null) returned.close();
+            else {
+                final Item item = previewItem;
+                vlcPreview = new VlcPreview(this, previewView, returned.urls, new VlcPreview.Listener() {
+                    @Override public void playing() {
+                        previewCounted = true; setNowPlaying(item, false, true); previewStarted();
+                        if (previewStatus != null) previewStatus.setText(fullScreenHint());
+                    }
+                    @Override public void failed() {
+                        if (previewStatus != null) previewStatus.setText("Preview unavailable – press OK to play full screen");
+                    }
+                }, returned);
+                if (previewPoster != null) previewPoster.setVisibility(View.GONE);
+            }
+        }
         resetShiftAfterClockChange();
         super.onResume();
         // Only clear when nothing in this screen is still playing (a running preview keeps counting).
-        if (preview == null) clearNowPlaying();
+        if (preview == null && vlcPreview == null) clearNowPlaying();
         // A channel picked from the full-screen player's Left drawer opens like any guide pick.
         final String drawerPick = LiveDrawerData.pendingPick; LiveDrawerData.pendingPick = null;
         if (drawerPick != null && liveChannels != null)

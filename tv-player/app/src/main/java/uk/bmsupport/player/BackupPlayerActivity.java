@@ -111,12 +111,23 @@ public final class BackupPlayerActivity extends Activity {
             urls = new String[]{cuUrl()};
             resume = 0;
         }
+        VlcPreview.Session carried = getIntent().getBooleanExtra("vlc_carried", false)
+                ? VlcPreview.forward.take(getIntent().getStringExtra("content_id"), android.os.SystemClock.elapsedRealtime()) : null;
+        if (carried != null) {
+            vlc = carried.vlc; mp = carried.player; vlcBoost = carried.boost;
+            urls = carried.urls; at = carried.index;
+            started = true;
+            feedStatus.playing(android.os.SystemClock.elapsedRealtime());
+            ride.playing(android.os.SystemClock.elapsedRealtime());
+            note.setVisibility(android.view.View.GONE);
+        } else {
         ArrayList<String> opts = new ArrayList<>();
         opts.add("--network-caching=" + BackupBufferPolicy.networkCacheMs(isLive(), PlayerActivity.prefs(this).getString("buffer", StreamRecovery.DEFAULT_BUFFER), recoveryName()));
         opts.add("--http-reconnect");
         vlcBoost = SoundBoost.vlc(this, opts);
         vlc = new LibVLC(this, opts);
         mp = new MediaPlayer(vlc);
+        }
         mp.attachViews(layout, null, false, false);
         // Films and series fill the screen (zoom, like the main player); live TV and catch up keep their shape.
         if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind"))) mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
@@ -150,7 +161,7 @@ public final class BackupPlayerActivity extends Activity {
                 default: break;
             }
         });
-        open();
+        if (carried == null) open(); else applyBoost();
         if (catchup()) showSkipToListed(root);
         ui.post(feedTick);
         ui.postDelayed(reportTick, 60000);
@@ -456,6 +467,15 @@ public final class BackupPlayerActivity extends Activity {
     @Override protected void onPause() {
         super.onPause();
         saveProgress();
+        // Return ownership before the guide resumes; background exits release normally.
+        if (isFinishing() && isLive() && started && mp != null && LiveDrawerData.pendingPick == null) {
+            mp.setEventListener(null); mp.detachViews();
+            if (paused) mp.play();
+            VlcPreview.backward.offer(new VlcPreview.Session(vlc, mp, vlcBoost, urls, at),
+                    getIntent().getStringExtra("content_id"), android.os.SystemClock.elapsedRealtime());
+            new Handler(Looper.getMainLooper()).postDelayed(VlcPreview.backward::drop, VlcHandoff.MAX_AGE_MS);
+            mp = null; vlc = null; vlcBoost = null;
+        }
         if (!isChangingConfigurations()) finish();
     }
 

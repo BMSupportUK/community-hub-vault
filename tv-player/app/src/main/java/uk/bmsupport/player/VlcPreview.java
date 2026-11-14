@@ -11,6 +11,36 @@ import org.videolan.libvlc.util.VLCVideoLayout;
 
 /** Live TV guide preview played by the built-in backup engine (libVLC), the same engine full screen uses. */
 final class VlcPreview {
+    static final VlcHandoff<Session> forward = new VlcHandoff<>();
+    static final VlcHandoff<Session> backward = new VlcHandoff<>();
+    static final class Session implements AutoCloseable {
+        final LibVLC vlc;
+        final MediaPlayer player;
+        final SoundBoost.Vlc boost;
+        final String[] urls;
+        final int index;
+        Session(LibVLC vlc, MediaPlayer player, SoundBoost.Vlc boost, String[] urls, int index) {
+            this.vlc = vlc; this.player = player; this.boost = boost; this.urls = urls; this.index = index;
+        }
+        @Override public void close() {
+            player.setEventListener(null);
+            player.stop(); player.detachViews(); player.release(); vlc.release();
+            if (boost != null) boost.release();
+        }
+    }
+
+    /** Move ownership without stopping, setting media, or playing a new address. */
+    Session takeSession() {
+        if (released || mp == null || !playing) return null;
+        released = true;
+        ui.removeCallbacksAndMessages(null);
+        mp.setEventListener(null);
+        mp.detachViews();
+        if (host != null && layout != null) host.removeView(layout);
+        Session session = new Session(vlc, mp, boost, urls, at);
+        mp = null; vlc = null; boost = null; layout = null; host = null;
+        return session;
+    }
     interface Listener { void playing(); void failed(); }
     private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
     private LibVLC vlc;
@@ -58,7 +88,20 @@ final class VlcPreview {
 
     /** index: where the picture goes in host (-1 = on top), so Multi-screen labels stay above it. */
     VlcPreview(Context c, ViewGroup host, int index, String[] urls, Listener l) {
+        this(c, host, index, urls, l, null);
+    }
+
+    VlcPreview(Context c, ViewGroup host, String[] urls, Listener l, Session carried) {
+        this(c, host, -1, urls, l, carried);
+    }
+
+    private VlcPreview(Context c, ViewGroup host, int index, String[] urls, Listener l, Session carried) {
         this.ctx = c.getApplicationContext(); this.host = host; this.urls = urls;
+        if (carried != null) {
+            vlc = carried.vlc; mp = carried.player; boost = carried.boost;
+            this.urls = carried.urls; at = carried.index;
+            playing = mp.isPlaying();
+        } else {
         ArrayList<String> opts = new ArrayList<>();
         opts.add("--network-caching=" + BackupBufferPolicy.previewCacheMs());
         opts.add("--http-reconnect");
@@ -66,6 +109,7 @@ final class VlcPreview {
         boost = SoundBoost.vlc(c, opts);
         vlc = new LibVLC(c, opts);
         mp = new MediaPlayer(vlc);
+        }
         layout = new VLCVideoLayout(c);
         host.addView(layout, index, new FrameLayout.LayoutParams(-1, -1));
         mp.attachViews(layout, null, false, false);
@@ -79,7 +123,8 @@ final class VlcPreview {
                 ui.postDelayed(this::open, 500);
             });
         });
-        open();
+        if (carried == null) open();
+        else { applyBoost(); ride.playing(android.os.SystemClock.elapsedRealtime()); l.playing(); }
         ui.postDelayed(watch, 1000);
     }
 
