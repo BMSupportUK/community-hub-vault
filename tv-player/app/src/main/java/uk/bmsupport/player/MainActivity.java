@@ -3229,7 +3229,7 @@ public class MainActivity extends Activity {
 
     private final java.util.Map<String, String> savedTab = new java.util.HashMap<>();
 
-    /** One Favourites / Recently watched card: icon over the name, at most two lines. */
+    /** One Favourites / Recently watched card: whole provider picture over the name, at most two lines. */
     View savedCard(Item it, String icon) {
         LinearLayout t = column();
         t.setGravity(Gravity.CENTER);
@@ -3247,7 +3247,8 @@ public class MainActivity extends Activity {
         if (it.poster != null && it.poster.startsWith("http")) {
             boolean live = "live".equals(it.kind);
             android.widget.ImageView img = new android.widget.ImageView(this);
-            img.setScaleType(live ? android.widget.ImageView.ScaleType.FIT_CENTER : android.widget.ImageView.ScaleType.CENTER_CROP);
+            // Fit the whole provider picture: filling these wide cards crops portrait posters.
+            img.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
             img.setClipToOutline(true);
             GradientDrawable clip = new GradientDrawable(); clip.setCornerRadius(dp(10)); img.setBackground(clip);
             img.setFocusable(false);

@@ -93,3 +93,4 @@
 - [x] Built signed 4.86: first player keeps late VIP Cinema/Movie Premiere frames instead of freezing for a keyframe; 260 tests pass. Not yet released.
 
 - [x] Published BM Player 5.19 (versionCode 330): sound booster Off now detaches the equalizer so Live TV, guide preview and Multi-screen use the box full-volume path. Upload verified byte-identical to the signed tested build; public updater reports 5.19. Real-box volume check pending.
+- [x] Built and retained signed BM Player 5.20 (331): whole uncropped provider posters in Favourites and Recently watched; home buttons and channel logos unchanged. 304 tests passed; BM signature verified. Not public; real-box appearance unverified.
