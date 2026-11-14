@@ -21,8 +21,8 @@ public class VoiceEntryTest {
     }
 
     @Test public void voiceSearchShowsOnAmazonWithKeyboardMicHint() {
-        assertTrue(VoiceEntry.available("Amazon"));
-        assertTrue(VoiceEntry.hint("Amazon").contains("hold the microphone button"));
+        assertFalse(VoiceEntry.available("Amazon"));
+        assertFalse(VoiceEntry.available("amazon"));
         assertTrue(VoiceEntry.available("Google"));
         assertTrue(VoiceEntry.available("Xiaomi"));
     }

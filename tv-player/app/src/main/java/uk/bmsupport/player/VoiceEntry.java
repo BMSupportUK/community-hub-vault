@@ -10,8 +10,8 @@ import android.widget.EditText;
 
 /** Fire TV dictation belongs to the keyboard, never an Alexa speech activity. */
 final class VoiceEntry {
-    /** Voice search shows everywhere; on Fire TV it opens the on-screen keyboard, whose own mic key dictates into the box. */
-    static boolean available(String manufacturer) { return true; }
+    /** Hidden on Amazon Fire TV: the remote mic always goes to Alexa (tested 5.36-5.39), so those boxes type instead. */
+    static boolean available(String manufacturer) { return !"amazon".equalsIgnoreCase(manufacturer); }
     static String hint(String manufacturer) {
         return "amazon".equalsIgnoreCase(manufacturer)
                 ? "When the keyboard is showing, hold the microphone button on your remote and speak — your words type into the box."
