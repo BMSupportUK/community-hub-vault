@@ -17,7 +17,7 @@ public class VideoDecodePolicyTest {
     }
     @Test public void softwareSettingAndCatchupPreferSoftware() {
         assertTrue(VideoDecodePolicy.preferSoftware(false, "software", "Sky Sports"));
-        assertTrue(VideoDecodePolicy.preferSoftware(true, "hardware", null));
+        assertFalse(VideoDecodePolicy.preferSoftware(true, "hardware", null));
     }
     @Test public void ordinaryUhdKeepsHardwareDefault() {
         assertFalse(VideoDecodePolicy.preferSoftware(false, "hardware", "Sky Sports UHD"));

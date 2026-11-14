@@ -6,7 +6,7 @@ final class VideoDecodePolicy {
         return name != null && name.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "").contains("monomax");
     }
     static boolean preferSoftware(boolean catchup, String decoder, String name) {
-        return catchup || "software".equals(decoder);
+        return "software".equals(decoder);
     }
     static boolean cleanKeyframes(boolean catchup, String name) {
         return catchup || affectedChannel(name);
