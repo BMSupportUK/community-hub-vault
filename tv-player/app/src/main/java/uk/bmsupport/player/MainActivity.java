@@ -3085,6 +3085,13 @@ public class MainActivity extends Activity {
                         if (cat != null) searchCategories.put(cat.optString("category_id"), cat.optString("category_name"));
                     }
                 }
+                // Group results by category (categories A–Z), then alphabetically by name inside each category.
+                java.util.Collections.sort(hits, (a, b) -> {
+                    int c = searchCategoryLabel(a, searchCategories).compareToIgnoreCase(searchCategoryLabel(b, searchCategories));
+                    if (c != 0) return c;
+                    String an = a.name != null ? a.name : "", bn = b.name != null ? b.name : "";
+                    return an.compareToIgnoreCase(bn);
+                });
                 ui.post(() -> {
                     if (hits.isEmpty()) { Toast.makeText(this, "Nothing found for \"" + want + "\"", Toast.LENGTH_LONG).show(); showSearch(kind, ""); return; }
                     String[] names = new String[hits.size()];
@@ -3096,12 +3103,7 @@ public class MainActivity extends Activity {
                                     name.setText(names[i]); name.setTextSize(16); name.setTextColor(TEXT);
                                     row.addView(name);
                                 } else row.addView(text(names[i], 16, TEXT, false));
-                                if (kind.equals("live")) {
-                                    String category = hits.get(i).category;
-                                    String label = searchCategories.get(category);
-                                    if (label == null || label.isEmpty()) label = category != null && !category.matches("\\d+") ? category : "Uncategorised";
-                                    row.addView(text(label, 13, MUTED, false));
-                                }
+                                row.addView(text(searchCategoryLabel(hits.get(i), searchCategories), 13, MUTED, false));
                                 // Films show how much has been watched; series show it per episode on their own page.
                                 if (kind.equals("film")) row.addView(watchedBar(hits.get(i)));
                                 return row;
@@ -3110,6 +3112,13 @@ public class MainActivity extends Activity {
                 });
             } catch (Exception ex) { ui.post(() -> Toast.makeText(this, "Couldn't search – try refreshing your playlist", Toast.LENGTH_LONG).show()); }
         });
+    }
+    /** Search-result category name: the provider category's name, or "Uncategorised" when the playlist only gives a number. */
+    private static String searchCategoryLabel(Item it, java.util.Map<String, String> names) {
+        String category = it.category;
+        String label = names.get(category);
+        if (label == null || label.isEmpty()) label = category != null && !category.matches("\\d+") ? category : "Uncategorised";
+        return label;
     }
     private int liveVoiceRequest;
     private void runLiveVoiceSearch(String spoken) {
