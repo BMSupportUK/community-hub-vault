@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { RolesGate } from "@/components/app/RolesGate";
 import { PlayerConnectionLog } from "@/components/app/PlayerConnectionLog";
+import { PlayerCustomerStats } from "@/components/app/PlayerCustomerStats";
 import { Button } from "@/components/ui/button";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 
@@ -37,5 +38,6 @@ function CustomerConnectionsPage() {
       <Button asChild variant="outline"><Link to="/admin" search={{ tab: "customers" }}><X className="size-4" />Close</Link></Button>
     </header>
     <PlayerConnectionLog userId={customer} />
+    {customer && <PlayerCustomerStats key={customer} userId={customer} />}
   </main>;
 }

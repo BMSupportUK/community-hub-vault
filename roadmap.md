@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Added seven-day UK customer viewing stats below the customer-card connection log: daily doughnut summaries by watched title, Details tabs, current playback and IP/location/VPN rows. Separate admin-only daily records split midnight credits and expire hourly after seven UK days; existing lifetime totals and 30-day logs unchanged. Ten regression tests pass; preview build OK. Recording starts as the website update is published; old per-session totals cannot accurately reconstruct past daily records.
+- [ ] Verify populated customer statistics through the signed-in screen; blocked by existing profile/password/PIN gates and no new daily records before website publication.
+
 - [x] Released Windows 0.4.99 and universal Mac 0.1.102 with protected catch-up skip code; 171 desktop tests pass. Public metadata and byte-identical downloads verified: Windows SHA-256 6d57c6152ac760a9b675d4f52b76fea67df66dc7e1e21af2ef8a2b5325ea8164; Mac SHA-256 871a99b2941d1b23a23fd42f2959c879e1b09af53b46a296b188e1b08d0e2bf4. Mac ad-hoc signing completed; native Apple validation and real playback unavailable in Linux.
 
 - [x] Added shared Windows/Mac catch-up two-minute forward skip, one-minute corrections and encrypted login/channel start memory; 171 desktop tests pass, including actual main-process command execution. Public downloads unchanged.

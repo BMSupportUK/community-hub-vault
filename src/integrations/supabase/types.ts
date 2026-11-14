@@ -6168,6 +6168,63 @@ export type Database = {
           },
         ]
       }
+      player_customer_daily_stats: {
+        Row: {
+          category: string | null
+          credential_id: string | null
+          day: string
+          device_id: string
+          geo_city: string | null
+          geo_country: string | null
+          id: string
+          kind: string
+          last_ip: string | null
+          last_watched_at: string
+          login: string
+          platform: string | null
+          seconds: number
+          title: string
+          user_id: string
+          vpn_status: string | null
+        }
+        Insert: {
+          category?: string | null
+          credential_id?: string | null
+          day: string
+          device_id: string
+          geo_city?: string | null
+          geo_country?: string | null
+          id?: string
+          kind: string
+          last_ip?: string | null
+          last_watched_at: string
+          login?: string
+          platform?: string | null
+          seconds?: number
+          title: string
+          user_id: string
+          vpn_status?: string | null
+        }
+        Update: {
+          category?: string | null
+          credential_id?: string | null
+          day?: string
+          device_id?: string
+          geo_city?: string | null
+          geo_country?: string | null
+          id?: string
+          kind?: string
+          last_ip?: string | null
+          last_watched_at?: string
+          login?: string
+          platform?: string | null
+          seconds?: number
+          title?: string
+          user_id?: string
+          vpn_status?: string | null
+        }
+        Relationships: []
+      }
       player_devices: {
         Row: {
           app_version: string | null
@@ -11017,6 +11074,7 @@ export type Database = {
         Returns: undefined
       }
       purge_player_connection_log: { Args: never; Returns: undefined }
+      purge_player_customer_daily_stats: { Args: never; Returns: undefined }
       purge_user_data: { Args: { _uid: string }; Returns: undefined }
       queue_shift_phone_alerts: { Args: never; Returns: number }
       reassign_ticket: {

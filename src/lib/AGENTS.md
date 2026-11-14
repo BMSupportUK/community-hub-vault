@@ -1,4 +1,5 @@
 # src/lib rules
+- Customer viewing stats use separate UK-day check-in credits with hourly seven-day retention and admin-only reads; lifetime totals and 30-day connection logs stay unchanged so daily breakdowns never assign an entire midnight-crossing session to one day.
 - Player device, buffering, voting, connection-count and cron-hook rules live in `src/routes/api/public/AGENTS.md`.
 - Inbox deletion uses a participant-checked, thread-locked RPC for selected messages or the current conversation on both ends; reported evidence stays protected, empty threads are removed, and authoritative reads clear selection/cache state.
 - EPG imports stream matched stations; US locals use station callsigns. EPG uses shared indexed fixture matching and single-flight catalogues without provider completion waits; sports cards retain those checks separately. Published-row caches never freeze event overlays.

@@ -2507,6 +2507,13 @@
       "when": 1794665063827,
       "tag": "0357_inbox_image_body_check",
       "breakpoints": true
+    },
+    {
+      "idx": 358,
+      "version": "7",
+      "when": 1794684094383,
+      "tag": "0358_player_customer_daily_stats",
+      "breakpoints": true
     }
   ]
 }
