@@ -6260,6 +6260,10 @@ export type Database = {
           last_seen_at: string
           linked_at: string | null
           name: string
+          net_down_kbps: number | null
+          net_measured_at: string | null
+          net_ping_ms: number | null
+          net_up_kbps: number | null
           nickname: string | null
           offsite_customer_id: string | null
           pin_failures: number
@@ -6305,6 +6309,10 @@ export type Database = {
           last_seen_at?: string
           linked_at?: string | null
           name?: string
+          net_down_kbps?: number | null
+          net_measured_at?: string | null
+          net_ping_ms?: number | null
+          net_up_kbps?: number | null
           nickname?: string | null
           offsite_customer_id?: string | null
           pin_failures?: number
@@ -6350,6 +6358,10 @@ export type Database = {
           last_seen_at?: string
           linked_at?: string | null
           name?: string
+          net_down_kbps?: number | null
+          net_measured_at?: string | null
+          net_ping_ms?: number | null
+          net_up_kbps?: number | null
           nickname?: string | null
           offsite_customer_id?: string | null
           pin_failures?: number

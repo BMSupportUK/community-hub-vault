@@ -42,6 +42,8 @@ const Body = z.discriminatedUnion("action", [
     version: z.string().trim().max(20).optional(),
     sig: z.string().trim().max(128).optional(),
     speed_kbps: z.number().int().min(0).max(2000000).optional(),
+    up_kbps: z.number().int().min(0).max(2000000).optional(),
+    ping_ms: z.number().int().min(0).max(60000).optional(),
     bitrate_kbps: z.number().int().min(0).max(200000).optional(),
     watching: z.object({
       kind: z.string().transform((k) => k === "episode" ? "series" : k === "movie" ? "film" : ["live", "film", "series", "catchup"].includes(k) ? k : "live"),
@@ -886,6 +888,9 @@ export const Route = createFileRoute("/api/public/player")({
         if (!pending && needsVpnCheck({ ip, checkedAt: device.vpn_checked_at, status: device.vpn_status, now })) {
           Object.assign(fields, await checkDeviceVpn(ip as string));
         }
+        if (body.speed_kbps != null || body.up_kbps != null || body.ping_ms != null) Object.assign(fields, {
+          net_down_kbps: body.speed_kbps ?? null, net_up_kbps: body.up_kbps ?? null, net_ping_ms: body.ping_ms ?? null,
+          net_measured_at: new Date(now).toISOString() });
         await supabaseAdmin.from("player_devices").update(fields).eq("id", device.id);
         // Weekly viewing hours: credit the gap since the last check-in to what was playing then.
         // Live TV previews are never credited — only real playback counts.

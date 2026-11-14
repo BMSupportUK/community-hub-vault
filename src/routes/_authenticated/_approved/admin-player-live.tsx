@@ -37,9 +37,10 @@ type Row = {
   vpn_status: string | null; vpn_provider: string | null; vpn_checked_at: string | null;
   linked_at: string | null; created_at: string | null; offsite_customer_id: string | null;
   unlock_failures: number | null; unlock_locked_until: string | null;
+  net_down_kbps: number | null; net_up_kbps: number | null; net_ping_ms: number | null; net_measured_at: string | null;
 };
 
-const DEVICE_SELECT = "id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon, vpn_status, vpn_provider, vpn_checked_at, linked_at, created_at, offsite_customer_id, unlock_failures, unlock_locked_until";
+const DEVICE_SELECT = "id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon, vpn_status, vpn_provider, vpn_checked_at, linked_at, created_at, offsite_customer_id, unlock_failures, unlock_locked_until, net_down_kbps, net_up_kbps, net_ping_ms, net_measured_at";
 
 const PLATFORM: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Phone", windows: "Windows", mac: "Mac" };
 
@@ -86,6 +87,23 @@ function RemoveBoxButton({ deviceId, onDone }: { deviceId: string; onDone: () =>
   );
 }
 
+function mbps(k: number | null | undefined) { return k ? `${(k / 1000).toFixed(k < 10000 ? 1 : 0)} Mbps` : "—"; }
+
+/** Five-bar connection strength from the latest download speed and ping. */
+function ConnectionBars({ down, ping }: { down: number | null; ping: number | null }) {
+  if (!down && !ping) return <span className="text-xs text-muted-foreground">Waiting</span>;
+  let n = !down ? 1 : down >= 15000 ? 5 : down >= 8000 ? 4 : down >= 4000 ? 3 : down >= 1500 ? 2 : 1;
+  if (ping != null && ping > 800) n = Math.min(n, 2); else if (ping != null && ping > 400) n = Math.min(n, 3);
+  const tone = n >= 4 ? "bg-success" : n === 3 ? "bg-warning" : "bg-destructive";
+  const label = ["", "Poor", "Weak", "Fair", "Good", "Excellent"][n];
+  return (
+    <div className="flex items-center gap-2" title={label}>
+      <div className="flex items-end gap-0.5">{[1, 2, 3, 4, 5].map((i) => <span key={i} className={`w-1.5 rounded-sm ${i <= n ? tone : "bg-muted"}`} style={{ height: 4 + i * 3 }} />)}</div>
+      <span className="text-xs">{label}</span>
+    </div>
+  );
+}
+
 function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row | null; names: Record<string, string>; now: number; onOpenChange: (open: boolean) => void }) {
   const place = [row?.geo_city, row?.geo_region, row?.geo_country].filter(Boolean).join(", ");
   const coords = row?.geo_lat != null && row?.geo_lon != null ? `${row.geo_lat.toFixed(4)}, ${row.geo_lon.toFixed(4)}` : null;
@@ -113,6 +131,17 @@ function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row |
                 <Field label="App version" value={row.app_version || "—"} />
                 <Field label="First added" value={when(row.created_at)} />
                 <Field label="Linked" value={when(row.linked_at)} />
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Connection</h3>
+              <div className="grid gap-x-6 sm:grid-cols-2">
+                <Field label="Status" value={<ConnectionBars down={row.net_down_kbps} ping={row.net_ping_ms} />} />
+                <Field label="Download" value={mbps(row.net_down_kbps)} />
+                <Field label="Upload" value={mbps(row.net_up_kbps)} />
+                <Field label="Ping" value={row.net_ping_ms ? `${row.net_ping_ms} ms` : "—"} />
+                <Field label="Measured" value={row.net_measured_at ? when(row.net_measured_at) : "—"} />
               </div>
             </section>
 
@@ -231,7 +260,7 @@ function AdminPlayerLivePageInner() {
         : <div className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-              <tr><th className="p-3">Code</th><th className="p-3">Username</th><th className="p-3">Location</th><th className="p-3">VPN</th><th className="p-3">Connected to</th><th className="p-3">Watching for</th><th className="p-3 max-sm:hidden">Online for</th><th className="p-3">Details</th></tr>
+              <tr><th className="p-3">Code</th><th className="p-3">Username</th><th className="p-3">Location</th><th className="p-3">VPN</th><th className="p-3">Connected to</th><th className="p-3">Connection</th><th className="p-3">Watching for</th><th className="p-3 max-sm:hidden">Online for</th><th className="p-3">Details</th></tr>
             </thead>
             <tbody>
               {live.map((r) => {
@@ -252,6 +281,7 @@ function AdminPlayerLivePageInner() {
                   <td className="p-3">{r.watching_title
                     ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Movie" : r.watching_kind === "catchup" ? "Catch up" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div></div></div>
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>
+                  <td className="p-3"><ConnectionBars down={r.net_down_kbps} ping={r.net_ping_ms} /><div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">↓ {mbps(r.net_down_kbps)} · ↑ {mbps(r.net_up_kbps)} · {r.net_ping_ms ? `${r.net_ping_ms} ms` : "—"}</div></td>
                   <td className="p-3 font-mono tabular-nums">{r.watching_since ? formatElapsed(r.watching_since, now) : "—"}</td>
                   <td className="p-3 font-mono tabular-nums max-sm:hidden">{formatElapsed(r.connected_since ?? r.last_seen_at, now)}</td>
                   <td className="p-3"><div className="flex gap-1.5">

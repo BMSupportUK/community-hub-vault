@@ -761,6 +761,9 @@ public class MainActivity extends Activity {
                 .put("preview", prefs.getBoolean("np_preview", false)));
         int kbps = WatchSpeed.sample(android.net.TrafficStats.getUidRxBytes(android.os.Process.myUid()), android.os.SystemClock.elapsedRealtime());
         if (since > 0 && !prefs.getBoolean("np_preview", false) && kbps > 0) b.put("speed_kbps", kbps);
+        int up = WatchSpeed.sampleUp(android.net.TrafficStats.getUidTxBytes(android.os.Process.myUid()), android.os.SystemClock.elapsedRealtime());
+        if (since > 0 && up > 0) b.put("up_kbps", up);
+        if (since > 0 && lastPingMs > 0) b.put("ping_ms", lastPingMs);
         return b;
     }
 
@@ -822,10 +825,15 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Round-trip time of the previous check-in, reported as the connection's ping. */
+    private volatile int lastPingMs;
+
     private void pollOnce() {
         try {
-            JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
-                    pollBody().toString()));
+            String pb = pollBody().toString();
+            long t0 = android.os.SystemClock.elapsedRealtime();
+            JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", pb));
+            lastPingMs = (int) Math.min(60000, android.os.SystemClock.elapsedRealtime() - t0);
             Checkin.setSlow(r.optInt("slow", 1));
             JSONObject mt = r.optJSONObject("maintenance");
             boolean down = mt != null && mt.optBoolean("enabled");
