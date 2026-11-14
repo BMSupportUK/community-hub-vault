@@ -47,8 +47,14 @@ final class VlcPreview {
     void applyBoost() {
         if (mp == null || released) return;
         try {
+            int gainMb = SoundBoost.gainFor(SoundBoost.current(ctx));
+            if (gainMb <= 0) {
+                // No boost: detach the equalizer so libVLC keeps the box's louder hardware/DSP audio path.
+                mp.setEqualizer(null);
+                return;
+            }
             MediaPlayer.Equalizer eq = MediaPlayer.Equalizer.create();
-            eq.setPreAmp(SoundBoost.gainFor(SoundBoost.current(ctx)) / 100f);
+            eq.setPreAmp(gainMb / 100f);
             mp.setEqualizer(eq);
         } catch (Exception ignored) {}
     }

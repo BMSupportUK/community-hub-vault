@@ -3,6 +3,7 @@
 - [x] Published 5.17 as the public download: home buttons restored; Favourites/Recently watched tabs show items as side-by-side cards. Updater reports 5.17; download SHA-256 990dd9b8 matches the tested signed build (versionCode 328).
 - [x] Published 5.18 as the public download: Favourites/Recently watched cards now show posters (Movies/Series) and provider channel logos (Live TV). Updater serves 5.18; download SHA-256 36a8906c matches the tested signed build.
 - [ ] Real-box check of 5.18 card pictures; blocked by no connected device.
+- [x] Built signed 5.19: libVLC engines no longer attach the sound equalizer when the booster is Off, so Live TV/preview/Multi-screen keep the box's louder hardware audio path. Tests pass; retained asset, not yet public.
 
 - [x] Built and BM-signed 5.16 (327): Favourites and Recently watched are now compact homeCard tiles sitting side by side in their own row under the main tiles; Sports guide/Settings/Multi-screen stay as small buttons. 305 Android tests pass (incl. new savedCardsSitSideBySide); APK retained as an asset. Not yet public.
 - [x] Published 5.16 as the public download (updater reports 5.16; download byte-identical to the tested signed build). Real-box check of the two cards still blocked by no connected device.
