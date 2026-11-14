@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Released BM Player 5.09 publicly: rebuilt signed APK (versionCode 320, permanent BM signature), uploaded to app-builds first, then switched the current build row. Public updater reports 5.09 and the download is byte-identical to the built APK.
+- [ ] Real-box check of 5.09 Left-steps-back on future programmes; blocked by no connected device.
+
 - [x] Released BM Player 5.08 publicly: uploaded signed APK first, then switched current build. Public updater reports 5.08; downloaded APK is byte-identical to the tested build, versionCode 319 and permanent BM signature verified. User will check EPG return and Catch up on real TV.
 
 - [x] Added Catch up to supported Live TV channels' play pop-ups, opening the existing archive and returning to the chosen category; rebuilt BM-signed 5.08 with 295 passing tests and retained its updated APK. Now publicly released; real-box playback check blocked by no connected device.
