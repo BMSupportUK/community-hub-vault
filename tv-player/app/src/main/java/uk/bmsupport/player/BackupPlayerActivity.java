@@ -159,9 +159,11 @@ public class BackupPlayerActivity extends Activity {
                     updateFeedNote();
                     break;
                 case MediaPlayer.Event.EncounteredError:
+                    if (catchup() && staleCatchupEvent()) break;
                     ui.post(catchup() ? this::catchupResume : this::next); break;
                 case MediaPlayer.Event.EndReached:
                     // Live streams that end are dropped connections: reopen the same address.
+                    if (catchup() && staleCatchupEvent()) break;
                     ui.post(() -> { if (catchup()) catchupResume(); else if (isLive()) open(); else finish(); }); break;
                 default: break;
             }
@@ -182,9 +184,14 @@ public class BackupPlayerActivity extends Activity {
     private String cuUrl() {
         return PlayerActivity.timeshiftUrl(getIntent().getStringExtra("catchup_prefix"), getIntent().getStringExtra("catchup_id"), cuSegStart, cuEnd, getIntent().getStringExtra("catchup_tz"));
     }
-    private long cuReached() { return cuSegStart + Math.max(0, mp == null ? 0 : mp.getTime()) / 1000; }
+    // Until the reopened recording plays, the old one's clock and end/error events are stale: they must not drag the start back.
+    private long cuOpenedAt;
+    private boolean staleCatchupEvent() { return !started && android.os.SystemClock.elapsedRealtime() - cuOpenedAt < 3000; }
+    private long cuReached() { return started ? cuSegStart + Math.max(0, mp == null ? 0 : mp.getTime()) / 1000 : cuSegStart; }
     private void catchupOpenAt(long start) {
-        cuSegStart = start; urls[0] = cuUrl(); at = 0; open();
+        cuSegStart = start; urls[0] = cuUrl(); at = 0; cuOpenedAt = android.os.SystemClock.elapsedRealtime();
+        try { mp.stop(); } catch (Exception ignored) {}
+        open();
     }
     private void catchupJump(int minutes) {
         if (mp == null) return;
