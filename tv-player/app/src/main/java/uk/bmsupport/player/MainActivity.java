@@ -2746,7 +2746,7 @@ public class MainActivity extends Activity {
             if (session != null) {
                 vlcPreview = null;
                 VlcPreview.forward.offer(session, it.id, android.os.SystemClock.elapsedRealtime());
-                intent.setClass(this, BackupPlayerActivity.class).putExtra("vlc_carried", true);
+                intent.setClass(this, session.stage != null ? BackupStageActivity.class : BackupPlayerActivity.class).putExtra("vlc_carried", true);
                 stopPreview(); stopMulti(); startActivity(intent);
                 ui.postDelayed(VlcPreview.forward::drop, VlcHandoff.MAX_AGE_MS);
                 return;

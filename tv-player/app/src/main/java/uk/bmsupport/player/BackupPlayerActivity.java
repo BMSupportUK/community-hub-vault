@@ -23,7 +23,7 @@ import org.videolan.libvlc.util.VLCVideoLayout;
  * Backup engine built into BM Player (libVLC, plays almost every format). PlayerActivity hands over here
  * by itself when the main player can't open or keep a stream going; customers install nothing extra.
  */
-public final class BackupPlayerActivity extends Activity {
+public class BackupPlayerActivity extends Activity {
     @Override protected void attachBaseContext(android.content.Context b) { super.attachBaseContext(PhoneScale.wrap(b)); }
     private androidx.media3.ui.PlayerControlView controller;
     private android.widget.LinearLayout controlsRow;
@@ -42,6 +42,7 @@ public final class BackupPlayerActivity extends Activity {
     private LibVLC vlc;
     private MediaPlayer mp;
     private VLCVideoLayout layout;
+    private VlcStage carriedStage;
     private TextView note;
     private TextView feedNote;
     private String[] urls;
@@ -83,7 +84,7 @@ public final class BackupPlayerActivity extends Activity {
         StreamClaim.attach(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
+        root.setBackgroundColor(this instanceof BackupStageActivity ? Color.TRANSPARENT : Color.BLACK);
         layout = new VLCVideoLayout(this);
         root.addView(layout, new FrameLayout.LayoutParams(-1, -1));
         note = new TextView(this);
@@ -114,6 +115,7 @@ public final class BackupPlayerActivity extends Activity {
         VlcPreview.Session carried = getIntent().getBooleanExtra("vlc_carried", false)
                 ? VlcPreview.forward.take(getIntent().getStringExtra("content_id"), android.os.SystemClock.elapsedRealtime()) : null;
         if (carried != null) {
+            carriedStage = carried.stage;
             vlc = carried.vlc; mp = carried.player; vlcBoost = carried.boost;
             urls = carried.urls; at = carried.index;
             started = true;
@@ -128,7 +130,10 @@ public final class BackupPlayerActivity extends Activity {
         vlc = new LibVLC(this, opts);
         mp = new MediaPlayer(vlc);
         }
-        mp.attachViews(layout, null, false, false);
+        if (carriedStage != null) {
+            root.removeView(layout);
+            layout = (VLCVideoLayout) carriedStage.picture;
+        } else mp.attachViews(layout, null, false, false);
         // Films and series fill the screen (zoom, like the main player); live TV and catch up keep their shape.
         if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind"))) mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
         mp.setEventListener(ev -> {
@@ -469,9 +474,14 @@ public final class BackupPlayerActivity extends Activity {
         saveProgress();
         // Return ownership before the guide resumes; background exits release normally.
         if (isFinishing() && isLive() && started && mp != null && LiveDrawerData.pendingPick == null) {
-            mp.setEventListener(null); mp.detachViews();
+            mp.setEventListener(null);
+            if (carriedStage == null) mp.detachViews();
             if (paused) mp.play();
-            VlcPreview.backward.offer(new VlcPreview.Session(vlc, mp, vlcBoost, urls, at),
+            VlcPreview.Session session = new VlcPreview.Session(vlc, mp, vlcBoost, urls, at);
+            session.stage = carriedStage;
+            if (carriedStage != null) carriedStage.full(false);
+            carriedStage = null;
+            VlcPreview.backward.offer(session,
                     getIntent().getStringExtra("content_id"), android.os.SystemClock.elapsedRealtime());
             new Handler(Looper.getMainLooper()).postDelayed(VlcPreview.backward::drop, VlcHandoff.MAX_AGE_MS);
             mp = null; vlc = null; vlcBoost = null;
@@ -506,6 +516,7 @@ public final class BackupPlayerActivity extends Activity {
         if (mp != null) { mp.stop(); mp.detachViews(); mp.release(); mp = null; }
         if (vlc != null) { vlc.release(); vlc = null; }
         if (vlcBoost != null) { vlcBoost.release(); vlcBoost = null; }
+        if (carriedStage != null) { carriedStage.close(); carriedStage = null; }
         super.onDestroy();
     }
 }

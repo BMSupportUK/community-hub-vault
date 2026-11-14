@@ -19,6 +19,7 @@ final class VlcPreview {
         final SoundBoost.Vlc boost;
         final String[] urls;
         final int index;
+        VlcStage stage;
         Session(LibVLC vlc, MediaPlayer player, SoundBoost.Vlc boost, String[] urls, int index) {
             this.vlc = vlc; this.player = player; this.boost = boost; this.urls = urls; this.index = index;
         }
@@ -26,6 +27,7 @@ final class VlcPreview {
             player.setEventListener(null);
             player.stop(); player.detachViews(); player.release(); vlc.release();
             if (boost != null) boost.release();
+            if (stage != null) stage.close();
         }
     }
 
@@ -35,9 +37,14 @@ final class VlcPreview {
         released = true;
         ui.removeCallbacksAndMessages(null);
         mp.setEventListener(null);
-        mp.detachViews();
-        if (host != null && layout != null) host.removeView(layout);
         Session session = new Session(vlc, mp, boost, urls, at);
+        session.stage = stage;
+        if (stage != null) stage.full(true);
+        else {
+            mp.detachViews();
+            if (host != null && layout != null) host.removeView(layout);
+        }
+        stage = null;
         mp = null; vlc = null; boost = null; layout = null; host = null;
         return session;
     }
@@ -47,6 +54,7 @@ final class VlcPreview {
     private MediaPlayer mp;
     private VLCVideoLayout layout;
     private ViewGroup host;
+    private VlcStage stage;
     private String[] urls;
     private int at, errors;
     private boolean released, playing, muted;
@@ -110,9 +118,15 @@ final class VlcPreview {
         vlc = new LibVLC(c, opts);
         mp = new MediaPlayer(vlc);
         }
-        layout = new VLCVideoLayout(c);
-        host.addView(layout, index, new FrameLayout.LayoutParams(-1, -1));
-        mp.attachViews(layout, null, false, false);
+        if (carried != null && carried.stage != null) {
+            stage = carried.stage; stage.full(false);
+            layout = (VLCVideoLayout) stage.picture;
+        } else {
+            layout = new VLCVideoLayout(c);
+            if (index == -1 && c instanceof android.app.Activity) stage = new VlcStage((android.app.Activity)c, host, layout);
+            else host.addView(layout, index, new FrameLayout.LayoutParams(-1, -1));
+            mp.attachViews(layout, null, false, false);
+        }
         mp.setEventListener(ev -> {
             if (released) return;
             if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released) { applyVolume(); applyBoost(); playing = true; ride.playing(android.os.SystemClock.elapsedRealtime()); l.playing(); } });
@@ -142,6 +156,7 @@ final class VlcPreview {
         try { mp.stop(); mp.detachViews(); mp.release(); vlc.release(); } catch (RuntimeException ignored) {}
         if (boost != null) boost.release();
         if (host != null && layout != null) host.removeView(layout);
+        if (stage != null) { stage.close(); stage = null; }
         mp = null; vlc = null; layout = null; host = null;
     }
 }

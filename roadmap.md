@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Built and retained permanent-BM-signed 5.29 (340): live preview stays on the same attached surface, expanding beneath transparent full-screen controls instead of detaching and reattaching. All 315 Android tests pass. Not publicly released.
+- [ ] Real-box verification of 5.29 picture continuity; blocked by no connected TV.
+
 - [x] Built and publicly released permanent-BM-signed 5.28 (339) with same-stream libVLC preview/full-screen handover and return to the guide; 314 Android tests pass. Live updater reports 5.28; public installer matches SHA-256 82663499086452c69748d6f26730846f9bd02caeb28aa1dc28971f18cd6fb183.
 - [ ] Real-box check of 5.28 same-stream handover; blocked by no connected TV.
 
