@@ -4446,8 +4446,11 @@ public class MainActivity extends Activity {
             dr.addView(miniPill("📅 ◀ 24h", "Back 24 hours", () -> { if (dayBack[0] != null) dayBack[0].run(); }));
             dr.addView(miniPill("Now", "Back to now", () -> { if (dayNow[0] != null) dayNow[0].run(); }));
             dr.addView(miniPill("24h ▶", "Forward 24 hours", () -> { if (dayFwd[0] != null) dayFwd[0].run(); }));
-            // Category pill straight after the day jumps: opens the category list; picking one loads its guide.
-            boxCatPill = miniPill("☰ Category: All", "Choose a category", () -> catBtn.performClick());
+            // Display-only category label; the remote's Left key opens the list from the guide.
+            boxCatPill = miniPill("Category: All", "Current category", () -> {});
+            boxCatPill.setOnClickListener(null);
+            boxCatPill.setClickable(false);
+            boxCatPill.setFocusable(false);
             dr.addView(boxCatPill);
             // Bold stand-out hint: Left on the remote lists the categories from any guide row.
             TextView leftHint = text("◀ Press Left on your remote to list the categories", 15, ACCENT, true);
@@ -4514,6 +4517,7 @@ public class MainActivity extends Activity {
         // No persistent edge tab: the guide fills the width, and a bold hint beside the Category
         // pill tells remote users that Left from any guide row lists the categories.
         FrameLayout guideScreen = sideDrawer(root, panel);
+        if (boxLive) drawerReturnFocus = grid;
         if ("phone".equals(platform())) GuideSafeArea.apply(guideScreen);
         setContentView(guideScreen);
         btns.getChildAt(1).setOnClickListener(v -> { grid.jumpNow(); grid.requestFocus(); });
@@ -4524,11 +4528,14 @@ public class MainActivity extends Activity {
         final java.util.Set<String> requested = new java.util.HashSet<>();
         final int[] gen = { 0 };
         final String[] previewPending = { null };
+        final String[] appliedCategory = { null };
         java.util.function.Consumer<String[]> applyCat = cat -> {
+            if (cat[0].equals(appliedCategory[0])) return;
+            appliedCategory[0] = cat[0];
             shownCh.clear(); requested.clear(); gen[0]++;
             for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
-            if (boxLive && boxCatPill != null) boxCatPill.setText("☰ Category: " + cat[1]);
+            if (boxLive && boxCatPill != null) boxCatPill.setText("Category: " + cat[1]);
             selectedCategory.setText("Category: " + cat[1]);
             guideTitle.setText("TV guide · " + cat[1]);
             if (live) liveCatId = cat[0];
@@ -4552,6 +4559,7 @@ public class MainActivity extends Activity {
         });
         catList.setOnItemClickListener((d, w, pos, id) -> {
             if (pos >= catRows.size()) return;
+            boolean changedCategory = !catRows.get(pos)[0].equals(appliedCategory[0]);
             applyCat.accept(catRows.get(pos));
             // TV boxes: picking a category loads that category's channels into the guide and closes the panel.
             if (channelDrawer != null && !boxLive) {
@@ -4561,7 +4569,7 @@ public class MainActivity extends Activity {
             } else {
                 hidePanel();
                 // Focus lands on the category's first channel in the guide, never the Search TV pill.
-                if (!shownCh.isEmpty()) grid.selectChannel(0);
+                if (changedCategory && !shownCh.isEmpty()) grid.selectChannel(0);
                 grid.requestFocus();
                 grid.post(grid::requestFocus);
             }
@@ -5498,6 +5506,7 @@ public class MainActivity extends Activity {
     private View drawerScrim;
     private LinearLayout drawerPanel;
     private boolean drawerShown;
+    private View drawerReturnFocus;
 
     /** Puts a screen in a frame with a panel that slides in from the left edge, hidden to start. */
     private FrameLayout sideDrawer(LinearLayout content, LinearLayout panel) {
@@ -5518,6 +5527,7 @@ public class MainActivity extends Activity {
         panel.setTranslationX(-w);
         frame.addView(panel, new FrameLayout.LayoutParams(w, ViewGroup.LayoutParams.MATCH_PARENT));
         drawerShown = false;
+        drawerReturnFocus = null;
         return frame;
     }
 
@@ -5540,12 +5550,18 @@ public class MainActivity extends Activity {
     private void hidePanel() {
         if (drawerPanel == null || !drawerShown) return;
         drawerShown = false;
+        final View focusTarget = drawerReturnFocus;
+        final LinearLayout closingPanel = drawerPanel;
         int w = dp(300);
         if (drawerScrim != null) drawerScrim.animate().alpha(0f).setDuration(180)
                 .withEndAction(() -> drawerScrim.setVisibility(View.INVISIBLE)).start();
         if (drawerWrap != null) drawerWrap.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+        if (focusTarget != null) focusTarget.requestFocus();
         drawerPanel.animate().translationX(-w).setDuration(180)
-                .withEndAction(() -> drawerPanel.setVisibility(View.INVISIBLE)).start();
+                .withEndAction(() -> {
+                    closingPanel.setVisibility(View.INVISIBLE);
+                    if (!drawerShown && drawerPanel == closingPanel && focusTarget != null) focusTarget.requestFocus();
+                }).start();
     }
 
     /** True only while the panel is on the current screen (a replaced screen detaches it). */

@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Built and BM-signed 5.08 (319): closing Live TV categories restores previous EPG row/time/scroll and focus; selecting the same category preserves position; box Category pill is display-only. All 293 Android tests pass; APK retained, public download unchanged.
+- [ ] Real-box check of 5.08 category closing and display-only label; blocked by no connected device.
+
 - [x] Built, signed and publicly released 5.07 (versionCode 318): Live TV left-edge Categories tab removed; bold "Press Left on your remote to list the categories" hint beside the box Category pill; phones keep the Categories pill in the View EPG bar. All Android tests pass; public updater serves 5.07 and the download matches the signed APK.
 - [ ] Real-box check of the 5.07 guide layout (hint beside Category pill, no edge tab); blocked by no connected device.
 

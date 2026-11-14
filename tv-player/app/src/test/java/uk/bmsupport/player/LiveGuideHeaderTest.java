@@ -206,11 +206,54 @@ public class LiveGuideHeaderTest {
         List<View> siblings = new ArrayList<>();
         collect(parent, Button.class, siblings);
         boolean pillThere = false;
-        for (View b : siblings) if (text(b).startsWith("☰ Category:")) pillThere = true;
+        for (View b : siblings) if (text(b).startsWith("Category:")) pillThere = true;
         assertTrue("the hint must sit beside the Category pill", pillThere);
     }
 
     /** Phones have no remote: their Categories pill stays in the View EPG pop-up bar. */
+    @Test public void closingBoxCategoriesReturnsToThePreviousGuideRowAndTime() throws Exception {
+        MainActivity a = open();
+        org.robolectric.Shadows.shadowOf(a.getPackageManager()).setSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK, true);
+        openLiveGuide(a);
+        GuideGridView grid = (GuideGridView) rootOf(a).getChildAt(rootOf(a).getChildCount() - 1);
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < 30; i++) names.add("Channel " + i);
+        grid.setChannels(names, java.util.Collections.nCopies(30, false));
+        grid.selectChannel(17);
+        grid.shiftDay(1);
+        long end = grid.windowEnd();
+        Field top = GuideGridView.class.getDeclaredField("topRow"); top.setAccessible(true);
+        int scroll = top.getInt(grid);
+        grid.requestFocus();
+        grid.onKeyDown(android.view.KeyEvent.KEYCODE_DPAD_LEFT,
+                new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_DPAD_LEFT));
+        // The test catalogue is empty; put focus on the drawer's Close action as a remote would.
+        Field drawer = MainActivity.class.getDeclaredField("drawerPanel"); drawer.setAccessible(true);
+        LinearLayout panel = (LinearLayout) drawer.get(a);
+        panel.getChildAt(panel.getChildCount() - 1).setFocusableInTouchMode(true);
+        panel.getChildAt(panel.getChildCount() - 1).requestFocus();
+        assertFalse(grid.hasFocus());
+        a.onBackPressed();
+        assertTrue(grid.hasFocus());
+        assertEquals(17, grid.selectedRow());
+        assertEquals(end, grid.windowEnd());
+        assertEquals(scroll, top.getInt(grid));
+    }
+
+    @Test public void boxCategoryLabelCannotOpenAListOrTakeRemoteFocus() throws Exception {
+        MainActivity a = open();
+        org.robolectric.Shadows.shadowOf(a.getPackageManager()).setSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK, true);
+        openLiveGuide(a);
+        Field pill = MainActivity.class.getDeclaredField("boxCatPill"); pill.setAccessible(true);
+        Button label = (Button) pill.get(a);
+        assertNotNull(label);
+        assertFalse(label.isFocusable());
+        assertFalse(label.isClickable());
+        assertFalse(label.performClick());
+        Method panel = MainActivity.class.getDeclaredMethod("panelOpen"); panel.setAccessible(true);
+        assertEquals(false, panel.invoke(a));
+    }
+
     @Test public void phonesKeepTheCategoriesPillInTheBiggerGuideBar() throws Exception {
         MainActivity a = open();
         openLiveGuide(a);
