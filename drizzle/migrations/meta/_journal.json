@@ -2514,6 +2514,13 @@
       "when": 1794684094383,
       "tag": "0358_player_customer_daily_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 359,
+      "version": "7",
+      "when": 1794684386774,
+      "tag": "0359_stop_preview_connection_recording",
+      "breakpoints": true
     }
   ]
 }

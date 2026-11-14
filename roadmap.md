@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Stop preview writes/updates in the live connection-history trigger; full-screen transitions remain logged. Three regression checks pass, build OK; database currently has no preview-only history to remove. Real-device transition verification remains unavailable.
+
 - [x] Added seven-day UK customer viewing stats below the customer-card connection log: daily doughnut summaries by watched title, Details tabs, current playback and IP/location/VPN rows. Separate admin-only daily records split midnight credits and expire hourly after seven UK days; existing lifetime totals and 30-day logs unchanged. Ten regression tests pass; preview build OK. Recording starts as the website update is published; old per-session totals cannot accurately reconstruct past daily records.
 - [ ] Verify populated customer statistics through the signed-in screen; blocked by existing profile/password/PIN gates and no new daily records before website publication.
 
