@@ -189,10 +189,12 @@ public final class BackupPlayerActivity extends Activity {
         ui.postDelayed(() -> catchupOpenAt(restart), cuRetries > 1 ? 2000 : 300);
     }
     /** Shown for 20s when catch up opened after the listed start, in case the show began on time. */
+    private android.widget.Button skipBtn;
     private void showSkipToListed(FrameLayout root) {
         final long listed = getIntent().getLongExtra("catchup_listed", 0);
         if (listed <= 0 || cuSegStart <= listed) return;
         final android.widget.Button b = new android.widget.Button(this);
+        skipBtn = b;
         b.setText("⏮ Skip to listed start");
         b.setAllCaps(false);
         b.setOnClickListener(v -> { cuRetries = 0; catchupOpenAt(listed); root.removeView(b); });
@@ -415,6 +417,10 @@ public final class BackupPlayerActivity extends Activity {
             }
             if (liveDrawer.shown) return super.dispatchKeyEvent(e);
         }
+        // OK on the Skip to listed start button must press it, not just reveal the controls.
+        if (e.getAction() == KeyEvent.ACTION_DOWN && skipBtn != null && skipBtn.getParent() != null
+                && (e.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || e.getKeyCode() == KeyEvent.KEYCODE_ENTER)
+                && (skipBtn.isFocused() || controller == null || !controller.isVisible())) { skipBtn.performClick(); return true; }
         if (e.getAction() == KeyEvent.ACTION_DOWN && mp != null) {
             switch (e.getKeyCode()) {
                 case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: setPlaying(paused); showControls(); return true;
