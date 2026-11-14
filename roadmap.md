@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Built and publicly released permanent-BM-signed 5.27 (338): two-screen Multi-room stacked vertically with Up/Down remote navigation; Triple Room layout and audio preserved. All 312 Android tests pass; bmsupport.uk updater reports 5.27 and public APK matches SHA-256 4ee6a244ff0e448d22ec1baf410667c7f8d2f3285772e5648b29c9b21e652143.
+- [ ] Real-box check of stacked Multi-room playback; blocked by no connected TV box.
+
 - [x] Built and retained permanent-BM-signed 5.26 (337) with Triple Room's large picture above two smaller pictures; two-screen layout and highlighted-pane sound unchanged. All 311 Android tests pass. Not publicly released.
 - [ ] Real-box playback check of the new Triple Room layout; blocked by no connected TV box.
 

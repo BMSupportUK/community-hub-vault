@@ -242,7 +242,7 @@ public class MainActivity extends Activity {
     private void chooseMultiScreens(int max) {
         // One screen is just the normal TV guide, so Multi-screen only offers 2 or 3.
         if (max < 3) { showMultiScreen(2); return; }
-        String[] names = {"2 screens – side by side", "3 screens – one large above two small"};
+        String[] names = {"2 screens – stacked vertically", "3 screens – one large above two small"};
         new AlertDialog.Builder(this).setTitle("Multi-screen – how many?")
                 .setItems(names, (d, w) -> showMultiScreen(w + 2)).setNegativeButton("Cancel", null).show();
     }
@@ -295,14 +295,24 @@ public class MainActivity extends Activity {
         if (screens == 1) {
             root.addView(panes[0], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
         } else if (screens == 2) {
-            root.addView(panes[0], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
-            root.addView(panes[1], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+            arrangeTwoScreens(root, panes);
         } else {
             arrangeTripleScreen(root, panes);
         }
         setContentView(root);
         panes[0].requestFocus();
         Toast.makeText(this, "Sound plays from the highlighted screen. Press OK on a screen to change its channel.", Toast.LENGTH_LONG).show();
+    }
+
+    static void arrangeTwoScreens(LinearLayout root, FrameLayout[] panes) {
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBaselineAligned(false);
+        for (FrameLayout pane : panes) {
+            pane.setId(View.generateViewId());
+            root.addView(pane, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        }
+        panes[0].setNextFocusDownId(panes[1].getId());
+        panes[1].setNextFocusUpId(panes[0].getId());
     }
 
     static void arrangeTripleScreen(LinearLayout root, FrameLayout[] panes) {
