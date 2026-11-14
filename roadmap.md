@@ -1,8 +1,10 @@
 # Roadmap
 
-- [x] Added Catch up to supported Live TV channels' play pop-ups, opening the existing archive and returning to the chosen category; rebuilt BM-signed 5.08 with 295 passing tests and retained its updated APK. Public download unchanged; real-box playback check blocked by no connected device.
+- [x] Released BM Player 5.08 publicly: uploaded signed APK first, then switched current build. Public updater reports 5.08; downloaded APK is byte-identical to the tested build, versionCode 319 and permanent BM signature verified. User will check EPG return and Catch up on real TV.
 
-- [x] Built and BM-signed 5.08 (319): closing Live TV categories restores previous EPG row/time/scroll and focus; selecting the same category preserves position; box Category pill is display-only. All 293 Android tests pass; APK retained, public download unchanged.
+- [x] Added Catch up to supported Live TV channels' play pop-ups, opening the existing archive and returning to the chosen category; rebuilt BM-signed 5.08 with 295 passing tests and retained its updated APK. Now publicly released; real-box playback check blocked by no connected device.
+
+- [x] Built and BM-signed 5.08 (319): closing Live TV categories restores previous EPG row/time/scroll and focus; selecting the same category preserves position; box Category pill is display-only. All 293 Android tests pass; APK retained and now publicly released with Catch up menu addition.
 - [ ] Real-box check of 5.08 category closing and display-only label; blocked by no connected device.
 
 - [x] Built, signed and publicly released 5.07 (versionCode 318): Live TV left-edge Categories tab removed; bold "Press Left on your remote to list the categories" hint beside the box Category pill; phones keep the Categories pill in the View EPG bar. All Android tests pass; public updater serves 5.07 and the download matches the signed APK.
