@@ -1,5 +1,9 @@
 # Roadmap
 
+- [x] Android tester feedback built as 5.04: visible Live categories tab, long Back for current preview, hide/show category navigation (All/search keep content), clearer buffers/settings, optional configured external players with BM Player first.
+- [x] All 284 Android tests pass; release builds and permanent BM signer verified; APK retained as an asset without switching the public update.
+- [ ] Verify 5.04 remote holds, installed external-player launch and playback on a real box; blocked by no connected device. Public release was not requested.
+
 - [x] Released signed 4.85 publicly: bmsupport.uk updater reports 4.85; live APK SHA-256 matches tested build and permanent signer verified.
 - [ ] Confirm GJ installed/runs 4.85 and test Movie Premiere there; no device attached, GJ still last reported 4.78 at 21:22 UTC with no post-release reports. Tester must update and play Movie Premiere; the newly allocated Virgin Media box belongs to danej, not gj.
 

@@ -40,4 +40,13 @@ final class CategoryOrder {
         for (String[] row : rows) if (!"*".equals(row[0])) ids.put(row[0]);
         prefs.edit().putString(key(prefs, kind), ids.toString()).apply();
     }
+    static String hiddenKey(SharedPreferences prefs, String kind) { return key(prefs, kind) + "_hidden"; }
+    static java.util.Set<String> hidden(SharedPreferences prefs, String kind) {
+        return new java.util.HashSet<>(prefs.getStringSet(hiddenKey(prefs, kind), java.util.Collections.emptySet()));
+    }
+    static List<String[]> visible(List<String[]> rows, java.util.Set<String> hidden) {
+        List<String[]> out = new ArrayList<>();
+        for (String[] row : rows) if ("*".equals(row[0]) || !hidden.contains(row[0])) out.add(row);
+        return out;
+    }
 }

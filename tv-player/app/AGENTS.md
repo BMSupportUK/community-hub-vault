@@ -1,6 +1,6 @@
 # tv-player app module rules
 - Signed with the permanent BM key; bump versionCode/versionName and upload a new `bm-player/` build row with package_name `uk.bmsupport.player` (the update endpoint filters on it) so installs upgrade in place.
-- Same tile front screen on every device; external VLC is removed from the app (no menu option, setting or catch-up handoff) — the built-in player and its in-app backup engine play everything.
+- Same tile front screen on every device; optional installed external video handlers are explicitly enabled in Settings and appended to play menus, never used as the automatic default.
 - Built-in player controls never sit on the picture: the once-a-second watchdog hides both Media3 and its sibling controls row 3.5s after input, regardless of Media3 visibility state; synchronize the row on controller transitions because native timers alone are unreliable on live/buffering streams.
 - Home-row buttons never fold a name onto a second line: smallButton() forces a single line with text that shrinks (16sp to 10sp), and smallWeight() shares the row out in proportion to each label's measured width so "Recently watched" gets more room than "Settings".
 - Header pills go through headerPill() and every button() carries default margins, so pills in any row never sit flush; Live TV header order is View EPG on phones (opens the guide full screen), then Search TV, Voice search; TV boxes show Search TV and Voice search.

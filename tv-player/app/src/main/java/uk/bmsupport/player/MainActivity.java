@@ -589,7 +589,32 @@ public class MainActivity extends Activity {
         super.onContentChanged();
         if (getApplication() instanceof PlayerApplication) ((PlayerApplication) getApplication()).refreshMajorIcon();
     }
+    private final PreviewBackHold previewBackHold = new PreviewBackHold();
+    private boolean previewBackTracking;
+    private Item heldPreview;
+    private final Runnable previewBackAction = () -> {
+        if (previewBackHold.hold(android.os.SystemClock.uptimeMillis()) && heldPreview != null) {
+            Item channel = heldPreview;
+            if (this.previewPlaying && this.previewItem == channel && !panelOpen()) play(channel, false);
+        }
+    };
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        if (PlayerApplication.closeAnnouncementOnBack(this, e)) return true;
+        if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && (previewBackTracking ||
+                (!"phone".equals(platform()) && ("tvguide".equals(screen) || "sports".equals(screen) || "sports_channels".equals(screen))
+                        && previewPlaying && previewItem != null && !panelOpen()))) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) {
+                heldPreview = previewItem; previewBackTracking = true;
+                previewBackHold.down(android.os.SystemClock.uptimeMillis());
+                ui.postDelayed(previewBackAction, PreviewBackHold.HOLD_MS);
+            } else if (e.getAction() == KeyEvent.ACTION_UP) {
+                ui.removeCallbacks(previewBackAction);
+                boolean shortPress = previewBackHold.up(e.isCanceled());
+                previewBackTracking = false; heldPreview = null;
+                if (shortPress) goBack();
+            }
+            return true;
+        }
         if ("sports".equals(screen) && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT && sportsList != null && sportsList.hasFocus()) {
             if (e.getAction() == KeyEvent.ACTION_DOWN && sportsChannelList != null) sportsChannelList.requestFocus();
             return true;
@@ -601,7 +626,7 @@ public class MainActivity extends Activity {
             }
             return true;
         }
-        return PlayerApplication.closeAnnouncementOnBack(this, e) || super.dispatchKeyEvent(e);
+        return super.dispatchKeyEvent(e);
     }
     @Override protected void onDestroy() { stopPreview(); stopMulti(); stopPolling(); ui.removeCallbacksAndMessages(null); super.onDestroy(); io.shutdownNow(); connectionIo.shutdownNow(); }
 
@@ -2227,8 +2252,12 @@ public class MainActivity extends Activity {
             final boolean cast2 = platform().equals("phone");
             if (cast2) { o2 = java.util.Arrays.copyOf(o2, o2.length + 1); o2[o2.length - 1] = "📺 Cast to TV"; }
             final int cast2At = o2.length - 1;
+            final List<android.content.pm.ResolveInfo> external = ExternalPlayers.enabled(this, prefs);
+            final int externalAt = o2.length;
+            o2 = appendExternalOptions(o2, external);
             new AlertDialog.Builder(this).setCustomTitle(filmDetails(it)).setItems(o2, (d, w) -> {
-                if (cast2 && w == cast2At) castToTv(it);
+                if (w >= externalAt) playExternal(it, external.get(w - externalAt), pos);
+                else if (cast2 && w == cast2At) castToTv(it);
                 else if (w == 0) startPlayback(it, defaultVlc(), pos);
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
                 else if (w == 2) toggleSaved("fav", it);
@@ -2241,8 +2270,12 @@ public class MainActivity extends Activity {
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
+        final List<android.content.pm.ResolveInfo> external = ExternalPlayers.enabled(this, prefs);
+        final int externalAt = opts.length;
+        opts = appendExternalOptions(opts, external);
         new AlertDialog.Builder(this).setCustomTitle("live".equals(it.kind) ? channelDetails(it) : filmDetails(it)).setItems(opts, (d, w) -> {
-            if (cast && w == castAt) castToTv(it);
+            if (w >= externalAt) playExternal(it, external.get(w - externalAt), 0);
+            else if (cast && w == castAt) castToTv(it);
             else if (w == 0) play(it, defaultVlc());
             else if (w == 1) toggleSaved("fav", it);
             else showVote(it);
@@ -2551,6 +2584,21 @@ public class MainActivity extends Activity {
     }
 
     private void play(Item it, boolean vlc) {
+        if ("episode".equals(it.kind) && !vlc) {
+            List<android.content.pm.ResolveInfo> players = ExternalPlayers.enabled(this, prefs);
+            if (!players.isEmpty()) {
+                String[] labels = appendExternalOptions(new String[]{"Play in BM Player"}, players);
+                new AlertDialog.Builder(this).setTitle(it.name).setItems(labels, (d,w) -> {
+                    if (w == 0) playInternalWithResume(it, false);
+                    else playExternalWithResume(it, players.get(w - 1));
+                }).show();
+                return;
+            }
+        }
+        playInternalWithResume(it, vlc);
+    }
+
+    private void playInternalWithResume(Item it, boolean vlc) {
         String key = watchKey(it.kind, it.id);
         long position = prefs.getLong(key + ":position", 0), duration = prefs.getLong(key + ":duration", 0);
         if (WatchProgress.eligible(it.kind) && WatchProgress.resumable(position, duration)) {
@@ -3249,6 +3297,58 @@ public class MainActivity extends Activity {
         try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return "?"; }
     }
 
+    private String[] appendExternalOptions(String[] existing, List<android.content.pm.ResolveInfo> players) {
+        String[] labels = java.util.Arrays.copyOf(existing, existing.length + players.size());
+        for (int i = 0; i < players.size(); i++) labels[existing.length + i] = "Play in " + players.get(i).loadLabel(getPackageManager());
+        return labels;
+    }
+    private void editExternalPlayers() {
+        List<android.content.pm.ResolveInfo> players = ExternalPlayers.installed(this);
+        if (players.isEmpty()) {
+            new AlertDialog.Builder(this).setTitle("External players").setMessage("No compatible video players are installed. Install one on this device, then return here to add it. BM Player stays the main player.").setPositiveButton("OK", null).show();
+            return;
+        }
+        java.util.Set<String> selected = new java.util.HashSet<>(prefs.getStringSet(ExternalPlayers.KEY, java.util.Collections.emptySet()));
+        String[] names = new String[players.size()]; boolean[] checked = new boolean[players.size()];
+        for (int i = 0; i < players.size(); i++) { names[i] = players.get(i).loadLabel(getPackageManager()).toString(); checked[i] = selected.contains(ExternalPlayers.id(players.get(i))); }
+        new AlertDialog.Builder(this).setTitle("Add external players")
+                .setMultiChoiceItems(names, checked, (d,w,on) -> { String id = ExternalPlayers.id(players.get(w)); if (on) selected.add(id); else selected.remove(id); })
+                .setPositiveButton("Save", (d,w) -> { prefs.edit().putStringSet(ExternalPlayers.KEY, selected).apply(); showSettings(); })
+                .setNegativeButton("Cancel", null).show();
+    }
+    private void playExternalWithResume(Item it, android.content.pm.ResolveInfo player) {
+        String key = watchKey(it.kind, it.id);
+        long pos = prefs.getLong(key + ":position", 0), duration = prefs.getLong(key + ":duration", 0);
+        if (WatchProgress.resumable(pos, duration)) new AlertDialog.Builder(this).setTitle(it.name)
+                .setItems(new String[]{"Resume", "Play from beginning"}, (d,w) -> playExternal(it, player, w == 0 ? pos : 0)).show();
+        else playExternal(it, player, 0);
+    }
+    private void playExternal(Item it, android.content.pm.ResolveInfo player, long position) {
+        StreamClaim.check(this, it.kind, it.name, false, (busy, who) -> {
+            Runnable launch = () -> {
+                Intent intent = ExternalPlayers.intent(ExternalPlayers.id(player), streamUrl(it), it.name, position);
+                stopPreview(); stopMulti();
+                vlcLive = null; vlcCatchup = null;
+                vlcKey = WatchProgress.eligible(it.kind) ? watchKey(it.kind, it.id) : null;
+                vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
+                try {
+                    startActivityForResult(intent, VLC_REQUEST);
+                    setNowPlaying(it, true);
+                    if (!isAdultCategory(it.category) && !"catchup".equals(it.kind)) remember("recent", it);
+                } catch (android.content.ActivityNotFoundException | SecurityException e) {
+                    Toast.makeText(this, "That player is unavailable. Opening BM Player.", Toast.LENGTH_LONG).show();
+                    startPlayback(it, false, position);
+                }
+            };
+            if (busy) askTakeover(it, who, launch); else launch.run();
+        });
+    }
+    private void chooseExplained(String title, String explanation, String key, String def, String[] labels, String[] values) {
+        new AlertDialog.Builder(this).setTitle(title).setMessage(explanation)
+                .setPositiveButton("Choose", (d,w) -> choose(title, key, def, labels, values))
+                .setNegativeButton("Cancel", null).show();
+    }
+
     /** One choice setting: shows the options and saves the picked value. */
     private void choose(String title, String key, String def, String[] labels, String[] values) {
         String cur = prefs.getString(key, def);
@@ -3295,8 +3395,9 @@ public class MainActivity extends Activity {
 
         List<View> boxes = new ArrayList<>();
         for (String kind : new String[]{"live", "film", "series"}) {
-            boxes.add(settingBox("⇅", sectionName(kind) + " categories", "Rearrange categories", v -> editCategoryOrder(kind)));
+            boxes.add(settingBox("⇅", sectionName(kind) + " categories", "Rearrange / hide categories", v -> editCategoryOrder(kind)));
         }
+        boxes.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
         boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
         boxes.add(settingBox("🛡", "Anti-Freeze: On", "Always on: unfreezes stuck pictures, reconnects drops, keeps live TV at now",
@@ -3304,11 +3405,11 @@ public class MainActivity extends Activity {
                         .setMessage("BM Player watches every channel, film and episode while you watch. If the picture freezes, the stream drops or live TV falls behind, it quietly fixes it. It can't fix a slow internet connection or a problem at the provider.")
                         .setPositiveButton("OK", null).show()));
         boxes.add(settingBox("⏳", "Buffer size", label("buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV),
-                v -> choose("Buffer size", "buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV)));
+                v -> chooseExplained("Buffer size", "A larger buffer gives more cushion against brief connection dips, but channels can take longer to open and live TV can be further behind. It cannot fix a broken feed. The guide preview and Multi-screen use a short 1.5-second cache for faster starts.", "buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV)));
         boxes.add(settingBox("🎞", "Decoder", label("decoder", "hardware", decL, decV),
-                v -> choose("Video decoder", "decoder", "hardware", decL, decV)));
+                v -> chooseExplained("Video decoder", "Hardware uses the box’s video chip and is best for HD and 4K. Software uses its processor and may help compatibility, but HD can run slowly on weaker boxes. Applies when playback next opens; Live TV previews and Multi-screen currently use their engine’s automatic choice.", "decoder", "hardware", decL, decV)));
         boxes.add(settingBox("🌐", "User agent", label("ua", PlayerActivity.UA, uaL, uaV),
-                v -> choose("User agent", "ua", PlayerActivity.UA, uaL, uaV)));
+                v -> chooseExplained("User agent", "The app name sent to the provider when requesting a stream. Some providers respond differently to different names; it does not boost speed or picture quality. Currently applies to the original player for Movies, episodes and Catch up, not the Live TV engine or its previews. Reopen playback after changing it.", "ua", PlayerActivity.UA, uaL, uaV)));
         boxes.add(settingBox("📺", "4K check", PlayerActivity.device4k(this) ? "4K device" : "Non 4K Device", v ->
                 new AlertDialog.Builder(this).setTitle("4K check")
                         .setMessage(PlayerActivity.device4k(this)
@@ -3394,7 +3495,7 @@ public class MainActivity extends Activity {
             ids.add(new String[]{id, o.optString("category_name")}); values.put(id, o);
         }
         JSONArray result = new JSONArray();
-        for (String[] row : CategoryOrder.apply(ids, prefs.getString(CategoryOrder.key(prefs, kind), "[]"))) result.put(values.get(row[0]));
+        for (String[] row : CategoryOrder.visible(CategoryOrder.apply(ids, prefs.getString(CategoryOrder.key(prefs, kind), "[]")), CategoryOrder.hidden(prefs, kind))) result.put(values.get(row[0]));
         return result;
     }
 
@@ -3411,13 +3512,15 @@ public class MainActivity extends Activity {
                 ui.post(() -> {
                     if (!"settings".equals(screen)) return;
                     List<String[]> rows = CategoryOrder.apply(original, prefs.getString(CategoryOrder.key(prefs, kind), "[]"));
+                    java.util.Set<String> hidden = CategoryOrder.hidden(prefs, kind);
                     int[] selected = {0};
                     LinearLayout content = column();
+                    content.addView(text("Hidden categories leave the sidebar; their titles remain in All and search.", 14, MUTED, false));
                     ListView list = list();
                     content.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(platform().equals("phone") ? 120 : 240)));
                     Runnable redraw = () -> {
                         List<String> names = new ArrayList<>();
-                        for (int i = 0; i < rows.size(); i++) names.add((i + 1) + ". " + rows.get(i)[1]);
+                        for (int i = 0; i < rows.size(); i++) names.add((hidden.contains(rows.get(i)[0]) ? "○ Hidden · " : "● ") + (i + 1) + ". " + rows.get(i)[1]);
                         list.setAdapter(rowAdapter(names)); list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
                         if (!rows.isEmpty()) { list.setItemChecked(selected[0], true); list.setSelection(selected[0]); }
                     };
@@ -3433,10 +3536,17 @@ public class MainActivity extends Activity {
                         java.util.Collections.swap(rows, selected[0], target); selected[0] = target; redraw.run();
                     }), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
                     content.addView(tools);
+                    content.addView(button("◉ Hide / show selected", v -> {
+                        if (selected[0] < 0 || selected[0] >= rows.size()) return;
+                        String id = rows.get(selected[0])[0];
+                        if (!hidden.remove(id)) hidden.add(id);
+                        redraw.run();
+                    }));
+                    content.addView(button("Show all categories", v -> { hidden.clear(); redraw.run(); }));
                     content.addView(button("↺ Reset order", v -> { rows.clear(); rows.addAll(original); selected[0] = 0; redraw.run(); }));
                     redraw.run();
                     new AlertDialog.Builder(this).setTitle(sectionName(kind) + " category order").setView(content)
-                        .setPositiveButton("Save", (d,w) -> { CategoryOrder.save(prefs, kind, rows); Toast.makeText(this, "Category order saved", Toast.LENGTH_SHORT).show(); })
+                        .setPositiveButton("Save", (d,w) -> { CategoryOrder.save(prefs, kind, rows); prefs.edit().putStringSet(CategoryOrder.hiddenKey(prefs, kind), hidden).apply(); Toast.makeText(this, "Categories saved", Toast.LENGTH_SHORT).show(); })
                         .setNegativeButton("Cancel", null).show();
                 });
             } catch (Exception e) { ui.post(() -> Toast.makeText(this, "Couldn't load categories. Try Refresh.", Toast.LENGTH_LONG).show()); }
@@ -4400,8 +4510,8 @@ public class MainActivity extends Activity {
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         panel.addView(button("Close", v -> hidePanel()));
         LinearLayout content = root;
-        // TV boxes: no left-edge tab — use the Category pill or Left from any guide row.
-        if (live && !boxLive) {
+        // Persistent category affordance on phones and TV boxes; Left still opens from any guide row.
+        if (live) {
             content = row();
             // Edge tab like the website's "Order chat" side button: stuck to the left edge, vertically centred, vertical label.
             LinearLayout rail = new LinearLayout(this);

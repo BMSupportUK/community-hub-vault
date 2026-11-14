@@ -34,4 +34,19 @@ public class CategoryOrderTest {
         assertEquals("1",CategoryOrder.apply(rows(),"[]").get(1)[0]);
         assertEquals("1",CategoryOrder.apply(rows(),"broken").get(1)[0]);
     }
+    @Test public void hidingRemovesOnlyCategoryNavigationAndAlwaysKeepsAll() {
+        List<String[]> visible = CategoryOrder.visible(rows(), new java.util.HashSet<>(Arrays.asList("*", "2")));
+        assertEquals(3, visible.size()); assertEquals("*", visible.get(0)[0]);
+        assertEquals("1", visible.get(1)[0]); assertEquals("3", visible.get(2)[0]);
+        assertEquals(4, rows().size());
+    }
+    @Test public void hiddenCategoriesStayLoginAndKindScoped() {
+        SharedPreferences prefs = RuntimeEnvironment.getApplication().getSharedPreferences("hidden-test", 0);
+        prefs.edit().clear().putString("user", "one").commit();
+        prefs.edit().putStringSet(CategoryOrder.hiddenKey(prefs, "live"), new java.util.HashSet<>(Arrays.asList("2"))).commit();
+        assertTrue(CategoryOrder.hidden(prefs, "live").contains("2"));
+        assertTrue(CategoryOrder.hidden(prefs, "film").isEmpty());
+        prefs.edit().putString("user", "two").commit();
+        assertTrue(CategoryOrder.hidden(prefs, "live").isEmpty());
+    }
 }

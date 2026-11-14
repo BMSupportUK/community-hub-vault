@@ -8,7 +8,7 @@ final class StreamRecovery {
     private StreamRecovery() {}
 
     static final String DEFAULT_BUFFER = "smooth";
-    static final String[] BUFFER_LABELS = {"Small (fast start)", "Normal", "Smooth (fewer stalls)", "Large"};
+    static final String[] BUFFER_LABELS = {"Small (faster zapping)", "Medium", "Large", "Extra Large (more cushion)"};
     static final String[] BUFFER_IDS = {"small", "normal", "smooth", "large"};
     static final int MAX_TRIES = 8;
     /** A stall this long is treated as a dropped stream and reconnected. */
