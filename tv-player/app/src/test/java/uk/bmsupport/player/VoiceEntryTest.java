@@ -22,7 +22,7 @@ public class VoiceEntryTest {
 
     @Test public void voiceSearchShowsOnAmazonWithKeyboardMicHint() {
         assertTrue(VoiceEntry.available("Amazon"));
-        assertTrue(VoiceEntry.hint("Amazon").contains("on-screen keyboard"));
+        assertTrue(VoiceEntry.hint("Amazon").contains("hold the microphone button"));
         assertTrue(VoiceEntry.available("Google"));
         assertTrue(VoiceEntry.available("Xiaomi"));
     }

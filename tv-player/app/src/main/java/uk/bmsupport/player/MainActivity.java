@@ -2963,7 +2963,8 @@ public class MainActivity extends Activity {
         // Close the keyboard whenever the voice box goes, so it never stays stuck on screen.
         dlg[0].setOnDismissListener(d -> hideKeyboard(q));
         q.setOnClickListener(v -> VoiceEntry.openKeyboard(dlg[0], q));
-        keepEntryVisible(dlg[0], q);
+        // Fire TV only dictates into its normal full-screen keyboard, like other apps; the compact keypad has no voice.
+        if (!"amazon".equalsIgnoreCase(Build.MANUFACTURER)) keepEntryVisible(dlg[0], q);
         dlg[0].show();
 
     }

@@ -14,7 +14,7 @@ final class VoiceEntry {
     static boolean available(String manufacturer) { return true; }
     static String hint(String manufacturer) {
         return "amazon".equalsIgnoreCase(manufacturer)
-                ? "Select the microphone key on the on-screen keyboard and speak. Don't use the Alexa button on the remote — that leaves BM Player."
+                ? "When the keyboard is showing, hold the microphone button on your remote and speak — your words type into the box."
                 : "Say what you're looking for";
     }
 
