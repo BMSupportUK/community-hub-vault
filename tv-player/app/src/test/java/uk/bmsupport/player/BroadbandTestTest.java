@@ -11,4 +11,13 @@ public class BroadbandTestTest {
     @Test(expected = java.io.IOException.class) public void partialDownloadIsNotASpeedResult() throws Exception {
         BroadbandTest.measure(false, (upload, bytes) -> new BroadbandTest.Sample(bytes - 1, 1_000_000_000));
     }
+    @Test public void slowLineStillGivesReadingFromTimeCappedSample() throws Exception {
+        int r = BroadbandTest.measure(true, (u, b) -> new BroadbandTest.Sample(1_000_000, 8_000_000_000L, true));
+        assertEquals(1000, r);
+    }
+    @Test public void oneFailedSampleDoesNotVoidTest() throws Exception {
+        int[] n = {0};
+        int r = BroadbandTest.measure(false, (u, b) -> { if (n[0]++ == 0) throw new java.io.IOException("x"); return new BroadbandTest.Sample(b, b * 80L); });
+        assertEquals(100000, r);
+    }
 }

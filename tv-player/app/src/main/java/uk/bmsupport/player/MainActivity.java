@@ -4057,11 +4057,12 @@ public class MainActivity extends Activity {
             io.execute(() -> {
                 try {
                     BroadbandTest.Result r = BroadbandTest.run(); broadbandResult = r;
+                    io.execute(this::pollOnce);
                     ui.post(() -> { if (dlg.isShowing()) dlg.setMessage(String.format(java.util.Locale.UK,
                             "Download: %.1f Mbps\nUpload: %.1f Mbps\nBroadband latency: %d ms\nTest server: Cloudflare",
                             r.down / 1000.0, r.up / 1000.0, r.ping)); });
                 } catch (Exception e) {
-                    ui.post(() -> { if (dlg.isShowing()) dlg.setMessage("Test failed. No new speed reading was saved."); });
+                    ui.post(() -> { if (dlg.isShowing()) dlg.setMessage("Test failed: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()) + "\nCheck the box is online and try again."); });
                 } finally { broadbandBusy = false; }
             });
         }).show();
