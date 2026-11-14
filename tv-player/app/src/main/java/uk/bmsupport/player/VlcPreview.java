@@ -21,6 +21,23 @@ final class VlcPreview {
     private int at, errors;
     private boolean released, playing, muted;
     private final Context ctx;
+    private final LiveRideThrough ride = new LiveRideThrough();
+    private final Runnable watch = new Runnable() {
+        @Override public void run() {
+            if (released || mp == null) return;
+            long now = android.os.SystemClock.elapsedRealtime();
+            if (ride.stable(now)) { errors = 0; ride.freezeReopens = 0; }
+            try {
+                org.videolan.libvlc.interfaces.IMedia media = mp.getMedia();
+                if (media != null) {
+                    org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
+                    media.release();
+                    if (playing && st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now) && ride.allowFreezeReopen()) open();
+                }
+            } catch (RuntimeException ignored) {}
+            ui.postDelayed(this, 1000);
+        }
+    };
 
     void setMuted(boolean m) { muted = m; applyVolume(); }
     boolean isPlaying() { return playing && !released; }
@@ -52,7 +69,7 @@ final class VlcPreview {
         mp.attachViews(layout, null, false, false);
         mp.setEventListener(ev -> {
             if (released) return;
-            if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released) { applyVolume(); applyBoost(); playing = true; l.playing(); } });
+            if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released) { applyVolume(); applyBoost(); playing = true; ride.playing(android.os.SystemClock.elapsedRealtime()); l.playing(); } });
             else if (ev.type == MediaPlayer.Event.EncounteredError || ev.type == MediaPlayer.Event.EndReached) ui.post(() -> {
                 if (released) return;
                 if (++errors > urls.length * 3) { l.failed(); return; }
@@ -61,10 +78,12 @@ final class VlcPreview {
             });
         });
         open();
+        ui.postDelayed(watch, 1000);
     }
 
     private void open() {
         if (released || urls == null || urls.length == 0) return;
+        ride.stopped(); ride.resetSamples();
         Media m = new Media(vlc, android.net.Uri.parse(urls[at]));
         mp.setMedia(m); m.release(); applyBoost(); mp.play();
     }

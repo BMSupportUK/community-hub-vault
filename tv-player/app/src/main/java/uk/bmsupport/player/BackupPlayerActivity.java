@@ -64,6 +64,7 @@ public final class BackupPlayerActivity extends Activity {
             feedStatus.progress(mp.getTime(), android.os.SystemClock.elapsedRealtime());
             updateFeedNote();
             if (controlPlayer != null) controlPlayer.refresh();
+            rideThrough();
             ui.postDelayed(this, 500);
         }
     };
@@ -120,7 +121,11 @@ public final class BackupPlayerActivity extends Activity {
                     feedStatus.playing(android.os.SystemClock.elapsedRealtime());
                     feedNote.setVisibility(TextView.GONE);
                     applyBoost();
+                    ride.playing(android.os.SystemClock.elapsedRealtime());
                     break;
+                case MediaPlayer.Event.ESAdded:
+                case MediaPlayer.Event.ESSelected:
+                    ui.postDelayed(this::keepAudio, 300); break;
                 case MediaPlayer.Event.Buffering:
                     feedStatus.buffering(ev.getBuffering());
                     updateFeedNote();
@@ -234,7 +239,12 @@ public final class BackupPlayerActivity extends Activity {
             String id = override.mediaTrackGroup.getFormat(override.trackIndices.get(0)).id;
             if (id == null) continue;
             try {
-                if (id.startsWith("audio:")) mp.setAudioTrack(Integer.parseInt(id.substring(6)));
+                if (id.startsWith("audio:")) {
+                    int aid = Integer.parseInt(id.substring(6));
+                    mp.setAudioTrack(aid);
+                    MediaPlayer.TrackDescription[] at2 = mp.getAudioTracks();
+                    if (at2 != null) for (MediaPlayer.TrackDescription d : at2) if (d.id == aid) wantedAudio = d.name;
+                }
                 if (id.startsWith("subtitle:") && !p.disabledTrackTypes.contains(androidx.media3.common.C.TRACK_TYPE_TEXT)) mp.setSpuTrack(Integer.parseInt(id.substring(9)));
             } catch (NumberFormatException ignored) {}
         }
@@ -267,6 +277,7 @@ public final class BackupPlayerActivity extends Activity {
         reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), true);
         started = false;
         paused = false;
+        ride.stopped(); ride.resetSamples();
         feedStatus.reset(android.os.SystemClock.elapsedRealtime());
         feedNote.setVisibility(TextView.GONE);
         Media m = new Media(vlc, Uri.parse(urls[at]));
@@ -277,6 +288,40 @@ public final class BackupPlayerActivity extends Activity {
         mp.setMedia(m);
         m.release();
         mp.play();
+    }
+
+    private final LiveRideThrough ride = new LiveRideThrough();
+    private String wantedAudio;
+    private long lastSample;
+
+    /** Adverts and picture/sound changes: reopen a frozen picture quietly, refresh the retry budget, keep the audio track. */
+    private void rideThrough() {
+        if (mp == null || !isLive() || paused || !started) return;
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (ride.stable(now)) { errors = 0; ride.freezeReopens = 0; }
+        if (now - lastSample < 1000) return;
+        lastSample = now;
+        try {
+            org.videolan.libvlc.interfaces.IMedia media = mp.getMedia();
+            if (media == null) return;
+            org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
+            media.release();
+            if (st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now)) {
+                if (ride.allowFreezeReopen()) open(); else next();
+            }
+        } catch (RuntimeException ignored) {}
+    }
+
+    private void keepAudio() {
+        if (mp == null || wantedAudio == null) return;
+        MediaPlayer.TrackDescription[] t = mp.getAudioTracks();
+        if (t == null) return;
+        int[] ids = new int[t.length]; String[] names = new String[t.length];
+        for (int i = 0; i < t.length; i++) { ids[i] = t[i].id; names[i] = t[i].name; }
+        int cur = mp.getAudioTrack();
+        for (int i = 0; i < t.length; i++) if (ids[i] == cur && wantedAudio.equals(names[i])) return;
+        int id = LiveRideThrough.pickAudio(ids, names, wantedAudio);
+        if (id >= 0) mp.setAudioTrack(id);
     }
 
     private int errors;
