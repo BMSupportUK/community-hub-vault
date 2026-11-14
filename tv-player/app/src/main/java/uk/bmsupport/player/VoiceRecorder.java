@@ -5,7 +5,9 @@ final class VoiceRecorder {
     static final int RATE = 16_000, MAX_MS = 8_000, SILENCE_MS = 1_200, SPEECH_LEVEL = 600, FLAT_LEVEL = 40;
     interface Listener { void level(int rms); }
     private volatile boolean stop;
-    void stop() { stop = true; }
+    private volatile android.media.AudioRecord live;
+    /** Stop must work even when the box never hands over sound: stopping the recorder frees a stuck read. */
+    void stop() { stop = true; android.media.AudioRecord r = live; if (r != null) try { r.stop(); } catch (Exception ignored) {} }
 
     /** Result of one take: the WAV, the loudest level heard and whether anyone spoke. */
     static final class Take {
@@ -51,18 +53,21 @@ final class VoiceRecorder {
         short[] buf = new short[RATE / 10];
         long start = android.os.SystemClock.elapsedRealtime(), lastLoud = start; boolean heard = false; int peak = 0;
         try {
+            live = rec;
             rec.startRecording();
             while (!stop) {
-                int n = rec.read(buf, 0, buf.length);
-                if (n < 0) throw new java.io.IOException("Microphone stopped");
+                // Non-blocking: Fire TV can leave a blocking read waiting forever when it gives apps no sound.
+                int n = rec.read(buf, 0, buf.length, android.media.AudioRecord.READ_NON_BLOCKING);
                 long now = android.os.SystemClock.elapsedRealtime();
+                if (n < 0) { if (stop) break; throw new java.io.IOException("Microphone stopped"); }
+                if (n == 0) { if (now - start >= MAX_MS) break; android.os.SystemClock.sleep(20); continue; }
                 int level = rms(buf, n); peak = Math.max(peak, level);
                 if (level >= SPEECH_LEVEL) { heard = true; lastLoud = now; }
                 for (int i = 0; i < n; i++) { pcm.write(buf[i] & 0xff); pcm.write((buf[i] >> 8) & 0xff); }
                 if (listener != null) listener.level(level);
                 if (finished(heard, now - lastLoud, now - start)) break;
             }
-        } finally { try { rec.stop(); } catch (Exception ignored) {} rec.release(); }
+        } finally { live = null; try { rec.stop(); } catch (Exception ignored) {} rec.release(); }
         return new Take(wav(pcm.toByteArray(), RATE), peak, heard);
     }
 }

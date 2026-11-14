@@ -2871,9 +2871,9 @@ public class MainActivity extends Activity {
             dlg.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> { dlg.dismiss(); typedFallback(kind); });
             talk.requestFocus();
             talk.setOnClickListener(v -> {
-                if (rec[0] != null) { rec[0].stop(); return; }
+                if (rec[0] != null) { rec[0].stop(); talk.setEnabled(false); status.setText("Stopping…"); return; }
                 VoiceRecorder r = new VoiceRecorder(); rec[0] = r;
-                status.setText("Listening… speak now"); talk.setText("Stop");
+                status.setText("Listening… speak now (up to 8 seconds)"); talk.setText("Stop");
                 io.execute(() -> {
                     try {
                         VoiceRecorder.Take t = r.record(lv -> ui.post(() -> level.setProgress(Math.min(4000, lv))));
@@ -2884,7 +2884,7 @@ public class MainActivity extends Activity {
                             return;
                         }
                         prefs.edit().putInt("mic_flat", 0).apply();
-                        if (!t.heardSpeech) { ui.post(() -> { rec[0] = null; status.setText("Didn't hear anything. Press Talk now and speak a bit louder."); talk.setText("Talk now"); level.setProgress(0); }); return; }
+                        if (!t.heardSpeech) { ui.post(() -> { rec[0] = null; talk.setEnabled(true); status.setText("Didn't hear anything. Press Talk now and speak a bit louder."); talk.setText("Talk now"); level.setProgress(0); }); return; }
                         ui.post(() -> { status.setText("Working…"); talk.setEnabled(false); });
                         String audio = android.util.Base64.encodeToString(t.wav, android.util.Base64.NO_WRAP);
                         JSONObject res = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "voice")
