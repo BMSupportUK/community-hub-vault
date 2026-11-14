@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Add current BM Player title/category to customer subscription cards with a shared 15-second refresh, excluding previews and matching each subscription's credential.
+
 - [x] Separate customer charts and IP/location rows into Viewing stats, alongside a Connection information tab containing playback logs; seven daily tabs remain within Viewing stats.
 
 - [x] Stop preview writes/updates in the live connection-history trigger; full-screen transitions remain logged. Three regression checks pass, build OK; database currently has no preview-only history to remove. Real-device transition verification remains unavailable.

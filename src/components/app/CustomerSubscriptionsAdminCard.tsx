@@ -23,6 +23,7 @@ import { CustomerAccountSwitchButton } from "@/components/app/CustomerAccountSwi
 import { CustomerPortalLinkButtons } from "@/components/app/CustomerPortalLinkButtons";
 import { customerAccountCards } from "@/lib/customer-account-cards";
 import { ManualCheckoutEmailButton } from "@/components/app/ManualCheckoutEmailButton";
+import { CustomerLiveViewing } from "@/components/app/CustomerLiveViewing";
 
 type Account = { id: string; login: string; expiresAt: string | null; renewedAt?: string | null; renewedDateAdjusted?: boolean; package?: string | null; packageProductId?: string | null };
 type Reward = { orderId: string; ref: string | null; referrerName: string; referrerAccounts: Account[]; rewardedAt: string | null };
@@ -319,6 +320,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
                     <Detail label="Last renewed subscription">{showNoRenewal && !renewedAt ? "No Renewal Yet" : date(renewedAt)}</Detail>
                   </div>
                 </dl>
+                <CustomerLiveViewing userId={c.userId} accountId={a?.id} />
               </section>);
             })}
             <div className="mt-1 h-1 w-full rounded-full bg-foreground/25" aria-hidden="true" />
