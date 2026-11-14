@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Built and publicly released BM-signed Android 5.36 (347) with pending preview layering, search entry and proper on-request speed-test fixes; 326 tests pass. Public updater reports 5.36; public download matches SHA-256 21a9b9824a83b86be20aeb8b701e35087971b87af88d1678d0f2a7cfda15c187. Real-box playback and Fire TV microphone dictation remain unverified because no box is connected.
+
 - [x] Fire TV voice entry bypasses Amazon speech activities and clears keyboard-blocking flags after the search dialog opens; 16 focused Android tests pass. No new installer released.
 - [ ] Verify microphone dictation stays inside BM Player on Fire TV; blocked by no connected physical Fire TV. Keyboard focus alone does not prove Amazon remote dictation works.
 
@@ -9,7 +11,7 @@
 
 - [x] Replace Live connections traffic estimates with on-request bounded adaptive broadband tests on Android/shared Windows-Mac; preserve actual timestamps and separate stream TCP connection time. Old speeds hidden until genuine tests arrive.
 - [x] Prepare Android 5.35 and desktop 0.4.102/0.1.105 code; Android release compiles, all 323 Android tests and desktop regressions pass. Real Cloudflare transfers completed from sandbox (not customer's broadband); no public downloads switched.
-- [ ] Verify updated tests on a signed-in physical player and release installers; blocked by no connected player and no public-release request.
+- [ ] Verify genuine speed readings on a signed-in physical player; blocked by no connected player. Android fixes released in 5.36; desktop 0.4.102/0.1.105 public release remains outside this Android release request.
 
 - [x] Add current BM Player title/category to customer subscription cards with a shared 15-second refresh, excluding previews and matching each subscription's credential.
 
