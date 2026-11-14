@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Built and retained permanent-BM-signed 5.26 (337) with Triple Room's large picture above two smaller pictures; two-screen layout and highlighted-pane sound unchanged. All 311 Android tests pass. Not publicly released.
+- [ ] Real-box playback check of the new Triple Room layout; blocked by no connected TV box.
+
 - [x] Published 5.17 as the public download: home buttons restored; Favourites/Recently watched tabs show items as side-by-side cards. Updater reports 5.17; download SHA-256 990dd9b8 matches the tested signed build (versionCode 328).
 - [x] Published 5.18 as the public download: Favourites/Recently watched cards now show posters (Movies/Series) and provider channel logos (Live TV). Updater serves 5.18; download SHA-256 36a8906c matches the tested signed build.
 - [ ] Real-box check of 5.18 card pictures; blocked by no connected device.

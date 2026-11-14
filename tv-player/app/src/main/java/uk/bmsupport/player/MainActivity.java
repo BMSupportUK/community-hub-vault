@@ -242,7 +242,7 @@ public class MainActivity extends Activity {
     private void chooseMultiScreens(int max) {
         // One screen is just the normal TV guide, so Multi-screen only offers 2 or 3.
         if (max < 3) { showMultiScreen(2); return; }
-        String[] names = {"2 screens – side by side", "3 screens – one big, two small"};
+        String[] names = {"2 screens – side by side", "3 screens – one large above two small"};
         new AlertDialog.Builder(this).setTitle("Multi-screen – how many?")
                 .setItems(names, (d, w) -> showMultiScreen(w + 2)).setNegativeButton("Cancel", null).show();
     }
@@ -298,15 +298,28 @@ public class MainActivity extends Activity {
             root.addView(panes[0], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
             root.addView(panes[1], weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
         } else {
-            root.addView(panes[0], weight(2, ViewGroup.LayoutParams.MATCH_PARENT));
-            LinearLayout right = column(); right.setPadding(0, 0, 0, 0);
-            right.addView(panes[1], new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-            right.addView(panes[2], new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-            root.addView(right, weight(1, ViewGroup.LayoutParams.MATCH_PARENT));
+            arrangeTripleScreen(root, panes);
         }
         setContentView(root);
         panes[0].requestFocus();
         Toast.makeText(this, "Sound plays from the highlighted screen. Press OK on a screen to change its channel.", Toast.LENGTH_LONG).show();
+    }
+
+    static void arrangeTripleScreen(LinearLayout root, FrameLayout[] panes) {
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.addView(panes[0], new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 2));
+        LinearLayout bottom = new LinearLayout(root.getContext());
+        bottom.setOrientation(LinearLayout.HORIZONTAL);
+        bottom.setBaselineAligned(false);
+        bottom.addView(panes[1], new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+        bottom.addView(panes[2], new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+        root.addView(bottom, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        for (FrameLayout pane : panes) pane.setId(View.generateViewId());
+        panes[0].setNextFocusDownId(panes[1].getId());
+        panes[1].setNextFocusUpId(panes[0].getId());
+        panes[2].setNextFocusUpId(panes[0].getId());
+        panes[1].setNextFocusRightId(panes[2].getId());
+        panes[2].setNextFocusLeftId(panes[1].getId());
     }
 
     private List<String[]> multiCats;
