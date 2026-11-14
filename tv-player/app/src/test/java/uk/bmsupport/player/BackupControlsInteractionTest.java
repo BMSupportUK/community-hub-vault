@@ -26,13 +26,13 @@ public class BackupControlsInteractionTest {
     @Test public void actionButtonActivatesItsActionNotPause() {
         BackupPlayerActivity a=Robolectric.buildActivity(BackupPlayerActivity.class).get(); FrameLayout root=new FrameLayout(a);
         int[] clicks={0}; LinearLayout row=PlayerActionControls.add(a,root,()->{},()->clicks[0]++,()->{});
-        row.getChildAt(1).performClick();assertEquals(1,clicks[0]);
+        row.getChildAt(0).performClick();assertEquals(1,clicks[0]);
     }
-    @Test public void soundButtonChangesSavedGain() {
+    @Test public void soundBoosterButtonIsHiddenEverywhere() {
         BackupPlayerActivity a=Robolectric.buildActivity(BackupPlayerActivity.class).get();FrameLayout root=new FrameLayout(a);
-        SoundBoost.set(a,"off");int[] gain={0};
-        LinearLayout row=PlayerActionControls.add(a,root,()->gain[0]=SoundBoost.gainFor(SoundBoost.current(a)),()->{},()->{});
-        row.getChildAt(0).performClick();assertEquals(600,gain[0]);
+        LinearLayout row=PlayerActionControls.add(a,root,()->{},()->{},()->{});
+        for (int i=0;i<row.getChildCount();i++) assertFalse(((Button)row.getChildAt(i)).getText().toString().contains("Sound booster"));
+        assertEquals("medium",SoundBoost.current(a));
     }
     @Test public void originalPlaybackBarPausesAndResumesBackup() {
         BackupPlayerActivity a=Robolectric.buildActivity(BackupPlayerActivity.class).get();

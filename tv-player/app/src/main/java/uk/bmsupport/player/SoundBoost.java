@@ -34,8 +34,8 @@ final class SoundBoost {
     /** With LoudnessEnhancer on libVLC's own audio session, libVLC stays at unity so peaks are limited, not clipped. */
     static int vlcVolume(boolean enhanced, String id, boolean muted) { return muted ? 0 : enhanced ? 100 : vlcVolumeFor(id, false); }
     static String next(String id) { return IDS[(index(id) + 1) % IDS.length]; }
-    /** Amazon Fire TV: the booster made no audible difference, so the level is fixed at the default and the controls are hidden. */
-    static boolean fixed() { return "amazon".equalsIgnoreCase(android.os.Build.MANUFACTURER); }
+    /** 5.25: the booster made no audible difference on any box, so the level is fixed at the default and the controls are hidden everywhere. */
+    static boolean fixed() { return true; }
     static String current(Context c) { return fixed() ? DEFAULT : IDS[index(PlayerActivity.prefs(c).getString(KEY, DEFAULT))]; }
     static String label(Context c) { return LABELS[index(current(c))]; }
 
