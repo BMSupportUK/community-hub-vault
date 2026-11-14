@@ -21,7 +21,7 @@ public class VoiceEntryTest {
     }
 
     @Test public void voiceSearchShowsOnAmazonWithKeyboardMicHint() {
-        assertTrue(VoiceEntry.available("Amazon"));
+        assertFalse(VoiceEntry.available("Amazon"));
         assertTrue(VoiceEntry.ownMic("amazon"));
         assertFalse(VoiceEntry.ownMic("Google"));
         assertEquals("Didn't catch that", VoiceEntry.errorText("HTTP 422: {\"error\":\"Didn't catch that\"}"));
