@@ -484,6 +484,8 @@ public class PlayerActivity extends Activity {
                 }
             }
         });
+        // Catch up plays in the Live TV engine (Media3 drifted sound out of step); this player is its fallback.
+        if (getIntent().hasExtra("catchup_prefix") && !getIntent().getBooleanExtra("primary_fallback", false)) { ui.post(this::handToBackup); return; }
         if (getIntent().hasExtra("catchup_prefix")) { startCatchup(); ui.postDelayed(saveTick, 5000); return; }
         String[] urls = getIntent().getStringArrayExtra("urls");
         if (urls == null) urls = new String[]{getIntent().getStringExtra("url")};
@@ -590,9 +592,9 @@ public class PlayerActivity extends Activity {
 
     }
 
-    /** Live TV starts in the backup engine unless it is catch up or the backup engine already gave up. */
+    /** Live TV and catch up start in the built-in libVLC engine unless it already gave up. */
     static boolean backupFirst(String kind, boolean catchup, boolean primaryFallback) {
-        return "live".equals(kind) && !catchup && !primaryFallback;
+        return ("live".equals(kind) || "catchup".equals(kind) || catchup) && !primaryFallback;
     }
 
     private void startWithRecovery(String[] urls) {

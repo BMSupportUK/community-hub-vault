@@ -12,6 +12,8 @@ final class BackupControlPlayer extends SimpleBasePlayer {
         long position(); long duration(); boolean ready(); boolean paused();
         void play(boolean play); void seek(long position); float speed(); void speed(float speed);
         Tracks tracks(); void tracks(TrackSelectionParameters parameters);
+        /** Catch up: skip buttons reopen the recording a minute later/earlier. */
+        default void jump(int minutes) {}
     }
     private final Engine engine;
     private final String kind;
@@ -25,6 +27,8 @@ final class BackupControlPlayer extends SimpleBasePlayer {
                 Player.COMMAND_GET_TIMELINE, Player.COMMAND_GET_METADATA,
                 Player.COMMAND_SET_SPEED_AND_PITCH, Player.COMMAND_GET_TRACKS,
                 Player.COMMAND_SET_TRACK_SELECTION_PARAMETERS);
+        boolean catchup = "catchup".equals(kind);
+        if (catchup) commands.addAll(Player.COMMAND_SEEK_BACK, Player.COMMAND_SEEK_FORWARD);
         if (seekable) commands.addAll(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM, Player.COMMAND_SEEK_BACK, Player.COMMAND_SEEK_FORWARD);
         MediaItemData item = new MediaItemData.Builder("backup").setMediaItem(MediaItem.EMPTY)
                 .setTracks(engine.tracks()).setIsSeekable(seekable)
@@ -33,12 +37,16 @@ final class BackupControlPlayer extends SimpleBasePlayer {
                 .setPlayWhenReady(!engine.paused(), Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
                 .setPlaybackState(engine.ready() ? Player.STATE_READY : Player.STATE_BUFFERING)
                 .setPlaylist(Collections.singletonList(item)).setContentPositionMs(Math.max(0, engine.position()))
-                .setSeekBackIncrementMs(5000).setSeekForwardIncrementMs(15000)
+                .setSeekBackIncrementMs(catchup ? CatchupStart.JUMP_MIN * 60000L : 5000).setSeekForwardIncrementMs(catchup ? CatchupStart.JUMP_MIN * 60000L : 15000)
                 .setPlaybackParameters(new PlaybackParameters(Math.max(0.1f, engine.speed())))
                 .setTrackSelectionParameters(selection).build();
     }
     @Override protected ListenableFuture<?> handleSetPlayWhenReady(boolean play) { engine.play(play); return Futures.immediateVoidFuture(); }
     @Override protected ListenableFuture<?> handleSeek(int index, long position, int command) {
+        if ("catchup".equals(kind) && (command == Player.COMMAND_SEEK_FORWARD || command == Player.COMMAND_SEEK_BACK)) {
+            engine.jump(command == Player.COMMAND_SEEK_FORWARD ? CatchupStart.JUMP_MIN : -CatchupStart.JUMP_MIN);
+            return Futures.immediateVoidFuture();
+        }
         if (PlayerControls.canSkip(kind) && engine.duration() > 0) engine.seek(Math.max(0, Math.min(engine.duration(), position)));
         return Futures.immediateVoidFuture();
     }

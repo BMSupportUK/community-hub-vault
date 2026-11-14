@@ -105,6 +105,12 @@ public final class BackupPlayerActivity extends Activity {
         urls = getIntent().getStringArrayExtra("urls");
         if (urls == null || urls.length == 0) urls = new String[]{getIntent().getStringExtra("url")};
         resume = getIntent().getLongExtra("resume_ms", 0);
+        if (catchup()) {
+            cuSegStart = getIntent().getLongExtra("catchup_start", 0);
+            cuEnd = getIntent().getLongExtra("catchup_end", 0);
+            urls = new String[]{cuUrl()};
+            resume = 0;
+        }
         ArrayList<String> opts = new ArrayList<>();
         opts.add("--network-caching=" + BackupBufferPolicy.networkCacheMs(isLive(), PlayerActivity.prefs(this).getString("buffer", StreamRecovery.DEFAULT_BUFFER), recoveryName()));
         opts.add("--http-reconnect");
@@ -118,6 +124,7 @@ public final class BackupPlayerActivity extends Activity {
                 case MediaPlayer.Event.Playing:
                     if (!started && resume > 0 && mp.getLength() > 0) mp.setTime(resume);
                     started = true;
+                    cuRetries = 0;
                     feedStatus.playing(android.os.SystemClock.elapsedRealtime());
                     feedNote.setVisibility(TextView.GONE);
                     applyBoost();
@@ -135,14 +142,15 @@ public final class BackupPlayerActivity extends Activity {
                     updateFeedNote();
                     break;
                 case MediaPlayer.Event.EncounteredError:
-                    ui.post(this::next); break;
+                    ui.post(catchup() ? this::catchupResume : this::next); break;
                 case MediaPlayer.Event.EndReached:
                     // Live streams that end are dropped connections: reopen the same address.
-                    ui.post(() -> { if (isLive()) open(); else finish(); }); break;
+                    ui.post(() -> { if (catchup()) catchupResume(); else if (isLive()) open(); else finish(); }); break;
                 default: break;
             }
         });
         open();
+        if (catchup()) showSkipToListed(root);
         ui.post(feedTick);
         ui.postDelayed(reportTick, 60000);
         lastPressAt = android.os.SystemClock.elapsedRealtime();
@@ -150,6 +158,50 @@ public final class BackupPlayerActivity extends Activity {
     }
 
     private String kind() { return PlayerActionControls.kind(this); }
+
+    // ---------- catch up: timeshift recordings can't be seeked in place, so every move reopens the address ----------
+    private long cuSegStart, cuEnd; private int cuRetries;
+    private boolean catchup() { return getIntent().hasExtra("catchup_prefix"); }
+    private String cuUrl() {
+        return PlayerActivity.timeshiftUrl(getIntent().getStringExtra("catchup_prefix"), getIntent().getStringExtra("catchup_id"), cuSegStart, cuEnd, getIntent().getStringExtra("catchup_tz"));
+    }
+    private long cuReached() { return cuSegStart + Math.max(0, mp == null ? 0 : mp.getTime()) / 1000; }
+    private void catchupOpenAt(long start) {
+        cuSegStart = start; urls[0] = cuUrl(); at = 0; open();
+    }
+    private void catchupJump(int minutes) {
+        if (mp == null) return;
+        cuRetries = 0;
+        catchupOpenAt(CatchupStart.jump(cuReached(), minutes, getIntent().getLongExtra("catchup_listed", cuSegStart), cuEnd));
+    }
+    /** The provider closed the recording early or it failed: reopen at the minute reached; after 8 tries use the main player. */
+    private void catchupResume() {
+        if (mp == null || isFinishing()) return;
+        long reached = cuReached();
+        if (started && reached >= cuEnd - 30) { finish(); return; }
+        if (++cuRetries > 8) {
+            android.content.Intent i = new android.content.Intent(getIntent()).setClass(this, PlayerActivity.class)
+                    .putExtra("primary_fallback", true).putExtra("catchup_start", reached - Math.floorMod(reached, 60L));
+            i.removeExtra("backup_first");
+            startActivity(i); finish(); return;
+        }
+        long restart = reached - Math.floorMod(reached, 60L);
+        ui.postDelayed(() -> catchupOpenAt(restart), cuRetries > 1 ? 2000 : 300);
+    }
+    /** Shown for 20s when catch up opened after the listed start, in case the show began on time. */
+    private void showSkipToListed(FrameLayout root) {
+        final long listed = getIntent().getLongExtra("catchup_listed", 0);
+        if (listed <= 0 || cuSegStart <= listed) return;
+        final android.widget.Button b = new android.widget.Button(this);
+        b.setText("⏮ Skip to listed start");
+        b.setAllCaps(false);
+        b.setOnClickListener(v -> { cuRetries = 0; catchupOpenAt(listed); root.removeView(b); });
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
+        lp.topMargin = 90; lp.rightMargin = 40;
+        root.addView(b, lp);
+        b.requestFocus();
+        ui.postDelayed(() -> { if (b.getParent() != null) root.removeView(b); }, 20000);
+    }
 
     private void applyBoost() {
         if (mp == null) return;
@@ -171,8 +223,8 @@ public final class BackupPlayerActivity extends Activity {
     private void installControls(FrameLayout root) {
         controller = new androidx.media3.ui.PlayerControlView(this);
         controller.setShowTimeoutMs((int)InactivityPolicy.CONTROLS_MS);
-        controller.setShowFastForwardButton(PlayerControls.canSkip(kind()));
-        controller.setShowRewindButton(PlayerControls.canSkip(kind()));
+        controller.setShowFastForwardButton(PlayerControls.canSkip(kind()) || catchup());
+        controller.setShowRewindButton(PlayerControls.canSkip(kind()) || catchup());
         controlPlayer = new BackupControlPlayer(new BackupControlPlayer.Engine() {
             public long position() { return mp == null ? 0 : mp.getTime(); }
             public long duration() { return mp == null ? 0 : mp.getLength(); }
@@ -184,6 +236,7 @@ public final class BackupPlayerActivity extends Activity {
             public void speed(float speed) { if (mp != null) mp.setRate(speed); }
             public androidx.media3.common.Tracks tracks() { return backupTracks(); }
             public void tracks(androidx.media3.common.TrackSelectionParameters p) { selectTracks(p); }
+            public void jump(int minutes) { catchupJump(minutes); }
         }, kind());
         controller.setPlayer(controlPlayer);
         root.addView(controller, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
@@ -296,7 +349,7 @@ public final class BackupPlayerActivity extends Activity {
 
     /** Adverts and picture/sound changes: reopen a frozen picture quietly, refresh the retry budget, keep the audio track. */
     private void rideThrough() {
-        if (mp == null || !isLive() || paused || !started) return;
+        if (mp == null || (!isLive() && !catchup()) || paused || !started) return;
         long now = android.os.SystemClock.elapsedRealtime();
         if (ride.stable(now)) { errors = 0; ride.freezeReopens = 0; }
         if (now - lastSample < 1000) return;
@@ -307,7 +360,7 @@ public final class BackupPlayerActivity extends Activity {
             org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
             media.release();
             if (st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now)) {
-                if (ride.allowFreezeReopen()) open(); else next();
+                if (catchup()) catchupResume(); else if (ride.allowFreezeReopen()) open(); else next();
             }
         } catch (RuntimeException ignored) {}
     }
@@ -366,7 +419,8 @@ public final class BackupPlayerActivity extends Activity {
             switch (e.getKeyCode()) {
                 case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: setPlaying(paused); showControls(); return true;
                 case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD: case KeyEvent.KEYCODE_MEDIA_REWIND:
-                    if (PlayerControls.canSkip(kind()) && mp.getLength() > 0) controlPlayer.seekTo(Math.max(0, Math.min(mp.getLength(), mp.getTime() + (e.getKeyCode() == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD ? 15000 : -5000))));
+                    if (catchup()) catchupJump(e.getKeyCode() == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD ? CatchupStart.JUMP_MIN : -CatchupStart.JUMP_MIN);
+                    else if (PlayerControls.canSkip(kind()) && mp.getLength() > 0) controlPlayer.seekTo(Math.max(0, Math.min(mp.getLength(), mp.getTime() + (e.getKeyCode() == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD ? 15000 : -5000))));
                     return true;
                 case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER:
                 case KeyEvent.KEYCODE_DPAD_LEFT: case KeyEvent.KEYCODE_DPAD_RIGHT:
