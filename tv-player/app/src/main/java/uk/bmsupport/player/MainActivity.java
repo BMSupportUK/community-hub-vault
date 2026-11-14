@@ -150,7 +150,7 @@ public class MainActivity extends Activity {
     /** A playable or browsable entry. */
     static final class Item {
         String kind, id, name, ext, category;
-        String norm, poster = "", seriesId = "", url = ""; long added; double rating; int pos; int archiveDays; String catchupId = ""; long catchupStart, catchupEnd;
+        String norm, poster = "", seriesId = "", url = ""; long added; double rating; int pos; int archiveDays; String catchupId = ""; long catchupStart, catchupEnd, catchupListed;
         String epNum = "", epTitle = "";
         String norm() { if (norm == null) norm = normChannel(name == null ? "" : name); return norm; }
         Item(String kind, String id, String name, String ext, String category) {
@@ -2707,6 +2707,7 @@ public class MainActivity extends Activity {
             // Providers often close timeshift streams early; the player reconnects from where it stopped.
             intent.putExtra("catchup_prefix", prefs.getString("dns", "").replaceAll("/+$", "") + "/timeshift/" + prefs.getString("user", "") + "/" + SecureLogin.password(prefs) + "/")
                     .putExtra("catchup_id", it.catchupId).putExtra("catchup_start", it.catchupStart).putExtra("catchup_end", it.catchupEnd)
+                    .putExtra("catchup_listed", it.catchupListed > 0 ? it.catchupListed : it.catchupStart)
                     .putExtra("catchup_tz", prefs.getString("server_tz", "Europe/London"));
         }
         if (WatchProgress.eligible(it.kind)) {
@@ -3429,6 +3430,15 @@ public class MainActivity extends Activity {
         for (String kind : new String[]{"live", "film", "series"}) {
             boxes.add(settingBox("⇅", sectionName(kind) + " categories", "Rearrange / hide categories", v -> editCategoryOrder(kind)));
         }
+        String[] cuL = {"Exact guide time", "+1 minute", "+2 minutes", "+3 minutes", "+5 minutes"};
+        int cuNow = CatchupStart.offset(prefs);
+        boxes.add(settingBox("🕘", "Catch-up starts", cuNow == 0 ? cuL[0] : "+" + cuNow + (cuNow == 1 ? " minute" : " minutes"), v -> {
+            int sel = 0; for (int i = 0; i < CatchupStart.CHOICES.length; i++) if (CatchupStart.CHOICES[i] == CatchupStart.offset(prefs)) sel = i;
+            new AlertDialog.Builder(this).setTitle("Catch-up starts")
+                    .setSingleChoiceItems(cuL, sel, (d, w) -> { prefs.edit().putInt(CatchupStart.PREF, CatchupStart.CHOICES[w]).apply(); d.dismiss(); showSettings(); })
+                    .setMessage(null).setNegativeButton("Cancel", null).show();
+            Toast.makeText(this, "Guide times are slot times and recordings often begin early. Catch up opens this many minutes after the listed start; use Skip to listed start if you miss the beginning.", Toast.LENGTH_LONG).show();
+        }));
         boxes.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
         boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
@@ -4273,8 +4283,13 @@ public class MainActivity extends Activity {
                 progs.setOnItemClickListener((a, v, w, id) -> {
                     int i = shown.get(w); long[] t = all.get(i);
                     Item c = new Item("catchup", ch.id + "@" + t[0], ch.name + " · " + titles.get(i), "ts", ch.category);
-                    c.url = catchupUrl(ch, t[0], t[1]);
-                    c.catchupId = ch.id; c.catchupStart = t[0]; c.catchupEnd = t[1] > t[0] ? t[1] : t[0] + 3600;
+                    int off = CatchupStart.offset(prefs);
+                    long listedEnd = t[1] > t[0] ? t[1] : t[0] + 3600;
+                    c.catchupListed = t[0];
+                    c.catchupStart = CatchupStart.at(t[0], listedEnd, off);
+                    c.catchupEnd = CatchupStart.end(listedEnd, off);
+                    c.url = catchupUrl(ch, c.catchupStart, c.catchupEnd);
+                    c.catchupId = ch.id;
                     // Catch up recordings play through VLC automatically; BM Player's own player is the fallback when VLC is missing.
                     play(c, false);
                 });

@@ -232,6 +232,7 @@ public class PlayerActivity extends Activity {
         player.setPlayWhenReady(true);
         player.prepare();
         ui.postDelayed(freezeWatch, 4000);
+        showSkipToListed();
     }
 
     // Timeshift recordings can jump in their timestamps; the sound carries on but the picture
@@ -249,6 +250,50 @@ public class PlayerActivity extends Activity {
             ui.postDelayed(this, 1000);
         }
     };
+
+    /** Timeshift recordings can't be seeked in place; skip buttons reopen the recording a minute later or earlier. */
+    private Player catchupControls(Player p) {
+        return new androidx.media3.common.ForwardingPlayer(p) {
+            @Override public Player.Commands getAvailableCommands() {
+                return super.getAvailableCommands().buildUpon().add(Player.COMMAND_SEEK_FORWARD).add(Player.COMMAND_SEEK_BACK).build();
+            }
+            @Override public boolean isCommandAvailable(int c) {
+                return c == Player.COMMAND_SEEK_FORWARD || c == Player.COMMAND_SEEK_BACK || super.isCommandAvailable(c);
+            }
+            @Override public long getSeekForwardIncrement() { return CatchupStart.JUMP_MIN * 60000L; }
+            @Override public long getSeekBackIncrement() { return CatchupStart.JUMP_MIN * 60000L; }
+            @Override public void seekForward() { catchupJump(CatchupStart.JUMP_MIN); }
+            @Override public void seekBack() { catchupJump(-CatchupStart.JUMP_MIN); }
+        };
+    }
+
+    private void catchupJump(int deltaMin) {
+        if (player == null) return;
+        long reached = cuSegStart + Math.max(0, player.getCurrentPosition()) / 1000;
+        catchupOpenAt(CatchupStart.jump(reached, deltaMin, getIntent().getLongExtra("catchup_listed", cuSegStart), cuEnd));
+    }
+
+    private void catchupOpenAt(long start) {
+        if (player == null) return;
+        cuSegStart = start; cuRetries = 0;
+        player.setMediaItem(item(timeshiftUrl(getIntent().getStringExtra("catchup_prefix"), getIntent().getStringExtra("catchup_id"), cuSegStart, cuEnd, getIntent().getStringExtra("catchup_tz"))));
+        player.setPlayWhenReady(true); player.prepare();
+    }
+
+    /** Shown for 20s when catch up opened after the listed start, in case the show began on time. */
+    private void showSkipToListed() {
+        final long listed = getIntent().getLongExtra("catchup_listed", 0);
+        if (rootView == null || listed <= 0 || cuSegStart <= listed) return;
+        final android.widget.Button b = new android.widget.Button(this);
+        b.setText("⏮ Skip to listed start");
+        b.setAllCaps(false);
+        b.setOnClickListener(v -> { catchupOpenAt(listed); rootView.removeView(b); });
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+        lp.topMargin = 40; lp.rightMargin = 40;
+        rootView.addView(b, lp);
+        b.requestFocus();
+        ui.postDelayed(() -> { if (b.getParent() != null) rootView.removeView(b); }, 20000);
+    }
 
     private void catchupResume() {
         if (player == null || isFinishing()) return;
@@ -329,8 +374,9 @@ public class PlayerActivity extends Activity {
         view.setControllerShowTimeoutMs((int) InactivityPolicy.CONTROLS_MS);
         view.setErrorMessageProvider(e -> android.util.Pair.create(0, SafeError.PLAYBACK));
         // Fast forward/rewind only where they work: films and series episodes, never live TV or catch up.
-        view.setShowFastForwardButton(PlayerControls.canSkip(kind()));
-        view.setShowRewindButton(PlayerControls.canSkip(kind()));
+        boolean jumps = PlayerControls.canSkip(kind()) || getIntent().hasExtra("catchup_prefix");
+        view.setShowFastForwardButton(jumps);
+        view.setShowRewindButton(jumps);
         root.addView(view);
         TextView banner = new TextView(this);
         banner.setText("Non 4K Device");
@@ -372,7 +418,7 @@ public class PlayerActivity extends Activity {
         seriesKey = getIntent().getStringExtra("series_key");
         resumePosition = getIntent().getLongExtra("resume_ms", 0);
         view.setKeepContentOnPlayerReset(true); // the last picture stays up while a dropped live stream reopens
-        view.setPlayer(player);
+        view.setPlayer(getIntent().hasExtra("catchup_prefix") ? catchupControls(player) : player);
         Bitmap still = carried != null && !stage ? PreviewSnapshot.take() : null;
         if (still != null) {
             final android.widget.ImageView cover = new android.widget.ImageView(this);
