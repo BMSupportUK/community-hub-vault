@@ -94,3 +94,4 @@
 
 - [x] Published BM Player 5.19 (versionCode 330): sound booster Off now detaches the equalizer so Live TV, guide preview and Multi-screen use the box full-volume path. Upload verified byte-identical to the signed tested build; public updater reports 5.19. Real-box volume check pending.
 - [x] Built and retained signed BM Player 5.20 (331): whole uncropped provider posters in Favourites and Recently watched; home buttons and channel logos unchanged. 304 tests passed; BM signature verified. Not public; real-box appearance unverified.
+- [x] Fixed adult history privacy in unreleased 5.20: provider category IDs resolved once per list, shared reads/writes exclude adult and unknown-category items and purge older history; adult name checks added. All 305 tests pass including save/purge regression. Signed installer rebuilt and retained; not public and real-box check unavailable.

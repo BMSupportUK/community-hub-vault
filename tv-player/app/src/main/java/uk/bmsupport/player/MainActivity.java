@@ -3086,7 +3086,46 @@ public class MainActivity extends Activity {
     // ---------- favourites / recent ----------
 
     private JSONArray saved(String key) {
-        try { return new JSONArray(prefs.getString(key, "[]")); } catch (Exception e) { return new JSONArray(); }
+        try {
+            JSONArray items = new JSONArray(prefs.getString(key, "[]"));
+            if (!"recent".equals(key)) return items;
+            java.util.Map<String, String> categories = recentCategoryNames();
+            JSONArray clean = new JSONArray();
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject o = items.optJSONObject(i);
+                if (o != null && recentAllowed(Item.fromJson(o), categories)) clean.put(o);
+            }
+            if (clean.length() != items.length()) prefs.edit().putString(key, clean.toString()).apply();
+            return clean;
+        } catch (Exception e) { return new JSONArray(); }
+    }
+
+    /** Read each local category list once, never once per history card and never over the network. */
+    private java.util.Map<String, String> recentCategoryNames() {
+        java.util.Map<String, String> names = new java.util.HashMap<>();
+        for (String kind : new String[]{"live", "film", "series"}) {
+            java.io.File f = cacheFile(kind, catActionFor(kind));
+            if (!f.exists()) continue;
+            try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[8192]; int n;
+                while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
+                JSONArray rows = new JSONArray(out.toString("UTF-8"));
+                for (int i = 0; i < rows.length(); i++) {
+                    JSONObject row = rows.optJSONObject(i);
+                    if (row != null) names.put(kind + ":" + row.optString("category_id"), row.optString("category_name"));
+                }
+            } catch (Exception ignored) {}
+        }
+        return names;
+    }
+
+    private boolean recentAllowed(Item it, java.util.Map<String, String> categories) {
+        if ("catchup".equals(it.kind) || isAdultCategory(it.name) || isAdultCategory(it.category)) return false;
+        String category = it.category == null ? "" : it.category.trim();
+        if (category.matches("\\d+")) category = categories.getOrDefault(savedKind(it) + ":" + category, "");
+        // Unknown classifications fail closed: privacy matters more than retaining a history card.
+        return !category.isEmpty() && !isAdultCategory(category);
     }
 
     private boolean isSaved(String key, Item it) {
@@ -3100,6 +3139,7 @@ public class MainActivity extends Activity {
 
     private void remember(String key, Item it) {
         JSONArray a = saved(key), out = new JSONArray();
+        if ("recent".equals(key) && !recentAllowed(it, recentCategoryNames())) return;
         out.put(it.toJson());
         for (int i = 0; i < a.length() && out.length() < 30; i++) {
             JSONObject o = a.optJSONObject(i);
@@ -3885,7 +3925,7 @@ public class MainActivity extends Activity {
     // ---------- parental control ----------
 
     private boolean isAdultCategory(String category) {
-        return category != null && category.toLowerCase(java.util.Locale.UK).matches(".*(adult|xxx|18\\+|porn|for adults).*");
+        return category != null && category.toLowerCase(java.util.Locale.UK).matches("(?s).*(adult|xxx|18\\s*\\+|porn|for adults|hustler|penthouse|playboy|brazzers|babestation|redlight|red light).*");
     }
 
     private boolean hideAdult(String category) {
