@@ -20,6 +20,13 @@ public class VoiceEntryTest {
         assertFalse(VoiceEntry.useSpeechActivity("Google", false));
     }
 
+    @Test public void voiceSearchIsHiddenOnAmazonOnly() {
+        assertFalse(VoiceEntry.available("Amazon"));
+        assertFalse(VoiceEntry.available("amazon"));
+        assertTrue(VoiceEntry.available("Google"));
+        assertTrue(VoiceEntry.available("Xiaomi"));
+    }
+
     @Test public void shownSearchDialogFocusesAttachedEditorAndAllowsKeyboard() {
         Activity activity = Robolectric.buildActivity(Activity.class).setup().visible().get();
         EditText field = new EditText(activity);

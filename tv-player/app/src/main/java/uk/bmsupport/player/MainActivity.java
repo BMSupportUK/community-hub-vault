@@ -232,7 +232,9 @@ public class MainActivity extends Activity {
     /** Asks how many screens to open, so one channel can fill the whole screen. */
     /** Home screen keeps one Search pill; the pop-up offers typed and voice search for each section. */
     private void chooseHomeSearch() {
-        String[] names = {"🔍 Search TV", "🔍 Search Movies", "🔍 Search Series", "🎤 Voice search TV", "🎤 Voice search Movies", "🎤 Voice search Series"};
+        String[] names = VoiceEntry.available(Build.MANUFACTURER)
+                ? new String[]{"🔍 Search TV", "🔍 Search Movies", "🔍 Search Series", "🎤 Voice search TV", "🎤 Voice search Movies", "🎤 Voice search Series"}
+                : new String[]{"🔍 Search TV", "🔍 Search Movies", "🔍 Search Series"};
         String[] kinds = {"live", "film", "series"};
         new AlertDialog.Builder(this).setTitle("Search")
                 .setItems(names, (d, w) -> { if (w < 3) showSearch(kinds[w], ""); else startVoice(kinds[w - 3]); })
@@ -1847,7 +1849,7 @@ public class MainActivity extends Activity {
         if (kind.equals("live") && maxCons >= 2) head.addView(headerPill("🖥 Multi-screen (" + maxCons + ")", v -> chooseMultiScreens(maxCons)));
         // Films/Series: no top Category pill — the sliding drawer opens on entry and from row-edge Left.
         head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
-        head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
+        if (VoiceEntry.available(Build.MANUFACTURER)) head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
         // Films/Series: Sort is an icon pill straight after Voice search (no sort row).
         final Runnable[] openSort = new Runnable[1];
         if (!kind.equals("live")) { Button sp = headerPill("⇅", v -> { if (openSort[0] != null) openSort[0].run(); }); sp.setContentDescription("Sort"); head.addView(sp); }
@@ -2973,7 +2975,7 @@ public class MainActivity extends Activity {
         q.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
         box.addView(q);
         AlertDialog[] dlg = new AlertDialog[1];
-        box.addView(button("🎤 Search by voice", v -> { if (dlg[0] != null) dlg[0].dismiss(); startVoice(kind); }));
+        if (VoiceEntry.available(Build.MANUFACTURER)) box.addView(button("🎤 Search by voice", v -> { if (dlg[0] != null) dlg[0].dismiss(); startVoice(kind); }));
         Runnable go = () -> {
             String want = q.getText().toString().trim();
             if (want.length() < 3) { Toast.makeText(this, "Please enter at least 3 letters", Toast.LENGTH_SHORT).show(); return; }
@@ -4472,7 +4474,7 @@ public class MainActivity extends Activity {
             head.addView(text("Live TV", 26, TEXT, true));
             head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             head.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
-            head.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
+            if (VoiceEntry.available(Build.MANUFACTURER)) head.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
             head.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
             root.addView(head);
         }
@@ -4522,7 +4524,7 @@ public class MainActivity extends Activity {
             pills.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
             pills.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
             pills.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
-            pills.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
+            if (VoiceEntry.available(Build.MANUFACTURER)) pills.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
             // A clear space between the pills and the programme title beneath them.
             LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             plp.bottomMargin = dp(14);
@@ -4985,7 +4987,7 @@ public class MainActivity extends Activity {
         head.addView(sportsCatPill, categorySize);
         Button voice = headerPill("🎤 Voice search", v -> startVoice("sports"));
         voice.setSingleLine(true);
-        head.addView(voice);
+        if (VoiceEntry.available(Build.MANUFACTURER)) head.addView(voice);
         Button refresh = headerPill("⟳ Refresh", v -> loadSports(status, true));
         refresh.setSingleLine(true);
         head.addView(refresh);
@@ -5007,6 +5009,8 @@ public class MainActivity extends Activity {
 
     /** Entering the sports guide: browse the categories by hand or say an event / team name. */
     private void askSportsMode() {
+        // Fire TV has no in-app voice, so there is nothing to choose: go straight to browsing.
+        if (!VoiceEntry.available(Build.MANUFACTURER)) { resetSportsFilters(); showSports(); return; }
         new AlertDialog.Builder(this).setTitle("Sports guide")
                 .setMessage("How would you like to find an event?")
                 .setPositiveButton("📂 Search manually", (d, w) -> { resetSportsFilters(); showSports(); })

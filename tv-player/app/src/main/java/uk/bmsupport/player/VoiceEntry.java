@@ -10,6 +10,11 @@ import android.widget.EditText;
 
 /** Fire TV dictation belongs to the keyboard, never an Alexa speech activity. */
 final class VoiceEntry {
+    /** Fire TV sends the remote mic to Alexa, never to a sideloaded app, so voice search is hidden there. */
+    static boolean available(String manufacturer) {
+        return !"amazon".equalsIgnoreCase(manufacturer);
+    }
+
     static boolean useSpeechActivity(String manufacturer, boolean resolved) {
         return resolved && !"amazon".equalsIgnoreCase(manufacturer);
     }
