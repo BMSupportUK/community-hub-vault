@@ -2,7 +2,7 @@ package uk.bmsupport.player;
 
 /** BM Player's own microphone capture for voice search on boxes without a usable speech service (Fire TV). */
 final class VoiceRecorder {
-    static final int RATE = 16_000, MAX_MS = 8_000, SILENCE_MS = 1_200, SPEECH_LEVEL = 600, FLAT_LEVEL = 40;
+    static final int RATE = 16_000, MAX_MS = 6_000, SILENCE_MS = 700, SPEECH_LEVEL = 600, FLAT_LEVEL = 40;
     interface Listener { void level(int rms); }
     private volatile boolean stop;
     private volatile android.media.AudioRecord live;
@@ -26,6 +26,18 @@ final class VoiceRecorder {
     /** Ends after speech then a pause, or at the cap. */
     static boolean finished(boolean heard, long silentMs, long elapsedMs) {
         return elapsedMs >= MAX_MS || (heard && silentMs >= SILENCE_MS);
+    }
+
+    /** Cuts quiet lead-in/tail (keeping 0.25s each side) so less audio is sent and words come back faster. */
+    static byte[] trim(byte[] pcm) {
+        int frame = RATE / 20 * 2, first = -1, last = -1;
+        for (int at = 0; at + frame <= pcm.length; at += frame) {
+            double sum = 0; for (int i = at; i < at + frame; i += 2) { short v = (short) ((pcm[i] & 0xff) | (pcm[i + 1] << 8)); sum += (double) v * v; }
+            if (Math.sqrt(sum / (frame / 2)) >= SPEECH_LEVEL / 2) { if (first < 0) first = at; last = at + frame; }
+        }
+        if (first < 0) return pcm;
+        int pad = RATE / 4 * 2, from = Math.max(0, first - pad), to = Math.min(pcm.length, last + pad);
+        return java.util.Arrays.copyOfRange(pcm, from, to);
     }
 
     static byte[] wav(byte[] pcm, int rate) {
@@ -68,6 +80,6 @@ final class VoiceRecorder {
                 if (finished(heard, now - lastLoud, now - start)) break;
             }
         } finally { live = null; try { rec.stop(); } catch (Exception ignored) {} rec.release(); }
-        return new Take(wav(pcm.toByteArray(), RATE), peak, heard);
+        return new Take(wav(trim(pcm.toByteArray()), RATE), peak, heard);
     }
 }

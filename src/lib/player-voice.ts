@@ -15,7 +15,7 @@ export async function transcribeVoice(bytes: Uint8Array<ArrayBuffer>, mime: stri
   form.append("model", "openai/gpt-transcribe");
   form.append("file", new File([bytes], mime.includes("wav") ? "voice.wav" : "voice.webm", { type: mime }));
   form.append("response_format", "json");
-  form.append("stream", "true");
+  form.append("stream", "false");
   form.append("languages", "en");
   form.append("prompt", "A short TV search: a channel, film, series, team or sports event name.");
   const res = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {

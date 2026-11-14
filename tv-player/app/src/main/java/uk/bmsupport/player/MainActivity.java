@@ -2858,7 +2858,7 @@ public class MainActivity extends Activity {
             micKind = kind; requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, MIC_REQUEST); return;
         }
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(20), dp(12), dp(20), dp(4));
-        TextView status = text("Press Talk now, then say what you're looking for.\n(Don't use the Alexa button on the remote.)", 16, TEXT, false);
+        TextView status = text("Press Talk now, then hold the microphone button on your remote and say what you're looking for. Let go when you've finished.", 16, TEXT, false);
         box.addView(status);
         android.widget.ProgressBar level = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         level.setMax(4000); box.addView(level, new LinearLayout.LayoutParams(-1, dp(18)));
@@ -2873,7 +2873,7 @@ public class MainActivity extends Activity {
             talk.setOnClickListener(v -> {
                 if (rec[0] != null) { rec[0].stop(); talk.setEnabled(false); status.setText("Stopping…"); return; }
                 VoiceRecorder r = new VoiceRecorder(); rec[0] = r;
-                status.setText("Listening… speak now (up to 8 seconds)"); talk.setText("Stop");
+                status.setText("Listening… hold the remote's microphone button and speak"); talk.setText("Stop");
                 io.execute(() -> {
                     try {
                         VoiceRecorder.Take t = r.record(lv -> ui.post(() -> level.setProgress(Math.min(4000, lv))));
