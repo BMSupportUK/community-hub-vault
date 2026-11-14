@@ -2255,14 +2255,14 @@ public class MainActivity extends Activity {
             final List<android.content.pm.ResolveInfo> external = ExternalPlayers.enabled(this, prefs);
             final int externalAt = o2.length;
             o2 = appendExternalOptions(o2, external);
-            new AlertDialog.Builder(this).setCustomTitle(filmDetails(it)).setItems(o2, (d, w) -> {
+            compactDialog(new AlertDialog.Builder(this).setTitle(it.name).setItems(o2, (d, w) -> {
                 if (w >= externalAt) playExternal(it, external.get(w - externalAt), pos);
                 else if (cast2 && w == cast2At) castToTv(it);
                 else if (w == 0) startPlayback(it, defaultVlc(), pos);
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
                 else if (w == 2) toggleSaved("fav", it);
                 else showVote(it);
-            }).show();
+            }).create());
             return;
         }
         String playLabel = "live".equals(it.kind) ? "Full Screen" : "Play";
@@ -2273,13 +2273,24 @@ public class MainActivity extends Activity {
         final List<android.content.pm.ResolveInfo> external = ExternalPlayers.enabled(this, prefs);
         final int externalAt = opts.length;
         opts = appendExternalOptions(opts, external);
-        new AlertDialog.Builder(this).setCustomTitle("live".equals(it.kind) ? channelDetails(it) : filmDetails(it)).setItems(opts, (d, w) -> {
+        compactDialog(new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
             if (w >= externalAt) playExternal(it, external.get(w - externalAt), 0);
             else if (cast && w == castAt) castToTv(it);
             else if (w == 0) play(it, defaultVlc());
             else if (w == 1) toggleSaved("fav", it);
             else showVote(it);
-        }).show();
+        }).create());
+    }
+
+    private AlertDialog compactDialog(AlertDialog dialog) {
+        dialog.show();
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+            window.setLayout(Math.min(dp(520), metrics.widthPixels * 4 / 5), ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setGravity(Gravity.CENTER);
+        }
+        return dialog;
     }
 
     /** Film details shown above the play options: backdrop, rating · year · length · genre, cast, director, plot. */
@@ -3394,6 +3405,7 @@ public class MainActivity extends Activity {
         String[] uaL = {"Standard", "BM Player", "IPTV Smarters"}, uaV = {PlayerActivity.UA, "BMPlayer/" + appVersion(), "IPTVSmartersPlayer"};
 
         List<View> boxes = new ArrayList<>();
+        boxes.add(settingBox("🔒", "Parental control", prefs.getString("pin", "").isEmpty() ? "Set PIN" : adultUnlocked ? "Unlocked" : "On", v -> parentalControl()));
         for (String kind : new String[]{"live", "film", "series"}) {
             boxes.add(settingBox("⇅", sectionName(kind) + " categories", "Rearrange / hide categories", v -> editCategoryOrder(kind)));
         }
@@ -3427,7 +3439,6 @@ public class MainActivity extends Activity {
                 prefs.edit().putInt("epg_shift", w - 12).putInt("epg_shift_offset", deviceOffsetMins()).apply(); d.dismiss(); showSettings();
             }).setNegativeButton("Cancel", null).show();
         }));
-        boxes.add(settingBox("🔒", "Parental control", prefs.getString("pin", "").isEmpty() ? "Off" : adultUnlocked ? "Unlocked" : "On", v -> parentalControl()));
         boxes.add(settingBox("🔊", "Sound booster", SoundBoost.label(this), v ->
                 new AlertDialog.Builder(this).setTitle("Sound booster")
                         .setSingleChoiceItems(SoundBoost.LABELS, SoundBoost.index(SoundBoost.current(this)), (d, w) -> {
@@ -3513,41 +3524,14 @@ public class MainActivity extends Activity {
                     if (!"settings".equals(screen)) return;
                     List<String[]> rows = CategoryOrder.apply(original, prefs.getString(CategoryOrder.key(prefs, kind), "[]"));
                     java.util.Set<String> hidden = CategoryOrder.hidden(prefs, kind);
-                    int[] selected = {0};
                     LinearLayout content = column();
-                    content.addView(text("Hidden categories leave the sidebar; their titles remain in All and search.", 14, MUTED, false));
-                    ListView list = list();
-                    content.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(platform().equals("phone") ? 120 : 240)));
-                    Runnable redraw = () -> {
-                        List<String> names = new ArrayList<>();
-                        for (int i = 0; i < rows.size(); i++) names.add((hidden.contains(rows.get(i)[0]) ? "○ Hidden · " : "● ") + (i + 1) + ". " + rows.get(i)[1]);
-                        list.setAdapter(rowAdapter(names)); list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-                        if (!rows.isEmpty()) { list.setItemChecked(selected[0], true); list.setSelection(selected[0]); }
-                    };
-                    list.setOnItemClickListener((a,v,p,id) -> { selected[0] = p; list.setItemChecked(p, true); });
-                    list.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                        @Override public void onItemSelected(AdapterView<?> a, View v, int p, long id) { selected[0] = p; }
-                        @Override public void onNothingSelected(AdapterView<?> a) {}
-                    });
-                    LinearLayout tools = row();
-                    for (int delta : new int[]{-1, 1}) tools.addView(button(delta < 0 ? "↑ Move up" : "↓ Move down", v -> {
-                        int target = selected[0] + delta;
-                        if (target < 0 || target >= rows.size()) return;
-                        java.util.Collections.swap(rows, selected[0], target); selected[0] = target; redraw.run();
-                    }), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
-                    content.addView(tools);
-                    content.addView(button("◉ Hide / show selected", v -> {
-                        if (selected[0] < 0 || selected[0] >= rows.size()) return;
-                        String id = rows.get(selected[0])[0];
-                        if (!hidden.remove(id)) hidden.add(id);
-                        redraw.run();
-                    }));
-                    content.addView(button("Show all categories", v -> { hidden.clear(); redraw.run(); }));
-                    content.addView(button("↺ Reset order", v -> { rows.clear(); rows.addAll(original); selected[0] = 0; redraw.run(); }));
-                    redraw.run();
-                    new AlertDialog.Builder(this).setTitle(sectionName(kind) + " category order").setView(content)
-                        .setPositiveButton("Save", (d,w) -> { CategoryOrder.save(prefs, kind, rows); prefs.edit().putStringSet(CategoryOrder.hiddenKey(prefs, kind), hidden).apply(); Toast.makeText(this, "Categories saved", Toast.LENGTH_SHORT).show(); })
-                        .setNegativeButton("Cancel", null).show();
+                    ListView list = CategoryEditor.create(this, rows, hidden);
+                    content.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.min(dp(240), getResources().getDisplayMetrics().heightPixels / 2)));
+                    compactDialog(new AlertDialog.Builder(this).setTitle(sectionName(kind) + " category order").setView(content)
+                        .setPositiveButton("Save", (d,w) -> { CategoryOrder.save(prefs, kind, rows); prefs.edit().putStringSet(CategoryOrder.hiddenKey(prefs, kind), new java.util.HashSet<>(hidden)).apply(); showSettings(); Toast.makeText(this, "Categories saved", Toast.LENGTH_SHORT).show(); })
+                        .setNeutralButton("Reset", (d,w) -> { CategoryOrder.save(prefs, kind, original); prefs.edit().remove(CategoryOrder.hiddenKey(prefs, kind)).apply(); showSettings(); })
+                        .setNegativeButton("Cancel", null).create());
+                    list.requestFocus(); list.setSelection(0);
                 });
             } catch (Exception e) { ui.post(() -> Toast.makeText(this, "Couldn't load categories. Try Refresh.", Toast.LENGTH_LONG).show()); }
         });
@@ -3842,12 +3826,17 @@ public class MainActivity extends Activity {
         android.widget.EditText e = new android.widget.EditText(this);
         e.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         e.setHint("4 digit PIN");
-        AlertDialog dlg = new AlertDialog.Builder(this).setTitle(title).setView(e)
-                .setPositiveButton("OK", (d, w) -> done.accept(e.getText().toString().trim()))
-                .setNegativeButton("Cancel", null).create();
-        keepEntryVisible(dlg, e);
-        dlg.show();
-
+        e.setFilters(new InputFilter[]{new InputFilter.LengthFilter(4)});
+        LinearLayout content = column(); content.addView(e);
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle(title).setView(content).setNegativeButton("Cancel", null).create();
+        LinearLayout pad = NumberPad.build(this, e, 4, CARD, ACCENT, TEXT, () -> {
+            String value = e.getText().toString();
+            if (!value.matches("\\d{4}")) { e.setError("Use 4 numbers"); return; }
+            dlg.dismiss(); done.accept(value);
+        });
+        content.addView(pad);
+        compactDialog(dlg);
+        View first = NumberPad.firstKey(pad); if (first != null) first.requestFocus();
     }
 
     private void parentalControl() {
@@ -3868,7 +3857,7 @@ public class MainActivity extends Activity {
             askPin("Enter your PIN", p -> {
                 if (!p.equals(prefs.getString("pin", ""))) { Toast.makeText(this, "Wrong PIN", Toast.LENGTH_SHORT).show(); return; }
                 if (w == 0) adultUnlocked = true;
-                else if (w == 1) { prefs.edit().remove("pin").apply(); parentalControl(); return; }
+                else if (w == 1) { askPin("Set a new parental PIN", next -> { prefs.edit().putString("pin", next).apply(); adultUnlocked = false; showSettings(); }); return; }
                 else { prefs.edit().remove("pin").apply(); adultUnlocked = false; }
                 showSettings();
             });
