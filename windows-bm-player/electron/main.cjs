@@ -67,12 +67,22 @@ let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||'')}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
 let announcement=null,annBusy=false;const STARTED_AT=Date.now();
 async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}if(r&&r.watch)openWatch(r.watch).catch(()=>{});if(r&&r.stop_stream&&sessions.length){stopAll().catch(()=>{}).finally(()=>send({type:'stream-taken'}));}}catch{}finally{annBusy=false;}}
+// Live connections speeds: a small download/upload check at most every 15 minutes while watching.
+let lastPing=0;const net={down:0,up:0,at:0,busy:false};
+async function netCheck(){if(net.busy||Date.now()-net.at<900000)return;net.busy=true;try{
+ let t=Date.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=2000000',{signal:AbortSignal.timeout(20000)});const bytes=(await r.arrayBuffer()).byteLength;const down=Math.round(bytes*8/Math.max(1,Date.now()-t));
+ t=Date.now();await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Uint8Array(1000000),signal:AbortSignal.timeout(20000)});const up=Math.round(8000000/Math.max(1,Date.now()-t));
+ net.down=Math.min(2000000,down);net.up=Math.min(2000000,up);net.at=Date.now();
+}catch{}finally{net.busy=false;}}
 async function poll(){
  // A stuck check (e.g. a stop that never returns) must never stop the box from picking up its link.
  if(!store.token||(pollBusy&&Date.now()-pollStarted<45000))return;pollBusy=true;pollStarted=Date.now();
  try{
   const session=sessions[0];
-  const r=await site({action:'poll',login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:sessions.map(x=>x.item.name).filter(Boolean).join(' · ').slice(0,200)||session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
+  if(session)netCheck();
+  const t0=Date.now();
+  const r=await site({action:'poll',...(session&&net.at?{speed_kbps:net.down,up_kbps:net.up}:{}),...(session&&lastPing?{ping_ms:lastPing}:{}),login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:sessions.map(x=>x.item.name).filter(Boolean).join(' · ').slice(0,200)||session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
+  lastPing=Math.min(60000,Date.now()-t0);
   linkVerified=r.linked===true||!!r.credentials;
   checkin.setSlow(r.slow);maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
