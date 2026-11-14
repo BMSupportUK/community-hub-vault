@@ -1760,9 +1760,7 @@ public class MainActivity extends Activity {
         if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
         int maxCons = Math.min(3, consPref(1));
         if (kind.equals("live") && maxCons >= 2) head.addView(headerPill("🖥 Multi-screen (" + maxCons + ")", v -> chooseMultiScreens(maxCons)));
-        // Films/Series: Category pill and row-edge Left both open the same sliding drawer.
-        final Button catPill = kind.equals("live") ? null : headerPill("☰ Category: All", v -> {});
-        if (catPill != null) head.addView(catPill);
+        // Films/Series: no top Category pill — the sliding drawer opens on entry and from row-edge Left.
         head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
         head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
         // Films/Series: Sort is an icon pill straight after Voice search (no sort row).
@@ -1802,7 +1800,7 @@ public class MainActivity extends Activity {
         }
         final TextView gridTitle = text("", 17, TEXT, true);
         if (posters) {
-            // Poster grid runs the full width under its category name; categories come from the top pill.
+            // Poster grid runs the full width under its category name; categories come from the sliding drawer.
             LinearLayout gcol = column();
             gcol.addView(gridTitle);
             gcol.addView(items, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
@@ -1890,7 +1888,6 @@ public class MainActivity extends Activity {
                 content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
             }
             setContentView(sideDrawer(content, panel));
-            if (catPill != null) catPill.setOnClickListener(v -> openCategories.run());
             MediaCategoryNavigation.bind((android.widget.GridView) items, openCategories);
         } else setContentView(root);
 
@@ -1946,14 +1943,11 @@ public class MainActivity extends Activity {
                     if (!c[0].equals(current[0])) return;
                     items.setSelection(0);
                     if (items instanceof ListView) ((ListView) items).setSelectionFromTop(0, 0);
-                    if (posters && focusItems) items.requestFocus();
-                    else if (posters && catPill != null) catPill.requestFocus();
-                    else if (focusItems) items.requestFocus();
+                    if (focusItems) items.requestFocus();
                 });
                 if (!kind.equals("live")) {
                     epg.setText(c[1] + " · " + list.size() + " titles");
                     gridTitle.setText(c[1].equals("All") ? (kind.equals("film") ? "All movies" : "All series") : c[1]);
-                    if (catPill != null) catPill.setText("☰ Category: " + c[1]);
                     if (hero != null) hero.show(shown.isEmpty() ? null : shown.get(0));
                 }
 
@@ -2006,7 +2000,8 @@ public class MainActivity extends Activity {
                     cats.setAdapter(adapter(names));
                     cats.setSelection(0);
                     showCat.accept(0, false);
-                    if (!posters) cats.requestFocus();
+                    if (posters) openCategories.run(); // Films/Series open on the highlighted category sidebar.
+                    else cats.requestFocus();
                 });
             } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
         });
