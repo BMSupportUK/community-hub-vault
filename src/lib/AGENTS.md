@@ -18,7 +18,6 @@
 - Password completion sends Auth updates with the middleware-verified bearer via the Auth HTTP endpoint, not stateless SDK updateUser (which requires a stored session); both password and first-login metadata updates use this path.
 - BM Support alerts use the shared SupportNotificationScope/useSupportNotifications boundary, including Fan Zone-origin sports guides; Fan Zone listeners stay independent so dual-role staff do not receive support pop-ups in Fan Zone.
 - Direct Install starts a fresh progress row for either setup path; website reads are scoped to that run, and already-installed runs have no download capability, so history cannot advance a new wizard.
-- Enabler login PIN issuance/status share verified customer identity across account, ticket and order surfaces; unowned orders remain isolated and account reset revokes legacy scoped PINs too, without changing handoff/reference bindings.
 - Staff display role refreshes retain the last successful map until replacement succeeds; one ref-counted focus listener prevents app-return colour/order flicker.
 - Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.
 - Order staff-help tickets start pending remote setup; their existing ticket layout notifies staff after confirmation, while self-install links retain paid-order guide access.
@@ -31,7 +30,6 @@
 - Square checkout uses SDK-hosted card fields after order-token/password verification, durable unresolved-attempt keys and the shared payment lock; only provider-verified COMPLETED GBP payments matching order/amount/location mark paid, with webhook/poll/cron repair. Retire payable invoices before direct charging; Stripe invoice behaviour and BM Support post-payment PDFs remain unchanged.
 - Square card loading shares a retryable environment-specific SDK promise and warms only public assets before unlock; authenticated order configuration and hosted card mounting remain behind the entered password.
 - Customer account switching verifies admin on the server, uses real customer sessions and an audit; admin return refresh tokens stay in a short-lived HttpOnly cookie and return checks current admin privileges.
-- Enabler confirmation status exposes only bound-reference expiry after ticket ownership or order-password verification; consumed TV checks and login PIN expiry never determine confirmation-entry availability.
 - Site-user manual orders use a role-gated atomic RPC that assigns explicit user ownership and payment notification; site identity and email come from a validated user ID, never email matching.
 - Ticket/order Connect atomically consumes only an unlinked, never-requested Enabler-delivered session; reference redemption cannot revive consumed checks, preventing connection reuse and duplicate staff alerts.
 - Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
@@ -39,3 +37,4 @@
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Sports import and guide rules live in `src/routes/api/public/AGENTS.md`.
 - Manual customer creation saves contact-only rows; checkout emails use an authenticated role-checked RPC to bind an explicit order and resolve its saved recipient, preventing premature Auth accounts and arbitrary-recipient sends.
+- Enabler rules (login PIN issuance/status and confirmation status) live in `src/routes/api/public/AGENTS.md`.
