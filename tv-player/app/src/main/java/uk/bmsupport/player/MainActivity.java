@@ -3035,9 +3035,12 @@ public class MainActivity extends Activity {
         long position = data.getLongExtra("extra_position", -1), duration = data.getLongExtra("extra_duration", -1);
         if (position < 0 || duration <= 0) return;
         if (position >= duration - 15000) position = duration;
-        SharedPreferences.Editor e = prefs.edit().putLong(vlcKey + ":position", position).putLong(vlcKey + ":duration", duration);
+        SharedPreferences.Editor e = prefs.edit();
+        WatchProgress.store(prefs, e, vlcKey, position, duration);
         if (vlcSeriesKey != null) e.putLong(vlcSeriesKey + ":position", position).putLong(vlcSeriesKey + ":duration", duration);
+        ProgressSync.touch(prefs, e, vlcKey, vlcSeriesKey);
         e.apply();
+        ProgressSync.push(this, true);
         vlcKey = null; vlcSeriesKey = null;
         if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
     }
@@ -3052,17 +3055,30 @@ public class MainActivity extends Activity {
 
     private LinearLayout watchedBar(Item it) {
         String key = watchKey(it.kind, it.id);
-        long duration = prefs.getLong(key + ":duration", 0), position = prefs.getLong(key + ":position", 0);
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
         android.widget.ProgressBar bar = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        if (duration <= 0) { box.setVisibility(View.GONE); return box; }
-        bar.setMax(100); bar.setProgress(WatchProgress.percent(position, duration));
+        bar.setMax(100);
         bar.setProgressTintList(android.content.res.ColorStateList.valueOf(ACCENT));
         box.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(6)));
-        boolean done = WatchProgress.finished(position, duration);
-        String label = done ? "\u2713 Watched" : WatchProgress.percent(position, duration) + "% watched";
-        if ("series".equals(it.kind) && duration > 0) label = "Last episode · " + label;
-        box.addView(text(label, 12, done ? Color.rgb(83, 212, 163) : MUTED, done));
+        TextView label = text("", 12, MUTED, false); box.addView(label);
+        Runnable refresh = () -> {
+            long duration = prefs.getLong(key + ":duration", 0), position = prefs.getLong(key + ":position", 0);
+            boolean done = WatchProgress.remembered(prefs, key);
+            box.setVisibility(duration > 0 || done ? View.VISIBLE : View.GONE);
+            bar.setProgress(WatchProgress.percent(position, duration));
+            String value = done ? "\u2713 Watched" : WatchProgress.percent(position, duration) + "% watched";
+            label.setText("series".equals(it.kind) ? "Last episode · " + value : value);
+            label.setTextColor(done ? Color.rgb(83, 212, 163) : MUTED);
+            label.setTypeface(null, done ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        };
+        SharedPreferences.OnSharedPreferenceChangeListener listener = (p, changed) -> {
+            if (changed != null && changed.startsWith(key + ":")) ui.post(refresh);
+        };
+        box.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(View v) { prefs.registerOnSharedPreferenceChangeListener(listener); refresh.run(); }
+            @Override public void onViewDetachedFromWindow(View v) { prefs.unregisterOnSharedPreferenceChangeListener(listener); ui.removeCallbacks(refresh); }
+        });
+        refresh.run();
         return box;
     }
 
@@ -5385,7 +5401,10 @@ public class MainActivity extends Activity {
             for (Item it : liveChannels) if (drawerPick.equals(it.id)) { final Item ch = it; ui.postDelayed(() -> startPlayback(ch, false, 0), 300); break; }
         if (hasLogin()) io.execute(() -> safeRun(io, this::pollOnce));
         // Positions watched on another device show here too (throttled to every 30s).
-        if (unlocked && hasLogin()) ProgressSync.pull(this, false, () -> { if ("home".equals(screen)) showHome(); });
+        if (unlocked && hasLogin()) ProgressSync.pull(this, false, () -> {
+            if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
+            if (ratingAdapter != null) ratingAdapter.notifyDataSetChanged();
+        });
         refreshVersionScreens();
         // Re-opened after being away: ask the PIN again before showing any screen.
         if (!PlayerApplication.pinPassed && unlocked && hasLogin() && !java.util.Arrays.asList("pin", "link", "linkcheck", "linkok", "unlock", "expired", "maintenance", "").contains(screen)) { stopPreview(); stopMulti(); checkPin(); return; }

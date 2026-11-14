@@ -64,23 +64,29 @@ final class ProgressSync {
             Set<String> dirty = new HashSet<>(p.getStringSet("psync_dirty", new HashSet<>()));
             if (token.isEmpty() || login.isEmpty() || dirty.isEmpty()) return;
             String pre = prefix(p);
-            JSONArray items = new JSONArray(); Set<String> sent = new HashSet<>();
+            JSONArray items = new JSONArray(); java.util.Map<String, Long> sent = new java.util.HashMap<>();
             try {
                 for (String k : dirty) {
                     String pk = portable(k);
-                    if (pk == null || !k.startsWith(pre)) { sent.add(k); continue; }
+                    if (pk == null || !k.startsWith(pre)) continue;
                     if (items.length() >= 50) break;
-                    items.put(new JSONObject().put("key", pk).put("position_ms", Math.max(0, p.getLong(k + ":position", 0)))
-                            .put("duration_ms", Math.max(0, p.getLong(k + ":duration", 0))).put("updated_at", p.getLong(k + ":at", 1))
-                            .put("age_ms", Math.max(0, System.currentTimeMillis() - p.getLong(k + ":at", 1))));
-                    sent.add(k);
+                    long at = p.getLong(k + ":at", 1), duration = Math.max(0, p.getLong(k + ":duration", 0));
+                    // The existing wire format carries completion as full progress, while local replay
+                    // keeps its independent resume position. Never send a rewatch as unwatched.
+                    long position = !pk.startsWith("series:") && WatchProgress.remembered(p, k)
+                            ? duration : Math.max(0, p.getLong(k + ":position", 0));
+                    items.put(new JSONObject().put("key", pk).put("position_ms", position)
+                            .put("duration_ms", duration).put("updated_at", at)
+                            .put("age_ms", Math.max(0, System.currentTimeMillis() - at)));
+                    sent.put(k, at);
                 }
                 if (items.length() > 0) {
                     JSONObject r = new JSONObject(Net.postJson(API, new JSONObject().put("action", "progress_set").put("device_token", token).put("login", login).put("items", items).toString()));
                     if (!r.optBoolean("ok")) return;
                 }
                 Set<String> left = new HashSet<>(p.getStringSet("psync_dirty", new HashSet<>()));
-                left.removeAll(sent);
+                for (java.util.Map.Entry<String, Long> entry : sent.entrySet())
+                    if (p.getLong(entry.getKey() + ":at", 0) == entry.getValue()) left.remove(entry.getKey());
                 p.edit().putStringSet("psync_dirty", left).apply();
             } catch (Exception ignored) {}
         });
@@ -122,7 +128,10 @@ final class ProgressSync {
                         if (portable(k) == null) continue;
                         long at = o.optLong("updated_at") + skew;
                         if (!remoteWins(p.getLong(k + ":at", 0), at)) continue;
-                        ed.putLong(k + ":position", o.optLong("position_ms")).putLong(k + ":duration", o.optLong("duration_ms")).putLong(k + ":at", at);
+                        if (o.optString("key").startsWith("series:"))
+                            ed.putLong(k + ":position", o.optLong("position_ms")).putLong(k + ":duration", o.optLong("duration_ms"));
+                        else WatchProgress.store(p, ed, k, o.optLong("position_ms"), o.optLong("duration_ms"));
+                        ed.putLong(k + ":at", at);
                         any = true;
                     }
                     if (any) ed.apply();

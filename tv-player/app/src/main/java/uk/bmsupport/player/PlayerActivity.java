@@ -86,8 +86,8 @@ public class PlayerActivity extends Activity {
         long duration = player.getDuration();
         if (duration <= 0) return;
         long position = ended ? duration : Math.max(0, player.getCurrentPosition());
-        SharedPreferences.Editor edit = prefs(this).edit()
-                .putLong(progressKey + ":position", position).putLong(progressKey + ":duration", duration);
+        SharedPreferences.Editor edit = prefs(this).edit();
+        WatchProgress.store(prefs(this), edit, progressKey, position, duration);
         if (seriesKey != null) edit.putLong(seriesKey + ":position", position).putLong(seriesKey + ":duration", duration);
         ProgressSync.touch(prefs(this), edit, progressKey, seriesKey);
         edit.apply();

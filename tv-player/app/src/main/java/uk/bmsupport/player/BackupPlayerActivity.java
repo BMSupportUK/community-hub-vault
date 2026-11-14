@@ -400,7 +400,9 @@ public final class BackupPlayerActivity extends Activity {
         long pos = mp.getTime(), len = mp.getLength();
         if (pos <= 0 || len <= 0) return;
         if (pos >= len - 15000) pos = len;
-        SharedPreferences.Editor ed = getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putLong(key + ":position", pos).putLong(key + ":duration", len);
+        SharedPreferences saved = getSharedPreferences("bmplayer", MODE_PRIVATE);
+        SharedPreferences.Editor ed = saved.edit();
+        WatchProgress.store(saved, ed, key, pos, len);
         String series = getIntent().getStringExtra("series_key");
         if (series != null) ed.putLong(series + ":position", pos).putLong(series + ":duration", len);
         ProgressSync.touch(getSharedPreferences("bmplayer", MODE_PRIVATE), ed, key, series);

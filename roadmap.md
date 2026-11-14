@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Prepared BM-signed 5.11 (322): film/episode completion survives replay and restart, attached progress indicators refresh immediately, external-player results enter sync, and upload acknowledgments preserve newer writes; 300 Android tests pass and APK retained. Public download unchanged.
+- [ ] Verify 5.11 watched-item return/replay on a real TV; blocked by no connected device.
+
 - [x] Released BM Player 5.09 publicly: rebuilt signed APK (versionCode 320, permanent BM signature), uploaded to app-builds first, then switched the current build row. Public updater reports 5.09 and the download is byte-identical to the built APK.
 - [ ] Real-box check of 5.09 Left-steps-back on future programmes; blocked by no connected device.
 
