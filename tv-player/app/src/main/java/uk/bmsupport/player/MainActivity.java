@@ -3241,10 +3241,24 @@ public class MainActivity extends Activity {
         t.setBackground(sel);
         t.setPadding(dp(10), dp(12), dp(10), dp(12));
         t.setMinimumHeight(dp(110));
-        TextView ic = text(icon, 28, TEXT, false); ic.setGravity(Gravity.CENTER);
         TextView lb = text(it.name, 16, TEXT, true); lb.setGravity(Gravity.CENTER);
         lb.setMaxLines(2); lb.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        t.addView(ic); t.addView(lb);
+        // Films/series show their provider poster, channels the provider's logo; the emoji is only a fallback.
+        if (it.poster != null && it.poster.startsWith("http")) {
+            boolean live = "live".equals(it.kind);
+            android.widget.ImageView img = new android.widget.ImageView(this);
+            img.setScaleType(live ? android.widget.ImageView.ScaleType.FIT_CENTER : android.widget.ImageView.ScaleType.CENTER_CROP);
+            img.setClipToOutline(true);
+            GradientDrawable clip = new GradientDrawable(); clip.setCornerRadius(dp(10)); img.setBackground(clip);
+            img.setFocusable(false);
+            loadPoster(img, it.poster);
+            t.addView(img, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, live ? dp(80) : dp(isPhone() ? 170 : 210)));
+            lb.setPadding(0, dp(6), 0, 0);
+        } else {
+            TextView ic = text(icon, 28, TEXT, false); ic.setGravity(Gravity.CENTER);
+            t.addView(ic);
+        }
+        t.addView(lb);
         return t;
     }
 
