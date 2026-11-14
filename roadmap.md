@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Built and BM-signed 5.16 (327): Favourites and Recently watched are now compact homeCard tiles sitting side by side in their own row under the main tiles; Sports guide/Settings/Multi-screen stay as small buttons. 305 Android tests pass (incl. new savedCardsSitSideBySide); APK retained as an asset. Not yet public.
+- [ ] Publish 5.16 when the user asks, then real-box check of the two cards; blocked by no connected device.
+
 - [x] Published retained BM-signed 5.11 APK before switching the current public build; live updater reports 5.11 (322) and downloaded file matches SHA-256 be54de6a729db20f3e9257952399f8ccc9daa7452e36decf6868ca510d5c624a. Signing certificate matches public 5.10.
 - [x] Prepared BM-signed 5.11 (322): film/episode completion survives replay and restart, attached progress indicators refresh immediately, external-player results enter sync, and upload acknowledgments preserve newer writes; 300 Android tests pass and APK retained. Now publicly released.
 - [ ] Verify 5.11 watched-item return/replay on a real TV; blocked by no connected device.

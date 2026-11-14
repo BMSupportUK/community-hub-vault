@@ -1324,16 +1324,20 @@ public class MainActivity extends Activity {
         root.addView(account);
 
         LinearLayout tiles = row();
-        tiles.setPadding(0, dp(20), 0, dp(12));
+        tiles.setPadding(0, dp(12), 0, dp(8));
         tiles.addView(tileWithRefresh("Live TV", "📺", "live"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         tiles.addView(tileWithRefresh("Films", "🎬", "film"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         tiles.addView(tileWithRefresh("Series", "🎞", "series"), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(tiles);
 
+        // Favourites and Recently watched are cards of their own, sitting side by side under the main tiles.
+        LinearLayout savedCards = row();
+        savedCards.addView(homeCard("Favourites", "★", v -> showSaved("fav", "Favourites")), weight(1, dp(88)));
+        savedCards.addView(homeCard("Recently watched", "⟲", v -> showSaved("recent", "Recently watched")), weight(1, dp(88)));
+        root.addView(savedCards);
+
         LinearLayout small = row();
         small.addView(smallButton("🏆 Sports guide", v -> askSportsMode()), smallWeight("🏆 Sports guide"));
-        small.addView(smallButton("★ Favourites", v -> showSaved("fav", "Favourites")), smallWeight("★ Favourites"));
-        small.addView(smallButton("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), smallWeight("⟲ Recently watched"));
         small.addView(smallButton("⚙ Settings", v -> showSettings()), smallWeight("⚙ Settings"));
         // Multi Room / Triple Room: show Multi-screen at once from the last account-info number so it never vanishes while (or if) the check is slow.
         int knownCons = consPref(0);
@@ -5767,6 +5771,26 @@ public class MainActivity extends Activity {
         t.setOnClickListener(l);
         TextView ic = text(icon, 48, TEXT, false); ic.setGravity(Gravity.CENTER);
         TextView lb = text(label, 24, TEXT, true); lb.setGravity(Gravity.CENTER);
+        t.addView(ic); t.addView(lb);
+        return t;
+    }
+
+    /**
+     * Compact home card (Favourites / Recently watched): same card look as the main tiles but
+     * shorter, so a pair of them sits side by side under the tiles without pushing the button
+     * row off the screen. The label always stays on one line.
+     */
+    private View homeCard(String label, String icon, View.OnClickListener l) {
+        LinearLayout t = column();
+        t.setGravity(Gravity.CENTER);
+        t.setBackground(focusBg(20));
+        t.setFocusable(true); t.setClickable(true);
+        t.setOnClickListener(l);
+        TextView ic = text(icon, 30, TEXT, false); ic.setGravity(Gravity.CENTER);
+        ic.setPadding(0, 0, 0, 0);
+        TextView lb = text(label, 17, TEXT, true); lb.setGravity(Gravity.CENTER);
+        lb.setSingleLine(true);
+        lb.setPadding(0, 0, 0, 0);
         t.addView(ic); t.addView(lb);
         return t;
     }
