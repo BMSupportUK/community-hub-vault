@@ -6170,6 +6170,7 @@ export type Database = {
       }
       player_customer_daily_stats: {
         Row: {
+          bitrate_kbps: number | null
           category: string | null
           credential_id: string | null
           day: string
@@ -6183,11 +6184,16 @@ export type Database = {
           login: string
           platform: string | null
           seconds: number
+          speed_kbps_sum: number
+          speed_max_kbps: number | null
+          speed_min_kbps: number | null
+          speed_samples: number
           title: string
           user_id: string
           vpn_status: string | null
         }
         Insert: {
+          bitrate_kbps?: number | null
           category?: string | null
           credential_id?: string | null
           day: string
@@ -6201,11 +6207,16 @@ export type Database = {
           login?: string
           platform?: string | null
           seconds?: number
+          speed_kbps_sum?: number
+          speed_max_kbps?: number | null
+          speed_min_kbps?: number | null
+          speed_samples?: number
           title: string
           user_id: string
           vpn_status?: string | null
         }
         Update: {
+          bitrate_kbps?: number | null
           category?: string | null
           credential_id?: string | null
           day?: string
@@ -6219,6 +6230,10 @@ export type Database = {
           login?: string
           platform?: string | null
           seconds?: number
+          speed_kbps_sum?: number
+          speed_max_kbps?: number | null
+          speed_min_kbps?: number | null
+          speed_samples?: number
           title?: string
           user_id?: string
           vpn_status?: string | null
@@ -11091,6 +11106,17 @@ export type Database = {
           _platform: string
           _seconds: number
           _started: string
+          _title: string
+          _user: string
+        }
+        Returns: undefined
+      }
+      record_player_watch_speed: {
+        Args: {
+          _bitrate: number
+          _device: string
+          _kind: string
+          _speed: number
           _title: string
           _user: string
         }

@@ -2521,6 +2521,13 @@
       "when": 1794684386774,
       "tag": "0359_stop_preview_connection_recording",
       "breakpoints": true
+    },
+    {
+      "idx": 360,
+      "version": "7",
+      "when": 1794684775769,
+      "tag": "0360_player_connection_strength",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,11 @@
+import { expect, test } from 'bun:test';
+import { connectionStrength, connectionDiagnosis } from '../src/lib/player-customer-stats';
+test('25 Mbps or more is Strong', () => expect(connectionStrength(25000).label).toBe('Strong'));
+test('10 to 25 Mbps is OK', () => { expect(connectionStrength(10000).label).toBe('OK'); expect(connectionStrength(24999).label).toBe('OK'); });
+test('5 to 10 Mbps is Weak', () => { expect(connectionStrength(5000).label).toBe('Weak'); expect(connectionStrength(9999).label).toBe('Weak'); });
+test('under 5 Mbps is Very weak', () => expect(connectionStrength(4999).label).toBe('Very weak'));
+test('three times the stream bitrate counts as Strong', () => expect(connectionStrength(12000, 4000).label).toBe('Strong'));
+test('no speed reading', () => expect(connectionStrength(null).label).toBe('No reading'));
+test('slow speed with buffering blames the internet', () => expect(connectionDiagnosis(connectionStrength(3000), 2)).toBe("Customer's internet too slow"));
+test('good speed with buffering blames the channel', () => expect(connectionDiagnosis(connectionStrength(30000), 2)).toBe('Likely channel/provider issue'));
+test('no buffering gives no diagnosis', () => expect(connectionDiagnosis(connectionStrength(3000), 0)).toBeNull());

@@ -125,3 +125,6 @@
 - [x] Published BM Player 5.20 (331): uploaded verified retained signed installer before switching current build; bmsupport.uk updater returns 5.20 and public APK is byte-identical (SHA-256 ec596096162c101f7f2c0896155ee052dc1c3a697519d580ca8b84758f009530), internal version 331/5.20 verified. Real-box install/listening check unavailable.
 - [x] Published BM Player 5.30 (341): catch-up Skip to listed start and one-minute skips stop the old recording cleanly and ignore its late finished signals, ending the pull-back loop. Public updater reports 5.30; installer byte-identical to the signed build (SHA-256 6581fd795fe07a15da75aab508e82c7f93fa2f4bd4605ddf9f8060463cb7917c). Real-box skip check unavailable.
 - [x] BM Player 5.31: catch-up skip moves forward (Skip ahead 2 min) and remembers each channel's real start; public
+- [x] Viewing stats: connection strength bars, buffering count and slow-internet/channel diagnosis (website)
+- [ ] Android 5.33 sends measured speed (code done, APK build pending — sandbox build tools wiped)
+- [ ] Windows/Mac send measured speed (not started)

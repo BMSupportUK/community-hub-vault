@@ -41,6 +41,8 @@ const Body = z.discriminatedUnion("action", [
     login: z.string().trim().max(120).optional(),
     version: z.string().trim().max(20).optional(),
     sig: z.string().trim().max(128).optional(),
+    speed_kbps: z.number().int().min(0).max(2000000).optional(),
+    bitrate_kbps: z.number().int().min(0).max(200000).optional(),
     watching: z.object({
       kind: z.string().transform((k) => k === "episode" ? "series" : k === "movie" ? "film" : ["live", "film", "series", "catchup"].includes(k) ? k : "live"),
       title: z.string().trim().max(200),
@@ -894,7 +896,13 @@ export const Route = createFileRoute("/api/public/player")({
         if (credit) await supabaseAdmin.rpc("add_player_watch_seconds", { _device: device.id, _kind: credit.kind, _seconds: credit.seconds });
         const { watchActivityCredit } = await import("@/lib/player-watch-activity");
         const activity = watchActivityCredit(device, credit, now);
-        if (activity) await supabaseAdmin.rpc("record_player_watch_activity", activity);
+        if (activity) {
+          await supabaseAdmin.rpc("record_player_watch_activity", activity);
+          // Connection strength: the app's measured download speed for the last minute.
+          if (body.speed_kbps || body.bitrate_kbps) await supabaseAdmin.rpc("record_player_watch_speed", {
+            _device: activity._device, _user: activity._user, _kind: activity._kind, _title: activity._title,
+            _speed: body.speed_kbps ?? 0, _bitrate: body.bitrate_kbps ?? 0 });
+        }
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({
           linked: !!(device.user_id || device.offsite_customer_id),

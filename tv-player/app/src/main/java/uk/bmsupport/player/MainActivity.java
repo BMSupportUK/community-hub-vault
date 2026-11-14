@@ -759,6 +759,8 @@ public class MainActivity extends Activity {
                 .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
                 .put("player", prefs.getString("np_player", "BM Player")).put("since", since)
                 .put("preview", prefs.getBoolean("np_preview", false)));
+        int kbps = WatchSpeed.sample(android.net.TrafficStats.getUidRxBytes(android.os.Process.myUid()), android.os.SystemClock.elapsedRealtime());
+        if (since > 0 && !prefs.getBoolean("np_preview", false) && kbps > 0) b.put("speed_kbps", kbps);
         return b;
     }
 
