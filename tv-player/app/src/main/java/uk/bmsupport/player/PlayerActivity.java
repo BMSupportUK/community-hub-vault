@@ -289,19 +289,28 @@ public class PlayerActivity extends Activity {
         player.setPlayWhenReady(true); player.prepare();
     }
 
-    /** Shown for 20s when catch up opened after the listed start, in case the show began on time. */
+    /** Same forward-only skip as the Live TV engine; the point reached is remembered for the channel. */
     private void showSkipToListed() {
         final long listed = getIntent().getLongExtra("catchup_listed", 0);
-        if (rootView == null || listed <= 0 || cuSegStart <= listed) return;
+        if (rootView == null || listed <= 0) return;
         final android.widget.Button b = new android.widget.Button(this);
-        b.setText("⏮ Skip to listed start");
+        final Runnable hide = () -> { if (b.getParent() != null) rootView.removeView(b); };
+        b.setText("⏭ Old show still on? Skip ahead 2 min");
         b.setAllCaps(false);
-        b.setOnClickListener(v -> { catchupOpenAt(listed); rootView.removeView(b); });
+        b.setOnClickListener(v -> {
+            long reached = cuSegStart + (player == null ? 0 : Math.max(0, player.getCurrentPosition()) / 1000);
+            long to = CatchupStart.skipAhead(reached, listed, cuEnd);
+            catchupOpenAt(to);
+            String id = getIntent().getStringExtra("catchup_id");
+            if (id != null) prefs(this).edit().putInt(CatchupStart.learnKey(id), CatchupStart.learned(to, listed)).apply();
+            ui.removeCallbacks(hide); ui.postDelayed(hide, 20000);
+            b.requestFocus();
+        });
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         lp.topMargin = 40; lp.rightMargin = 40;
         rootView.addView(b, lp);
         b.requestFocus();
-        ui.postDelayed(() -> { if (b.getParent() != null) rootView.removeView(b); }, 20000);
+        ui.postDelayed(hide, 20000);
     }
 
     private void catchupResume() {

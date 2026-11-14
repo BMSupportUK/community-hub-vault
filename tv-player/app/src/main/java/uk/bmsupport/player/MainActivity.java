@@ -3551,7 +3551,7 @@ public class MainActivity extends Activity {
             new AlertDialog.Builder(this).setTitle("Catch-up starts")
                     .setSingleChoiceItems(cuL, sel, (d, w) -> { prefs.edit().putInt(CatchupStart.PREF, CatchupStart.CHOICES[w]).apply(); d.dismiss(); showSettings(); })
                     .setMessage(null).setNegativeButton("Cancel", null).show();
-            Toast.makeText(this, "Guide times are slot times and recordings often begin early. Catch up opens this many minutes after the listed start; use Skip to listed start if you miss the beginning.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Guide times are slot times and recordings often begin early. Catch up opens this many minutes after the listed start. If the show before is still on, press Skip ahead 2 min; BM Player remembers where that channel really starts next time.", Toast.LENGTH_LONG).show();
         }));
         boxes.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
         boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
@@ -4397,7 +4397,7 @@ public class MainActivity extends Activity {
                 progs.setOnItemClickListener((a, v, w, id) -> {
                     int i = shown.get(w); long[] t = all.get(i);
                     Item c = new Item("catchup", ch.id + "@" + t[0], ch.name + " · " + titles.get(i), "ts", ch.category);
-                    int off = CatchupStart.offset(prefs);
+                    int off = CatchupStart.offsetFor(prefs, ch.id);
                     long listedEnd = t[1] > t[0] ? t[1] : t[0] + 3600;
                     c.catchupListed = t[0];
                     c.catchupStart = CatchupStart.at(t[0], listedEnd, off);

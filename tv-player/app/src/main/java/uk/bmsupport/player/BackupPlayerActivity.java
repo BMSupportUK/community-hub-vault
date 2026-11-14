@@ -196,7 +196,9 @@ public class BackupPlayerActivity extends Activity {
     private void catchupJump(int minutes) {
         if (mp == null) return;
         cuRetries = 0;
-        catchupOpenAt(CatchupStart.jump(cuReached(), minutes, getIntent().getLongExtra("catchup_listed", cuSegStart), cuEnd));
+        long to = CatchupStart.jump(cuReached(), minutes, getIntent().getLongExtra("catchup_listed", cuSegStart), cuEnd);
+        catchupOpenAt(to);
+        if (skipBtn != null && skipBtn.getParent() != null) { learnCatchupStart(to); ui.removeCallbacks(hideSkip); ui.postDelayed(hideSkip, 20000); }
     }
     /** The provider closed the recording early or it failed: reopen at the minute reached; after 8 tries use the main player. */
     private void catchupResume() {
@@ -212,21 +214,42 @@ public class BackupPlayerActivity extends Activity {
         long restart = reached - Math.floorMod(reached, 60L);
         ui.postDelayed(() -> catchupOpenAt(restart), cuRetries > 1 ? 2000 : 300);
     }
-    /** Shown for 20s when catch up opened after the listed start, in case the show began on time. */
+    /**
+     * Catch-up recordings often still show the end of the show before; the listed start is earlier still, so a
+     * "back to listed start" button only replayed the old show. This button always moves forward from where
+     * playback has got to, stays up while it is being used, and the point reached is remembered per channel so
+     * the next catch up on that channel opens there.
+     */
     private android.widget.Button skipBtn;
+    private FrameLayout skipRoot;
+    private final Runnable hideSkip = () -> { if (skipBtn != null && skipBtn.getParent() != null) skipRoot.removeView(skipBtn); };
     private void showSkipToListed(FrameLayout root) {
         final long listed = getIntent().getLongExtra("catchup_listed", 0);
-        if (listed <= 0 || cuSegStart <= listed) return;
+        if (listed <= 0) return;
         final android.widget.Button b = new android.widget.Button(this);
-        skipBtn = b;
-        b.setText("⏮ Skip to listed start");
+        skipBtn = b; skipRoot = root;
+        b.setText("⏭ Old show still on? Skip ahead 2 min");
         b.setAllCaps(false);
-        b.setOnClickListener(v -> { cuRetries = 0; catchupOpenAt(listed); root.removeView(b); });
+        b.setOnClickListener(v -> {
+            cuRetries = 0;
+            long to = CatchupStart.skipAhead(cuReached(), listed, cuEnd);
+            catchupOpenAt(to);
+            learnCatchupStart(to);
+            ui.removeCallbacks(hideSkip); ui.postDelayed(hideSkip, 20000);
+            b.requestFocus();
+        });
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
         lp.topMargin = 90; lp.rightMargin = 40;
         root.addView(b, lp);
         b.requestFocus();
-        ui.postDelayed(() -> { if (b.getParent() != null) root.removeView(b); }, 20000);
+        ui.postDelayed(hideSkip, 20000);
+    }
+    /** Remember where this channel's programmes really start, so its next catch up opens there. */
+    private void learnCatchupStart(long start) {
+        long listed = getIntent().getLongExtra("catchup_listed", 0);
+        String id = getIntent().getStringExtra("catchup_id");
+        if (listed <= 0 || id == null) return;
+        PlayerActivity.prefs(this).edit().putInt(CatchupStart.learnKey(id), CatchupStart.learned(start, listed)).apply();
     }
 
     private SoundBoost.Vlc vlcBoost;
@@ -445,7 +468,7 @@ public class BackupPlayerActivity extends Activity {
             }
             if (liveDrawer.shown) return super.dispatchKeyEvent(e);
         }
-        // OK on the Skip to listed start button must press it, not just reveal the controls.
+        // OK on the Skip ahead button must press it, not just reveal the controls.
         if (e.getAction() == KeyEvent.ACTION_DOWN && skipBtn != null && skipBtn.getParent() != null
                 && (e.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || e.getKeyCode() == KeyEvent.KEYCODE_ENTER)
                 && (skipBtn.isFocused() || controller == null || !controller.isVisible())) { skipBtn.performClick(); return true; }
