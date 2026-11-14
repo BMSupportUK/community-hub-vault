@@ -14,9 +14,17 @@ final class VlcStage implements AutoCloseable {
     private final View.OnLayoutChangeListener follow = (v,l,t,r,b,ol,ot,or,ob) -> place();
 
     VlcStage(Activity activity, View anchor, View picture) {
-        this.decor = (ViewGroup) activity.getWindow().getDecorView();
+        // A decor-level sibling sits above the entire guide, including its drawer.
+        // Mount inside the guide frame instead, between content and drawer layers.
+        ViewGroup window = (ViewGroup) activity.getWindow().getDecorView();
+        View content = activity.findViewById(android.R.id.content);
+        View candidate = anchor;
+        while (candidate.getParent() instanceof View && candidate.getParent() != content) {
+            candidate = (View) candidate.getParent();
+        }
+        this.decor = candidate instanceof FrameLayout ? (FrameLayout) candidate : window;
         this.anchor = anchor; this.picture = picture;
-        decor.addView(picture, new FrameLayout.LayoutParams(1, 1));
+        decor.addView(picture, Math.min(1, decor.getChildCount()), new FrameLayout.LayoutParams(1, 1));
         anchor.addOnLayoutChangeListener(follow);
         decor.addOnLayoutChangeListener(follow);
         place();

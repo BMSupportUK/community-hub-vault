@@ -33,3 +33,4 @@
 
 - Display mode changes happen only when the customer presses the home-screen 50Hz button (choice lasts only while the app runs, re-pinned on each screen); never automatically at startup or playback, and playback keeps Media3 surface rate requests disabled.
 - Live preview and full screen share one player both ways: Media3 uses PreviewHandoff; libVLC keeps its video attached to VlcStage on the guide window, resizing it beneath transparent BackupStageActivity controls without detaching the video or reopening media. VlcPreview.Session/VlcHandoff transfers engine/audio ownership; Back returns it before the guide resumes, and stale/unclaimed transfers release the stage and stream.
+- VlcStage mounts between guide content and its scrim/drawer in the guide's outer FrameLayout, never above that frame in window decor, so categories remain above the uninterrupted preview.

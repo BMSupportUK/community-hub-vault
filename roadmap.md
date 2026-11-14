@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Correct guide categories/preview stacking without stopping or reattaching its stream; both VlcStage interaction tests pass. Installer rebuild/release is not included in this fix.
+
 - [x] Built and retained BM-signed Android 5.35 (346) with genuine on-request download/upload reporting; all 323 tests pass. Signer matches permanent BM key; installer SHA-256 7472744819e86cb5d3e6d2e67e55ed87850eb7424fa177a1939803b76a568ece. Public download unchanged.
 
 - [x] Replace Live connections traffic estimates with on-request bounded adaptive broadband tests on Android/shared Windows-Mac; preserve actual timestamps and separate stream TCP connection time. Old speeds hidden until genuine tests arrive.
