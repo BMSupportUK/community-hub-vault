@@ -1,6 +1,6 @@
 # Roadmap
 
-- [x] Built and retained permanent-BM-signed 5.28 (339) with same-stream libVLC preview/full-screen handover and return to the guide; 314 Android tests pass. Public 5.27 unchanged until release is requested.
+- [x] Built and publicly released permanent-BM-signed 5.28 (339) with same-stream libVLC preview/full-screen handover and return to the guide; 314 Android tests pass. Live updater reports 5.28; public installer matches SHA-256 82663499086452c69748d6f26730846f9bd02caeb28aa1dc28971f18cd6fb183.
 - [ ] Real-box check of 5.28 same-stream handover; blocked by no connected TV.
 
 - [x] Built and publicly released permanent-BM-signed 5.27 (338): two-screen Multi-room stacked vertically with Up/Down remote navigation; Triple Room layout and audio preserved. All 312 Android tests pass; bmsupport.uk updater reports 5.27 and public APK matches SHA-256 4ee6a244ff0e448d22ec1baf410667c7f8d2f3285772e5648b29c9b21e652143.
