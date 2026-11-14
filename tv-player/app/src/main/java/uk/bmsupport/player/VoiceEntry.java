@@ -10,9 +10,12 @@ import android.widget.EditText;
 
 /** Fire TV dictation belongs to the keyboard, never an Alexa speech activity. */
 final class VoiceEntry {
-    /** Fire TV sends the remote mic to Alexa, never to a sideloaded app, so voice search is hidden there. */
-    static boolean available(String manufacturer) {
-        return !"amazon".equalsIgnoreCase(manufacturer);
+    /** Voice search shows everywhere; on Fire TV it opens the on-screen keyboard, whose own mic key dictates into the box. */
+    static boolean available(String manufacturer) { return true; }
+    static String hint(String manufacturer) {
+        return "amazon".equalsIgnoreCase(manufacturer)
+                ? "Select the microphone key on the on-screen keyboard and speak. Don't use the Alexa button on the remote — that leaves BM Player."
+                : "Say what you're looking for";
     }
 
     static boolean useSpeechActivity(String manufacturer, boolean resolved) {
@@ -33,6 +36,6 @@ final class VoiceEntry {
         field.requestFocus();
         InputMethodManager keyboard = (InputMethodManager) field.getContext()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (keyboard != null) keyboard.showSoftInput(field, InputMethodManager.SHOW_IMPLICIT);
+        if (keyboard != null) keyboard.showSoftInput(field, InputMethodManager.SHOW_FORCED);
     }
 }

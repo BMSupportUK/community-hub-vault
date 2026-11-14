@@ -2932,6 +2932,7 @@ public class MainActivity extends Activity {
     /** Request keyboard dictation; never launch Alexa's global search on Fire TV. */
     private void voiceDictation(String kind) {
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(16), dp(8), dp(16), 0);
+        box.addView(text(VoiceEntry.hint(Build.MANUFACTURER), 15, TEXT, false));
         box.addView(text("Search words", 16, TEXT, false));
         android.widget.EditText q = new android.widget.EditText(this);
         q.setSingleLine(true); q.setHint("Your words appear here");

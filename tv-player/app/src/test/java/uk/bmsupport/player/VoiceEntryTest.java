@@ -20,9 +20,9 @@ public class VoiceEntryTest {
         assertFalse(VoiceEntry.useSpeechActivity("Google", false));
     }
 
-    @Test public void voiceSearchIsHiddenOnAmazonOnly() {
-        assertFalse(VoiceEntry.available("Amazon"));
-        assertFalse(VoiceEntry.available("amazon"));
+    @Test public void voiceSearchShowsOnAmazonWithKeyboardMicHint() {
+        assertTrue(VoiceEntry.available("Amazon"));
+        assertTrue(VoiceEntry.hint("Amazon").contains("on-screen keyboard"));
         assertTrue(VoiceEntry.available("Google"));
         assertTrue(VoiceEntry.available("Xiaomi"));
     }
