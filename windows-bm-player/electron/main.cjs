@@ -4,6 +4,7 @@ const PLATFORM=MAC?{id:'mac',name:'Mac',device:'Mac BM Player'}:{id:'windows',na
 require('./mac-engine.cjs').registerScheme(protocol);
 const fs=require('node:fs');
 const path=require('node:path');
+const nodeNet=require('node:net');
 const {pathToFileURL}=require('node:url');
 const {execFile}=require('node:child_process');
 const core=require('../core.cjs');
@@ -69,6 +70,8 @@ let announcement=null,annBusy=false;const STARTED_AT=Date.now();
 async function fetchAnnouncement(){if(annBusy||!store.token)return;annBusy=true;try{const r=await site({action:'announcement'});const fresh=r&&r.announcement&&Date.now()-Number(r.announcement.age_ms||0)>=STARTED_AT;const next=fresh&&typeof r.announcement.message==='string'?{id:String(r.announcement.id),message:r.announcement.message.slice(0,300)}:null;if(JSON.stringify(next)!==JSON.stringify(announcement)){announcement=next;send({type:'state',state:publicState()});}if(r&&r.watch)openWatch(r.watch).catch(()=>{});if(r&&r.stop_stream&&sessions.length){stopAll().catch(()=>{}).finally(()=>send({type:'stream-taken'}));}}catch{}finally{annBusy=false;}}
 // Live connections speeds: a small download/upload check at most every 15 minutes while watching.
 let lastPing=0;const net={down:0,up:0,at:0,busy:false};
+// Ping times a fresh connection to the playing stream's own server, not our website.
+function streamPing(url){return new Promise(res=>{try{const u=new URL(url);const port=Number(u.port)||(u.protocol==='https:'?443:80);const t=Date.now();const s=nodeNet.connect({host:u.hostname,port,timeout:5000},()=>{s.destroy();res(Math.min(60000,Date.now()-t));});s.on('error',()=>{s.destroy();res(0);});s.on('timeout',()=>{s.destroy();res(0);});}catch{res(0);}});}
 async function netCheck(){if(net.busy||Date.now()-net.at<900000)return;net.busy=true;try{
  let t=Date.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=2000000',{signal:AbortSignal.timeout(20000)});const bytes=(await r.arrayBuffer()).byteLength;const down=Math.round(bytes*8/Math.max(1,Date.now()-t));
  t=Date.now();await fetch('https://speed.cloudflare.com/__up',{method:'POST',body:new Uint8Array(1000000),signal:AbortSignal.timeout(20000)});const up=Math.round(8000000/Math.max(1,Date.now()-t));
@@ -80,9 +83,8 @@ async function poll(){
  try{
   const session=sessions[0];
   if(session)netCheck();
-  const t0=Date.now();
+  lastPing=session?await streamPing(session.urls?.[session.urlIndex]||session.urls?.[0]):0;
   const r=await site({action:'poll',...(session&&net.at?{speed_kbps:net.down,up_kbps:net.up}:{}),...(session&&lastPing?{ping_ms:lastPing}:{}),login:store.user||'',version:app.getVersion(),watching:session?{kind:session.item.kind==='episode'?'series':session.item.kind,title:sessions.map(x=>x.item.name).filter(Boolean).join(' · ').slice(0,200)||session.item.name,category:session.item.categoryName||'',player:'BM Player',since:session.since}:null});
-  lastPing=Math.min(60000,Date.now()-t0);
   linkVerified=r.linked===true||!!r.credentials;
   checkin.setSlow(r.slow);maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();

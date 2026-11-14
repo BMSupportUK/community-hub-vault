@@ -784,7 +784,7 @@ public class MainActivity extends Activity {
 
     private void clearNowPlaying() {
         if (prefs.getLong("np_since", 0) == 0) return;
-        prefs.edit().putLong("np_since", 0).putBoolean("np_preview", false).apply();
+        prefs.edit().putLong("np_since", 0).putBoolean("np_preview", false).remove("np_host").remove("np_port").apply();
         io.execute(this::pollOnce);
     }
 
@@ -825,15 +825,37 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Round-trip time of the previous check-in, reported as the connection's ping. */
+    /** Round-trip time to the playing stream's own server, reported as the connection's ping. */
     private volatile int lastPingMs;
+
+    /** Remembers the playing stream's server so the check-in can time a connection to it. */
+    private void noteStreamHost(String url) {
+        try {
+            java.net.URI u = java.net.URI.create(url);
+            String host = u.getHost();
+            if (host == null || host.isEmpty()) return;
+            int port = u.getPort() > 0 ? u.getPort() : ("https".equalsIgnoreCase(u.getScheme()) ? 443 : 80);
+            prefs.edit().putString("np_host", host).putInt("np_port", port).apply();
+        } catch (Exception ignored) {}
+    }
+
+    /** Ping is a fresh connection to the playing stream's own server, not to our website. */
+    private int streamPingMs() {
+        if (prefs.getLong("np_since", 0) == 0) return 0;
+        String host = prefs.getString("np_host", "");
+        if (host.isEmpty()) return 0;
+        long t0 = android.os.SystemClock.elapsedRealtime();
+        try (java.net.Socket s = new java.net.Socket()) {
+            s.connect(new java.net.InetSocketAddress(host, prefs.getInt("np_port", 80)), 5000);
+            return (int) Math.min(60000, android.os.SystemClock.elapsedRealtime() - t0);
+        } catch (Exception e) { return 0; }
+    }
 
     private void pollOnce() {
         try {
             String pb = pollBody().toString();
-            long t0 = android.os.SystemClock.elapsedRealtime();
             JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", pb));
-            lastPingMs = (int) Math.min(60000, android.os.SystemClock.elapsedRealtime() - t0);
+            lastPingMs = streamPingMs();
             Checkin.setSlow(r.optInt("slow", 1));
             JSONObject mt = r.optJSONObject("maintenance");
             boolean down = mt != null && mt.optBoolean("enabled");
@@ -1761,7 +1783,9 @@ public class MainActivity extends Activity {
             previewClaimed = false;
             // The preview plays in the built-in backup engine, the same engine full-screen live TV uses.
             previewView = view;
-            vlcPreview = new VlcPreview(this, view, streamUrls(it), new VlcPreview.Listener() {
+            String[] previewUrls = streamUrls(it);
+            noteStreamHost(previewUrls[0]);
+            vlcPreview = new VlcPreview(this, view, previewUrls, new VlcPreview.Listener() {
                 @Override public void playing() {
                     status.setText(fullScreenHint());
                     if (!previewCounted) { previewCounted = true; setNowPlaying(it, false, true); }
@@ -2674,6 +2698,7 @@ public class MainActivity extends Activity {
         // Adult-category items are never kept in recently watched, for safety.
         if (!isAdultCategory(it.category) && !"catchup".equals(it.kind)) remember("recent", it);
         String url = streamUrl(it);
+        noteStreamHost(url);
         setNowPlaying(it, vlc);
         if (vlc) {
             Intent i = new Intent(Intent.ACTION_VIEW).setPackage("org.videolan.vlc").setDataAndTypeAndNormalize(Uri.parse(url), "video/*");

@@ -1,6 +1,7 @@
 # Windows BM Player main-process rules
 - This standalone Electron shell uses an isolated React renderer and a narrow, sender-verified IPC bridge; credentials and device tokens stay encrypted in the main process, never in renderer storage.
 - Website calls use only the existing device-token `/api/public/player` endpoint; provider requests are built from stored DNS/login, never arbitrary renderer URLs.
+- Live connections ping times a fresh TCP connection to the playing stream's own server (streamPing in main.cjs), never the website check-in round-trip; shared with Mac.
 - The opening film is bundled offline and rendered before the main screen; the main window is maximised before being shown to avoid a small-window flash.
 - Bundled libVLC runs in-process through the pinned Windows x64 Koffi bridge and renders to BM-owned child HWNDs; never spawn external VLC or expose provider URLs/native handles to the renderer. Validated normalised surface rectangles keep previews, playback controls and dialogs separate.
 - The installer closes BM Player (taskkill + path-matched Stop-Process) and confirms the DLLs are writable before copying, asking Retry/Cancel if still locked.
