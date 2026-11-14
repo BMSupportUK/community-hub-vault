@@ -3087,10 +3087,8 @@ public class MainActivity extends Activity {
                 }
                 // Group results by category (categories A–Z), then alphabetically by name inside each category.
                 java.util.Collections.sort(hits, (a, b) -> {
-                    int c = searchCategoryLabel(a, searchCategories).compareToIgnoreCase(searchCategoryLabel(b, searchCategories));
-                    if (c != 0) return c;
-                    String an = a.name != null ? a.name : "", bn = b.name != null ? b.name : "";
-                    return an.compareToIgnoreCase(bn);
+                    int c = SearchOrder.compare(searchCategoryLabel(a, searchCategories), searchCategoryLabel(b, searchCategories));
+                    return c != 0 ? c : SearchOrder.compare(a.name, b.name);
                 });
                 ui.post(() -> {
                     if (hits.isEmpty()) { Toast.makeText(this, "Nothing found for \"" + want + "\"", Toast.LENGTH_LONG).show(); showSearch(kind, ""); return; }

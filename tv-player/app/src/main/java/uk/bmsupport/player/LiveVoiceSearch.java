@@ -43,6 +43,8 @@ final class LiveVoiceSearch {
                 }
                 if (LiveSearch.matches(hay, query)) hits.add(new Row(group, title, subtitle, value));
             }
+            // Categories A–Z; channels grouped by their category (A–Z), then A–Z inside each category.
+            hits.sort((x, y) -> { int c = SearchOrder.compare(x.subtitle, y.subtitle); return c != 0 ? c : SearchOrder.compare(x.title, y.title); });
             rows.add(new Row(group, group + " (" + hits.size() + ")", "", null));
             rows.addAll(hits);
             if (hits.isEmpty()) rows.add(new Row(group, "No matching " + group.toLowerCase(java.util.Locale.UK), "", null));
