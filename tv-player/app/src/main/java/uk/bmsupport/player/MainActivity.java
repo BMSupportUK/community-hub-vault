@@ -2833,6 +2833,7 @@ public class MainActivity extends Activity {
     private String voiceKind;
 
     private void startVoice(String kind) {
+        if (VoiceEntry.ownMic(Build.MANUFACTURER)) { ownVoice(kind); return; }
         Intent i = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-GB");
@@ -2845,6 +2846,80 @@ public class MainActivity extends Activity {
         }
         voiceKind = null;
         voiceDictation(kind);
+    }
+
+    private static final int MIC_REQUEST = 4344;
+    private String micKind;
+
+    /** Fire TV: BM Player records the microphone itself and the website turns it into words; Alexa never opens. */
+    private void ownVoice(String kind) {
+        if (prefs.getInt("mic_flat", 0) >= 2) { Toast.makeText(this, "This TV doesn't let apps use its microphone — type your search instead", Toast.LENGTH_LONG).show(); typedFallback(kind); return; }
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            micKind = kind; requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, MIC_REQUEST); return;
+        }
+        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(20), dp(12), dp(20), dp(4));
+        TextView status = text("Press Talk now, then say what you're looking for.\n(Don't use the Alexa button on the remote.)", 16, TEXT, false);
+        box.addView(status);
+        android.widget.ProgressBar level = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        level.setMax(4000); box.addView(level, new LinearLayout.LayoutParams(-1, dp(18)));
+        VoiceRecorder[] rec = new VoiceRecorder[1];
+        AlertDialog dlg = new AlertDialog.Builder(this).setTitle("🎤 Voice search").setView(box)
+                .setPositiveButton("Talk now", null).setNegativeButton("Type instead", null).create();
+        dlg.setOnDismissListener(d -> { if (rec[0] != null) rec[0].stop(); });
+        dlg.setOnShowListener(d -> {
+            android.widget.Button talk = dlg.getButton(AlertDialog.BUTTON_POSITIVE);
+            dlg.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> { dlg.dismiss(); typedFallback(kind); });
+            talk.requestFocus();
+            talk.setOnClickListener(v -> {
+                if (rec[0] != null) { rec[0].stop(); return; }
+                VoiceRecorder r = new VoiceRecorder(); rec[0] = r;
+                status.setText("Listening… speak now"); talk.setText("Stop");
+                io.execute(() -> {
+                    try {
+                        VoiceRecorder.Take t = r.record(lv -> ui.post(() -> level.setProgress(Math.min(4000, lv))));
+                        if (!dlg.isShowing()) return;
+                        if (t.flat()) {
+                            prefs.edit().putInt("mic_flat", prefs.getInt("mic_flat", 0) + 1).apply();
+                            ui.post(() -> { dlg.dismiss(); Toast.makeText(this, "No sound reached BM Player — this TV may not let apps use its microphone. Type your search instead.", Toast.LENGTH_LONG).show(); typedFallback(kind); });
+                            return;
+                        }
+                        prefs.edit().putInt("mic_flat", 0).apply();
+                        if (!t.heardSpeech) { ui.post(() -> { rec[0] = null; status.setText("Didn't hear anything. Press Talk now and speak a bit louder."); talk.setText("Talk now"); level.setProgress(0); }); return; }
+                        ui.post(() -> { status.setText("Working…"); talk.setEnabled(false); });
+                        String audio = android.util.Base64.encodeToString(t.wav, android.util.Base64.NO_WRAP);
+                        JSONObject res = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "voice")
+                                .put("device_token", prefs.getString("token", "")).put("audio", audio).put("mime", "audio/wav").toString()));
+                        String words = res.optString("text", "").trim();
+                        ui.post(() -> { dlg.dismiss(); if (words.length() < 2) typedFallback(kind); else voiceWords(kind, words); });
+                    } catch (Exception e) {
+                        String msg = VoiceEntry.errorText(e.getMessage());
+                        ui.post(() -> { rec[0] = null; if (dlg.isShowing()) { status.setText(msg); talk.setText("Talk now"); talk.setEnabled(true); level.setProgress(0); } });
+                    }
+                });
+            });
+        });
+        dlg.show();
+    }
+
+    private void voiceWords(String kind, String words) {
+        Toast.makeText(this, "Searching: " + words, Toast.LENGTH_SHORT).show();
+        if ("sports".equals(kind)) { if (!"sports".equals(screen)) showSports(); sportsVoice(words); }
+        else if ("live".equals(kind)) runLiveVoiceSearch(words);
+        else showSearch(kind, words);
+    }
+
+    private void typedFallback(String kind) {
+        if ("sports".equals(kind)) { resetSportsFilters(); showSports(); }
+        else showSearch(kind, "");
+    }
+
+    @Override public void onRequestPermissionsResult(int req, String[] perms, int[] results) {
+        super.onRequestPermissionsResult(req, perms, results);
+        if (req != MIC_REQUEST) return;
+        String kind = micKind; micKind = null;
+        if (kind == null) return;
+        if (results.length > 0 && results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) ownVoice(kind);
+        else { Toast.makeText(this, "Microphone not allowed — type your search instead", Toast.LENGTH_LONG).show(); typedFallback(kind); }
     }
 
     private void hideKeyboard(View v) {

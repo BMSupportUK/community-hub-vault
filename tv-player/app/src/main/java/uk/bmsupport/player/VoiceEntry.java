@@ -10,8 +10,10 @@ import android.widget.EditText;
 
 /** Fire TV dictation belongs to the keyboard, never an Alexa speech activity. */
 final class VoiceEntry {
-    /** Hidden on Amazon Fire TV: the remote mic always goes to Alexa (tested 5.36-5.39), so those boxes type instead. */
-    static boolean available(String manufacturer) { return !"amazon".equalsIgnoreCase(manufacturer); }
+    /** Voice search shows on every device. */
+    static boolean available(String manufacturer) { return true; }
+    /** Fire TV sends the remote mic to Alexa, so BM Player records the microphone itself there. */
+    static boolean ownMic(String manufacturer) { return "amazon".equalsIgnoreCase(manufacturer); }
     static String hint(String manufacturer) {
         return "amazon".equalsIgnoreCase(manufacturer)
                 ? "When the keyboard is showing, hold the microphone button on your remote and speak — your words type into the box."
@@ -37,5 +39,14 @@ final class VoiceEntry {
         InputMethodManager keyboard = (InputMethodManager) field.getContext()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         if (keyboard != null) keyboard.showSoftInput(field, InputMethodManager.SHOW_FORCED);
+    }
+
+    /** The website's own error words (e.g. "Didn't catch that"), else a plain retry message. */
+    static String errorText(String raw) {
+        if (raw != null) { int at = raw.indexOf('{'); if (at >= 0) try {
+            String m = new org.json.JSONObject(raw.substring(at)).optString("error", "");
+            if (!m.isEmpty()) return m;
+        } catch (Exception ignored) {} }
+        return "Voice search didn't work. Try again or type instead.";
     }
 }
