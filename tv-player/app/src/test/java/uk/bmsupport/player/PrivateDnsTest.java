@@ -51,4 +51,12 @@ public class PrivateDnsTest {
         PrivateDns.clear();
         assertFalse(PrivateDns.listUsed);
     }
+
+    @Test public void alwaysModeLeavesSecureAndIpLinksAlone() {
+        PrivateDns.enabled = true;
+        assertNull(StreamDns.preferPrivate("https://example.com/live/1.ts"));
+        assertNull(StreamDns.preferPrivate("http://1.2.3.4/live/1.ts"));
+        PrivateDns.enabled = false;
+        assertNull(StreamDns.preferPrivate("http://example.com/live/1.ts"));
+    }
 }

@@ -3778,6 +3778,15 @@ public class MainActivity extends Activity {
                             prefs.edit().putBoolean(PrivateDns.PREF, !pdns).apply();
                             PrivateDns.enabled = !pdns; PrivateDns.clear(); showSettings(); })
                         .setNegativeButton("Cancel", null).show()));
+        if (pdns) {
+            boolean always = prefs.getBoolean(StreamDns.ALWAYS_PREF, false);
+            boxes.add(settingBox("🕶", "Always use Private DNS for channels: " + (always ? "On" : "Off"), "Look up every channel privately", v ->
+                    new AlertDialog.Builder(this).setTitle("Always use Private DNS for channels")
+                            .setMessage("Every channel looks up its server through Private DNS straight away, instead of only when your broadband blocks it. Some channels may buffer more because the server picked can be further away. Secure (https) channels always use a normal lookup.")
+                            .setPositiveButton(always ? "Switch off" : "Switch on", (d, w) -> {
+                                prefs.edit().putBoolean(StreamDns.ALWAYS_PREF, !always).apply(); showSettings(); })
+                            .setNegativeButton("Cancel", null).show()));
+        }
         advanced.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
         advanced.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));

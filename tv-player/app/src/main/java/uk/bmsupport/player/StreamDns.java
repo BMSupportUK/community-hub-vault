@@ -22,4 +22,13 @@ final class StreamDns {
         String ip = PrivateDns.resolve(h);
         return ip == null ? null : withIp(url, ip);
     }
+    static final String ALWAYS_PREF = "pdns_streams";
+    /** "Always use Private DNS for channels": rewrite plain-HTTP streams to the privately looked-up address up front; null if not possible (https, already an IP, lookup failed). */
+    static String preferPrivate(String url) {
+        if (!PrivateDns.enabled || url == null || !url.startsWith("http://")) return null;
+        String h = host(url);
+        if (h == null || h.matches("[\\d.]+")) return null;
+        String ip = PrivateDns.resolve(h);
+        return ip == null ? null : withIp(url, ip);
+    }
 }
