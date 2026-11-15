@@ -24,6 +24,7 @@ final class BackupFeedStatus {
     void playing(long now) { lastProgressAt = now; buffering = false; }
 
     boolean stalled(boolean started, boolean playing, long now) {
-        return started && playing && buffering && now - lastProgressAt >= 2000;
+        return started && playing && ((buffering && now - lastProgressAt >= 2000)
+                || (lastPosition >= 0 && now - lastProgressAt >= 4000));
     }
 }

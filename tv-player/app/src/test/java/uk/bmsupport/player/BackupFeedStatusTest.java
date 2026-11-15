@@ -5,6 +5,14 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public final class BackupFeedStatusTest {
+    @Test public void silentStallShowsNoticeWithoutBufferingEvent() {
+        BackupFeedStatus status = new BackupFeedStatus();
+        status.reset(0); status.playing(0); status.progress(1000, 1000);
+        assertFalse(status.stalled(true, true, 4999));
+        assertTrue(status.stalled(true, true, 5000));
+        status.progress(2000, 5100);
+        assertFalse(status.stalled(true, true, 5100));
+    }
     @Test public void bufferingWhilePictureProgressesNeverShowsAStall() {
         BackupFeedStatus status = new BackupFeedStatus();
         status.reset(0); status.playing(0); status.buffering(25);

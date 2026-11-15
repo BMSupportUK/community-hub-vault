@@ -11,6 +11,7 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { timeZo
 const label = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 const tone = { strong: 'bg-success', ok: 'bg-primary', weak: 'bg-warning', very_weak: 'bg-destructive', none: 'bg-muted' } as const;
 function Bars({ strength, title }: { strength: Strength; title?: string }) {
+ if (strength.level === 'none') return <span className="text-xs text-muted-foreground" title={title}>{strength.label}</span>;
  return <span className="inline-flex items-center gap-2" title={title}><span className="inline-flex items-end gap-0.5" aria-hidden="true">{[1,2,3,4].map(n=><span key={n} className={`w-1.5 rounded-sm ${n <= strength.bars ? tone[strength.level] : 'bg-muted'}`} style={{ height: `${n*4}px` }} />)}</span><span className="text-xs font-semibold">{strength.label}</span></span>;
 }
 class StatsError extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -55,7 +56,7 @@ function Stats({ userId }: { userId: string }) {
  const ukDay = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date(iso));
  const buf = (r: { device_id: string; title: string; day: string }) => { const list = data.buffers.filter(b => b.device_id === r.device_id && b.content_name === r.title && ukDay(b.occurred_at) === r.day); return { count: list.length, ms: list.reduce((s, b) => s + Number(b.stall_ms), 0) }; };
  return <><div className="space-y-3 border-b border-border py-3">
-  <h3 className="text-sm font-semibold">Live connection</h3>
+  <h3 className="text-sm font-semibold">Live stream download</h3>
   {data.devices.filter(device => device.watching_title && !device.watching_preview).map(device => {
    const reading = data.rows.find(row => row.device_id === device.id && row.title === device.watching_title && row.login === device.iptv_username && row.day === days[0]);
    const speed = reading ? latestConnectionReading(reading, device) : null;

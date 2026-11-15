@@ -75,8 +75,10 @@ public class BackupPlayerActivity extends Activity {
         // VLC can stop reporting isPlaying during rebuffering; only an explicit user pause suppresses a stall.
         boolean stalled = isLive() && feedStatus.stalled(started, !paused, android.os.SystemClock.elapsedRealtime());
         reportStall(stallTracker.update(stalled, android.os.SystemClock.elapsedRealtime()), false);
-        feedNote.setText(FeedStatus.BUFFERING);
-        feedNote.setVisibility(stalled ? TextView.VISIBLE : TextView.GONE);
+        String name = getIntent().getStringExtra("content_name");
+        feedNote.setText(retryQueued || reconnect.active()
+                ? "Reconnecting" + (name == null ? "" : " to " + name) + "…" : FeedStatus.BUFFERING);
+        feedNote.setVisibility(stalled || retryQueued || reconnect.active() ? TextView.VISIBLE : TextView.GONE);
     }
 
     @Override protected void onCreate(Bundle b) {

@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Restore full-screen libVLC buffering notices for silent stalls and keep reconnect notices visible; remove misleading broadband-strength ratings from stream throughput. Android suite and 15 website checks pass; website build OK.
+- [ ] Release the buffering-notice Android update and publish neutral stream-download labels; real-TV notice verification is blocked by no connected physical box.
+
 - [x] Correct Android live-stream recovery for silent offline stalls and guide/Multi-screen retries; included in public 5.51.
 - [x] Built and publicly released permanent-BM-signed Android 5.51 (362); 353 tests pass. Live updater and first TV-install choice report 5.51; public installer is byte-identical, SHA-256 be008525f409f0a533813a794bcf32201f8adfaa7e8b0d5f70a7ed62c458547e. Crash mapping retained privately.
 - [ ] Verify recovery on a real offline stream on a TV; blocked by no connected physical box.

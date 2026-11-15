@@ -16,16 +16,13 @@ export function customerStatsSegments<T extends { title: string; kind: string; s
 export type Strength = { level: 'strong' | 'ok' | 'weak' | 'very_weak' | 'none'; bars: 0 | 1 | 2 | 3 | 4; label: string };
 /** Reported stream throughput bands, not Wi-Fi signal or broadband capacity. */
 export function connectionStrength(avgKbps: number | null, bitrateKbps?: number | null): Strength {
- if (!avgKbps || avgKbps <= 0) return { level: 'none', bars: 0, label: 'No reading' };
- if (avgKbps >= 25000 || (bitrateKbps && avgKbps >= bitrateKbps * 3)) return { level: 'strong', bars: 4, label: 'Strong' };
- if (avgKbps >= 10000) return { level: 'ok', bars: 3, label: 'OK' };
- if (avgKbps >= 5000) return { level: 'weak', bars: 2, label: 'Weak' };
- return { level: 'very_weak', bars: 1, label: 'Very weak' };
+ // A channel downloading 3 Mbps can play perfectly on 500 Mbps broadband.
+ // Neither the transfer rate nor the stream bitrate establishes connection strength.
+ return { level: 'none', bars: 0, label: avgKbps && avgKbps > 0 ? 'Stream download' : 'No reading' };
 }
 export function connectionDiagnosis(strength: Strength, buffers: number) {
  if (!buffers || strength.level === 'none') return null;
- if (strength.level === 'weak' || strength.level === 'very_weak') return "Customer's internet too slow";
- return 'Likely channel/provider issue';
+ return null;
 }
 export const mbps = (kbps: number) => `${(kbps / 1000).toFixed(kbps < 10000 ? 1 : 0)} Mbps`;
 export function latestConnectionReading(
